@@ -81,7 +81,7 @@ Now, we'll use the RootAVD tool and the `FAKEBOOTIMG` method to install Magisk a
     Launch the AVD you just created. **Wait for it to fully boot** before proceeding.
 
     ```cmd
-    emulator -avd Pixel_7_Pro_API_33
+    emulator -avd Pixel_7_Pro_API_33 -writable-system
     ```
 
 3.  **Run the RootAVD Script**
@@ -124,12 +124,10 @@ With a rooted emulator running, the next setup step is to install and run the Fr
     su
     chmod 755 /data/local/tmp/frida-server
     /data/local/tmp/frida-server &
-    exit
-    exit
     ```
 
 2.  **Verify Connection**
-    Check that Frida can see your emulator by listing the running processes.
+    Check that Frida can see your emulator by listing the running processes in a new terminal window.
 
     ```cmd
     frida-ps -U
