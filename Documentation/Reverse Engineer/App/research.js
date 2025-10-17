@@ -17,7 +17,7 @@
  * 
  * NOTE:
  * This is a pure monitoring script - it does NOT bypass or modify any security checks.
- * Use script.js for the actual bypass.
+ * Use bypass.js for the actual bypass.
  */
 
 Java.perform(function() {
