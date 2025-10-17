@@ -11,11 +11,14 @@
  * SOLUTION:
  * This Frida script bypasses root detection by:
  * 1. Intercepting the Talsec EventChannel that streams threat notifications to Flutter
- * 2. Blocking all threat events before they reach the Flutter's layer
+ * 2. Blocking all threat events before they reach the Flutter layer
  * 3. Intercepting flutter_jailbreak_detection and returning false for all checks
  * 
  * USAGE:
- * frida -U -l "app.js" -f it.bicoccapp.unimib
+ * frida -U -l "bypass.js" -f it.bicoccapp.unimib
+ * 
+ * NOTE:
+ * Use research.js to monitor all channel traffic without blocking anything.
  */
 
 Java.perform(function() {
@@ -83,10 +86,10 @@ Java.perform(function() {
             return setStreamHandler.call(this, handler);
         };
         
-        console.log("[+] Talsec EventChannel blocker installed");
+        console.log("[✓] Talsec EventChannel blocker installed");
         
     } catch (e) {
-        console.log("[-] EventChannel error: " + e);
+        console.log("[✗] EventChannel error: " + e);
     }
     
     // The flutter_jailbreak_detection plugin checks for root/jailbreak.
@@ -134,19 +137,16 @@ Java.perform(function() {
             return setMethodCallHandler.call(this, handler);
         };
         
-        console.log("[+] Jailbreak detection bypass installed");
+        console.log("[✓] Jailbreak detection bypass installed");
         
     } catch (e) {
-        console.log("[-] Jailbreak bypass error: " + e);
+        console.log("[✗] Jailbreak bypass error: " + e);
     }
     
-    console.log("\n[+] All bypasses active - App should work without detection\n");
+    console.log("\n[✓] All bypasses active - App should work without detection\n");
 });
 
-// ============================================
-// HELPER: Serialize Java objects for logging
-// ============================================
-
+// Helper function to serialize Java objects for logging
 function serializeValue(value) {
     if (value === null || value === undefined) return null;
     
