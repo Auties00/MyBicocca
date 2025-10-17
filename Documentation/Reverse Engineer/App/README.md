@@ -163,8 +163,8 @@ With the environment fully configured, you can now install the app and run the b
 
 ### 2\. Run the Bypass Script
 
-1.  Save the provided JavaScript code from the original prompt into a file named **`bypass.js`**.
-2.  Run the following command in your terminal. This will launch the BicoccApp and immediately inject your script to apply the bypasses.
+1.  Download [bypass.js](./bypass.js) locally and navigate to the directory where the file was saved from a new terminal window.
+2.  Run the following command, this will launch the BicoccApp and immediately inject your script to apply the bypasses.
     ```cmd
     frida -U -l "bypass.js" -f it.bicoccapp.unimib
     ```
