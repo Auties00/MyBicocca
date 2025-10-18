@@ -1,6 +1,120 @@
 E-LEARNING: {}
 
-BICOCCAPP: {}
+BICOCCAPP:
+  calendar :
+    - export to personal calendar app
+    ricerca insegnamenti :
+      nel mio corso :
+        - ricerca automatica
+      tutti gli insegnamenti :
+        area didattica :
+          - area economico statistica
+          - area giuridica
+          - area medica
+          - area psicologica
+          - area scientifica
+          - area scienze della formazione
+          - area sociologica
+
+            corso di laurea :
+              tutti gli effettivi corsi:
+                anno:
+                  - tutte le possibili lezioni
+
+            corso di laurea magistrale :
+              tutti gli effettivi corsi :
+                anno :
+                  - tutte le possibili lezioni
+
+  lezioni :
+    le tue lezioni -> qualcosa é andato storto
+    aggiungi :
+      ricerca insegmanti del punto precedente (calendar)
+
+  esami :
+    iscrizioni esami :
+      - esami a cui sei iscritto con possibilità di "annulla iscrizione"
+    appelli disponibili :
+      esame :
+        - lista appelli
+    esami sostenuti :
+      - lista esami - cfu - voto - data voto
+    esami da sostenere :
+      - lista esami da sostenere - cfu
+
+  carriera :
+    - numero esami sostenuti
+    - media ponderata
+    - media aritmetica (davvero serve ? anche qual'ora avessimo esami con diversi cfu, davvero é interessante questo valore ?
+    - rapporto visivo cfu aquisiti/totali
+    calcola media su voto ipotetico : (mi permetto di farlo meglio e con la possibilità di inserire piú voti e per ciascun voto anche i cfu corrispondenti magari )
+      - media simulata
+    grafico esami :
+      - grafico degli esami con y=voto & x=uno per esame (validi solo con cfu >= 1)
+    pagamento tasse :
+      - questa carriera
+      - lista completa
+
+  menu :
+    home :
+      riporta al login... credo si possa tramutare in "riavvio app" o "refresh app"
+    messaggi :
+      - boh sono vuoti i miei non so
+      - ricerca
+    profilo :
+      - nome
+      - matricola
+      - laurea che sto seguendo
+      - email istituzionale
+      - tasto per esportare appuntamenti che non funziona
+    avvisi :
+      tutte le notifiche
+    segreteria : (ma credo sia meglio chiamarlo "link esterni")
+      prenota appuntamento :
+        https://gestioneorari.didattica.unimib.it/portaleplanning/unimib-segreteria
+      persone in coda :
+        https://gestioneorari.didattica.unimib.it/planning/monitor.php?layout=1
+    orientamento :
+      https://www.unimib.it/servizi/bicocca-orienta
+    aule e spazi :
+      aule :
+        https://gestioneorari.didattica.unimib.it/PortaleStudentiUnimib/index.php?view=rooms&include=rooms&_lang=it
+      laboratori self aperti :
+        https://gestioneorari.didattica.unimib.it/PortaleStudentiUnimib/index.php?view=bookings&form-type=bookings&include=bookings&mode=bookings&sede%5B%5D=LIB&tipo=38&stato=&ricerca=&giorno_settimana%5B%5D
+    biblioteca :
+      orari e recapiti :
+        https://www.biblio.unimib.it/it/chi-siamo/sedi-e-orari
+      prenotazione posti :
+        https://affluences.com/it/sites/universita-bicocca-biblioteca-di-ateneo
+      catalogo online :
+        https://www.biblio.unimib.it/it
+    diritto allo studio :
+      https://www.unimib.it/studiare/servizi-studenti-e-laureati/diritto-allo-studio-contribuzione-studentesca-150-ore
+    luoghi del campus :
+      c'é effettivamente la mappa del campo con luoghi segnati e barra di ricerca... interessante ma la voglio fare meglio con gli edifici in 3d
+      - biblioteche
+      - dipartimeni
+      - edifici
+      - mense-e-bar
+      - pulsante per centrare su me stesso
+    vivi bicocca :
+      https://www.unimib.it/ateneo/opportunita-e-facilities/vivi-bicocca
+    news :
+      https://www.unimib.it/news
+    eventi :
+      https://www.unimib.it/eventi
+    segnala un problema :
+      link a :
+        - segreterie online
+        - segreterie ateneo
+        - accessibilita@unimib.it
+        - sistemi informativi
+    privacy policy :
+      pdf easy delle policy
+    informazioni :
+      - che ridere, non si puó usare... non attiva nulla
+    - logout
+    - versione
 
 S3W:
   features:
