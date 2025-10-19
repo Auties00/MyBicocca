@@ -1,4 +1,774 @@
-E-LEARNING: {}
+# #############################################################################
+# E-LEARNING
+# E-LEARNING
+# E-LEARNING
+# E-LEARNING
+# E-LEARNING
+# #############################################################################
+
+E-LEARNING:
+  base_url: "https://elearning.unimib.it"
+  platform: "Moodle"
+  descrizione: "Piattaforma e-learning dell'Università degli Studi di Milano-Bicocca per la gestione di corsi, materiali didattici, esami e comunicazioni docenti-studenti"
+
+  # ===========================================================================
+  # HOMEPAGE / DASHBOARD
+  # ===========================================================================
+  homepage:
+    url: "https://elearning.unimib.it"
+    page_title: "Dashboard | e-Learning - UNIMIB"
+    descrizione: "Pagina principale con dashboard personale, lista corsi, notifiche "
+    
+    # -------------------------------------------------------------------------
+    # NAVIGAZIONE PRINCIPALE (Header)
+    # -------------------------------------------------------------------------
+    navigazione_principale:
+      descrizione: "Menu di navigazione principale in alto nella pagina"
+      items:
+        - nome: "Home"
+          url: "https://elearning.unimib.it/"
+          descrizione: "Torna alla homepage della piattaforma"
+          
+        - nome: "Dashboard"
+          url: "https://elearning.unimib.it/my/"
+          descrizione: "Dashboard personale con panoramica attività e corsi"
+          
+        - nome: "I miei corsi"
+          url: "https://elearning.unimib.it/my/courses.php"
+          descrizione: "Lista completa di tutti i corsi a cui sei iscritto"
+          
+        - nome: "My Media" NO
+          
+        - nome: "Conversazioni"
+          icona: "💬"
+          badge_notifiche: "Numero conversazioni non lette"
+          descrizione: "Sistema di messaggistica interno tra utenti della piattaforma"
+          url: "https://elearning.unimib.it/message/index.php"
+          azioni:
+            - "Visualizza conversazioni"
+            - "Leggi messaggi non letti"
+            - "Marca tutti come letti"
+            - "Chiudi popover notifiche"
+
+    # -------------------------------------------------------------------------
+    # MENU UTENTE (Dropdown in alto a destra)
+    # -------------------------------------------------------------------------
+    menu_utente:
+      trigger: "Avatar/nome utente in alto a destra"
+      descrizione: "Menu dropdown con opzioni personali, impostazioni e logout"
+      items:
+        - nome: "Dashboard"
+          url: "https://elearning.unimib.it/my/"
+          descrizione: "Vai alla tua dashboard personale"
+          
+        - nome: "Profilo"
+          url: "https://elearning.unimib.it/user/profile.php"
+          descrizione: "Visualizza e modifica il tuo profilo utente"
+          
+        - nome: "Voti"
+          url: "https://elearning.unimib.it/grade/report/overview/index.php"
+          descrizione: "Panoramica di tutti i voti ricevuti nei corsi"
+          
+        - nome: "Messaggi"
+          url: "https://elearning.unimib.it/message/index.php"
+          descrizione: "Accedi alla messaggistica interna"
+          
+        - nome: "Preferenze"
+          url: "https://elearning.unimib.it/user/preferences.php"
+          descrizione: "Configura preferenze personali (notifiche, lingua, ecc.)"
+          sottomenu:
+            - "Notifiche via email"
+            - "Impostazioni editor"
+            - "Preferenze forum"
+            - "Impostazioni calendario"
+            
+        - nome: "Logout"
+          url: "https://elearning.unimib.it/login/logout.php"
+          descrizione: "Esci dalla piattaforma"
+
+    # -------------------------------------------------------------------------
+    # RICERCA
+    # -------------------------------------------------------------------------
+    ricerca:
+      descrizione: "Sistema di ricerca multiplo per corsi, docenti e attività"
+      
+      ricerca_corsi:
+        placeholder: "Cerca corso"
+        descrizione: "Cerca tra tutti i corsi disponibili per nome o codice"
+        posizione: "Campo di ricerca nella sezione corsi"
+        
+      ricerca_docenti:
+        placeholder: "Cerca docente"
+        descrizione: "Cerca corsi per nome del docente"
+        
+    # -------------------------------------------------------------------------
+    # ELENCO CORSI
+    # -------------------------------------------------------------------------
+    elenco_corsi:
+      descrizione: "Lista completa dei corsi organizzata per anno accademico"
+      
+      organizzazione:
+        - tipo: "Anno Accademico"
+          collapsible: true
+          descrizione: "Corsi raggruppati per anno accademico (es: A.A. 2025-2026, 2024-2025)"
+          
+      struttura_corso_card:
+        elementi:
+          - nome_corso: "Nome completo del corso (es: Analisi e Progetto di Algoritmi)"
+            codice_corso: "Codice identificativo (es: 2626-3-E3101Q113)"
+            link_corso: "https://elearning.unimib.it/course/view.php?id=<COURSE_ID>"
+
+    # -------------------------------------------------------------------------
+    # BLOCCO: CORSO DI STUDI
+    # -------------------------------------------------------------------------
+    blocco_corso_di_studi:
+      descrizione: "Informazioni sul corso di laurea/studi dell'utente"
+
+    # -------------------------------------------------------------------------
+    # BLOCCO: CRONOLOGIA
+    # -------------------------------------------------------------------------
+    blocco_cronologia:
+      descrizione: "Timeline delle attività recenti e prossime scadenze"
+      posizione: "Contenuto principale dashboard"
+      filtri:
+        - "Prossimi 7 giorni"
+        - "Ordina per data"
+      elementi:
+        - tipo: "Attività"
+          mostra: "Elenco attività in scadenza o eventi imminenti"
+      ricerca_timeline:
+        placeholder: "Cerca per tipo o per nome dell'attività"
+
+
+    # -------------------------------------------------------------------------
+    # SCRIPTS ESTERNI E INTEGRAZIONI
+    # -------------------------------------------------------------------------
+    integrazioni_esterne:
+      descrizione: "Script e servizi esterni integrati nella piattaforma"
+      servizi:
+        - nome: "ReadSpeaker"
+          url: "https://cdn-eu.readspeaker.com/script/12247/webReaderForEducation/"
+          descrizione: "Servizio di lettura vocale dei testi (text-to-speech) per accessibilità"
+          funzionalità:
+            - "Leggi contenuto ad alta voce"
+            - "Download audio"
+            - "Impostazioni voce e velocità"
+            
+        - nome: "MathJax"
+          url: "https://cdn.jsdelivr.net/npm/mathjax@2.7.9/MathJax.js"
+          descrizione: "Rendering formule matematiche LaTeX/MathML"
+     
+  # ===========================================================================
+  # CORSO (Struttura generale applicabile a tutti i corsi)
+  # ===========================================================================
+  corso:
+    url_pattern: "https://elearning.unimib.it/course/view.php?id=<COURSE_ID>"
+    page_title_pattern: "Corso: <NOME_CORSO> | e-Learning - UNIMIB"
+    descrizione: "Pagina principale di un corso con tutti i materiali, attività e strumenti"
+    
+    # -------------------------------------------------------------------------
+    # NAVIGAZIONE CORSO (Tab orizzontali)
+    # -------------------------------------------------------------------------
+    navigation_tabs:
+      descrizione: "Tab di navigazione nella barra secondaria del corso"
+      
+      tab_corso:
+        nome: "Corso"
+        url: "https://elearning.unimib.it/course/view.php?id=<COURSE_ID>"
+        descrizione: "Pagina principale con contenuti e attività del corso"
+        stato: "Tab attiva di default"
+        
+      tab_partecipanti:
+        nome: "Partecipanti"
+        url: "https://elearning.unimib.it/user/index.php?id=<COURSE_ID>"
+        descrizione: "Lista completa di studenti e docenti iscritti al corso"
+        contenuto:
+          - tipo: "Tabella utenti"
+            dati:
+              - "Nome e Cognome"
+              - "Ruolo (Studente/Docente/Tutor)"
+          - ricerca: "Campo ricerca per filtrare partecipanti"
+          - filtri:
+              - "Per ruolo"
+              - "Per gruppo"
+              - "iniziale del cognome/nome"
+          - azioni:
+              - "Visualizza profilo"
+
+      tab_valutazioni:
+        nome: "Valutazioni"
+        url: "https://elearning.unimib.it/grade/report/user/index.php?id=<COURSE_ID>"
+        descrizione: "Registro voti personale con tutte le valutazioni ricevute"
+        contenuto:
+          - tipo: "Tabella voti"
+      tab_altro:
+        nome: "Altro"
+        descrizione: "Menu dropdown con disiscrivimi da questo corso"
+  
+
+    # -------------------------------------------------------------------------
+    # HEADER CORSO
+    # -------------------------------------------------------------------------
+    header_corso:
+      elementi:
+        - titolo_corso: "Nome completo del corso"
+          codice: "Codice identificativo corso"
+
+        - azioni_rapide:
+            - icona: "ℹ️ SYLLABUS"
+              descrizione: "Apre pagina syllabus/informazioni corso"
+              url: "https://elearning.unimib.it/course/info.php?id=<COURSE_ID>"
+
+ 
+    # -------------------------------------------------------------------------
+    # STRUTTURA SEZIONI CORSO
+    # -------------------------------------------------------------------------
+    sezioni_corso:
+      descrizione: "Contenuto principale organizzato in sezioni tematiche/cronologiche"
+      layout: "Verticale, sezioni una sotto l'altra"
+      collapsible: true
+      
+      sezione_generica:
+        struttura:
+          - titolo_sezione:
+              esempio: "INTRODUZIONE"
+              formato: "Uppercase, collassabile"
+              icona_expand: "▼ quando aperta, ► quando chiusa"
+              
+          - descrizione_sezione:
+              tipo: "Testo HTML"
+              opzionale: true
+              contenuto: "Descrizione testuale della sezione con possibili link, formattazione, immagini"
+              
+          - lista_attivita:
+              descrizione: "Lista verticale di tutte le attività/risorse nella sezione"
+              
+      esempio_sezione_introduzione:
+        titolo: "INTRODUZIONE"
+        aperta: true
+        contenuto:
+          - tipo: "Forum"
+            nome: "Avvisi"
+            icona: "💬"
+            descrizione: "Forum degli avvisi del corso (comunicazioni docenti)"
+            
+          - tipo: "Forum"
+            nome: "Forum studenti"
+            icona: "💬"
+            descrizione: "Forum discussione libera tra studenti"
+            
+      esempio_sezione_comunicazioni:
+        titolo: "COMUNICAZIONI DEI DOCENTI"
+        stato: "Espansa"
+        testo_interno: ""
+        
+      esempio_sezione_programma:
+        titolo: "PROGRAMMA DELL'INSEGNAMENTO"
+        collassabile: true
+        
+      esempio_sezione_modalita_esame:
+        titolo: "MODALITA' D'ESAME"
+        collassabile: true
+        
+      esempio_sezione_libro_testo:
+        titolo: "LIBRO DI TESTO"
+        attivita:
+          - tipo: "Testo"
+            
+      esempio_sezione_calendario:
+        titolo: "CALENDARIO DEL TURNO AL"
+        sottosezioni:
+          - "Date lezioni
+          - "Argomenti per data"
+          - "Note organizzative"
+
+    # -------------------------------------------------------------------------
+    # TIPOLOGIE ATTIVITÀ/RISORSE
+    # -------------------------------------------------------------------------
+    tipologie_attivita:
+      descrizione: "Tutti i tipi di attività e risorse disponibili nei corsi"
+      
+      forum:
+        icona: "💬"
+        tipo: "Forum"
+        url_pattern: "https://elearning.unimib.it/mod/forum/view.php?id=<MODULE_ID>"
+        descrizione: "Forum di discussione per comunicazioni e domande"
+        esempi:
+          - "Avvisi (forum solo docenti)"
+          - "Forum studenti (discussione libera)"
+          - "Q&A Forum (domande e risposte)"
+        azioni_disponibili:
+          - "Aggiungi argomento discussione"
+          - "Rispondi a discussione"
+          - "Iscrizione forum (notifiche email)"
+          - "Cerca nel forum"
+          - "Visualizza discussioni per data/autore"
+          
+      file_documento:
+        icona: "📄"
+        tipo: "File/Documento"
+        url_pattern: "https://elearning.unimib.it/mod/resource/view.php?id=<MODULE_ID>"
+        formati_supportati:
+          - "PDF"
+          - "Word (doc, docx)"
+          - "PowerPoint (ppt, pptx)"
+          - "Testo (txt)"
+          - "Immagini (jpg, png, gif)"
+        descrizione: "File scaricabile (slide, dispense, appunti)"
+        azioni:
+          - "Visualizza online (se supportato)"
+          - "Download file"
+          - "ReadSpeaker (lettura vocale)"
+          
+      link_esterno:
+        icona: "🔗"
+        tipo: "Link URL esterno"
+        url_pattern: "https://elearning.unimib.it/mod/url/view.php?id=<MODULE_ID>"
+        descrizione: "Collegamento a risorse web esterne"
+        esempi:
+          - "Esempi di progetti e documentazioni"
+          - "Repository GitHub"
+          - "Siti web di riferimento"
+        azioni:
+          - "Apri in nuova finestra"
+          - "Apri in iframe"
+          
+      pagina_html:
+        icona: "📝"
+        tipo: "Pagina HTML"
+        url_pattern: "https://elearning.unimib.it/mod/page/view.php?id=<MODULE_ID>"
+        descrizione: "Pagina web interna con contenuto formattato HTML"
+        contenuto_tipico:
+          - "Spiegazioni testuali"
+          - "Liste e tabelle"
+          - "Immagini embedded"
+          - "Video embedded"
+          
+      video_lezione:
+        icona: "🎥"
+        tipo: "Video (Kaltura)"
+        url_pattern: "https://elearning.unimib.it/mod/kalvidres/view.php?id=<MODULE_ID>"
+        descrizione: "Video lezione registrata su piattaforma Kaltura"
+        esempi:
+          - "Lezione - Introduzione al corso (1 Ottobre 2025)"
+          - "Lezione - Introduzione allo sviluppo di app mobili (2 Ottobre 2025)"
+          - "Lezione - La complessità dello sviluppo e del mantenimento di un'app (3 Ottobre 2025)"
+        azioni:
+          - "Play/Pause video"
+          - "Controlli velocità riproduzione"
+          - "Sottotitoli (se disponibili)"
+          - "Download video (se abilitato)"
+          - "Timestamp navigazione"
+          
+      quiz:
+        icona: "❓"
+        tipo: "Quiz"
+        url_pattern: "https://elearning.unimib.it/mod/quiz/view.php?id=<MODULE_ID>"
+        descrizione: "Test con domande a scelta multipla, vero/falso, aperte"
+        esempi:
+          - "Mobile App Development: Challenges, Solutions, and Business Models"
+          - "Development of Android Applications"
+        elementi:
+          - tempo_limite: "Durata massima tentativo (es: 60 minuti)"
+          - tentativi_consentiti: "Numero tentativi permessi"
+          - valutazione: "Punteggio e peso su voto finale"
+          - apertura_chiusura: "Finestre temporali disponibilità"
+        azioni:
+          - "Avvia tentativo"
+          - "Continua tentativo precedente"
+          - "Visualizza tentativi precedenti"
+          - "Visualizza feedback e risposte corrette"
+          
+      compito_consegna:
+        icona: "📋"
+        tipo: "Compito/Assignment"
+        url_pattern: "https://elearning.unimib.it/mod/assign/view.php?id=<MODULE_ID>"
+        descrizione: "Consegna elaborati, progetti, relazioni"
+        elementi:
+          - data_consegna: "Scadenza consegna"
+          - data_limite: "Ultima data consegna possibile"
+          - tipo_consegna:
+              - "Caricamento file"
+              - "Testo online"
+              - "Entrambi"
+          - limite_file: "Dimensione massima file"
+          - formato_file: "Formati accettati"
+        azioni:
+          - "Aggiungi consegna"
+          - "Modifica consegna"
+          - "Visualizza feedback docente"
+          - "Visualizza voto"
+          - "Download file consegnato"
+          
+      cartella:
+        icona: "📁"
+        tipo: "Cartella"
+        url_pattern: "https://elearning.unimib.it/mod/folder/view.php?id=<MODULE_ID>"
+        descrizione: "Raccolta organizzata di più file"
+        azioni:
+          - "Visualizza contenuto cartella"
+          - "Download tutti i file (zip)"
+          - "Download singoli file"
+          
+      libro:
+        icona: "📚"
+        tipo: "Libro/Book"
+        url_pattern: "https://elearning.unimib.it/mod/book/view.php?id=<MODULE_ID>"
+        descrizione: "Contenuto organizzato in capitoli navigabili"
+        struttura:
+          - "Indice capitoli nella sidebar"
+          - "Navigazione capitolo precedente/successivo"
+          - "Stampa intero libro o capitolo singolo"
+          
+      scorm:
+        icona: "🎓"
+        tipo: "Pacchetto SCORM"
+        url_pattern: "https://elearning.unimib.it/mod/scorm/view.php?id=<MODULE_ID>"
+        descrizione: "Lezione interattiva multimediale standard SCORM"
+        caratteristiche:
+          - "Tracciamento progressi"
+          - "Navigazione interna al pacchetto"
+          - "Salvataggio stato avanzamento"
+
+    # -------------------------------------------------------------------------
+    # SYLLABUS / INFORMAZIONI CORSO
+    # -------------------------------------------------------------------------
+    syllabus:
+      url_pattern: "https://elearning.unimib.it/course/info.php?id=<COURSE_ID>"
+      descrizione: "Pagina dedicata con tutte le informazioni amministrative e didattiche del corso"
+      accesso: "Bottone verde 'ℹ️ SYLLABUS' in alto nella pagina corso"
+      
+      layout:
+        sidebar_destra:
+          - "Bottone 'Entra' (accesso rapido al corso)"
+          - "Scheda del corso"
+          - "Staff docenti"
+          - "Opinione studenti"
+          - "Bibliografia"
+          - "Metodi di iscrizione"
+          
+        contenuto_principale:
+          collapsible_sections: true
+          descrizione: "Sezioni espandibili con tutte le informazioni"
+      
+      sezioni_standard:
+        obiettivi:
+          titolo: "Obiettivi"
+          descrizione: "Obiettivi formativi del corso, competenze da acquisire"
+          contenuto_tipo: "Testo descrittivo delle finalità didattiche"
+          
+        contenuti_sintetici:
+          titolo: "Contenuti sintetici"
+          descrizione: "Sintesi degli argomenti trattati"
+          
+        programma_esteso:
+          titolo: "Programma esteso"
+          descrizione: "Elenco dettagliato di tutti gli argomenti del corso"
+          formato: "Lista puntata o numerata con topic e subtopic"
+          
+        prerequisiti:
+          titolo: "Prerequisiti"
+          descrizione: "Conoscenze necessarie prima di frequentare il corso"
+
+            
+        modalita_didattica:
+          titolo: "Modalità didattica"
+          contenuto:
+            - "Lezioni frontali"
+            - "Esercitazioni in laboratorio"
+            - "Progetti di gruppo"
+            - "Seminari"
+          ore_totali: "Suddivisione ore teoria/pratica"
+          
+        materiale_didattico:
+          titolo: "Materiale didattico"
+          contenuto:
+            - "Slide delle lezioni"
+            - "Dispense"
+            - "Esercizi svolti"
+            - "Codice esempi"
+            
+        periodo_erogazione:
+          titolo: "Periodo di erogazione dell'insegnamento"
+          contenuto:
+            - "Primo semestre / Secondo semestre"
+            - "Date inizio e fine corso"
+            
+        modalita_verifica_profitto:
+          titolo: "Modalità di verifica del profitto e valutazione"
+          descrizione: "Come viene valutato lo studente"
+          elementi:
+            - tipo_esame:
+                - "Prova scritta"
+                - "Prova orale"
+                - "Progetto"
+                - "Quiz online"
+            - struttura_esame: "Descrizione dettagliata prove"
+            - criteri_valutazione: "Come viene assegnato il voto"
+            - voto_minimo: "Soglia superamento esame"
+            
+        orario_ricevimento:
+          titolo: "Orario di ricevimento"
+          contenuto:
+            - giorno: "Giorno della settimana"
+            - orario: "Fascia oraria"
+            - luogo: "Ufficio docente o modalità (online/presenza)"
+            - note: "Su appuntamento via email"
+            
+        scheda_corso_sidebar:
+          elementi:
+            settore_disciplinare:
+              label: "Settore disciplinare"
+              esempio: "INF/01"
+              
+            cfu:
+              label: "CFU"
+              esempio: "8"
+              descrizione: "Crediti Formativi Universitari"
+              
+            periodo:
+              label: "Periodo"
+              esempio: "Primo Semestre"
+              
+            tipo_attivita:
+              label: "Tipo di attività"
+              esempio: "Obbligatorio a scelta"
+              
+            ore:
+              label: "Ore"
+              esempio: "0"
+              nota: "Ore totali del corso"
+              
+            tipologia_cds:
+              label: "Tipologia CdS"
+              esempio: "Laurea Triennale"
+              
+            lingua:
+              label: "Lingua"
+              esempio: "Italiano"
+              
+        staff_docenti:
+          descrizione: "Lista completa docenti del corso"
+          elementi_per_docente:
+            - avatar: "Foto profilo"
+            - nome_cognome: "Nome completo docente"
+            - sigla: "Iniziali (es: FB)"
+            - ruolo: "Ruolo nel corso"
+
+              
+        opinione_studenti:
+          descrizione: "Link a valutazione del corso dell'anno precedente"
+          url: "Vedi valutazione del precedente anno accademico"
+          
+        bibliografia:
+          descrizione: "Testi consigliati e obbligatori"
+          link: "Trova i libri per questo corso nella Biblioteca di Ateneo"
+          url_biblioteca: "Link alla biblioteca"
+          
+        metodi_iscrizione:
+          descrizione: "Modalità con cui gli studenti possono iscriversi al corso"
+          opzioni:
+            - "Iscrizione manuale"
+            - "Iscrizione spontanea (Studente)"
+            - "Iscrizione automatica da sistema"
+
+
+  # ===========================================================================
+  # VOTI / VALUTAZIONI
+  # ===========================================================================
+  voti:
+    url_panoramica: "https://elearning.unimib.it/grade/report/overview/index.php"
+    descrizione: "Panoramica completa di tutti i voti ricevuti in tutti i corsi"
+    
+    visualizzazioni:
+      panoramica:
+        descrizione: "Vista aggregata voti di tutti i corsi"
+        elementi:
+          - nome_corso: "Nome del corso"
+          - voto_finale: "Voto complessivo del corso"
+          - link_dettaglio: "Link a report dettagliato corso"
+          
+      report_corso:
+        url: "https://elearning.unimib.it/grade/report/user/index.php?id=<COURSE_ID>"
+        descrizione: "Report dettagliato voti singolo corso"
+
+            
+
+
+  # ===========================================================================
+  # PROFILO UTENTE
+  # ===========================================================================
+  profilo:
+    url: "https://elearning.unimib.it/user/profile.php"
+    descrizione: "Pagina profilo personale con informazioni e impostazioni"
+    
+    sezioni:
+      informazioni_generali:
+        campi:
+          - nome: "Nome"
+          - cognome: "Cognome"
+          - email: "Indirizzo email principale"
+          - timezone: "Fuso orario"
+          
+      immagine_profilo:
+        descrizione: "Avatar personale"
+        azioni:
+          - "Carica nuova immagine"
+          - "Elimina immagine corrente"
+          
+      descrizione:
+        descrizione: "Bio personale (opzionale)"
+        
+        
+      corsi_iscritto:
+        descrizione: "Lista corsi in cui sei iscritto"
+
+        
+      report_attivita:
+        descrizione: "Statistiche attività sulla piattaforma"
+        metriche:
+          - "sessioni browser"
+
+  # ===========================================================================
+  # PREFERENZE
+  # ===========================================================================
+  preferenze:
+    url: "https://elearning.unimib.it/user/preferences.php"
+    descrizione: "Configurazione preferenze personali piattaforma"
+    
+    categorie:
+      preferenze_utente:
+        - nome: "Modifica profilo"
+          url: "user/edit.php"
+          
+        - nome: "Cambia password"
+          url: "login/change_password.php"
+          
+        - nome: "Lingua preferita"
+          opzioni:
+            - "Italiano"
+            - "English"
+            
+        - nome: "Notifiche"
+          url: "message/notificationpreferences.php"
+          descrizione: "Configura notifiche email e browser"
+          
+      preferenze_messaggi:
+        - "Messaggi bloccati"
+        - "Preferenze messaggistica"
+        - "Processore notifiche"
+        
+      preferenze_forum:
+        - "Tracciamento discussioni forum"
+        - "Modalità editing forum"
+        - "Digest email forum"
+        
+      preferenze_editor:
+        - "Editor di testo preferito"
+        - "Impostazioni editor HTML"
+        
+      preferenze_badge:
+        - "Preferenze badge"
+        - "Gestione privacy badge"
+        
+      preferenze_calendario:
+        - "Preferenze calendario"
+        - "Export calendario"
+
+  # ===========================================================================
+  # NOTIFICHE
+  # ===========================================================================
+  notifiche:
+    descrizione: "Sistema notifiche piattaforma"
+    accesso: "Icona campanella in header"
+    
+    tipi_notifiche:
+      - tipo: "Messaggio privato"
+        icona: "💬"
+        azione: "Apre conversazione"
+        
+      - tipo: "Nuovo post forum"
+        icona: "📝"
+        azione: "Apre discussione forum"
+        
+      - tipo: "Scadenza compito"
+        icona: "⏰"
+        azione: "Apre pagina compito"
+        
+      - tipo: "Voto pubblicato"
+        icona: "📊"
+        azione: "Apre registro voti"
+        
+      - tipo: "Feedback docente"
+        icona: "💭"
+        azione: "Apre feedback"
+        
+    azioni_notifiche:
+      - action: "mark-all-read"
+        descrizione: "Marca tutte come lette"
+        
+      - action: "close-notification-popover"
+        descrizione: "Chiudi popup notifiche"
+        
+      - "Apri singola notifica"
+      - "Elimina notifica"
+
+  # ===========================================================================
+  # ACCESSIBILITÀ
+  # ===========================================================================
+  accessibilita:
+    readspeaker:
+      descrizione: "Servizio di lettura vocale integrato per accessibilità"
+      url_servizio: "https://cdn-eu.readspeaker.com/script/12247/webReaderForEducation/"
+      funzionalita:
+        - "Lettura ad alta voce di testi"
+        - "Evidenziazione parola corrente"
+        - "Controllo velocità lettura"
+        - "Cambio voce e lingua"
+        - "Download file audio"
+        - "Lettura automatica pagina"
+      attivazione: "Icona ReadSpeaker su elementi testuali"
+      
+    contrasto_alto:
+      descrizione: "Modalità alto contrasto per ipovedenti"
+      
+    navigazione_tastiera:
+      descrizione: "Supporto completo navigazione da tastiera"
+      shortcuts:
+        - "Tab: navigazione elementi"
+        - "Enter: attivazione link/bottone"
+        - "Esc: chiusura modali"
+
+  # ===========================================================================
+  # TECNOLOGIE E INTEGRAZIONI
+  # ===========================================================================
+  tecnologie:
+    piattaforma_base:
+      nome: "Moodle"
+
+    servizi_esterni:
+      - nome: "Kaltura"
+        descrizione: "Piattaforma video hosting e streaming"
+        
+      - nome: "ReadSpeaker"
+        descrizione: "Text-to-speech accessibilità"
+        
+      - nome: "MathJax"
+        descrizione: "Rendering formule matematiche"
+        
+    integrazione_ateneo:
+      - nome: "Shibboleth"
+        descrizione: "Single Sign-On autenticazione universitaria"
+
+
+# #############################################################################
+# BICOCCAPP
+# BICOCCAPP
+# BICOCCAPP
+# BICOCCAPP
+# BICOCCAPP
+# BICOCCAPP
+# #############################################################################
 
 BICOCCAPP:
   calendar :
@@ -116,27 +886,31 @@ BICOCCAPP:
     - logout
     - versione
 
+# #############################################################################
+# S3W
+# S3W
+# S3W
+# S3W
+# S3W
+# #############################################################################
+
 S3W:
   features:
     "Logout":
-      url:
-        "https://s3w.si.unimib.it/Logout.do"
+      url: "https://s3w.si.unimib.it/Logout.do"
     
     "Cambio password":
-      url:
-        "https://s3w.si.unimib.it/auth/CambioPasswordForm.do"
+      url: "https://s3w.si.unimib.it/auth/CambioPasswordForm.do"
         
     "Bacheca Messaggi": NO
-      url:
-        "https://s3w.si.unimib.it/auth/Messaggi.do"
+      url: "https://s3w.si.unimib.it/auth/Messaggi.do"
     
     "Dati Personali":
-      url:
-          "https://s3w.si.unimib.it/auth/AddressBook/ABMsgAnaPreForm.do"
-        name: "Dati Anagrafici"
-        data:
-          "Dati Personali":
-            data:
+      url: "https://s3w.si.unimib.it/auth/AddressBook/ABMsgAnaPreForm.do"
+      name: "Dati Anagrafici"
+      data:
+        "Dati Personali":
+          data:
             - "Nome"
             - "Cognome"
             - "Sesso"
@@ -146,33 +920,31 @@ S3W:
             - "Provincia di nascita"
             - "Comune/Città di nascita"
             - "Codice Fiscale"
-          "Residenza":
-            data:
-              - "Nazione"
-              - "Provincia"
-              - "Comune/Città"
-              - "CAP"
-              - "Frazione"
-              - "Indirizzo"
-              - "N° Civico"
-              - "Telefono"
-              - "Domicilio coincide con residenza"
-            actions:
-              - modificare dati residenza:
-                url:
-                  "https://s3w.si.unimib.it/auth/AddressBook/ABSubWizIndirizziResForm.do"
-          "Recapiti":
+        "Residenza":
           data:
-          - "Recapito Documenti"
-          - "Recapito Tasse"
-          - "Email"
-          - "Fax"
-          - "Cellulare"
-          - "Dichiaro di aver preso visione dell'informativa ai sensi dell'articolo 13 del D.Lgs. n. 196/2003, pubblicata sul sito di Ateneo, e presto il mio consenso al trattamento dei miei dati personali, sulla base dell'art. 6, co. 1 e dell'art. 9 co. 2 del GDPR, da parte dell'Ateneo. Informativa al link: https://www.unimib.it/informativa-studenti."
+            - "Nazione"
+            - "Provincia"
+            - "Comune/Città"
+            - "CAP"
+            - "Frazione"
+            - "Indirizzo"
+            - "N° Civico"
+            - "Telefono"
+            - "Domicilio coincide con residenza"
           actions:
-          - modificare recapiti:
-            url:
-              "https://s3w.si.unimib.it/auth/AddressBook/ABSubWizRecapitoForm.do"
+            - modificare dati residenza:
+                url: "https://s3w.si.unimib.it/auth/AddressBook/ABSubWizIndirizziResForm.do"
+        "Recapiti":
+          data:
+            - "Recapito Documenti"
+            - "Recapito Tasse"
+            - "Email"
+            - "Fax"
+            - "Cellulare"
+            - "Dichiaro di aver preso visione dell'informativa ai sensi dell'articolo 13 del D.Lgs. n. 196/2003, pubblicata sul sito di Ateneo, e presto il mio consenso al trattamento dei miei dati personali, sulla base dell'art. 6, co. 1 e dell'art. 9 co. 2 del GDPR, da parte dell'Ateneo. Informativa al link: https://www.unimib.it/informativa-studenti."
+          actions:
+            - modificare recapiti:
+                url: "https://s3w.si.unimib.it/auth/AddressBook/ABSubWizRecapitoForm.do"
     
     "Segreteria":
       subpages:
