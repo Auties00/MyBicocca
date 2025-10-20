@@ -17,7 +17,7 @@
  * 4. Intercepting http_certificate_pinning and returning CONNECTION_SECURE for all checks
  *
  * USAGE:
- * frida -U -l "bypass.js" -f it.bicoccapp.unimib
+ * frida -U -l "poc.js" -f it.bicoccapp.unimib
  *
  * NOTE:
  * Use research.js to monitor all channel traffic
