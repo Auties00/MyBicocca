@@ -3,44 +3,209 @@ package it.attendance100.mybicocca
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.outlined.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.google.accompanist.pager.ExperimentalPagerApi
+import com.google.accompanist.pager.HorizontalPager
+import com.google.accompanist.pager.rememberPagerState
+import it.attendance100.mybicocca.ui.theme.BackgroundColor
+import it.attendance100.mybicocca.ui.theme.GrayColor
 import it.attendance100.mybicocca.ui.theme.MyBicoccaTheme
+import it.attendance100.mybicocca.ui.theme.PrimaryColor
+import kotlinx.coroutines.launch
+import androidx.compose.material.icons.*
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
             MyBicoccaTheme {
-                // A surface container using the 'background' color from the theme
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    Greeting("Android")
+                    HomePage()
                 }
             }
         }
     }
 }
 
+@OptIn(ExperimentalPagerApi::class)
 @Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
+fun HomePage() {
+    val pagerState = rememberPagerState()
+    val coroutineScope = rememberCoroutineScope()
+    val currentPage = pagerState.currentPage
 
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    MyBicoccaTheme {
-        Greeting("Android")
+    Scaffold(
+        containerColor = BackgroundColor,
+        topBar = {
+            TopAppBar(currentPage)
+        },
+        bottomBar = {
+            BottomNavBar(
+                currentIndex = currentPage,
+                onPageSelected = { index ->
+                    coroutineScope.launch {
+                        pagerState.animateScrollToPage(index)
+                    }
+                }
+            )
+        }
+    ) { paddingValues ->
+        HorizontalPager(
+            count = 4,
+            state = pagerState,
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+        ) { page ->
+            PageContent(page)
+        }
     }
 }
+
+@Composable
+fun TopAppBar(currentPage: Int) {
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(60.dp),
+        color = BackgroundColor
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 13.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Avatar
+            Box(
+                modifier = Modifier
+                    .size(44.dp)
+                    .clip(CircleShape)
+                    .clickable { /* Profile navigation */ }
+                    .background(GrayColor)
+            )
+
+            // App Title
+            Text(
+                text = buildAnnotatedString {
+                    withStyle(
+                        style = SpanStyle(
+                            color = Color.White,
+                            fontWeight = FontWeight.Normal,
+                            fontSize = 20.sp
+                        )
+                    ) {
+                        append("My")
+                    }
+                    withStyle(
+                        style = SpanStyle(
+                            color = PrimaryColor,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 20.sp
+                        )
+                    ) {
+                        append("Bicocca")
+                    }
+                }
+            )
+
+            // Search Icon
+            IconButton(onClick = { /* Search action */ }) {
+                Icon(
+                    imageVector = Icons.Outlined.Search,
+                    contentDescription = "Search",
+                    tint = GrayColor,
+                    modifier = Modifier.size(28.dp)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun BottomNavBar(currentIndex: Int, onPageSelected: (Int) -> Unit) {
+    NavigationBar(
+        containerColor = BackgroundColor,
+        contentColor = PrimaryColor
+    ) {
+        val items = listOf(
+            BottomNavItem("Calendario", Icons.Outlined.CalendarMonth, Icons.Filled.CalendarMonth),
+            BottomNavItem("Elearning", Icons.Outlined.School, Icons.Filled.School),
+            BottomNavItem("Segreteria", Icons.Outlined.ContactPage, Icons.Filled.ContactPage),
+            BottomNavItem("Carriera", Icons.Outlined.Person, Icons.Filled.Person)
+        )
+
+        items.forEachIndexed { index, item ->
+            NavigationBarItem(
+                icon = {
+                    Icon(
+                        imageVector = if (currentIndex == index) item.selectedIcon else item.icon,
+                        contentDescription = item.label,
+                        tint = if (currentIndex == index) PrimaryColor else GrayColor
+                    )
+                },
+                label = {
+                    Text(
+                        text = item.label,
+                        fontSize = 12.sp,
+                        color = if (currentIndex == index) PrimaryColor else GrayColor
+                    )
+                },
+                selected = currentIndex == index,
+                onClick = { onPageSelected(index) },
+                colors = NavigationBarItemDefaults.colors(
+                    selectedIconColor = PrimaryColor,
+                    selectedTextColor = PrimaryColor,
+                    unselectedIconColor = GrayColor,
+                    unselectedTextColor = GrayColor,
+                    indicatorColor = Color.Transparent
+                )
+            )
+        }
+    }
+}
+
+@Composable
+fun PageContent(page: Int) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(BackgroundColor),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = "Page ${page + 1}",
+            color = Color.White,
+            fontSize = 24.sp
+        )
+    }
+}
+
+data class BottomNavItem(
+    val label: String,
+    val icon: ImageVector,
+    val selectedIcon: ImageVector
+)
