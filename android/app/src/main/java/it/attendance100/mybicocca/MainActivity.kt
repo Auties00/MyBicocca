@@ -17,6 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -31,7 +32,10 @@ import it.attendance100.mybicocca.ui.theme.GrayColor
 import it.attendance100.mybicocca.ui.theme.MyBicoccaTheme
 import it.attendance100.mybicocca.ui.theme.PrimaryColor
 import kotlinx.coroutines.launch
-import androidx.compose.material.icons.*
+import androidx.compose.animation.Crossfade
+import coil.compose.AsyncImagePainter
+import coil.compose.SubcomposeAsyncImage
+import coil.compose.SubcomposeAsyncImageContent
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -59,7 +63,7 @@ fun HomePage() {
     Scaffold(
         containerColor = BackgroundColor,
         topBar = {
-            TopAppBar(currentPage)
+            TopAppBar()
         },
         bottomBar = {
             BottomNavBar(
@@ -85,7 +89,7 @@ fun HomePage() {
 }
 
 @Composable
-fun TopAppBar(currentPage: Int) {
+fun TopAppBar() {
     Surface(
         modifier = Modifier
             .fillMaxWidth()
@@ -100,13 +104,53 @@ fun TopAppBar(currentPage: Int) {
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Avatar
-            Box(
+            SubcomposeAsyncImage(
+                model = "https://lh3.googleusercontent.com/a/ACg8ocLz6eMAklEzeodysm38Y18Ult6bw96hlhQ_DCheY_eEnuoLeno=s298-c-no", // Replace with actual image URL from elearning api
+                contentDescription = "Profile Avatar",
+                contentScale = ContentScale.Crop,
                 modifier = Modifier
                     .size(44.dp)
                     .clip(CircleShape)
                     .clickable { /* Profile navigation */ }
-                    .background(GrayColor)
-            )
+            ) {
+                val state = painter.state
+
+                Crossfade(targetState = state) { currentState ->
+                    when (currentState) {
+                        is AsyncImagePainter.State.Loading -> {
+                            Box(
+                                modifier = Modifier.fillMaxSize(),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(23.dp),
+                                    strokeWidth = 2.dp,
+                                    color = PrimaryColor
+                                )
+                            }
+                        }
+
+                        // Fallback icon on error
+                        is AsyncImagePainter.State.Error -> {
+                            Box(
+                                modifier = Modifier.fillMaxSize(),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Person,
+                                    contentDescription = "Error loading image",
+                                    tint = GrayColor
+                                )
+                            }
+                        }
+
+                        else -> {
+                            SubcomposeAsyncImageContent()
+                        }
+                    }
+                }
+            }
+
 
             // App Title
             Text(
