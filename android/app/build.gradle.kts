@@ -68,4 +68,5 @@ dependencies {
     debugImplementation("androidx.compose.ui:ui-test-manifest")
     implementation("com.google.accompanist:accompanist-pager:0.23.1")
     implementation("androidx.compose.material:material-icons-extended-android:1.7.8")
+    implementation("io.coil-kt:coil-compose:2.7.0")
 }
