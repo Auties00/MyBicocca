@@ -1,12 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name" translatable="false">MyBicocca</string>
+    <string name="app_name">MyBicocca</string>
     <string name="bottom_navbar_calendario">Calendario</string>
     <string name="bottom_navbar_elearning">Elearning</string>
     <string name="bottom_navbar_segreterie">Segreterie</string>
     <string name="bottom_navbar_carriera">Carriera</string>
     <string name="homescreen_profile">Profilo</string>
     <string name="error_loading_image">Errore caricando l\'immagine</string>
-    <string name="homescreen_app_prefix" translatable="false">My</string>
-    <string name="homescreen_app_suffix" translatable="false">Bicocca</string>
     <string name="search">Cerca</string>
 </resources>

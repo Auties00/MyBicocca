@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name" translatable="false">MyBicocca</string>
+    <string name="bottom_navbar_calendario">Calendar</string>
+    <string name="bottom_navbar_elearning">Elearning</string>
+    <string name="bottom_navbar_segreterie">Secretariat</string>
+    <string name="bottom_navbar_carriera">Career</string>
+    <string name="homescreen_profile">Profile</string>
+    <string name="error_loading_image">Error loading image</string>
+    <string name="search">Search</string>
+</resources>
