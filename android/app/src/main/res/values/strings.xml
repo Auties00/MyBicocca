@@ -1,12 +1,38 @@
 <resources>
-    <string name="app_name" translatable="false">MyBicocca</string>
-    <string name="bottom_navbar_calendario">Calendario</string>
-    <string name="bottom_navbar_elearning">Elearning</string>
-    <string name="bottom_navbar_segreterie">Segreterie</string>
-    <string name="bottom_navbar_carriera">Carriera</string>
-    <string name="homescreen_profile">Profilo</string>
-    <string name="error_loading_image">Errore caricando l\'immagine</string>
-    <string name="homescreen_app_prefix" translatable="false">My</string>
-    <string name="homescreen_app_suffix" translatable="false">Bicocca</string>
-    <string name="search">Cerca</string>
+  <string name="app_name" translatable="false">MyBicocca</string>
+  <string name="bottom_navbar_calendario">Calendario</string>
+  <string name="bottom_navbar_elearning">Elearning</string>
+  <string name="bottom_navbar_segreterie">Segreterie</string>
+  <string name="bottom_navbar_carriera">Carriera</string>
+  <string name="homescreen_profile">Profilo</string>
+  <string name="error_loading_image">Errore caricando l\'immagine</string>
+  <string name="homescreen_app_prefix" translatable="false">My</string>
+  <string name="homescreen_app_suffix" translatable="false">Bicocca</string>
+  <string name="search">Cerca</string>
+  <string name="settings_appearance">Tema</string>
+  <string name="settings_dark_mode">Modalità Scura</string>
+  <string name="settings_dark_mode_enabled">Il tema Scuro è attivo</string>
+  <string name="settings_language">Lingua</string>
+  <string name="settings_language_desc">Seleziona la lingua dell\'app</string>
+  <string name="settings_general">Generale</string>
+  <string name="language_italian" translatable="false">Italiano</string>
+  <string name="language_english" translatable="false">English</string>
+  <string name="language_system_default">Predefinito di Sistema</string>
+  <string name="settings_dark_mode_disabled">Il tema Chiaro è attivo</string>
+  <string name="settings">Impostazioni</string>
+  <string name="login_manager">Manager Login</string>
+  <string name="app_info">Info App</string>
+  <string name="arrow_back">Indietro</string>
+  <string name="login_manager_desc">Gestisci le credenziali del tuo account</string>
+  <string name="ok">Ok</string>
+  <string name="licenses">Licenze</string>
+  <string name="copyright" translatable="false">© 2025-2025 100% Attendance</string>
+  <string name="app_logo">Logo App</string>
+  <string name="fingerprint_login">Login con Impronta</string>
+  <string name="fingerprint_login_desc">Accedi con la tua impronta digitale invece di inserire le credenziali ogni volta</string>
+  <string name="security">Sicurezza</string>
+  <string name="logins_list">Lista Login</string>
+  <string name="settings_material_you" translatable="false">Material You</string>
+  <string name="settings_material_you_enabled">Il design Material You è attivo</string>
+  <string name="settings_material_you_disabled">Usa il design Material You</string>
 </resources>

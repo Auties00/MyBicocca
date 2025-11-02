@@ -1,10 +1,31 @@
 <resources>
-    <string name="app_name" translatable="false">MyBicocca</string>
-    <string name="bottom_navbar_calendario">Calendar</string>
-    <string name="bottom_navbar_elearning">Elearning</string>
-    <string name="bottom_navbar_segreterie">Secretariat</string>
-    <string name="bottom_navbar_carriera">Career</string>
-    <string name="homescreen_profile">Profile</string>
-    <string name="error_loading_image">Error loading image</string>
-    <string name="search">Search</string>
+  <string name="bottom_navbar_calendario">Calendar</string>
+  <string name="bottom_navbar_elearning">Elearning</string>
+  <string name="bottom_navbar_segreterie">Secretariat</string>
+  <string name="bottom_navbar_carriera">Career</string>
+  <string name="homescreen_profile">Profile</string>
+  <string name="error_loading_image">Error loading image</string>
+  <string name="search">Search</string>
+  <string name="settings_appearance">Theme</string>
+  <string name="settings_dark_mode">Dark Mode</string>
+  <string name="settings_dark_mode_enabled">Dark Mode is active</string>
+  <string name="settings_language_desc">Select the app\'s Language</string>
+  <string name="settings_general">General</string>
+  <string name="settings_dark_mode_disabled">Light Mode is active</string>
+  <string name="language_system_default">System Default</string>
+  <string name="settings_language">Language</string>
+  <string name="settings">Settings</string>
+  <string name="login_manager">Login Manager</string>
+  <string name="app_info">App Info</string>
+  <string name="arrow_back">Back</string>
+  <string name="login_manager_desc">Manage your account credentials</string>
+  <string name="ok">Ok</string>
+  <string name="licenses">Licenses</string>
+  <string name="app_logo">App Logo</string>
+  <string name="fingerprint_login">Fingerprint Login</string>
+  <string name="fingerprint_login_desc">Log in with your fingerprint instead of entering your credentials each time</string>
+  <string name="security">Security</string>
+  <string name="logins_list">Logins List</string>
+  <string name="settings_material_you_enabled">Material You design is active</string>
+  <string name="settings_material_you_disabled">Use Material You design</string>
 </resources>

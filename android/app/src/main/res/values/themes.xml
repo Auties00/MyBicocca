@@ -2,4 +2,11 @@
 <resources>
 
     <style name="Theme.MyBicocca" parent="android:Theme.Material.Light.NoActionBar" />
+
+    <!-- AppCompat theme for OSS Licenses activity -->
+    <style name="Theme.MyBicocca.AppCompat" parent="Theme.AppCompat.DayNight.DarkActionBar">
+        <item name="colorPrimary">@color/primary</item>
+        <item name="colorPrimaryDark">@color/primary</item>
+        <item name="colorAccent">@color/primary</item>
+    </style>
 </resources>
