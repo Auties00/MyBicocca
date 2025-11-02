@@ -26,38 +26,27 @@ private val MyBicoccaDarkColorScheme = darkColorScheme(
 )
 
 private val MyBicoccaLightColorScheme = lightColorScheme(
-    primary = PrimaryColor,
-    background = BackgroundColor,
-    surface = BackgroundColor,
+    primary = PrimaryColorLight,
+    background = BackgroundColorLight,
+    surface = SurfaceColorLight,
     onPrimary = Color.White,
-    onBackground = Color.White,
-    onSurface = Color.White
-
-    /* Other default colors to override
-    background = Color(0xFFFFFBFE),
-    surface = Color(0xFFFFFBFE),
-    onPrimary = Color.White,
-    onSecondary = Color.White,
-    onTertiary = Color.White,
-    onBackground = Color(0xFF1C1B1F),
-    onSurface = Color(0xFF1C1B1F),
-    */
+    onBackground = TextColorLight,
+    onSurface = TextColorLight
 )
 
 @Composable
 fun MyBicoccaTheme(
     darkTheme: Boolean = true,
-    dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {
-    val colorScheme = MyBicoccaDarkColorScheme
+    val colorScheme = if (darkTheme) MyBicoccaDarkColorScheme else MyBicoccaLightColorScheme
 
     val view = LocalView.current
     if (!view.isInEditMode) {
         SideEffect {
             val window = (view.context as Activity).window
-            window.statusBarColor = BackgroundColor.toArgb()
-            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = false
+            window.statusBarColor = if (darkTheme) BackgroundColor.toArgb() else BackgroundColorLight.toArgb()
+            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !darkTheme
         }
     }
 
