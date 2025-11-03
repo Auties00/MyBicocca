@@ -1,7 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <style name="Theme.MyBicocca" parent="android:Theme.Material.Light.NoActionBar" />
+    <style name="Theme.MyBicocca" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/launcher_background</item>
+        <item name="android:statusBarColor">@color/launcher_background</item>
+        <item name="android:windowLightStatusBar">false</item>
+    </style>
 
     <!-- AppCompat theme for OSS Licenses activity -->
     <style name="Theme.MyBicocca.AppCompat" parent="Theme.AppCompat.DayNight.DarkActionBar">

@@ -7,6 +7,11 @@
   <string name="error_loading_image">Error loading image</string>
   <string name="search">Search</string>
   <string name="settings_appearance">Theme</string>
+  <string name="settings_theme">Theme</string>
+  <string name="settings_theme_desc">System Default</string>
+  <string name="theme_system_default">System Default</string>
+  <string name="theme_light">Light</string>
+  <string name="theme_dark">Dark</string>
   <string name="settings_dark_mode">Dark Mode</string>
   <string name="settings_dark_mode_enabled">Dark Mode is active</string>
   <string name="settings_language_desc">Select the app\'s Language</string>

@@ -36,8 +36,8 @@ fun SettingsScreen(
 ) {
   val context = LocalContext.current
   val preferencesManager = rememberPreferencesManager()
-  var isDarkMode by remember { mutableStateOf(preferencesManager.isDarkMode) }
-  var isMaterialYou by remember { mutableStateOf(preferencesManager.isMaterialYou) }
+  var selectedThemeMode by remember { mutableStateOf(preferencesManager.themeMode) }
+  var showThemeDialog by remember { mutableStateOf(false) }
 
   // Get supported locales from LocaleManager
   val supportedLocales = remember {
@@ -137,15 +137,11 @@ fun SettingsScreen(
         modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp)
       )
 
-      // Dark Mode Toggle
+      // Theme Selection
       Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable {
-              isDarkMode = !isDarkMode
-              preferencesManager.isDarkMode = isDarkMode
-              onThemeChange(isDarkMode)
-            },
+            .clickable { showThemeDialog = true },
         color = MaterialTheme.colorScheme.background
       ) {
         Row(
@@ -161,7 +157,11 @@ fun SettingsScreen(
           ) {
             with(sharedTransitionScope) {
               Icon(
-                imageVector = if (isDarkMode) Icons.Default.DarkMode else Icons.Default.LightMode,
+                imageVector = when (selectedThemeMode) {
+                  PreferencesManager.THEME_DARK -> Icons.Default.DarkMode
+                  PreferencesManager.THEME_LIGHT -> Icons.Default.LightMode
+                  else -> Icons.Default.Brightness4
+                },
                 contentDescription = null,
                 tint = primaryColor,
                 modifier = Modifier
@@ -177,29 +177,26 @@ fun SettingsScreen(
             }
             Column {
               Text(
-                text = stringResource(R.string.settings_dark_mode),
+                text = stringResource(R.string.settings_theme),
                 color = textColor,
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Medium
               )
               Text(
-                text = stringResource(if (isDarkMode) R.string.settings_dark_mode_enabled else R.string.settings_dark_mode_disabled),
+                text = when (selectedThemeMode) {
+                  PreferencesManager.THEME_LIGHT -> stringResource(R.string.theme_light)
+                  PreferencesManager.THEME_DARK -> stringResource(R.string.theme_dark)
+                  else -> stringResource(R.string.theme_system_default)
+                },
                 color = grayColor,
                 fontSize = 13.sp
               )
             }
           }
-          Switch(
-            checked = isDarkMode,
-            onCheckedChange = {
-              isDarkMode = !isDarkMode
-              preferencesManager.isDarkMode = isDarkMode
-              onThemeChange(isDarkMode)
-            },
-            colors = SwitchDefaults.colors(
-              checkedThumbColor = primaryColor,
-              checkedTrackColor = primaryColor.copy(alpha = 0.5f)
-            )
+          Icon(
+            imageVector = Icons.Default.ChevronRight,
+            contentDescription = null,
+            tint = grayColor
           )
         }
       }
@@ -373,6 +370,64 @@ fun SettingsScreen(
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(text = languageName)
+              }
+            }
+          }
+        },
+        confirmButton = { },
+      )
+    }
+
+    // Theme Selection Dialog
+    if (showThemeDialog) {
+      val themeOptions = listOf(
+        PreferencesManager.THEME_SYSTEM_DEFAULT,
+        PreferencesManager.THEME_LIGHT,
+        PreferencesManager.THEME_DARK
+      )
+
+      AlertDialog(
+        onDismissRequest = { showThemeDialog = false },
+        title = {
+          Text(text = stringResource(R.string.settings_theme))
+        },
+        text = {
+          Column {
+            themeOptions.forEach { themeMode ->
+              val themeName = when (themeMode) {
+                PreferencesManager.THEME_SYSTEM_DEFAULT -> stringResource(R.string.theme_system_default)
+                PreferencesManager.THEME_LIGHT -> stringResource(R.string.theme_light)
+                PreferencesManager.THEME_DARK -> stringResource(R.string.theme_dark)
+                else -> themeMode
+              }
+
+              Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable {
+                      selectedThemeMode = themeMode
+                      preferencesManager.themeMode = themeMode
+                      preferencesManager.applyTheme()
+
+                      onThemeChange(preferencesManager.isDarkMode)
+                    },
+                verticalAlignment = Alignment.CenterVertically
+              ) {
+                RadioButton(
+                  selected = selectedThemeMode == themeMode,
+                  onClick = {
+                    selectedThemeMode = themeMode
+                    preferencesManager.themeMode = themeMode
+                    preferencesManager.applyTheme()
+                    // Note: Icon follows system theme automatically
+                    onThemeChange(preferencesManager.isDarkMode)
+                  },
+                  colors = RadioButtonDefaults.colors(
+                    selectedColor = primaryColor
+                  )
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(text = themeName)
               }
             }
           }
