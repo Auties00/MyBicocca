@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+<!--    to enable black icon, uncomment this ↓ and remove "hidden_" from "hidden_drawable-night" folder in res
+    <color name="launcher_background">#FF0d0d0d</color>-->
+    <color name="launcher_background">#FFffffff</color>
+</resources>
+

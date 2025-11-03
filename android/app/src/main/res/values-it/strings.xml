@@ -8,6 +8,11 @@
   <string name="error_loading_image">Errore caricando l\'immagine</string>
   <string name="search">Cerca</string>
   <string name="settings_appearance">Tema</string>
+  <string name="settings_theme">Tema</string>
+  <string name="settings_theme_desc">Predefinito di Sistema</string>
+  <string name="theme_system_default">Predefinito di Sistema</string>
+  <string name="theme_light">Chiaro</string>
+  <string name="theme_dark">Scuro</string>
   <string name="settings_dark_mode">Tema Scuro</string>
   <string name="settings_dark_mode_enabled">Il tema Scuro è attivo</string>
   <string name="settings_language_desc">Seleziona la lingua dell\'app</string>

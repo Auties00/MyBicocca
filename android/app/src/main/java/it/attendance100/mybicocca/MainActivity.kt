@@ -5,6 +5,7 @@ import androidx.activity.*
 import androidx.activity.compose.*
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
+import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -26,6 +27,9 @@ sealed class Screen(val route: String) {
 
 class MainActivity : ComponentActivity() {
   override fun onCreate(savedInstanceState: Bundle?) {
+    val preferencesManager = PreferencesManager(this)
+    preferencesManager.applyTheme() // Ensures theme is applied immediately
+
     super.onCreate(savedInstanceState)
 
     // Enable edge-to-edge content
@@ -42,8 +46,21 @@ class MainActivity : ComponentActivity() {
     )
 
     setContent {
-      val preferencesManager = rememberPreferencesManager()
-      var isDarkMode by remember { mutableStateOf(preferencesManager.isDarkMode) }
+      val preferencesManager = rememberPreferencesManager() // Reinstantiation with context
+      val systemInDarkTheme = isSystemInDarkTheme()
+
+      var currentThemeMode by remember { mutableStateOf(preferencesManager.themeMode) }
+
+      // Determine theme based on mode
+      val isDarkMode by remember(currentThemeMode, systemInDarkTheme) {
+        derivedStateOf {
+          when (currentThemeMode) {
+            PreferencesManager.THEME_DARK -> true
+            PreferencesManager.THEME_LIGHT -> false
+            else -> systemInDarkTheme
+          }
+        }
+      }
 
       MyBicoccaTheme(darkTheme = isDarkMode) {
         Surface(
@@ -53,9 +70,9 @@ class MainActivity : ComponentActivity() {
           color = MaterialTheme.colorScheme.background,
         ) {
           AppNavigation(
-            onThemeChange = { darkMode ->
-              isDarkMode = darkMode
-              preferencesManager.isDarkMode = darkMode
+            onThemeChange = { _ ->
+              // Update the state to trigger recomposition
+              currentThemeMode = preferencesManager.themeMode
             }
           )
         }

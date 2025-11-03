@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Launcher icon dimensions -->
+    <dimen name="launcher_icon_size">108dp</dimen>
+    
+    <!-- Launcher icon viewport dimensions (float values) -->
+    <item name="launcher_icon_viewport" type="dimen" format="float">108.0</item>
+    
+    <!-- Logo group transformation values (float values) -->
+    <item name="logo_translate_xy" type="dimen" format="float">29.0</item>
+    <item name="logo_scale" type="dimen" format="float">1.2</item>
+    
+    <!-- Logo with text transformation values -->
+    <item name="logo_text_translate_x" type="dimen" format="float">31.0</item>
+    <item name="logo_text_translate_y" type="dimen" format="float">26.0</item>
+    <item name="logo_text_scale" type="dimen" format="float">1.1</item>
+    
+    <!-- Text only transformation values -->
+    <item name="text_translate_x" type="dimen" format="float">13.0</item>
+    <item name="text_translate_y" type="dimen" format="float">47.0</item>
+    <item name="text_scale" type="dimen" format="float">2.0</item>
+</resources>
+
