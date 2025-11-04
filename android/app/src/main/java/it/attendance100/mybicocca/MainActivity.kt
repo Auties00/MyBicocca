@@ -33,18 +33,25 @@ class MainActivity : ComponentActivity() {
 
     super.onCreate(savedInstanceState)
 
+    // WindowCompat.setDecorFitsSystemWindows(window, false)
+
     // Enable edge-to-edge content
-    enableEdgeToEdge(
-      // Set the status bar to be transparent
-      statusBarStyle = SystemBarStyle.dark(
-        Color.Transparent.toArgb(),
-      ),
-      // Set the navigation bar to a solid black color
-      navigationBarStyle = SystemBarStyle.auto(
-        lightScrim = PrimaryColor.toArgb(),
-        darkScrim = PrimaryColor.toArgb(),
-      )
-    )
+    // enableEdgeToEdge(
+    //   // Set the status bar to be transparent
+    //   statusBarStyle =
+    //       if (preferencesManager.isDarkMode)
+    //         SystemBarStyle.dark(
+    //           Color.Transparent.toArgb(),
+    //         ) else SystemBarStyle.light(
+    //         Color.Transparent.toArgb(),
+    //         darkScrim = Color.Transparent.toArgb(),
+    //       ),
+    //   // Set the navigation bar to a solid black color
+    //   navigationBarStyle = SystemBarStyle.auto(
+    //     lightScrim = PrimaryColor.toArgb(),
+    //     darkScrim = PrimaryColor.toArgb(),
+    //   )
+    // )
 
     setContent {
       val preferencesManager = rememberPreferencesManager() // Reinstantiation with context

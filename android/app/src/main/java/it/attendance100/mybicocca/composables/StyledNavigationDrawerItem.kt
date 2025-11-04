@@ -1,10 +1,10 @@
 package it.attendance100.mybicocca.composables
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.*
+import androidx.compose.ui.graphics.*
 import androidx.compose.ui.graphics.vector.*
 import androidx.compose.ui.unit.*
 import it.attendance100.mybicocca.ui.theme.*
@@ -41,14 +41,15 @@ fun StyledNavigationDrawerItem(
     modifier = modifier
         .padding(horizontal = 8.dp)
         .padding(bottom = 4.dp),
-    shape = RoundedCornerShape(12.dp),
     colors = NavigationDrawerItemDefaults.colors(
-      unselectedContainerColor = grayColor.copy(alpha = 0.05f),
+      unselectedContainerColor = Color.Transparent,
       selectedContainerColor = PrimaryColor.copy(alpha = 0.4f),
       unselectedIconColor = grayColor,
       unselectedTextColor = textColor,
       selectedIconColor = PrimaryColor,
-      selectedTextColor = PrimaryColor
+      selectedBadgeColor = PrimaryColor,
+      unselectedBadgeColor = textColor,
+      selectedTextColor = PrimaryColor,
     )
   )
 }
