@@ -44,6 +44,7 @@ class PreferencesManager(private val context: Context) {
       prefs.edit { putString(KEY_LOCALE, value) }
     }
 
+
   /**
    * Applies the stored theme preference to the entire app
    */

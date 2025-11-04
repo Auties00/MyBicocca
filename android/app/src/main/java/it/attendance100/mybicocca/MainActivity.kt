@@ -15,6 +15,7 @@ import androidx.navigation.compose.*
 import it.attendance100.mybicocca.screens.*
 import it.attendance100.mybicocca.ui.theme.*
 import it.attendance100.mybicocca.utils.*
+import kotlinx.coroutines.*
 
 // Navigation routes
 sealed class Screen(val route: String) {
@@ -81,11 +82,13 @@ class MainActivity : ComponentActivity() {
   }
 }
 
-@OptIn(ExperimentalSharedTransitionApi::class)
+@OptIn(ExperimentalSharedTransitionApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun AppNavigation(onThemeChange: (Boolean) -> Unit) {
   val navController = rememberNavController()
   val predictiveBackEasingFactor = 10.0f
+  val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
+  val scope = rememberCoroutineScope()
 
   SharedTransitionLayout {
     NavHost(
@@ -95,7 +98,7 @@ fun AppNavigation(onThemeChange: (Boolean) -> Unit) {
         scaleOut(
           targetScale = 0.9f,
           transformOrigin = TransformOrigin(pivotFractionX = 1.5f, pivotFractionY = 0.5f),
-          animationSpec = tween(300, easing = { fraction -> hybridEaseLog(fraction, 2.5f, 2.5f, 0.01f) * predictiveBackEasingFactor })
+          animationSpec = tween(300, easing = /*CubicBezierEasing(0f,0f,0f,1f))*/ { fraction -> hybridEaseLog(fraction, 2.5f, 2.5f, 0.01f) * predictiveBackEasingFactor })
         ) + fadeOut(animationSpec = tween(300, easing = { fraction -> fraction * 2 })) + slideOutHorizontally(
           targetOffsetX = { hybridEaseLog(it / 3f, 30f, 30f, 20f).toInt() },
           animationSpec = tween(300)
@@ -109,7 +112,16 @@ fun AppNavigation(onThemeChange: (Boolean) -> Unit) {
       },
     ) {
       composable(Screen.Home.route) { _ ->
-        HomePage(navController, this@SharedTransitionLayout, this)
+        BackHandler(enabled = drawerState.isOpen) {
+          if (drawerState.isOpen) {
+            // If the drawer is open, launch a coroutine to close it
+            scope.launch {
+              drawerState.close()
+            }
+          }
+        }
+
+        HomePage(navController, this@SharedTransitionLayout, this, drawerState)
       }
       composable(Screen.LoginManager.route) { _ ->
         LoginManagerScreen(navController, this@SharedTransitionLayout, this)

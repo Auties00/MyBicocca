@@ -329,6 +329,8 @@ fun SettingsScreen(
           )
         }
       }
+
+      Divider(color = grayColor.copy(alpha = 0.2f), modifier = Modifier.padding(horizontal = 16.dp))
     }
 
     // Language Selection Dialog
