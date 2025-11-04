@@ -1,39 +1,26 @@
 package it.attendance100.mybicocca.composables
 
-import androidx.compose.material3.*
+import androidx.compose.foundation.*
+import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.*
 import androidx.compose.ui.res.*
-import androidx.compose.ui.text.*
-import androidx.compose.ui.text.font.*
-import androidx.compose.ui.unit.*
 import it.attendance100.mybicocca.R
+import it.attendance100.mybicocca.utils.*
 
 
 @Composable
 fun AppTitle() {
-  val primaryColor = MaterialTheme.colorScheme.primary
-  val textColor = MaterialTheme.colorScheme.onBackground
+  val preferencesManager = rememberPreferencesManager()
+  val isDarkMode = preferencesManager.isDarkMode
 
-  Text(
-    text = buildAnnotatedString {
-      withStyle(
-        style = SpanStyle(
-          color = textColor,
-          fontWeight = FontWeight.Normal,
-          fontSize = 20.sp
-        )
-      ) {
-        append(stringResource(R.string.homescreen_app_prefix))
-      }
-      withStyle(
-        style = SpanStyle(
-          color = primaryColor,
-          fontWeight = FontWeight.Bold,
-          fontSize = 20.sp
-        )
-      ) {
-        append(stringResource(R.string.homescreen_app_suffix))
-      }
-    }
-  )
+  Column(
+    verticalArrangement = Arrangement.Center,
+  ) {
+    Image(
+      painter = painterResource(if (isDarkMode) R.drawable.dark_text else R.drawable.text),
+      contentDescription = stringResource(R.string.app_logo),
+      modifier = Modifier.size(dimensionResource(id = R.dimen.launcher_icon_size))
+    )
+  }
 }

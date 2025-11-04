@@ -26,6 +26,7 @@ import it.attendance100.mybicocca.utils.*
 
 val fallbackLangList = listOf("en", "it")
 
+@Suppress("AssignedValueIsNeverRead")
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun SettingsScreen(
@@ -432,7 +433,11 @@ fun SettingsScreen(
             }
           }
         },
-        confirmButton = { },
+        confirmButton = {
+          Button(onClick = { showThemeDialog = false }) {
+            Text(text = stringResource(R.string.ok))
+          }
+        },
       )
     }
   }
