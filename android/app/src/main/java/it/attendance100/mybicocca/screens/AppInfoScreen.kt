@@ -9,6 +9,7 @@ import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.*
+import androidx.compose.ui.graphics.*
 import androidx.compose.ui.res.*
 import androidx.compose.ui.text.font.*
 import androidx.compose.ui.unit.*
@@ -17,6 +18,7 @@ import it.attendance100.mybicocca.*
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.composables.*
 import it.attendance100.mybicocca.ui.theme.*
+import it.attendance100.mybicocca.utils.*
 
 private val versionText: String by lazy {
   buildString {
@@ -47,6 +49,7 @@ fun AppInfoScreen(
 ) {
   val textColor = MaterialTheme.colorScheme.onBackground
   val grayColor = if (MaterialTheme.colorScheme.background == BackgroundColor) GrayColor else GrayColorLight
+  val isDarkMode = rememberPreferencesManager().isDarkMode
 
   Scaffold(
     containerColor = MaterialTheme.colorScheme.background,
@@ -106,9 +109,9 @@ fun AppInfoScreen(
         // App Logo (monochrome launcher)
         with(sharedTransitionScope) {
           Icon(
-            painter = painterResource(id = R.drawable.logo),
+            painter = painterResource(if (isDarkMode) R.drawable.logo_text_dark else R.drawable.logo_text),
             contentDescription = stringResource(R.string.app_logo),
-            tint = androidx.compose.ui.graphics.Color.White,
+            tint = Color.Unspecified,
             modifier = Modifier
                 .size(190.dp)
                 .sharedElement(

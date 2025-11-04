@@ -1,5 +1,6 @@
 package it.attendance100.mybicocca.screens
 
+import androidx.activity.*
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.*
@@ -12,6 +13,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.*
 import androidx.compose.ui.draw.*
+import androidx.compose.ui.graphics.*
 import androidx.compose.ui.graphics.vector.*
 import androidx.compose.ui.layout.*
 import androidx.compose.ui.platform.*
@@ -24,6 +26,7 @@ import it.attendance100.mybicocca.*
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.composables.*
 import it.attendance100.mybicocca.ui.theme.*
+import it.attendance100.mybicocca.utils.*
 import kotlinx.coroutines.*
 
 @OptIn(ExperimentalPagerApi::class, ExperimentalSharedTransitionApi::class)
@@ -40,6 +43,14 @@ fun HomePage(
   val grayColor = if (MaterialTheme.colorScheme.background == BackgroundColor) GrayColor else GrayColorLight
   val primaryColor = MaterialTheme.colorScheme.primary
 
+  // Handle status bar color changes based on drawer state
+  val context = LocalContext.current
+  val activity = context as? ComponentActivity
+  val preferencesManager = rememberPreferencesManager()
+
+  // Determine if we're in dark mode based on preferences
+  val isDarkMode = preferencesManager.isDarkMode
+
   val density = LocalDensity.current
   val drawerWidthDp = 280.dp
   val drawerWidthPx = with(density) { drawerWidthDp.toPx() }
@@ -54,11 +65,37 @@ fun HomePage(
   val avatarSize = 44.dp
   val startX = 13.dp // TopAppBar padding
   val startY = (60.dp - avatarSize) / 2 // Centered in 60.dp TopAppBar
-  val endX = drawerWidthDp - 12.dp - avatarSize // Drawer padding and size
-  val endY = 12.dp
+  val endX = drawerWidthDp - 14.5.dp - avatarSize // Drawer padding and size
+  val endY = 13.75.dp
 
   val animatedX = lerp(startX, endX, animationProgress)
   val animatedY = lerp(startY, endY, animationProgress)
+
+
+  LaunchedEffect(animationProgress, isDarkMode) {
+    activity?.let {
+      // Interpolate scrim alpha based on drawer animation progress (0.0 to 0.25)
+      val scrimAlpha = animationProgress * (if (!isDarkMode) 0.25f else 0.125f)
+
+      // Get the current background color based on theme
+      val backgroundColor = if (isDarkMode) BackgroundColor else BackgroundColorLight
+
+      // Blend black overlay over the background color (lerp from background to black based on alpha)
+      val blendedColor = lerp(backgroundColor, Color.Black, scrimAlpha)
+      val scrimColor = blendedColor.toArgb()
+
+      // Use appropriate SystemBarStyle based on theme mode
+      val statusBarStyle = if (isDarkMode)
+        SystemBarStyle.dark(scrimColor)
+      else
+        SystemBarStyle.light(
+          scrim = scrimColor,
+          darkScrim = scrimColor
+        )
+
+      it.enableEdgeToEdge(statusBarStyle = statusBarStyle)
+    }
+  }
 
   Box(modifier = Modifier.fillMaxSize()) {
     ModalNavigationDrawer(
@@ -82,10 +119,10 @@ fun HomePage(
               label = stringResource(R.string.login_manager),
               selected = false,
               onClick = {
+                navController.navigate(Screen.LoginManager.route) // Switched order on purpose to make the animation feel snappier
                 coroutineScope.launch {
                   drawerState.close()
                 }
-                navController.navigate(Screen.LoginManager.route)
               }
             )
 
@@ -162,9 +199,9 @@ fun HomePage(
             .clip(CircleShape)
             .background(color = PrimaryColor.copy(alpha = 0.777f))
             .clickable {
-              // This single avatar now controls the drawer
               coroutineScope.launch {
                 if (drawerState.isOpen) {
+                  navController.navigate(Screen.LoginManager.route)
                   drawerState.close()
                 } else {
                   drawerState.open()

@@ -202,72 +202,6 @@ fun SettingsScreen(
         }
       }
 
-      // // Material You
-      // Surface(
-      //   modifier = Modifier
-      //       .fillMaxWidth()
-      //       .clickable {
-      //         isMaterialYou = !isMaterialYou
-      //         preferencesManager.isMaterialYou = isMaterialYou
-      //       }
-      //   ,
-      //   color = MaterialTheme.colorScheme.background
-      // ) {
-      //   Row(
-      //     modifier = Modifier
-      //         .fillMaxWidth()
-      //         .padding(horizontal = 16.dp, vertical = 16.dp),
-      //     horizontalArrangement = Arrangement.SpaceBetween,
-      //     verticalAlignment = Alignment.CenterVertically
-      //   ) {
-      //     Row(
-      //       verticalAlignment = Alignment.CenterVertically,
-      //       horizontalArrangement = Arrangement.spacedBy(16.dp)
-      //     ) {
-      //       with(sharedTransitionScope) {
-      //         Icon(
-      //           imageVector = Icons.Default.Category,
-      //           contentDescription = null,
-      //           tint = primaryColor,
-      //           modifier = Modifier
-      //               .size(24.dp)
-      //               .sharedElement(
-      //                 state = rememberSharedContentState(key = "material_you_icon"),
-      //                 animatedVisibilityScope = animatedContentScope,
-      //                 boundsTransform = { _, _ ->
-      //                   tween(durationMillis = 400)
-      //                 }
-      //               )
-      //         )
-      //       }
-      //       Column {
-      //         Text(
-      //           text = stringResource(R.string.settings_material_you),
-      //           color = textColor,
-      //           fontSize = 16.sp,
-      //           fontWeight = FontWeight.Medium
-      //         )
-      //         Text(
-      //           text = stringResource(if (isMaterialYou) R.string.settings_material_you_enabled else R.string.settings_material_you_disabled),
-      //           color = grayColor,
-      //           fontSize = 13.sp
-      //         )
-      //       }
-      //     }
-      //     Switch(
-      //       checked = isMaterialYou,
-      //       onCheckedChange = {
-      //         isMaterialYou = it
-      //         preferencesManager.isMaterialYou = it
-      //       },
-      //       colors = SwitchDefaults.colors(
-      //         checkedThumbColor = primaryColor,
-      //         checkedTrackColor = primaryColor.copy(alpha = 0.5f)
-      //       )
-      //     )
-      //   }
-      // }
-
       Divider(color = grayColor.copy(alpha = 0.2f), modifier = Modifier.padding(horizontal = 16.dp))
 
       // General Section
@@ -329,8 +263,6 @@ fun SettingsScreen(
           )
         }
       }
-
-      Divider(color = grayColor.copy(alpha = 0.2f), modifier = Modifier.padding(horizontal = 16.dp))
     }
 
     // Language Selection Dialog
