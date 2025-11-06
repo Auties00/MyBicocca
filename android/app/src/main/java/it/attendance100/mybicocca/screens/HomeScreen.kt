@@ -2,7 +2,6 @@ package it.attendance100.mybicocca.screens
 
 import androidx.activity.*
 import androidx.compose.animation.*
-import androidx.compose.animation.core.*
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.*
@@ -15,12 +14,10 @@ import androidx.compose.ui.*
 import androidx.compose.ui.draw.*
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.graphics.vector.*
-import androidx.compose.ui.layout.*
 import androidx.compose.ui.platform.*
 import androidx.compose.ui.res.*
 import androidx.compose.ui.unit.*
 import androidx.navigation.*
-import coil.compose.*
 import com.google.accompanist.pager.*
 import it.attendance100.mybicocca.*
 import it.attendance100.mybicocca.R
@@ -40,22 +37,11 @@ fun HomePage(
   val pagerState = rememberPagerState()
   val coroutineScope = rememberCoroutineScope()
   val currentPage = pagerState.currentPage
-  val grayColor = if (MaterialTheme.colorScheme.background == BackgroundColor) GrayColor else GrayColorLight
-  val primaryColor = MaterialTheme.colorScheme.primary
-
-  // Handle status bar color changes based on drawer state
-  val context = LocalContext.current
-  val activity = context as? ComponentActivity
-  val preferencesManager = rememberPreferencesManager()
-
-  // Determine if we're in dark mode based on preferences
-  val isDarkMode = preferencesManager.isDarkMode
 
   val density = LocalDensity.current
   val drawerWidthDp = 280.dp
   val drawerWidthPx = with(density) { drawerWidthDp.toPx() }
   val animationProgress = remember(drawerState.offset.value) {
-    // Ensure we don't divide by zero and clamp the value
     if (drawerWidthPx == 0f) {
       if (drawerState.isOpen) 1f else 0f
     } else {
@@ -71,20 +57,21 @@ fun HomePage(
   val animatedX = lerp(startX, endX, animationProgress)
   val animatedY = lerp(startY, endY, animationProgress)
 
+  val context = LocalContext.current
+  val activity = context as? ComponentActivity
+  val preferencesManager = rememberPreferencesManager()
+  val isDarkMode = preferencesManager.isDarkMode
 
   LaunchedEffect(animationProgress, isDarkMode) {
     activity?.let {
-      // Interpolate scrim alpha based on drawer animation progress (0.0 to 0.25)
+      // Interpolate scrim alpha based on drawer animation progress (0.0 to 0.25 or 0.125)
       val scrimAlpha = animationProgress * (if (!isDarkMode) 0.25f else 0.125f)
 
-      // Get the current background color based on theme
       val backgroundColor = if (isDarkMode) BackgroundColor else BackgroundColorLight
 
-      // Blend black overlay over the background color (lerp from background to black based on alpha)
       val blendedColor = lerp(backgroundColor, Color.Black, scrimAlpha)
       val scrimColor = blendedColor.toArgb()
 
-      // Use appropriate SystemBarStyle based on theme mode
       val statusBarStyle = if (isDarkMode)
         SystemBarStyle.dark(scrimColor)
       else
@@ -187,72 +174,30 @@ fun HomePage(
         }
       }
     }
-    with(sharedTransitionScope) {
-      SubcomposeAsyncImage(
-        model = "https://lh3.googleusercontent.com/a/ACg8ocLz6eMAklEzeodysm38Y18Ult6bw96hlhQ_DCheY_eEnuoLeno=s298-c-no",
-        contentDescription = stringResource(R.string.homescreen_profile),
-        contentScale = ContentScale.Crop,
-        modifier = Modifier
-            // Apply the animated position for the drawer
-            .offset(x = animatedX, y = animatedY)
-            .size(avatarSize)
-            .clip(CircleShape)
-            .background(color = PrimaryColor.copy(alpha = 0.777f))
-            .clickable {
-              coroutineScope.launch {
-                if (drawerState.isOpen) {
-                  navController.navigate(Screen.LoginManager.route)
-                  drawerState.close()
-                } else {
-                  drawerState.open()
-                }
-              }
-            }
-            .sharedElement(
-              state = rememberSharedContentState(key = "avatar"),
-              animatedVisibilityScope = animatedContentScope,
-              boundsTransform = { _, _ -> tween(durationMillis = 400) },
-              clipInOverlayDuringTransition = OverlayClip(CircleShape)
-            )
-      ) {
-        val state = painter.state
-        Crossfade(targetState = state) { currentState ->
-          when (currentState) {
-            is AsyncImagePainter.State.Loading -> {
-              Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-              ) {
-                CircularProgressIndicator(
-                  modifier = Modifier.size(23.dp),
-                  strokeWidth = 2.dp,
-                  color = primaryColor
-                )
-              }
-            }
 
-            is AsyncImagePainter.State.Error -> {
-              Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-              ) {
-                Icon(
-                  imageVector = Icons.Default.Person,
-                  contentDescription = stringResource(R.string.error_loading_image),
-                  tint = grayColor
-                )
-              }
-            }
-
-            else -> {
-              SubcomposeAsyncImageContent()
+    // Avatar Drawn on top of everything else
+    HoistedAvatar(
+      sharedTransitionScope = sharedTransitionScope,
+      animatedContentScope = animatedContentScope,
+      animatedX = animatedX,
+      animatedY = animatedY,
+      avatarSize = avatarSize,
+      onClick = {
+        coroutineScope.launch {
+          coroutineScope.launch {
+            if (drawerState.isOpen) {
+              navController.navigate(Screen.LoginManager.route)
+              drawerState.close()
+            } else {
+              drawerState.open()
             }
           }
         }
       }
-    }
+    )
   }
 }
+
 
 @OptIn(ExperimentalComposeUiApi::class, ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
 @Composable
