@@ -1,1 +1,1543 @@
-# TODO: Unify all platforms into a single app
+# #############################################################################
+# MYBICOCCA
+# MYBICOCCA
+# MYBICOCCA
+# MYBICOCCA
+# MYBICOCCA
+# #############################################################################
+
+MYBICOCCA:
+  tree:
+    MyBicocca/
+    ├── Tab Navigazione
+    │   ├── Calendario
+    │   ├── E-Learning
+    │   ├── Segreteria
+    │   └── Carriera*
+    │
+    ├── Tab: Calendario
+    │   ├── Esporta Calendario
+    │   ├── Ricerca Insegnamenti
+    │   │   ├── Nel Mio Corso
+    │   │   └── Tutti gli Insegnamenti
+    │   │       └── Area Didattica
+    │   │           └── Corso di Laurea/Magistrale
+    │   │               └── Anno
+    │   │                   └── Lezioni
+    │   ├── Le Tue Lezioni
+    │   └── Aggiungi Lezioni
+    │
+    ├── Tab: E-Learning
+    │   ├── Tab Navigazione
+    │   │   ├── Elenco Corsi*
+    │   │   ├── Ricerca Corsi
+    │   │   ├── Profilo
+    │   │   └── Preferenze
+    │   │
+    │   ├── Corso Singolo
+    │   │   ├── Tab Superiori Navigazione
+    │   │   │   ├── Contenuti*
+    │   │   │   ├── Syllabus
+    │   │   │   ├── Partecipanti
+    │   │   │   ├── Valutazioni
+    │   │   │   └── Altro
+    │   │   │
+    │   │   ├── Sezioni Corso
+    │   │   │   ├── Introduzione
+    │   │   │   ├── Comunicazioni/Avvisi
+    │   │   │   ├── Programma
+    │   │   │   ├── Modalità Esame
+    │   │   │   └── Materiali
+    │   │   │
+    │   │   └── Attività
+    │   │       ├── Forum
+    │   │       ├── File/Documenti
+    │   │       ├── Link Esterni
+    │   │       ├── Video Lezioni
+    │   │       ├── Quiz
+    │   │       └── Compiti/Progetti
+    │   │
+    │   ├── Ricerca Corsi
+    │   │   └── Dipartimento
+    │   │       └── Laurea Triennale/Magistrale
+    │   │           └── Corso di Laurea
+    │   │               └── A.A. (2025/2026)
+    │   │                   └── Anno (1°, 2°, 3°)
+    │   │                       └── Corso
+    │   ├── Profilo
+    │   │   ├── Notifiche
+    │   │   └── Messaggi
+    │   │
+    │   └── Impostazioni Elearning (moodle)
+    │       └── ...
+    │
+    ├── Tab: Segreterie S3
+    │   ├── Tab Navigazione
+    │   │   ├── Questionari
+    │   │   ├── Dichiarazione ISEE
+    │   │   ├── Pagamenti
+    │   │   ├── Autocertificazioni
+    │   │   └── Titoli di Studio
+    │   │
+    │   ├── Questionari
+    │   ├── Dichiarazione ISEE
+    │   ├── Pagamenti
+    │   │   ├── Addebiti Fatturati
+    │   │   ├── Dettaglio Fattura
+    │   │   └── Stampa Quietanza
+    │   │
+    │   ├── Autocertificazioni
+    │   │   ├── Anni Iscrizione
+    │   │   ├── Iscrizione con Esami
+    │   │   ├── Laurea con Esami
+    │   │   └── Tasse per Anno Solare
+    │   │
+    │   └── Titoli di Studio
+    │       ├── Scuola Superiore
+    │       └── Universitari
+    │
+    ├── Tab: Carriera
+    │   ├── Tab Navigazione
+    │   │   ├── Profilo*
+    │   │   ├── Piano
+    │   │   ├── Libretto
+    │   │   ├── Esami
+    │   │   └── Luoghi del Campus
+    │   │
+    │   ├── Profilo
+    │   │   ├── Statistiche
+    │   │   ├── Media Aritmetica
+    │   │   ├── Media Ponderata
+    │   │   ├── CFU Acquisiti/Totali
+    │   │   └── Piano Carriera
+    │   │
+    │   ├── Libretto
+    │   │   ├── Tabella Esami
+    │   │   │   └── Dettaglio Esame
+    │   │   │
+    │   │   └── Dettaglio Esame
+    │   │
+    │   ├── Esami
+    │   │   ├── Iscrizioni Esami
+    │   │   ├── Appelli Disponibili
+    │   │   │   └── Dettaglio Appello
+    │   │   │       ├── Cancella Iscrizione
+    │   │   │       └── Iscrizione Appello
+    │   │   │
+    │   │   ├── Esami Sostenuti
+    │   │   ├── Esami da Sostenere
+    │   │   └── Bacheca Esiti
+    │   │
+    │   ├── Luoghi del Campus
+    │   │   ├── Mappa Interattiva
+    │   │   ├── Ricerca Luoghi
+    │   │   └── Categorie (Biblioteche, Dipartimenti, Edifici, Mense)
+    │   │
+    │   └── Messaggi/Avvisi
+    │
+    └── Profile (dropdown)
+        ├── Login Manager
+        ├── Impostazioni App
+        └── Info
+            ├── Privacy Policy
+            └── Versione App
+
+  # ===========================================================================
+  # TAB 1: CALENDARIO
+  # ===========================================================================
+  calendario:
+    descrizione: "Gestione del calendario con lezioni ed esami"
+    
+    esporta_calendario:
+      fonte: "BicoccApp"
+      tipo_api: "REST API"
+      descrizione: "Esporta eventi nelle app calendario personali"
+    
+    ricerca_insegnamenti:
+      fonte: "BicoccApp"
+      tipo_api: "REST API"
+      descrizione: "Ricerca corsi e lezioni"
+      
+      nel_mio_corso:
+        fonte: "BicoccApp"
+        descrizione: "Ricerca automatica nel corso di laurea dello studente"
+        implementazione: "Automatica basata sul profilo studente"
+      
+      tutti_gli_insegnamenti:
+        fonte: "BicoccApp"
+        descrizione: "Ricerca tutti i corsi disponibili nell'università"
+        
+        filtri:
+          area_didattica:
+            fonte: "BicoccApp"
+            valori:
+              - "area economico statistica"
+              - "area giuridica"
+              - "area medica"
+              - "area psicologica"
+              - "area scientifica"
+              - "area scienze della formazione"
+              - "area sociologica"
+          
+          tipo_corso:
+            - tipo: "corso di laurea"
+              descrizione: "Corsi di laurea triennale"
+              filtri:
+                - "corso specifico"
+                - "anno"
+            - tipo: "corso di laurea magistrale"
+              descrizione: "Corsi di laurea magistrale"
+              filtri:
+                - "corso specifico"
+                - "anno"
+    
+    le_tue_lezioni:
+      fonte: "BicoccApp"
+      tipo_api: "REST API"
+      descrizione: "Visualizza le tue lezioni programmate"
+      stato: "Attualmente mostra errore in BicoccApp, da investigare"
+    
+    aggiungi_lezioni:
+      fonte: "BicoccApp"
+      tipo_api: "REST API"
+      descrizione: "Aggiungi lezioni al calendario usando la ricerca insegnamenti"
+      collegato_a: "ricerca_insegnamenti"
+
+  # ===========================================================================
+  # TAB 2: E-LEARNING
+  # ===========================================================================
+  elearning:
+    descrizione: "Integrazione piattaforma e-learning basata su Moodle"
+    url_base: "https://elearning.unimib.it"
+    
+    # Tab Navigazione
+    tab_navigazione:
+      elementi:
+        - nome: "Elenco Corsi"
+          default: true
+          descrizione: "Pagina principale con lista di tutti i corsi"
+        - nome: "Ricerca Corsi"
+          descrizione: "Ricerca avanzata corsi per dipartimento, corso di laurea, anno"
+        - nome: "Profilo"
+          descrizione: "Profilo personale con notifiche e messaggi"
+        - nome: "Preferenze"
+          descrizione: "Impostazioni e preferenze piattaforma Moodle"
+    
+    # Elenco Corsi (pagina principale)
+    elenco_corsi:
+      fonte: "E-Learning"
+      url: "https://elearning.unimib.it/my/courses.php"
+      descrizione: "Lista completa dei corsi a cui sei iscritto"
+      
+      organizzazione: "Raggruppati per anno accademico (A.A.)"
+      espandibile: true
+      scheda_corso:
+        - "nome_corso"
+        - "codice_corso"
+        - "docenti"
+        - "progresso_corso"
+      
+      azioni:
+        - "Apri corso"
+        - "Cerca nei corsi"
+    
+    # Ricerca Corsi
+    ricerca_corsi:
+      fonte: "E-Learning"
+      descrizione: "Sistema di ricerca corsi strutturato gerarchicamente"
+      
+      gerarchia:
+        livello_1_dipartimento:
+          descrizione: "Selezione del dipartimento/area didattica"
+          valori:
+            - "area economico statistica"
+            - "area giuridica"
+            - "area medica"
+            - "area psicologica"
+            - "area scientifica"
+            - "area scienze della formazione"
+            - "area sociologica"
+        
+        livello_2_tipo_laurea:
+          descrizione: "Tipo di corso di laurea"
+          valori:
+            - "Laurea Triennale"
+            - "Laurea Magistrale"
+        
+        livello_3_corso_laurea:
+          descrizione: "Corso di laurea specifico"
+          note: "Lista dinamica basata su dipartimento e tipo"
+        
+        livello_4_anno_accademico:
+          descrizione: "Anno accademico"
+          formato: "A.A. YYYY/YYYY+1"
+          esempio: "A.A. 2025/2026"
+        
+        livello_5_anno_corso:
+          descrizione: "Anno del corso"
+          valori:
+            - "1° Anno"
+            - "2° Anno"
+            - "3° Anno" (solo triennale)
+        
+        livello_6_corso:
+          descrizione: "Insegnamento specifico"
+          dati_visualizzati:
+            - "Nome corso"
+            - "Codice corso"
+            - "Docente/i"
+            - "CFU"
+            - "Semestre"
+    
+    # Corso Singolo
+    corso_singolo:
+      fonte: "E-Learning"
+      pattern_url: "https://elearning.unimib.it/course/view.php?id=<COURSE_ID>"
+      descrizione: "Pagina individuale del corso con materiali e attività"
+      
+      # Tab Superiori Navigazione
+      tab_superiori_navigazione:
+        - nome: "Contenuti"
+          default: true
+          descrizione: "Pagina principale con contenuti e attività del corso"
+        - nome: "Syllabus"
+          descrizione: "Informazioni dettagliate del corso (obiettivi, modalità esame, etc.)"
+        - nome: "Partecipanti"
+          descrizione: "Lista di studenti e docenti iscritti"
+        - nome: "Valutazioni"
+          descrizione: "Registro voti personale per questo corso"
+        - nome: "Altro"
+          descrizione: "Opzioni aggiuntive (disiscriviti, impostazioni)"
+      
+      # Contenuti (tab default)
+      contenuti:
+        header_corso:
+          elementi:
+            - "titolo_corso"
+            - "codice_corso"
+            - "docenti"
+            - "pulsante_syllabus"
+        
+        # Sezioni Corso
+        sezioni_corso:
+          fonte: "E-Learning"
+          layout: "Sezioni verticali, espandibili"
+          descrizione: "Contenuto principale organizzato in sezioni tematiche"
+          
+          tipologie_comuni:
+            - nome: "Introduzione"
+              descrizione: "Presentazione del corso e informazioni generali"
+            - nome: "Comunicazioni/Avvisi"
+              descrizione: "Annunci e comunicazioni dei docenti"
+            - nome: "Programma"
+              descrizione: "Programma dettagliato dell'insegnamento"
+            - nome: "Modalità Esame"
+              descrizione: "Informazioni su come si svolge l'esame"
+            - nome: "Materiali"
+              descrizione: "Materiali didattici, slide, dispense"
+          
+          sezioni_dinamiche:
+            descrizione: "Sezioni create dai docenti per organizzare il contenuto"
+            note: "Possono essere per argomento, per settimana, per modulo, etc."
+        
+        # Attività
+        attivita:
+          fonte: "E-Learning"
+          descrizione: "Tutti i tipi di attività e risorse disponibili nei corsi"
+          
+          tipi:
+            - tipo: "Forum"
+              pattern_url: "https://elearning.unimib.it/mod/forum/view.php?id=<MODULE_ID>"
+              descrizione: "Forum di discussione"
+            - tipo: "File/Documenti"
+              descrizione: "File scaricabili (PDF, DOC, etc.)"
+            - tipo: "Link Esterni"
+              descrizione: "Collegamenti a risorse esterne"
+            - tipo: "Video Lezioni"
+              descrizione: "Video registrati o streaming"
+            - tipo: "Quiz"
+              descrizione: "Test e quiz autovalutativi"
+            - tipo: "Compiti/Progetti"
+              descrizione: "Consegne e progetti da caricare"
+            - tipo: "Cartella"
+              descrizione: "Raccolta di file organizzati"
+            - tipo: "Libro"
+              descrizione: "Contenuto organizzato a libro"
+            - tipo: "Pagina HTML"
+              descrizione: "Pagine web con contenuto formattato"
+            - tipo: "SCORM"
+              descrizione: "Pacchetti SCORM interattivi"
+      
+      # Syllabus
+      syllabus:
+        fonte: "E-Learning"
+        pattern_url: "https://elearning.unimib.it/course/info.php?id=<COURSE_ID>"
+        descrizione: "Pagina informazioni dettagliate del corso"
+        
+        sezioni:
+          - "Obiettivi formativi"
+          - "Prerequisiti"
+          - "Metodi didattici"
+          - "Modalità di verifica"
+          - "Contenuti del corso"
+          - "Testi di riferimento"
+          - "Note aggiuntive"
+      
+      # Partecipanti
+      partecipanti:
+        url: "https://elearning.unimib.it/user/index.php?id=<COURSE_ID>"
+        descrizione: "Lista completa di studenti e docenti"
+        filtri:
+          - "Cerca per nome"
+          - "Filtra per ruolo (Studente/Docente)"
+      
+      # Valutazioni
+      valutazioni:
+        pattern_url: "https://elearning.unimib.it/grade/report/user/index.php?id=<COURSE_ID>"
+        descrizione: "Report voti dettagliato per questo corso"
+        visualizza:
+          - "Voti delle attività"
+          - "Media del corso"
+          - "Feedback dei docenti"
+    
+    # Profilo E-Learning
+    profilo:
+      fonte: "E-Learning"
+      url: "https://elearning.unimib.it/user/profile.php"
+      descrizione: "Profilo personale con informazioni, notifiche e messaggi"
+      
+      sezioni:
+        informazioni_generali:
+          - "Nome e cognome"
+          - "Email"
+          - "Immagine profilo"
+          - "Descrizione personale"
+          - "Corsi iscritto"
+          - "Report attività"
+        
+        # Notifiche
+        notifiche:
+          fonte: "E-Learning"
+          accesso: "Icona campanella nell'header / sezione nel profilo"
+          descrizione: "Centro notifiche della piattaforma"
+          
+          tipi:
+            - tipo: "Messaggio privato"
+              azione: "Apre conversazione"
+            - tipo: "Nuovo post forum"
+              azione: "Apre discussione"
+            - tipo: "Scadenza compito"
+              azione: "Apre pagina compito"
+            - tipo: "Voto pubblicato"
+              azione: "Apre registro voti"
+            - tipo: "Feedback docente"
+              azione: "Apre feedback"
+          
+          azioni:
+            - "Segna tutte come lette"
+            - "Filtra per tipo"
+            - "Apri singola notifica"
+            - "Elimina notifica"
+        
+        # Messaggi
+        messaggi:
+          fonte: "E-Learning"
+          url: "https://elearning.unimib.it/message/index.php"
+          descrizione: "Sistema di messaggistica interno della piattaforma"
+          
+          funzionalita:
+            - "Invia messaggio"
+            - "Ricerca conversazioni"
+            - "Archivia conversazione"
+            - "Elimina messaggio"
+          
+          filtri:
+            - "Non letti"
+            - "Preferiti"
+            - "Tutti i messaggi"
+    
+    # Impostazioni E-Learning (Moodle)
+    impostazioni_elearning:
+      fonte: "E-Learning"
+      url: "https://elearning.unimib.it/user/preferences.php"
+      descrizione: "Configurazione preferenze personali piattaforma Moodle"
+      
+      categorie:
+        preferenze_utente:
+          - "Modifica profilo"
+          - "Lingua preferita"
+          - "Fuso orario"
+        
+        preferenze_messaggi:
+          - "Notifiche email"
+          - "Messaggi bloccati"
+          - "Frequenza notifiche"
+          - "Processore notifiche"
+        
+        preferenze_forum:
+          - "Tracciamento discussioni"
+          - "Modalità visualizzazione"
+          - "Digest email forum"
+        
+        preferenze_editor:
+          - "Editor di testo preferito"
+          - "Impostazioni editor HTML"
+        
+        preferenze_badge:
+          - "Gestione badge"
+          - "Privacy badge"
+        
+        preferenze_calendario:
+          - "Visualizzazione calendario"
+          - "Export calendario"
+          - "Promemoria eventi"
+    
+    # Integrazioni e Servizi
+    integrazioni:
+      fonte: "E-Learning"
+      descrizione: "Servizi esterni integrati nella piattaforma"
+      
+      servizi:
+        - nome: "ReadSpeaker"
+          descrizione: "Servizio text-to-speech per accessibilità"
+          url: "https://cdn-eu.readspeaker.com/script/12247/webReaderForEducation/"
+          funzionalita:
+            - "Lettura ad alta voce testi"
+            - "Controllo velocità lettura"
+            - "Download audio"
+        
+        - nome: "MathJax"
+          descrizione: "Rendering formule matematiche (LaTeX/MathML)"
+          url: "https://cdn.jsdelivr.net/npm/mathjax@2.7.9/MathJax.js"
+        
+        - nome: "Kaltura"
+          descrizione: "Piattaforma hosting e streaming video"
+          funzionalita:
+            - "Player video integrato"
+            - "Sottotitoli"
+            - "Qualità video adattiva"
+
+  # ===========================================================================
+  # TAB 3: SEGRETERIA S3
+  # ===========================================================================
+  segreteria:
+    descrizione: "Servizi amministrativi e di segreteria tramite portale S3"
+    fonte: "S3"
+    url_base: "https://s3w.si.unimib.it"
+    
+    # Tab Navigazione
+    tab_navigazione:
+      elementi:
+        - nome: "Questionari"
+          descrizione: "Questionari di valutazione corsi e servizi"
+        - nome: "Dichiarazione ISEE"
+          descrizione: "Gestione dichiarazione ISEE per tasse"
+        - nome: "Pagamenti"
+          descrizione: "Elenco tasse e pagamenti"
+        - nome: "Autocertificazioni"
+          descrizione: "Certificati e autodichiarazioni"
+        - nome: "Titoli di Studio"
+          descrizione: "Titoli di studio posseduti"
+    
+    # Questionari
+    questionari:
+      fonte: "S3"
+      url: "https://s3w.si.unimib.it/questionari/QuestionariWrapperNew.do?evento_comp_cod=GEN_QUEST"
+      richiede_parsing: true
+      descrizione: "Questionari di valutazione delle attività didattiche e servizi"
+      
+      tipi:
+        - tipo: "Questionari generici"
+          descrizione: "Questionari su servizi e strutture"
+        - tipo: "Questionari valutazione attività didattiche"
+          descrizione: "Questionari di valutazione insegnamenti"
+      
+      note: "Compilazione obbligatoria per poter sostenere esami"
+    
+    # Dichiarazione ISEE
+    dichiarazione_isee:
+      fonte: "S3"
+      url: "https://s3w.si.unimib.it/auth/Autocertificazioni/Autocertificazione.do"
+      richiede_parsing: true
+      descrizione: "Dichiarazione ISEE per calcolo tasse universitarie"
+      
+      dati_visualizzati:
+        - "Data presentazione"
+        - "Fascia di reddito"
+        - "Numero componenti nucleo familiare"
+        - "ISEE (Indicatore Situazione Economica Equivalente)"
+        - "ISPEE (Indicatore Situazione Patrimoniale Equivalente)"
+      
+      azioni:
+        - "Visualizza dichiarazione"
+        - "Modifica dichiarazione"
+        - "Stampa attestazione"
+    
+    # Pagamenti
+    pagamenti:
+      fonte: "S3 / BicoccApp"
+      url_s3: "https://s3w.si.unimib.it/auth/studente/Tasse/ListaFatture.do"
+      bicoccapp_disponibile: true
+      descrizione: "Gestione pagamenti tasse universitarie"
+      note: "Preferire BicoccApp REST API quando disponibile"
+      
+      # Addebiti Fatturati (lista principale)
+      addebiti_fatturati:
+        descrizione: "Elenco di tutte le fatture emesse"
+        visualizzazione: "Lista ordinata per data"
+        
+        info_fattura_lista:
+          - "Anno Accademico"
+          - "Importo totale"
+          - "Scadenza"
+          - "Stato (Pagata/Non pagata/Scaduta)"
+        
+        azioni_lista:
+          - "Apri dettaglio fattura"
+          - "Paga con PagoPA"
+          - "Scarica bollettino"
+      
+      # Dettaglio Fattura
+      dettaglio_fattura:
+        url_s3: "https://s3w.si.unimib.it/auth/studente/Tasse/FatturaDettaglio.do?fatt_id=<ID_FATTURA>"
+        descrizione: "Informazioni dettagliate di una singola fattura"
+        
+        informazioni_generali:
+          - "Anno Accademico"
+          - "Data Scadenza"
+          - "Importo totale"
+          - "Modalità pagamento"
+          - "Codice Avviso PagoPA"
+          - "Data Pagamento"
+          - "Stato RPT"
+          - "Esito transazione PagoPA"
+          - "Esito Operazione"
+        
+        dettaglio_voci:
+          descrizione: "Dettaglio delle singole voci di spesa che compongono la fattura"
+          voci:
+            - "Tassa di iscrizione"
+            - "Contributo regionale DSU"
+            - "Imposta di bollo"
+            - "Altri contributi"
+        
+        azioni:
+          - azione: "Paga con PagoPA"
+            descrizione: "Effettua pagamento tramite circuito PagoPA"
+          - azione: "Stampa quietanza"
+            url: "https://s3w.si.unimib.it/auth/studente/Tasse/StampaQuietanzaPagoPA.do?fatt_id=<ID_FATTURA>&rpt_id=<ID_RPT>"
+            descrizione: "Scarica ricevuta di pagamento"
+          - azione: "Stampa bollettino"
+            descrizione: "Scarica bollettino per pagamento in banca/posta"
+    
+    # Autocertificazioni
+    autocertificazioni:
+      fonte: "S3"
+      url_base: "https://s3w.si.unimib.it/auth/studente/Certificati"
+      url_lista: "https://s3w.si.unimib.it/auth/studente/Certificati/ListaCertificati.do"
+      richiede_parsing: true
+      descrizione: "Generazione e download di certificati e autocertificazioni per vari scopi amministrativi"
+      
+      note: "Tutti i certificati vengono generati in formato PDF. Disponibili sia come autocertificazioni che come certificati con bollo digitale."
+      
+      tipi_disponibili:
+        - tipo: "Anni di Iscrizione"
+          nome_tecnico: "AutodichiarazioneAnniIscrizione"
+          tipo_cert_cod: "I"
+          pattern_url: "https://s3w.si.unimib.it/auth/studente/Certificati/MessaggiCertificato.do?cert_conf_id=<ID>&doc_id=<ID>&annosolare=<ANNO>&tipo_cert_cod=I&cert_des=AutodichiarazioneAnniIscrizione&firma_dig_flg=0"
+          descrizione: "Certificato degli anni accademici di iscrizione al corso di studio"
+          
+          parametri_generazione:
+            - "Selezione anno/i accademico/i (multiplo)"
+            - "Opzione: Escludi periodi di sospensione"
+            - "Uso destinazione (es: uso bollo auto, borse di studio, ecc.)"
+          
+          contenuto:
+            - "Dati anagrafici studente"
+            - "Corso di laurea"
+            - "Anni accademici di iscrizione"
+            - "Eventuale data di laurea"
+        
+        - tipo: "Iscrizione con Esami"
+          nome_tecnico: "AutodichiarazioneIscrizioneconEsami"
+          tipo_cert_cod: "I"
+          pattern_url: "https://s3w.si.unimib.it/auth/studente/Certificati/MessaggiCertificato.do?cert_conf_id=<ID>&doc_id=<ID>&annosolare=<ANNO>&tipo_cert_cod=I&cert_des=AutodichiarazioneIscrizioneconEsami&firma_dig_flg=0"
+          descrizione: "Certificato di iscrizione corrente con opzionale elenco esami sostenuti"
+          
+          parametri_generazione:
+            - "Anno Accademico di riferimento"
+            - "Opzione: Includi esami sostenuti"
+            - "Uso destinazione"
+          
+          contenuto:
+            - "Dati anagrafici"
+            - "Corso di laurea e anno di corso"
+            - "Stato iscrizione"
+            - "Elenco esami (opzionale) con voto e CFU"
+            - "Media e CFU totali"
+        
+        - tipo: "Laurea con Esami"
+          nome_tecnico: "AutodichiarazioneLaureaconEsami"
+          tipo_cert_cod: "L"
+          pattern_url: "https://s3w.si.unimib.it/auth/studente/Certificati/MessaggiCertificato.do?cert_conf_id=<ID>&doc_id=<ID>&annosolare=<ANNO>&tipo_cert_cod=L&cert_des=AutodichiarazioneLaureaconEsami&firma_dig_flg=0"
+          descrizione: "Certificato di laurea conseguita con opzionale elenco esami"
+          
+          parametri_generazione:
+            - "Tipologia: Laurea / Laurea Magistrale"
+            - "Opzione: Includi esami nel certificato"
+            - "Uso destinazione"
+          
+          contenuto:
+            - "Dati anagrafici"
+            - "Corso di laurea"
+            - "Data conseguimento"
+            - "Voto finale"
+            - "Elenco esami (opzionale) con voto e CFU"
+            - "Media ponderata finale"
+        
+        - tipo: "Tasse per Anno Solare"
+          nome_tecnico: "AutodichiarazioneTasseperannosolare"
+          tipo_cert_cod: "TAX"
+          pattern_url: "https://s3w.si.unimib.it/auth/studente/Certificati/MessaggiCertificato.do?cert_conf_id=<ID>&doc_id=<ID>&annosolare=20XX&tipo_cert_cod=TAX&cert_des=AutodichiarazioneTasseperannosolare&firma_dig_flg=0"
+          descrizione: "Certificato delle tasse universitarie pagate in uno specifico anno solare (per detrazioni fiscali)"
+          
+          note: "Vengono generati certificati multipli, uno per ogni anno di iscrizione con pagamenti"
+          
+          parametri_generazione:
+            - "Anno Solare (es: 2024)"
+            - "Uso destinazione"
+          
+          contenuto:
+            - "Dati anagrafici"
+            - "Corso di laurea"
+            - "Elenco pagamenti nell'anno solare"
+            - "Importo totale versato"
+            - "Codice fiscale università"
+      
+      opzioni_firma:
+        - tipo: "Autocertificazione semplice"
+          firma_dig_flg: 0
+          descrizione: "Documento autocertificato senza bollo"
+        
+        - tipo: "Certificato con bollo digitale"
+          firma_dig_flg: 1
+          descrizione: "Certificato ufficiale con marca da bollo digitale (€16,00)"
+      
+      azioni:
+        - "Seleziona tipo certificato"
+        - "Compila parametri"
+        - "Scegli tipo firma (autocertificazione/bollo)"
+        - "Genera anteprima"
+        - "Scarica PDF"
+        - "Stampa"
+    
+    # Titoli di Studio
+    titoli_di_studio:
+      fonte: "S3"
+      url: "https://s3w.si.unimib.it/auth/Degrees/DGAnagraficaTitoliForm.do"
+      richiede_parsing: true
+      descrizione: "Visualizzazione e gestione dei titoli di studio (scuola superiore e universitari) registrati nel sistema"
+      
+      note: "Questi dati vengono utilizzati per verifiche amministrative e requisiti di accesso ai corsi"
+      
+      # Scuola Superiore
+      scuola_superiore:
+        url_dettaglio: "https://s3w.si.unimib.it/auth/Degrees/RiepilogoDatiTitoloSupForm.do?id=<TITOLO_ID>"
+        descrizione: "Diploma di scuola secondaria superiore"
+        
+        dati_visualizzati:
+          - nome: "Anno Maturità"
+            descrizione: "Anno scolastico di conseguimento"
+          
+          - nome: "Data Maturità"
+            descrizione: "Data esatta del conseguimento"
+          
+          - nome: "Voto"
+            descrizione: "Voto finale (es: 100/100, 95/100, ecc.)"
+          
+          - nome: "Titolo"
+            descrizione: "Tipo di diploma (es: Liceo Scientifico, Istituto Tecnico, ecc.)"
+          
+          - nome: "Istituto"
+            descrizione: "Nome completo dell'istituto scolastico"
+          
+          - nome: "Comune"
+            descrizione: "Città dell'istituto"
+          
+          - nome: "Situazione"
+            descrizione: "Stato del titolo (Conseguito, In corso, ecc.)"
+        
+        azioni:
+          - "Visualizza dettagli"
+          - "Modifica dati (se consentito)"
+      
+      # Universitari
+      universitari:
+        url_dettaglio: "https://s3w.si.unimib.it/auth/Degrees/RiepilogoDatiTitoloUnivForm.do?tit_it_id=<TITOLO_ID>"
+        descrizione: "Titoli universitari precedenti (lauree triennali, magistrali, master, ecc.)"
+        
+        dati_visualizzati:
+          - "Tipologia (Laurea Triennale, Magistrale, Master, ecc.)"
+          - "Ateneo"
+          - "Anno Accademico conseguimento"
+          - "Voto finale"
+          - "Corso di Laurea"
+          - "Situazione (Conseguito/In corso)"
+        
+        sezioni_aggiuntive:
+          certificazioni_linguistiche:
+            descrizione: "Certificazioni di conoscenza linguistica associate al titolo"
+            campi:
+              - "Lingua"
+              - "Livello (A1, A2, B1, B2, C1, C2)"
+              - "Ente certificatore"
+              - "Data conseguimento"
+          
+          certificazioni_inglese:
+            descrizione: "Certificazioni specifiche di lingua inglese"
+            tipi_comuni:
+              - "IELTS"
+              - "TOEFL"
+              - "Cambridge (PET, FCE, CAE, CPE)"
+              - "Trinity"
+            campi:
+              - "Tipo certificazione"
+              - "Punteggio/Livello"
+              - "Data conseguimento"
+              - "Scadenza (se applicabile)"
+        
+        azioni:
+          - "Visualizza dettagli"
+          - "Aggiungi certificazione linguistica"
+          - "Modifica dati (se consentito)"
+
+
+  # ===========================================================================
+  # TAB 4: CARRIERA
+  # ===========================================================================
+  carriera:
+    descrizione: "Carriera accademica, voti, esami e informazioni personali"
+    fonte: "S3 / BicoccApp"
+    
+    # Tab Navigazione principale
+    tab_navigazione:
+      elementi:
+        - nome: "Profilo"
+          default: true
+          note: "Schermata iniziale con statistiche e dati personali"
+        - nome: "Piano"
+        - nome: "Libretto"
+        - nome: "Esami"
+        - nome: "Luoghi del Campus"
+    
+    # Profilo (default tab)
+    profilo:
+      fonte: "BicoccApp"
+      tipo_api: "REST API"
+      descrizione: "Informazioni personali e statistiche carriera studente"
+      
+      dati_anagrafici:
+        - "Nome"
+        - "Cognome"
+        - "Matricola"
+        - "Corso di laurea"
+        - "Anno di corso"
+        - "Email istituzionale"
+        - "Codice Fiscale"
+      
+      statistiche:
+        fonte: "Preferire BicoccApp REST API"
+        descrizione: "Dashboard con metriche principali della carriera"
+        
+        media_aritmetica:
+          descrizione: "Media semplice di tutti i voti"
+          calcolo: "Somma voti / Numero esami"
+          visualizzazione: "Numero grande prominente"
+        
+        media_ponderata:
+          descrizione: "Media pesata per CFU"
+          calcolo: "(Somma (voto × CFU)) / (Somma CFU)"
+          visualizzazione: "Numero grande prominente"
+          nota: "Questa è la media che conta per la laurea"
+        
+        cfu:
+          descrizione: "Crediti Formativi Universitari acquisiti"
+          visualizzazione: "X / Y CFU"
+          componenti:
+            - "CFU acquisiti (esami superati)"
+            - "CFU totali del corso"
+            - "Barra di progresso visuale"
+            - "Percentuale completamento"
+        
+        piano_carriera_link:
+          descrizione: "Link rapido al piano di studi completo"
+          azione: "Apri Piano Carriera (tab Piano)"
+        
+        calcola_media_simulata:
+          fonte: "BicoccApp"
+          descrizione: "Calcola media ipotetica con voti what-if"
+          note: "Permettere voti ipotetici multipli con CFU per ciascuno"
+          
+          input:
+            - "Voto ipotetico (18-30)"
+            - "CFU corrispondenti"
+            - "Possibilità di aggiungere più esami ipotetici"
+          
+          output:
+            - "Nuova media aritmetica simulata"
+            - "Nuova media ponderata simulata"
+            - "Impatto sul voto di laurea potenziale"
+          
+          visualizzazione: "Dialog/Modal con form e risultati in tempo reale"
+        
+        grafico_esami:
+          fonte: "BicoccApp"
+          descrizione: "Grafico andamento voti nel tempo"
+          tipo_grafico: "Linea o barre"
+          
+          assi:
+            x: "Ordine cronologico esami (o date)"
+            y: "Voto (18-30)"
+          
+          filtri:
+            - "Solo esami con CFU >= 1"
+            - "Escludi lodi dal conteggio"
+          
+          interattivita:
+            - "Tap su punto → dettagli esame"
+            - "Mostra media mobile"
+    
+    # Piano di Studi
+    piano:
+      fonte: "S3"
+      url: "https://s3w.si.unimib.it/auth/studente/Piani/PianiHome.do"
+      richiede_parsing: true
+      descrizione: "Piano di studi ufficiale con attività didattiche del corso"
+      
+      informazioni_piano:
+        - nome: "Stato"
+          descrizione: "Attivo, In approvazione, Bloccato, ecc."
+        
+        - nome: "Tipo Piano"
+          descrizione: "Piano di studi standard o personalizzato"
+        
+        - nome: "Data ultima variazione"
+          descrizione: "Ultima modifica al piano"
+        
+        - nome: "Anno di offerta"
+          descrizione: "Anno accademico offerta formativa"
+        
+        - nome: "Anno del regolamento"
+          descrizione: "Regolamento didattico di riferimento"
+      
+      attivita_didattiche:
+        descrizione: "Elenco completo delle attività del corso organizzate per anno"
+        visualizzazione: "Tabella raggruppata per anno di corso"
+        
+        colonne:
+          - "Codice Attività"
+          - "Nome Insegnamento"
+          - "Anno Corso"
+          - "Semestre"
+          - "CFU"
+          - "Tipologia (Base, Caratterizzante, Affine, ecc.)"
+          - "SSD (Settore Scientifico Disciplinare)"
+          - "Stato (Da sostenere, Superato, ecc.)"
+        
+        raggruppamento:
+          - "Anno 1"
+          - "Anno 2"
+          - "Anno 3"
+          - "Fuori anno / A scelta"
+      
+      azioni:
+        - azione: "Stampa Piano"
+          url: "https://s3w.si.unimib.it/auth/studente/Piani/PianiStampaPiano.do?PIANO_ID=<ID_PIANO>"
+          descrizione: "Download PDF del piano di studi ufficiale"
+        
+        - azione: "Richiedi modifica piano"
+          note: "Se consentito dal regolamento (es: esami a scelta)"
+    
+    # Libretto Esami
+    libretto:
+      fonte: "S3 / BicoccApp"
+      url_s3: "https://s3w.si.unimib.it/auth/studente/Libretto/LibrettoHome.do"
+      bicoccapp_disponibile: true
+      descrizione: "Tabella completa degli esami con voti e dettagli"
+      
+      visualizzazione: "Tabella sortabile e filtrabile"
+      
+      colonne_tabella:
+        - "Codice"
+        - "Attività Didattica (nome esame)"
+        - "Anno di Corso"
+        - "Tipologia d'esame"
+        - "Data Superamento"
+        - "CFU (peso)"
+        - "Voto"
+        - "Lode (se presente)"
+      
+      ordinamento_default: "Data Superamento (decrescente)"
+      
+      filtri:
+        - "Per Anno di Corso"
+        - "Per Tipologia"
+        - "Solo esami superati"
+        - "Solo esami da sostenere"
+      
+      azioni_riga:
+        - azione: "Apri Dettaglio Esame"
+          destinazione: "Schermata dettaglio singolo esame"
+      
+      dettaglio_esame:
+        url_s3: "https://s3w.si.unimib.it/auth/studente/Libretto/LibrettoDettaglio.do?adsce_id=<ID_ATTIVITA>"
+        descrizione: "Informazioni dettagliate su un singolo esame"
+        
+        informazioni:
+          - "Nome completo Attività Didattica"
+          - "Anno di Corso"
+          - "Tipologia d'esame (Scritto, Orale, Scritto+Orale, ecc.)"
+          - "Corso di Studio"
+          - "Data di Superamento"
+          - "CFU (Peso)"
+          - "Valutazione (Voto)"
+          - "Docente titolare"
+          - "SSD (Settore Scientifico Disciplinare)"
+        
+        prove_sostenute:
+          descrizione: "Storico completo dei tentativi d'esame (anche non superati)"
+          visualizzazione: "Tabella cronologica"
+          
+          colonne:
+            - "Data Appello"
+            - "Tipo Prova"
+            - "Esito (Superato, Non superato, Ritirato, Assente)"
+            - "Voto (se superato)"
+          
+          note: "Utile per vedere progressi dello studente in un esame difficile"
+    
+    # Esami (iscrizioni, appelli, risultati)
+    esami:
+      fonte: "BicoccApp / S3"
+      descrizione: "Gestione completa degli esami: iscrizioni, appelli disponibili, sostenuti, da sostenere"
+      
+      # Iscrizioni Attive
+      iscrizioni:
+        fonte: "BicoccApp"
+        tipo_api: "REST API"
+        descrizione: "Elenco esami a cui lo studente è già iscritto"
+        
+        visualizzazione: "Lista card con dettagli essenziali"
+        
+        informazioni_card:
+          - "Nome esame"
+          - "Data e ora appello"
+          - "Aula"
+          - "Docente"
+          - "Scadenza cancellazione iscrizione"
+        
+        azioni:
+          - azione: "Visualizza dettagli completi"
+          - azione: "Cancella iscrizione"
+            nota: "Entro i termini previsti"
+      
+      # Appelli Disponibili
+      appelli_disponibili:
+        fonte: "BicoccApp / S3"
+        url_s3: "https://s3w.si.unimib.it/auth/studente/Appelli/Appelli.do"
+        bicoccapp_disponibile: true
+        descrizione: "Sessioni d'esame disponibili per iscriversi"
+        
+        visualizzazione: "Lista/Griglia con filtri e ricerca"
+        
+        filtri:
+          - "Per Insegnamento"
+          - "Per Data"
+          - "Per Sessione (Estiva, Autunnale, Invernale, Straordinaria)"
+          - "Per Anno di Corso"
+        
+        informazioni_lista:
+          - "Nome esame"
+          - "Data e ora"
+          - "Scadenza iscrizione"
+          - "Posti disponibili (se limitato)"
+          - "Stato iscrizione possibile"
+        
+        dettaglio_appello:
+          fonte: "S3 (se necessario per più dettagli)"
+          pattern_url: "https://s3w.si.unimib.it/auth/studente/Appelli/DatiPrenotazioneAppello.do?APP_ID=<APP_ID>&..."
+          descrizione: "Dettagli completi di un singolo appello d'esame"
+          
+          informazioni:
+            - "Attività Didattica (nome corso)"
+            - "Codice Appello"
+            - "Sessione (es: Prima Sessione, Appello Straordinario)"
+            - "Tipo esame (Scritto, Orale, Pratico, ecc.)"
+            - "Modalità verbalizzazione"
+            - "Docente/i esaminatore/i"
+            - "Aula o Luogo"
+            - "Note dell'appello (requisiti, materiali ammessi, ecc.)"
+            - "Termine iscrizione"
+            - "Termine cancellazione iscrizione"
+          
+          calendario_prove:
+            descrizione: "Se l'esame ha più prove (es: scritto + orale)"
+            visualizzazione: "Tabella date multiple"
+            colonne:
+              - "Data e Ora"
+              - "Tipo Prova"
+              - "Aula"
+          
+          form_iscrizione:
+            campi:
+              - "Note per il docente (campo testo opzionale)"
+          
+          azioni:
+            - azione: "Prenotati all'appello"
+              fonte: "Preferire BicoccApp REST API"
+              vincoli:
+                - "Deve essere dentro i termini di iscrizione"
+                - "Studente deve avere i prerequisiti"
+                - "Non deve essere già iscritto"
+            
+            - azione: "Aggiungi al calendario"
+              descrizione: "Integrazione con calendario del tab Calendario"
+      
+      # Esami Sostenuti
+      sostenuti:
+        fonte: "BicoccApp"
+        tipo_api: "REST API"
+        descrizione: "Storico esami già completati con successo"
+        
+        visualizzazione: "Lista cronologica (più recenti in alto)"
+        
+        informazioni:
+          - "Nome esame"
+          - "CFU"
+          - "Voto"
+          - "Data voto"
+          - "Lode (se presente)"
+        
+        ordinamento:
+          - "Data (default)"
+          - "Voto (crescente/decrescente)"
+          - "Nome esame (A-Z)"
+        
+        azioni:
+          - "Apri dettaglio esame (collegamento a Libretto)"
+      
+      # Esami Da Sostenere
+      da_sostenere:
+        fonte: "BicoccApp"
+        tipo_api: "REST API"
+        descrizione: "Esami del piano di studi ancora da completare"
+        
+        visualizzazione: "Lista ordinata per priorità suggerita"
+        
+        informazioni:
+          - "Nome esame"
+          - "CFU"
+          - "Anno di corso previsto"
+          - "Prerequisiti (se presenti)"
+          - "Prossimi appelli disponibili (date)"
+        
+        suggerimenti:
+          - "Priorità basata su anno di corso"
+          - "Prerequisiti da completare prima"
+          - "Appelli disponibili a breve"
+        
+        azioni:
+          - "Vai ad Appelli Disponibili (filtrato per questo esame)"
+          - "Iscriviti direttamente (se appello imminente)"
+      
+      # Bacheca Esiti
+      bacheca_esiti:
+        fonte: "S3"
+        url: "https://s3w.si.unimib.it/auth/studente/Appelli/BachecaEsiti.do"
+        richiede_parsing: true
+        descrizione: "Bacheca con risultati degli esami recenti pubblicati dai docenti"
+        
+        visualizzazione: "Lista cronologica con notifiche"
+        
+        informazioni:
+          - "Nome esame"
+          - "Data appello"
+          - "Data pubblicazione esito"
+          - "Esito (Superato/Non superato/Ritirato/Assente)"
+          - "Voto (se superato)"
+          - "Note del docente (opzionale)"
+        
+        notifiche:
+          - "Push notification quando nuovo esito pubblicato"
+          - "Badge su icona tab Esami"
+        
+        azioni:
+          - "Accetta voto"
+          - "Rifiuta voto (entro termini)"
+          - "Visualizza verbale"
+    
+    # Luoghi del Campus
+    luoghi_del_campus:
+      fonte: "BicoccApp"
+      tipo_api: "REST API"
+      descrizione: "Mappa interattiva del campus universitario con POI (Points of Interest)"
+      
+      funzionalita:
+        - nome: "Mappa interattiva"
+          descrizione: "Mappa basata su servizio (Google Maps, OpenStreetMap, ecc.)"
+          features:
+            - "Zoom in/out"
+            - "Pan (scorrimento)"
+            - "Rotazione mappa (opzionale)"
+        
+        - nome: "Ricerca luoghi"
+          descrizione: "Barra di ricerca per trovare edifici, aule, servizi"
+          filtri:
+            - "Per Nome"
+            - "Per Categoria"
+        
+        - nome: "Geolocalizzazione"
+          descrizione: "Centramento automatico su posizione corrente utente"
+          permesso_richiesto: "Accesso alla posizione"
+        
+        - nome: "Navigazione"
+          descrizione: "Indicazioni per raggiungere un luogo"
+          integrazione: "Link a Google Maps/Apple Maps per navigazione esterna"
+      
+      categorie_luoghi:
+        - categoria: "Biblioteche"
+        
+        - categoria: "Dipartimenti"
+        
+        - categoria: "Edifici"
+          descrizione: "Tutti gli edifici del campus (U1, U2, U3, ... U49)"
+          info_edificio:
+            - "Sigla (es: U24)"
+            - "Nome (es: Zephyrum)"
+            - "Indirizzo completo"
+            - "Servizi presenti (aule, laboratori, uffici)"
+        
+        - categoria: "Mense e Bar"
+          esempi:
+            - "Mensa U6"
+            - "Bar U3"
+          info_extra:
+            - "Orari di apertura"
+        
+        - categoria: "Aule"
+          descrizione: "Aule specifiche con codice (es: U14-T013)"
+          ricerca: "Es: cerca 'U14-T013' per trovare aula sul piano"
+        
+        - categoria: "Segreterie Studenti"
+          info:
+            - "Ubicazione"
+            - "Orari ricevimento"
+            - "Contatti"
+        
+        - categoria: "Altri Servizi"
+          esempi:
+            - "Ufficio Stage e Placement"
+            - "Ufficio Relazioni Internazionali"
+            - "CUS (Centro Universitario Sportivo)"
+            - "Parcheggi"
+            - "Fermate ATM/Stazioni"
+      
+      dettaglio_luogo:
+        descrizione: "Tap su marker → card con informazioni"
+        informazioni:
+          - "Nome luogo"
+          - "Categoria"
+          - "Indirizzo"
+          - "Orari (se applicabile)"
+          - "Contatti (email, telefono)"
+          - "Foto del luogo (opzionale)"
+          - "Descrizione breve"
+        
+        azioni:
+          - "Vai a (navigazione esterna)"
+          - "Chiama (se numero presente)"
+          - "Invia email (se email presente)"
+          - "Salva nei Preferiti"
+      
+      miglioramenti_futuri:
+        - "Modelli 3D degli edifici (AR/VR)"
+        - "Visualizzazione piani interni edifici"
+        - "Disponibilità aule in tempo reale"
+        - "Integrazione orario lezioni (mostra dove hai lezione ora)"
+    
+    # Messaggi e Avvisi
+    messaggi_avvisi:
+      descrizione: "Sistema di comunicazioni tra università e studente"
+      
+      messaggi:
+        fonte: "BicoccApp"
+        tipo_api: "REST API"
+        descrizione: "Messaggi personali diretti allo studente"
+        
+        tipi_messaggi:
+          - "Comunicazioni segreteria"
+          - "Avvisi docenti"
+          - "Notifiche amministrative"
+          - "Promemoria scadenze"
+        
+        funzionalita:
+          - "Lista messaggi cronologica"
+          - "Ricerca messaggi (per testo, data, mittente)"
+          - "Filtri per tipo/categoria"
+          - "Segna come letto/non letto"
+          - "Elimina messaggio"
+        
+        dettaglio_messaggio:
+          campi:
+            - "Oggetto"
+            - "Mittente"
+            - "Data ricezione"
+            - "Corpo messaggio"
+            - "Allegati (se presenti)"
+          
+          azioni:
+            - "Rispondi (se mittente lo consente)"
+            - "Inoltra"
+            - "Scarica allegati"
+        
+        notifiche:
+          - "Push notification per nuovi messaggi"
+          - "Badge con numero messaggi non letti"
+      
+      avvisi:
+        fonte: "BicoccApp"
+        tipo_api: "REST API"
+        descrizione: "Avvisi e notifiche generali dell'ateneo"
+        
+        tipi_avvisi:
+          - "Bandi e concorsi"
+          - "Chiusure uffici"
+          - "Eventi universitari"
+          - "Scioperi e modifiche servizi"
+          - "Novità didattiche"
+        
+        visualizzazione: "Feed/Bacheca stile social con card"
+        
+        filtri:
+          - "Per categoria"
+          - "Per data pubblicazione"
+          - "Solo non letti"
+        
+        azioni:
+          - "Apri dettaglio avviso"
+          - "Condividi (link esterno)"
+          - "Salva nei Preferiti"
+
+
+# =============================================================================
+# PROFILE (dropdown)
+# =============================================================================
+profile_dropdown:
+  descrizione: "Menu dropdown accessibile dall'icona profilo in alto a sinistra"
+  posizione: "Header dell'app, sempre visibile"
+  
+  elementi:
+    # Login Manager
+    - nome: "Login Manager"
+      descrizione: "Gestione credenziali e accessi multipli"
+      
+      funzionalita:
+        gestione_account:
+          descrizione: "Supporto multi-account per studenti con più carriere"
+          campi:
+            - "Username (matricola)"
+            - "Nome visualizzato"
+            - "Email associata"
+            - "Carriera (es: Laurea Triennale Informatica 2020-2023)"
+          
+          azioni:
+            - "Aggiungi account"
+            - "Cambia account attivo"
+            - "Rimuovi account"
+        
+        logout:
+          descrizione: "Esci dall'account corrente"
+          comportamento: "Torna a schermata login"
+          opzioni:
+            - "Logout singolo (account corrente)"
+            - "Logout tutti gli account"
+        
+        cambio_password:
+          fonte: "S3"
+          url: "https://s3w.si.unimib.it/auth/CambioPasswordForm.do"
+          descrizione: "Modifica password di accesso ai servizi universitari"
+          
+          form:
+            campi:
+              - "Password attuale"
+              - "Nuova password"
+              - "Conferma nuova password"
+            
+            requisiti_password:
+              - "Minimo 8 caratteri"
+              - "Almeno una lettera maiuscola"
+              - "Almeno una lettera minuscola"
+              - "Almeno un numero"
+              - "Almeno un carattere speciale"
+          
+          note: "La modifica password sincronizza con tutti i servizi universitari (S3, E-Learning, Email)"
+    
+    # Impostazioni App
+    - nome: "Impostazioni App"
+      descrizione: "Configurazione dell'applicazione MyBicocca"
+      
+      sezioni:
+        generali:
+          - impostazione: "Tema"
+            opzioni:
+              - "Chiaro"
+              - "Scuro"
+              - "Automatico (segue sistema)"
+          
+          - impostazione: "Lingua"
+            opzioni:
+              - "Italiano"
+              - "Inglese"
+          
+          - impostazione: "Dimensione testo"
+            opzioni:
+              - "Piccolo"
+              - "Medio"
+              - "Grande"
+            accessibilita: true
+        
+        notifiche:
+          - impostazione: "Notifiche Push"
+            opzioni:
+              - "Tutte"
+              - "Solo prioritarie"
+              - "Disabilitate"
+          
+          - impostazione: "Nuovi messaggi"
+            tipo: "Toggle (on/off)"
+          
+          - impostazione: "Esiti esami"
+            tipo: "Toggle (on/off)"
+          
+          - impostazione: "Promemoria esami"
+            tipo: "Toggle (on/off)"
+            dettaglio: "Notifica X giorni prima dell'appello"
+          
+          - impostazione: "Scadenze amministrative"
+            tipo: "Toggle (on/off)"
+        
+        calendario:
+          - impostazione: "Vista predefinita"
+            opzioni:
+              - "Giorno"
+              - "Settimana"
+              - "Mese"
+          
+          - impostazione: "Sincronizza con calendario sistema"
+            tipo: "Toggle (on/off)"
+            descrizione: "Esporta eventi in Google Calendar / Apple Calendar"
+        
+        privacy:
+          - impostazione: "Condivisione dati analitici"
+            tipo: "Toggle (on/off)"
+            descrizione: "Aiuta a migliorare l'app condividendo dati anonimi di utilizzo"
+          
+          - impostazione: "Cache dati"
+            azioni:
+              - "Svuota cache"
+              - "Elimina dati locali"
+            nota: "Migliora prestazioni e libera spazio"
+        
+        avanzate:
+          - impostazione: "Modalità sviluppatore"
+            tipo: "Toggle (on/off)"
+            descrizione: "Mostra informazioni tecniche e debug"
+          
+          - impostazione: "Server API"
+            descrizione: "Cambia endpoint server (solo per test/sviluppo)"
+            opzioni:
+              - "Produzione"
+              - "Staging"
+              - "Locale"
+          
+          - impostazione: "Aggiorna app"
+            azione: "Verifica aggiornamenti"
+            comportamento: "Controlla se disponibile nuova versione su store"
+            nota: "Sostituisce vecchio pulsante 'Home' che reindirizzava a login"
+    
+    # Info
+    - nome: "Info"
+      descrizione: "Informazioni sull'applicazione"
+      
+      sezioni:
+        privacy_policy:
+          fonte: "BicoccApp"
+          formato: "PDF"
+          descrizione: "Informativa sulla privacy e trattamento dati personali"
+          
+          contenuto:
+            - "Titolare del trattamento (Università Milano-Bicocca)"
+            - "Dati raccolti e finalità"
+            - "Base giuridica del trattamento"
+            - "Conservazione dati"
+            - "Diritti dell'interessato (GDPR)"
+            - "Contatti DPO (Data Protection Officer)"
+          
+          azioni:
+            - "Visualizza PDF"
+            - "Scarica copia"
+        
+        termini_e_condizioni:
+          formato: "PDF o HTML"
+          descrizione: "Termini di utilizzo dell'applicazione MyBicocca"
+          
+          contenuto:
+            - "Condizioni d'uso"
+            - "Limitazioni di responsabilità"
+            - "Obblighi dell'utente"
+            - "Modifiche al servizio"
+        
+        versione_app:
+          campi:
+            - campo: "Numero versione"
+              esempio: "v2.4.1"
+              formato: "Semantic Versioning (major.minor.patch)"
+            
+            - campo: "Build number"
+              esempio: "#342"
+              descrizione: "Numero build interno"
+            
+            - campo: "Data rilascio"
+              esempio: "15 Gennaio 2025"
+            
+            - campo: "Ultima verifica aggiornamenti"
+              esempio: "Oggi alle 14:32"
+        
+        crediti:
+          descrizione: "Riconoscimenti e informazioni sviluppo"
+          contenuti:
+            - "Team di sviluppo"
+            - "Ateneo: Università degli Studi di Milano-Bicocca"
+            - "Licenze software open source utilizzate"
+            - "Contatti supporto tecnico"
+        
+        supporto:
+          canali:
+            - nome: "Email supporto"
+              contatto: "supporto.app@unimib.it"
+            
+            - nome: "Segnala bug"
+              descrizione: "Form per segnalare problemi tecnici"
+              campi:
+                - "Descrizione problema"
+                - "Screenshot (opzionale)"
+                - "Versione app"
+                - "Dispositivo e OS"
+            
+            - nome: "FAQ"
+              descrizione: "Domande frequenti sull'utilizzo dell'app"
+              link: "https://www.unimib.it/faq-mybicocca"
+            
+            - nome: "Sistemi Informativi"
+              descrizione: "Contatto ufficio IT per problemi tecnici gravi"
+              email: "sistemi.informativi@unimib.it"
