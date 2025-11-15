@@ -9,9 +9,6 @@ SSL pinning bypass requires system-level modifications (root access), but Bicocc
 
 ## Solution Architecture
 
-> **IMPORTANT:** This research requires a rooted Android device with Magisk (Zygisk enabled), LSPosed, and Frida server.
->
-> **Don't have a rooted device?** Run `./setup_emulator.sh` to automatically create a fully configured Android emulator with all necessary tools.
-
-The [frida](./frida) directory includes the work that went into researching and developing a proof of concept to bypass the security measures.
-The [magisk](./magisk) directory contains a Magisk module that was developed based on the PoC to bypass the security measures.
+- The [frida](./frida) directory includes the work that went into researching and developing a proof of concept to bypass the security measures.
+- The [magisk](./magisk) directory contains a Magisk module that was developed based on the PoC to bypass the security measures.
+- The [emulator](emulator) directory contains scripts to automatically set up and run an Android emulator with all necessary tools to start reverse engineering.
