@@ -7,6 +7,7 @@
 .buildlog/
 .history
 .idea/
+**/go.sum
 
 # packages file containing multi-root paths
 .packages.generated
