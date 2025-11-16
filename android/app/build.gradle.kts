@@ -81,7 +81,6 @@ dependencies {
   implementation("androidx.navigation:navigation-compose:2.9.6")
   implementation("com.google.android.gms:play-services-oss-licenses:17.3.0")
   implementation("androidx.biometric:biometric:1.1.0")
-  implementation("androidx.hilt:hilt-navigation-fragment:1.3.0")
 
   // Vico for charts
   implementation("com.patrykandpatrick.vico:compose:2.3.5")

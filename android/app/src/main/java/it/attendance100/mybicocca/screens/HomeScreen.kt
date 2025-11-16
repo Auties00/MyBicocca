@@ -2,6 +2,7 @@ package it.attendance100.mybicocca.screens
 
 import androidx.activity.*
 import androidx.compose.animation.*
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.pager.*
@@ -36,10 +37,11 @@ fun HomePage(
 ) {
   val pagerState = rememberPagerState(
     initialPage = 0,
-    pageCount = { 4 },
+    pageCount = { 5 },
   )
   val coroutineScope = rememberCoroutineScope()
   val currentPage = pagerState.currentPage
+  val isFirstPage = currentPage == 0
 
   val density = LocalDensity.current
   val drawerWidthDp = 280.dp
@@ -105,6 +107,7 @@ fun HomePage(
             StyledNavigationDrawerItem(
               icon = Icons.Default.Key,
               label = stringResource(R.string.login_manager),
+              trailing = { if (isFirstPage) Avatar(size = 44.dp, modifier = Modifier.offset(x = 18.dp)) },
               selected = false,
               onClick = {
                 navController.navigate(Screen.LoginManager.route) // Switched order on purpose to make the animation feel snappier
@@ -149,7 +152,9 @@ fun HomePage(
             navController = navController,
             drawerState = drawerState,
             sharedTransitionScope = sharedTransitionScope,
-            animatedContentScope = animatedContentScope
+            animatedContentScope = animatedContentScope,
+            isFirstPage = isFirstPage,
+            currentPage = currentPage
           )
         },
         bottomBar = {
@@ -175,25 +180,40 @@ fun HomePage(
     }
 
     // Avatar Drawn on top of everything else
-    HoistedAvatar(
-      sharedTransitionScope = sharedTransitionScope,
-      animatedContentScope = animatedContentScope,
-      animatedX = animatedX,
-      animatedY = animatedY,
-      avatarSize = avatarSize,
-      onClick = {
-        coroutineScope.launch {
+    AnimatedVisibility(
+      visible = !isFirstPage,
+      enter = slideInHorizontally(
+        initialOffsetX = { -it },
+        animationSpec = tween(durationMillis = 400)
+      ) + fadeIn(animationSpec = tween(durationMillis = 400)),
+      exit = slideOutHorizontally(
+        targetOffsetX = { -it },
+        animationSpec = tween(durationMillis = 400)
+      ) + fadeOut(animationSpec = tween(durationMillis = 400)),
+      modifier = Modifier
+          .size(avatarSize)
+          .offset(x = animatedX, y = animatedY)
+    ) {
+      HoistedAvatar(
+        sharedTransitionScope = sharedTransitionScope,
+        animatedContentScope = animatedContentScope,
+        animatedX = 0.dp,
+        animatedY = 0.dp,
+        avatarSize = avatarSize,
+        onClick = {
           coroutineScope.launch {
-            if (drawerState.isOpen) {
-              navController.navigate(Screen.LoginManager.route)
-              drawerState.close()
-            } else {
-              drawerState.open()
+            coroutineScope.launch {
+              if (drawerState.isOpen) {
+                navController.navigate(Screen.LoginManager.route)
+                drawerState.close()
+              } else {
+                drawerState.open()
+              }
             }
           }
         }
-      }
-    )
+      )
+    }
   }
 }
 
@@ -205,6 +225,8 @@ fun TopAppBar(
   drawerState: DrawerState,
   sharedTransitionScope: SharedTransitionScope,
   animatedContentScope: AnimatedContentScope,
+  isFirstPage: Boolean,
+  currentPage: Int,
 ) {
   val grayColor = if (MaterialTheme.colorScheme.background == BackgroundColor) GrayColor else GrayColorLight
   val scope = rememberCoroutineScope()
@@ -222,19 +244,51 @@ fun TopAppBar(
       horizontalArrangement = Arrangement.SpaceBetween,
       verticalAlignment = Alignment.CenterVertically
     ) {
-      // Avatar with Dropdown Menu
-      Box {
-        Box(
-          modifier = Modifier
-              .size(44.dp)
-              .clip(CircleShape)
-              .clickable {
-                // The hoisted avatar will open the drawer
-                scope.launch {
-                  drawerState.open()
-                }
+      // Left button: Menu icon on first page, hoisted avatar placeholder on other pages
+      Box(
+        modifier = Modifier
+            .size(44.dp)
+      ) {
+        this@Row.AnimatedVisibility(
+          visible = isFirstPage,
+          enter = slideInHorizontally(
+            initialOffsetX = { -it },
+            animationSpec = tween(durationMillis = 400)
+          ) + fadeIn(animationSpec = tween(durationMillis = 400)),
+          exit = slideOutHorizontally(
+            targetOffsetX = { -it },
+            animationSpec = tween(durationMillis = 400)
+          ) + fadeOut(animationSpec = tween(durationMillis = 400))
+        ) {
+          IconButton(
+            onClick = {
+              scope.launch {
+                drawerState.open()
               }
-        )
+            }
+          ) {
+            Icon(
+              imageVector = Icons.Default.Menu,
+              contentDescription = stringResource(R.string.settings),
+              tint = grayColor,
+              modifier = Modifier.size(28.dp)
+            )
+          }
+        }
+
+        // Invisible placeholder for avatar when not on first page
+        // The actual avatar is hoisted and rendered separately
+        if (!isFirstPage) {
+          Box(
+            modifier = Modifier
+                .clip(CircleShape)
+                .clickable {
+                  scope.launch {
+                    drawerState.open()
+                  }
+                }
+          )
+        }
       }
 
       // App Title
@@ -265,6 +319,7 @@ fun BottomNavBar(currentIndex: Int, onPageSelected: (Int) -> Unit) {
     contentColor = primaryColor
   ) {
     val items = listOf(
+      BottomNavItem(stringResource(R.string.bottom_navbar_home), Icons.Outlined.Home, Icons.Filled.Home),
       BottomNavItem(stringResource(R.string.bottom_navbar_calendario), Icons.Outlined.CalendarMonth, Icons.Filled.CalendarMonth),
       BottomNavItem(stringResource(R.string.bottom_navbar_elearning), Icons.Outlined.School, Icons.Filled.School),
       BottomNavItem(stringResource(R.string.bottom_navbar_segreterie), Icons.Outlined.ContactPage, Icons.Filled.ContactPage),
@@ -307,7 +362,12 @@ fun PageContent(
   animatedContentScope: AnimatedContentScope,
 ) {
   when (page) {
-    3 -> {
+    0 -> {
+      // Home page with centered avatar
+      HomeContentScreen()
+    }
+
+    4 -> {
       // Career page
       CareerScreen(sharedTransitionScope, animatedContentScope)
     }
@@ -331,6 +391,18 @@ fun PageContent(
         )
       }
     }
+  }
+}
+
+@Composable
+fun HomeContentScreen() {
+  Box(
+    modifier = Modifier
+        .fillMaxSize()
+        .background(MaterialTheme.colorScheme.background),
+    contentAlignment = Alignment.Center
+  ) {
+    Avatar(size = 120.dp)
   }
 }
 
