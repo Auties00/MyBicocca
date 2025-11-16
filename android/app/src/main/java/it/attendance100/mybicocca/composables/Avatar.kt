@@ -18,6 +18,63 @@ import coil.compose.*
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.ui.theme.*
 
+@Composable
+fun Avatar(
+  modifier: Modifier = Modifier,
+  size: Dp = 120.dp,
+) {
+  val primaryColor = MaterialTheme.colorScheme.primary
+  val grayColor = if (MaterialTheme.colorScheme.background == BackgroundColor) GrayColor else GrayColorLight
+
+  Box(
+    modifier = modifier
+        .size(size)
+        .clip(CircleShape)
+  ) {
+    SubcomposeAsyncImage(
+      model = "https://lh3.googleusercontent.com/a/ACg8ocLz6eMAklEzeodysm38Y18Ult6bw96hlhQ_DCheY_eEnuoLeno=s298-c-no",
+      contentDescription = stringResource(R.string.homescreen_profile),
+      contentScale = ContentScale.Crop,
+      modifier = Modifier
+          .fillMaxSize()
+          .clip(CircleShape)
+    ) {
+      when (painter.state) {
+        is AsyncImagePainter.State.Loading -> {
+          Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+          ) {
+            CircularProgressIndicator(
+              modifier = Modifier.size(size * 0.33f),
+              strokeWidth = 3.dp,
+              color = primaryColor
+            )
+          }
+        }
+
+        is AsyncImagePainter.State.Error -> {
+          Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .clip(CircleShape),
+            contentAlignment = Alignment.Center
+          ) {
+            Icon(
+              imageVector = Icons.Default.Person,
+              contentDescription = stringResource(R.string.error_loading_image),
+              tint = grayColor,
+              modifier = Modifier.size(size * 0.5f)
+            )
+          }
+        }
+
+        else -> SubcomposeAsyncImageContent()
+      }
+    }
+  }
+}
+
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun SharedAvatar(

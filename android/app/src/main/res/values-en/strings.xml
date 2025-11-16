@@ -1,4 +1,5 @@
 <resources>
+  <string name="bottom_navbar_home">Home</string>
   <string name="bottom_navbar_calendario">Calendar</string>
   <string name="bottom_navbar_elearning">Elearning</string>
   <string name="bottom_navbar_segreterie">Secretariat</string>

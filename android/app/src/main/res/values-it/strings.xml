@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+  <string name="bottom_navbar_home">Home</string>
   <string name="bottom_navbar_calendario">Calendario</string>
   <string name="bottom_navbar_elearning">Elearning</string>
   <string name="bottom_navbar_segreterie">Segreterie</string>

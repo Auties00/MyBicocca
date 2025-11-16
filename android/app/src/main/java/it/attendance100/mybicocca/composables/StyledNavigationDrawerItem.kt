@@ -17,6 +17,7 @@ fun StyledNavigationDrawerItem(
   selected: Boolean = false,
   onClick: () -> Unit,
   modifier: Modifier = Modifier,
+  trailing: (@Composable () -> Unit)? = null,
 ) {
   val textColor = MaterialTheme.colorScheme.onBackground
   val grayColor = if (MaterialTheme.colorScheme.background == BackgroundColor) GrayColor else GrayColorLight
@@ -36,6 +37,7 @@ fun StyledNavigationDrawerItem(
         fontSize = 16.sp
       )
     },
+    badge = trailing,
     selected = selected,
     onClick = onClick,
     modifier = modifier
