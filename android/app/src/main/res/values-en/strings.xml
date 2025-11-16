@@ -33,4 +33,29 @@
   <string name="logins_list">Logins List</string>
   <string name="settings_material_you_enabled">Material You design is active</string>
   <string name="settings_material_you_disabled">Use Material You design</string>
+
+  <!-- Career Page -->
+  <string name="career_tab_profilo">Profile</string>
+  <string name="career_tab_piano">Plan</string>
+  <string name="career_tab_esami">Exams</string>
+  <string name="career_tab_luoghi">Places</string>
+  <string name="career_dati">Personal Data</string>
+  <string name="career_statistiche">Statistics</string>
+  <string name="career_name">Name</string>
+  <string name="career_surname">Surname</string>
+  <string name="career_matricola">Student ID</string>
+  <string name="career_corso">Degree Program</string>
+  <string name="career_anno">Year of Study</string>
+  <string name="career_email">Institutional Email</string>
+  <string name="career_media_aritmetica">Arithmetic Average</string>
+  <string name="career_media_ponderata">Weighted Average</string>
+  <string name="career_esami_sostenuti">Exams Taken</string>
+  <string name="career_cfu_acquisiti">Credits Earned</string>
+  <string name="career_calcola_media">Calculate hypothetical average</string>
+  <string name="career_dialog_title">Calculate Hypothetical Average</string>
+  <string name="career_dialog_voto">Grade</string>
+  <string name="career_dialog_cfu">Credits</string>
+  <string name="career_dialog_calcola">Calculate</string>
+  <string name="career_dialog_annulla">Cancel</string>
+  <string name="career_grafico_voti">Grades Chart</string>
 </resources>

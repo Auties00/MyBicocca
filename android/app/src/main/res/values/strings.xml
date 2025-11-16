@@ -40,4 +40,29 @@
   <string name="settings_material_you" translatable="false">Material You</string>
   <string name="settings_material_you_enabled">Il design Material You è attivo</string>
   <string name="settings_material_you_disabled">Usa il design Material You</string>
+
+  <!-- Career Page -->
+  <string name="career_tab_profilo">Profilo</string>
+  <string name="career_tab_piano">Piano</string>
+  <string name="career_tab_esami">Esami</string>
+  <string name="career_tab_luoghi">Luoghi</string>
+  <string name="career_dati">Dati Personali</string>
+  <string name="career_statistiche">Statistiche</string>
+  <string name="career_name">Nome</string>
+  <string name="career_surname">Cognome</string>
+  <string name="career_matricola">Matricola</string>
+  <string name="career_corso">Corso di Laurea</string>
+  <string name="career_anno">Anno di Corso</string>
+  <string name="career_email">Email Istituzionale</string>
+  <string name="career_media_aritmetica">Media Aritmetica</string>
+  <string name="career_media_ponderata">Media Ponderata</string>
+  <string name="career_esami_sostenuti">Esami Sostenuti</string>
+  <string name="career_cfu_acquisiti">CFU Acquisiti</string>
+  <string name="career_calcola_media">Calcola media ipotetica</string>
+  <string name="career_dialog_title">Calcola Media Ipotetica</string>
+  <string name="career_dialog_voto">Voto</string>
+  <string name="career_dialog_cfu">CFU</string>
+  <string name="career_dialog_calcola">Calcola</string>
+  <string name="career_dialog_annulla">Annulla</string>
+  <string name="career_grafico_voti">Grafico Voti</string>
 </resources>
