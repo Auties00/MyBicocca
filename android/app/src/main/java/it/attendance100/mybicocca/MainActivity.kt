@@ -35,24 +35,6 @@ class MainActivity : ComponentActivity() {
 
     // WindowCompat.setDecorFitsSystemWindows(window, false)
 
-    // Enable edge-to-edge content
-    // enableEdgeToEdge(
-    //   // Set the status bar to be transparent
-    //   statusBarStyle =
-    //       if (preferencesManager.isDarkMode)
-    //         SystemBarStyle.dark(
-    //           Color.Transparent.toArgb(),
-    //         ) else SystemBarStyle.light(
-    //         Color.Transparent.toArgb(),
-    //         darkScrim = Color.Transparent.toArgb(),
-    //       ),
-    //   // Set the navigation bar to a solid black color
-    //   navigationBarStyle = SystemBarStyle.auto(
-    //     lightScrim = PrimaryColor.toArgb(),
-    //     darkScrim = PrimaryColor.toArgb(),
-    //   )
-    // )
-
     setContent {
       val preferencesManager = rememberPreferencesManager() // Reinstantiation with context
       val systemInDarkTheme = isSystemInDarkTheme()
@@ -70,12 +52,29 @@ class MainActivity : ComponentActivity() {
         }
       }
 
+      // Update edge-to-edge when theme changes
+      LaunchedEffect(isDarkMode) {
+        enableEdgeToEdge(
+          statusBarStyle =
+              if (isDarkMode)
+                SystemBarStyle.dark(
+                  Color.Transparent.toArgb(),
+                ) else SystemBarStyle.light(
+                Color.Transparent.toArgb(),
+                darkScrim = Color.Transparent.toArgb(),
+              ),
+          navigationBarStyle = SystemBarStyle.auto(
+            lightScrim = OnPrimaryColor.toArgb(),
+            darkScrim = OnPrimaryColor.toArgb(),
+          )
+        )
+      }
+
       MyBicoccaTheme(darkTheme = isDarkMode) {
         Surface(
           modifier = Modifier
               .fillMaxSize()
               .statusBarsPadding(), // manual top padding because of enableEdgeToEdge()
-          color = MaterialTheme.colorScheme.background,
         ) {
           AppNavigation(
             onThemeChange = { _ ->
@@ -93,7 +92,6 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun AppNavigation(onThemeChange: (Boolean) -> Unit) {
   val navController = rememberNavController()
-  val predictiveBackEasingFactor = 10.0f
   val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
   val scope = rememberCoroutineScope()
 
@@ -104,17 +102,20 @@ fun AppNavigation(onThemeChange: (Boolean) -> Unit) {
       popExitTransition = {
         scaleOut(
           targetScale = 0.9f,
-          transformOrigin = TransformOrigin(pivotFractionX = 1.5f, pivotFractionY = 0.5f),
-          animationSpec = tween(300, easing = /*CubicBezierEasing(0f,0f,0f,1f))*/ { fraction -> hybridEaseLog(fraction, 2.5f, 2.5f, 0.01f) * predictiveBackEasingFactor })
-        ) + fadeOut(animationSpec = tween(300, easing = { fraction -> fraction * 2 })) + slideOutHorizontally(
-          targetOffsetX = { hybridEaseLog(it / 3f, 30f, 30f, 20f).toInt() },
-          animationSpec = tween(300)
+          transformOrigin = TransformOrigin(pivotFractionX = 0.5f, pivotFractionY = 0.5f),
+          animationSpec = tween(300, easing = CubicBezierEasing(0f, 1f, 0.57f, 0.93f))
+        ) + fadeOut(
+          targetAlpha = 0.1f,
+          animationSpec = tween(300, easing = CubicBezierEasing(0f, 1f, 0.57f, 0.93f))
+        ) + slideOutHorizontally(
+          targetOffsetX = { it / 4 },
+          animationSpec = tween(300, easing = CubicBezierEasing(0f, 1f, 0.57f, 0.93f))
         )
       },
       popEnterTransition = {
         slideInHorizontally(
-          initialOffsetX = { -it / 3 },
-          animationSpec = tween(300)
+          initialOffsetX = { -it / 2 },
+          animationSpec = tween(300, easing = CubicBezierEasing(0f, 1f, 0.57f, 0.93f))
         )
       },
     ) {

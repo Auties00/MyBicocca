@@ -168,7 +168,7 @@ fun SettingsScreen(
                 modifier = Modifier
                     .size(24.dp)
                     .sharedElement(
-                      state = rememberSharedContentState(key = "settings_icon"),
+                      sharedContentState = rememberSharedContentState(key = "settings_icon"),
                       animatedVisibilityScope = animatedContentScope,
                       boundsTransform = { _, _ ->
                         tween(durationMillis = 400)
@@ -202,7 +202,7 @@ fun SettingsScreen(
         }
       }
 
-      Divider(color = grayColor.copy(alpha = 0.2f), modifier = Modifier.padding(horizontal = 16.dp))
+      HorizontalDivider(color = grayColor.copy(alpha = 0.2f), modifier = Modifier.padding(horizontal = 16.dp))
 
       // General Section
       Text(
@@ -269,6 +269,7 @@ fun SettingsScreen(
     if (showLanguageDialog) {
       AlertDialog(
         onDismissRequest = { showLanguageDialog = false },
+        containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
         title = {
           Text(text = stringResource(R.string.settings_language))
         },
@@ -323,6 +324,7 @@ fun SettingsScreen(
 
       AlertDialog(
         onDismissRequest = { showThemeDialog = false },
+        containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
         title = {
           Text(text = stringResource(R.string.settings_theme))
         },

@@ -20,6 +20,68 @@ import it.attendance100.mybicocca.ui.theme.*
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
+fun SharedAvatar(
+  sharedTransitionScope: SharedTransitionScope,
+  animatedContentScope: AnimatedContentScope,
+  modifier: Modifier = Modifier,
+  size: Dp = 120.dp,
+) {
+  val primaryColor = MaterialTheme.colorScheme.primary
+  val grayColor = if (MaterialTheme.colorScheme.background == BackgroundColor) GrayColor else GrayColorLight
+
+  with(sharedTransitionScope) {
+    SubcomposeAsyncImage(
+      model = "https://lh3.googleusercontent.com/a/ACg8ocLz6eMAklEzeodysm38Y18Ult6bw96hlhQ_DCheY_eEnuoLeno=s298-c-no",
+      contentDescription = stringResource(R.string.homescreen_profile),
+      contentScale = ContentScale.Crop,
+      modifier = modifier
+          .size(size)
+          .clip(CircleShape)
+          .sharedElement(
+            sharedContentState = rememberSharedContentState(key = "avatar"),
+            animatedVisibilityScope = animatedContentScope,
+            boundsTransform = { _, _ ->
+              tween(durationMillis = 400)
+            },
+            clipInOverlayDuringTransition = OverlayClip(CircleShape)
+          )
+    ) {
+      when (painter.state) {
+        is AsyncImagePainter.State.Loading -> {
+          Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+          ) {
+            CircularProgressIndicator(
+              modifier = Modifier.size(size * 0.33f),
+              strokeWidth = 3.dp,
+              color = primaryColor
+            )
+          }
+        }
+
+        is AsyncImagePainter.State.Error -> {
+          Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+          ) {
+            Icon(
+              imageVector = Icons.Default.Person,
+              contentDescription = stringResource(R.string.error_loading_image),
+              tint = grayColor,
+              modifier = Modifier.size(size * 0.5f)
+            )
+          }
+        }
+
+        else -> SubcomposeAsyncImageContent()
+      }
+    }
+  }
+}
+
+@OptIn(ExperimentalSharedTransitionApi::class)
+@Composable
 fun HoistedAvatar(
   sharedTransitionScope: SharedTransitionScope,
   animatedContentScope: AnimatedContentScope,
@@ -42,7 +104,7 @@ fun HoistedAvatar(
           .clip(CircleShape)
           .clickable { onClick() }
           .sharedElement(
-            state = rememberSharedContentState(key = "avatar"),
+            sharedContentState = rememberSharedContentState(key = "avatar"),
             animatedVisibilityScope = animatedContentScope,
             boundsTransform = { _, _ -> tween(durationMillis = 400) },
             clipInOverlayDuringTransition = OverlayClip(CircleShape)

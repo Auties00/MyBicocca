@@ -1,27 +1,22 @@
 package it.attendance100.mybicocca.screens
 
-import androidx.biometric.BiometricManager
+import androidx.biometric.*
 import androidx.compose.animation.*
-import androidx.compose.animation.core.*
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.*
 import androidx.compose.material.icons.*
 import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material.icons.filled.*
-import androidx.compose.material.icons.outlined.School
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.*
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.layout.*
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.*
 import androidx.compose.ui.res.*
 import androidx.compose.ui.text.font.*
 import androidx.compose.ui.unit.*
 import androidx.navigation.*
-import coil.compose.*
 import it.attendance100.mybicocca.R
+import it.attendance100.mybicocca.composables.*
 import it.attendance100.mybicocca.ui.theme.*
 
 @OptIn(ExperimentalSharedTransitionApi::class)
@@ -88,55 +83,11 @@ fun LoginManagerScreen(
             .fillMaxWidth()
             .padding(top = 24.dp, bottom = 32.dp)
       ) {
-        with(sharedTransitionScope) {
-          SubcomposeAsyncImage(
-            model = "https://lh3.googleusercontent.com/a/ACg8ocLz6eMAklEzeodysm38Y18Ult6bw96hlhQ_DCheY_eEnuoLeno=s298-c-no",
-            contentDescription = stringResource(R.string.homescreen_profile),
-            contentScale = ContentScale.Crop,
-            modifier = Modifier
-                .size(120.dp)
-                .clip(CircleShape)
-                .sharedElement(
-                  state = rememberSharedContentState(key = "avatar"),
-                  animatedVisibilityScope = animatedContentScope,
-                  boundsTransform = { _, _ ->
-                    tween(durationMillis = 400)
-                  },
-                  clipInOverlayDuringTransition = OverlayClip(CircleShape)
-                )
-          ) {
-            when (painter.state) {
-              is AsyncImagePainter.State.Loading -> {
-                Box(
-                  modifier = Modifier.fillMaxSize(),
-                  contentAlignment = Alignment.Center
-                ) {
-                  CircularProgressIndicator(
-                    modifier = Modifier.size(40.dp),
-                    strokeWidth = 3.dp,
-                    color = primaryColor
-                  )
-                }
-              }
-
-              is AsyncImagePainter.State.Error -> {
-                Box(
-                  modifier = Modifier.fillMaxSize(),
-                  contentAlignment = Alignment.Center
-                ) {
-                  Icon(
-                    imageVector = Icons.Default.Person,
-                    contentDescription = null,
-                    tint = grayColor,
-                    modifier = Modifier.size(60.dp)
-                  )
-                }
-              }
-
-              else -> SubcomposeAsyncImageContent()
-            }
-          }
-        }
+        SharedAvatar(
+          sharedTransitionScope = sharedTransitionScope,
+          animatedContentScope = animatedContentScope,
+          size = 120.dp
+        )
         Text(
           text = stringResource(R.string.login_manager),
           color = textColor,
