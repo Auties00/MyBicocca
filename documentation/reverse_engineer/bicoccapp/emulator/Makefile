@@ -1,6 +1,6 @@
 .PHONY: all build clean deps test install build-all help
 
-APP_NAME := emulator
+APP_NAME := bicoccapp-emulator
 OUTPUT_DIR := bin
 
 # Default target
