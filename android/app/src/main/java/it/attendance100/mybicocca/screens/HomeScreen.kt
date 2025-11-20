@@ -17,8 +17,8 @@ import androidx.compose.ui.graphics.vector.*
 import androidx.compose.ui.platform.*
 import androidx.compose.ui.res.*
 import androidx.compose.ui.unit.*
+import androidx.compose.foundation.pager.*
 import androidx.navigation.*
-import com.google.accompanist.pager.*
 import it.attendance100.mybicocca.*
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.composables.*
@@ -26,7 +26,7 @@ import it.attendance100.mybicocca.ui.theme.*
 import it.attendance100.mybicocca.utils.*
 import kotlinx.coroutines.*
 
-@OptIn(ExperimentalPagerApi::class, ExperimentalSharedTransitionApi::class)
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun HomePage(
   navController: NavHostController,
@@ -34,7 +34,7 @@ fun HomePage(
   animatedContentScope: AnimatedContentScope,
   drawerState: DrawerState,
 ) {
-  val pagerState = rememberPagerState()
+  val pagerState = rememberPagerState(pageCount = { 4 })
   val coroutineScope = rememberCoroutineScope()
   val currentPage = pagerState.currentPage
 
@@ -164,7 +164,6 @@ fun HomePage(
         }
       ) { paddingValues ->
         HorizontalPager(
-          count = 4,
           state = pagerState,
           modifier = Modifier
               .fillMaxSize()
@@ -302,17 +301,20 @@ fun BottomNavBar(currentIndex: Int, onPageSelected: (Int) -> Unit) {
 
 @Composable
 fun PageContent(page: Int) {
-  Box(
-    modifier = Modifier
+  when (page) {
+    0 -> CalendarScreen()
+    else -> Box(
+      modifier = Modifier
         .fillMaxSize()
         .background(MaterialTheme.colorScheme.background),
-    contentAlignment = Alignment.Center
-  ) {
-    Text(
-      text = "Page ${page + 1}",
-      color = MaterialTheme.colorScheme.onBackground,
-      fontSize = 24.sp
-    )
+      contentAlignment = Alignment.Center
+    ) {
+      Text(
+        text = "Page ${page + 1}",
+        color = MaterialTheme.colorScheme.onBackground,
+        fontSize = 24.sp
+      )
+    }
   }
 }
 

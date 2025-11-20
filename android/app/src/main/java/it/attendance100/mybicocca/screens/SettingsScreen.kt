@@ -168,7 +168,7 @@ fun SettingsScreen(
                 modifier = Modifier
                     .size(24.dp)
                     .sharedElement(
-                      state = rememberSharedContentState(key = "settings_icon"),
+                      sharedContentState = rememberSharedContentState(key = "settings_icon"),
                       animatedVisibilityScope = animatedContentScope,
                       boundsTransform = { _, _ ->
                         tween(durationMillis = 400)

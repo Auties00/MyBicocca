@@ -97,7 +97,7 @@ fun LoginManagerScreen(
                 .size(120.dp)
                 .clip(CircleShape)
                 .sharedElement(
-                  state = rememberSharedContentState(key = "avatar"),
+                  sharedContentState = rememberSharedContentState(key = "avatar"),
                   animatedVisibilityScope = animatedContentScope,
                   boundsTransform = { _, _ ->
                     tween(durationMillis = 400)

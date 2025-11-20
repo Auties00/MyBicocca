@@ -115,7 +115,7 @@ fun AppInfoScreen(
             modifier = Modifier
                 .size(190.dp)
                 .sharedElement(
-                  state = rememberSharedContentState(key = "appinfo_icon"),
+                  sharedContentState = rememberSharedContentState(key = "appinfo_icon"),
                   animatedVisibilityScope = animatedContentScope,
                   boundsTransform = { _, _ ->
                     tween(durationMillis = 400)

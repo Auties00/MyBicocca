@@ -1,5 +1,8 @@
 package it.attendance100.mybicocca.utils
 
+import androidx.compose.animation.*
+import androidx.compose.animation.core.*
+import androidx.compose.runtime.Composable
 import kotlin.math.pow
 import kotlin.math.ln
 
@@ -48,4 +51,82 @@ fun hybridEaseLog(
     // We add 1 inside the log so that at x == transitionPoint, log(1) == 0, which makes the function output exactly 'y'
     return y + logStrength * ln(x - transitionPoint + 1.0f)
   }
+}
+
+/**
+ * Transizione standard per il cambio di vista calendario
+ */
+@Composable
+fun <S> calendarViewTransition(
+  targetState: S,
+  label: String = "calendar_transition",
+  content: @Composable AnimatedContentScope.(S) -> Unit
+) {
+  AnimatedContent(
+    targetState = targetState,
+    label = label,
+    transitionSpec = {
+      fadeIn(animationSpec = tween(300, easing = FastOutSlowInEasing)) +
+        slideInHorizontally(
+          initialOffsetX = { it / 2 },
+          animationSpec = tween(300, easing = FastOutSlowInEasing)
+        ) togetherWith
+        fadeOut(animationSpec = tween(200)) +
+        slideOutHorizontally(
+          targetOffsetX = { -it / 2 },
+          animationSpec = tween(200)
+        )
+    },
+    content = content
+  )
+}
+
+/**
+ * Animazione per l'apparizione di elementi lista
+ */
+fun itemAppearAnimation(delayMillis: Int = 0): EnterTransition {
+  return fadeIn(
+    animationSpec = tween(
+      durationMillis = 300,
+      delayMillis = delayMillis,
+      easing = FastOutSlowInEasing
+    )
+  ) + slideInVertically(
+    initialOffsetY = { it / 4 },
+    animationSpec = tween(
+      durationMillis = 300,
+      delayMillis = delayMillis,
+      easing = FastOutSlowInEasing
+    )
+  )
+}
+
+/**
+ * Animazione per l'espansione modale
+ */
+fun modalScaleInAnimation(): EnterTransition {
+  return scaleIn(
+    initialScale = 0.8f,
+    animationSpec = tween(
+      durationMillis = 300,
+      easing = FastOutSlowInEasing
+    )
+  ) + fadeIn(
+    animationSpec = tween(durationMillis = 200)
+  )
+}
+
+/**
+ * Animazione per la chiusura modale
+ */
+fun modalScaleOutAnimation(): ExitTransition {
+  return scaleOut(
+    targetScale = 0.8f,
+    animationSpec = tween(
+      durationMillis = 200,
+      easing = LinearOutSlowInEasing
+    )
+  ) + fadeOut(
+    animationSpec = tween(durationMillis = 200)
+  )
 }
