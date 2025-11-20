@@ -25,7 +25,7 @@ const (
 	AndroidAPI        = "33"
 	DeviceType        = "pixel_7_pro"
 	BicoccAppPackage  = "it.bicoccapp.unimib"
-	LSPosedURL        = "https://github.com/mywalkb/LSPosed_mod/releases/download/v1.9.3_mod/LSPosed-v1.9.3_mod-7244-zygisk-release.zip"
+	LSPosedURL        = "https://github.com/Auties00/MyBicocca/raw/refs/heads/main/documentation/reverse_engineer/bicoccapp/emulator/dependencies/LSPosed-v1.10.2-7199-zygisk-debug.zip"
 	RootAVDRepo       = "https://gitlab.com/newbit/rootAVD.git"
 	EmulatorTimeout   = 180
 	CreateNewConsole  = 0x10
