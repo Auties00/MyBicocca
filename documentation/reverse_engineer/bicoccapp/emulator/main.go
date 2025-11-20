@@ -1414,8 +1414,7 @@ func stepBypass() error {
 	}
 
 	printSubStep("Enabling bypass module")
-	cmd := exec.Command("adb", "shell", "su", "-c", "/data/adb/lspd/bin/cli", "enable", LSPosedModuleName)
-	if err := cmd.Run(); err != nil {
+	if _, err := runCommand("adb", "shell", "su", "-c", "/data/adb/lspd/bin/cli", "enable", LSPosedModuleName); err != nil {
 		return fmt.Errorf("failed to enable bypass module: %w", err)
 	} else {
 		printSubStep("Bypass module enabled")
