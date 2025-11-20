@@ -40,4 +40,21 @@
   <string name="settings_material_you" translatable="false">Material You</string>
   <string name="settings_material_you_enabled">Il design Material You è attivo</string>
   <string name="settings_material_you_disabled">Usa il design Material You</string>
+  <string name="calendar_today">Oggi</string>
+  <string name="calendar_previous_month">Mese Precedente</string>
+  <string name="calendar_next_month">Mese Successivo</string>
+  <string name="calendar_events">Eventi</string>
+  <string name="calendar_no_events">Nessun evento per questo giorno</string>
+  <string name="calendar_list_view">Vista Lista</string>
+  <string name="calendar_week_view">Vista Settimanale</string>
+  <string name="event_type_lecture">Lezione</string>
+  <string name="event_type_lab">Laboratorio</string>
+  <string name="event_type_exam">Esame</string>
+  <string name="event_type_office_hours">Ricevimento</string>
+  <string name="event_type_other">Altro</string>
+  <string name="event_detail_date_time">Data e Orario</string>
+  <string name="event_detail_professor">Docente</string>
+  <string name="event_detail_location">Luogo</string>
+  <string name="event_detail_notes">Note</string>
+  <string name="event_detail_close">Chiudi</string>
 </resources>

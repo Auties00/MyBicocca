@@ -12,6 +12,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.*
 import androidx.compose.ui.graphics.*
 import androidx.navigation.compose.*
+import dagger.hilt.android.AndroidEntryPoint
 import it.attendance100.mybicocca.screens.*
 import it.attendance100.mybicocca.ui.theme.*
 import it.attendance100.mybicocca.utils.*
@@ -26,6 +27,7 @@ sealed class Screen(val route: String) {
 }
 
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
   override fun onCreate(savedInstanceState: Bundle?) {
     val preferencesManager = PreferencesManager(this)

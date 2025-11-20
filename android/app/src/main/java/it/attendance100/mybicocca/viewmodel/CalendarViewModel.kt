@@ -1,23 +1,28 @@
 package it.attendance100.mybicocca.viewmodel
 
-import android.app.*
 import androidx.lifecycle.*
+import dagger.hilt.android.lifecycle.HiltViewModel
+import it.attendance100.mybicocca.domain.usecase.*
 import it.attendance100.mybicocca.model.*
-import it.attendance100.mybicocca.repository.*
 import kotlinx.coroutines.*
 import java.time.*
+import javax.inject.Inject
+
 
 /**
- * ViewModel per il calendario
- * Gestisce lo stato e la logica di business del calendario
+ * ViewModel per il calendario.
+ * Gestisce lo stato e la logica di business del calendario.
+ * Usa Hilt per Dependency Injection e Use Cases per business logic.
  */
-class CalendarViewModel(application: Application) : AndroidViewModel(application) {
-
-  private val repository: CalendarRepository
-
-  // LiveData per gli eventi e gli orari
-  val allEvents: LiveData<List<CourseEvent>>
-  val allSchedules: LiveData<List<CourseSchedule>>
+@HiltViewModel
+class CalendarViewModel @Inject constructor(
+  private val getEventsForDateUseCase: GetEventsForDateUseCase,
+  private val getEventsForMonthUseCase: GetEventsForMonthUseCase,
+  private val syncCalendarUseCase: SyncCalendarUseCase,
+  private val insertEventUseCase: InsertEventUseCase,
+  private val updateEventUseCase: UpdateEventUseCase,
+  private val deleteEventUseCase: DeleteEventUseCase
+) : ViewModel() {
 
   // Stato del calendario
   private val _selectedDate = MutableLiveData<LocalDate>()
@@ -33,40 +38,54 @@ class CalendarViewModel(application: Application) : AndroidViewModel(application
   val errorMessage: LiveData<String?> = _errorMessage
 
   init {
-    val database = AppDatabase.getDatabase(application)
-    repository = CalendarRepository(
-      database.courseEventDao(),
-      database.courseScheduleDao()
-    )
-    allEvents = repository.allEvents
-    allSchedules = repository.allSchedules
-
     // Inizializza con la data corrente
     _selectedDate.value = LocalDate.now()
     _currentMonth.value = YearMonth.now()
+    
+    // Carica i dati iniziali
+    loadInitialData()
+  }
+  
+  /**
+   * Carica i dati iniziali (funziona sia con Mock che con API reale)
+   */
+  private fun loadInitialData() = viewModelScope.launch {
+    try {
+      _isLoading.value = true
+      // Sincronizza dal server (o carica dati mock)
+      syncCalendarUseCase()
+      _errorMessage.value = null
+    } catch (e: Exception) {
+      _errorMessage.value = e.message
+    } finally {
+      _isLoading.value = false
+    }
   }
 
   /**
    * Ottiene gli eventi per la data selezionata
    */
-  val eventsForSelectedDate: LiveData<List<CourseEvent>> = Transformations.switchMap<LocalDate, List<CourseEvent>>(_selectedDate) { date ->
-    repository.getEventsByDate(date)
+  val eventsForSelectedDate: LiveData<List<CourseEvent>> = _selectedDate.switchMap { date ->
+    getEventsForDateUseCase(date)
   }
 
   /**
    * Ottiene gli eventi per il mese corrente
    */
-  val eventsForCurrentMonth: LiveData<List<CourseEvent>> = Transformations.switchMap<YearMonth, List<CourseEvent>>(_currentMonth) { month ->
-    val startDate = month.atDay(1)
-    val endDate = month.atEndOfMonth()
-    repository.getEventsBetweenDates(startDate, endDate)
+  val eventsForCurrentMonth: LiveData<List<CourseEvent>> = _currentMonth.switchMap { month ->
+    getEventsForMonthUseCase(month)
   }
 
   /**
-   * Seleziona una nuova data
+   * Seleziona una nuova data e aggiorna il mese corrente se necessario
    */
   fun selectDate(date: LocalDate) {
     _selectedDate.value = date
+    // Sincronizza currentMonth solo se la data è in un mese diverso
+    val dateMonth = YearMonth.from(date)
+    if (_currentMonth.value != dateMonth) {
+      _currentMonth.value = dateMonth
+    }
   }
 
   /**
@@ -77,17 +96,59 @@ class CalendarViewModel(application: Application) : AndroidViewModel(application
   }
 
   /**
-   * Va al mese precedente
+   * Va al mese precedente e aggiorna la data selezionata
    */
   fun previousMonth() {
-    _currentMonth.value = _currentMonth.value?.minusMonths(1) ?: YearMonth.now().minusMonths(1)
+    val current = _currentMonth.value ?: YearMonth.now()
+    val newMonth = current.minusMonths(1)
+    _currentMonth.value = newMonth
+    
+    // Mantieni lo stesso giorno del mese, o l'ultimo se non esiste
+    val currentDay = _selectedDate.value?.dayOfMonth ?: 1
+    val newDay = minOf(currentDay, newMonth.lengthOfMonth())
+    _selectedDate.value = newMonth.atDay(newDay)
   }
 
   /**
-   * Va al mese successivo
+   * Va al mese successivo e aggiorna la data selezionata
    */
   fun nextMonth() {
-    _currentMonth.value = _currentMonth.value?.plusMonths(1) ?: YearMonth.now().plusMonths(1)
+    val current = _currentMonth.value ?: YearMonth.now()
+    val newMonth = current.plusMonths(1)
+    _currentMonth.value = newMonth
+    
+    // Mantieni lo stesso giorno del mese, o l'ultimo se non esiste
+    val currentDay = _selectedDate.value?.dayOfMonth ?: 1
+    val newDay = minOf(currentDay, newMonth.lengthOfMonth())
+    _selectedDate.value = newMonth.atDay(newDay)
+  }
+
+  /**
+   * Va alla settimana precedente
+   */
+  fun previousWeek() {
+    val current = _selectedDate.value ?: return
+    val newDate = current.minusWeeks(1)
+    _selectedDate.value = newDate
+    // Aggiorna currentMonth solo se la data è in un mese diverso
+    val newMonth = YearMonth.from(newDate)
+    if (_currentMonth.value != newMonth) {
+      _currentMonth.value = newMonth
+    }
+  }
+
+  /**
+   * Va alla settimana successiva
+   */
+  fun nextWeek() {
+    val current = _selectedDate.value ?: return
+    val newDate = current.plusWeeks(1)
+    _selectedDate.value = newDate
+    // Aggiorna currentMonth solo se la data è in un mese diverso
+    val newMonth = YearMonth.from(newDate)
+    if (_currentMonth.value != newMonth) {
+      _currentMonth.value = newMonth
+    }
   }
 
   /**
@@ -104,7 +165,7 @@ class CalendarViewModel(application: Application) : AndroidViewModel(application
   fun insertEvent(event: CourseEvent) = viewModelScope.launch {
     try {
       _isLoading.value = true
-      repository.insertEvent(event)
+      insertEventUseCase(event)
       _errorMessage.value = null
     } catch (e: Exception) {
       _errorMessage.value = e.message
@@ -119,7 +180,7 @@ class CalendarViewModel(application: Application) : AndroidViewModel(application
   fun updateEvent(event: CourseEvent) = viewModelScope.launch {
     try {
       _isLoading.value = true
-      repository.updateEvent(event)
+      updateEventUseCase(event)
       _errorMessage.value = null
     } catch (e: Exception) {
       _errorMessage.value = e.message
@@ -134,7 +195,7 @@ class CalendarViewModel(application: Application) : AndroidViewModel(application
   fun deleteEvent(event: CourseEvent) = viewModelScope.launch {
     try {
       _isLoading.value = true
-      repository.deleteEvent(event)
+      deleteEventUseCase(event)
       _errorMessage.value = null
     } catch (e: Exception) {
       _errorMessage.value = e.message
@@ -144,30 +205,12 @@ class CalendarViewModel(application: Application) : AndroidViewModel(application
   }
 
   /**
-   * Sincronizza i dati dal server
+   * Sincronizza i dati dal server (funziona sia con Mock che con API reale)
    */
   fun syncFromRemote() = viewModelScope.launch {
     try {
       _isLoading.value = true
-      repository.syncFromRemote()
-      _errorMessage.value = null
-    } catch (e: Exception) {
-      _errorMessage.value = e.message
-    } finally {
-      _isLoading.value = false
-    }
-  }
-
-  /**
-   * Genera eventi dal calendario ricorrente
-   */
-  fun generateEventsFromSchedules() = viewModelScope.launch {
-    try {
-      _isLoading.value = true
-      val currentMonth = _currentMonth.value ?: YearMonth.now()
-      val startDate = currentMonth.atDay(1)
-      val endDate = currentMonth.atEndOfMonth()
-      repository.generateEventsFromSchedules(startDate, endDate)
+      syncCalendarUseCase()
       _errorMessage.value = null
     } catch (e: Exception) {
       _errorMessage.value = e.message

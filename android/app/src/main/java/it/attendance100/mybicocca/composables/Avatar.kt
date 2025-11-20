@@ -42,7 +42,7 @@ fun HoistedAvatar(
           .clip(CircleShape)
           .clickable { onClick() }
           .sharedElement(
-            state = rememberSharedContentState(key = "avatar"),
+            sharedContentState = rememberSharedContentState(key = "avatar"),
             animatedVisibilityScope = animatedContentScope,
             boundsTransform = { _, _ -> tween(durationMillis = 400) },
             clipInOverlayDuringTransition = OverlayClip(CircleShape)

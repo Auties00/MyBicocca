@@ -33,4 +33,21 @@
   <string name="logins_list">Logins List</string>
   <string name="settings_material_you_enabled">Material You design is active</string>
   <string name="settings_material_you_disabled">Use Material You design</string>
+  <string name="calendar_today">Today</string>
+  <string name="calendar_previous_month">Previous Month</string>
+  <string name="calendar_next_month">Next Month</string>
+  <string name="calendar_events">Events</string>
+  <string name="calendar_no_events">No events for this day</string>
+  <string name="calendar_list_view">List View</string>
+  <string name="calendar_week_view">Week View</string>
+  <string name="event_type_lecture">Lecture</string>
+  <string name="event_type_lab">Lab</string>
+  <string name="event_type_exam">Exam</string>
+  <string name="event_type_office_hours">Office Hours</string>
+  <string name="event_type_other">Other</string>
+  <string name="event_detail_date_time">Date and Time</string>
+  <string name="event_detail_professor">Professor</string>
+  <string name="event_detail_location">Location</string>
+  <string name="event_detail_notes">Notes</string>
+  <string name="event_detail_close">Close</string>
 </resources>
