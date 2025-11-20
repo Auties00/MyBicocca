@@ -1391,15 +1391,28 @@ func fixMagiskEnvironment() error {
 func stepBypass() error {
 	printStep("Setting up bypass module")
 
-	printSubStep("Checking if bypass module is already installed")
-	output, err := runCommand("adb", "shell", "pm", "list", "packages")
+	printSubStep("Listing LSPosed modules")
+	modulesOutput, err := runCommand("adb", "shell", "su", "-c", "/data/adb/lspd/bin/cli", "modules", "ls")
 	if err != nil {
-		return fmt.Errorf("failed to list packages: %w", err)
+		return fmt.Errorf("failed to list installed lsposed modules: %w", err)
+	}
+	modules := make(map[string]bool)
+	readHeader := false
+	for line := range strings.Lines(modulesOutput) {
+		if !readHeader {
+			readHeader = true
+		} else {
+			fields := strings.Fields(line)
+			if len(fields) != 3 {
+				continue
+			}
+
+			modules[fields[0]] = fields[2] == "enabled"
+		}
 	}
 
-	if strings.Contains(strings.ToLower(output), LSPosedModuleName) {
-		printSubStep("Bypass module already installed")
-	} else {
+	printSubStep("Checking if bypass module is already installed")
+	if _, moduleExists := modules[LSPosedModuleName]; !moduleExists {
 		printSubStep("Downloading bypass module")
 		bypassAPK := filepath.Join(tempDir, "bypass.apk")
 		if err := downloadFile(bypassAPK, LSPosedModuleUrl); err != nil {
@@ -1411,15 +1424,31 @@ func stepBypass() error {
 		if _, err := runCommand("adb", "install", "-r", bypassAPK); err != nil {
 			return fmt.Errorf("failed to install bypass module: %w", err)
 		}
+	} else {
+		printSubStep("Bypass module already installed")
+	}
+
+	printSubStep("Listing bypass module scopes")
+	scopes, err := runCommand("adb", "shell", "su", "-c", "/data/adb/lspd/bin/cli", "scope", "ls", LSPosedModuleName)
+	if err != nil {
+		return fmt.Errorf("failed to list bypass module scopes: %w", err)
+	}
+
+	if !strings.Contains(scopes, BicoccAppPackage) {
+		printSubStep("Adding Bicoccapp to bypass module scopes")
+		if _, err := runCommand("adb", "shell", "su", "-c", "/data/adb/lspd/bin/cli", "scope", "set", "-a", "it.attendance100.bicoccapp", "it.bicoccapp.unimib/0"); err != nil {
+			return fmt.Errorf("failed to set bypass module scopes: %w", err)
+		}
+	} else {
+		printSubStep("Bicoccapp is already in the bypass module scopes")
 	}
 
 	printSubStep("Enabling bypass module")
-	if _, err := runCommand("adb", "shell", "su", "-c", "/data/adb/lspd/bin/cli", "enable", LSPosedModuleName); err != nil {
+	if _, err := runCommand("adb", "shell", "su", "-c", "/data/adb/lspd/bin/cli", "modules", "set", "-e", LSPosedModuleName); err != nil {
 		return fmt.Errorf("failed to enable bypass module: %w", err)
-	} else {
-		printSubStep("Bypass module enabled")
 	}
 
+	printSubStep("Bypass module enabled")
 	return nil
 }
 
