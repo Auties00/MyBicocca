@@ -1,6 +1,6 @@
 # Android Emulator
 
-An automated installer for setting up and running an Android emulator environment with Frida, LSPosed, and BicoccApp for reverse engineering.
+An automated installer for setting up and running a rooted Android emulator environment with Magisk, LSPosed, and BicoccApp for reverse engineering.
 
 ## Installation Options
 

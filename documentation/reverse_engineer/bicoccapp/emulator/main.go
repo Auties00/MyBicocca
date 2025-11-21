@@ -4,6 +4,7 @@ import (
 	"archive/zip"
 	"bufio"
 	"encoding/xml"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -20,14 +21,13 @@ import (
 )
 
 const (
-	FridaVersion      = "17.5.1"
 	AVDName           = "Pixel_7_Pro_API_33"
 	AndroidAPI        = "33"
 	DeviceType        = "pixel_7_pro"
 	BicoccAppPackage  = "it.bicoccapp.unimib"
 	LSPosedURL        = "https://github.com/Auties00/MyBicocca/raw/refs/heads/main/documentation/reverse_engineer/bicoccapp/emulator/dependencies/LSPosed-v1.10.2-7199-zygisk-debug.zip"
 	RootAVDRepo       = "https://gitlab.com/newbit/rootAVD.git"
-	EmulatorTimeout   = 180
+	EmulatorTimeout   = 120 // Reduced from 180
 	CreateNewConsole  = 0x10
 	LSPosedModuleUrl  = "https://github.com/Auties00/MyBicocca/raw/refs/heads/main/documentation/reverse_engineer/bicoccapp/magisk/bin/bypass.apk"
 	LSPosedModuleName = "it.attendance100.bicoccapp"
@@ -44,6 +44,7 @@ var (
 	fridaServerArch string
 	ramdiskPath     string
 	rootAVDDir      string
+	startTime       time.Time
 )
 
 var (
@@ -53,6 +54,7 @@ var (
 	colorSub        = lipgloss.NewStyle().Foreground(lipgloss.Color("#888888"))
 	colorSubWarning = lipgloss.NewStyle().Foreground(lipgloss.Color("#FFFF00"))
 	colorInfo       = lipgloss.NewStyle().Foreground(lipgloss.Color("#FFFFFF"))
+	colorTiming     = lipgloss.NewStyle().Foreground(lipgloss.Color("#888888")).Italic(true)
 )
 
 type CommandError struct {
@@ -69,47 +71,39 @@ func (e *CommandError) Error() string {
 		sb.WriteString(" " + strings.Join(e.Args, " "))
 	}
 	if e.Err != nil {
-		sb.WriteString(fmt.Sprintf("\nError: %v", e.Err))
-	}
-	if e.Output != "" {
-		sb.WriteString(fmt.Sprintf("\nOutput: %s", e.Output))
+		sb.WriteString(fmt.Sprintf(" (Error: %v)", e.Err))
 	}
 	return sb.String()
 }
 
-func printStep(message string) {
-	fmt.Println(colorStep.Render(message))
-}
-
-func printSubStep(message string) {
-	fmt.Println(colorSub.Render("  → " + message))
-}
-
-func printSubStepWarning(message string) {
-	fmt.Println(colorSubWarning.Render("  → " + message))
-}
-
-func printError(message string) {
-	fmt.Println(colorError.Render("✗ " + message))
+func getElapsedTime() string {
+	elapsed := time.Since(startTime)
+	return fmt.Sprintf("[%02d:%02d]", int(elapsed.Minutes()), int(elapsed.Seconds())%60)
 }
 
 func printInfo(message string) {
-	fmt.Println(colorInfo.Render("  " + message))
+	fmt.Println(colorStep.Render(fmt.Sprintf("\n[+] %s %s", message, colorTiming.Render(getElapsedTime()))))
+}
+
+func printError(message string) {
+	fmt.Println(colorError.Render(fmt.Sprintf("[!] %s %s", message, colorTiming.Render(getElapsedTime()))))
+}
+
+func printSubInfo(message string) {
+	fmt.Println(colorSub.Render(fmt.Sprintf("  [+] %s", message)))
+}
+
+func printSubWarning(message string) {
+	fmt.Println(colorSubWarning.Render(fmt.Sprintf("  [!] %s", message)))
 }
 
 func printComplete() {
-	fmt.Println()
-	fmt.Println(colorSuccess.Render("═══════════════════════════════════════════"))
-	fmt.Println(colorSuccess.Render("✓ Setup Complete!"))
-	fmt.Println(colorSuccess.Render("═══════════════════════════════════════════"))
-	fmt.Println()
-	printInfo("Configuration:")
-	printInfo("  • AVD Name: " + AVDName)
-	printInfo("  • Android Version: 13 (API " + AndroidAPI + ")")
-	printInfo("  • Device: Pixel 7 Pro")
-	printInfo("  • Architecture: " + detectedArch)
-	printInfo("  • Frida Version: " + FridaVersion)
-	fmt.Println()
+	elapsed := time.Since(startTime)
+	printInfo(fmt.Sprintf("Configuration complete (%.1f minutes)", elapsed.Minutes()))
+	printSubInfo("AVD Name: " + AVDName)
+	printSubInfo("Android Version: 13 (API " + AndroidAPI + ")")
+	printSubInfo("Device: Pixel 7 Pro")
+	printSubInfo("Architecture: " + detectedArch)
 }
 
 func runCommand(name string, args ...string) (string, error) {
@@ -140,7 +134,6 @@ func runDetachedCommand(name string, args ...string) (*exec.Cmd, error) {
 		commandBuilder.WriteString(arg)
 	}
 	command := commandBuilder.String()
-	printSubStep("Running command: " + command)
 
 	switch runtime.GOOS {
 	case "linux":
@@ -154,30 +147,18 @@ func runDetachedCommand(name string, args ...string) (*exec.Cmd, error) {
 			{"mate-terminal", []string{"-e", "bash", "-c", cmdStr}},
 			{"konsole", []string{"-e", "bash", "-c", cmdStr}},
 			{"xfce4-terminal", []string{"-e", "bash", "-c", cmdStr}},
-			{"lxterminal", []string{"-e", "bash", "-c", cmdStr}},
 			{"xterm", []string{"-e", "bash", "-c", cmdStr}},
-			{"rxvt", []string{"-e", "bash", "-c", cmdStr}},
-			{"urxvt", []string{"-e", "bash", "-c", cmdStr}},
-			{"terminator", []string{"-e", "bash", "-c", cmdStr}},
-			{"tilix", []string{"-e", "bash", "-c", cmdStr}},
-			{"alacritty", []string{"-e", "bash", "-c", cmdStr}},
-			{"kitty", []string{"-e", "bash", "-c", cmdStr}},
-			{"sakura", []string{"-e", "bash", "-c", cmdStr}},
-			{"terminology", []string{"-e", "bash", "-c", cmdStr}},
-			{"st", []string{"-e", "bash", "-c", cmdStr}},
 		}
 
-		var found bool
 		for _, term := range terminals {
 			if _, err := exec.LookPath(term.name); err == nil {
 				cmd = exec.Command(term.name, term.args...)
-				found = true
 				break
 			}
 		}
 
-		if !found {
-			return nil, fmt.Errorf("no terminal emulator found.")
+		if cmd == nil {
+			return nil, fmt.Errorf("no terminal emulator found")
 		}
 
 	case "darwin":
@@ -200,7 +181,7 @@ end tell`, escapeAppleScript(command))
 	}
 
 	if err := cmd.Start(); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to start detached command: %w", err)
 	}
 
 	return cmd, nil
@@ -230,15 +211,13 @@ func detectOS() string {
 
 func detectArchitecture() string {
 	arch := runtime.GOARCH
-	printSubStep("Detected CPU architecture: " + arch)
-
 	switch arch {
 	case "amd64":
 		return "x86_64"
 	case "arm64":
 		return "arm64"
 	default:
-		printSubStepWarning("Unknown architecture '" + arch + "', defaulting to x86_64")
+		printSubWarning(fmt.Sprintf("Unknown architecture '%s', defaulting to x86_64", arch))
 		return "x86_64"
 	}
 }
@@ -248,72 +227,53 @@ func configureArchitecture() {
 		systemImage = "system-images;android-33;google_apis_playstore;arm64-v8a"
 		fridaServerArch = "android-arm64"
 		ramdiskPath = filepath.Join("system-images", "android-33", "google_apis_playstore", "arm64-v8a", "ramdisk.img")
-		printSubStep("Using ARM64 emulator and Frida server")
 	} else {
 		systemImage = "system-images;android-33;google_apis_playstore;x86_64"
 		fridaServerArch = "android-x86_64"
 		ramdiskPath = filepath.Join("system-images", "android-33", "google_apis_playstore", "x86_64", "ramdisk.img")
-		printSubStep("Using x86_64 emulator and Frida server")
 	}
+	printSubInfo(fmt.Sprintf("Using %s emulator and Frida server", detectedArch))
 }
 
-func refreshEnv() error {
-	printSubStep("Refreshing environment variables")
-
+func refreshEnv() {
 	switch detectedOS {
 	case "windows":
-		cmd := exec.Command("powershell.exe", "-Command", `
-			$env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
-			[Environment]::SetEnvironmentVariable("Path", $env:Path, "Process")
-		`)
-		if err := cmd.Run(); err != nil {
-			return fmt.Errorf("failed to refresh environment: %w", err)
-		}
-
 		output, err := exec.Command("powershell.exe", "-Command", `
 			[System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
 		`).Output()
 		if err == nil {
-			err := os.Setenv("PATH", strings.TrimSpace(string(output)))
-			if err != nil {
-				return err
+			if err := os.Setenv("PATH", strings.TrimSpace(string(output))); err != nil {
+				printSubWarning(fmt.Sprintf("%s: %v", "Failed to set PATH", err))
 			}
+		} else {
+			printSubWarning(fmt.Sprintf("%s: %v", "Failed to get PATH from registry", err))
 		}
 
 	case "mac":
 		brewPaths := []string{"/opt/homebrew/bin", "/usr/local/bin"}
 		currentPath := os.Getenv("PATH")
 		for _, brewPath := range brewPaths {
-			if _, err := os.Stat(brewPath); err == nil {
-				if !strings.Contains(currentPath, brewPath) {
-					err := os.Setenv("PATH", brewPath+string(os.PathListSeparator)+currentPath)
-					if err != nil {
-						return err
-					}
-					printSubStep("Added " + brewPath + " to PATH")
+			if _, err := os.Stat(brewPath); err == nil && !strings.Contains(currentPath, brewPath) {
+				if err := os.Setenv("PATH", brewPath+string(os.PathListSeparator)+currentPath); err != nil {
+					printSubWarning(fmt.Sprintf("%s: %v", "Failed to add brew path to PATH", err))
 				}
 			}
 		}
 
 	case "linux":
 		currentPath := os.Getenv("PATH")
-		commonPaths := []string{"/usr/local/bin", "/usr/bin", "/bin", "/usr/local/sbin", "/usr/sbin", "/sbin"}
+		commonPaths := []string{"/usr/local/bin", "/usr/bin", "/bin"}
 		for _, p := range commonPaths {
 			if !strings.Contains(currentPath, p) {
-				err := os.Setenv("PATH", currentPath+string(os.PathListSeparator)+p)
-				if err != nil {
-					return err
+				if err := os.Setenv("PATH", currentPath+string(os.PathListSeparator)+p); err != nil {
+					printSubWarning(fmt.Sprintf("%s: %v", "Failed to add common path to PATH", err))
 				}
 			}
 		}
 	}
-
-	return nil
 }
 
 func addToPath(newPath string) error {
-	printSubStep("Adding to PATH: " + newPath)
-
 	switch detectedOS {
 	case "windows":
 		cmd := exec.Command("powershell.exe", "-Command",
@@ -325,14 +285,11 @@ func addToPath(newPath string) error {
 
 		currentPath := strings.TrimSpace(string(output))
 		if strings.Contains(currentPath, newPath) {
-			printSubStep("Path already in PATH")
 			return nil
 		}
 
-		var updatedPath string
-		if currentPath == "" {
-			updatedPath = newPath
-		} else {
+		updatedPath := newPath
+		if currentPath != "" {
 			updatedPath = newPath + ";" + currentPath
 		}
 
@@ -343,8 +300,9 @@ func addToPath(newPath string) error {
 		}
 
 		if err := os.Setenv("PATH", newPath+";"+os.Getenv("PATH")); err != nil {
-			return err
+			printSubWarning(fmt.Sprintf("%s: %v", "Failed to set PATH in current process", err))
 		}
+		return nil
 
 	case "mac", "linux":
 		home := os.Getenv("HOME")
@@ -357,64 +315,53 @@ func addToPath(newPath string) error {
 		exportLine := fmt.Sprintf("\nexport PATH=\"%s:$PATH\"\n", newPath)
 
 		for _, config := range shellConfigs {
-			if _, err := os.Stat(config); err == nil {
-				content, _ := os.ReadFile(config)
+			if content, err := os.ReadFile(config); err == nil {
 				if strings.Contains(string(content), newPath) {
 					continue
 				}
 
-				f, err := os.OpenFile(config, os.O_APPEND|os.O_WRONLY, 0644)
-				if err != nil {
-					continue
-				}
-				if _, err := f.WriteString(exportLine); err != nil {
-					return err
-				}
-				if err := f.Close(); err != nil {
-					return err
+				if f, err := os.OpenFile(config, os.O_APPEND|os.O_WRONLY, 0644); err == nil {
+					if _, err := f.WriteString(exportLine); err != nil {
+						printSubWarning(fmt.Sprintf("%s: %v", fmt.Sprintf("Failed to write to %s", config), err))
+					}
+					f.Close()
 				}
 			}
 		}
 
-		err := os.Setenv("PATH", newPath+":"+os.Getenv("PATH"))
-		if err != nil {
-			return err
-		}
+		return os.Setenv("PATH", newPath+":"+os.Getenv("PATH"))
 	}
 
 	return nil
 }
 
 func downloadFile(filepath, url string) error {
-	printSubStep("Downloading: " + url)
+	printSubInfo(fmt.Sprintf("Downloading from %s", url))
 	resp, err := http.Get(url)
 	if err != nil {
-		return fmt.Errorf("failed to download from '%s': %w", url, err)
+		return fmt.Errorf("download failed: %w", err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("failed to download from '%s': HTTP status %d", url, resp.StatusCode)
+		return fmt.Errorf("download failed: HTTP %d", resp.StatusCode)
 	}
 
 	out, err := os.Create(filepath)
 	if err != nil {
-		return fmt.Errorf("failed to create file '%s': %w", filepath, err)
+		return fmt.Errorf("failed to create file: %w", err)
 	}
 	defer out.Close()
 
 	_, err = io.Copy(out, resp.Body)
-	if err != nil {
-		return fmt.Errorf("failed to write downloaded content: %w", err)
-	}
-
-	return nil
+	return err
 }
 
 func unzip(src, dest string) error {
+	printSubInfo("Extracting archive")
 	r, err := zip.OpenReader(src)
 	if err != nil {
-		return fmt.Errorf("failed to open zip file: %w", err)
+		return fmt.Errorf("failed to open zip: %w", err)
 	}
 	defer r.Close()
 
@@ -422,76 +369,42 @@ func unzip(src, dest string) error {
 		fpath := filepath.Join(dest, f.Name)
 
 		if f.FileInfo().IsDir() {
-			if err := os.MkdirAll(fpath, os.ModePerm); err != nil {
-				return fmt.Errorf("failed to create directory: %w", err)
-			}
+			os.MkdirAll(fpath, os.ModePerm)
 			continue
 		}
 
 		if err = os.MkdirAll(filepath.Dir(fpath), os.ModePerm); err != nil {
-			return fmt.Errorf("failed to create parent directory: %w", err)
+			return err
 		}
 
 		outFile, err := os.OpenFile(fpath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, f.Mode())
 		if err != nil {
-			return fmt.Errorf("failed to create file: %w", err)
+			return err
 		}
 
 		rc, err := f.Open()
 		if err != nil {
-			if err := outFile.Close(); err != nil {
-				return err
-			}
-			return fmt.Errorf("failed to open file in archive: %w", err)
+			outFile.Close()
+			return err
 		}
 
 		_, err = io.Copy(outFile, rc)
-		if err := outFile.Close(); err != nil {
-			return err
-		}
-		if err := rc.Close(); err != nil {
-			return err
-		}
+		outFile.Close()
+		rc.Close()
 		if err != nil {
-			return fmt.Errorf("failed to extract file: %w", err)
+			return err
 		}
-	}
-	return nil
-}
-
-func extractXZ(xzPath, outputPath string) error {
-	if !commandExists("xz") {
-		return fmt.Errorf("xz utility not found. Please install xz-utils package")
-	}
-
-	printSubStep("Decompressing xz archive")
-	cmd := exec.Command("xz", "-d", xzPath)
-	var stderr strings.Builder
-	cmd.Stderr = &stderr
-
-	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("failed to decompress: %w\nStderr: %s", err, stderr.String())
-	}
-
-	decompressedPath := strings.TrimSuffix(xzPath, ".xz")
-	if _, err := os.Stat(decompressedPath); os.IsNotExist(err) {
-		return fmt.Errorf("decompressed file not found after extraction")
-	}
-
-	if err := os.Rename(decompressedPath, outputPath); err != nil {
-		return fmt.Errorf("failed to move decompressed file: %w", err)
 	}
 	return nil
 }
 
 func ensureWinget() error {
-	printSubStep("Checking for winget")
 	if commandExists("winget") {
-		printSubStep("winget is already installed")
+		printSubInfo("winget detected")
 		return nil
 	}
 
-	printSubStep("Installing winget via PowerShell")
+	printSubInfo("Installing winget")
 	psScript := `
 		$progressPreference = 'silentlyContinue'
 		Install-PackageProvider -Name NuGet -Force | Out-Null
@@ -500,28 +413,25 @@ func ensureWinget() error {
 	`
 
 	cmd := exec.Command("powershell.exe", "-ExecutionPolicy", "Bypass", "-Command", psScript)
-	_ = cmd.Run() // Ignore error
+	cmd.Run()
 
-	if err := refreshEnv(); err != nil {
-		return fmt.Errorf("failed to refresh environment: %w", err)
-	}
+	refreshEnv()
 
 	if !commandExists("winget") {
-		return fmt.Errorf("winget installation completed but command not found. Please restart terminal")
+		return fmt.Errorf("winget installation completed but command not found - restart terminal")
 	}
 
-	printSubStep("winget installed successfully")
+	printSubInfo("winget installed")
 	return nil
 }
 
 func ensureBrew() error {
-	printSubStep("Checking for Homebrew")
 	if commandExists("brew") {
-		printSubStep("Homebrew is already installed")
+		printSubInfo("Homebrew detected")
 		return nil
 	}
 
-	printSubStep("Downloading Homebrew installer")
+	printSubInfo("Installing Homebrew")
 	installScriptURL := "https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh"
 	resp, err := http.Get(installScriptURL)
 	if err != nil {
@@ -533,35 +443,31 @@ func ensureBrew() error {
 		return fmt.Errorf("failed to download Homebrew installer: HTTP %d", resp.StatusCode)
 	}
 
-	printSubStep("Running Homebrew installer")
 	cmd := exec.Command("/bin/bash")
 	cmd.Stdin = resp.Body
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("failed to install Homebrew: %w", err)
+		return fmt.Errorf("Homebrew installation failed: %w", err)
 	}
 
-	if err := refreshEnv(); err != nil {
-		return fmt.Errorf("failed to refresh environment: %w", err)
-	}
+	refreshEnv()
 
 	if !commandExists("brew") {
-		return fmt.Errorf("homebrew installation completed but command not found. Please restart terminal")
+		return fmt.Errorf("homebrew installation completed but command not found - restart terminal")
 	}
 
-	printSubStep("Homebrew installed successfully")
+	printSubInfo("Homebrew installed")
 	return nil
 }
 
 func ensureGit() error {
-	printSubStep("Checking for Git")
 	if commandExists("git") {
-		printSubStep("Git is already installed")
+		printSubInfo("Git detected")
 		return nil
 	}
 
-	printSubStep("Git not found, installing")
+	printSubInfo("Installing Git")
 	pkg := "git"
 	if detectedOS == "windows" {
 		pkg = "Git.Git"
@@ -571,21 +477,19 @@ func ensureGit() error {
 	}
 
 	if !commandExists("git") {
-		return fmt.Errorf("git installed but command not found. Please restart terminal")
+		return fmt.Errorf("git installation completed but command not found - restart terminal")
 	}
 
-	printSubStep("Git installed successfully")
 	return nil
 }
 
 func ensureSQLite3() error {
-	printSubStep("Checking for SQLite3")
 	if commandExists("sqlite3") {
-		printSubStep("SQLite3 is already installed")
+		printSubInfo("SQLite3 detected")
 		return nil
 	}
 
-	printSubStep("SQLite3 not found, installing")
+	printSubInfo("Installing SQLite3")
 	pkg := "sqlite3"
 	if detectedOS == "windows" {
 		pkg = "SQLite.SQLite"
@@ -595,17 +499,14 @@ func ensureSQLite3() error {
 	}
 
 	if !commandExists("sqlite3") {
-		return fmt.Errorf("sqlite3 installed but command not found. Please restart terminal")
+		return fmt.Errorf("sqlite3 installation completed but command not found - restart terminal")
 	}
 
-	printSubStep("SQLite3 installed successfully")
 	return nil
 }
 
 func installPackage(name, pkg string) error {
 	var cmd *exec.Cmd
-
-	printSubStep("Installing " + name)
 
 	switch detectedOS {
 	case "linux":
@@ -629,55 +530,44 @@ func installPackage(name, pkg string) error {
 		}
 		cmd = exec.Command("winget", "install", pkg, "--silent", "--accept-package-agreements", "--accept-source-agreements")
 	default:
-		return fmt.Errorf("unsupported operating system: %s", detectedOS)
-	}
-
-	if cmd == nil {
-		return fmt.Errorf("failed to create installation command")
+		return fmt.Errorf("unsupported OS: %s", detectedOS)
 	}
 
 	var stdout, stderr strings.Builder
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 
-	err := cmd.Run()
-	if err != nil {
-		printSubStepWarning(fmt.Sprintf("%s installation completed with error (this could be fine): %v", name, err))
+	if err := cmd.Run(); err != nil {
+		printSubWarning(fmt.Sprintf("%s installation warning: %v (may be fine)", name, err))
 	}
 
-	if err := refreshEnv(); err != nil {
-		printSubStepWarning(fmt.Sprintf("Failed to refresh environment: %v", err))
-	}
-
+	refreshEnv()
 	return nil
 }
 
 func stepInitialize() error {
-	printStep("Initializing")
+	printInfo("Initializing")
 
-	printSubStep("Detecting operating system")
 	detectedOS = detectOS()
-	printSubStep("Detected OS: " + detectedOS)
+	printSubInfo(fmt.Sprintf("OS: %s", detectedOS))
 
-	printSubStep("Detecting CPU architecture")
 	detectedArch = detectArchitecture()
+	printSubInfo(fmt.Sprintf("Architecture: %s", detectedArch))
 
-	printSubStep("Configuring architecture-specific settings")
 	configureArchitecture()
 
-	printSubStep("Creating temporary directory")
 	var err error
 	tempDir, err = os.MkdirTemp("", "android-setup-*")
 	if err != nil {
-		return fmt.Errorf("failed to create temporary directory: %w", err)
+		return fmt.Errorf("failed to create temp directory: %w", err)
 	}
-	printSubStep("Temporary directory: " + tempDir)
+	printSubInfo(fmt.Sprintf("Temp directory: %s", tempDir))
 
 	return nil
 }
 
 func stepSystemTools() error {
-	printStep("Setting up system tools")
+	printInfo("Setting up system tools")
 
 	if detectedOS == "windows" {
 		if err := ensureWinget(); err != nil {
@@ -701,24 +591,21 @@ func stepSystemTools() error {
 }
 
 func stepPython() error {
-	printStep("Setting up Python")
+	printInfo("Setting up Python")
 
-	printSubStep("Checking for Python")
-	_, python3Err := runCommand("python3", "--version")
-	if python3Err == nil {
+	if _, err := runCommand("python3", "--version"); err == nil {
 		pythonCmd = "python3"
-		printSubStep("Found Python (python3)")
+		printSubInfo("Python3 detected")
 		return nil
 	}
 
-	_, pythonErr := runCommand("python", "--version")
-	if pythonErr == nil {
+	if _, err := runCommand("python", "--version"); err == nil {
 		pythonCmd = "python"
-		printSubStep("Found Python (python)")
+		printSubInfo("Python detected")
 		return nil
 	}
 
-	printSubStep("Python not found, installing")
+	printSubInfo("Installing Python")
 	pkg := "python3"
 	if detectedOS == "windows" {
 		pkg = "Python.Python.3.12"
@@ -734,45 +621,26 @@ func stepPython() error {
 		}
 	}
 
-	printSubStep("Verifying Python installation")
-	_, verifyPython3Err := runCommand("python3", "--version")
-	if verifyPython3Err == nil {
+	if _, err := runCommand("python3", "--version"); err == nil {
 		pythonCmd = "python3"
 		return nil
 	}
 
-	_, verifyPythonErr := runCommand("python", "--version")
-	if verifyPythonErr == nil {
+	if _, err := runCommand("python", "--version"); err == nil {
 		pythonCmd = "python"
 		return nil
 	}
 
-	return fmt.Errorf("python installed but not functioning. Please restart terminal")
-}
-
-func stepFrida() error {
-	printStep("Setting up Frida tools")
-
-	printSubStep("Checking for Frida tools")
-	if !commandExists("frida") {
-		printSubStep("Installing frida-tools via pip")
-		if _, err := runCommand(pythonCmd, "-m", "pip", "install", "--quiet", "frida-tools"); err != nil {
-			return err
-		}
-		printSubStep("Frida tools installed")
-	} else {
-		printSubStep("Frida tools already installed")
-	}
-
-	return nil
+	return fmt.Errorf("python installation completed but not functioning - restart terminal")
 }
 
 func stepJava() error {
-	printStep("Setting up Java")
+	printInfo("Setting up Java")
 
-	printSubStep("Checking for Java")
-	if !commandExists("java") {
-		printSubStep("Java not found, installing")
+	if commandExists("java") {
+		printSubInfo("Java detected")
+	} else {
+		printSubInfo("Installing Java")
 		pkg := "openjdk-17-jdk"
 		if detectedOS == "windows" {
 			pkg = "Oracle.JDK.17"
@@ -782,41 +650,35 @@ func stepJava() error {
 		if err := installPackage("Java", pkg); err != nil {
 			return err
 		}
-	} else {
-		printSubStep("Java already installed")
 	}
 
-	printSubStep("Configuring JAVA_HOME")
 	javaHome = os.Getenv("JAVA_HOME")
 	if javaHome == "" {
 		if detectedOS == "mac" {
 			output, _ := runCommand("/usr/libexec/java_home")
-			javaHome = output
+			javaHome = strings.TrimSpace(output)
 		} else if detectedOS == "windows" {
 			javaHome = findJavaHomeWindows()
 		} else {
-			javaPath, _ := exec.LookPath("java")
-			if javaPath != "" {
+			if javaPath, _ := exec.LookPath("java"); javaPath != "" {
 				javaHome = filepath.Dir(filepath.Dir(javaPath))
 			}
 		}
 		if javaHome != "" {
-			err := os.Setenv("JAVA_HOME", javaHome)
-			if err != nil {
-				return err
+			if err := os.Setenv("JAVA_HOME", javaHome); err != nil {
+				printSubWarning(fmt.Sprintf("%s: %v", "Failed to set JAVA_HOME", err))
+			} else {
+				printSubInfo(fmt.Sprintf("JAVA_HOME: %s", javaHome))
 			}
-			printSubStep("JAVA_HOME set to: " + javaHome)
 		}
 	} else {
-		printSubStep("JAVA_HOME already set: " + javaHome)
+		printSubInfo(fmt.Sprintf("JAVA_HOME: %s", javaHome))
 	}
 
 	return nil
 }
 
 func findJavaHomeWindows() string {
-	printSubStep("Detecting Java installation on Windows")
-
 	commonPaths := []string{
 		filepath.Join(os.Getenv("ProgramFiles"), "Java"),
 		filepath.Join(os.Getenv("ProgramFiles(x86)"), "Java"),
@@ -836,7 +698,6 @@ func findJavaHomeWindows() string {
 			if entry.IsDir() && strings.Contains(strings.ToLower(entry.Name()), "jdk") {
 				potentialHome := filepath.Join(basePath, entry.Name())
 				if _, err := os.Stat(filepath.Join(potentialHome, "bin", "java.exe")); err == nil {
-					printSubStep("Found JDK at: " + potentialHome)
 					return potentialHome
 				}
 			}
@@ -847,9 +708,8 @@ func findJavaHomeWindows() string {
 }
 
 func stepAndroidSDK() error {
-	printStep("Setting up Android SDK")
+	printInfo("Setting up Android SDK")
 
-	printSubStep("Configuring Android SDK location")
 	androidHome = os.Getenv("ANDROID_HOME")
 	if androidHome == "" {
 		switch detectedOS {
@@ -860,40 +720,34 @@ func stepAndroidSDK() error {
 		default:
 			androidHome = filepath.Join(os.Getenv("HOME"), "Android", "Sdk")
 		}
-		err := os.Setenv("ANDROID_HOME", androidHome)
-		if err != nil {
-			return err
+		if err := os.Setenv("ANDROID_HOME", androidHome); err != nil {
+			printSubWarning(fmt.Sprintf("%s: %v", "Failed to set ANDROID_HOME", err))
 		}
-		printSubStep("ANDROID_HOME set to: " + androidHome)
-	} else {
-		printSubStep("ANDROID_HOME: " + androidHome)
 	}
+	printSubInfo(fmt.Sprintf("ANDROID_HOME: %s", androidHome))
 
-	printSubStep("Checking for SDK manager")
 	if !commandExists("sdkmanager") {
-		printSubStep("SDK manager not found, downloading")
+		printSubInfo("Installing SDK tools")
 		if err := downloadAndInstallSDKTools(); err != nil {
 			return err
 		}
 	} else {
-		printSubStep("SDK manager found")
+		printSubInfo("SDK manager detected")
 	}
 
-	if installedPlatformTools, err := installSDKComponent("platform-tools", "Platform-Tools"); err != nil {
+	if installed, err := installSDKComponent("platform-tools", "Platform-Tools"); err != nil {
 		return err
-	} else if installedPlatformTools {
-		platformToolsPath := filepath.Join(androidHome, "platform-tools")
-		if err := addToPath(platformToolsPath); err != nil {
-			return fmt.Errorf("failed to add platform-tools to PATH: %w", err)
+	} else if installed {
+		if err := addToPath(filepath.Join(androidHome, "platform-tools")); err != nil {
+			printSubWarning(fmt.Sprintf("%s: %v", "Failed to add platform-tools to PATH", err))
 		}
 	}
 
-	if installedEmulator, err := installSDKComponent("emulator", "Emulator"); err != nil {
+	if installed, err := installSDKComponent("emulator", "Emulator"); err != nil {
 		return err
-	} else if installedEmulator {
-		emulatorPath := filepath.Join(androidHome, "emulator")
-		if err := addToPath(emulatorPath); err != nil {
-			return fmt.Errorf("failed to add emulator to PATH: %w", err)
+	} else if installed {
+		if err := addToPath(filepath.Join(androidHome, "emulator")); err != nil {
+			printSubWarning(fmt.Sprintf("%s: %v", "Failed to add emulator to PATH", err))
 		}
 	}
 
@@ -901,23 +755,15 @@ func stepAndroidSDK() error {
 		return err
 	}
 
-	err := refreshEnv()
-	if err != nil {
-		return err
-	}
-
+	refreshEnv()
 	configureArchitecture()
 
 	return nil
 }
 
 func downloadAndInstallSDKTools() error {
-	printSubStep("Creating cmdline-tools directory")
 	cmdlineToolsDir := filepath.Join(androidHome, "cmdline-tools")
-	err := os.MkdirAll(cmdlineToolsDir, 0755)
-	if err != nil {
-		return err
-	}
+	os.MkdirAll(cmdlineToolsDir, 0755)
 
 	var sdkURL string
 	switch detectedOS {
@@ -934,41 +780,30 @@ func downloadAndInstallSDKTools() error {
 		return err
 	}
 
-	printSubStep("Extracting command-line tools")
 	extractDir := filepath.Join(tempDir, "extracted")
 	if err := unzip(zipPath, extractDir); err != nil {
 		return err
 	}
 
-	printSubStep("Installing command-line tools")
 	latestDir := filepath.Join(cmdlineToolsDir, "latest")
-	if err := os.RemoveAll(latestDir); err != nil {
-		return err
-	}
+	os.RemoveAll(latestDir)
 
 	srcDir := filepath.Join(extractDir, "cmdline-tools")
 	if err := os.Rename(srcDir, latestDir); err != nil {
 		return err
 	}
 
-	binPath := filepath.Join(latestDir, "bin")
-	if err := addToPath(binPath); err != nil {
-		return err
-	}
-	printSubStep("Command-line tools installed")
-
-	return nil
+	return addToPath(filepath.Join(latestDir, "bin"))
 }
 
-// TODO: Refactor
 func installSDKComponent(component, name string) (bool, error) {
 	output, _ := runCommand("sdkmanager", "--list_installed")
 	if strings.Contains(output, component) {
-		printSubStep(name + " already installed")
+		printSubInfo(fmt.Sprintf("%s already installed", name))
 		return false, nil
 	}
 
-	printSubStep("Installing " + name)
+	printSubInfo(fmt.Sprintf("Installing %s", name))
 
 	cmd := exec.Command("sdkmanager", component)
 	stdin, _ := cmd.StdinPipe()
@@ -978,18 +813,13 @@ func installSDKComponent(component, name string) (bool, error) {
 	cmd.Stderr = &stderr
 
 	if err := cmd.Start(); err != nil {
-		return false, &CommandError{
-			Command: "sdkmanager",
-			Args:    []string{component},
-			Err:     fmt.Errorf("failed to start: %w", err),
-		}
+		return false, fmt.Errorf("sdkmanager start failed: %w", err)
 	}
 
 	stdin.Write([]byte("y\n"))
 	stdin.Close()
 
-	err := cmd.Wait()
-	if err != nil {
+	if err := cmd.Wait(); err != nil {
 		return false, &CommandError{
 			Command: "sdkmanager",
 			Args:    []string{component},
@@ -998,14 +828,11 @@ func installSDKComponent(component, name string) (bool, error) {
 		}
 	}
 
-	printSubStep(name + " installed")
 	return true, nil
 }
 
 func stepEmulator() error {
-	printStep("Setting up emulator")
-
-	printSubStep("Checking for existing AVD")
+	printInfo("Setting up emulator")
 
 	cmd := exec.Command("emulator", "-list-avds")
 	output, err := cmd.Output()
@@ -1013,16 +840,16 @@ func stepEmulator() error {
 		return fmt.Errorf("failed to list AVDs: %w", err)
 	}
 
-	avdSet := make(map[string]bool)
-	avdList := strings.Split(strings.TrimSpace(string(output)), "\n")
-	for _, avd := range avdList {
-		if trimmed := strings.TrimSpace(avd); trimmed != "" {
-			avdSet[trimmed] = true
+	avdExists := false
+	for _, avd := range strings.Split(strings.TrimSpace(string(output)), "\n") {
+		if strings.TrimSpace(avd) == AVDName {
+			avdExists = true
+			break
 		}
 	}
 
-	if _, avdExists := avdSet[AVDName]; !avdExists {
-		printSubStep("Creating AVD: " + AVDName)
+	if !avdExists {
+		printSubInfo(fmt.Sprintf("Creating AVD: %s", AVDName))
 		_, err := runCommand("avdmanager", "create", "avd",
 			"-n", AVDName,
 			"-k", systemImage,
@@ -1030,14 +857,84 @@ func stepEmulator() error {
 			"--force",
 			"-p", filepath.Join(os.Getenv("HOME"), ".android", "avd", AVDName+".avd"))
 		if err != nil {
-			return fmt.Errorf("failed to start AVD creation: %w", err)
+			return fmt.Errorf("AVD creation failed: %w", err)
 		}
-		printSubStep("AVD created")
 	} else {
-		printSubStep("AVD already exists")
+		printSubInfo("AVD already exists")
 	}
 
-	return startEmulator()
+	if err := startEmulator(); err != nil {
+		return fmt.Errorf("failed to start emulator: %w", err)
+	}
+
+	printInfo("Configuring root access")
+	if output, _ := runCommand("adb", "shell", "su", "-c", "id"); strings.Contains(strings.ToLower(output), "uid=0") {
+		printSubInfo("Root access confirmed")
+	} else {
+		printSubInfo("Setting up rootAVD")
+
+		rootAVDDir = filepath.Join(tempDir, "rootAVD")
+		if _, err := runCommand("git", "clone", RootAVDRepo, rootAVDDir); err != nil {
+			return fmt.Errorf("rootAVD clone failed: %w", err)
+		}
+
+		var rootAVDScript string
+		if detectedOS == "windows" {
+			rootAVDScript = filepath.Join(rootAVDDir, "rootAVD.bat")
+		} else {
+			rootAVDScript = filepath.Join(rootAVDDir, "rootAVD.sh")
+		}
+
+		cmd := exec.Command(rootAVDScript, ramdiskPath)
+		cmd.Dir = rootAVDDir
+		if err := cmd.Start(); err != nil {
+			return fmt.Errorf("rootAVD start failed: %w", err)
+		}
+
+		printSubInfo("Running rootAVD script")
+		if err := cmd.Wait(); err != nil {
+			return fmt.Errorf("rootAVD failed: %w", err)
+		}
+
+		printSubInfo("Waiting for emulator to go offline")
+		if err := waitForEmulatorStatus(false); err != nil {
+			return fmt.Errorf("rootAVD wait failed: %w", err)
+		}
+
+		printSubInfo("Restarting emulator")
+		if err := startEmulator(); err != nil {
+			return fmt.Errorf("failed to start emulator: %w", err)
+		}
+	}
+
+	printSubInfo("Checking Zygisk status")
+	command := "\"magisk --sqlite 'select value from settings where (key=\\\"zygisk\\\");'\""
+
+	zygiskEnabled := false
+	if output, err := runCommand("adb", "shell", "su", "-c", command); err == nil {
+		if strings.Contains(output, "value=1") {
+			zygiskEnabled = true
+			printSubInfo("Zygisk is already enabled")
+		}
+	}
+
+	if !zygiskEnabled {
+		printSubInfo("Enabling Zygisk")
+		command = "\"magisk --sqlite 'replace into settings (key,value) values(\\\"zygisk\\\",1);'\""
+		if _, err := runCommand("adb", "shell", "su", "-c", command); err != nil {
+			printSubWarning(fmt.Sprintf("%s: %v", "Failed to enable Zygisk", err))
+		} else {
+			printSubInfo("Zygisk enabled successfully")
+		}
+	}
+
+	printSubInfo("Configuring Magisk auto-allow")
+	command = "magisk resetprop persist.sys.su.mode 2"
+	if _, err := runCommand("adb", "shell", "su", "-c", command); err != nil {
+		printSubWarning(fmt.Sprintf("%s: %v", "Failed to set Magisk auto-allow", err))
+	}
+
+	return nil
 }
 
 func startEmulator() error {
@@ -1047,251 +944,151 @@ func startEmulator() error {
 	}
 
 	if _, err := os.Stat(emulatorBin); os.IsNotExist(err) {
-		return fmt.Errorf("emulator binary not found at: %s", emulatorBin)
+		return fmt.Errorf("emulator binary not found: %s", emulatorBin)
 	}
 
-	printSubStep("Killing any existing emulator instances")
-	_ = killExistingEmulators()
+	killExistingEmulators()
 
-	printSubStep("Restarting ADB server")
+	printSubInfo("Restarting ADB")
 	if _, err := runCommand("adb", "kill-server"); err != nil {
-		return fmt.Errorf("failed to kill adb server: %w", err)
+		printSubWarning(fmt.Sprintf("%s: %v", "Failed to kill ADB server", err))
 	}
 	if _, err := runCommand("adb", "start-server"); err != nil {
-		return fmt.Errorf("failed to start adb server: %w", err)
+		return fmt.Errorf("ADB start failed: %w", err)
 	}
 
-	printSubStep("Starting emulator in a new window: " + AVDName)
+	printSubInfo(fmt.Sprintf("Starting emulator: %s", AVDName))
 	if _, err := runDetachedCommand("emulator", "-avd", AVDName, "-writable-system", "-no-snapshot-load"); err != nil {
-		return fmt.Errorf("failed to start emulator: %w", err)
-	}
-	printSubStep("Emulator started in separate window")
-
-	printSubStep("Waiting for emulator to boot")
-	if err := waitForDevice(); err != nil {
-		return fmt.Errorf("emulator failed to start: %w", err)
+		return fmt.Errorf("emulator start failed: %w", err)
 	}
 
-	return nil
+	return waitForEmulatorStatus(true)
 }
 
-func killExistingEmulators() error {
-	var cmd *exec.Cmd
-
+func killExistingEmulators() {
 	if detectedOS == "windows" {
-		processes := []string{
-			"qemu-system-x86_64.exe",
-			"qemu-system-i386.exe",
-			"emulator.exe",
-			"emulator-x86.exe",
-			"emulator-arm.exe",
-		}
-		for _, proc := range processes {
-			cmd = exec.Command("taskkill", "/F", "/IM", proc)
-			_ = cmd.Run()
+		for _, proc := range []string{"qemu-system-x86_64.exe", "emulator.exe"} {
+			if err := exec.Command("taskkill", "/F", "/IM", proc).Run(); err != nil {
+				printSubWarning(fmt.Sprintf("%s: %v", fmt.Sprintf("Failed to kill %s", proc), err))
+			}
 		}
 	} else {
-		cmd = exec.Command("pkill", "-9", "emulator")
-		_ = cmd.Run()
-
-		cmd = exec.Command("pkill", "-9", "qemu-system")
-		_ = cmd.Run()
+		if err := exec.Command("pkill", "-9", "emulator").Run(); err != nil {
+			printSubWarning(fmt.Sprintf("%s: %v", "Failed to kill emulator processes", err))
+		}
+		if err := exec.Command("pkill", "-9", "qemu-system").Run(); err != nil {
+			printSubWarning(fmt.Sprintf("%s: %v", "Failed to kill qemu processes", err))
+		}
 	}
-
-	return nil
 }
 
-func waitForDevice() error {
-	elapsed := 0
-	for elapsed < EmulatorTimeout {
-		if elapsed%15 == 0 {
-			printSubStep("Waiting for device...")
-		}
+func rebootEmulator() error {
+	printSubInfo("Rebooting emulator")
+	if _, err := runCommand("adb", "reboot"); err != nil {
+		printSubWarning(fmt.Sprintf("%s: %v", "Failed to reboot device", err))
+	}
 
+	return waitForEmulatorStatus(true)
+}
+
+func waitForEmulatorStatus(online bool) error {
+	start := time.Now()
+	for time.Since(start) < EmulatorTimeout*time.Second {
 		output, err := runCommand("adb", "devices")
-		if err == nil && strings.Contains(output, "emulator") {
+		if err == nil && strings.Contains(output, "emulator") == online {
 			break
 		}
-		time.Sleep(3 * time.Second)
-		elapsed += 3
+		time.Sleep(2 * time.Second)
 	}
 
-	if elapsed >= EmulatorTimeout {
-		return fmt.Errorf("timeout waiting for emulator after %d seconds", EmulatorTimeout)
+	if time.Since(start) >= EmulatorTimeout*time.Second {
+		return fmt.Errorf("emulator status check timeout after %d seconds", EmulatorTimeout)
 	}
 
-	printSubStep("Device detected, waiting for boot completion")
-	if _, err := runCommand("adb", "wait-for-device"); err != nil {
-		return fmt.Errorf("adb wait-for-device failed: %w", err)
-	}
-
-	bootTimeout := 300
-	bootElapsed := 0
-	for {
-		if bootElapsed%20 == 0 && bootElapsed > 0 {
-			printSubStep(fmt.Sprintf("Booting... (%d/%d seconds)", bootElapsed, bootTimeout))
+	if online {
+		if _, err := runCommand("adb", "wait-for-device"); err != nil {
+			printSubWarning(fmt.Sprintf("%s: %v", "ADB wait-for-device warning", err))
 		}
 
-		output, err := runCommand("adb", "shell", "getprop", "sys.boot_completed")
-		if err == nil && strings.TrimSpace(output) == "1" {
-			break
+		bootStart := time.Now()
+		bootTimeout := 300 * time.Second
+		for time.Since(bootStart) < bootTimeout {
+			output, err := runCommand("adb", "shell", "getprop", "sys.boot_completed")
+			if err == nil && strings.TrimSpace(output) == "1" {
+				return nil
+			} else {
+				time.Sleep(2 * time.Second)
+			}
 		}
 
-		time.Sleep(3 * time.Second)
-		bootElapsed += 3
-
-		if bootElapsed >= bootTimeout {
-			return fmt.Errorf("timeout waiting for boot after %d seconds", bootTimeout)
-		}
-	}
-
-	printSubStep("Boot completed, system stabilizing")
-	time.Sleep(7 * time.Second)
-
-	return nil
-}
-
-func stepRoot() error {
-	printStep("Configuring root access")
-
-	printSubStep("Checking root access")
-	output, _ := runCommand("adb", "shell", "su", "-c", "id")
-
-	if strings.Contains(strings.ToLower(output), "uid=0") {
-		printSubStep("Root access confirmed (uid=0)")
+		return fmt.Errorf("boot timeout after %d seconds", int(bootTimeout.Seconds()))
 	} else {
-		printSubStepWarning("Root access not available, setting up rootAVD")
-
-		rootAVDDir = filepath.Join(tempDir, "rootAVD")
-		printSubStep("Cloning rootAVD repository")
-
-		if _, err := runCommand("git", "clone", RootAVDRepo, rootAVDDir); err != nil {
-			return fmt.Errorf("failed to clone rootAVD: %w", err)
-		}
-
-		var rootAVDScript string
-		if detectedOS == "windows" {
-			rootAVDScript = filepath.Join(rootAVDDir, "rootAVD.bat")
-		} else {
-			rootAVDScript = filepath.Join(rootAVDDir, "rootAVD.sh")
-		}
-		printSubStep("Found rootAVD script: " + rootAVDScript)
-
-		cmd := exec.Command(rootAVDScript, ramdiskPath)
-		cmd.Dir = rootAVDDir
-		if err := cmd.Start(); err != nil {
-			return fmt.Errorf("failed to start rootAVD: %w", err)
-		}
-
-		printSubStep("Running rootAVD script")
-		if err := cmd.Wait(); err != nil {
-			return fmt.Errorf("rootAVD failed: %w", err)
-		}
-
-		printSubStep("Waiting for changes to take effect")
-		time.Sleep(10 * time.Second)
-
-		printSubStep("Restarting emulator")
-		if err := startEmulator(); err != nil {
-			return err
-		}
+		return nil
 	}
-
-	printSubStep("Configuring Magisk auto-allow policy")
-	if _, err := runCommand("adb", "shell", "su", "-c", "magisk", "--sqlite", "PRAGMA user_version=7"); err != nil {
-		return fmt.Errorf("Failed to set database version: " + err.Error())
-	}
-	if _, err := runCommand("adb", "shell", "su", "-c", "magisk", "resetprop", "persist.sys.su.mode", "2"); err != nil {
-		return fmt.Errorf("Failed to set automatic response to allow: " + err.Error())
-	}
-
-	return nil
 }
 
 func stepLSPosed() error {
-	printStep("Installing LSPosed")
+	printInfo("Installing LSPosed")
 
-	printSubStep("Checking if LSPosed is already installed")
 	modulesOutput, err := runCommand("adb", "shell", "su", "-c", "ls", "-1", "/data/adb/modules")
-	printSubStep(modulesOutput)
 	if err != nil {
-		return fmt.Errorf("failed to list packages: %w", err)
+		return fmt.Errorf("failed to list modules: %w", err)
 	}
-	modules := make(map[string]bool)
-	for module := range strings.Lines(modulesOutput) {
-		modules[module] = true
-	}
-	if _, moduleExists := modules["lsposed"]; moduleExists {
-		printSubStep("LSPosed already installed")
+
+	if strings.Contains(modulesOutput, "lsposed") {
+		printSubInfo("LSPosed already installed")
 		return nil
 	}
 
-	printSubStep("Downloading LSPosed")
 	zipPath := filepath.Join(tempDir, "LSPosed.zip")
 	if err := downloadFile(zipPath, LSPosedURL); err != nil {
-		return fmt.Errorf("failed to download LSPosed: %w", err)
+		return fmt.Errorf("LSPosed download failed: %w", err)
 	}
 
-	printSubStep("Pushing LSPosed module to device")
 	devicePath := "/sdcard/LSPosed.zip"
+	printSubInfo("Installing LSPosed module")
 	if _, err := runCommand("adb", "push", zipPath, devicePath); err != nil {
-		return fmt.Errorf("failed to push LSPosed to device: %w", err)
+		return fmt.Errorf("LSPosed push failed: %w", err)
 	}
 
-	printSubStep("Installing LSPosed module via Magisk")
 	installCmd := fmt.Sprintf("su -c 'magisk --install-module %s'", devicePath)
 	if _, err := runCommand("adb", "shell", installCmd); err != nil {
 		if err := fixMagiskEnvironment(); err != nil {
-			return fmt.Errorf("failed to fix Magisk environment: %w", err)
+			return fmt.Errorf("Magisk environment fix failed: %w", err)
 		}
 
-		printSubStep("Retrying Magisk install after Magisk env fix")
+		printSubInfo("Retrying LSPosed installation")
 		if _, err := runCommand("adb", "shell", installCmd); err != nil {
-			return fmt.Errorf("failed to install LSPosed module after Magisk env fix: %w", err)
-		} else {
-			printSubStep("LSPosed installed successfully")
+			return fmt.Errorf("LSPosed installation failed: %w", err)
 		}
-	} else {
-		printSubStep("LSPosed installed successfully")
 	}
 
-	printSubStep("Cleaning up temporary file")
 	if _, err := runCommand("adb", "shell", "rm", devicePath); err != nil {
-		printSubStepWarning("Failed to remove temporary file: " + devicePath)
+		printSubWarning(fmt.Sprintf("%s: %v", "Failed to cleanup LSPosed zip", err))
 	}
 
-	printSubStep("Rebooting device to apply changes")
-	if _, err := runCommand("adb", "reboot"); err != nil {
-		return fmt.Errorf("failed to reboot device: %w", err)
-	}
-
-	printSubStep("Waiting for device to come back online...")
-	if err := waitForDevice(); err != nil {
-		return fmt.Errorf("emulator failed to start: %w", err)
-	}
-
-	printSubStep("LSPosed installed successfully")
-	return nil
+	return rebootEmulator()
 }
 
 func getUIDump() (string, error) {
-	_, _ = runCommand("adb", "shell", "rm", "/sdcard/window_dump.xml")
-	_, _ = runCommand("adb", "shell", "uiautomator", "dump", "/sdcard/window_dump.xml")
+	if _, err := runCommand("adb", "shell", "rm", "/sdcard/window_dump.xml"); err != nil {
+		printSubWarning(fmt.Sprintf("%s: %v", "Failed to remove old UI dump", err))
+	}
+	if _, err := runCommand("adb", "shell", "uiautomator", "dump", "/sdcard/window_dump.xml"); err != nil {
+		printSubWarning(fmt.Sprintf("%s: %v", "Failed to dump UI", err))
+	}
 	return runCommand("adb", "shell", "cat", "/sdcard/window_dump.xml")
 }
 
 func isTextOnScreen(text string) bool {
 	output, err := getUIDump()
-	if err != nil {
-		return false
-	}
-	return strings.Contains(strings.ToLower(output), strings.ToLower(text))
+	return err == nil && strings.Contains(strings.ToLower(output), strings.ToLower(text))
 }
 
 func clickButtonByText(text string) error {
 	xmlContent, err := getUIDump()
 	if err != nil {
-		return fmt.Errorf("failed to get UI dump: %w", err)
+		return fmt.Errorf("UI dump failed: %w", err)
 	}
 
 	decoder := xml.NewDecoder(strings.NewReader(xmlContent))
@@ -1301,33 +1098,26 @@ func clickButtonByText(text string) error {
 			break
 		}
 		if err != nil {
-			return fmt.Errorf("xml parse error: %w", err)
+			return fmt.Errorf("XML parse error: %w", err)
 		}
 
-		switch t := token.(type) {
-		case xml.StartElement:
-			if t.Name.Local == "node" {
-				var currentText string
-				var bounds string
-				for _, attr := range t.Attr {
-					if attr.Name.Local == "text" {
-						currentText = attr.Value
-					}
-					if attr.Name.Local == "bounds" {
-						bounds = attr.Value
-					}
+		if t, ok := token.(xml.StartElement); ok && t.Name.Local == "node" {
+			var currentText, bounds string
+			for _, attr := range t.Attr {
+				if attr.Name.Local == "text" {
+					currentText = attr.Value
 				}
+				if attr.Name.Local == "bounds" {
+					bounds = attr.Value
+				}
+			}
 
-				if strings.EqualFold(currentText, text) {
-					cleaned := strings.ReplaceAll(bounds, "][", ",")
-					cleaned = strings.ReplaceAll(cleaned, "[", "")
-					cleaned = strings.ReplaceAll(cleaned, "]", "")
-					coords := strings.Split(cleaned, ",")
+			if strings.EqualFold(currentText, text) {
+				cleaned := strings.ReplaceAll(strings.ReplaceAll(bounds, "][", ","), "[", "")
+				cleaned = strings.ReplaceAll(cleaned, "]", "")
+				coords := strings.Split(cleaned, ",")
 
-					if len(coords) != 4 {
-						continue
-					}
-
+				if len(coords) == 4 {
 					x1, _ := strconv.Atoi(coords[0])
 					y1, _ := strconv.Atoi(coords[1])
 					x2, _ := strconv.Atoi(coords[2])
@@ -1336,7 +1126,7 @@ func clickButtonByText(text string) error {
 					centerX := (x1 + x2) / 2
 					centerY := (y1 + y2) / 2
 
-					printSubStep(fmt.Sprintf("Tapping '%s' at %d, %d", text, centerX, centerY))
+					printSubInfo(fmt.Sprintf("Clicking '%s' at (%d, %d)", text, centerX, centerY))
 					_, err := runCommand("adb", "shell", "input", "tap", fmt.Sprintf("%d", centerX), fmt.Sprintf("%d", centerY))
 					return err
 				}
@@ -1344,220 +1134,137 @@ func clickButtonByText(text string) error {
 		}
 	}
 
-	return fmt.Errorf("button with text '%s' not found", text)
+	return fmt.Errorf("button '%s' not found", text)
 }
 
 func fixMagiskEnvironment() error {
-	printStep("Finalizing Magisk Environment")
+	printSubInfo("Finalizing Magisk environment")
 
-	printSubStep("Granting Magisk POST_NOTIFICATIONS permission")
 	if _, err := runCommand("adb", "shell", "pm", "grant", "com.topjohnwu.magisk", "android.permission.POST_NOTIFICATIONS"); err != nil {
-		return fmt.Errorf("failed to grant Magisk POST_NOTIFICATIONS permission: %w", err)
+		return fmt.Errorf("Magisk permission grant failed: %w", err)
 	}
 
-	printSubStep("Opening Magisk App...")
+	printSubInfo("Opening Magisk app")
 	_, err := runCommand("adb", "shell", "monkey", "-p", "com.topjohnwu.magisk", "-c", "android.intent.category.LAUNCHER", "1")
 	if err != nil {
-		return fmt.Errorf("failed to launch Magisk app: %w", err)
+		return fmt.Errorf("Magisk app launch failed: %w", err)
 	}
 
-	printSubStep("Waiting for Magisk UI...")
-	appLoaded := false
 	for i := 0; i < 10; i++ {
 		if isTextOnScreen("Additional Setup") {
-			appLoaded = true
+			printSubInfo("Setup dialog detected")
 			break
 		}
 		time.Sleep(1 * time.Second)
 	}
 
-	if !appLoaded {
-		printSubStepWarning("Magisk app did not seem to load in time, attempting blind interaction anyway...")
-	} else {
-		printSubStep("Magisk UI detected.")
-	}
-
-	printSubStep("Setup dialog detected! Handling it...")
 	if err := clickButtonByText("OK"); err != nil {
-		return fmt.Errorf("failed to click OK button: %w", err)
-	} else {
-		printSubStep("Clicked OK on Setup Dialog.")
+		return fmt.Errorf("failed to click OK: %w", err)
 	}
 
-	time.Sleep(10 * time.Second)
-	if err := waitForDevice(); err != nil {
-		return fmt.Errorf("emulator failed to start: %w", err)
+	if err := waitForEmulatorStatus(false); err != nil {
+		return fmt.Errorf("failed to wait for device to go offline: %w", err)
+	}
+
+	if err := waitForEmulatorStatus(true); err != nil {
+		return fmt.Errorf("failed to wait for device to go online: %w", err)
 	}
 
 	return nil
 }
 
 func stepBypass() error {
-	printStep("Setting up bypass module")
+	printInfo("Setting up bypass module")
 
-	printSubStep("Listing LSPosed modules")
 	modulesOutput, err := runCommand("adb", "shell", "su", "-c", "/data/adb/lspd/bin/cli", "modules", "ls")
 	if err != nil {
-		return fmt.Errorf("failed to list installed lsposed modules: %w", err)
+		return fmt.Errorf("failed to list LSPosed modules: %w", err)
 	}
-	modules := make(map[string]bool)
-	readHeader := false
-	for line := range strings.Lines(modulesOutput) {
-		if !readHeader {
-			readHeader = true
-		} else {
-			fields := strings.Fields(line)
-			if len(fields) != 3 {
-				continue
-			}
 
+	modules := make(map[string]bool)
+	lines := strings.Split(modulesOutput, "\n")
+	for i, line := range lines {
+		if i == 0 {
+			continue // Skip header
+		}
+		fields := strings.Fields(line)
+		if len(fields) == 3 {
 			modules[fields[0]] = fields[2] == "enabled"
 		}
 	}
 
-	printSubStep("Checking if bypass module is already installed")
-	if _, moduleExists := modules[LSPosedModuleName]; !moduleExists {
-		printSubStep("Downloading bypass module")
+	if _, exists := modules[LSPosedModuleName]; !exists {
 		bypassAPK := filepath.Join(tempDir, "bypass.apk")
 		if err := downloadFile(bypassAPK, LSPosedModuleUrl); err != nil {
-			return fmt.Errorf("failed to download bypass module: %w", err)
+			return fmt.Errorf("bypass module download failed: %w", err)
 		}
-		printSubStep("Downloaded bypass module: " + bypassAPK)
 
-		printSubStep("Installing bypass module")
+		printSubInfo("Installing bypass module")
 		if _, err := runCommand("adb", "install", "-r", bypassAPK); err != nil {
-			return fmt.Errorf("failed to install bypass module: %w", err)
+			return fmt.Errorf("bypass module installation failed: %w", err)
 		}
 	} else {
-		printSubStep("Bypass module already installed")
+		printSubInfo("Bypass module already installed")
 	}
 
-	printSubStep("Listing bypass module scopes")
 	scopes, err := runCommand("adb", "shell", "su", "-c", "/data/adb/lspd/bin/cli", "scope", "ls", LSPosedModuleName)
 	if err != nil {
-		return fmt.Errorf("failed to list bypass module scopes: %w", err)
+		return fmt.Errorf("failed to list scopes: %w", err)
 	}
 
 	if !strings.Contains(scopes, BicoccAppPackage) {
-		printSubStep("Adding Bicoccapp to bypass module scopes")
-		if _, err := runCommand("adb", "shell", "su", "-c", "/data/adb/lspd/bin/cli", "scope", "set", "-a", "it.attendance100.bicoccapp", "it.bicoccapp.unimib/0"); err != nil {
-			return fmt.Errorf("failed to set bypass module scopes: %w", err)
+		printSubInfo("Adding Bicoccapp to bypass scopes")
+		if _, err := runCommand("adb", "shell", "su", "-c", "/data/adb/lspd/bin/cli", "scope", "set", "-a", LSPosedModuleName, BicoccAppPackage+"/0"); err != nil {
+			return fmt.Errorf("failed to set scopes: %w", err)
 		}
 	} else {
-		printSubStep("Bicoccapp is already in the bypass module scopes")
+		printSubInfo("Bicoccapp already in scopes")
 	}
 
-	printSubStep("Enabling bypass module")
+	printSubInfo("Enabling bypass module")
 	if _, err := runCommand("adb", "shell", "su", "-c", "/data/adb/lspd/bin/cli", "modules", "set", "-e", LSPosedModuleName); err != nil {
-		return fmt.Errorf("failed to enable bypass module: %w", err)
-	}
-
-	printSubStep("Bypass module enabled")
-	return nil
-}
-
-func stepFridaServer() error {
-	printStep("Installing Frida server")
-
-	printSubStep("Checking if frida-server exists on device")
-	output, err := runCommand("adb", "shell", "su", "-c", "test -f /data/local/tmp/frida-server && echo yes || echo no")
-	if err != nil {
-		return fmt.Errorf("failed to check frida-server: %w", err)
-	}
-
-	if strings.TrimSpace(output) == "yes" {
-		printSubStep("frida-server found, restarting")
-		_, _ = runCommand("adb", "shell", "su", "-c", "pkill -9 frida-server")
-
-		printSubStep("Starting frida-server")
-		cmd := exec.Command("adb", "shell", "su", "-c", "/data/local/tmp/frida-server &")
-		if err := cmd.Start(); err != nil {
-			return fmt.Errorf("failed to start frida-server: %w", err)
-		}
-	} else {
-		printSubStep("Downloading frida-server " + FridaVersion)
-		fridaURL := fmt.Sprintf("https://github.com/frida/frida/releases/download/%s/frida-server-%s-%s.xz",
-			FridaVersion, FridaVersion, fridaServerArch)
-		xzPath := filepath.Join(tempDir, "frida-server.xz")
-
-		if err := downloadFile(xzPath, fridaURL); err != nil {
-			return fmt.Errorf("failed to download frida-server: %w", err)
-		}
-
-		printSubStep("Extracting frida-server")
-		binPath := filepath.Join(tempDir, "frida-server")
-		if err := extractXZ(xzPath, binPath); err != nil {
-			return fmt.Errorf("failed to extract frida-server: %w", err)
-		}
-
-		printSubStep("Pushing frida-server to device")
-		if _, err := runCommand("adb", "push", binPath, "/data/local/tmp/frida-server"); err != nil {
-			return fmt.Errorf("failed to push frida-server: %w", err)
-		}
-
-		printSubStep("Setting executable permissions")
-		if _, err := runCommand("adb", "shell", "su", "-c", "chmod 755 /data/local/tmp/frida-server"); err != nil {
-			return fmt.Errorf("failed to set permissions: %w", err)
-		}
-
-		printSubStep("Starting frida-server")
-		cmd := exec.Command("adb", "shell", "su", "-c", "/data/local/tmp/frida-server &")
-		if err := cmd.Start(); err != nil {
-			return fmt.Errorf("failed to start frida-server: %w", err)
-		}
-	}
-
-	printSubStep("Verifying frida-server connection")
-	if _, err := runCommand("frida-ps", "-U"); err != nil {
-		return fmt.Errorf("frida-server not responding: %w", err)
+		return fmt.Errorf("failed to enable module: %w", err)
 	}
 
 	return nil
 }
 
 func stepBicoccApp() error {
-	printStep("Setting up BicoccApp")
-	installed, err := isBicoccappInstalled()
-	if err != nil {
-		return fmt.Errorf("bicoccapp installation failed: %w", err)
-	} else if !installed {
-		printSubStep("Bicoccapp is not installed: waiting for manual installation")
-	} else {
-		printSubStep("Bicoccapp is installed")
+	printInfo("Setting up BicoccApp")
+
+	if installed, _ := isBicoccappInstalled(); installed {
+		printSubInfo("Bicoccapp detected")
 		return nil
 	}
 
+	printSubInfo("Bicoccapp is not installed: please install it manually from the Google Play Store (you might need to log in)")
 	for {
-		installed, err := isBicoccappInstalled()
-		if err != nil {
-			return fmt.Errorf("bicoccapp installation failed: %w", err)
-		} else if !installed {
-			time.Sleep(5 * time.Second)
-		} else {
+		if installed, _ := isBicoccappInstalled(); installed {
+			printSubInfo("Bicoccapp installation detected")
 			return nil
 		}
+		time.Sleep(5 * time.Second)
 	}
 }
 
 func isBicoccappInstalled() (bool, error) {
 	output, err := runCommand("adb", "shell", "pm", "list", "packages")
 	if err != nil {
-		return false, fmt.Errorf("failed to list packages: %w", err)
-	} else if strings.Contains(output, BicoccAppPackage) {
-		return true, nil
-	} else {
-		return false, nil
+		return false, fmt.Errorf("package list failed: %w", err)
 	}
+	return strings.Contains(output, BicoccAppPackage), nil
 }
 
 func pauseBeforeExit() {
 	fmt.Println()
 	fmt.Println(colorInfo.Render("Press Enter to exit..."))
 	reader := bufio.NewReader(os.Stdin)
-	_, _ = reader.ReadString('\n')
+	reader.ReadString('\n')
 }
 
 func main() {
+	startTime = time.Now()
+
 	steps := []struct {
 		name string
 		fn   func() error
@@ -1565,32 +1272,26 @@ func main() {
 		{"Initialize", stepInitialize},
 		{"System Tools", stepSystemTools},
 		{"Python", stepPython},
-		{"Frida", stepFrida},
 		{"Java", stepJava},
 		{"Android SDK", stepAndroidSDK},
 		{"Emulator", stepEmulator},
-		{"Root Access", stepRoot},
 		{"LSPosed", stepLSPosed},
-		{"Frida Server", stepFridaServer},
 		{"BicoccApp", stepBicoccApp},
 		{"Bypass Module", stepBypass},
 	}
 
 	for _, step := range steps {
 		if err := step.fn(); err != nil {
-			fmt.Println()
-			printError("Setup failed at: " + step.name)
-			printError(err.Error())
-
-			if cmdErr, ok := err.(*CommandError); ok {
-				fmt.Println()
-				printInfo("Command Details:")
-				printInfo("  Command: " + cmdErr.Command + " " + strings.Join(cmdErr.Args, " "))
+			printError(fmt.Sprintf("Setup failed at: %s", step.name))
+			printSubWarning("Error: " + err.Error())
+			var cmdErr *CommandError
+			if errors.As(err, &cmdErr) {
+				printSubWarning("Command details:")
+				printSubWarning(fmt.Sprintf("%s %s", cmdErr.Command, strings.Join(cmdErr.Args, " ")))
 				if cmdErr.Output != "" {
-					printInfo("  Output: " + cmdErr.Output)
+					printSubWarning(fmt.Sprintf("Output: %s", cmdErr.Output))
 				}
 			}
-			fmt.Println()
 			pauseBeforeExit()
 			os.Exit(1)
 		}
@@ -1598,11 +1299,11 @@ func main() {
 
 	printComplete()
 
-	// Cleanup
 	if tempDir != "" {
-		os.RemoveAll(tempDir)
+		if err := os.RemoveAll(tempDir); err != nil {
+			printSubWarning(fmt.Sprintf("%s: %v", "Failed to cleanup temporary directory", err))
+		}
 	}
 
-	// Pause before exit so window doesn't close
 	pauseBeforeExit()
 }
