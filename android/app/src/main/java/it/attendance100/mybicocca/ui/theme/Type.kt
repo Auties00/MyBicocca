@@ -3,6 +3,7 @@ package it.attendance100.mybicocca.ui.theme
 import androidx.compose.material3.*
 import androidx.compose.ui.text.font.*
 import androidx.compose.ui.text.googlefonts.*
+import androidx.compose.ui.text.googlefonts.GoogleFont
 import it.attendance100.mybicocca.R
 
 val provider = GoogleFont.Provider(

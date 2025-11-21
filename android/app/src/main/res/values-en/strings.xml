@@ -59,4 +59,23 @@
   <string name="career_dialog_calcola">Calculate</string>
   <string name="career_dialog_annulla">Cancel</string>
   <string name="career_grafico_voti">Grades Chart</string>
+  
+  <!-- Calendar Page -->
+  <string name="calendar_today">Today</string>
+  <string name="calendar_previous_month">Previous Month</string>
+  <string name="calendar_next_month">Next Month</string>
+  <string name="calendar_events">Events</string>
+  <string name="calendar_no_events">No events for this day</string>
+  <string name="calendar_list_view">List View</string>
+  <string name="calendar_week_view">Week View</string>
+  <string name="event_type_lecture">Lecture</string>
+  <string name="event_type_lab">Lab</string>
+  <string name="event_type_exam">Exam</string>
+  <string name="event_type_office_hours">Office Hours</string>
+  <string name="event_type_other">Other</string>
+  <string name="event_detail_date_time">Date and Time</string>
+  <string name="event_detail_professor">Professor</string>
+  <string name="event_detail_location">Location</string>
+  <string name="event_detail_notes">Notes</string>
+  <string name="event_detail_close">Close</string>
 </resources>

@@ -7,9 +7,14 @@
 .buildlog/
 .history
 .idea/
+**/go.sum
 
 # packages file containing multi-root paths
 .packages.generated
+
+# macOS
+.DS_Store
+**/.DS_Store
 
 # Android related
 **/android/**/gradle-wrapper.jar
