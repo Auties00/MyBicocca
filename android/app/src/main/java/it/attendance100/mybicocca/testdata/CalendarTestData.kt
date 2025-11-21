@@ -1,6 +1,6 @@
-package it.attendance100.mybicocca.utils
+package it.attendance100.mybicocca.testdata
 
-import it.attendance100.mybicocca.model.*
+import it.attendance100.mybicocca.data.entities.*
 import java.time.*
 
 /**
@@ -15,7 +15,7 @@ object CalendarTestData {
   fun getSampleEvents(): List<CourseEvent> {
     val today = LocalDate.now()
     val brandColor = CalendarUtils.BICOCCA_BRAND_COLOR
-    
+
     return listOf(
       CourseEvent(
         id = CalendarUtils.TEST_EVENT_ID_START,
@@ -139,14 +139,14 @@ object CalendarTestData {
       )
     )
   }
-  
+
   /**
    * Restituisce una lista di orari ricorrenti di esempio
    */
   fun getSampleSchedules(): List<CourseSchedule> {
     val currentMonth = YearMonth.now()
     val brandColor = CalendarUtils.BICOCCA_BRAND_COLOR
-    
+
     return listOf(
       CourseSchedule(
         courseName = "Programmazione ad Oggetti",

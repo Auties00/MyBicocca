@@ -1,6 +1,8 @@
-package it.attendance100.mybicocca.model
+package it.attendance100.mybicocca.di
 
 import androidx.room.*
+import it.attendance100.mybicocca.data.daos.*
+import it.attendance100.mybicocca.data.entities.*
 
 /**
  * Room Database per l'app MyBicocca.

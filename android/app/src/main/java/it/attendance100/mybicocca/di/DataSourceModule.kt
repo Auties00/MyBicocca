@@ -1,12 +1,12 @@
 package it.attendance100.mybicocca.di
 
-import dagger.Binds
-import dagger.Module
-import dagger.hilt.InstallIn
-import dagger.hilt.components.SingletonComponent
-import it.attendance100.mybicocca.data.calendar.CalendarDataSource
-import it.attendance100.mybicocca.data.calendar.MockCalendarDataSource
-import javax.inject.Singleton
+import dagger.*
+import dagger.hilt.*
+import dagger.hilt.components.*
+import it.attendance100.mybicocca.data.datasources.calendar.*
+import it.attendance100.mybicocca.data.datasources.notification.*
+import it.attendance100.mybicocca.data.datasources.user.*
+import javax.inject.*
 
 /**
  * Hilt Module per le sorgenti dati.
@@ -31,4 +31,16 @@ abstract class DataSourceModule {
     abstract fun bindCalendarDataSource(
         mockDataSource: MockCalendarDataSource
     ): CalendarDataSource
+
+  @Binds
+  @Singleton
+  abstract fun bindUserDataSource(
+    mockDataSource: MockUserDataSource,
+  ): UserDataSource
+
+  @Binds
+  @Singleton
+  abstract fun bindNotificationDataSource(
+    mockDataSource: MockNotificationDataSource,
+  ): NotificationDataSource
 }

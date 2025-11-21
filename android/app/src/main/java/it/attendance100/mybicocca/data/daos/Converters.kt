@@ -1,6 +1,7 @@
-package it.attendance100.mybicocca.model
+package it.attendance100.mybicocca.data.daos
 
 import androidx.room.*
+import it.attendance100.mybicocca.data.entities.*
 import java.time.*
 
 /**

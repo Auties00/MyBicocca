@@ -1,32 +1,24 @@
 package it.attendance100.mybicocca.components
 
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AccessTime
-import androidx.compose.material.icons.filled.LocationOn
-import androidx.compose.material.icons.filled.Person
+import androidx.compose.foundation.shape.*
+import androidx.compose.material.icons.*
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.compose.ui.res.stringResource
-import it.attendance100.mybicocca.model.CourseEvent
-import it.attendance100.mybicocca.utils.CalendarUtils
-import java.time.LocalDate
-import java.time.format.TextStyle
-import java.util.Locale
+import androidx.compose.runtime.*
+import androidx.compose.ui.*
+import androidx.compose.ui.draw.*
+import androidx.compose.ui.graphics.*
+import androidx.compose.ui.res.*
+import androidx.compose.ui.text.font.*
+import androidx.compose.ui.text.style.*
+import androidx.compose.ui.unit.*
+import it.attendance100.mybicocca.data.entities.*
+import it.attendance100.mybicocca.utils.*
+import java.time.*
+import java.time.format.*
+import java.util.*
 
 /**
  * Componente riutilizzabile per mostrare una singola cella giorno
@@ -46,17 +38,17 @@ fun RowScope.DayCell(
 
   Column(
     modifier = modifier
-      .weight(1f)
-      .clip(RoundedCornerShape(12.dp))
-      .background(
-        when {
-          isSelected -> primaryColor
-          isToday -> primaryColor.copy(alpha = 0.2f)
-          else -> Color.Transparent
-        }
-      )
-      .clickable { onDateSelected(date) }
-      .padding(vertical = 10.dp),
+        .weight(1f)
+        .clip(RoundedCornerShape(12.dp))
+        .background(
+          when {
+            isSelected -> primaryColor
+            isToday -> primaryColor.copy(alpha = 0.2f)
+            else -> Color.Transparent
+          }
+        )
+        .clickable { onDateSelected(date) }
+        .padding(vertical = 10.dp),
     horizontalAlignment = Alignment.CenterHorizontally
   ) {
     Text(
@@ -98,28 +90,28 @@ fun EventListCard(
 
   Surface(
     modifier = Modifier
-      .fillMaxWidth()
-      .then(
-        if (onClick != null) Modifier.clickable(onClick = onClick)
-        else Modifier
-      ),
+        .fillMaxWidth()
+        .then(
+          if (onClick != null) Modifier.clickable(onClick = onClick)
+          else Modifier
+        ),
     shape = RoundedCornerShape(12.dp),
     color = primaryColor.copy(alpha = 0.1f),
     border = BorderStroke(1.dp, primaryColor.copy(alpha = 0.3f))
   ) {
     Row(
       modifier = Modifier
-        .fillMaxWidth()
-        .padding(12.dp),
+          .fillMaxWidth()
+          .padding(12.dp),
       horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
       // Barra colorata laterale
       Box(
         modifier = Modifier
-          .width(4.dp)
-          .height(60.dp)
-          .clip(RoundedCornerShape(2.dp))
-          .background(CalendarUtils.getEventColor(event.eventType, primaryColor))
+            .width(4.dp)
+            .height(60.dp)
+            .clip(RoundedCornerShape(2.dp))
+            .background(CalendarUtils.getEventColor(event.eventType, primaryColor))
       )
 
       Column(
@@ -247,8 +239,8 @@ fun CompactEventCell(
   ) {
     Column(
       modifier = Modifier
-        .fillMaxSize()
-        .padding(6.dp),
+          .fillMaxSize()
+          .padding(6.dp),
       verticalArrangement = Arrangement.SpaceBetween
     ) {
       // Nome corso abbreviato
@@ -321,12 +313,12 @@ fun EmptyGridCell(
 ) {
   Box(
     modifier = modifier
-      .fillMaxSize()
-      .border(
-        width = 0.5.dp,
-        color = grayColor.copy(alpha = 0.1f),
-        shape = RoundedCornerShape(6.dp)
-      )
+        .fillMaxSize()
+        .border(
+          width = 0.5.dp,
+          color = grayColor.copy(alpha = 0.1f),
+          shape = RoundedCornerShape(6.dp)
+        )
   )
 }
 

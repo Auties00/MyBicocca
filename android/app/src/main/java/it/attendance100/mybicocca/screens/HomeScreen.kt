@@ -13,9 +13,12 @@ import androidx.compose.ui.*
 import androidx.compose.ui.res.*
 import androidx.compose.ui.text.font.*
 import androidx.compose.ui.unit.*
+import androidx.hilt.navigation.compose.*
 import it.attendance100.mybicocca.R
-import it.attendance100.mybicocca.composables.*
+import it.attendance100.mybicocca.components.*
+import it.attendance100.mybicocca.domain.model.*
 import it.attendance100.mybicocca.ui.theme.*
+import it.attendance100.mybicocca.viewmodel.*
 import kotlinx.coroutines.*
 
 
@@ -23,11 +26,15 @@ import kotlinx.coroutines.*
 fun HomeContentScreen(
   pagerState: PagerState,
   coroutineScope: CoroutineScope,
+  viewModel: HomeViewModel = hiltViewModel(),
 ) {
   val primaryColor = MaterialTheme.colorScheme.primary
   val surfaceColor = MaterialTheme.colorScheme.surface
   val textColor = MaterialTheme.colorScheme.onBackground
   val grayColor = if (MaterialTheme.colorScheme.background == BackgroundColor) GrayColor else GrayColorLight
+
+  val user by viewModel.user.collectAsState()
+  val notifications by viewModel.notifications.collectAsState()
 
   Column(
     modifier = Modifier
@@ -84,20 +91,20 @@ fun HomeContentScreen(
           verticalArrangement = Arrangement.Center
         ) {
           Text(
-            text = "Mario Rossi",
+            text = "${user?.name ?: ""} ${user?.surname ?: ""}",
             fontSize = 20.sp,
             fontWeight = FontWeight.Bold,
             color = textColor
           )
           Spacer(modifier = Modifier.height(4.dp))
           Text(
-            text = "Computer Science",
+            text = user?.course ?: "",
             fontSize = 14.sp,
             color = grayColor
           )
           Spacer(modifier = Modifier.height(8.dp))
           Text(
-            text = "Mat. 123456",
+            text = "Mat. ${user?.matricola ?: ""}",
             fontSize = 13.sp,
             color = primaryColor,
             fontWeight = FontWeight.Medium
@@ -109,8 +116,7 @@ fun HomeContentScreen(
     }
 
     // Unread Notifications Section
-    val hasUnreadNotifications = true // Mock data
-    if (hasUnreadNotifications) {
+    if (notifications.isNotEmpty()) {
       Column(verticalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.padding(top = 12.dp)) {
         Text(
           text = "Unread Notifications",
@@ -119,74 +125,43 @@ fun HomeContentScreen(
           color = textColor
         )
 
-        // Notification 1
-        Surface(
-          modifier = Modifier.fillMaxWidth(),
-          shape = RoundedCornerShape(16.dp),
-          color = surfaceColor,
-          tonalElevation = 2.dp
-        ) {
-          Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        notifications.forEach { notification ->
+          Surface(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(16.dp),
+            color = surfaceColor,
+            tonalElevation = 2.dp
           ) {
-            Icon(
-              imageVector = Icons.Filled.Notifications,
-              contentDescription = null,
-              tint = primaryColor,
-              modifier = Modifier.size(24.dp)
-            )
-            Column(modifier = Modifier.weight(1f)) {
-              Text(
-                text = "New exam results available",
-                fontSize = 15.sp,
-                fontWeight = FontWeight.Medium,
-                color = textColor
+            Row(
+              modifier = Modifier
+                  .fillMaxWidth()
+                  .padding(16.dp),
+              verticalAlignment = Alignment.CenterVertically,
+              horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+              Icon(
+                imageVector = when (notification.type) {
+                  NotificationType.EXAM_RESULT -> Icons.Filled.Notifications
+                  NotificationType.LECTURE -> Icons.Filled.Event
+                  else -> Icons.Filled.Info
+                },
+                contentDescription = null,
+                tint = primaryColor,
+                modifier = Modifier.size(24.dp)
               )
-              Text(
-                text = "2 hours ago",
-                fontSize = 12.sp,
-                color = grayColor
-              )
-            }
-          }
-        }
-
-        // Notification 2
-        Surface(
-          modifier = Modifier.fillMaxWidth(),
-          shape = RoundedCornerShape(16.dp),
-          color = surfaceColor,
-          tonalElevation = 2.dp
-        ) {
-          Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-          ) {
-            Icon(
-              imageVector = Icons.Filled.Event,
-              contentDescription = null,
-              tint = primaryColor,
-              modifier = Modifier.size(24.dp)
-            )
-            Column(modifier = Modifier.weight(1f)) {
-              Text(
-                text = "Upcoming lecture tomorrow",
-                fontSize = 15.sp,
-                fontWeight = FontWeight.Medium,
-                color = textColor
-              )
-              Text(
-                text = "5 hours ago",
-                fontSize = 12.sp,
-                color = grayColor
-              )
+              Column(modifier = Modifier.weight(1f)) {
+                Text(
+                  text = notification.title,
+                  fontSize = 15.sp,
+                  fontWeight = FontWeight.Medium,
+                  color = textColor
+                )
+                Text(
+                  text = notification.timeAgo,
+                  fontSize = 12.sp,
+                  color = grayColor
+                )
+              }
             }
           }
         }

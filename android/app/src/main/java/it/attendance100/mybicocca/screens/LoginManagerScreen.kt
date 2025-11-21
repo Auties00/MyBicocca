@@ -16,7 +16,7 @@ import androidx.compose.ui.text.font.*
 import androidx.compose.ui.unit.*
 import androidx.navigation.*
 import it.attendance100.mybicocca.R
-import it.attendance100.mybicocca.composables.*
+import it.attendance100.mybicocca.components.*
 import it.attendance100.mybicocca.ui.theme.*
 
 @OptIn(ExperimentalSharedTransitionApi::class)
