@@ -1,0 +1,408 @@
+package it.attendance100.mybicocca.screens
+
+import androidx.activity.*
+import androidx.compose.animation.*
+import androidx.compose.animation.core.*
+import androidx.compose.foundation.*
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.pager.*
+import androidx.compose.foundation.shape.*
+import androidx.compose.material.icons.*
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.outlined.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.*
+import androidx.compose.ui.draw.*
+import androidx.compose.ui.graphics.*
+import androidx.compose.ui.graphics.vector.*
+import androidx.compose.ui.platform.*
+import androidx.compose.ui.res.*
+import androidx.compose.ui.unit.*
+import androidx.navigation.*
+import it.attendance100.mybicocca.*
+import it.attendance100.mybicocca.R
+import it.attendance100.mybicocca.composables.*
+import it.attendance100.mybicocca.ui.theme.*
+import it.attendance100.mybicocca.utils.*
+import kotlinx.coroutines.*
+
+@OptIn(ExperimentalSharedTransitionApi::class)
+@Composable
+fun HomePage(
+  navController: NavHostController,
+  sharedTransitionScope: SharedTransitionScope,
+  animatedContentScope: AnimatedContentScope,
+  drawerState: DrawerState,
+) {
+  val pagerState = rememberPagerState(
+    initialPage = 0,
+    pageCount = { 5 },
+  )
+  val coroutineScope = rememberCoroutineScope()
+  val currentPage = pagerState.currentPage
+  val isFirstPage = currentPage == 0
+
+  val density = LocalDensity.current
+  val drawerWidthDp = 280.dp
+  val drawerWidthPx = with(density) { drawerWidthDp.toPx() }
+  val animationProgress = remember(drawerState.currentOffset) {
+    if (drawerWidthPx == 0f) {
+      if (drawerState.isOpen) 1f else 0f
+    } else {
+      (1f - (drawerState.currentOffset / -drawerWidthPx)).coerceIn(0f, 1f)
+    }
+  }
+  val avatarSize = 44.dp
+  val startX = 13.dp // TopAppBar padding
+  val startY = (60.dp - avatarSize) / 2 // Centered in 60.dp TopAppBar
+  val endX = drawerWidthDp - 14.5.dp - avatarSize // Drawer padding and size
+  val endY = 13.75.dp
+
+  val animatedX = lerp(startX, endX, animationProgress)
+  val animatedY = lerp(startY, endY, animationProgress)
+
+  val context = LocalContext.current
+  val activity = context as? ComponentActivity
+  val preferencesManager = rememberPreferencesManager()
+  val isDarkMode = preferencesManager.isDarkMode
+  val backgroundColor = MaterialTheme.colorScheme.background
+
+  LaunchedEffect(animationProgress, isDarkMode) {
+    activity?.let {
+      // Interpolate scrim alpha based on drawer animation progress (0.0 to 0.25 or 0.125)
+      val scrimAlpha = animationProgress * (if (!isDarkMode) 0.25f else 0.125f)
+
+      val blendedColor = lerp(backgroundColor, Color.Black, scrimAlpha)
+      val scrimColor = blendedColor.toArgb()
+
+      val statusBarStyle = if (isDarkMode)
+        SystemBarStyle.dark(scrimColor)
+      else
+        SystemBarStyle.light(
+          scrim = scrimColor,
+          darkScrim = scrimColor
+        )
+
+      it.enableEdgeToEdge(statusBarStyle = statusBarStyle)
+    }
+  }
+
+  Box(modifier = Modifier.fillMaxSize()) {
+    ModalNavigationDrawer(
+      drawerState = drawerState,
+      gesturesEnabled = true,
+      modifier = Modifier.fillMaxSize(),
+      drawerContent = {
+        ModalDrawerSheet(
+          modifier = Modifier.width(drawerWidthDp)
+        ) {
+          Column(
+            modifier = Modifier
+                .fillMaxSize()
+          ) {
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Login Manager Item
+            StyledNavigationDrawerItem(
+              icon = Icons.Default.Key,
+              label = stringResource(R.string.login_manager),
+              trailing = { if (isFirstPage) Avatar(size = 44.dp, modifier = Modifier.offset(x = 18.dp)) },
+              selected = false,
+              onClick = {
+                navController.navigate(Screen.LoginManager.route) // Switched order on purpose to make the animation feel snappier
+                coroutineScope.launch {
+                  drawerState.close()
+                }
+              }
+            )
+
+            // Settings Item
+            StyledNavigationDrawerItem(
+              icon = Icons.Outlined.Settings,
+              label = stringResource(R.string.settings),
+              selected = false,
+              onClick = {
+                coroutineScope.launch {
+                  drawerState.close()
+                }
+                navController.navigate(Screen.Settings.route)
+              }
+            )
+
+            // App Info Item
+            StyledNavigationDrawerItem(
+              icon = Icons.Outlined.Info,
+              label = stringResource(R.string.app_info),
+              selected = false,
+              onClick = {
+                coroutineScope.launch {
+                  drawerState.close()
+                }
+                navController.navigate(Screen.AppInfo.route)
+              }
+            )
+          }
+        }
+      },
+    ) {
+      Scaffold(
+        topBar = {
+          TopAppBar(
+            navController = navController,
+            drawerState = drawerState,
+            sharedTransitionScope = sharedTransitionScope,
+            animatedContentScope = animatedContentScope,
+            isFirstPage = isFirstPage,
+            currentPage = currentPage
+          )
+        },
+        bottomBar = {
+          BottomNavBar(
+            currentIndex = currentPage,
+            onPageSelected = { index ->
+              coroutineScope.launch {
+                pagerState.animateScrollToPage(index)
+              }
+            }
+          )
+        }
+      ) { paddingValues ->
+        HorizontalPager(
+          state = pagerState,
+          modifier = Modifier
+              .fillMaxSize()
+              .padding(paddingValues)
+        ) { page ->
+          PageContent(page, sharedTransitionScope, animatedContentScope, pagerState, coroutineScope)
+        }
+      }
+    }
+
+    // Avatar Drawn on top of everything else
+    AnimatedVisibility(
+      visible = !isFirstPage,
+      enter = slideInHorizontally(
+        initialOffsetX = { -it },
+        animationSpec = tween(durationMillis = 400)
+      ) + fadeIn(animationSpec = tween(durationMillis = 400)),
+      exit = slideOutHorizontally(
+        targetOffsetX = { -it },
+        animationSpec = tween(durationMillis = 400)
+      ) + fadeOut(animationSpec = tween(durationMillis = 400)),
+      modifier = Modifier
+          .size(avatarSize)
+          .offset(x = animatedX, y = animatedY)
+    ) {
+      HoistedAvatar(
+        sharedTransitionScope = sharedTransitionScope,
+        animatedContentScope = animatedContentScope,
+        animatedX = 0.dp,
+        animatedY = 0.dp,
+        avatarSize = avatarSize,
+        onClick = {
+          coroutineScope.launch {
+            coroutineScope.launch {
+              if (drawerState.isOpen) {
+                navController.navigate(Screen.LoginManager.route)
+                drawerState.close()
+              } else {
+                drawerState.open()
+              }
+            }
+          }
+        }
+      )
+    }
+  }
+}
+
+
+@OptIn(ExperimentalComposeUiApi::class, ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
+@Composable
+fun TopAppBar(
+  navController: NavHostController,
+  drawerState: DrawerState,
+  sharedTransitionScope: SharedTransitionScope,
+  animatedContentScope: AnimatedContentScope,
+  isFirstPage: Boolean,
+  currentPage: Int,
+) {
+  val grayColor = if (MaterialTheme.colorScheme.background == BackgroundColor) GrayColor else GrayColorLight
+  val scope = rememberCoroutineScope()
+
+  Surface(
+    modifier = Modifier
+        .fillMaxWidth()
+        .height(60.dp),
+    color = MaterialTheme.colorScheme.background
+  ) {
+    Row(
+      modifier = Modifier
+          .fillMaxSize()
+          .padding(horizontal = 13.dp),
+      horizontalArrangement = Arrangement.SpaceBetween,
+      verticalAlignment = Alignment.CenterVertically
+    ) {
+      // Left button: Menu icon on first page, hoisted avatar placeholder on other pages
+      Box(
+        modifier = Modifier
+            .size(44.dp)
+      ) {
+        this@Row.AnimatedVisibility(
+          visible = isFirstPage,
+          enter = slideInHorizontally(
+            initialOffsetX = { -it },
+            animationSpec = tween(durationMillis = 400)
+          ) + fadeIn(animationSpec = tween(durationMillis = 400)),
+          exit = slideOutHorizontally(
+            targetOffsetX = { -it },
+            animationSpec = tween(durationMillis = 400)
+          ) + fadeOut(animationSpec = tween(durationMillis = 400))
+        ) {
+          IconButton(
+            onClick = {
+              scope.launch {
+                drawerState.open()
+              }
+            }
+          ) {
+            Icon(
+              imageVector = Icons.Default.Menu,
+              contentDescription = stringResource(R.string.settings),
+              tint = grayColor,
+              modifier = Modifier.size(28.dp)
+            )
+          }
+        }
+
+        // Invisible placeholder for avatar when not on first page
+        // The actual avatar is hoisted and rendered separately
+        if (!isFirstPage) {
+          Box(
+            modifier = Modifier
+                .clip(CircleShape)
+                .clickable {
+                  scope.launch {
+                    drawerState.open()
+                  }
+                }
+          )
+        }
+      }
+
+      // App Title
+      AppTitle()
+
+      // Search Icon
+      IconButton(onClick = { /* Search action */ }) {
+        Icon(
+          imageVector = Icons.Outlined.Search,
+          contentDescription = stringResource(R.string.search),
+          tint = grayColor,
+          modifier = Modifier.size(28.dp)
+        )
+      }
+    }
+  }
+}
+
+@Composable
+fun BottomNavBar(currentIndex: Int, onPageSelected: (Int) -> Unit) {
+  val primaryColor = MaterialTheme.colorScheme.primary
+  val primaryContainerColor = MaterialTheme.colorScheme.primaryContainer
+  val backgroundColor = MaterialTheme.colorScheme.surfaceContainerLow
+  val grayColor = GrayColor
+
+  NavigationBar(
+    containerColor = backgroundColor,
+    contentColor = primaryColor
+  ) {
+    val items = listOf(
+      BottomNavItem(stringResource(R.string.bottom_navbar_home), Icons.Outlined.Home, Icons.Filled.Home),
+      BottomNavItem(stringResource(R.string.bottom_navbar_calendario), Icons.Outlined.CalendarMonth, Icons.Filled.CalendarMonth),
+      BottomNavItem(stringResource(R.string.bottom_navbar_elearning), Icons.Outlined.School, Icons.Filled.School),
+      BottomNavItem(stringResource(R.string.bottom_navbar_segreterie), Icons.Outlined.ContactPage, Icons.Filled.ContactPage),
+      BottomNavItem(stringResource(R.string.bottom_navbar_carriera), Icons.Outlined.Badge, Icons.Filled.Badge)
+    )
+
+    items.forEachIndexed { index, item ->
+      NavigationBarItem(
+        icon = {
+          Icon(
+            imageVector = if (currentIndex == index) item.selectedIcon else item.icon,
+            contentDescription = item.label,
+          )
+        },
+        label = {
+          Text(
+            text = item.label,
+            fontSize = 12.sp,
+          )
+        },
+        selected = currentIndex == index,
+        onClick = { onPageSelected(index) },
+        colors = NavigationBarItemDefaults.colors(
+          selectedIconColor = primaryColor,
+          selectedTextColor = primaryColor,
+          unselectedIconColor = grayColor,
+          unselectedTextColor = grayColor,
+          indicatorColor = primaryContainerColor.copy(alpha = 0.15f),
+        )
+      )
+    }
+  }
+}
+
+@OptIn(ExperimentalSharedTransitionApi::class)
+@Composable
+fun PageContent(
+  page: Int,
+  sharedTransitionScope: SharedTransitionScope,
+  animatedContentScope: AnimatedContentScope,
+  pagerState: PagerState,
+  coroutineScope: CoroutineScope,
+) {
+  when (page) {
+    0 -> {
+      // Home page
+      HomeContentScreen(pagerState, coroutineScope)
+    }
+    
+    1 -> {
+      // Calendar page
+      CalendarScreen()
+    }
+
+    4 -> {
+      // Career page
+      CareerScreen(sharedTransitionScope, animatedContentScope)
+    }
+
+    else -> {
+      // Placeholder for other pages
+      Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(start = 6.dp, end = 6.dp)
+            .background(
+              MaterialTheme.colorScheme.background,
+              shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
+            ),
+        contentAlignment = Alignment.Center
+      ) {
+        Text(
+          text = "Page ${page + 1}",
+          color = MaterialTheme.colorScheme.onBackground,
+          fontSize = 24.sp
+        )
+      }
+    }
+  }
+}
+
+data class BottomNavItem(
+  val label: String,
+  val icon: ImageVector,
+  val selectedIcon: ImageVector,
+)
