@@ -11,10 +11,9 @@
  *
  * SOLUTION:
  * This Frida script bypasses root detection and SSL pinning by:
- * 1. Intercepting the Talsec EventChannel that streams threat notifications to Flutter
- * 2. Blocking all threat events before they reach the Flutter layer
- * 3. Intercepting flutter_jailbreak_detection and returning false for all checks
- * 4. Intercepting http_certificate_pinning and returning CONNECTION_SECURE for all checks
+ * - Intercepting and blocking the Talsec EventChannel that streams threat notifications to Flutter
+ * - Intercepting flutter_jailbreak_detection and returning false for all checks
+ * - Intercepting http_certificate_pinning and returning CONNECTION_SECURE for all checks
  *
  * USAGE:
  * frida -U -l "poc.js" -f it.bicoccapp.unimib
@@ -23,151 +22,137 @@
  * Use research.js to monitor all channel traffic
  */
 
+const Config = {
+    classes: {
+        String: 'java.lang.String',
+        ByteBuffer: 'java.nio.ByteBuffer',
+        FlutterJNI: 'io.flutter.embedding.engine.FlutterJNI',
+    },
+    channels: {
+        talsec: ['talsec', 'freerasp'],
+        jailbreak: ['flutter_jailbreak_detection'],
+        sslPinning: ['http_certificate_pinning']
+    }
+}
+
+function isTalsecChannel(channelName) {
+    if (!channelName) return false
+    return Config.channels.talsec.some(pattern => channelName.toLowerCase().includes(pattern))
+}
+
+function isJailbreakChannel(channelName) {
+    if (!channelName) return false
+    return Config.channels.jailbreak.some(pattern => channelName.toLowerCase().includes(pattern))
+}
+
+function isSslPinningChannel(channelName) {
+    if (!channelName) return false
+    return Config.channels.sslPinning.some(pattern => channelName.toLowerCase().includes(pattern))
+}
+
+// Builds a success envelope that contains the boolean value false
+// Reversed from https://github.com/flutter/flutter/blob/b3298ebef4c3cc8709e1a837ebe78fcabf294a8e/engine/src/flutter/shell/platform/android/io/flutter/plugin/common/StandardMethodCodec.java#L58
+function createBooleanFalseResponse() {
+    const ByteBuffer = Java.use(Config.classes.ByteBuffer)
+
+    const buffer = ByteBuffer.allocateDirect(2)
+
+    buffer.put(0x00) // Success envelope
+    buffer.put(0x02) // Boolean FALSE
+
+    buffer.flip()
+
+    return buffer
+}
+
+// Builds a success envelope that contains the string value "CONNECTION_SECURE"
+// Reversed from https://github.com/flutter/flutter/blob/b3298ebef4c3cc8709e1a837ebe78fcabf294a8e/engine/src/flutter/shell/platform/android/io/flutter/plugin/common/StandardMethodCodec.java#L58
+function createConnectionSecureResponse() {
+    const ByteBuffer = Java.use(Config.classes.ByteBuffer)
+    const String = Java.use(Config.classes.String)
+
+    const strBytes = String.$new('CONNECTION_SECURE').getBytes()
+    const length = strBytes.length
+    const sizeBytes = length < 254 ? 1 : (length <= 0xffff ? 3 : 5)
+
+    const buffer = ByteBuffer.allocateDirect(2 + sizeBytes + length)
+
+    buffer.put(0x00) // Success envelope
+    buffer.put(0x07) // STRING type code
+
+    // Write size
+    if (length < 254) {
+        buffer.put(length)
+    } else if (length <= 0xffff) {
+        buffer.put(254)
+        buffer.put(length & 0xFF)
+        buffer.put((length >> 8) & 0xFF)
+    } else {
+        buffer.put(255)
+        buffer.put(length & 0xFF)
+        buffer.put((length >> 8) & 0xFF)
+        buffer.put((length >> 16) & 0xFF)
+        buffer.put((length >> 24) & 0xFF)
+    }
+
+    buffer.put(strBytes)
+
+    buffer.flip()
+
+    return buffer
+}
+
+
+function hookMethodChannel() {
+    try {
+        const FlutterJNI = Java.use(Config.classes.FlutterJNI)
+        const originalHandlePlatformMessage = FlutterJNI.handlePlatformMessage
+        FlutterJNI.handlePlatformMessage.implementation = function (channelName, byteBuffer, replyId, messageData) {
+            if (isJailbreakChannel(channelName)) {
+                console.log("[OVERRIDE] MethodChannel call on " + channelName + " -> false")
+                const response = createBooleanFalseResponse()
+                const responseSize = response.remaining()
+                this.invokePlatformMessageResponseCallback(replyId, response, responseSize)
+                if (messageData !== 0) {
+                    this.cleanupMessageData(messageData)
+                }
+            } else if (isSslPinningChannel(channelName)) {
+                console.log("[OVERRIDE] MethodChannel call on " + channelName + " -> CONNECTION_SECURE")
+                const response = createConnectionSecureResponse()
+                const responseSize = response.remaining()
+                this.invokePlatformMessageResponseCallback(replyId, response, responseSize)
+                if (messageData !== 0) {
+                    this.cleanupMessageData(messageData)
+                }
+            } else {
+                return originalHandlePlatformMessage.call(this, channelName, byteBuffer, replyId, messageData)
+            }
+        }
+        console.log("[✓] MethodChannel hooked")
+    } catch (e) {
+        console.log("[✗] MethodChannel hooking failed: " + e.message)
+    }
+}
+
+function hookEventStream() {
+    try {
+        const FlutterJNI = Java.use(Config.classes.FlutterJNI)
+        const originalDispatchPlatformMessage = FlutterJNI.dispatchPlatformMessage
+        FlutterJNI.dispatchPlatformMessage.implementation = function (channelName, byteBuffer, position, responseId) {
+            if (isTalsecChannel(channelName)) {
+                console.log("[BLOCKED] EventStream event from " + channelName)
+            }else {
+                return originalDispatchPlatformMessage.call(this, channelName, byteBuffer, position, responseId)
+            }
+        }
+        console.log("[✓] EventChannel hooked")
+    } catch (e) {
+        console.log("[✗] EventChannel hooking failed: " + e.message)
+    }
+}
+
 Java.perform(function() {
-    console.log("[*] Bypass starting...\n");
-
-    // Talsec uses an EventChannel to stream threat notifications.
-    // We intercept the stream and block all events from reaching Flutter.
-    try {
-        var EventChannel = Java.use("io.flutter.plugin.common.EventChannel");
-        var setStreamHandler = EventChannel.setStreamHandler.overload('io.flutter.plugin.common.EventChannel$StreamHandler');
-
-        setStreamHandler.implementation = function(handler) {
-            var channelName = this.name.value;
-
-            // Only intercept Talsec/Freerasp channels
-            if (channelName.includes("talsec") || channelName.includes("freerasp")) {
-                console.log("[+] Intercepted Talsec EventChannel: " + channelName);
-
-                var retainedHandler = Java.retain(handler);
-
-                // Create a wrapper that blocks all threat events
-                var StreamHandlerWrapper = Java.registerClass({
-                    name: 'com.frida.TalsecBypass' + Math.random().toString(36).substr(2, 9),
-                    implements: [Java.use('io.flutter.plugin.common.EventChannel$StreamHandler')],
-                    methods: {
-                        onListen: function(listenArgs, eventSink) {
-                            var retainedEventSink = Java.retain(eventSink);
-
-                            // Wrap the EventSink to intercept events
-                            var EventSinkWrapper = Java.registerClass({
-                                name: 'com.frida.EventBlocker' + Math.random().toString(36).substr(2, 9),
-                                implements: [Java.use('io.flutter.plugin.common.EventChannel$EventSink')],
-                                methods: {
-                                    // Block threat notifications
-                                    success: function(event) {
-                                        console.log("[BLOCKED] Talsec threat event");
-                                        // Don't forward to Flutter
-                                    },
-                                    // Block error notifications
-                                    error: function(errorCode, errorMessage, errorDetails) {
-                                        console.log("[BLOCKED] Talsec error event");
-                                        // Don't forward to Flutter
-                                    },
-                                    // Allow stream to end normally
-                                    endOfStream: function() {
-                                        retainedEventSink.endOfStream();
-                                    }
-                                }
-                            });
-
-                            // Call original handler with our blocking wrapper
-                            retainedHandler.onListen(listenArgs, EventSinkWrapper.$new());
-                        },
-                        onCancel: function(cancelArgs) {
-                            retainedHandler.onCancel(cancelArgs);
-                        }
-                    }
-                });
-
-                return setStreamHandler.call(this, StreamHandlerWrapper.$new());
-            }
-
-            // Pass through non-Talsec channels unchanged
-            return setStreamHandler.call(this, handler);
-        };
-
-        console.log("[✓] EventChannel filter installed");
-
-    } catch (e) {
-        console.log("[✗] EventChannel filter error: " + e);
-    }
-
-    // The flutter_jailbreak_detection plugin checks for root/jailbreak.
-    // We intercept its method calls and return false (not jailbroken).
-    try {
-        var MethodChannel = Java.use("io.flutter.plugin.common.MethodChannel");
-        var setMethodCallHandler = MethodChannel.setMethodCallHandler.overload('io.flutter.plugin.common.MethodChannel$MethodCallHandler');
-
-        setMethodCallHandler.implementation = function(handler) {
-            var channelName = this.name.value;
-
-            // Only intercept jailbreak detection channel
-            if (channelName.includes("flutter_jailbreak_detection")) {
-                console.log("[+] Intercepted jailbreak detection channel");
-
-                var retainedHandler = Java.retain(handler);
-
-                var HandlerWrapper = Java.registerClass({
-                    name: 'com.frida.JailbreakBypass' + Math.random().toString(36).substr(2, 9),
-                    implements: [Java.use('io.flutter.plugin.common.MethodChannel$MethodCallHandler')],
-                    methods: {
-                        onMethodCall: function(call, result) {
-                            var methodName = call.method.value;
-
-                            // Return false for all jailbreak/root checks
-                            if (methodName === "jailbroken" ||
-                                methodName === "canMockLocation" ||
-                                methodName === "developerMode") {
-
-                                console.log("[BYPASSED] " + methodName + " -> false");
-                                result.success(Java.use("java.lang.Boolean").valueOf(false));
-                                return;
-                            }
-
-                            // Pass through other methods
-                            retainedHandler.onMethodCall(call, result);
-                        }
-                    }
-                });
-
-                return setMethodCallHandler.call(this, HandlerWrapper.$new());
-            }else if(channelName.includes("http_certificate_pinning")) {
-                console.log("[+] Intercepted ssl pinning channel");
-
-                var retainedHandler = Java.retain(handler);
-
-                var HandlerWrapper = Java.registerClass({
-                    name: 'com.frida.SslPinningBypass' + Math.random().toString(36).substr(2, 9),
-                    implements: [Java.use('io.flutter.plugin.common.MethodChannel$MethodCallHandler')],
-                    methods: {
-                        onMethodCall: function(call, result) {
-                            var methodName = call.method.value;
-
-                            if (methodName === "check") {
-
-                                console.log("[BYPASSED] " + methodName + " -> CONNECTION_SECURE");
-                                result.success(Java.use("java.lang.String").valueOf("CONNECTION_SECURE"));
-                                return;
-                            }
-
-                            // Pass through other methods
-                            retainedHandler.onMethodCall(call, result);
-                        }
-                    }
-                });
-
-                return setMethodCallHandler.call(this, HandlerWrapper.$new());
-            }
-
-            // Pass through non-jailbreak channels unchanged
-            return setMethodCallHandler.call(this, handler);
-        };
-
-        console.log("[✓] MethodChannel filter installed");
-    } catch (e) {
-        console.log("[✗] MethodChannel filter error: " + e);
-    }
-
-    console.log("[✓] Bypass installed");
-});
+    console.log("[*] BicoccApp PoC - Starting...")
+    hookMethodChannel()
+    hookEventStream()
+})

@@ -1212,12 +1212,16 @@ func stepLSPosed() error {
 	printStep("Installing LSPosed")
 
 	printSubStep("Checking if LSPosed is already installed")
-	output, err := runCommand("adb", "shell", "pm", "list", "packages")
+	modulesOutput, err := runCommand("adb", "shell", "su", "-c", "ls", "-1", "/data/adb/modules")
+	printSubStep(modulesOutput)
 	if err != nil {
 		return fmt.Errorf("failed to list packages: %w", err)
 	}
-
-	if strings.Contains(strings.ToLower(output), "lsposed") {
+	modules := make(map[string]bool)
+	for module := range strings.Lines(modulesOutput) {
+		modules[module] = true
+	}
+	if _, moduleExists := modules["lsposed"]; moduleExists {
 		printSubStep("LSPosed already installed")
 		return nil
 	}
@@ -1455,12 +1459,6 @@ func stepBypass() error {
 func stepFridaServer() error {
 	printStep("Installing Frida server")
 
-	printSubStep("Checking if frida-server is running")
-	if _, err := runCommand("frida-ps", "-U"); err == nil {
-		printSubStep("frida-server is already running")
-		return nil
-	}
-
 	printSubStep("Checking if frida-server exists on device")
 	output, err := runCommand("adb", "shell", "su", "-c", "test -f /data/local/tmp/frida-server && echo yes || echo no")
 	if err != nil {
@@ -1469,17 +1467,13 @@ func stepFridaServer() error {
 
 	if strings.TrimSpace(output) == "yes" {
 		printSubStep("frida-server found, restarting")
-		if _, err := runCommand("adb", "shell", "su", "-c", "pkill -9 frida-server"); err != nil {
-			return fmt.Errorf("failed to kill frida-server: %w", err)
-		}
-		time.Sleep(2 * time.Second)
+		_, _ = runCommand("adb", "shell", "su", "-c", "pkill -9 frida-server")
 
 		printSubStep("Starting frida-server")
 		cmd := exec.Command("adb", "shell", "su", "-c", "/data/local/tmp/frida-server &")
 		if err := cmd.Start(); err != nil {
 			return fmt.Errorf("failed to start frida-server: %w", err)
 		}
-		time.Sleep(5 * time.Second)
 	} else {
 		printSubStep("Downloading frida-server " + FridaVersion)
 		fridaURL := fmt.Sprintf("https://github.com/frida/frida/releases/download/%s/frida-server-%s-%s.xz",
@@ -1511,7 +1505,6 @@ func stepFridaServer() error {
 		if err := cmd.Start(); err != nil {
 			return fmt.Errorf("failed to start frida-server: %w", err)
 		}
-		time.Sleep(5 * time.Second)
 	}
 
 	printSubStep("Verifying frida-server connection")
@@ -1523,48 +1516,38 @@ func stepFridaServer() error {
 }
 
 func stepBicoccApp() error {
-	printStep("Installing BicoccApp")
-
-	printSubStep("Checking if BicoccApp is installed")
-	output, err := runCommand("adb", "shell", "pm", "list", "packages")
+	printStep("Setting up BicoccApp")
+	installed, err := isBicoccappInstalled()
 	if err != nil {
-		return fmt.Errorf("failed to list packages: %w", err)
+		return fmt.Errorf("bicoccapp installation failed: %w", err)
+	} else if !installed {
+		printSubStep("Bicoccapp is not installed: waiting for manual installation")
+	} else {
+		printSubStep("Bicoccapp is installed")
+		return nil
 	}
 
-	if strings.Contains(output, BicoccAppPackage) {
-		printSubStep("BicoccApp already installed")
-		return launchBicoccApp()
+	for {
+		installed, err := isBicoccappInstalled()
+		if err != nil {
+			return fmt.Errorf("bicoccapp installation failed: %w", err)
+		} else if !installed {
+			time.Sleep(5 * time.Second)
+		} else {
+			return nil
+		}
 	}
-
-	printSubStep("Opening Play Store for BicoccApp")
-	playStoreURL := "https://play.google.com/store/apps/details?id=" + BicoccAppPackage + "&hl=it"
-	if _, err := runCommand("adb", "shell", "am", "start", "-a", "android.intent.action.VIEW", "-d", playStoreURL); err != nil {
-		return fmt.Errorf("failed to open Play Store: %w", err)
-	}
-
-	printSubStep("Waiting for manual installation (30 seconds)")
-	time.Sleep(30 * time.Second)
-
-	printSubStep("Verifying BicoccApp installation")
-	output, err = runCommand("adb", "shell", "pm", "list", "packages")
-	if err != nil {
-		return fmt.Errorf("failed to verify installation: %w", err)
-	}
-
-	if !strings.Contains(output, BicoccAppPackage) {
-		return fmt.Errorf("BicoccApp not found. Please install manually from: %s", playStoreURL)
-	}
-
-	return launchBicoccApp()
 }
 
-func launchBicoccApp() error {
-	printSubStep("Launching BicoccApp")
-	if _, err := runCommand("adb", "shell", "monkey", "-p", BicoccAppPackage, "-c", "android.intent.category.LAUNCHER", "1"); err != nil {
-		return fmt.Errorf("failed to launch BicoccApp: %w", err)
+func isBicoccappInstalled() (bool, error) {
+	output, err := runCommand("adb", "shell", "pm", "list", "packages")
+	if err != nil {
+		return false, fmt.Errorf("failed to list packages: %w", err)
+	} else if strings.Contains(output, BicoccAppPackage) {
+		return true, nil
+	} else {
+		return false, nil
 	}
-	printSubStep("BicoccApp launched")
-	return nil
 }
 
 func pauseBeforeExit() {
@@ -1588,9 +1571,9 @@ func main() {
 		{"Emulator", stepEmulator},
 		{"Root Access", stepRoot},
 		{"LSPosed", stepLSPosed},
-		{"Bypass Module", stepBypass},
 		{"Frida Server", stepFridaServer},
 		{"BicoccApp", stepBicoccApp},
+		{"Bypass Module", stepBypass},
 	}
 
 	for _, step := range steps {
