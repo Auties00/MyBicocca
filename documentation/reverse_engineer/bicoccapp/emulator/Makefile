@@ -18,10 +18,10 @@ build: deps
 	@echo "Building for current platform..."
 	@mkdir -p $(OUTPUT_DIR)
 ifeq ($(OS),Windows_NT)
-	@go build -ldflags="-s -w" -trimpath -o $(OUTPUT_DIR)/$(APP_NAME).exe .
+	@go build -ldflags="-s -w" -trimpath -o $(OUTPUT_DIR)/$(APP_NAME).exe ./cmd/emulator
 	@echo "Build complete: $(OUTPUT_DIR)/$(APP_NAME).exe"
 else
-	@go build -ldflags="-s -w" -trimpath -o $(OUTPUT_DIR)/$(APP_NAME) .
+	@go build -ldflags="-s -w" -trimpath -o $(OUTPUT_DIR)/$(APP_NAME) ./cmd/emulator
 	@echo "Build complete: $(OUTPUT_DIR)/$(APP_NAME)"
 endif
 
@@ -50,27 +50,27 @@ install: build
 # Build specific platform
 build-linux-amd64: deps
 	@mkdir -p $(OUTPUT_DIR)
-	@GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -ldflags="-s -w" -trimpath -o $(OUTPUT_DIR)/$(APP_NAME)-linux-amd64 .
+	@GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -ldflags="-s -w" -trimpath -o $(OUTPUT_DIR)/$(APP_NAME)-linux-amd64 ./cmd/emulator
 
 build-linux-arm64: deps
 	@mkdir -p $(OUTPUT_DIR)
-	@GOOS=linux GOARCH=arm64 CGO_ENABLED=0 go build -ldflags="-s -w" -trimpath -o $(OUTPUT_DIR)/$(APP_NAME)-linux-arm64 .
+	@GOOS=linux GOARCH=arm64 CGO_ENABLED=0 go build -ldflags="-s -w" -trimpath -o $(OUTPUT_DIR)/$(APP_NAME)-linux-arm64 ./cmd/emulator
 
 build-darwin-amd64: deps
 	@mkdir -p $(OUTPUT_DIR)
-	@GOOS=darwin GOARCH=amd64 CGO_ENABLED=0 go build -ldflags="-s -w" -trimpath -o $(OUTPUT_DIR)/$(APP_NAME)-darwin-amd64 .
+	@GOOS=darwin GOARCH=amd64 CGO_ENABLED=0 go build -ldflags="-s -w" -trimpath -o $(OUTPUT_DIR)/$(APP_NAME)-darwin-amd64 ./cmd/emulator
 
 build-darwin-arm64: deps
 	@mkdir -p $(OUTPUT_DIR)
-	@GOOS=darwin GOARCH=arm64 CGO_ENABLED=0 go build -ldflags="-s -w" -trimpath -o $(OUTPUT_DIR)/$(APP_NAME)-darwin-arm64 .
+	@GOOS=darwin GOARCH=arm64 CGO_ENABLED=0 go build -ldflags="-s -w" -trimpath -o $(OUTPUT_DIR)/$(APP_NAME)-darwin-arm64 ./cmd/emulator
 
 build-windows-amd64: deps
 	@mkdir -p $(OUTPUT_DIR)
-	@GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go build -ldflags="-s -w" -trimpath -o $(OUTPUT_DIR)/$(APP_NAME)-windows-amd64.exe .
+	@GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go build -ldflags="-s -w" -trimpath -o $(OUTPUT_DIR)/$(APP_NAME)-windows-amd64.exe ./cmd/emulator
 
 build-windows-arm64: deps
 	@mkdir -p $(OUTPUT_DIR)
-	@GOOS=windows GOARCH=arm64 CGO_ENABLED=0 go build -ldflags="-s -w" -trimpath -o $(OUTPUT_DIR)/$(APP_NAME)-windows-arm64.exe .
+	@GOOS=windows GOARCH=arm64 CGO_ENABLED=0 go build -ldflags="-s -w" -trimpath -o $(OUTPUT_DIR)/$(APP_NAME)-windows-arm64.exe ./cmd/emulator
 
 # Help target
 help:
