@@ -1,11 +1,10 @@
 package it.attendance100.mybicocca.domain.usecase
 
-import androidx.lifecycle.LiveData
-import it.attendance100.mybicocca.model.CourseEvent
-import it.attendance100.mybicocca.repository.CalendarRepository
-import java.time.LocalDate
-import java.time.YearMonth
-import javax.inject.Inject
+import androidx.lifecycle.*
+import it.attendance100.mybicocca.data.entities.*
+import it.attendance100.mybicocca.data.repository.*
+import java.time.*
+import javax.inject.*
 
 /**
  * Raccoglie tutti gli Use Cases per il Calendario in un unico file.

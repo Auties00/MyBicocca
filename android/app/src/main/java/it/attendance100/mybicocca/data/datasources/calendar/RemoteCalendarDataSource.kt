@@ -1,10 +1,8 @@
-package it.attendance100.mybicocca.data.calendar
+package it.attendance100.mybicocca.data.datasources.calendar
 
-import it.attendance100.mybicocca.model.CourseEvent
-import java.time.LocalDate
-import java.time.YearMonth
-import javax.inject.Inject
-import javax.inject.Singleton
+import it.attendance100.mybicocca.data.entities.*
+import java.time.*
+import javax.inject.*
 
 /**
  * Implementazione remota del CalendarDataSource.

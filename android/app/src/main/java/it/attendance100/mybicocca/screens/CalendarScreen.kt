@@ -6,30 +6,27 @@ import androidx.compose.foundation.*
 import androidx.compose.foundation.interaction.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.*
+import androidx.compose.foundation.pager.*
 import androidx.compose.foundation.shape.*
 import androidx.compose.material.icons.*
-import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.automirrored.outlined.*
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.*
 import androidx.compose.ui.*
 import androidx.compose.ui.draw.*
 import androidx.compose.ui.graphics.*
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.*
 import androidx.compose.ui.layout.*
 import androidx.compose.ui.res.*
 import androidx.compose.ui.text.font.*
 import androidx.compose.ui.text.style.*
 import androidx.compose.ui.unit.*
-import androidx.compose.foundation.pager.*
-import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.viewmodel.compose.*
+import androidx.hilt.navigation.compose.*
 import it.attendance100.mybicocca.R
-import it.attendance100.mybicocca.model.*
+import it.attendance100.mybicocca.data.entities.*
 import it.attendance100.mybicocca.ui.theme.*
 import it.attendance100.mybicocca.utils.*
 import it.attendance100.mybicocca.viewmodel.*
@@ -62,8 +59,8 @@ fun CalendarScreen(
 
   Column(
     modifier = Modifier
-      .fillMaxSize()
-      .background(backgroundColor)
+        .fillMaxSize()
+        .background(backgroundColor)
   ) {
     // Header con navigazione e toggle vista
     CalendarHeader(
@@ -155,8 +152,8 @@ fun CalendarHeader(
   // header
   Row(
     modifier = Modifier
-      .fillMaxWidth()
-      .padding(horizontal = 8.dp, vertical = 8.dp),
+        .fillMaxWidth()
+        .padding(horizontal = 8.dp, vertical = 8.dp),
     horizontalArrangement = Arrangement.SpaceBetween,
     verticalAlignment = Alignment.CenterVertically
   ) {
@@ -263,11 +260,11 @@ private fun AnimatedViewToggle(
         stringResource(R.string.calendar_week_view)
       },
       modifier = Modifier
-        .size(20.dp)
-        .graphicsLayer {
-          rotationY = rotation
-          cameraDistance = 12f * density
-        }
+          .size(20.dp)
+          .graphicsLayer {
+            rotationY = rotation
+            cameraDistance = 12f * density
+          }
     )
   }
 }
@@ -323,8 +320,8 @@ fun HorizontalDaySelector(
   HorizontalPager(
     state = pagerState,
     modifier = Modifier
-      .fillMaxWidth()
-      .padding(vertical = 8.dp)
+        .fillMaxWidth()
+        .padding(vertical = 8.dp)
   ) { page ->
     val weekOffset = page - 1000
     val weekStart = referenceDate.with(DayOfWeek.MONDAY).plusWeeks(weekOffset.toLong())
@@ -332,8 +329,8 @@ fun HorizontalDaySelector(
 
     Row(
       modifier = Modifier
-        .fillMaxWidth()
-        .padding(horizontal = 8.dp),
+          .fillMaxWidth()
+          .padding(horizontal = 8.dp),
       horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
       weekDays.forEach { date ->
@@ -347,23 +344,23 @@ fun HorizontalDaySelector(
 
         Column(
           modifier = Modifier
-            .weight(1f)
-            .clip(RoundedCornerShape(12.dp))
-            .background(
-              when {
-                isSelected -> primaryColor
-                isToday -> primaryColor.copy(alpha = 0.2f)
-                else -> grayColor.copy(alpha = 0.1f)
-              }
-            )
-            .then(
-              if (isClickable) {
-                Modifier.clickable { onDateSelected(date) }
-              } else {
-                Modifier
-              }
-            )
-            .padding(vertical = 6.dp),
+              .weight(1f)
+              .clip(RoundedCornerShape(12.dp))
+              .background(
+                when {
+                  isSelected -> primaryColor
+                  isToday -> primaryColor.copy(alpha = 0.2f)
+                  else -> grayColor.copy(alpha = 0.1f)
+                }
+              )
+              .then(
+                if (isClickable) {
+                  Modifier.clickable { onDateSelected(date) }
+                } else {
+                  Modifier
+                }
+              )
+              .padding(vertical = 6.dp),
           horizontalAlignment = Alignment.CenterHorizontally
         ) {
         Text(
@@ -441,8 +438,8 @@ fun WeekEventsGrid(
 
       Box(
         modifier = Modifier
-          .fillMaxSize()
-          .verticalScroll(scrollState)
+            .fillMaxSize()
+            .verticalScroll(scrollState)
       ) {
         // Griglia di sfondo con linee orarie
         WeekGridBackground(
@@ -497,8 +494,8 @@ fun WeekHeader(
 ) {
   Row(
     modifier = Modifier
-      .fillMaxWidth()
-      .padding(start = 60.dp, end = 8.dp, top = 10.dp, bottom = 10.dp),
+        .fillMaxWidth()
+        .padding(start = 60.dp, end = 8.dp, top = 10.dp, bottom = 10.dp),
     horizontalArrangement = Arrangement.spacedBy(4.dp)
   ) {
     daysOfWeek.forEach { date ->
@@ -508,14 +505,14 @@ fun WeekHeader(
 
       Column(
         modifier = Modifier
-          .weight(1f)
-          .clip(RoundedCornerShape(8.dp))
-          .background(
-            if (isSelected) primaryColor.copy(alpha = 0.15f)
-            else Color.Transparent
-          )
-          .clickable { onDateSelected(date) }
-          .padding(vertical = 8.dp),
+            .weight(1f)
+            .clip(RoundedCornerShape(8.dp))
+            .background(
+              if (isSelected) primaryColor.copy(alpha = 0.15f)
+              else Color.Transparent
+            )
+            .clickable { onDateSelected(date) }
+            .padding(vertical = 8.dp),
         horizontalAlignment = Alignment.CenterHorizontally
       ) {
         Text(
@@ -553,20 +550,20 @@ fun WeekGridBackground(
 
   Column(
     modifier = Modifier
-      .fillMaxWidth()
-      .height(totalHeight)
+        .fillMaxWidth()
+        .height(totalHeight)
   ) {
     for (hour in startHour until endHour) {
       Row(
         modifier = Modifier
-          .fillMaxWidth()
-          .height(hourSlotHeight)
+            .fillMaxWidth()
+            .height(hourSlotHeight)
       ) {
         // Colonna orario a sinistra
         Box(
           modifier = Modifier
-            .width(50.dp)
-            .fillMaxHeight(),
+              .width(50.dp)
+              .fillMaxHeight(),
           contentAlignment = Alignment.TopStart
         ) {
           Text(
@@ -581,8 +578,8 @@ fun WeekGridBackground(
         // Linea orizzontale che attraversa tutta la settimana
         Box(
           modifier = Modifier
-            .weight(1f)
-            .fillMaxHeight()
+              .weight(1f)
+              .fillMaxHeight()
         ) {
           HorizontalDivider(
             color = grayColor.copy(alpha = 0.15f),
@@ -637,8 +634,8 @@ fun WeekEventsOverlay(
       }
     },
     modifier = Modifier
-      .fillMaxWidth()
-      .padding(start = 50.dp)
+        .fillMaxWidth()
+        .padding(start = 50.dp)
   ) { measurables, constraints ->
     val totalDays = 7
     val dayWidth = constraints.maxWidth / totalDays
@@ -700,8 +697,8 @@ fun FloatingEventBox(
   ) {
     Box(
       modifier = Modifier
-        .fillMaxSize()
-        .padding(6.dp),
+          .fillMaxSize()
+          .padding(6.dp),
       contentAlignment = Alignment.TopStart
     ) {
       Column(
@@ -751,24 +748,24 @@ fun EventDetailDialog(
   // Background scrim
   Box(
     modifier = Modifier
-      .fillMaxSize()
-      .background(Color.Black.copy(alpha = 0.5f))
-      .clickable(
-        onClick = onDismiss,
-        indication = null,
-        interactionSource = remember { MutableInteractionSource() }
-      ),
+        .fillMaxSize()
+        .background(Color.Black.copy(alpha = 0.5f))
+        .clickable(
+          onClick = onDismiss,
+          indication = null,
+          interactionSource = remember { MutableInteractionSource() }
+        ),
     contentAlignment = Alignment.Center
   ) {
     // Dialog card
     Surface(
       modifier = Modifier
-        .fillMaxWidth(0.9f)
-        .clickable(
-          onClick = {},
-          indication = null,
-          interactionSource = remember { MutableInteractionSource() }
-        ),
+          .fillMaxWidth(0.9f)
+          .clickable(
+            onClick = {},
+            indication = null,
+            interactionSource = remember { MutableInteractionSource() }
+          ),
       shape = RoundedCornerShape(20.dp),
       color = backgroundColor,
       shadowElevation = 8.dp
@@ -784,8 +781,8 @@ fun EventDetailDialog(
         ) {
           Column(
             modifier = Modifier
-              .fillMaxWidth()
-              .padding(20.dp)
+                .fillMaxWidth()
+                .padding(20.dp)
           ) {
             // Badge tipo
             Surface(
@@ -828,8 +825,8 @@ fun EventDetailDialog(
         // Dettagli evento
         Column(
           modifier = Modifier
-            .fillMaxWidth()
-            .padding(20.dp),
+              .fillMaxWidth()
+              .padding(20.dp),
           verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
           // Data e orario
@@ -889,8 +886,8 @@ fun EventDetailDialog(
           TextButton(
             onClick = onDismiss,
             modifier = Modifier
-              .fillMaxWidth()
-              .height(48.dp)
+                .fillMaxWidth()
+                .height(48.dp)
           ) {
             Text(
               text = stringResource(R.string.event_detail_close),
@@ -962,17 +959,17 @@ fun RowScope.ImprovedDayHeaderCell(
 
   Column(
     modifier = Modifier
-      .weight(1f)
-      .clip(RoundedCornerShape(12.dp))
-      .background(
-        when {
-          isSelected -> primaryColor
-          isToday -> primaryColor.copy(alpha = 0.15f)
-          else -> Color.Transparent
-        }
-      )
-      .clickable { onDateSelected(date) }
-      .padding(vertical = 10.dp, horizontal = 4.dp),
+        .weight(1f)
+        .clip(RoundedCornerShape(12.dp))
+        .background(
+          when {
+            isSelected -> primaryColor
+            isToday -> primaryColor.copy(alpha = 0.15f)
+            else -> Color.Transparent
+          }
+        )
+        .clickable { onDateSelected(date) }
+        .padding(vertical = 10.dp, horizontal = 4.dp),
     horizontalAlignment = Alignment.CenterHorizontally
   ) {
     Text(
@@ -1013,16 +1010,16 @@ fun ImprovedWeekGridRow(
 ) {
   Row(
     modifier = Modifier
-      .fillMaxWidth()
-      .defaultMinSize(minHeight = 70.dp)
-      .padding(vertical = 2.dp)
+        .fillMaxWidth()
+        .defaultMinSize(minHeight = 70.dp)
+        .padding(vertical = 2.dp)
   ) {
     // Colonna orario con design migliorato
     Box(
       modifier = Modifier
-        .width(56.dp)
-        .fillMaxHeight()
-        .padding(end = 12.dp, top = 4.dp),
+          .width(56.dp)
+          .fillMaxHeight()
+          .padding(end = 12.dp, top = 4.dp),
       contentAlignment = Alignment.TopEnd
     ) {
       Column(
@@ -1047,9 +1044,9 @@ fun ImprovedWeekGridRow(
 
       Box(
         modifier = Modifier
-          .weight(1f)
-          .fillMaxHeight()
-          .padding(horizontal = 3.dp)
+            .weight(1f)
+            .fillMaxHeight()
+            .padding(horizontal = 3.dp)
       ) {
         if (eventsForHour.isNotEmpty()) {
           eventsForHour.firstOrNull()?.let { event ->
@@ -1067,16 +1064,16 @@ fun ImprovedWeekGridRow(
           // Cella vuota con bordo sottile
           Box(
             modifier = Modifier
-              .fillMaxSize()
-              .border(
-                width = 0.5.dp,
-                color = grayColor.copy(alpha = 0.15f),
-                shape = RoundedCornerShape(8.dp)
-              )
-              .background(
-                color = backgroundColor,
-                shape = RoundedCornerShape(8.dp)
-              )
+                .fillMaxSize()
+                .border(
+                  width = 0.5.dp,
+                  color = grayColor.copy(alpha = 0.15f),
+                  shape = RoundedCornerShape(8.dp)
+                )
+                .background(
+                  color = backgroundColor,
+                  shape = RoundedCornerShape(8.dp)
+                )
           )
         }
       }
@@ -1098,8 +1095,8 @@ fun ImprovedEventGridCell(
 
   Surface(
     modifier = Modifier
-      .fillMaxWidth()
-      .animateContentSize(),
+        .fillMaxWidth()
+        .animateContentSize(),
     shape = RoundedCornerShape(8.dp),
     color = eventColor,
     shadowElevation = if (isExpanded) 4.dp else 1.dp,
@@ -1107,8 +1104,8 @@ fun ImprovedEventGridCell(
   ) {
     Column(
       modifier = Modifier
-        .fillMaxWidth()
-        .padding(8.dp),
+          .fillMaxWidth()
+          .padding(8.dp),
       verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
       // Titolo sempre visibile
@@ -1255,17 +1252,17 @@ fun RowScope.DayHeaderCell(
 
   Column(
     modifier = Modifier
-      .weight(1f)
-      .clip(RoundedCornerShape(8.dp))
-      .background(
-        when {
-          isSelected -> primaryColor
-          isToday -> primaryColor.copy(alpha = 0.2f)
-          else -> Color.Transparent
-        }
-      )
-      .clickable { onDateSelected(date) }
-      .padding(vertical = 8.dp),
+        .weight(1f)
+        .clip(RoundedCornerShape(8.dp))
+        .background(
+          when {
+            isSelected -> primaryColor
+            isToday -> primaryColor.copy(alpha = 0.2f)
+            else -> Color.Transparent
+          }
+        )
+        .clickable { onDateSelected(date) }
+        .padding(vertical = 8.dp),
     horizontalAlignment = Alignment.CenterHorizontally
   ) {
     Text(
@@ -1303,15 +1300,15 @@ fun WeekGridRow(
 ) {
   Row(
     modifier = Modifier
-      .fillMaxWidth()
-      .height(80.dp)
+        .fillMaxWidth()
+        .height(80.dp)
   ) {
     // Colonna orario
     Box(
       modifier = Modifier
-        .width(48.dp)
-        .fillMaxHeight()
-        .padding(end = 8.dp),
+          .width(48.dp)
+          .fillMaxHeight()
+          .padding(end = 8.dp),
       contentAlignment = Alignment.TopEnd
     ) {
       Text(
@@ -1332,9 +1329,9 @@ fun WeekGridRow(
 
       Box(
         modifier = Modifier
-          .weight(1f)
-          .fillMaxHeight()
-          .padding(horizontal = 2.dp)
+            .weight(1f)
+            .fillMaxHeight()
+            .padding(horizontal = 2.dp)
       ) {
         if (eventsForHour.isNotEmpty()) {
           eventsForHour.firstOrNull()?.let { event ->
@@ -1348,11 +1345,11 @@ fun WeekGridRow(
           // Cella vuota con bordo
           Box(
             modifier = Modifier
-              .fillMaxSize()
-              .background(
-                color = grayColor.copy(alpha = 0.05f),
-                shape = RoundedCornerShape(4.dp)
-              )
+                .fillMaxSize()
+                .background(
+                  color = grayColor.copy(alpha = 0.05f),
+                  shape = RoundedCornerShape(4.dp)
+                )
           )
         }
       }
@@ -1376,8 +1373,8 @@ fun EventGridCell(
   ) {
     Column(
       modifier = Modifier
-        .fillMaxSize()
-        .padding(6.dp),
+          .fillMaxSize()
+          .padding(6.dp),
       verticalArrangement = Arrangement.spacedBy(2.dp)
     ) {
       Text(
@@ -1418,8 +1415,8 @@ fun MonthCalendar(
 
   Column(
     modifier = Modifier
-      .fillMaxWidth()
-      .padding(horizontal = 8.dp)
+        .fillMaxWidth()
+        .padding(horizontal = 8.dp)
   ) {
     // Intestazione giorni della settimana
     Row(
@@ -1498,18 +1495,18 @@ fun RowScope.DayCell(
 ) {
   Box(
     modifier = Modifier
-      .weight(1f)
-      .aspectRatio(1f)
-      .padding(2.dp)
-      .clip(CircleShape)
-      .background(
-        when {
-          isSelected -> primaryColor
-          isToday -> primaryColor.copy(alpha = 0.2f)
-          else -> Color.Transparent
-        }
-      )
-      .clickable(onClick = onClick),
+        .weight(1f)
+        .aspectRatio(1f)
+        .padding(2.dp)
+        .clip(CircleShape)
+        .background(
+          when {
+            isSelected -> primaryColor
+            isToday -> primaryColor.copy(alpha = 0.2f)
+            else -> Color.Transparent
+          }
+        )
+        .clickable(onClick = onClick),
     contentAlignment = Alignment.Center
   ) {
     Text(
@@ -1535,8 +1532,8 @@ fun EventsList(
 ) {
   Column(
     modifier = Modifier
-      .fillMaxWidth()
-      .padding(horizontal = 16.dp)
+        .fillMaxWidth()
+        .padding(horizontal = 16.dp)
   ) {
     Text(
       text = stringResource(R.string.calendar_events),
@@ -1550,8 +1547,8 @@ fun EventsList(
       isLoading -> {
         Box(
           modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 32.dp),
+              .fillMaxWidth()
+              .padding(vertical = 32.dp),
           contentAlignment = Alignment.Center
         ) {
           CircularProgressIndicator(
@@ -1565,8 +1562,8 @@ fun EventsList(
       events.isEmpty() -> {
         Box(
           modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 32.dp),
+              .fillMaxWidth()
+              .padding(vertical = 32.dp),
           contentAlignment = Alignment.Center
         ) {
           Column(
@@ -1623,17 +1620,17 @@ fun EventCard(
   ) {
     Row(
       modifier = Modifier
-        .fillMaxWidth()
-        .padding(12.dp),
+          .fillMaxWidth()
+          .padding(12.dp),
       horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
       // Barra colorata laterale
       Box(
         modifier = Modifier
-          .width(4.dp)
-          .height(60.dp)
-          .clip(RoundedCornerShape(2.dp))
-          .background(primaryColor)
+            .width(4.dp)
+            .height(60.dp)
+            .clip(RoundedCornerShape(2.dp))
+            .background(primaryColor)
       )
 
       Column(

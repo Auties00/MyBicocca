@@ -1,12 +1,12 @@
 package it.attendance100.mybicocca.viewmodel
 
 import androidx.lifecycle.*
-import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.lifecycle.*
+import it.attendance100.mybicocca.data.entities.*
 import it.attendance100.mybicocca.domain.usecase.*
-import it.attendance100.mybicocca.model.*
 import kotlinx.coroutines.*
 import java.time.*
-import javax.inject.Inject
+import javax.inject.*
 
 
 /**
@@ -21,7 +21,7 @@ class CalendarViewModel @Inject constructor(
   private val syncCalendarUseCase: SyncCalendarUseCase,
   private val insertEventUseCase: InsertEventUseCase,
   private val updateEventUseCase: UpdateEventUseCase,
-  private val deleteEventUseCase: DeleteEventUseCase
+  private val deleteEventUseCase: DeleteEventUseCase,
 ) : ViewModel() {
 
   // Stato del calendario
@@ -41,11 +41,11 @@ class CalendarViewModel @Inject constructor(
     // Inizializza con la data corrente
     _selectedDate.value = LocalDate.now()
     _currentMonth.value = YearMonth.now()
-    
+
     // Carica i dati iniziali
     loadInitialData()
   }
-  
+
   /**
    * Carica i dati iniziali (funziona sia con Mock che con API reale)
    */
@@ -102,7 +102,7 @@ class CalendarViewModel @Inject constructor(
     val current = _currentMonth.value ?: YearMonth.now()
     val newMonth = current.minusMonths(1)
     _currentMonth.value = newMonth
-    
+
     // Mantieni lo stesso giorno del mese, o l'ultimo se non esiste
     val currentDay = _selectedDate.value?.dayOfMonth ?: 1
     val newDay = minOf(currentDay, newMonth.lengthOfMonth())
@@ -116,7 +116,7 @@ class CalendarViewModel @Inject constructor(
     val current = _currentMonth.value ?: YearMonth.now()
     val newMonth = current.plusMonths(1)
     _currentMonth.value = newMonth
-    
+
     // Mantieni lo stesso giorno del mese, o l'ultimo se non esiste
     val currentDay = _selectedDate.value?.dayOfMonth ?: 1
     val newDay = minOf(currentDay, newMonth.lengthOfMonth())

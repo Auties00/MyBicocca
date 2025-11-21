@@ -14,6 +14,7 @@ import androidx.compose.ui.res.*
 import androidx.compose.ui.text.font.*
 import androidx.compose.ui.text.input.*
 import androidx.compose.ui.unit.*
+import androidx.hilt.navigation.compose.*
 import com.patrykandpatrick.vico.compose.cartesian.*
 import com.patrykandpatrick.vico.compose.cartesian.axis.*
 import com.patrykandpatrick.vico.compose.cartesian.layer.*
@@ -26,17 +27,23 @@ import com.patrykandpatrick.vico.core.cartesian.layer.*
 import com.patrykandpatrick.vico.core.common.*
 import com.patrykandpatrick.vico.core.common.shape.*
 import it.attendance100.mybicocca.R
+import it.attendance100.mybicocca.domain.model.*
 import it.attendance100.mybicocca.ui.theme.*
+import it.attendance100.mybicocca.viewmodel.*
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun CareerScreen(
   sharedTransitionScope: SharedTransitionScope,
   animatedContentScope: AnimatedContentScope,
+  viewModel: CareerViewModel = hiltViewModel(),
 ) {
   var selectedTabIndex by remember { mutableIntStateOf(0) }
   val primaryColor = MaterialTheme.colorScheme.primary
   val grayColor = if (MaterialTheme.colorScheme.background == BackgroundColor) GrayColor else GrayColorLight
+
+  val user by viewModel.user.collectAsState()
+  val stats by viewModel.stats.collectAsState()
 
   Column(
     modifier = Modifier
@@ -79,7 +86,7 @@ fun CareerScreen(
 
     // Tab Content
     when (selectedTabIndex) {
-      0 -> ProfiloTab(sharedTransitionScope, animatedContentScope)
+      0 -> ProfiloTab(sharedTransitionScope, animatedContentScope, user, stats)
       1 -> PlaceholderTab(stringResource(R.string.career_tab_piano))
       2 -> PlaceholderTab(stringResource(R.string.career_tab_esami))
       3 -> PlaceholderTab(stringResource(R.string.career_tab_luoghi))
@@ -92,6 +99,8 @@ fun CareerScreen(
 fun ProfiloTab(
   sharedTransitionScope: SharedTransitionScope,
   animatedContentScope: AnimatedContentScope,
+  user: User?,
+  stats: CareerStats?,
 ) {
   val primaryColor = MaterialTheme.colorScheme.primary
   val textColor = MaterialTheme.colorScheme.onBackground
@@ -100,22 +109,22 @@ fun ProfiloTab(
   var showDialog by remember { mutableStateOf(false) }
 
   // Sample data - replace with actual data
-  val name = "Mario"
-  val surname = "Rossi"
-  val matricola = "123456"
-  val corso = "Informatica"
-  val anno = "3"
-  val email = "m.rossi@campus.unimib.it"
+  val name = user?.name ?: ""
+  val surname = user?.surname ?: ""
+  val matricola = user?.matricola ?: ""
+  val corso = user?.course ?: ""
+  val anno = user?.year ?: ""
+  val email = user?.email ?: ""
 
-  val mediaAritmetica = 27.5f
-  val mediaPonderata = 28.2f
-  val esamiSostenuti = 18
-  val esamiTotali = 24
-  val cfuAcquisiti = 144
-  val cfuTotali = 180
+  val mediaAritmetica = stats?.mediaAritmetica ?: 0f
+  val mediaPonderata = stats?.mediaPonderata ?: 0f
+  val esamiSostenuti = stats?.esamiSostenuti ?: 0
+  val esamiTotali = stats?.esamiTotali ?: 0
+  val cfuAcquisiti = stats?.cfuAcquisiti ?: 0
+  val cfuTotali = stats?.cfuTotali ?: 0
 
   // Sample grades for chart
-  val grades = listOf(28f, 30f, 26f, 29f, 27f, 30f, 28f, 25f, 29f, 30f, 27f, 28f, 30f, 26f, 29f, 27f, 28f, 30f, 31f, 19f)
+  val grades = stats?.grades ?: emptyList()
 
   Column(
     modifier = Modifier

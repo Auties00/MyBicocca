@@ -1,4 +1,4 @@
-package it.attendance100.mybicocca.model
+package it.attendance100.mybicocca.data.entities
 
 import androidx.room.*
 import java.time.*

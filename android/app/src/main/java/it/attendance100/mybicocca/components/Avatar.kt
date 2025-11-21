@@ -1,4 +1,4 @@
-package it.attendance100.mybicocca.composables
+package it.attendance100.mybicocca.components
 
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*

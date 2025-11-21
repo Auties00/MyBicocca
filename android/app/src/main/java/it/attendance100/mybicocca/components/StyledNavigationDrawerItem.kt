@@ -1,4 +1,4 @@
-package it.attendance100.mybicocca.composables
+package it.attendance100.mybicocca.components
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
