@@ -1,7 +1,8 @@
 package it.attendance100.mybicocca.domain.model
 
 /**
-Represents the career statistics of a user.
+ * Career statistics business model
+ * Represents the student's academic progress and grades
  */
 data class CareerStats(
   val mediaAritmetica: Float,

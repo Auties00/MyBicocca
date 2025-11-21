@@ -6,11 +6,11 @@ import it.attendance100.mybicocca.data.entities.*
 import java.time.*
 
 /**
- * Data Access Object per gli eventi del calendario
+ * Data Access Object for calendar events
  */
 @Dao
 interface CourseEventDao {
-  // Metodi per DataSource con LocalDateTime
+  // Methods for DataSource with LocalDateTime
   @Query("SELECT * FROM course_events WHERE start_time >= :startDateTime AND end_time <= :endDateTime ORDER BY start_time")
   suspend fun getEventsBetween(startDateTime: LocalDateTime, endDateTime: LocalDateTime): List<CourseEvent>
   
@@ -28,7 +28,7 @@ interface CourseEventDao {
 }
 
 /**
- * Data Access Object per gli orari ricorrenti
+ * Data Access Object for recurring schedules
  */
 @Dao
 interface CourseScheduleDao {

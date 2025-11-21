@@ -6,6 +6,10 @@ import kotlinx.coroutines.flow.*
 import javax.inject.*
 import it.attendance100.mybicocca.domain.contracts.NotificationRepository as INotificationRepository
 
+/**
+ * Implements notification contract, uses datasource
+ * Manages notification data
+ */
 class NotificationRepository @Inject constructor(
   private val dataSource: NotificationDataSource,
 ) : INotificationRepository {

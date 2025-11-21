@@ -10,17 +10,17 @@ import javax.inject.*
 import it.attendance100.mybicocca.domain.contracts.CalendarRepository as ICalendarRepository
 
 /**
- * Repository per gestire i dati del calendario.
- * Architettura Clean: Repository → DataSource + DAO (cache locale).
+ * Implements calendar contract, uses DAOs + datasource
+ * Manages calendar data using Clean Architecture: Repository -> DataSource + DAO (local cache)
  *
  * Pattern:
- * - DataSource per recupero dati (mock o API)
- * - DAO per cache locale e osservabilità LiveData
- * - Offline-first: dati dal DB, sync in background
+ * - DataSource for data retrieval (mock or API)
+ * - DAO for local cache and LiveData observability
+ * - Offline-first: data from DB, background sync
  *
- * Il DataSource viene iniettato tramite Hilt:
- * - In sviluppo: MockCalendarDataSource
- * - In produzione: RemoteCalendarDataSource
+ * The DataSource is injected via Hilt:
+ * - In development: MockCalendarDataSource
+ * - In production: RemoteCalendarDataSource
  */
 @Singleton
 class CalendarRepository @Inject constructor(
@@ -31,8 +31,8 @@ class CalendarRepository @Inject constructor(
     private var isInitialized = false
 
     /**
-     * Osserva eventi per un mese specifico (LiveData reattivo).
-     * Il DAO emette automaticamente quando i dati cambiano.
+     * Observes events for a specific month (reactive LiveData)
+     * The DAO automatically emits when data changes
      */
     override fun observeEventsForMonth(month: YearMonth): LiveData<List<CourseEvent>> {
         val startDate = month.atDay(1).atStartOfDay()
@@ -41,7 +41,7 @@ class CalendarRepository @Inject constructor(
     }
 
     /**
-     * Osserva eventi per una data specifica (LiveData reattivo).
+     * Observes events for a specific date (reactive LiveData)
      */
     override fun observeEventsForDate(date: LocalDate): LiveData<List<CourseEvent>> {
         val startDateTime = date.atStartOfDay()

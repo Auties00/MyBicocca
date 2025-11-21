@@ -134,7 +134,7 @@ fun ProfiloTab(
     horizontalAlignment = Alignment.CenterHorizontally,
     verticalArrangement = Arrangement.spacedBy(24.dp)
   ) {
-    // Dati Section
+    // Data Section
     Column(
       modifier = Modifier.fillMaxWidth(),
       verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -167,7 +167,7 @@ fun ProfiloTab(
       }
     }
 
-    // Statistiche Section
+    // Statistics Section
     Column(
       modifier = Modifier.fillMaxWidth(),
       verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -183,7 +183,7 @@ fun ProfiloTab(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(12.dp)
       ) {
-        // Media Aritmetica
+        // Arithmetic Mean
         StatCard(
           modifier = Modifier.weight(1f),
           title = stringResource(R.string.career_media_aritmetica),
@@ -192,7 +192,7 @@ fun ProfiloTab(
           grayColor = grayColor
         )
 
-        // Media Ponderata
+        // Weighted Mean
         StatCard(
           modifier = Modifier.weight(1f),
           title = stringResource(R.string.career_media_ponderata),
@@ -207,6 +207,7 @@ fun ProfiloTab(
         horizontalArrangement = Arrangement.spacedBy(12.dp)
       ) {
         // Esami Sostenuti
+        // Exams Taken
         ProgressStatCard(
           modifier = Modifier.weight(1f),
           title = stringResource(R.string.career_esami_sostenuti),
@@ -217,7 +218,7 @@ fun ProfiloTab(
           grayColor = grayColor
         )
 
-        // CFU Acquisiti
+        // ECTS Acquired
         ProgressStatCard(
           modifier = Modifier.weight(1f),
           title = stringResource(R.string.career_cfu_acquisiti),
@@ -230,7 +231,7 @@ fun ProfiloTab(
       }
     }
 
-    // Calcola Media Button
+    // Calculate Average Button
     Button(
       onClick = { showDialog = true },
       modifier = Modifier
