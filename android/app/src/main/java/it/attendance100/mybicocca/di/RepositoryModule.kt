@@ -12,16 +12,16 @@ import it.attendance100.mybicocca.domain.contracts.NotificationRepository as INo
 import it.attendance100.mybicocca.domain.contracts.UserRepository as IUserRepository
 
 /**
- * Hilt Module per i repository.
- * Fornisce le istanze dei repository iniettando le dipendenze necessarie.
+ * Provides repository instances
+ * Supplies repository instances by injecting necessary dependencies
  */
 @Module
 @InstallIn(SingletonComponent::class)
 object RepositoryModule {
 
     /**
-     * Fornisce il CalendarRepository.
-     * Hilt inietterà automaticamente DataSource e DAO.
+     * Provides the CalendarRepository
+     * Hilt will automatically inject DataSource and DAO
      */
     @Provides
     @Singleton

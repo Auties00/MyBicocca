@@ -4,6 +4,10 @@ import androidx.lifecycle.*
 import it.attendance100.mybicocca.data.entities.*
 import java.time.*
 
+/**
+ * Calendar operations contract
+ * Defines methods for observing and managing calendar events
+ */
 interface CalendarRepository {
   fun observeEventsForMonth(month: YearMonth): LiveData<List<CourseEvent>>
   fun observeEventsForDate(date: LocalDate): LiveData<List<CourseEvent>>

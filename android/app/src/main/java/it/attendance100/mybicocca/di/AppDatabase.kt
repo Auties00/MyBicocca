@@ -5,8 +5,8 @@ import it.attendance100.mybicocca.data.daos.*
 import it.attendance100.mybicocca.data.entities.*
 
 /**
- * Room Database per l'app MyBicocca.
- * L'istanza è gestita da Hilt (vedi DatabaseModule).
+ * Room database configuration
+ * The instance is managed by Hilt (see DatabaseModule)
  */
 @Database(
   entities = [CourseEvent::class, CourseSchedule::class],

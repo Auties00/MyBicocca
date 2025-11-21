@@ -4,22 +4,22 @@ import it.attendance100.mybicocca.data.entities.*
 import java.time.*
 
 /**
- * Interfaccia per le sorgenti dati del calendario.
- * Permette di astrarre la provenienza dei dati (mock, API, ecc.)
+ * Abstraction for calendar data retrieval
+ * Allows abstracting data origin (mock, API, etc)
  */
 interface CalendarDataSource {
     /**
-     * Recupera eventi per un mese specifico.
+     * Retrieves events for a specific month
      */
     suspend fun getEventsForMonth(month: YearMonth): List<CourseEvent>
 
     /**
-     * Recupera eventi per una data specifica.
+     * Retrieves events for a specific date
      */
     suspend fun getEventsForDate(date: LocalDate): List<CourseEvent>
 
     /**
-     * Sincronizza gli eventi dal server.
+     * Syncs events from the server
      */
     suspend fun syncEvents(): Boolean
 }

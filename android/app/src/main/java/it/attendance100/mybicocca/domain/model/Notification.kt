@@ -6,6 +6,10 @@ enum class NotificationType {
   GENERAL
 }
 
+/**
+ * Notification business model
+ * Represents a system notification for the user
+ */
 data class Notification(
   val id: String,
   val title: String,

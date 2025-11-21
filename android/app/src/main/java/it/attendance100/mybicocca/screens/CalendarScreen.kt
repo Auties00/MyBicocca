@@ -36,8 +36,8 @@ import java.time.temporal.*
 import java.util.*
 
 enum class CalendarViewMode {
-  LIST,    // Vista lista con giorni
-  WEEK     // Vista griglia settimanale
+  LIST,    // List view with days
+  WEEK     // Weekly grid view
 }
 
 @Composable

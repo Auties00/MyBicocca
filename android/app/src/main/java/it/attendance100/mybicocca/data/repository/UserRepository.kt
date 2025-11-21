@@ -6,6 +6,10 @@ import kotlinx.coroutines.flow.*
 import javax.inject.*
 import it.attendance100.mybicocca.domain.contracts.UserRepository as IUserRepository
 
+/**
+ * Implements user contract, uses datasource
+ * Manages user data and career statistics
+ */
 class UserRepository @Inject constructor(
   private val dataSource: UserDataSource,
 ) : IUserRepository {

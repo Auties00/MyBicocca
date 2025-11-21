@@ -7,8 +7,8 @@ import java.time.*
 import javax.inject.*
 
 /**
- * Implementazione mock del CalendarDataSource.
- * Fornisce dati di test per lo sviluppo.
+ * Mock calendar source
+ * Provides test data for development
  */
 @Singleton
 class MockCalendarDataSource @Inject constructor() : CalendarDataSource {
@@ -16,7 +16,7 @@ class MockCalendarDataSource @Inject constructor() : CalendarDataSource {
     private var mockData: List<CourseEvent>? = null
 
     override suspend fun getEventsForMonth(month: YearMonth): List<CourseEvent> {
-        // Simula latenza di rete
+      // Simulates network latency
         delay(300)
         
         ensureMockDataLoaded()
@@ -31,7 +31,7 @@ class MockCalendarDataSource @Inject constructor() : CalendarDataSource {
     }
 
     override suspend fun getEventsForDate(date: LocalDate): List<CourseEvent> {
-        // Simula latenza di rete
+      // Simulates network latency
         delay(300)
         
         ensureMockDataLoaded()
@@ -42,7 +42,7 @@ class MockCalendarDataSource @Inject constructor() : CalendarDataSource {
     }
 
     override suspend fun syncEvents(): Boolean {
-        // Simula sincronizzazione dal server
+      // Simulates server synchronization
         delay(1000)
         ensureMockDataLoaded()
         return true

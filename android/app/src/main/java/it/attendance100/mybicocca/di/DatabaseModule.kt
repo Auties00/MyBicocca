@@ -10,15 +10,15 @@ import it.attendance100.mybicocca.data.daos.*
 import javax.inject.*
 
 /**
- * Hilt Module per il database Room.
- * Fornisce l'istanza del database e i DAO.
+ * Provides Room database instances
+ * Supplies the database instance and DAOs
  */
 @Module
 @InstallIn(SingletonComponent::class)
 object DatabaseModule {
 
     /**
-     * Fornisce l'istanza singleton del database Room.
+     * Provides the singleton instance of the Room database
      */
     @Provides
     @Singleton
@@ -35,7 +35,7 @@ object DatabaseModule {
     }
 
     /**
-     * Fornisce il DAO per gli eventi del calendario.
+     * Provides the DAO for calendar events
      */
     @Provides
     @Singleton
@@ -44,7 +44,7 @@ object DatabaseModule {
     }
 
     /**
-     * Fornisce il DAO per gli orari ricorrenti.
+     * Provides the DAO for recurring schedules
      */
     @Provides
     @Singleton
