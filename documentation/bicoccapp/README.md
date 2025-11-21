@@ -11,4 +11,5 @@ SSL pinning bypass requires system-level modifications (root access), but Bicocc
 
 - The [frida](./frida) directory includes the work that went into researching and developing a proof of concept to bypass the security measures.
 - The [magisk](./magisk) directory contains a Magisk module that was developed based on the PoC to bypass the security measures.
-- The [emulator](emulator) directory contains scripts to automatically set up and run an Android emulator with all necessary tools to start reverse engineering.
+- The [emulator](./emulator) directory contains scripts to automatically set up and run an Android emulator with all necessary tools to start reverse engineering.
+- The [generator](./generator) directory contains scripts to automatically generate documentation and interfaces for the REST API used by BicoccApp

@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"os"
 
-	"setup_emulator/internal/setup"
-	"setup_emulator/internal/ui"
+	"emulator/internal/setup"
+	"emulator/internal/ui"
 )
 
 func main() {
