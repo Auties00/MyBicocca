@@ -4,8 +4,8 @@ import it.attendance100.mybicocca.domain.model.*
 
 object UserMockData {
   val user = User(
-    name = "Mario",
-    surname = "Rossi",
+    name = "Lorenzo Angelo",
+    surname = "Lupi",
     matricola = "123456",
     course = "Informatica",
     year = "3",

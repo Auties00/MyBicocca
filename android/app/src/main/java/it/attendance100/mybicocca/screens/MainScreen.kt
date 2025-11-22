@@ -36,7 +36,7 @@ fun HomePage(
   drawerState: DrawerState,
 ) {
   val pagerState = rememberPagerState(
-    initialPage = 0,
+    initialPage = 5,
     pageCount = { 5 },
   )
   val coroutineScope = rememberCoroutineScope()

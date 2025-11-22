@@ -14,7 +14,7 @@ import androidx.compose.ui.res.*
 import androidx.compose.ui.text.font.*
 import androidx.compose.ui.text.input.*
 import androidx.compose.ui.unit.*
-import androidx.hilt.navigation.compose.*
+import androidx.hilt.lifecycle.viewmodel.compose.*
 import com.patrykandpatrick.vico.compose.cartesian.*
 import com.patrykandpatrick.vico.compose.cartesian.axis.*
 import com.patrykandpatrick.vico.compose.cartesian.layer.*
@@ -27,9 +27,11 @@ import com.patrykandpatrick.vico.core.cartesian.layer.*
 import com.patrykandpatrick.vico.core.common.*
 import com.patrykandpatrick.vico.core.common.shape.*
 import it.attendance100.mybicocca.R
+import it.attendance100.mybicocca.components.uni_badge.*
 import it.attendance100.mybicocca.domain.model.*
 import it.attendance100.mybicocca.ui.theme.*
 import it.attendance100.mybicocca.viewmodel.*
+import java.util.*
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
@@ -108,14 +110,6 @@ fun ProfiloTab(
 
   var showDialog by remember { mutableStateOf(false) }
 
-  // Sample data - replace with actual data
-  val name = user?.name ?: ""
-  val surname = user?.surname ?: ""
-  val matricola = user?.matricola ?: ""
-  val corso = user?.course ?: ""
-  val anno = user?.year ?: ""
-  val email = user?.email ?: ""
-
   val mediaAritmetica = stats?.mediaAritmetica ?: 0f
   val mediaPonderata = stats?.mediaPonderata ?: 0f
   val esamiSostenuti = stats?.esamiSostenuti ?: 0
@@ -123,7 +117,6 @@ fun ProfiloTab(
   val cfuAcquisiti = stats?.cfuAcquisiti ?: 0
   val cfuTotali = stats?.cfuTotali ?: 0
 
-  // Sample grades for chart
   val grades = stats?.grades ?: emptyList()
 
   Column(
@@ -146,25 +139,22 @@ fun ProfiloTab(
         fontWeight = FontWeight.Bold,
       )
 
-      Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-          containerColor = MaterialTheme.colorScheme.surface
-        ),
-        shape = RoundedCornerShape(16.dp)
-      ) {
-        Column(
-          modifier = Modifier.padding(16.dp),
-          verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-          InfoRow(stringResource(R.string.career_name), name, textColor, grayColor)
-          InfoRow(stringResource(R.string.career_surname), surname, textColor, grayColor)
-          InfoRow(stringResource(R.string.career_matricola), matricola, textColor, grayColor)
-          InfoRow(stringResource(R.string.career_corso), corso, textColor, grayColor)
-          InfoRow(stringResource(R.string.career_anno), anno, textColor, grayColor)
-          InfoRow(stringResource(R.string.career_email), email, textColor, grayColor)
-        }
-      }
+      CreditCard(
+        accentColor = primaryColor,
+        isChromatic = true,
+        frontContent = {
+          BadgeFront(
+            user,
+            textColor = textColor
+          )
+        },
+        backContent = {
+          BadgeBack(
+            user,
+            textColor = textColor
+          )
+        },
+      )
     }
 
     // Statistics Section
@@ -187,7 +177,7 @@ fun ProfiloTab(
         StatCard(
           modifier = Modifier.weight(1f),
           title = stringResource(R.string.career_media_aritmetica),
-          value = String.format(java.util.Locale.getDefault(), "%.2f", mediaAritmetica),
+          value = String.format(Locale.getDefault(), "%.2f", mediaAritmetica),
           textColor = textColor,
           grayColor = grayColor
         )
@@ -196,7 +186,7 @@ fun ProfiloTab(
         StatCard(
           modifier = Modifier.weight(1f),
           title = stringResource(R.string.career_media_ponderata),
-          value = String.format(java.util.Locale.getDefault(), "%.2f", mediaPonderata),
+          value = String.format(Locale.getDefault(), "%.2f", mediaPonderata),
           textColor = MaterialTheme.colorScheme.onBackground,
           grayColor = grayColor
         )
@@ -286,30 +276,6 @@ fun ProfiloTab(
   }
 }
 
-@Composable
-fun InfoRow(
-  label: String,
-  value: String,
-  textColor: Color,
-  grayColor: Color,
-) {
-  Row(
-    modifier = Modifier.fillMaxWidth(),
-    horizontalArrangement = Arrangement.SpaceBetween
-  ) {
-    Text(
-      text = label,
-      color = grayColor,
-      fontSize = 14.sp
-    )
-    Text(
-      text = value,
-      color = textColor,
-      fontSize = 14.sp,
-      fontWeight = FontWeight.Medium
-    )
-  }
-}
 
 @Composable
 fun StatCard(
