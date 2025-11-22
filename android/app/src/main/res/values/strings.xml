@@ -85,4 +85,5 @@
   <string name="event_detail_location">Luogo</string>
   <string name="event_detail_notes">Note</string>
   <string name="event_detail_close">Chiudi</string>
+  <string name="badge_university_full" translatable="false">Università degli Studi</string>
 </resources>

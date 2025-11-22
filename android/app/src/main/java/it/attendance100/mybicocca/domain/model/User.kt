@@ -11,4 +11,6 @@ data class User(
   val course: String,
   val year: String,
   val email: String,
-)
+) {
+  companion object
+}
