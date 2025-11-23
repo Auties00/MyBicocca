@@ -1,0 +1,52 @@
+services:
+  android-emulator:
+    devices:
+      - /dev/kvm:/dev/kvm
+
+    build:
+      dockerfile: Dockerfile
+    container_name: android-emulator
+    
+    # Required for hardware acceleration access
+    privileged: true
+    
+    # Port mappings for ADB access from host
+    ports:
+      - "5037:5037"   # ADB server
+      - "5554:5554"   # Emulator console
+      - "5555:5555"   # ADB connection
+      - "5900:5900"   # VNC server
+      - "6080:6080"   # noVNC web interface
+    
+    # Persistent storage for AVD data
+    volumes:
+      - android-avd-data:/root/.android
+      - android-sdk-cache:/opt/android-sdk
+    
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          memory: 8G
+        reservations:
+          memory: 4G
+    
+    # Shared memory for emulator
+    shm_size: '2gb'
+    
+    # Health check
+    healthcheck:
+      test: ["CMD", "/opt/scripts/healthcheck.sh"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 300s
+    
+    # Restart policy
+    restart: unless-stopped
+
+volumes:
+  android-avd-data:
+    driver: local
+  android-sdk-cache:
+    driver: local

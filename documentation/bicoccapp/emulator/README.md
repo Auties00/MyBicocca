@@ -1,30 +1,64 @@
-# Android Emulator
+# Android Emulator Docker
 
-An automated installer for setting up and running a rooted Android emulator environment with Magisk, LSPosed, and BicoccApp for reverse engineering.
+A Docker image for running a rooted Android emulator with Magisk, LSPosed and bypass module for BicoccApp.
 
-## Installation Options
+## Requirements
 
-### Option 1: Using Precompiled Binaries (Recommended)
+- Docker 20.10+
+- At least 8GB RAM available
+- At least 20GB disk space
 
-Precompiled binaries are available in the `bin/` directory for all platforms:
+## Setup
 
-- **Linux**: `bin/bicoccapp-emulator-linux-amd64` (x86) or `bin/bicoccapp-emulator-linux-arm64` (ARM)
-- **macOS**: `bin/bicoccapp-emulator-darwin-amd64` (Intel) or `bin/bicoccapp-emulator-darwin-arm64` (Apple Silicon)
-- **Windows**: `bin/bicoccapp-emulator-windows-amd64.exe` (x86) or `bin/bicoccapp-emulator-windows-arm64.exe` (ARM)
+### Hardware Acceleration
 
-### Option 2: Building from Source
+- Linux: recommended environment because it natively supports KVM
+- Windows: Windows Subsystem for Linux is recommended
+- MacOS: No hardware acceleration is available
 
-#### Prerequisites
-
-- Go 1.25.4 or later
-- Make
-
-#### Building
+To enable hardware acceleration:
 
 ```bash
-# Build for your current platform
-make build
+# Verify KVM is available
+ls -la /dev/kvm
 
-# Build for all platforms
-make build-all
+# If not present, enable KVM
+sudo modprobe kvm
+sudo modprobe kvm_intel  # or kvm_amd for AMD processors
+
+# Add your user to kvm group
+sudo usermod -aG kvm $USER
 ```
+
+### Run
+
+```
+docker compose up --build -d android-emulator
+```
+
+## Connecting from Host
+
+### ADB Connection
+
+```bash
+# Connect to the emulator
+adb connect localhost:5555
+
+# Verify connection
+adb devices
+# Output:
+# List of devices attached
+# localhost:5555    device
+
+# Use ADB normally
+adb shell
+adb install myapp.apk
+```
+
+## Exposed Ports
+
+| Port | Description      |
+|------|------------------|
+| 5037 | ADB Server       |
+| 5554 | Emulator Console |
+| 5555 | ADB Connection   |
