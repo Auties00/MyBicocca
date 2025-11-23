@@ -2,6 +2,7 @@ package it.attendance100.mybicocca.components.uni_badge
 
 import android.content.*
 import android.hardware.*
+import android.util.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.*
 import androidx.compose.foundation.gestures.*
@@ -9,7 +10,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.saveable.*
 import androidx.compose.ui.*
 import androidx.compose.ui.draw.*
 import androidx.compose.ui.geometry.*
@@ -18,22 +18,24 @@ import androidx.compose.ui.input.pointer.*
 import androidx.compose.ui.layout.*
 import androidx.compose.ui.platform.*
 import androidx.compose.ui.unit.*
+import kotlinx.coroutines.*
 import kotlin.math.*
 
-const val colorOpacity = 0.1f
+const val colorOpacity = 0.2f
 const val partialColorOpacity = 0.2f
 
 val chromaticColors = listOf(
-  Color.White.copy(alpha = colorOpacity * 4),
-  Color.White.copy(alpha = colorOpacity / 2),
+  Color.Red.copy(alpha = colorOpacity),
+  Color.Yellow.copy(alpha = colorOpacity),
   Color.Transparent,
-  Color.White.copy(alpha = colorOpacity / 2),
-  Color.White.copy(alpha = colorOpacity),
+  Color.Transparent,
+  Color.Magenta.copy(alpha = colorOpacity),
+  Color.Transparent,
 )
 val partialChromaticColors = listOf(
   Color.Black.copy(alpha = partialColorOpacity),
   Color.Transparent,
-  Color.White.copy(alpha = partialColorOpacity)
+  Color.Magenta.copy(alpha = partialColorOpacity / 2)
 )
 
 @Composable
@@ -45,27 +47,23 @@ fun CreditCard(
   isChromatic: Boolean = false,
 ) {
   val localDensity = LocalDensity.current
-  var isFlipped by rememberSaveable { mutableStateOf(false) }
+  val scope = rememberCoroutineScope()
+
+  val rotationY = remember { Animatable(0f) }
   var rotationX by remember { mutableFloatStateOf(0f) }
-  var rotationY by remember { mutableFloatStateOf(0f) }
+
   var cardWidth by remember { mutableFloatStateOf(0f) }
   var cardHeight by remember { mutableFloatStateOf(0f) }
+
   var touchX by remember { mutableFloatStateOf(0.5f) }
   var touchY by remember { mutableFloatStateOf(0.5f) }
-  val flipRotation by animateFloatAsState(
-    targetValue = if (isFlipped) 180f else 0f,
-    animationSpec = tween(durationMillis = 600, easing = FastOutSlowInEasing),
-    label = "flipRotation"
-  )
+  var gestureStartTime by remember { mutableStateOf(0L) }
+  var totalDragX by remember { mutableFloatStateOf(0f) }
+
   val animatedRotationX by animateFloatAsState(
     targetValue = rotationX, animationSpec = spring(
       dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow
     ), label = "rotationX"
-  )
-  val animatedRotationY by animateFloatAsState(
-    targetValue = rotationY, animationSpec = spring(
-      dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow
-    ), label = "rotationY"
   )
   val animatedTouchX by animateFloatAsState(
     targetValue = touchX, animationSpec = spring(
@@ -95,16 +93,15 @@ fun CreditCard(
         val pitch = orientation[1]
         val roll = orientation[2]
 
-        tiltY = -(pitch).coerceIn(-1f, 1f)
-        tiltX = (roll).coerceIn(-1f, 1f)
+        tiltY = -(pitch / 2.5f).coerceIn(-1f, 1f)
+        tiltX = (roll / 2.5f).coerceIn(-1f, 1f)
       }
 
       override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
     }
 
-    if (sensor != null) {
-      sensorManager.registerListener(listener, sensor, SensorManager.SENSOR_DELAY_UI)
-    }
+    if (sensor != null) sensorManager.registerListener(listener, sensor, SensorManager.SENSOR_DELAY_UI)
+
 
     onDispose {
       sensorManager.unregisterListener(listener)
@@ -123,49 +120,97 @@ fun CreditCard(
           }
           .pointerInput(Unit) {
             detectDragGestures(
+              onDragStart = { _ ->
+                gestureStartTime = System.currentTimeMillis()
+                totalDragX = 0f
+              },
               onDragEnd = {
+                val current = rotationY.value
+                val duration = (System.currentTimeMillis() - gestureStartTime)
+                val isFlick = duration in 0..<100
+
+                if (isFlick) Log.i("Drag", "\nShort drag")
+                else Log.i("Drag", "\nLong drag")
+
+
+                val thresholdPx = if (isFlick) cardWidth * 0.05f else cardWidth * 0.5f
+                Log.i("Drag", "Threshold: $thresholdPx")
+                val absTotal = abs(totalDragX)
+                Log.i("Drag", "Total drag: $absTotal")
+
+
+                val base = round(current / 180f) * 180f
+                Log.i("Drag", "base: $base")
+
+
+                val target = if (isFlick && cardWidth > 0 && absTotal > thresholdPx) {
+                  val dir = if (totalDragX > 0f) 1f else -1f
+                  Log.i("Drag", "target: $base + 180f * dir, direction: $dir")
+                  Log.i("Drag", "new base: ${base + 180f * dir}")
+                  base + 180f * dir
+                } else base
+                scope.launch {
+                  rotationY.animateTo(target, animationSpec = tween(600, easing = FastOutSlowInEasing))
+                }
                 rotationX = 0f
-                rotationY = 0f
                 touchX = 0.5f
                 touchY = 0.5f
               },
               onDragCancel = {
+                val current = rotationY.value
+                val base = round(current / 180f) * 180f
+                scope.launch {
+                  rotationY.animateTo(base, animationSpec = tween(600, easing = FastOutSlowInEasing))
+                }
                 rotationX = 0f
-                rotationY = 0f
                 touchX = 0.5f
                 touchY = 0.5f
-              },
+              }
             ) { change, dragAmount ->
               change.consume()
               val currentTouchX = change.position.x
               val currentTouchY = change.position.y
-              val normalizedX = (currentTouchX - cardWidth / 2f) / (cardWidth / 2f)
-              val normalizedY = (currentTouchY - cardHeight / 2f) / (cardHeight / 2f)
-              val maxRotation = 10f
-              rotationX = -normalizedY * maxRotation
-              rotationY = normalizedX * maxRotation
-              touchX = (currentTouchX / cardWidth).coerceIn(0f, 1f)
-              touchY = (currentTouchY / cardHeight).coerceIn(0f, 1f)
+
+              if (cardWidth > 0 && cardHeight > 0) {
+                touchX = (currentTouchX / cardWidth).coerceIn(0f, 1f)
+                touchY = (currentTouchY / cardHeight).coerceIn(0f, 1f)
+
+                val normalizedY = (currentTouchY - cardHeight / 2f) / (cardHeight / 2f)
+                rotationX = -normalizedY * 10f
+
+                totalDragX += dragAmount.x
+                val rotationDelta = (dragAmount.x / cardWidth) * 180f
+                scope.launch {
+                  rotationY.snapTo(rotationY.value + rotationDelta)
+                }
+              }
             }
           }
           .pointerInput(Unit) {
             detectTapGestures(
               onTap = {
-                isFlipped = !isFlipped
+                val current = rotationY.value
+                val target = current + 180f
+                scope.launch {
+                  rotationY.animateTo(target, animationSpec = tween(600, easing = FastOutSlowInEasing))
+                }
               })
           }
           .graphicsLayer {
-            this.rotationY = flipRotation + animatedRotationY
+            this.rotationY = rotationY.value
             this.rotationX = animatedRotationX
             cameraDistance = 12f * localDensity.density
           }, contentAlignment = Alignment.Center
     ) {
+      val angle = (rotationY.value % 360 + 360) % 360
+      val isBack = angle > 90f && angle < 270f
+
       CardFace(
         modifier = Modifier.wrapContentSize().run {
-          if (flipRotation > 90f) this.graphicsLayer { this.rotationY = 180f }
+          if (isBack) this.graphicsLayer { this.rotationY = 180f }
           else this
         },
-        content = if (flipRotation <= 90f) frontContent else backContent,
+        content = if (isBack) backContent else frontContent,
         background = accentColor,
         isChromatic = isChromatic,
         touchX = animatedTouchX + tiltX,
