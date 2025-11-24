@@ -2,7 +2,6 @@ package it.attendance100.mybicocca.components.uni_badge
 
 import android.content.*
 import android.hardware.*
-import android.util.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.*
 import androidx.compose.foundation.gestures.*
@@ -18,6 +17,7 @@ import androidx.compose.ui.input.pointer.*
 import androidx.compose.ui.layout.*
 import androidx.compose.ui.platform.*
 import androidx.compose.ui.unit.*
+import it.attendance100.mybicocca.utils.*
 import kotlinx.coroutines.*
 import kotlin.math.*
 
@@ -41,13 +41,14 @@ val partialChromaticColors = listOf(
 @Composable
 fun CreditCard(
   modifier: Modifier = Modifier,
-  frontContent: @Composable () -> Unit,
-  backContent: @Composable () -> Unit,
+  frontContent: @Composable (touchX: Float, touchY: Float) -> Unit,
+  backContent: @Composable (touchX: Float, touchY: Float) -> Unit,
   accentColor: Color,
   isChromatic: Boolean = false,
 ) {
   val localDensity = LocalDensity.current
   val scope = rememberCoroutineScope()
+  val haptics = rememberHapticManager()
 
   val rotationY = remember { Animatable(0f) }
   var rotationX by remember { mutableFloatStateOf(0f) }
@@ -59,6 +60,8 @@ fun CreditCard(
   var touchY by remember { mutableFloatStateOf(0.5f) }
   var gestureStartTime by remember { mutableStateOf(0L) }
   var totalDragX by remember { mutableFloatStateOf(0f) }
+  var hasFeatheredDuringGesture by remember { mutableStateOf(false) }
+  var prevAngleDuringGesture by remember { mutableFloatStateOf(((rotationY.value % 360f) + 360f) % 360f) }
 
   val animatedRotationX by animateFloatAsState(
     targetValue = rotationX, animationSpec = spring(
@@ -77,6 +80,7 @@ fun CreditCard(
   )
 
   val context = LocalContext.current
+  val haptic = rememberHapticManager()
   val sensorManager = remember { context.getSystemService(Context.SENSOR_SERVICE) as SensorManager }
   var tiltX by remember { mutableFloatStateOf(0f) }
   var tiltY by remember { mutableFloatStateOf(0f) }
@@ -123,30 +127,22 @@ fun CreditCard(
               onDragStart = { _ ->
                 gestureStartTime = System.currentTimeMillis()
                 totalDragX = 0f
+                hasFeatheredDuringGesture = false
+                prevAngleDuringGesture = (((rotationY.value % 360f) + 360f) % 360f)
+                haptics.custom(intensity = 0.5f, durationMillis = 20)
               },
               onDragEnd = {
                 val current = rotationY.value
                 val duration = (System.currentTimeMillis() - gestureStartTime)
                 val isFlick = duration in 0..<100
 
-                if (isFlick) Log.i("Drag", "\nShort drag")
-                else Log.i("Drag", "\nLong drag")
-
-
                 val thresholdPx = if (isFlick) cardWidth * 0.05f else cardWidth * 0.5f
-                Log.i("Drag", "Threshold: $thresholdPx")
                 val absTotal = abs(totalDragX)
-                Log.i("Drag", "Total drag: $absTotal")
-
 
                 val base = round(current / 180f) * 180f
-                Log.i("Drag", "base: $base")
-
 
                 val target = if (isFlick && cardWidth > 0 && absTotal > thresholdPx) {
                   val dir = if (totalDragX > 0f) 1f else -1f
-                  Log.i("Drag", "target: $base + 180f * dir, direction: $dir")
-                  Log.i("Drag", "new base: ${base + 180f * dir}")
                   base + 180f * dir
                 } else base
                 scope.launch {
@@ -155,6 +151,7 @@ fun CreditCard(
                 rotationX = 0f
                 touchX = 0.5f
                 touchY = 0.5f
+                if (!isFlick) haptics.tap()
               },
               onDragCancel = {
                 val current = rotationY.value
@@ -165,7 +162,7 @@ fun CreditCard(
                 rotationX = 0f
                 touchX = 0.5f
                 touchY = 0.5f
-              }
+              },
             ) { change, dragAmount ->
               change.consume()
               val currentTouchX = change.position.x
@@ -182,18 +179,51 @@ fun CreditCard(
                 val rotationDelta = (dragAmount.x / cardWidth) * 180f
                 scope.launch {
                   rotationY.snapTo(rotationY.value + rotationDelta)
+
+                  // robust crossing detection: trigger feather when crossing 90° or 270° lines
+                  val angleNow = (((rotationY.value % 360f) + 360f) % 360f)
+                  val prev = prevAngleDuringGesture
+                  val delta = (((angleNow - prev + 540f) % 360f) - 180f) // signed delta in [-180,180)
+
+                  fun crossedThreshold(threshold: Float): Boolean {
+                    if (abs(delta) < 0.0001f) return false
+                    val tRel = (threshold - prev + 360f) % 360f
+                    return if (delta > 0f) {
+                      tRel > 0f && tRel <= delta
+                    } else {
+                      tRel >= 360f + delta && tRel < 360f
+                    }
+                  }
+
+                  var didCross = false
+                  if (crossedThreshold(90f) || crossedThreshold(270f)) {
+                    didCross = true
+                  }
+
+                  if (didCross) {
+                    try {
+                      haptics.feather()
+                    } catch (_: Exception) {
+                    }
+                  }
+
+                  prevAngleDuringGesture = angleNow
                 }
               }
             }
           }
           .pointerInput(Unit) {
             detectTapGestures(
-              onTap = {
+              onTap = { offset ->
                 val current = rotationY.value
-                val target = current + 180f
+                val isLeft = if (cardWidth > 0) offset.x < cardWidth / 2 else false
+                val direction = if (isLeft) -1f else 1f
+                val target = (round(current / 180f) + direction) * 180f
+
                 scope.launch {
                   rotationY.animateTo(target, animationSpec = tween(600, easing = FastOutSlowInEasing))
                 }
+                haptics.spring()
               })
           }
           .graphicsLayer {
@@ -227,7 +257,7 @@ fun CardFace(
   isChromatic: Boolean = false,
   touchX: Float = 0.5f,
   touchY: Float = 0.5f,
-  content: @Composable () -> Unit,
+  content: @Composable (touchX: Float, touchY: Float) -> Unit,
 ) {
   val primaryColor = MaterialTheme.colorScheme.primary
 
@@ -238,7 +268,7 @@ fun CardFace(
           .aspectRatio(1.6111112f),
       colors = CardDefaults.cardColors(containerColor = if (isChromatic) primaryColor else background),
     ) {
-      content()
+      content(touchX, touchY)
     }
     // Chromatic overlay
     if (isChromatic) {

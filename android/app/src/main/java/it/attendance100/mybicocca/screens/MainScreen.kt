@@ -318,6 +318,7 @@ fun BottomNavBar(currentIndex: Int, onPageSelected: (Int) -> Unit) {
     containerColor = backgroundColor,
     contentColor = primaryColor
   ) {
+    val haptics = rememberHapticManager()
     val items = listOf(
       BottomNavItem(stringResource(R.string.bottom_navbar_home), Icons.Outlined.Home, Icons.Filled.Home),
       BottomNavItem(stringResource(R.string.bottom_navbar_calendario), Icons.Outlined.CalendarMonth, Icons.Filled.CalendarMonth),
@@ -341,7 +342,10 @@ fun BottomNavBar(currentIndex: Int, onPageSelected: (Int) -> Unit) {
           )
         },
         selected = currentIndex == index,
-        onClick = { onPageSelected(index) },
+        onClick = {
+          onPageSelected(index)
+          haptics.tap()
+        },
         colors = NavigationBarItemDefaults.colors(
           selectedIconColor = primaryColor,
           selectedTextColor = primaryColor,
@@ -368,7 +372,7 @@ fun PageContent(
       // Home page
       HomeContentScreen(pagerState, coroutineScope)
     }
-    
+
     1 -> {
       // Calendar page
       CalendarScreen()

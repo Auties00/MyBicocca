@@ -79,4 +79,10 @@
   <string name="event_detail_location">Luogo</string>
   <string name="event_detail_notes">Note</string>
   <string name="event_detail_close">Chiudi</string>
+  <string name="matricola_short">Mat.</string>
+  <string name="homepage_unread_notifications">Notifiche non Lette</string>
+  <string name="homepage_see_all_notifications">Vedi tutte le notifiche</string>
+  <string name="homescreen_shortcuts">Shortcuts</string>
+  <string name="homescreen_edit_shortcuts">Modifica le Shortcuts</string>
+  <string name="homescreen_my_courses">I miei Corsi</string>
 </resources>

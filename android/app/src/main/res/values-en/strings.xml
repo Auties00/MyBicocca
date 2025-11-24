@@ -78,4 +78,10 @@
   <string name="event_detail_location">Location</string>
   <string name="event_detail_notes">Notes</string>
   <string name="event_detail_close">Close</string>
+  <string name="matricola_short">ID</string>
+  <string name="homepage_unread_notifications">Unread Notifications</string>
+  <string name="homepage_see_all_notifications">See all Notifications</string>
+  <string name="homescreen_shortcuts">Shortcuts</string>
+  <string name="homescreen_edit_shortcuts">Edit Shortcuts</string>
+  <string name="homescreen_my_courses">My Courses</string>
 </resources>
