@@ -33,6 +33,9 @@ ENV VNC_PORT=5900
 ENV NOVNC_PORT=6080
 ENV VNC_PASSWORD=android
 
+# Mark docker env
+ENV IS_DOCKER=TRUE
+
 # Install system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     openjdk-17-jdk \
@@ -145,7 +148,7 @@ RUN wget -q "https://github.com/Auties00/MyBicocca/raw/refs/heads/main/documenta
 RUN mkdir -p /opt/scripts
 
 # Copy entrypoint and setup scripts
-COPY scripts/entrypoint.sh /opt/scripts/entrypoint.sh
+COPY setup.sh /opt/scripts/entrypoint.sh
 COPY scripts/healthcheck.sh /opt/scripts/healthcheck.sh
 
 RUN chmod +x /opt/scripts/*.sh
