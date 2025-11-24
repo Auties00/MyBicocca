@@ -86,6 +86,9 @@ fun SettingsScreen(
   var selectedLocale by remember { mutableStateOf(currentAppLocale) }
   var showLanguageDialog by remember { mutableStateOf(false) }
 
+  var badgeParallax by remember { mutableStateOf(preferencesManager.badgeParallax) }
+
+
   val primaryColor = MaterialTheme.colorScheme.primary
   val textColor = MaterialTheme.colorScheme.onBackground
   val grayColor = if (MaterialTheme.colorScheme.background == BackgroundColor) GrayColor else GrayColorLight
@@ -260,6 +263,74 @@ fun SettingsScreen(
             imageVector = Icons.Default.ChevronRight,
             contentDescription = null,
             tint = grayColor
+          )
+        }
+      }
+
+      HorizontalDivider(color = grayColor.copy(alpha = 0.2f), modifier = Modifier.padding(horizontal = 16.dp))
+
+      // General Section
+      Text(
+        text = stringResource(R.string.settings_developer),
+        color = primaryColor,
+        fontSize = 14.sp,
+        fontWeight = FontWeight.Bold,
+        modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp)
+      )
+
+      // Badge Parallax
+      Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable {
+              badgeParallax = !badgeParallax
+              preferencesManager.badgeParallax = badgeParallax
+            },
+        color = MaterialTheme.colorScheme.background
+      ) {
+        Row(
+          modifier = Modifier
+              .fillMaxWidth()
+              .padding(horizontal = 16.dp, vertical = 16.dp),
+          horizontalArrangement = Arrangement.SpaceBetween,
+          verticalAlignment = Alignment.CenterVertically
+        ) {
+          Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+          ) {
+            Icon(
+              imageVector = Icons.Default.Language,
+              contentDescription = null,
+              tint = primaryColor,
+              modifier = Modifier.size(24.dp)
+            )
+            Column {
+              Text(
+                text = stringResource(R.string.settings_badge_parallax),
+                color = textColor,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Medium
+              )
+              Text(
+                text = "badgeParallax",
+                color = grayColor,
+                fontSize = 13.sp
+              )
+            }
+          }
+
+          Switch(
+            checked = badgeParallax,
+            onCheckedChange = {
+              badgeParallax = it
+              preferencesManager.badgeParallax = it
+            },
+            colors = SwitchDefaults.colors(
+              checkedThumbColor = primaryColor,
+              checkedTrackColor = primaryColor.copy(alpha = 0.5f)
+            ),
+            modifier = Modifier.padding(start = 15.dp)
           )
         }
       }

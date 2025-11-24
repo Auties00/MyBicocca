@@ -38,7 +38,6 @@
   <string name="fingerprint_login_desc">Accedi con la tua impronta digitale invece di inserire le credenziali ogni volta</string>
   <string name="security">Sicurezza</string>
   <string name="logins_list">Lista Login</string>
-  <string name="settings_material_you" translatable="false">Material You</string>
   <string name="settings_material_you_enabled">Il design Material You è attivo</string>
   <string name="settings_material_you_disabled">Usa il design Material You</string>
 
@@ -86,4 +85,12 @@
   <string name="event_detail_notes">Note</string>
   <string name="event_detail_close">Chiudi</string>
   <string name="badge_university_full" translatable="false">Università degli Studi</string>
+  <string name="matricola_short">Mat.</string>
+  <string name="homepage_unread_notifications">Notifiche non Lette</string>
+  <string name="homepage_see_all_notifications">Vedi tutte le notifiche</string>
+  <string name="homescreen_shortcuts">Shortcuts</string>
+  <string name="homescreen_edit_shortcuts">Modifica le Shortcuts</string>
+  <string name="homescreen_my_courses">I miei Corsi</string>
+  <string name="settings_badge_parallax" translatable="false">Badge Parallax</string>
+  <string name="settings_developer" translatable="false">Developer Settings</string>
 </resources>

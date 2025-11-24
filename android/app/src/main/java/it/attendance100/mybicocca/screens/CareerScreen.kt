@@ -30,6 +30,7 @@ import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.components.uni_badge.*
 import it.attendance100.mybicocca.domain.model.*
 import it.attendance100.mybicocca.ui.theme.*
+import it.attendance100.mybicocca.utils.*
 import it.attendance100.mybicocca.viewmodel.*
 import java.util.*
 
@@ -142,16 +143,20 @@ fun ProfiloTab(
       CreditCard(
         accentColor = primaryColor,
         isChromatic = true,
-        frontContent = {
+        frontContent = { x, y ->
           BadgeFront(
             user,
-            textColor = textColor
+            textColor = textColor,
+            touchX = x,
+            touchY = y
           )
         },
-        backContent = {
+        backContent = { x, y ->
           BadgeBack(
             user,
-            textColor = textColor
+            textColor = textColor,
+            touchX = x,
+            touchY = y
           )
         },
       )
@@ -285,11 +290,15 @@ fun StatCard(
   textColor: Color,
   grayColor: Color,
 ) {
+  val haptic = rememberHapticManager()
   Card(
     modifier = modifier,
     colors = CardDefaults.cardColors(
       containerColor = MaterialTheme.colorScheme.surface
     ),
+    onClick = {
+      haptic.tap()
+    },
     shape = RoundedCornerShape(16.dp)
   ) {
     Column(
@@ -325,12 +334,16 @@ fun ProgressStatCard(
   grayColor: Color,
 ) {
   val progress = current.toFloat() / total.toFloat()
+  val haptic = rememberHapticManager()
 
   Card(
     modifier = modifier,
     colors = CardDefaults.cardColors(
       containerColor = MaterialTheme.colorScheme.surface
     ),
+    onClick = {
+      haptic.spring()
+    },
     shape = RoundedCornerShape(16.dp)
   ) {
     Column(

@@ -17,6 +17,7 @@ import androidx.compose.ui.unit.*
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.components.*
 import it.attendance100.mybicocca.domain.model.*
+import it.attendance100.mybicocca.utils.*
 
 val usr = User(
   name = "Federico Giarrusso",
@@ -32,7 +33,7 @@ val usr = User(
 fun BadgeFrontPreview() {
   CardFace(
     modifier = Modifier.wrapContentSize().run { this },
-    content = { BadgeFront(usr) },
+    content = { x, y -> BadgeFront(usr, touchX = x, touchY = y) },
     background = MaterialTheme.colorScheme.primary,
     isChromatic = true,
     touchX = 0f,
@@ -45,7 +46,7 @@ fun BadgeFrontPreview() {
 fun BadgeBackPreview() {
   CardFace(
     // modifier = Modifier.wrapContentSize().run { this },
-    content = { BadgeBack(usr) },
+    content = { x, y -> BadgeBack(usr, touchX = x, touchY = y) },
     background = MaterialTheme.colorScheme.primary,
     isChromatic = true,
     touchX = 0f,
@@ -54,7 +55,8 @@ fun BadgeBackPreview() {
 }
 
 @Composable
-fun BadgeFront(user: User?, textColor: Color = MaterialTheme.colorScheme.onBackground) {
+fun BadgeFront(user: User?, textColor: Color = MaterialTheme.colorScheme.onBackground, touchX: Float = 0.5f, touchY: Float = 0.5f) {
+  val preferencesManager = rememberPreferencesManager()
   Box(
     modifier = Modifier
         .fillMaxSize()
@@ -62,12 +64,14 @@ fun BadgeFront(user: User?, textColor: Color = MaterialTheme.colorScheme.onBackg
   ) {
     val scale = .8
     val height = 52
+    var movementCoeff = 30
+    if (!preferencesManager.badgeParallax) movementCoeff = 0
 
     // BG Texture
     DitheredTexture(
       modifier = Modifier
           .fillMaxSize()
-          .offset(x = (-180).dp)
+          .offset(x = (-180 + (-touchX + 0.5f) * (movementCoeff * 1.5)).dp, y = ((-touchY + 0.5f) * (movementCoeff * 1.5)).dp)
           .rotate(0f),
       color = Color.Black,
       spacing = 10f,          // Distance between dots
@@ -89,7 +93,7 @@ fun BadgeFront(user: User?, textColor: Color = MaterialTheme.colorScheme.onBackg
 
           .scale(2f)
           .rotate(7.5f)
-          .absoluteOffset(x = (43).dp, y = (30).dp)
+          .absoluteOffset(x = (43 + (-touchX + 0.5f) * (movementCoeff)).dp, y = (30 + (-touchY + 0.5f) * (movementCoeff / 2.5)).dp)
 
           // .scale(2.25f)
           // .rotate(-7.5f)
@@ -189,7 +193,7 @@ fun BadgeFront(user: User?, textColor: Color = MaterialTheme.colorScheme.onBackg
 }
 
 @Composable
-fun BadgeBack(user: User?, textColor: Color = MaterialTheme.colorScheme.onBackground) {
+fun BadgeBack(user: User?, textColor: Color = MaterialTheme.colorScheme.onBackground, touchX: Float = 0.5f, touchY: Float = 0.5f) {
   Column(modifier = Modifier.fillMaxSize()) {
     Spacer(modifier = Modifier.height(24.dp))
     // Magnetic Stripe

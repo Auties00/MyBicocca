@@ -1,5 +1,8 @@
 package it.attendance100.mybicocca
 
+import android.app.*
+import android.content.*
+import android.content.pm.*
 import android.os.*
 import androidx.activity.*
 import androidx.activity.compose.*
@@ -11,6 +14,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.*
 import androidx.compose.ui.graphics.*
+import androidx.compose.ui.platform.*
 import androidx.navigation.compose.*
 import dagger.hilt.android.*
 import it.attendance100.mybicocca.screens.*
@@ -54,6 +58,8 @@ class MainActivity : ComponentActivity() {
         }
       }
 
+      LockScreenOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT)
+
       // Update edge-to-edge when theme changes
       LaunchedEffect(isDarkMode) {
         enableEdgeToEdge(
@@ -73,17 +79,19 @@ class MainActivity : ComponentActivity() {
       }
 
       MyBicoccaTheme(darkTheme = isDarkMode) {
-        Surface(
-          modifier = Modifier
-              .fillMaxSize()
-              .statusBarsPadding(), // manual top padding because of enableEdgeToEdge()
-        ) {
-          AppNavigation(
-            onThemeChange = { _ ->
-              // Update the state to trigger recomposition
-              currentThemeMode = preferencesManager.themeMode
-            }
-          )
+        ProvideHapticManager {
+          Surface(
+            modifier = Modifier
+                .fillMaxSize()
+                .statusBarsPadding(), // manual top padding because of enableEdgeToEdge()
+          ) {
+            AppNavigation(
+              onThemeChange = { _ ->
+                // Update the state to trigger recomposition
+                currentThemeMode = preferencesManager.themeMode
+              }
+            )
+          }
         }
       }
     }
@@ -146,3 +154,22 @@ fun AppNavigation(onThemeChange: (Boolean) -> Unit) {
   }
 }
 
+@Composable
+fun LockScreenOrientation(orientation: Int) {
+  val context = LocalContext.current
+  DisposableEffect(Unit) {
+    val activity = context.findActivity() ?: return@DisposableEffect onDispose {}
+    val originalOrientation = activity.requestedOrientation
+    activity.requestedOrientation = orientation
+    onDispose {
+      // restore original orientation when view disappears
+      activity.requestedOrientation = originalOrientation
+    }
+  }
+}
+
+fun Context.findActivity(): Activity? = when (this) {
+  is Activity -> this
+  is ContextWrapper -> baseContext.findActivity()
+  else -> null
+}

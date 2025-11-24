@@ -13,11 +13,12 @@ import androidx.compose.ui.*
 import androidx.compose.ui.res.*
 import androidx.compose.ui.text.font.*
 import androidx.compose.ui.unit.*
-import androidx.hilt.navigation.compose.*
+import androidx.hilt.lifecycle.viewmodel.compose.*
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.components.*
 import it.attendance100.mybicocca.domain.model.*
 import it.attendance100.mybicocca.ui.theme.*
+import it.attendance100.mybicocca.utils.*
 import it.attendance100.mybicocca.viewmodel.*
 import kotlinx.coroutines.*
 
@@ -35,6 +36,7 @@ fun HomeContentScreen(
 
   val user by viewModel.user.collectAsState()
   val notifications by viewModel.notifications.collectAsState()
+  val haptic = rememberHapticManager()
 
   Column(
     modifier = Modifier
@@ -60,10 +62,14 @@ fun HomeContentScreen(
         modifier = Modifier.size(120.dp),
         shape = RoundedCornerShape(20.dp),
         color = surfaceColor,
-        tonalElevation = 2.dp
+        tonalElevation = 2.dp,
+        onClick = {
+          haptic.tap()
+        }
       ) {
         Box(
-          modifier = Modifier.fillMaxSize(),
+          modifier = Modifier
+              .fillMaxSize(),
           contentAlignment = Alignment.Center
         ) {
           Avatar(size = 90.dp)
@@ -79,6 +85,7 @@ fun HomeContentScreen(
         tonalElevation = 2.dp,
         onClick = {
           coroutineScope.launch {
+            haptic.tap()
             pagerState.animateScrollToPage(4)
           }
         }
@@ -104,7 +111,7 @@ fun HomeContentScreen(
           )
           Spacer(modifier = Modifier.height(8.dp))
           Text(
-            text = "Mat. ${user?.matricola ?: ""}",
+            text = "${stringResource(R.string.matricola_short)} ${user?.matricola ?: ""}",
             fontSize = 13.sp,
             color = primaryColor,
             fontWeight = FontWeight.Medium
@@ -119,7 +126,7 @@ fun HomeContentScreen(
     if (notifications.isNotEmpty()) {
       Column(verticalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.padding(top = 12.dp)) {
         Text(
-          text = "Unread Notifications",
+          text = stringResource(R.string.homepage_unread_notifications),
           fontSize = 18.sp,
           fontWeight = FontWeight.Bold,
           color = textColor
@@ -130,7 +137,10 @@ fun HomeContentScreen(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(16.dp),
             color = surfaceColor,
-            tonalElevation = 2.dp
+            tonalElevation = 2.dp,
+            onClick = {
+              haptic.tap()
+            }
           ) {
             Row(
               modifier = Modifier
@@ -168,10 +178,13 @@ fun HomeContentScreen(
 
         // See more button
         TextButton(
-          onClick = { /* Navigate to notifications */ },
+          onClick = {
+            /* Navigate to notifications */
+            haptic.tap()
+          },
           modifier = Modifier.align(Alignment.End)
         ) {
-          Text("See all notifications")
+          Text(stringResource(R.string.homepage_see_all_notifications))
           Spacer(modifier = Modifier.width(4.dp))
           Icon(
             imageVector = Icons.AutoMirrored.Filled.ArrowForward,
@@ -190,15 +203,18 @@ fun HomeContentScreen(
         verticalAlignment = Alignment.CenterVertically
       ) {
         Text(
-          text = "Shortcuts",
+          text = stringResource(R.string.homescreen_shortcuts),
           fontSize = 18.sp,
           fontWeight = FontWeight.Bold,
           color = textColor
         )
-        IconButton(onClick = { /* Edit shortcuts */ }) {
+        IconButton(onClick = {
+          /* Edit shortcuts */
+          haptic.tap()
+        }) {
           Icon(
             imageVector = Icons.Filled.Edit,
-            contentDescription = "Edit shortcuts",
+            contentDescription = stringResource(R.string.homescreen_edit_shortcuts),
             tint = grayColor,
             modifier = Modifier.size(20.dp)
           )
@@ -252,7 +268,10 @@ fun HomeContentScreen(
             shape = RoundedCornerShape(16.dp),
             color = surfaceColor,
             tonalElevation = 2.dp,
-            onClick = { /* Shortcut action */ }
+            onClick = {
+              /* Shortcut action */
+              haptic.tap()
+            }
           ) {
             Box(
               modifier = Modifier.fillMaxSize(),
@@ -281,7 +300,10 @@ fun HomeContentScreen(
             shape = RoundedCornerShape(16.dp),
             color = surfaceColor,
             tonalElevation = 2.dp,
-            onClick = { /* Shortcut action */ }
+            onClick = {
+              /* Shortcut action */
+              haptic.tap()
+            }
           ) {
             Column(
               modifier = Modifier
@@ -314,7 +336,10 @@ fun HomeContentScreen(
             shape = RoundedCornerShape(16.dp),
             color = surfaceColor,
             tonalElevation = 2.dp,
-            onClick = { /* Shortcut action */ }
+            onClick = {
+              /* Shortcut action */
+              haptic.tap()
+            }
           ) {
             Row(
               modifier = Modifier
@@ -352,7 +377,10 @@ fun HomeContentScreen(
             shape = RoundedCornerShape(16.dp),
             color = surfaceColor,
             tonalElevation = 2.dp,
-            onClick = { /* Shortcut action */ }
+            onClick = {
+              /* Shortcut action */
+              haptic.tap()
+            }
           ) {
             Box(
               modifier = Modifier.fillMaxSize(),
@@ -375,7 +403,10 @@ fun HomeContentScreen(
             shape = RoundedCornerShape(16.dp),
             color = surfaceColor,
             tonalElevation = 2.dp,
-            onClick = { /* Shortcut action */ }
+            onClick = {
+              /* Shortcut action */
+              haptic.tap()
+            }
           ) {
             Box(
               modifier = Modifier.fillMaxSize(),
@@ -398,7 +429,10 @@ fun HomeContentScreen(
             shape = RoundedCornerShape(16.dp),
             color = surfaceColor,
             tonalElevation = 2.dp,
-            onClick = { /* Shortcut action */ }
+            onClick = {
+              /* Shortcut action */
+              haptic.tap()
+            }
           ) {
             Column(
               modifier = Modifier

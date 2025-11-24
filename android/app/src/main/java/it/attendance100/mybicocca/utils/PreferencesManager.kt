@@ -10,8 +10,10 @@ class PreferencesManager(private val context: Context) {
   private val prefs: SharedPreferences = context.getSharedPreferences("app_preferences", Context.MODE_PRIVATE)
 
   companion object {
+    private const val KEY_IS_DEVELOPER_MODE = "developer_mode"
     private const val KEY_THEME_MODE = "theme_mode"
     private const val KEY_LOCALE = "locale"
+    private const val KEY_BADGE_PARALLAX = "badge_parallax"
 
     const val THEME_SYSTEM_DEFAULT = "system"
     const val THEME_LIGHT = "light"
@@ -21,6 +23,13 @@ class PreferencesManager(private val context: Context) {
     const val LOCALE_ITALIAN = "it" // Default locale
     const val LOCALE_ENGLISH = "en"
   }
+
+  var isDeveloperMode: Boolean
+    get() = prefs.getBoolean(KEY_IS_DEVELOPER_MODE, false)
+    set(value) {
+      prefs.edit { putBoolean(KEY_IS_DEVELOPER_MODE, value) }
+    }
+
 
   var themeMode: String
     get() = prefs.getString(KEY_THEME_MODE, THEME_SYSTEM_DEFAULT) ?: THEME_SYSTEM_DEFAULT
@@ -42,6 +51,12 @@ class PreferencesManager(private val context: Context) {
     get() = prefs.getString(KEY_LOCALE, LOCALE_ITALIAN) ?: LOCALE_ITALIAN
     set(value) {
       prefs.edit { putString(KEY_LOCALE, value) }
+    }
+
+  var badgeParallax: Boolean
+    get() = prefs.getBoolean(KEY_BADGE_PARALLAX, true)
+    set(value) {
+      prefs.edit { putBoolean(KEY_BADGE_PARALLAX, value) }
     }
 
 
