@@ -93,4 +93,5 @@
   <string name="homescreen_my_courses">I miei Corsi</string>
   <string name="settings_badge_parallax" translatable="false">Badge Parallax</string>
   <string name="settings_developer" translatable="false">Developer Settings</string>
+  <string name="settings_badge_white" translatable="false">White Badge</string>
 </resources>

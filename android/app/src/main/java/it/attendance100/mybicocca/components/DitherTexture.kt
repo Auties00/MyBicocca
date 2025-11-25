@@ -7,6 +7,7 @@ import androidx.compose.ui.*
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.graphics.drawscope.*
 import androidx.compose.ui.tooling.preview.*
+import it.attendance100.mybicocca.ui.theme.*
 import kotlin.math.*
 
 /**
@@ -131,7 +132,7 @@ fun TexturePreview() {
   Box(
     modifier = Modifier
         .fillMaxSize()
-        .background(Color(0xFFF0F0F0))
+        .background(BadgeSignatureBoxColorWhite)
   ) {
     DitheredTexture(
       modifier = Modifier.fillMaxSize(),

@@ -87,6 +87,7 @@ fun SettingsScreen(
   var showLanguageDialog by remember { mutableStateOf(false) }
 
   var badgeParallax by remember { mutableStateOf(preferencesManager.badgeParallax) }
+  var whiteBadge by remember { mutableStateOf(preferencesManager.badgeWhite) }
 
 
   val primaryColor = MaterialTheme.colorScheme.primary
@@ -325,6 +326,63 @@ fun SettingsScreen(
             onCheckedChange = {
               badgeParallax = it
               preferencesManager.badgeParallax = it
+            },
+            colors = SwitchDefaults.colors(
+              checkedThumbColor = primaryColor,
+              checkedTrackColor = primaryColor.copy(alpha = 0.5f)
+            ),
+            modifier = Modifier.padding(start = 15.dp)
+          )
+        }
+      }
+
+      // White Badge
+      Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable {
+              whiteBadge = !whiteBadge
+              preferencesManager.badgeWhite = whiteBadge
+            },
+        color = MaterialTheme.colorScheme.background
+      ) {
+        Row(
+          modifier = Modifier
+              .fillMaxWidth()
+              .padding(horizontal = 16.dp, vertical = 16.dp),
+          horizontalArrangement = Arrangement.SpaceBetween,
+          verticalAlignment = Alignment.CenterVertically
+        ) {
+          Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+          ) {
+            Icon(
+              imageVector = Icons.Default.Language,
+              contentDescription = null,
+              tint = primaryColor,
+              modifier = Modifier.size(24.dp)
+            )
+            Column {
+              Text(
+                text = stringResource(R.string.settings_badge_white),
+                color = textColor,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Medium
+              )
+              Text(
+                text = "badgeWhite",
+                color = grayColor,
+                fontSize = 13.sp
+              )
+            }
+          }
+
+          Switch(
+            checked = whiteBadge,
+            onCheckedChange = {
+              whiteBadge = it
+              preferencesManager.badgeWhite = it
             },
             colors = SwitchDefaults.colors(
               checkedThumbColor = primaryColor,

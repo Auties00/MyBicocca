@@ -41,6 +41,7 @@ private val MyBicoccaDarkColorScheme = darkColorScheme(
   inverseSurface = inverseSurfaceColor,
   inversePrimary = inversePrimaryColor,
   background = BackgroundColor,
+  onBackground = OnBackgroundColor,
 )
 
 private val MyBicoccaLightColorScheme = lightColorScheme(
@@ -76,6 +77,7 @@ private val MyBicoccaLightColorScheme = lightColorScheme(
   inverseSurface = inverseSurfaceColorLight,
   inversePrimary = inversePrimaryColorLight,
   background = BackgroundColorLight,
+  onBackground = OnBackgroundColorLight,
 )
 
 @Composable
