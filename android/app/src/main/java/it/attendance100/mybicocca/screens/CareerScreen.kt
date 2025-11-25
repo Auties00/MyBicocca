@@ -3,6 +3,7 @@ package it.attendance100.mybicocca.screens
 import androidx.compose.animation.*
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.*
 import androidx.compose.foundation.shape.*
 import androidx.compose.foundation.text.*
 import androidx.compose.material3.*
@@ -120,19 +121,13 @@ fun ProfiloTab(
 
   val grades = stats?.grades ?: emptyList()
 
-  Column(
-    modifier = Modifier
-        .fillMaxSize()
-        .verticalScroll(rememberScrollState())
-        .padding(16.dp),
-    horizontalAlignment = Alignment.CenterHorizontally,
-    verticalArrangement = Arrangement.spacedBy(24.dp)
-  ) {
+  val userDataSection: @Composable () -> Unit = @Composable {
     // Data Section
     Column(
       modifier = Modifier.fillMaxWidth(),
       verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
+      // Section Title
       Text(
         text = stringResource(R.string.career_dati),
         color = primaryColor,
@@ -140,33 +135,39 @@ fun ProfiloTab(
         fontWeight = FontWeight.Bold,
       )
 
+      // Badge
       CreditCard(
         accentColor = primaryColor,
         isChromatic = true,
-        frontContent = { x, y ->
+        frontContent = { x, y, whiteBadge, _ ->
           BadgeFront(
             user,
-            textColor = textColor,
+            textColor = if (whiteBadge) BadgeWhiteDrawableColor else OnBackgroundColor,
             touchX = x,
-            touchY = y
+            touchY = y,
+            whiteBadge = whiteBadge,
           )
         },
-        backContent = { x, y ->
+        backContent = { x, y, whiteBadge, hazeState ->
           BadgeBack(
             user,
-            textColor = textColor,
+            textColor = if (whiteBadge) BadgeWhiteDrawableColor else OnBackgroundColor,
             touchX = x,
-            touchY = y
+            touchY = y,
+            whiteBadge = whiteBadge,
+            hazeState = hazeState,
           )
         },
       )
     }
+  }
 
-    // Statistics Section
+  val statisticsSection: @Composable () -> Unit = @Composable { // Statistics Section
     Column(
       modifier = Modifier.fillMaxWidth(),
       verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
+      // Section Title
       Text(
         text = stringResource(R.string.career_statistiche),
         color = primaryColor,
@@ -174,6 +175,7 @@ fun ProfiloTab(
         fontWeight = FontWeight.Bold
       )
 
+      // Medie
       Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -192,17 +194,17 @@ fun ProfiloTab(
           modifier = Modifier.weight(1f),
           title = stringResource(R.string.career_media_ponderata),
           value = String.format(Locale.getDefault(), "%.2f", mediaPonderata),
-          textColor = MaterialTheme.colorScheme.onBackground,
+          textColor = textColor,
           grayColor = grayColor
         )
       }
 
+      // Progress
       Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(12.dp)
       ) {
-        // Esami Sostenuti
-        // Exams Taken
+        // Esams Done
         ProgressStatCard(
           modifier = Modifier.weight(1f),
           title = stringResource(R.string.career_esami_sostenuti),
@@ -213,7 +215,7 @@ fun ProfiloTab(
           grayColor = grayColor
         )
 
-        // ECTS Acquired
+        // Crediti Acquired
         ProgressStatCard(
           modifier = Modifier.weight(1f),
           title = stringResource(R.string.career_cfu_acquisiti),
@@ -225,48 +227,80 @@ fun ProfiloTab(
         )
       }
     }
+  }
+
+  LazyColumn(
+    modifier = Modifier.fillMaxSize(),
+    contentPadding = PaddingValues(16.dp),
+    horizontalAlignment = Alignment.CenterHorizontally,
+    verticalArrangement = Arrangement.spacedBy(24.dp),
+  ) {
+
+    item {
+      if (isTablet()) {
+        Row(
+          modifier = Modifier.fillMaxWidth(),
+          horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+          // Inside a Row, we might need weights or specific widths,
+          // but for now, we just call the functions.
+          Box(modifier = Modifier.weight(1f)) { userDataSection() }
+          Spacer(modifier = Modifier.width(16.dp))
+          Box(modifier = Modifier.weight(1f)) { statisticsSection() }
+        }
+      } else {
+        userDataSection()
+        Spacer(modifier = Modifier.height(16.dp))
+        statisticsSection()
+      }
+    }
 
     // Calculate Average Button
-    Button(
-      onClick = { showDialog = true },
-      modifier = Modifier
-          .fillMaxWidth()
-          .height(48.dp),
-      colors = ButtonDefaults.buttonColors(
-        containerColor = primaryColor
-      )
-    ) {
-      Text(
-        text = stringResource(R.string.career_calcola_media),
-        fontSize = 16.sp
-      )
+    item {
+      Button(
+        onClick = { showDialog = true },
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(48.dp),
+        colors = ButtonDefaults.buttonColors(
+          containerColor = primaryColor
+        )
+      ) {
+        Text(
+          text = stringResource(R.string.career_calcola_media),
+          fontSize = 16.sp
+        )
+      }
     }
 
     // Grades Chart
-    Card(
-      modifier = Modifier
-          .fillMaxWidth()
-          .height(300.dp),
-      colors = CardDefaults.cardColors(
-        containerColor = MaterialTheme.colorScheme.surface
-      ),
-      shape = RoundedCornerShape(16.dp)
-    ) {
-      Column(
-        modifier = Modifier.padding(16.dp)
+    item {
+      Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(300.dp),
+        colors = CardDefaults.cardColors(
+          containerColor = MaterialTheme.colorScheme.surface
+        ),
+        shape = RoundedCornerShape(16.dp)
       ) {
-        Text(
-          text = stringResource(R.string.career_grafico_voti),
-          color = primaryColor,
-          fontSize = 18.sp,
-          fontWeight = FontWeight.Bold,
-          modifier = Modifier.padding(bottom = 16.dp)
-        )
+        Column(
+          modifier = Modifier.padding(16.dp)
+        ) {
+          Text(
+            text = stringResource(R.string.career_grafico_voti),
+            color = primaryColor,
+            fontSize = 18.sp,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(bottom = 16.dp)
+          )
 
-        GradesChart(grades, primaryColor)
+          GradesChart(grades, primaryColor)
+        }
       }
     }
   }
+
 
   if (showDialog) {
     HypotheticalGradeDialog(

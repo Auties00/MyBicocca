@@ -111,4 +111,8 @@ dependencies {
   implementation("com.patrykandpatrick.vico:compose-m3:2.3.6")
   implementation("com.patrykandpatrick.vico:core:2.3.6")
   debugImplementation("androidx.compose.ui:ui-tooling:1.9.5")
+
+  // Haze for blur
+  implementation("dev.chrisbanes.haze:haze:1.7.1")
+  implementation("dev.chrisbanes.haze:haze-materials:1.7.1")
 }

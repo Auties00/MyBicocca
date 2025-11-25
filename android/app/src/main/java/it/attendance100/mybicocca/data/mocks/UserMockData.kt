@@ -6,10 +6,10 @@ object UserMockData {
   val user = User(
     name = "Lorenzo Angelo",
     surname = "Lupi",
-    matricola = "123456",
+    matricola = "909369",
     course = "Informatica",
     year = "3",
-    email = "m.rossi@campus.unimib.it"
+    email = "l.lupi3@campus.unimib.it"
   )
 
   val careerStats = CareerStats(

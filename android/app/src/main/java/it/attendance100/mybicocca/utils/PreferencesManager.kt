@@ -14,6 +14,7 @@ class PreferencesManager(private val context: Context) {
     private const val KEY_THEME_MODE = "theme_mode"
     private const val KEY_LOCALE = "locale"
     private const val KEY_BADGE_PARALLAX = "badge_parallax"
+    private const val KEY_BADGE_WHITE = "badge_white"
 
     const val THEME_SYSTEM_DEFAULT = "system"
     const val THEME_LIGHT = "light"
@@ -58,6 +59,13 @@ class PreferencesManager(private val context: Context) {
     set(value) {
       prefs.edit { putBoolean(KEY_BADGE_PARALLAX, value) }
     }
+
+  var badgeWhite: Boolean
+    get() = prefs.getBoolean(KEY_BADGE_WHITE, false)
+    set(value) {
+      prefs.edit { putBoolean(KEY_BADGE_WHITE, value) }
+    }
+
 
 
   /**

@@ -39,7 +39,8 @@ fun Avatar(
           .fillMaxSize()
           .clip(CircleShape)
     ) {
-      when (painter.state) {
+
+    when (painter.state) {
         is AsyncImagePainter.State.Loading -> {
           Box(
             modifier = Modifier.fillMaxSize(),

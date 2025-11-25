@@ -17,6 +17,7 @@ import androidx.compose.ui.input.pointer.*
 import androidx.compose.ui.layout.*
 import androidx.compose.ui.platform.*
 import androidx.compose.ui.unit.*
+import dev.chrisbanes.haze.*
 import it.attendance100.mybicocca.utils.*
 import kotlinx.coroutines.*
 import kotlin.math.*
@@ -25,24 +26,23 @@ const val colorOpacity = 0.2f
 const val partialColorOpacity = 0.2f
 
 val chromaticColors = listOf(
-  Color.Red.copy(alpha = colorOpacity),
-  Color.Yellow.copy(alpha = colorOpacity),
-  Color.Transparent,
-  Color.Transparent,
-  Color.Magenta.copy(alpha = colorOpacity),
-  Color.Transparent,
+  Color.Magenta.copy(alpha = 0.12f),
+  Color.Cyan.copy(alpha = 0.12f),
+  Color.Yellow.copy(alpha = 0.12f),
+  Color(0xFFFFC0CB).copy(alpha = 0.12f),
+  Color.Transparent
 )
 val partialChromaticColors = listOf(
-  Color.Black.copy(alpha = partialColorOpacity),
+  Color.Cyan.copy(alpha = 0.12f),
   Color.Transparent,
-  Color.Magenta.copy(alpha = partialColorOpacity / 2)
+  Color.Magenta.copy(alpha = 0.12f)
 )
 
 @Composable
 fun CreditCard(
   modifier: Modifier = Modifier,
-  frontContent: @Composable (touchX: Float, touchY: Float) -> Unit,
-  backContent: @Composable (touchX: Float, touchY: Float) -> Unit,
+  frontContent: @Composable (touchX: Float, touchY: Float, whiteBadge: Boolean, hazeState: HazeState) -> Unit,
+  backContent: @Composable (touchX: Float, touchY: Float, whiteBadge: Boolean, hazeState: HazeState) -> Unit,
   accentColor: Color,
   isChromatic: Boolean = false,
 ) {
@@ -82,6 +82,7 @@ fun CreditCard(
   val context = LocalContext.current
   val haptic = rememberHapticManager()
   val sensorManager = remember { context.getSystemService(Context.SENSOR_SERVICE) as SensorManager }
+  val hazeState = remember { HazeState() }
   var tiltX by remember { mutableFloatStateOf(0f) }
   var tiltY by remember { mutableFloatStateOf(0f) }
 
@@ -236,15 +237,19 @@ fun CreditCard(
       val isBack = angle > 90f && angle < 270f
 
       CardFace(
-        modifier = Modifier.wrapContentSize().run {
-          if (isBack) this.graphicsLayer { this.rotationY = 180f }
-          else this
-        },
+        modifier = Modifier
+            .wrapContentSize()
+            .run {
+              if (isBack) this.graphicsLayer { this.rotationY = 180f }
+              else this
+            }
+            .hazeSource(state = hazeState),
         content = if (isBack) backContent else frontContent,
         background = accentColor,
         isChromatic = isChromatic,
         touchX = animatedTouchX + tiltX,
-        touchY = animatedTouchY + tiltY
+        touchY = animatedTouchY + tiltY,
+        hazeState = hazeState,
       )
     }
   }
@@ -257,9 +262,12 @@ fun CardFace(
   isChromatic: Boolean = false,
   touchX: Float = 0.5f,
   touchY: Float = 0.5f,
-  content: @Composable (touchX: Float, touchY: Float) -> Unit,
+  hazeState: HazeState,
+  content: @Composable (touchX: Float, touchY: Float, whiteBadge: Boolean, hazeState: HazeState) -> Unit,
 ) {
-  val primaryColor = MaterialTheme.colorScheme.primary
+  val preferencesManager = rememberPreferencesManager()
+  val whiteBadge = preferencesManager.badgeWhite
+  val primaryColor = if (whiteBadge) Color.White else MaterialTheme.colorScheme.primary
 
   Box(modifier = modifier) {
     Card(
@@ -268,7 +276,7 @@ fun CardFace(
           .aspectRatio(1.6111112f),
       colors = CardDefaults.cardColors(containerColor = if (isChromatic) primaryColor else background),
     ) {
-      content(touchX, touchY)
+      content(touchX, touchY, whiteBadge, hazeState)
     }
     // Chromatic overlay
     if (isChromatic) {
