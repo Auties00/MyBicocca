@@ -73,3 +73,10 @@ val BackgroundColorLight = Color(0xFFFFF8F7)
 val CardColorLight = Color(0xFFFFE9EA)
 val GrayColorLight = Color(0xFF666666)
 val TextColorLight = Color(0xFF1C1C1C)
+
+// Calendar event colors (work on both dark and light themes)
+val EventLectureColor = Color(0xFF8B5CF6)       // Purple - Lectures
+val EventLabColor = Color(0xFF06B6D4)           // Cyan - Labs
+val EventExamColor = Color(0xFFEF4444)          // Red - Exams
+val EventOfficeHoursColor = Color(0xFFF59E0B)   // Amber - Office Hours
+val EventInProgressColor = Color(0xFF4CAF50)   // Green - Event in progress
