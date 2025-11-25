@@ -75,8 +75,24 @@
   <string name="event_type_office_hours">Ricevimento</string>
   <string name="event_type_other">Altro</string>
   <string name="event_detail_date_time">Data e Orario</string>
+  <string name="event_detail_time">Orario</string>
+  <string name="event_detail_start">Inizio</string>
+  <string name="event_detail_end">Fine</string>
   <string name="event_detail_professor">Docente</string>
   <string name="event_detail_location">Luogo</string>
   <string name="event_detail_notes">Note</string>
   <string name="event_detail_close">Chiudi</string>
+  <string name="event_detail_actions">AZIONI</string>
+  <string name="event_status_cancelled">Annullato</string>
+  <string name="event_status_ended">Terminato</string>
+  <string name="event_status_ended_mins">Terminato da %1$d min</string>
+  <string name="event_status_ended_hours">Terminato da %1$d ore</string>
+  <string name="event_status_ended_days">Terminato da %1$d giorni</string>
+  <string name="event_status_in_progress_hours">Iniziato da %1$dh %2$dmin</string>
+  <string name="event_status_in_progress_mins">Iniziato da %1$d min</string>
+  <string name="event_status_starts_mins">Tra %1$d minuti</string>
+  <string name="event_status_starts_hours">Tra %1$d ore</string>
+  <string name="event_status_starts_days">Tra %1$d giorni</string>
+    <string name="event_action_elearning">Pagina E-Learning</string>
+    <string name="event_action_elearning_subtitle">Visualizza le risorse del corso</string>
 </resources>

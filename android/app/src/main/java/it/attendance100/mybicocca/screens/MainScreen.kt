@@ -174,7 +174,13 @@ fun HomePage(
               .fillMaxSize()
               .padding(paddingValues)
         ) { page ->
-          PageContent(page, sharedTransitionScope, animatedContentScope, pagerState, coroutineScope)
+          PageContent(
+            page = page,
+            sharedTransitionScope = sharedTransitionScope,
+            animatedContentScope = animatedContentScope,
+            pagerState = pagerState,
+            coroutineScope = coroutineScope
+          )
         }
       }
     }
