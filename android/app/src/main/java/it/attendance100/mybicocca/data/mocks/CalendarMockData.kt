@@ -25,8 +25,8 @@ object CalendarMockData {
         professor = "Prof. Mario Rossi",
         room = "U7-08",
         building = "Edificio U7",
-        startTime = LocalDateTime.of(today, LocalTime.of(9, 0)),
-        endTime = LocalDateTime.of(today, LocalTime.of(11, 0)),
+        startTime = LocalDateTime.of(today, LocalTime.of(18, 30)),
+        endTime = LocalDateTime.of(today, LocalTime.of(19, 30)),
         eventType = EventType.LECTURE,
         color = brandColor
       ),

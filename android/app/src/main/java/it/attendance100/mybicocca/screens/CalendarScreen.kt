@@ -3,7 +3,6 @@ package it.attendance100.mybicocca.screens
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.*
-import androidx.compose.foundation.interaction.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.*
 import androidx.compose.foundation.pager.*
@@ -17,19 +16,24 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.*
 import androidx.compose.ui.*
 import androidx.compose.ui.draw.*
+import androidx.compose.ui.geometry.*
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.graphics.vector.*
 import androidx.compose.ui.layout.*
+import androidx.compose.ui.platform.*
 import androidx.compose.ui.res.*
 import androidx.compose.ui.text.font.*
 import androidx.compose.ui.text.style.*
 import androidx.compose.ui.unit.*
+import androidx.compose.ui.window.*
 import androidx.hilt.navigation.compose.*
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.data.entities.*
 import it.attendance100.mybicocca.ui.theme.*
 import it.attendance100.mybicocca.utils.*
 import it.attendance100.mybicocca.viewmodel.*
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import java.time.*
 import java.time.format.*
 import java.time.temporal.*
@@ -56,7 +60,22 @@ fun CalendarScreen(
   val isLoading by viewModel.isLoading.observeAsState(false)
 
   var viewMode by remember { mutableStateOf(CalendarViewMode.LIST) }
+  
+  // Settimana visualizzata (può essere diversa da selectedDate in modalità WEEK)
+  var displayedWeekStart by remember { mutableStateOf(selectedDate.with(DayOfWeek.MONDAY)) }
+  
+  // Counter per forzare il refresh del pager quando si preme "Oggi"
+  var todayPressCount by remember { mutableIntStateOf(0) }
+  
+  // Stato per il dialog dell'evento selezionato
+  var selectedEvent by remember { mutableStateOf<CourseEvent?>(null) }
+  
+  // Sincronizza displayedWeekStart quando cambia selectedDate (es. click su "Oggi" o selezione giorno)
+  LaunchedEffect(selectedDate) {
+    displayedWeekStart = selectedDate.with(DayOfWeek.MONDAY)
+  }
 
+  // Contenuto principale
   Column(
     modifier = Modifier
         .fillMaxSize()
@@ -69,7 +88,10 @@ fun CalendarScreen(
       onViewModeChange = { viewMode = it },
       onPreviousMonth = { viewModel.previousMonth() },
       onNextMonth = { viewModel.nextMonth() },
-      onToday = { viewModel.goToToday() },
+      onToday = { 
+        viewModel.goToToday()
+        todayPressCount++
+      },
       textColor = textColor,
       grayColor = grayColor,
       primaryColor = primaryColor
@@ -80,6 +102,7 @@ fun CalendarScreen(
       selectedDate = selectedDate,
       currentMonth = currentMonth,
       viewMode = viewMode,
+      todayPressCount = todayPressCount,
       onDateSelected = { date -> viewModel.selectDate(date) },
       onWeekChanged = { weekStartDate ->
         // Aggiorna il mese quando si scorre di settimana
@@ -87,6 +110,8 @@ fun CalendarScreen(
         if (currentMonth != weekMonth) {
           viewModel.setCurrentMonth(weekMonth)
         }
+        // Aggiorna la settimana visualizzata (per la griglia)
+        displayedWeekStart = weekStartDate
       },
       textColor = textColor,
       grayColor = grayColor,
@@ -115,22 +140,35 @@ fun CalendarScreen(
             isLoading = isLoading,
             textColor = textColor,
             grayColor = grayColor,
-            primaryColor = primaryColor
+            primaryColor = primaryColor,
+            onEventClick = { event -> selectedEvent = event }
           )
         }
         CalendarViewMode.WEEK -> {
           WeekEventsGrid(
-            selectedDate = selectedDate,
+            displayedWeekStart = displayedWeekStart,
             events = eventsForCurrentMonth,
             isLoading = isLoading,
             textColor = textColor,
             grayColor = grayColor,
             primaryColor = primaryColor,
-            backgroundColor = backgroundColor
+            onEventClick = { event -> selectedEvent = event }
           )
         }
       }
     }
+  }
+  
+  // Dialog evento (Material 3 gestisce automaticamente scrim e blocco interazioni)
+  selectedEvent?.let { event ->
+    EventDetailDialog(
+      event = event,
+      onDismiss = { selectedEvent = null },
+      textColor = textColor,
+      grayColor = grayColor,
+      primaryColor = primaryColor,
+      backgroundColor = backgroundColor
+    )
   }
 }
 
@@ -275,6 +313,7 @@ fun HorizontalDaySelector(
   selectedDate: LocalDate,
   currentMonth: YearMonth,
   viewMode: CalendarViewMode,
+  todayPressCount: Int,
   onDateSelected: (LocalDate) -> Unit,
   onWeekChanged: (LocalDate) -> Unit,
   textColor: Color,
@@ -298,15 +337,15 @@ fun HorizontalDaySelector(
     pageCount = { 2000 }
   )
 
-  // Sincronizza il pager quando cambia selectedDate (programmaticamente)
-  LaunchedEffect(selectedDate) {
+  // Sincronizza il pager quando cambia selectedDate o si preme "Oggi"
+  LaunchedEffect(selectedDate, todayPressCount) {
     val weeksBetween = ChronoUnit.WEEKS.between(
       referenceDate.with(DayOfWeek.MONDAY),
       selectedDate.with(DayOfWeek.MONDAY)
     )
     val targetPage = 1000 + weeksBetween.toInt()
     if (pagerState.currentPage != targetPage) {
-      pagerState.animateScrollToPage(targetPage)
+      pagerState.scrollToPage(targetPage)
     }
   }
 
@@ -398,20 +437,16 @@ fun HorizontalDaySelector(
 // Vista Griglia Eventi Settimanale (senza selettore giorni)
 @Composable
 fun WeekEventsGrid(
-  selectedDate: LocalDate,
+  displayedWeekStart: LocalDate,
   events: List<CourseEvent>,
   isLoading: Boolean,
   textColor: Color,
   grayColor: Color,
   primaryColor: Color,
-  backgroundColor: Color
+  onEventClick: (CourseEvent) -> Unit
 ) {
-  // Stato per l'evento selezionato (modale)
-  var selectedEvent by remember { mutableStateOf<CourseEvent?>(null) }
-  
-  // Calcola la settimana corrente basata su selectedDate
-  val weekStart = selectedDate.with(DayOfWeek.MONDAY)
-  val daysOfWeek = (0..6).map { weekStart.plusDays(it.toLong()) }
+  // Calcola i giorni della settimana visualizzata
+  val daysOfWeek = (0..6).map { displayedWeekStart.plusDays(it.toLong()) }
 
   // Filtra eventi per questa settimana
   val weekEvents = events.filter { event ->
@@ -454,28 +489,8 @@ fun WeekEventsGrid(
           daysOfWeek = daysOfWeek,
           events = weekEvents,
           startHour = CalendarUtils.WEEK_START_HOUR,
-          onEventClick = { event -> selectedEvent = event },
+          onEventClick = onEventClick,
           primaryColor = primaryColor
-        )
-      }
-    }
-
-    // Dialog modale per evento selezionato
-    AnimatedVisibility(
-      visible = selectedEvent != null,
-      enter = fadeIn(animationSpec = tween(300, easing = FastOutSlowInEasing)) +
-        scaleIn(initialScale = 0.8f, animationSpec = tween(300, easing = FastOutSlowInEasing)),
-      exit = fadeOut(animationSpec = tween(200, easing = FastOutSlowInEasing)) +
-        scaleOut(targetScale = 0.8f, animationSpec = tween(200, easing = FastOutSlowInEasing))
-    ) {
-      selectedEvent?.let { event ->
-        EventDetailDialog(
-          event = event,
-          onDismiss = { selectedEvent = null },
-          textColor = textColor,
-          grayColor = grayColor,
-          primaryColor = primaryColor,
-          backgroundColor = backgroundColor
         )
       }
     }
@@ -732,7 +747,19 @@ fun FloatingEventBox(
   }
 }
 
-// Dialog modale con tutte le informazioni dell'evento
+// ============================================================================
+// EVENT DETAIL DIALOG
+// ============================================================================
+
+// Enum per lo status dell'evento
+private enum class EventStatus {
+  CANCELLED,
+  ENDED,
+  IN_PROGRESS,
+  UPCOMING
+}
+
+// Dialog con design premium usando Material 3 BasicAlertDialog
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EventDetailDialog(
@@ -744,159 +771,816 @@ fun EventDetailDialog(
   backgroundColor: Color
 ) {
   val eventColor = CalendarUtils.getEventColor(event.eventType, primaryColor)
+  
+  // Calcola status e testo
+  val now = LocalDateTime.now()
+  val eventStatus = remember(event, now) {
+    when {
+      event.isCancelled -> EventStatus.CANCELLED
+      now.isAfter(event.endTime) -> EventStatus.ENDED
+      now.isAfter(event.startTime) && now.isBefore(event.endTime) -> EventStatus.IN_PROGRESS
+      else -> EventStatus.UPCOMING
+    }
+  }
+  
+  val statusColor = when (eventStatus) {
+    EventStatus.CANCELLED -> MaterialTheme.colorScheme.error
+    EventStatus.ENDED -> grayColor
+    EventStatus.IN_PROGRESS -> Color(0xFF4CAF50)
+    EventStatus.UPCOMING -> eventColor
+  }
 
-  // Background scrim
+  // === ANIMAZIONI ===
+  var isVisible by remember { mutableStateOf(false) }
+  var isClosing by remember { mutableStateOf(false) }
+  val scope = rememberCoroutineScope()
+  
+  LaunchedEffect(Unit) { isVisible = true }
+  
+  val animatedDismiss: () -> Unit = {
+    if (!isClosing) {
+      isClosing = true
+      isVisible = false
+      scope.launch {
+        delay(300)
+        onDismiss()
+      }
+    }
+  }
+  
+  // Animazioni card
+  val cardScale by animateFloatAsState(
+    targetValue = if (isVisible) 1f else 0.85f,
+    animationSpec = if (isClosing) tween(250, easing = EaseInCubic)
+    else spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow),
+    label = "cardScale"
+  )
+  
+  val cardAlpha by animateFloatAsState(
+    targetValue = if (isVisible) 1f else 0f,
+    animationSpec = tween(if (isClosing) 200 else 350, easing = if (isClosing) EaseInCubic else EaseOutCubic),
+    label = "cardAlpha"
+  )
+  
+  val cardOffsetY by animateFloatAsState(
+    targetValue = if (isVisible) 0f else 80f,
+    animationSpec = if (isClosing) tween(250, easing = EaseInCubic)
+    else spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow),
+    label = "cardOffsetY"
+  )
+
+  // Stagger animations
+  val headerVisible by animateFloatAsState(
+    targetValue = if (isVisible) 1f else 0f,
+    animationSpec = tween(if (isClosing) 150 else 400, delayMillis = if (isClosing) 0 else 100),
+    label = "headerVisible"
+  )
+  
+  val timeCardVisible by animateFloatAsState(
+    targetValue = if (isVisible) 1f else 0f,
+    animationSpec = tween(if (isClosing) 150 else 400, delayMillis = if (isClosing) 0 else 200),
+    label = "timeCardVisible"
+  )
+  
+  val detailsVisible by animateFloatAsState(
+    targetValue = if (isVisible) 1f else 0f,
+    animationSpec = tween(if (isClosing) 150 else 400, delayMillis = if (isClosing) 0 else 300),
+    label = "detailsVisible"
+  )
+  
+  val buttonVisible by animateFloatAsState(
+    targetValue = if (isVisible) 1f else 0f,
+    animationSpec = tween(if (isClosing) 150 else 400, delayMillis = if (isClosing) 0 else 400),
+    label = "buttonVisible"
+  )
+
+  // Gradient animato
+  val infiniteTransition = rememberInfiniteTransition(label = "headerGradient")
+  val gradientOffset by infiniteTransition.animateFloat(
+    initialValue = 0f,
+    targetValue = 1f,
+    animationSpec = infiniteRepeatable(tween(4000, easing = LinearEasing), RepeatMode.Reverse),
+    label = "gradientOffset"
+  )
+
+  // Padding uniforme per tutto il contenuto del dialog
+  val dialogContentPadding = 16.dp
+
+  // Material 3 BasicAlertDialog
+  BasicAlertDialog(
+    onDismissRequest = animatedDismiss,
+    modifier = Modifier
+        .fillMaxWidth(0.94f)
+        .wrapContentHeight()
+        .graphicsLayer {
+          scaleX = cardScale
+          scaleY = cardScale
+          alpha = cardAlpha
+          translationY = cardOffsetY
+        },
+    properties = DialogProperties(
+      dismissOnBackPress = true,
+      dismissOnClickOutside = true,
+      usePlatformDefaultWidth = false
+    )
+  ) {
+    Card(
+      shape = RoundedCornerShape(28.dp),
+      colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+      elevation = CardDefaults.cardElevation(defaultElevation = 24.dp)
+    ) {
+      Column(modifier = Modifier.fillMaxWidth()) {
+        // Header Section (ha il suo padding interno per il gradient)
+        EventDialogHeader(
+          event = event,
+          eventColor = eventColor,
+          eventStatus = eventStatus,
+          statusColor = statusColor,
+          gradientOffset = gradientOffset,
+          infiniteTransition = infiniteTransition,
+          headerVisible = headerVisible,
+          contentPadding = dialogContentPadding,
+          onClose = animatedDismiss
+        )
+
+        // Time Section
+        EventDialogTimeSection(
+          event = event,
+          eventColor = eventColor,
+          eventStatus = eventStatus,
+          textColor = textColor,
+          grayColor = grayColor,
+          timeCardVisible = timeCardVisible,
+          contentPadding = dialogContentPadding
+        )
+
+        // Details Section
+        EventDialogDetailsSection(
+          event = event,
+          eventColor = eventColor,
+          textColor = textColor,
+          grayColor = grayColor,
+          detailsVisible = detailsVisible,
+          contentPadding = dialogContentPadding
+        )
+
+        Spacer(modifier = Modifier.height(dialogContentPadding))
+
+        // E-Learning Button
+        EventDialogELearningButton(
+          primaryColor = primaryColor,
+          buttonVisible = buttonVisible,
+          contentPadding = dialogContentPadding,
+          onClick = { /* TODO: Navigate to e-learning */ }
+        )
+      }
+    }
+  }
+}
+
+// ============================================================================
+// DIALOG HEADER SECTION
+// ============================================================================
+
+@Composable
+private fun EventDialogHeader(
+  event: CourseEvent,
+  eventColor: Color,
+  eventStatus: EventStatus,
+  statusColor: Color,
+  gradientOffset: Float,
+  infiniteTransition: InfiniteTransition,
+  headerVisible: Float,
+  contentPadding: Dp,
+  onClose: () -> Unit
+) {
+  val locale = Locale.getDefault()
+  val dayOfWeekFormatter = DateTimeFormatter.ofPattern("EEEE", locale)
+  val dateFormatter = DateTimeFormatter.ofPattern("d MMMM yyyy", locale)
+  
+  val statusText = when (eventStatus) {
+    EventStatus.CANCELLED -> stringResource(R.string.event_status_cancelled)
+    EventStatus.ENDED -> stringResource(R.string.event_status_ended)
+    EventStatus.IN_PROGRESS -> {
+      val remaining = java.time.Duration.between(LocalDateTime.now(), event.endTime)
+      val remainingMins = remaining.toMinutes()
+      if (remainingMins > 60) stringResource(R.string.event_status_in_progress_hours, remainingMins / 60, remainingMins % 60)
+      else stringResource(R.string.event_status_in_progress_mins, remainingMins)
+    }
+    EventStatus.UPCOMING -> {
+      val until = java.time.Duration.between(LocalDateTime.now(), event.startTime)
+      val untilMins = until.toMinutes()
+      when {
+        untilMins < 60 -> stringResource(R.string.event_status_starts_mins, untilMins)
+        untilMins < 1440 -> stringResource(R.string.event_status_starts_hours, untilMins / 60)
+        else -> stringResource(R.string.event_status_starts_days, untilMins / 1440)
+      }
+    }
+  }
+
   Box(
     modifier = Modifier
-        .fillMaxSize()
-        .background(Color.Black.copy(alpha = 0.5f))
-        .clickable(
-          onClick = onDismiss,
-          indication = null,
-          interactionSource = remember { MutableInteractionSource() }
-        ),
-    contentAlignment = Alignment.Center
-  ) {
-    // Dialog card
-    Surface(
-      modifier = Modifier
-          .fillMaxWidth(0.9f)
-          .clickable(
-            onClick = {},
-            indication = null,
-            interactionSource = remember { MutableInteractionSource() }
-          ),
-      shape = RoundedCornerShape(20.dp),
-      color = backgroundColor,
-      shadowElevation = 8.dp
-    ) {
-      Column(
-        modifier = Modifier.fillMaxWidth()
-      ) {
-        // Header colorato
-        Surface(
-          modifier = Modifier.fillMaxWidth(),
-          color = eventColor,
-          shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp)
-        ) {
-          Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(20.dp)
-          ) {
-            // Badge tipo
-            Surface(
-              shape = RoundedCornerShape(6.dp),
-              color = Color.White.copy(alpha = 0.25f)
-            ) {
-              Text(
-                text = stringResource(CalendarUtils.getEventTypeStringRes(event.eventType)),
-                color = Color.White,
-                fontSize = 11.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+        .fillMaxWidth()
+        .graphicsLayer { alpha = headerVisible }
+        .background(
+          brush = Brush.linearGradient(
+            colors = listOf(
+              eventColor,
+              eventColor.copy(alpha = 0.85f),
+              Color(
+                red = (eventColor.red * 0.8f + gradientOffset * 0.1f).coerceIn(0f, 1f),
+                green = (eventColor.green * 0.9f).coerceIn(0f, 1f),
+                blue = (eventColor.blue * 1.1f).coerceIn(0f, 1f),
+                alpha = 1f
               )
-            }
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // Nome corso
-            Text(
-              text = event.courseName,
-              color = Color.White,
-              fontSize = 20.sp,
-              fontWeight = FontWeight.Bold,
-              lineHeight = 24.sp
-            )
-
-            // Codice corso
-            event.courseCode?.let { code ->
-              Spacer(modifier = Modifier.height(6.dp))
-              Text(
-                text = code,
-                color = Color.White.copy(alpha = 0.9f),
-                fontSize = 13.sp,
-                fontWeight = FontWeight.Medium
-              )
-            }
-          }
-        }
-
-        // Dettagli evento
-        Column(
-          modifier = Modifier
-              .fillMaxWidth()
-              .padding(20.dp),
-          verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-          // Data e orario
-          DetailRow(
-            icon = Icons.Default.CalendarMonth,
-            label = stringResource(R.string.event_detail_date_time),
-            value = buildString {
-              append(event.startTime.toLocalDate().format(CalendarUtils.fullDateFormatter()))
-              append("\n")
-              append(CalendarUtils.formatTime(event.startTime.hour, event.startTime.minute))
-              append(" - ")
-              append(CalendarUtils.formatTime(event.endTime.hour, event.endTime.minute))
-            },
-            textColor = textColor,
-            primaryColor = primaryColor
+            ),
+            start = Offset(0f, 0f),
+            end = Offset(500f + gradientOffset * 200f, 500f)
           )
-
-          // Professore
-          event.professor?.let { professor ->
-            DetailRow(
-              icon = Icons.Default.Person,
-              label = stringResource(R.string.event_detail_professor),
-              value = professor,
-              textColor = textColor,
-              primaryColor = primaryColor
+        )
+  ) {
+    // Overlay decorativo
+    Box(
+      modifier = Modifier
+          .matchParentSize()
+          .background(
+            brush = Brush.verticalGradient(
+              colors = listOf(
+                Color.White.copy(alpha = 0.05f),
+                Color.Transparent,
+                Color.Black.copy(alpha = 0.1f)
+              )
             )
-          }
-
-          // Aula e edificio
-          if (event.room != null || event.building != null) {
-            DetailRow(
-              icon = Icons.Default.LocationOn,
-              label = stringResource(R.string.event_detail_location),
-              value = buildString {
-                event.room?.let { append(it) }
-                if (event.room != null && event.building != null) append("\n")
-                event.building?.let { append(it) }
-              },
-              textColor = textColor,
-              primaryColor = primaryColor
-            )
-          }
-
-          // Note
-          event.notes?.let { notes ->
-            DetailRow(
-              icon = Icons.AutoMirrored.Outlined.Notes,
-              label = stringResource(R.string.event_detail_notes),
-              value = notes,
-              textColor = textColor,
-              primaryColor = primaryColor
-            )
-          }
-
-          // Bottone chiudi
-          Spacer(modifier = Modifier.height(8.dp))
-          TextButton(
-            onClick = onDismiss,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(48.dp)
-          ) {
-            Text(
-              text = stringResource(R.string.event_detail_close),
-              fontSize = 15.sp,
-              fontWeight = FontWeight.Medium,
-              color = primaryColor
-            )
-          }
+          )
+    )
+    
+    Column(
+      modifier = Modifier.padding(contentPadding),
+      verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+      // Top row: type chip + close
+      Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+      ) {
+        // Event type chip
+        EventTypeChip(event.eventType)
+        // Close button
+        FilledIconButton(
+          onClick = onClose,
+          modifier = Modifier.size(32.dp),
+          colors = IconButtonDefaults.filledIconButtonColors(
+            containerColor = Color.White.copy(alpha = 0.2f),
+            contentColor = Color.White
+          )
+        ) {
+          Icon(
+            imageVector = Icons.Default.Close,
+            contentDescription = stringResource(R.string.event_detail_close),
+            modifier = Modifier.size(18.dp)
+          )
         }
+      }
+
+      // Course name
+      Text(
+        text = event.courseName,
+        color = Color.White,
+        fontSize = 22.sp,
+        fontWeight = FontWeight.Bold,
+        lineHeight = 26.sp
+      )
+
+      // Date
+      Text(
+        text = buildString {
+          append(event.startTime.format(dayOfWeekFormatter).replaceFirstChar { it.uppercase() })
+          append(", ")
+          append(event.startTime.format(dateFormatter))
+        },
+        color = Color.White.copy(alpha = 0.85f),
+        fontSize = 13.sp,
+        fontWeight = FontWeight.Medium
+      )
+    }
+  }
+}
+
+@Composable
+private fun EventStatusBadge(
+  statusText: String,
+  eventColor: Color
+) {
+  Surface(
+    shape = RoundedCornerShape(20.dp),
+    color = eventColor.copy(alpha = 0.15f)
+  ) {
+    Text(
+      text = statusText,
+      color = eventColor,
+      fontSize = 13.sp,
+      fontWeight = FontWeight.SemiBold,
+      modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+    )
+  }
+}
+
+@Composable
+private fun EventTypeChip(eventType: EventType) {
+  Surface(
+    shape = RoundedCornerShape(16.dp),
+    color = Color.White.copy(alpha = 0.2f)
+  ) {
+    Row(
+      modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
+      horizontalArrangement = Arrangement.spacedBy(5.dp),
+      verticalAlignment = Alignment.CenterVertically
+    ) {
+      Icon(
+        imageVector = when (eventType) {
+          EventType.LECTURE -> Icons.Outlined.School
+          EventType.LAB -> Icons.Outlined.Science
+          EventType.EXAM -> Icons.AutoMirrored.Outlined.Assignment
+          EventType.OFFICE_HOURS -> Icons.Outlined.People
+          EventType.OTHER -> Icons.Outlined.Event
+        },
+        contentDescription = null,
+        tint = Color.White,
+        modifier = Modifier.size(12.dp)
+      )
+      Text(
+        text = stringResource(CalendarUtils.getEventTypeStringRes(eventType)),
+        color = Color.White,
+        fontSize = 11.sp,
+        fontWeight = FontWeight.Medium
+      )
+    }
+  }
+}
+
+// ============================================================================
+// DIALOG TIME SECTION
+// ============================================================================
+
+@Composable
+private fun EventDialogTimeSection(
+  event: CourseEvent,
+  eventColor: Color,
+  eventStatus: EventStatus,
+  textColor: Color,
+  grayColor: Color,
+  timeCardVisible: Float,
+  contentPadding: Dp
+) {
+  val timeFormatter = CalendarUtils.timeFormatter
+  val duration = java.time.Duration.between(event.startTime, event.endTime)
+  val durationText = buildString {
+    val hours = duration.toHours()
+    val minutes = duration.toMinutes() % 60
+    if (hours > 0) append("${hours}h ")
+    if (minutes > 0) append("${minutes}min")
+  }.trim()
+
+  // Status text
+  val statusText = when (eventStatus) {
+    EventStatus.CANCELLED -> stringResource(R.string.event_status_cancelled)
+    EventStatus.ENDED -> {
+      // Calcola quanto tempo fa è terminato
+      val elapsed = java.time.Duration.between(event.endTime, LocalDateTime.now())
+      val elapsedMins = elapsed.toMinutes()
+      when {
+        elapsedMins < 60 -> stringResource(R.string.event_status_ended_mins, elapsedMins)
+        elapsedMins < 1440 -> stringResource(R.string.event_status_ended_hours, elapsedMins / 60)
+        elapsedMins < 10080 -> stringResource(R.string.event_status_ended_days, elapsedMins / 1440) // Fino a 7 giorni
+        else -> stringResource(R.string.event_status_ended) // Oltre 7 giorni, solo "Terminato"
+      }
+    }
+    EventStatus.IN_PROGRESS -> {
+      // Calcola da quanto tempo è iniziato
+      val elapsed = java.time.Duration.between(event.startTime, LocalDateTime.now())
+      val elapsedMins = elapsed.toMinutes()
+      if (elapsedMins >= 60) stringResource(R.string.event_status_in_progress_hours, elapsedMins / 60, elapsedMins % 60)
+      else stringResource(R.string.event_status_in_progress_mins, elapsedMins)
+    }
+    EventStatus.UPCOMING -> {
+      val until = java.time.Duration.between(LocalDateTime.now(), event.startTime)
+      val untilMins = until.toMinutes()
+      when {
+        untilMins < 60 -> stringResource(R.string.event_status_starts_mins, untilMins)
+        untilMins < 1440 -> stringResource(R.string.event_status_starts_hours, untilMins / 60)
+        else -> stringResource(R.string.event_status_starts_days, untilMins / 1440)
+      }
+    }
+  }
+
+  Card(
+    modifier = Modifier
+        .fillMaxWidth()
+        .padding(horizontal = contentPadding)
+        .offset(y = (-8).dp)
+        .graphicsLayer {
+          alpha = timeCardVisible
+          translationY = (1f - timeCardVisible) * 30f
+        },
+    shape = RoundedCornerShape(20.dp),
+    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+    elevation = CardDefaults.cardElevation(defaultElevation = 12.dp)
+  ) {
+    // Calcolo automatico dell'allineamento
+    val density = LocalDensity.current
+    val labelHeight = with(density) { 11.sp.toDp() }
+    val spacerHeight = 6.dp
+    val timeTextHeight = with(density) { 17.sp.toDp() }
+    // Offset = label + spacer + metà orario (per centrare rispetto all'orario)
+    val durationIndicatorTopOffset = labelHeight + spacerHeight + (timeTextHeight / 2)
+
+    Column(
+      modifier = Modifier
+          .fillMaxWidth()
+          .padding(contentPadding + 4.dp),
+      horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+      // Time row with duration indicator
+      Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.Top
+      ) {
+        // Start time column (label centered above time)
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+          Text(
+            text = stringResource(R.string.event_detail_start),
+            color = grayColor,
+            fontSize = 11.sp,
+            fontWeight = FontWeight.Medium
+          )
+          Spacer(modifier = Modifier.height(spacerHeight))
+          Text(
+            text = event.startTime.format(timeFormatter),
+            color = textColor,
+            fontSize = 28.sp,
+            fontWeight = FontWeight.Bold
+          )
+        }
+
+        // Duration indicator - centered with time text
+        Box(
+          modifier = Modifier
+              .weight(1f)
+              .padding(top = durationIndicatorTopOffset),
+          contentAlignment = Alignment.TopCenter
+        ) {
+          DurationIndicator(
+            durationText = durationText,
+            eventColor = eventColor,
+            modifier = Modifier.fillMaxWidth()
+          )
+        }
+
+        // End time column (label centered above time)
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+          Text(
+            text = stringResource(R.string.event_detail_end),
+            color = grayColor,
+            fontSize = 11.sp,
+            fontWeight = FontWeight.Medium
+          )
+          Spacer(modifier = Modifier.height(spacerHeight))
+          Text(
+            text = event.endTime.format(timeFormatter),
+            color = textColor,
+            fontSize = 28.sp,
+            fontWeight = FontWeight.Bold
+          )
+        }
+      }
+
+      // Progress bar (solo se in corso)
+      if (eventStatus == EventStatus.IN_PROGRESS) {
+        Spacer(modifier = Modifier.height(12.dp))
+        EventProgressBar(event = event, eventColor = eventColor, grayColor = grayColor)
+      }
+
+      // Status badge centered below
+      Spacer(modifier = Modifier.height(16.dp))
+      EventStatusBadge(
+        statusText = statusText,
+        eventColor = eventColor
+      )
+    }
+  }
+}
+
+@Composable
+private fun TimeDisplay(
+  label: String,
+  time: String,
+  textColor: Color,
+  grayColor: Color
+) {
+  Column(horizontalAlignment = Alignment.CenterHorizontally) {
+    Text(
+      text = label,
+      color = grayColor,
+      fontSize = 11.sp,
+      fontWeight = FontWeight.Medium
+    )
+    Spacer(modifier = Modifier.height(6.dp))
+    Text(
+      text = time,
+      color = textColor,
+      fontSize = 28.sp,
+      fontWeight = FontWeight.Bold,
+      lineHeight = 28.sp
+    )
+  }
+}
+
+@Composable
+private fun DurationIndicator(
+  durationText: String,
+  eventColor: Color,
+  modifier: Modifier = Modifier
+) {
+  Row(
+    verticalAlignment = Alignment.CenterVertically,
+    horizontalArrangement = Arrangement.Center,
+    modifier = modifier
+  ) {
+    Box(
+      modifier = Modifier
+          .weight(1f)
+          .height(2.dp)
+          .padding(horizontal = 8.dp)
+          .background(
+            brush = Brush.horizontalGradient(listOf(Color.Transparent, eventColor.copy(alpha = 0.5f))),
+            shape = RoundedCornerShape(1.dp)
+          )
+    )
+    AssistChip(
+      onClick = {},
+      label = { Text(durationText, fontWeight = FontWeight.Bold, fontSize = 13.sp) },
+      leadingIcon = {
+        Icon(Icons.Outlined.Timer, contentDescription = null, modifier = Modifier.size(16.dp))
+      },
+      colors = AssistChipDefaults.assistChipColors(
+        containerColor = eventColor.copy(alpha = 0.15f),
+        labelColor = eventColor,
+        leadingIconContentColor = eventColor
+      ),
+      border = null
+    )
+    Box(
+      modifier = Modifier
+          .weight(1f)
+          .height(2.dp)
+          .padding(horizontal = 8.dp)
+          .background(
+            brush = Brush.horizontalGradient(listOf(eventColor.copy(alpha = 0.5f), Color.Transparent)),
+            shape = RoundedCornerShape(1.dp)
+          )
+    )
+  }
+}
+
+@Composable
+private fun EventProgressBar(
+  event: CourseEvent,
+  eventColor: Color,
+  grayColor: Color
+) {
+  val now = LocalDateTime.now()
+  val progress = remember(now) {
+    val total = java.time.Duration.between(event.startTime, event.endTime).toMinutes().toFloat()
+    val elapsed = java.time.Duration.between(event.startTime, now).toMinutes().toFloat()
+    (elapsed / total).coerceIn(0f, 1f)
+  }
+  
+  val animatedProgress by animateFloatAsState(
+    targetValue = progress,
+    animationSpec = tween(1000, easing = EaseOutCubic),
+    label = "animatedProgress"
+  )
+  
+  LinearProgressIndicator(
+    progress = { animatedProgress },
+    modifier = Modifier
+        .fillMaxWidth()
+        .padding(horizontal = 20.dp)
+        .padding(bottom = 16.dp)
+        .height(6.dp)
+        .clip(RoundedCornerShape(3.dp)),
+    color = eventColor,
+    trackColor = grayColor.copy(alpha = 0.2f)
+  )
+}
+
+// ============================================================================
+// DIALOG DETAILS SECTION
+// ============================================================================
+
+@Composable
+private fun EventDialogDetailsSection(
+  event: CourseEvent,
+  eventColor: Color,
+  textColor: Color,
+  grayColor: Color,
+  detailsVisible: Float,
+  contentPadding: Dp
+) {
+  Column(
+    modifier = Modifier
+        .fillMaxWidth()
+        .padding(horizontal = contentPadding)
+        .padding(top = 8.dp)
+        .graphicsLayer {
+          alpha = detailsVisible
+          translationY = (1f - detailsVisible) * 30f
+        },
+    verticalArrangement = Arrangement.spacedBy(12.dp)
+  ) {
+    // Location
+    if (event.room != null || event.building != null) {
+      DetailInfoRow(
+        icon = Icons.Outlined.LocationOn,
+        label = stringResource(R.string.event_detail_location),
+        value = buildString {
+          if (event.room != null) append(event.room)
+          if (event.building != null) {
+            if (event.room != null) append(" • ")
+            append(event.building)
+          }
+        },
+        accentColor = eventColor,
+        textColor = textColor,
+        grayColor = grayColor
+      )
+    }
+
+    // Professor
+    if (event.professor != null) {
+      DetailInfoRow(
+        icon = Icons.Outlined.Person,
+        label = stringResource(R.string.event_detail_professor),
+        value = event.professor,
+        accentColor = eventColor,
+        textColor = textColor,
+        grayColor = grayColor
+      )
+    }
+
+    // Notes
+    if (!event.notes.isNullOrBlank()) {
+      DetailInfoRow(
+        icon = Icons.Outlined.Notes,
+        label = stringResource(R.string.event_detail_notes),
+        value = event.notes,
+        accentColor = eventColor,
+        textColor = textColor,
+        grayColor = grayColor
+      )
+    }
+  }
+}
+
+// ============================================================================
+// DIALOG E-LEARNING BUTTON
+// ============================================================================
+
+@Composable
+private fun EventDialogELearningButton(
+  primaryColor: Color,
+  buttonVisible: Float,
+  contentPadding: Dp,
+  onClick: () -> Unit
+) {
+  Surface(
+    onClick = onClick,
+    modifier = Modifier
+        .fillMaxWidth()
+        .padding(horizontal = contentPadding)
+        .padding(bottom = contentPadding)
+        .graphicsLayer {
+          alpha = buttonVisible
+          translationY = (1f - buttonVisible) * 30f
+        },
+    shape = RoundedCornerShape(16.dp),
+    color = primaryColor,
+    shadowElevation = 8.dp
+  ) {
+    Row(
+      modifier = Modifier
+          .fillMaxWidth()
+          .padding(16.dp),
+      horizontalArrangement = Arrangement.spacedBy(16.dp),
+      verticalAlignment = Alignment.CenterVertically
+    ) {
+      // Icon container (stesso stile di DetailInfoRow)
+      Box(
+        modifier = Modifier
+            .size(44.dp)
+            .clip(RoundedCornerShape(12.dp))
+            .background(Color.White.copy(alpha = 0.2f)),
+        contentAlignment = Alignment.Center
+      ) {
+        Icon(
+          imageVector = Icons.Outlined.School,
+          contentDescription = null,
+          tint = Color.White,
+          modifier = Modifier.size(22.dp)
+        )
+      }
+
+      // Text content
+      Column(
+        modifier = Modifier.weight(1f),
+        verticalArrangement = Arrangement.spacedBy(2.dp)
+      ) {
+        Text(
+          text = stringResource(R.string.event_action_elearning),
+          color = Color.White,
+          fontSize = 15.sp,
+          fontWeight = FontWeight.SemiBold,
+          maxLines = 1,
+          overflow = TextOverflow.Ellipsis
+        )
+        Text(
+          text = stringResource(R.string.event_action_elearning_subtitle),
+          color = Color.White.copy(alpha = 0.7f),
+          fontSize = 12.sp,
+          maxLines = 1,
+          overflow = TextOverflow.Ellipsis
+        )
+      }
+
+      Icon(
+        imageVector = Icons.AutoMirrored.Outlined.KeyboardArrowRight,
+        contentDescription = null,
+        tint = Color.White.copy(alpha = 0.7f),
+        modifier = Modifier.size(24.dp)
+      )
+    }
+  }
+}
+
+// ============================================================================
+// DETAIL INFO ROW (usato nella sezione details)
+// ============================================================================
+@Composable
+private fun DetailInfoRow(
+  icon: ImageVector,
+  label: String,
+  value: String,
+  accentColor: Color,
+  textColor: Color,
+  grayColor: Color
+) {
+  Surface(
+    modifier = Modifier.fillMaxWidth(),
+    shape = RoundedCornerShape(16.dp),
+    color = MaterialTheme.colorScheme.surfaceContainerHigh
+  ) {
+    Row(
+      modifier = Modifier
+          .fillMaxWidth()
+          .padding(16.dp),
+      horizontalArrangement = Arrangement.spacedBy(16.dp),
+      verticalAlignment = Alignment.CenterVertically
+    ) {
+      // Icon container
+      Box(
+        modifier = Modifier
+            .size(44.dp)
+            .clip(RoundedCornerShape(12.dp))
+            .background(accentColor.copy(alpha = 0.1f)),
+        contentAlignment = Alignment.Center
+      ) {
+        Icon(
+          imageVector = icon,
+          contentDescription = null,
+          tint = accentColor,
+          modifier = Modifier.size(22.dp)
+        )
+      }
+
+      // Text content
+      Column(
+        modifier = Modifier.weight(1f),
+        verticalArrangement = Arrangement.spacedBy(2.dp)
+      ) {
+        Text(
+          text = label,
+          color = grayColor,
+          fontSize = 12.sp,
+          fontWeight = FontWeight.Medium
+        )
+        Text(
+          text = value,
+          color = textColor,
+          fontSize = 15.sp,
+          fontWeight = FontWeight.SemiBold
+        )
       }
     }
   }
@@ -1528,7 +2212,8 @@ fun EventsList(
   isLoading: Boolean,
   textColor: Color,
   grayColor: Color,
-  primaryColor: Color
+  primaryColor: Color,
+  onEventClick: (CourseEvent) -> Unit
 ) {
   Column(
     modifier = Modifier
@@ -1594,7 +2279,8 @@ fun EventsList(
               event = event,
               textColor = textColor,
               grayColor = grayColor,
-              primaryColor = primaryColor
+              primaryColor = primaryColor,
+              onClick = { onEventClick(event) }
             )
           }
         }
@@ -1608,15 +2294,18 @@ fun EventCard(
   event: CourseEvent,
   textColor: Color,
   grayColor: Color,
-  primaryColor: Color
+  primaryColor: Color,
+  onClick: () -> Unit = {}
 ) {
   val timeFormatter = CalendarUtils.timeFormatter
+  val cardBackgroundColor = MaterialTheme.colorScheme.surface
 
   Surface(
     modifier = Modifier.fillMaxWidth(),
     shape = RoundedCornerShape(12.dp),
-    color = primaryColor.copy(alpha = 0.1f),
-    border = BorderStroke(1.dp, primaryColor.copy(alpha = 0.3f))
+    color = cardBackgroundColor,
+    border = BorderStroke(1.dp, primaryColor.copy(alpha = 0.4f)),
+    onClick = onClick
   ) {
     Row(
       modifier = Modifier

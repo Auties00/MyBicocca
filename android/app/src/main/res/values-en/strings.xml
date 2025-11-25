@@ -74,8 +74,24 @@
   <string name="event_type_office_hours">Office Hours</string>
   <string name="event_type_other">Other</string>
   <string name="event_detail_date_time">Date and Time</string>
+  <string name="event_detail_time">Time</string>
+  <string name="event_detail_start">Start</string>
+  <string name="event_detail_end">End</string>
   <string name="event_detail_professor">Professor</string>
   <string name="event_detail_location">Location</string>
   <string name="event_detail_notes">Notes</string>
   <string name="event_detail_close">Close</string>
+  <string name="event_detail_actions">ACTIONS</string>
+  <string name="event_status_cancelled">Cancelled</string>
+  <string name="event_status_ended">Ended</string>
+  <string name="event_status_ended_mins">Ended %1$d min ago</string>
+  <string name="event_status_ended_hours">Ended %1$d hours ago</string>
+  <string name="event_status_ended_days">Ended %1$d days ago</string>
+  <string name="event_status_in_progress_hours">Started %1$dh %2$dmin ago</string>
+  <string name="event_status_in_progress_mins">Started %1$d min ago</string>
+  <string name="event_status_starts_mins">In %1$d minutes</string>
+  <string name="event_status_starts_hours">In %1$d hours</string>
+  <string name="event_status_starts_days">In %1$d days</string>
+    <string name="event_action_elearning">E-Learning Page</string>
+    <string name="event_action_elearning_subtitle">View course resources</string>
 </resources>
