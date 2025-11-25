@@ -1,143 +1,86 @@
 package it.attendance100.mybicocca.utils
 
-import androidx.compose.foundation.*
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
-import androidx.compose.ui.*
-import androidx.compose.ui.draw.*
-import androidx.compose.ui.graphics.*
-import androidx.compose.ui.graphics.vector.*
-import androidx.compose.ui.unit.*
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.data.entities.*
+import it.attendance100.mybicocca.ui.theme.*
 import java.time.*
 import java.time.format.*
 import java.util.*
 
 /**
- * Utility object per funzioni e costanti riutilizzabili nel calendario
+ * Calendar utility functions and constants.
  */
 object CalendarUtils {
 
-  // Costanti per colori eventi
-  private const val COLOR_LECTURE = 0xFF8B5CF6      // Viola
-  private const val COLOR_LAB = 0xFF06B6D4          // Cyan
-  private const val COLOR_EXAM = 0xFFEF4444         // Rosso
-  private const val COLOR_OFFICE_HOURS = 0xFFF59E0B // Amber
-
-  // Colore brand Bicocca
   const val BICOCCA_BRAND_COLOR = "#9C0C35"
-
-  // Range ID per dati di test (1001-9999 riservati per mock data)
   const val TEST_EVENT_ID_START = 1001L
   const val TEST_EVENT_ID_END = 9999L
 
-  // Costanti UI per il calendario
-  val HOUR_SLOT_HEIGHT = 80.dp       // Altezza di uno slot orario nella vista griglia
-  val WEEK_START_HOUR = 8            // Ora di inizio visualizzazione settimana
-  val WEEK_END_HOUR = 20             // Ora di fine visualizzazione settimana
-  val WEEK_TOTAL_HOURS = WEEK_END_HOUR - WEEK_START_HOUR // 12 ore totali
+  val HOUR_SLOT_HEIGHT = 80.dp
+  const val WEEK_START_HOUR = 8
+  const val WEEK_END_HOUR = 20
+  const val WEEK_TOTAL_HOURS = WEEK_END_HOUR - WEEK_START_HOUR
 
-
-  /**
-   * Formattatore per orari (HH:mm)
-   */
   val timeFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm")
 
-  /**
-   * Formattatore per date complete (EEEE d MMMM yyyy)
-   */
   fun fullDateFormatter(locale: Locale = Locale.ITALIAN): DateTimeFormatter =
       DateTimeFormatter.ofPattern("EEEE d MMMM yyyy", locale)
 
-  /**
-   * Formattatore per mese e anno (MMMM yyyy)
-   */
   fun monthYearFormatter(locale: Locale = Locale.getDefault()): DateTimeFormatter =
       DateTimeFormatter.ofPattern("MMMM", locale)
 
-  /**
-   * Restituisce il colore associato a un tipo di evento
-   */
-  fun getEventColor(eventType: EventType, primaryColor: Color): Color {
-    return when (eventType) {
-      EventType.LECTURE -> Color(COLOR_LECTURE)
-      EventType.LAB -> Color(COLOR_LAB)
-      EventType.EXAM -> Color(COLOR_EXAM)
-      EventType.OFFICE_HOURS -> Color(COLOR_OFFICE_HOURS)
-      EventType.OTHER -> primaryColor
-    }
+  fun getEventColor(eventType: EventType, primaryColor: Color): Color = when (eventType) {
+    EventType.LECTURE -> EventLectureColor
+    EventType.LAB -> EventLabColor
+    EventType.EXAM -> EventExamColor
+    EventType.OFFICE_HOURS -> EventOfficeHoursColor
+    EventType.OTHER -> primaryColor
   }
 
-  /**
-   * Restituisce l'ID della risorsa string per un tipo di evento
-   */
-  fun getEventTypeStringRes(eventType: EventType): Int {
-    return when (eventType) {
-      EventType.LECTURE -> R.string.event_type_lecture
-      EventType.LAB -> R.string.event_type_lab
-      EventType.EXAM -> R.string.event_type_exam
-      EventType.OFFICE_HOURS -> R.string.event_type_office_hours
-      EventType.OTHER -> R.string.event_type_other
-    }
+  fun getEventTypeStringRes(eventType: EventType): Int = when (eventType) {
+    EventType.LECTURE -> R.string.event_type_lecture
+    EventType.LAB -> R.string.event_type_lab
+    EventType.EXAM -> R.string.event_type_exam
+    EventType.OFFICE_HOURS -> R.string.event_type_office_hours
+    EventType.OTHER -> R.string.event_type_other
   }
 
-  /**
-   * Verifica se una data è oggi
-   */
   fun isToday(date: LocalDate): Boolean = date == LocalDate.now()
 
-  /**
-   * Formatta un orario nel formato HH:mm
-   */
-  @Composable
-  fun formatTime(hour: Int, minute: Int, locale: Locale? = getCurrentLocale()): String {
-    return String.format(locale, "%02d:%02d", hour, minute)
-  }
-}
+  fun formatTime(hour: Int, minute: Int): String =
+      String.format(Locale.getDefault(), "%02d:%02d", hour, minute)
 
-/**
- * Composable riutilizzabile per icone circolari con background
- */
-@Composable
-fun CircularIconBackground(
-  icon: ImageVector,
-  backgroundColor: Color,
-  iconTint: Color,
-  size: Dp = 40.dp,
-  iconSize: Dp = 20.dp,
-  contentDescription: String? = null,
-) {
-  Box(
-    modifier = Modifier
-        .size(size)
-        .clip(CircleShape)
-        .background(backgroundColor),
-    contentAlignment = Alignment.Center
-  ) {
-    Icon(
-      imageVector = icon,
-      contentDescription = contentDescription,
-      tint = iconTint,
-      modifier = Modifier.size(iconSize)
-    )
+  fun formatDuration(start: LocalDateTime, end: LocalDateTime): String {
+    val duration = Duration.between(start, end)
+    val hours = duration.toHours()
+    val minutes = duration.toMinutes() % 60
+    return buildString {
+      if (hours > 0) append("${hours}h ")
+      if (minutes > 0) append("${minutes}min")
+    }.trim()
   }
-}
 
-/**
- * Composable per indicatore "oggi" (pallino)
- */
-@Composable
-fun TodayIndicator(
-  color: Color,
-  size: Dp = 4.dp,
-) {
-  Box(
-    modifier = Modifier
-        .size(size)
-        .clip(CircleShape)
-        .background(color)
-  )
+  fun formatEventLocation(room: String?, building: String?): String? = when {
+    room != null && building != null -> "$room • $building"
+    room != null -> room
+    building != null -> building
+    else -> null
+  }
+
+  fun calculateEventProgress(event: CourseEvent): Float {
+    val now = LocalDateTime.now()
+    val total = Duration.between(event.startTime, event.endTime).toMinutes().toFloat()
+    val elapsed = Duration.between(event.startTime, now).toMinutes().toFloat()
+    return (elapsed / total).coerceIn(0f, 1f)
+  }
+
+  fun isEventInProgress(event: CourseEvent): Boolean {
+    val now = LocalDateTime.now()
+    return !event.isCancelled && now.isAfter(event.startTime) && now.isBefore(event.endTime)
+  }
+
+  fun isEventEnded(event: CourseEvent): Boolean =
+      !event.isCancelled && LocalDateTime.now().isAfter(event.endTime)
 }
