@@ -12,12 +12,11 @@ import it.attendance100.mybicocca.ui.theme.*
 
 @Composable
 fun StyledNavigationDrawerItem(
+  modifier: Modifier = Modifier,
   icon: ImageVector,
   label: String,
   selected: Boolean = false,
   onClick: () -> Unit,
-  modifier: Modifier = Modifier,
-  trailing: (@Composable () -> Unit)? = null,
 ) {
   val textColor = MaterialTheme.colorScheme.onBackground
   val grayColor = if (MaterialTheme.colorScheme.background == BackgroundColor) GrayColor else GrayColorLight
@@ -37,7 +36,6 @@ fun StyledNavigationDrawerItem(
         fontSize = 16.sp
       )
     },
-    badge = trailing,
     selected = selected,
     onClick = onClick,
     modifier = modifier

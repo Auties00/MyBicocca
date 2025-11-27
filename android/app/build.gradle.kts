@@ -14,7 +14,7 @@ android {
 
   defaultConfig {
     applicationId = "it.attendance100.mybicocca"
-    minSdk = 24
+    minSdk = 25
     targetSdk = 36
     versionCode = 1
     versionName = "1.0"
@@ -74,6 +74,7 @@ dependencies {
   implementation("androidx.appcompat:appcompat:1.7.1")
   implementation("com.google.android.material:material:1.13.0")
   implementation("androidx.compose.ui:ui-text-google-fonts:1.9.5")
+  implementation("androidx.wear.compose:compose-material3:1.5.5")
 
   // Core library desugaring for java.time API on older Android versions
   coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")

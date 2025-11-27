@@ -24,7 +24,7 @@ import androidx.compose.ui.res.*
 import androidx.compose.ui.text.font.*
 import androidx.compose.ui.text.style.*
 import androidx.compose.ui.unit.*
-import androidx.hilt.navigation.compose.*
+import androidx.hilt.lifecycle.viewmodel.compose.*
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.data.entities.*
 import it.attendance100.mybicocca.ui.theme.*
