@@ -5,7 +5,6 @@ import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.pager.*
 import androidx.compose.foundation.shape.*
 import androidx.compose.material.icons.*
 import androidx.compose.material.icons.filled.*
@@ -35,12 +34,8 @@ fun HomePage(
   animatedContentScope: AnimatedContentScope,
   drawerState: DrawerState,
 ) {
-  val pagerState = rememberPagerState(
-    initialPage = 5,
-    pageCount = { 5 },
-  )
+  var currentPage by remember { mutableIntStateOf(0) }
   val coroutineScope = rememberCoroutineScope()
-  val currentPage = pagerState.currentPage
   val isFirstPage = currentPage == 0
 
   val density = LocalDensity.current
@@ -161,20 +156,17 @@ fun HomePage(
           BottomNavBar(
             currentIndex = currentPage,
             onPageSelected = { index ->
-              coroutineScope.launch {
-                pagerState.animateScrollToPage(index)
-              }
+              currentPage = index
             }
           )
         }
       ) { paddingValues ->
-        HorizontalPager(
-          state = pagerState,
+        Box(
           modifier = Modifier
               .fillMaxSize()
               .padding(paddingValues)
-        ) { page ->
-          PageContent(page, sharedTransitionScope, animatedContentScope, pagerState, coroutineScope)
+        ) {
+          PageContent(currentPage, sharedTransitionScope, animatedContentScope, { currentPage = it }, coroutineScope)
         }
       }
     }
@@ -364,13 +356,13 @@ fun PageContent(
   page: Int,
   sharedTransitionScope: SharedTransitionScope,
   animatedContentScope: AnimatedContentScope,
-  pagerState: PagerState,
+  onNavigateToPage: (Int) -> Unit,
   coroutineScope: CoroutineScope,
 ) {
   when (page) {
     0 -> {
       // Home page
-      HomeContentScreen(pagerState, coroutineScope)
+      HomeContentScreen(onNavigateToPage, coroutineScope)
     }
 
     1 -> {

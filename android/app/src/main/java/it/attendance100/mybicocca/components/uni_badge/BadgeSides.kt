@@ -154,7 +154,7 @@ fun BadgeFront(user: User?, textColor: Color = OnBackgroundColor, touchX: Float 
           .width(scale * 64.dp)
           .height(scale * 52.dp)
           .clip(RoundedCornerShape(corner = CornerSize(scale * 9.5.dp))),
-      colorFilter = ColorFilter.tint(if (whiteBadge) Color.White else Color(0xFFffbc21), blendMode = BlendMode.Multiply)
+      colorFilter = ColorFilter.tint(if (whiteBadge) Color.Red.copy(alpha = 0.1f) else Color(0xFFffad42), blendMode = BlendMode.Multiply)
     )
 
     // Contactless Chip
@@ -218,6 +218,7 @@ fun BadgeBack(user: User?, textColor: Color = MaterialTheme.colorScheme.onBackgr
     if (!preferencesManager.badgeParallax) movementCoeff = 0
 
     val signatureBgCol = if (whiteBadge) BadgeSignatureBoxColorWhite else BadgeSignatureBoxColorRed
+    val signatureBgCol2 = if (whiteBadge) BadgeSignatureBoxColorWhite2 else BadgeSignatureBoxColorRed2
 
     // BG Texture
     DitheredTexture(
@@ -331,7 +332,6 @@ fun BadgeBack(user: User?, textColor: Color = MaterialTheme.colorScheme.onBackgr
             )
             .fillMaxWidth()
             .height((55).dp)
-            // .background(Color(0xFF000000))
             .background((if (whiteBadge) BadgeSignatureBoxColorWhite else Color(0xFF000000)).copy(alpha = 0.95f))
       ) {}
 
@@ -385,19 +385,19 @@ fun BadgeBack(user: User?, textColor: Color = MaterialTheme.colorScheme.onBackgr
                   modifier = Modifier
                       .fillMaxWidth()
                       .height(7.dp)
-                      .background(signatureBgCol)
+                      .background(signatureBgCol2)
                 )
                 Box(
                   modifier = Modifier
                       .fillMaxWidth()
                       .height(7.dp)
-                      .background(signatureBgCol)
+                      .background(signatureBgCol2)
                 )
                 Box(
                   modifier = Modifier
                       .fillMaxWidth()
                       .height(7.dp)
-                      .background(signatureBgCol)
+                      .background(signatureBgCol2)
                 )
               }
               // Signature Text

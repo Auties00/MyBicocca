@@ -37,11 +37,11 @@ val inversePrimaryColor = Color(0xFFaf2a4b)
 val BackgroundColor = Color(0xFF0d0d0d)
 val OnBackgroundColor = Color(0xFFFFF8F7)
 val GrayColor = Color(0xFF9d9d9d)
-val BadgeWhiteDrawableColor = Color(0xFF281E1E)
+val BadgeWhiteDrawableColor = Color(0xFF551420) // Color(0xFF281E1E)
 val BadgeSignatureBoxColorRed = Color(0xFFa6a6a6).copy(alpha = 0.75f)
-val BadgeSignatureBoxColorWhite = Color(0xFFF0F0F0).copy(alpha = 0.95f)
+val BadgeSignatureBoxColorWhite = Color(0xFFE3E3E3).copy(alpha = 0.95f)
 val BadgeSignatureBoxColorRed2 = Color(0xFFB8B8B8).copy(alpha = 0.75f)
-val BadgeSignatureBoxColorWhite2 = Color(0xFFF6F6F6).copy(alpha = 0.95f)
+val BadgeSignatureBoxColorWhite2 = Color(0xFFEEEEEE).copy(alpha = 0.95f)
 
 
 // Light theme colors
