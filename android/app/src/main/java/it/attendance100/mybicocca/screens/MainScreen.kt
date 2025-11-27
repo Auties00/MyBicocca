@@ -12,7 +12,6 @@ import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.*
-import androidx.compose.ui.draw.*
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.graphics.vector.*
 import androidx.compose.ui.platform.*
@@ -102,7 +101,6 @@ fun HomePage(
             StyledNavigationDrawerItem(
               icon = Icons.Default.Key,
               label = stringResource(R.string.login_manager),
-              trailing = { if (isFirstPage) Avatar(size = 44.dp, modifier = Modifier.offset(x = 18.dp)) },
               selected = false,
               onClick = {
                 navController.navigate(Screen.LoginManager.route) // Switched order on purpose to make the animation feel snappier
@@ -148,7 +146,7 @@ fun HomePage(
             drawerState = drawerState,
             sharedTransitionScope = sharedTransitionScope,
             animatedContentScope = animatedContentScope,
-            isFirstPage = isFirstPage,
+            // isFirstPage = isFirstPage,
             currentPage = currentPage
           )
         },
@@ -173,7 +171,7 @@ fun HomePage(
 
     // Avatar Drawn on top of everything else
     AnimatedVisibility(
-      visible = !isFirstPage,
+      visible = true,
       enter = slideInHorizontally(
         initialOffsetX = { -it },
         animationSpec = tween(durationMillis = 400)
@@ -217,7 +215,7 @@ fun TopAppBar(
   drawerState: DrawerState,
   sharedTransitionScope: SharedTransitionScope,
   animatedContentScope: AnimatedContentScope,
-  isFirstPage: Boolean,
+  // isFirstPage: Boolean,
   currentPage: Int,
 ) {
   val grayColor = if (MaterialTheme.colorScheme.background == BackgroundColor) GrayColor else GrayColorLight
@@ -236,52 +234,9 @@ fun TopAppBar(
       horizontalArrangement = Arrangement.SpaceBetween,
       verticalAlignment = Alignment.CenterVertically
     ) {
-      // Left button: Menu icon on first page, hoisted avatar placeholder on other pages
       Box(
-        modifier = Modifier
-            .size(44.dp)
-      ) {
-        this@Row.AnimatedVisibility(
-          visible = isFirstPage,
-          enter = slideInHorizontally(
-            initialOffsetX = { -it },
-            animationSpec = tween(durationMillis = 400)
-          ) + fadeIn(animationSpec = tween(durationMillis = 400)),
-          exit = slideOutHorizontally(
-            targetOffsetX = { -it },
-            animationSpec = tween(durationMillis = 400)
-          ) + fadeOut(animationSpec = tween(durationMillis = 400))
-        ) {
-          IconButton(
-            onClick = {
-              scope.launch {
-                drawerState.open()
-              }
-            }
-          ) {
-            Icon(
-              imageVector = Icons.Default.Menu,
-              contentDescription = stringResource(R.string.settings),
-              tint = grayColor,
-              modifier = Modifier.size(28.dp)
-            )
-          }
-        }
-
-        // Invisible placeholder for avatar when not on first page
-        // The actual avatar is hoisted and rendered separately
-        if (!isFirstPage) {
-          Box(
-            modifier = Modifier
-                .clip(CircleShape)
-                .clickable {
-                  scope.launch {
-                    drawerState.open()
-                  }
-                }
-          )
-        }
-      }
+        modifier = Modifier.size(44.dp)
+      )
 
       // App Title
       AppTitle()
@@ -312,7 +267,6 @@ fun BottomNavBar(currentIndex: Int, onPageSelected: (Int) -> Unit) {
   ) {
     val haptics = rememberHapticManager()
     val items = listOf(
-      BottomNavItem(stringResource(R.string.bottom_navbar_home), Icons.Outlined.Home, Icons.Filled.Home),
       BottomNavItem(stringResource(R.string.bottom_navbar_calendario), Icons.Outlined.CalendarMonth, Icons.Filled.CalendarMonth),
       BottomNavItem(stringResource(R.string.bottom_navbar_elearning), Icons.Outlined.School, Icons.Filled.School),
       BottomNavItem(stringResource(R.string.bottom_navbar_segreterie), Icons.Outlined.ContactPage, Icons.Filled.ContactPage),
@@ -361,16 +315,11 @@ fun PageContent(
 ) {
   when (page) {
     0 -> {
-      // Home page
-      HomeContentScreen(onNavigateToPage, coroutineScope)
-    }
-
-    1 -> {
       // Calendar page
       CalendarScreen()
     }
 
-    4 -> {
+    3 -> {
       // Career page
       CareerScreen(sharedTransitionScope, animatedContentScope)
     }

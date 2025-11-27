@@ -81,6 +81,7 @@ private val MyBicoccaLightColorScheme = lightColorScheme(
 )
 
 @Composable
+@Suppress("DEPRECATION")
 fun MyBicoccaTheme(
   darkTheme: Boolean = true,
   content: @Composable () -> Unit,
