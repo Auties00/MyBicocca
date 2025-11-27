@@ -58,6 +58,13 @@
   <string name="career_dialog_cfu">Credits</string>
   <string name="career_dialog_calcola">Calculate</string>
   <string name="career_dialog_annulla">Cancel</string>
+  <string name="career_dialog_chiudi">Close</string>
+  <string name="career_dialog_current_averages">Current averages</string>
+  <string name="career_dialog_new_grade">New grade</string>
+  <string name="career_dialog_new_averages">New averages</string>
+  <string name="career_dialog_voto_error">Invalid grade (>17)</string>
+  <string name="career_dialog_cfu_optional">Optional</string>
+  <string name="career_dialog_add_cfu">Add credits</string>
   <string name="career_grafico_voti">Grades Chart</string>
   
   <!-- Calendar Page -->

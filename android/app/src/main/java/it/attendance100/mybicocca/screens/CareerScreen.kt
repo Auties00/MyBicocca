@@ -4,6 +4,7 @@ import androidx.compose.animation.*
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.*
+import androidx.compose.foundation.pager.*
 import androidx.compose.foundation.shape.*
 import androidx.compose.foundation.text.*
 import androidx.compose.material3.*
@@ -33,6 +34,7 @@ import it.attendance100.mybicocca.domain.model.*
 import it.attendance100.mybicocca.ui.theme.*
 import it.attendance100.mybicocca.utils.*
 import it.attendance100.mybicocca.viewmodel.*
+import kotlinx.coroutines.*
 import java.util.*
 
 @OptIn(ExperimentalSharedTransitionApi::class)
@@ -42,7 +44,10 @@ fun CareerScreen(
   animatedContentScope: AnimatedContentScope,
   viewModel: CareerViewModel = hiltViewModel(),
 ) {
-  var selectedTabIndex by remember { mutableIntStateOf(0) }
+  val pagerState = rememberPagerState(pageCount = { 4 })
+  val coroutineScope = rememberCoroutineScope()
+  val selectedTabIndex = pagerState.currentPage
+
   val primaryColor = MaterialTheme.colorScheme.primary
   val grayColor = if (MaterialTheme.colorScheme.background == BackgroundColor) GrayColor else GrayColorLight
 
@@ -55,17 +60,10 @@ fun CareerScreen(
         .background(MaterialTheme.colorScheme.background)
   ) {
     // Tab Row
-    SecondaryScrollableTabRow(
+    PrimaryTabRow(
       selectedTabIndex = selectedTabIndex,
       containerColor = MaterialTheme.colorScheme.background,
       contentColor = primaryColor,
-      edgePadding = 0.dp,
-      indicator = {
-        TabRowDefaults.SecondaryIndicator(
-          modifier = Modifier.tabIndicatorOffset(selectedTabIndex),
-          color = primaryColor
-        )
-      }
     ) {
       listOf(
         stringResource(R.string.career_tab_profilo),
@@ -75,7 +73,11 @@ fun CareerScreen(
       ).forEachIndexed { index, title ->
         Tab(
           selected = selectedTabIndex == index,
-          onClick = { selectedTabIndex = index },
+          onClick = {
+            coroutineScope.launch {
+              pagerState.animateScrollToPage(index)
+            }
+          },
           text = {
             Text(
               text = title,
@@ -89,11 +91,16 @@ fun CareerScreen(
     }
 
     // Tab Content
-    when (selectedTabIndex) {
-      0 -> ProfiloTab(sharedTransitionScope, animatedContentScope, user, stats)
-      1 -> PlaceholderTab(stringResource(R.string.career_tab_piano))
-      2 -> PlaceholderTab(stringResource(R.string.career_tab_esami))
-      3 -> PlaceholderTab(stringResource(R.string.career_tab_luoghi))
+    HorizontalPager(
+      state = pagerState,
+      modifier = Modifier.fillMaxSize()
+    ) { page ->
+      when (page) {
+        0 -> ProfiloTab(sharedTransitionScope, animatedContentScope, user, stats)
+        1 -> PlaceholderTab(stringResource(R.string.career_tab_piano))
+        2 -> PlaceholderTab(stringResource(R.string.career_tab_esami))
+        3 -> PlaceholderTab(stringResource(R.string.career_tab_luoghi))
+      }
     }
   }
 }
@@ -305,12 +312,13 @@ fun ProfiloTab(
   if (showDialog) {
     HypotheticalGradeDialog(
       onDismiss = { showDialog = false },
-      onCalculate = { _, _ ->
-        // Calculate new averages
-        showDialog = false
-      },
+      currentMediaAritmetica = mediaAritmetica,
+      currentMediaPonderata = mediaPonderata,
+      currentEsamiSostenuti = esamiSostenuti,
+      currentCfuAcquisiti = cfuAcquisiti,
       primaryColor = primaryColor,
-      textColor = MaterialTheme.colorScheme.onBackground
+      textColor = MaterialTheme.colorScheme.onBackground,
+      grayColor = grayColor
     )
   }
 }
@@ -495,64 +503,286 @@ fun GradesChart(grades: List<Float>, primaryColor: Color) {
   )
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HypotheticalGradeDialog(
   onDismiss: () -> Unit,
-  onCalculate: (Int, Int) -> Unit,
+  currentMediaAritmetica: Float,
+  currentMediaPonderata: Float,
+  currentEsamiSostenuti: Int,
+  currentCfuAcquisiti: Int,
   primaryColor: Color,
   textColor: Color,
+  grayColor: Color,
 ) {
   var voto by remember { mutableStateOf("") }
   var cfu by remember { mutableStateOf("") }
 
-  AlertDialog(
+  // Calculate new averages
+  val votoValue = voto.toFloatOrNull()
+  val cfuValue = cfu.toIntOrNull()
+
+  // New arithmetic average: (sum of all grades + new grade) / (count + 1)
+  val newMediaAritmetica = if (votoValue != null && votoValue >= 18) {
+    val currentSum = currentMediaAritmetica * currentEsamiSostenuti
+    (currentSum + votoValue) / (currentEsamiSostenuti + 1)
+  } else null
+
+  // New weighted average: (sum of (grade * cfu) + new grade * new cfu) / (total cfu + new cfu)
+  val newMediaPonderata = if (votoValue != null && votoValue >= 18 && cfuValue != null && cfuValue > 0) {
+    val currentWeightedSum = currentMediaPonderata * currentCfuAcquisiti
+    (currentWeightedSum + votoValue * cfuValue) / (currentCfuAcquisiti + cfuValue)
+  } else null
+
+  BasicAlertDialog(
     onDismissRequest = onDismiss,
-    containerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
-    title = {
-      Text(
-        text = stringResource(R.string.career_dialog_title),
-        color = textColor
+  ) {
+    Card(
+      modifier = Modifier
+          .fillMaxWidth()
+          .padding(16.dp),
+      shape = RoundedCornerShape(28.dp),
+      colors = CardDefaults.cardColors(
+        containerColor = MaterialTheme.colorScheme.surfaceContainerLow
       )
-    },
-    text = {
+    ) {
       Column(
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(24.dp),
+        verticalArrangement = Arrangement.spacedBy(20.dp)
       ) {
-        OutlinedTextField(
-          value = voto,
-          onValueChange = { voto = it },
-          label = { Text(stringResource(R.string.career_dialog_voto)) },
-          keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-          modifier = Modifier.fillMaxWidth()
+        // Title
+        Text(
+          text = stringResource(R.string.career_dialog_title),
+          color = textColor,
+          fontSize = 22.sp,
+          fontWeight = FontWeight.SemiBold
         )
-        OutlinedTextField(
-          value = cfu,
-          onValueChange = { cfu = it },
-          label = { Text(stringResource(R.string.career_dialog_cfu)) },
-          keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-          modifier = Modifier.fillMaxWidth()
-        )
-      }
-    },
-    confirmButton = {
-      TextButton(
-        onClick = {
-          val votoInt = voto.toIntOrNull()
-          val cfuInt = cfu.toIntOrNull()
-          if (votoInt != null && cfuInt != null) {
-            onCalculate(votoInt, cfuInt)
+
+        // Averages Section - both current and new in same cards
+        Row(
+          modifier = Modifier.fillMaxWidth(),
+          horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+          // Arithmetic Mean Card with difference
+          Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(6.dp)
+          ) {
+            HypotheticalStatCard(
+              title = stringResource(R.string.career_media_aritmetica),
+              currentValue = currentMediaAritmetica,
+              newValue = newMediaAritmetica,
+              textColor = textColor,
+              grayColor = grayColor,
+              primaryColor = primaryColor
+            )
+            // Difference underneath
+            val diffAritmetica = newMediaAritmetica?.let { it - currentMediaAritmetica }
+            DifferenceIndicator(
+              difference = diffAritmetica
+            )
+          }
+
+          // Weighted Mean Card with difference
+          Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(6.dp)
+          ) {
+            HypotheticalStatCard(
+              title = stringResource(R.string.career_media_ponderata),
+              currentValue = currentMediaPonderata,
+              newValue = newMediaPonderata,
+              textColor = textColor,
+              grayColor = grayColor,
+              primaryColor = primaryColor
+            )
+            // Difference underneath
+            val diffPonderata = newMediaPonderata?.let { it - currentMediaPonderata }
+            DifferenceIndicator(
+              difference = diffPonderata
+            )
           }
         }
-      ) {
-        Text(stringResource(R.string.career_dialog_calcola), color = primaryColor)
-      }
-    },
-    dismissButton = {
-      TextButton(onClick = onDismiss) {
-        Text(stringResource(R.string.career_dialog_annulla), color = textColor)
+
+        HorizontalDivider(color = grayColor.copy(alpha = 0.2f))
+
+        // Input Section
+        Row(
+          modifier = Modifier.fillMaxWidth(),
+          horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+          OutlinedTextField(
+            value = voto,
+            onValueChange = { newValue ->
+              if (newValue.isEmpty() || newValue.toFloatOrNull() != null) {
+                voto = newValue
+              }
+            },
+            label = { Text(stringResource(R.string.career_dialog_voto)) },
+            placeholder = { Text(">17") },
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            singleLine = true,
+            isError = votoValue != null && votoValue < 18,
+            supportingText = if (votoValue != null && votoValue < 18) {
+              { Text(stringResource(R.string.career_dialog_voto_error)) }
+            } else null,
+            modifier = Modifier.weight(1f),
+            shape = RoundedCornerShape(12.dp)
+          )
+
+          OutlinedTextField(
+            value = cfu,
+            onValueChange = { newValue ->
+              if (newValue.isEmpty() || newValue.toIntOrNull() != null) {
+                cfu = newValue
+              }
+            },
+            label = { Text(stringResource(R.string.career_dialog_cfu)) },
+            placeholder = { Text(stringResource(R.string.career_dialog_cfu_optional)) },
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            singleLine = true,
+            modifier = Modifier.weight(1f),
+            shape = RoundedCornerShape(12.dp)
+          )
+        }
+
+        // Action Buttons
+        Row(
+          modifier = Modifier.fillMaxWidth(),
+          horizontalArrangement = Arrangement.End,
+          verticalAlignment = Alignment.CenterVertically
+        ) {
+          TextButton(onClick = onDismiss) {
+            Text(
+              text = stringResource(R.string.career_dialog_chiudi),
+              color = textColor
+            )
+          }
+        }
       }
     }
-  )
+  }
+}
+
+@Composable
+fun HypotheticalStatCard(
+  modifier: Modifier = Modifier,
+  title: String,
+  currentValue: Float,
+  newValue: Float?,
+  textColor: Color,
+  grayColor: Color,
+  primaryColor: Color,
+) {
+  Card(
+    modifier = modifier,
+    colors = CardDefaults.cardColors(
+      containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+    ),
+    shape = RoundedCornerShape(12.dp)
+  ) {
+    Column(
+      modifier = Modifier
+          .padding(12.dp)
+          .fillMaxWidth(),
+      verticalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+      Text(
+        text = title,
+        color = grayColor,
+        fontSize = 11.sp,
+        maxLines = 1
+      )
+      Column(
+        verticalArrangement = Arrangement.spacedBy(6.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+      ) {
+        // Current value
+        Text(
+          text = String.format(Locale.getDefault(), "%.2f", currentValue),
+          color = textColor,
+          fontSize = 18.sp,
+          fontWeight = FontWeight.Bold
+        )
+        // New value
+        AnimatedVisibility(
+          visible = newValue != null,
+          enter = fadeIn() + expandHorizontally(),
+          exit = fadeOut() + shrinkHorizontally(),
+        ) {
+          Row(
+            verticalAlignment = Alignment.Bottom,
+            horizontalArrangement = Arrangement.spacedBy(4.dp)
+          ) {
+            Text(
+              text = "→",
+              color = grayColor,
+              fontSize = 14.sp
+            )
+            Text(
+              text = newValue?.let { String.format(Locale.getDefault(), "%.2f", it) } ?: "",
+              color = primaryColor,
+              fontSize = 18.sp,
+              fontWeight = FontWeight.Bold
+            )
+          }
+        }
+      }
+    }
+  }
+}
+
+@Composable
+fun DifferenceIndicator(
+  modifier: Modifier = Modifier,
+  difference: Float?,
+) {
+  val isPositive = difference != null && difference >= 0
+
+  Box(
+    modifier = modifier
+        .fillMaxWidth()
+        .height(20.dp),
+    contentAlignment = Alignment.Center
+  ) {
+    AnimatedVisibility(
+      visible = difference != null,
+      enter = fadeIn(),
+      exit = fadeOut()
+    ) {
+      val chipColor = if (isPositive) {
+        Color(0xFF4CAF50).copy(alpha = 0.15f)
+      } else {
+        Color(0xFFF44336).copy(alpha = 0.15f)
+      }
+      val chipTextColor = if (isPositive) Color(0xFF2E7D32) else Color(0xFFC62828)
+
+      Box(
+        modifier = Modifier
+            .clip(RoundedCornerShape(6.dp))
+            .background(chipColor)
+            .padding(horizontal = 8.dp, vertical = 2.dp),
+        contentAlignment = Alignment.Center
+      ) {
+        Text(
+          modifier = Modifier.offset(y = (-2.85).dp),
+          text = difference?.let {
+            String.format(
+              Locale.getDefault(),
+              "%s%.2f",
+              if (it >= 0) "+" else "",
+              it
+            )
+          } ?: "",
+          color = chipTextColor,
+          fontSize = 11.sp,
+          fontWeight = FontWeight.Medium
+        )
+      }
+    }
+  }
 }
 
 @Composable

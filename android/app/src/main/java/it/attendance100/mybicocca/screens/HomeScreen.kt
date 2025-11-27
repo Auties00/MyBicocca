@@ -2,7 +2,6 @@ package it.attendance100.mybicocca.screens
 
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.pager.*
 import androidx.compose.foundation.shape.*
 import androidx.compose.material.icons.*
 import androidx.compose.material.icons.automirrored.filled.*
@@ -25,7 +24,7 @@ import kotlinx.coroutines.*
 
 @Composable
 fun HomeContentScreen(
-  pagerState: PagerState,
+  onNavigateToPage: (Int) -> Unit,
   coroutineScope: CoroutineScope,
   viewModel: HomeViewModel = hiltViewModel(),
 ) {
@@ -86,7 +85,7 @@ fun HomeContentScreen(
         onClick = {
           coroutineScope.launch {
             haptic.tap()
-            pagerState.animateScrollToPage(4)
+            onNavigateToPage(4)
           }
         }
       ) {

@@ -147,7 +147,7 @@ fun CreditCard(
                   base + 180f * dir
                 } else base
                 scope.launch {
-                  rotationY.animateTo(target, animationSpec = tween(600, easing = FastOutSlowInEasing))
+                  rotationY.animateTo(target, animationSpec = tween(300, easing = FastOutSlowInEasing))
                 }
                 rotationX = 0f
                 touchX = 0.5f
@@ -158,7 +158,7 @@ fun CreditCard(
                 val current = rotationY.value
                 val base = round(current / 180f) * 180f
                 scope.launch {
-                  rotationY.animateTo(base, animationSpec = tween(600, easing = FastOutSlowInEasing))
+                  rotationY.animateTo(base, animationSpec = tween(300, easing = FastOutSlowInEasing))
                 }
                 rotationX = 0f
                 touchX = 0.5f
@@ -222,7 +222,7 @@ fun CreditCard(
                 val target = (round(current / 180f) + direction) * 180f
 
                 scope.launch {
-                  rotationY.animateTo(target, animationSpec = tween(600, easing = FastOutSlowInEasing))
+                  rotationY.animateTo(target, animationSpec = tween(300, easing = FastOutSlowInEasing))
                 }
                 haptics.spring()
               })

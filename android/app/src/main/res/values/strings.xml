@@ -64,6 +64,13 @@
   <string name="career_dialog_cfu">CFU</string>
   <string name="career_dialog_calcola">Calcola</string>
   <string name="career_dialog_annulla">Annulla</string>
+  <string name="career_dialog_chiudi">Chiudi</string>
+  <string name="career_dialog_current_averages">Medie attuali</string>
+  <string name="career_dialog_new_grade">Nuovo voto</string>
+  <string name="career_dialog_new_averages">Nuove medie</string>
+  <string name="career_dialog_voto_error">Voto non valido (>17)</string>
+  <string name="career_dialog_cfu_optional">Opzionale</string>
+  <string name="career_dialog_add_cfu">Aggiungi CFU</string>
   <string name="career_grafico_voti">Grafico Voti</string>
   
   <!-- Calendar Page -->
