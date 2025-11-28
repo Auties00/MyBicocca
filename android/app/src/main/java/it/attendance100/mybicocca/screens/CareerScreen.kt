@@ -490,14 +490,15 @@ fun GradesChart(grades: List<Float>, primaryColor: Color) {
   }
 
   val textColor = MaterialTheme.colorScheme.onSurface
-  val zoom = Zoom.fixed(0.95f)
-  val maxZoom = Zoom.fixed(2f)
+  val zoom = Zoom.fixed(0.1f) // 0.95f
+  val maxZoom = Zoom.fixed(0.1f) // 2.00f
 
   CartesianChartHost(
     zoomState = rememberVicoZoomState(
-      initialZoom = zoom,
-      maxZoom = maxZoom,
+      zoomEnabled = false,
+      initialZoom = zoom
     ),
+    scrollState = rememberVicoScrollState(),
     chart = rememberCartesianChart(
       rememberLineCartesianLayer(
         lineProvider = LineCartesianLayer.LineProvider.series(
