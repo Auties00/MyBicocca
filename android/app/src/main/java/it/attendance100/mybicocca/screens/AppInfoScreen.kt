@@ -2,6 +2,7 @@ package it.attendance100.mybicocca.screens
 
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
+import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.*
 import androidx.compose.material.icons.automirrored.filled.*
@@ -48,7 +49,7 @@ fun AppInfoScreen(
 ) {
   val textColor = MaterialTheme.colorScheme.onBackground
   val grayColor = if (MaterialTheme.colorScheme.background == BackgroundColor) GrayColor else GrayColorLight
-  val isDarkMode = rememberPreferencesManager().isDarkMode
+  val isDarkMode = rememberPreferencesManager().isDarkMode ?: isSystemInDarkTheme()
 
   Scaffold(
     containerColor = MaterialTheme.colorScheme.background,

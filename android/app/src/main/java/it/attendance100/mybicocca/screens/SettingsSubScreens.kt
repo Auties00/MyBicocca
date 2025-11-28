@@ -139,6 +139,7 @@ fun AppearanceSettingsScreen(
                 PreferencesManager.THEME_DARK -> stringResource(R.string.settings_appearance_theme_dark)
                 else -> themeMode
               }
+              val default = isSystemInDarkTheme()
 
               Row(
                 modifier = Modifier
@@ -147,7 +148,8 @@ fun AppearanceSettingsScreen(
                       selectedThemeMode = themeMode
                       preferencesManager.themeMode = themeMode
                       preferencesManager.applyTheme()
-                      onThemeChange(preferencesManager.isDarkMode)
+                      onThemeChange(preferencesManager.isDarkMode ?: default)
+
                     },
                 verticalAlignment = Alignment.CenterVertically
               ) {
@@ -157,7 +159,7 @@ fun AppearanceSettingsScreen(
                     selectedThemeMode = themeMode
                     preferencesManager.themeMode = themeMode
                     preferencesManager.applyTheme()
-                    onThemeChange(preferencesManager.isDarkMode)
+                    onThemeChange(preferencesManager.isDarkMode ?: default)
                   },
                   colors = RadioButtonDefaults.colors(selectedColor = primaryColor)
                 )

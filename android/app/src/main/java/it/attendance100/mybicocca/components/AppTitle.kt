@@ -12,7 +12,7 @@ import it.attendance100.mybicocca.utils.*
 @Composable
 fun AppTitle() {
   val preferencesManager = rememberPreferencesManager()
-  val isDarkMode = preferencesManager.isDarkMode
+  val isDarkMode = preferencesManager.isDarkMode ?: isSystemInDarkTheme()
 
   Column(
     verticalArrangement = Arrangement.Center,

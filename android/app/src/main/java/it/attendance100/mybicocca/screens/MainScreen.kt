@@ -58,7 +58,7 @@ fun HomePage(
   val context = LocalContext.current
   val activity = context as? ComponentActivity
   val preferencesManager = rememberPreferencesManager()
-  val isDarkMode = preferencesManager.isDarkMode
+  val isDarkMode = preferencesManager.isDarkMode ?: isSystemInDarkTheme()
   val backgroundColor = MaterialTheme.colorScheme.background
 
   LaunchedEffect(animationProgress, isDarkMode) {
