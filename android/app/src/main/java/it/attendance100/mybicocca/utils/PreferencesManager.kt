@@ -5,13 +5,25 @@ import androidx.appcompat.app.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.platform.*
 import androidx.core.content.*
+import dagger.hilt.android.qualifiers.*
+import javax.inject.*
 
 
+@Singleton
 @Suppress("unused")
-class PreferencesManager(private val context: Context) {
+class PreferencesManager @Inject constructor(
+  @ApplicationContext context: Context,
+) {
   private val prefs: SharedPreferences = context.getSharedPreferences("app_preferences", Context.MODE_PRIVATE)
 
   companion object {
+    // Auth
+    private const val KEY_AUTH_UID = "auth_uid"
+    private const val KEY_AUTH_CLIENT = "auth_client"
+    private const val KEY_AUTH_TOKEN = "auth_access_token"
+    private const val KEY_AUTH_FISCAL_CODE = "auth_fiscal_code"
+
+    // Private Settings
     private const val KEY_IS_DEVELOPER_MODE = "developer_mode"
     private const val KEY_THEME_MODE = "theme_mode"
     private const val KEY_LOCALE = "locale"
@@ -21,6 +33,7 @@ class PreferencesManager(private val context: Context) {
     private const val KEY_KEEP_LOGGED_IN = "keep_logged_in"
     private const val KEY_SESSION_DURATION = "session_duration"
 
+    // Public Settings
     const val THEME_SYSTEM_DEFAULT = "system"
     const val THEME_LIGHT = "light"
     const val THEME_DARK = "dark"
@@ -99,11 +112,38 @@ class PreferencesManager(private val context: Context) {
       prefs.edit { putLong(KEY_SESSION_DURATION, value) }
     }
 
+  // Authentication Headers
+  var authUid: String?
+    get() = prefs.getString(KEY_AUTH_UID, null)
+    set(value) = prefs.edit { putString(KEY_AUTH_UID, value) }
 
+  var authClient: String?
+    get() = prefs.getString(KEY_AUTH_CLIENT, null)
+    set(value) = prefs.edit { putString(KEY_AUTH_CLIENT, value) }
 
-  /**
-   * Applies the stored theme preference to the entire app
-   */
+  var authAccessToken: String?
+    get() = prefs.getString(KEY_AUTH_TOKEN, null)
+    set(value) = prefs.edit { putString(KEY_AUTH_TOKEN, value) }
+
+  var authFiscalCode: String?
+    get() = prefs.getString(KEY_AUTH_FISCAL_CODE, null)
+    set(value) = prefs.edit { putString(KEY_AUTH_FISCAL_CODE, value) }
+
+  fun clearAuth() {
+    prefs.edit {
+      remove(KEY_AUTH_UID)
+      remove(KEY_AUTH_CLIENT)
+      remove(KEY_AUTH_TOKEN)
+      remove(KEY_AUTH_FISCAL_CODE)
+    }
+  }
+
+  fun isLoggedIn(): Boolean {
+    return !authUid.isNullOrBlank() &&
+        !authClient.isNullOrBlank() &&
+        !authAccessToken.isNullOrBlank()
+  }
+
   fun applyTheme() {
     AppCompatDelegate.setDefaultNightMode(
       when (themeMode) {

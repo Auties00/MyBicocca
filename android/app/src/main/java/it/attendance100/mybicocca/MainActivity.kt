@@ -18,6 +18,7 @@ import androidx.compose.ui.platform.*
 import androidx.navigation.compose.*
 import dagger.hilt.android.*
 import it.attendance100.mybicocca.screens.*
+import it.attendance100.mybicocca.screens.login.*
 import it.attendance100.mybicocca.ui.theme.*
 import it.attendance100.mybicocca.utils.*
 import kotlinx.coroutines.*
@@ -33,6 +34,8 @@ sealed class Screen(val route: String) {
   object SettingsSecurity : Screen("settings_security")
   object SettingsDeveloper : Screen("settings_developer")
   object AppInfo : Screen("app_info")
+  object Login : Screen("login_webview")
+
 }
 
 
@@ -175,6 +178,14 @@ fun AppNavigation(onThemeChange: (Boolean) -> Unit) {
       }
       composable(Screen.AppInfo.route) { _ ->
         AppInfoScreen(navController, this@SharedTransitionLayout, this)
+      }
+      composable(Screen.Login.route) {
+        LoginWebViewScreen(
+          onLoginSuccess = {
+            navController.popBackStack() // Pop back to LoginManager (or Home) and refresh
+          },
+          onBack = { navController.navigateUp() }
+        )
       }
     }
   }

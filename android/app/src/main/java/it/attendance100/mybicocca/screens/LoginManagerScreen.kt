@@ -12,10 +12,13 @@ import androidx.compose.ui.*
 import androidx.compose.ui.res.*
 import androidx.compose.ui.text.font.*
 import androidx.compose.ui.unit.*
+import androidx.hilt.lifecycle.viewmodel.compose.*
 import androidx.navigation.*
+import it.attendance100.mybicocca.*
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.components.*
 import it.attendance100.mybicocca.ui.theme.*
+import it.attendance100.mybicocca.viewmodel.login.*
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
@@ -23,6 +26,7 @@ fun LoginManagerScreen(
   navController: NavHostController,
   sharedTransitionScope: SharedTransitionScope,
   animatedContentScope: AnimatedContentScope,
+  viewModel: LoginViewModel = hiltViewModel(),
 ) {
   val primaryColor = MaterialTheme.colorScheme.primary
   val textColor = MaterialTheme.colorScheme.onBackground
@@ -163,7 +167,45 @@ fun LoginManagerScreen(
           )
         }
       }
+
+      // BicoccApp
+      Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable {
+              // Navigate to the WebView
+              navController.navigate(Screen.Login.route)
+            },
+        color = MaterialTheme.colorScheme.background
+      ) {
+        Row(
+          verticalAlignment = Alignment.CenterVertically,
+          horizontalArrangement = Arrangement.spacedBy(16.dp),
+          modifier = Modifier
+              .weight(1f)
+              .fillMaxWidth()
+              .padding(horizontal = 16.dp, vertical = 16.dp),
+        ) {
+          Icon(
+            imageVector = Icons.Default.ContactPage,
+            contentDescription = null,
+            tint = primaryColor,
+            modifier = Modifier.size(24.dp)
+          )
+          Text(
+            text = stringResource(R.string.bicoccapp),
+            color = textColor,
+            fontSize = 16.sp,
+            fontWeight = FontWeight.Medium,
+          )
+        }
+      }
     }
+  }
+
+  LaunchedEffect(Unit) {
+    // If we have a token, try to fetch data to prove it works
+    viewModel.fetchAndLogProfile()
   }
 }
 
