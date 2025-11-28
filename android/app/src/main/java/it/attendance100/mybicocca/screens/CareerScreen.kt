@@ -43,8 +43,6 @@ import java.util.*
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun CareerScreen(
-  sharedTransitionScope: SharedTransitionScope,
-  animatedContentScope: AnimatedContentScope,
   viewModel: CareerViewModel = hiltViewModel(),
 ) {
   val pagerState = rememberPagerState(pageCount = { 4 })
@@ -129,7 +127,7 @@ fun CareerScreen(
       flingBehavior = PagerDefaults.flingBehavior(state = pagerState, snapPositionalThreshold = 0.6667f),
     ) { page ->
       when (page) {
-        0 -> ProfiloTab(sharedTransitionScope, animatedContentScope, user, stats)
+        0 -> ProfiloTab(user, stats)
         1 -> PlaceholderTab(stringResource(R.string.career_tab_piano))
         2 -> PlaceholderTab(stringResource(R.string.career_tab_esami))
         3 -> PlaceholderTab(stringResource(R.string.career_tab_luoghi))
@@ -141,8 +139,6 @@ fun CareerScreen(
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun ProfiloTab(
-  sharedTransitionScope: SharedTransitionScope,
-  animatedContentScope: AnimatedContentScope,
   user: User?,
   stats: CareerStats?,
 ) {
@@ -344,7 +340,11 @@ fun ProfiloTab(
 
   if (showDialog) {
     HypotheticalGradeDialog(
-      onDismiss = { showDialog = false },
+
+      onDismiss = {
+        @Suppress("AssignedValueIsNeverRead")
+        showDialog = false
+      },
       currentMediaAritmetica = mediaAritmetica,
       currentMediaPonderata = mediaPonderata,
       currentEsamiSostenuti = esamiSostenuti,
@@ -468,7 +468,7 @@ fun GradesChart(grades: List<Float>, primaryColor: Color) {
       contentAlignment = Alignment.Center
     ) {
       Text(
-        text = "No data available",
+        text = stringResource(R.string.career_no_data_available),
         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
       )
     }
@@ -654,7 +654,7 @@ fun HypotheticalGradeDialog(
               }
             },
             label = { Text(stringResource(R.string.career_dialog_voto)) },
-            placeholder = { Text(">17") },
+            placeholder = { Text(stringResource(R.string.career_dialog_voto_placeholder)) },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             singleLine = true,
             isError = votoValue != null && votoValue < 18,
@@ -750,7 +750,7 @@ fun HypotheticalStatCard(
             horizontalArrangement = Arrangement.spacedBy(4.dp)
           ) {
             Text(
-              text = "→",
+              text = stringResource(R.string.career_arrow_symbol),
               color = grayColor,
               fontSize = 14.sp
             )
@@ -827,7 +827,7 @@ fun PlaceholderTab(tabName: String) {
     contentAlignment = Alignment.Center
   ) {
     Text(
-      text = "$tabName - Coming soon",
+      text = stringResource(R.string.career_coming_soon_format, tabName),
       color = MaterialTheme.colorScheme.onBackground,
       fontSize = 18.sp
     )

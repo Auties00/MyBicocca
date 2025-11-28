@@ -35,7 +35,6 @@ fun HomePage(
 ) {
   var currentPage by remember { mutableIntStateOf(0) }
   val coroutineScope = rememberCoroutineScope()
-  val isFirstPage = currentPage == 0
 
   val density = LocalDensity.current
   val drawerWidthDp = 280.dp
@@ -141,14 +140,7 @@ fun HomePage(
     ) {
       Scaffold(
         topBar = {
-          TopAppBar(
-            navController = navController,
-            drawerState = drawerState,
-            sharedTransitionScope = sharedTransitionScope,
-            animatedContentScope = animatedContentScope,
-            // isFirstPage = isFirstPage,
-            currentPage = currentPage
-          )
+          TopAppBar()
         },
         bottomBar = {
           BottomNavBar(
@@ -164,7 +156,7 @@ fun HomePage(
               .fillMaxSize()
               .padding(paddingValues)
         ) {
-          PageContent(currentPage, sharedTransitionScope, animatedContentScope, { currentPage = it }, coroutineScope)
+          PageContent(currentPage)
         }
       }
     }
@@ -211,15 +203,8 @@ fun HomePage(
 @OptIn(ExperimentalComposeUiApi::class, ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
 @Composable
 fun TopAppBar(
-  navController: NavHostController,
-  drawerState: DrawerState,
-  sharedTransitionScope: SharedTransitionScope,
-  animatedContentScope: AnimatedContentScope,
-  // isFirstPage: Boolean,
-  currentPage: Int,
 ) {
   val grayColor = if (MaterialTheme.colorScheme.background == BackgroundColor) GrayColor else GrayColorLight
-  val scope = rememberCoroutineScope()
 
   Surface(
     modifier = Modifier
@@ -306,13 +291,7 @@ fun BottomNavBar(currentIndex: Int, onPageSelected: (Int) -> Unit) {
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
-fun PageContent(
-  page: Int,
-  sharedTransitionScope: SharedTransitionScope,
-  animatedContentScope: AnimatedContentScope,
-  onNavigateToPage: (Int) -> Unit,
-  coroutineScope: CoroutineScope,
-) {
+fun PageContent(page: Int) {
   when (page) {
     0 -> {
       // Calendar page
@@ -321,7 +300,7 @@ fun PageContent(
 
     3 -> {
       // Career page
-      CareerScreen(sharedTransitionScope, animatedContentScope)
+      CareerScreen()
     }
 
     else -> {

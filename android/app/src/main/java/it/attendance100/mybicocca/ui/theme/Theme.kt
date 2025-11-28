@@ -81,7 +81,6 @@ private val MyBicoccaLightColorScheme = lightColorScheme(
 )
 
 @Composable
-@Suppress("DEPRECATION")
 fun MyBicoccaTheme(
   darkTheme: Boolean = true,
   content: @Composable () -> Unit,
@@ -104,6 +103,7 @@ fun MyBicoccaTheme(
         }
       } else {
         // For Android 14 and below
+        @Suppress("DEPRECATION")
         window.statusBarColor = color
       }
       WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !darkTheme
