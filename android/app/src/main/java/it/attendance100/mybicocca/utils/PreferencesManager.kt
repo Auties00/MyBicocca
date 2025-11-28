@@ -52,13 +52,14 @@ class PreferencesManager(private val context: Context) {
       prefs.edit { putString(KEY_THEME_MODE, value) }
     }
 
-  var isDarkMode: Boolean
+  var isDarkMode: Boolean?
     get() = when (themeMode) {
       THEME_DARK -> true
       THEME_LIGHT -> false
-      else -> false // System default, return false as fallback
+      else -> null // System default, will use isSystemInDarkTheme() in the composable function
     }
     set(value) {
+      if (value == null) return
       themeMode = if (value) THEME_DARK else THEME_LIGHT
     }
 

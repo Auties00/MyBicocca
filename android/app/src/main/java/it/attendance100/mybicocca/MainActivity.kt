@@ -66,42 +66,48 @@ class MainActivity : ComponentActivity() {
       LockScreenOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT)
 
       // Update edge-to-edge when theme changes
-      LaunchedEffect(isDarkMode) {
-        enableEdgeToEdge(
-          statusBarStyle =
-              if (isDarkMode)
-                SystemBarStyle.dark(
-                  Color.Transparent.toArgb(),
-                ) else SystemBarStyle.light(
-                Color.Transparent.toArgb(),
-                darkScrim = Color.Transparent.toArgb(),
-              ),
-          navigationBarStyle = SystemBarStyle.auto(
-            lightScrim = OnPrimaryColor.toArgb(),
-            darkScrim = OnPrimaryColor.toArgb(),
-          )
-        )
-      }
+      LaunchedEffect(isDarkMode) { styleStatusBar(isDarkMode) }
 
       MyBicoccaTheme(darkTheme = isDarkMode) {
         ProvideHapticManager {
           Surface(
-            modifier = Modifier
-                .fillMaxSize()
-                .statusBarsPadding(), // manual top padding because of enableEdgeToEdge()
+            modifier = Modifier.fillMaxSize(),
           ) {
-            AppNavigation(
-              onThemeChange = { _ ->
-                // Update the state to trigger recomposition
-                currentThemeMode = preferencesManager.themeMode
-              }
-            )
+            Box(modifier = Modifier.statusBarsPadding()) { // manual top padding because of enableEdgeToEdge()
+              AppNavigation(
+                onThemeChange = { isDarkModeInner ->
+                  // Update the state to trigger recomposition
+                  currentThemeMode = preferencesManager.themeMode
+                  styleStatusBar(isDarkModeInner)
+                }
+              )
+            }
           }
         }
       }
     }
   }
+
+  fun styleStatusBar(isDarkMode: Boolean) {
+    enableEdgeToEdge(
+      statusBarStyle =
+          if (isDarkMode)
+            SystemBarStyle.dark(
+              BackgroundColor.toArgb()
+            )
+          else
+            SystemBarStyle.light(
+              BackgroundColorLight.toArgb(),
+              darkScrim = BackgroundColor.toArgb(),
+            ),
+      navigationBarStyle = SystemBarStyle.auto(
+        lightScrim = OnPrimaryColor.toArgb(),
+        darkScrim = OnPrimaryColor.toArgb(),
+      )
+    )
+  }
 }
+
 
 @OptIn(ExperimentalSharedTransitionApi::class, ExperimentalMaterial3Api::class)
 @Composable
