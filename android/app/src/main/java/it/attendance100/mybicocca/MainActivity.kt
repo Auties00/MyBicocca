@@ -27,6 +27,11 @@ sealed class Screen(val route: String) {
   object Home : Screen("home")
   object LoginManager : Screen("login_manager")
   object Settings : Screen("settings")
+  object SettingsAppearance : Screen("settings_appearance")
+  object SettingsGeneral : Screen("settings_general")
+  object SettingsBehaviour : Screen("settings_behaviour")
+  object SettingsSecurity : Screen("settings_security")
+  object SettingsDeveloper : Screen("settings_developer")
   object AppInfo : Screen("app_info")
 }
 
@@ -146,6 +151,21 @@ fun AppNavigation(onThemeChange: (Boolean) -> Unit) {
       }
       composable(Screen.Settings.route) { _ ->
         SettingsScreen(navController, this@SharedTransitionLayout, this, onThemeChange)
+      }
+      composable(Screen.SettingsAppearance.route) { _ ->
+        AppearanceSettingsScreen(navController, this@SharedTransitionLayout, this, onThemeChange)
+      }
+      composable(Screen.SettingsGeneral.route) { _ ->
+        GeneralSettingsScreen(navController, this@SharedTransitionLayout, this)
+      }
+      composable(Screen.SettingsBehaviour.route) { _ ->
+        BehaviourSettingsScreen(navController, this@SharedTransitionLayout, this)
+      }
+      composable(Screen.SettingsSecurity.route) { _ ->
+        SecuritySettingsScreen(navController, this@SharedTransitionLayout, this)
+      }
+      composable(Screen.SettingsDeveloper.route) { _ ->
+        DeveloperSettingsScreen(navController, this@SharedTransitionLayout, this)
       }
       composable(Screen.AppInfo.route) { _ ->
         AppInfoScreen(navController, this@SharedTransitionLayout, this)

@@ -9,18 +9,18 @@
   <string name="error_loading_image">Errore caricando l\'immagine</string>
   <string name="search">Cerca</string>
   <string name="settings_appearance">Tema</string>
-  <string name="settings_theme">Tema</string>
-  <string name="settings_theme_desc">Predefinito di Sistema</string>
-  <string name="theme_system_default">Predefinito di Sistema</string>
-  <string name="theme_light">Chiaro</string>
-  <string name="theme_dark">Scuro</string>
-  <string name="settings_dark_mode">Tema Scuro</string>
-  <string name="settings_dark_mode_enabled">Il tema Scuro è attivo</string>
-  <string name="settings_language_desc">Seleziona la lingua dell\'app</string>
+  <string name="settings_appearance_theme">Tema</string>
+  <string name="settings_appearance_theme_desc">Predefinito di Sistema</string>
+  <string name="settings_appearance_theme_system_default">Predefinito di Sistema</string>
+  <string name="settings_appearance_theme_light">Chiaro</string>
+  <string name="settings_appearance_theme_dark">Scuro</string>
+  <string name="settings_appearance_dark_mode">Tema Scuro</string>
+  <string name="settings_appearance_dark_mode_enabled">Il tema Scuro è attivo</string>
+  <string name="settings_general_language_desc">Seleziona la lingua dell\'app</string>
   <string name="settings_general">Generale</string>
   <string name="language_system_default">Predefinito di Sistema</string>
-  <string name="settings_dark_mode_disabled">Il tema Chiaro è attivo</string>
-  <string name="settings_language">Lingua</string>
+  <string name="settings_appearance_dark_mode_disabled">Il tema Chiaro è attivo</string>
+  <string name="settings_general_language">Lingua</string>
   <string name="settings">Impostazioni</string>
   <string name="login_manager">Manager Login</string>
   <string name="app_info">Info App</string>
@@ -29,12 +29,10 @@
   <string name="ok">Ok</string>
   <string name="licenses">Licenze</string>
   <string name="app_logo">Logo App</string>
-  <string name="fingerprint_login">Login con Impronta</string>
-  <string name="fingerprint_login_desc">Accedi con la tua impronta digitale invece di inserire le credenziali ogni volta</string>
+  <string name="settings_security_fingerprint_login">Login con Impronta</string>
+  <string name="settings_security_fingerprint_login_desc">Accedi con la tua impronta digitale invece di inserire le credenziali ogni volta</string>
   <string name="security">Sicurezza</string>
   <string name="logins_list">Lista Login</string>
-  <string name="settings_material_you_enabled">Il design Material You è attivo</string>
-  <string name="settings_material_you_disabled">Usa il design Material You</string>
 
   <!-- Career Page -->
   <string name="career_tab_profilo">Profilo</string>
@@ -92,4 +90,7 @@
   <string name="homescreen_shortcuts">Shortcuts</string>
   <string name="homescreen_edit_shortcuts">Modifica le Shortcuts</string>
   <string name="homescreen_my_courses">I miei Corsi</string>
+  <string name="settings_security">Sicurezza</string>
+  <string name="settings_behaviour">Comportamento</string>
+  <string name="cancel">Annulla</string>
 </resources>

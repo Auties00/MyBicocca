@@ -2,7 +2,6 @@ package it.attendance100.mybicocca.screens
 
 import androidx.activity.*
 import androidx.compose.animation.*
-import androidx.compose.animation.core.*
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.*
@@ -35,6 +34,7 @@ fun HomePage(
 ) {
   var currentPage by remember { mutableIntStateOf(0) }
   val coroutineScope = rememberCoroutineScope()
+  val haptic = rememberHapticManager()
 
   val density = LocalDensity.current
   val drawerWidthDp = 280.dp
@@ -162,16 +162,7 @@ fun HomePage(
     }
 
     // Avatar Drawn on top of everything else
-    AnimatedVisibility(
-      visible = true,
-      enter = slideInHorizontally(
-        initialOffsetX = { -it },
-        animationSpec = tween(durationMillis = 400)
-      ) + fadeIn(animationSpec = tween(durationMillis = 400)),
-      exit = slideOutHorizontally(
-        targetOffsetX = { -it },
-        animationSpec = tween(durationMillis = 400)
-      ) + fadeOut(animationSpec = tween(durationMillis = 400)),
+    Box(
       modifier = Modifier
           .size(avatarSize)
           .offset(x = animatedX, y = animatedY)
@@ -183,6 +174,7 @@ fun HomePage(
         animatedY = 0.dp,
         avatarSize = avatarSize,
         onClick = {
+          haptic.tap()
           coroutineScope.launch {
             coroutineScope.launch {
               if (drawerState.isOpen) {
@@ -274,8 +266,8 @@ fun BottomNavBar(currentIndex: Int, onPageSelected: (Int) -> Unit) {
         },
         selected = currentIndex == index,
         onClick = {
-          onPageSelected(index)
           haptics.tap()
+          onPageSelected(index)
         },
         colors = NavigationBarItemDefaults.colors(
           selectedIconColor = primaryColor,

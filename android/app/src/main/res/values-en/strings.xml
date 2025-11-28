@@ -8,18 +8,18 @@
   <string name="error_loading_image">Error loading image</string>
   <string name="search">Search</string>
   <string name="settings_appearance">Theme</string>
-  <string name="settings_theme">Theme</string>
-  <string name="settings_theme_desc">System Default</string>
-  <string name="theme_system_default">System Default</string>
-  <string name="theme_light">Light</string>
-  <string name="theme_dark">Dark</string>
-  <string name="settings_dark_mode">Dark Mode</string>
-  <string name="settings_dark_mode_enabled">Dark Mode is active</string>
-  <string name="settings_language_desc">Select the app\'s Language</string>
+  <string name="settings_appearance_theme">Theme</string>
+  <string name="settings_appearance_theme_desc">System Default</string>
+  <string name="settings_appearance_theme_system_default">System Default</string>
+  <string name="settings_appearance_theme_light">Light</string>
+  <string name="settings_appearance_theme_dark">Dark</string>
+  <string name="settings_appearance_dark_mode">Dark Mode</string>
+  <string name="settings_appearance_dark_mode_enabled">Dark Mode is active</string>
+  <string name="settings_general_language_desc">Select the app\'s Language</string>
   <string name="settings_general">General</string>
-  <string name="settings_dark_mode_disabled">Light Mode is active</string>
+  <string name="settings_appearance_dark_mode_disabled">Light Mode is active</string>
   <string name="language_system_default">System Default</string>
-  <string name="settings_language">Language</string>
+  <string name="settings_general_language">Language</string>
   <string name="settings">Settings</string>
   <string name="login_manager">Login Manager</string>
   <string name="app_info">App Info</string>
@@ -28,12 +28,10 @@
   <string name="ok">Ok</string>
   <string name="licenses">Licenses</string>
   <string name="app_logo">App Logo</string>
-  <string name="fingerprint_login">Fingerprint Login</string>
-  <string name="fingerprint_login_desc">Log in with your fingerprint instead of entering your credentials each time</string>
+  <string name="settings_security_fingerprint_login">Fingerprint Login</string>
+  <string name="settings_security_fingerprint_login_desc">Log in with your fingerprint instead of entering your credentials each time</string>
   <string name="security">Security</string>
   <string name="logins_list">Logins List</string>
-  <string name="settings_material_you_enabled">Material You design is active</string>
-  <string name="settings_material_you_disabled">Use Material You design</string>
 
   <!-- Career Page -->
   <string name="career_tab_profilo">Profile</string>
@@ -91,4 +89,30 @@
   <string name="homescreen_shortcuts">Shortcuts</string>
   <string name="homescreen_edit_shortcuts">Edit Shortcuts</string>
   <string name="homescreen_my_courses">My Courses</string>
+  <string name="settings_security">Security</string>
+  <string name="settings_behaviour">Behaviour</string>
+  <string name="cancel">Cancel</string>
+
+  <!-- Settings Subtitles -->
+  <string name="settings_appearance_subtitle">Theme</string>
+  <string name="settings_general_subtitle">Language • Accessibility</string>
+  <string name="settings_behaviour_subtitle">Refresh Interval • Notifications</string>
+  <string name="settings_security_subtitle">Login • Session</string>
+  <string name="settings_developer_subtitle">Badge</string>
+
+  <!-- Security Options -->
+  <string name="settings_security_keep_logged_in">Keep me logged in</string>
+  <string name="settings_security_keep_logged_in_desc_true">Stay logged in for a specified duration</string>
+  <string name="settings_security_keep_logged_in_desc_false">You will have to log in every time you open the app</string>
+  <string name="settings_security_session_duration">Session Duration</string>
+  <string name="settings_security_select_duration">Select Duration</string>
+  <string name="duration_30_min">30 Minutes</string>
+  <string name="duration_1_hour">1 Hour</string>
+  <string name="duration_2_hours">2 Hours</string>
+  <string name="duration_6_hours">6 Hours</string>
+  <string name="duration_12_hours">12 Hours</string>
+  <string name="duration_24_hours">24 Hours</string>
+  <string name="duration_7_days">7 Days</string>
+  <string name="duration_forever">As long as possible</string>
+  <string name="unknown">Unknown</string>
 </resources>

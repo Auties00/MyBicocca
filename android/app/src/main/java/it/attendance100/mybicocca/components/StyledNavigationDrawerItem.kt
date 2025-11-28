@@ -8,6 +8,7 @@ import androidx.compose.ui.graphics.*
 import androidx.compose.ui.graphics.vector.*
 import androidx.compose.ui.unit.*
 import it.attendance100.mybicocca.ui.theme.*
+import it.attendance100.mybicocca.utils.*
 
 
 @Composable
@@ -20,6 +21,7 @@ fun StyledNavigationDrawerItem(
 ) {
   val textColor = MaterialTheme.colorScheme.onBackground
   val grayColor = if (MaterialTheme.colorScheme.background == BackgroundColor) GrayColor else GrayColorLight
+  val haptic = rememberHapticManager()
 
   NavigationDrawerItem(
     icon = {
@@ -37,7 +39,10 @@ fun StyledNavigationDrawerItem(
       )
     },
     selected = selected,
-    onClick = onClick,
+    onClick = {
+      haptic.tap()
+      onClick()
+    },
     modifier = modifier
         .padding(horizontal = 8.dp)
         .padding(bottom = 4.dp),
