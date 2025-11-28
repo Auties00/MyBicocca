@@ -1,4 +1,5 @@
 <resources>
+  <string name="bottom_navbar_home">Home</string>
   <string name="bottom_navbar_calendario">Calendar</string>
   <string name="bottom_navbar_elearning">Elearning</string>
   <string name="bottom_navbar_segreterie">Secretariat</string>
@@ -33,4 +34,61 @@
   <string name="logins_list">Logins List</string>
   <string name="settings_material_you_enabled">Material You design is active</string>
   <string name="settings_material_you_disabled">Use Material You design</string>
+
+  <!-- Career Page -->
+  <string name="career_tab_profilo">Profile</string>
+  <string name="career_tab_piano">Plan</string>
+  <string name="career_tab_esami">Exams</string>
+  <string name="career_tab_luoghi">Places</string>
+  <string name="career_dati">Personal Data</string>
+  <string name="career_statistiche">Statistics</string>
+  <string name="career_name">Name</string>
+  <string name="career_surname">Surname</string>
+  <string name="career_matricola">Student ID</string>
+  <string name="career_corso">Degree Program</string>
+  <string name="career_anno">Year of Study</string>
+  <string name="career_email">Institutional Email</string>
+  <string name="career_media_aritmetica">Arithmetic Average</string>
+  <string name="career_media_ponderata">Weighted Average</string>
+  <string name="career_esami_sostenuti">Exams Taken</string>
+  <string name="career_cfu_acquisiti">Credits Earned</string>
+  <string name="career_calcola_media">Calculate hypothetical average</string>
+  <string name="career_dialog_title">Calculate Hypothetical Average</string>
+  <string name="career_dialog_voto">Grade</string>
+  <string name="career_dialog_cfu">Credits</string>
+  <string name="career_dialog_calcola">Calculate</string>
+  <string name="career_dialog_annulla">Cancel</string>
+  <string name="career_dialog_chiudi">Close</string>
+  <string name="career_dialog_current_averages">Current averages</string>
+  <string name="career_dialog_new_grade">New grade</string>
+  <string name="career_dialog_new_averages">New averages</string>
+  <string name="career_dialog_voto_error">Invalid grade (>17)</string>
+  <string name="career_dialog_cfu_optional">Optional</string>
+  <string name="career_dialog_add_cfu">Add credits</string>
+  <string name="career_grafico_voti">Grades Chart</string>
+  
+  <!-- Calendar Page -->
+  <string name="calendar_today">Today</string>
+  <string name="calendar_previous_month">Previous Month</string>
+  <string name="calendar_next_month">Next Month</string>
+  <string name="calendar_events">Events</string>
+  <string name="calendar_no_events">No events for this day</string>
+  <string name="calendar_list_view">List View</string>
+  <string name="calendar_week_view">Week View</string>
+  <string name="event_type_lecture">Lecture</string>
+  <string name="event_type_lab">Lab</string>
+  <string name="event_type_exam">Exam</string>
+  <string name="event_type_office_hours">Office Hours</string>
+  <string name="event_type_other">Other</string>
+  <string name="event_detail_date_time">Date and Time</string>
+  <string name="event_detail_professor">Professor</string>
+  <string name="event_detail_location">Location</string>
+  <string name="event_detail_notes">Notes</string>
+  <string name="event_detail_close">Close</string>
+  <string name="matricola_short">ID</string>
+  <string name="homepage_unread_notifications">Unread Notifications</string>
+  <string name="homepage_see_all_notifications">See all Notifications</string>
+  <string name="homescreen_shortcuts">Shortcuts</string>
+  <string name="homescreen_edit_shortcuts">Edit Shortcuts</string>
+  <string name="homescreen_my_courses">My Courses</string>
 </resources>

@@ -1,4 +1,4 @@
-package it.attendance100.mybicocca.composables
+package it.attendance100.mybicocca.components
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
@@ -12,11 +12,11 @@ import it.attendance100.mybicocca.ui.theme.*
 
 @Composable
 fun StyledNavigationDrawerItem(
+  modifier: Modifier = Modifier,
   icon: ImageVector,
   label: String,
   selected: Boolean = false,
   onClick: () -> Unit,
-  modifier: Modifier = Modifier,
 ) {
   val textColor = MaterialTheme.colorScheme.onBackground
   val grayColor = if (MaterialTheme.colorScheme.background == BackgroundColor) GrayColor else GrayColorLight
@@ -26,13 +26,13 @@ fun StyledNavigationDrawerItem(
       Icon(
         imageVector = icon,
         contentDescription = null,
-        tint = if (selected) PrimaryColor else grayColor
+        tint = if (selected) OnPrimaryColor else grayColor
       )
     },
     label = {
       Text(
         text = label,
-        color = if (selected) PrimaryColor else textColor,
+        color = if (selected) OnPrimaryColor else textColor,
         fontSize = 16.sp
       )
     },
@@ -43,13 +43,13 @@ fun StyledNavigationDrawerItem(
         .padding(bottom = 4.dp),
     colors = NavigationDrawerItemDefaults.colors(
       unselectedContainerColor = Color.Transparent,
-      selectedContainerColor = PrimaryColor.copy(alpha = 0.4f),
+      selectedContainerColor = OnPrimaryColor.copy(alpha = 0.4f),
       unselectedIconColor = grayColor,
       unselectedTextColor = textColor,
-      selectedIconColor = PrimaryColor,
-      selectedBadgeColor = PrimaryColor,
+      selectedIconColor = OnPrimaryColor,
+      selectedBadgeColor = OnPrimaryColor,
       unselectedBadgeColor = textColor,
-      selectedTextColor = PrimaryColor,
+      selectedTextColor = OnPrimaryColor,
     )
   )
 }

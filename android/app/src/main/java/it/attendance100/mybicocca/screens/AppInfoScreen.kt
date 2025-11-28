@@ -2,7 +2,6 @@ package it.attendance100.mybicocca.screens
 
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
-import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.*
 import androidx.compose.material.icons.automirrored.filled.*
@@ -16,7 +15,7 @@ import androidx.compose.ui.unit.*
 import androidx.navigation.*
 import it.attendance100.mybicocca.*
 import it.attendance100.mybicocca.R
-import it.attendance100.mybicocca.composables.*
+import it.attendance100.mybicocca.components.*
 import it.attendance100.mybicocca.ui.theme.*
 import it.attendance100.mybicocca.utils.*
 
@@ -87,8 +86,7 @@ fun AppInfoScreen(
     Box(
       modifier = Modifier
           .fillMaxSize()
-          .padding(paddingValues)
-          .background(MaterialTheme.colorScheme.background),
+          .padding(paddingValues),
       contentAlignment = Alignment.Center
     ) {
       Column(
@@ -115,7 +113,7 @@ fun AppInfoScreen(
             modifier = Modifier
                 .size(190.dp)
                 .sharedElement(
-                  state = rememberSharedContentState(key = "appinfo_icon"),
+                  sharedContentState = rememberSharedContentState(key = "appinfo_icon"),
                   animatedVisibilityScope = animatedContentScope,
                   boundsTransform = { _, _ ->
                     tween(durationMillis = 400)
