@@ -316,7 +316,7 @@ fun ProfiloTab(
             .fillMaxWidth()
             .height(300.dp),
         colors = CardDefaults.cardColors(
-          containerColor = MaterialTheme.colorScheme.surface
+          containerColor = MaterialTheme.colorScheme.surfaceDim
         ),
         shape = RoundedCornerShape(16.dp)
       ) {
@@ -369,7 +369,7 @@ fun StatCard(
   Card(
     modifier = modifier,
     colors = CardDefaults.cardColors(
-      containerColor = MaterialTheme.colorScheme.surface
+      containerColor = MaterialTheme.colorScheme.surfaceDim
     ),
     onClick = {
       haptic.tap()
@@ -414,7 +414,7 @@ fun ProgressStatCard(
   Card(
     modifier = modifier,
     colors = CardDefaults.cardColors(
-      containerColor = MaterialTheme.colorScheme.surface
+      containerColor = MaterialTheme.colorScheme.surfaceDim
     ),
     onClick = {
       haptic.spring()
@@ -490,8 +490,7 @@ fun GradesChart(grades: List<Float>, primaryColor: Color) {
   }
 
   val textColor = MaterialTheme.colorScheme.onSurface
-  val zoom = Zoom.fixed(0.1f) // 0.95f
-  val maxZoom = Zoom.fixed(0.1f) // 2.00f
+  val zoom = Zoom.fixed(0.1f)
 
   CartesianChartHost(
     zoomState = rememberVicoZoomState(

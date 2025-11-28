@@ -117,4 +117,10 @@ dependencies {
   // Haze for blur
   implementation("dev.chrisbanes.haze:haze:1.7.1")
   implementation("dev.chrisbanes.haze:haze-materials:1.7.1")
+
+  // Network and Retrofit
+  implementation("com.squareup.retrofit2:retrofit:3.0.0")
+  implementation("com.squareup.retrofit2:converter-gson:3.0.0")
+  implementation("com.squareup.okhttp3:okhttp:5.3.2")
+  implementation("com.squareup.okhttp3:logging-interceptor:5.3.2")
 }

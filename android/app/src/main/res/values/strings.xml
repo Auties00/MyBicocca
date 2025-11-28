@@ -125,4 +125,5 @@
   <string name="duration_7_days">7 Giorni</string>
   <string name="duration_forever">Il più a lungo possibile</string>
   <string name="unknown">Sconosciuto</string>
+  <string name="bicoccapp" translatable="false">BicoccApp</string>
 </resources>

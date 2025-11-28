@@ -115,4 +115,5 @@
   <string name="duration_7_days">7 Days</string>
   <string name="duration_forever">As long as possible</string>
   <string name="unknown">Unknown</string>
+  <string name="career_no_data_available">No Available Data</string>
 </resources>

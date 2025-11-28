@@ -4,9 +4,14 @@ import dagger.*
 import dagger.hilt.*
 import dagger.hilt.components.*
 import it.attendance100.mybicocca.data.daos.*
+import it.attendance100.mybicocca.data.datasources.auth.*
 import it.attendance100.mybicocca.data.datasources.calendar.*
+import it.attendance100.mybicocca.data.datasources.notification.*
+import it.attendance100.mybicocca.data.datasources.user.*
 import it.attendance100.mybicocca.data.repository.*
+import it.attendance100.mybicocca.utils.*
 import javax.inject.*
+import it.attendance100.mybicocca.domain.contracts.AuthRepository as IAuthRepository
 import it.attendance100.mybicocca.domain.contracts.CalendarRepository as ICalendarRepository
 import it.attendance100.mybicocca.domain.contracts.NotificationRepository as INotificationRepository
 import it.attendance100.mybicocca.domain.contracts.UserRepository as IUserRepository
@@ -36,7 +41,7 @@ object RepositoryModule {
   @Provides
   @Singleton
   fun provideUserRepository(
-    dataSource: it.attendance100.mybicocca.data.datasources.user.UserDataSource,
+    dataSource: UserDataSource,
   ): IUserRepository {
     return UserRepository(dataSource)
   }
@@ -44,8 +49,18 @@ object RepositoryModule {
   @Provides
   @Singleton
   fun provideNotificationRepository(
-    dataSource: it.attendance100.mybicocca.data.datasources.notification.NotificationDataSource,
+    dataSource: NotificationDataSource,
   ): INotificationRepository {
     return NotificationRepository(dataSource)
+  }
+
+  // Auth
+  @Provides
+  @Singleton
+  fun provideAuthRepository(
+    dataSource: AuthDataSource,
+    preferencesManager: PreferencesManager,
+  ): IAuthRepository {
+    return AuthRepository(dataSource, preferencesManager)
   }
 }
