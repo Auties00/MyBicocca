@@ -11,20 +11,20 @@
   <string name="homescreen_app_suffix" translatable="false">Bicocca</string>
   <string name="search">Cerca</string>
   <string name="settings_appearance">Tema</string>
-  <string name="settings_theme">Tema</string>
-  <string name="settings_theme_desc">Predefinito di Sistema</string>
-  <string name="theme_system_default">Predefinito di Sistema</string>
-  <string name="theme_light">Chiaro</string>
-  <string name="theme_dark">Scuro</string>
-  <string name="settings_dark_mode">Modalità Scura</string>
-  <string name="settings_dark_mode_enabled">Il tema Scuro è attivo</string>
-  <string name="settings_language">Lingua</string>
-  <string name="settings_language_desc">Seleziona la lingua dell\'app</string>
+  <string name="settings_appearance_theme">Tema</string>
+  <string name="settings_appearance_theme_desc">Predefinito di Sistema</string>
+  <string name="settings_appearance_theme_system_default">Predefinito di Sistema</string>
+  <string name="settings_appearance_theme_light">Chiaro</string>
+  <string name="settings_appearance_theme_dark">Scuro</string>
+  <string name="settings_appearance_dark_mode">Modalità Scura</string>
+  <string name="settings_appearance_dark_mode_enabled">Il tema Scuro è attivo</string>
+  <string name="settings_general_language">Lingua</string>
+  <string name="settings_general_language_desc">Seleziona la lingua dell\'app</string>
   <string name="settings_general">Generale</string>
-  <string name="language_italian" translatable="false">Italiano</string>
-  <string name="language_english" translatable="false">English</string>
+  <string name="settings_general_language_italian" translatable="false">Italiano</string>
+  <string name="settings_general_language_english" translatable="false">English</string>
   <string name="language_system_default">Predefinito di Sistema</string>
-  <string name="settings_dark_mode_disabled">Il tema Chiaro è attivo</string>
+  <string name="settings_appearance_dark_mode_disabled">Il tema Chiaro è attivo</string>
   <string name="settings">Impostazioni</string>
   <string name="login_manager">Manager Login</string>
   <string name="app_info">Info App</string>
@@ -34,12 +34,10 @@
   <string name="licenses">Licenze</string>
   <string name="copyright" translatable="false">© 2025-2025 100% Attendance</string>
   <string name="app_logo">Logo App</string>
-  <string name="fingerprint_login">Login con Impronta</string>
-  <string name="fingerprint_login_desc">Accedi con la tua impronta digitale invece di inserire le credenziali ogni volta</string>
+  <string name="settings_security_fingerprint_login">Login con Impronta</string>
+  <string name="settings_security_fingerprint_login_desc">Accedi con la tua impronta digitale invece di inserire le credenziali ogni volta</string>
   <string name="security">Sicurezza</string>
   <string name="logins_list">Lista Login</string>
-  <string name="settings_material_you_enabled">Il design Material You è attivo</string>
-  <string name="settings_material_you_disabled">Usa il design Material You</string>
 
   <!-- Career Page -->
   <string name="career_tab_profilo">Profilo</string>
@@ -102,7 +100,29 @@
   <string name="homescreen_shortcuts">Shortcuts</string>
   <string name="homescreen_edit_shortcuts">Modifica le Shortcuts</string>
   <string name="homescreen_my_courses">I miei Corsi</string>
-  <string name="settings_badge_parallax" translatable="false">Badge Parallax</string>
-  <string name="settings_developer" translatable="false">Developer Settings</string>
-  <string name="settings_badge_white" translatable="false">White Badge</string>
+  <string name="settings_developer_badge_parallax" translatable="false">Badge Parallax</string>
+  <string name="settings_developer" translatable="false">Developer</string>
+  <string name="settings_developer_badge_white" translatable="false">White Badge</string>
+  <string name="settings_security">Sicurezza</string>
+  <string name="settings_behaviour">Comportamento</string>
+  <string name="cancel">Annulla</string>
+  <string name="settings_appearance_subtitle">Tema</string>
+  <string name="settings_general_subtitle">Lingua • Accessibilità</string>
+  <string name="settings_behaviour_subtitle">Intervallo Aggiornamento • Notifiche</string>
+  <string name="settings_security_subtitle">Login • Sessione</string>
+  <string name="settings_developer_subtitle">Badge</string>
+  <string name="settings_security_keep_logged_in">Resta connesso</string>
+  <string name="settings_security_keep_logged_in_desc_true">Resta connesso per una durata specifica</string>
+  <string name="settings_security_keep_logged_in_desc_false">Dovrai effettuare il login ogni volta che apri l\'app</string>
+  <string name="settings_security_session_duration">Durata Sessione</string>
+  <string name="settings_security_select_duration">Seleziona Durata</string>
+  <string name="duration_30_min">30 Minuti</string>
+  <string name="duration_1_hour">1 Ora</string>
+  <string name="duration_2_hours">2 Ore</string>
+  <string name="duration_6_hours">6 Ore</string>
+  <string name="duration_12_hours">12 Ore</string>
+  <string name="duration_24_hours">24 Ore</string>
+  <string name="duration_7_days">7 Giorni</string>
+  <string name="duration_forever">Il più a lungo possibile</string>
+  <string name="unknown">Sconosciuto</string>
 </resources>
