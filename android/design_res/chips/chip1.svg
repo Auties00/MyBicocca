@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="b" xmlns="http://www.w3.org/2000/svg" width="133" height="109" viewBox="0 0 133 109">
+  <g id="c">
+    <g id="d">
+      <rect x="1" y="30.5" width="38.5" height="24" style="fill:#fff;" />
+      <rect x="1" y="55.5" width="38.5" height="23" style="fill:#fff;" />
+      <path d="M39.5,91.5v-12H1v10.54c0,9.9,8.05,17.96,17.96,17.96h46.54v-16.5h-26Z" style="fill:#fff;" />
+      <path d="M39.5,17.5h26V1H18.96C9.05,1,1,9.05,1,18.96v10.54h38.5v-12Z" style="fill:#fff;" />
+      <rect x="40.5" y="18.5" width="51" height="72" style="fill:#fff;" />
+      <path d="M92.5,91.5h-26v16.5h47.54c9.9,0,17.96-8.06,17.96-17.96v-10.54h-39.5v12Z" style="fill:#fff;" />
+      <rect x="92.5" y="55.5" width="39.5" height="23" style="fill:#fff;" />
+      <path d="M92.5,17.5v12h39.5v-10.54c0-9.9-8.05-17.96-17.96-17.96h-47.54v16.5h26Z" style="fill:#fff;" />
+      <rect x="92.5" y="30.5" width="39.5" height="24" style="fill:#fff;" />
+      <rect y="30.5" width="1" height="24" />
+      <path d="M1,18.96C1,9.05,9.05,1,18.96,1h95.09c9.9,0,17.96,8.05,17.96,17.96v71.09c0,9.9-8.05,17.96-17.96,17.96h-47.54v1h47.54c10.45,0,18.96-8.5,18.96-18.96V18.96c0-10.45-8.5-18.96-18.96-18.96H18.96C8.5,0,0,8.5,0,18.96v10.54h1v-10.54Z" />
+      <rect y="55.5" width="1" height="23" />
+      <path d="M18.96,109h46.54v-1H18.96c-9.9,0-17.96-8.06-17.96-17.96v-10.54H0v10.54c0,10.45,8.5,18.96,18.96,18.96Z" />
+      <path d="M92.5,79.5h-.5v-1h.5v-23h-.5v-1h.5v-24h-.5v-1h.5v-12h-26v.5h-1v-.5h-26v12h.5v1h-.5v24h.5v1h-.5v23h.5v1h-.5v12h26v-.5h1v.5h26v-12ZM91.5,90.5h-51V18.5h51v72Z" />
+      <rect x="65.5" y="1" width="1" height="16.5" />
+      <rect x="65.5" y="17.5" width="1" height=".5" />
+      <rect x="65.5" y="91.5" width="1" height="16.5" />
+      <rect x="65.5" y="108" width="1" height="1" />
+      <rect x="65.5" y="91" width="1" height=".5" />
+      <rect x="1" y="78.5" width="38.5" height="1" />
+      <rect y="78.5" width="1" height="1" />
+      <rect x="39.5" y="78.5" width=".5" height="1" />
+      <rect x="92.5" y="78.5" width="39.5" height="1" />
+      <rect x="92" y="78.5" width=".5" height="1" />
+      <rect x="92.5" y="54.5" width="39.5" height="1" />
+      <rect x="92" y="54.5" width=".5" height="1" />
+      <rect x="1" y="54.5" width="38.5" height="1" />
+      <rect y="54.5" width="1" height="1" />
+      <rect x="39.5" y="54.5" width=".5" height="1" />
+      <rect x="1" y="29.5" width="38.5" height="1" />
+      <rect y="29.5" width="1" height="1" />
+      <rect x="39.5" y="29.5" width=".5" height="1" />
+      <rect x="92.5" y="29.5" width="39.5" height="1" />
+      <rect x="92" y="29.5" width=".5" height="1" />
+    </g>
+  </g>
+</svg>
