@@ -72,6 +72,10 @@
   <string name="career_dialog_cfu_optional">Opzionale</string>
   <string name="career_dialog_add_cfu">Aggiungi CFU</string>
   <string name="career_grafico_voti">Grafico Voti</string>
+  <string name="career_no_data_available">Nessun dato disponibile</string>
+  <string name="career_dialog_voto_placeholder" translatable="false">&gt;17</string>
+  <string name="career_arrow_symbol" translatable="false">→</string>
+  <string name="career_coming_soon_format">%1$s - Coming soon</string>
   
   <!-- Calendar Page -->
   <string name="calendar_today">Oggi</string>
