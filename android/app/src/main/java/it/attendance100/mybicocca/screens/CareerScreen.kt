@@ -127,9 +127,20 @@ fun CareerScreen(
       flingBehavior = PagerDefaults.flingBehavior(state = pagerState, snapPositionalThreshold = 0.6667f),
     ) { page ->
       when (page) {
-        0 -> ProfiloTab(user, stats)
+        0 -> ProfiloTab(
+          user,
+          stats,
+          onGoToExams = {
+            coroutineScope.launch {
+              pagerState.animateScrollToPage(2)
+            }
+          }
+        )
         1 -> PlaceholderTab(stringResource(R.string.career_tab_piano))
-        2 -> PlaceholderTab(stringResource(R.string.career_tab_esami))
+        2 -> ExamsTab(
+          passedExams = stats?.passedExams ?: emptyList(),
+          remainingExams = stats?.remainingExams ?: emptyList()
+        )
         3 -> PlaceholderTab(stringResource(R.string.career_tab_luoghi))
       }
     }
@@ -141,6 +152,7 @@ fun CareerScreen(
 fun ProfiloTab(
   user: User?,
   stats: CareerStats?,
+  onGoToExams: () -> Unit,
 ) {
   val primaryColor = MaterialTheme.colorScheme.primary
   val textColor = MaterialTheme.colorScheme.onBackground
@@ -151,7 +163,6 @@ fun ProfiloTab(
   val mediaAritmetica = stats?.mediaAritmetica ?: 0f
   val mediaPonderata = stats?.mediaPonderata ?: 0f
   val esamiSostenuti = stats?.esamiSostenuti ?: 0
-  val esamiTotali = stats?.esamiTotali ?: 0
   val cfuAcquisiti = stats?.cfuAcquisiti ?: 0
   val cfuTotali = stats?.cfuTotali ?: 0
 
@@ -241,12 +252,10 @@ fun ProfiloTab(
         horizontalArrangement = Arrangement.spacedBy(12.dp)
       ) {
         // Esams Done
-        ProgressStatCard(
+        StatCard(
           modifier = Modifier.weight(1f),
           title = stringResource(R.string.career_esami_sostenuti),
-          current = esamiSostenuti,
-          total = esamiTotali,
-          primaryColor = primaryColor,
+          value = esamiSostenuti.toString(),
           textColor = textColor,
           grayColor = grayColor
         )
@@ -333,6 +342,25 @@ fun ProfiloTab(
 
           GradesChart(grades, primaryColor)
         }
+      }
+    }
+
+    // Go to Exams Button
+    item {
+      OutlinedButton(
+        onClick = onGoToExams,
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(48.dp),
+        border = BorderStroke(1.dp, primaryColor),
+        colors = ButtonDefaults.outlinedButtonColors(
+          contentColor = primaryColor
+        )
+      ) {
+        Text(
+          text = stringResource(R.string.career_vedi_esami),
+          fontSize = 16.sp
+        )
       }
     }
   }
@@ -461,7 +489,7 @@ fun ProgressStatCard(
 }
 
 @Composable
-fun GradesChart(grades: List<Float>, primaryColor: Color) {
+fun GradesChart(grades: List<GradePoint>, primaryColor: Color) {
   if (grades.isEmpty()) {
     Box(
       modifier = Modifier.fillMaxSize(),
@@ -475,8 +503,9 @@ fun GradesChart(grades: List<Float>, primaryColor: Color) {
     return
   }
 
-  val minGrade = grades.minOrNull() ?: 18f
-  val maxGrade = grades.maxOrNull() ?: 30f
+  val values = grades.map { it.value }
+  val minGrade = values.minOrNull() ?: 18f
+  val maxGrade = values.maxOrNull() ?: 30f
 
   val yAxisMin = minGrade.toDouble()
   val yAxisMax = maxGrade.toDouble()
@@ -485,7 +514,7 @@ fun GradesChart(grades: List<Float>, primaryColor: Color) {
 
   LaunchedEffect(grades) {
     modelProducer.runTransaction {
-      lineSeries { series(grades) }
+      lineSeries { series(values) }
     }
   }
 
@@ -831,5 +860,100 @@ fun PlaceholderTab(tabName: String) {
       color = MaterialTheme.colorScheme.onBackground,
       fontSize = 18.sp
     )
+  }
+}
+
+@Composable
+fun ExamsTab(
+  passedExams: List<Exam>,
+  remainingExams: List<Exam>,
+) {
+  val allExams = (passedExams + remainingExams).filter { it.name.isNotBlank() }
+
+  LazyColumn(
+    modifier = Modifier.fillMaxSize(),
+    contentPadding = PaddingValues(16.dp),
+    verticalArrangement = Arrangement.spacedBy(12.dp)
+  ) {
+    items(allExams) { exam ->
+      ExamCard(exam)
+    }
+  }
+}
+
+@Composable
+fun ExamCard(exam: Exam) {
+  val primaryColor = MaterialTheme.colorScheme.primary
+  val isPassed = exam.status == "S"
+  val statusColor = if (isPassed) Color(0xFF4CAF50) else Color(0xFFFF9800)
+
+  Card(
+    modifier = Modifier.fillMaxWidth(),
+    colors = CardDefaults.cardColors(
+      containerColor = MaterialTheme.colorScheme.surfaceDim
+    ),
+    shape = RoundedCornerShape(16.dp)
+  ) {
+    Row(
+      modifier = Modifier
+          .padding(16.dp)
+          .fillMaxWidth(),
+      verticalAlignment = Alignment.CenterVertically,
+      horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+      Column(
+        modifier = Modifier.weight(1f),
+        verticalArrangement = Arrangement.spacedBy(4.dp)
+      ) {
+        Text(
+          text = exam.name,
+          style = MaterialTheme.typography.titleMedium,
+          fontWeight = FontWeight.Bold,
+          color = MaterialTheme.colorScheme.onSurface
+        )
+        Row(
+          horizontalArrangement = Arrangement.spacedBy(8.dp),
+          verticalAlignment = Alignment.CenterVertically
+        ) {
+          Badge(
+            containerColor = statusColor.copy(alpha = 0.1f),
+            contentColor = statusColor
+          ) {
+            Text(
+              text = if (isPassed) "Superato" else "Da sostenere",
+              modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+              style = MaterialTheme.typography.labelSmall
+            )
+          }
+          Text(
+            text = "${exam.cfu} CFU",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+          )
+        }
+        if (exam.date != null) {
+          Text(
+            text = exam.date.split(" ").firstOrNull() ?: exam.date,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+          )
+        }
+      }
+
+      if (isPassed && exam.grade != null) {
+        Surface(
+          color = primaryColor.copy(alpha = 0.1f),
+          shape = RoundedCornerShape(8.dp)
+        ) {
+          Text(
+            text = exam.grade,
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold,
+            color = primaryColor
+          )
+        }
+      }
+    }
   }
 }

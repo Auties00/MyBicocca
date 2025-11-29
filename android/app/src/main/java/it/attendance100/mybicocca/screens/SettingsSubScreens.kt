@@ -20,7 +20,7 @@ import androidx.compose.ui.text.font.*
 import androidx.compose.ui.unit.*
 import androidx.core.os.*
 import androidx.navigation.*
-import it.attendance100.mybicocca.Screen
+import it.attendance100.mybicocca.*
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.components.*
 import it.attendance100.mybicocca.utils.*
@@ -504,10 +504,17 @@ fun DeveloperSettingsScreen(
           .background(MaterialTheme.colorScheme.background)
           .verticalScroll(rememberScrollState())
     ) {
+      Text(
+        modifier = Modifier.padding(start = 16.dp, top = 16.dp, bottom = 8.dp),
+        text = "Badge",
+        color = MaterialTheme.colorScheme.primary,
+        fontSize = 14.sp,
+      )
+
       SimpleSwitchSettingItem(
         title = stringResource(R.string.settings_developer_badge_parallax),
         subtitle = "badgeParallax",
-        icon = Icons.Default.BugReport,
+        icon = Icons.Default.PhotoSizeSelectLarge,
         checked = badgeParallax,
         onCheckedChange = {
           badgeParallax = it
@@ -518,7 +525,7 @@ fun DeveloperSettingsScreen(
       SimpleSwitchSettingItem(
         title = stringResource(R.string.settings_developer_badge_white),
         subtitle = "badgeWhite",
-        icon = Icons.Default.Code,
+        icon = Icons.Filled.Badge,
         checked = whiteBadge,
         onCheckedChange = {
           whiteBadge = it
@@ -526,10 +533,19 @@ fun DeveloperSettingsScreen(
         }
       )
 
+      HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.onSecondary)
+
+      Text(
+        modifier = Modifier.padding(start = 16.dp, top = 16.dp, bottom = 8.dp),
+        text = "API",
+        color = MaterialTheme.colorScheme.onBackground,
+        fontSize = 14.sp,
+      )
+
       SimpleCategorySettingItem(
         title = "API Test Page",
         subtitle = "Test API endpoints and view raw JSON",
-        icon = Icons.Default.Http,
+        icon = Icons.Default.Code,
         onClick = { navController.navigate(Screen.ApiTest.route) }
       )
     }

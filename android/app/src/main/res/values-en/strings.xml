@@ -98,7 +98,7 @@
   <string name="settings_general_subtitle">Language • Accessibility</string>
   <string name="settings_behaviour_subtitle">Refresh Interval • Notifications</string>
   <string name="settings_security_subtitle">Login • Session</string>
-  <string name="settings_developer_subtitle">Badge</string>
+  <string name="settings_developer_subtitle">Badge • API Test</string>
 
   <!-- Security Options -->
   <string name="settings_security_keep_logged_in">Keep me logged in</string>
@@ -116,4 +116,5 @@
   <string name="duration_forever">As long as possible</string>
   <string name="unknown">Unknown</string>
   <string name="career_no_data_available">No Available Data</string>
+  <string name="career_vedi_esami">See all Exams</string>
 </resources>

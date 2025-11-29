@@ -6,6 +6,7 @@ import androidx.compose.runtime.*
 import androidx.lifecycle.*
 import dagger.hilt.android.lifecycle.*
 import it.attendance100.mybicocca.data.api.*
+import it.attendance100.mybicocca.data.repository.*
 import it.attendance100.mybicocca.utils.*
 import kotlinx.coroutines.*
 import javax.inject.*
@@ -15,6 +16,7 @@ import it.attendance100.mybicocca.domain.contracts.AuthRepository as IAuthReposi
 class LoginViewModel @Inject constructor(
   private val authRepository: IAuthRepository,
   private val apiService: MyBicoccaApiService,
+  private val userRepository: UserRepository,
   private val preferencesManager: PreferencesManager,
 ) : ViewModel() {
 
@@ -46,16 +48,11 @@ class LoginViewModel @Inject constructor(
   fun fetchAndLogProfile() {
     viewModelScope.launch {
       try {
-        // Retrieve the saved fiscal code
-        val fiscalCode = preferencesManager.authFiscalCode
-
-        val response = withContext(Dispatchers.IO) {
-          // Pass it to the API
-          apiService.getUserProfile(fiscalCode).string()
-        }
-        // Successfully fetched user profile
+        // Trigger the repository refresh
+        // Fetches from API and saves to Room Database
+        userRepository.refreshUser()
       } catch (e: Exception) {
-        Log.e("MyBicoccaAuth", "Failed to fetch profile", e)
+        Log.e("MyBicoccaAuth", "Failed to refresh user data", e)
       }
     }
   }

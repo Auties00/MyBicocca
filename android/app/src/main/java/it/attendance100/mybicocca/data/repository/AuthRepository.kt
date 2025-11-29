@@ -38,6 +38,7 @@ class AuthRepository @Inject constructor(
         preferencesManager.authClient = client
         preferencesManager.authAccessToken = accessToken
         preferencesManager.authFiscalCode = fiscalCode
+        preferencesManager.sessionStartTime = System.currentTimeMillis()
         return true
       }
 

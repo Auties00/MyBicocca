@@ -37,7 +37,7 @@ abstract class DataSourceModule {
   @Binds
   @Singleton
   abstract fun bindUserDataSource(
-    mockDataSource: MockUserDataSource,
+    remoteDataSource: RemoteUserDataSource,
   ): UserDataSource
 
   @Binds

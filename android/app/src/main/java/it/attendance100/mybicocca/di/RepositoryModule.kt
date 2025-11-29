@@ -41,9 +41,10 @@ object RepositoryModule {
   @Provides
   @Singleton
   fun provideUserRepository(
-    dataSource: UserDataSource,
+    userDataSource: UserDataSource,
+    userDao: UserDao,
   ): IUserRepository {
-    return UserRepository(dataSource)
+    return UserRepository(userDataSource, userDao)
   }
 
   @Provides
