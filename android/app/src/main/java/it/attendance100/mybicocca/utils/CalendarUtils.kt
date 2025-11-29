@@ -35,7 +35,6 @@ object CalendarUtils {
     EventType.LECTURE -> EventLectureColor
     EventType.LAB -> EventLabColor
     EventType.EXAM -> EventExamColor
-    EventType.OFFICE_HOURS -> EventOfficeHoursColor
     EventType.OTHER -> primaryColor
   }
 
@@ -43,7 +42,6 @@ object CalendarUtils {
     EventType.LECTURE -> R.string.event_type_lecture
     EventType.LAB -> R.string.event_type_lab
     EventType.EXAM -> R.string.event_type_exam
-    EventType.OFFICE_HOURS -> R.string.event_type_office_hours
     EventType.OTHER -> R.string.event_type_other
   }
 

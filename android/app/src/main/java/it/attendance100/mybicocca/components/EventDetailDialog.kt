@@ -61,13 +61,9 @@ enum class EventStatus {
   }
 }
 
-// ============================================================================
-// EVENT DETAIL DIALOG
-// ============================================================================
 
-/**
- * Dialog premium per mostrare i dettagli di un evento usando Material 3 BasicAlertDialog
- */
+// EVENT DETAIL DIALOG
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EventDetailDialog(
@@ -111,10 +107,10 @@ fun EventDetailDialog(
   
   val cardAlpha by animateFloatAsState(
     targetValue = if (isVisible) 1f else 0f,
-    animationSpec = tween(if (isClosing) 200 else 350, easing = if (isClosing) EaseInCubic else EaseOutCubic),
+    animationSpec = tween(if (isClosing) 200 else 250, easing = if (isClosing) EaseInCubic else EaseOutCubic),
     label = "cardAlpha"
   )
-  
+
   val cardOffsetY by animateFloatAsState(
     targetValue = if (isVisible) 0f else 80f,
     animationSpec = if (isClosing) tween(250, easing = EaseInCubic)
@@ -125,25 +121,25 @@ fun EventDetailDialog(
   // Stagger animations
   val headerVisible by animateFloatAsState(
     targetValue = if (isVisible) 1f else 0f,
-    animationSpec = tween(if (isClosing) 150 else 400, delayMillis = if (isClosing) 0 else 100),
+    animationSpec = tween(if (isClosing) 150 else 300, delayMillis = if (isClosing) 0 else 50),
     label = "headerVisible"
   )
   
   val timeCardVisible by animateFloatAsState(
     targetValue = if (isVisible) 1f else 0f,
-    animationSpec = tween(if (isClosing) 150 else 400, delayMillis = if (isClosing) 0 else 200),
+    animationSpec = tween(if (isClosing) 150 else 300, delayMillis = if (isClosing) 0 else 100),
     label = "timeCardVisible"
   )
   
   val detailsVisible by animateFloatAsState(
     targetValue = if (isVisible) 1f else 0f,
-    animationSpec = tween(if (isClosing) 150 else 400, delayMillis = if (isClosing) 0 else 300),
+    animationSpec = tween(if (isClosing) 150 else 300, delayMillis = if (isClosing) 0 else 150),
     label = "detailsVisible"
   )
   
   val buttonVisible by animateFloatAsState(
     targetValue = if (isVisible) 1f else 0f,
-    animationSpec = tween(if (isClosing) 150 else 400, delayMillis = if (isClosing) 0 else 400),
+    animationSpec = tween(if (isClosing) 150 else 300, delayMillis = if (isClosing) 0 else 200),
     label = "buttonVisible"
   )
 
@@ -156,10 +152,10 @@ fun EventDetailDialog(
     label = "gradientOffset"
   )
 
-  // Padding uniforme per tutto il contenuto del dialog
+  // Padding uniforme  del dialog
   val dialogContentPadding = 16.dp
 
-  // Material 3 BasicAlertDialog
+
   BasicAlertDialog(
     onDismissRequest = animatedDismiss,
     modifier = Modifier
@@ -227,10 +223,8 @@ fun EventDetailDialog(
   }
 }
 
-// ============================================================================
-// DIALOG HEADER SECTION
-// ============================================================================
 
+// DIALOG HEADER SECTION
 @Composable
 private fun EventDialogHeader(
   event: CourseEvent,
@@ -349,7 +343,6 @@ private fun EventTypeChip(eventType: EventType) {
           EventType.LECTURE -> Icons.Outlined.School
           EventType.LAB -> Icons.Outlined.Science
           EventType.EXAM -> Icons.AutoMirrored.Outlined.Assignment
-          EventType.OFFICE_HOURS -> Icons.Outlined.People
           EventType.OTHER -> Icons.Outlined.Event
         },
         contentDescription = null,
@@ -366,10 +359,8 @@ private fun EventTypeChip(eventType: EventType) {
   }
 }
 
-// ============================================================================
-// DIALOG TIME SECTION
-// ============================================================================
 
+// DIALOG TIME SECTION
 @Composable
 private fun EventDialogTimeSection(
   event: CourseEvent,
@@ -399,7 +390,7 @@ private fun EventDialogTimeSection(
     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
     elevation = CardDefaults.cardElevation(defaultElevation = 12.dp)
   ) {
-    // Calcolo automatico dell'allineamento
+    // Calcolo dell'allineamento
     val density = LocalDensity.current
     val labelHeight = with(density) { 11.sp.toDp() }
     val spacerHeight = 6.dp
@@ -608,10 +599,8 @@ private fun EventProgressBar(
   )
 }
 
-// ============================================================================
-// DIALOG DETAILS SECTION
-// ============================================================================
 
+// DIALOG DETAILS SECTION
 @Composable
 private fun EventDialogDetailsSection(
   event: CourseEvent,
@@ -729,10 +718,7 @@ private fun DetailInfoRow(
   }
 }
 
-// ============================================================================
 // DIALOG E-LEARNING BUTTON
-// ============================================================================
-
 @Composable
 private fun EventDialogELearningButton(
   buttonVisible: Float,
