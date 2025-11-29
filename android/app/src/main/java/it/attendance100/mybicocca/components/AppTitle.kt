@@ -10,7 +10,9 @@ import it.attendance100.mybicocca.utils.*
 
 
 @Composable
-fun AppTitle() {
+fun AppTitle(
+  modifier: Modifier = Modifier,
+) {
   val preferencesManager = rememberPreferencesManager()
   val isDarkMode = preferencesManager.isDarkMode ?: isSystemInDarkTheme()
 
@@ -20,7 +22,7 @@ fun AppTitle() {
     Image(
       painter = painterResource(if (isDarkMode) R.drawable.dark_text else R.drawable.text),
       contentDescription = stringResource(R.string.app_logo),
-      modifier = Modifier.size(dimensionResource(id = R.dimen.launcher_icon_size))
+      modifier = modifier.size(dimensionResource(id = R.dimen.launcher_icon_size))
     )
   }
 }

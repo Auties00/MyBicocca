@@ -23,6 +23,11 @@ class PreferencesManager @Inject constructor(
     private const val KEY_AUTH_TOKEN = "auth_access_token"
     private const val KEY_AUTH_FISCAL_CODE = "auth_fiscal_code"
 
+    private const val KEY_USER_STUDENT_ID = "user_student_id"
+    private const val KEY_USER_MATRIC_ID = "user_matric_id"
+    private const val KEY_USER_PERSON_ID = "user_person_id"
+    private const val KEY_USER_TYPE_TITLE_CODE = "user_type_title_code"
+
     // Private Settings
     private const val KEY_IS_DEVELOPER_MODE = "developer_mode"
     private const val KEY_THEME_MODE = "theme_mode"
@@ -129,12 +134,33 @@ class PreferencesManager @Inject constructor(
     get() = prefs.getString(KEY_AUTH_FISCAL_CODE, null)
     set(value) = prefs.edit { putString(KEY_AUTH_FISCAL_CODE, value) }
 
+  // User Info for quick access
+  var userStudentId: Int
+    get() = prefs.getInt(KEY_USER_STUDENT_ID, -1)
+    set(value) = prefs.edit { putInt(KEY_USER_STUDENT_ID, value) }
+
+  var userMatricId: Int
+    get() = prefs.getInt(KEY_USER_MATRIC_ID, -1)
+    set(value) = prefs.edit { putInt(KEY_USER_MATRIC_ID, value) }
+
+  var userPersonId: Int
+    get() = prefs.getInt(KEY_USER_PERSON_ID, -1)
+    set(value) = prefs.edit { putInt(KEY_USER_PERSON_ID, value) }
+
+  var userTypeTitleCode: String?
+    get() = prefs.getString(KEY_USER_TYPE_TITLE_CODE, null)
+    set(value) = prefs.edit { putString(KEY_USER_TYPE_TITLE_CODE, value) }
+
   fun clearAuth() {
     prefs.edit {
       remove(KEY_AUTH_UID)
       remove(KEY_AUTH_CLIENT)
       remove(KEY_AUTH_TOKEN)
       remove(KEY_AUTH_FISCAL_CODE)
+      remove(KEY_USER_STUDENT_ID)
+      remove(KEY_USER_MATRIC_ID)
+      remove(KEY_USER_PERSON_ID)
+      remove(KEY_USER_TYPE_TITLE_CODE)
     }
   }
 
