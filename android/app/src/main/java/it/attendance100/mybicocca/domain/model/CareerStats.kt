@@ -16,28 +16,27 @@ data class CareerStats(
   val remainingExams: List<Exam>,
 )
 
+/**
+ * Exam grade point
+ * Represents a grade point for a specific exam
+ */
 data class GradePoint(
   val value: Float,
   val date: String,
   val name: String,
   val cfu: String,
-  val isCumLaude: Boolean,
+  val isLode: Boolean,
 )
 
-// We need ExamItem here or import it. It's in DTOs.
-// Ideally domain models shouldn't depend on DTOs.
-// But for speed, I'll duplicate or move ExamItem to domain?
-// Or just use a domain version.
-// Let's check if ExamItem is available here. It's in DTO package.
-// I should probably create a domain model for Exam.
-// But the user just said "update the models".
-// I'll create a domain Exam model to be clean.
-
+/**
+ * Exam model
+ * Represents a student's exam
+ */
 data class Exam(
   val name: String,
   val cfu: String,
   val grade: String?,
   val date: String?,
-  val status: String, // "S" or "F"
-  val isCumLaude: Boolean,
+  val status: String, // "S" or "F" (Superato o Frequentato)
+  val isLode: Boolean,
 )

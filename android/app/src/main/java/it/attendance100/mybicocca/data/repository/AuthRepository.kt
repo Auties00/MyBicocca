@@ -25,10 +25,8 @@ class AuthRepository @Inject constructor(
       // Parse URL parameters
       val uri = Uri.parse(location)
 
-      // Logs show "access_token" but headers usually use "access-token", so we'll check both just in case
-      val accessToken = uri.getQueryParameter("access_token")
-        ?: uri.getQueryParameter("access-token")
-
+      // Checking both "access_token" and "access-token" just in case
+      val accessToken = uri.getQueryParameter("access_token") ?: uri.getQueryParameter("access-token")
       val client = uri.getQueryParameter("client")
       val uid = uri.getQueryParameter("uid")
       val fiscalCode = uri.getQueryParameter("fiscal_code")

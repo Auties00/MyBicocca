@@ -9,6 +9,7 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.*
+import androidx.compose.ui.platform.*
 import androidx.compose.ui.res.*
 import androidx.compose.ui.text.font.*
 import androidx.compose.ui.unit.*
@@ -31,6 +32,7 @@ fun LoginManagerScreen(
   val primaryColor = MaterialTheme.colorScheme.primary
   val textColor = MaterialTheme.colorScheme.onBackground
   val grayColor = if (MaterialTheme.colorScheme.background == BackgroundColor) GrayColor else GrayColorLight
+  val uriHandler = LocalUriHandler.current
 
   Scaffold(
     containerColor = MaterialTheme.colorScheme.background,
@@ -110,8 +112,7 @@ fun LoginManagerScreen(
       Surface(
         modifier = Modifier
             .fillMaxWidth()
-        //  .clickable() {} TODO add elearning login
-        ,
+            .clickable { uriHandler.openUri("https://elearning.unimib.it") },
         color = MaterialTheme.colorScheme.background
       ) {
         Row(
@@ -141,8 +142,7 @@ fun LoginManagerScreen(
       Surface(
         modifier = Modifier
             .fillMaxWidth()
-        //  .clickable() {} TODO add segreterie login
-        ,
+            .clickable { uriHandler.openUri("https://s3w.si.unimib.it") },
         color = MaterialTheme.colorScheme.background
       ) {
         Row(

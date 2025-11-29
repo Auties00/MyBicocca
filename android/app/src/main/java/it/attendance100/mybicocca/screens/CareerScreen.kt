@@ -920,13 +920,13 @@ fun ExamCard(exam: Exam) {
             contentColor = statusColor
           ) {
             Text(
-              text = if (isPassed) "Superato" else "Da sostenere",
+              text = stringResource(if (isPassed) R.string.exam_status_passed else R.string.exam_status_pending),
               modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
               style = MaterialTheme.typography.labelSmall
             )
           }
           Text(
-            text = "${exam.cfu} CFU",
+            text = stringResource(R.string.exam_cfu_format, exam.cfu),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
           )

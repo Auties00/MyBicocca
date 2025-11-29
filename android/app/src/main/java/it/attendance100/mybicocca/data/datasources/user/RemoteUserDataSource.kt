@@ -108,15 +108,15 @@ class RemoteUserDataSource @Inject constructor(
 
     val grades = examsResponse.career.notations.map { notation ->
       val examDetail = examsResponse.career.exams.find { it.dateExam == notation.dateExam }
-      val isCumLaude = notation.isCumLaude
-      val value = if (isCumLaude) 31f else notation.grade
+      val isLode = notation.isLode
+      val value = if (isLode) 31f else notation.grade
 
       GradePoint(
         value = value,
         date = notation.dateExam,
         name = examDetail?.activityDescr ?: "Esame",
         cfu = examDetail?.cfu ?: "?",
-        isCumLaude = isCumLaude
+        isLode = isLode
       )
     }
 
@@ -130,7 +130,7 @@ class RemoteUserDataSource @Inject constructor(
         grade = it.grade,
         date = it.dateExam,
         status = it.status,
-        isCumLaude = it.isCumLaude
+        isLode = it.isLode
       )
     }
 
@@ -141,7 +141,7 @@ class RemoteUserDataSource @Inject constructor(
         grade = null,
         date = null,
         status = it.status,
-        isCumLaude = false
+        isLode = false
       )
     }
 

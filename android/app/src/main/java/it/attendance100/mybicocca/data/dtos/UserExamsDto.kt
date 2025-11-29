@@ -18,7 +18,7 @@ data class ExamNotation(
   @SerializedName("laudFlag") val laudFlag: Int,
   @SerializedName("grade") val grade: Float,
 ) {
-  val isCumLaude: Boolean get() = laudFlag == 1
+  val isLode: Boolean get() = laudFlag == 1
 }
 
 data class ExamItem(
@@ -38,5 +38,5 @@ data class ExamItem(
   @SerializedName("grade") val grade: String?, // Can be "0", "22", "30L"
   @SerializedName("laudFlag") val laudFlag: Int,
 ) {
-  val isCumLaude: Boolean get() = laudFlag == 1
+  val isLode: Boolean get() = laudFlag == 1
 }
