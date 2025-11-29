@@ -2,38 +2,29 @@ package it.attendance100.mybicocca.viewmodel
 
 import androidx.lifecycle.*
 import dagger.hilt.android.lifecycle.*
-import it.attendance100.mybicocca.domain.contracts.*
-import it.attendance100.mybicocca.domain.model.*
+import it.attendance100.mybicocca.data.repository.*
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.*
 import javax.inject.*
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
   private val userRepository: UserRepository,
-  private val notificationRepository: NotificationRepository,
 ) : ViewModel() {
 
-  private val _user = MutableStateFlow<User?>(null)
-  val user: StateFlow<User?> = _user.asStateFlow()
-
-  private val _notifications = MutableStateFlow<List<Notification>>(emptyList())
-  val notifications: StateFlow<List<Notification>> = _notifications.asStateFlow()
+  // Expose data as Flow or State for UI
+  val user = userRepository.getUser()
 
   init {
-    loadData()
+    // Trigger background refresh immediately on init
+    refreshData()
   }
 
-  private fun loadData() {
+
+  fun refreshData() {
     viewModelScope.launch {
-      userRepository.getUser().collect {
-        _user.value = it
-      }
-    }
-    viewModelScope.launch {
-      notificationRepository.getUnreadNotifications().collect {
-        _notifications.value = it
-      }
+      // Runs in background.
+      // UI updates automatically because it observes the 'user' Flow.
+      userRepository.refreshUser()
     }
   }
 }

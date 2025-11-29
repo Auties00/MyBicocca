@@ -69,7 +69,7 @@ class RemoteUserDataSource @Inject constructor(
       android.util.Log.d("RemoteUserDataSource", "getCareerStats: IDs found in cache.")
     }
 
-    if (stuId == null || matId == null) {
+    if (stuId == null) {
       android.util.Log.w("RemoteUserDataSource", "getCareerStats: Missing IDs, returning empty stats.")
       return@coroutineScope CareerStats(
         mediaAritmetica = 0f,
@@ -78,7 +78,9 @@ class RemoteUserDataSource @Inject constructor(
         esamiTotali = 0,
         cfuAcquisiti = 0,
         cfuTotali = 0,
-        grades = emptyList()
+        grades = emptyList(),
+        passedExams = emptyList(),
+        remainingExams = emptyList()
       )
     }
 
@@ -104,16 +106,55 @@ class RemoteUserDataSource @Inject constructor(
     // We'll pick the one with base 30 for the grades average.
     val avg30 = averages.find { it.base == 30 }
 
-    val grades = examsResponse.career.notations.map { it.grade }
+    val grades = examsResponse.career.notations.map { notation ->
+      val examDetail = examsResponse.career.exams.find { it.dateExam == notation.dateExam }
+      val isCumLaude = notation.isCumLaude
+      val value = if (isCumLaude) 31f else notation.grade
+
+      GradePoint(
+        value = value,
+        date = notation.dateExam,
+        name = examDetail?.activityDescr ?: "Esame",
+        cfu = examDetail?.cfu ?: "?",
+        isCumLaude = isCumLaude
+      )
+    }
+
+    // Calculate total exams from the exams list + remainings list
+    val totalExams = (examsResponse.career.exams.size + examsResponse.career.remainings.size)
+
+    val passedExams = examsResponse.career.exams.map {
+      Exam(
+        name = it.activityDescr,
+        cfu = it.cfu,
+        grade = it.grade,
+        date = it.dateExam,
+        status = it.status,
+        isCumLaude = it.isCumLaude
+      )
+    }
+
+    val remainingExams = examsResponse.career.remainings.map {
+      Exam(
+        name = it.activityDescr,
+        cfu = it.cfu,
+        grade = null,
+        date = null,
+        status = it.status,
+        isCumLaude = false
+      )
+    }
 
     CareerStats(
       mediaAritmetica = avg30?.arithmetic ?: 0f,
       mediaPonderata = avg30?.weighted ?: 0f,
       esamiSostenuti = stats.examsDone,
-      esamiTotali = 0, // Not provided directly, maybe calculate or leave 0
+      esamiTotali = totalExams,
       cfuAcquisiti = stats.cfuDone.toInt(),
       cfuTotali = stats.totalToDo.toInt(),
-      grades = grades
+      grades = grades,
+      passedExams = passedExams,
+      remainingExams = remainingExams
     )
   }
 }

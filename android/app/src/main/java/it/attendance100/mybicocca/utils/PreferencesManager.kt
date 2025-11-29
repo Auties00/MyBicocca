@@ -27,6 +27,7 @@ class PreferencesManager @Inject constructor(
     private const val KEY_USER_MATRIC_ID = "user_matric_id"
     private const val KEY_USER_PERSON_ID = "user_person_id"
     private const val KEY_USER_TYPE_TITLE_CODE = "user_type_title_code"
+    private const val KEY_SESSION_START_TIME = "session_start_time"
 
     // Private Settings
     private const val KEY_IS_DEVELOPER_MODE = "developer_mode"
@@ -117,6 +118,10 @@ class PreferencesManager @Inject constructor(
       prefs.edit { putLong(KEY_SESSION_DURATION, value) }
     }
 
+  var sessionStartTime: Long
+    get() = prefs.getLong(KEY_SESSION_START_TIME, 0L)
+    set(value) = prefs.edit { putLong(KEY_SESSION_START_TIME, value) }
+
   // Authentication Headers
   var authUid: String?
     get() = prefs.getString(KEY_AUTH_UID, null)
@@ -161,6 +166,7 @@ class PreferencesManager @Inject constructor(
       remove(KEY_USER_MATRIC_ID)
       remove(KEY_USER_PERSON_ID)
       remove(KEY_USER_TYPE_TITLE_CODE)
+      remove(KEY_SESSION_START_TIME)
     }
   }
 

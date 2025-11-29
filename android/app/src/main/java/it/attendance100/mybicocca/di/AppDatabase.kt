@@ -9,12 +9,18 @@ import it.attendance100.mybicocca.data.entities.*
  * The instance is managed by Hilt (see DatabaseModule)
  */
 @Database(
-  entities = [CourseEvent::class, CourseSchedule::class],
-  version = 1,
+  entities = [
+    CourseEvent::class,
+    CourseSchedule::class,
+    UserEntity::class,
+    CareerStatsEntity::class,
+  ],
+  version = 3,
   exportSchema = false
 )
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
   abstract fun courseEventDao(): CourseEventDao
   abstract fun courseScheduleDao(): CourseScheduleDao
+  abstract fun userDao(): UserDao
 }

@@ -110,7 +110,7 @@
   <string name="settings_general_subtitle">Lingua • Accessibilità</string>
   <string name="settings_behaviour_subtitle">Intervallo Aggiornamento • Notifiche</string>
   <string name="settings_security_subtitle">Login • Sessione</string>
-  <string name="settings_developer_subtitle">Badge</string>
+  <string name="settings_developer_subtitle">Badge • Test API</string>
   <string name="settings_security_keep_logged_in">Resta connesso</string>
   <string name="settings_security_keep_logged_in_desc_true">Resta connesso per una durata specifica</string>
   <string name="settings_security_keep_logged_in_desc_false">Dovrai effettuare il login ogni volta che apri l\'app</string>
@@ -126,4 +126,5 @@
   <string name="duration_forever">Il più a lungo possibile</string>
   <string name="unknown">Sconosciuto</string>
   <string name="bicoccapp" translatable="false">BicoccApp</string>
+  <string name="career_vedi_esami">Vedi tutti gli esami</string>
 </resources>

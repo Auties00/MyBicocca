@@ -12,7 +12,9 @@ data class CareerStatsEntity(
   val esamiTotali: Int,
   val cfuAcquisiti: Int,
   val cfuTotali: Int,
-  val grades: List<Float>,
+  val grades: List<GradePoint>,
+  val passedExams: List<Exam>,
+  val remainingExams: List<Exam>,
 ) {
   fun toDomain() = CareerStats(
     mediaAritmetica = mediaAritmetica,
@@ -21,7 +23,9 @@ data class CareerStatsEntity(
     esamiTotali = esamiTotali,
     cfuAcquisiti = cfuAcquisiti,
     cfuTotali = cfuTotali,
-    grades = grades
+    grades = grades,
+    passedExams = passedExams,
+    remainingExams = remainingExams
   )
 }
 
@@ -32,5 +36,7 @@ fun CareerStats.toEntity() = CareerStatsEntity(
   esamiTotali = esamiTotali,
   cfuAcquisiti = cfuAcquisiti,
   cfuTotali = cfuTotali,
-  grades = grades
+  grades = grades,
+  passedExams = passedExams,
+  remainingExams = remainingExams
 )

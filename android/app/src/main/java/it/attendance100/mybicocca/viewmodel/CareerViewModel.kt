@@ -34,5 +34,8 @@ class CareerViewModel @Inject constructor(
         _stats.value = it
       }
     }
+    viewModelScope.launch {
+      userRepository.refreshUser()
+    }
   }
 }

@@ -25,6 +25,7 @@ import kotlinx.coroutines.*
 
 // Navigation routes
 sealed class Screen(val route: String) {
+  object Splash : Screen("splash")
   object Home : Screen("home")
   object LoginManager : Screen("login_manager")
   object Settings : Screen("settings")
@@ -35,6 +36,7 @@ sealed class Screen(val route: String) {
   object SettingsDeveloper : Screen("settings_developer")
   object AppInfo : Screen("app_info")
   object Login : Screen("login_webview")
+  object ApiTest : Screen("api_test")
 
 }
 
@@ -122,7 +124,7 @@ fun AppNavigation(onThemeChange: (Boolean) -> Unit) {
   SharedTransitionLayout {
     NavHost(
       navController = navController,
-      startDestination = Screen.Home.route,
+      startDestination = Screen.Splash.route,
       popExitTransition = {
         scaleOut(
           targetScale = 0.9f,
@@ -143,6 +145,9 @@ fun AppNavigation(onThemeChange: (Boolean) -> Unit) {
         )
       },
     ) {
+      composable(Screen.Splash.route) {
+        SplashScreen(navController)
+      }
       composable(Screen.Home.route) { _ ->
         BackHandler(enabled = drawerState.isOpen) {
           if (drawerState.isOpen) {
@@ -182,10 +187,15 @@ fun AppNavigation(onThemeChange: (Boolean) -> Unit) {
       composable(Screen.Login.route) {
         LoginWebViewScreen(
           onLoginSuccess = {
-            navController.popBackStack() // Pop back to LoginManager (or Home) and refresh
+            navController.navigate(Screen.Home.route) {
+              popUpTo(Screen.Login.route) { inclusive = true }
+            }
           },
           onBack = { navController.navigateUp() }
         )
+      }
+      composable(Screen.ApiTest.route) {
+        ApiTestScreen(navController)
       }
     }
   }

@@ -10,4 +10,5 @@ import kotlinx.coroutines.flow.*
 interface UserRepository {
   fun getUser(): Flow<User>
   fun getCareerStats(): Flow<CareerStats>
+  suspend fun refreshUser()
 }
