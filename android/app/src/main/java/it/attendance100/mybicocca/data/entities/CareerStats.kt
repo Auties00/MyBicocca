@@ -1,0 +1,36 @@
+package it.attendance100.mybicocca.data.entities
+
+import androidx.room.*
+import it.attendance100.mybicocca.domain.model.*
+
+@Entity(tableName = "career_stats")
+data class CareerStatsEntity(
+  @PrimaryKey val id: Int = 0, // Constant ID = 0 because we only store the current logged-in user's stats
+  val mediaAritmetica: Float,
+  val mediaPonderata: Float,
+  val esamiSostenuti: Int,
+  val esamiTotali: Int,
+  val cfuAcquisiti: Int,
+  val cfuTotali: Int,
+  val grades: List<Float>,
+) {
+  fun toDomain() = CareerStats(
+    mediaAritmetica = mediaAritmetica,
+    mediaPonderata = mediaPonderata,
+    esamiSostenuti = esamiSostenuti,
+    esamiTotali = esamiTotali,
+    cfuAcquisiti = cfuAcquisiti,
+    cfuTotali = cfuTotali,
+    grades = grades
+  )
+}
+
+fun CareerStats.toEntity() = CareerStatsEntity(
+  mediaAritmetica = mediaAritmetica,
+  mediaPonderata = mediaPonderata,
+  esamiSostenuti = esamiSostenuti,
+  esamiTotali = esamiTotali,
+  cfuAcquisiti = cfuAcquisiti,
+  cfuTotali = cfuTotali,
+  grades = grades
+)

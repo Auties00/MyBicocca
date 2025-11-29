@@ -20,6 +20,7 @@ import androidx.compose.ui.text.font.*
 import androidx.compose.ui.unit.*
 import androidx.core.os.*
 import androidx.navigation.*
+import it.attendance100.mybicocca.Screen
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.components.*
 import it.attendance100.mybicocca.utils.*
@@ -523,6 +524,13 @@ fun DeveloperSettingsScreen(
           whiteBadge = it
           preferencesManager.badgeWhite = it
         }
+      )
+
+      SimpleCategorySettingItem(
+        title = "API Test Page",
+        subtitle = "Test API endpoints and view raw JSON",
+        icon = Icons.Default.Http,
+        onClick = { navController.navigate(Screen.ApiTest.route) }
       )
     }
   }
