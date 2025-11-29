@@ -8,7 +8,7 @@ import kotlinx.coroutines.flow.*
  * Defines methods for retrieving user profile and career stats
  */
 interface UserRepository {
-  fun getUser(): Flow<User>
-  fun getCareerStats(): Flow<CareerStats>
+  fun getUser(): Flow<User?>
+  fun getCareerStats(): Flow<CareerStats?>
   suspend fun refreshUser()
 }

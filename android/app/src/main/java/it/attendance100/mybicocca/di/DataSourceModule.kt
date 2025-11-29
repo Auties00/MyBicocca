@@ -5,7 +5,6 @@ import dagger.hilt.*
 import dagger.hilt.components.*
 import it.attendance100.mybicocca.data.datasources.auth.*
 import it.attendance100.mybicocca.data.datasources.calendar.*
-import it.attendance100.mybicocca.data.datasources.notification.*
 import it.attendance100.mybicocca.data.datasources.user.*
 import javax.inject.*
 
@@ -39,12 +38,6 @@ abstract class DataSourceModule {
   abstract fun bindUserDataSource(
     remoteDataSource: RemoteUserDataSource,
   ): UserDataSource
-
-  @Binds
-  @Singleton
-  abstract fun bindNotificationDataSource(
-    mockDataSource: MockNotificationDataSource,
-  ): NotificationDataSource
 
   // Auth
   @Binds

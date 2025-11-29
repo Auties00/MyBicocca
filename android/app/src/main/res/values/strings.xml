@@ -127,4 +127,7 @@
   <string name="unknown">Sconosciuto</string>
   <string name="bicoccapp" translatable="false">BicoccApp</string>
   <string name="career_vedi_esami">Vedi tutti gli esami</string>
+  <string name="exam_status_passed">Passed</string>
+  <string name="exam_status_pending">Pending</string>
+  <string name="exam_cfu_format">%1$d CFU</string>
 </resources>

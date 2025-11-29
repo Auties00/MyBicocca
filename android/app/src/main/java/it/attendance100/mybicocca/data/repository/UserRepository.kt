@@ -17,17 +17,15 @@ class UserRepository @Inject constructor(
    * Retrieves the user from the Database.
    * Returns a Flow that immediately emits cached data if available.
    */
-  override fun getUser(): Flow<User> {
+  override fun getUser(): Flow<User?> {
     return dao.getUser().map { entity ->
-      // If DB is empty, return a placeholder User.
-      entity?.toDomain() ?: User("", "", "", "", "", "")
+      entity?.toDomain()
     }
   }
 
-  override fun getCareerStats(): Flow<CareerStats> {
+  override fun getCareerStats(): Flow<CareerStats?> {
     return dao.getCareerStats().map { entity ->
-      // If DB is empty, return a placeholder CareerStats.
-      entity?.toDomain() ?: CareerStats(0f, 0f, 0, 0, 0, 0, emptyList(), emptyList(), emptyList())
+      entity?.toDomain()
     }
   }
 

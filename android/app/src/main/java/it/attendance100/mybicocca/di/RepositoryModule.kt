@@ -1,3 +1,5 @@
+@file:Suppress("RedundantSuppression", "RedundantSuppression")
+
 package it.attendance100.mybicocca.di
 
 import dagger.*
@@ -6,14 +8,12 @@ import dagger.hilt.components.*
 import it.attendance100.mybicocca.data.daos.*
 import it.attendance100.mybicocca.data.datasources.auth.*
 import it.attendance100.mybicocca.data.datasources.calendar.*
-import it.attendance100.mybicocca.data.datasources.notification.*
 import it.attendance100.mybicocca.data.datasources.user.*
 import it.attendance100.mybicocca.data.repository.*
 import it.attendance100.mybicocca.utils.*
 import javax.inject.*
 import it.attendance100.mybicocca.domain.contracts.AuthRepository as IAuthRepository
 import it.attendance100.mybicocca.domain.contracts.CalendarRepository as ICalendarRepository
-import it.attendance100.mybicocca.domain.contracts.NotificationRepository as INotificationRepository
 import it.attendance100.mybicocca.domain.contracts.UserRepository as IUserRepository
 
 /**
@@ -21,6 +21,7 @@ import it.attendance100.mybicocca.domain.contracts.UserRepository as IUserReposi
  * Supplies repository instances by injecting necessary dependencies
  */
 @Module
+@Suppress("unused", "RedundantSuppression", "RedundantSuppression", "RedundantSuppression", "RedundantSuppression", "RedundantSuppression")
 @InstallIn(SingletonComponent::class)
 object RepositoryModule {
 
@@ -45,14 +46,6 @@ object RepositoryModule {
     userDao: UserDao,
   ): IUserRepository {
     return UserRepository(userDataSource, userDao)
-  }
-
-  @Provides
-  @Singleton
-  fun provideNotificationRepository(
-    dataSource: NotificationDataSource,
-  ): INotificationRepository {
-    return NotificationRepository(dataSource)
   }
 
   // Auth
