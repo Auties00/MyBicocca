@@ -41,18 +41,6 @@ enum class CalendarViewMode {
 }
 
 
-// SHARED CONSTANTS
-/**
- * Costanti condivise tra CalendarScreen e WeekGridView per garantire allineamento.
- * Questa costante crea un accoppiamento tra CalendarScreen (che usa uno Spacer
- * nel selettore dei giorni) e WeekGridView (che usa questa larghezza per la colonna oraria).
- * Modificare questo valore richiede modifiche in entrambi i componenti per mantenere l'allineamento.
- */
-object CalendarLayoutConstants {
-    val TIME_COLUMN_WIDTH = 50.dp
-}
-
-
 // MAIN CALENDAR SCREEN
 
 @Composable
