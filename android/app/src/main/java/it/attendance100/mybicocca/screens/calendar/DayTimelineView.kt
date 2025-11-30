@@ -1,6 +1,5 @@
 package it.attendance100.mybicocca.screens.calendar
 
-
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
@@ -23,68 +22,24 @@ import androidx.compose.ui.text.font.*
 import androidx.compose.ui.text.style.*
 import androidx.compose.ui.unit.*
 import it.attendance100.mybicocca.R
-import it.attendance100.mybicocca.components.OverlappingEventsDialog
+import it.attendance100.mybicocca.components.SwipeableCardStack
 import it.attendance100.mybicocca.data.entities.*
 import it.attendance100.mybicocca.ui.theme.*
 import it.attendance100.mybicocca.utils.*
 import kotlinx.coroutines.delay
 import java.time.*
 
-
 // CONSTANTS
-
 private object DayTimelineConstants {
-    val HOUR_SLOT_HEIGHT = 80.dp
-    val TIME_COLUMN_WIDTH = 68.dp
     val CURRENT_TIME_DOT_SIZE = 12.dp
     val CURRENT_TIME_LINE_HEIGHT = 2.dp
     val EVENT_CARD_CORNER_RADIUS = 16.dp
     val COLOR_BAR_WIDTH = 4.dp
+    const val PULSE_DURATION_MS = 2000
 
     const val START_HOUR = 7
     const val END_HOUR = 22
-    const val PULSE_DURATION_MS = 2000
 }
-
-
-// OVERLAPPING EVENTS INDICATOR
-
-@Composable
-private fun OverlappingEventsIndicator(
-    count: Int,
-    primaryColor: Color,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    // Indicatore sottile e compatto posizionato in alto
-    Surface(
-        onClick = onClick,
-        modifier = modifier,
-        shape = RoundedCornerShape(8.dp),
-        color = primaryColor.copy(alpha = 0.9f),
-        shadowElevation = 2.dp
-    ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-            horizontalArrangement = Arrangement.spacedBy(4.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                imageVector = Icons.Outlined.MoreHoriz,
-                contentDescription = null,
-                tint = Color.White,
-                modifier = Modifier.size(14.dp)
-            )
-            Text(
-                text = "+$count",
-                color = Color.White,
-                fontSize = 11.sp,
-                fontWeight = FontWeight.SemiBold
-            )
-        }
-    }
-}
-
 
 // MAIN COMPONENT - DAY TIMELINE VIEW
 
@@ -124,7 +79,6 @@ fun DayTimelineView(
     }
 }
 
-
 // HEADER
 
 @Composable
@@ -162,7 +116,6 @@ private fun DayTimelineHeader(
         }
     }
 }
-
 
 // TIMELINE CONTENT
 
@@ -212,7 +165,7 @@ private fun TimelineContent(
             val currentHour = currentTime.hour
             if (currentHour >= DayTimelineConstants.START_HOUR && currentHour <= DayTimelineConstants.END_HOUR) {
                 val totalMinutes = (currentHour - DayTimelineConstants.START_HOUR) * 60 + currentTime.minute
-                val offsetY = (totalMinutes / 60f * DayTimelineConstants.HOUR_SLOT_HEIGHT.value).dp
+                val offsetY = (totalMinutes / 60f * CalendarUtils.HOUR_SLOT_HEIGHT.value).dp
 
                 CurrentTimeIndicator(
                     primaryColor = primaryColor,
@@ -223,7 +176,6 @@ private fun TimelineContent(
     }
 }
 
-
 // TIMELINE BACKGROUND
 
 @Composable
@@ -232,7 +184,7 @@ private fun TimelineBackground(
     endHour: Int,
     grayColor: Color
 ) {
-    val totalHeight = ((endHour - startHour) * DayTimelineConstants.HOUR_SLOT_HEIGHT.value).dp
+    val totalHeight = ((endHour - startHour) * CalendarUtils.HOUR_SLOT_HEIGHT.value).dp
 
     Column(
         modifier = Modifier
@@ -243,11 +195,12 @@ private fun TimelineBackground(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(DayTimelineConstants.HOUR_SLOT_HEIGHT)
+                    .height(CalendarUtils.HOUR_SLOT_HEIGHT)
             ) {
                 Box(
                     modifier = Modifier
-                        .width(DayTimelineConstants.TIME_COLUMN_WIDTH),
+                        // Usa la costante definita in WeekGridView
+                        .width(CalendarLayoutConstants.TIME_COLUMN_WIDTH),
                     contentAlignment = Alignment.TopEnd
                 ) {
                     Text(
@@ -274,7 +227,6 @@ private fun TimelineBackground(
     }
 }
 
-
 // EVENTS OVERLAY
 
 @Composable
@@ -287,164 +239,148 @@ private fun TimelineEventsOverlay(
     onEventClick: (CourseEvent) -> Unit
 ) {
     val density = LocalDensity.current
-    var overlappingEventsToShow by remember { mutableStateOf<List<CourseEvent>?>(null) }
-    // Mappa gruppo -> evento selezionato (per default il primo)
+
+    // Mappa gruppo -> evento selezionato
     val selectedEventsByGroup = remember { mutableStateMapOf<Int, Long>() }
-    
-    // Inizializza eventi selezionati per ogni gruppo appena cambiano gli eventi
+
+    // Calcola gruppi di eventi sovrapposti
+    val overlappingGroups = remember(events) { calculateOverlappingGroups(events) }
+
+    // Inizializza eventi selezionati per ogni gruppo
     LaunchedEffect(events) {
-        val overlappingGroups = calculateOverlappingGroups(events)
         overlappingGroups.forEachIndexed { groupIndex, group ->
-            if (!selectedEventsByGroup.containsKey(groupIndex) && group.events.size > 2) {
-                // Inizializza con l'evento che inizia prima
+            if (!selectedEventsByGroup.containsKey(groupIndex)) {
                 selectedEventsByGroup[groupIndex] = getEarliestEvent(group.events).id
             }
         }
     }
-    
+
     Box(modifier = Modifier.fillMaxSize()) {
         Layout(
             content = {
-                // Calcola gruppi prima di creare i composable
-                val overlappingGroups = calculateOverlappingGroups(events)
-                
                 overlappingGroups.forEachIndexed { groupIndex, group ->
-                    // Inizializza evento selezionato per questo gruppo se non esiste
-                    // Usa l'evento che inizia prima
                     if (!selectedEventsByGroup.containsKey(groupIndex)) {
                         selectedEventsByGroup[groupIndex] = getEarliestEvent(group.events).id
                     }
-                    
-                    val selectedEventId = selectedEventsByGroup[groupIndex]
-                    
-                    // Filtra eventi da mostrare: se >2 sovrapposizioni, mostra solo quello selezionato
-                    val eventsToDisplay = if (group.events.size > 2) {
-                        // Trova l'evento selezionato, o usa quello che inizia prima se non trovato
-                        val selectedEvent = group.events.find { it.id == selectedEventId }
-                        if (selectedEvent != null) {
-                            listOf(selectedEvent)
-                        } else {
-                            listOf(getEarliestEvent(group.events))
-                        }
-                    } else {
-                        group.visibleEvents
-                    }
-                    
-                    eventsToDisplay.forEachIndexed { index, event ->
-                        val durationMinutes = java.time.Duration.between(
-                            event.startTime,
-                            event.endTime
-                        ).toMinutes()
-                        val eventHeightDp = (durationMinutes / 60f * DayTimelineConstants.HOUR_SLOT_HEIGHT.value).dp
 
-                        TimelineEventCard(
-                            event = event,
-                            height = eventHeightDp,
+                    val selectedEventId = selectedEventsByGroup[groupIndex] ?: group.events.first().id
+
+                    // ============================================
+                    // CASO 3+ EVENTI: USA SWIPEABLE CARD STACK
+                    // ============================================
+                    if (group.events.size > 2) {
+                        val selectedEvent = group.events.find { it.id == selectedEventId } ?: group.events.first()
+                        val durationMinutes = java.time.Duration.between(
+                            selectedEvent.startTime,
+                            selectedEvent.endTime
+                        ).toMinutes()
+                        val cardHeight = (durationMinutes / 60f * CalendarUtils.HOUR_SLOT_HEIGHT.value).dp
+
+                        SwipeableCardStack(
+                            events = group.events,
+                            currentEventId = selectedEventId,
+                            onEventSelected = { eventId ->
+                                selectedEventsByGroup[groupIndex] = eventId
+                            },
+                            onEventClick = onEventClick,
+                            cardHeight = cardHeight,
                             textColor = textColor,
                             grayColor = grayColor,
                             primaryColor = primaryColor,
-                            onClick = { onEventClick(event) },
-                            modifier = Modifier.layoutId("event_${event.id}"),
-                            stackDepth = if (group.hasHiddenEvents) minOf(group.hiddenCount, 2) else 0
+                            modifier = Modifier.layoutId("swipe_group_$groupIndex")
                         )
-                    }
-                    
-                    // Indicatore per eventi nascosti (posizionato in alto)
-                    if (group.hasHiddenEvents) {
-                        // Usa l'evento selezionato per posizionare l'indicatore
-                        val selectedEvent = group.events.find { it.id == selectedEventId } 
-                            ?: group.events.first()
-                        OverlappingEventsIndicator(
-                            count = group.hiddenCount,
-                            primaryColor = primaryColor,
-                            onClick = { 
-                                overlappingEventsToShow = group.events
-                            },
-                            modifier = Modifier.layoutId("indicator_${groupIndex}_${selectedEvent.id}")
-                        )
+                    } else {
+                        // ============================================
+                        // CASO 1-2 EVENTI: RENDERING NORMALE
+                        // ============================================
+                        group.visibleEvents.forEachIndexed { index, event ->
+                            val durationMinutes = java.time.Duration.between(
+                                event.startTime,
+                                event.endTime
+                            ).toMinutes()
+                            val eventHeightDp = (durationMinutes / 60f * CalendarUtils.HOUR_SLOT_HEIGHT.value).dp
+
+                            TimelineEventCard(
+                                event = event,
+                                height = eventHeightDp,
+                                textColor = textColor,
+                                grayColor = grayColor,
+                                primaryColor = primaryColor,
+                                onClick = { onEventClick(event) },
+                                modifier = Modifier.layoutId("event_${event.id}"),
+                                stackDepth = 0
+                            )
+                        }
                     }
                 }
             },
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(start = DayTimelineConstants.TIME_COLUMN_WIDTH, end = 16.dp),
+                .padding(start = CalendarLayoutConstants.TIME_COLUMN_WIDTH, end = 16.dp),
             measurePolicy = { measurables, constraints ->
                 val totalHours = DayTimelineConstants.END_HOUR - DayTimelineConstants.START_HOUR
                 val maxLayoutHeight = with(density) {
-                    (totalHours * DayTimelineConstants.HOUR_SLOT_HEIGHT).toPx().toInt()
+                    (totalHours * CalendarUtils.HOUR_SLOT_HEIGHT).toPx().toInt()
                 }
 
-                val overlappingGroups = calculateOverlappingGroups(events)
                 val placeables = mutableListOf<Triple<Placeable, Int, Int>>()
 
                 overlappingGroups.forEachIndexed { groupIndex, group ->
-                    // Calcola eventi da visualizzare (stesso filtro del content)
-                    val selectedEventId = selectedEventsByGroup[groupIndex]
-                    val eventsToDisplay = if (group.events.size > 2 && selectedEventId != null) {
-                        val selectedEvent = group.events.find { it.id == selectedEventId }
-                        if (selectedEvent != null) {
-                            listOf(selectedEvent)
-                        } else {
-                            listOf(getEarliestEvent(group.events))
+                    if (group.events.size > 2) {
+                        val measurable = measurables.find {
+                            (it.layoutId as? String) == "swipe_group_$groupIndex"
                         }
-                    } else {
-                        group.visibleEvents
-                    }
-                    
-                    val visibleCount = eventsToDisplay.size
-                    val availableWidth = constraints.maxWidth
-                    val columnWidth = availableWidth / visibleCount
 
-                    // Posiziona eventi visibili
-                    eventsToDisplay.forEachIndexed { index, event ->
-                        val measurable = measurables.find { 
-                            (it.layoutId as? String) == "event_${event.id}" 
-                        }
-                        
                         measurable?.let {
-                            val startMinutes = event.startTime.hour * 60 + event.startTime.minute
+                            // POSIZIONE FISSA: ancorata all'evento che inizia prima nel gruppo
+                            val earliestEvent = getEarliestEvent(group.events)
+                            val startMinutes = earliestEvent.startTime.hour * 60 + earliestEvent.startTime.minute
                             val startOffsetMinutes = startMinutes - (startHour * 60)
-                            val topOffsetPx = with(density) {
-                                (startOffsetMinutes / 60f * DayTimelineConstants.HOUR_SLOT_HEIGHT).toPx().toInt()
-                            }
 
-                            val leftOffset = index * columnWidth
+                            val stackOffset = with(density) { 16.dp.toPx().toInt() }
+                            val topOffsetPx = with(density) {
+                                (startOffsetMinutes / 60f * CalendarUtils.HOUR_SLOT_HEIGHT).toPx().toInt() - stackOffset
+                            }.coerceAtLeast(0)
 
                             val placeable = it.measure(
                                 constraints.copy(
                                     minWidth = 0,
-                                    maxWidth = columnWidth - 4,
+                                    maxWidth = constraints.maxWidth,
                                     minHeight = 0
                                 )
                             )
 
-                            placeables.add(Triple(placeable, leftOffset, topOffsetPx))
+                            placeables.add(Triple(placeable, 0, topOffsetPx))
                         }
-                    }
+                    } else {
+                        val visibleCount = group.visibleEvents.size
+                        val availableWidth = constraints.maxWidth
+                        val columnWidth = availableWidth / visibleCount
 
-                    // Posiziona indicatore se presente (in alto a destra sulla card)
-                    if (group.hasHiddenEvents) {
-                        // Trova l'evento selezionato per posizionare l'indicatore
-                        val selectedEvent = eventsToDisplay.firstOrNull() ?: group.events.first()
-                        val indicatorMeasurable = measurables.find { 
-                            (it.layoutId as? String) == "indicator_${groupIndex}_${selectedEvent.id}" 
-                        }
-                        
-                        indicatorMeasurable?.let {
-                            val startMinutes = selectedEvent.startTime.hour * 60 + selectedEvent.startTime.minute
-                            val startOffsetMinutes = startMinutes - (startHour * 60)
-                            
-                            val placeable = it.measure(constraints.copy(minWidth = 0, minHeight = 0))
-                            
-                            // Posiziona in alto, con piccolo offset dall'inizio dell'evento
-                            val topOffsetPx = with(density) {
-                                (startOffsetMinutes / 60f * DayTimelineConstants.HOUR_SLOT_HEIGHT).toPx().toInt() + 4.dp.toPx().toInt()
+                        group.visibleEvents.forEachIndexed { index, event ->
+                            val measurable = measurables.find {
+                                (it.layoutId as? String) == "event_${event.id}"
                             }
 
-                            // Posiziona in alto a destra sulla card
-                            val leftOffset = availableWidth - placeable.width - with(density) { 8.dp.toPx().toInt() }
+                            measurable?.let {
+                                val startMinutes = event.startTime.hour * 60 + event.startTime.minute
+                                val startOffsetMinutes = startMinutes - (startHour * 60)
+                                val topOffsetPx = with(density) {
+                                    (startOffsetMinutes / 60f * CalendarUtils.HOUR_SLOT_HEIGHT).toPx().toInt()
+                                }
 
-                            placeables.add(Triple(placeable, leftOffset, topOffsetPx))
+                                val leftOffset = index * columnWidth
+
+                                val placeable = it.measure(
+                                    constraints.copy(
+                                        minWidth = 0,
+                                        maxWidth = columnWidth - 4,
+                                        minHeight = 0
+                                    )
+                                )
+
+                                placeables.add(Triple(placeable, leftOffset, topOffsetPx))
+                            }
                         }
                     }
                 }
@@ -457,57 +393,10 @@ private fun TimelineEventsOverlay(
             }
         )
     }
-
-    // Dialog per eventi sovrapposti
-    overlappingEventsToShow?.let { overlappingEvents ->
-        // Calcola gruppi per trovare l'indice corretto
-        val overlappingGroups = calculateOverlappingGroups(events)
-        val groupIndex = overlappingGroups.indexOfFirst { group ->
-            group.events.any { groupEvent ->
-                overlappingEvents.any { it.id == groupEvent.id }
-            }
-        }
-        
-        // Usa gli eventi ordinati dal gruppo
-        val orderedEvents = if (groupIndex >= 0) overlappingGroups[groupIndex].events else overlappingEvents
-        
-        // Ottieni l'evento selezionato (dovrebbe essere già inizializzato da LaunchedEffect)
-        val selectedEventId = if (groupIndex >= 0) {
-            val storedId = selectedEventsByGroup[groupIndex]
-            // Usa l'ID memorizzato solo se esiste ancora nel gruppo, altrimenti fallback al primo
-            if (storedId != null && orderedEvents.any { it.id == storedId }) {
-                storedId
-            } else {
-                // Fallback se non inizializzato o non valido
-                val id = orderedEvents.first().id
-                selectedEventsByGroup[groupIndex] = id
-                id
-            }
-        } else {
-            orderedEvents.firstOrNull()?.id
-        }
-        
-        OverlappingEventsDialog(
-            events = orderedEvents,
-            selectedEventId = selectedEventId,
-            onEventSelected = { eventId ->
-                if (groupIndex >= 0) {
-                    selectedEventsByGroup[groupIndex] = eventId
-                }
-            },
-            onDismiss = { overlappingEventsToShow = null },
-            primaryColor = primaryColor,
-            backgroundColor = MaterialTheme.colorScheme.background,
-            textColor = textColor,
-            grayColor = grayColor
-        )
-    }
 }
 
-/**
- * Calcola i gruppi di eventi sovrapposti.
- * Ogni gruppo rappresenta eventi che si sovrappongono temporalmente.
- */
+// HELPER FUNCTIONS
+
 private fun calculateOverlappingGroups(events: List<CourseEvent>): List<OverlappingGroup> {
     val sortedEvents = events.sortedBy { it.startTime }
     val groups = mutableListOf<OverlappingGroup>()
@@ -516,7 +405,6 @@ private fun calculateOverlappingGroups(events: List<CourseEvent>): List<Overlapp
         var addedToGroup = false
 
         for (group in groups) {
-            // Controlla se l'evento si sovrappone a qualsiasi evento nel gruppo
             val overlaps = group.events.any { groupEvent ->
                 event.startTime < groupEvent.endTime && event.endTime > groupEvent.startTime
             }
@@ -533,7 +421,6 @@ private fun calculateOverlappingGroups(events: List<CourseEvent>): List<Overlapp
         }
     }
 
-    // Ordina eventi all'interno di ogni gruppo per startTime
     groups.forEach { group ->
         group.events.sortBy { it.startTime }
     }
@@ -541,34 +428,19 @@ private fun calculateOverlappingGroups(events: List<CourseEvent>): List<Overlapp
     return groups
 }
 
-/**
- * Rappresenta un gruppo di eventi sovrapposti.
- */
 private data class OverlappingGroup(
     val events: MutableList<CourseEvent>
 ) {
     val visibleEvents: List<CourseEvent>
         get() = if (events.size > 2) {
-            // 3+ eventi: mostra solo il primo (quello che inizia prima)
             listOf(events.first())
         } else {
-            // 1-2 eventi: mostra tutti
             events
         }
-    
-    val hiddenEvents: List<CourseEvent>
-        get() = if (events.size > 2) {
-            // Se 3+, gli altri sono nascosti (tutti tranne il primo)
-            events.drop(1)
-        } else {
-            emptyList()
-        }
-    
-    val hasHiddenEvents: Boolean
-        get() = events.size > 2
-    
-    val hiddenCount: Int
-        get() = if (events.size > 2) events.size - 1 else 0
+}
+
+private fun getEarliestEvent(events: List<CourseEvent>): CourseEvent {
+    return events.minByOrNull { it.startTime } ?: events.first()
 }
 
 @Composable
@@ -591,7 +463,7 @@ private fun CurrentTimeIndicator(
         modifier = modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Spacer(modifier = Modifier.width(DayTimelineConstants.TIME_COLUMN_WIDTH - 6.dp))
+        Spacer(modifier = Modifier.width(CalendarLayoutConstants.TIME_COLUMN_WIDTH - 6.dp))
 
         Box(
             modifier = Modifier
@@ -633,8 +505,7 @@ private fun DashedHourLine(grayColor: Color) {
     }
 }
 
-
-// EVENT CARD
+// EVENT CARD (STANDARD, NON-STACKED)
 
 private enum class TimelineEventStatus {
     ENDED,
@@ -674,10 +545,8 @@ private fun TimelineEventCard(
     val cardAlpha = if (eventStatus == TimelineEventStatus.ENDED) 0.6f else 1f
 
     Box(modifier = modifier) {
-        // Background Stack Cards
         if (stackDepth > 0) {
             val stackOffset = 5.dp
-            // Render cards from back to front
             for (i in stackDepth downTo 1) {
                 Surface(
                     modifier = Modifier
@@ -805,14 +674,12 @@ private fun EventCardContent(
         }
 
         if (showCompactContent) {
-            // Versione compatta: solo orario
             EventInfoChip(
                 icon = Icons.Outlined.Schedule,
                 text = "${event.startTime.format(CalendarUtils.timeFormatter)} - ${event.endTime.format(CalendarUtils.timeFormatter)}",
                 color = grayColor
             )
         } else {
-            // Versione completa
             Row(
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                 verticalAlignment = Alignment.CenterVertically
@@ -959,7 +826,6 @@ private fun getEventTypeIcon(eventType: EventType): ImageVector {
     }
 }
 
-
 // LOADING STATE
 
 @Composable
@@ -974,8 +840,4 @@ private fun TimelineLoadingState(primaryColor: Color) {
             color = primaryColor
         )
     }
-}
-
-private fun getEarliestEvent(events: List<CourseEvent>): CourseEvent {
-    return events.minByOrNull { it.startTime } ?: events.first()
 }

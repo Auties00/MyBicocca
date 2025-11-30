@@ -378,7 +378,7 @@ object CalendarMockData {
         building = "Edificio U9",
         startTime = LocalDateTime.of(nextMonday, LocalTime.of(10, 0)),
         endTime = LocalDateTime.of(nextMonday, LocalTime.of(11, 30)),
-        eventType = EventType.LECTURE,
+        eventType = EventType.LAB,
         color = brandColor
       ))
       add(CourseEvent(

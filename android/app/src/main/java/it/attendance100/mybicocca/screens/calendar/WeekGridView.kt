@@ -19,6 +19,16 @@ import java.time.*
 
 // CONSTANTS
 
+/**
+ * Costanti condivise tra CalendarScreen e WeekGridView per garantire allineamento.
+ * Questa costante crea un accoppiamento tra CalendarScreen (che usa uno Spacer
+ * nel selettore dei giorni) e WeekGridView (che usa questa larghezza per la colonna oraria).
+ * Modificare questo valore richiede modifiche in entrambi i componenti per mantenere l'allineamento.
+ */
+object CalendarLayoutConstants {
+    val TIME_COLUMN_WIDTH = 50.dp
+}
+
 private object WeekGridConstants {
     const val EVENT_HORIZONTAL_PADDING = 2
     const val TOTAL_DAYS = 7
