@@ -12,11 +12,13 @@ import androidx.compose.ui.*
 import androidx.compose.ui.res.*
 import androidx.compose.ui.text.font.*
 import androidx.compose.ui.unit.*
+import androidx.hilt.lifecycle.viewmodel.compose.*
 import androidx.navigation.*
 import it.attendance100.mybicocca.*
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.components.*
 import it.attendance100.mybicocca.utils.*
+import it.attendance100.mybicocca.viewmodel.*
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
@@ -26,6 +28,7 @@ fun SettingsScreen(
   sharedTransitionScope: SharedTransitionScope,
   animatedContentScope: AnimatedContentScope,
   onThemeChange: (Boolean) -> Unit,
+  mainViewModel: MainViewModel = hiltViewModel(),
 ) {
   val haptic = rememberHapticManager()
   val textColor = MaterialTheme.colorScheme.onBackground
@@ -74,7 +77,7 @@ fun SettingsScreen(
           .padding(paddingValues)
           .background(MaterialTheme.colorScheme.background)
           .verticalScroll(rememberScrollState())
-        ) {
+    ) {
       SimpleCategorySettingItem(
         title = stringResource(R.string.settings_appearance),
         subtitle = stringResource(R.string.settings_appearance_subtitle),

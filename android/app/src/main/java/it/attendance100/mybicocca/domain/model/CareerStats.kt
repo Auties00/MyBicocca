@@ -22,7 +22,7 @@ data class CareerStats(
  */
 data class GradePoint(
   val value: Float,
-  val date: String,
+  val date: String, // ISO 8601 date
   val name: String,
   val cfu: String,
   val isLode: Boolean,

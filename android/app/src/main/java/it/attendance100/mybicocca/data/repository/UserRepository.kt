@@ -1,5 +1,6 @@
 package it.attendance100.mybicocca.data.repository
 
+import android.util.*
 import it.attendance100.mybicocca.data.daos.*
 import it.attendance100.mybicocca.data.datasources.user.*
 import it.attendance100.mybicocca.data.entities.*
@@ -31,19 +32,26 @@ class UserRepository @Inject constructor(
 
   /**
    * Refreshes data from API and saves to DB.
+   * Throws exception if network or auth fails, allowing the caller to handle it.
    */
   override suspend fun refreshUser() {
     try {
+      Log.d("UserRepository", "Refreshing user data...")
       // Fetch from Network
       val remoteUser = api.getUser()
+      Log.d("UserRepository", "User fetched: ${remoteUser.name}")
+      
       val remoteStats = api.getCareerStats()
+      Log.d("UserRepository", "Career stats fetched. Exams: ${remoteStats.esamiSostenuti}")
 
       // Save to DB
       dao.insertUser(remoteUser.toEntity())
       dao.insertCareerStats(remoteStats.toEntity())
+      Log.d("UserRepository", "Data saved to local DB")
 
     } catch (e: Exception) {
-      e.printStackTrace()
+      Log.e("UserRepository", "Error refreshing user data", e)
+      throw e // Propagate error to let ViewModel handle Auth failures
     }
   }
 }

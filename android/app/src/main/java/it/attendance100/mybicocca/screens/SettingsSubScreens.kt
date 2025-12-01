@@ -19,16 +19,19 @@ import androidx.compose.ui.res.*
 import androidx.compose.ui.text.font.*
 import androidx.compose.ui.unit.*
 import androidx.core.os.*
+import androidx.hilt.lifecycle.viewmodel.compose.*
 import androidx.navigation.*
 import it.attendance100.mybicocca.*
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.components.*
 import it.attendance100.mybicocca.utils.*
+import it.attendance100.mybicocca.viewmodel.*
 
 @Composable
 fun SettingsSubScreenScaffold(
   title: String,
   navController: NavHostController,
+  mainViewModel: MainViewModel = hiltViewModel(),
   content: @Composable (PaddingValues) -> Unit,
 ) {
   val textColor = MaterialTheme.colorScheme.onBackground
@@ -492,6 +495,7 @@ fun DeveloperSettingsScreen(
   val preferencesManager = rememberPreferencesManager()
   var badgeParallax by remember { mutableStateOf(preferencesManager.badgeParallax) }
   var whiteBadge by remember { mutableStateOf(preferencesManager.badgeWhite) }
+  var progressBarToggle by remember { mutableStateOf(preferencesManager.progressBarToggle) }
 
   SettingsSubScreenScaffold(
     title = stringResource(R.string.settings_developer),
@@ -506,7 +510,7 @@ fun DeveloperSettingsScreen(
     ) {
       Text(
         modifier = Modifier.padding(start = 16.dp, top = 16.dp, bottom = 8.dp),
-        text = "Badge",
+        text = stringResource(R.string.settings_developer_badge),
         color = MaterialTheme.colorScheme.primary,
         fontSize = 14.sp,
       )
@@ -537,8 +541,28 @@ fun DeveloperSettingsScreen(
 
       Text(
         modifier = Modifier.padding(start = 16.dp, top = 16.dp, bottom = 8.dp),
-        text = "API",
-        color = MaterialTheme.colorScheme.onBackground,
+        text = "Other",
+        color = MaterialTheme.colorScheme.primary,
+        fontSize = 14.sp,
+      )
+
+      SimpleSwitchSettingItem(
+        title = "ProgressBar Type",
+        subtitle = "progressBarToggle",
+        icon = Icons.Default.HorizontalRule,
+        checked = progressBarToggle,
+        onCheckedChange = {
+          progressBarToggle = it
+          preferencesManager.progressBarToggle = it
+        }
+      )
+
+      HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.onSecondary)
+
+      Text(
+        modifier = Modifier.padding(start = 16.dp, top = 16.dp, bottom = 8.dp),
+        text = stringResource(R.string.settings_developer_api),
+        color = MaterialTheme.colorScheme.primary,
         fontSize = 14.sp,
       )
 

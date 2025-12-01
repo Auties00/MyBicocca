@@ -32,12 +32,14 @@ class PreferencesManager @Inject constructor(
     // Private Settings
     private const val KEY_IS_DEVELOPER_MODE = "developer_mode"
     private const val KEY_THEME_MODE = "theme_mode"
-    private const val KEY_LOCALE = "locale"
-    private const val KEY_BADGE_PARALLAX = "badge_parallax"
-    private const val KEY_BADGE_WHITE = "badge_white"
     private const val KEY_FINGERPRINT_LOGIN = "fingerprint_login"
     private const val KEY_KEEP_LOGGED_IN = "keep_logged_in"
     private const val KEY_SESSION_DURATION = "session_duration"
+    private const val KEY_LOCALE = "locale"
+    private const val KEY_BADGE_PARALLAX = "badge_parallax"
+    private const val KEY_BADGE_WHITE = "badge_white"
+    private const val KEY_PROGRESS_BAR_TOGGLE = "progress_bar_toggle"
+
 
     // Public Settings
     const val THEME_SYSTEM_DEFAULT = "system"
@@ -98,6 +100,12 @@ class PreferencesManager @Inject constructor(
     get() = prefs.getBoolean(KEY_BADGE_WHITE, false)
     set(value) {
       prefs.edit { putBoolean(KEY_BADGE_WHITE, value) }
+    }
+
+  var progressBarToggle: Boolean
+    get() = prefs.getBoolean(KEY_PROGRESS_BAR_TOGGLE, false)
+    set(value) {
+      prefs.edit { putBoolean(KEY_PROGRESS_BAR_TOGGLE, value) }
     }
 
   var fingerprintLogin: Boolean

@@ -16,12 +16,14 @@ import androidx.compose.ui.graphics.vector.*
 import androidx.compose.ui.platform.*
 import androidx.compose.ui.res.*
 import androidx.compose.ui.unit.*
+import androidx.hilt.lifecycle.viewmodel.compose.*
 import androidx.navigation.*
 import it.attendance100.mybicocca.*
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.components.*
 import it.attendance100.mybicocca.ui.theme.*
 import it.attendance100.mybicocca.utils.*
+import it.attendance100.mybicocca.viewmodel.*
 import kotlinx.coroutines.*
 
 @OptIn(ExperimentalSharedTransitionApi::class)
@@ -31,10 +33,14 @@ fun HomePage(
   sharedTransitionScope: SharedTransitionScope,
   animatedContentScope: AnimatedContentScope,
   drawerState: DrawerState,
+  mainViewModel: MainViewModel = hiltViewModel(),
 ) {
   var currentPage by remember { mutableIntStateOf(0) }
   val coroutineScope = rememberCoroutineScope()
   val haptic = rememberHapticManager()
+
+  val isOffline by mainViewModel.isOffline.collectAsState()
+  val isSessionExpired by mainViewModel.isSessionExpired.collectAsState()
 
   val density = LocalDensity.current
   val drawerWidthDp = 280.dp
@@ -151,12 +157,20 @@ fun HomePage(
           )
         }
       ) { paddingValues ->
-        Box(
+        Column(
           modifier = Modifier
               .fillMaxSize()
               .padding(paddingValues)
         ) {
-          PageContent(currentPage)
+          StatusIndicator(
+            isOffline = isOffline,
+            isSessionExpired = isSessionExpired
+          )
+          Box(
+            modifier = Modifier.weight(1f)
+          ) {
+            PageContent(currentPage)
+          }
         }
       }
     }
@@ -196,7 +210,7 @@ fun HomePage(
 @Composable
 fun TopAppBar(
 ) {
-  val grayColor = if (MaterialTheme.colorScheme.background == BackgroundColor) GrayColor else GrayColorLight
+  val grayColor = GrayColor()
 
   Surface(
     modifier = Modifier
@@ -236,7 +250,7 @@ fun BottomNavBar(currentIndex: Int, onPageSelected: (Int) -> Unit) {
   val primaryColor = MaterialTheme.colorScheme.primary
   val primaryContainerColor = MaterialTheme.colorScheme.primaryContainer
   val backgroundColor = MaterialTheme.colorScheme.surfaceContainerLow
-  val grayColor = GrayColor
+  val grayColor = GrayColorDark
 
   NavigationBar(
     containerColor = backgroundColor,

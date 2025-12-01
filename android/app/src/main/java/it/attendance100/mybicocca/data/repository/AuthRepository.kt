@@ -13,14 +13,18 @@ class AuthRepository @Inject constructor(
 ) : IAuthRepository {
 
   override suspend fun performLoginCallback(code: String, state: String, cookie: String): Boolean {
+    Log.v("AuthRepository", "Performing login callback with code: $code")
     try {
       val response = authDataSource.getAuthHeaders(code, state, cookie)
 
       // Get the redirect location
       val location = response.headers()["Location"] ?: ""
-      Log.d("AuthRepository", "Redirect Location: $location")
+      Log.v("AuthRepository", "Redirect Location: $location")
 
-      if (location.isBlank()) return false
+      if (location.isBlank()) {
+        Log.e("AuthRepository", "Login failed: Empty redirect location")
+        return false
+      }
 
       // Parse URL parameters
       val uri = Uri.parse(location)
@@ -32,6 +36,7 @@ class AuthRepository @Inject constructor(
       val fiscalCode = uri.getQueryParameter("fiscal_code")
 
       if (uid != null && client != null && accessToken != null) {
+        Log.d("AuthRepository", "Login successful. Saving credentials for user: $uid")
         preferencesManager.authUid = uid
         preferencesManager.authClient = client
         preferencesManager.authAccessToken = accessToken
@@ -40,16 +45,23 @@ class AuthRepository @Inject constructor(
         return true
       }
 
+      Log.e("AuthRepository", "Login failed: Missing tokens in redirect URL")
       return false
     } catch (e: Exception) {
+      Log.e("AuthRepository", "Login exception", e)
       e.printStackTrace()
       return false
     }
   }
 
-  override fun isUserLoggedIn(): Boolean = preferencesManager.isLoggedIn()
+  override fun isUserLoggedIn(): Boolean {
+    val loggedIn = preferencesManager.isLoggedIn()
+    Log.d("AuthRepository", "Checking login status: $loggedIn")
+    return loggedIn
+  }
 
   override fun logout() {
+    Log.d("AuthRepository", "Logging out user")
     preferencesManager.clearAuth()
   }
 }

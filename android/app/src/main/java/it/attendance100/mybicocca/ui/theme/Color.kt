@@ -1,5 +1,7 @@
 package it.attendance100.mybicocca.ui.theme
 
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.graphics.*
 
 // Dark theme colors
@@ -34,11 +36,11 @@ val outlineColor = Color(0xFFa68a8c)
 val outlineVariantColor = Color(0xFF584143)
 val inverseSurfaceColor = Color(0xFFf5ddde)
 val inverseOnSurfaceColor = Color(0xFF3b2d2e)
-val inversePrimaryColor = Color(0xFFaf2a4b)
+val inversePrimaryColor = Color(0xFFf01d59)
 val BackgroundColor = Color(0xFF0d0d0d)
 val surfaceColor = BackgroundColor // Predictive back animation background
 val OnBackgroundColor = Color(0xFFFFF8F7)
-val GrayColor = Color(0xFF9d9d9d)
+val GrayColorDark = Color(0xFF9d9d9d)
 val BadgeWhiteDrawableColor = Color(0xFF551420) // Color(0xFF281E1E)
 val BadgeSignatureBoxColorRed = Color(0xFFa6a6a6).copy(alpha = 0.75f)
 val BadgeSignatureBoxColorWhite = Color(0xFFE3E3E3).copy(alpha = 0.95f)
@@ -48,9 +50,9 @@ val BadgeSignatureBoxColorWhite2 = Color(0xFFEEEEEE).copy(alpha = 0.95f)
 
 // Light theme colors
 val OnPrimaryColorLight = Color(0xFFFFFFFF)
-val PrimaryColorLight = Color(0xFF81002D)
+val PrimaryColorLight = Color(0xFFf01d59)
 val SecondaryColorLight = Color(0xFF904954)
-val onSecondaryColorLight = Color(0xFFFFFFFF)
+val onSecondaryColorLight = Color(0xFFa32043)
 val TertiaryColorLight = Color(0xFF885200)
 val onTertiaryColorLight = Color(0xFFFFFFFF)
 val ErrorColorLight = Color(0xFFBA1A1A)
@@ -63,7 +65,7 @@ val tertiaryContainerColorLight = Color(0xFFFEA93E)
 val onTertiaryContainerColorLight = Color(0xFF6D4100)
 val errorContainerColorLight = Color(0xFFFFDAD6)
 val onErrorContainerColorLight = Color(0xFF93000A)
-val surfaceDimColorLight = Color(0xFFECD4D6)
+val surfaceDimColorLight = Color(0xffeee3e4)
 val surfaceColorLight = Color(0xFFFFF8F7)
 val surfaceBrightColorLight = Color(0xFFFFF8F7)
 val surfaceContainerLowestColorLight = Color(0xFFFFFFFF)
@@ -77,9 +79,14 @@ val outlineColorLight = Color(0xFF8B7073)
 val outlineVariantColorLight = Color(0xFFDFBFC2)
 val inverseSurfaceColorLight = Color(0xFF3B2D2E)
 val inverseOnSurfaceColorLight = Color(0xFFFFECED)
-val inversePrimaryColorLight = Color(0xFFFFB2BC)
+val inversePrimaryColorLight = Color(0xffe6124f)
 val BackgroundColorLight = Color(0xFFFFFFFF)
 val CardColorLight = Color(0xFFFFE9EA)
 val GrayColorLight = Color(0xFF666666)
 val OnBackgroundColorLight = Color(0xFF0d0d0d)
 val TextColorLight = Color(0xFF1C1C1C)
+
+@Composable
+fun GrayColor(): Color {
+  return if (MaterialTheme.colorScheme.background == BackgroundColor) GrayColorDark else GrayColorLight
+}

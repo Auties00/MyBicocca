@@ -49,6 +49,11 @@ fun LoginWebViewScreen(
           .padding(paddingValues)
     ) {
       when (state) {
+        is LoginViewModel.LoginState.Success -> {
+          // Show loading while redirecting
+          CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+        }
+
         is LoginViewModel.LoginState.Authenticating -> {
           CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
         }
@@ -94,7 +99,7 @@ fun LoginWebViewScreen(
                     val url = request?.url?.toString() ?: return false
 
                     if (url.startsWith(callbackPrefix)) {
-                      Log.d("WebViewDebug", "Callback intercepted! URL: $url")
+                      Log.v("WebViewDebug", "Callback intercepted! URL: $url")
 
                       // FIX: Extract Cookies for the domain
                       val cookies = CookieManager.getInstance().getCookie("https://backoffice-app.unimib.it") ?: ""
