@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.*
-import androidx.compose.ui.graphics.*
 import androidx.compose.ui.unit.*
 import androidx.hilt.lifecycle.viewmodel.compose.*
 import androidx.navigation.*
@@ -17,24 +16,49 @@ fun SplashScreen(
   navController: NavController,
   viewModel: SplashViewModel = hiltViewModel(),
 ) {
-  val destination by viewModel.startDestination
+  val state by viewModel.splashState
 
-  LaunchedEffect(destination) {
-    destination?.let { dest ->
-      navController.navigate(dest.route) {
-        // Clear Splash from backstack so user can't go back to it
-        popUpTo(Screen.Splash.route) { inclusive = true }
+  LaunchedEffect(state) {
+    when (state) {
+      is SplashViewModel.SplashState.NavigateHome -> {
+        navController.navigate(Screen.Home.route) {
+          popUpTo(Screen.Splash.route) { inclusive = true }
+        }
       }
+
+      is SplashViewModel.SplashState.NavigateLogin -> {
+        navController.navigate(Screen.Login.route) {
+          popUpTo(Screen.Splash.route) { inclusive = true }
+        }
+      }
+
+      else -> {}
     }
   }
 
   Surface(
     modifier = Modifier.fillMaxSize(),
-    color = Color.Red
+    color = MaterialTheme.colorScheme.background
   ) {
     Box(contentAlignment = Alignment.Center) {
-      // Show App Title or Logo while checking auth
-      AppTitle(modifier = Modifier.size(200.dp))
+      Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+      ) {
+        AppTitle(modifier = Modifier.size(200.dp))
+
+        if (state is SplashViewModel.SplashState.ShowLoginButton) {
+          Spacer(modifier = Modifier.height(32.dp))
+          Button(
+            onClick = { navController.navigate(Screen.Login.route) }
+          ) {
+            Text("Login")
+          }
+        } else if (state is SplashViewModel.SplashState.Loading) {
+          Spacer(modifier = Modifier.height(32.dp))
+          CircularProgressIndicator()
+        }
+      }
     }
   }
 }

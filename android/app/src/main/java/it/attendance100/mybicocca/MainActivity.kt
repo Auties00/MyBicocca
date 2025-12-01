@@ -22,6 +22,7 @@ import it.attendance100.mybicocca.screens.login.*
 import it.attendance100.mybicocca.ui.theme.*
 import it.attendance100.mybicocca.utils.*
 import kotlinx.coroutines.*
+import javax.inject.*
 
 // Navigation routes
 sealed class Screen(val route: String) {
@@ -43,6 +44,9 @@ sealed class Screen(val route: String) {
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+  @Inject
+  lateinit var networkMonitor: NetworkMonitor
+
   override fun onCreate(savedInstanceState: Bundle?) {
     val preferencesManager = PreferencesManager(this)
     preferencesManager.applyTheme() // Ensures theme is applied immediately
@@ -91,6 +95,11 @@ class MainActivity : ComponentActivity() {
         }
       }
     }
+  }
+
+  override fun onResume() {
+    super.onResume()
+    networkMonitor.refresh()
   }
 
   fun styleStatusBar(isDarkMode: Boolean) {

@@ -117,4 +117,11 @@
   <string name="unknown">Unknown</string>
   <string name="career_no_data_available">No Available Data</string>
   <string name="career_vedi_esami">See all Exams</string>
+  <string name="exam_status_passed">Passed</string>
+  <string name="exam_status_pending">Pending</string>
+  <string name="exam_cfu_format">%1$s CFU</string>
+  <string name="status_session_expired">Session Expired</string>
+  <string name="status_offline">You\'re currently Offline</string>
+  <string name="settings_developer_api">API</string>
+  <string name="settings_developer_badge">Badge</string>
 </resources>

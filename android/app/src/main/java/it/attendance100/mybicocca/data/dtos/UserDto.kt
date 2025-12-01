@@ -4,8 +4,8 @@ import com.google.gson.annotations.*
 
 // --- /user_profile ---
 data class UserProfileResponse(
-  @SerializedName("user") val user: UserDetail,
-  @SerializedName("careers") val careers: List<CareerInfo>,
+  @SerializedName("user") val user: UserDetail?,
+  @SerializedName("careers") val careers: List<CareerInfo>?,
 )
 
 data class UserDetail(

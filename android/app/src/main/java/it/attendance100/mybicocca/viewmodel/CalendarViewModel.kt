@@ -1,13 +1,14 @@
 package it.attendance100.mybicocca.viewmodel
 
+
 import androidx.lifecycle.*
 import dagger.hilt.android.lifecycle.*
 import it.attendance100.mybicocca.data.entities.*
 import it.attendance100.mybicocca.domain.usecase.*
+import it.attendance100.mybicocca.utils.*
 import kotlinx.coroutines.*
 import java.time.*
 import javax.inject.*
-
 
 /**
  * ViewModel per il calendario.
@@ -22,6 +23,7 @@ class CalendarViewModel @Inject constructor(
   private val insertEventUseCase: InsertEventUseCase,
   private val updateEventUseCase: UpdateEventUseCase,
   private val deleteEventUseCase: DeleteEventUseCase,
+  networkMonitor: NetworkMonitor,
 ) : ViewModel() {
 
   // Stato del calendario
@@ -43,7 +45,15 @@ class CalendarViewModel @Inject constructor(
     _currentMonth.value = YearMonth.now()
 
     // Carica i dati iniziali
-    loadInitialData()
+    // loadInitialData() // Removed explicit call, relying on network monitor
+
+    viewModelScope.launch {
+      networkMonitor.isOnline.collect { isOnline ->
+        if (isOnline) {
+          loadInitialData()
+        }
+      }
+    }
   }
 
   /**

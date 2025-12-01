@@ -14,8 +14,13 @@ class RemoteUserDataSource @Inject constructor(
   override suspend fun getUser(): User {
     val fiscalCode = preferencesManager.authFiscalCode
     val response = api.getUserProfile(fiscalCode)
+
+    if (response.user == null) {
+      throw ApiException(500, "Invalid response: User data is missing")
+    }
+
     val userDetail = response.user
-    val career = response.careers.firstOrNull()
+    val career = response.careers?.firstOrNull()
 
     // Cache IDs for future calls
     if (career != null) {
@@ -47,10 +52,10 @@ class RemoteUserDataSource @Inject constructor(
     if (stuId == null || matId == null || personId == null) {
       android.util.Log.d("RemoteUserDataSource", "getCareerStats: IDs not in cache, fetching profile...")
       val userProfileResponse = api.getUserProfile(fiscalCode)
-      android.util.Log.d("RemoteUserDataSource", "getCareerStats: Profile fetched. User: ${userProfileResponse.user.name}")
+      android.util.Log.d("RemoteUserDataSource", "getCareerStats: Profile fetched. User: ${userProfileResponse.user?.name}")
 
-      val careerInfo = userProfileResponse.careers.firstOrNull()
-      personId = userProfileResponse.user.personId
+      val careerInfo = userProfileResponse.careers?.firstOrNull()
+      personId = userProfileResponse.user?.personId
 
       stuId = careerInfo?.studentId
       matId = careerInfo?.matricId
@@ -59,14 +64,16 @@ class RemoteUserDataSource @Inject constructor(
       android.util.Log.d("RemoteUserDataSource", "getCareerStats: Extracted IDs - stuId: $stuId, matId: $matId, personId: $personId, typeTitleCode: $typeTitleCode")
 
       // Cache them now
-      if (stuId != null && matId != null) {
+      if (stuId != null && matId != null && personId != null) {
         preferencesManager.userStudentId = stuId
         preferencesManager.userMatricId = matId
         preferencesManager.userPersonId = personId
         preferencesManager.userTypeTitleCode = typeTitleCode
+      } else {
+        android.util.Log.w("RemoteUserDataSource", "getCareerStats: Failed to extract IDs from profile")
       }
     } else {
-      android.util.Log.d("RemoteUserDataSource", "getCareerStats: IDs found in cache.")
+      android.util.Log.v("RemoteUserDataSource", "getCareerStats: IDs found in cache.")
     }
 
     if (stuId == null) {
@@ -85,11 +92,11 @@ class RemoteUserDataSource @Inject constructor(
     }
 
     val careerDeferred = async {
-      android.util.Log.d("RemoteUserDataSource", "getCareerStats: Calling getUserCareer...")
+      android.util.Log.v("RemoteUserDataSource", "getCareerStats: Calling getUserCareer...")
       api.getUserCareer(stuId, matId, personId, typeTitleCode)
     }
     val examsDeferred = async {
-      android.util.Log.d("RemoteUserDataSource", "getCareerStats: Calling getUserExams...")
+      android.util.Log.v("RemoteUserDataSource", "getCareerStats: Calling getUserExams...")
       api.getUserExams(matId)
     }
 

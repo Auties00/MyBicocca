@@ -92,6 +92,7 @@ object NetworkModule {
   fun provideOkHttpClient(
     @Named("AuthInterceptor") authInterceptor: Interceptor,
     @Named("TokenRefreshInterceptor") tokenRefreshInterceptor: Interceptor,
+    errorHandlingInterceptor: ErrorHandlingInterceptor,
   ): OkHttpClient {
     val logger = HttpLoggingInterceptor().apply {
       level = HttpLoggingInterceptor.Level.BODY
@@ -100,6 +101,7 @@ object NetworkModule {
     return OkHttpClient.Builder()
         .addInterceptor(authInterceptor) // Adds auth headers
         .addInterceptor(tokenRefreshInterceptor) // Saves new auth headers
+        .addInterceptor(errorHandlingInterceptor) // Checks for soft errors in body
         .addInterceptor(logger)
         .followRedirects(false) // Disable redirect following so we can catch headers from the 302 response of the callback if necessary
         .followSslRedirects(false)

@@ -1,5 +1,6 @@
 package it.attendance100.mybicocca.components
 
+import android.content.res.*
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.*
@@ -11,7 +12,9 @@ import androidx.compose.ui.draw.*
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.graphics.vector.*
 import androidx.compose.ui.text.font.*
+import androidx.compose.ui.tooling.preview.*
 import androidx.compose.ui.unit.*
+import it.attendance100.mybicocca.ui.theme.*
 import it.attendance100.mybicocca.utils.*
 
 @Composable
@@ -57,8 +60,8 @@ fun SimpleCategorySettingItem(
   iconComposable: (@Composable () -> Unit)? = null,
   verticalPadding: Dp = 16.dp,
   enabled: Boolean = true,
+  haptic: HapticManager = rememberHapticManager(),
 ) {
-  val haptic = rememberHapticManager()
   Surface(
     modifier = modifier
         .fillMaxWidth()
@@ -141,8 +144,8 @@ fun SimpleSwitchSettingItem(
   textColor: Color = MaterialTheme.colorScheme.onBackground,
   grayColor: Color = MaterialTheme.colorScheme.onSurfaceVariant,
   enabled: Boolean = true,
+  haptic: HapticManager = rememberHapticManager(),
 ) {
-  val haptic = rememberHapticManager()
   Surface(
     modifier = modifier
         .fillMaxWidth()
@@ -199,12 +202,13 @@ fun AdvancedSwitchSettingItem(
   textColor: Color = MaterialTheme.colorScheme.onBackground,
   grayColor: Color = MaterialTheme.colorScheme.onSurfaceVariant,
   enabled: Boolean = true,
+  haptic: HapticManager = rememberHapticManager(),
 ) {
-  val haptic = rememberHapticManager()
   Row(
     modifier = modifier
         .fillMaxWidth()
         .height(IntrinsicSize.Min)
+        .background(MaterialTheme.colorScheme.background)
         .alpha(if (enabled) 1f else 0.38f)
   ) {
     Surface(
@@ -230,8 +234,9 @@ fun AdvancedSwitchSettingItem(
 
     VerticalDivider(
       modifier = Modifier
-          .width(1.dp)
-          .fillMaxHeight(),
+          .width(1.5.dp)
+          .fillMaxHeight()
+          .padding(vertical = 12.dp),
       color = grayColor.copy(alpha = 0.2f)
     )
 
@@ -263,6 +268,146 @@ fun AdvancedSwitchSettingItem(
           )
         )
       }
+    }
+  }
+}
+
+@Composable
+@Preview(backgroundColor = 0xFF0D0D0D, showBackground = true, showSystemUi = false, uiMode = Configuration.UI_MODE_NIGHT_YES or Configuration.UI_MODE_TYPE_NORMAL)
+private fun SimpleCategorySettingItemDarkPreview() {
+  MaterialTheme(colorScheme = MyBicoccaDarkColorScheme) {
+    ProvideHapticManager {
+      SimpleCategorySettingItem(
+        title = "Account Information",
+        subtitle = "Manage your personal details",
+        icon = Icons.Default.Person,
+        onClick = {},
+        haptic = LocalHapticManager.current,
+      )
+    }
+  }
+}
+
+@Composable
+@Preview(showBackground = true, backgroundColor = 0xFFFFFFFF, showSystemUi = false)
+private fun SimpleCategorySettingItemLightPreview() {
+  MaterialTheme(colorScheme = lightColorScheme()) {
+    ProvideHapticManager {
+      SimpleCategorySettingItem(
+        title = "Account Information",
+        subtitle = "Manage your personal details",
+        icon = Icons.Default.Person,
+        onClick = {},
+        haptic = LocalHapticManager.current,
+      )
+    }
+  }
+}
+
+@Composable
+@Preview(backgroundColor = 0xFF0D0D0D, showBackground = true, showSystemUi = false, uiMode = Configuration.UI_MODE_NIGHT_YES or Configuration.UI_MODE_TYPE_NORMAL)
+private fun DialogOpenerSettingItemDarkPreview() {
+  MaterialTheme(colorScheme = MyBicoccaDarkColorScheme) {
+    ProvideHapticManager {
+      DialogOpenerSettingItem(
+        title = "Theme",
+        subtitle = "Select app appearance",
+        icon = Icons.Default.ColorLens,
+        onClick = {}
+      )
+    }
+  }
+}
+
+@Composable
+@Preview(showBackground = true, backgroundColor = 0xFFFFFFFF, showSystemUi = false)
+private fun DialogOpenerSettingItemLightPreview() {
+  MaterialTheme(colorScheme = lightColorScheme()) {
+    ProvideHapticManager {
+      DialogOpenerSettingItem(
+        title = "Theme",
+        subtitle = "Select app appearance",
+        icon = Icons.Default.ColorLens,
+        onClick = {}
+      )
+    }
+  }
+}
+
+@Composable
+@Suppress("AssignedValueIsNeverRead")
+@Preview(backgroundColor = 0xFF0D0D0D, showBackground = true, showSystemUi = false, uiMode = Configuration.UI_MODE_NIGHT_YES or Configuration.UI_MODE_TYPE_NORMAL)
+private fun SimpleSwitchSettingItemDarkPreview() {
+  MaterialTheme(colorScheme = MyBicoccaDarkColorScheme) {
+    ProvideHapticManager {
+      var checked by remember { mutableStateOf(true) }
+      SimpleSwitchSettingItem(
+        title = "Notifications",
+        subtitle = "Enable push notifications",
+        icon = Icons.Default.Notifications,
+        checked = checked,
+        onCheckedChange = { checked = it },
+        haptic = LocalHapticManager.current,
+      )
+    }
+  }
+}
+
+@Composable
+@Suppress("AssignedValueIsNeverRead")
+@Preview(showBackground = true, backgroundColor = 0xFFFFFFFF, showSystemUi = false)
+private fun SimpleSwitchSettingItemLightPreview() {
+  MaterialTheme(colorScheme = lightColorScheme()) {
+    ProvideHapticManager {
+      var checked by remember { mutableStateOf(false) }
+      SimpleSwitchSettingItem(
+        title = "Notifications",
+        subtitle = "Enable push notifications",
+        icon = Icons.Default.Notifications,
+        checked = checked,
+        onCheckedChange = { checked = it },
+        haptic = rememberHapticManager(),
+      )
+    }
+  }
+}
+
+@Composable
+@Suppress("AssignedValueIsNeverRead")
+@Preview(backgroundColor = 0xFF0D0D0D, showBackground = true, showSystemUi = false, uiMode = Configuration.UI_MODE_NIGHT_YES or Configuration.UI_MODE_TYPE_NORMAL)
+private fun AdvancedSwitchSettingItemDarkPreview() {
+  MaterialTheme(colorScheme = MyBicoccaDarkColorScheme) {
+    ProvideHapticManager {
+      var checked by remember { mutableStateOf(true) }
+      AdvancedSwitchSettingItem(
+        title = "Wi-Fi",
+        subtitle = "Connected to Home Network",
+        icon = Icons.Default.Wifi,
+        checked = checked,
+        onCheckedChange = { checked = it },
+        onSettingsClick = {},
+        haptic = LocalHapticManager.current,
+      )
+    }
+  }
+}
+
+@Composable
+@Suppress("AssignedValueIsNeverRead")
+@Preview(showBackground = true, backgroundColor = 0xFFFFFFFF, showSystemUi = false)
+private fun AdvancedSwitchSettingItemLightPreview() {
+  MaterialTheme(colorScheme = lightColorScheme()) {
+    ProvideHapticManager {
+      var checked by remember { mutableStateOf(false) }
+      AdvancedSwitchSettingItem(
+        title = "Wi-Fi",
+        subtitle = "Connected to Home Network",
+        icon = Icons.Default.Wifi,
+        checked = checked,
+        onCheckedChange = { checked = it },
+        onSettingsClick = {},
+        haptic = LocalHapticManager.current,
+      )
     }
   }
 }

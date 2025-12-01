@@ -1,11 +1,14 @@
 package it.attendance100.mybicocca.components
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.*
+import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.*
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.graphics.vector.*
+import androidx.compose.ui.tooling.preview.*
 import androidx.compose.ui.unit.*
 import it.attendance100.mybicocca.ui.theme.*
 import it.attendance100.mybicocca.utils.*
@@ -20,7 +23,7 @@ fun StyledNavigationDrawerItem(
   onClick: () -> Unit,
 ) {
   val textColor = MaterialTheme.colorScheme.onBackground
-  val grayColor = if (MaterialTheme.colorScheme.background == BackgroundColor) GrayColor else GrayColorLight
+  val grayColor = GrayColor()
   val haptic = rememberHapticManager()
 
   NavigationDrawerItem(
@@ -59,3 +62,42 @@ fun StyledNavigationDrawerItem(
   )
 }
 
+@Preview(showBackground = true, backgroundColor = 0xFF1a0d0f)
+@Composable
+private fun StyledNavigationDrawerItemDarkPreview() {
+  ProvideHapticManager {
+    MaterialTheme(colorScheme = MyBicoccaDarkColorScheme) {
+      Box(
+        modifier = Modifier
+            .padding(8.dp)
+      ) {
+        StyledNavigationDrawerItem(
+          icon = Icons.Outlined.Settings,
+          label = "Settings",
+          selected = false,
+          onClick = { }
+        )
+      }
+    }
+  }
+}
+
+@Preview(showSystemUi = false, showBackground = true)
+@Composable
+private fun StyledNavigationDrawerItemLightPreview() {
+  ProvideHapticManager {
+    MaterialTheme(colorScheme = MyBicoccaLightColorScheme) {
+      Box(
+        modifier = Modifier
+            .padding(8.dp)
+      ) {
+        StyledNavigationDrawerItem(
+          icon = Icons.Outlined.Settings,
+          label = "Settings",
+          selected = false,
+          onClick = { }
+        )
+      }
+    }
+  }
+}

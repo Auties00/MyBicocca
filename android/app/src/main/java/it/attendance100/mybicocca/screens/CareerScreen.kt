@@ -1,5 +1,6 @@
 package it.attendance100.mybicocca.screens
 
+import android.content.res.*
 import androidx.compose.animation.*
 import androidx.compose.foundation.*
 import androidx.compose.foundation.gestures.*
@@ -18,6 +19,7 @@ import androidx.compose.ui.input.pointer.*
 import androidx.compose.ui.res.*
 import androidx.compose.ui.text.font.*
 import androidx.compose.ui.text.input.*
+import androidx.compose.ui.tooling.preview.*
 import androidx.compose.ui.unit.*
 import androidx.hilt.lifecycle.viewmodel.compose.*
 import com.patrykandpatrick.vico.compose.cartesian.*
@@ -32,13 +34,16 @@ import com.patrykandpatrick.vico.core.cartesian.layer.*
 import com.patrykandpatrick.vico.core.common.*
 import com.patrykandpatrick.vico.core.common.shape.*
 import it.attendance100.mybicocca.R
+import it.attendance100.mybicocca.components.cards.*
 import it.attendance100.mybicocca.components.uni_badge.*
+import it.attendance100.mybicocca.data.mocks.*
 import it.attendance100.mybicocca.domain.model.*
 import it.attendance100.mybicocca.ui.theme.*
 import it.attendance100.mybicocca.utils.*
 import it.attendance100.mybicocca.viewmodel.*
 import kotlinx.coroutines.*
 import java.util.*
+import kotlin.math.*
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
@@ -52,7 +57,7 @@ fun CareerScreen(
   val nestedScrollConnection = rememberPageNestedScrollConnection(state = pagerState)
 
   val primaryColor = MaterialTheme.colorScheme.primary
-  val grayColor = if (MaterialTheme.colorScheme.background == BackgroundColor) GrayColor else GrayColorLight
+  val grayColor = GrayColor()
 
   val user by viewModel.user.collectAsState()
   val stats by viewModel.stats.collectAsState()
@@ -110,7 +115,7 @@ fun CareerScreen(
               do {
                 val event = awaitPointerEvent(pass = PointerEventPass.Initial)
                 val change = event.changes.firstOrNull() ?: break
-                if (change.pressed && !handled && pagerState.currentPage == 0 && kotlin.math.abs(pagerState.currentPageOffsetFraction) < 0.01f) {
+                if (change.pressed && !handled && pagerState.currentPage == 0 && abs(pagerState.currentPageOffsetFraction) < 0.01f) {
                   val delta = change.position.x - change.previousPosition.x
                   if (delta > 0) {
                     userScrollEnabled = false
@@ -136,11 +141,13 @@ fun CareerScreen(
             }
           }
         )
+
         1 -> PlaceholderTab(stringResource(R.string.career_tab_piano))
         2 -> ExamsTab(
           passedExams = stats?.passedExams ?: emptyList(),
           remainingExams = stats?.remainingExams ?: emptyList()
         )
+
         3 -> PlaceholderTab(stringResource(R.string.career_tab_luoghi))
       }
     }
@@ -156,7 +163,7 @@ fun ProfiloTab(
 ) {
   val primaryColor = MaterialTheme.colorScheme.primary
   val textColor = MaterialTheme.colorScheme.onBackground
-  val grayColor = if (MaterialTheme.colorScheme.background == BackgroundColor) GrayColor else GrayColorLight
+  val grayColor = GrayColor()
 
   var showDialog by remember { mutableStateOf(false) }
 
@@ -165,6 +172,10 @@ fun ProfiloTab(
   val esamiSostenuti = stats?.esamiSostenuti ?: 0
   val cfuAcquisiti = stats?.cfuAcquisiti ?: 0
   val cfuTotali = stats?.cfuTotali ?: 0
+
+  val preferencesManager = rememberPreferencesManager()
+
+  val progressBarToggle = preferencesManager.progressBarToggle
 
   val grades = stats?.grades ?: emptyList()
 
@@ -233,7 +244,6 @@ fun ProfiloTab(
           title = stringResource(R.string.career_media_aritmetica),
           value = String.format(Locale.getDefault(), "%.2f", mediaAritmetica),
           textColor = textColor,
-          grayColor = grayColor
         )
 
         // Weighted Mean
@@ -242,7 +252,6 @@ fun ProfiloTab(
           title = stringResource(R.string.career_media_ponderata),
           value = String.format(Locale.getDefault(), "%.2f", mediaPonderata),
           textColor = textColor,
-          grayColor = grayColor
         )
       }
 
@@ -257,7 +266,6 @@ fun ProfiloTab(
           title = stringResource(R.string.career_esami_sostenuti),
           value = esamiSostenuti.toString(),
           textColor = textColor,
-          grayColor = grayColor
         )
 
         // Crediti Acquired
@@ -268,7 +276,8 @@ fun ProfiloTab(
           total = cfuTotali,
           primaryColor = primaryColor,
           textColor = textColor,
-          grayColor = grayColor
+          backgroundProgressBar = progressBarToggle,
+          progressbar = !progressBarToggle
         )
       }
     }
@@ -287,8 +296,6 @@ fun ProfiloTab(
           modifier = Modifier.fillMaxWidth(),
           horizontalArrangement = Arrangement.SpaceBetween
         ) {
-          // Inside a Row, we might need weights or specific widths,
-          // but for now, we just call the functions.
           Box(modifier = Modifier.weight(1f)) { userDataSection() }
           Spacer(modifier = Modifier.width(16.dp))
           Box(modifier = Modifier.weight(1f)) { statisticsSection() }
@@ -384,106 +391,36 @@ fun ProfiloTab(
   }
 }
 
-
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES or Configuration.UI_MODE_TYPE_NORMAL)
 @Composable
-fun StatCard(
-  modifier: Modifier = Modifier,
-  title: String,
-  value: String,
-  textColor: Color,
-  grayColor: Color,
-) {
-  val haptic = rememberHapticManager()
-  Card(
-    modifier = modifier,
-    colors = CardDefaults.cardColors(
-      containerColor = MaterialTheme.colorScheme.surfaceDim
+fun GradesChartDarkPreview() {
+  val grades = listOf(
+    GradePoint(
+      cfu = "8.0",
+      value = 30f,
+      date = "2023-10-25",
+      name = "Test Grade 1",
+      isLode = false,
     ),
-    onClick = {
-      haptic.tap()
-    },
-    shape = RoundedCornerShape(16.dp)
+  )
+  Box(
+    modifier = Modifier.size(400.dp, 350.dp),
   ) {
-    Column(
-      modifier = Modifier
-          .padding(16.dp)
-          .fillMaxWidth(),
-      verticalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-      Text(
-        text = title,
-        color = grayColor,
-        fontSize = 12.sp,
-        maxLines = 2
-      )
-      Text(
-        text = value,
-        color = textColor,
-        fontSize = 24.sp,
-        fontWeight = FontWeight.Bold
-      )
+    MaterialTheme(colorScheme = MyBicoccaDarkColorScheme) {
+      GradesChart(grades, MaterialTheme.colorScheme.primary)
     }
   }
 }
 
+@Preview(showBackground = true, showSystemUi = false)
 @Composable
-fun ProgressStatCard(
-  modifier: Modifier = Modifier,
-  title: String,
-  current: Int,
-  total: Int,
-  primaryColor: Color,
-  textColor: Color,
-  grayColor: Color,
-) {
-  val progress = current.toFloat() / total.toFloat()
-  val haptic = rememberHapticManager()
-
-  Card(
-    modifier = modifier,
-    colors = CardDefaults.cardColors(
-      containerColor = MaterialTheme.colorScheme.surfaceDim
-    ),
-    onClick = {
-      haptic.spring()
-    },
-    shape = RoundedCornerShape(16.dp)
+fun GradesChartLightPreview() {
+  val grades = UserMockData.careerStats.grades
+  Box(
+    modifier = Modifier.size(400.dp, 350.dp),
   ) {
-    Column(
-      modifier = Modifier
-          .padding(16.dp)
-          .fillMaxWidth(),
-      verticalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-      Text(
-        text = title,
-        color = grayColor,
-        fontSize = 12.sp,
-        maxLines = 2
-      )
-      Text(
-        text = "$current/$total",
-        color = textColor,
-        fontSize = 24.sp,
-        fontWeight = FontWeight.Bold
-      )
-
-      // Progress bar
-      Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(8.dp)
-            .clip(RoundedCornerShape(4.dp))
-            .background(grayColor.copy(alpha = 0.2f))
-      ) {
-        Box(
-          modifier = Modifier
-              .fillMaxWidth(progress)
-              .fillMaxHeight()
-              .clip(RoundedCornerShape(4.dp))
-              .background(primaryColor)
-        )
-      }
+    MaterialTheme(colorScheme = MyBicoccaDarkColorScheme) {
+      GradesChart(grades, MaterialTheme.colorScheme.primary)
     }
   }
 }

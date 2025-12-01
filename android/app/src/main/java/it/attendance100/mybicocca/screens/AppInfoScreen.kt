@@ -48,7 +48,7 @@ fun AppInfoScreen(
   animatedContentScope: AnimatedContentScope,
 ) {
   val textColor = MaterialTheme.colorScheme.onBackground
-  val grayColor = if (MaterialTheme.colorScheme.background == BackgroundColor) GrayColor else GrayColorLight
+  val grayColor = GrayColor()
   val isDarkMode = rememberPreferencesManager().isDarkMode ?: isSystemInDarkTheme()
 
   Scaffold(
