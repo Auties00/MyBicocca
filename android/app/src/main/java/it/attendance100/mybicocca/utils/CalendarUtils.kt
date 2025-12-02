@@ -18,6 +18,35 @@ object CalendarUtils {
   const val TEST_EVENT_ID_START = 1001L
   const val TEST_EVENT_ID_END = 9999L
 
+  // Calendar Screen Constants
+  const val PAGER_INITIAL_PAGE_OFFSET = Int.MAX_VALUE / 2
+  const val PAGER_PAGE_COUNT = Int.MAX_VALUE
+  val DAY_SELECTOR_HEIGHT = 72.dp
+
+  // Day Timeline Constants
+  val CURRENT_TIME_DOT_SIZE = 12.dp
+  val CURRENT_TIME_LINE_HEIGHT = 2.dp
+  val EVENT_CARD_CORNER_RADIUS = 16.dp
+  val COLOR_BAR_WIDTH = 4.dp
+  const val PULSE_DURATION_MS = 2000
+  const val START_HOUR = 7
+  const val END_HOUR = 22
+
+  // Week Grid Constants
+  val TIME_COLUMN_WIDTH = 50.dp
+  const val EVENT_HORIZONTAL_PADDING = 2
+  const val TOTAL_DAYS = 7
+  val OVERLAP_OFFSET = 4.dp
+
+  // Stack Constants
+  val STACK_CARD_CORNER_RADIUS = 16.dp
+  val STACK_COLOR_BAR_WIDTH = 4.dp
+  val STACK_OFFSET_X = 10.dp
+  val STACK_OFFSET_Y = 6.dp
+  const val SWIPE_THRESHOLD = 0.25f
+  const val VELOCITY_THRESHOLD = 400f
+  const val MAX_VISIBLE_CARDS = 3
+
   val HOUR_SLOT_HEIGHT = 80.dp
   const val WEEK_START_HOUR = 8
   const val WEEK_END_HOUR = 20

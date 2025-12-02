@@ -14,7 +14,7 @@
   <string name="theme_system_default">Predefinito di Sistema</string>
   <string name="theme_light">Chiaro</string>
   <string name="theme_dark">Scuro</string>
-  <string name="settings_dark_mode">Tema Scuro</string>
+  <string name="settings_dark_mode">Modalità Scura</string>
   <string name="settings_dark_mode_enabled">Il tema Scuro è attivo</string>
   <string name="settings_language_desc">Seleziona la lingua dell\'app</string>
   <string name="settings_general">Generale</string>
@@ -60,8 +60,9 @@
   <string name="career_dialog_calcola">Calcola</string>
   <string name="career_dialog_annulla">Annulla</string>
   <string name="career_grafico_voti">Grafico Voti</string>
-  
+
   <!-- Calendar Page -->
+  <string name="calendar_overview">Panoramica</string>
   <string name="calendar_today">Oggi</string>
   <string name="calendar_previous_month">Mese Precedente</string>
   <string name="calendar_next_month">Mese Successivo</string>
@@ -69,6 +70,8 @@
   <string name="calendar_no_events">Nessun evento per questo giorno</string>
   <string name="calendar_list_view">Vista Lista</string>
   <string name="calendar_week_view">Vista Settimanale</string>
+  <string name="calendar_overlapping_events">%d eventi sovrapposti</string>
+  <string name="calendar_collapse">Comprimi</string>
   <string name="event_type_lecture">Lezione</string>
   <string name="event_type_lab">Laboratorio</string>
   <string name="event_type_exam">Esame</string>
@@ -83,6 +86,16 @@
   <string name="event_detail_notes">Note</string>
   <string name="event_detail_close">Chiudi</string>
   <string name="event_detail_actions">AZIONI</string>
+  <string name="overlapping_events_title">Eventi Sovrapposti</string>
+  <string name="overlapping_events_count">%1$d eventi nello stesso orario</string>
+  <string name="overlapping_events_badge">+%1$d</string>
+  <string name="close">Chiudi</string>
+  <string name="expand">Espandi</string>
+  <string name="collapse">Comprimi</string>
+  <string name="event_duration">Durata</string>
+  <string name="event_location">Luogo</string>
+  <string name="event_professor">Docente</string>
+  <string name="event_cancelled">Evento Annullato</string>
   <string name="event_status_cancelled">Annullato</string>
   <string name="event_status_ended">Terminato</string>
   <string name="event_status_ended_mins">Terminato da %1$d min</string>
@@ -93,6 +106,6 @@
   <string name="event_status_starts_mins">Tra %1$d minuti</string>
   <string name="event_status_starts_hours">Tra %1$d ore</string>
   <string name="event_status_starts_days">Tra %1$d giorni</string>
-    <string name="event_action_elearning">Pagina E-Learning</string>
-    <string name="event_action_elearning_subtitle">Visualizza le risorse del corso</string>
+  <string name="event_action_elearning">Pagina E-Learning</string>
+  <string name="event_action_elearning_subtitle">Visualizza le risorse del corso</string>
 </resources>
