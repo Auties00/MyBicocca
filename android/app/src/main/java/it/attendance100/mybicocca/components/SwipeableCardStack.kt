@@ -31,24 +31,6 @@ import kotlinx.coroutines.launch
 import java.time.LocalDateTime
 import kotlin.math.absoluteValue
 
-// CONSTANTS
-
-private object StackConstants {
-    val CARD_CORNER_RADIUS = 16.dp
-    val COLOR_BAR_WIDTH = 4.dp
-
-    // Stack visual
-    val STACK_OFFSET_X = 10.dp
-    val STACK_OFFSET_Y = 6.dp
-
-    // Swipe thresholds
-    const val SWIPE_THRESHOLD = 0.25f
-    const val VELOCITY_THRESHOLD = 400f
-
-    // Visible cards
-    const val MAX_VISIBLE_CARDS = 3
-}
-
 // MAIN COMPONENT
 
 @Composable
@@ -61,7 +43,7 @@ fun SwipeableCardStack(
     textColor: Color,
     grayColor: Color,
     primaryColor: Color,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     if (events.isEmpty()) return
 
@@ -69,6 +51,7 @@ fun SwipeableCardStack(
     val density = LocalDensity.current
     val haptic = LocalHapticFeedback.current
 
+    // Ordine cronologico originale (rimosso sort per priorità per evitare disorientamento)
     val sortedEvents = events
 
     var currentIndex by remember {
@@ -89,41 +72,48 @@ fun SwipeableCardStack(
     var cardWidth by remember { mutableFloatStateOf(300f) }
 
     val stackExtraX = with(density) {
-        StackConstants.STACK_OFFSET_X.toPx() * (StackConstants.MAX_VISIBLE_CARDS - 1)
+        CalendarUtils.STACK_OFFSET_X.toPx() * (CalendarUtils.MAX_VISIBLE_CARDS - 1)
     }
     val stackExtraY = with(density) {
-        StackConstants.STACK_OFFSET_Y.toPx() * (StackConstants.MAX_VISIBLE_CARDS - 1)
+        CalendarUtils.STACK_OFFSET_Y.toPx() * (CalendarUtils.MAX_VISIBLE_CARDS - 1)
     }
 
     Column(modifier = modifier.fillMaxWidth()) {
-        // AGGIUNTA ANIMAZIONE QUI
         AnimatedContent(
             targetState = isExpanded,
             transitionSpec = {
                 if (targetState) {
-                    // Espansione: Fade In + Espansione Verticale
                     (fadeIn(animationSpec = tween(300)) +
-                            expandVertically(expandFrom = Alignment.Top, animationSpec = tween(300, easing = FastOutSlowInEasing)))
+                            expandVertically(
+                                expandFrom = Alignment.Top,
+                                animationSpec = tween(300, easing = FastOutSlowInEasing)
+                            ))
                         .togetherWith(
                             fadeOut(animationSpec = tween(300)) +
-                                    shrinkVertically(shrinkTowards = Alignment.Top, animationSpec = tween(300))
+                                    shrinkVertically(
+                                        shrinkTowards = Alignment.Top,
+                                        animationSpec = tween(300)
+                                    )
                         )
                 } else {
-                    // Collasso: Fade Out + Restringimento Verticale
                     (fadeIn(animationSpec = tween(300)) +
-                            expandVertically(expandFrom = Alignment.Top, animationSpec = tween(300)))
+                            expandVertically(
+                                expandFrom = Alignment.Top,
+                                animationSpec = tween(300)
+                            ))
                         .togetherWith(
                             fadeOut(animationSpec = tween(300)) +
-                                    shrinkVertically(shrinkTowards = Alignment.Top, animationSpec = tween(300, easing = FastOutSlowInEasing))
+                                    shrinkVertically(
+                                        shrinkTowards = Alignment.Top,
+                                        animationSpec = tween(300, easing = FastOutSlowInEasing)
+                                    )
                         )
                 }
             },
-            label = "expand_collapse_animation"
+            label = "expand_collapse"
         ) { targetExpanded ->
             if (targetExpanded) {
-                // ============================
                 // MODALITÀ ESPANSA
-                // ============================
                 ExpandedEventsList(
                     events = sortedEvents,
                     currentIndex = currentIndex,
@@ -142,10 +132,7 @@ fun SwipeableCardStack(
                     }
                 )
             } else {
-                // ============================
                 // MODALITÀ STACK
-                // ============================
-                // Raggruppiamo tutto in una Column per l'AnimatedContent
                 Column {
                     Box(
                         modifier = Modifier
@@ -160,38 +147,70 @@ fun SwipeableCardStack(
                                 orientation = Orientation.Horizontal,
                                 onDragStopped = { velocity ->
                                     scope.launch {
-                                        val threshold = cardWidth * StackConstants.SWIPE_THRESHOLD
+                                        val threshold = cardWidth * CalendarUtils.SWIPE_THRESHOLD
                                         when {
-                                            offsetX.value < -threshold || velocity < -StackConstants.VELOCITY_THRESHOLD -> {
-                                                offsetX.animateTo(-cardWidth, spring(dampingRatio = Spring.DampingRatioLowBouncy))
-                                                currentIndex = (currentIndex + 1) % sortedEvents.size
+                                            // Swipe LEFT
+                                            offsetX.value < -threshold || velocity < -CalendarUtils.VELOCITY_THRESHOLD -> {
+                                                offsetX.animateTo(
+                                                    -cardWidth,
+                                                    spring(dampingRatio = Spring.DampingRatioLowBouncy)
+                                                )
+                                                currentIndex =
+                                                    (currentIndex + 1) % sortedEvents.size
                                                 onEventSelected(sortedEvents[currentIndex].id)
                                                 haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                                 offsetX.snapTo(0f)
                                             }
-                                            offsetX.value > threshold || velocity > StackConstants.VELOCITY_THRESHOLD -> {
-                                                offsetX.animateTo(cardWidth, spring(dampingRatio = Spring.DampingRatioLowBouncy))
-                                                currentIndex = (currentIndex - 1 + sortedEvents.size) % sortedEvents.size
+                                            // Swipe RIGHT
+                                            offsetX.value > threshold || velocity > CalendarUtils.VELOCITY_THRESHOLD -> {
+                                                offsetX.animateTo(
+                                                    cardWidth,
+                                                    spring(dampingRatio = Spring.DampingRatioLowBouncy)
+                                                )
+                                                currentIndex =
+                                                    (currentIndex - 1 + sortedEvents.size) % sortedEvents.size
                                                 onEventSelected(sortedEvents[currentIndex].id)
                                                 haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                                 offsetX.snapTo(0f)
                                             }
+
                                             else -> {
-                                                offsetX.animateTo(0f, spring(dampingRatio = Spring.DampingRatioMediumBouncy))
+                                                offsetX.animateTo(
+                                                    0f,
+                                                    spring(dampingRatio = Spring.DampingRatioMediumBouncy)
+                                                )
                                             }
                                         }
                                     }
                                 }
                             )
                     ) {
-                        val visibleCount = minOf(StackConstants.MAX_VISIBLE_CARDS, sortedEvents.size)
+                        val visibleCount =
+                            minOf(CalendarUtils.MAX_VISIBLE_CARDS, sortedEvents.size)
                         for (stackPos in (visibleCount - 1) downTo 0) {
                             val eventIndex = (currentIndex + stackPos) % sortedEvents.size
                             val event = sortedEvents[eventIndex]
+
+                            val cardUiState by remember(stackPos, cardWidth) {
+                                derivedStateOf {
+                                    val isTopCard = stackPos == 0
+                                    val dragVal = if (isTopCard) offsetX.value else 0f
+                                    
+                                    val rotationVal = if (isTopCard && cardWidth > 0) (dragVal / cardWidth) * 8f else 0f
+                                    val elevationVal = if (isTopCard) 6.dp else (3 - stackPos).coerceAtLeast(1).dp
+                                    
+                                    Triple(dragVal, rotationVal, elevationVal)
+                                }
+                            }
+                            
+                            val (finalDragOffset, finalRotation, finalElevation) = cardUiState
+
                             DeckCard(
                                 event = event,
                                 stackPosition = stackPos,
-                                dragOffset = if (stackPos == 0) offsetX.value else 0f,
+                                dragOffset = finalDragOffset,
+                                rotation = finalRotation,
+                                elevation = finalElevation,
                                 cardWidth = cardWidth,
                                 cardHeight = cardHeight,
                                 textColor = textColor,
@@ -233,7 +252,7 @@ private fun PositionIndicator(
     currentIndex: Int,
     totalEvents: Int,
     grayColor: Color,
-    onClick: () -> Unit
+    onClick: () -> Unit,
 ) {
     Surface(
         modifier = Modifier.clickable(onClick = onClick),
@@ -245,8 +264,18 @@ private fun PositionIndicator(
             horizontalArrangement = Arrangement.spacedBy(4.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(text = "${currentIndex + 1}/$totalEvents", color = grayColor, fontSize = 11.sp, fontWeight = FontWeight.Medium)
-            Icon(imageVector = Icons.Outlined.UnfoldMore, contentDescription = null, tint = grayColor, modifier = Modifier.size(14.dp))
+            Text(
+                text = "${currentIndex + 1}/$totalEvents",
+                color = grayColor,
+                fontSize = 11.sp,
+                fontWeight = FontWeight.Medium
+            )
+            Icon(
+                imageVector = Icons.Outlined.UnfoldMore,
+                contentDescription = null,
+                tint = grayColor,
+                modifier = Modifier.size(14.dp)
+            )
         }
     }
 }
@@ -259,15 +288,42 @@ private fun ExpandedEventsList(
     grayColor: Color,
     primaryColor: Color,
     onEventSelect: (Int) -> Unit,
-    onCollapse: () -> Unit
+    onCollapse: () -> Unit,
 ) {
-    Column(modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-            Text(text = "${events.size} eventi sovrapposti", color = grayColor, fontSize = 12.sp, fontWeight = FontWeight.Medium)
-            Surface(modifier = Modifier.clickable(onClick = onCollapse), color = grayColor.copy(alpha = 0.15f), shape = RoundedCornerShape(6.dp)) {
-                Row(modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp), horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Icon(imageVector = Icons.Outlined.UnfoldLess, contentDescription = null, tint = grayColor, modifier = Modifier.size(16.dp))
-                    Text(text = "Comprimi", color = grayColor, fontSize = 12.sp)
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = stringResource(R.string.calendar_overlapping_events, events.size),
+                color = grayColor,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Medium
+            )
+            Surface(
+                modifier = Modifier.clickable(onClick = onCollapse),
+                color = grayColor.copy(alpha = 0.15f),
+                shape = RoundedCornerShape(6.dp)
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.UnfoldLess,
+                        contentDescription = null,
+                        tint = grayColor,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Text(text = stringResource(R.string.calendar_collapse), color = grayColor, fontSize = 12.sp)
                 }
             }
         }
@@ -275,16 +331,49 @@ private fun ExpandedEventsList(
             val eventColor = CalendarUtils.getEventColor(event.eventType, primaryColor)
             val isSelected = index == currentIndex
             Surface(
-                modifier = Modifier.fillMaxWidth().clickable { onEventSelect(index) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { onEventSelect(index) },
                 color = if (isSelected) eventColor.copy(alpha = 0.1f) else MaterialTheme.colorScheme.surface,
                 shape = RoundedCornerShape(12.dp),
-                border = if (isSelected) BorderStroke(1.5.dp, eventColor.copy(alpha = 0.5f)) else BorderStroke(0.5.dp, grayColor.copy(alpha = 0.15f))
+                border = if (isSelected) BorderStroke(
+                    1.5.dp,
+                    eventColor.copy(alpha = 0.5f)
+                ) else BorderStroke(0.5.dp, grayColor.copy(alpha = 0.15f))
             ) {
-                Row(modifier = Modifier.fillMaxWidth().padding(12.dp), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Box(modifier = Modifier.width(3.dp).height(40.dp).clip(RoundedCornerShape(2.dp)).background(eventColor))
-                    Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Text(text = event.courseName, color = textColor, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                        Text(text = "${event.startTime.format(CalendarUtils.timeFormatter)} - ${event.endTime.format(CalendarUtils.timeFormatter)}", color = grayColor, fontSize = 12.sp)
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(12.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .width(3.dp)
+                            .height(40.dp)
+                            .clip(RoundedCornerShape(2.dp))
+                            .background(eventColor)
+                    )
+                    Column(
+                        modifier = Modifier.weight(1f),
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Text(
+                            text = event.courseName,
+                            color = textColor,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                        Text(
+                            text = "${event.startTime.format(CalendarUtils.timeFormatter)} - ${
+                                event.endTime.format(
+                                    CalendarUtils.timeFormatter
+                                )
+                            }", color = grayColor, fontSize = 12.sp
+                        )
                     }
                 }
             }
@@ -297,26 +386,25 @@ private fun DeckCard(
     event: CourseEvent,
     stackPosition: Int,
     dragOffset: Float,
+    rotation: Float,
+    elevation: Dp,
     cardWidth: Float,
     cardHeight: Dp,
     textColor: Color,
     grayColor: Color,
     primaryColor: Color,
-    onClick: () -> Unit
+    onClick: () -> Unit,
 ) {
     val density = LocalDensity.current
     val eventColor = CalendarUtils.getEventColor(event.eventType, primaryColor)
     val eventStatus = remember(event) { getEventStatus(event) }
 
-    val baseOffsetX = with(density) { StackConstants.STACK_OFFSET_X.toPx() * stackPosition }
-    val baseOffsetY = with(density) { -StackConstants.STACK_OFFSET_Y.toPx() * stackPosition }
+    val baseOffsetX = with(density) { CalendarUtils.STACK_OFFSET_X.toPx() * stackPosition }
+    val baseOffsetY = with(density) { -CalendarUtils.STACK_OFFSET_Y.toPx() * stackPosition }
     val baseScale = 1f - (0.03f * stackPosition)
 
     val finalOffsetX = if (stackPosition == 0) dragOffset else baseOffsetX
-    val rotation = if (stackPosition == 0 && cardWidth > 0) (dragOffset / cardWidth) * 8f else 0f
-
     val zIndex = (10 - stackPosition).toFloat()
-    val elevation = if (stackPosition == 0) 6.dp else (3 - stackPosition).coerceAtLeast(1).dp
 
     Surface(
         modifier = Modifier
@@ -331,10 +419,13 @@ private fun DeckCard(
                 rotationZ = rotation
                 transformOrigin = TransformOrigin(0.5f, 0.85f)
             },
-        shape = RoundedCornerShape(StackConstants.CARD_CORNER_RADIUS),
+        shape = RoundedCornerShape(CalendarUtils.STACK_CARD_CORNER_RADIUS),
         color = MaterialTheme.colorScheme.surface,
         shadowElevation = elevation,
-        border = if (stackPosition > 0) BorderStroke(0.5.dp, grayColor.copy(alpha = 0.1f)) else null,
+        border = if (stackPosition > 0) BorderStroke(
+            0.5.dp,
+            grayColor.copy(alpha = 0.1f)
+        ) else null,
         onClick = onClick
     ) {
         Row(modifier = Modifier.fillMaxSize()) {
@@ -358,17 +449,21 @@ private fun EventCardContent(
     eventStatus: TimelineEventStatus,
     eventColor: Color,
     textColor: Color,
-    grayColor: Color
+    grayColor: Color,
 ) {
     val showCompactContent = height < 80.dp
-    val durationText = remember(event) { CalendarUtils.formatDuration(event.startTime, event.endTime) }
+    val durationText =
+        remember(event) { CalendarUtils.formatDuration(event.startTime, event.endTime) }
 
+    // Utilizziamo VerticalClipLayout per gestire il contenuto
     VerticalClipLayout(
         modifier = Modifier
             .fillMaxSize()
             .padding(if (showCompactContent) 8.dp else 12.dp),
         spacing = if (showCompactContent) 4.dp else 6.dp
     ) {
+        // ROW UNIFICATA: TITOLO (SX) + STATO (DX)
+        // Questo porta il titolo in alto, allineato con lo status
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -381,26 +476,50 @@ private fun EventCardContent(
                 fontWeight = FontWeight.SemiBold,
                 maxLines = if (showCompactContent) 1 else 2,
                 overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f) // Prende tutto lo spazio a sinistra
             )
+
             Spacer(modifier = Modifier.width(8.dp))
-            EventStatusIndicator(event = event, eventStatus = eventStatus, eventColor = eventColor)
+
+            // Indicatore di stato in alto a destra
+            EventStatusIndicator(
+                event = event,
+                eventStatus = eventStatus,
+                eventColor = eventColor
+            )
         }
 
+        // INFO CHIPS (Sotto il titolo)
         if (showCompactContent) {
             EventInfoChip(
                 icon = Icons.Outlined.Schedule,
-                text = "${event.startTime.format(CalendarUtils.timeFormatter)} - ${event.endTime.format(CalendarUtils.timeFormatter)}",
+                text = "${event.startTime.format(CalendarUtils.timeFormatter)} - ${
+                    event.endTime.format(
+                        CalendarUtils.timeFormatter
+                    )
+                }",
                 color = grayColor
             )
         } else {
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
-                EventInfoChip(icon = Icons.Outlined.Schedule, text = "${event.startTime.format(CalendarUtils.timeFormatter)} - ${event.endTime.format(CalendarUtils.timeFormatter)}", color = grayColor)
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                EventInfoChip(
+                    icon = Icons.Outlined.Schedule,
+                    text = "${event.startTime.format(CalendarUtils.timeFormatter)} - ${
+                        event.endTime.format(CalendarUtils.timeFormatter)
+                    }",
+                    color = grayColor
+                )
                 EventInfoChip(icon = Icons.Outlined.Timer, text = durationText, color = grayColor)
             }
+
             CalendarUtils.formatEventLocation(event.room, event.building)?.let { location ->
                 EventInfoChip(Icons.Outlined.LocationOn, location, grayColor)
             }
+
+            // Mostra Prof solo se c'è spazio (gestito da VerticalClipLayout)
             if (height >= 120.dp) {
                 event.professor?.let { professor ->
                     EventInfoChip(Icons.Outlined.Person, professor, grayColor)
@@ -411,26 +530,67 @@ private fun EventCardContent(
 }
 
 @Composable
-private fun EventStatusIndicator(event: CourseEvent, eventStatus: TimelineEventStatus, eventColor: Color) {
+private fun EventStatusIndicator(
+    event: CourseEvent,
+    eventStatus: TimelineEventStatus,
+    eventColor: Color,
+) {
     when (eventStatus) {
         TimelineEventStatus.ENDED -> {
-            Surface(shape = RoundedCornerShape(6.dp), color = EventInProgressColor, modifier = Modifier.size(24.dp)) {
+            Surface(
+                shape = RoundedCornerShape(6.dp),
+                color = EventInProgressColor,
+                modifier = Modifier.size(24.dp)
+            ) {
                 Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
-                    Icon(Icons.Outlined.Check, null, tint = Color.White, modifier = Modifier.size(16.dp))
+                    Icon(
+                        Icons.Outlined.Check,
+                        null,
+                        tint = Color.White,
+                        modifier = Modifier.size(16.dp)
+                    )
                 }
             }
         }
+
         TimelineEventStatus.IN_PROGRESS -> {
             val infiniteTransition = rememberInfiniteTransition(label = "in_progress")
-            val scale by infiniteTransition.animateFloat(initialValue = 0.8f, targetValue = 1.2f, animationSpec = infiniteRepeatable(tween(800, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "scale")
-            Box(modifier = Modifier.size(24.dp).scale(scale), contentAlignment = Alignment.Center) {
-                Box(modifier = Modifier.size(12.dp).clip(CircleShape).background(EventInProgressColor))
+            val scale by infiniteTransition.animateFloat(
+                initialValue = 0.8f,
+                targetValue = 1.2f,
+                animationSpec = infiniteRepeatable(
+                    tween(800, easing = FastOutSlowInEasing),
+                    RepeatMode.Reverse
+                ),
+                label = "scale"
+            )
+            Box(
+                modifier = Modifier
+                    .size(24.dp)
+                    .scale(scale), contentAlignment = Alignment.Center
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(12.dp)
+                        .clip(CircleShape)
+                        .background(EventInProgressColor)
+                )
             }
         }
+
         TimelineEventStatus.UPCOMING -> {
-            Surface(shape = RoundedCornerShape(6.dp), color = eventColor.copy(alpha = 0.15f), modifier = Modifier.size(28.dp)) {
+            Surface(
+                shape = RoundedCornerShape(6.dp),
+                color = eventColor.copy(alpha = 0.15f),
+                modifier = Modifier.size(28.dp)
+            ) {
                 Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
-                    Icon(getEventTypeIcon(event.eventType), null, tint = eventColor, modifier = Modifier.size(16.dp))
+                    Icon(
+                        getEventTypeIcon(event.eventType),
+                        null,
+                        tint = eventColor,
+                        modifier = Modifier.size(16.dp)
+                    )
                 }
             }
         }
@@ -442,16 +602,44 @@ private fun EventColorBar(color: Color, status: TimelineEventStatus) {
     val barColor = if (status == TimelineEventStatus.IN_PROGRESS) EventInProgressColor else color
     val infiniteTransition = rememberInfiniteTransition(label = "bar_pulse")
     val animatedAlpha by if (status == TimelineEventStatus.IN_PROGRESS) {
-        infiniteTransition.animateFloat(initialValue = 0.7f, targetValue = 1f, animationSpec = infiniteRepeatable(tween(1000), RepeatMode.Reverse), label = "alpha")
+        infiniteTransition.animateFloat(
+            initialValue = 0.7f,
+            targetValue = 1f,
+            animationSpec = infiniteRepeatable(
+                tween(1000, easing = FastOutSlowInEasing),
+                RepeatMode.Reverse
+            ),
+            label = "alpha"
+        )
     } else remember { mutableFloatStateOf(1f) }
-    Box(modifier = Modifier.width(StackConstants.COLOR_BAR_WIDTH).fillMaxHeight().clip(RoundedCornerShape(topStart = StackConstants.CARD_CORNER_RADIUS, bottomStart = StackConstants.CARD_CORNER_RADIUS)).background(barColor.copy(alpha = animatedAlpha)))
+    Box(
+        modifier = Modifier
+            .width(CalendarUtils.STACK_COLOR_BAR_WIDTH)
+            .fillMaxHeight()
+            .clip(
+                RoundedCornerShape(
+                    topStart = CalendarUtils.STACK_CARD_CORNER_RADIUS,
+                    bottomStart = CalendarUtils.STACK_CARD_CORNER_RADIUS
+                )
+            )
+            .background(barColor.copy(alpha = animatedAlpha))
+    )
 }
 
 @Composable
 private fun EventInfoChip(icon: ImageVector, text: String, color: Color) {
-    Row(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
         Icon(icon, null, tint = color.copy(alpha = 0.7f), modifier = Modifier.size(14.dp))
-        Text(text = text, color = color, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        Text(
+            text = text,
+            color = color,
+            fontSize = 12.sp,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
     }
 }
 
@@ -478,7 +666,7 @@ private fun getEventStatus(event: CourseEvent): TimelineEventStatus {
 fun VerticalClipLayout(
     modifier: Modifier = Modifier,
     spacing: Dp = 0.dp,
-    content: @Composable () -> Unit
+    content: @Composable () -> Unit,
 ) {
     Layout(content = content, modifier = modifier) { measurables, constraints ->
         val spacingPx = spacing.roundToPx()
@@ -487,8 +675,10 @@ fun VerticalClipLayout(
 
         for (measurable in measurables) {
             val placeable = measurable.measure(constraints.copy(minHeight = 0))
+            // Calcola altezza richiesta
             val requiredSpace = placeable.height + if (placeables.isNotEmpty()) spacingPx else 0
 
+            // Controlla se c'è spazio rimanente
             if (currentHeight + requiredSpace <= constraints.maxHeight) {
                 placeables.add(placeable)
                 currentHeight += requiredSpace
