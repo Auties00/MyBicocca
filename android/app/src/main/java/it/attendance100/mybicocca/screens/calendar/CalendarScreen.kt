@@ -268,8 +268,7 @@ private fun CalendarHeader(
         ) {
             Text(
                 text = stringResource(R.string.calendar_today),
-                fontSize = 13.sp,
-                fontWeight = FontWeight.Medium
+                style = MaterialTheme.typography.labelLarge
             )
         }
 
@@ -283,7 +282,8 @@ private fun CalendarHeader(
             }
             Text(
                 text = currentMonth.format(monthYearFormatter).replaceFirstChar { it.uppercase() },
-                color = textColor, fontSize = 15.sp, fontWeight = FontWeight.Bold,
+                color = textColor,
+                style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier.padding(horizontal = 2.dp)
             )
             IconButton(onClick = onNextMonth) {
@@ -417,14 +417,13 @@ private fun DaySelectorItem(
         Text(
             text = dayName.take(3).uppercase(),
             color = if (isSelected) Color.White.copy(alpha = 0.8f) else if (isToday) primaryColor else grayColor,
-            fontSize = 11.sp,
-            fontWeight = FontWeight.Medium
+            style = MaterialTheme.typography.labelSmall
         )
         Spacer(modifier = Modifier.height(2.dp))
         Text(
             text = date.dayOfMonth.toString(),
             color = if (isSelected) Color.White else if (isToday) primaryColor else textColor,
-            fontSize = 17.sp,
+            style = MaterialTheme.typography.titleMedium,
             fontWeight = if (isSelected || isToday) FontWeight.Bold else FontWeight.Normal
         )
         if (isToday && !isSelected) {
