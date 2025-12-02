@@ -83,8 +83,7 @@ private fun WeekTimelineHeader() {
         Text(
             text = stringResource(R.string.calendar_overview),
             color = Color.Transparent,
-            fontSize = 14.sp,
-            fontWeight = FontWeight.Bold
+            style = MaterialTheme.typography.titleSmall
         )
     }
 }
@@ -187,7 +186,7 @@ private fun WeekGridHourRow(hour: Int, hourSlotHeight: Dp, grayColor: Color) {
             Text(
                 text = String.format("%02d", hour),
                 color = grayColor.copy(alpha = 0.6f),
-                fontSize = 12.sp, fontWeight = FontWeight.Normal,
+                style = MaterialTheme.typography.bodySmall,
                 modifier = Modifier
                     .padding(end = 8.dp)
                     .offset(y = (-8).dp)

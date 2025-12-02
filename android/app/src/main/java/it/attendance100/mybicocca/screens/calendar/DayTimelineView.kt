@@ -71,16 +71,14 @@ private fun DayTimelineHeader(eventsCount: Int, primaryColor: Color) {
         Text(
             text = stringResource(R.string.calendar_events),
             color = primaryColor,
-            fontSize = 14.sp,
-            fontWeight = FontWeight.Bold
+            style = MaterialTheme.typography.titleSmall
         )
         if (eventsCount > 0) {
             Surface(shape = RoundedCornerShape(12.dp), color = primaryColor.copy(alpha = 0.12f)) {
                 Text(
                     text = eventsCount.toString(),
                     color = primaryColor,
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.SemiBold,
+                    style = MaterialTheme.typography.labelMedium,
                     modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
                 )
             }
@@ -163,8 +161,7 @@ private fun TimelineBackground(startHour: Int, endHour: Int, grayColor: Color) {
                     Text(
                         text = String.format("%02d", hour),
                         color = grayColor.copy(alpha = 0.6f),
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.Medium,
+                        style = MaterialTheme.typography.labelMedium,
                         modifier = Modifier
                             .padding(end = 20.dp)
                             .offset(y = (-12).dp)
@@ -507,8 +504,7 @@ private fun EventCardContent(
             Text(
                 text = event.courseName,
                 color = textColor,
-                fontSize = 15.sp,
-                fontWeight = FontWeight.SemiBold,
+                style = MaterialTheme.typography.titleSmall,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.weight(1f)
@@ -624,7 +620,7 @@ private fun EventInfoChip(icon: ImageVector, text: String, color: Color) {
         Text(
             text = text,
             color = color,
-            fontSize = 12.sp,
+            style = MaterialTheme.typography.bodySmall,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
         )

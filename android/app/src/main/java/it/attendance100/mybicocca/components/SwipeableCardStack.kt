@@ -267,8 +267,7 @@ private fun PositionIndicator(
             Text(
                 text = "${currentIndex + 1}/$totalEvents",
                 color = grayColor,
-                fontSize = 11.sp,
-                fontWeight = FontWeight.Medium
+                style = MaterialTheme.typography.labelSmall
             )
             Icon(
                 imageVector = Icons.Outlined.UnfoldMore,
