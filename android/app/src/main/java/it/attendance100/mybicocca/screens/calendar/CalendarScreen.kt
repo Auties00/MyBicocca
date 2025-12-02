@@ -1,6 +1,5 @@
 package it.attendance100.mybicocca.screens.calendar
 
-
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.*
@@ -32,16 +31,12 @@ import java.time.format.*
 import java.time.temporal.*
 import java.util.*
 
-
-// VIEW MODE ENUM
-
 enum class CalendarViewMode {
     LIST,
     WEEK
 }
 
-
-// MAIN CALENDAR SCREEN
+// Nota: CalendarLayoutConstants è definito in WeekGridView.kt
 
 @Composable
 fun CalendarScreen(
@@ -72,7 +67,6 @@ fun CalendarScreen(
             .fillMaxSize()
             .background(backgroundColor)
     ) {
-        // Header
         CalendarHeader(
             currentMonth = currentMonth,
             viewMode = viewMode,
@@ -87,7 +81,6 @@ fun CalendarScreen(
             primaryColor = primaryColor
         )
 
-        // Selettore giorni - SEMPRE VISIBILE, IDENTICO per entrambe le viste
         HorizontalDaySelector(
             selectedDate = selectedDate,
             viewMode = viewMode,
@@ -108,13 +101,10 @@ fun CalendarScreen(
 
         HorizontalDivider(color = grayColor.copy(alpha = 0.2f))
 
-        // Contenuto con animazione fluida tra le viste
         AnimatedContent(
             targetState = viewMode,
             transitionSpec = {
-                // Animazione di fade + slide orizzontale
                 if (targetState == CalendarViewMode.WEEK) {
-                    // Da lista a griglia: slide da destra + fade
                     (slideInHorizontally(
                         initialOffsetX = { fullWidth -> fullWidth / 3 },
                         animationSpec = tween(400, easing = FastOutSlowInEasing)
@@ -129,7 +119,6 @@ fun CalendarScreen(
                         )
                     )
                 } else {
-                    // Da griglia a lista: slide da sinistra + fade
                     (slideInHorizontally(
                         initialOffsetX = { fullWidth -> -fullWidth / 3 },
                         animationSpec = tween(400, easing = FastOutSlowInEasing)
@@ -185,9 +174,7 @@ fun CalendarScreen(
     }
 }
 
-
 // CALENDAR HEADER
-
 @Composable
 private fun CalendarHeader(
     currentMonth: YearMonth,
@@ -209,7 +196,6 @@ private fun CalendarHeader(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Pulsante Oggi
         FilledTonalButton(
             onClick = onToday,
             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
@@ -225,15 +211,11 @@ private fun CalendarHeader(
             )
         }
 
-        // Navigazione mese
         Row(
             horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            IconButton(
-                onClick = onPreviousMonth,
-                modifier = Modifier.size(36.dp)
-            ) {
+            IconButton(onClick = onPreviousMonth, modifier = Modifier.size(36.dp)) {
                 Icon(
                     imageVector = Icons.Default.ChevronLeft,
                     contentDescription = stringResource(R.string.calendar_previous_month),
@@ -250,10 +232,7 @@ private fun CalendarHeader(
                 modifier = Modifier.padding(horizontal = 2.dp)
             )
 
-            IconButton(
-                onClick = onNextMonth,
-                modifier = Modifier.size(36.dp)
-            ) {
+            IconButton(onClick = onNextMonth, modifier = Modifier.size(36.dp)) {
                 Icon(
                     imageVector = Icons.Default.ChevronRight,
                     contentDescription = stringResource(R.string.calendar_next_month),
@@ -263,7 +242,6 @@ private fun CalendarHeader(
             }
         }
 
-        // Toggle vista
         FilledTonalIconButton(
             onClick = {
                 onViewModeChange(
@@ -283,20 +261,14 @@ private fun CalendarHeader(
                 } else {
                     Icons.Outlined.CalendarViewWeek
                 },
-                contentDescription = if (viewMode == CalendarViewMode.LIST) {
-                    stringResource(R.string.calendar_list_view)
-                } else {
-                    stringResource(R.string.calendar_week_view)
-                },
+                contentDescription = null,
                 modifier = Modifier.size(20.dp)
             )
         }
     }
 }
 
-
-// HORIZONTAL DAY SELECTOR (Allineato alla griglia)
-
+// HORIZONTAL DAY SELECTOR
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun HorizontalDaySelector(
@@ -365,10 +337,6 @@ private fun HorizontalDaySelector(
     }
 }
 
-/**
- * Row dei giorni della settimana.
- * In modalità WEEK ha uno Spacer iniziale per allinearsi alla colonna orario della griglia.
- */
 @Composable
 private fun WeekDaysRow(
     weekStart: LocalDate,
@@ -385,12 +353,10 @@ private fun WeekDaysRow(
             .padding(vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Spacer per allinearsi alla colonna orario (solo in WEEK mode)
         if (viewMode == CalendarViewMode.WEEK) {
             Spacer(modifier = Modifier.width(CalendarLayoutConstants.TIME_COLUMN_WIDTH))
         }
 
-        // 7 giorni con peso uguale
         (0..6).forEach { dayOffset ->
             val date = weekStart.plusDays(dayOffset.toLong())
             val isSelected = date == selectedDate
@@ -427,15 +393,20 @@ private fun DaySelectorItem(
     grayColor: Color,
     primaryColor: Color
 ) {
+    // FIX: Usiamo fillMaxWidth() per garantire che TUTTI gli elementi
+    // occupino lo stesso spazio (la colonna intera), MA aumentiamo il padding orizzontale
+    // (da 2.dp a 7.dp) per stringere visivamente la "pillola" e renderla elegante.
     Column(
         modifier = Modifier
+            .padding(horizontal = 7.dp)
+            .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
             .background(
                 if (isSelected) primaryColor
                 else Color.Transparent
             )
             .clickable { onDateSelected(date) }
-            .padding(horizontal = 8.dp, vertical = 6.dp),
+            .padding(vertical = 6.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
