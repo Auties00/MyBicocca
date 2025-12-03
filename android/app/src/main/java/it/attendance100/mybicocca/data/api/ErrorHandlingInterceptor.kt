@@ -24,19 +24,21 @@ class ErrorHandlingInterceptor @Inject constructor() : Interceptor {
           val trimmed = jsonString.trim()
           if (trimmed.startsWith("{")) {
             val jsonObject = JSONObject(jsonString)
+            // Check if `status` exists and is an integer
             if (jsonObject.has("status") && !jsonObject.isNull("status")) {
-              val status = jsonObject.optInt("status")
-              // Check for the specific error condition: status 500 in body despite 200 OK header
-              if (status >= 400) {
-                val message = jsonObject.optString("message", "Unknown Error")
-                val code = jsonObject.optString("code", "")
+              val statusOpt = jsonObject.opt("status")
+              if (statusOpt is Int) {
+                if (statusOpt >= 400) {
+                  val message = jsonObject.optString("message", "Unknown Error")
+                  val code = jsonObject.optString("code", "")
 
-                Log.w("ErrorInterceptor", "Detected error in 200 OK response: status=$status, code=$code")
+                  Log.w("ErrorInterceptor", "Detected error in 200 OK response: status=$statusOpt, code=$code")
 
-                // Specifically check for JWT expired or generic 500 that implies auth failure
-                if (status == 500 && (message.contains("JWT expired", ignoreCase = true) || code == "eS3-813")) {
-                  Log.e("ErrorInterceptor", "Throwing ExpiredJWTApiException")
-                  throw ExpiredJWTApiException(status, message)
+                  // Check for JWT expired or generic 500 that means auth failure
+                  if (statusOpt == 500 && (message.contains("JWT expired", ignoreCase = true) || code == "eS3-813")) {
+                    Log.e("ErrorInterceptor", "Throwing ExpiredJWTApiException")
+                    throw ExpiredJWTApiException(statusOpt, message)
+                  }
                 }
               }
             }
@@ -47,7 +49,7 @@ class ErrorHandlingInterceptor @Inject constructor() : Interceptor {
         if (e is ExpiredJWTApiException) throw e
 
         // Otherwise, ignore parsing errors and let Retrofit handle the body
-        Log.e("ErrorInterceptor", "Failed to parse error body", e)
+        // Log.e("ErrorInterceptor", "Failed to parse error body", e)
       }
     }
 

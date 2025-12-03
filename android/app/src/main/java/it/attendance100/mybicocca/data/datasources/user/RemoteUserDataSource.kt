@@ -13,12 +13,15 @@ class RemoteUserDataSource @Inject constructor(
 
   override suspend fun getUser(): User {
     val fiscalCode = preferencesManager.authFiscalCode
+    android.util.Log.d("RemoteUserDataSource", "getUser: Starting live API fetch for fiscalCode: $fiscalCode")
     val response = api.getUserProfile(fiscalCode)
 
     if (response.user == null) {
+      android.util.Log.e("RemoteUserDataSource", "getUser: API returned null user")
       throw ApiException(500, "Invalid response: User data is missing")
     }
 
+    android.util.Log.d("RemoteUserDataSource", "getUser: Live API fetch successful")
     val userDetail = response.user
     val career = response.careers?.firstOrNull()
 
@@ -73,7 +76,7 @@ class RemoteUserDataSource @Inject constructor(
         android.util.Log.w("RemoteUserDataSource", "getCareerStats: Failed to extract IDs from profile")
       }
     } else {
-      android.util.Log.v("RemoteUserDataSource", "getCareerStats: IDs found in cache.")
+      android.util.Log.v("RemoteUserDataSource", "  getCareerStats: IDs found in cache.")
     }
 
     if (stuId == null) {
@@ -92,18 +95,19 @@ class RemoteUserDataSource @Inject constructor(
     }
 
     val careerDeferred = async {
-      android.util.Log.v("RemoteUserDataSource", "getCareerStats: Calling getUserCareer...")
+      android.util.Log.v("RemoteUserDataSource", "  getCareerStats: Calling getUserCareer...")
       api.getUserCareer(stuId, matId, personId, typeTitleCode)
     }
     val examsDeferred = async {
-      android.util.Log.v("RemoteUserDataSource", "getCareerStats: Calling getUserExams...")
+      android.util.Log.v("RemoteUserDataSource", "  getCareerStats: Calling getUserExams...")
       api.getUserExams(matId)
     }
 
     val careerResponse = careerDeferred.await()
     val examsResponse = examsDeferred.await()
 
-    android.util.Log.d("RemoteUserDataSource", "getCareerStats: Responses received.")
+    android.util.Log.d("RemoteUserDataSource", "getCareerStats: Live API responses received.")
+    android.util.Log.d("RemoteUserDataSource", "getCareerStats: Fetched ${examsResponse.career.exams.size} passed exams and ${examsResponse.career.remainings.size} remaining exams from Live API")
 
     val stats = careerResponse.career.stats
     val averages = careerResponse.career.averages

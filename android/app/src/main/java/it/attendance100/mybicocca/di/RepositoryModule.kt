@@ -44,8 +44,9 @@ object RepositoryModule {
   fun provideUserRepository(
     userDataSource: UserDataSource,
     userDao: UserDao,
+    networkMonitor: NetworkMonitor,
   ): IUserRepository {
-    return UserRepository(userDataSource, userDao)
+    return UserRepository(userDataSource, userDao, networkMonitor)
   }
 
   // Auth

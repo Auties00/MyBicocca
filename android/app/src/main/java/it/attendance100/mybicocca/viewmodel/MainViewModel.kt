@@ -52,19 +52,27 @@ class MainViewModel @Inject constructor(
       return
     }
 
-    val startTime = preferencesManager.sessionStartTime
-    val duration = preferencesManager.sessionDuration
-
-    if (duration == PreferencesManager.DURATION_FOREVER) {
-      _isSessionExpired.value = false
-      return
-    }
-
     val currentTime = System.currentTimeMillis()
-    if (currentTime - startTime > duration) {
-      _isSessionExpired.value = true
+    val authExpiry = preferencesManager.authExpiry
+
+    if (authExpiry > 0) {
+      // Use expiry time provided by server
+      _isSessionExpired.value = currentTime > authExpiry
     } else {
-      _isSessionExpired.value = false
+      // Fallback to local timer if server expiry not yet available
+      val startTime = preferencesManager.sessionStartTime
+      val duration = preferencesManager.sessionDuration
+
+      if (duration == PreferencesManager.DURATION_FOREVER) {
+        _isSessionExpired.value = false
+        return
+      }
+
+      if (currentTime - startTime > duration) {
+        _isSessionExpired.value = true
+      } else {
+        _isSessionExpired.value = false
+      }
     }
   }
 }
