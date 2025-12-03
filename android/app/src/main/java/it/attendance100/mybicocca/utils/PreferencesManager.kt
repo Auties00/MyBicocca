@@ -28,6 +28,7 @@ class PreferencesManager @Inject constructor(
     private const val KEY_USER_PERSON_ID = "user_person_id"
     private const val KEY_USER_TYPE_TITLE_CODE = "user_type_title_code"
     private const val KEY_SESSION_START_TIME = "session_start_time"
+    private const val KEY_AUTH_EXPIRY = "auth_expiry"
 
     // Private Settings
     private const val KEY_IS_DEVELOPER_MODE = "developer_mode"
@@ -147,6 +148,10 @@ class PreferencesManager @Inject constructor(
     get() = prefs.getString(KEY_AUTH_FISCAL_CODE, null)
     set(value) = prefs.edit { putString(KEY_AUTH_FISCAL_CODE, value) }
 
+  var authExpiry: Long
+    get() = prefs.getLong(KEY_AUTH_EXPIRY, 0L)
+    set(value) = prefs.edit { putLong(KEY_AUTH_EXPIRY, value) }
+
   // User Info for quick access
   var userStudentId: Int
     get() = prefs.getInt(KEY_USER_STUDENT_ID, -1)
@@ -175,6 +180,7 @@ class PreferencesManager @Inject constructor(
       remove(KEY_USER_PERSON_ID)
       remove(KEY_USER_TYPE_TITLE_CODE)
       remove(KEY_SESSION_START_TIME)
+      remove(KEY_AUTH_EXPIRY)
     }
   }
 
