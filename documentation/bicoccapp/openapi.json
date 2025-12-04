@@ -1,0 +1,454 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "BicoccApp API",
+    "version": "v1",
+    "description": "API Documentation for the University of Milano-Bicocca Mobile Application"
+  },
+  "servers": [
+    {
+      "url": "https://backoffice-app.unimib.it",
+      "description": "Production Server "
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "uid": {
+        "type": "apiKey",
+        "name": "uid",
+        "in": "header",
+        "description": "User identifier (email address)"
+      },
+      "client": {
+        "type": "apiKey",
+        "name": "client",
+        "in": "header",
+        "description": "Client session token"
+      },
+      "access-token": {
+        "type": "apiKey",
+        "name": "access-token",
+        "in": "header",
+        "description": "Access token for API authorization"
+      }
+    }
+  },
+  "security": [
+    {
+      "uid": [],
+      "client": [],
+      "access-token": []
+    }
+  ],
+  "paths": {
+    "/api/v1/auth/openid_connect": {
+      "get": {
+        "tags": ["Authentication"],
+        "summary": "Initiate OpenID Connect",
+        "description": "Initiates the OpenID Connect authentication flow. Redirects to IdP",
+        "security": [],
+        "responses": {
+          "302": {
+            "description": "Redirect to University IdP"
+          }
+        }
+      }
+    },
+    "/api/v1/auth/openid_connect/callback": {
+      "get": {
+        "tags": ["Authentication"],
+        "summary": "OpenID Connect Callback",
+        "description": "Handles callback from IdP and returns authentication tokens",
+        "security": [],
+        "parameters": [
+          {
+            "name": "code",
+            "in": "query",
+            "schema": { "type": "string" },
+            "required": true
+          },
+          {
+            "name": "state",
+            "in": "query",
+            "schema": { "type": "string" },
+            "required": true
+          }
+        ],
+        "responses": {
+          "302": {
+            "description": "Redirects with tokens"
+          }
+        }
+      }
+    },
+    "/api/v1/user_profile": {
+      "get": {
+        "tags": ["User Profile & Career"],
+        "summary": "Get User Profile",
+        "description": "Retrieves authenticated user profile info",
+        "parameters": [
+          {
+            "name": "fiscalCode",
+            "in": "query",
+            "schema": { "type": "string" },
+            "example": "TRALSN05A12F205A"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "example": {
+                  "user": {
+                    "appuser_id": 16474,
+                    "personId": 454914,
+                    "userId": "a.autiero2",
+                    "fiscalCode": "TRALSN05A12F205A",
+                    "name": "ALESSANDRO AUTIERO",
+                    "email": "a.autiero2@campus.unimib.it"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/user_career": {
+      "get": {
+        "tags": ["User Profile & Career"],
+        "summary": "Get User Career",
+        "description": "Fetches academic career details and statistics",
+        "parameters": [
+          { "name": "matricId", "in": "query", "schema": { "type": "integer" } },
+          { "name": "personId", "in": "query", "schema": { "type": "integer" } },
+          { "name": "studentId", "in": "query", "schema": { "type": "integer" } },
+          { "name": "typeTitleCode", "in": "query", "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/v1/user_exams": {
+      "get": {
+        "tags": ["User Profile & Career"],
+        "summary": "Get User Exams",
+        "description": "Retrieves history of exams taken",
+        "parameters": [
+          { "name": "matricId", "in": "query", "schema": { "type": "integer" }, "required": true }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/v1/user_appeals": {
+      "get": {
+        "tags": ["User Profile & Career"],
+        "summary": "Get Exam Appeals",
+        "description": "Gets info about exam sessions user can register for",
+        "parameters": [
+          { "name": "matricId", "in": "query", "schema": { "type": "integer" } },
+          { "name": "personId", "in": "query", "schema": { "type": "integer" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/v1/user_fees": {
+      "get": {
+        "tags": ["Fees & Registrations"],
+        "summary": "Get User Fees",
+        "description": "Retrieves tuition fee payment history",
+        "parameters": [
+          { "name": "personId", "in": "query", "schema": { "type": "integer" } },
+          { "name": "matricId", "in": "query", "schema": { "type": "integer" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/v1/user_registrations": {
+      "get": {
+        "tags": ["Fees & Registrations"],
+        "summary": "Get User Registrations",
+        "description": "Gets info about student course registrations",
+        "parameters": [
+          { "name": "matricId", "in": "query", "schema": { "type": "integer" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/v1/calendar": {
+      "get": {
+        "tags": ["Calendar & Schedule"],
+        "summary": "Get Calendar Events",
+        "description": "Retrieves academic calendar events for a date",
+        "parameters": [
+          { "name": "matricId", "in": "query", "schema": { "type": "integer" } },
+          { "name": "date", "in": "query", "schema": { "type": "string", "format": "date" }, "example": "2025-11-27" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/v1/calendar_courses": {
+      "get": {
+        "tags": ["Calendar & Schedule"],
+        "summary": "Get Calendar Courses",
+        "description": "Lists all courses available for adding to personal calendar",
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/v1/set_calendar": {
+      "post": {
+        "tags": ["Calendar & Schedule"],
+        "summary": "Add Course to Calendar",
+        "description": "Adds a course to the user's personal calendar",
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "user_id": { "type": "string" },
+                  "cdsCode": { "type": "string" },
+                  "activityCode": { "type": "string" },
+                  "lessonName": { "type": "string" },
+                  "courseCode": { "type": "string" },
+                  "partition": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Course added correctly"
+          }
+        }
+      }
+    },
+    "/api/v1/course_detail": {
+      "get": {
+        "tags": ["Courses & Lessons"],
+        "summary": "Get Course Details",
+        "description": "Retrieves detailed info about a specific course",
+        "parameters": [
+          { "name": "activityCode", "in": "query", "schema": { "type": "string" } },
+          { "name": "courseCode", "in": "query", "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/v1/wizard/categories": {
+      "get": {
+        "tags": ["Course Wizard"],
+        "summary": "Get Wizard Categories",
+        "description": "Gets list of academic area categories",
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/v1/wizard/degrees": {
+      "get": {
+        "tags": ["Course Wizard"],
+        "summary": "Get Wizard Degrees",
+        "description": "Retrieves degree types for a category",
+        "parameters": [
+          { "name": "category_code", "in": "query", "schema": { "type": "string" }, "required": true }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/v1/wizard/courses": {
+      "get": {
+        "tags": ["Course Wizard"],
+        "summary": "Get Wizard Courses",
+        "description": "Lists degree programs for category/degree combination",
+        "parameters": [
+          { "name": "category_code", "in": "query", "schema": { "type": "string" } },
+          { "name": "degree_code", "in": "query", "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/v1/wizard/lessons": {
+      "get": {
+        "tags": ["Course Wizard"],
+        "summary": "Get Wizard Lessons",
+        "description": "Gets list of lessons for a specific degree program",
+        "parameters": [
+          { "name": "category_code", "in": "query", "schema": { "type": "string" } },
+          { "name": "degree_code", "in": "query", "schema": { "type": "string" } },
+          { "name": "course_code", "in": "query", "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/v1/wizard/user_courses": {
+      "get": {
+        "tags": ["Course Wizard"],
+        "summary": "Get User Wizard Courses",
+        "description": "Retrieves courses associated with user's degree",
+        "parameters": [
+          { "name": "matricId", "in": "query", "schema": { "type": "integer" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/v1/alerts": {
+      "get": {
+        "tags": ["Notifications & Messages"],
+        "summary": "Get Alerts",
+        "description": "Fetches notifications and alerts",
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/v1/conversations": {
+      "get": {
+        "tags": ["Notifications & Messages"],
+        "summary": "Get Conversations",
+        "description": "Retrieves list of message conversations with teachers",
+        "parameters": [
+          { "name": "page", "in": "query", "schema": { "type": "integer" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/v1/messages/info_message": {
+      "get": {
+        "tags": ["Notifications & Messages"],
+        "summary": "Get Info Message",
+        "description": "Gets system-wide informational messages",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/v1/messages/appointment": {
+      "post": {
+        "tags": ["Notifications & Messages"],
+        "summary": "Request Appointment",
+        "description": "Sends an appointment request to a teacher",
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "teacher_key": { "type": "string" },
+                  "student_id": { "type": "string" },
+                  "message_body": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Request Sent" },
+          "403": { "description": "Forbidden / Teacher not registered" }
+        }
+      }
+    },
+    "/api/v1/point_of_interests": {
+      "get": {
+        "tags": ["Campus Information"],
+        "summary": "Get Points of Interest",
+        "description": "Retrieves campus map data",
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/v1/teacher": {
+      "get": {
+        "tags": ["Campus Information"],
+        "summary": "Get Teacher Info",
+        "description": "Gets detailed teacher info including office hours",
+        "parameters": [
+          { "name": "teacherEmail", "in": "query", "schema": { "type": "string" }, "required": true }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/v1/app_navigations/navigation_drawer": {
+      "get": {
+        "tags": ["App Navigation"],
+        "summary": "Get Navigation Drawer",
+        "description": "Retrieves app navigation structure",
+        "parameters": [
+          { "name": "locale", "in": "query", "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    }
+  }
+}
