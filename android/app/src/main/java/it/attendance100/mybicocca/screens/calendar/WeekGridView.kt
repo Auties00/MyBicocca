@@ -2,6 +2,7 @@ package it.attendance100.mybicocca.screens.calendar
 
 import androidx.compose.foundation.*
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.*
 import androidx.compose.material3.*
@@ -48,11 +49,11 @@ fun WeekGridView(
             !eventDate.isBefore(daysOfWeek.first()) && !eventDate.isAfter(daysOfWeek.last())
         }
     }
+    
+    // Stato zoom per pinch-to-zoom
+    var zoomLevel by remember { mutableFloatStateOf(CalendarUtils.DEFAULT_ZOOM) }
 
     Column(modifier = Modifier.fillMaxSize()) {
-        // [SYNC] Header fittizio per allineare verticalmente la griglia con DayTimelineView
-        WeekTimelineHeader()
-
         when {
             isLoading -> WeekGridLoadingState(primaryColor)
             else -> WeekGridContent(
@@ -61,30 +62,15 @@ fun WeekGridView(
                 grayColor = grayColor,
                 primaryColor = primaryColor,
                 scrollState = scrollState,
+                zoomLevel = zoomLevel,
+                onZoomChange = { newZoom -> 
+                    zoomLevel = newZoom.coerceIn(CalendarUtils.MIN_ZOOM, CalendarUtils.MAX_ZOOM)
+                },
                 onEventClick = onEventClick,
                 onSwipeWeek = onSwipeWeek,
                 onDayZoom = onDayZoom
             )
         }
-    }
-}
-
-// [SYNC] Header che imita altezza/padding di DayTimelineHeader per allineare le griglie
-@Composable
-private fun WeekTimelineHeader() {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 12.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        // Testo invisibile ma presente per occupare lo stesso spazio
-        Text(
-            text = stringResource(R.string.calendar_overview),
-            color = Color.Transparent,
-            style = MaterialTheme.typography.titleSmall
-        )
     }
 }
 
@@ -97,12 +83,17 @@ private fun WeekGridContent(
     grayColor: Color,
     primaryColor: Color,
     scrollState: ScrollState,
+    zoomLevel: Float,
+    onZoomChange: (Float) -> Unit,
     onEventClick: (CourseEvent) -> Unit,
     onSwipeWeek: (Int) -> Unit,
     onDayZoom: (LocalDate) -> Unit
 ) {
     var currentTime by remember { mutableStateOf(LocalTime.now()) }
     var isSwiping by remember { mutableStateOf(false) }
+    
+    // Calcola se siamo in modalità compatta
+    val isCompactMode = zoomLevel < CalendarUtils.COMPACT_THRESHOLD
 
     LaunchedEffect(Unit) {
         while (true) {
@@ -114,6 +105,13 @@ private fun WeekGridContent(
     Box(
         modifier = Modifier
             .fillMaxSize()
+            .pointerInput(zoomLevel) {
+                detectTransformGestures { _, _, zoom, _ ->
+                    if (zoom != 1f) {
+                        onZoomChange(zoomLevel * zoom)
+                    }
+                }
+            }
             .pointerInput(Unit) {
                 detectHorizontalDragGestures(
                     onDragEnd = { isSwiping = false },
@@ -128,27 +126,43 @@ private fun WeekGridContent(
             }
             .verticalScroll(scrollState)
     ) {
-        WeekGridBackground(
-            startHour = CalendarUtils.WEEK_START_HOUR,
-            endHour = CalendarUtils.WEEK_END_HOUR,
-            grayColor = grayColor
-        )
+        if (isCompactMode) {
+            // Vista compatta: eventi impilati senza spazi
+            CompactWeekView(
+                daysOfWeek = daysOfWeek,
+                events = events,
+                onEventClick = onEventClick,
+                onDayZoom = onDayZoom,
+                primaryColor = primaryColor,
+                grayColor = grayColor
+            )
+        } else {
+            // Vista normale con zoom
+            WeekGridBackground(
+                startHour = CalendarUtils.WEEK_START_HOUR,
+                endHour = CalendarUtils.WEEK_END_HOUR,
+                grayColor = grayColor,
+                zoomLevel = zoomLevel
+            )
 
-        WeekEventsOverlay(
-            daysOfWeek = daysOfWeek,
-            events = events,
-            startHour = CalendarUtils.WEEK_START_HOUR,
-            onEventClick = onEventClick,
-            onDayZoom = onDayZoom,
-            primaryColor = primaryColor
-        )
+            WeekEventsOverlay(
+                daysOfWeek = daysOfWeek,
+                events = events,
+                startHour = CalendarUtils.WEEK_START_HOUR,
+                onEventClick = onEventClick,
+                onDayZoom = onDayZoom,
+                primaryColor = primaryColor,
+                zoomLevel = zoomLevel
+            )
 
-        CurrentTimeWeekIndicator(
-            daysOfWeek = daysOfWeek,
-            currentTime = currentTime,
-            startHour = CalendarUtils.WEEK_START_HOUR,
-            primaryColor = primaryColor
-        )
+            CurrentTimeWeekIndicator(
+                daysOfWeek = daysOfWeek,
+                currentTime = currentTime,
+                startHour = CalendarUtils.WEEK_START_HOUR,
+                primaryColor = primaryColor,
+                zoomLevel = zoomLevel
+            )
+        }
     }
 }
 
@@ -158,16 +172,18 @@ private fun WeekGridContent(
 private fun WeekGridBackground(
     startHour: Int,
     endHour: Int,
-    grayColor: Color
+    grayColor: Color,
+    zoomLevel: Float
 ) {
-    val hourSlotHeight = CalendarUtils.HOUR_SLOT_HEIGHT
-    val totalHeight = ((endHour - startHour) * hourSlotHeight.value).dp
+    val baseHourSlotHeight = CalendarUtils.HOUR_SLOT_HEIGHT
+    val scaledHourSlotHeight = (baseHourSlotHeight.value * zoomLevel).dp
+    val totalHeight = ((endHour - startHour) * scaledHourSlotHeight.value).dp
 
     Column(modifier = Modifier
         .fillMaxWidth()
         .height(totalHeight)) {
         for (hour in startHour until endHour) {
-            WeekGridHourRow(hour, hourSlotHeight, grayColor)
+            WeekGridHourRow(hour, scaledHourSlotHeight, grayColor)
         }
     }
 }
@@ -227,9 +243,11 @@ private fun WeekEventsOverlay(
     startHour: Int,
     onEventClick: (CourseEvent) -> Unit,
     onDayZoom: (LocalDate) -> Unit,
-    primaryColor: Color
+    primaryColor: Color,
+    zoomLevel: Float
 ) {
-    val hourSlotHeight = CalendarUtils.HOUR_SLOT_HEIGHT
+    val baseHourSlotHeight = CalendarUtils.HOUR_SLOT_HEIGHT
+    val scaledHourSlotHeight = (baseHourSlotHeight.value * zoomLevel).dp
     val density = LocalDensity.current
 
     Layout(
@@ -240,7 +258,7 @@ private fun WeekEventsOverlay(
                 dayEvents.forEach { event ->
                     val durationMinutes = ChronoUnit.MINUTES.between(event.startTime, event.endTime)
                     val visualDuration = maxOf(durationMinutes, 15L)
-                    val eventHeightDp = (visualDuration / 60f * hourSlotHeight.value).dp
+                    val eventHeightDp = (visualDuration / 60f * scaledHourSlotHeight.value).dp
 
                     val hasOverlap = remember(dayEvents) {
                         dayEvents.any { other ->
@@ -267,7 +285,7 @@ private fun WeekEventsOverlay(
     ) { measurables, constraints ->
         val dayWidthPx = constraints.maxWidth / CalendarUtils.TOTAL_DAYS.toFloat()
         val totalHours = CalendarUtils.WEEK_TOTAL_HOURS
-        val maxLayoutHeight = (totalHours * hourSlotHeight.toPx()).toInt()
+        val maxLayoutHeight = (totalHours * scaledHourSlotHeight.toPx()).toInt()
         val placeables = mutableListOf<Triple<Placeable, Int, Int>>()
 
         val measurablesByDay = measurables.groupBy { (it.layoutId as String).split("_")[0].toInt() }
@@ -278,9 +296,9 @@ private fun WeekEventsOverlay(
                 val event = events.firstOrNull { it.id == eventId } ?: return@mapNotNull null
                 val startMinutes = event.startTime.hour * 60 + event.startTime.minute
                 val startOffsetMinutes = startMinutes - (startHour * 60)
-                val topPx = (startOffsetMinutes / 60f * hourSlotHeight.toPx()).toInt()
+                val topPx = (startOffsetMinutes / 60f * scaledHourSlotHeight.toPx()).toInt()
                 val durationMinutes = ChronoUnit.MINUTES.between(event.startTime, event.endTime)
-                val heightPx = (maxOf(durationMinutes, 15L) / 60f * hourSlotHeight.toPx()).toInt()
+                val heightPx = (maxOf(durationMinutes, 15L) / 60f * scaledHourSlotHeight.toPx()).toInt()
                 EventLayoutInfo(measurable, topPx, topPx + heightPx)
             }.sortedBy { it.topPx }
 
@@ -391,20 +409,22 @@ private fun CurrentTimeWeekIndicator(
     daysOfWeek: List<LocalDate>,
     currentTime: LocalTime,
     startHour: Int,
-    primaryColor: Color
+    primaryColor: Color,
+    zoomLevel: Float
 ) {
     val today = LocalDate.now()
     val density = LocalDensity.current
-    val hourSlotHeight = CalendarUtils.HOUR_SLOT_HEIGHT
+    val baseHourSlotHeight = CalendarUtils.HOUR_SLOT_HEIGHT
+    val scaledHourSlotHeight = (baseHourSlotHeight.value * zoomLevel).dp
     val currentHour = currentTime.hour
 
     if (currentHour >= startHour && currentHour < CalendarUtils.WEEK_END_HOUR) {
         val totalMinutes = (currentHour - startHour) * 60 + currentTime.minute
-        val topOffsetDp = (totalMinutes / 60f * hourSlotHeight.value).dp
+        val topOffsetDp = (totalMinutes / 60f * scaledHourSlotHeight.value).dp
         Canvas(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(totalMinutes.dp)
+                .height(topOffsetDp + 10.dp)
                 .padding(start = CalendarUtils.TIME_COLUMN_WIDTH)
         ) {
             val lineY = with(density) { topOffsetDp.toPx() }
@@ -423,6 +443,93 @@ private fun CurrentTimeWeekIndicator(
                     radius = 3.dp.toPx(),
                     center = Offset(circleX, lineY)
                 )
+            }
+        }
+    }
+}
+
+// COMPACT WEEK VIEW - Eventi impilati senza spazi temporali
+
+@Composable
+private fun CompactWeekView(
+    daysOfWeek: List<LocalDate>,
+    events: List<CourseEvent>,
+    onEventClick: (CourseEvent) -> Unit,
+    onDayZoom: (LocalDate) -> Unit,
+    primaryColor: Color,
+    grayColor: Color
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(start = CalendarUtils.TIME_COLUMN_WIDTH)
+    ) {
+        daysOfWeek.forEach { date ->
+            val dayEvents = events
+                .filter { it.startTime.toLocalDate() == date }
+                .sortedBy { it.startTime }
+            
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(horizontal = 1.dp)
+            ) {
+                if (dayEvents.isEmpty()) {
+                    // Giorno vuoto - mostra placeholder
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(CalendarUtils.COMPACT_EVENT_HEIGHT)
+                            .padding(1.dp)
+                            .background(
+                                grayColor.copy(alpha = 0.1f),
+                                RoundedCornerShape(4.dp)
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "—",
+                            color = grayColor.copy(alpha = 0.3f),
+                            fontSize = 10.sp
+                        )
+                    }
+                } else {
+                    dayEvents.forEach { event ->
+                        val eventColor = CalendarUtils.getEventColor(event.eventType, primaryColor)
+                        val hasOverlap = dayEvents.any { other ->
+                            other.id != event.id &&
+                                    (event.startTime.isBefore(other.endTime) && event.endTime.isAfter(other.startTime))
+                        }
+                        
+                        Surface(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(CalendarUtils.COMPACT_EVENT_HEIGHT)
+                                .padding(vertical = 1.dp),
+                            shape = RoundedCornerShape(4.dp),
+                            color = eventColor,
+                            onClick = {
+                                if (hasOverlap) onDayZoom(date) else onEventClick(event)
+                            }
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(horizontal = 4.dp),
+                                contentAlignment = Alignment.CenterStart
+                            ) {
+                                Text(
+                                    text = event.courseName,
+                                    color = Color.White,
+                                    fontSize = 8.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
+                        }
+                    }
+                }
             }
         }
     }

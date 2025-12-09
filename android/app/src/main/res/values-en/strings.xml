@@ -70,6 +70,8 @@
   <string name="calendar_no_events">No events for this day</string>
   <string name="calendar_list_view">List View</string>
   <string name="calendar_week_view">Week View</string>
+  <string name="calendar_month_view">Month View</string>
+  <string name="calendar_view_mode">View Mode</string>
   <string name="calendar_overlapping_events">%d overlapping events</string>
   <string name="calendar_collapse">Collapse</string>
   <string name="event_type_lecture">Lecture</string>

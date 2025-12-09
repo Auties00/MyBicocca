@@ -32,23 +32,30 @@ import java.time.format.*
 import java.time.temporal.*
 import java.util.*
 
+// ============================================================================
+// VIEW MODE ENUM - Aggiunta modalità MONTH
+// ============================================================================
+
 enum class CalendarViewMode {
-    LIST,
-    WEEK
+    LIST,   // Vista giornaliera timeline
+    WEEK,   // Vista settimanale griglia
+    MONTH   // Vista mensile completa
 }
+
+// ============================================================================
+// CALENDAR ROUTE - Entry point con ViewModel
+// ============================================================================
 
 @Composable
 fun CalendarRoute(
     viewModel: CalendarViewModel = hiltViewModel()
 ) {
-    // Osserva gli stati qui
     val selectedDate by viewModel.selectedDate.observeAsState(LocalDate.now())
     val currentMonth by viewModel.currentMonth.observeAsState(YearMonth.now())
     val eventsForSelectedDate by viewModel.eventsForSelectedDate.observeAsState(emptyList())
     val eventsForCurrentMonth by viewModel.eventsForCurrentMonth.observeAsState(emptyList())
     val isLoading by viewModel.isLoading.observeAsState(false)
 
-    // Passa solo i dati e le funzioni alla schermata pura
     CalendarScreen(
         selectedDate = selectedDate,
         currentMonth = currentMonth,
@@ -63,6 +70,11 @@ fun CalendarRoute(
     )
 }
 
+// ============================================================================
+// MAIN CALENDAR SCREEN
+// ============================================================================
+
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun CalendarScreen(
     selectedDate: LocalDate,
@@ -101,7 +113,10 @@ fun CalendarScreen(
         )
         CalendarUtils.PAGER_INITIAL_PAGE_OFFSET + weeksBetween.toInt()
     }
-    val pagerState = rememberPagerState(initialPage = initialPage, pageCount = { CalendarUtils.PAGER_PAGE_COUNT })
+    val pagerState = rememberPagerState(
+        initialPage = initialPage,
+        pageCount = { CalendarUtils.PAGER_PAGE_COUNT }
+    )
 
     LaunchedEffect(selectedDate) {
         displayedWeekStart = selectedDate.with(DayOfWeek.MONDAY)
@@ -112,6 +127,7 @@ fun CalendarScreen(
             .fillMaxSize()
             .background(backgroundColor)
     ) {
+        // Header con navigazione e toggle vista
         CalendarHeader(
             currentMonth = currentMonth,
             viewMode = viewMode,
@@ -121,8 +137,8 @@ fun CalendarScreen(
             onToday = {
                 onTodayClick()
                 todayPressCount++
-                // Se in vista settimanale, passa alla giornaliera
-                if (viewMode == CalendarViewMode.WEEK) {
+                // Se in vista settimanale o mensile, passa alla giornaliera
+                if (viewMode != CalendarViewMode.LIST) {
                     viewMode = CalendarViewMode.LIST
                 }
             },
@@ -155,37 +171,61 @@ fun CalendarScreen(
             displayedWeekStart = weekStart
         }
 
-        HorizontalDaySelector(
-            pagerState = pagerState,
-            selectedDate = selectedDate,
-            referenceDate = referenceDate,
-            viewMode = viewMode,
-            onDateSelected = { date ->
-                onDateSelected(date)
-                // [NAV] Se in vista settimanale, passa alla giornaliera
-                if (viewMode == CalendarViewMode.WEEK) {
-                    viewMode = CalendarViewMode.LIST
-                }
-            },
-            textColor = textColor,
-            grayColor = grayColor,
-            primaryColor = primaryColor
-        )
+        // Selettore giorni orizzontale (nascosto in vista mensile)
+        AnimatedVisibility(
+            visible = viewMode != CalendarViewMode.MONTH,
+            enter = expandVertically() + fadeIn(),
+            exit = shrinkVertically() + fadeOut()
+        ) {
+            HorizontalDaySelector(
+                pagerState = pagerState,
+                selectedDate = selectedDate,
+                referenceDate = referenceDate,
+                viewMode = viewMode,
+                onDateSelected = { date ->
+                    onDateSelected(date)
+                    // Se in vista settimanale, passa alla giornaliera
+                    if (viewMode == CalendarViewMode.WEEK) {
+                        viewMode = CalendarViewMode.LIST
+                    }
+                },
+                textColor = textColor,
+                grayColor = grayColor,
+                primaryColor = primaryColor
+            )
+        }
 
         HorizontalDivider(color = grayColor.copy(alpha = 0.2f))
 
+        // Contenuto principale con transizioni animate
         AnimatedContent(
             targetState = viewMode,
             transitionSpec = {
-                if (targetState == CalendarViewMode.WEEK) {
-                    (slideInHorizontally(initialOffsetX = { it / 3 }) + fadeIn()).togetherWith(
-                        slideOutHorizontally(targetOffsetX = { -it / 3 }) + fadeOut()
-                    )
-                } else {
-                    (slideInHorizontally(initialOffsetX = { -it / 3 }) + fadeIn()).togetherWith(
-                        slideOutHorizontally(targetOffsetX = { it / 3 }) + fadeOut()
-                    )
-                }
+                when {
+                    // Da LIST a WEEK
+                    initialState == CalendarViewMode.LIST && targetState == CalendarViewMode.WEEK -> {
+                        (slideInHorizontally(initialOffsetX = { it / 3 }) + fadeIn()).togetherWith(
+                            slideOutHorizontally(targetOffsetX = { -it / 3 }) + fadeOut()
+                        )
+                    }
+                    // Da WEEK a LIST
+                    initialState == CalendarViewMode.WEEK && targetState == CalendarViewMode.LIST -> {
+                        (slideInHorizontally(initialOffsetX = { -it / 3 }) + fadeIn()).togetherWith(
+                            slideOutHorizontally(targetOffsetX = { it / 3 }) + fadeOut()
+                        )
+                    }
+                    // Da/verso MONTH
+                    targetState == CalendarViewMode.MONTH -> {
+                        (slideInVertically(initialOffsetY = { it / 4 }) + fadeIn()).togetherWith(
+                            slideOutVertically(targetOffsetY = { -it / 4 }) + fadeOut()
+                        )
+                    }
+                    else -> {
+                        (slideInVertically(initialOffsetY = { -it / 4 }) + fadeIn()).togetherWith(
+                            slideOutVertically(targetOffsetY = { it / 4 }) + fadeOut()
+                        )
+                    }
+                }.using(SizeTransform(clip = false))
             },
             label = "ViewModeTransition"
         ) { mode ->
@@ -199,7 +239,7 @@ fun CalendarScreen(
                         grayColor = grayColor,
                         primaryColor = primaryColor,
                         onEventClick = { event -> selectedEvent = event },
-                        scrollState = sharedScrollState // [SYNC] Passa lo stato condiviso
+                        scrollState = sharedScrollState
                     )
                 }
 
@@ -211,7 +251,7 @@ fun CalendarScreen(
                         grayColor = grayColor,
                         primaryColor = primaryColor,
                         onEventClick = { event -> selectedEvent = event },
-                        scrollState = sharedScrollState, // [SYNC] Passa lo stato condiviso
+                        scrollState = sharedScrollState,
                         onSwipeWeek = { direction ->
                             scope.launch {
                                 val newPage = pagerState.currentPage - direction
@@ -224,10 +264,57 @@ fun CalendarScreen(
                         }
                     )
                 }
+
+                CalendarViewMode.MONTH -> {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .verticalScroll(rememberScrollState())
+                    ) {
+                        MonthGridView(
+                            currentMonth = currentMonth,
+                            selectedDate = selectedDate,
+                            events = eventsForCurrentMonth,
+                            isLoading = isLoading,
+                            textColor = textColor,
+                            grayColor = grayColor,
+                            primaryColor = primaryColor,
+                            onDateSelected = { date ->
+                                onDateSelected(date)
+                                // Aggiorna anche il pager per mantenere sincronizzazione
+                                scope.launch {
+                                    val weeksBetween = ChronoUnit.WEEKS.between(
+                                        referenceDate.with(DayOfWeek.MONDAY),
+                                        date.with(DayOfWeek.MONDAY)
+                                    )
+                                    val targetPage = CalendarUtils.PAGER_INITIAL_PAGE_OFFSET + weeksBetween.toInt()
+                                    pagerState.scrollToPage(targetPage)
+                                }
+                            },
+                            onMonthChange = onMonthChange
+                        )
+
+                        // Anteprima eventi del giorno selezionato
+                        SelectedDateEventsPreview(
+                            selectedDate = selectedDate,
+                            events = eventsForCurrentMonth,
+                            textColor = textColor,
+                            grayColor = grayColor,
+                            primaryColor = primaryColor,
+                            onEventClick = { event -> selectedEvent = event },
+                            onShowAllEvents = {
+                                viewMode = CalendarViewMode.LIST
+                            }
+                        )
+
+                        Spacer(modifier = Modifier.height(16.dp))
+                    }
+                }
             }
         }
     }
 
+    // Dialog dettagli evento
     selectedEvent?.let { event ->
         EventDetailDialog(
             event = event,
@@ -240,7 +327,10 @@ fun CalendarScreen(
     }
 }
 
-// CALENDAR HEADER
+// ============================================================================
+// CALENDAR HEADER - Con toggle vista a 3 modalità
+// ============================================================================
+
 @Composable
 private fun CalendarHeader(
     currentMonth: YearMonth,
@@ -262,6 +352,7 @@ private fun CalendarHeader(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
+        // Pulsante "Oggi"
         FilledTonalButton(
             onClick = onToday,
             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
@@ -276,6 +367,7 @@ private fun CalendarHeader(
             )
         }
 
+        // Navigazione mese
         Row(verticalAlignment = Alignment.CenterVertically) {
             IconButton(onClick = onPreviousMonth) {
                 Icon(
@@ -299,29 +391,70 @@ private fun CalendarHeader(
             }
         }
 
-        FilledTonalIconButton(
-            onClick = {
-                val newMode = if (viewMode == CalendarViewMode.LIST) {
-                    CalendarViewMode.WEEK
-                } else {
-                    CalendarViewMode.LIST
-                }
-                onViewModeChange(newMode)
-            },
-            colors = IconButtonDefaults.filledTonalIconButtonColors(
-                containerColor = if (viewMode == CalendarViewMode.LIST) primaryColor else Color.White,
-                contentColor = if (viewMode == CalendarViewMode.LIST) Color.White else primaryColor
-            )
-        ) {
-            Icon(
-                imageVector = if (viewMode == CalendarViewMode.LIST) Icons.Outlined.ViewAgenda else Icons.Outlined.CalendarViewWeek,
-                contentDescription = null
-            )
-        }
+        // Toggle vista con menu a 3 opzioni
+        ViewModeToggle(
+            currentMode = viewMode,
+            onModeChange = onViewModeChange,
+            primaryColor = primaryColor
+        )
     }
 }
 
+// ============================================================================
+// VIEW MODE TOGGLE - Cycling button con animazione rotazione
+// ============================================================================
+
+@Composable
+private fun ViewModeToggle(
+    currentMode: CalendarViewMode,
+    onModeChange: (CalendarViewMode) -> Unit,
+    primaryColor: Color
+) {
+    // Stato per tracciare l'animazione
+    var isAnimating by remember { mutableStateOf(false) }
+    
+    // Animazione rotazione completa (0 -> 180 -> 0)
+    val rotation by animateFloatAsState(
+        targetValue = if (isAnimating) 180f else 0f,
+        animationSpec = tween(durationMillis = 300, easing = FastOutSlowInEasing),
+        finishedListener = { isAnimating = false },
+        label = "viewModeRotation"
+    )
+
+    FilledTonalIconButton(
+        onClick = {
+            isAnimating = true
+            // Cicla alla prossima vista
+            val nextMode = when (currentMode) {
+                CalendarViewMode.LIST -> CalendarViewMode.WEEK
+                CalendarViewMode.WEEK -> CalendarViewMode.MONTH
+                CalendarViewMode.MONTH -> CalendarViewMode.LIST
+            }
+            onModeChange(nextMode)
+        },
+        colors = IconButtonDefaults.filledTonalIconButtonColors(
+            containerColor = primaryColor,
+            contentColor = Color.White
+        )
+    ) {
+        Icon(
+            imageVector = when (currentMode) {
+                CalendarViewMode.LIST -> Icons.Outlined.ViewAgenda
+                CalendarViewMode.WEEK -> Icons.Outlined.CalendarViewWeek
+                CalendarViewMode.MONTH -> Icons.Outlined.CalendarMonth
+            },
+            contentDescription = stringResource(R.string.calendar_view_mode),
+            modifier = Modifier.graphicsLayer {
+                rotationY = rotation
+            }
+        )
+    }
+}
+
+// ============================================================================
 // HORIZONTAL DAY SELECTOR
+// ============================================================================
+
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun HorizontalDaySelector(
@@ -383,14 +516,14 @@ private fun WeekDaysRow(
 
             Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
                 DaySelectorItem(
-                    date,
-                    dayName,
-                    isSelected,
-                    isToday,
-                    onDateSelected,
-                    textColor,
-                    grayColor,
-                    primaryColor
+                    date = date,
+                    dayName = dayName,
+                    isSelected = isSelected,
+                    isToday = isToday,
+                    onDateSelected = onDateSelected,
+                    textColor = textColor,
+                    grayColor = grayColor,
+                    primaryColor = primaryColor
                 )
             }
         }
@@ -420,22 +553,32 @@ private fun DaySelectorItem(
     ) {
         Text(
             text = dayName.take(3).uppercase(),
-            color = if (isSelected) Color.White.copy(alpha = 0.8f) else if (isToday) primaryColor else grayColor,
+            color = when {
+                isSelected -> Color.White.copy(alpha = 0.8f)
+                isToday -> primaryColor
+                else -> grayColor
+            },
             style = MaterialTheme.typography.labelSmall
         )
         Spacer(modifier = Modifier.height(2.dp))
         Text(
             text = date.dayOfMonth.toString(),
-            color = if (isSelected) Color.White else if (isToday) primaryColor else textColor,
+            color = when {
+                isSelected -> Color.White
+                isToday -> primaryColor
+                else -> textColor
+            },
             style = MaterialTheme.typography.titleMedium,
             fontWeight = if (isSelected || isToday) FontWeight.Bold else FontWeight.Normal
         )
         if (isToday && !isSelected) {
             Spacer(modifier = Modifier.height(2.dp))
-            Box(modifier = Modifier
-                .size(5.dp)
-                .clip(CircleShape)
-                .background(primaryColor))
+            Box(
+                modifier = Modifier
+                    .size(5.dp)
+                    .clip(CircleShape)
+                    .background(primaryColor)
+            )
         }
     }
 }
