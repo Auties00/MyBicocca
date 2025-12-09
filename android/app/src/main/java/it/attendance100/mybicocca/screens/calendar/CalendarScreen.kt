@@ -121,6 +121,10 @@ fun CalendarScreen(
             onToday = {
                 onTodayClick()
                 todayPressCount++
+                // Se in vista settimanale, passa alla giornaliera
+                if (viewMode == CalendarViewMode.WEEK) {
+                    viewMode = CalendarViewMode.LIST
+                }
             },
             textColor = textColor,
             primaryColor = primaryColor
