@@ -38,6 +38,13 @@ object CalendarUtils {
   const val TOTAL_DAYS = 7
   val OVERLAP_OFFSET = 4.dp
 
+  // Pinch-to-Zoom Constants
+  const val MIN_ZOOM = 0.0f
+  const val MAX_ZOOM = 1.5f
+  const val DEFAULT_ZOOM = 1.0f
+  const val COMPACT_THRESHOLD = 0.3f
+  val COMPACT_EVENT_HEIGHT = 28.dp
+
   // Stack Constants
   val STACK_CARD_CORNER_RADIUS = 16.dp
   val STACK_COLOR_BAR_WIDTH = 4.dp

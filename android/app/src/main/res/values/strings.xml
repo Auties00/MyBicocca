@@ -77,6 +77,8 @@
   <string name="calendar_no_events">Nessun evento per questo giorno</string>
   <string name="calendar_list_view">Vista Lista</string>
   <string name="calendar_week_view">Vista Settimanale</string>
+  <string name="calendar_month_view">Vista Mensile</string>
+  <string name="calendar_view_mode">Modalità Visualizzazione</string>
   <string name="calendar_overlapping_events">%d eventi sovrapposti</string>
   <string name="calendar_collapse">Comprimi</string>
   <string name="event_type_lecture">Lezione</string>
