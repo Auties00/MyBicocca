@@ -14,20 +14,23 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.*
 import androidx.compose.ui.graphics.*
+import androidx.compose.ui.graphics.Color.Companion.Transparent
 import androidx.compose.ui.platform.*
+import androidx.navigation.*
 import androidx.navigation.compose.*
 import dagger.hilt.android.*
 import it.attendance100.mybicocca.screens.*
 import it.attendance100.mybicocca.screens.login.*
+import it.attendance100.mybicocca.screens.settings.*
 import it.attendance100.mybicocca.ui.theme.*
 import it.attendance100.mybicocca.utils.*
-import kotlinx.coroutines.*
 import javax.inject.*
 
 // Navigation routes
 sealed class Screen(val route: String) {
   object Splash : Screen("splash")
   object Home : Screen("home")
+  object Profile : Screen("profile")
   object LoginManager : Screen("login_manager")
   object Settings : Screen("settings")
   object SettingsAppearance : Screen("settings_appearance")
@@ -53,7 +56,7 @@ class MainActivity : ComponentActivity() {
 
     super.onCreate(savedInstanceState)
 
-    // WindowCompat.setDecorFitsSystemWindows(window, false)
+    enableEdgeToEdge()
 
     setContent {
       val preferencesManager = rememberPreferencesManager() // Reinstantiation with context
@@ -82,7 +85,7 @@ class MainActivity : ComponentActivity() {
           Surface(
             modifier = Modifier.fillMaxSize(),
           ) {
-            Box(modifier = Modifier.statusBarsPadding()) { // manual top padding because of enableEdgeToEdge()
+            Box {
               AppNavigation(
                 onThemeChange = { isDarkModeInner ->
                   // Update the state to trigger recomposition
@@ -107,12 +110,12 @@ class MainActivity : ComponentActivity() {
       statusBarStyle =
           if (isDarkMode)
             SystemBarStyle.dark(
-              BackgroundColor.toArgb()
+              Transparent.toArgb()
             )
           else
             SystemBarStyle.light(
-              BackgroundColorLight.toArgb(),
-              darkScrim = BackgroundColor.toArgb(),
+              Transparent.toArgb(),
+              darkScrim = Transparent.toArgb(),
             ),
       navigationBarStyle = SystemBarStyle.auto(
         lightScrim = OnPrimaryColor.toArgb(),
@@ -127,8 +130,6 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun AppNavigation(onThemeChange: (Boolean) -> Unit) {
   val navController = rememberNavController()
-  val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
-  val scope = rememberCoroutineScope()
 
   SharedTransitionLayout {
     NavHost(
@@ -157,17 +158,25 @@ fun AppNavigation(onThemeChange: (Boolean) -> Unit) {
       composable(Screen.Splash.route) {
         SplashScreen(navController)
       }
-      composable(Screen.Home.route) { _ ->
-        BackHandler(enabled = drawerState.isOpen) {
-          if (drawerState.isOpen) {
-            // If the drawer is open, launch a coroutine to close it
-            scope.launch {
-              drawerState.close()
-            }
+      composable(
+        route = "home?page={page}&tab={tab}",
+        arguments = listOf(
+          navArgument("page") {
+            type = NavType.IntType
+            defaultValue = 0
+          },
+          navArgument("tab") {
+            type = NavType.IntType
+            defaultValue = 0
           }
-        }
-
-        HomePage(navController, this@SharedTransitionLayout, this, drawerState)
+        )
+      ) { backStackEntry ->
+        val page = backStackEntry.arguments?.getInt("page") ?: 0
+        val tab = backStackEntry.arguments?.getInt("tab") ?: 0
+        HomePage(navController, this@SharedTransitionLayout, this, initialPage = page, initialTab = tab)
+      }
+      composable(Screen.Profile.route) { _ ->
+        ProfiloScreen(navController, this@SharedTransitionLayout, this)
       }
       composable(Screen.LoginManager.route) { _ ->
         LoginManagerScreen(navController, this@SharedTransitionLayout, this)

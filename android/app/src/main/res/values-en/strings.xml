@@ -2,9 +2,9 @@
   <string name="bottom_navbar_home">Home</string>
   <string name="bottom_navbar_calendario">Calendar</string>
   <string name="bottom_navbar_elearning">Elearning</string>
-  <string name="bottom_navbar_segreterie">Secretariat</string>
-  <string name="bottom_navbar_carriera">Career</string>
-  <string name="homescreen_profile">Profile</string>
+  <string name="bottom_navbar_mappa">Places</string>
+  <string name="bottom_navbar_segreterie">Registry</string>
+  <string name="profile_screen">Profile</string>
   <string name="error_loading_image">Error loading image</string>
   <string name="search">Search</string>
   <string name="settings_appearance">Theme</string>
@@ -36,8 +36,8 @@
   <!-- Career Page -->
   <string name="career_tab_profilo">Profile</string>
   <string name="career_tab_piano">Plan</string>
-  <string name="career_tab_libretto">Grade Book</string>
-  <string name="career_tab_luoghi">Places</string>
+  <string name="career_tab_esami">Exams</string>
+  <string name="career_tab_segreterie">Secretariat</string>
   <string name="career_dati">Personal Data</string>
   <string name="career_statistiche">Statistics</string>
   <string name="career_name">Name</string>

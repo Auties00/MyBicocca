@@ -148,6 +148,7 @@ fun AppInfoScreen(
             fontSize = 16.sp
           )
         }
+        Spacer(modifier = Modifier.height(96.dp))
       }
     }
   }
