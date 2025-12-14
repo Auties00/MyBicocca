@@ -5,6 +5,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.*
 import androidx.compose.foundation.gestures.*
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.shape.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -210,13 +211,23 @@ private fun WeekGridContentWithZoom(
                 .verticalScroll(scrollState)
         ) {
             if (isCompactMode) {
+                // Passiamo l'altezza del container per garantire che riempia lo schermo
+                // anche all'interno della Column scrollabile
+                val density = LocalDensity.current
+                val heightModifier = if (containerHeight > 0) {
+                    Modifier.height(with(density) { containerHeight.toDp() })
+                } else {
+                    Modifier.fillMaxSize()
+                }
+                
                 CompactWeekView(
                     daysOfWeek = daysOfWeek,
                     events = events,
                     onEventClick = onEventClick,
                     onDayZoom = onDayZoom,
                     primaryColor = primaryColor,
-                    grayColor = grayColor
+                    grayColor = grayColor,
+                    modifier = heightModifier
                 )
             } else {
                 Box {
@@ -259,7 +270,8 @@ private fun CompactWeekView(
     onEventClick: (CourseEvent) -> Unit,
     onDayZoom: (LocalDate) -> Unit,
     primaryColor: Color,
-    grayColor: Color
+    grayColor: Color,
+    modifier: Modifier = Modifier
 ) {
     val eventsByDay = remember(events, daysOfWeek) {
         daysOfWeek.associateWith { date ->
@@ -268,74 +280,96 @@ private fun CompactWeekView(
         }
     }
 
-    val maxEventsInDay = eventsByDay.values.maxOfOrNull { it.size } ?: 0
-    val compactHeight = (maxEventsInDay * (CalendarUtils.COMPACT_EVENT_HEIGHT.value + 2)).dp + 8.dp
-
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .heightIn(min = compactHeight)
+    BoxWithConstraints(
+        modifier = modifier
+            .fillMaxSize()
             .padding(start = CalendarUtils.TIME_COLUMN_WIDTH)
     ) {
-        daysOfWeek.forEachIndexed { index, date ->
-            val dayEvents = eventsByDay[date] ?: emptyList()
-            val isToday = date == LocalDate.now()
+        val availableHeight = maxHeight
+        val eventSpacing = 2.dp
+        val verticalPadding = 8.dp
+        val maxComfortableEventHeight = 120.dp
 
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxHeight()
-                    .then(if (index < 6) Modifier.padding(end = 1.dp) else Modifier)
-            ) {
-                Box(
+        // Calcolo globale per uniformare l'altezza delle card in tutti i giorni
+        val maxEventsCount = eventsByDay.values.maxOfOrNull { it.size } ?: 0
+        val totalSpacingForMax = if (maxEventsCount > 0) {
+            (eventSpacing * (maxEventsCount - 1)) + verticalPadding
+        } else 0.dp
+        
+        val totalNeededHeightForMax = (maxComfortableEventHeight * maxEventsCount) + totalSpacingForMax
+        val useCompactHeight = totalNeededHeightForMax > availableHeight
+        
+        val unifiedEventHeight = if (useCompactHeight && maxEventsCount > 0) {
+            (availableHeight - totalSpacingForMax) / maxEventsCount
+        } else {
+            maxComfortableEventHeight
+        }
+
+        Row(
+            modifier = Modifier.fillMaxSize()
+        ) {
+            daysOfWeek.forEachIndexed { index, date ->
+                val dayEvents = eventsByDay[date] ?: emptyList()
+                val isToday = date == LocalDate.now()
+
+                Column(
                     modifier = Modifier
-                        .fillMaxWidth()
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .then(if (index < 6) Modifier.padding(end = 1.dp) else Modifier)
                         .background(
-                            if (isToday) primaryColor.copy(alpha = 0.1f)
+                            if (isToday) primaryColor.copy(alpha = 0.05f)
                             else Color.Transparent
                         )
                         .padding(vertical = 4.dp),
-                    contentAlignment = Alignment.Center
+                    verticalArrangement = Arrangement.spacedBy(eventSpacing)
                 ) {
-                    Text(
-                        text = date.dayOfMonth.toString(),
-                        fontSize = 10.sp,
-                        fontWeight = if (isToday) FontWeight.Bold else FontWeight.Normal,
-                        color = if (isToday) primaryColor else grayColor
-                    )
-                }
-
-                dayEvents.forEach { event ->
-                    val eventColor = CalendarUtils.getEventColor(event.eventType, primaryColor)
-                    val hasOverlap = dayEvents.any { other ->
-                        other.id != event.id &&
-                                event.startTime.isBefore(other.endTime) &&
-                                event.endTime.isAfter(other.startTime)
-                    }
-
-                    Surface(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(CalendarUtils.COMPACT_EVENT_HEIGHT)
-                            .padding(vertical = 1.dp),
-                        shape = RoundedCornerShape(4.dp),
-                        color = eventColor,
-                        onClick = { if (hasOverlap) onDayZoom(date) else onEventClick(event) }
-                    ) {
-                        Box(
+                    dayEvents.forEach { event ->
+                        val eventColor = CalendarUtils.getEventColor(event.eventType, primaryColor)
+                        val hasOverlap = dayEvents.any { other ->
+                            other.id != event.id &&
+                                    event.startTime.isBefore(other.endTime) &&
+                                    event.endTime.isAfter(other.startTime)
+                        }
+                        
+                        Surface(
                             modifier = Modifier
-                                .fillMaxSize()
-                                .padding(horizontal = 4.dp),
-                            contentAlignment = Alignment.CenterStart
+                                .fillMaxWidth()
+                                .height(unifiedEventHeight),
+                            shape = RoundedCornerShape(6.dp),
+                            color = eventColor,
+                            onClick = { onEventClick(event) }
                         ) {
-                            Text(
-                                text = event.courseName,
-                                color = Color.White,
-                                fontSize = 8.sp,
-                                fontWeight = FontWeight.Bold,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(horizontal = 4.dp, vertical = 2.dp),
+                                contentAlignment = Alignment.CenterStart
+                            ) {
+                                Column(
+                                    modifier = Modifier.fillMaxSize(),
+                                    verticalArrangement = Arrangement.Center
+                                ) {
+                                    Text(
+                                        text = event.courseName,
+                                        color = Color.White,
+                                        fontSize = 9.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        maxLines = if (unifiedEventHeight > 60.dp) 3 else 2,
+                                        overflow = TextOverflow.Ellipsis,
+                                        lineHeight = 11.sp
+                                    )
+                                    
+                                    if (unifiedEventHeight > 40.dp) {
+                                        Text(
+                                            text = event.startTime.format(CalendarUtils.timeFormatter),
+                                            color = Color.White.copy(alpha = 0.8f),
+                                            fontSize = 7.sp,
+                                            maxLines = 1
+                                        )
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -633,8 +667,6 @@ private fun WeekEventsOverlay(
                             maxHeight = eventHeight
                         )
                     )
-                    
-                    // Solo i primi 3 eventi sono visibili con offset
                     val visualStackIndex = minOf(stackIndex, 2)
                     val xPos = (dayIndex * dayWidthPx + dayPaddingPx + visualStackIndex * stackOffsetXPx).toInt()
                     val yPos = (eventStartMinutes / 60f * hourHeightPx + visualStackIndex * stackOffsetYPx).toInt()
