@@ -2,11 +2,25 @@ import org.gradle.kotlin.dsl.register
 import org.openapitools.generator.gradle.plugin.tasks.GenerateTask
 
 // Constants
-val elearningSpec = "$rootDir/openapi/elearning/elearning.yaml"
+val appApiPackage = "it.attendance100.mybicocca.data.api"
+val appModelPackage = "it.attendance100.mybicocca.domain.model"
+
+val elearningSpec = "$rootDir/openapi/elearning.yaml"
 val elearningBaseDir = "$buildDir/generated/openapi/elearning"
 
-val bicoccappSpec = "$rootDir/openapi/bicoccapp/bicoccapp.yaml"
+val bicoccappSpec = "$rootDir/openapi/bicoccapp.yaml"
 val bicoccappBaseDir = "$buildDir/generated/openapi/bicoccapp"
+
+val s3Spec = "$rootDir/openapi/s3.yaml"
+val s3BaseDir = "$buildDir/generated/openapi/s3"
+
+val openApiConfig = mapOf(
+    "library" to "jvm-retrofit2",
+    "serializationLibrary" to "moshi",
+    "useCoroutines" to "true",
+    "enumPropertyNaming" to "UPPERCASE",
+    "collectionType" to "list"
+)
 
 // Plugins
 plugins {
@@ -71,8 +85,9 @@ android {
     sourceSets {
         getByName("main") {
             java.srcDirs(
-                // "$elearningBaseDir/src/main/kotlin",
-                "$bicoccappBaseDir/src/main/kotlin"
+                "$elearningBaseDir/src/main/kotlin",
+                "$bicoccappBaseDir/src/main/kotlin",
+                "$s3BaseDir/src/main/kotlin"
             )
         }
     }
@@ -160,20 +175,11 @@ val elearningTask = tasks.register<GenerateTask>("generateElearningClient") {
     generatorName.set("kotlin")
     inputSpec.set(elearningSpec)
     outputDir.set(elearningBaseDir)
-    apiPackage.set("it.attendance100.mybicocca.data.api.elearning")
-    modelPackage.set("it.attendance100.mybicocca.domain.model.elearning")
-    packageName.set("it.attendance100.mybicocca.data.api.elearning")
+    apiPackage.set("$appApiPackage.elearning")
+    modelPackage.set("$appModelPackage.elearning")
+    packageName.set("$appApiPackage.elearning")
     skipValidateSpec.set(true)
-    configOptions.set(
-        mapOf(
-            "library" to "jvm-retrofit2",
-            "serializationLibrary" to "moshi",
-            "useCoroutines" to "true",
-            "enumPropertyNaming" to "UPPERCASE",
-            "collectionType" to "list",
-            "supportNullable" to "true"
-        )
-    )
+    configOptions.set(openApiConfig)
 }
 
 // 2. Bicoccapp codegen
@@ -181,28 +187,32 @@ val bicoccappTask = tasks.register<GenerateTask>("generateBicoccappClient") {
     generatorName.set("kotlin")
     inputSpec.set(bicoccappSpec)
     outputDir.set(bicoccappBaseDir)
-    apiPackage.set("it.attendance100.mybicocca.data.api.bicoccapp")
-    modelPackage.set("it.attendance100.mybicocca.domain.model.bicoccapp")
-    packageName.set("it.attendance100.mybicocca.data.api.bicoccapp")
-    configOptions.set(
-        mapOf(
-            "library" to "jvm-retrofit2",
-            "serializationLibrary" to "moshi",
-            "useCoroutines" to "true",
-            "enumPropertyNaming" to "UPPERCASE",
-            "collectionType" to "list",
-            "supportNullable" to "true"
-        )
-    )
+    apiPackage.set("$appApiPackage.bicoccapp")
+    modelPackage.set("$appModelPackage.bicoccapp")
+    packageName.set("$appApiPackage.bicoccapp")
+    skipValidateSpec.set(true)
+    configOptions.set(openApiConfig)
 }
 
-// TODO: S3
+// 3. S3
+val s3Task = tasks.register<GenerateTask>("generaS3Client") {
+    generatorName.set("kotlin")
+    inputSpec.set(s3Spec)
+    outputDir.set(s3BaseDir)
+    apiPackage.set("$appApiPackage.s3")
+    modelPackage.set("$appModelPackage.s3")
+    packageName.set("$appApiPackage.s3")
+    skipValidateSpec.set(true)
+    configOptions.set(openApiConfig)
+}
+
 
 // Generate both APIs together
 val generateAllApis = tasks.register("generateAllApis") {
     dependsOn(
         elearningTask,
-        bicoccappTask
+        bicoccappTask,
+        s3Task
     )
 }
 
