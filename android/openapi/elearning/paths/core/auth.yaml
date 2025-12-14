@@ -1,0 +1,262 @@
+# Core Authentication Web Service Functions
+
+core_auth_is_minor:
+  post:
+    operationId: core_auth_is_minor
+    summary: Check if user is a minor based on age digital consent
+    description: Checks if a user is considered a minor based on age digital consent requirements
+    tags:
+      - core_auth
+    requestBody:
+      required: true
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            type: object
+            properties:
+              wsfunction:
+                type: string
+                enum: [core_auth_is_minor]
+              wstoken:
+                type: string
+                description: Authentication token
+              age:
+                type: integer
+                description: User's age
+              country:
+                type: string
+                description: Country code (e.g., 'AU', 'US')
+            required:
+              - wsfunction
+              - wstoken
+              - age
+              - country
+    responses:
+      '200':
+        description: Successful response
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: boolean
+                  description: Whether the user is a minor
+                warnings:
+                  type: array
+                  items:
+                    $ref: '../schemas/common.yaml#/components/schemas/CoreWSExternalWarning'
+
+core_auth_request_password_reset:
+  post:
+    operationId: core_auth_request_password_reset
+    summary: Request password reset
+    description: Requests a password reset for a user by username or email
+    tags:
+      - core_auth
+    requestBody:
+      required: true
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            type: object
+            properties:
+              wsfunction:
+                type: string
+                enum: [core_auth_request_password_reset]
+              wstoken:
+                type: string
+                description: Authentication token
+              username:
+                type: string
+                description: Username (either username or email required)
+              email:
+                type: string
+                format: email
+                description: Email address (either username or email required)
+            required:
+              - wsfunction
+              - wstoken
+    responses:
+      '200':
+        description: Successful response
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  description: Status of the request (dataerror, emailpasswordconfirmmaybesent, emailpasswordconfirmnotsent, emailpasswordconfirmsent, emailpasswordempty, emailresetconfirmsent)
+                notice:
+                  type: string
+                  description: Notice message
+                warnings:
+                  type: array
+                  items:
+                    $ref: '../schemas/common.yaml#/components/schemas/CoreWSExternalWarning'
+
+core_auth_resend_confirmation_email:
+  post:
+    operationId: core_auth_resend_confirmation_email
+    summary: Resend confirmation email
+    description: Resends a confirmation email to a pending user
+    tags:
+      - core_auth
+    requestBody:
+      required: true
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            type: object
+            properties:
+              wsfunction:
+                type: string
+                enum: [core_auth_resend_confirmation_email]
+              wstoken:
+                type: string
+                description: Authentication token
+              username:
+                type: string
+                description: Username
+              password:
+                type: string
+                description: Password (plain text)
+              redirect:
+                type: string
+                description: Redirect URL after confirmation
+            required:
+              - wsfunction
+              - wstoken
+              - username
+              - password
+    responses:
+      '200':
+        description: Successful response
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: boolean
+                  description: True if the email was sent successfully
+                warnings:
+                  type: array
+                  items:
+                    $ref: '../schemas/common.yaml#/components/schemas/CoreWSExternalWarning'
+
+auth_email_get_signup_settings:
+  post:
+    operationId: auth_email_get_signup_settings
+    summary: Get signup settings
+    description: Get the signup required settings and profile fields for email-based self-registration
+    tags:
+      - core_auth
+    requestBody:
+      required: true
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            type: object
+            properties:
+              wsfunction:
+                type: string
+                enum: [auth_email_get_signup_settings]
+              wstoken:
+                type: string
+                description: Authentication token
+            required:
+              - wsfunction
+              - wstoken
+    responses:
+      '200':
+        description: Successful response
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                namefields:
+                  type: array
+                  items:
+                    type: string
+                  description: The order of the name fields
+                passwordpolicy:
+                  type: string
+                  description: Password policy
+                sitepolicy:
+                  type: string
+                  description: Site policy URL
+                sitepolicyhandler:
+                  type: string
+                  description: Site policy handler
+                defaultcity:
+                  type: string
+                  description: Default city
+                country:
+                  type: string
+                  description: Default country code
+                profilefields:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                      shortname:
+                        type: string
+                      name:
+                        type: string
+                      datatype:
+                        type: string
+                      description:
+                        type: string
+                      descriptionformat:
+                        type: integer
+                      categoryid:
+                        type: integer
+                      categoryname:
+                        type: string
+                      sortorder:
+                        type: integer
+                      required:
+                        type: integer
+                      locked:
+                        type: integer
+                      visible:
+                        type: integer
+                      forceunique:
+                        type: integer
+                      signup:
+                        type: integer
+                      defaultdata:
+                        type: string
+                      defaultdataformat:
+                        type: integer
+                      param1:
+                        type: string
+                      param2:
+                        type: string
+                      param3:
+                        type: string
+                      param4:
+                        type: string
+                      param5:
+                        type: string
+                recaptchapublickey:
+                  type: string
+                  description: reCAPTCHA public key
+                recaptchachallengehash:
+                  type: string
+                  description: reCAPTCHA challenge hash
+                recaptchachallengeimage:
+                  type: string
+                  description: reCAPTCHA challenge image URL
+                recaptchachallengejs:
+                  type: string
+                  description: reCAPTCHA JavaScript URL
+                warnings:
+                  type: array
+                  items:
+                    $ref: '../schemas/common.yaml#/components/schemas/CoreWSExternalWarning'

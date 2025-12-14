@@ -1,5 +1,6 @@
 package it.attendance100.mybicocca.utils
 
+import android.annotation.SuppressLint
 import android.content.*
 import android.os.*
 import android.view.*
@@ -177,6 +178,7 @@ class HapticManager(private val context: Context, private val view: View?) {
 
   private fun hasVibrator(): Boolean = vibrator.hasVibrator()
 
+  @SuppressLint("WrongConstant")
   @RequiresApi(Build.VERSION_CODES.R)
   private fun arePrimitivesSupported(vararg primitiveIds: Int): Boolean {
     // Safe check for primitive support

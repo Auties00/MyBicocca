@@ -1,0 +1,1211 @@
+# Forum Module Web Service Functions
+
+mod_forum_get_forums_by_courses:
+  post:
+    operationId: mod_forum_get_forums_by_courses
+    summary: Get forums by courses
+    description: Returns a list of forum instances in the provided courses
+    tags:
+      - mod_forum
+    requestBody:
+      required: true
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            type: object
+            properties:
+              wsfunction:
+                type: string
+                enum: [mod_forum_get_forums_by_courses]
+              wstoken:
+                type: string
+              courseids[]:
+                type: array
+                items:
+                  type: integer
+                description: Array of course IDs
+            required:
+              - wsfunction
+              - wstoken
+    responses:
+      '200':
+        description: List of forums
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/ModForumData'
+
+mod_forum_get_forum_discussions:
+  post:
+    operationId: mod_forum_get_forum_discussions
+    summary: Get forum discussions
+    description: Returns a list of forum discussions
+    tags:
+      - mod_forum
+    requestBody:
+      required: true
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            type: object
+            properties:
+              wsfunction:
+                type: string
+                enum: [mod_forum_get_forum_discussions]
+              wstoken:
+                type: string
+              forumid:
+                type: integer
+                description: Forum instance ID
+              sortorder:
+                type: integer
+                description: Sort order
+              page:
+                type: integer
+                description: Page number
+              perpage:
+                type: integer
+                description: Items per page
+              groupid:
+                type: integer
+                description: Group ID
+            required:
+              - wsfunction
+              - wstoken
+              - forumid
+    responses:
+      '200':
+        description: List of discussions
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                discussions:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/ModForumDiscussion'
+                warnings:
+                  type: array
+                  items:
+                    $ref: '../schemas/common.yaml#/components/schemas/CoreWSExternalWarning'
+
+mod_forum_get_forum_discussion_posts:
+  post:
+    operationId: mod_forum_get_forum_discussion_posts
+    summary: Get forum discussion posts
+    description: Returns posts for a discussion
+    tags:
+      - mod_forum
+    requestBody:
+      required: true
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            type: object
+            properties:
+              wsfunction:
+                type: string
+                enum: [mod_forum_get_forum_discussion_posts]
+              wstoken:
+                type: string
+              discussionid:
+                type: integer
+                description: Discussion ID
+              sortby:
+                type: string
+                enum: [id, created, modified]
+                description: Sort by field
+              sortdirection:
+                type: string
+                enum: [ASC, DESC]
+                description: Sort direction
+              includeinlineattachments:
+                type: boolean
+                description: Include inline attachments
+            required:
+              - wsfunction
+              - wstoken
+              - discussionid
+    responses:
+      '200':
+        description: List of posts
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                posts:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/ModForumPost'
+                ratinginfo:
+                  type: object
+                  properties:
+                    contextid:
+                      type: integer
+                    component:
+                      type: string
+                    ratingarea:
+                      type: string
+                    canviewall:
+                      type: boolean
+                    canviewany:
+                      type: boolean
+                    scales:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          id:
+                            type: integer
+                          courseid:
+                            type: integer
+                          name:
+                            type: string
+                          max:
+                            type: integer
+                          isnumeric:
+                            type: boolean
+                          items:
+                            type: array
+                            items:
+                              type: object
+                              properties:
+                                value:
+                                  type: integer
+                                name:
+                                  type: string
+                    ratings:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          itemid:
+                            type: integer
+                          scaleid:
+                            type: integer
+                          userid:
+                            type: integer
+                          aggregate:
+                            type: number
+                          aggregatestr:
+                            type: string
+                          aggregatelabel:
+                            type: string
+                          count:
+                            type: integer
+                          rating:
+                            type: integer
+                          canrate:
+                            type: boolean
+                          canviewaggregate:
+                            type: boolean
+                warnings:
+                  type: array
+                  items:
+                    $ref: '../schemas/common.yaml#/components/schemas/CoreWSExternalWarning'
+
+mod_forum_get_discussion_posts:
+  post:
+    operationId: mod_forum_get_discussion_posts
+    summary: Get discussion posts (new)
+    description: Returns posts for a discussion with additional data
+    tags:
+      - mod_forum
+    requestBody:
+      required: true
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            type: object
+            properties:
+              wsfunction:
+                type: string
+                enum: [mod_forum_get_discussion_posts]
+              wstoken:
+                type: string
+              discussionid:
+                type: integer
+                description: Discussion ID
+              sortby:
+                type: string
+                description: Sort by field
+              sortdirection:
+                type: string
+                description: Sort direction
+            required:
+              - wsfunction
+              - wstoken
+              - discussionid
+    responses:
+      '200':
+        description: Discussion posts
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                posts:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/ModForumPostNew'
+                forumid:
+                  type: integer
+                courseid:
+                  type: integer
+                ratinginfo:
+                  type: object
+                warnings:
+                  type: array
+                  items:
+                    $ref: '../schemas/common.yaml#/components/schemas/CoreWSExternalWarning'
+
+mod_forum_add_discussion:
+  post:
+    operationId: mod_forum_add_discussion
+    summary: Add discussion
+    description: Add a new discussion to a forum
+    tags:
+      - mod_forum
+    requestBody:
+      required: true
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            type: object
+            properties:
+              wsfunction:
+                type: string
+                enum: [mod_forum_add_discussion]
+              wstoken:
+                type: string
+              forumid:
+                type: integer
+                description: Forum instance ID
+              subject:
+                type: string
+                description: Discussion subject
+              message:
+                type: string
+                description: Discussion message
+              groupid:
+                type: integer
+                description: Group ID
+              options[0][name]:
+                type: string
+                description: Option name
+              options[0][value]:
+                type: string
+                description: Option value
+            required:
+              - wsfunction
+              - wstoken
+              - forumid
+              - subject
+              - message
+    responses:
+      '200':
+        description: New discussion info
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                discussionid:
+                  type: integer
+                  description: New discussion ID
+                warnings:
+                  type: array
+                  items:
+                    $ref: '../schemas/common.yaml#/components/schemas/CoreWSExternalWarning'
+
+mod_forum_add_discussion_post:
+  post:
+    operationId: mod_forum_add_discussion_post
+    summary: Add discussion post
+    description: Add a new post to a forum discussion
+    tags:
+      - mod_forum
+    requestBody:
+      required: true
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            type: object
+            properties:
+              wsfunction:
+                type: string
+                enum: [mod_forum_add_discussion_post]
+              wstoken:
+                type: string
+              postid:
+                type: integer
+                description: Parent post ID
+              subject:
+                type: string
+                description: Post subject
+              message:
+                type: string
+                description: Post message
+              options[0][name]:
+                type: string
+                description: Option name (e.g., discussionsubscribe, private, inlineattachmentsid, attachmentsid, topreferredformat)
+              options[0][value]:
+                type: string
+                description: Option value
+            required:
+              - wsfunction
+              - wstoken
+              - postid
+              - subject
+              - message
+    responses:
+      '200':
+        description: New post info
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                postid:
+                  type: integer
+                  description: New post ID
+                warnings:
+                  type: array
+                  items:
+                    $ref: '../schemas/common.yaml#/components/schemas/CoreWSExternalWarning'
+                post:
+                  $ref: '#/components/schemas/ModForumPostNew'
+                messages:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                      message:
+                        type: string
+
+mod_forum_update_discussion_post:
+  post:
+    operationId: mod_forum_update_discussion_post
+    summary: Update discussion post
+    description: Update a post
+    tags:
+      - mod_forum
+    requestBody:
+      required: true
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            type: object
+            properties:
+              wsfunction:
+                type: string
+                enum: [mod_forum_update_discussion_post]
+              wstoken:
+                type: string
+              postid:
+                type: integer
+                description: Post ID
+              subject:
+                type: string
+                description: Post subject
+              message:
+                type: string
+                description: Post message
+              messageformat:
+                type: integer
+                description: Message format
+              options[0][name]:
+                type: string
+                description: Option name
+              options[0][value]:
+                type: string
+                description: Option value
+            required:
+              - wsfunction
+              - wstoken
+              - postid
+    responses:
+      '200':
+        description: Update result
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/common.yaml#/components/schemas/CoreStatusWithWarningsWSResponse'
+
+mod_forum_delete_post:
+  post:
+    operationId: mod_forum_delete_post
+    summary: Delete post
+    description: Deletes a post or discussion
+    tags:
+      - mod_forum
+    requestBody:
+      required: true
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            type: object
+            properties:
+              wsfunction:
+                type: string
+                enum: [mod_forum_delete_post]
+              wstoken:
+                type: string
+              postid:
+                type: integer
+                description: Post ID
+            required:
+              - wsfunction
+              - wstoken
+              - postid
+    responses:
+      '200':
+        description: Delete result
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/common.yaml#/components/schemas/CoreStatusWithWarningsWSResponse'
+
+mod_forum_can_add_discussion:
+  post:
+    operationId: mod_forum_can_add_discussion
+    summary: Can add discussion
+    description: Check if user can add discussion
+    tags:
+      - mod_forum
+    requestBody:
+      required: true
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            type: object
+            properties:
+              wsfunction:
+                type: string
+                enum: [mod_forum_can_add_discussion]
+              wstoken:
+                type: string
+              forumid:
+                type: integer
+                description: Forum instance ID
+              groupid:
+                type: integer
+                description: Group ID
+            required:
+              - wsfunction
+              - wstoken
+              - forumid
+    responses:
+      '200':
+        description: Can add status
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: boolean
+                  description: Whether user can add
+                canpindiscussions:
+                  type: boolean
+                  description: Can pin discussions
+                cancreateattachment:
+                  type: boolean
+                  description: Can create attachments
+                warnings:
+                  type: array
+                  items:
+                    $ref: '../schemas/common.yaml#/components/schemas/CoreWSExternalWarning'
+
+mod_forum_get_forum_access_information:
+  post:
+    operationId: mod_forum_get_forum_access_information
+    summary: Get forum access information
+    description: Return capabilities information for a given forum
+    tags:
+      - mod_forum
+    requestBody:
+      required: true
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            type: object
+            properties:
+              wsfunction:
+                type: string
+                enum: [mod_forum_get_forum_access_information]
+              wstoken:
+                type: string
+              forumid:
+                type: integer
+                description: Forum instance ID
+            required:
+              - wsfunction
+              - wstoken
+              - forumid
+    responses:
+      '200':
+        description: Access information
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                canaddinstance:
+                  type: boolean
+                canviewdiscussion:
+                  type: boolean
+                canviewhiddentimedposts:
+                  type: boolean
+                canstartnewdiscussion:
+                  type: boolean
+                canreplypost:
+                  type: boolean
+                canaddnews:
+                  type: boolean
+                canreplynews:
+                  type: boolean
+                canviewrating:
+                  type: boolean
+                canviewanyrating:
+                  type: boolean
+                canviewallratings:
+                  type: boolean
+                canrate:
+                  type: boolean
+                canpostprivatereply:
+                  type: boolean
+                canreadprivatereplies:
+                  type: boolean
+                canmod:
+                  type: boolean
+                canexportdiscussion:
+                  type: boolean
+                canexportforum:
+                  type: boolean
+                canexportownpost:
+                  type: boolean
+                cansplitdiscussions:
+                  type: boolean
+                canmanagesubscriptions:
+                  type: boolean
+                canmovefromanyforum:
+                  type: boolean
+                canmovetotopic:
+                  type: boolean
+                canpindiscussions:
+                  type: boolean
+                cangrade:
+                  type: boolean
+                warnings:
+                  type: array
+                  items:
+                    $ref: '../schemas/common.yaml#/components/schemas/CoreWSExternalWarning'
+
+mod_forum_set_lock_state:
+  post:
+    operationId: mod_forum_set_lock_state
+    summary: Set lock state
+    description: Set the lock state for the discussion
+    tags:
+      - mod_forum
+    requestBody:
+      required: true
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            type: object
+            properties:
+              wsfunction:
+                type: string
+                enum: [mod_forum_set_lock_state]
+              wstoken:
+                type: string
+              forumid:
+                type: integer
+                description: Forum instance ID
+              discussionid:
+                type: integer
+                description: Discussion ID
+              targetstate:
+                type: integer
+                description: Target lock state
+            required:
+              - wsfunction
+              - wstoken
+              - forumid
+              - discussionid
+              - targetstate
+    responses:
+      '200':
+        description: Lock result
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                id:
+                  type: integer
+                locked:
+                  type: boolean
+                times:
+                  type: object
+                  properties:
+                    locked:
+                      type: integer
+                warnings:
+                  type: array
+                  items:
+                    $ref: '../schemas/common.yaml#/components/schemas/CoreWSExternalWarning'
+
+mod_forum_view_forum:
+  post:
+    operationId: mod_forum_view_forum
+    summary: View forum
+    description: Trigger the forum viewed event
+    tags:
+      - mod_forum
+    requestBody:
+      required: true
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            type: object
+            properties:
+              wsfunction:
+                type: string
+                enum: [mod_forum_view_forum]
+              wstoken:
+                type: string
+              forumid:
+                type: integer
+                description: Forum instance ID
+            required:
+              - wsfunction
+              - wstoken
+              - forumid
+    responses:
+      '200':
+        description: Successful response
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/common.yaml#/components/schemas/CoreStatusWithWarningsWSResponse'
+
+mod_forum_view_forum_discussion:
+  post:
+    operationId: mod_forum_view_forum_discussion
+    summary: View forum discussion
+    description: Trigger the discussion viewed event
+    tags:
+      - mod_forum
+    requestBody:
+      required: true
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            type: object
+            properties:
+              wsfunction:
+                type: string
+                enum: [mod_forum_view_forum_discussion]
+              wstoken:
+                type: string
+              discussionid:
+                type: integer
+                description: Discussion ID
+            required:
+              - wsfunction
+              - wstoken
+              - discussionid
+    responses:
+      '200':
+        description: Successful response
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/common.yaml#/components/schemas/CoreStatusWithWarningsWSResponse'
+
+mod_forum_prepare_draft_area_for_post:
+  post:
+    operationId: mod_forum_prepare_draft_area_for_post
+    summary: Prepare draft area for post
+    description: Prepares a draft area for editing a post
+    tags:
+      - mod_forum
+    requestBody:
+      required: true
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            type: object
+            properties:
+              wsfunction:
+                type: string
+                enum: [mod_forum_prepare_draft_area_for_post]
+              wstoken:
+                type: string
+              postid:
+                type: integer
+                description: Post ID (0 for new)
+              area:
+                type: string
+                description: Draft area (post or attachment)
+              draftitemid:
+                type: integer
+                description: Existing draft item ID
+            required:
+              - wsfunction
+              - wstoken
+              - postid
+              - area
+    responses:
+      '200':
+        description: Draft area info
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                draftitemid:
+                  type: integer
+                  description: Draft item ID
+                files:
+                  type: array
+                  items:
+                    $ref: '../schemas/common.yaml#/components/schemas/CoreWSStoredFile'
+                areaoptions:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                      value:
+                        type: string
+                messagetext:
+                  type: string
+                  description: Message text
+                messageformat:
+                  type: integer
+                  description: Message format
+                warnings:
+                  type: array
+                  items:
+                    $ref: '../schemas/common.yaml#/components/schemas/CoreWSExternalWarning'
+
+components:
+  schemas:
+    ModForumData:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Forum instance ID
+        course:
+          type: integer
+          description: Course ID
+        type:
+          type: string
+          description: Forum type
+        name:
+          type: string
+          description: Forum name
+        intro:
+          type: string
+          description: Forum introduction
+        introformat:
+          type: integer
+          description: Introduction format
+        introfiles:
+          type: array
+          items:
+            $ref: '../schemas/common.yaml#/components/schemas/CoreWSExternalFile'
+        duedate:
+          type: integer
+          description: Due date
+        cutoffdate:
+          type: integer
+          description: Cut-off date
+        assessed:
+          type: integer
+          description: Assessed
+        assesstimestart:
+          type: integer
+          description: Assess time start
+        assesstimefinish:
+          type: integer
+          description: Assess time finish
+        scale:
+          type: integer
+          description: Scale
+        maxbytes:
+          type: integer
+          description: Max bytes
+        maxattachments:
+          type: integer
+          description: Max attachments
+        forcesubscribe:
+          type: integer
+          description: Force subscribe
+        trackingtype:
+          type: integer
+          description: Tracking type
+        rsstype:
+          type: integer
+          description: RSS type
+        rssarticles:
+          type: integer
+          description: RSS articles
+        timemodified:
+          type: integer
+          description: Time modified
+        warnafter:
+          type: integer
+          description: Warn after
+        blockafter:
+          type: integer
+          description: Block after
+        blockperiod:
+          type: integer
+          description: Block period
+        completiondiscussions:
+          type: integer
+          description: Completion discussions
+        completionreplies:
+          type: integer
+          description: Completion replies
+        completionposts:
+          type: integer
+          description: Completion posts
+        cmid:
+          type: integer
+          description: Course module ID
+        numdiscussions:
+          type: integer
+          description: Number of discussions
+        cancreatediscussions:
+          type: boolean
+          description: Can create discussions
+        lockdiscussionafter:
+          type: integer
+          description: Lock discussion after
+
+    ModForumDiscussion:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Discussion ID
+        name:
+          type: string
+          description: Discussion name
+        groupid:
+          type: integer
+          description: Group ID
+        timemodified:
+          type: integer
+          description: Time modified
+        usermodified:
+          type: integer
+          description: User who modified
+        timestart:
+          type: integer
+          description: Time start
+        timeend:
+          type: integer
+          description: Time end
+        discussion:
+          type: integer
+          description: Discussion ID
+        parent:
+          type: integer
+          description: Parent ID
+        userid:
+          type: integer
+          description: User ID
+        created:
+          type: integer
+          description: Time created
+        modified:
+          type: integer
+          description: Time modified
+        mailed:
+          type: integer
+          description: Mailed status
+        subject:
+          type: string
+          description: Subject
+        message:
+          type: string
+          description: Message
+        messageformat:
+          type: integer
+          description: Message format
+        messagetrust:
+          type: integer
+          description: Message trust
+        attachment:
+          type: string
+          description: Has attachment
+        attachments:
+          type: array
+          items:
+            $ref: '../schemas/common.yaml#/components/schemas/CoreWSExternalFile'
+        totalscore:
+          type: integer
+          description: Total score
+        mailnow:
+          type: integer
+          description: Mail now
+        userfullname:
+          type: string
+          description: User full name
+        usermodifiedfullname:
+          type: string
+          description: Modified user full name
+        userpictureurl:
+          type: string
+          format: uri
+          description: User picture URL
+        usermodifiedpictureurl:
+          type: string
+          format: uri
+          description: Modified user picture URL
+        numreplies:
+          type: integer
+          description: Number of replies
+        numunread:
+          type: integer
+          description: Number of unread
+        pinned:
+          type: boolean
+          description: Is pinned
+        locked:
+          type: boolean
+          description: Is locked
+        starred:
+          type: boolean
+          description: Is starred
+        canreply:
+          type: boolean
+          description: Can reply
+        canlock:
+          type: boolean
+          description: Can lock
+        canfavourite:
+          type: boolean
+          description: Can favourite
+
+    ModForumPost:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Post ID
+        discussion:
+          type: integer
+          description: Discussion ID
+        parent:
+          type: integer
+          description: Parent post ID
+        userid:
+          type: integer
+          description: User ID
+        created:
+          type: integer
+          description: Created timestamp
+        modified:
+          type: integer
+          description: Modified timestamp
+        mailed:
+          type: integer
+          description: Mailed status
+        subject:
+          type: string
+          description: Subject
+        message:
+          type: string
+          description: Message
+        messageformat:
+          type: integer
+          description: Message format
+        messagetrust:
+          type: integer
+          description: Message trust
+        attachment:
+          type: string
+          description: Has attachment
+        attachments:
+          type: array
+          items:
+            $ref: '../schemas/common.yaml#/components/schemas/CoreWSExternalFile'
+        totalscore:
+          type: integer
+          description: Total score
+        mailnow:
+          type: integer
+          description: Mail now
+        children:
+          type: array
+          items:
+            type: integer
+          description: Child post IDs
+        canreply:
+          type: boolean
+          description: Can reply
+        postread:
+          type: boolean
+          description: Post read
+        userfullname:
+          type: string
+          description: User full name
+        userpictureurl:
+          type: string
+          format: uri
+          description: User picture URL
+
+    ModForumPostNew:
+      type: object
+      properties:
+        id:
+          type: integer
+        subject:
+          type: string
+        replysubject:
+          type: string
+        message:
+          type: string
+        messageformat:
+          type: integer
+        author:
+          type: object
+          properties:
+            id:
+              type: integer
+            fullname:
+              type: string
+            isdeleted:
+              type: boolean
+            groups:
+              type: array
+              items:
+                type: object
+            urls:
+              type: object
+              properties:
+                profile:
+                  type: string
+                profileimage:
+                  type: string
+        discussionid:
+          type: integer
+        hasparent:
+          type: boolean
+        parentid:
+          type: integer
+        timecreated:
+          type: integer
+        timemodified:
+          type: integer
+        unread:
+          type: boolean
+        isdeleted:
+          type: boolean
+        isprivatereply:
+          type: boolean
+        haswordcount:
+          type: boolean
+        wordcount:
+          type: integer
+        charcount:
+          type: integer
+        capabilities:
+          type: object
+          properties:
+            view:
+              type: boolean
+            edit:
+              type: boolean
+            delete:
+              type: boolean
+            split:
+              type: boolean
+            reply:
+              type: boolean
+            selfenrol:
+              type: boolean
+            export:
+              type: boolean
+            controlreadstatus:
+              type: boolean
+            canreplyprivately:
+              type: boolean
+        urls:
+          type: object
+          properties:
+            view:
+              type: string
+            viewisolated:
+              type: string
+            viewparent:
+              type: string
+            edit:
+              type: string
+            delete:
+              type: string
+            split:
+              type: string
+            reply:
+              type: string
+            export:
+              type: string
+            markasread:
+              type: string
+            markasunread:
+              type: string
+            discuss:
+              type: string
+        attachments:
+          type: array
+          items:
+            $ref: '../schemas/common.yaml#/components/schemas/CoreWSExternalFile'
+        messageinlinefiles:
+          type: array
+          items:
+            $ref: '../schemas/common.yaml#/components/schemas/CoreWSExternalFile'
+        tags:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+              tagid:
+                type: integer
+              isstandard:
+                type: boolean
+              displayname:
+                type: string
+              flag:
+                type: boolean
+              urls:
+                type: object
+                properties:
+                  view:
+                    type: string
+        html:
+          type: object
+          properties:
+            rating:
+              type: string
+            taglist:
+              type: string
+            authorsubheading:
+              type: string

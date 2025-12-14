@@ -1,0 +1,1019 @@
+# Core Course Web Service Functions
+
+core_course_get_categories:
+  post:
+    operationId: core_course_get_categories
+    summary: Get course categories
+    description: Return category details
+    tags:
+      - core_course
+    requestBody:
+      required: true
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            type: object
+            properties:
+              wsfunction:
+                type: string
+                enum: [core_course_get_categories]
+              wstoken:
+                type: string
+              criteria[0][key]:
+                type: string
+                enum: [id, ids, name, parent, idnumber, visible]
+                description: Criteria key
+              criteria[0][value]:
+                type: string
+                description: Criteria value
+              addsubcategories:
+                type: boolean
+                description: Whether to include subcategories
+            required:
+              - wsfunction
+              - wstoken
+    responses:
+      '200':
+        description: List of categories
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/CoreCategoryData'
+
+core_course_get_courses:
+  post:
+    operationId: core_course_get_courses
+    summary: Get courses
+    description: Return course details
+    tags:
+      - core_course
+    requestBody:
+      required: true
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            type: object
+            properties:
+              wsfunction:
+                type: string
+                enum: [core_course_get_courses]
+              wstoken:
+                type: string
+              options[ids][]:
+                type: array
+                items:
+                  type: integer
+                description: List of course IDs
+            required:
+              - wsfunction
+              - wstoken
+    responses:
+      '200':
+        description: List of courses
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/CoreCourseGetCoursesData'
+
+core_course_get_courses_by_field:
+  post:
+    operationId: core_course_get_courses_by_field
+    summary: Get courses by field
+    description: Get courses matching a specific field value
+    tags:
+      - core_course
+    requestBody:
+      required: true
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            type: object
+            properties:
+              wsfunction:
+                type: string
+                enum: [core_course_get_courses_by_field]
+              wstoken:
+                type: string
+              field:
+                type: string
+                enum: [id, ids, shortname, idnumber, category, sectionid]
+                description: Field to search
+              value:
+                type: string
+                description: Value to match
+            required:
+              - wsfunction
+              - wstoken
+    responses:
+      '200':
+        description: Courses matching the field
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                courses:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/CoreCourseSearchedData'
+                warnings:
+                  type: array
+                  items:
+                    $ref: '../schemas/common.yaml#/components/schemas/CoreWSExternalWarning'
+
+core_course_get_contents:
+  post:
+    operationId: core_course_get_contents
+    summary: Get course contents
+    description: Get course contents (sections and modules)
+    tags:
+      - core_course
+    requestBody:
+      required: true
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            type: object
+            properties:
+              wsfunction:
+                type: string
+                enum: [core_course_get_contents]
+              wstoken:
+                type: string
+              courseid:
+                type: integer
+                description: Course ID
+              options[0][name]:
+                type: string
+                description: Option name
+              options[0][value]:
+                type: string
+                description: Option value
+            required:
+              - wsfunction
+              - wstoken
+              - courseid
+    responses:
+      '200':
+        description: Course sections
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/CoreCourseSection'
+
+core_course_get_course_module:
+  post:
+    operationId: core_course_get_course_module
+    summary: Get course module
+    description: Return information about a course module
+    tags:
+      - core_course
+    requestBody:
+      required: true
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            type: object
+            properties:
+              wsfunction:
+                type: string
+                enum: [core_course_get_course_module]
+              wstoken:
+                type: string
+              cmid:
+                type: integer
+                description: Course module ID
+            required:
+              - wsfunction
+              - wstoken
+              - cmid
+    responses:
+      '200':
+        description: Course module information
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                cm:
+                  $ref: '#/components/schemas/CoreCourseModule'
+                warnings:
+                  type: array
+                  items:
+                    $ref: '../schemas/common.yaml#/components/schemas/CoreWSExternalWarning'
+
+core_course_get_course_module_by_instance:
+  post:
+    operationId: core_course_get_course_module_by_instance
+    summary: Get course module by instance
+    description: Return information about a module instance
+    tags:
+      - core_course
+    requestBody:
+      required: true
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            type: object
+            properties:
+              wsfunction:
+                type: string
+                enum: [core_course_get_course_module_by_instance]
+              wstoken:
+                type: string
+              module:
+                type: string
+                description: Module name (e.g., quiz, forum)
+              instance:
+                type: integer
+                description: Module instance ID
+            required:
+              - wsfunction
+              - wstoken
+              - module
+              - instance
+    responses:
+      '200':
+        description: Course module information
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                cm:
+                  $ref: '#/components/schemas/CoreCourseModule'
+                warnings:
+                  type: array
+                  items:
+                    $ref: '../schemas/common.yaml#/components/schemas/CoreWSExternalWarning'
+
+core_course_get_recent_courses:
+  post:
+    operationId: core_course_get_recent_courses
+    summary: Get recent courses
+    description: List of courses a user has accessed most recently
+    tags:
+      - core_course
+    requestBody:
+      required: true
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            type: object
+            properties:
+              wsfunction:
+                type: string
+                enum: [core_course_get_recent_courses]
+              wstoken:
+                type: string
+              userid:
+                type: integer
+                description: User ID (0 for current user)
+              limit:
+                type: integer
+                description: Result set limit
+              offset:
+                type: integer
+                description: Result set offset
+              sort:
+                type: string
+                description: Sort string
+            required:
+              - wsfunction
+              - wstoken
+    responses:
+      '200':
+        description: List of recent courses
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/CoreCourseSummaryData'
+
+core_course_search_courses:
+  post:
+    operationId: core_course_search_courses
+    summary: Search courses
+    description: Search courses by criteria
+    tags:
+      - core_course
+    requestBody:
+      required: true
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            type: object
+            properties:
+              wsfunction:
+                type: string
+                enum: [core_course_search_courses]
+              wstoken:
+                type: string
+              criterianame:
+                type: string
+                enum: [search, modulelist, blocklist, tagid]
+                description: Criteria name
+              criteriavalue:
+                type: string
+                description: Criteria value
+              page:
+                type: integer
+                description: Page number (0 based)
+              perpage:
+                type: integer
+                description: Items per page
+              limittoenrolled:
+                type: boolean
+                description: Limit to enrolled courses
+            required:
+              - wsfunction
+              - wstoken
+              - criterianame
+              - criteriavalue
+    responses:
+      '200':
+        description: Search results
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                total:
+                  type: integer
+                  description: Total course count
+                courses:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/CoreCourseSearchedData'
+                warnings:
+                  type: array
+                  items:
+                    $ref: '../schemas/common.yaml#/components/schemas/CoreWSExternalWarning'
+
+core_course_view_course:
+  post:
+    operationId: core_course_view_course
+    summary: View course
+    description: Trigger the course viewed event
+    tags:
+      - core_course
+    requestBody:
+      required: true
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            type: object
+            properties:
+              wsfunction:
+                type: string
+                enum: [core_course_view_course]
+              wstoken:
+                type: string
+              courseid:
+                type: integer
+                description: Course ID
+              sectionnumber:
+                type: integer
+                description: Section number
+            required:
+              - wsfunction
+              - wstoken
+              - courseid
+    responses:
+      '200':
+        description: Successful response
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/common.yaml#/components/schemas/CoreStatusWithWarningsWSResponse'
+
+core_course_set_favourite_courses:
+  post:
+    operationId: core_course_set_favourite_courses
+    summary: Set favourite courses
+    description: Add or remove courses from a user's favourites
+    tags:
+      - core_course
+    requestBody:
+      required: true
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            type: object
+            properties:
+              wsfunction:
+                type: string
+                enum: [core_course_set_favourite_courses]
+              wstoken:
+                type: string
+              courses[0][id]:
+                type: integer
+                description: Course ID
+              courses[0][favourite]:
+                type: boolean
+                description: Favourite status
+            required:
+              - wsfunction
+              - wstoken
+    responses:
+      '200':
+        description: Successful response
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/common.yaml#/components/schemas/CoreWarningsWSResponse'
+
+core_course_get_user_navigation_options:
+  post:
+    operationId: core_course_get_user_navigation_options
+    summary: Get user navigation options
+    description: Get navigation options for a set of courses
+    tags:
+      - core_course
+    requestBody:
+      required: true
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            type: object
+            properties:
+              wsfunction:
+                type: string
+                enum: [core_course_get_user_navigation_options]
+              wstoken:
+                type: string
+              courseids[]:
+                type: array
+                items:
+                  type: integer
+                description: List of course IDs
+            required:
+              - wsfunction
+              - wstoken
+              - courseids[]
+    responses:
+      '200':
+        description: Navigation options
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                courses:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                      options:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            name:
+                              type: string
+                            available:
+                              type: boolean
+                warnings:
+                  type: array
+                  items:
+                    $ref: '../schemas/common.yaml#/components/schemas/CoreWSExternalWarning'
+
+core_course_get_user_administration_options:
+  post:
+    operationId: core_course_get_user_administration_options
+    summary: Get user administration options
+    description: Get administration options for a set of courses
+    tags:
+      - core_course
+    requestBody:
+      required: true
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            type: object
+            properties:
+              wsfunction:
+                type: string
+                enum: [core_course_get_user_administration_options]
+              wstoken:
+                type: string
+              courseids[]:
+                type: array
+                items:
+                  type: integer
+                description: List of course IDs
+            required:
+              - wsfunction
+              - wstoken
+              - courseids[]
+    responses:
+      '200':
+        description: Administration options
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                courses:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                      options:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            name:
+                              type: string
+                            available:
+                              type: boolean
+                warnings:
+                  type: array
+                  items:
+                    $ref: '../schemas/common.yaml#/components/schemas/CoreWSExternalWarning'
+
+core_course_check_updates:
+  post:
+    operationId: core_course_check_updates
+    summary: Check updates
+    description: Check if there are updates affecting the user for the given course and target contexts
+    tags:
+      - core_course
+    requestBody:
+      required: true
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            type: object
+            properties:
+              wsfunction:
+                type: string
+                enum: [core_course_check_updates]
+              wstoken:
+                type: string
+              courseid:
+                type: integer
+                description: Course ID
+              tocheck[0][contextlevel]:
+                type: string
+                description: Context level (module)
+              tocheck[0][id]:
+                type: integer
+                description: Instance ID
+              tocheck[0][since]:
+                type: integer
+                description: Check updates since this time (Unix timestamp)
+            required:
+              - wsfunction
+              - wstoken
+              - courseid
+    responses:
+      '200':
+        description: Update information
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                instances:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      contextlevel:
+                        type: string
+                      id:
+                        type: integer
+                      updates:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            name:
+                              type: string
+                            timeupdated:
+                              type: integer
+                            itemids:
+                              type: array
+                              items:
+                                type: integer
+                warnings:
+                  type: array
+                  items:
+                    $ref: '../schemas/common.yaml#/components/schemas/CoreWSExternalWarning'
+
+core_my_view_page:
+  post:
+    operationId: core_my_view_page
+    summary: View my page
+    description: Trigger the dashboard or my courses page viewed event
+    tags:
+      - core_course
+    requestBody:
+      required: true
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            type: object
+            properties:
+              wsfunction:
+                type: string
+                enum: [core_my_view_page]
+              wstoken:
+                type: string
+              page:
+                type: string
+                enum: [my, dashboard]
+                description: Page to view
+            required:
+              - wsfunction
+              - wstoken
+              - page
+    responses:
+      '200':
+        description: Successful response
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/common.yaml#/components/schemas/CoreStatusWithWarningsWSResponse'
+
+components:
+  schemas:
+    CoreCategoryData:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Category ID
+        name:
+          type: string
+          description: Category name
+        idnumber:
+          type: string
+          description: Category ID number
+        description:
+          type: string
+          description: Category description
+        descriptionformat:
+          type: integer
+          description: Description format
+        parent:
+          type: integer
+          description: Parent category ID
+        sortorder:
+          type: integer
+          description: Category sorting order
+        coursecount:
+          type: integer
+          description: Number of courses in this category
+        visible:
+          type: integer
+          description: Whether visible
+        visibleold:
+          type: integer
+          description: Previous visibility
+        timemodified:
+          type: integer
+          description: Time modified
+        depth:
+          type: integer
+          description: Category depth
+        path:
+          type: string
+          description: Category path
+        theme:
+          type: string
+          description: Category theme
+
+    CoreCourseGetCoursesData:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Course ID
+        fullname:
+          type: string
+          description: Course full name
+        displayname:
+          type: string
+          description: Course display name
+        shortname:
+          type: string
+          description: Course short name
+        categoryid:
+          type: integer
+          description: Category ID
+        summary:
+          type: string
+          description: Summary
+        summaryformat:
+          type: integer
+          description: Summary format
+        format:
+          type: string
+          description: Course format
+        startdate:
+          type: integer
+          description: Start date
+        enddate:
+          type: integer
+          description: End date
+        visible:
+          type: integer
+          description: Whether visible
+        lang:
+          type: string
+          description: Forced language
+        enablecompletion:
+          type: boolean
+          description: Whether completion is enabled
+
+    CoreCourseSearchedData:
+      allOf:
+        - $ref: '#/components/schemas/CoreCourseGetCoursesData'
+        - type: object
+          properties:
+            categoryname:
+              type: string
+              description: Category name
+            sortorder:
+              type: integer
+              description: Sort order in category
+            summaryfiles:
+              type: array
+              items:
+                $ref: '../schemas/common.yaml#/components/schemas/CoreWSExternalFile'
+            overviewfiles:
+              type: array
+              items:
+                $ref: '../schemas/common.yaml#/components/schemas/CoreWSExternalFile'
+            contacts:
+              type: array
+              items:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                  fullname:
+                    type: string
+            enrollmentmethods:
+              type: array
+              items:
+                type: string
+            customfields:
+              type: array
+              items:
+                $ref: '../schemas/common.yaml#/components/schemas/CoreCourseCustomField'
+
+    CoreCourseSummaryData:
+      type: object
+      properties:
+        id:
+          type: integer
+        fullname:
+          type: string
+        shortname:
+          type: string
+        idnumber:
+          type: string
+        summary:
+          type: string
+        summaryformat:
+          type: integer
+        startdate:
+          type: integer
+        enddate:
+          type: integer
+        visible:
+          type: boolean
+        fullnamedisplay:
+          type: string
+        viewurl:
+          type: string
+          format: uri
+        courseimage:
+          type: string
+          format: uri
+        progress:
+          type: number
+        hasprogress:
+          type: boolean
+        isfavourite:
+          type: boolean
+        hidden:
+          type: boolean
+        timeaccess:
+          type: integer
+        showshortname:
+          type: boolean
+        coursecategory:
+          type: string
+
+    CoreCourseSection:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Section ID
+        name:
+          type: string
+          description: Section name
+        visible:
+          type: integer
+          description: Whether visible
+        summary:
+          type: string
+          description: Summary
+        summaryformat:
+          type: integer
+          description: Summary format
+        section:
+          type: integer
+          description: Section number
+        hiddenbynumsections:
+          type: integer
+          description: Hidden by num sections
+        uservisible:
+          type: boolean
+          description: User visible
+        modules:
+          type: array
+          items:
+            $ref: '#/components/schemas/CoreCourseModuleBasic'
+
+    CoreCourseModule:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Course module ID
+        course:
+          type: integer
+          description: Course ID
+        module:
+          type: integer
+          description: Module type ID
+        name:
+          type: string
+          description: Module name
+        modname:
+          type: string
+          description: Module type name (e.g., quiz, forum)
+        instance:
+          type: integer
+          description: Module instance ID
+        section:
+          type: integer
+          description: Section ID
+        sectionnum:
+          type: integer
+          description: Section number
+        groupmode:
+          type: integer
+          description: Group mode
+        groupingid:
+          type: integer
+          description: Grouping ID
+        completion:
+          type: integer
+          description: Completion tracking
+        idnumber:
+          type: string
+          description: ID number
+        added:
+          type: integer
+          description: Time added
+        score:
+          type: integer
+          description: Score
+        indent:
+          type: integer
+          description: Indent level
+        visible:
+          type: integer
+          description: Visibility
+        visibleoncoursepage:
+          type: integer
+          description: Visible on course page
+        visibleold:
+          type: integer
+          description: Previous visibility
+        completiongradeitemnumber:
+          type: integer
+          description: Completion grade item number
+        downloadcontent:
+          type: integer
+          description: Download content
+        lang:
+          type: string
+          description: Forced language
+
+    CoreCourseModuleBasic:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Activity ID
+        url:
+          type: string
+          format: uri
+          description: Activity URL
+        name:
+          type: string
+          description: Activity name
+        instance:
+          type: integer
+          description: Instance ID
+        contextid:
+          type: integer
+          description: Context ID
+        description:
+          type: string
+          description: Description
+        visible:
+          type: integer
+          description: Visibility
+        uservisible:
+          type: boolean
+          description: User visibility
+        availabilityinfo:
+          type: string
+          description: Availability info
+        visibleoncoursepage:
+          type: integer
+          description: Visible on course page
+        modicon:
+          type: string
+          format: uri
+          description: Module icon URL
+        modname:
+          type: string
+          description: Module type name
+        modplural:
+          type: string
+          description: Module plural name
+        indent:
+          type: integer
+          description: Indent
+        onclick:
+          type: string
+          description: Onclick action
+        afterlink:
+          type: string
+          description: After link
+        customdata:
+          type: string
+          description: Custom data
+        noviewlink:
+          type: boolean
+          description: No view link
+        completion:
+          type: integer
+          description: Completion type
+        completiondata:
+          type: object
+          properties:
+            state:
+              type: integer
+            timecompleted:
+              type: integer
+            overrideby:
+              type: integer
+            valueused:
+              type: boolean
+            hascompletion:
+              type: boolean
+            isautomatic:
+              type: boolean
+            istrackeduser:
+              type: boolean
+            uservisible:
+              type: boolean
+        downloadcontent:
+          type: integer
+          description: Download content
+        dates:
+          type: array
+          items:
+            type: object
+            properties:
+              label:
+                type: string
+              timestamp:
+                type: integer
+        contents:
+          type: array
+          items:
+            $ref: '../schemas/common.yaml#/components/schemas/CoreWSExternalFile'

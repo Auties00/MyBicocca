@@ -1,0 +1,391 @@
+openapi: 3.1.0
+info:
+  title: Moodle Web Services API
+  description: |
+    OpenAPI specification for Moodle Web Services used by the Moodle Mobile App.
+
+    All API calls are made to a single endpoint (`/webservice/rest/server.php`) with
+    the `wsfunction` parameter determining which operation to perform. Each unique
+    `wsfunction` value is modeled as a separate operation in this specification.
+
+    ## Authentication
+    All requests require a `wstoken` parameter for authentication. This token is
+    obtained during the login process.
+
+    ## Response Format
+    All responses are in JSON format (specified via `moodlewsrestformat=json` query parameter).
+
+    ## Error Handling
+    Errors are returned as JSON objects with `exception`, `errorcode`, and `message` fields.
+  version: 5.1.0
+  contact:
+    name: Moodle
+    url: https://moodle.org
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0
+
+servers:
+  - url: '{protocol}://{host}/webservice/rest'
+    description: Moodle Web Services REST endpoint
+    variables:
+      protocol:
+        default: https
+        enum:
+          - https
+          - http
+        description: Protocol (HTTPS recommended)
+      host:
+        default: your-moodle-site.com
+        description: Your Moodle site hostname
+
+security:
+  - wsToken: []
+
+tags:
+  - name: core_auth
+    description: Authentication functions
+  - name: core_user
+    description: User management functions
+  - name: core_course
+    description: Course management functions
+  - name: core_enrol
+    description: Enrollment functions
+  - name: core_message
+    description: Messaging functions
+  - name: core_calendar
+    description: Calendar functions
+  - name: core_files
+    description: File management functions
+  - name: core_comment
+    description: Comment functions
+  - name: core_notes
+    description: Notes functions
+  - name: core_blog
+    description: Blog functions
+  - name: core_group
+    description: Group functions
+  - name: core_tag
+    description: Tag functions
+  - name: core_completion
+    description: Completion functions
+  - name: core_competency
+    description: Competency functions
+  - name: core_badges
+    description: Badge functions
+  - name: core_rating
+    description: Rating functions
+  - name: core_search
+    description: Search functions
+  - name: core_block
+    description: Block functions
+  - name: core_h5p
+    description: H5P functions
+  - name: core_xapi
+    description: xAPI functions
+  - name: core_filters
+    description: Filter functions
+  - name: core_reportbuilder
+    description: Report builder functions
+  - name: mod_quiz
+    description: Quiz module functions
+  - name: mod_assign
+    description: Assignment module functions
+  - name: mod_forum
+    description: Forum module functions
+  - name: mod_lesson
+    description: Lesson module functions
+  - name: mod_chat
+    description: Chat module functions
+  - name: mod_glossary
+    description: Glossary module functions
+  - name: mod_feedback
+    description: Feedback module functions
+  - name: mod_book
+    description: Book module functions
+  - name: mod_choice
+    description: Choice module functions
+  - name: mod_data
+    description: Database module functions
+  - name: mod_h5pactivity
+    description: H5P Activity module functions
+  - name: mod_scorm
+    description: SCORM module functions
+  - name: mod_bigbluebuttonbn
+    description: BigBlueButton module functions
+  - name: mod_folder
+    description: Folder module functions
+  - name: mod_imscp
+    description: IMS Content Package module functions
+  - name: mod_label
+    description: Label module functions
+  - name: mod_lti
+    description: LTI module functions
+  - name: mod_page
+    description: Page module functions
+  - name: mod_survey
+    description: Survey module functions
+  - name: mod_url
+    description: URL module functions
+  - name: mod_wiki
+    description: Wiki module functions
+  - name: mod_workshop
+    description: Workshop module functions
+  - name: tool_mobile
+    description: Mobile app tool functions
+  - name: tool_lp
+    description: Learning plans tool functions
+  - name: tool_dataprivacy
+    description: Data privacy tool functions
+  - name: tool_policy
+    description: Policy tool functions
+  - name: block_recentlyaccesseditems
+    description: Recently accessed items block functions
+  - name: block_starredcourses
+    description: Starred courses block functions
+  - name: enrol_guest
+    description: Guest enrollment functions
+  - name: enrol_self
+    description: Self enrollment functions
+  - name: gradereport_user
+    description: User grade report functions
+  - name: message_airnotifier
+    description: Airnotifier message output functions
+
+paths:
+  # Generic endpoint documentation
+  /server.php:
+    post:
+      summary: Moodle Web Service Endpoint
+      description: |
+        Single endpoint that handles all web service calls. The `wsfunction` parameter
+        determines which operation to perform.
+
+        ## How to Use This API
+        All Moodle Web Services are called through this single endpoint. The specific
+        function is determined by the `wsfunction` parameter.
+
+        ## Individual Function Documentation
+        See the individual path files for detailed documentation of each wsfunction:
+        - `paths/core/` - Core Moodle functions (auth, user, course, enrol, message, calendar)
+        - `paths/mod/` - Module functions (quiz, assign, forum)
+        - `paths/tool/` - Tool functions (mobile)
+
+        ## Example Request
+        ```
+        POST /webservice/rest/server.php?moodlewsrestformat=json HTTP/1.1
+        Content-Type: application/x-www-form-urlencoded
+
+        wstoken=YOUR_TOKEN&wsfunction=core_user_get_users_by_field&field=id&values[0]=2
+        ```
+      parameters:
+        - name: moodlewsrestformat
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [json]
+          description: Response format (always json for mobile app)
+        - name: wsfunction
+          in: query
+          required: true
+          schema:
+            type: string
+            description: The web service function to call
+            enum:
+              # Core Auth
+              - core_auth_is_minor
+              - core_auth_request_password_reset
+              - core_auth_resend_confirmation_email
+              - auth_email_get_signup_settings
+              # Core User
+              - core_user_get_users_by_field
+              - core_user_get_course_user_profiles
+              - core_user_get_user_preferences
+              - core_user_update_user_preferences
+              - core_user_update_picture
+              - core_user_agree_site_policy
+              - core_user_view_user_profile
+              - core_user_view_user_list
+              - core_user_add_user_device
+              - core_user_remove_user_device
+              - core_user_get_private_files_info
+              - core_user_add_user_private_files
+              # Core Course
+              - core_course_get_categories
+              - core_course_get_courses
+              - core_course_get_courses_by_field
+              - core_course_get_contents
+              - core_course_get_course_module
+              - core_course_get_course_module_by_instance
+              - core_course_get_recent_courses
+              - core_course_search_courses
+              - core_course_view_course
+              - core_course_set_favourite_courses
+              - core_course_check_updates
+              - core_my_view_page
+              # Core Enrol
+              - core_enrol_get_enrolled_users
+              - core_enrol_get_users_courses
+              - core_enrol_get_course_enrolment_methods
+              - core_enrol_search_users
+              - enrol_self_enrol_user
+              - enrol_self_get_instance_info
+              - enrol_guest_get_instance_info
+              - enrol_guest_validate_password
+              # Core Message
+              - core_message_get_conversations
+              - core_message_get_conversation_between_users
+              - core_message_get_conversation_messages
+              - core_message_send_messages_to_conversation
+              - core_message_send_instant_messages
+              - core_message_get_messages
+              - core_message_mark_message_read
+              - core_message_mark_all_notifications_as_read
+              - core_message_get_unread_conversation_counts
+              - core_message_block_user
+              - core_message_unblock_user
+              - core_message_delete_conversations_by_id
+              - core_message_get_user_contacts
+              - core_message_confirm_contact_request
+              - core_message_decline_contact_request
+              - core_message_get_received_contact_requests_count
+              # Core Calendar
+              - core_calendar_get_calendar_events
+              - core_calendar_get_calendar_event_by_id
+              - core_calendar_get_calendar_day_view
+              - core_calendar_get_calendar_monthly_view
+              - core_calendar_get_calendar_upcoming_view
+              - core_calendar_get_calendar_access_information
+              - core_calendar_get_allowed_event_types
+              - core_calendar_delete_calendar_events
+              - core_calendar_submit_create_update_form
+              # Module Quiz
+              - mod_quiz_get_quizzes_by_courses
+              - mod_quiz_get_quiz_access_information
+              - mod_quiz_get_attempt_access_information
+              - mod_quiz_get_user_attempts
+              - mod_quiz_get_user_best_grade
+              - mod_quiz_start_attempt
+              - mod_quiz_get_attempt_data
+              - mod_quiz_get_attempt_summary
+              - mod_quiz_save_attempt
+              - mod_quiz_process_attempt
+              - mod_quiz_get_attempt_review
+              - mod_quiz_get_combined_review_options
+              - mod_quiz_get_quiz_feedback_for_grade
+              - mod_quiz_get_quiz_required_qtypes
+              - mod_quiz_view_quiz
+              - mod_quiz_view_attempt
+              - mod_quiz_view_attempt_summary
+              - mod_quiz_view_attempt_review
+              # Module Assign
+              - mod_assign_get_assignments
+              - mod_assign_get_submission_status
+              - mod_assign_get_submissions
+              - mod_assign_get_grades
+              - mod_assign_save_submission
+              - mod_assign_submit_for_grading
+              - mod_assign_submit_grading_form
+              - mod_assign_list_participants
+              - mod_assign_view_assign
+              - mod_assign_view_submission_status
+              - mod_assign_start_submission
+              - mod_assign_remove_submission
+              # Module Forum
+              - mod_forum_get_forums_by_courses
+              - mod_forum_get_forum_discussions
+              - mod_forum_get_forum_discussion_posts
+              - mod_forum_get_discussion_posts
+              - mod_forum_add_discussion
+              - mod_forum_add_discussion_post
+              - mod_forum_update_discussion_post
+              - mod_forum_delete_post
+              - mod_forum_can_add_discussion
+              - mod_forum_get_forum_access_information
+              - mod_forum_set_lock_state
+              - mod_forum_view_forum
+              - mod_forum_view_forum_discussion
+              - mod_forum_prepare_draft_area_for_post
+              # Tool Mobile
+              - tool_mobile_get_public_config
+              - tool_mobile_get_config
+              - tool_mobile_get_plugins_supporting_mobile
+              - tool_mobile_get_autologin_key
+              - tool_mobile_get_content
+              - tool_mobile_get_tokens_for_qr_login
+              - tool_mobile_validate_subscription_key
+              - tool_mobile_call_external_functions
+          description: The web service function to call
+        - name: wstoken
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Authentication token
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              additionalProperties: true
+              description: |
+                Function-specific parameters. See individual wsfunction documentation
+                in the paths/ directory for detailed parameter specifications.
+      responses:
+        '200':
+          description: |
+            Successful response. The format depends on the wsfunction called.
+            See individual function documentation for response schemas.
+          content:
+            application/json:
+              schema:
+                type: object
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WSError'
+        '401':
+          description: Unauthorized - invalid token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WSError'
+        '403':
+          description: Forbidden - insufficient permissions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WSError'
+
+components:
+  schemas:
+    WSError:
+      type: object
+      properties:
+        exception:
+          type: string
+          description: Exception class name
+        errorcode:
+          type: string
+          description: Error code
+        message:
+          type: string
+          description: Human-readable error message
+        debuginfo:
+          type: string
+          description: Debug information (only in debug mode)
+      required:
+        - exception
+        - errorcode
+        - message
+
+  securitySchemes:
+    wsToken:
+      type: apiKey
+      in: query
+      name: wstoken
+      description: Web service authentication token

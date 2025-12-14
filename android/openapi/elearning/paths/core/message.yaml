@@ -1,0 +1,1023 @@
+# Core Message Web Service Functions
+
+core_message_get_conversations:
+  post:
+    operationId: core_message_get_conversations
+    summary: Get conversations
+    description: Get the list of conversations for a user
+    tags:
+      - core_message
+    requestBody:
+      required: true
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            type: object
+            properties:
+              wsfunction:
+                type: string
+                enum: [core_message_get_conversations]
+              wstoken:
+                type: string
+              userid:
+                type: integer
+                description: User ID
+              limitfrom:
+                type: integer
+                description: Limit from
+              limitnum:
+                type: integer
+                description: Limit number
+              type:
+                type: integer
+                description: Filter by type (null, 1=individual, 2=group, 3=self)
+              favourites:
+                type: boolean
+                description: Filter favourites
+              mergeself:
+                type: boolean
+                description: Merge self conversation
+            required:
+              - wsfunction
+              - wstoken
+              - userid
+    responses:
+      '200':
+        description: List of conversations
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                conversations:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/CoreMessageConversation'
+
+core_message_get_conversation_between_users:
+  post:
+    operationId: core_message_get_conversation_between_users
+    summary: Get conversation between users
+    description: Get the conversation between two users
+    tags:
+      - core_message
+    requestBody:
+      required: true
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            type: object
+            properties:
+              wsfunction:
+                type: string
+                enum: [core_message_get_conversation_between_users]
+              wstoken:
+                type: string
+              userid:
+                type: integer
+                description: User ID
+              otheruserid:
+                type: integer
+                description: Other user ID
+              includecontactrequests:
+                type: boolean
+                description: Include contact requests
+              includeprivacyinfo:
+                type: boolean
+                description: Include privacy info
+              memberlimit:
+                type: integer
+                description: Member limit
+              memberoffset:
+                type: integer
+                description: Member offset
+              messagelimit:
+                type: integer
+                description: Message limit
+              messageoffset:
+                type: integer
+                description: Message offset
+              newestmessagesfirst:
+                type: boolean
+                description: Order newest first
+            required:
+              - wsfunction
+              - wstoken
+              - userid
+              - otheruserid
+    responses:
+      '200':
+        description: Conversation data
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CoreMessageConversation'
+
+core_message_get_conversation_messages:
+  post:
+    operationId: core_message_get_conversation_messages
+    summary: Get conversation messages
+    description: Get messages for a conversation
+    tags:
+      - core_message
+    requestBody:
+      required: true
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            type: object
+            properties:
+              wsfunction:
+                type: string
+                enum: [core_message_get_conversation_messages]
+              wstoken:
+                type: string
+              currentuserid:
+                type: integer
+                description: Current user ID
+              convid:
+                type: integer
+                description: Conversation ID
+              limitfrom:
+                type: integer
+                description: Limit from
+              limitnum:
+                type: integer
+                description: Limit number
+              newest:
+                type: boolean
+                description: Newest first
+              timefrom:
+                type: integer
+                description: Time from
+            required:
+              - wsfunction
+              - wstoken
+              - currentuserid
+              - convid
+    responses:
+      '200':
+        description: Conversation messages
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                id:
+                  type: integer
+                members:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/CoreMessageMember'
+                messages:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/CoreMessageMessage'
+
+core_message_send_messages_to_conversation:
+  post:
+    operationId: core_message_send_messages_to_conversation
+    summary: Send messages to conversation
+    description: Send messages to an existing conversation
+    tags:
+      - core_message
+    requestBody:
+      required: true
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            type: object
+            properties:
+              wsfunction:
+                type: string
+                enum: [core_message_send_messages_to_conversation]
+              wstoken:
+                type: string
+              conversationid:
+                type: integer
+                description: Conversation ID
+              messages[0][text]:
+                type: string
+                description: Message text
+              messages[0][textformat]:
+                type: integer
+                description: Text format
+            required:
+              - wsfunction
+              - wstoken
+              - conversationid
+    responses:
+      '200':
+        description: Sent messages
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/CoreMessageMessage'
+
+core_message_send_instant_messages:
+  post:
+    operationId: core_message_send_instant_messages
+    summary: Send instant messages
+    description: Send instant messages to users
+    tags:
+      - core_message
+    requestBody:
+      required: true
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            type: object
+            properties:
+              wsfunction:
+                type: string
+                enum: [core_message_send_instant_messages]
+              wstoken:
+                type: string
+              messages[0][touserid]:
+                type: integer
+                description: Recipient user ID
+              messages[0][text]:
+                type: string
+                description: Message text
+              messages[0][textformat]:
+                type: integer
+                description: Text format
+            required:
+              - wsfunction
+              - wstoken
+    responses:
+      '200':
+        description: Sent message results
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: object
+                properties:
+                  msgid:
+                    type: integer
+                    description: Message ID (-1 on error)
+                  clientmsgid:
+                    type: string
+                  errormessage:
+                    type: string
+
+core_message_get_messages:
+  post:
+    operationId: core_message_get_messages
+    summary: Get messages
+    description: Get messages (legacy)
+    tags:
+      - core_message
+    requestBody:
+      required: true
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            type: object
+            properties:
+              wsfunction:
+                type: string
+                enum: [core_message_get_messages]
+              wstoken:
+                type: string
+              useridto:
+                type: integer
+                description: Recipient user ID
+              useridfrom:
+                type: integer
+                description: Sender user ID
+              type:
+                type: string
+                enum: [both, conversations, notifications]
+                description: Message type
+              read:
+                type: integer
+                description: Read status (0=unread, 1=read, 2=both)
+              newestfirst:
+                type: boolean
+                description: Order newest first
+              limitfrom:
+                type: integer
+                description: Limit from
+              limitnum:
+                type: integer
+                description: Limit number
+            required:
+              - wsfunction
+              - wstoken
+              - useridto
+              - type
+    responses:
+      '200':
+        description: Messages
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                messages:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/CoreMessageLegacyMessage'
+                warnings:
+                  type: array
+                  items:
+                    $ref: '../schemas/common.yaml#/components/schemas/CoreWSExternalWarning'
+
+core_message_mark_message_read:
+  post:
+    operationId: core_message_mark_message_read
+    summary: Mark message read
+    description: Mark a message as read
+    tags:
+      - core_message
+    requestBody:
+      required: true
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            type: object
+            properties:
+              wsfunction:
+                type: string
+                enum: [core_message_mark_message_read]
+              wstoken:
+                type: string
+              messageid:
+                type: integer
+                description: Message ID
+              timeread:
+                type: integer
+                description: Time read (defaults to now)
+            required:
+              - wsfunction
+              - wstoken
+              - messageid
+    responses:
+      '200':
+        description: Mark result
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                messageid:
+                  type: integer
+                warnings:
+                  type: array
+                  items:
+                    $ref: '../schemas/common.yaml#/components/schemas/CoreWSExternalWarning'
+
+core_message_mark_all_notifications_as_read:
+  post:
+    operationId: core_message_mark_all_notifications_as_read
+    summary: Mark all notifications read
+    description: Mark all notifications as read for a user
+    tags:
+      - core_message
+    requestBody:
+      required: true
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            type: object
+            properties:
+              wsfunction:
+                type: string
+                enum: [core_message_mark_all_notifications_as_read]
+              wstoken:
+                type: string
+              useridto:
+                type: integer
+                description: User ID
+              useridfrom:
+                type: integer
+                description: From user ID filter
+              timecreatedto:
+                type: integer
+                description: Created before time
+            required:
+              - wsfunction
+              - wstoken
+              - useridto
+    responses:
+      '200':
+        description: Success
+        content:
+          application/json:
+            schema:
+              type: boolean
+
+core_message_get_unread_conversation_counts:
+  post:
+    operationId: core_message_get_unread_conversation_counts
+    summary: Get unread conversation counts
+    description: Get unread conversation counts for a user
+    tags:
+      - core_message
+    requestBody:
+      required: true
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            type: object
+            properties:
+              wsfunction:
+                type: string
+                enum: [core_message_get_unread_conversation_counts]
+              wstoken:
+                type: string
+              userid:
+                type: integer
+                description: User ID
+            required:
+              - wsfunction
+              - wstoken
+              - userid
+    responses:
+      '200':
+        description: Unread counts
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                favourites:
+                  type: integer
+                types:
+                  type: object
+                  properties:
+                    '1':
+                      type: integer
+                    '2':
+                      type: integer
+                    '3':
+                      type: integer
+
+core_message_block_user:
+  post:
+    operationId: core_message_block_user
+    summary: Block user
+    description: Block a user from messaging
+    tags:
+      - core_message
+    requestBody:
+      required: true
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            type: object
+            properties:
+              wsfunction:
+                type: string
+                enum: [core_message_block_user]
+              wstoken:
+                type: string
+              userid:
+                type: integer
+                description: Current user ID
+              blockeduserid:
+                type: integer
+                description: User ID to block
+            required:
+              - wsfunction
+              - wstoken
+              - userid
+              - blockeduserid
+    responses:
+      '200':
+        description: Block result
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/common.yaml#/components/schemas/CoreWarningsWSResponse'
+
+core_message_unblock_user:
+  post:
+    operationId: core_message_unblock_user
+    summary: Unblock user
+    description: Unblock a user from messaging
+    tags:
+      - core_message
+    requestBody:
+      required: true
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            type: object
+            properties:
+              wsfunction:
+                type: string
+                enum: [core_message_unblock_user]
+              wstoken:
+                type: string
+              userid:
+                type: integer
+                description: Current user ID
+              unblockeduserid:
+                type: integer
+                description: User ID to unblock
+            required:
+              - wsfunction
+              - wstoken
+              - userid
+              - unblockeduserid
+    responses:
+      '200':
+        description: Unblock result
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/common.yaml#/components/schemas/CoreWarningsWSResponse'
+
+core_message_delete_conversations_by_id:
+  post:
+    operationId: core_message_delete_conversations_by_id
+    summary: Delete conversations
+    description: Delete conversations by ID
+    tags:
+      - core_message
+    requestBody:
+      required: true
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            type: object
+            properties:
+              wsfunction:
+                type: string
+                enum: [core_message_delete_conversations_by_id]
+              wstoken:
+                type: string
+              userid:
+                type: integer
+                description: User ID
+              conversationids[]:
+                type: array
+                items:
+                  type: integer
+                description: Conversation IDs
+            required:
+              - wsfunction
+              - wstoken
+              - userid
+              - conversationids[]
+    responses:
+      '200':
+        description: Delete result
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/common.yaml#/components/schemas/CoreWarningsWSResponse'
+
+core_message_get_user_contacts:
+  post:
+    operationId: core_message_get_user_contacts
+    summary: Get user contacts
+    description: Get contacts for a user
+    tags:
+      - core_message
+    requestBody:
+      required: true
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            type: object
+            properties:
+              wsfunction:
+                type: string
+                enum: [core_message_get_user_contacts]
+              wstoken:
+                type: string
+              userid:
+                type: integer
+                description: User ID
+              limitfrom:
+                type: integer
+                description: Limit from
+              limitnum:
+                type: integer
+                description: Limit number
+            required:
+              - wsfunction
+              - wstoken
+              - userid
+    responses:
+      '200':
+        description: Contacts
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/CoreMessageContact'
+
+core_message_confirm_contact_request:
+  post:
+    operationId: core_message_confirm_contact_request
+    summary: Confirm contact request
+    description: Accept a contact request
+    tags:
+      - core_message
+    requestBody:
+      required: true
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            type: object
+            properties:
+              wsfunction:
+                type: string
+                enum: [core_message_confirm_contact_request]
+              wstoken:
+                type: string
+              userid:
+                type: integer
+                description: User ID
+              requesteduserid:
+                type: integer
+                description: Requesting user ID
+            required:
+              - wsfunction
+              - wstoken
+              - userid
+              - requesteduserid
+    responses:
+      '200':
+        description: Confirm result
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/common.yaml#/components/schemas/CoreWarningsWSResponse'
+
+core_message_decline_contact_request:
+  post:
+    operationId: core_message_decline_contact_request
+    summary: Decline contact request
+    description: Decline a contact request
+    tags:
+      - core_message
+    requestBody:
+      required: true
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            type: object
+            properties:
+              wsfunction:
+                type: string
+                enum: [core_message_decline_contact_request]
+              wstoken:
+                type: string
+              userid:
+                type: integer
+                description: User ID
+              requesteduserid:
+                type: integer
+                description: Requesting user ID
+            required:
+              - wsfunction
+              - wstoken
+              - userid
+              - requesteduserid
+    responses:
+      '200':
+        description: Decline result
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/common.yaml#/components/schemas/CoreWarningsWSResponse'
+
+core_message_get_received_contact_requests_count:
+  post:
+    operationId: core_message_get_received_contact_requests_count
+    summary: Get contact requests count
+    description: Get the number of received contact requests
+    tags:
+      - core_message
+    requestBody:
+      required: true
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            type: object
+            properties:
+              wsfunction:
+                type: string
+                enum: [core_message_get_received_contact_requests_count]
+              wstoken:
+                type: string
+              userid:
+                type: integer
+                description: User ID
+            required:
+              - wsfunction
+              - wstoken
+              - userid
+    responses:
+      '200':
+        description: Request count
+        content:
+          application/json:
+            schema:
+              type: integer
+
+core_message_data_for_messagearea_search_messages:
+  post:
+    operationId: core_message_data_for_messagearea_search_messages
+    summary: Search messages
+    description: Search for messages
+    tags:
+      - core_message
+    requestBody:
+      required: true
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            type: object
+            properties:
+              wsfunction:
+                type: string
+                enum: [core_message_data_for_messagearea_search_messages]
+              wstoken:
+                type: string
+              userid:
+                type: integer
+                description: User ID
+              search:
+                type: string
+                description: Search string
+              limitfrom:
+                type: integer
+                description: Limit from
+              limitnum:
+                type: integer
+                description: Limit number
+            required:
+              - wsfunction
+              - wstoken
+              - userid
+              - search
+    responses:
+      '200':
+        description: Search results
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                contacts:
+                  type: array
+                  items:
+                    type: object
+
+core_message_message_search_users:
+  post:
+    operationId: core_message_message_search_users
+    summary: Search users for messaging
+    description: Search for users to message
+    tags:
+      - core_message
+    requestBody:
+      required: true
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            type: object
+            properties:
+              wsfunction:
+                type: string
+                enum: [core_message_message_search_users]
+              wstoken:
+                type: string
+              userid:
+                type: integer
+                description: Current user ID
+              search:
+                type: string
+                description: Search string
+              limitfrom:
+                type: integer
+                description: Limit from
+              limitnum:
+                type: integer
+                description: Limit number
+            required:
+              - wsfunction
+              - wstoken
+              - userid
+              - search
+    responses:
+      '200':
+        description: Search results
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                contacts:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/CoreMessageContact'
+                noncontacts:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/CoreMessageContact'
+
+components:
+  schemas:
+    CoreMessageConversation:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Conversation ID
+        name:
+          type: string
+          description: Conversation name
+        subname:
+          type: string
+          description: Subname
+        imageurl:
+          type: string
+          format: uri
+          description: Image URL
+        type:
+          type: integer
+          description: Type (1=individual, 2=group, 3=self)
+        membercount:
+          type: integer
+          description: Member count
+        ismuted:
+          type: boolean
+          description: Is muted
+        isfavourite:
+          type: boolean
+          description: Is favourite
+        isread:
+          type: boolean
+          description: Is read
+        unreadcount:
+          type: integer
+          description: Unread count
+        members:
+          type: array
+          items:
+            $ref: '#/components/schemas/CoreMessageMember'
+        messages:
+          type: array
+          items:
+            $ref: '#/components/schemas/CoreMessageMessage'
+        candeletemessagesforallusers:
+          type: boolean
+
+    CoreMessageMember:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: User ID
+        fullname:
+          type: string
+          description: Full name
+        profileurl:
+          type: string
+          format: uri
+          description: Profile URL
+        profileimageurl:
+          type: string
+          format: uri
+          description: Profile image URL
+        profileimageurlsmall:
+          type: string
+          format: uri
+          description: Small profile image URL
+        isonline:
+          type: boolean
+          description: Is online
+        showonlinestatus:
+          type: boolean
+          description: Show online status
+        isblocked:
+          type: boolean
+          description: Is blocked
+        iscontact:
+          type: boolean
+          description: Is contact
+        isdeleted:
+          type: boolean
+          description: Is deleted
+        canmessageevenifblocked:
+          type: boolean
+        canmessage:
+          type: boolean
+        requirescontact:
+          type: boolean
+        contactrequests:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+              userid:
+                type: integer
+              requesteduserid:
+                type: integer
+              timecreated:
+                type: integer
+
+    CoreMessageMessage:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Message ID
+        useridfrom:
+          type: integer
+          description: From user ID
+        text:
+          type: string
+          description: Message text
+        timecreated:
+          type: integer
+          description: Time created
+
+    CoreMessageLegacyMessage:
+      type: object
+      properties:
+        id:
+          type: integer
+        useridfrom:
+          type: integer
+        useridto:
+          type: integer
+        subject:
+          type: string
+        text:
+          type: string
+        fullmessage:
+          type: string
+        fullmessageformat:
+          type: integer
+        fullmessagehtml:
+          type: string
+        smallmessage:
+          type: string
+        notification:
+          type: integer
+        contexturl:
+          type: string
+        contexturlname:
+          type: string
+        timecreated:
+          type: integer
+        timeread:
+          type: integer
+        usertofullname:
+          type: string
+        userfromfullname:
+          type: string
+        component:
+          type: string
+        eventtype:
+          type: string
+        customdata:
+          type: string
+
+    CoreMessageContact:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: User ID
+        fullname:
+          type: string
+          description: Full name
+        profileurl:
+          type: string
+          format: uri
+        profileimageurl:
+          type: string
+          format: uri
+        profileimageurlsmall:
+          type: string
+          format: uri
+        isonline:
+          type: boolean
+        showonlinestatus:
+          type: boolean
+        isblocked:
+          type: boolean
+        iscontact:
+          type: boolean
+        isdeleted:
+          type: boolean
+        canmessage:
+          type: boolean
+        requirescontact:
+          type: boolean
