@@ -3,8 +3,8 @@ package it.attendance100.mybicocca.di
 import dagger.*
 import dagger.hilt.*
 import dagger.hilt.components.*
+import it.attendance100.mybicocca.data.datasources.auth.*
 import it.attendance100.mybicocca.data.datasources.calendar.*
-import it.attendance100.mybicocca.data.datasources.notification.*
 import it.attendance100.mybicocca.data.datasources.user.*
 import javax.inject.*
 
@@ -16,6 +16,7 @@ import javax.inject.*
  * - Change MockCalendarDataSource -> RemoteCalendarDataSource
  */
 @Module
+@Suppress("unused")
 @InstallIn(SingletonComponent::class)
 abstract class DataSourceModule {
 
@@ -35,12 +36,13 @@ abstract class DataSourceModule {
   @Binds
   @Singleton
   abstract fun bindUserDataSource(
-    mockDataSource: MockUserDataSource,
+    remoteDataSource: RemoteUserDataSource,
   ): UserDataSource
 
+  // Auth
   @Binds
   @Singleton
-  abstract fun bindNotificationDataSource(
-    mockDataSource: MockNotificationDataSource,
-  ): NotificationDataSource
+  abstract fun bindAuthDataSource(
+    remoteDataSource: RemoteAuthDataSource,
+  ): AuthDataSource
 }

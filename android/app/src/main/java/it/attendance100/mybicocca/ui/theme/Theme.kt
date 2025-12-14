@@ -8,7 +8,7 @@ import androidx.compose.ui.graphics.*
 import androidx.compose.ui.platform.*
 import androidx.core.view.*
 
-private val MyBicoccaDarkColorScheme = darkColorScheme(
+val MyBicoccaDarkColorScheme = darkColorScheme(
   primary = PrimaryColor,
   onPrimary = OnPrimaryColor,
   secondary = SecondaryColor,
@@ -44,7 +44,7 @@ private val MyBicoccaDarkColorScheme = darkColorScheme(
   onBackground = OnBackgroundColor,
 )
 
-private val MyBicoccaLightColorScheme = lightColorScheme(
+val MyBicoccaLightColorScheme = lightColorScheme(
   primary = PrimaryColorLight,
   onPrimary = OnPrimaryColorLight,
   secondary = SecondaryColorLight,
@@ -81,7 +81,6 @@ private val MyBicoccaLightColorScheme = lightColorScheme(
 )
 
 @Composable
-@Suppress("DEPRECATION")
 fun MyBicoccaTheme(
   darkTheme: Boolean = true,
   content: @Composable () -> Unit,
@@ -104,6 +103,7 @@ fun MyBicoccaTheme(
         }
       } else {
         // For Android 14 and below
+        @Suppress("DEPRECATION")
         window.statusBarColor = color
       }
       WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !darkTheme

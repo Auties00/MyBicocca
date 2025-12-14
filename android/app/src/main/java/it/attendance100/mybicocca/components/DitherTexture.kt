@@ -10,9 +10,6 @@ import androidx.compose.ui.tooling.preview.*
 import it.attendance100.mybicocca.ui.theme.*
 import kotlin.math.*
 
-/**
- * Dithered Texture Composable.
- */
 @Composable
 fun DitheredTexture(
   modifier: Modifier = Modifier,
@@ -25,18 +22,14 @@ fun DitheredTexture(
   fadeEnd: Float = 0.9f,
   shapeProvider: (size: Float) -> Path = { size -> RhombusPath(size) },
 ) {
-  // We remember the path based on size so we don't rebuild it every frame
-  // unless the size changes.
+  // We remember the path based on size so we don't rebuild it every frame unless the size changes
   val shapePath = remember(dotSize) { shapeProvider(dotSize) }
 
   Canvas(modifier = modifier) {
-    // We rotate the entire drawing context for the "Global Rotation"
+    // Rotate globally based on globalRotation
     rotate(degrees = globalRotation) {
 
-      // Calculate how big our grid needs to be to cover the screen.
-      // Because of rotation, we might need to draw outside the visible bounds
-      // so corners don't get clipped. We add a safety buffer.
-      val buffer = size.maxDimension
+      val buffer = size.maxDimension // Safety buffer to draw outside of bounds
       val gridWidth = size.width + buffer
       val gridHeight = size.height + buffer
 
@@ -49,40 +42,32 @@ fun DitheredTexture(
 
       for (row in 0..rows) {
         for (col in 0..cols) {
-
-          // 1. Calculate Position
+          // Position
           var x = startX + (col * spacing)
           val y = startY + (row * spacing)
 
-          // 2. Apply Stagger (Offset by 50% on odd rows)
+          // Offset
           if (row % 2 != 0) x += spacing / 2
 
 
-          // 3. Calculate Dithering Probability
-          // We map the x position relative to the screen width to a 0.0-1.0 range
-          // We use the actual canvas coordinates, untranslated by startX
+          // Calculate dithering probability
           val screenRelativeX = x - startX - (buffer / 2) + (size.width / 2)
 
           // Normalize position between 0 and 1 relative to canvas width
           val normalizedX = (screenRelativeX / size.width).coerceIn(0f, 1f)
 
-          // Calculate threshold: 1.0 means always draw, 0.0 means never draw
-          // We interpolate based on fadeStart and fadeEnd
+          // 1.0 -> always draw
+          // 0.0 -> never draw
+          // Interpolate based on fadeStart and fadeEnd
           val drawProbability = when {
             normalizedX < fadeStart -> 1f
             normalizedX > fadeEnd -> 0f
             else -> 1f - ((normalizedX - fadeStart) / (fadeEnd - fadeStart))
           }
 
-          // 4. Deterministic Randomness
-          // We need a random number that is consistent for this specific row/col
-          // so it doesn't "shimmer" when the UI redraws.
-          // We use a simple pseudo-random hash function.
           val randomValue = pseudoRandom(row, col)
 
           if (randomValue < drawProbability) {
-            // 5. Draw the Shape
-            // We translate to the specific dot position
             translate(left = x, top = y) {
               // We rotate the individual dot around its own center
               rotate(degrees = dotRotation) {
@@ -99,9 +84,6 @@ fun DitheredTexture(
   }
 }
 
-/**
- * Helper to create a centered Rhombus (Diamond) path.
- */
 fun RhombusPath(size: Float): Path {
   val half = size / 2
   return Path().apply {
@@ -113,18 +95,12 @@ fun RhombusPath(size: Float): Path {
   }
 }
 
-/**
- * A deterministic pseudo-random number generator.
- * Returns a float between 0.0 and 1.0 based on the input coordinates.
- * This ensures the "static" doesn't change frame-to-frame.
- */
 fun pseudoRandom(x: Int, y: Int): Float {
   // A simple hash logic often used in shaders for noise
   val value = sin(x * 12.9898 + y * 78.233) * 43758.5453
   return (abs(value) % 1.0).toFloat()
 }
 
-// --- PREVIEW ---
 
 @Preview(showBackground = true, widthDp = 400, heightDp = 600)
 @Composable

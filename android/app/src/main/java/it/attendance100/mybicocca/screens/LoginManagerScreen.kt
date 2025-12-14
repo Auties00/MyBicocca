@@ -1,6 +1,5 @@
 package it.attendance100.mybicocca.screens
 
-import androidx.biometric.*
 import androidx.compose.animation.*
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
@@ -10,14 +9,20 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.*
+import androidx.compose.ui.draw.*
+import androidx.compose.ui.graphics.vector.*
 import androidx.compose.ui.platform.*
 import androidx.compose.ui.res.*
 import androidx.compose.ui.text.font.*
 import androidx.compose.ui.unit.*
+import androidx.hilt.lifecycle.viewmodel.compose.*
 import androidx.navigation.*
+import it.attendance100.mybicocca.*
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.components.*
 import it.attendance100.mybicocca.ui.theme.*
+import it.attendance100.mybicocca.viewmodel.*
+import it.attendance100.mybicocca.viewmodel.login.*
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
@@ -25,10 +30,15 @@ fun LoginManagerScreen(
   navController: NavHostController,
   sharedTransitionScope: SharedTransitionScope,
   animatedContentScope: AnimatedContentScope,
+  viewModel: LoginViewModel = hiltViewModel(),
+  mainViewModel: MainViewModel = hiltViewModel(),
 ) {
   val primaryColor = MaterialTheme.colorScheme.primary
   val textColor = MaterialTheme.colorScheme.onBackground
-  val grayColor = if (MaterialTheme.colorScheme.background == BackgroundColor) GrayColor else GrayColorLight
+  val grayColor = GrayColor()
+  val uriHandler = LocalUriHandler.current
+  val isOffline by mainViewModel.isOffline.collectAsState()
+  val isSessionExpired by mainViewModel.isSessionExpired.collectAsState()
 
   Scaffold(
     containerColor = MaterialTheme.colorScheme.background,
@@ -63,182 +73,156 @@ fun LoginManagerScreen(
       }
     }
   ) { paddingValues ->
-    val context = LocalContext.current
-    val biometricManager = BiometricManager.from(context)
-    val canUseBiometric = biometricManager.canAuthenticate(BiometricManager.Authenticators.BIOMETRIC_WEAK) == BiometricManager.BIOMETRIC_SUCCESS
-
-    var fingerprintLoginEnabled by remember { mutableStateOf(false) }
-
     Column(
       modifier = Modifier
           .fillMaxSize()
           .padding(paddingValues)
           .background(MaterialTheme.colorScheme.background)
-          .verticalScroll(rememberScrollState())
     ) {
+      StatusIndicator(
+        isOffline = isOffline,
+        isSessionExpired = isSessionExpired
+      )
       Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(16.dp),
         modifier = Modifier
-            .fillMaxWidth()
-            .padding(top = 24.dp, bottom = 32.dp)
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
       ) {
-        SharedAvatar(
-          sharedTransitionScope = sharedTransitionScope,
-          animatedContentScope = animatedContentScope,
-          size = 120.dp
-        )
-        Text(
-          text = stringResource(R.string.login_manager),
-          color = textColor,
-          fontSize = 24.sp,
-          fontWeight = FontWeight.Bold
-        )
-        Text(
-          text = stringResource(R.string.login_manager_desc),
-          color = grayColor,
-          fontSize = 16.sp
-        )
-      }
-
-      // Security section
-      Text(
-        text = stringResource(R.string.logins_list),
-        color = primaryColor,
-        fontSize = 14.sp,
-        fontWeight = FontWeight.Bold,
-        modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp)
-      )
-
-      // Elearning
-      Surface(
-        modifier = Modifier
-            .fillMaxWidth()
-        //  .clickable() {} TODO add elearning login
-        ,
-        color = MaterialTheme.colorScheme.background
-      ) {
-        Row(
-          verticalAlignment = Alignment.CenterVertically,
-          horizontalArrangement = Arrangement.spacedBy(16.dp),
+        Column(
+          horizontalAlignment = Alignment.CenterHorizontally,
+          verticalArrangement = Arrangement.spacedBy(16.dp),
           modifier = Modifier
-              .weight(1f)
               .fillMaxWidth()
-              .padding(horizontal = 16.dp, vertical = 16.dp),
+              .padding(top = 24.dp, bottom = 32.dp)
         ) {
-          Icon(
-            imageVector = Icons.Default.School,
-            contentDescription = null,
-            tint = primaryColor,
-            modifier = Modifier.size(24.dp)
+          SharedAvatar(
+            sharedTransitionScope = sharedTransitionScope,
+            animatedContentScope = animatedContentScope,
+            size = 120.dp
           )
           Text(
-            text = stringResource(R.string.bottom_navbar_elearning),
+            text = stringResource(R.string.login_manager),
             color = textColor,
-            fontSize = 16.sp,
-            fontWeight = FontWeight.Medium,
-          )
-        }
-      }
-
-      // Segreterie
-      Surface(
-        modifier = Modifier
-            .fillMaxWidth()
-        //  .clickable() {} TODO add segreterie login
-        ,
-        color = MaterialTheme.colorScheme.background
-      ) {
-        Row(
-          verticalAlignment = Alignment.CenterVertically,
-          horizontalArrangement = Arrangement.spacedBy(16.dp),
-          modifier = Modifier
-              .weight(1f)
-              .fillMaxWidth()
-              .padding(horizontal = 16.dp, vertical = 16.dp),
-        ) {
-          Icon(
-            imageVector = Icons.Default.ContactPage,
-            contentDescription = null,
-            tint = primaryColor,
-            modifier = Modifier.size(24.dp)
+            fontSize = 24.sp,
+            fontWeight = FontWeight.Bold
           )
           Text(
-            text = stringResource(R.string.bottom_navbar_segreterie),
-            color = textColor,
-            fontSize = 16.sp,
-            fontWeight = FontWeight.Medium,
+            text = stringResource(R.string.login_manager_desc),
+            color = grayColor,
+            fontSize = 16.sp
           )
         }
-      }
 
-      // Security section
-      Text(
-        text = stringResource(R.string.security),
-        color = primaryColor,
-        fontSize = 14.sp,
-        fontWeight = FontWeight.Bold,
-        modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp)
-      )
+        // Security section
+        Text(
+          text = stringResource(R.string.logins_list),
+          color = primaryColor,
+          fontSize = 14.sp,
+          fontWeight = FontWeight.Bold,
+          modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp)
+        )
 
-      // Fingerprint login setting
-      Surface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(enabled = canUseBiometric) {
-              fingerprintLoginEnabled = !fingerprintLoginEnabled
-            },
-        color = MaterialTheme.colorScheme.background
-      ) {
-        Row(
+        // Elearning
+        Surface(
           modifier = Modifier
               .fillMaxWidth()
-              .padding(horizontal = 16.dp, vertical = 16.dp),
-          horizontalArrangement = Arrangement.SpaceBetween,
-          verticalAlignment = Alignment.CenterVertically
+              .clickable { uriHandler.openUri("https://elearning.unimib.it") },
+          color = MaterialTheme.colorScheme.background
         ) {
           Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(16.dp),
-            modifier = Modifier.weight(1f)
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 16.dp),
           ) {
             Icon(
-              imageVector = Icons.Default.Fingerprint,
+              imageVector = Icons.Default.School,
               contentDescription = null,
-              tint = if (canUseBiometric) primaryColor else grayColor,
+              tint = primaryColor,
               modifier = Modifier.size(24.dp)
             )
-            Column(
-              modifier = Modifier.weight(1f)
-            ) {
-              Text(
-                text = stringResource(R.string.fingerprint_login),
-                color = if (canUseBiometric) textColor else grayColor,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Medium,
-                modifier = Modifier.padding(bottom = 4.dp)
-              )
-              Text(
-                text = stringResource(R.string.fingerprint_login_desc),
-                color = grayColor,
-                fontSize = 13.sp,
-                lineHeight = 16.sp
-              )
-            }
+            Text(
+              text = stringResource(R.string.bottom_navbar_elearning),
+              color = textColor,
+              fontSize = 16.sp,
+              fontWeight = FontWeight.Medium,
+            )
           }
-          Switch(
-            checked = fingerprintLoginEnabled,
-            onCheckedChange = { fingerprintLoginEnabled = it },
-            enabled = canUseBiometric,
-            colors = SwitchDefaults.colors(
-              checkedThumbColor = primaryColor,
-              checkedTrackColor = primaryColor.copy(alpha = 0.5f)
-            ),
-            modifier = Modifier.padding(start = 15.dp)
-          )
+        }
+
+        // Segreterie
+        Surface(
+          modifier = Modifier
+              .fillMaxWidth()
+              .clickable { uriHandler.openUri("https://s3w.si.unimib.it") },
+          color = MaterialTheme.colorScheme.background
+        ) {
+          Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 16.dp),
+          ) {
+            Icon(
+              imageVector = Icons.Default.ContactPage,
+              contentDescription = null,
+              tint = primaryColor,
+              modifier = Modifier.size(24.dp)
+            )
+            Text(
+              text = stringResource(R.string.bottom_navbar_segreterie),
+              color = textColor,
+              fontSize = 16.sp,
+              fontWeight = FontWeight.Medium,
+            )
+          }
+        }
+
+        // BicoccApp
+        Surface(
+          modifier = Modifier
+              .fillMaxWidth()
+              .clickable {
+                // Navigate to the WebView
+                navController.navigate(Screen.Login.route)
+              },
+          color = MaterialTheme.colorScheme.background
+        ) {
+          Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 16.dp),
+          ) {
+            Icon(
+              imageVector = ImageVector.vectorResource(R.drawable.logo),
+              contentDescription = null,
+              tint = primaryColor,
+              modifier = Modifier
+                  .scale(1.5f)
+                  .size(24.dp)
+            )
+            Text(
+              text = stringResource(R.string.bicoccapp),
+              color = textColor,
+              fontSize = 16.sp,
+              fontWeight = FontWeight.Medium,
+            )
+          }
         }
       }
     }
+  }
+
+  LaunchedEffect(Unit) {
+    // If we have a token, try to fetch data to prove it works
+    viewModel.fetchAndLogProfile()
   }
 }
 

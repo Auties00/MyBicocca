@@ -18,21 +18,35 @@ import androidx.compose.ui.platform.*
 import androidx.navigation.compose.*
 import dagger.hilt.android.*
 import it.attendance100.mybicocca.screens.*
+import it.attendance100.mybicocca.screens.login.*
 import it.attendance100.mybicocca.ui.theme.*
 import it.attendance100.mybicocca.utils.*
 import kotlinx.coroutines.*
+import javax.inject.*
 
 // Navigation routes
 sealed class Screen(val route: String) {
+  object Splash : Screen("splash")
   object Home : Screen("home")
   object LoginManager : Screen("login_manager")
   object Settings : Screen("settings")
+  object SettingsAppearance : Screen("settings_appearance")
+  object SettingsGeneral : Screen("settings_general")
+  object SettingsBehaviour : Screen("settings_behaviour")
+  object SettingsSecurity : Screen("settings_security")
+  object SettingsDeveloper : Screen("settings_developer")
   object AppInfo : Screen("app_info")
+  object Login : Screen("login_webview")
+  object ApiTest : Screen("api_test")
+
 }
 
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+  @Inject
+  lateinit var networkMonitor: NetworkMonitor
+
   override fun onCreate(savedInstanceState: Bundle?) {
     val preferencesManager = PreferencesManager(this)
     preferencesManager.applyTheme() // Ensures theme is applied immediately
@@ -61,42 +75,53 @@ class MainActivity : ComponentActivity() {
       LockScreenOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT)
 
       // Update edge-to-edge when theme changes
-      LaunchedEffect(isDarkMode) {
-        enableEdgeToEdge(
-          statusBarStyle =
-              if (isDarkMode)
-                SystemBarStyle.dark(
-                  Color.Transparent.toArgb(),
-                ) else SystemBarStyle.light(
-                Color.Transparent.toArgb(),
-                darkScrim = Color.Transparent.toArgb(),
-              ),
-          navigationBarStyle = SystemBarStyle.auto(
-            lightScrim = OnPrimaryColor.toArgb(),
-            darkScrim = OnPrimaryColor.toArgb(),
-          )
-        )
-      }
+      LaunchedEffect(isDarkMode) { styleStatusBar(isDarkMode) }
 
       MyBicoccaTheme(darkTheme = isDarkMode) {
         ProvideHapticManager {
           Surface(
-            modifier = Modifier
-                .fillMaxSize()
-                .statusBarsPadding(), // manual top padding because of enableEdgeToEdge()
+            modifier = Modifier.fillMaxSize(),
           ) {
-            AppNavigation(
-              onThemeChange = { _ ->
-                // Update the state to trigger recomposition
-                currentThemeMode = preferencesManager.themeMode
-              }
-            )
+            Box(modifier = Modifier.statusBarsPadding()) { // manual top padding because of enableEdgeToEdge()
+              AppNavigation(
+                onThemeChange = { isDarkModeInner ->
+                  // Update the state to trigger recomposition
+                  currentThemeMode = preferencesManager.themeMode
+                  styleStatusBar(isDarkModeInner)
+                }
+              )
+            }
           }
         }
       }
     }
   }
+
+  override fun onResume() {
+    super.onResume()
+    networkMonitor.refresh()
+  }
+
+  fun styleStatusBar(isDarkMode: Boolean) {
+    enableEdgeToEdge(
+      statusBarStyle =
+          if (isDarkMode)
+            SystemBarStyle.dark(
+              BackgroundColor.toArgb()
+            )
+          else
+            SystemBarStyle.light(
+              BackgroundColorLight.toArgb(),
+              darkScrim = BackgroundColor.toArgb(),
+            ),
+      navigationBarStyle = SystemBarStyle.auto(
+        lightScrim = OnPrimaryColor.toArgb(),
+        darkScrim = OnPrimaryColor.toArgb(),
+      )
+    )
+  }
 }
+
 
 @OptIn(ExperimentalSharedTransitionApi::class, ExperimentalMaterial3Api::class)
 @Composable
@@ -108,7 +133,7 @@ fun AppNavigation(onThemeChange: (Boolean) -> Unit) {
   SharedTransitionLayout {
     NavHost(
       navController = navController,
-      startDestination = Screen.Home.route,
+      startDestination = Screen.Splash.route,
       popExitTransition = {
         scaleOut(
           targetScale = 0.9f,
@@ -129,6 +154,9 @@ fun AppNavigation(onThemeChange: (Boolean) -> Unit) {
         )
       },
     ) {
+      composable(Screen.Splash.route) {
+        SplashScreen(navController)
+      }
       composable(Screen.Home.route) { _ ->
         BackHandler(enabled = drawerState.isOpen) {
           if (drawerState.isOpen) {
@@ -147,8 +175,36 @@ fun AppNavigation(onThemeChange: (Boolean) -> Unit) {
       composable(Screen.Settings.route) { _ ->
         SettingsScreen(navController, this@SharedTransitionLayout, this, onThemeChange)
       }
+      composable(Screen.SettingsAppearance.route) { _ ->
+        AppearanceSettingsScreen(navController, this@SharedTransitionLayout, this, onThemeChange)
+      }
+      composable(Screen.SettingsGeneral.route) { _ ->
+        GeneralSettingsScreen(navController, this@SharedTransitionLayout, this)
+      }
+      composable(Screen.SettingsBehaviour.route) { _ ->
+        BehaviourSettingsScreen(navController, this@SharedTransitionLayout, this)
+      }
+      composable(Screen.SettingsSecurity.route) { _ ->
+        SecuritySettingsScreen(navController, this@SharedTransitionLayout, this)
+      }
+      composable(Screen.SettingsDeveloper.route) { _ ->
+        DeveloperSettingsScreen(navController, this@SharedTransitionLayout, this)
+      }
       composable(Screen.AppInfo.route) { _ ->
         AppInfoScreen(navController, this@SharedTransitionLayout, this)
+      }
+      composable(Screen.Login.route) {
+        LoginWebViewScreen(
+          onLoginSuccess = {
+            navController.navigate(Screen.Home.route) {
+              popUpTo(Screen.Login.route) { inclusive = true }
+            }
+          },
+          onBack = { navController.navigateUp() }
+        )
+      }
+      composable(Screen.ApiTest.route) {
+        ApiTestScreen(navController)
       }
     }
   }

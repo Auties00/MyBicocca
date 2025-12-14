@@ -2,7 +2,6 @@ package it.attendance100.mybicocca.screens
 
 import androidx.activity.*
 import androidx.compose.animation.*
-import androidx.compose.animation.core.*
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.*
@@ -17,12 +16,15 @@ import androidx.compose.ui.graphics.vector.*
 import androidx.compose.ui.platform.*
 import androidx.compose.ui.res.*
 import androidx.compose.ui.unit.*
+import androidx.hilt.lifecycle.viewmodel.compose.*
 import androidx.navigation.*
 import it.attendance100.mybicocca.*
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.components.*
+import it.attendance100.mybicocca.screens.career.*
 import it.attendance100.mybicocca.ui.theme.*
 import it.attendance100.mybicocca.utils.*
+import it.attendance100.mybicocca.viewmodel.*
 import kotlinx.coroutines.*
 
 @OptIn(ExperimentalSharedTransitionApi::class)
@@ -32,10 +34,14 @@ fun HomePage(
   sharedTransitionScope: SharedTransitionScope,
   animatedContentScope: AnimatedContentScope,
   drawerState: DrawerState,
+  mainViewModel: MainViewModel = hiltViewModel(),
 ) {
   var currentPage by remember { mutableIntStateOf(0) }
   val coroutineScope = rememberCoroutineScope()
-  val isFirstPage = currentPage == 0
+  val haptic = rememberHapticManager()
+
+  val isOffline by mainViewModel.isOffline.collectAsState()
+  val isSessionExpired by mainViewModel.isSessionExpired.collectAsState()
 
   val density = LocalDensity.current
   val drawerWidthDp = 280.dp
@@ -59,7 +65,7 @@ fun HomePage(
   val context = LocalContext.current
   val activity = context as? ComponentActivity
   val preferencesManager = rememberPreferencesManager()
-  val isDarkMode = preferencesManager.isDarkMode
+  val isDarkMode = preferencesManager.isDarkMode ?: isSystemInDarkTheme()
   val backgroundColor = MaterialTheme.colorScheme.background
 
   LaunchedEffect(animationProgress, isDarkMode) {
@@ -141,14 +147,7 @@ fun HomePage(
     ) {
       Scaffold(
         topBar = {
-          TopAppBar(
-            navController = navController,
-            drawerState = drawerState,
-            sharedTransitionScope = sharedTransitionScope,
-            animatedContentScope = animatedContentScope,
-            // isFirstPage = isFirstPage,
-            currentPage = currentPage
-          )
+          TopAppBar()
         },
         bottomBar = {
           BottomNavBar(
@@ -159,27 +158,26 @@ fun HomePage(
           )
         }
       ) { paddingValues ->
-        Box(
+        Column(
           modifier = Modifier
               .fillMaxSize()
               .padding(paddingValues)
         ) {
-          PageContent(currentPage, sharedTransitionScope, animatedContentScope, { currentPage = it }, coroutineScope)
+          StatusIndicator(
+            isOffline = isOffline,
+            isSessionExpired = isSessionExpired
+          )
+          Box(
+            modifier = Modifier.weight(1f)
+          ) {
+            PageContent(currentPage)
+          }
         }
       }
     }
 
     // Avatar Drawn on top of everything else
-    AnimatedVisibility(
-      visible = true,
-      enter = slideInHorizontally(
-        initialOffsetX = { -it },
-        animationSpec = tween(durationMillis = 400)
-      ) + fadeIn(animationSpec = tween(durationMillis = 400)),
-      exit = slideOutHorizontally(
-        targetOffsetX = { -it },
-        animationSpec = tween(durationMillis = 400)
-      ) + fadeOut(animationSpec = tween(durationMillis = 400)),
+    Box(
       modifier = Modifier
           .size(avatarSize)
           .offset(x = animatedX, y = animatedY)
@@ -191,6 +189,7 @@ fun HomePage(
         animatedY = 0.dp,
         avatarSize = avatarSize,
         onClick = {
+          haptic.tap()
           coroutineScope.launch {
             coroutineScope.launch {
               if (drawerState.isOpen) {
@@ -211,15 +210,8 @@ fun HomePage(
 @OptIn(ExperimentalComposeUiApi::class, ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
 @Composable
 fun TopAppBar(
-  navController: NavHostController,
-  drawerState: DrawerState,
-  sharedTransitionScope: SharedTransitionScope,
-  animatedContentScope: AnimatedContentScope,
-  // isFirstPage: Boolean,
-  currentPage: Int,
 ) {
-  val grayColor = if (MaterialTheme.colorScheme.background == BackgroundColor) GrayColor else GrayColorLight
-  val scope = rememberCoroutineScope()
+  val grayColor = GrayColor()
 
   Surface(
     modifier = Modifier
@@ -259,7 +251,7 @@ fun BottomNavBar(currentIndex: Int, onPageSelected: (Int) -> Unit) {
   val primaryColor = MaterialTheme.colorScheme.primary
   val primaryContainerColor = MaterialTheme.colorScheme.primaryContainer
   val backgroundColor = MaterialTheme.colorScheme.surfaceContainerLow
-  val grayColor = GrayColor
+  val grayColor = GrayColorDark
 
   NavigationBar(
     containerColor = backgroundColor,
@@ -289,8 +281,8 @@ fun BottomNavBar(currentIndex: Int, onPageSelected: (Int) -> Unit) {
         },
         selected = currentIndex == index,
         onClick = {
-          onPageSelected(index)
           haptics.tap()
+          onPageSelected(index)
         },
         colors = NavigationBarItemDefaults.colors(
           selectedIconColor = primaryColor,
@@ -306,13 +298,7 @@ fun BottomNavBar(currentIndex: Int, onPageSelected: (Int) -> Unit) {
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
-fun PageContent(
-  page: Int,
-  sharedTransitionScope: SharedTransitionScope,
-  animatedContentScope: AnimatedContentScope,
-  onNavigateToPage: (Int) -> Unit,
-  coroutineScope: CoroutineScope,
-) {
+fun PageContent(page: Int) {
   when (page) {
     0 -> {
       // Calendar page
@@ -321,7 +307,7 @@ fun PageContent(
 
     3 -> {
       // Career page
-      CareerScreen(sharedTransitionScope, animatedContentScope)
+      CareerScreen()
     }
 
     else -> {
