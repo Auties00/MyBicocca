@@ -1,4 +1,4 @@
-package it.attendance100.mybicocca.screens
+package it.attendance100.mybicocca.screens.settings
 
 import android.app.*
 import android.content.*
