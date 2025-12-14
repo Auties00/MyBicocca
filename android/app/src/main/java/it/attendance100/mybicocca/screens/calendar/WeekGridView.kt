@@ -24,9 +24,7 @@ import java.time.*
 import java.time.temporal.ChronoUnit
 import kotlin.math.absoluteValue
 
-// ============================================================================
 // MAIN COMPONENT - WEEK GRID VIEW
-// ============================================================================
 
 @Composable
 fun WeekGridView(
@@ -68,9 +66,19 @@ fun WeekGridView(
     }
 }
 
-// ============================================================================
+// LOADING STATE
+
+@Composable
+private fun WeekGridLoadingState(primaryColor: Color) {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        CircularProgressIndicator(color = primaryColor)
+    }
+}
+
 // GRID CONTENT WITH PINCH-TO-ZOOM
-// ============================================================================
 
 @Composable
 private fun WeekGridContentWithZoom(
@@ -86,14 +94,11 @@ private fun WeekGridContentWithZoom(
     val density = LocalDensity.current
     var currentTime by remember { mutableStateOf(LocalTime.now()) }
 
-    // Calcola altezza totale del contenuto al 100% zoom
     val totalHours = CalendarUtils.WEEK_END_HOUR - CalendarUtils.WEEK_START_HOUR
     val baseContentHeight = CalendarUtils.HOUR_SLOT_HEIGHT * totalHours
 
-    // Stato per l'altezza del container disponibile
     var containerHeight by remember { mutableFloatStateOf(0f) }
 
-    // Calcola MIN_ZOOM dinamicamente: quando il contenuto occupa tutto lo schermo
     val minZoom by remember(containerHeight) {
         derivedStateOf {
             if (containerHeight > 0) {
@@ -105,7 +110,6 @@ private fun WeekGridContentWithZoom(
         }
     }
 
-    // Stato zoom con animazione
     var targetZoom by remember { mutableFloatStateOf(CalendarUtils.DEFAULT_ZOOM) }
     val zoomLevel by animateFloatAsState(
         targetValue = targetZoom,
@@ -113,29 +117,14 @@ private fun WeekGridContentWithZoom(
         label = "zoomAnimation"
     )
 
-    // Stato per gesture swipe orizzontale
-    var isSwiping by remember { mutableStateOf(false) }
-
-    // Determina se siamo in modalità compatta
     val isCompactMode by remember(zoomLevel, minZoom) {
         derivedStateOf { zoomLevel <= minZoom * 1.1f }
     }
 
-    // Aggiorna l'ora corrente ogni minuto
     LaunchedEffect(Unit) {
         while (true) {
             currentTime = LocalTime.now()
             delay(60_000L)
-        }
-    }
-
-    // Effetto per aggiustare lo scroll quando cambia lo zoom
-    LaunchedEffect(zoomLevel) {
-        // Mantiene la posizione relativa dello scroll quando si zooma
-        val maxScroll = scrollState.maxValue
-        if (maxScroll > 0) {
-            val currentRatio = scrollState.value.toFloat() / maxScroll
-            // Lo scroll verrà aggiornato automaticamente dal nuovo contenuto
         }
     }
 
@@ -146,84 +135,81 @@ private fun WeekGridContentWithZoom(
                 containerHeight = size.height.toFloat()
             }
             .pointerInput(minZoom) {
-                // Gestione custom delle gesture per separare pinch da scroll
                 awaitEachGesture {
-                    val firstDown = awaitFirstDown(requireUnconsumed = false)
-
-                    // Aspetta per vedere se arriva un secondo dito
+                    awaitFirstDown(requireUnconsumed = false)
                     var secondPointer: PointerId? = null
-                    var isPinching = false
+                    var initialSpan = 0f
 
-                    // Track per horizontal swipe
-                    var totalDragX = 0f
-                    var hasSwiped = false
+                    withTimeoutOrNull(100L) {
+                        while (true) {
+                            val event = awaitPointerEvent(PointerEventPass.Initial)
+                            val pointers = event.changes.filter { it.pressed }
 
-                    do {
-                        val event = awaitPointerEvent()
-                        val pointers = event.changes.filter { it.pressed }
-
-                        when {
-                            // Due o più dita = pinch to zoom
-                            pointers.size >= 2 && !hasSwiped -> {
-                                isPinching = true
-
-                                val pointer1 = pointers[0]
-                                val pointer2 = pointers[1]
-
-                                // Calcola distanza attuale e precedente
-                                val currentDistance = (pointer1.position - pointer2.position).getDistance()
-                                val previousDistance = (pointer1.previousPosition - pointer2.previousPosition).getDistance()
-
-                                if (previousDistance > 0f && currentDistance > 0f) {
-                                    val zoomChange = currentDistance / previousDistance
-
-                                    // Applica il cambio di zoom
-                                    if (zoomChange != 1f) {
-                                        val newZoom = (targetZoom * zoomChange).coerceIn(minZoom, CalendarUtils.MAX_ZOOM)
-                                        targetZoom = newZoom
-                                    }
-                                }
-
-                                // Consuma gli eventi per evitare scroll
-                                pointers.forEach { it.consume() }
+                            if (pointers.size >= 2) {
+                                secondPointer = pointers[1].id
+                                val p1 = pointers[0].position
+                                val p2 = pointers[1].position
+                                initialSpan = (p1 - p2).getDistance()
+                                break
                             }
 
-                            // Un dito solo = potenziale swipe orizzontale
-                            pointers.size == 1 && !isPinching -> {
-                                val change = pointers.first()
-                                val dragX = change.position.x - change.previousPosition.x
-                                val dragY = change.position.y - change.previousPosition.y
-
-                                // Se il movimento è più orizzontale che verticale
-                                if (!hasSwiped && dragX.absoluteValue > dragY.absoluteValue * 1.5f) {
-                                    totalDragX += dragX
-
-                                    // Threshold per swipe settimana
-                                    if (totalDragX.absoluteValue > 80f && !isSwiping) {
-                                        isSwiping = true
-                                        hasSwiped = true
-                                        val direction = if (totalDragX > 0) 1 else -1
-                                        onSwipeWeek(direction)
-                                        change.consume()
-                                    }
-                                }
-                                // Se è verticale, lascia passare per lo scroll
+                            if (pointers.isEmpty()) {
+                                break
                             }
                         }
-                    } while (event.changes.any { it.pressed })
+                    }
 
-                    isSwiping = false
+                    if (secondPointer != null && initialSpan > 0f) {
+                        val initialZoom = targetZoom
+
+                        while (true) {
+                            val event = awaitPointerEvent(PointerEventPass.Initial)
+                            val pointers = event.changes.filter { it.pressed }
+
+                            if (pointers.size < 2) break
+
+                            val currentSpan = (pointers[0].position - pointers[1].position).getDistance()
+                            val scaleFactor = currentSpan / initialSpan
+                            val newZoom = (initialZoom * scaleFactor).coerceIn(minZoom, CalendarUtils.MAX_ZOOM)
+
+                            targetZoom = newZoom
+                            event.changes.forEach { it.consume() }
+                        }
+                    }
                 }
             }
+            .pointerInput(Unit) {
+                var totalDragX = 0f
+                var isSwiping = false
+                detectHorizontalDragGestures(
+                    onDragStart = {
+                        totalDragX = 0f
+                        isSwiping = false
+                    },
+                    onDragEnd = {
+                        if (isSwiping) {
+                            val direction = if (totalDragX > 0) 1 else -1
+                            onSwipeWeek(direction)
+                        }
+                        isSwiping = false
+                    },
+                    onDragCancel = { isSwiping = false },
+                    onHorizontalDrag = { change, dragAmount ->
+                        totalDragX += dragAmount
+                        if (totalDragX.absoluteValue > 100f) {
+                            isSwiping = true
+                            change.consume()
+                        }
+                    }
+                )
+            }
     ) {
-        // Contenuto scrollabile
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(scrollState)
         ) {
             if (isCompactMode) {
-                // Vista compatta: eventi impilati senza timeline
                 CompactWeekView(
                     daysOfWeek = daysOfWeek,
                     events = events,
@@ -233,7 +219,6 @@ private fun WeekGridContentWithZoom(
                     grayColor = grayColor
                 )
             } else {
-                // Vista normale con timeline zoomabile
                 Box {
                     WeekGridBackground(
                         startHour = CalendarUtils.WEEK_START_HOUR,
@@ -262,32 +247,10 @@ private fun WeekGridContentWithZoom(
                 }
             }
         }
-
-        // Indicatore zoom (opzionale, per debug - rimuovere in produzione)
-        /*
-        Box(
-            modifier = Modifier
-                .align(Alignment.TopEnd)
-                .padding(8.dp)
-                .background(
-                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.8f),
-                    shape = RoundedCornerShape(8.dp)
-                )
-                .padding(horizontal = 12.dp, vertical = 6.dp)
-        ) {
-            Text(
-                text = "${(zoomLevel * 100).toInt()}%",
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
-        */
     }
 }
 
-// ============================================================================
 // COMPACT WEEK VIEW (per zoom minimo)
-// ============================================================================
 
 @Composable
 private fun CompactWeekView(
@@ -298,9 +261,6 @@ private fun CompactWeekView(
     primaryColor: Color,
     grayColor: Color
 ) {
-    val density = LocalDensity.current
-
-    // Raggruppa eventi per giorno
     val eventsByDay = remember(events, daysOfWeek) {
         daysOfWeek.associateWith { date ->
             events.filter { it.startTime.toLocalDate() == date }
@@ -308,7 +268,6 @@ private fun CompactWeekView(
         }
     }
 
-    // Calcola l'altezza massima necessaria
     val maxEventsInDay = eventsByDay.values.maxOfOrNull { it.size } ?: 0
     val compactHeight = (maxEventsInDay * (CalendarUtils.COMPACT_EVENT_HEIGHT.value + 2)).dp + 8.dp
 
@@ -326,11 +285,8 @@ private fun CompactWeekView(
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxHeight()
-                    .then(
-                        if (index < 6) Modifier.padding(end = 1.dp) else Modifier
-                    )
+                    .then(if (index < 6) Modifier.padding(end = 1.dp) else Modifier)
             ) {
-                // Header del giorno in modalità compatta
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -349,14 +305,12 @@ private fun CompactWeekView(
                     )
                 }
 
-                // Eventi compatti
                 dayEvents.forEach { event ->
                     val eventColor = CalendarUtils.getEventColor(event.eventType, primaryColor)
-
                     val hasOverlap = dayEvents.any { other ->
                         other.id != event.id &&
-                                (event.startTime.isBefore(other.endTime) &&
-                                        event.endTime.isAfter(other.startTime))
+                                event.startTime.isBefore(other.endTime) &&
+                                event.endTime.isAfter(other.startTime)
                     }
 
                     Surface(
@@ -366,9 +320,7 @@ private fun CompactWeekView(
                             .padding(vertical = 1.dp),
                         shape = RoundedCornerShape(4.dp),
                         color = eventColor,
-                        onClick = {
-                            if (hasOverlap) onDayZoom(date) else onEventClick(event)
-                        }
+                        onClick = { if (hasOverlap) onDayZoom(date) else onEventClick(event) }
                     ) {
                         Box(
                             modifier = Modifier
@@ -392,9 +344,7 @@ private fun CompactWeekView(
     }
 }
 
-// ============================================================================
 // GRID BACKGROUND
-// ============================================================================
 
 @Composable
 private fun WeekGridBackground(
@@ -403,8 +353,7 @@ private fun WeekGridBackground(
     grayColor: Color,
     zoomLevel: Float
 ) {
-    val baseHourSlotHeight = CalendarUtils.HOUR_SLOT_HEIGHT
-    val scaledHourSlotHeight = (baseHourSlotHeight.value * zoomLevel).dp
+    val scaledHourSlotHeight = (CalendarUtils.HOUR_SLOT_HEIGHT.value * zoomLevel).dp
     val totalHeight = ((endHour - startHour) * scaledHourSlotHeight.value).dp
 
     Column(
@@ -429,7 +378,6 @@ private fun WeekGridHourRow(
             .fillMaxWidth()
             .height(hourSlotHeight)
     ) {
-        // Colonna orario
         Box(
             modifier = Modifier
                 .width(CalendarUtils.TIME_COLUMN_WIDTH)
@@ -446,7 +394,6 @@ private fun WeekGridHourRow(
             )
         }
 
-        // Area griglia con linea tratteggiata
         Box(
             modifier = Modifier
                 .weight(1f)
@@ -480,9 +427,63 @@ private fun DashedDivider(
     }
 }
 
-// ============================================================================
-// EVENTS OVERLAY
-// ============================================================================
+// OVERLAP DETECTION & GROUPING
+
+/**
+ * Rappresenta un gruppo di eventi che si sovrappongono temporalmente.
+ */
+private data class OverlapGroup(
+    val events: List<CourseEvent>,
+    val groupStartMinutes: Int,
+    val groupEndMinutes: Int
+)
+
+/**
+ * Raggruppa gli eventi di un giorno in base alle sovrapposizioni.
+ */
+private fun groupOverlappingEvents(
+    dayEvents: List<CourseEvent>,
+    startHour: Int
+): List<OverlapGroup> {
+    if (dayEvents.isEmpty()) return emptyList()
+    
+    val sortedEvents = dayEvents.sortedBy { it.startTime }
+    val groups = mutableListOf<OverlapGroup>()
+    
+    var currentGroupEvents = mutableListOf<CourseEvent>()
+    var currentGroupEnd = Int.MIN_VALUE
+    
+    sortedEvents.forEach { event ->
+        val eventStartMinutes = (event.startTime.hour - startHour) * 60 + event.startTime.minute
+        val durationMinutes = ChronoUnit.MINUTES.between(event.startTime, event.endTime).toInt()
+        val eventEndMinutes = eventStartMinutes + maxOf(durationMinutes, 15)
+        
+        if (currentGroupEvents.isEmpty()) {
+            currentGroupEvents.add(event)
+            currentGroupEnd = eventEndMinutes
+        } else if (eventStartMinutes < currentGroupEnd) {
+            currentGroupEvents.add(event)
+            currentGroupEnd = maxOf(currentGroupEnd, eventEndMinutes)
+        } else {
+            val groupStart = (currentGroupEvents.first().startTime.hour - startHour) * 60 +
+                    currentGroupEvents.first().startTime.minute
+            groups.add(OverlapGroup(currentGroupEvents.toList(), groupStart, currentGroupEnd))
+            
+            currentGroupEvents = mutableListOf(event)
+            currentGroupEnd = eventEndMinutes
+        }
+    }
+    
+    if (currentGroupEvents.isNotEmpty()) {
+        val groupStart = (currentGroupEvents.first().startTime.hour - startHour) * 60 +
+                currentGroupEvents.first().startTime.minute
+        groups.add(OverlapGroup(currentGroupEvents.toList(), groupStart, currentGroupEnd))
+    }
+    
+    return groups
+}
+
+// EVENTS OVERLAY - STACKING APPROACH
 
 @Composable
 private fun WeekEventsOverlay(
@@ -494,37 +495,60 @@ private fun WeekEventsOverlay(
     primaryColor: Color,
     zoomLevel: Float
 ) {
-    val baseHourSlotHeight = CalendarUtils.HOUR_SLOT_HEIGHT
-    val scaledHourSlotHeight = (baseHourSlotHeight.value * zoomLevel).dp
+    val scaledHourSlotHeight = (CalendarUtils.HOUR_SLOT_HEIGHT.value * zoomLevel).dp
     val density = LocalDensity.current
+    
+    val groupsByDay = remember(events, daysOfWeek, startHour) {
+        daysOfWeek.mapIndexed { dayIndex, date ->
+            val dayEvents = events.filter { it.startTime.toLocalDate() == date }
+            dayIndex to groupOverlappingEvents(dayEvents, startHour)
+        }.toMap()
+    }
 
     Layout(
         content = {
             daysOfWeek.forEachIndexed { dayIndex, date ->
-                val dayEvents = events
-                    .filter { it.startTime.toLocalDate() == date }
-                    .sortedBy { it.startTime }
-
-                dayEvents.forEach { event ->
-                    val durationMinutes = ChronoUnit.MINUTES.between(event.startTime, event.endTime)
-                    val visualDuration = maxOf(durationMinutes, 15L)
-                    val eventHeightDp = (visualDuration / 60f * scaledHourSlotHeight.value).dp
-
-                    val hasOverlap = dayEvents.any { other ->
-                        other.id != event.id &&
-                                (event.startTime.isBefore(other.endTime) &&
-                                        event.endTime.isAfter(other.startTime))
+                val dayGroups = groupsByDay[dayIndex] ?: emptyList()
+                
+                dayGroups.forEachIndexed { groupIndex, group ->
+                    if (group.events.size == 1) {
+                        // Evento singolo - larghezza piena
+                        val event = group.events.first()
+                        val durationMinutes = ChronoUnit.MINUTES.between(event.startTime, event.endTime)
+                        val visualDuration = maxOf(durationMinutes, 15L)
+                        val eventHeightDp = (visualDuration / 60f * scaledHourSlotHeight.value).dp
+                        
+                        WeekEventCard(
+                            event = event,
+                            height = eventHeightDp,
+                            onClick = { onEventClick(event) },
+                            primaryColor = primaryColor,
+                            isStacked = false,
+                            stackPosition = 0,
+                            totalInStack = 1,
+                            modifier = Modifier.layoutId("single_${dayIndex}_${event.id}")
+                        )
+                    } else {
+                        // Gruppo sovrapposto - stacking visivo
+                        val sortedGroupEvents = group.events.sortedBy { it.startTime }
+                        
+                        sortedGroupEvents.forEachIndexed { stackIndex, event ->
+                            val durationMinutes = ChronoUnit.MINUTES.between(event.startTime, event.endTime)
+                            val visualDuration = maxOf(durationMinutes, 15L)
+                            val eventHeightDp = (visualDuration / 60f * scaledHourSlotHeight.value).dp
+                            
+                            WeekEventCard(
+                                event = event,
+                                height = eventHeightDp,
+                                onClick = { onDayZoom(date) },
+                                primaryColor = primaryColor,
+                                isStacked = true,
+                                stackPosition = stackIndex,
+                                totalInStack = group.events.size,
+                                modifier = Modifier.layoutId("stacked_${dayIndex}_${groupIndex}_${event.id}")
+                            )
+                        }
                     }
-
-                    WeekEventBox(
-                        event = event,
-                        height = eventHeightDp,
-                        onClick = {
-                            if (hasOverlap) onDayZoom(date) else onEventClick(event)
-                        },
-                        primaryColor = primaryColor,
-                        modifier = Modifier.layoutId("${dayIndex}_${event.id}")
-                    )
                 }
             }
         },
@@ -532,158 +556,198 @@ private fun WeekEventsOverlay(
             .fillMaxWidth()
             .padding(start = CalendarUtils.TIME_COLUMN_WIDTH)
     ) { measurables, constraints ->
-        val dayWidthPx = constraints.maxWidth / CalendarUtils.TOTAL_DAYS.toFloat()
+        
+        val totalDays = CalendarUtils.TOTAL_DAYS
+        val dayWidthPx = constraints.maxWidth / totalDays.toFloat()
         val totalHours = CalendarUtils.WEEK_TOTAL_HOURS
-        val maxLayoutHeight = (totalHours * scaledHourSlotHeight.toPx()).toInt()
-        val placeables = mutableListOf<Triple<Placeable, Int, Int>>()
+        val hourHeightPx = scaledHourSlotHeight.toPx()
+        val maxLayoutHeight = (totalHours * hourHeightPx).toInt()
+        
+        val dayPaddingPx = with(density) { 2.dp.toPx() }
+        val stackOffsetXPx = with(density) { 5.dp.toPx() }
+        val stackOffsetYPx = with(density) { 3.dp.toPx() }
+        
+        val placeables = mutableListOf<PlaceableInfo>()
 
-        // Raggruppa i measurable per giorno
-        val measurablesByDay = measurables.groupBy {
-            (it.layoutId as String).split("_")[0].toInt()
-        }
-
-        measurablesByDay.forEach { (dayIndex, dayMeasurables) ->
-            // Crea info di layout per ogni evento del giorno
-            val dayEventInfos = dayMeasurables.mapNotNull { measurable ->
-                val eventId = (measurable.layoutId as String).split("_")[1].toLong()
-                val event = events.firstOrNull { it.id == eventId } ?: return@mapNotNull null
-
-                val eventStartMinutes = (event.startTime.hour - startHour) * 60 + event.startTime.minute
-                val topPx = (eventStartMinutes / 60f * scaledHourSlotHeight.toPx()).toInt()
-
-                val durationMinutes = ChronoUnit.MINUTES.between(event.startTime, event.endTime)
-                val visualDuration = maxOf(durationMinutes, 15L)
-                val bottomPx = topPx + (visualDuration / 60f * scaledHourSlotHeight.toPx()).toInt()
-
-                EventLayoutInfo(measurable, topPx, bottomPx)
-            }.sortedBy { it.topPx }
-
-            // Assegna colonne per gestire sovrapposizioni
-            assignColumns(dayEventInfos)
-
-            // Misura e posiziona gli eventi
-            val overlapOffsetPx = with(density) { CalendarUtils.OVERLAP_OFFSET.toPx() }
-
-            dayEventInfos.forEach { info ->
-                val eventWidth = (dayWidthPx - overlapOffsetPx * 2 - 4).toInt()
-                    .coerceAtLeast(1)
-
-                val placeable = info.measurable.measure(
-                    constraints.copy(
-                        minWidth = eventWidth,
-                        maxWidth = eventWidth,
-                        minHeight = 0,
-                        maxHeight = (info.bottomPx - info.topPx).coerceAtLeast(1)
+        measurables.forEach { measurable ->
+            val layoutId = measurable.layoutId as String
+            val parts = layoutId.split("_")
+            
+            when (parts[0]) {
+                "single" -> {
+                    val dayIndex = parts[1].toInt()
+                    val eventId = parts[2].toLong()
+                    val event = events.first { it.id == eventId }
+                    
+                    val eventStartMinutes = (event.startTime.hour - startHour) * 60 + event.startTime.minute
+                    val durationMinutes = ChronoUnit.MINUTES.between(event.startTime, event.endTime).toInt()
+                    val visualDuration = maxOf(durationMinutes, 15)
+                    
+                    val eventWidth = (dayWidthPx - dayPaddingPx * 2).toInt().coerceAtLeast(1)
+                    val eventHeight = (visualDuration / 60f * hourHeightPx).toInt().coerceAtLeast(1)
+                    
+                    val placeable = measurable.measure(
+                        constraints.copy(
+                            minWidth = eventWidth,
+                            maxWidth = eventWidth,
+                            minHeight = eventHeight,
+                            maxHeight = eventHeight
+                        )
                     )
-                )
-
-                val xPos = (dayIndex * dayWidthPx +
-                        info.columnIndex * overlapOffsetPx +
-                        with(density) { 1.dp.toPx() }).toInt()
-
-                placeables.add(Triple(placeable, xPos, info.topPx))
+                    
+                    val xPos = (dayIndex * dayWidthPx + dayPaddingPx).toInt()
+                    val yPos = (eventStartMinutes / 60f * hourHeightPx).toInt()
+                    
+                    placeables.add(PlaceableInfo(placeable, xPos, yPos, zIndex = 0f))
+                }
+                
+                "stacked" -> {
+                    val dayIndex = parts[1].toInt()
+                    val groupIndex = parts[2].toInt()
+                    val eventId = parts[3].toLong()
+                    val event = events.first { it.id == eventId }
+                    
+                    val dayGroups = groupsByDay[dayIndex] ?: emptyList()
+                    val group = dayGroups.getOrNull(groupIndex) ?: return@forEach
+                    val sortedGroupEvents = group.events.sortedBy { it.startTime }
+                    val stackIndex = sortedGroupEvents.indexOfFirst { it.id == eventId }
+                    
+                    if (stackIndex < 0) return@forEach
+                    
+                    val eventStartMinutes = (event.startTime.hour - startHour) * 60 + event.startTime.minute
+                    val durationMinutes = ChronoUnit.MINUTES.between(event.startTime, event.endTime).toInt()
+                    val visualDuration = maxOf(durationMinutes, 15)
+                    
+                    // Larghezza ridotta per vedere le card dietro
+                    val maxVisibleStack = minOf(group.events.size, 3)
+                    val totalStackOffset = (maxVisibleStack - 1) * stackOffsetXPx
+                    val baseWidth = dayWidthPx - dayPaddingPx * 2 - totalStackOffset
+                    val eventWidth = baseWidth.toInt().coerceAtLeast(1)
+                    val eventHeight = (visualDuration / 60f * hourHeightPx).toInt().coerceAtLeast(1)
+                    
+                    val placeable = measurable.measure(
+                        constraints.copy(
+                            minWidth = eventWidth,
+                            maxWidth = eventWidth,
+                            minHeight = eventHeight,
+                            maxHeight = eventHeight
+                        )
+                    )
+                    
+                    // Solo i primi 3 eventi sono visibili con offset
+                    val visualStackIndex = minOf(stackIndex, 2)
+                    val xPos = (dayIndex * dayWidthPx + dayPaddingPx + visualStackIndex * stackOffsetXPx).toInt()
+                    val yPos = (eventStartMinutes / 60f * hourHeightPx + visualStackIndex * stackOffsetYPx).toInt()
+                    
+                    // Z-index: eventi più recenti (in fondo alla lista) sopra
+                    val zIndex = stackIndex.toFloat()
+                    
+                    placeables.add(PlaceableInfo(placeable, xPos, yPos, zIndex))
+                }
             }
         }
 
         layout(constraints.maxWidth, maxLayoutHeight) {
-            placeables.forEach { (placeable, x, y) ->
-                placeable.place(x, y)
+            placeables.sortedBy { it.zIndex }.forEach { info ->
+                info.placeable.place(info.x, info.y, zIndex = info.zIndex)
             }
         }
     }
 }
 
-private data class EventLayoutInfo(
-    val measurable: Measurable,
-    val topPx: Int,
-    val bottomPx: Int,
-    var columnIndex: Int = 0
+private data class PlaceableInfo(
+    val placeable: Placeable,
+    val x: Int,
+    val y: Int,
+    val zIndex: Float
 )
 
-private fun assignColumns(events: List<EventLayoutInfo>) {
-    if (events.isEmpty()) return
-
-    events.forEach { current ->
-        // Trova eventi che si sovrappongono e sono già stati posizionati
-        val overlapping = events.filter { other ->
-            other !== current &&
-                    other.columnIndex >= 0 &&
-                    current.topPx < other.bottomPx &&
-                    current.bottomPx > other.topPx
-        }
-
-        // Trova la prima colonna libera
-        val usedColumns = overlapping.map { it.columnIndex }.toSet()
-        var column = 0
-        while (column in usedColumns) {
-            column++
-        }
-        current.columnIndex = column
-    }
-}
-
-// ============================================================================
-// EVENT BOX
-// ============================================================================
+// EVENT CARD
 
 @Composable
-private fun WeekEventBox(
+private fun WeekEventCard(
     event: CourseEvent,
     height: Dp,
     onClick: () -> Unit,
     primaryColor: Color,
+    isStacked: Boolean,
+    stackPosition: Int,
+    totalInStack: Int,
     modifier: Modifier = Modifier
 ) {
     val eventColor = CalendarUtils.getEventColor(event.eventType, primaryColor)
-    val showText = height >= 14.dp
-    val showDetails = height >= 35.dp
+    val showText = height >= 16.dp
+    val showLocation = height >= 40.dp
+    
+    val elevation = if (isStacked) (stackPosition + 2).dp else 2.dp
 
     Surface(
         modifier = modifier
-            .height(height)
-            .padding(bottom = 1.dp),
+            .fillMaxWidth()
+            .height(height),
         shape = RoundedCornerShape(6.dp),
-        color = eventColor.copy(alpha = 0.95f),
-        border = BorderStroke(1.dp, Color.White.copy(alpha = 0.2f)),
-        shadowElevation = 2.dp,
+        color = eventColor,
+        shadowElevation = elevation,
+        border = BorderStroke(
+            width = 0.5.dp,
+            color = Color.White.copy(alpha = 0.3f)
+        ),
         onClick = onClick
     ) {
-        if (showText) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 3.dp, vertical = 2.dp)
-            ) {
-                Text(
-                    text = event.courseName,
-                    color = Color.White,
-                    fontSize = 9.sp,
-                    fontWeight = FontWeight.Bold,
-                    maxLines = if (showDetails) 2 else 1,
-                    overflow = TextOverflow.Ellipsis,
-                    lineHeight = 10.sp
-                )
-                if (showDetails) {
-                    event.room?.let { room ->
-                        Spacer(modifier = Modifier.height(1.dp))
+        Box(modifier = Modifier.fillMaxSize()) {
+            if (showText) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 4.dp, vertical = 3.dp)
+                ) {
+                    Text(
+                        text = event.courseName,
+                        color = Color.White,
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        maxLines = if (showLocation) 2 else 1,
+                        overflow = TextOverflow.Ellipsis,
+                        lineHeight = 11.sp
+                    )
+                    
+                    val locationText = CalendarUtils.formatEventLocation(event.room, event.building)
+                    if (showLocation && !locationText.isNullOrBlank()) {
+                        Spacer(modifier = Modifier.height(2.dp))
                         Text(
-                            text = room,
-                            color = Color.White.copy(alpha = 0.9f),
+                            text = locationText,
+                            color = Color.White.copy(alpha = 0.85f),
                             fontSize = 8.sp,
                             maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            lineHeight = 9.sp
+                            overflow = TextOverflow.Ellipsis
                         )
                     }
+                }
+            }
+            
+            // Badge +N per eventi sovrapposti
+            if (isStacked && stackPosition == totalInStack - 1 && totalInStack > 1) {
+                Surface(
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(2.dp),
+                    shape = CircleShape,
+                    color = Color.White
+                ) {
+                    Text(
+                        text = "$totalInStack",
+                        color = eventColor,
+                        fontSize = 8.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp)
+                    )
                 }
             }
         }
     }
 }
 
-// ============================================================================
 // CURRENT TIME INDICATOR
-// ============================================================================
 
 @Composable
 private fun CurrentTimeWeekIndicator(
@@ -694,62 +758,56 @@ private fun CurrentTimeWeekIndicator(
     zoomLevel: Float
 ) {
     val today = LocalDate.now()
-    val density = LocalDensity.current
-    val baseHourSlotHeight = CalendarUtils.HOUR_SLOT_HEIGHT
-    val scaledHourSlotHeight = (baseHourSlotHeight.value * zoomLevel).dp
-    val currentHour = currentTime.hour
+    val todayIndex = daysOfWeek.indexOfFirst { it == today }
 
-    // Mostra solo se l'ora corrente è nell'intervallo visibile
-    if (currentHour >= startHour && currentHour < CalendarUtils.WEEK_END_HOUR) {
-        val totalMinutes = (currentHour - startHour) * 60 + currentTime.minute
-        val topOffsetDp = (totalMinutes / 60f * scaledHourSlotHeight.value).dp
+    if (todayIndex < 0) return
+    if (currentTime.hour < startHour || currentTime.hour >= CalendarUtils.WEEK_END_HOUR) return
 
-        Canvas(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(topOffsetDp + 10.dp)
-                .padding(start = CalendarUtils.TIME_COLUMN_WIDTH)
-        ) {
-            val lineY = with(density) { topOffsetDp.toPx() }
+    val scaledHourSlotHeight = (CalendarUtils.HOUR_SLOT_HEIGHT.value * zoomLevel).dp
+    val minutesSinceStart = (currentTime.hour - startHour) * 60 + currentTime.minute
+    val topOffset = (minutesSinceStart / 60f * scaledHourSlotHeight.value).dp
+    val dotSize = 10.dp
+    val lineHeight = 2.dp
 
-            // Linea orizzontale
-            drawLine(
-                color = primaryColor,
-                start = Offset(0f, lineY),
-                end = Offset(size.width, lineY),
-                strokeWidth = 1.5.dp.toPx()
+    Layout(
+        content = {
+            Spacer(
+                modifier = Modifier
+                    .layoutId("line")
+                    .fillMaxWidth()
+                    .height(lineHeight)
+                    .background(primaryColor)
             )
-
-            // Pallino sul giorno corrente
-            if (daysOfWeek.contains(today)) {
-                val dayIndex = daysOfWeek.indexOf(today)
-                val dayWidth = size.width / CalendarUtils.TOTAL_DAYS
-                val circleX = (dayIndex * dayWidth) + (dayWidth / 2)
-
-                drawCircle(
-                    color = primaryColor,
-                    radius = 4.dp.toPx(),
-                    center = Offset(circleX, lineY)
-                )
-            }
-        }
-    }
-}
-
-// ============================================================================
-// LOADING STATE
-// ============================================================================
-
-@Composable
-private fun WeekGridLoadingState(primaryColor: Color) {
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ) {
-        CircularProgressIndicator(
-            modifier = Modifier.size(32.dp),
-            strokeWidth = 3.dp,
-            color = primaryColor
+            Spacer(
+                modifier = Modifier
+                    .layoutId("dot")
+                    .size(dotSize)
+                    .background(primaryColor, CircleShape)
+            )
+        },
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(start = CalendarUtils.TIME_COLUMN_WIDTH)
+    ) { measurables, constraints ->
+        val lineMeasurable = measurables.first { it.layoutId == "line" }
+        val dotMeasurable = measurables.first { it.layoutId == "dot" }
+        
+        val linePlaceable = lineMeasurable.measure(constraints)
+        val dotPlaceable = dotMeasurable.measure(
+            constraints.copy(minWidth = 0, minHeight = 0)
         )
+        
+        val dayWidthPx = constraints.maxWidth / CalendarUtils.TOTAL_DAYS.toFloat()
+        val topPx = topOffset.roundToPx()
+        
+        val dotX = ((todayIndex + 1) * dayWidthPx - dotPlaceable.width / 2).toInt()
+            .coerceIn(0, constraints.maxWidth - dotPlaceable.width)
+        
+        val dotY = topPx - (dotPlaceable.height - linePlaceable.height) / 2
+        
+        layout(constraints.maxWidth, (topPx + dotPlaceable.height).coerceAtLeast(1)) {
+            linePlaceable.place(0, topPx)
+            dotPlaceable.place(dotX, dotY)
+        }
     }
 }
