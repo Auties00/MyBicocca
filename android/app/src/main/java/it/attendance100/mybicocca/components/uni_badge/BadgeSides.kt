@@ -9,7 +9,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.*
 import androidx.compose.ui.draw.*
-import androidx.compose.ui.geometry.*
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.layout.*
 import androidx.compose.ui.res.*
@@ -208,7 +207,6 @@ fun BadgeBack(user: User?, textColor: Color = MaterialTheme.colorScheme.onBackgr
         .fillMaxSize()
   ) {
     val preferencesManager = rememberPreferencesManager()
-    var verticalHeight by remember { mutableStateOf(Size.Zero) }
     val fontFamily = FontFamily(
       Font(R.font.mrs_saint_delafield_regular, FontWeight.Medium),
     )
@@ -321,7 +319,7 @@ fun BadgeBack(user: User?, textColor: Color = MaterialTheme.colorScheme.onBackgr
     Column(
       modifier = Modifier
           .fillMaxSize()
-          .onGloballyPositioned { layoutCoordinates -> verticalHeight = layoutCoordinates.size.toSize() }) {
+    ) {
       Spacer(modifier = Modifier.height(24.dp))
       // Magnetic Stripe
       Box(
@@ -405,7 +403,7 @@ fun BadgeBack(user: User?, textColor: Color = MaterialTheme.colorScheme.onBackgr
                 modifier = Modifier
                     .offset(y = 1.75.dp)
                     .padding(horizontal = 10.dp),
-                text = "${user?.name ?: ""} ${user?.surname ?: ""}",
+                text = "${user?.name?.titleCase() ?: ""} ${user?.surname?.titleCase() ?: ""}",
                 style = LocalTextStyle.current.copy(
                   fontSize = 28.sp,
                   color = if (whiteBadge) textColor else Color.Black,

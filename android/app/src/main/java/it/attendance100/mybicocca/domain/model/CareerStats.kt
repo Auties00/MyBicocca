@@ -11,5 +11,32 @@ data class CareerStats(
   val esamiTotali: Int,
   val cfuAcquisiti: Int,
   val cfuTotali: Int,
-  val grades: List<Float>,
+  val grades: List<GradePoint>,
+  val passedExams: List<Exam>,
+  val remainingExams: List<Exam>,
+)
+
+/**
+ * Exam grade point
+ * Represents a grade point for a specific exam
+ */
+data class GradePoint(
+  val value: Float,
+  val date: String, // ISO 8601 date
+  val name: String,
+  val cfu: String,
+  val isLode: Boolean,
+)
+
+/**
+ * Exam model
+ * Represents a student's exam
+ */
+data class Exam(
+  val name: String,
+  val cfu: String,
+  val grade: String?,
+  val date: String?,
+  val status: String, // "S" or "F" (Superato o Frequentato)
+  val isLode: Boolean,
 )

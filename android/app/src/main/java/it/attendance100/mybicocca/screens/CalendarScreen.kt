@@ -47,7 +47,7 @@ fun CalendarScreen(
   val backgroundColor = MaterialTheme.colorScheme.background
   val textColor = MaterialTheme.colorScheme.onBackground
   val primaryColor = MaterialTheme.colorScheme.primary
-  val grayColor = if (backgroundColor == BackgroundColor) GrayColor else GrayColorLight
+  val grayColor = GrayColor()
 
   val selectedDate by viewModel.selectedDate.observeAsState(LocalDate.now())
   val currentMonth by viewModel.currentMonth.observeAsState(YearMonth.now())
@@ -1265,16 +1265,6 @@ fun RowScope.DayHeaderCell(
         .padding(vertical = 8.dp),
     horizontalAlignment = Alignment.CenterHorizontally
   ) {
-    Text(
-      text = dayOfWeek.uppercase(),
-      color = when {
-        isSelected -> Color.White
-        isToday -> primaryColor
-        else -> grayColor
-      },
-      fontSize = 10.sp,
-      fontWeight = FontWeight.Medium
-    )
     Spacer(modifier = Modifier.height(2.dp))
     Text(
       text = date.dayOfMonth.toString(),
