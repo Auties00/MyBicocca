@@ -1,0 +1,1147 @@
+# Quiz Module Web Service Functions
+
+mod_quiz_get_quizzes_by_courses:
+  post:
+    operationId: mod_quiz_get_quizzes_by_courses
+    summary: Get quizzes by courses
+    description: Returns a list of quizzes in the provided courses
+    tags:
+      - mod_quiz
+    requestBody:
+      required: true
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            type: object
+            properties:
+              wsfunction:
+                type: string
+                enum: [mod_quiz_get_quizzes_by_courses]
+              wstoken:
+                type: string
+              courseids[]:
+                type: array
+                items:
+                  type: integer
+                description: Array of course IDs
+            required:
+              - wsfunction
+              - wstoken
+    responses:
+      '200':
+        description: List of quizzes
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                quizzes:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/ModQuizData'
+                warnings:
+                  type: array
+                  items:
+                    $ref: '../schemas/common.yaml#/components/schemas/CoreWSExternalWarning'
+
+mod_quiz_get_quiz_access_information:
+  post:
+    operationId: mod_quiz_get_quiz_access_information
+    summary: Get quiz access information
+    description: Return access information for a given quiz
+    tags:
+      - mod_quiz
+    requestBody:
+      required: true
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            type: object
+            properties:
+              wsfunction:
+                type: string
+                enum: [mod_quiz_get_quiz_access_information]
+              wstoken:
+                type: string
+              quizid:
+                type: integer
+                description: Quiz instance ID
+            required:
+              - wsfunction
+              - wstoken
+              - quizid
+    responses:
+      '200':
+        description: Access information
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ModQuizAccessInformation'
+
+mod_quiz_get_attempt_access_information:
+  post:
+    operationId: mod_quiz_get_attempt_access_information
+    summary: Get attempt access information
+    description: Return access information for a given attempt in a quiz
+    tags:
+      - mod_quiz
+    requestBody:
+      required: true
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            type: object
+            properties:
+              wsfunction:
+                type: string
+                enum: [mod_quiz_get_attempt_access_information]
+              wstoken:
+                type: string
+              quizid:
+                type: integer
+                description: Quiz instance ID
+              attemptid:
+                type: integer
+                description: Attempt ID (0 for last attempt)
+            required:
+              - wsfunction
+              - wstoken
+              - quizid
+    responses:
+      '200':
+        description: Attempt access information
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ModQuizAttemptAccessInformation'
+
+mod_quiz_get_user_attempts:
+  post:
+    operationId: mod_quiz_get_user_attempts
+    summary: Get user attempts
+    description: Return a list of attempts for the given quiz and user
+    tags:
+      - mod_quiz
+    requestBody:
+      required: true
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            type: object
+            properties:
+              wsfunction:
+                type: string
+                enum: [mod_quiz_get_user_attempts]
+              wstoken:
+                type: string
+              quizid:
+                type: integer
+                description: Quiz instance ID
+              userid:
+                type: integer
+                description: User ID (0 for current user)
+              status:
+                type: string
+                enum: [all, finished, unfinished]
+                description: Status filter
+              includepreviews:
+                type: boolean
+                description: Include preview attempts
+            required:
+              - wsfunction
+              - wstoken
+              - quizid
+    responses:
+      '200':
+        description: List of attempts
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                attempts:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/ModQuizAttempt'
+                warnings:
+                  type: array
+                  items:
+                    $ref: '../schemas/common.yaml#/components/schemas/CoreWSExternalWarning'
+
+mod_quiz_get_user_best_grade:
+  post:
+    operationId: mod_quiz_get_user_best_grade
+    summary: Get user best grade
+    description: Get the best current grade for the given quiz and user
+    tags:
+      - mod_quiz
+    requestBody:
+      required: true
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            type: object
+            properties:
+              wsfunction:
+                type: string
+                enum: [mod_quiz_get_user_best_grade]
+              wstoken:
+                type: string
+              quizid:
+                type: integer
+                description: Quiz instance ID
+              userid:
+                type: integer
+                description: User ID (0 for current user)
+            required:
+              - wsfunction
+              - wstoken
+              - quizid
+    responses:
+      '200':
+        description: Best grade information
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                hasgrade:
+                  type: boolean
+                  description: Whether the user has a grade
+                grade:
+                  type: number
+                  description: The grade (only if hasgrade is true)
+                gradetopass:
+                  type: number
+                  description: Grade to pass the quiz
+                warnings:
+                  type: array
+                  items:
+                    $ref: '../schemas/common.yaml#/components/schemas/CoreWSExternalWarning'
+
+mod_quiz_start_attempt:
+  post:
+    operationId: mod_quiz_start_attempt
+    summary: Start attempt
+    description: Starts a new attempt at a quiz
+    tags:
+      - mod_quiz
+    requestBody:
+      required: true
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            type: object
+            properties:
+              wsfunction:
+                type: string
+                enum: [mod_quiz_start_attempt]
+              wstoken:
+                type: string
+              quizid:
+                type: integer
+                description: Quiz instance ID
+              preflightdata[0][name]:
+                type: string
+                description: Preflight data name
+              preflightdata[0][value]:
+                type: string
+                description: Preflight data value
+              forcenew:
+                type: boolean
+                description: Force a new attempt
+            required:
+              - wsfunction
+              - wstoken
+              - quizid
+    responses:
+      '200':
+        description: Started attempt
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                attempt:
+                  $ref: '#/components/schemas/ModQuizAttempt'
+                warnings:
+                  type: array
+                  items:
+                    $ref: '../schemas/common.yaml#/components/schemas/CoreWSExternalWarning'
+
+mod_quiz_get_attempt_data:
+  post:
+    operationId: mod_quiz_get_attempt_data
+    summary: Get attempt data
+    description: Returns information for the given attempt page
+    tags:
+      - mod_quiz
+    requestBody:
+      required: true
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            type: object
+            properties:
+              wsfunction:
+                type: string
+                enum: [mod_quiz_get_attempt_data]
+              wstoken:
+                type: string
+              attemptid:
+                type: integer
+                description: Attempt ID
+              page:
+                type: integer
+                description: Page number
+              preflightdata[0][name]:
+                type: string
+                description: Preflight data name
+              preflightdata[0][value]:
+                type: string
+                description: Preflight data value
+            required:
+              - wsfunction
+              - wstoken
+              - attemptid
+              - page
+    responses:
+      '200':
+        description: Attempt data
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                attempt:
+                  $ref: '#/components/schemas/ModQuizAttempt'
+                messages:
+                  type: array
+                  items:
+                    type: string
+                  description: Access messages (for users with preview capability)
+                nextpage:
+                  type: integer
+                  description: Next page number
+                questions:
+                  type: array
+                  items:
+                    $ref: '../schemas/common.yaml#/components/schemas/CoreQuestionQuestionWSData'
+                warnings:
+                  type: array
+                  items:
+                    $ref: '../schemas/common.yaml#/components/schemas/CoreWSExternalWarning'
+
+mod_quiz_get_attempt_summary:
+  post:
+    operationId: mod_quiz_get_attempt_summary
+    summary: Get attempt summary
+    description: Returns a summary of a quiz attempt before it is submitted
+    tags:
+      - mod_quiz
+    requestBody:
+      required: true
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            type: object
+            properties:
+              wsfunction:
+                type: string
+                enum: [mod_quiz_get_attempt_summary]
+              wstoken:
+                type: string
+              attemptid:
+                type: integer
+                description: Attempt ID
+              preflightdata[0][name]:
+                type: string
+                description: Preflight data name
+              preflightdata[0][value]:
+                type: string
+                description: Preflight data value
+            required:
+              - wsfunction
+              - wstoken
+              - attemptid
+    responses:
+      '200':
+        description: Attempt summary
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                questions:
+                  type: array
+                  items:
+                    $ref: '../schemas/common.yaml#/components/schemas/CoreQuestionQuestionWSData'
+                totalunanswered:
+                  type: integer
+                  description: Total unanswered questions (since 4.4)
+                warnings:
+                  type: array
+                  items:
+                    $ref: '../schemas/common.yaml#/components/schemas/CoreWSExternalWarning'
+
+mod_quiz_save_attempt:
+  post:
+    operationId: mod_quiz_save_attempt
+    summary: Save attempt
+    description: Processes save requests during the quiz
+    tags:
+      - mod_quiz
+    requestBody:
+      required: true
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            type: object
+            properties:
+              wsfunction:
+                type: string
+                enum: [mod_quiz_save_attempt]
+              wstoken:
+                type: string
+              attemptid:
+                type: integer
+                description: Attempt ID
+              data[0][name]:
+                type: string
+                description: Data name
+              data[0][value]:
+                type: string
+                description: Data value
+              preflightdata[0][name]:
+                type: string
+                description: Preflight data name
+              preflightdata[0][value]:
+                type: string
+                description: Preflight data value
+            required:
+              - wsfunction
+              - wstoken
+              - attemptid
+    responses:
+      '200':
+        description: Save result
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/common.yaml#/components/schemas/CoreStatusWithWarningsWSResponse'
+
+mod_quiz_process_attempt:
+  post:
+    operationId: mod_quiz_process_attempt
+    summary: Process attempt
+    description: Process responses during an attempt at a quiz and also finish the attempt
+    tags:
+      - mod_quiz
+    requestBody:
+      required: true
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            type: object
+            properties:
+              wsfunction:
+                type: string
+                enum: [mod_quiz_process_attempt]
+              wstoken:
+                type: string
+              attemptid:
+                type: integer
+                description: Attempt ID
+              data[0][name]:
+                type: string
+                description: Data name
+              data[0][value]:
+                type: string
+                description: Data value
+              finishattempt:
+                type: boolean
+                description: Whether to finish the attempt
+              timeup:
+                type: boolean
+                description: Whether time is up
+              preflightdata[0][name]:
+                type: string
+                description: Preflight data name
+              preflightdata[0][value]:
+                type: string
+                description: Preflight data value
+            required:
+              - wsfunction
+              - wstoken
+              - attemptid
+    responses:
+      '200':
+        description: Process result
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                state:
+                  type: string
+                  enum: [inprogress, finished, overdue, abandoned]
+                  description: The new attempt state
+                warnings:
+                  type: array
+                  items:
+                    $ref: '../schemas/common.yaml#/components/schemas/CoreWSExternalWarning'
+
+mod_quiz_get_attempt_review:
+  post:
+    operationId: mod_quiz_get_attempt_review
+    summary: Get attempt review
+    description: Returns review information for a given attempt
+    tags:
+      - mod_quiz
+    requestBody:
+      required: true
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            type: object
+            properties:
+              wsfunction:
+                type: string
+                enum: [mod_quiz_get_attempt_review]
+              wstoken:
+                type: string
+              attemptid:
+                type: integer
+                description: Attempt ID
+              page:
+                type: integer
+                description: Page number (-1 for all pages)
+            required:
+              - wsfunction
+              - wstoken
+              - attemptid
+    responses:
+      '200':
+        description: Attempt review
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                grade:
+                  type: string
+                  description: Grade for the quiz
+                attempt:
+                  $ref: '#/components/schemas/ModQuizAttempt'
+                additionaldata:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                      title:
+                        type: string
+                      content:
+                        type: string
+                questions:
+                  type: array
+                  items:
+                    $ref: '../schemas/common.yaml#/components/schemas/CoreQuestionQuestionWSData'
+                warnings:
+                  type: array
+                  items:
+                    $ref: '../schemas/common.yaml#/components/schemas/CoreWSExternalWarning'
+
+mod_quiz_get_combined_review_options:
+  post:
+    operationId: mod_quiz_get_combined_review_options
+    summary: Get combined review options
+    description: Combines the review options from a number of different quiz attempts
+    tags:
+      - mod_quiz
+    requestBody:
+      required: true
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            type: object
+            properties:
+              wsfunction:
+                type: string
+                enum: [mod_quiz_get_combined_review_options]
+              wstoken:
+                type: string
+              quizid:
+                type: integer
+                description: Quiz instance ID
+              userid:
+                type: integer
+                description: User ID (0 for current user)
+            required:
+              - wsfunction
+              - wstoken
+              - quizid
+    responses:
+      '200':
+        description: Combined review options
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                someoptions:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                      value:
+                        type: integer
+                alloptions:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                      value:
+                        type: integer
+                warnings:
+                  type: array
+                  items:
+                    $ref: '../schemas/common.yaml#/components/schemas/CoreWSExternalWarning'
+
+mod_quiz_get_quiz_feedback_for_grade:
+  post:
+    operationId: mod_quiz_get_quiz_feedback_for_grade
+    summary: Get quiz feedback for grade
+    description: Get the feedback text that should be show to a student at the end of their attempt
+    tags:
+      - mod_quiz
+    requestBody:
+      required: true
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            type: object
+            properties:
+              wsfunction:
+                type: string
+                enum: [mod_quiz_get_quiz_feedback_for_grade]
+              wstoken:
+                type: string
+              quizid:
+                type: integer
+                description: Quiz instance ID
+              grade:
+                type: number
+                description: The grade to check
+            required:
+              - wsfunction
+              - wstoken
+              - quizid
+              - grade
+    responses:
+      '200':
+        description: Feedback for grade
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                feedbacktext:
+                  type: string
+                  description: The feedback text
+                feedbacktextformat:
+                  type: integer
+                  description: Feedback text format
+                feedbackinlinefiles:
+                  type: array
+                  items:
+                    $ref: '../schemas/common.yaml#/components/schemas/CoreWSExternalFile'
+                warnings:
+                  type: array
+                  items:
+                    $ref: '../schemas/common.yaml#/components/schemas/CoreWSExternalWarning'
+
+mod_quiz_get_quiz_required_qtypes:
+  post:
+    operationId: mod_quiz_get_quiz_required_qtypes
+    summary: Get quiz required qtypes
+    description: Return the potential question types that would be required for a given quiz
+    tags:
+      - mod_quiz
+    requestBody:
+      required: true
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            type: object
+            properties:
+              wsfunction:
+                type: string
+                enum: [mod_quiz_get_quiz_required_qtypes]
+              wstoken:
+                type: string
+              quizid:
+                type: integer
+                description: Quiz instance ID
+            required:
+              - wsfunction
+              - wstoken
+              - quizid
+    responses:
+      '200':
+        description: Required question types
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                questiontypes:
+                  type: array
+                  items:
+                    type: string
+                  description: List of question types used
+                warnings:
+                  type: array
+                  items:
+                    $ref: '../schemas/common.yaml#/components/schemas/CoreWSExternalWarning'
+
+mod_quiz_view_quiz:
+  post:
+    operationId: mod_quiz_view_quiz
+    summary: View quiz
+    description: Trigger the quiz viewed event
+    tags:
+      - mod_quiz
+    requestBody:
+      required: true
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            type: object
+            properties:
+              wsfunction:
+                type: string
+                enum: [mod_quiz_view_quiz]
+              wstoken:
+                type: string
+              quizid:
+                type: integer
+                description: Quiz instance ID
+            required:
+              - wsfunction
+              - wstoken
+              - quizid
+    responses:
+      '200':
+        description: Successful response
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/common.yaml#/components/schemas/CoreStatusWithWarningsWSResponse'
+
+mod_quiz_view_attempt:
+  post:
+    operationId: mod_quiz_view_attempt
+    summary: View attempt
+    description: Trigger the attempt viewed event
+    tags:
+      - mod_quiz
+    requestBody:
+      required: true
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            type: object
+            properties:
+              wsfunction:
+                type: string
+                enum: [mod_quiz_view_attempt]
+              wstoken:
+                type: string
+              attemptid:
+                type: integer
+                description: Attempt ID
+              page:
+                type: integer
+                description: Page number
+              preflightdata[0][name]:
+                type: string
+                description: Preflight data name
+              preflightdata[0][value]:
+                type: string
+                description: Preflight data value
+            required:
+              - wsfunction
+              - wstoken
+              - attemptid
+              - page
+    responses:
+      '200':
+        description: Successful response
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/common.yaml#/components/schemas/CoreStatusWithWarningsWSResponse'
+
+mod_quiz_view_attempt_summary:
+  post:
+    operationId: mod_quiz_view_attempt_summary
+    summary: View attempt summary
+    description: Trigger the attempt summary viewed event
+    tags:
+      - mod_quiz
+    requestBody:
+      required: true
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            type: object
+            properties:
+              wsfunction:
+                type: string
+                enum: [mod_quiz_view_attempt_summary]
+              wstoken:
+                type: string
+              attemptid:
+                type: integer
+                description: Attempt ID
+              preflightdata[0][name]:
+                type: string
+                description: Preflight data name
+              preflightdata[0][value]:
+                type: string
+                description: Preflight data value
+            required:
+              - wsfunction
+              - wstoken
+              - attemptid
+    responses:
+      '200':
+        description: Successful response
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/common.yaml#/components/schemas/CoreStatusWithWarningsWSResponse'
+
+mod_quiz_view_attempt_review:
+  post:
+    operationId: mod_quiz_view_attempt_review
+    summary: View attempt review
+    description: Trigger the attempt review viewed event
+    tags:
+      - mod_quiz
+    requestBody:
+      required: true
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            type: object
+            properties:
+              wsfunction:
+                type: string
+                enum: [mod_quiz_view_attempt_review]
+              wstoken:
+                type: string
+              attemptid:
+                type: integer
+                description: Attempt ID
+            required:
+              - wsfunction
+              - wstoken
+              - attemptid
+    responses:
+      '200':
+        description: Successful response
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/common.yaml#/components/schemas/CoreStatusWithWarningsWSResponse'
+
+components:
+  schemas:
+    ModQuizData:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Activity instance ID
+        course:
+          type: integer
+          description: Course ID
+        coursemodule:
+          type: integer
+          description: Course module ID
+        name:
+          type: string
+          description: Activity name
+        intro:
+          type: string
+          description: Activity introduction
+        introformat:
+          type: integer
+          description: Introduction format
+        introfiles:
+          type: array
+          items:
+            $ref: '../schemas/common.yaml#/components/schemas/CoreWSExternalFile'
+        section:
+          type: integer
+          description: Course section ID
+        visible:
+          type: boolean
+          description: Module visibility
+        groupmode:
+          type: integer
+          description: Group mode
+        groupingid:
+          type: integer
+          description: Grouping ID
+        lang:
+          type: string
+          description: Forced language
+        timeopen:
+          type: integer
+          description: The time when this quiz opens (0 = no restriction)
+        timeclose:
+          type: integer
+          description: The time when this quiz closes (0 = no restriction)
+        timelimit:
+          type: integer
+          description: The time limit for quiz attempts in seconds
+        overduehandling:
+          type: string
+          enum: [autosubmit, graceperiod, autoabandon]
+          description: Method for handling overdue attempts
+        graceperiod:
+          type: integer
+          description: Grace period in seconds
+        preferredbehaviour:
+          type: string
+          description: Question behaviour
+        canredoquestions:
+          type: integer
+          description: Allow redo of completed questions
+        attempts:
+          type: integer
+          description: Maximum number of attempts
+        attemptonlast:
+          type: integer
+          description: Build on last attempt
+        grademethod:
+          type: integer
+          description: Grade method (1=highest, 2=average, 3=first, 4=last)
+        decimalpoints:
+          type: integer
+          description: Decimal places for grades
+        questiondecimalpoints:
+          type: integer
+          description: Decimal places for question grades
+        reviewattempt:
+          type: integer
+          description: Review attempt options
+        reviewcorrectness:
+          type: integer
+          description: Review correctness options
+        reviewmarks:
+          type: integer
+          description: Review marks options
+        reviewspecificfeedback:
+          type: integer
+          description: Review specific feedback options
+        reviewgeneralfeedback:
+          type: integer
+          description: Review general feedback options
+        reviewrightanswer:
+          type: integer
+          description: Review right answer options
+        reviewoverallfeedback:
+          type: integer
+          description: Review overall feedback options
+        questionsperpage:
+          type: integer
+          description: Questions per page
+        navmethod:
+          type: string
+          enum: [free, seq]
+          description: Navigation method
+        shuffleanswers:
+          type: integer
+          description: Shuffle answers
+        sumgrades:
+          type: number
+          description: Sum of all question max grades
+        grade:
+          type: number
+          description: Quiz grade
+        timecreated:
+          type: integer
+          description: Time created
+        timemodified:
+          type: integer
+          description: Time modified
+        password:
+          type: string
+          description: Password required
+        subnet:
+          type: string
+          description: IP subnet restriction
+        browsersecurity:
+          type: string
+          description: Browser security
+        delay1:
+          type: integer
+          description: Delay between 1st and 2nd attempt
+        delay2:
+          type: integer
+          description: Delay between subsequent attempts
+        showuserpicture:
+          type: integer
+          description: Show user picture
+        showblocks:
+          type: integer
+          description: Show blocks
+        completionattemptsexhausted:
+          type: integer
+          description: Completion when attempts exhausted
+        completionpass:
+          type: integer
+          description: Completion when passed
+        allowofflineattempts:
+          type: integer
+          description: Allow offline attempts
+        autosaveperiod:
+          type: integer
+          description: Auto-save period
+        hasfeedback:
+          type: integer
+          description: Has feedback
+        hasquestions:
+          type: integer
+          description: Has questions
+
+    ModQuizAccessInformation:
+      type: object
+      properties:
+        canattempt:
+          type: boolean
+          description: Whether the user can do the quiz
+        canmanage:
+          type: boolean
+          description: Whether the user can edit quiz settings
+        canpreview:
+          type: boolean
+          description: Whether the user can preview the quiz
+        canreviewmyattempts:
+          type: boolean
+          description: Whether the user can review their attempts
+        canviewreports:
+          type: boolean
+          description: Whether the user can view reports
+        accessrules:
+          type: array
+          items:
+            type: string
+          description: List of access rules
+        activerulenames:
+          type: array
+          items:
+            type: string
+          description: List of active rules
+        preventaccessreasons:
+          type: array
+          items:
+            type: string
+          description: List of reasons preventing access
+        warnings:
+          type: array
+          items:
+            $ref: '../schemas/common.yaml#/components/schemas/CoreWSExternalWarning'
+
+    ModQuizAttemptAccessInformation:
+      type: object
+      properties:
+        endtime:
+          type: integer
+          description: When the attempt must be submitted
+        isfinished:
+          type: boolean
+          description: Whether the user can never attempt again
+        ispreflightcheckrequired:
+          type: boolean
+          description: Whether a preflight check is required
+        preventnewattemptreasons:
+          type: array
+          items:
+            type: string
+          description: Reasons preventing new attempts
+        warnings:
+          type: array
+          items:
+            $ref: '../schemas/common.yaml#/components/schemas/CoreWSExternalWarning'
+
+    ModQuizAttempt:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Attempt ID
+        quiz:
+          type: integer
+          description: Quiz ID
+        userid:
+          type: integer
+          description: User ID
+        attempt:
+          type: integer
+          description: Attempt number
+        uniqueid:
+          type: integer
+          description: Unique ID for question usage
+        layout:
+          type: string
+          description: Attempt layout
+        currentpage:
+          type: integer
+          description: Current page
+        preview:
+          type: integer
+          description: Whether preview attempt
+        state:
+          type: string
+          enum: [inprogress, overdue, finished, abandoned]
+          description: Attempt state
+        timestart:
+          type: integer
+          description: Time started
+        timefinish:
+          type: integer
+          description: Time finished
+        timemodified:
+          type: integer
+          description: Time modified
+        timemodifiedoffline:
+          type: integer
+          description: Time modified offline
+        timecheckstate:
+          type: integer
+          description: Time to check state
+        sumgrades:
+          type: number
+          description: Sum of grades
+        gradeitemmarks:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              grade:
+                type: number
+              maxgrade:
+                type: number
+          description: Grade item marks (since 4.4)

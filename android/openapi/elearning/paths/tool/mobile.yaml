@@ -1,0 +1,565 @@
+# Tool Mobile Web Service Functions
+
+tool_mobile_get_public_config:
+  post:
+    operationId: tool_mobile_get_public_config
+    summary: Get public config
+    description: Returns the Moodle site public configuration, settings and capabilities
+    tags:
+      - tool_mobile
+    requestBody:
+      required: true
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            type: object
+            properties:
+              wsfunction:
+                type: string
+                enum: [tool_mobile_get_public_config]
+              wstoken:
+                type: string
+            required:
+              - wsfunction
+              - wstoken
+    responses:
+      '200':
+        description: Public configuration
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ToolMobilePublicConfig'
+
+tool_mobile_get_config:
+  post:
+    operationId: tool_mobile_get_config
+    summary: Get config
+    description: Returns all the site configuration
+    tags:
+      - tool_mobile
+    requestBody:
+      required: true
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            type: object
+            properties:
+              wsfunction:
+                type: string
+                enum: [tool_mobile_get_config]
+              wstoken:
+                type: string
+              section:
+                type: string
+                description: Config section
+            required:
+              - wsfunction
+              - wstoken
+    responses:
+      '200':
+        description: Site configuration
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                settings:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                      value:
+                        type: string
+                warnings:
+                  type: array
+                  items:
+                    $ref: '../schemas/common.yaml#/components/schemas/CoreWSExternalWarning'
+
+tool_mobile_get_plugins_supporting_mobile:
+  post:
+    operationId: tool_mobile_get_plugins_supporting_mobile
+    summary: Get plugins supporting mobile
+    description: Returns the list of plugins that support the mobile app
+    tags:
+      - tool_mobile
+    requestBody:
+      required: true
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            type: object
+            properties:
+              wsfunction:
+                type: string
+                enum: [tool_mobile_get_plugins_supporting_mobile]
+              wstoken:
+                type: string
+            required:
+              - wsfunction
+              - wstoken
+    responses:
+      '200':
+        description: Plugins list
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                plugins:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      component:
+                        type: string
+                      version:
+                        type: string
+                      addon:
+                        type: string
+                      dependencies:
+                        type: array
+                        items:
+                          type: string
+                      fileurl:
+                        type: string
+                      filehash:
+                        type: string
+                      filesize:
+                        type: integer
+                      handlers:
+                        type: string
+                      lang:
+                        type: string
+                warnings:
+                  type: array
+                  items:
+                    $ref: '../schemas/common.yaml#/components/schemas/CoreWSExternalWarning'
+
+tool_mobile_get_autologin_key:
+  post:
+    operationId: tool_mobile_get_autologin_key
+    summary: Get autologin key
+    description: Creates an autologin key for the current user (valid for a limited time only)
+    tags:
+      - tool_mobile
+    requestBody:
+      required: true
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            type: object
+            properties:
+              wsfunction:
+                type: string
+                enum: [tool_mobile_get_autologin_key]
+              wstoken:
+                type: string
+              privatetoken:
+                type: string
+                description: User's private token
+            required:
+              - wsfunction
+              - wstoken
+              - privatetoken
+    responses:
+      '200':
+        description: Autologin key
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                key:
+                  type: string
+                  description: The autologin key
+                autologinurl:
+                  type: string
+                  format: uri
+                  description: The autologin URL
+                warnings:
+                  type: array
+                  items:
+                    $ref: '../schemas/common.yaml#/components/schemas/CoreWSExternalWarning'
+
+tool_mobile_get_content:
+  post:
+    operationId: tool_mobile_get_content
+    summary: Get content
+    description: Returns a page content for a specific component
+    tags:
+      - tool_mobile
+    requestBody:
+      required: true
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            type: object
+            properties:
+              wsfunction:
+                type: string
+                enum: [tool_mobile_get_content]
+              wstoken:
+                type: string
+              component:
+                type: string
+                description: Component name
+              method:
+                type: string
+                description: Method name
+              args[0][name]:
+                type: string
+                description: Argument name
+              args[0][value]:
+                type: string
+                description: Argument value
+            required:
+              - wsfunction
+              - wstoken
+              - component
+              - method
+    responses:
+      '200':
+        description: Page content
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                templates:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                      html:
+                        type: string
+                javascript:
+                  type: string
+                  description: JavaScript code
+                otherdata:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                      value:
+                        type: string
+                files:
+                  type: array
+                  items:
+                    $ref: '../schemas/common.yaml#/components/schemas/CoreWSExternalFile'
+                restrict:
+                  type: object
+                  properties:
+                    users:
+                      type: array
+                      items:
+                        type: integer
+                    courses:
+                      type: array
+                      items:
+                        type: integer
+                disabled:
+                  type: boolean
+                  description: Whether the content is disabled
+                warnings:
+                  type: array
+                  items:
+                    $ref: '../schemas/common.yaml#/components/schemas/CoreWSExternalWarning'
+
+tool_mobile_get_tokens_for_qr_login:
+  post:
+    operationId: tool_mobile_get_tokens_for_qr_login
+    summary: Get tokens for QR login
+    description: Returns the site information and tokens for QR login
+    tags:
+      - tool_mobile
+    requestBody:
+      required: true
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            type: object
+            properties:
+              wsfunction:
+                type: string
+                enum: [tool_mobile_get_tokens_for_qr_login]
+              wstoken:
+                type: string
+              qrloginkey:
+                type: string
+                description: The QR login key
+              userid:
+                type: integer
+                description: The user ID
+            required:
+              - wsfunction
+              - wstoken
+              - qrloginkey
+              - userid
+    responses:
+      '200':
+        description: QR login tokens
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                token:
+                  type: string
+                  description: The WS token
+                privatetoken:
+                  type: string
+                  description: The private token
+                warnings:
+                  type: array
+                  items:
+                    $ref: '../schemas/common.yaml#/components/schemas/CoreWSExternalWarning'
+
+tool_mobile_validate_subscription_key:
+  post:
+    operationId: tool_mobile_validate_subscription_key
+    summary: Validate subscription key
+    description: Validates a subscription key
+    tags:
+      - tool_mobile
+    requestBody:
+      required: true
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            type: object
+            properties:
+              wsfunction:
+                type: string
+                enum: [tool_mobile_validate_subscription_key]
+              wstoken:
+                type: string
+              key:
+                type: string
+                description: Subscription key
+            required:
+              - wsfunction
+              - wstoken
+              - key
+    responses:
+      '200':
+        description: Validation result
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                validated:
+                  type: boolean
+                warnings:
+                  type: array
+                  items:
+                    $ref: '../schemas/common.yaml#/components/schemas/CoreWSExternalWarning'
+
+tool_mobile_call_external_functions:
+  post:
+    operationId: tool_mobile_call_external_functions
+    summary: Call external functions
+    description: Call multiple external functions at once and return all responses (batch requests)
+    tags:
+      - tool_mobile
+    requestBody:
+      required: true
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            type: object
+            properties:
+              wsfunction:
+                type: string
+                enum: [tool_mobile_call_external_functions]
+              wstoken:
+                type: string
+              requests[0][function]:
+                type: string
+                description: Function name
+              requests[0][arguments]:
+                type: string
+                description: JSON encoded arguments
+              requests[0][settingraw]:
+                type: boolean
+                description: Return raw strings
+              requests[0][settingfilter]:
+                type: boolean
+                description: Apply text filters
+              requests[0][settingfileurl]:
+                type: boolean
+                description: Rewrite plugin file URLs
+              requests[0][settinglang]:
+                type: string
+                description: Session language
+            required:
+              - wsfunction
+              - wstoken
+    responses:
+      '200':
+        description: Batch responses
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                responses:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      error:
+                        type: boolean
+                        description: Whether an error occurred
+                      data:
+                        type: string
+                        description: JSON encoded response data
+                      exception:
+                        type: string
+                        description: Exception message if error
+                      errorcode:
+                        type: string
+                        description: Error code if error
+
+components:
+  schemas:
+    ToolMobilePublicConfig:
+      type: object
+      properties:
+        wwwroot:
+          type: string
+          format: uri
+          description: Moodle site URL
+        httpswwwroot:
+          type: string
+          format: uri
+          description: Moodle HTTPS URL
+        sitename:
+          type: string
+          description: Site name
+        guestlogin:
+          type: integer
+          description: Guest login enabled
+        rememberusername:
+          type: integer
+          description: Remember username
+        authloginviaemail:
+          type: integer
+          description: Login via email
+        registerauth:
+          type: string
+          description: Registration auth method
+        forgottenpasswordurl:
+          type: string
+          format: uri
+          description: Forgotten password URL
+        authinstructions:
+          type: string
+          description: Auth instructions
+        authnoneenabled:
+          type: integer
+          description: None auth enabled
+        enablewebservices:
+          type: integer
+          description: Web services enabled
+        enablemobilewebservice:
+          type: integer
+          description: Mobile web service enabled
+        maintenanceenabled:
+          type: integer
+          description: Maintenance mode enabled
+        maintenancemessage:
+          type: string
+          description: Maintenance message
+        logourl:
+          type: string
+          format: uri
+          description: Logo URL
+        compactlogourl:
+          type: string
+          format: uri
+          description: Compact logo URL
+        typeoflogin:
+          type: integer
+          description: Type of login (0=via app, 1=browser, 2=embedded)
+        launchurl:
+          type: string
+          format: uri
+          description: SSO launch URL
+        mobilecssurl:
+          type: string
+          format: uri
+          description: Mobile CSS URL
+        tool_mobile_disabledfeatures:
+          type: string
+          description: Disabled features
+        identityproviders:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              iconurl:
+                type: string
+              url:
+                type: string
+          description: Identity providers
+        country:
+          type: string
+          description: Default country
+        agedigitalconsentverification:
+          type: boolean
+          description: Age verification enabled
+        supportname:
+          type: string
+          description: Support name
+        supportemail:
+          type: string
+          description: Support email
+        supportpage:
+          type: string
+          description: Support page URL
+        supportavailability:
+          type: integer
+          description: Support availability
+        autolang:
+          type: integer
+          description: Auto language detection
+        lang:
+          type: string
+          description: Default language
+        langmenu:
+          type: integer
+          description: Language menu enabled
+        langlist:
+          type: string
+          description: Available languages
+        locale:
+          type: string
+          description: Site locale
+        tool_mobile_minimumversion:
+          type: string
+          description: Minimum app version
+        tool_mobile_iosappid:
+          type: string
+          description: iOS App ID
+        tool_mobile_androidappid:
+          type: string
+          description: Android App ID
+        tool_mobile_setuplink:
+          type: string
+          description: Setup link
+        tool_mobile_qrcodetype:
+          type: integer
+          description: QR code type
+        warnings:
+          type: array
+          items:
+            $ref: '../schemas/common.yaml#/components/schemas/CoreWSExternalWarning'

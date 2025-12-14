@@ -1,0 +1,775 @@
+# Core Calendar Web Service Functions
+
+core_calendar_get_calendar_events:
+  post:
+    operationId: core_calendar_get_calendar_events
+    summary: Get calendar events
+    description: Get calendar events
+    tags:
+      - core_calendar
+    requestBody:
+      required: true
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            type: object
+            properties:
+              wsfunction:
+                type: string
+                enum: [core_calendar_get_calendar_events]
+              wstoken:
+                type: string
+              events[eventids][]:
+                type: array
+                items:
+                  type: integer
+                description: Event IDs
+              events[courseids][]:
+                type: array
+                items:
+                  type: integer
+                description: Course IDs
+              events[groupids][]:
+                type: array
+                items:
+                  type: integer
+                description: Group IDs
+              events[categoryids][]:
+                type: array
+                items:
+                  type: integer
+                description: Category IDs
+              options[userevents]:
+                type: boolean
+                description: Include user events
+              options[siteevents]:
+                type: boolean
+                description: Include site events
+              options[timestart]:
+                type: integer
+                description: Start time
+              options[timeend]:
+                type: integer
+                description: End time
+              options[ignorehidden]:
+                type: boolean
+                description: Ignore hidden events
+            required:
+              - wsfunction
+              - wstoken
+    responses:
+      '200':
+        description: Calendar events
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                events:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/CoreCalendarEvent'
+                warnings:
+                  type: array
+                  items:
+                    $ref: '../schemas/common.yaml#/components/schemas/CoreWSExternalWarning'
+
+core_calendar_get_calendar_event_by_id:
+  post:
+    operationId: core_calendar_get_calendar_event_by_id
+    summary: Get calendar event by ID
+    description: Get a calendar event by its ID
+    tags:
+      - core_calendar
+    requestBody:
+      required: true
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            type: object
+            properties:
+              wsfunction:
+                type: string
+                enum: [core_calendar_get_calendar_event_by_id]
+              wstoken:
+                type: string
+              eventid:
+                type: integer
+                description: Event ID
+            required:
+              - wsfunction
+              - wstoken
+              - eventid
+    responses:
+      '200':
+        description: Calendar event
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                event:
+                  $ref: '#/components/schemas/CoreCalendarEventDetail'
+                warnings:
+                  type: array
+                  items:
+                    $ref: '../schemas/common.yaml#/components/schemas/CoreWSExternalWarning'
+
+core_calendar_get_calendar_day_view:
+  post:
+    operationId: core_calendar_get_calendar_day_view
+    summary: Get calendar day view
+    description: Get the calendar day view
+    tags:
+      - core_calendar
+    requestBody:
+      required: true
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            type: object
+            properties:
+              wsfunction:
+                type: string
+                enum: [core_calendar_get_calendar_day_view]
+              wstoken:
+                type: string
+              year:
+                type: integer
+                description: Year
+              month:
+                type: integer
+                description: Month
+              day:
+                type: integer
+                description: Day
+              courseid:
+                type: integer
+                description: Course ID
+              categoryid:
+                type: integer
+                description: Category ID
+            required:
+              - wsfunction
+              - wstoken
+              - year
+              - month
+              - day
+    responses:
+      '200':
+        description: Day view data
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                events:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/CoreCalendarEventDetail'
+                defaulteventcontext:
+                  type: integer
+                filter_selector:
+                  type: string
+                courseid:
+                  type: integer
+                categoryid:
+                  type: integer
+                neweventtimestamp:
+                  type: integer
+                date:
+                  $ref: '../schemas/common.yaml#/components/schemas/CoreWSDate'
+                periodname:
+                  type: string
+                previousperiod:
+                  $ref: '../schemas/common.yaml#/components/schemas/CoreWSDate'
+                previousperiodlink:
+                  type: string
+                previousperiodname:
+                  type: string
+                nextperiod:
+                  $ref: '../schemas/common.yaml#/components/schemas/CoreWSDate'
+                nextperiodlink:
+                  type: string
+                nextperiodname:
+                  type: string
+                larrow:
+                  type: string
+                rarrow:
+                  type: string
+
+core_calendar_get_calendar_monthly_view:
+  post:
+    operationId: core_calendar_get_calendar_monthly_view
+    summary: Get calendar monthly view
+    description: Get the monthly calendar view
+    tags:
+      - core_calendar
+    requestBody:
+      required: true
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            type: object
+            properties:
+              wsfunction:
+                type: string
+                enum: [core_calendar_get_calendar_monthly_view]
+              wstoken:
+                type: string
+              year:
+                type: integer
+                description: Year
+              month:
+                type: integer
+                description: Month
+              courseid:
+                type: integer
+                description: Course ID
+              categoryid:
+                type: integer
+                description: Category ID
+              includenavigation:
+                type: boolean
+                description: Include navigation
+              mini:
+                type: boolean
+                description: Mini calendar
+            required:
+              - wsfunction
+              - wstoken
+              - year
+              - month
+    responses:
+      '200':
+        description: Monthly view data
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                url:
+                  type: string
+                courseid:
+                  type: integer
+                categoryid:
+                  type: integer
+                filter_selector:
+                  type: string
+                weeks:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      prepadding:
+                        type: array
+                        items:
+                          type: integer
+                      postpadding:
+                        type: array
+                        items:
+                          type: integer
+                      days:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            seconds:
+                              type: integer
+                            minutes:
+                              type: integer
+                            hours:
+                              type: integer
+                            mday:
+                              type: integer
+                            wday:
+                              type: integer
+                            year:
+                              type: integer
+                            yday:
+                              type: integer
+                            istoday:
+                              type: boolean
+                            isweekend:
+                              type: boolean
+                            timestamp:
+                              type: integer
+                            neweventtimestamp:
+                              type: integer
+                            viewdaylink:
+                              type: string
+                            viewdaylinktitle:
+                              type: string
+                            events:
+                              type: array
+                              items:
+                                $ref: '#/components/schemas/CoreCalendarEventDetail'
+                            hasevents:
+                              type: boolean
+                            calendareventtypes:
+                              type: array
+                              items:
+                                type: string
+                            popovertitle:
+                              type: string
+                            haslastdayofevent:
+                              type: boolean
+                daynames:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      dayno:
+                        type: integer
+                      shortname:
+                        type: string
+                      fullname:
+                        type: string
+                date:
+                  $ref: '../schemas/common.yaml#/components/schemas/CoreWSDate'
+                periodname:
+                  type: string
+                includenavigation:
+                  type: boolean
+                initialeventsloaded:
+                  type: boolean
+                previousperiod:
+                  $ref: '../schemas/common.yaml#/components/schemas/CoreWSDate'
+                previousperiodlink:
+                  type: string
+                previousperiodname:
+                  type: string
+                nextperiod:
+                  $ref: '../schemas/common.yaml#/components/schemas/CoreWSDate'
+                nextperiodlink:
+                  type: string
+                nextperiodname:
+                  type: string
+                larrow:
+                  type: string
+                rarrow:
+                  type: string
+                defaulteventcontext:
+                  type: integer
+
+core_calendar_get_calendar_upcoming_view:
+  post:
+    operationId: core_calendar_get_calendar_upcoming_view
+    summary: Get calendar upcoming view
+    description: Get the upcoming events view
+    tags:
+      - core_calendar
+    requestBody:
+      required: true
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            type: object
+            properties:
+              wsfunction:
+                type: string
+                enum: [core_calendar_get_calendar_upcoming_view]
+              wstoken:
+                type: string
+              courseid:
+                type: integer
+                description: Course ID
+              categoryid:
+                type: integer
+                description: Category ID
+            required:
+              - wsfunction
+              - wstoken
+    responses:
+      '200':
+        description: Upcoming events
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                events:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/CoreCalendarEventDetail'
+                defaulteventcontext:
+                  type: integer
+                filter_selector:
+                  type: string
+                courseid:
+                  type: integer
+                categoryid:
+                  type: integer
+                isloggedin:
+                  type: boolean
+
+core_calendar_get_calendar_access_information:
+  post:
+    operationId: core_calendar_get_calendar_access_information
+    summary: Get calendar access information
+    description: Get calendar access information for a course
+    tags:
+      - core_calendar
+    requestBody:
+      required: true
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            type: object
+            properties:
+              wsfunction:
+                type: string
+                enum: [core_calendar_get_calendar_access_information]
+              wstoken:
+                type: string
+              courseid:
+                type: integer
+                description: Course ID
+            required:
+              - wsfunction
+              - wstoken
+    responses:
+      '200':
+        description: Access information
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                canmanageentries:
+                  type: boolean
+                canmanageownentries:
+                  type: boolean
+                canmanagegroupentries:
+                  type: boolean
+                warnings:
+                  type: array
+                  items:
+                    $ref: '../schemas/common.yaml#/components/schemas/CoreWSExternalWarning'
+
+core_calendar_get_allowed_event_types:
+  post:
+    operationId: core_calendar_get_allowed_event_types
+    summary: Get allowed event types
+    description: Get the allowed event types for a course
+    tags:
+      - core_calendar
+    requestBody:
+      required: true
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            type: object
+            properties:
+              wsfunction:
+                type: string
+                enum: [core_calendar_get_allowed_event_types]
+              wstoken:
+                type: string
+              courseid:
+                type: integer
+                description: Course ID
+            required:
+              - wsfunction
+              - wstoken
+    responses:
+      '200':
+        description: Allowed event types
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                allowedeventtypes:
+                  type: array
+                  items:
+                    type: string
+                warnings:
+                  type: array
+                  items:
+                    $ref: '../schemas/common.yaml#/components/schemas/CoreWSExternalWarning'
+
+core_calendar_delete_calendar_events:
+  post:
+    operationId: core_calendar_delete_calendar_events
+    summary: Delete calendar events
+    description: Delete calendar events
+    tags:
+      - core_calendar
+    requestBody:
+      required: true
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            type: object
+            properties:
+              wsfunction:
+                type: string
+                enum: [core_calendar_delete_calendar_events]
+              wstoken:
+                type: string
+              events[0][eventid]:
+                type: integer
+                description: Event ID
+              events[0][repeat]:
+                type: boolean
+                description: Delete all events in series
+            required:
+              - wsfunction
+              - wstoken
+    responses:
+      '200':
+        description: Delete result
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/common.yaml#/components/schemas/CoreWarningsWSResponse'
+
+core_calendar_submit_create_update_form:
+  post:
+    operationId: core_calendar_submit_create_update_form
+    summary: Submit create/update form
+    description: Submit the calendar event form
+    tags:
+      - core_calendar
+    requestBody:
+      required: true
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            type: object
+            properties:
+              wsfunction:
+                type: string
+                enum: [core_calendar_submit_create_update_form]
+              wstoken:
+                type: string
+              formdata:
+                type: string
+                description: URL encoded form data
+            required:
+              - wsfunction
+              - wstoken
+              - formdata
+    responses:
+      '200':
+        description: Form submission result
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                event:
+                  $ref: '#/components/schemas/CoreCalendarEventDetail'
+                validationerror:
+                  type: boolean
+
+components:
+  schemas:
+    CoreCalendarEvent:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Event ID
+        name:
+          type: string
+          description: Event name
+        description:
+          type: string
+          description: Description
+        format:
+          type: integer
+          description: Description format
+        courseid:
+          type: integer
+          description: Course ID
+        categoryid:
+          type: integer
+          description: Category ID
+        groupid:
+          type: integer
+          description: Group ID
+        userid:
+          type: integer
+          description: User ID
+        repeatid:
+          type: integer
+          description: Repeat ID
+        modulename:
+          type: string
+          description: Module name
+        instance:
+          type: integer
+          description: Instance ID
+        eventtype:
+          type: string
+          description: Event type
+        timestart:
+          type: integer
+          description: Start time
+        timeduration:
+          type: integer
+          description: Duration
+        visible:
+          type: integer
+          description: Visibility
+        uuid:
+          type: string
+          description: UUID
+        sequence:
+          type: integer
+          description: Sequence
+        timemodified:
+          type: integer
+          description: Time modified
+        subscriptionid:
+          type: integer
+          description: Subscription ID
+
+    CoreCalendarEventDetail:
+      allOf:
+        - $ref: '#/components/schemas/CoreCalendarEvent'
+        - type: object
+          properties:
+            url:
+              type: string
+              format: uri
+            descriptionformat:
+              type: integer
+            iscourseevent:
+              type: boolean
+            iscategoryevent:
+              type: boolean
+            groupname:
+              type: string
+            normalisedeventtype:
+              type: string
+            normalisedeventtypetext:
+              type: string
+            action:
+              type: object
+              properties:
+                name:
+                  type: string
+                url:
+                  type: string
+                itemcount:
+                  type: integer
+                actionable:
+                  type: boolean
+                showitemcount:
+                  type: boolean
+            course:
+              type: object
+              properties:
+                id:
+                  type: integer
+                fullname:
+                  type: string
+                shortname:
+                  type: string
+                idnumber:
+                  type: string
+                summary:
+                  type: string
+                summaryformat:
+                  type: integer
+                startdate:
+                  type: integer
+                enddate:
+                  type: integer
+                visible:
+                  type: boolean
+                showactivitydates:
+                  type: boolean
+                showcompletionconditions:
+                  type: boolean
+                fullnamedisplay:
+                  type: string
+                viewurl:
+                  type: string
+                courseimage:
+                  type: string
+                progress:
+                  type: number
+                hasprogress:
+                  type: boolean
+                isfavourite:
+                  type: boolean
+                hidden:
+                  type: boolean
+                timeaccess:
+                  type: integer
+                showshortname:
+                  type: boolean
+                coursecategory:
+                  type: string
+            canedit:
+              type: boolean
+            candelete:
+              type: boolean
+            deleteurl:
+              type: string
+            editurl:
+              type: string
+            viewurl:
+              type: string
+            formattedtime:
+              type: string
+            formattedlocation:
+              type: string
+            isactionevent:
+              type: boolean
+            iscourseevent:
+              type: boolean
+            iscategoryevent:
+              type: boolean
+            icon:
+              type: object
+              properties:
+                key:
+                  type: string
+                component:
+                  type: string
+                alttext:
+                  type: string
+                iconurl:
+                  type: string
+                iconclass:
+                  type: string
+            category:
+              type: object
+              properties:
+                id:
+                  type: integer
+                name:
+                  type: string
+                idnumber:
+                  type: string
+                description:
+                  type: string
+                parent:
+                  type: integer
+                coursecount:
+                  type: integer
+                visible:
+                  type: integer
+                timemodified:
+                  type: integer
+                depth:
+                  type: integer
+                nestedname:
+                  type: string
+                url:
+                  type: string
+            mindaytimestamp:
+              type: integer
+            mindayerror:
+              type: string
+            maxdaytimestamp:
+              type: integer
+            maxdayerror:
+              type: string
+            draggable:
+              type: boolean

@@ -1,0 +1,433 @@
+components:
+  schemas:
+    # Base warning structure returned by WS
+    CoreWSExternalWarning:
+      type: object
+      properties:
+        item:
+          type: string
+          description: Item name
+        itemid:
+          type: integer
+          description: Item ID
+        warningcode:
+          type: string
+          description: The warning code can be used by the client app to implement specific behaviour
+        message:
+          type: string
+          description: Untranslated english message to explain the warning
+      required:
+        - warningcode
+        - message
+
+    # Standard warnings response
+    CoreWarningsWSResponse:
+      type: object
+      properties:
+        warnings:
+          type: array
+          items:
+            $ref: '#/components/schemas/CoreWSExternalWarning'
+
+    # Status with warnings response
+    CoreStatusWithWarningsWSResponse:
+      type: object
+      properties:
+        status:
+          type: boolean
+          description: Status - true if success
+        offline:
+          type: boolean
+          description: True if information has been stored in offline for future use
+        warnings:
+          type: array
+          items:
+            $ref: '#/components/schemas/CoreWSExternalWarning'
+      required:
+        - status
+
+    # File structure returned by WS
+    CoreWSExternalFile:
+      type: object
+      properties:
+        filename:
+          type: string
+          description: File name
+        filepath:
+          type: string
+          description: File path
+        filesize:
+          type: integer
+          description: File size
+        fileurl:
+          type: string
+          format: uri
+          description: Downloadable file URL
+        timemodified:
+          type: integer
+          description: Time modified (Unix timestamp)
+        mimetype:
+          type: string
+          description: File mime type
+        isexternalfile:
+          type: boolean
+          description: Whether is an external file
+        repositorytype:
+          type: string
+          description: The repository type for the external files
+        icon:
+          type: string
+          description: Relative path to the relevant file type icon based on the file's mime type (since Moodle 4.4)
+      required:
+        - fileurl
+
+    # Stored file structure
+    CoreWSStoredFile:
+      type: object
+      properties:
+        contextid:
+          type: integer
+          description: Context ID
+        component:
+          type: string
+          description: Component
+        filearea:
+          type: string
+          description: File area
+        itemid:
+          type: integer
+          description: Item ID
+        filepath:
+          type: string
+          description: File path
+        filename:
+          type: string
+          description: File name
+        isdir:
+          type: boolean
+          description: Is directory
+        isimage:
+          type: boolean
+          description: Is image
+        timemodified:
+          type: integer
+          description: Time modified
+        timecreated:
+          type: integer
+          description: Time created
+        filesize:
+          type: integer
+          description: File size
+        author:
+          type: string
+          description: Author
+        license:
+          type: string
+          description: License
+        filenameshort:
+          type: string
+          description: Short file name
+        filesizeformatted:
+          type: string
+          description: Formatted file size
+        icon:
+          type: string
+          description: Icon
+        timecreatedformatted:
+          type: string
+          description: Formatted time created
+        timemodifiedformatted:
+          type: string
+          description: Formatted time modified
+        url:
+          type: string
+          format: uri
+          description: URL
+        urls:
+          type: object
+          properties:
+            export:
+              type: string
+              description: The URL used to export the attachment
+        html:
+          type: object
+          properties:
+            plagiarism:
+              type: string
+              description: The HTML source for the Plagiarism Response
+      required:
+        - contextid
+        - component
+        - filearea
+        - itemid
+        - filepath
+        - filename
+        - isdir
+        - isimage
+        - timemodified
+        - timecreated
+        - filesize
+        - author
+        - license
+        - filenameshort
+        - filesizeformatted
+        - icon
+        - timecreatedformatted
+        - timemodifiedformatted
+        - url
+
+    # Date data returned by date_exporter
+    CoreWSDate:
+      type: object
+      properties:
+        seconds:
+          type: integer
+          description: Seconds
+        minutes:
+          type: integer
+          description: Minutes
+        hours:
+          type: integer
+          description: Hours
+        mday:
+          type: integer
+          description: Day of month
+        wday:
+          type: integer
+          description: Day of week
+        mon:
+          type: integer
+          description: Month
+        year:
+          type: integer
+          description: Year
+        yday:
+          type: integer
+          description: Day of year
+        weekday:
+          type: string
+          description: Weekday name
+        month:
+          type: string
+          description: Month name
+        timestamp:
+          type: integer
+          description: Unix timestamp
+      required:
+        - seconds
+        - minutes
+        - hours
+        - mday
+        - wday
+        - mon
+        - year
+        - yday
+        - weekday
+        - month
+        - timestamp
+
+    # Text format enum
+    TextFormat:
+      type: integer
+      enum: [0, 1, 2, 4]
+      description: |
+        Text format:
+        - 0: MOODLE
+        - 1: HTML
+        - 2: PLAIN
+        - 4: MARKDOWN
+
+    # Upload file result
+    CoreWSUploadFileResult:
+      type: object
+      properties:
+        component:
+          type: string
+          description: Component the file was uploaded to
+        context:
+          type: string
+          description: Context the file was uploaded to
+        userid:
+          type: integer
+          description: User that uploaded the file
+        filearea:
+          type: string
+          description: File area the file was uploaded to
+        filename:
+          type: string
+          description: File name
+        filepath:
+          type: string
+          description: File path
+        itemid:
+          type: integer
+          description: Item ID the file was uploaded to
+        license:
+          type: string
+          description: File license
+        author:
+          type: string
+          description: Author name
+        source:
+          type: string
+          description: File source
+      required:
+        - component
+        - context
+        - userid
+        - filearea
+        - filename
+        - filepath
+        - itemid
+        - license
+        - author
+        - source
+
+    # Course custom field
+    CoreCourseCustomField:
+      type: object
+      properties:
+        name:
+          type: string
+          description: The name of the custom field
+        shortname:
+          type: string
+          description: The shortname of the custom field
+        type:
+          type: string
+          description: The type of the custom field (text, checkbox, etc.)
+        valueraw:
+          type: string
+          description: The raw value of the custom field
+        value:
+          type: string
+          description: The value of the custom field
+      required:
+        - name
+        - shortname
+        - type
+        - valueraw
+        - value
+
+    # Course format option
+    CoreCourseFormatOption:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Course format option name
+        value:
+          type: string
+          description: Course format option value
+      required:
+        - name
+        - value
+
+    # Basic course data
+    CoreCourseBasicData:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Course ID
+        fullname:
+          type: string
+          description: Course full name
+        displayname:
+          type: string
+          description: Course display name
+        shortname:
+          type: string
+          description: Course short name
+        summary:
+          type: string
+          description: Summary
+        summaryformat:
+          $ref: '#/components/schemas/TextFormat'
+        categoryid:
+          type: integer
+          description: Course category ID
+      required:
+        - id
+        - fullname
+        - shortname
+        - summary
+
+    # Question data from WS
+    CoreQuestionQuestionWSData:
+      type: object
+      properties:
+        slot:
+          type: integer
+          description: Slot number
+        type:
+          type: string
+          description: Question type
+        page:
+          type: integer
+          description: Page number
+        questionnumber:
+          type: string
+          description: Question number displayed
+        number:
+          type: integer
+          description: Question number
+        html:
+          type: string
+          description: Question HTML
+        responsefileareas:
+          type: array
+          items:
+            type: object
+            properties:
+              area:
+                type: string
+              files:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CoreWSExternalFile'
+        sequencecheck:
+          type: integer
+          description: Sequence check
+        lastactiontime:
+          type: integer
+          description: Last action time
+        hasautosavedstep:
+          type: boolean
+          description: Whether has autosaved step
+        flagged:
+          type: boolean
+          description: Whether question is flagged
+        state:
+          type: string
+          description: Question state
+        stateclass:
+          type: string
+          description: Question state class
+        status:
+          type: string
+          description: Question status
+        blockedbyprevious:
+          type: boolean
+          description: Whether blocked by previous question
+        mark:
+          type: string
+          description: Mark
+        maxmark:
+          type: number
+          description: Maximum mark
+        settings:
+          type: string
+          description: Question settings
+      required:
+        - slot
+        - type
+        - page
+        - html
+
+  securitySchemes:
+    wsToken:
+      type: apiKey
+      in: query
+      name: wstoken
+      description: Web service token for authentication

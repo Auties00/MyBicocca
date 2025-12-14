@@ -1,0 +1,730 @@
+openapi: 3.0.0
+info:
+  title: BicoccApp REST API
+  description: REST API for the University of Milano-Bicocca Mobile Application
+  version: v1
+servers:
+  - url: https://backoffice-app.unimib.it/api/v1
+components:
+  # https://github.com/OpenAPITools/openapi-generator/issues/13394
+  #  securitySchemes:
+  #    TokenHeaders:
+  #      type: apiKey
+  #      in: header
+  #      name: uid
+  #    ClientHeader:
+  #      type: apiKey
+  #      in: header
+  #      name: client
+  #    AccessTokenHeader:
+  #      type: apiKey
+  #      in: header
+  #      name: access-token
+  parameters:
+    UidHeader:
+      name: uid
+      in: header
+      required: true
+      schema:
+        type: string
+      description: User identifier (email address)
+    ClientHeader:
+      name: client
+      in: header
+      required: true
+      schema:
+        type: string
+      description: Client session token
+    AccessTokenHeader:
+      name: access-token
+      in: header
+      required: true
+      schema:
+        type: string
+      description: Access token for API authorization
+  schemas:
+    UserProfile:
+      type: object
+      properties:
+        user:
+          type: object
+          properties:
+            appuser_id:
+              type: integer
+            personId:
+              type: integer
+            userId:
+              type: string
+            fiscalCode:
+              type: string
+            name:
+              type: string
+            surname:
+              type: string
+            mobile:
+              type: string
+            email:
+              type: string
+            fotoId:
+              type: integer
+            photo:
+              type: string
+              nullable: true
+            has_calendar:
+              type: boolean
+        careers:
+          type: array
+          items:
+            type: object
+            properties:
+              matricId:
+                type: integer
+              selected:
+                type: boolean
+              oldCode:
+                type: boolean
+              matricCode:
+                type: string
+              studentId:
+                type: integer
+    UserCareer:
+      type: object
+      properties:
+        career:
+          type: object
+          properties:
+            averages:
+              type: array
+              items:
+                type: object
+            stats:
+              type: object
+            degree:
+              type: object
+    UserExams:
+      type: object
+      properties:
+        career:
+          type: object
+          properties:
+            notations:
+              type: array
+              items:
+                type: object
+    UserAppeals:
+      type: object
+      properties:
+        career:
+          type: object
+          properties:
+            courses:
+              type: array
+              items:
+                type: object
+    UserFees:
+      type: object
+      properties:
+        career:
+          type: object
+          properties:
+            fees:
+              type: array
+              items:
+                type: object
+    UserRegistrations:
+      type: object
+      properties:
+        career:
+          type: object
+          properties:
+            registrations:
+              type: array
+              items:
+                type: object
+    Calendar:
+      type: object
+      properties:
+        calendar:
+          type: array
+          items:
+            type: object
+    CalendarCourses:
+      type: object
+      properties:
+        courses:
+          type: array
+          items:
+            type: object
+    SetCalendarResponse:
+      type: object
+      properties:
+        message:
+          type: string
+        status:
+          type: integer
+    CourseDetail:
+      type: object
+      properties:
+        activity_code:
+          type: string
+        cds_code:
+          type: string
+        lesson_name:
+          type: string
+        partition:
+          type: string
+        course_code:
+          type: string
+        teachers:
+          type: array
+          items:
+            type: object
+        events:
+          type: array
+          items:
+            type: object
+    WizardCategories:
+      type: object
+      properties:
+        categories:
+          type: array
+          items:
+            type: object
+    WizardDegrees:
+      type: object
+      properties:
+        degrees:
+          type: array
+          items:
+            type: object
+    WizardCourses:
+      type: object
+      properties:
+        courses:
+          type: array
+          items:
+            type: object
+    WizardLessons:
+      type: object
+      properties:
+        lessons:
+          type: object
+    WizardUserCourses:
+      type: object
+      properties:
+        lessons:
+          type: object
+    Alerts:
+      type: object
+      properties:
+        alerts_to_read:
+          type: integer
+        alerts:
+          type: array
+          items:
+            type: object
+    Conversations:
+      type: object
+      properties:
+        conversations:
+          type: array
+          items:
+            type: object
+        unread_messages:
+          type: integer
+    InfoMessage:
+      type: object
+    AppointmentResponse:
+      type: object
+      properties:
+        error:
+          type: string
+    PointOfInterests:
+      type: object
+      properties:
+        maps:
+          type: object
+          properties:
+            filters:
+              type: array
+              items:
+                type: object
+            map_locations:
+              type: array
+              items:
+                type: object
+    Teacher:
+      type: object
+      properties:
+        teacher:
+          type: object
+    AppNavigation:
+      type: object
+      properties:
+        navigation_drawers:
+          type: array
+          items:
+            type: object
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+paths:
+  /auth/openid_connect:
+    get:
+      summary: Initiates the OpenID Connect authentication flow
+      description: Redirects the user to the university's identity provider for login.
+      responses:
+        '302':
+          description: Redirect
+  /auth/openid_connect/callback:
+    get:
+      summary: Handles the callback from the identity provider
+      description: Returns authentication tokens.
+      parameters:
+        - name: code
+          in: query
+          schema:
+            type: string
+        - name: state
+          in: query
+          schema:
+            type: string
+      responses:
+        '302':
+          description: Redirect
+  /user_profile:
+    get:
+      summary: Retrieves the authenticated user's profile information
+      parameters:
+        - $ref: '#/components/parameters/UidHeader'
+        - $ref: '#/components/parameters/ClientHeader'
+        - $ref: '#/components/parameters/AccessTokenHeader'
+        - name: fiscalCode
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+  /user_career:
+    get:
+      summary: Fetches detailed information about the student's academic career
+      parameters:
+        - $ref: '#/components/parameters/UidHeader'
+        - $ref: '#/components/parameters/ClientHeader'
+        - $ref: '#/components/parameters/AccessTokenHeader'
+        - name: matricId
+          in: query
+          schema:
+            type: integer
+        - name: personId
+          in: query
+          schema:
+            type: integer
+        - name: studentId
+          in: query
+          schema:
+            type: integer
+        - name: typeTitleCode
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserCareer'
+  /user_exams:
+    get:
+      summary: Retrieves the history of exams taken by the student
+      parameters:
+        - $ref: '#/components/parameters/UidHeader'
+        - $ref: '#/components/parameters/ClientHeader'
+        - $ref: '#/components/parameters/AccessTokenHeader'
+        - name: matricId
+          in: query
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserExams'
+  /user_appeals:
+    get:
+      summary: Gets information about exam sessions
+      parameters:
+        - $ref: '#/components/parameters/UidHeader'
+        - $ref: '#/components/parameters/ClientHeader'
+        - $ref: '#/components/parameters/AccessTokenHeader'
+        - name: matricId
+          in: query
+          schema:
+            type: integer
+        - name: personId
+          in: query
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserAppeals'
+  /user_fees:
+    get:
+      summary: Retrieves the student's tuition fee payment history
+      parameters:
+        - $ref: '#/components/parameters/UidHeader'
+        - $ref: '#/components/parameters/ClientHeader'
+        - $ref: '#/components/parameters/AccessTokenHeader'
+        - name: personId
+          in: query
+          schema:
+            type: integer
+        - name: matricId
+          in: query
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserFees'
+  /user_registrations:
+    get:
+      summary: Gets information about the student's course registrations
+      parameters:
+        - $ref: '#/components/parameters/UidHeader'
+        - $ref: '#/components/parameters/ClientHeader'
+        - $ref: '#/components/parameters/AccessTokenHeader'
+        - name: matricId
+          in: query
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserRegistrations'
+  /calendar:
+    get:
+      summary: Retrieves the academic calendar with scheduled events
+      parameters:
+        - $ref: '#/components/parameters/UidHeader'
+        - $ref: '#/components/parameters/ClientHeader'
+        - $ref: '#/components/parameters/AccessTokenHeader'
+        - name: matricId
+          in: query
+          schema:
+            type: integer
+        - name: date
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Calendar'
+  /calendar_courses:
+    get:
+      summary: Lists all courses available for adding to the personal calendar
+      parameters:
+        - $ref: '#/components/parameters/UidHeader'
+        - $ref: '#/components/parameters/ClientHeader'
+        - $ref: '#/components/parameters/AccessTokenHeader'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CalendarCourses'
+  /set_calendar:
+    post:
+      summary: Adds a course to the user's personal calendar
+      parameters:
+        - $ref: '#/components/parameters/UidHeader'
+        - $ref: '#/components/parameters/ClientHeader'
+        - $ref: '#/components/parameters/AccessTokenHeader'
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                user_id:
+                  type: string
+                cdsCode:
+                  type: string
+                activityCode:
+                  type: string
+                lessonName:
+                  type: string
+                courseCode:
+                  type: string
+                partition:
+                  type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SetCalendarResponse'
+  /course_detail:
+    get:
+      summary: Retrieves detailed information about a specific course
+      parameters:
+        - $ref: '#/components/parameters/UidHeader'
+        - $ref: '#/components/parameters/ClientHeader'
+        - $ref: '#/components/parameters/AccessTokenHeader'
+        - name: activityCode
+          in: query
+          schema:
+            type: string
+        - name: courseCode
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseDetail'
+  /wizard/categories:
+    get:
+      summary: Gets the list of academic area categories
+      parameters:
+        - $ref: '#/components/parameters/UidHeader'
+        - $ref: '#/components/parameters/ClientHeader'
+        - $ref: '#/components/parameters/AccessTokenHeader'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WizardCategories'
+  /wizard/degrees:
+    get:
+      summary: Retrieves available degree types for a specific academic category
+      parameters:
+        - $ref: '#/components/parameters/UidHeader'
+        - $ref: '#/components/parameters/ClientHeader'
+        - $ref: '#/components/parameters/AccessTokenHeader'
+        - name: category_code
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WizardDegrees'
+  /wizard/courses:
+    get:
+      summary: Lists degree programs available for a category and degree type combination
+      parameters:
+        - $ref: '#/components/parameters/UidHeader'
+        - $ref: '#/components/parameters/ClientHeader'
+        - $ref: '#/components/parameters/AccessTokenHeader'
+        - name: category_code
+          in: query
+          schema:
+            type: string
+        - name: degree_code
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WizardCourses'
+  /wizard/lessons:
+    get:
+      summary: Gets the list of lessons/courses for a specific degree program
+      parameters:
+        - $ref: '#/components/parameters/UidHeader'
+        - $ref: '#/components/parameters/ClientHeader'
+        - $ref: '#/components/parameters/AccessTokenHeader'
+        - name: category_code
+          in: query
+          schema:
+            type: string
+        - name: degree_code
+          in: query
+          schema:
+            type: string
+        - name: course_code
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WizardLessons'
+  /wizard/user_courses:
+    get:
+      summary: Retrieves the courses associated with the authenticated user's degree program
+      parameters:
+        - $ref: '#/components/parameters/UidHeader'
+        - $ref: '#/components/parameters/ClientHeader'
+        - $ref: '#/components/parameters/AccessTokenHeader'
+        - name: matricId
+          in: query
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WizardUserCourses'
+  /alerts:
+    get:
+      summary: Fetches notifications and alerts for the user
+      parameters:
+        - $ref: '#/components/parameters/UidHeader'
+        - $ref: '#/components/parameters/ClientHeader'
+        - $ref: '#/components/parameters/AccessTokenHeader'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Alerts'
+  /conversations:
+    get:
+      summary: Retrieves the list of message conversations the user has with teachers
+      parameters:
+        - $ref: '#/components/parameters/UidHeader'
+        - $ref: '#/components/parameters/ClientHeader'
+        - $ref: '#/components/parameters/AccessTokenHeader'
+        - name: page
+          in: query
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Conversations'
+  /messages/info_message:
+    get:
+      summary: Gets system-wide informational messages to display in the app
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InfoMessage'
+  /messages/appointment:
+    post:
+      summary: Sends an appointment request message to a teacher
+      parameters:
+        - $ref: '#/components/parameters/UidHeader'
+        - $ref: '#/components/parameters/ClientHeader'
+        - $ref: '#/components/parameters/AccessTokenHeader'
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                teacher_key:
+                  type: string
+                student_id:
+                  type: integer
+                message_body:
+                  type: string
+      responses:
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AppointmentResponse'
+  /point_of_interests:
+    get:
+      summary: Retrieves campus map data including buildings, cafeterias, libraries, and departments
+      parameters:
+        - $ref: '#/components/parameters/UidHeader'
+        - $ref: '#/components/parameters/ClientHeader'
+        - $ref: '#/components/parameters/AccessTokenHeader'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PointOfInterests'
+  /teacher:
+    get:
+      summary: Gets detailed information about a specific teacher
+      parameters:
+        - $ref: '#/components/parameters/UidHeader'
+        - $ref: '#/components/parameters/ClientHeader'
+        - $ref: '#/components/parameters/AccessTokenHeader'
+        - name: teacherEmail
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Teacher'
+  /app_navigations/navigation_drawer:
+    get:
+      summary: Retrieves the app's navigation drawer menu structure and configuration
+      parameters:
+        - $ref: '#/components/parameters/UidHeader'
+        - $ref: '#/components/parameters/ClientHeader'
+        - $ref: '#/components/parameters/AccessTokenHeader'
+        - name: locale
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AppNavigation'

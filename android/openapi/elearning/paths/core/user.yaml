@@ -1,0 +1,689 @@
+# Core User Web Service Functions
+
+core_user_get_users_by_field:
+  post:
+    operationId: core_user_get_users_by_field
+    summary: Get users by field
+    description: Retrieve users' information for a specified unique field
+    tags:
+      - core_user
+    requestBody:
+      required: true
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            type: object
+            properties:
+              wsfunction:
+                type: string
+                enum: [core_user_get_users_by_field]
+              wstoken:
+                type: string
+              field:
+                type: string
+                enum: [id, idnumber, username, email]
+                description: The search field
+              values[]:
+                type: array
+                items:
+                  type: string
+                description: Values to search for
+            required:
+              - wsfunction
+              - wstoken
+              - field
+              - values[]
+    responses:
+      '200':
+        description: List of users
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/CoreUserData'
+
+core_user_get_course_user_profiles:
+  post:
+    operationId: core_user_get_course_user_profiles
+    summary: Get course user profiles
+    description: Get user profiles in a specific course context
+    tags:
+      - core_user
+    requestBody:
+      required: true
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            type: object
+            properties:
+              wsfunction:
+                type: string
+                enum: [core_user_get_course_user_profiles]
+              wstoken:
+                type: string
+              userlist[0][userid]:
+                type: integer
+                description: User ID
+              userlist[0][courseid]:
+                type: integer
+                description: Course ID
+            required:
+              - wsfunction
+              - wstoken
+    responses:
+      '200':
+        description: List of user profiles
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/CoreUserCourseProfile'
+
+core_user_get_user_preferences:
+  post:
+    operationId: core_user_get_user_preferences
+    summary: Get user preferences
+    description: Get user preferences for a user
+    tags:
+      - core_user
+    requestBody:
+      required: true
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            type: object
+            properties:
+              wsfunction:
+                type: string
+                enum: [core_user_get_user_preferences]
+              wstoken:
+                type: string
+              name:
+                type: string
+                description: Preference name (empty for all preferences)
+              userid:
+                type: integer
+                description: User ID (0 for current user)
+            required:
+              - wsfunction
+              - wstoken
+    responses:
+      '200':
+        description: User preferences
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                preferences:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                      value:
+                        type: string
+                warnings:
+                  type: array
+                  items:
+                    $ref: '../schemas/common.yaml#/components/schemas/CoreWSExternalWarning'
+
+core_user_update_user_preferences:
+  post:
+    operationId: core_user_update_user_preferences
+    summary: Update user preferences
+    description: Update user preferences for a user
+    tags:
+      - core_user
+    requestBody:
+      required: true
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            type: object
+            properties:
+              wsfunction:
+                type: string
+                enum: [core_user_update_user_preferences]
+              wstoken:
+                type: string
+              userid:
+                type: integer
+                description: User ID (0 for current user)
+              emailstop:
+                type: integer
+                description: Enable or disable notifications
+              preferences[0][type]:
+                type: string
+                description: Preference name
+              preferences[0][value]:
+                type: string
+                description: Preference value
+            required:
+              - wsfunction
+              - wstoken
+    responses:
+      '200':
+        description: Successful response
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/common.yaml#/components/schemas/CoreWarningsWSResponse'
+
+core_user_update_picture:
+  post:
+    operationId: core_user_update_picture
+    summary: Update user picture
+    description: Update or delete the user picture in the site
+    tags:
+      - core_user
+    requestBody:
+      required: true
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            type: object
+            properties:
+              wsfunction:
+                type: string
+                enum: [core_user_update_picture]
+              wstoken:
+                type: string
+              draftitemid:
+                type: integer
+                description: Draft item ID
+              delete:
+                type: boolean
+                description: Whether to delete the picture
+              userid:
+                type: integer
+                description: User ID (0 for current user)
+            required:
+              - wsfunction
+              - wstoken
+              - draftitemid
+    responses:
+      '200':
+        description: Successful response
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                profileimageurl:
+                  type: string
+                  format: uri
+                warnings:
+                  type: array
+                  items:
+                    $ref: '../schemas/common.yaml#/components/schemas/CoreWSExternalWarning'
+
+core_user_agree_site_policy:
+  post:
+    operationId: core_user_agree_site_policy
+    summary: Agree to site policy
+    description: Mark the user as having agreed to the site policy
+    tags:
+      - core_user
+    requestBody:
+      required: true
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            type: object
+            properties:
+              wsfunction:
+                type: string
+                enum: [core_user_agree_site_policy]
+              wstoken:
+                type: string
+            required:
+              - wsfunction
+              - wstoken
+    responses:
+      '200':
+        description: Successful response
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: boolean
+                warnings:
+                  type: array
+                  items:
+                    $ref: '../schemas/common.yaml#/components/schemas/CoreWSExternalWarning'
+
+core_user_view_user_profile:
+  post:
+    operationId: core_user_view_user_profile
+    summary: View user profile
+    description: Trigger the user profile viewed event
+    tags:
+      - core_user
+    requestBody:
+      required: true
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            type: object
+            properties:
+              wsfunction:
+                type: string
+                enum: [core_user_view_user_profile]
+              wstoken:
+                type: string
+              userid:
+                type: integer
+                description: User ID
+              courseid:
+                type: integer
+                description: Course ID (0 for site profile)
+            required:
+              - wsfunction
+              - wstoken
+              - userid
+    responses:
+      '200':
+        description: Successful response
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/common.yaml#/components/schemas/CoreStatusWithWarningsWSResponse'
+
+core_user_view_user_list:
+  post:
+    operationId: core_user_view_user_list
+    summary: View user list
+    description: Trigger the user list viewed event
+    tags:
+      - core_user
+    requestBody:
+      required: true
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            type: object
+            properties:
+              wsfunction:
+                type: string
+                enum: [core_user_view_user_list]
+              wstoken:
+                type: string
+              courseid:
+                type: integer
+                description: Course ID
+            required:
+              - wsfunction
+              - wstoken
+              - courseid
+    responses:
+      '200':
+        description: Successful response
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/common.yaml#/components/schemas/CoreStatusWithWarningsWSResponse'
+
+core_user_add_user_device:
+  post:
+    operationId: core_user_add_user_device
+    summary: Add user device
+    description: Store mobile user devices information for push notifications
+    tags:
+      - core_user
+    requestBody:
+      required: true
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            type: object
+            properties:
+              wsfunction:
+                type: string
+                enum: [core_user_add_user_device]
+              wstoken:
+                type: string
+              appid:
+                type: string
+                description: App ID
+              name:
+                type: string
+                description: Device name
+              model:
+                type: string
+                description: Device model
+              platform:
+                type: string
+                description: Device platform
+              version:
+                type: string
+                description: Device version
+              pushid:
+                type: string
+                description: Push notification ID
+              uuid:
+                type: string
+                description: Device UUID
+            required:
+              - wsfunction
+              - wstoken
+              - appid
+              - name
+              - model
+              - platform
+              - version
+              - pushid
+              - uuid
+    responses:
+      '200':
+        description: Successful response
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                    description: Device ID
+                  warnings:
+                    type: array
+                    items:
+                      $ref: '../schemas/common.yaml#/components/schemas/CoreWSExternalWarning'
+
+core_user_remove_user_device:
+  post:
+    operationId: core_user_remove_user_device
+    summary: Remove user device
+    description: Remove a user device from the push notification table
+    tags:
+      - core_user
+    requestBody:
+      required: true
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            type: object
+            properties:
+              wsfunction:
+                type: string
+                enum: [core_user_remove_user_device]
+              wstoken:
+                type: string
+              uuid:
+                type: string
+                description: Device UUID
+              appid:
+                type: string
+                description: App ID
+            required:
+              - wsfunction
+              - wstoken
+              - uuid
+    responses:
+      '200':
+        description: Successful response
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                removed:
+                  type: boolean
+                warnings:
+                  type: array
+                  items:
+                    $ref: '../schemas/common.yaml#/components/schemas/CoreWSExternalWarning'
+
+core_user_get_private_files_info:
+  post:
+    operationId: core_user_get_private_files_info
+    summary: Get private files info
+    description: Returns general information about files in the user private files area
+    tags:
+      - core_user
+    requestBody:
+      required: true
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            type: object
+            properties:
+              wsfunction:
+                type: string
+                enum: [core_user_get_private_files_info]
+              wstoken:
+                type: string
+              userid:
+                type: integer
+                description: User ID (0 for current user)
+            required:
+              - wsfunction
+              - wstoken
+    responses:
+      '200':
+        description: Private files information
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                filecount:
+                  type: integer
+                  description: Number of files
+                foldercount:
+                  type: integer
+                  description: Number of folders
+                filesize:
+                  type: integer
+                  description: Total file size
+                filesizewithoutreferences:
+                  type: integer
+                  description: File size excluding external files
+                warnings:
+                  type: array
+                  items:
+                    $ref: '../schemas/common.yaml#/components/schemas/CoreWSExternalWarning'
+
+core_user_add_user_private_files:
+  post:
+    operationId: core_user_add_user_private_files
+    summary: Add user private files
+    description: Copy files from a draft area to users private files area
+    tags:
+      - core_user
+    requestBody:
+      required: true
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            type: object
+            properties:
+              wsfunction:
+                type: string
+                enum: [core_user_add_user_private_files]
+              wstoken:
+                type: string
+              draftid:
+                type: integer
+                description: Draft item ID
+            required:
+              - wsfunction
+              - wstoken
+              - draftid
+    responses:
+      '200':
+        description: Successful response
+        content:
+          application/json:
+            schema:
+              type: 'null'
+
+components:
+  schemas:
+    CoreUserData:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: User ID
+        username:
+          type: string
+          description: Username
+        firstname:
+          type: string
+          description: First name
+        lastname:
+          type: string
+          description: Last name
+        fullname:
+          type: string
+          description: Full name
+        email:
+          type: string
+          format: email
+          description: Email address
+        address:
+          type: string
+          description: Postal address
+        phone1:
+          type: string
+          description: Phone 1
+        phone2:
+          type: string
+          description: Phone 2
+        department:
+          type: string
+          description: Department
+        institution:
+          type: string
+          description: Institution
+        idnumber:
+          type: string
+          description: ID number
+        interests:
+          type: string
+          description: User interests
+        firstaccess:
+          type: integer
+          description: First access timestamp
+        lastaccess:
+          type: integer
+          description: Last access timestamp
+        auth:
+          type: string
+          description: Auth method
+        suspended:
+          type: boolean
+          description: Whether user is suspended
+        confirmed:
+          type: boolean
+          description: Whether user is confirmed
+        lang:
+          type: string
+          description: Language
+        calendartype:
+          type: string
+          description: Calendar type
+        theme:
+          type: string
+          description: Theme
+        timezone:
+          type: string
+          description: Timezone
+        mailformat:
+          type: integer
+          description: Mail format
+        description:
+          type: string
+          description: User description
+        descriptionformat:
+          type: integer
+          description: Description format
+        city:
+          type: string
+          description: City
+        country:
+          type: string
+          description: Country code
+        profileimageurlsmall:
+          type: string
+          format: uri
+          description: Small profile image URL
+        profileimageurl:
+          type: string
+          format: uri
+          description: Profile image URL
+        customfields:
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+              value:
+                type: string
+              name:
+                type: string
+              shortname:
+                type: string
+        preferences:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              value:
+                type: string
+
+    CoreUserCourseProfile:
+      allOf:
+        - $ref: '#/components/schemas/CoreUserData'
+        - type: object
+          properties:
+            groups:
+              type: array
+              items:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                  name:
+                    type: string
+                  description:
+                    type: string
+                  descriptionformat:
+                    type: integer
+            roles:
+              type: array
+              items:
+                type: object
+                properties:
+                  roleid:
+                    type: integer
+                  name:
+                    type: string
+                  shortname:
+                    type: string
+                  sortorder:
+                    type: integer
+            enrolledcourses:
+              type: array
+              items:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                  fullname:
+                    type: string
+                  shortname:
+                    type: string
