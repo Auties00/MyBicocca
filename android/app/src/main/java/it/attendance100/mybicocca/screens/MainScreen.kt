@@ -21,6 +21,7 @@ import androidx.navigation.*
 import it.attendance100.mybicocca.*
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.components.*
+import it.attendance100.mybicocca.screens.career.*
 import it.attendance100.mybicocca.ui.theme.*
 import it.attendance100.mybicocca.utils.*
 import it.attendance100.mybicocca.viewmodel.*
