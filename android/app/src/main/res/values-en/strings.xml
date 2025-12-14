@@ -36,7 +36,7 @@
   <!-- Career Page -->
   <string name="career_tab_profilo">Profile</string>
   <string name="career_tab_piano">Plan</string>
-  <string name="career_tab_esami">Exams</string>
+  <string name="career_tab_libretto">Grade Book</string>
   <string name="career_tab_luoghi">Places</string>
   <string name="career_dati">Personal Data</string>
   <string name="career_statistiche">Statistics</string>

@@ -76,6 +76,7 @@ dependencies {
   implementation("androidx.compose.ui:ui-text-google-fonts:1.9.5")
   implementation("androidx.wear.compose:compose-material3:1.5.5")
   implementation("androidx.compose.foundation:foundation:1.9.5")
+  implementation("androidx.compose.ui:ui-graphics:1.10.0")
 
   // Core library desugaring for java.time API on older Android versions
   coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
