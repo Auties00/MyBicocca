@@ -15,7 +15,6 @@
     <item name="colorAccent">@color/primary</item>
     <item name="colorPrimary">@color/primary</item>
     <item name="colorPrimaryDark">@color/primary</item>
-    <item name="colorAccent">@color/primary</item>
     <item name="android:colorBackground">@color/launcher_background</item>
     <item name="android:color">@color/launcher_background</item>
     <item name="android:fitsSystemWindows">true</item>
