@@ -1,143 +1,131 @@
 package it.attendance100.mybicocca.utils
 
-import androidx.compose.foundation.*
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
-import androidx.compose.ui.*
-import androidx.compose.ui.draw.*
-import androidx.compose.ui.graphics.*
-import androidx.compose.ui.graphics.vector.*
-import androidx.compose.ui.unit.*
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
 import it.attendance100.mybicocca.R
-import it.attendance100.mybicocca.data.entities.*
+import it.attendance100.mybicocca.data.entities.CourseEvent
+import it.attendance100.mybicocca.data.entities.EventType
+import it.attendance100.mybicocca.ui.theme.*
 import java.time.*
 import java.time.format.*
 import java.util.*
 
 /**
- * Utility object per funzioni e costanti riutilizzabili nel calendario
+ * Calendar utility functions and constants.
  */
 object CalendarUtils {
 
-  // Costanti per colori eventi
-  private const val COLOR_LECTURE = 0xFF8B5CF6      // Viola
-  private const val COLOR_LAB = 0xFF06B6D4          // Cyan
-  private const val COLOR_EXAM = 0xFFEF4444         // Rosso
-  private const val COLOR_OFFICE_HOURS = 0xFFF59E0B // Amber
+    const val BICOCCA_BRAND_COLOR = "#9C0C35"
+    const val TEST_EVENT_ID_START = 1001L
+    const val TEST_EVENT_ID_END = 9999L
 
-  // Colore brand Bicocca
-  const val BICOCCA_BRAND_COLOR = "#9C0C35"
+    // Calendar Screen Constants
+    const val PAGER_INITIAL_PAGE_OFFSET = Int.MAX_VALUE / 2
+    const val PAGER_PAGE_COUNT = Int.MAX_VALUE
+    val DAY_SELECTOR_HEIGHT = 72.dp
 
-  // Range ID per dati di test (1001-9999 riservati per mock data)
-  const val TEST_EVENT_ID_START = 1001L
-  const val TEST_EVENT_ID_END = 9999L
+    // Day Timeline Constants
+    val CURRENT_TIME_DOT_SIZE = 12.dp
+    val CURRENT_TIME_LINE_HEIGHT = 2.dp
+    val EVENT_CARD_CORNER_RADIUS = 16.dp
+    val COLOR_BAR_WIDTH = 4.dp
+    const val PULSE_DURATION_MS = 2000
+    const val START_HOUR = 7
+    const val END_HOUR = 22
 
-  // Costanti UI per il calendario
-  val HOUR_SLOT_HEIGHT = 80.dp       // Altezza di uno slot orario nella vista griglia
-  val WEEK_START_HOUR = 8            // Ora di inizio visualizzazione settimana
-  val WEEK_END_HOUR = 20             // Ora di fine visualizzazione settimana
-  val WEEK_TOTAL_HOURS = WEEK_END_HOUR - WEEK_START_HOUR // 12 ore totali
+    // Week Grid Constants
+    val TIME_COLUMN_WIDTH = 50.dp
+    const val EVENT_HORIZONTAL_PADDING = 2
+    const val TOTAL_DAYS = 7
+    val OVERLAP_OFFSET = 4.dp
 
+    // Pinch-to-Zoom Constants
+    // MIN_ZOOM è calcolato dinamicamente in WeekGridView basato sull'altezza dello schermo
+    // Questo valore è un fallback di sicurezza
+    const val MIN_ZOOM_FALLBACK = 0.4f
+    const val MAX_ZOOM = 1.5f
+    const val DEFAULT_ZOOM = 1.0f
 
-  /**
-   * Formattatore per orari (HH:mm)
-   */
-  val timeFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm")
+    // Compact View Constants (quando zoom è al minimo)
+    val COMPACT_EVENT_HEIGHT = 28.dp
 
-  /**
-   * Formattatore per date complete (EEEE d MMMM yyyy)
-   */
-  fun fullDateFormatter(locale: Locale = Locale.ITALIAN): DateTimeFormatter =
-      DateTimeFormatter.ofPattern("EEEE d MMMM yyyy", locale)
+    // Stack Constants (per card sovrapposte)
+    val STACK_CARD_CORNER_RADIUS = 16.dp
+    val STACK_COLOR_BAR_WIDTH = 4.dp
+    val STACK_OFFSET_X = 10.dp
+    val STACK_OFFSET_Y = 6.dp
+    const val SWIPE_THRESHOLD = 0.25f
+    const val VELOCITY_THRESHOLD = 400f
+    const val MAX_VISIBLE_CARDS = 3
 
-  /**
-   * Formattatore per mese e anno (MMMM yyyy)
-   */
-  fun monthYearFormatter(locale: Locale = Locale.getDefault()): DateTimeFormatter =
-      DateTimeFormatter.ofPattern("MMMM", locale)
+    // Week Grid Time Constants
+    val HOUR_SLOT_HEIGHT = 80.dp
+    const val WEEK_START_HOUR = 8
+    const val WEEK_END_HOUR = 20
+    const val WEEK_TOTAL_HOURS = WEEK_END_HOUR - WEEK_START_HOUR
 
-  /**
-   * Restituisce il colore associato a un tipo di evento
-   */
-  fun getEventColor(eventType: EventType, primaryColor: Color): Color {
-    return when (eventType) {
-      EventType.LECTURE -> Color(COLOR_LECTURE)
-      EventType.LAB -> Color(COLOR_LAB)
-      EventType.EXAM -> Color(COLOR_EXAM)
-      EventType.OFFICE_HOURS -> Color(COLOR_OFFICE_HOURS)
-      EventType.OTHER -> primaryColor
+    // Formatters
+    val timeFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm")
+
+    fun fullDateFormatter(locale: Locale = Locale.ITALIAN): DateTimeFormatter =
+        DateTimeFormatter.ofPattern("EEEE d MMMM yyyy", locale)
+
+    fun monthYearFormatter(locale: Locale = Locale.getDefault()): DateTimeFormatter =
+        DateTimeFormatter.ofPattern("MMMM", locale)
+
+    fun getEventColor(eventType: EventType, primaryColor: Color): Color = when (eventType) {
+        EventType.LECTURE -> EventLectureColor
+        EventType.LAB -> EventLabColor
+        EventType.EXAM -> EventExamColor
+        EventType.OTHER -> primaryColor
     }
-  }
 
-  /**
-   * Restituisce l'ID della risorsa string per un tipo di evento
-   */
-  fun getEventTypeStringRes(eventType: EventType): Int {
-    return when (eventType) {
-      EventType.LECTURE -> R.string.event_type_lecture
-      EventType.LAB -> R.string.event_type_lab
-      EventType.EXAM -> R.string.event_type_exam
-      EventType.OFFICE_HOURS -> R.string.event_type_office_hours
-      EventType.OTHER -> R.string.event_type_other
+    fun getEventTypeStringRes(eventType: EventType): Int = when (eventType) {
+        EventType.LECTURE -> R.string.event_type_lecture
+        EventType.LAB -> R.string.event_type_lab
+        EventType.EXAM -> R.string.event_type_exam
+        EventType.OTHER -> R.string.event_type_other
     }
-  }
 
-  /**
-   * Verifica se una data è oggi
-   */
-  fun isToday(date: LocalDate): Boolean = date == LocalDate.now()
+    fun isToday(date: LocalDate): Boolean = date == LocalDate.now()
 
-  /**
-   * Formatta un orario nel formato HH:mm
-   */
-  @Composable
-  fun formatTime(hour: Int, minute: Int, locale: Locale? = getCurrentLocale()): String {
-    return String.format(locale, "%02d:%02d", hour, minute)
-  }
-}
+    fun formatTime(hour: Int, minute: Int): String =
+        String.format(Locale.getDefault(), "%02d:%02d", hour, minute)
 
-/**
- * Composable riutilizzabile per icone circolari con background
- */
-@Composable
-fun CircularIconBackground(
-  icon: ImageVector,
-  backgroundColor: Color,
-  iconTint: Color,
-  size: Dp = 40.dp,
-  iconSize: Dp = 20.dp,
-  contentDescription: String? = null,
-) {
-  Box(
-    modifier = Modifier
-        .size(size)
-        .clip(CircleShape)
-        .background(backgroundColor),
-    contentAlignment = Alignment.Center
-  ) {
-    Icon(
-      imageVector = icon,
-      contentDescription = contentDescription,
-      tint = iconTint,
-      modifier = Modifier.size(iconSize)
-    )
-  }
-}
+    fun formatDuration(start: LocalDateTime, end: LocalDateTime): String {
+        val duration = Duration.between(start, end)
+        val hours = duration.toHours()
+        val minutes = duration.toMinutes() % 60
+        return buildString {
+            if (hours > 0) append("${hours}h ")
+            if (minutes > 0) append("${minutes}min")
+        }.trim()
+    }
 
-/**
- * Composable per indicatore "oggi" (pallino)
- */
-@Composable
-fun TodayIndicator(
-  color: Color,
-  size: Dp = 4.dp,
-) {
-  Box(
-    modifier = Modifier
-        .size(size)
-        .clip(CircleShape)
-        .background(color)
-  )
+    fun formatEventLocation(room: String?, building: String?): String? {
+        return when {
+            room != null && building != null -> "$room - $building"
+            room != null -> room
+            building != null -> building
+            else -> null
+        }
+    }
+
+    fun calculateEventProgress(event: CourseEvent): Float {
+        val now = LocalDateTime.now()
+        val start = event.startTime
+        val end = event.endTime
+
+        if (now.isBefore(start)) return 0f
+        if (now.isAfter(end)) return 1f
+
+        val totalDuration = Duration.between(start, end).toMinutes()
+        val elapsedDuration = Duration.between(start, now).toMinutes()
+
+        return if (totalDuration > 0) {
+            (elapsedDuration.toFloat() / totalDuration).coerceIn(0f, 1f)
+        } else {
+            0f
+        }
+    }
 }

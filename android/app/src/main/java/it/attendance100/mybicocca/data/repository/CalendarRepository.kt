@@ -90,8 +90,12 @@ class CalendarRepository @Inject constructor(
           if (success && !isInitialized) {
                 // Carica eventi iniziali nella cache locale
                 val currentMonth = YearMonth.now()
-                val events = dataSource.getEventsForMonth(currentMonth)
-                events.forEach { event ->
+                val nextMonth = currentMonth.plusMonths(1)
+
+                val currentEvents = dataSource.getEventsForMonth(currentMonth)
+                val nextEvents = dataSource.getEventsForMonth(nextMonth)
+
+                (currentEvents + nextEvents).forEach { event ->
                     eventDao.insert(event)
                 }
                 isInitialized = true
