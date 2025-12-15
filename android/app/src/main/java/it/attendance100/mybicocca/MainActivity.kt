@@ -16,32 +16,35 @@ import androidx.compose.ui.*
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.graphics.Color.Companion.Transparent
 import androidx.compose.ui.platform.*
+import androidx.compose.ui.unit.*
 import androidx.navigation.*
 import androidx.navigation.compose.*
 import dagger.hilt.android.*
 import it.attendance100.mybicocca.screens.*
 import it.attendance100.mybicocca.screens.login.*
+import it.attendance100.mybicocca.screens.profilo.*
 import it.attendance100.mybicocca.screens.settings.*
 import it.attendance100.mybicocca.ui.theme.*
 import it.attendance100.mybicocca.utils.*
 import javax.inject.*
+import kotlin.math.*
 
 // Navigation routes
 sealed class Screen(val route: String) {
   object Splash : Screen("splash")
-  object Home : Screen("home")
-  object Profile : Screen("profile")
-  object LoginManager : Screen("login_manager")
-  object Settings : Screen("settings")
-  object SettingsAppearance : Screen("settings_appearance")
-  object SettingsGeneral : Screen("settings_general")
-  object SettingsBehaviour : Screen("settings_behaviour")
-  object SettingsSecurity : Screen("settings_security")
-  object SettingsDeveloper : Screen("settings_developer")
-  object AppInfo : Screen("app_info")
-  object Login : Screen("login_webview")
-  object ApiTest : Screen("api_test")
-
+  object Home : Screen("/")
+  object Profile : Screen("/profile")
+  object Esami : Screen("/profile/esami")
+  object Settings : Screen("/settings")
+  object SettingsAppearance : Screen("/settings/settings_appearance")
+  object SettingsGeneral : Screen("/settings/settings_general")
+  object SettingsBehaviour : Screen("/settings/settings_behaviour")
+  object SettingsSecurity : Screen("/settings/settings_security")
+  object SettingsDeveloper : Screen("/settings/settings_developer")
+  object LoginManager : Screen("/settings/login_manager")
+  object Login : Screen("/settings/login_manager/login_webview")
+  object AppInfo : Screen("/settings/app_info")
+  object ApiTest : Screen("/settings/settings_developer/api_test")
 }
 
 
@@ -130,36 +133,42 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun AppNavigation(onThemeChange: (Boolean) -> Unit) {
   val navController = rememberNavController()
+  val x: Int = with(LocalDensity.current) { 35.dp.toPx().roundToInt() }
+  val y: Int = with(LocalDensity.current) { 30.dp.toPx().roundToInt() }
+
+  val kDefaultPopExitTransition = scaleOut(
+    targetScale = 0.9f,
+    transformOrigin = TransformOrigin(pivotFractionX = 0.5f, pivotFractionY = 0.5f),
+    animationSpec = tween(300, easing = CubicBezierEasing(0f, 1f, 0.57f, 0.93f))
+  ) + fadeOut(
+    targetAlpha = 0.1f,
+    animationSpec = tween(300, easing = CubicBezierEasing(0f, 1f, 0.57f, 0.93f))
+  ) + slideOutHorizontally(
+    targetOffsetX = { it / 4 },
+    animationSpec = tween(300, easing = CubicBezierEasing(0f, 1f, 0.57f, 0.93f))
+  )
+
+  val kDefaultPopEnterTransition = slideInHorizontally(
+    initialOffsetX = { -it / 2 },
+    animationSpec = tween(300, easing = CubicBezierEasing(0f, 1f, 0.57f, 0.93f))
+  )
 
   SharedTransitionLayout {
     NavHost(
       navController = navController,
       startDestination = Screen.Splash.route,
       popExitTransition = {
-        scaleOut(
-          targetScale = 0.9f,
-          transformOrigin = TransformOrigin(pivotFractionX = 0.5f, pivotFractionY = 0.5f),
-          animationSpec = tween(300, easing = CubicBezierEasing(0f, 1f, 0.57f, 0.93f))
-        ) + fadeOut(
-          targetAlpha = 0.1f,
-          animationSpec = tween(300, easing = CubicBezierEasing(0f, 1f, 0.57f, 0.93f))
-        ) + slideOutHorizontally(
-          targetOffsetX = { it / 4 },
-          animationSpec = tween(300, easing = CubicBezierEasing(0f, 1f, 0.57f, 0.93f))
-        )
+        kDefaultPopExitTransition
       },
       popEnterTransition = {
-        slideInHorizontally(
-          initialOffsetX = { -it / 2 },
-          animationSpec = tween(300, easing = CubicBezierEasing(0f, 1f, 0.57f, 0.93f))
-        )
+        kDefaultPopEnterTransition
       },
     ) {
       composable(Screen.Splash.route) {
         SplashScreen(navController)
       }
       composable(
-        route = "home?page={page}&tab={tab}",
+        route = "/?page={page}&tab={tab}",
         arguments = listOf(
           navArgument("page") {
             type = NavType.IntType
@@ -175,8 +184,33 @@ fun AppNavigation(onThemeChange: (Boolean) -> Unit) {
         val tab = backStackEntry.arguments?.getInt("tab") ?: 0
         HomePage(navController, this@SharedTransitionLayout, this, initialPage = page, initialTab = tab)
       }
-      composable(Screen.Profile.route) { _ ->
+      composable(
+        route = Screen.Profile.route,
+        enterTransition = {
+          scaleIn(
+            initialScale = 0.0f,
+            transformOrigin = TransformOrigin(pivotFractionX = 0.06f, pivotFractionY = 0.05f),
+          ) + fadeIn(
+            animationSpec = tween(300, easing = CubicBezierEasing(0f, 1f, 0.57f, 0.93f))
+          )
+        },
+        popExitTransition = {
+          scaleOut(
+            targetScale = 0.0f,
+            transformOrigin = TransformOrigin(pivotFractionX = 0.06f, pivotFractionY = 0.05f),
+            animationSpec = tween(300, easing = CubicBezierEasing(0f, 1f, 0.57f, 0.93f))
+          ) + fadeOut(
+            animationSpec = tween(300, easing = CubicBezierEasing(0f, 1f, 0.57f, 0.93f))
+          )
+        },
+        popEnterTransition = {
+          kDefaultPopEnterTransition
+        }
+      ) { _ ->
         ProfiloScreen(navController, this@SharedTransitionLayout, this)
+      }
+      composable(Screen.Esami.route) {
+        EsamiScreen(navController, this@SharedTransitionLayout, this)
       }
       composable(Screen.LoginManager.route) { _ ->
         LoginManagerScreen(navController, this@SharedTransitionLayout, this)

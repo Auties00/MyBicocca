@@ -57,6 +57,7 @@ fun AppInfoScreen(
       Surface(
         modifier = Modifier
             .fillMaxWidth()
+            .statusBarsPadding()
             .height(60.dp),
         color = MaterialTheme.colorScheme.background
       ) {

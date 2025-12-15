@@ -10,9 +10,11 @@ import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.*
+import androidx.compose.ui.res.*
 import androidx.compose.ui.unit.*
 import androidx.compose.ui.viewinterop.*
 import androidx.hilt.lifecycle.viewmodel.compose.*
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.viewmodel.login.*
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -37,7 +39,10 @@ fun LoginWebViewScreen(
         title = { Text("University Login") },
         navigationIcon = {
           IconButton(onClick = onBack) {
-            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+            Icon(
+              Icons.AutoMirrored.Filled.ArrowBack,
+              contentDescription = stringResource(R.string.arrow_back),
+            )
           }
         }
       )
