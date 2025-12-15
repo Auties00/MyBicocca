@@ -1,5 +1,6 @@
-package it.attendance100.mybicocca.screens
+package it.attendance100.mybicocca.screens.settings
 
+import android.util.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.*
 import androidx.compose.material.icons.*
@@ -81,10 +82,10 @@ class ApiTestViewModel @Inject constructor(
   private fun testUserProfile(id: String) {
     viewModelScope.launch {
       updateState(id, isLoading = true)
-      android.util.Log.d("ApiTestViewModel", "testUserProfile: Starting...")
+      Log.d("ApiTestViewModel", "testUserProfile: Starting...")
       try {
         val fiscalCode = preferencesManager.authFiscalCode
-        android.util.Log.d("ApiTestViewModel", "testUserProfile: FiscalCode: $fiscalCode")
+        Log.d("ApiTestViewModel", "testUserProfile: FiscalCode: $fiscalCode")
         val response = apiService.getUserProfile(fiscalCode)
 
         // Cache IDs
@@ -97,10 +98,10 @@ class ApiTestViewModel @Inject constructor(
         }
 
         updateState(id, isLoading = false, response = gson.toJson(response))
-        android.util.Log.d("ApiTestViewModel", "testUserProfile: Success")
+        Log.d("ApiTestViewModel", "testUserProfile: Success")
       } catch (e: Exception) {
         updateState(id, isLoading = false, response = "Error: ${e.message}\n\nStack Trace:\n${e.stackTraceToString()}")
-        android.util.Log.e("ApiTestViewModel", "testUserProfile: Error", e)
+        Log.e("ApiTestViewModel", "testUserProfile: Error", e)
       }
     }
   }
@@ -108,7 +109,7 @@ class ApiTestViewModel @Inject constructor(
   private fun testUserCareer(id: String) {
     viewModelScope.launch {
       updateState(id, isLoading = true)
-      android.util.Log.d("ApiTestViewModel", "testUserCareer: Starting...")
+      Log.d("ApiTestViewModel", "testUserCareer: Starting...")
       try {
         val fiscalCode = preferencesManager.authFiscalCode
 
@@ -120,7 +121,7 @@ class ApiTestViewModel @Inject constructor(
         if (stuId == null || matId == null || personId == null) {
           if (fiscalCode != null) {
             try {
-              android.util.Log.d("ApiTestViewModel", "testUserCareer: Fetching profile for IDs...")
+              Log.d("ApiTestViewModel", "testUserCareer: Fetching profile for IDs...")
               val profile = apiService.getUserProfile(fiscalCode)
               val career = profile.careers?.firstOrNull()
               stuId = career?.studentId
@@ -136,26 +137,26 @@ class ApiTestViewModel @Inject constructor(
                 preferencesManager.userTypeTitleCode = career.typeTitleCode
               }
 
-              android.util.Log.d("ApiTestViewModel", "testUserCareer: IDs found - stuId: $stuId, matId: $matId, personId: $personId, typeTitleCode: $typeTitleCode")
+              Log.d("ApiTestViewModel", "testUserCareer: IDs found - stuId: $stuId, matId: $matId, personId: $personId, typeTitleCode: $typeTitleCode")
             } catch (e: Exception) {
               updateState(id, isLoading = false, response = "Error fetching profile to get IDs: ${e.message}\n${e.stackTraceToString()}")
-              android.util.Log.e("ApiTestViewModel", "testUserCareer: Error fetching profile", e)
+              Log.e("ApiTestViewModel", "testUserCareer: Error fetching profile", e)
               return@launch
             }
           } else {
-            android.util.Log.w("ApiTestViewModel", "testUserCareer: FiscalCode is null")
+            Log.w("ApiTestViewModel", "testUserCareer: FiscalCode is null")
           }
         } else {
-          android.util.Log.d("ApiTestViewModel", "testUserCareer: IDs found in cache.")
+          Log.d("ApiTestViewModel", "testUserCareer: IDs found in cache.")
         }
 
-        android.util.Log.d("ApiTestViewModel", "testUserCareer: Calling getUserCareer...")
+        Log.d("ApiTestViewModel", "testUserCareer: Calling getUserCareer...")
         val response = apiService.getUserCareer(stuId, matId, personId, typeTitleCode)
         updateState(id, isLoading = false, response = gson.toJson(response))
-        android.util.Log.d("ApiTestViewModel", "testUserCareer: Success")
+        Log.d("ApiTestViewModel", "testUserCareer: Success")
       } catch (e: Exception) {
         updateState(id, isLoading = false, response = "Error: ${e.message}\n\nStack Trace:\n${e.stackTraceToString()}")
-        android.util.Log.e("ApiTestViewModel", "testUserCareer: Error", e)
+        Log.e("ApiTestViewModel", "testUserCareer: Error", e)
       }
     }
   }
@@ -163,7 +164,7 @@ class ApiTestViewModel @Inject constructor(
   private fun testUserExams(id: String) {
     viewModelScope.launch {
       updateState(id, isLoading = true)
-      android.util.Log.d("ApiTestViewModel", "testUserExams: Starting...")
+      Log.d("ApiTestViewModel", "testUserExams: Starting...")
       try {
         val fiscalCode = preferencesManager.authFiscalCode
         var matId: Int? = preferencesManager.userMatricId.takeIf { it != -1 }
@@ -171,7 +172,7 @@ class ApiTestViewModel @Inject constructor(
         if (matId == null) {
           if (fiscalCode != null) {
             try {
-              android.util.Log.d("ApiTestViewModel", "testUserExams: Fetching profile for IDs...")
+              Log.d("ApiTestViewModel", "testUserExams: Fetching profile for IDs...")
               val profile = apiService.getUserProfile(fiscalCode)
               val career = profile.careers?.firstOrNull()
               matId = career?.matricId
@@ -184,26 +185,26 @@ class ApiTestViewModel @Inject constructor(
                 preferencesManager.userTypeTitleCode = career.typeTitleCode
               }
 
-              android.util.Log.d("ApiTestViewModel", "testUserExams: IDs found - matId: $matId")
+              Log.d("ApiTestViewModel", "testUserExams: IDs found - matId: $matId")
             } catch (e: Exception) {
               updateState(id, isLoading = false, response = "Error fetching profile to get IDs: ${e.message}\n${e.stackTraceToString()}")
-              android.util.Log.e("ApiTestViewModel", "testUserExams: Error fetching profile", e)
+              Log.e("ApiTestViewModel", "testUserExams: Error fetching profile", e)
               return@launch
             }
           } else {
-            android.util.Log.w("ApiTestViewModel", "testUserExams: FiscalCode is null")
+            Log.w("ApiTestViewModel", "testUserExams: FiscalCode is null")
           }
         } else {
-          android.util.Log.d("ApiTestViewModel", "testUserExams: IDs found in cache.")
+          Log.d("ApiTestViewModel", "testUserExams: IDs found in cache.")
         }
 
-        android.util.Log.d("ApiTestViewModel", "testUserExams: Calling getUserExams...")
+        Log.d("ApiTestViewModel", "testUserExams: Calling getUserExams...")
         val response = apiService.getUserExams(matId)
         updateState(id, isLoading = false, response = gson.toJson(response))
-        android.util.Log.d("ApiTestViewModel", "testUserExams: Success")
+        Log.d("ApiTestViewModel", "testUserExams: Success")
       } catch (e: Exception) {
         updateState(id, isLoading = false, response = "Error: ${e.message}\n\nStack Trace:\n${e.stackTraceToString()}")
-        android.util.Log.e("ApiTestViewModel", "testUserExams: Error", e)
+        Log.e("ApiTestViewModel", "testUserExams: Error", e)
       }
     }
   }
@@ -226,6 +227,7 @@ fun ApiTestScreen(
       Surface(
         modifier = Modifier
             .fillMaxWidth()
+            .statusBarsPadding()
             .height(60.dp),
         color = backgroundColor
       ) {

@@ -1,4 +1,4 @@
-package it.attendance100.mybicocca.screens
+package it.attendance100.mybicocca.screens.settings
 
 import android.app.*
 import android.content.*
@@ -43,6 +43,7 @@ fun SettingsSubScreenScaffold(
       Surface(
         modifier = Modifier
             .fillMaxWidth()
+            .statusBarsPadding()
             .height(60.dp),
         color = MaterialTheme.colorScheme.background
       ) {

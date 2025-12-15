@@ -25,6 +25,7 @@
 **/android/local.properties
 **/android/**/GeneratedPluginRegistrant.java
 **/android/key.properties
+**/keystore.properties
 *.jks
 
 # iOS/XCode related

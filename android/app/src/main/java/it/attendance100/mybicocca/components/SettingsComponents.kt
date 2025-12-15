@@ -3,6 +3,7 @@ package it.attendance100.mybicocca.components
 import android.content.res.*
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.*
 import androidx.compose.material.icons.*
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -47,12 +48,20 @@ private fun SettingItemTexts(title: String, subtitle: String?, titleColor: Color
 }
 
 @Composable
+fun cardColors(): CardColors {
+  return CardDefaults.cardColors(
+    containerColor = MaterialTheme.colorScheme.background,
+    disabledContainerColor = MaterialTheme.colorScheme.background,
+  )
+}
+
+@Composable
 fun SimpleCategorySettingItem(
+  modifier: Modifier = Modifier,
   title: String,
   subtitle: String?,
-  icon: ImageVector,
+  icon: ImageVector? = null,
   onClick: () -> Unit,
-  modifier: Modifier = Modifier,
   primaryColor: Color = MaterialTheme.colorScheme.primary,
   textColor: Color = MaterialTheme.colorScheme.onBackground,
   grayColor: Color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -61,16 +70,21 @@ fun SimpleCategorySettingItem(
   verticalPadding: Dp = 16.dp,
   enabled: Boolean = true,
   haptic: HapticManager = rememberHapticManager(),
+  borderRadius: Dp = 0.dp,
 ) {
-  Surface(
+  Card(
+    onClick = {
+      haptic.tap()
+      onClick()
+    },
+    enabled = enabled,
+    shape = RoundedCornerShape(borderRadius),
     modifier = modifier
         .fillMaxWidth()
         .alpha(if (enabled) 1f else 0.38f)
-        .clickable(enabled = enabled) {
-          haptic.tap()
-          onClick()
-        },
-    color = MaterialTheme.colorScheme.background
+        .clip(RoundedCornerShape(borderRadius)),
+    // color = MaterialTheme.colorScheme.background
+    colors = cardColors()
   ) {
     Row(
       modifier = Modifier
@@ -85,7 +99,7 @@ fun SimpleCategorySettingItem(
       ) {
         if (iconComposable != null) {
           iconComposable()
-        } else {
+        } else if (icon != null) {
           SettingItemIcon(icon, primaryColor)
         }
         SettingItemTexts(title, subtitle, textColor, grayColor)
@@ -99,16 +113,17 @@ fun SimpleCategorySettingItem(
 
 @Composable
 fun DialogOpenerSettingItem(
+  modifier: Modifier = Modifier,
   title: String,
   subtitle: String?,
-  icon: ImageVector,
+  icon: ImageVector? = null,
   onClick: () -> Unit,
-  modifier: Modifier = Modifier,
   primaryColor: Color = MaterialTheme.colorScheme.primary,
   textColor: Color = MaterialTheme.colorScheme.onBackground,
   grayColor: Color = MaterialTheme.colorScheme.onSurfaceVariant,
   iconComposable: (@Composable () -> Unit)? = null,
   enabled: Boolean = true,
+  borderRadius: Dp = 0.dp,
 ) {
   SimpleCategorySettingItem(
     title = title,
@@ -128,7 +143,8 @@ fun DialogOpenerSettingItem(
     },
     iconComposable = iconComposable,
     verticalPadding = 16.dp,
-    enabled = enabled
+    enabled = enabled,
+    borderRadius = borderRadius,
   )
 }
 
@@ -145,16 +161,21 @@ fun SimpleSwitchSettingItem(
   grayColor: Color = MaterialTheme.colorScheme.onSurfaceVariant,
   enabled: Boolean = true,
   haptic: HapticManager = rememberHapticManager(),
+  borderRadius: Dp = 0.dp,
 ) {
-  Surface(
+  Card(
+    onClick = {
+      haptic.tap()
+      onCheckedChange(!checked)
+    },
+    enabled = enabled,
+    shape = RoundedCornerShape(borderRadius),
     modifier = modifier
         .fillMaxWidth()
         .alpha(if (enabled) 1f else 0.38f)
-        .clickable(enabled = enabled) {
-          haptic.tap()
-          onCheckedChange(!checked)
-        },
-    color = MaterialTheme.colorScheme.background
+        .clip(RoundedCornerShape(borderRadius)),
+    // color = MaterialTheme.colorScheme.background,
+    colors = cardColors()
   ) {
     Row(
       modifier = Modifier
@@ -203,6 +224,7 @@ fun AdvancedSwitchSettingItem(
   grayColor: Color = MaterialTheme.colorScheme.onSurfaceVariant,
   enabled: Boolean = true,
   haptic: HapticManager = rememberHapticManager(),
+  borderRadius: Dp = 0.dp,
 ) {
   Row(
     modifier = modifier
@@ -211,15 +233,19 @@ fun AdvancedSwitchSettingItem(
         .background(MaterialTheme.colorScheme.background)
         .alpha(if (enabled) 1f else 0.38f)
   ) {
-    Surface(
+    Card(
+      onClick = {
+        haptic.tap()
+        onSettingsClick()
+      },
+      enabled = enabled,
+      shape = RoundedCornerShape(topStart = borderRadius, bottomStart = borderRadius),
       modifier = Modifier
           .weight(1f)
           .fillMaxHeight()
-          .clickable(enabled = enabled) {
-            haptic.tap()
-            onSettingsClick()
-          },
-      color = MaterialTheme.colorScheme.background
+          .clip(RoundedCornerShape(topStart = borderRadius, bottomStart = borderRadius)),
+      // color = MaterialTheme.colorScheme.background
+      colors = cardColors()
     ) {
       Row(
         modifier = Modifier
@@ -240,14 +266,17 @@ fun AdvancedSwitchSettingItem(
       color = grayColor.copy(alpha = 0.2f)
     )
 
-    Surface(
+    Card(
+      onClick = {
+        haptic.tap()
+        onCheckedChange(!checked)
+      },
+      shape = RoundedCornerShape(topEnd = borderRadius, bottomEnd = borderRadius),
       modifier = Modifier
           .fillMaxHeight()
-          .clickable(enabled = enabled) {
-            haptic.tap()
-            onCheckedChange(!checked)
-          },
-      color = MaterialTheme.colorScheme.background
+          .clip(RoundedCornerShape(topEnd = borderRadius, bottomEnd = borderRadius)),
+      // color = MaterialTheme.colorScheme.background
+      colors = cardColors()
     ) {
       Box(
         modifier = Modifier
