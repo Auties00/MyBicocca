@@ -1,3 +1,6 @@
+import java.io.*
+import java.util.*
+
 plugins {
   id("com.android.application")
   id("org.jetbrains.kotlin.android")
@@ -5,6 +8,14 @@ plugins {
   id("com.google.android.gms.oss-licenses-plugin")
   id("com.google.devtools.ksp")
   id("com.google.dagger.hilt.android")
+}
+
+val keystorePropertiesFile = rootProject.file("keystore.properties")
+val keystoreProperties = Properties()
+
+// Check if file exists to avoid build errors on CI/CD or other machines
+if (keystorePropertiesFile.exists()) {
+  keystoreProperties.load(FileInputStream(keystorePropertiesFile))
 }
 
 android {
@@ -30,9 +41,21 @@ android {
     compose = true
   }
 
+  signingConfigs {
+    create("release") {
+      keyAlias = keystoreProperties["keyAlias"] as String?
+      keyPassword = keystoreProperties["keyPassword"] as String?
+      storeFile = keystoreProperties["storeFile"]?.let { file(it) }
+      storePassword = keystoreProperties["storePassword"] as String?
+    }
+  }
+
   buildTypes {
     release {
-      isMinifyEnabled = false
+      isMinifyEnabled = true
+      isShrinkResources = true
+      signingConfig = signingConfigs.getByName("release")
+
       proguardFiles(
         getDefaultProguardFile("proguard-android-optimize.txt"),
         "proguard-rules.pro"
@@ -77,6 +100,8 @@ dependencies {
   implementation("androidx.wear.compose:compose-material3:1.5.5")
   implementation("androidx.compose.foundation:foundation:1.9.5")
   implementation("androidx.compose.ui:ui-graphics:1.10.0")
+  implementation("androidx.compose.foundation:foundation:1.10.0")
+  implementation("androidx.compose.ui:ui-unit:1.10.0")
 
   // Core library desugaring for java.time API on older Android versions
   coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")

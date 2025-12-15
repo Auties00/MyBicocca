@@ -126,7 +126,6 @@
   <string name="duration_forever">Il più a lungo possibile</string>
   <string name="unknown">Sconosciuto</string>
   <string name="bicoccapp" translatable="false">BicoccApp</string>
-  <string name="career_vedi_esami">Vedi tutti gli esami</string>
   <string name="exam_status_passed">Superato</string>
   <string name="exam_status_pending">Da sostenere</string>
   <string name="exam_cfu_format">%1$s CFU</string>
@@ -134,4 +133,8 @@
   <string name="status_offline">Sei Offline</string>
   <string name="settings_developer_api">API</string>
   <string name="settings_developer_badge">Badge</string>
+  <string name="profile_esami">Libretto</string>
+  <string name="profile_esami_pending">Esami da dare</string>
+  <string name="profile_esami_passed">Esami Superati</string>
+  <string name="login">Login</string>
 </resources>

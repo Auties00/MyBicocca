@@ -129,7 +129,6 @@ fun HomePage(
           )
         },
   ) {
-
     Box(
       modifier = Modifier
           .fillMaxSize()
@@ -183,7 +182,10 @@ fun HomePage(
     ) {
       IconButton(
         modifier = Modifier.requiredSize(currentAvatarSize),
-        onClick = { navController.navigate(Screen.Profile.route) }
+        onClick = {
+          navController.navigate(Screen.Profile.route)
+          haptic.spring(0.3f)
+        }
       ) {
         SharedAvatar(
           sharedTransitionScope = sharedTransitionScope,

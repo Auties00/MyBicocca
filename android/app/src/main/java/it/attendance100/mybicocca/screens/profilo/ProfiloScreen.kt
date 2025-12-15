@@ -1,4 +1,4 @@
-package it.attendance100.mybicocca.screens
+package it.attendance100.mybicocca.screens.profilo
 
 import android.content.res.*
 import androidx.compose.animation.*
@@ -34,6 +34,7 @@ import com.patrykandpatrick.vico.core.common.*
 import com.patrykandpatrick.vico.core.common.shape.*
 import it.attendance100.mybicocca.*
 import it.attendance100.mybicocca.R
+import it.attendance100.mybicocca.components.*
 import it.attendance100.mybicocca.components.cards.*
 import it.attendance100.mybicocca.components.uni_badge.*
 import it.attendance100.mybicocca.data.mocks.*
@@ -183,7 +184,10 @@ fun ProfiloScreen(
         title = { Text(stringResource(R.string.profile_screen)) },
         navigationIcon = {
           IconButton(onClick = { navController.popBackStack() }) {
-            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+            Icon(
+              Icons.AutoMirrored.Filled.ArrowBack,
+              contentDescription = stringResource(R.string.arrow_back),
+            )
           }
         },
       )
@@ -199,20 +203,9 @@ fun ProfiloScreen(
     ) {
 
       item {
-        if (isTablet()) {
-          Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
-          ) {
-            Box(modifier = Modifier.weight(1f)) { userDataSection() }
-            Spacer(modifier = Modifier.width(16.dp))
-            Box(modifier = Modifier.weight(1f)) { statisticsSection() }
-          }
-        } else {
-          userDataSection()
-          Spacer(modifier = Modifier.height(16.dp))
-          statisticsSection()
-        }
+        userDataSection()
+        Spacer(modifier = Modifier.height(16.dp))
+        statisticsSection()
       }
 
       // Calculate Average Button
@@ -233,51 +226,33 @@ fun ProfiloScreen(
         }
       }
 
+
       // Grades Chart
       item {
-        Card(
-          modifier = Modifier
-              .fillMaxWidth()
-              .height(250.dp),
-          colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceDim
-          ),
-          shape = RoundedCornerShape(16.dp)
-        ) {
-          Column(
-            modifier = Modifier.padding(top = 16.dp, start = 12.dp, end = 12.dp, bottom = 12.dp)
+        Column {
+          DialogOpenerSettingItem(
+            title = stringResource(R.string.profile_esami),
+            subtitle = null,
+            icon = Icons.AutoMirrored.Filled.List,
+            onClick = { navController.navigate(Screen.Esami.route) },
+          )
+          Spacer(modifier = Modifier.height(4.dp))
+          Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(250.dp),
+            colors = CardDefaults.cardColors(
+              containerColor = MaterialTheme.colorScheme.surfaceDim
+            ),
+            shape = RoundedCornerShape(16.dp)
           ) {
             Text(
-              text = stringResource(R.string.career_grafico_voti),
-              color = primaryColor,
-              fontSize = 18.sp,
-              fontWeight = FontWeight.Bold,
-              modifier = Modifier.padding(bottom = 2.dp)
+              stringResource(R.string.career_grafico_voti),
+              modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 16.dp),
+              color = MaterialTheme.colorScheme.onSurface
             )
-
             GradesChart(grades, primaryColor)
           }
-        }
-      }
-
-      // Go to Exams Button
-      item {
-        OutlinedButton(
-          onClick = {
-            navController.navigate("${Screen.Home.route}?page=3&tab=1")
-          },
-          modifier = Modifier
-              .fillMaxWidth()
-              .height(45.dp),
-          border = BorderStroke(1.dp, primaryColor),
-          colors = ButtonDefaults.outlinedButtonColors(
-            contentColor = primaryColor
-          )
-        ) {
-          Text(
-            text = stringResource(R.string.career_vedi_esami),
-            fontSize = 16.sp
-          )
         }
       }
     }
@@ -377,7 +352,7 @@ fun GradesChart(grades: List<GradePoint>, primaryColor: Color) {
     modelProducer = modelProducer,
     modifier = Modifier
         .fillMaxSize()
-        .systemGestureExclusion()
+        .padding(16.dp)
   )
 }
 

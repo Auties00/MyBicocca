@@ -61,7 +61,6 @@ fun CareerScreen(
       }
     ) {
       listOf(
-        stringResource(R.string.career_tab_profilo),
         stringResource(R.string.career_tab_esami),
         stringResource(R.string.career_tab_piano),
         stringResource(R.string.career_tab_segreterie)
@@ -120,19 +119,7 @@ fun CareerScreen(
       flingBehavior = PagerDefaults.flingBehavior(state = pagerState),
     ) { page ->
       when (page) {
-        0 -> PlaceholderTab("TODO")
-
-        1 -> ExamsTab(
-          passedExams = stats?.passedExams ?: emptyList(),
-          pendingExams = stats?.remainingExams ?: emptyList(),
-        )
-
-        2 -> PianoTab(
-          user,
-          stats,
-        )
-
-        3 -> PlaceholderTab(stringResource(R.string.career_tab_segreterie))
+        else -> PlaceholderTab(" :)")
       }
     }
   }

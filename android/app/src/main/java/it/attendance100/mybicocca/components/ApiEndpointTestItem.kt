@@ -17,7 +17,7 @@ import androidx.compose.ui.graphics.*
 import androidx.compose.ui.text.font.*
 import androidx.compose.ui.tooling.preview.*
 import androidx.compose.ui.unit.*
-import it.attendance100.mybicocca.screens.*
+import it.attendance100.mybicocca.screens.settings.*
 import it.attendance100.mybicocca.ui.theme.*
 import it.attendance100.mybicocca.utils.*
 

@@ -1,38 +1,69 @@
-package it.attendance100.mybicocca.screens.career
+package it.attendance100.mybicocca.screens
 
+import androidx.compose.animation.*
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.*
 import androidx.compose.foundation.shape.*
 import androidx.compose.material.icons.*
+import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.*
 import androidx.compose.ui.graphics.*
+import androidx.compose.ui.res.*
 import androidx.compose.ui.text.font.*
 import androidx.compose.ui.text.style.*
 import androidx.compose.ui.unit.*
+import androidx.hilt.lifecycle.viewmodel.compose.*
+import androidx.navigation.*
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.domain.model.*
 import it.attendance100.mybicocca.ui.theme.*
+import it.attendance100.mybicocca.viewmodel.*
 
 
-@OptIn(ExperimentalFoundationApi::class)
+@OptIn(ExperimentalSharedTransitionApi::class, ExperimentalMaterial3Api::class)
 @Composable
-fun ExamsTab(passedExams: List<Exam>, pendingExams: List<Exam>) {
+fun EsamiScreen(
+  navController: NavHostController,
+  sharedTransitionScope: SharedTransitionScope,
+  animatedContentScope: AnimatedContentScope,
+) {
+  val viewModel: CareerViewModel = hiltViewModel()
+  val stats by viewModel.stats.collectAsState()
+  val passedExams = stats?.passedExams ?: emptyList()
+  val remainingExams = stats?.remainingExams ?: emptyList()
 
-  // State for expanding/collapsing
   var isPassedExpanded by remember { mutableStateOf(true) }
   var isPendingExpanded by remember { mutableStateOf(true) }
 
+  Scaffold(
+    topBar = {
+      TopAppBar(
+        title = { Text(stringResource(R.string.profile_esami)) },
+        navigationIcon = {
+          IconButton(onClick = { navController.popBackStack() }) {
+            Icon(
+              Icons.AutoMirrored.Filled.ArrowBack,
+              contentDescription = stringResource(R.string.arrow_back)
+            )
+          }
+        },
+      )
+    }
+  ) { paddingValues ->
   LazyColumn(
-    modifier = Modifier.fillMaxSize(),
+    modifier = Modifier
+        .fillMaxSize()
+        .padding(paddingValues),
     contentPadding = PaddingValues(bottom = 16.dp, top = 16.dp)
   ) {
     // Passed
     stickyHeader {
       ExpandableHeader(
-        title = "Passed Exams",
+        title = stringResource(R.string.profile_esami_passed),
         count = passedExams.size,
         isExpanded = isPassedExpanded,
         titleColor = MaterialTheme.colorScheme.primary,
@@ -49,8 +80,8 @@ fun ExamsTab(passedExams: List<Exam>, pendingExams: List<Exam>) {
     // Pending
     stickyHeader {
       ExpandableHeader(
-        title = "Pending Exams",
-        count = pendingExams.size,
+        title = stringResource(R.string.profile_esami_pending),
+        count = remainingExams.size,
         isExpanded = isPendingExpanded,
         titleColor = MaterialTheme.colorScheme.primary,
         onToggle = { isPendingExpanded = !isPendingExpanded }
@@ -58,8 +89,9 @@ fun ExamsTab(passedExams: List<Exam>, pendingExams: List<Exam>) {
     }
 
     if (isPendingExpanded) {
-      items(pendingExams) { exam ->
+      items(remainingExams) { exam ->
         ExamCard(exam = exam)
+      }
       }
     }
   }
@@ -101,7 +133,7 @@ fun ExpandableHeader(
 
       Icon(
         imageVector = if (isExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
-        contentDescription = "Expand",
+        contentDescription = "Espandi",
         tint = MaterialTheme.colorScheme.onSurfaceVariant
       )
     }
@@ -193,6 +225,15 @@ fun ExamCard(exam: Exam) {
               color = MaterialTheme.colorScheme.onSurfaceVariant
             )
           }
+          // TODO if (exam.date != null) {
+          //   Spacer(modifier = Modifier.height(6.dp))
+          //   val year = exam.date.split(" ").firstOrNull()?.split("/")?.lastOrNull()?.toIntOrNull()
+          //   Text(
+          //     text = SimpleDateFormat("ddd MM${if (LocalDateTime.now().year != year) " $year" else ""}", getCurrentLocale()).format(exam.date.split(" ").firstOrNull() ?: exam.date),
+          //     style = MaterialTheme.typography.bodyMedium,
+          //     color = MaterialTheme.colorScheme.onSurfaceVariant
+          //   )
+          // }
         }
 
         // Voto + CFU

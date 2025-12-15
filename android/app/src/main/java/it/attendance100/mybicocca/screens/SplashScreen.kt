@@ -4,10 +4,12 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.*
+import androidx.compose.ui.res.*
 import androidx.compose.ui.unit.*
 import androidx.hilt.lifecycle.viewmodel.compose.*
 import androidx.navigation.*
 import it.attendance100.mybicocca.*
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.components.*
 import it.attendance100.mybicocca.viewmodel.*
 
@@ -52,7 +54,7 @@ fun SplashScreen(
           Button(
             onClick = { navController.navigate(Screen.Login.route) }
           ) {
-            Text("Login")
+            Text(stringResource(R.string.login))
           }
         } else if (state is SplashViewModel.SplashState.Loading) {
           Spacer(modifier = Modifier.height(32.dp))
