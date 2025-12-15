@@ -16,7 +16,7 @@ val s3BaseDir = "$buildDir/generated/openapi/s3"
 
 val openApiConfig = mapOf(
     "library" to "jvm-retrofit2",
-    "serializationLibrary" to "moshi",
+    "serializationLibrary" to "gson",
     "useCoroutines" to "true",
     "enumPropertyNaming" to "UPPERCASE",
     "collectionType" to "list"
@@ -111,7 +111,7 @@ dependencies {
     implementation("com.google.android.material:material:1.13.0")
     implementation("androidx.compose.ui:ui-text-google-fonts:1.10.0")
     implementation("androidx.wear.compose:compose-material3:1.5.6")
-    implementation("androidx.compose.foundation:foundation:1.9.5")
+    implementation("androidx.compose.foundation:foundation:1.10.0")
     implementation("androidx.compose.ui:ui-graphics:1.10.0")
 
     // Core library desugaring for java.time API on older Android versions
@@ -157,12 +157,11 @@ dependencies {
 
     // Retrofit
     implementation("com.squareup.retrofit2:retrofit:3.0.0")
-    implementation("com.squareup.retrofit2:converter-moshi:3.0.0")
+    implementation("com.squareup.retrofit2:converter-gson:3.0.0")
     implementation("com.squareup.retrofit2:converter-scalars:3.0.0")
 
-    // Moshi
-    implementation("com.squareup.moshi:moshi:1.15.2")
-    implementation("com.squareup.moshi:moshi-kotlin:1.15.2")
+    // Gson
+    implementation("com.google.code.gson:gson:2.13.2")
 
     // Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
