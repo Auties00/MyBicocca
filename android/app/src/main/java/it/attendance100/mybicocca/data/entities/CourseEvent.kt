@@ -52,8 +52,7 @@ enum class EventType {
   LECTURE,        // Lezione
   LAB,            // Laboratorio
   EXAM,           // Esame
-  OFFICE_HOURS,   // Ricevimento
-  OTHER           // Altro
+  OTHER           // Altro (include ricevimenti, eventi personali, etc.)
 }
 
 /**

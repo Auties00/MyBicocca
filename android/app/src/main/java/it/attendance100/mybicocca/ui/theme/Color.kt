@@ -86,7 +86,22 @@ val GrayColorLight = Color(0xFF666666)
 val OnBackgroundColorLight = Color(0xFF0d0d0d)
 val TextColorLight = Color(0xFF1C1C1C)
 
+// Calendar event colors - Improved saturation and contrast
+val EventLectureColor = Color(0xFF9333EA)       // Vibrant Purple - Lectures
+val EventLabColor = Color(0xFF0EA5E9)           // Bright Cyan - Labs
+val EventExamColor = Color(0xFFDC2626)          // Strong Red - Exams
+val EventOfficeHoursColor = Color(0xFFF97316)   // Vivid Orange - Office Hours
+val EventInProgressColor = Color(0xFF10B981)    // Emerald Green - Event in progress
+val EventOtherColor = Color(0xFF8B5CF6)         // Medium Purple - Other events
+
+// Event colors with opacity for backgrounds
+val EventLectureColorAlpha = Color(0x1A9333EA)  // 10% opacity
+val EventLabColorAlpha = Color(0x1A0EA5E9)
+val EventExamColorAlpha = Color(0x1ADC2626)
+val EventOfficeHoursColorAlpha = Color(0x1AF97316)
+val EventOtherColorAlpha = Color(0x1A8B5CF6)
+
 @Composable
 fun GrayColor(): Color {
-  return if (MaterialTheme.colorScheme.background == BackgroundColor) GrayColorDark else GrayColorLight
+    return if (MaterialTheme.colorScheme.background == BackgroundColor) GrayColorDark else GrayColorLight
 }
