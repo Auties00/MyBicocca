@@ -109,5 +109,4 @@
   <string name="event_status_starts_hours">Tra %1$d ore</string>
   <string name="event_status_starts_days">Tra %1$d giorni</string>
   <string name="event_action_elearning">Pagina E-Learning</string>
-  <string name="event_action_elearning_subtitle">Visualizza le risorse del corso</string>
 </resources>

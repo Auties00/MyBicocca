@@ -10,6 +10,7 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.*
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.*
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.input.pointer.pointerInput
@@ -25,9 +26,7 @@ import java.time.temporal.*
 import java.util.*
 import kotlin.math.absoluteValue
 
-// ============================================================================
 // MAIN COMPONENT - MONTH GRID VIEW
-// ============================================================================
 
 @Composable
 fun MonthGridView(
@@ -48,14 +47,11 @@ fun MonthGridView(
         events.groupBy { it.startTime.toLocalDate() }
     }
 
-    // Calcola informazioni intelligenti sul mese
-    val monthInsights = remember(events, currentMonth) {
-        calculateMonthInsights(events, currentMonth)
-    }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .padding(top = 16.dp)
             .pointerInput(Unit) {
                 detectHorizontalDragGestures(
                     onDragEnd = { isSwiping = false },
@@ -69,13 +65,6 @@ fun MonthGridView(
                 }
             }
     ) {
-        // Header con insight mensili
-        MonthInsightsHeader(
-            monthInsights = monthInsights,
-            primaryColor = primaryColor,
-            grayColor = grayColor
-        )
-
         when {
             isLoading -> MonthGridLoadingState(primaryColor)
             else -> MonthGridContent(
@@ -85,118 +74,14 @@ fun MonthGridView(
                 textColor = textColor,
                 grayColor = grayColor,
                 primaryColor = primaryColor,
-                onDateSelected = onDateSelected
+                onDateSelected = onDateSelected,
+                onMonthChange = onMonthChange
             )
         }
     }
 }
 
-// ============================================================================
-// MONTH INSIGHTS - Funzionalità Intelligenti
-// ============================================================================
-
-data class MonthInsights(
-    val totalEvents: Int,
-    val lectureCount: Int,
-    val labCount: Int,
-    val examCount: Int,
-    val busiestDay: LocalDate?,
-    val busiestDayCount: Int,
-    val daysWithEvents: Int,
-    val upcomingExams: List<CourseEvent>
-)
-
-private fun calculateMonthInsights(
-    events: List<CourseEvent>,
-    currentMonth: YearMonth
-): MonthInsights {
-    val monthEvents = events.filter {
-        YearMonth.from(it.startTime.toLocalDate()) == currentMonth
-    }
-
-    val eventsByDate = monthEvents.groupBy { it.startTime.toLocalDate() }
-    val busiestEntry = eventsByDate.maxByOrNull { it.value.size }
-
-    val upcomingExams = monthEvents
-        .filter { it.eventType == EventType.EXAM && it.startTime.isAfter(LocalDateTime.now()) }
-        .sortedBy { it.startTime }
-        .take(3)
-
-    return MonthInsights(
-        totalEvents = monthEvents.size,
-        lectureCount = monthEvents.count { it.eventType == EventType.LECTURE },
-        labCount = monthEvents.count { it.eventType == EventType.LAB },
-        examCount = monthEvents.count { it.eventType == EventType.EXAM },
-        busiestDay = busiestEntry?.key,
-        busiestDayCount = busiestEntry?.value?.size ?: 0,
-        daysWithEvents = eventsByDate.size,
-        upcomingExams = upcomingExams
-    )
-}
-
-@Composable
-private fun MonthInsightsHeader(
-    monthInsights: MonthInsights,
-    primaryColor: Color,
-    grayColor: Color
-) {
-    Surface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp),
-        shape = RoundedCornerShape(16.dp),
-        color = primaryColor.copy(alpha = 0.08f)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceEvenly
-        ) {
-            // Statistiche rapide
-            InsightItem(
-                value = monthInsights.totalEvents.toString(),
-                label = "Eventi",
-                primaryColor = primaryColor
-            )
-            InsightItem(
-                value = monthInsights.daysWithEvents.toString(),
-                label = "Giorni attivi",
-                primaryColor = primaryColor
-            )
-            InsightItem(
-                value = monthInsights.examCount.toString(),
-                label = "Esami",
-                primaryColor = EventExamColor
-            )
-        }
-    }
-}
-
-@Composable
-private fun InsightItem(
-    value: String,
-    label: String,
-    primaryColor: Color
-) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(
-            text = value,
-            color = primaryColor,
-            style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.Bold
-        )
-        Text(
-            text = label,
-            color = primaryColor.copy(alpha = 0.7f),
-            style = MaterialTheme.typography.labelSmall
-        )
-    }
-}
-
-// ============================================================================
 // MONTH GRID CONTENT
-// ============================================================================
 
 @Composable
 private fun MonthGridContent(
@@ -206,7 +91,8 @@ private fun MonthGridContent(
     textColor: Color,
     grayColor: Color,
     primaryColor: Color,
-    onDateSelected: (LocalDate) -> Unit
+    onDateSelected: (LocalDate) -> Unit,
+    onMonthChange: (YearMonth) -> Unit
 ) {
     val daysInMonth = currentMonth.lengthOfMonth()
     val firstDayOfMonth = currentMonth.atDay(1)
@@ -240,7 +126,8 @@ private fun MonthGridContent(
             textColor = textColor,
             grayColor = grayColor,
             primaryColor = primaryColor,
-            onDateSelected = onDateSelected
+            onDateSelected = onDateSelected,
+            onMonthChange = onMonthChange
         )
     }
 }
@@ -289,7 +176,8 @@ private fun MonthDaysGrid(
     textColor: Color,
     grayColor: Color,
     primaryColor: Color,
-    onDateSelected: (LocalDate) -> Unit
+    onDateSelected: (LocalDate) -> Unit,
+    onMonthChange: (YearMonth) -> Unit
 ) {
     val totalCells = startDayOffset + daysInMonth
     val rows = (totalCells + 6) / 7 // Arrotonda per eccesso
@@ -322,7 +210,8 @@ private fun MonthDaysGrid(
                             textColor = textColor,
                             grayColor = grayColor,
                             primaryColor = primaryColor,
-                            onDateSelected = onDateSelected
+                            onDateSelected = onDateSelected,
+                            onMonthChange = onMonthChange
                         )
                     }
                 }
@@ -331,9 +220,7 @@ private fun MonthDaysGrid(
     }
 }
 
-// ============================================================================
 // DAY CELL - Cella singola del giorno
-// ============================================================================
 
 private data class DayInfo(
     val date: LocalDate,
@@ -391,7 +278,8 @@ private fun MonthDayCell(
     textColor: Color,
     grayColor: Color,
     primaryColor: Color,
-    onDateSelected: (LocalDate) -> Unit
+    onDateSelected: (LocalDate) -> Unit,
+    onMonthChange: (YearMonth) -> Unit
 ) {
     val isSelected = dayInfo.date == selectedDate
     val dayEvents = eventsByDate[dayInfo.date] ?: emptyList()
@@ -417,8 +305,11 @@ private fun MonthDayCell(
                     else -> Color.Transparent
                 }
             )
-            .clickable(enabled = dayInfo.isCurrentMonth) {
+            .clickable {
                 onDateSelected(dayInfo.date)
+                if (!dayInfo.isCurrentMonth) {
+                    onMonthChange(YearMonth.from(dayInfo.date))
+                }
             }
             .padding(4.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -441,7 +332,7 @@ private fun MonthDayCell(
         )
 
         // Indicatori eventi (solo per il mese corrente)
-        if (dayInfo.isCurrentMonth && hasEvents) {
+        if (hasEvents) {
             Spacer(modifier = Modifier.height(2.dp))
             EventIndicators(
                 events = dayEvents,
@@ -492,9 +383,7 @@ private fun EventIndicators(
     }
 }
 
-// ============================================================================
 // LOADING STATE
-// ============================================================================
 
 @Composable
 private fun MonthGridLoadingState(primaryColor: Color) {
@@ -510,9 +399,7 @@ private fun MonthGridLoadingState(primaryColor: Color) {
     }
 }
 
-// ============================================================================
 // SELECTED DATE EVENTS PREVIEW - Anteprima eventi del giorno selezionato
-// ============================================================================
 
 @Composable
 fun SelectedDateEventsPreview(
@@ -529,18 +416,18 @@ fun SelectedDateEventsPreview(
             .sortedBy { it.startTime }
     }
 
-    if (dayEvents.isEmpty()) return
-
-    Surface(
+    ElevatedCard(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 8.dp),
         shape = RoundedCornerShape(16.dp),
-        color = MaterialTheme.colorScheme.surface,
-        tonalElevation = 2.dp
+        colors = CardDefaults.elevatedCardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 4.dp)
     ) {
         Column(
-            modifier = Modifier.padding(12.dp)
+            modifier = Modifier.padding(16.dp)
         ) {
             // Header con data
             Row(
@@ -548,59 +435,69 @@ fun SelectedDateEventsPreview(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = formatSelectedDate(selectedDate),
-                    color = primaryColor,
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Bold
-                )
-                Surface(
-                    shape = RoundedCornerShape(8.dp),
-                    color = primaryColor.copy(alpha = 0.12f)
-                ) {
+                Column {
                     Text(
-                        text = "${dayEvents.size} eventi",
-                        color = primaryColor,
-                        style = MaterialTheme.typography.labelSmall,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                        text = formatSelectedDate(selectedDate),
+                        color = textColor,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
                     )
+                    if (dayEvents.isEmpty()) {
+                        Text(
+                            text = "Nessun evento",
+                            color = grayColor,
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
+                }
+                
+                if (dayEvents.isNotEmpty()) {
+                    Surface(
+                        shape = RoundedCornerShape(8.dp),
+                        color = primaryColor.copy(alpha = 0.1f)
+                    ) {
+                        Text(
+                            text = "${dayEvents.size} eventi",
+                            color = primaryColor,
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                        )
+                    }
                 }
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            if (dayEvents.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(16.dp))
 
-            // Primi 3 eventi
-            dayEvents.take(3).forEach { event ->
-                EventPreviewItem(
-                    event = event,
-                    textColor = textColor,
-                    grayColor = grayColor,
-                    primaryColor = primaryColor,
-                    onClick = { onEventClick(event) }
-                )
-                if (event != dayEvents.take(3).last()) {
-                    Spacer(modifier = Modifier.height(8.dp))
+                // Primi 3 eventi
+                dayEvents.take(3).forEach { event ->
+                    EventPreviewItem(
+                        event = event,
+                        textColor = textColor,
+                        grayColor = grayColor,
+                        primaryColor = primaryColor,
+                        onClick = { onEventClick(event) }
+                    )
+                    if (event != dayEvents.take(3).last()) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
                 }
-            }
 
-            // Link per vedere tutti
-            if (dayEvents.size > 3) {
-                Spacer(modifier = Modifier.height(8.dp))
-                TextButton(
-                    onClick = onShowAllEvents,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text(
-                        text = "Vedi tutti gli eventi (${dayEvents.size})",
-                        color = primaryColor,
-                        style = MaterialTheme.typography.labelMedium
-                    )
-                    Icon(
-                        imageVector = Icons.Default.ChevronRight,
-                        contentDescription = null,
-                        tint = primaryColor,
-                        modifier = Modifier.size(16.dp)
-                    )
+                // Link per vedere tutti
+                if (dayEvents.size > 3) {
+                    Spacer(modifier = Modifier.height(12.dp))
+                    OutlinedButton(
+                        onClick = onShowAllEvents,
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        border = BorderStroke(1.dp, primaryColor.copy(alpha = 0.5f)),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            contentColor = primaryColor
+                        )
+                    ) {
+                        Text("Vedi tutti (${dayEvents.size})")
+                    }
                 }
             }
         }
@@ -685,9 +582,7 @@ private fun formatSelectedDate(date: LocalDate): String {
     return "$dayOfWeek $day $month"
 }
 
-// ============================================================================
 // UPCOMING EXAMS SECTION - Sezione esami in arrivo
-// ============================================================================
 
 @Composable
 fun UpcomingExamsSection(
