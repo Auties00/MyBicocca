@@ -32,9 +32,7 @@ import java.time.format.*
 import java.time.temporal.*
 import java.util.*
 
-// ============================================================================
 // VIEW MODE ENUM - Aggiunta modalità MONTH
-// ============================================================================
 
 enum class CalendarViewMode {
     LIST,   // Vista giornaliera timeline
@@ -42,9 +40,7 @@ enum class CalendarViewMode {
     MONTH   // Vista mensile completa
 }
 
-// ============================================================================
 // CALENDAR ROUTE - Entry point con ViewModel
-// ============================================================================
 
 @Composable
 fun CalendarRoute(
@@ -70,9 +66,7 @@ fun CalendarRoute(
     )
 }
 
-// ============================================================================
 // MAIN CALENDAR SCREEN
-// ============================================================================
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -327,9 +321,7 @@ fun CalendarScreen(
     }
 }
 
-// ============================================================================
 // CALENDAR HEADER - Con toggle vista a 3 modalità
-// ============================================================================
 
 @Composable
 private fun CalendarHeader(
@@ -345,30 +337,42 @@ private fun CalendarHeader(
     val locale = Locale.getDefault()
     val monthYearFormatter = CalendarUtils.monthYearFormatter(locale)
 
-    Row(
+    Box(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 8.dp, vertical = 8.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+            .padding(horizontal = 8.dp, vertical = 8.dp)
     ) {
         // Pulsante "Oggi"
-        FilledTonalButton(
+        FilledTonalIconButton(
             onClick = onToday,
-            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-            colors = ButtonDefaults.filledTonalButtonColors(
+            modifier = Modifier.align(Alignment.CenterStart),
+            colors = IconButtonDefaults.filledTonalIconButtonColors(
                 containerColor = primaryColor.copy(alpha = 0.12f),
                 contentColor = primaryColor
             )
         ) {
-            Text(
-                text = stringResource(R.string.calendar_today),
-                style = MaterialTheme.typography.labelLarge
-            )
+            Box(contentAlignment = Alignment.Center) {
+                Icon(
+                    imageVector = Icons.Outlined.CalendarToday,
+                    contentDescription = stringResource(R.string.calendar_today)
+                )
+                Text(
+                    text = LocalDate.now().dayOfMonth.toString(),
+                    textAlign = TextAlign.Center,
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        fontSize = 8.sp,
+                        fontWeight = FontWeight.Bold
+                    ),
+                    modifier = Modifier.padding(top = 7.dp)
+                )
+            }
         }
 
         // Navigazione mese
-        Row(verticalAlignment = Alignment.CenterVertically) {
+        Row(
+            modifier = Modifier.align(Alignment.Center),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             IconButton(onClick = onPreviousMonth) {
                 Icon(
                     Icons.Default.ChevronLeft,
@@ -392,17 +396,17 @@ private fun CalendarHeader(
         }
 
         // Toggle vista con menu a 3 opzioni
-        ViewModeToggle(
-            currentMode = viewMode,
-            onModeChange = onViewModeChange,
-            primaryColor = primaryColor
-        )
+        Box(modifier = Modifier.align(Alignment.CenterEnd)) {
+            ViewModeToggle(
+                currentMode = viewMode,
+                onModeChange = onViewModeChange,
+                primaryColor = primaryColor
+            )
+        }
     }
 }
 
-// ============================================================================
 // VIEW MODE TOGGLE - Cycling button con animazione rotazione
-// ============================================================================
 
 @Composable
 private fun ViewModeToggle(
@@ -451,9 +455,7 @@ private fun ViewModeToggle(
     }
 }
 
-// ============================================================================
 // HORIZONTAL DAY SELECTOR
-// ============================================================================
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable

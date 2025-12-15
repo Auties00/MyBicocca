@@ -109,5 +109,4 @@
   <string name="event_status_starts_hours">In %1$d hours</string>
   <string name="event_status_starts_days">In %1$d days</string>
   <string name="event_action_elearning">E-Learning Page</string>
-  <string name="event_action_elearning_subtitle">View course resources</string>
 </resources>

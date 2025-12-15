@@ -32,9 +32,7 @@ import java.time.*
 import java.time.format.*
 import java.util.*
 
-// ============================================================================
 // EVENT STATUS ENUM
-// ============================================================================
 
 /**
  * Enum per rappresentare lo status di un evento
@@ -738,50 +736,31 @@ private fun EventDialogELearningButton(
         },
     shape = RoundedCornerShape(16.dp),
     color = buttonColor,
-    shadowElevation = 8.dp
+    shadowElevation = 6.dp
   ) {
-    Row(
+    Box(
       modifier = Modifier
           .fillMaxWidth()
-          .padding(16.dp),
-      horizontalArrangement = Arrangement.spacedBy(16.dp),
-      verticalAlignment = Alignment.CenterVertically
+          .padding(vertical = 14.dp, horizontal = 16.dp)
     ) {
-      // Icon container
-      Box(
-        modifier = Modifier
-            .size(44.dp)
-            .clip(RoundedCornerShape(12.dp))
-            .background(Color.White.copy(alpha = 0.2f)),
-        contentAlignment = Alignment.Center
+      Row(
+        modifier = Modifier.align(Alignment.Center),
+        verticalAlignment = Alignment.CenterVertically
       ) {
         Icon(
           imageVector = Icons.Outlined.School,
           contentDescription = null,
           tint = Color.White,
-          modifier = Modifier.size(22.dp)
+          modifier = Modifier.size(20.dp)
         )
-      }
 
-      // Text content
-      Column(
-        modifier = Modifier.weight(1f),
-        verticalArrangement = Arrangement.spacedBy(2.dp)
-      ) {
+        Spacer(modifier = Modifier.width(10.dp))
+
         Text(
           text = stringResource(R.string.event_action_elearning),
           color = Color.White,
-          fontSize = 15.sp,
-          fontWeight = FontWeight.SemiBold,
-          maxLines = 1,
-          overflow = TextOverflow.Ellipsis
-        )
-        Text(
-          text = stringResource(R.string.event_action_elearning_subtitle),
-          color = Color.White.copy(alpha = 0.7f),
-          fontSize = 12.sp,
-          maxLines = 1,
-          overflow = TextOverflow.Ellipsis
+          fontSize = 16.sp,
+          fontWeight = FontWeight.SemiBold
         )
       }
 
@@ -789,7 +768,9 @@ private fun EventDialogELearningButton(
         imageVector = Icons.AutoMirrored.Outlined.KeyboardArrowRight,
         contentDescription = null,
         tint = Color.White.copy(alpha = 0.7f),
-        modifier = Modifier.size(24.dp)
+        modifier = Modifier
+            .align(Alignment.CenterEnd)
+            .size(24.dp)
       )
     }
   }
