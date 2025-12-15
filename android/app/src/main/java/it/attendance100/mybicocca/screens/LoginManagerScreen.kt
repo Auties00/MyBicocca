@@ -46,6 +46,7 @@ fun LoginManagerScreen(
       Surface(
         modifier = Modifier
             .fillMaxWidth()
+            .statusBarsPadding()
             .height(60.dp),
         color = MaterialTheme.colorScheme.background
       ) {
@@ -174,7 +175,7 @@ fun LoginManagerScreen(
               modifier = Modifier.size(24.dp)
             )
             Text(
-              text = stringResource(R.string.bottom_navbar_segreterie),
+              text = stringResource(R.string.bottom_navbar_mappa),
               color = textColor,
               fontSize = 16.sp,
               fontWeight = FontWeight.Medium,

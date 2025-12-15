@@ -2,9 +2,9 @@
   <string name="bottom_navbar_home">Home</string>
   <string name="bottom_navbar_calendario">Calendar</string>
   <string name="bottom_navbar_elearning">Elearning</string>
-  <string name="bottom_navbar_segreterie">Secretariat</string>
-  <string name="bottom_navbar_carriera">Career</string>
-  <string name="homescreen_profile">Profile</string>
+  <string name="bottom_navbar_mappa">Places</string>
+  <string name="bottom_navbar_segreterie">Registry</string>
+  <string name="profile_screen">Profile</string>
   <string name="error_loading_image">Error loading image</string>
   <string name="search">Search</string>
   <string name="settings_appearance">Theme</string>
@@ -36,8 +36,8 @@
   <!-- Career Page -->
   <string name="career_tab_profilo">Profile</string>
   <string name="career_tab_piano">Plan</string>
-  <string name="career_tab_libretto">Grade Book</string>
-  <string name="career_tab_luoghi">Places</string>
+  <string name="career_tab_esami">Exams</string>
+  <string name="career_tab_segreterie">Secretariat</string>
   <string name="career_dati">Personal Data</string>
   <string name="career_statistiche">Statistics</string>
   <string name="career_name">Name</string>
@@ -116,7 +116,6 @@
   <string name="duration_forever">As long as possible</string>
   <string name="unknown">Unknown</string>
   <string name="career_no_data_available">No Available Data</string>
-  <string name="career_vedi_esami">See all Exams</string>
   <string name="exam_status_passed">Passed</string>
   <string name="exam_status_pending">Pending</string>
   <string name="exam_cfu_format">%1$s CFU</string>
@@ -124,4 +123,8 @@
   <string name="status_offline">You\'re currently Offline</string>
   <string name="settings_developer_api">API</string>
   <string name="settings_developer_badge">Badge</string>
+  <string name="profile_esami">All Exams</string>
+  <string name="profile_esami_pending">Pending Exams</string>
+  <string name="profile_esami_passed">Passed Exams</string>
+  <string name="login">Login</string>
 </resources>

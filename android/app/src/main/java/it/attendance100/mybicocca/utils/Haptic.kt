@@ -90,23 +90,23 @@ class HapticManager(private val context: Context, private val view: View?) {
   /**
    * Spring
    */
-  fun spring() {
+  fun spring(scale: Float = 1f) {
     if (!hasVibrator()) return
 
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && arePrimitivesSupported(VibrationEffect.Composition.PRIMITIVE_THUD)) {
       val delayMs = 200L
       val composition = VibrationEffect.startComposition()
-          .addPrimitive(VibrationEffect.Composition.PRIMITIVE_THUD, 1.0f)
+          .addPrimitive(VibrationEffect.Composition.PRIMITIVE_THUD, scale)
 
       if (arePrimitivesSupported(VibrationEffect.Composition.PRIMITIVE_LOW_TICK))
-        composition.addPrimitive(VibrationEffect.Composition.PRIMITIVE_LOW_TICK, 1.0f)
+        composition.addPrimitive(VibrationEffect.Composition.PRIMITIVE_LOW_TICK, scale)
 
       vibrator.vibrate(composition.compose())
 
       view?.postDelayed({
         vibrator.vibrate(
           VibrationEffect.startComposition()
-              .addPrimitive(VibrationEffect.Composition.PRIMITIVE_THUD, 0.4f)
+              .addPrimitive(VibrationEffect.Composition.PRIMITIVE_THUD, (scale - 0.7f).coerceAtLeast(0f) + 0.1f)
               .compose()
         )
       }, delayMs)

@@ -1,27 +1,26 @@
-package it.attendance100.mybicocca.screens
+package it.attendance100.mybicocca.screens.profilo
 
 import android.content.res.*
 import androidx.compose.animation.*
 import androidx.compose.foundation.*
-import androidx.compose.foundation.gestures.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.*
-import androidx.compose.foundation.pager.*
 import androidx.compose.foundation.shape.*
 import androidx.compose.foundation.text.*
+import androidx.compose.material.icons.*
+import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.*
 import androidx.compose.ui.draw.*
 import androidx.compose.ui.graphics.*
-import androidx.compose.ui.input.nestedscroll.*
-import androidx.compose.ui.input.pointer.*
 import androidx.compose.ui.res.*
 import androidx.compose.ui.text.font.*
 import androidx.compose.ui.text.input.*
 import androidx.compose.ui.tooling.preview.*
 import androidx.compose.ui.unit.*
 import androidx.hilt.lifecycle.viewmodel.compose.*
+import androidx.navigation.*
 import com.patrykandpatrick.vico.compose.cartesian.*
 import com.patrykandpatrick.vico.compose.cartesian.axis.*
 import com.patrykandpatrick.vico.compose.cartesian.layer.*
@@ -33,7 +32,9 @@ import com.patrykandpatrick.vico.core.cartesian.data.*
 import com.patrykandpatrick.vico.core.cartesian.layer.*
 import com.patrykandpatrick.vico.core.common.*
 import com.patrykandpatrick.vico.core.common.shape.*
+import it.attendance100.mybicocca.*
 import it.attendance100.mybicocca.R
+import it.attendance100.mybicocca.components.*
 import it.attendance100.mybicocca.components.cards.*
 import it.attendance100.mybicocca.components.uni_badge.*
 import it.attendance100.mybicocca.data.mocks.*
@@ -41,126 +42,20 @@ import it.attendance100.mybicocca.domain.model.*
 import it.attendance100.mybicocca.ui.theme.*
 import it.attendance100.mybicocca.utils.*
 import it.attendance100.mybicocca.viewmodel.*
-import kotlinx.coroutines.*
 import java.util.*
-import kotlin.math.*
 
-@OptIn(ExperimentalSharedTransitionApi::class)
+
+@OptIn(ExperimentalSharedTransitionApi::class, ExperimentalMaterial3Api::class)
 @Composable
-fun CareerScreen(
-  viewModel: CareerViewModel = hiltViewModel(),
+fun ProfiloScreen(
+  navController: NavHostController,
+  sharedTransitionScope: SharedTransitionScope,
+  animatedContentScope: AnimatedContentScope,
 ) {
-  val pagerState = rememberPagerState(pageCount = { 4 })
-  val coroutineScope = rememberCoroutineScope()
-  val selectedTabIndex = pagerState.currentPage
-
-  val nestedScrollConnection = rememberPageNestedScrollConnection(state = pagerState)
-
-  val primaryColor = MaterialTheme.colorScheme.primary
-  val grayColor = GrayColor()
-
+  val viewModel: CareerViewModel = hiltViewModel()
   val user by viewModel.user.collectAsState()
   val stats by viewModel.stats.collectAsState()
 
-  var userScrollEnabled by remember { mutableStateOf(true) }
-
-  Column(
-    modifier = Modifier
-        .fillMaxSize()
-        .background(MaterialTheme.colorScheme.background)
-  ) {
-    // Tab Row
-    PrimaryTabRow(
-      selectedTabIndex = selectedTabIndex,
-      containerColor = MaterialTheme.colorScheme.background,
-      contentColor = primaryColor,
-    ) {
-      listOf(
-        stringResource(R.string.career_tab_profilo),
-        stringResource(R.string.career_tab_piano),
-        stringResource(R.string.career_tab_esami),
-        stringResource(R.string.career_tab_luoghi)
-      ).forEachIndexed { index, title ->
-        Tab(
-          selected = selectedTabIndex == index,
-          onClick = {
-            coroutineScope.launch {
-              pagerState.animateScrollToPage(index)
-            }
-          },
-          text = {
-            Text(
-              text = title,
-              color = if (selectedTabIndex == index) primaryColor else grayColor,
-              fontWeight = if (selectedTabIndex == index) FontWeight.Bold else FontWeight.Normal,
-              fontSize = 14.sp
-            )
-          }
-        )
-      }
-    }
-
-    // Tab Content
-    HorizontalPager(
-      state = pagerState,
-      userScrollEnabled = userScrollEnabled,
-      modifier = Modifier
-          .fillMaxSize()
-          .nestedScroll(nestedScrollConnection)
-          .pointerInput(pagerState) {
-            awaitEachGesture {
-              awaitFirstDown(pass = PointerEventPass.Initial)
-              userScrollEnabled = true
-              var handled = false
-              do {
-                val event = awaitPointerEvent(pass = PointerEventPass.Initial)
-                val change = event.changes.firstOrNull() ?: break
-                if (change.pressed && !handled && pagerState.currentPage == 0 && abs(pagerState.currentPageOffsetFraction) < 0.01f) {
-                  val delta = change.position.x - change.previousPosition.x
-                  if (delta > 0) {
-                    userScrollEnabled = false
-                    handled = true
-                  } else if (delta < 0) {
-                    handled = true
-                  }
-                }
-              } while (event.changes.any { it.pressed })
-              userScrollEnabled = true
-            }
-          },
-      beyondViewportPageCount = 1,
-      flingBehavior = PagerDefaults.flingBehavior(state = pagerState, snapPositionalThreshold = 0.6667f),
-    ) { page ->
-      when (page) {
-        0 -> ProfiloTab(
-          user,
-          stats,
-          onGoToExams = {
-            coroutineScope.launch {
-              pagerState.animateScrollToPage(2)
-            }
-          }
-        )
-
-        1 -> PlaceholderTab(stringResource(R.string.career_tab_piano))
-        2 -> ExamsTab(
-          passedExams = stats?.passedExams ?: emptyList(),
-          remainingExams = stats?.remainingExams ?: emptyList()
-        )
-
-        3 -> PlaceholderTab(stringResource(R.string.career_tab_luoghi))
-      }
-    }
-  }
-}
-
-@OptIn(ExperimentalSharedTransitionApi::class)
-@Composable
-fun ProfiloTab(
-  user: User?,
-  stats: CareerStats?,
-  onGoToExams: () -> Unit,
-) {
   val primaryColor = MaterialTheme.colorScheme.primary
   val textColor = MaterialTheme.colorScheme.onBackground
   val grayColor = GrayColor()
@@ -283,91 +178,82 @@ fun ProfiloTab(
     }
   }
 
-  LazyColumn(
-    modifier = Modifier.fillMaxSize(),
-    contentPadding = PaddingValues(16.dp),
-    horizontalAlignment = Alignment.CenterHorizontally,
-    verticalArrangement = Arrangement.spacedBy(24.dp),
-  ) {
+  Scaffold(
+    topBar = {
+      TopAppBar(
+        title = { Text(stringResource(R.string.profile_screen)) },
+        navigationIcon = {
+          IconButton(onClick = { navController.popBackStack() }) {
+            Icon(
+              Icons.AutoMirrored.Filled.ArrowBack,
+              contentDescription = stringResource(R.string.arrow_back),
+            )
+          }
+        },
+      )
+    }
+  ) { paddingValues ->
+    LazyColumn(
+      modifier = Modifier
+          .fillMaxSize()
+          .padding(paddingValues),
+      contentPadding = PaddingValues(16.dp),
+      horizontalAlignment = Alignment.CenterHorizontally,
+      verticalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
 
-    item {
-      if (isTablet()) {
-        Row(
-          modifier = Modifier.fillMaxWidth(),
-          horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-          Box(modifier = Modifier.weight(1f)) { userDataSection() }
-          Spacer(modifier = Modifier.width(16.dp))
-          Box(modifier = Modifier.weight(1f)) { statisticsSection() }
-        }
-      } else {
+      item {
         userDataSection()
         Spacer(modifier = Modifier.height(16.dp))
         statisticsSection()
       }
-    }
 
-    // Calculate Average Button
-    item {
-      Button(
-        onClick = { showDialog = true },
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(48.dp),
-        colors = ButtonDefaults.buttonColors(
-          containerColor = primaryColor
-        )
-      ) {
-        Text(
-          text = stringResource(R.string.career_calcola_media),
-          fontSize = 16.sp
-        )
-      }
-    }
-
-    // Grades Chart
-    item {
-      Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(300.dp),
-        colors = CardDefaults.cardColors(
-          containerColor = MaterialTheme.colorScheme.surfaceDim
-        ),
-        shape = RoundedCornerShape(16.dp)
-      ) {
-        Column(
-          modifier = Modifier.padding(16.dp)
+      // Calculate Average Button
+      item {
+        Button(
+          onClick = { showDialog = true },
+          modifier = Modifier
+              .fillMaxWidth()
+              .height(48.dp),
+          colors = ButtonDefaults.buttonColors(
+            containerColor = primaryColor
+          )
         ) {
           Text(
-            text = stringResource(R.string.career_grafico_voti),
-            color = primaryColor,
-            fontSize = 18.sp,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(bottom = 16.dp)
+            text = stringResource(R.string.career_calcola_media),
+            fontSize = 16.sp
           )
-
-          GradesChart(grades, primaryColor)
         }
       }
-    }
 
-    // Go to Exams Button
-    item {
-      OutlinedButton(
-        onClick = onGoToExams,
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(48.dp),
-        border = BorderStroke(1.dp, primaryColor),
-        colors = ButtonDefaults.outlinedButtonColors(
-          contentColor = primaryColor
-        )
-      ) {
-        Text(
-          text = stringResource(R.string.career_vedi_esami),
-          fontSize = 16.sp
-        )
+
+      // Grades Chart
+      item {
+        Column {
+          DialogOpenerSettingItem(
+            title = stringResource(R.string.profile_esami),
+            subtitle = null,
+            icon = Icons.AutoMirrored.Filled.List,
+            onClick = { navController.navigate(Screen.Esami.route) },
+          )
+          Spacer(modifier = Modifier.height(4.dp))
+          Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(250.dp),
+            colors = CardDefaults.cardColors(
+              containerColor = MaterialTheme.colorScheme.surfaceDim
+            ),
+            shape = RoundedCornerShape(16.dp)
+          ) {
+            Text(
+              stringResource(R.string.career_grafico_voti),
+              modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 16.dp),
+              color = MaterialTheme.colorScheme.onSurface
+            )
+            GradesChart(grades, primaryColor)
+          }
+        }
       }
     }
   }
@@ -388,40 +274,6 @@ fun ProfiloTab(
       textColor = MaterialTheme.colorScheme.onBackground,
       grayColor = grayColor
     )
-  }
-}
-
-@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES or Configuration.UI_MODE_TYPE_NORMAL)
-@Composable
-fun GradesChartDarkPreview() {
-  val grades = listOf(
-    GradePoint(
-      cfu = "8.0",
-      value = 30f,
-      date = "2023-10-25",
-      name = "Test Grade 1",
-      isLode = false,
-    ),
-  )
-  Box(
-    modifier = Modifier.size(400.dp, 350.dp),
-  ) {
-    MaterialTheme(colorScheme = MyBicoccaDarkColorScheme) {
-      GradesChart(grades, MaterialTheme.colorScheme.primary)
-    }
-  }
-}
-
-@Preview(showBackground = true, showSystemUi = false)
-@Composable
-fun GradesChartLightPreview() {
-  val grades = UserMockData.careerStats.grades
-  Box(
-    modifier = Modifier.size(400.dp, 350.dp),
-  ) {
-    MaterialTheme(colorScheme = MyBicoccaDarkColorScheme) {
-      GradesChart(grades, MaterialTheme.colorScheme.primary)
-    }
   }
 }
 
@@ -498,7 +350,9 @@ fun GradesChart(grades: List<GradePoint>, primaryColor: Color) {
       )
     ),
     modelProducer = modelProducer,
-    modifier = Modifier.fillMaxSize()
+    modifier = Modifier
+        .fillMaxSize()
+        .padding(16.dp)
   )
 }
 
@@ -784,113 +638,36 @@ fun DifferenceIndicator(
   }
 }
 
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES or Configuration.UI_MODE_TYPE_NORMAL)
 @Composable
-fun PlaceholderTab(tabName: String) {
+fun GradesChartDarkPreview() {
+  val grades = listOf(
+    GradePoint(
+      cfu = "8.0",
+      value = 30f,
+      date = "2023-10-25",
+      name = "Test Grade 1",
+      isLode = false,
+    ),
+  )
   Box(
-    modifier = Modifier
-        .fillMaxSize()
-        .background(MaterialTheme.colorScheme.background),
-    contentAlignment = Alignment.Center
+    modifier = Modifier.size(400.dp, 350.dp),
   ) {
-    Text(
-      text = stringResource(R.string.career_coming_soon_format, tabName),
-      color = MaterialTheme.colorScheme.onBackground,
-      fontSize = 18.sp
-    )
-  }
-}
-
-@Composable
-fun ExamsTab(
-  passedExams: List<Exam>,
-  remainingExams: List<Exam>,
-) {
-  val allExams = (passedExams + remainingExams).filter { it.name.isNotBlank() }
-
-  LazyColumn(
-    modifier = Modifier.fillMaxSize(),
-    contentPadding = PaddingValues(16.dp),
-    verticalArrangement = Arrangement.spacedBy(12.dp)
-  ) {
-    items(allExams) { exam ->
-      ExamCard(exam)
+    MaterialTheme(colorScheme = MyBicoccaDarkColorScheme) {
+      GradesChart(grades, MaterialTheme.colorScheme.primary)
     }
   }
 }
 
+@Preview(showBackground = true, showSystemUi = false)
 @Composable
-fun ExamCard(exam: Exam) {
-  val primaryColor = MaterialTheme.colorScheme.primary
-  val isPassed = exam.status == "S"
-  val statusColor = if (isPassed) Color(0xFF4CAF50) else Color(0xFFFF9800)
-
-  Card(
-    modifier = Modifier.fillMaxWidth(),
-    colors = CardDefaults.cardColors(
-      containerColor = MaterialTheme.colorScheme.surfaceDim
-    ),
-    shape = RoundedCornerShape(16.dp)
+fun GradesChartLightPreview() {
+  val grades = UserMockData.careerStats.grades
+  Box(
+    modifier = Modifier.size(400.dp, 350.dp),
   ) {
-    Row(
-      modifier = Modifier
-          .padding(16.dp)
-          .fillMaxWidth(),
-      verticalAlignment = Alignment.CenterVertically,
-      horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-      Column(
-        modifier = Modifier.weight(1f),
-        verticalArrangement = Arrangement.spacedBy(4.dp)
-      ) {
-        Text(
-          text = exam.name,
-          style = MaterialTheme.typography.titleMedium,
-          fontWeight = FontWeight.Bold,
-          color = MaterialTheme.colorScheme.onSurface
-        )
-        Row(
-          horizontalArrangement = Arrangement.spacedBy(8.dp),
-          verticalAlignment = Alignment.CenterVertically
-        ) {
-          Badge(
-            containerColor = statusColor.copy(alpha = 0.1f),
-            contentColor = statusColor
-          ) {
-            Text(
-              text = stringResource(if (isPassed) R.string.exam_status_passed else R.string.exam_status_pending),
-              modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-              style = MaterialTheme.typography.labelSmall
-            )
-          }
-          Text(
-            text = stringResource(R.string.exam_cfu_format, exam.cfu),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-          )
-        }
-        if (exam.date != null) {
-          Text(
-            text = exam.date.split(" ").firstOrNull() ?: exam.date,
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-          )
-        }
-      }
-
-      if (isPassed && exam.grade != null) {
-        Surface(
-          color = primaryColor.copy(alpha = 0.1f),
-          shape = RoundedCornerShape(8.dp)
-        ) {
-          Text(
-            text = exam.grade,
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold,
-            color = primaryColor
-          )
-        }
-      }
+    MaterialTheme(colorScheme = MyBicoccaDarkColorScheme) {
+      GradesChart(grades, MaterialTheme.colorScheme.primary)
     }
   }
 }
