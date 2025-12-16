@@ -1,8 +1,8 @@
 package it.attendance100.mybicocca.ui.theme
 
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
-import androidx.compose.ui.graphics.*
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Color
 
 // Dark theme colors
 val OnPrimaryColor = Color(0xFFffb2bc)
