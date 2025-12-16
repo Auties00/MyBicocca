@@ -1,27 +1,3 @@
-import org.gradle.kotlin.dsl.register
-import org.openapitools.generator.gradle.plugin.tasks.GenerateTask
-
-// Constants
-val appApiPackage = "it.attendance100.mybicocca.data.api"
-val appModelPackage = "it.attendance100.mybicocca.domain.model"
-
-val elearningSpec = "$rootDir/openapi/elearning.yaml"
-val elearningBaseDir = "$buildDir/generated/openapi/elearning"
-
-val bicoccappSpec = "$rootDir/openapi/bicoccapp.yaml"
-val bicoccappBaseDir = "$buildDir/generated/openapi/bicoccapp"
-
-val s3Spec = "$rootDir/openapi/s3.yaml"
-val s3BaseDir = "$buildDir/generated/openapi/s3"
-
-val openApiConfig = mapOf(
-    "library" to "jvm-retrofit2",
-    "serializationLibrary" to "gson",
-    "useCoroutines" to "true",
-    "enumPropertyNaming" to "UPPERCASE",
-    "collectionType" to "list"
-)
-
 // Plugins
 plugins {
     id("com.android.application")
@@ -30,7 +6,6 @@ plugins {
     id("com.google.android.gms.oss-licenses-plugin")
     id("com.google.devtools.ksp")
     id("com.google.dagger.hilt.android")
-    id("org.openapi.generator")
 }
 
 // Android config
@@ -74,21 +49,12 @@ android {
 
     kotlinOptions {
         jvmTarget = "17"
+        freeCompilerArgs = listOf("-XXLanguage:+PropertyParamAnnotationDefaultTargetMode")
     }
 
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
-        }
-    }
-
-    sourceSets {
-        getByName("main") {
-            java.srcDirs(
-                "$elearningBaseDir/src/main/kotlin",
-                "$bicoccappBaseDir/src/main/kotlin",
-                "$s3BaseDir/src/main/kotlin"
-            )
         }
     }
 }
@@ -169,55 +135,4 @@ dependencies {
     // OkHttp (Retrofit dependency)
     implementation("com.squareup.okhttp3:okhttp:5.3.2")
     implementation("com.squareup.okhttp3:logging-interceptor:5.3.2")
-}
-
-// 1. Elearning codegen
-val elearningTask = tasks.register<GenerateTask>("generateElearningClient") {
-    generatorName.set("kotlin")
-    inputSpec.set(elearningSpec)
-    outputDir.set(elearningBaseDir)
-    apiPackage.set("$appApiPackage.elearning")
-    modelPackage.set("$appModelPackage.elearning")
-    packageName.set("$appApiPackage.elearning")
-    skipValidateSpec.set(true)
-    configOptions.set(openApiConfig)
-}
-
-// 2. Bicoccapp codegen
-val bicoccappTask = tasks.register<GenerateTask>("generateBicoccappClient") {
-    generatorName.set("kotlin")
-    inputSpec.set(bicoccappSpec)
-    outputDir.set(bicoccappBaseDir)
-    apiPackage.set("$appApiPackage.bicoccapp")
-    modelPackage.set("$appModelPackage.bicoccapp")
-    packageName.set("$appApiPackage.bicoccapp")
-    skipValidateSpec.set(true)
-    configOptions.set(openApiConfig)
-}
-
-// 3. S3
-val s3Task = tasks.register<GenerateTask>("generaS3Client") {
-    generatorName.set("kotlin")
-    inputSpec.set(s3Spec)
-    outputDir.set(s3BaseDir)
-    apiPackage.set("$appApiPackage.s3")
-    modelPackage.set("$appModelPackage.s3")
-    packageName.set("$appApiPackage.s3")
-    skipValidateSpec.set(true)
-    configOptions.set(openApiConfig)
-}
-
-
-// Generate both APIs together
-val generateAllApis = tasks.register("generateAllApis") {
-    dependsOn(
-        elearningTask,
-        bicoccappTask,
-        s3Task
-    )
-}
-
-// Hook into Android's pre-build task
-tasks.named("preBuild") {
-    dependsOn(generateAllApis)
 }

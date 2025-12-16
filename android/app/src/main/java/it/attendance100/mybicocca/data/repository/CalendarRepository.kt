@@ -1,13 +1,17 @@
 package it.attendance100.mybicocca.data.repository
 
-import androidx.lifecycle.*
-import it.attendance100.mybicocca.data.daos.*
-import it.attendance100.mybicocca.data.datasources.calendar.*
-import it.attendance100.mybicocca.data.entities.*
-import kotlinx.coroutines.*
-import java.time.*
-import javax.inject.*
-import it.attendance100.mybicocca.domain.contracts.CalendarRepository as ICalendarRepository
+import androidx.lifecycle.LiveData
+import it.attendance100.mybicocca.data.local.dao.CourseEventDao
+import it.attendance100.mybicocca.data.local.dao.CourseScheduleDao
+import it.attendance100.mybicocca.data.local.entity.CourseEvent
+import it.attendance100.mybicocca.domain.datasource.CalendarDataSource
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import java.time.LocalDate
+import java.time.YearMonth
+import javax.inject.Inject
+import javax.inject.Singleton
+import it.attendance100.mybicocca.domain.repository.CalendarRepository as ICalendarRepository
 
 /**
  * Implements calendar contract, uses DAOs + datasource
@@ -24,9 +28,9 @@ import it.attendance100.mybicocca.domain.contracts.CalendarRepository as ICalend
  */
 @Singleton
 class CalendarRepository @Inject constructor(
-  private val dataSource: CalendarDataSource,
-  private val eventDao: CourseEventDao,
-  private val scheduleDao: CourseScheduleDao,
+    private val dataSource: CalendarDataSource,
+    private val eventDao: CourseEventDao,
+    private val scheduleDao: CourseScheduleDao,
 ) : ICalendarRepository {
     private var isInitialized = false
 
@@ -70,13 +74,13 @@ class CalendarRepository @Inject constructor(
         eventDao.delete(event)
     }
 
-  override suspend fun syncData() {
-    TODO("Not yet implemented")
-  }
+    override suspend fun syncData() {
+        TODO("Not yet implemented")
+    }
 
-  /**
+    /**
      * Sincronizza dal DataSource (mock o API) e salva in cache locale.
-   *
+     *
      * Pattern offline-first:
      * 1. Recupera dati dal DataSource
      * 2. Salva nel DB locale (DAO)
@@ -87,7 +91,7 @@ class CalendarRepository @Inject constructor(
             // Chiama il DataSource (mock o API)
             val success = dataSource.syncEvents()
 
-          if (success && !isInitialized) {
+            if (success && !isInitialized) {
                 // Carica eventi iniziali nella cache locale
                 val currentMonth = YearMonth.now()
                 val nextMonth = currentMonth.plusMonths(1)
@@ -101,7 +105,7 @@ class CalendarRepository @Inject constructor(
                 isInitialized = true
             }
 
-          success
+            success
         } catch (e: Exception) {
             false
         }

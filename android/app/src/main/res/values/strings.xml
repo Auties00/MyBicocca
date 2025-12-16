@@ -6,7 +6,7 @@
     <string name="homescreen_app_prefix" translatable="false">My</string>
     <string name="homescreen_app_suffix" translatable="false">Bicocca</string>
     <string name="app_logo">Logo App</string>
-    <string name="copyright" translatable="false">© 2025-2025 100% Attendance</string>
+    <string name="copyright" translatable="false">© 2025-2025 100%% Attendance</string>
 
     <!-- Bottom Navigation -->
     <string name="bottom_navbar_home">Home</string>

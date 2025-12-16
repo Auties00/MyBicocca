@@ -21,7 +21,7 @@
     android:theme="@style/Theme.MyBicocca"
     tools:targetApi="33">
     <activity
-      android:name=".MainActivity"
+      android:name="it.attendance100.mybicocca.MyBicoccaActivity"
       android:exported="true"
       android:theme="@style/Theme.MyBicocca">
       <intent-filter>
