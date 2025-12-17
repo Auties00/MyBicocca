@@ -1,15 +1,8 @@
 package it.attendance100.mybicocca.data.api.bicoccapp
 
-import it.attendance100.mybicocca.data.remote.dto.bicoccapp.BicoccappCalendarCoursesResponse
-import it.attendance100.mybicocca.data.remote.dto.bicoccapp.BicoccappCalendarResponse
-import it.attendance100.mybicocca.data.remote.dto.bicoccapp.BicoccappCourseDetailResponse
-import it.attendance100.mybicocca.data.remote.dto.bicoccapp.BicoccappSetCalendarResponse
-import retrofit2.Response
-import retrofit2.http.Field
-import retrofit2.http.FormUrlEncoded
-import retrofit2.http.GET
-import retrofit2.http.POST
-import retrofit2.http.Query
+import it.attendance100.mybicocca.data.dto.bicoccapp.*
+import retrofit2.*
+import retrofit2.http.*
 
 /**
  * # BicoccApp Calendar API

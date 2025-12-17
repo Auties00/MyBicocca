@@ -1,12 +1,8 @@
 package it.attendance100.mybicocca.data.api.bicoccapp
 
-import it.attendance100.mybicocca.data.remote.dto.bicoccapp.BicoccappWizardCategoriesResponse
-import it.attendance100.mybicocca.data.remote.dto.bicoccapp.BicoccappWizardCoursesResponse
-import it.attendance100.mybicocca.data.remote.dto.bicoccapp.BicoccappWizardDegreesResponse
-import it.attendance100.mybicocca.data.remote.dto.bicoccapp.BicoccappWizardLessonsResponse
-import retrofit2.Response
-import retrofit2.http.GET
-import retrofit2.http.Query
+import it.attendance100.mybicocca.data.dto.bicoccapp.*
+import retrofit2.*
+import retrofit2.http.*
 
 /**
  * # BicoccApp Wizard API

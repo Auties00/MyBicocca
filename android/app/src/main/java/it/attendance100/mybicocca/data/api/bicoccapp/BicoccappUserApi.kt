@@ -1,17 +1,9 @@
 package it.attendance100.mybicocca.data.api.bicoccapp
 
-import it.attendance100.mybicocca.data.remote.dto.bicoccapp.BicoccappExamsSessionsResponse
-import it.attendance100.mybicocca.data.remote.dto.bicoccapp.BicoccappTaxesResponse
-import it.attendance100.mybicocca.data.remote.dto.bicoccapp.BicoccappUserCareerResponse
-import it.attendance100.mybicocca.data.remote.dto.bicoccapp.BicoccappUserExamsResponse
-import it.attendance100.mybicocca.data.remote.dto.bicoccapp.BicoccappUserProfile
-import it.attendance100.mybicocca.data.remote.dto.bicoccapp.BicoccappUserRegistrationsResponse
-import it.attendance100.mybicocca.data.remote.dto.elearning.BicoccappModificationResponse
-import retrofit2.Response
-import retrofit2.http.DELETE
-import retrofit2.http.GET
-import retrofit2.http.POST
-import retrofit2.http.Query
+import it.attendance100.mybicocca.data.dto.bicoccapp.*
+import it.attendance100.mybicocca.data.dto.elearning.*
+import retrofit2.*
+import retrofit2.http.*
 
 /**
  * # BicoccApp User API
