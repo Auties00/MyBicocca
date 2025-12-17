@@ -4,17 +4,8 @@ import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
-import it.attendance100.mybicocca.data.remote.api.elearning.ElearningApi
-import it.attendance100.mybicocca.data.remote.api.elearning.ElearningAssignmentApi
-import it.attendance100.mybicocca.data.remote.api.elearning.ElearningAuthApi
-import it.attendance100.mybicocca.data.remote.api.elearning.ElearningCalendarApi
-import it.attendance100.mybicocca.data.remote.api.elearning.ElearningCommonApi
-import it.attendance100.mybicocca.data.remote.api.elearning.ElearningCourseApi
-import it.attendance100.mybicocca.data.remote.api.elearning.ElearningForumApi
-import it.attendance100.mybicocca.data.remote.api.elearning.ElearningMessageApi
-import it.attendance100.mybicocca.data.remote.api.elearning.ElearningQuizApi
-import it.attendance100.mybicocca.data.remote.api.elearning.ElearningUserApi
-import it.attendance100.mybicocca.util.PreferencesManager
+import it.attendance100.mybicocca.data.api.elearning.*
+import it.attendance100.mybicocca.manager.StorageManager
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
@@ -83,7 +74,7 @@ object ElearningApiModule {
     @Provides
     @Singleton
     @ElearningOkHttpClient
-    fun provideOkHttpClient(preferencesManager: PreferencesManager): OkHttpClient {
+    fun provideOkHttpClient(storageManager: StorageManager): OkHttpClient {
         val loggingInterceptor = HttpLoggingInterceptor().apply {
             level = HttpLoggingInterceptor.Level.BODY
         }
@@ -91,7 +82,7 @@ object ElearningApiModule {
         return OkHttpClient.Builder()
             .addInterceptor { chain ->
                 var request = chain.request()
-                val token = preferencesManager.elearningToken
+                val token = storageManager.elearningToken
 
                 if (!token.isNullOrBlank()) {
                     val url = request.url.newBuilder()

@@ -45,7 +45,7 @@ import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.Screen
 import it.attendance100.mybicocca.ui.component.SimpleCategorySettingItem
 import it.attendance100.mybicocca.ui.screen.main.MainViewModel
-import it.attendance100.mybicocca.util.rememberHapticManager
+import it.attendance100.mybicocca.manager.rememberHapticManager
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable

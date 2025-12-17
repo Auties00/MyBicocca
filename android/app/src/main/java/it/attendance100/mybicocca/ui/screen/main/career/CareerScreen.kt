@@ -34,7 +34,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.ui.theme.GrayColor
-import it.attendance100.mybicocca.util.rememberPageNestedScrollConnection
+import it.attendance100.mybicocca.ui.component.rememberPageNestedScrollConnection
 import kotlinx.coroutines.launch
 import kotlin.math.abs
 

@@ -6,14 +6,14 @@ import androidx.room.TypeConverter
 import androidx.room.TypeConverters
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
-import it.attendance100.mybicocca.data.local.dao.CourseEventDao
-import it.attendance100.mybicocca.data.local.dao.CourseScheduleDao
-import it.attendance100.mybicocca.data.local.dao.UserDao
-import it.attendance100.mybicocca.data.local.entity.CareerStatsEntity
-import it.attendance100.mybicocca.data.local.entity.CourseEvent
-import it.attendance100.mybicocca.data.local.entity.CourseSchedule
-import it.attendance100.mybicocca.data.local.entity.EventType
-import it.attendance100.mybicocca.data.local.entity.UserEntity
+import it.attendance100.mybicocca.data.dao.CourseEventDao
+import it.attendance100.mybicocca.data.dao.CourseScheduleDao
+import it.attendance100.mybicocca.data.dao.UserDao
+import it.attendance100.mybicocca.domain.model.CareerStatsEntity
+import it.attendance100.mybicocca.domain.model.CourseEvent
+import it.attendance100.mybicocca.domain.model.CourseSchedule
+import it.attendance100.mybicocca.domain.model.EventType
+import it.attendance100.mybicocca.domain.model.UserEntity
 import it.attendance100.mybicocca.domain.model.Exam
 import it.attendance100.mybicocca.domain.model.GradePoint
 import java.time.DayOfWeek
@@ -42,7 +42,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun userDao(): UserDao
 }
 
-private class Converters {
+class Converters {
     private val gson = Gson()
 
     @TypeConverter

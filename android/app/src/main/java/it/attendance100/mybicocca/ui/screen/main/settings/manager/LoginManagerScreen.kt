@@ -46,8 +46,8 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.Screen
-import it.attendance100.mybicocca.ui.component.SharedAvatar
-import it.attendance100.mybicocca.ui.component.StatusIndicator
+import it.attendance100.mybicocca.ui.component.appbar.SharedAvatar
+import it.attendance100.mybicocca.ui.component.appbar.StatusIndicator
 import it.attendance100.mybicocca.ui.screen.login.LoginViewModel
 import it.attendance100.mybicocca.ui.screen.main.MainViewModel
 import it.attendance100.mybicocca.ui.theme.GrayColor

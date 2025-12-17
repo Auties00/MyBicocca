@@ -60,10 +60,10 @@ import it.attendance100.mybicocca.ui.screen.main.settings.manager.LoginManagerSc
 import it.attendance100.mybicocca.ui.screen.splash.SplashScreen
 import it.attendance100.mybicocca.ui.theme.MyBicoccaTheme
 import it.attendance100.mybicocca.ui.theme.OnPrimaryColor
-import it.attendance100.mybicocca.util.NetworkMonitor
-import it.attendance100.mybicocca.util.PreferencesManager
-import it.attendance100.mybicocca.util.ProvideHapticManager
-import it.attendance100.mybicocca.util.rememberPreferencesManager
+import it.attendance100.mybicocca.manager.NetworkManager
+import it.attendance100.mybicocca.manager.StorageManager
+import it.attendance100.mybicocca.manager.ProvideHapticManager
+import it.attendance100.mybicocca.manager.rememberPreferencesManager
 import javax.inject.Inject
 import kotlin.math.roundToInt
 
@@ -88,11 +88,11 @@ sealed class Screen(val route: String) {
 @AndroidEntryPoint
 class MyBicoccaActivity : ComponentActivity() {
     @Inject
-    lateinit var networkMonitor: NetworkMonitor
+    lateinit var networkManager: NetworkManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        val preferencesManager = PreferencesManager(this)
-        preferencesManager.applyTheme() // Ensures theme is applied immediately
+        val storageManager = StorageManager(this)
+        storageManager.applyTheme() // Ensures theme is applied immediately
 
         super.onCreate(savedInstanceState)
 
@@ -108,8 +108,8 @@ class MyBicoccaActivity : ComponentActivity() {
             val isDarkMode by remember(currentThemeMode, systemInDarkTheme) {
                 derivedStateOf {
                     when (currentThemeMode) {
-                        PreferencesManager.THEME_DARK -> true
-                        PreferencesManager.THEME_LIGHT -> false
+                        StorageManager.THEME_DARK -> true
+                        StorageManager.THEME_LIGHT -> false
                         else -> systemInDarkTheme
                     }
                 }
@@ -142,7 +142,7 @@ class MyBicoccaActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
-        networkMonitor.refresh()
+        networkManager.refresh()
     }
 
     fun styleStatusBar(isDarkMode: Boolean) {

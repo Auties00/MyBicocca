@@ -8,19 +8,13 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import it.attendance100.mybicocca.data.remote.api.MyBicoccaApiService
-import it.attendance100.mybicocca.data.repository.UserRepository
-import it.attendance100.mybicocca.domain.repository.AuthRepository
-import it.attendance100.mybicocca.util.PreferencesManager
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class LoginViewModel @Inject constructor(
     private val authRepository: AuthRepository,
-    private val apiService: MyBicoccaApiService,
-    private val userRepository: UserRepository,
-    private val preferencesManager: PreferencesManager,
+    private val userRepository: UserRepository
 ) : ViewModel() {
 
     var loginState by mutableStateOf<LoginState>(LoginState.Idle)

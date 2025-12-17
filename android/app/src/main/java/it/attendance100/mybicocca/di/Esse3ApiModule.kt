@@ -4,15 +4,7 @@ import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
-import it.attendance100.mybicocca.data.remote.api.esse3.Esse3AdmissionApi
-import it.attendance100.mybicocca.data.remote.api.esse3.Esse3Api
-import it.attendance100.mybicocca.data.remote.api.esse3.Esse3AuthApi
-import it.attendance100.mybicocca.data.remote.api.esse3.Esse3CareerApi
-import it.attendance100.mybicocca.data.remote.api.esse3.Esse3CommonApi
-import it.attendance100.mybicocca.data.remote.api.esse3.Esse3ExamsApi
-import it.attendance100.mybicocca.data.remote.api.esse3.Esse3InternshipApi
-import it.attendance100.mybicocca.data.remote.api.esse3.Esse3QuestionnaireApi
-import it.attendance100.mybicocca.data.remote.api.esse3.Esse3UserApi
+import it.attendance100.mybicocca.data.api.esse3.*
 import okhttp3.Cookie
 import okhttp3.CookieJar
 import okhttp3.HttpUrl

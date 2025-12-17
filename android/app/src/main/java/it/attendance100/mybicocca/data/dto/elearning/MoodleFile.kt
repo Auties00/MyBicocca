@@ -1,0 +1,15 @@
+package it.attendance100.mybicocca.data.dto.elearning
+import com.google.gson.annotations.SerializedName
+import java.net.URI
+
+data class MoodleFile (
+    @SerializedName("fileurl") val fileUrl: URI,
+    @SerializedName("filename") val fileName: String? = null,
+    @SerializedName("filepath") val filePath: String? = null,
+    @SerializedName("filesize") val fileSize: Int? = null,
+    @SerializedName("timemodified") val timeModified: Int? = null,
+    @SerializedName("mimetype") val mimeType: String? = null,
+    @SerializedName("isexternalfile") val isExternalFile: Boolean? = null,
+    @SerializedName("repositorytype") val repositoryType: String? = null,
+    @SerializedName("icon") val icon: String? = null
+)

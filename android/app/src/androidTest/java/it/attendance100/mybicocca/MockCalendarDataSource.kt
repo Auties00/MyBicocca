@@ -1,10 +1,9 @@
 package it.attendance100.mybicocca
 
-import it.attendance100.mybicocca.data.local.entity.CourseEvent
-import it.attendance100.mybicocca.data.local.entity.CourseSchedule
-import it.attendance100.mybicocca.data.local.entity.EventType
-import it.attendance100.mybicocca.domain.datasource.CalendarDataSource
-import it.attendance100.mybicocca.util.CalendarUtils
+import it.attendance100.mybicocca.domain.model.CourseEvent
+import it.attendance100.mybicocca.domain.model.CourseSchedule
+import it.attendance100.mybicocca.domain.model.EventType
+import it.attendance100.mybicocca.ui.screen.main.calendar.CalendarUtils
 import kotlinx.coroutines.delay
 import java.time.DayOfWeek
 import java.time.LocalDate

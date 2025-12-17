@@ -3,7 +3,7 @@ package it.attendance100.mybicocca.ui.screen.main
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import it.attendance100.mybicocca.util.NetworkMonitor
+import it.attendance100.mybicocca.manager.NetworkManager
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
@@ -12,9 +12,9 @@ import javax.inject.Inject
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
-    networkMonitor: NetworkMonitor,
+    networkManager: NetworkManager,
 ) : ViewModel() {
-    val isOffline: StateFlow<Boolean> = networkMonitor.isOnline
+    val isOffline: StateFlow<Boolean> = networkManager.isOnline
         .map { !it }
         .stateIn(
             scope = viewModelScope,
@@ -23,6 +23,6 @@ class MainViewModel @Inject constructor(
         )
 
     init {
-        networkMonitor.refresh()
+        networkManager.refresh()
     }
 }

@@ -41,9 +41,9 @@ import androidx.navigation.NavHostController
 import com.google.android.gms.oss.licenses.OssLicensesMenuActivity
 import it.attendance100.mybicocca.BuildConfig
 import it.attendance100.mybicocca.R
-import it.attendance100.mybicocca.ui.component.AppTitle
+import it.attendance100.mybicocca.ui.component.appbar.AppTitle
 import it.attendance100.mybicocca.ui.theme.GrayColor
-import it.attendance100.mybicocca.util.rememberPreferencesManager
+import it.attendance100.mybicocca.manager.rememberPreferencesManager
 
 private val versionText: String by lazy {
     buildString {

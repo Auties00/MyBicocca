@@ -7,7 +7,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.domain.model.CareerStats
-import it.attendance100.mybicocca.domain.model.User
 
 
 @Composable

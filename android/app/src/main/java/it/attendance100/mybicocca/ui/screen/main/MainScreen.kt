@@ -66,15 +66,15 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.Screen
-import it.attendance100.mybicocca.ui.component.AppTitle
-import it.attendance100.mybicocca.ui.component.SharedAvatar
-import it.attendance100.mybicocca.ui.component.StatusIndicator
+import it.attendance100.mybicocca.manager.rememberHapticManager
+import it.attendance100.mybicocca.ui.component.appbar.AppTitle
+import it.attendance100.mybicocca.ui.component.appbar.SharedAvatar
+import it.attendance100.mybicocca.ui.component.appbar.StatusIndicator
 import it.attendance100.mybicocca.ui.screen.main.calendar.CalendarRoute
 import it.attendance100.mybicocca.ui.screen.main.career.CareerScreen
 import it.attendance100.mybicocca.ui.screen.main.map.LuoghiScreen
 import it.attendance100.mybicocca.ui.theme.GrayColor
 import it.attendance100.mybicocca.ui.theme.GrayColorDark
-import it.attendance100.mybicocca.util.rememberHapticManager
 import java.time.LocalDateTime
 
 @Suppress("AssignedValueIsNeverRead")

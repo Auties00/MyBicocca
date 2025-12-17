@@ -64,9 +64,9 @@ import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.ui.component.DialogOpenerSettingItem
 import it.attendance100.mybicocca.ui.component.SimpleSwitchSettingItem
 import it.attendance100.mybicocca.ui.screen.main.MainViewModel
-import it.attendance100.mybicocca.util.PreferencesManager
-import it.attendance100.mybicocca.util.rememberHapticManager
-import it.attendance100.mybicocca.util.rememberPreferencesManager
+import it.attendance100.mybicocca.manager.StorageManager
+import it.attendance100.mybicocca.manager.rememberHapticManager
+import it.attendance100.mybicocca.manager.rememberPreferencesManager
 
 @Composable
 fun SettingsSubScreenScaffold(
@@ -149,13 +149,13 @@ fun AppearanceSettingsScreen(
             DialogOpenerSettingItem(
                 title = stringResource(R.string.settings_appearance_theme),
                 subtitle = when (selectedThemeMode) {
-                    PreferencesManager.THEME_LIGHT -> stringResource(R.string.settings_appearance_theme_light)
-                    PreferencesManager.THEME_DARK -> stringResource(R.string.settings_appearance_theme_dark)
+                    StorageManager.THEME_LIGHT -> stringResource(R.string.settings_appearance_theme_light)
+                    StorageManager.THEME_DARK -> stringResource(R.string.settings_appearance_theme_dark)
                     else -> stringResource(R.string.settings_appearance_theme_system_default)
                 },
                 icon = when (selectedThemeMode) {
-                    PreferencesManager.THEME_DARK -> Icons.Default.DarkMode
-                    PreferencesManager.THEME_LIGHT -> Icons.Default.LightMode
+                    StorageManager.THEME_DARK -> Icons.Default.DarkMode
+                    StorageManager.THEME_LIGHT -> Icons.Default.LightMode
                     else -> Icons.Default.Brightness4
                 },
                 onClick = { showThemeDialog = true }
@@ -164,9 +164,9 @@ fun AppearanceSettingsScreen(
 
         if (showThemeDialog) {
             val themeOptions = listOf(
-                PreferencesManager.THEME_SYSTEM_DEFAULT,
-                PreferencesManager.THEME_LIGHT,
-                PreferencesManager.THEME_DARK
+                StorageManager.THEME_SYSTEM_DEFAULT,
+                StorageManager.THEME_LIGHT,
+                StorageManager.THEME_DARK
             )
 
             AlertDialog(
@@ -180,9 +180,9 @@ fun AppearanceSettingsScreen(
                     Column {
                         themeOptions.forEach { themeMode ->
                             val themeName = when (themeMode) {
-                                PreferencesManager.THEME_SYSTEM_DEFAULT -> stringResource(R.string.settings_appearance_theme_system_default)
-                                PreferencesManager.THEME_LIGHT -> stringResource(R.string.settings_appearance_theme_light)
-                                PreferencesManager.THEME_DARK -> stringResource(R.string.settings_appearance_theme_dark)
+                                StorageManager.THEME_SYSTEM_DEFAULT -> stringResource(R.string.settings_appearance_theme_system_default)
+                                StorageManager.THEME_LIGHT -> stringResource(R.string.settings_appearance_theme_light)
+                                StorageManager.THEME_DARK -> stringResource(R.string.settings_appearance_theme_dark)
                                 else -> themeMode
                             }
                             val default = isSystemInDarkTheme()
@@ -258,7 +258,7 @@ fun GeneralSettingsScreen(
         } else {
             fallbackLangList
         }
-            .let { listOf(PreferencesManager.LOCALE_SYSTEM_DEFAULT) + it }
+            .let { listOf(StorageManager.LOCALE_SYSTEM_DEFAULT) + it }
     }
 
     val currentAppLocale = remember {
@@ -266,15 +266,15 @@ fun GeneralSettingsScreen(
             try {
                 val localeManager = context.getSystemService(LocaleManager::class.java)
                 val appLocales = localeManager.applicationLocales
-                if (appLocales.isEmpty) PreferencesManager.LOCALE_SYSTEM_DEFAULT
-                else appLocales.get(0)?.language ?: PreferencesManager.LOCALE_SYSTEM_DEFAULT
+                if (appLocales.isEmpty) StorageManager.LOCALE_SYSTEM_DEFAULT
+                else appLocales.get(0)?.language ?: StorageManager.LOCALE_SYSTEM_DEFAULT
             } catch (_: Exception) {
                 preferencesManager.locale
             }
         } else {
             val appLocales = AppCompatDelegate.getApplicationLocales()
-            if (appLocales.isEmpty) PreferencesManager.LOCALE_SYSTEM_DEFAULT
-            else appLocales.get(0)?.language ?: PreferencesManager.LOCALE_SYSTEM_DEFAULT
+            if (appLocales.isEmpty) StorageManager.LOCALE_SYSTEM_DEFAULT
+            else appLocales.get(0)?.language ?: StorageManager.LOCALE_SYSTEM_DEFAULT
         }
     }
 
@@ -295,7 +295,7 @@ fun GeneralSettingsScreen(
             DialogOpenerSettingItem(
                 title = stringResource(R.string.settings_general_language),
                 subtitle = when (selectedLocale) {
-                    PreferencesManager.LOCALE_SYSTEM_DEFAULT -> stringResource(R.string.language_system_default)
+                    StorageManager.LOCALE_SYSTEM_DEFAULT -> stringResource(R.string.language_system_default)
                     "it" -> stringResource(R.string.settings_general_language_italian)
                     "en" -> stringResource(R.string.settings_general_language_english)
                     else -> selectedLocale
@@ -317,7 +317,7 @@ fun GeneralSettingsScreen(
                     Column {
                         supportedLocales.forEach { languageCode ->
                             val languageName = when (languageCode) {
-                                PreferencesManager.LOCALE_SYSTEM_DEFAULT -> stringResource(R.string.language_system_default)
+                                StorageManager.LOCALE_SYSTEM_DEFAULT -> stringResource(R.string.language_system_default)
                                 "it" -> stringResource(R.string.settings_general_language_italian)
                                 "en" -> stringResource(R.string.settings_general_language_english)
                                 else -> languageCode
@@ -357,14 +357,14 @@ private fun setAppLocale(context: Context, languageCode: String) {
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
         val localeManager = context.getSystemService(LocaleManager::class.java)
         localeManager.applicationLocales =
-            if (languageCode == PreferencesManager.LOCALE_SYSTEM_DEFAULT) {
+            if (languageCode == StorageManager.LOCALE_SYSTEM_DEFAULT) {
                 LocaleList.getEmptyLocaleList()
             } else {
                 LocaleList.forLanguageTags(languageCode)
             }
     } else {
         AppCompatDelegate.setApplicationLocales(
-            if (languageCode == PreferencesManager.LOCALE_SYSTEM_DEFAULT) {
+            if (languageCode == StorageManager.LOCALE_SYSTEM_DEFAULT) {
                 LocaleListCompat.getEmptyLocaleList()
             } else {
                 LocaleListCompat.forLanguageTags(languageCode)

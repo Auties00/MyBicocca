@@ -1,10 +1,8 @@
 package it.attendance100.mybicocca
 
-import it.attendance100.mybicocca.domain.datasource.UserDataSource
 import it.attendance100.mybicocca.domain.model.CareerStats
 import it.attendance100.mybicocca.domain.model.Exam
 import it.attendance100.mybicocca.domain.model.GradePoint
-import it.attendance100.mybicocca.domain.model.User
 import javax.inject.Inject
 
 /**
