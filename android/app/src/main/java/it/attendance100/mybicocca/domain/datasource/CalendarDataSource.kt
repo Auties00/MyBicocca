@@ -1,13 +1,9 @@
 package it.attendance100.mybicocca.domain.datasource
 
-import it.attendance100.mybicocca.data.local.entity.CourseEvent
-import java.time.LocalDate
-import java.time.YearMonth
+import it.attendance100.mybicocca.data.local.entity.*
+import it.attendance100.mybicocca.domain.model.*
+import java.time.*
 
-/**
- * Abstraction for calendar data retrieval
- * Allows abstracting data origin (mock, API, etc)
- */
 interface CalendarDataSource {
     /**
      * Retrieves events for a specific month
@@ -18,6 +14,11 @@ interface CalendarDataSource {
      * Retrieves events for a specific date
      */
     suspend fun getEventsForDate(date: LocalDate): List<CourseEvent>
+
+  /**
+   * Retrieves bookable slots for appointments
+   */
+  suspend fun getBookableSlots(): List<BookingSlot>
 
     /**
      * Syncs events from the server
