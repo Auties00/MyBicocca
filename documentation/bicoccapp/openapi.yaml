@@ -1,0 +1,713 @@
+openapi: 3.0.0
+info:
+  title: BicoccApp REST API
+  description: REST API for the University of Milano-Bicocca Mobile Application
+  version: v1
+servers:
+  - url: https://backoffice-app.unimib.it/api/v1
+tags:
+  - name: bicoccapp_auth
+    description: Authentication and authorization endpoints
+  - name: bicoccapp_user
+    description: User profile and academic information
+  - name: bicoccapp_calendar
+    description: Calendar and course scheduling
+  - name: bicoccapp_wizard
+    description: Course selection wizard
+  - name: bicoccapp_messages
+    description: Alerts, conversations, and messaging
+  - name: bicoccapp_campus
+    description: Campus information and points of interest
+  - name: bicoccapp_navigation
+    description: App navigation configuration
+components:
+  securitySchemes:
+    TokenAuth:
+      type: apiKey
+      in: header
+      name: uid
+      description: User identifier (email address)
+    ClientAuth:
+      type: apiKey
+      in: header
+      name: client
+      description: Client session token
+    AccessTokenAuth:
+      type: apiKey
+      in: header
+      name: access-token
+      description: Access token for API authorization
+  schemas:
+    UserProfile:
+      type: object
+      properties:
+        user:
+          type: object
+          properties:
+            appuser_id:
+              type: integer
+            personId:
+              type: integer
+            userId:
+              type: string
+            fiscalCode:
+              type: string
+            name:
+              type: string
+            surname:
+              type: string
+            mobile:
+              type: string
+            email:
+              type: string
+            fotoId:
+              type: integer
+            photo:
+              type: string
+              nullable: true
+            has_calendar:
+              type: boolean
+        careers:
+          type: array
+          items:
+            type: object
+            properties:
+              matricId:
+                type: integer
+              selected:
+                type: boolean
+              oldCode:
+                type: boolean
+              matricCode:
+                type: string
+              studentId:
+                type: integer
+    UserCareer:
+      type: object
+      properties:
+        career:
+          type: object
+          properties:
+            averages:
+              type: array
+              items:
+                type: object
+            stats:
+              type: object
+            degree:
+              type: object
+    UserExams:
+      type: object
+      properties:
+        career:
+          type: object
+          properties:
+            notations:
+              type: array
+              items:
+                type: object
+    UserAppeals:
+      type: object
+      properties:
+        career:
+          type: object
+          properties:
+            courses:
+              type: array
+              items:
+                type: object
+    UserFees:
+      type: object
+      properties:
+        career:
+          type: object
+          properties:
+            fees:
+              type: array
+              items:
+                type: object
+    UserRegistrations:
+      type: object
+      properties:
+        career:
+          type: object
+          properties:
+            registrations:
+              type: array
+              items:
+                type: object
+    Calendar:
+      type: object
+      properties:
+        calendar:
+          type: array
+          items:
+            type: object
+    CalendarCourses:
+      type: object
+      properties:
+        courses:
+          type: array
+          items:
+            type: object
+    SetCalendarResponse:
+      type: object
+      properties:
+        message:
+          type: string
+        status:
+          type: integer
+    CourseDetail:
+      type: object
+      properties:
+        activity_code:
+          type: string
+        cds_code:
+          type: string
+        lesson_name:
+          type: string
+        partition:
+          type: string
+        course_code:
+          type: string
+        teachers:
+          type: array
+          items:
+            type: object
+        events:
+          type: array
+          items:
+            type: object
+    WizardCategories:
+      type: object
+      properties:
+        categories:
+          type: array
+          items:
+            type: object
+    WizardDegrees:
+      type: object
+      properties:
+        degrees:
+          type: array
+          items:
+            type: object
+    WizardCourses:
+      type: object
+      properties:
+        courses:
+          type: array
+          items:
+            type: object
+    WizardLessons:
+      type: object
+      properties:
+        lessons:
+          type: object
+    WizardUserCourses:
+      type: object
+      properties:
+        lessons:
+          type: object
+    Alerts:
+      type: object
+      properties:
+        alerts_to_read:
+          type: integer
+        alerts:
+          type: array
+          items:
+            type: object
+    Conversations:
+      type: object
+      properties:
+        conversations:
+          type: array
+          items:
+            type: object
+        unread_messages:
+          type: integer
+    InfoMessage:
+      type: object
+    AppointmentResponse:
+      type: object
+      properties:
+        error:
+          type: string
+    PointOfInterests:
+      type: object
+      properties:
+        maps:
+          type: object
+          properties:
+            filters:
+              type: array
+              items:
+                type: object
+            map_locations:
+              type: array
+              items:
+                type: object
+    Teacher:
+      type: object
+      properties:
+        teacher:
+          type: object
+    AppNavigation:
+      type: object
+      properties:
+        navigation_drawers:
+          type: array
+          items:
+            type: object
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+
+security:
+  - TokenAuth: []
+    ClientAuth: []
+    AccessTokenAuth: []
+
+paths:
+  /auth/openid_connect:
+    get:
+      tags:
+        - bicoccapp_auth
+      summary: Initiates the OpenID Connect authentication flow
+      description: Redirects the user to the university's identity provider for login.
+      security: []
+      responses:
+        '302':
+          description: Redirect
+  /auth/openid_connect/callback:
+    get:
+      tags:
+        - bicoccapp_auth
+      summary: Handles the callback from the identity provider
+      description: Returns authentication tokens.
+      security: []
+      parameters:
+        - name: code
+          in: query
+          schema:
+            type: string
+        - name: state
+          in: query
+          schema:
+            type: string
+      responses:
+        '302':
+          description: Redirect
+  /user_profile:
+    get:
+      tags:
+        - bicoccapp_user
+      summary: Retrieves the authenticated user's profile information
+      parameters:
+        - name: fiscalCode
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+  /user_career:
+    get:
+      tags:
+        - bicoccapp_user
+      summary: Fetches detailed information about the student's academic career
+      parameters:
+        - name: matricId
+          in: query
+          schema:
+            type: integer
+        - name: personId
+          in: query
+          schema:
+            type: integer
+        - name: studentId
+          in: query
+          schema:
+            type: integer
+        - name: typeTitleCode
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserCareer'
+  /user_exams:
+    get:
+      tags:
+        - bicoccapp_user
+      summary: Retrieves the history of exams taken by the student
+      parameters:
+        - name: matricId
+          in: query
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserExams'
+  /user_appeals:
+    get:
+      tags:
+        - bicoccapp_user
+      summary: Gets information about exam sessions
+      parameters:
+        - name: matricId
+          in: query
+          schema:
+            type: integer
+        - name: personId
+          in: query
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserAppeals'
+  /user_fees:
+    get:
+      tags:
+        - bicoccapp_user
+      summary: Retrieves the student's tuition fee payment history
+      parameters:
+        - name: personId
+          in: query
+          schema:
+            type: integer
+        - name: matricId
+          in: query
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserFees'
+  /user_registrations:
+    get:
+      tags:
+        - bicoccapp_user
+      summary: Gets information about the student's course registrations
+      parameters:
+        - name: matricId
+          in: query
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserRegistrations'
+  /calendar:
+    get:
+      tags:
+        - bicoccapp_calendar
+      summary: Retrieves the academic calendar with scheduled events
+      parameters:
+        - name: matricId
+          in: query
+          schema:
+            type: integer
+        - name: date
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Calendar'
+  /calendar_courses:
+    get:
+      tags:
+        - bicoccapp_calendar
+      summary: Lists all courses available for adding to the personal calendar
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CalendarCourses'
+  /set_calendar:
+    post:
+      tags:
+        - bicoccapp_calendar
+      summary: Adds a course to the user's personal calendar
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                user_id:
+                  type: string
+                cdsCode:
+                  type: string
+                activityCode:
+                  type: string
+                lessonName:
+                  type: string
+                courseCode:
+                  type: string
+                partition:
+                  type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SetCalendarResponse'
+  /course_detail:
+    get:
+      tags:
+        - bicoccapp_calendar
+      summary: Retrieves detailed information about a specific course
+      parameters:
+        - name: activityCode
+          in: query
+          schema:
+            type: string
+        - name: courseCode
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseDetail'
+  /wizard/categories:
+    get:
+      tags:
+        - bicoccapp_wizard
+      summary: Gets the list of academic area categories
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WizardCategories'
+  /wizard/degrees:
+    get:
+      tags:
+        - bicoccapp_wizard
+      summary: Retrieves available degree types for a specific academic category
+      parameters:
+        - name: category_code
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WizardDegrees'
+  /wizard/courses:
+    get:
+      tags:
+        - bicoccapp_wizard
+      summary: Lists degree programs available for a category and degree type combination
+      parameters:
+        - name: category_code
+          in: query
+          schema:
+            type: string
+        - name: degree_code
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WizardCourses'
+  /wizard/lessons:
+    get:
+      tags:
+        - bicoccapp_wizard
+      summary: Gets the list of lessons/courses for a specific degree program
+      parameters:
+        - name: category_code
+          in: query
+          schema:
+            type: string
+        - name: degree_code
+          in: query
+          schema:
+            type: string
+        - name: course_code
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WizardLessons'
+  /wizard/user_courses:
+    get:
+      tags:
+        - bicoccapp_wizard
+      summary: Retrieves the courses associated with the authenticated user's degree program
+      parameters:
+        - name: matricId
+          in: query
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WizardUserCourses'
+  /alerts:
+    get:
+      tags:
+        - bicoccapp_messages
+      summary: Fetches notifications and alerts for the user
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Alerts'
+  /conversations:
+    get:
+      tags:
+        - bicoccapp_messages
+      summary: Retrieves the list of message conversations the user has with teachers
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Conversations'
+  /messages/info_message:
+    get:
+      tags:
+        - bicoccapp_messages
+      summary: Gets system-wide informational messages to display in the app
+      security: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InfoMessage'
+  /messages/appointment:
+    post:
+      tags:
+        - bicoccapp_messages
+      summary: Sends an appointment request message to a teacher
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                teacher_key:
+                  type: string
+                student_id:
+                  type: integer
+                message_body:
+                  type: string
+      responses:
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AppointmentResponse'
+  /point_of_interests:
+    get:
+      tags:
+        - bicoccapp_campus
+      summary: Retrieves campus map data including buildings, cafeterias, libraries, and departments
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PointOfInterests'
+  /teacher:
+    get:
+      tags:
+        - bicoccapp_campus
+      summary: Gets detailed information about a specific teacher
+      parameters:
+        - name: teacherEmail
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Teacher'
+  /app_navigations/navigation_drawer:
+    get:
+      tags:
+        - bicoccapp_navigation
+      summary: Retrieves the app's navigation drawer menu structure and configuration
+      parameters:
+        - name: locale
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AppNavigation'
