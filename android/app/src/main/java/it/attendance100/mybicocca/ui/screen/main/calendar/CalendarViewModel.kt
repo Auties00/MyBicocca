@@ -6,14 +6,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.switchMap
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import it.attendance100.mybicocca.data.local.entity.CourseEvent
-import it.attendance100.mybicocca.domain.usecase.DeleteEventUseCase
-import it.attendance100.mybicocca.domain.usecase.GetEventsForDateUseCase
-import it.attendance100.mybicocca.domain.usecase.GetEventsForMonthUseCase
-import it.attendance100.mybicocca.domain.usecase.InsertEventUseCase
-import it.attendance100.mybicocca.domain.usecase.SyncCalendarUseCase
-import it.attendance100.mybicocca.domain.usecase.UpdateEventUseCase
-import it.attendance100.mybicocca.util.NetworkMonitor
+import it.attendance100.mybicocca.domain.model.CourseEvent
+import it.attendance100.mybicocca.manager.NetworkManager
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.YearMonth
@@ -26,13 +20,8 @@ import javax.inject.Inject
  */
 @HiltViewModel
 class CalendarViewModel @Inject constructor(
-    private val getEventsForDateUseCase: GetEventsForDateUseCase,
-    private val getEventsForMonthUseCase: GetEventsForMonthUseCase,
-    private val syncCalendarUseCase: SyncCalendarUseCase,
-    private val insertEventUseCase: InsertEventUseCase,
-    private val updateEventUseCase: UpdateEventUseCase,
-    private val deleteEventUseCase: DeleteEventUseCase,
-    networkMonitor: NetworkMonitor,
+    private val calendarRepository: CalendarRepository,
+    networkManager: NetworkManager,
 ) : ViewModel() {
 
     // Stato del calendario
@@ -57,7 +46,7 @@ class CalendarViewModel @Inject constructor(
         // loadInitialData() // Removed explicit call, relying on network monitor
 
         viewModelScope.launch {
-            networkMonitor.isOnline.collect { isOnline ->
+            networkManager.isOnline.collect { isOnline ->
                 if (isOnline) {
                     loadInitialData()
                 }
@@ -72,7 +61,7 @@ class CalendarViewModel @Inject constructor(
         try {
             _isLoading.value = true
             // Sincronizza dal server (o carica dati mock)
-            syncCalendarUseCase()
+            calendarRepository.syncFromRemote()
             _errorMessage.value = null
         } catch (e: Exception) {
             _errorMessage.value = e.message
@@ -85,14 +74,14 @@ class CalendarViewModel @Inject constructor(
      * Ottiene gli eventi per la data selezionata
      */
     val eventsForSelectedDate: LiveData<List<CourseEvent>> = _selectedDate.switchMap { date ->
-        getEventsForDateUseCase(date)
+        calendarRepository.observeEventsForDate(date)
     }
 
     /**
      * Ottiene gli eventi per il mese corrente
      */
     val eventsForCurrentMonth: LiveData<List<CourseEvent>> = _currentMonth.switchMap { month ->
-        getEventsForMonthUseCase(month)
+        calendarRepository.observeEventsForMonth(month)
     }
 
     /**
@@ -184,7 +173,7 @@ class CalendarViewModel @Inject constructor(
     fun insertEvent(event: CourseEvent) = viewModelScope.launch {
         try {
             _isLoading.value = true
-            insertEventUseCase(event)
+            calendarRepository.insertEvent(event)
             _errorMessage.value = null
         } catch (e: Exception) {
             _errorMessage.value = e.message
@@ -199,7 +188,7 @@ class CalendarViewModel @Inject constructor(
     fun updateEvent(event: CourseEvent) = viewModelScope.launch {
         try {
             _isLoading.value = true
-            updateEventUseCase(event)
+            calendarRepository.updateEvent(event)
             _errorMessage.value = null
         } catch (e: Exception) {
             _errorMessage.value = e.message
@@ -214,7 +203,7 @@ class CalendarViewModel @Inject constructor(
     fun deleteEvent(event: CourseEvent) = viewModelScope.launch {
         try {
             _isLoading.value = true
-            deleteEventUseCase(event)
+            calendarRepository.deleteEvent(event)
             _errorMessage.value = null
         } catch (e: Exception) {
             _errorMessage.value = e.message
@@ -229,7 +218,7 @@ class CalendarViewModel @Inject constructor(
     fun syncFromRemote() = viewModelScope.launch {
         try {
             _isLoading.value = true
-            syncCalendarUseCase()
+            calendarRepository.syncFromRemote()
             _errorMessage.value = null
         } catch (e: Exception) {
             _errorMessage.value = e.message

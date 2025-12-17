@@ -23,7 +23,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.Screen
-import it.attendance100.mybicocca.ui.component.AppTitle
+import it.attendance100.mybicocca.ui.component.appbar.AppTitle
 
 @Composable
 fun SplashScreen(

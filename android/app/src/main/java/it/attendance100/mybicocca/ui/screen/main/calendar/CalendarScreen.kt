@@ -70,12 +70,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import it.attendance100.mybicocca.R
-import it.attendance100.mybicocca.data.local.entity.CourseEvent
+import it.attendance100.mybicocca.domain.model.CourseEvent
 import it.attendance100.mybicocca.ui.component.EventDetailDialog
+import it.attendance100.mybicocca.ui.component.calendar.DayTimelineView
+import it.attendance100.mybicocca.ui.component.calendar.MonthGridView
+import it.attendance100.mybicocca.ui.component.calendar.SelectedDateEventsPreview
+import it.attendance100.mybicocca.ui.component.calendar.WeekGridView
 import it.attendance100.mybicocca.ui.theme.BackgroundColor
 import it.attendance100.mybicocca.ui.theme.GrayColor
 import it.attendance100.mybicocca.ui.theme.GrayColorLight
-import it.attendance100.mybicocca.util.CalendarUtils
 import kotlinx.coroutines.launch
 import java.time.DayOfWeek
 import java.time.LocalDate

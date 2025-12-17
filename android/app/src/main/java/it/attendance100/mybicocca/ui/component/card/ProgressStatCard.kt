@@ -31,9 +31,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import it.attendance100.mybicocca.ui.theme.MyBicoccaDarkColorScheme
 import it.attendance100.mybicocca.ui.theme.MyBicoccaLightColorScheme
-import it.attendance100.mybicocca.util.ProvideHapticManager
-import it.attendance100.mybicocca.util.rememberHapticManager
-import it.attendance100.mybicocca.util.rememberPreferencesManager
+import it.attendance100.mybicocca.manager.ProvideHapticManager
+import it.attendance100.mybicocca.manager.rememberHapticManager
+import it.attendance100.mybicocca.manager.rememberPreferencesManager
 
 
 @Composable

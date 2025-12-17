@@ -7,9 +7,9 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
-import it.attendance100.mybicocca.data.local.dao.CourseEventDao
-import it.attendance100.mybicocca.data.local.dao.CourseScheduleDao
-import it.attendance100.mybicocca.data.local.dao.UserDao
+import it.attendance100.mybicocca.data.dao.CourseEventDao
+import it.attendance100.mybicocca.data.dao.CourseScheduleDao
+import it.attendance100.mybicocca.data.dao.UserDao
 import javax.inject.Singleton
 
 /**

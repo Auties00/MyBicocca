@@ -1,0 +1,37 @@
+package it.attendance100.mybicocca.data.dto.elearning
+import com.google.gson.annotations.SerializedName
+import java.net.URI
+
+data class UserProfile(
+    @SerializedName("id") val id: Int? = null,
+    @SerializedName("username") val username: String? = null,
+    @SerializedName("firstname") val firstName: String? = null,
+    @SerializedName("lastname") val lastName: String? = null,
+    @SerializedName("fullname") val fullName: String? = null,
+    @SerializedName("email") val email: String? = null,
+    @SerializedName("address") val address: String? = null,
+    @SerializedName("phone1") val phone1: String? = null,
+    @SerializedName("phone2") val phone2: String? = null,
+    @SerializedName("department") val department: String? = null,
+    @SerializedName("institution") val institution: String? = null,
+    @SerializedName("idnumber") val idNumber: String? = null,
+    @SerializedName("interests") val interests: String? = null,
+    @SerializedName("firstaccess") val firstAccess: Int? = null,
+    @SerializedName("lastaccess") val lastAccess: Int? = null,
+    @SerializedName("auth") val auth: String? = null,
+    @SerializedName("suspended") val suspended: Boolean? = null,
+    @SerializedName("confirmed") val confirmed: Boolean? = null,
+    @SerializedName("lang") val lang: String? = null,
+    @SerializedName("calendartype") val calendarType: String? = null,
+    @SerializedName("theme") val theme: String? = null,
+    @SerializedName("timezone") val timezone: String? = null,
+    @SerializedName("mailformat") val mailFormat: Int? = null,
+    @SerializedName("description") val description: String? = null,
+    @SerializedName("descriptionformat") val descriptionFormat: Int? = null,
+    @SerializedName("city") val city: String? = null,
+    @SerializedName("country") val country: String? = null,
+    @SerializedName("profileimageurlsmall") val profileImageUrlSmall: URI? = null,
+    @SerializedName("profileimageurl") val profileImageUrl: URI? = null,
+    @SerializedName("customfields") val customFields: List<UserCustomField>? = null,
+    @SerializedName("preferences") val preferences: List<UserPreference>? = null
+)

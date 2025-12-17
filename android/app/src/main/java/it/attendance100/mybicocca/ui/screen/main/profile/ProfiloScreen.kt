@@ -85,6 +85,7 @@ import com.patrykandpatrick.vico.core.common.shape.CorneredShape
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.Screen
 import it.attendance100.mybicocca.domain.model.GradePoint
+import it.attendance100.mybicocca.manager.rememberPreferencesManager
 import it.attendance100.mybicocca.ui.component.DialogOpenerSettingItem
 import it.attendance100.mybicocca.ui.component.badge.BadgeBack
 import it.attendance100.mybicocca.ui.component.badge.BadgeFront
@@ -96,7 +97,6 @@ import it.attendance100.mybicocca.ui.theme.BadgeWhiteDrawableColor
 import it.attendance100.mybicocca.ui.theme.GrayColor
 import it.attendance100.mybicocca.ui.theme.MyBicoccaDarkColorScheme
 import it.attendance100.mybicocca.ui.theme.OnBackgroundColor
-import it.attendance100.mybicocca.util.rememberPreferencesManager
 import java.util.Locale
 
 
@@ -725,7 +725,15 @@ fun GradesChartDarkPreview() {
 @Preview(showBackground = true, showSystemUi = false)
 @Composable
 fun GradesChartLightPreview() {
-    val grades = UserMockData.careerStats.grades
+    val grades = listOf(
+        GradePoint(
+            cfu = "8.0",
+            value = 30f,
+            date = "2023-10-25",
+            name = "Test Grade 1",
+            isLode = false,
+        ),
+    )
     Box(
         modifier = Modifier.size(400.dp, 350.dp),
     ) {

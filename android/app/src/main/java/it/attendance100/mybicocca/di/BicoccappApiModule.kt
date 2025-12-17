@@ -4,14 +4,8 @@ import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
-import it.attendance100.mybicocca.data.remote.api.bicoccapp.BicoccappApi
-import it.attendance100.mybicocca.data.remote.api.bicoccapp.BicoccappAuthApi
-import it.attendance100.mybicocca.data.remote.api.bicoccapp.BicoccappCalendarApi
-import it.attendance100.mybicocca.data.remote.api.bicoccapp.BicoccappCampusApi
-import it.attendance100.mybicocca.data.remote.api.bicoccapp.BicoccappMessagesApi
-import it.attendance100.mybicocca.data.remote.api.bicoccapp.BicoccappUserApi
-import it.attendance100.mybicocca.data.remote.api.bicoccapp.BicoccappWizardApi
-import it.attendance100.mybicocca.util.PreferencesManager
+import it.attendance100.mybicocca.data.api.bicoccapp.*
+import it.attendance100.mybicocca.manager.StorageManager
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
@@ -102,7 +96,7 @@ object BicoccappApiModule {
     @Provides
     @Singleton
     @Esse3OkHttpClient
-    fun provideOkHttpClient(preferencesManager: PreferencesManager): OkHttpClient {
+    fun provideOkHttpClient(storageManager: StorageManager): OkHttpClient {
         val loggingInterceptor = HttpLoggingInterceptor().apply {
             level = HttpLoggingInterceptor.Level.BODY
         }
@@ -110,15 +104,15 @@ object BicoccappApiModule {
         return OkHttpClient.Builder()
             .addInterceptor { chain ->
                 val originalRequest = chain.request()
-                if (!preferencesManager.isLoggedIn()) {
+                if (!storageManager.isLoggedIn()) {
                     chain.proceed(originalRequest)
                 } else if (originalRequest.header(HEADER_ACCESS_TOKEN) != null) {
                     chain.proceed(originalRequest)
                 } else {
                     val authenticatedRequest = originalRequest.newBuilder().apply {
-                        preferencesManager.authAccessToken?.let { header(HEADER_ACCESS_TOKEN, it) }
-                        preferencesManager.authClient?.let { header(HEADER_CLIENT, it) }
-                        preferencesManager.authUid?.let { header(HEADER_UID, it) }
+                        storageManager.authAccessToken?.let { header(HEADER_ACCESS_TOKEN, it) }
+                        storageManager.authClient?.let { header(HEADER_CLIENT, it) }
+                        storageManager.authUid?.let { header(HEADER_UID, it) }
                     }.build()
                     chain.proceed(authenticatedRequest)
                 }

@@ -44,8 +44,8 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.hazeSource
-import it.attendance100.mybicocca.util.rememberHapticManager
-import it.attendance100.mybicocca.util.rememberPreferencesManager
+import it.attendance100.mybicocca.manager.rememberHapticManager
+import it.attendance100.mybicocca.manager.rememberPreferencesManager
 import kotlinx.coroutines.launch
 import kotlin.math.abs
 import kotlin.math.cos

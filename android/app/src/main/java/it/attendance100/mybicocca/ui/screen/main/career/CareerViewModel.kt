@@ -4,9 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import it.attendance100.mybicocca.domain.model.CareerStats
-import it.attendance100.mybicocca.domain.model.User
 import it.attendance100.mybicocca.domain.repository.UserRepository
-import it.attendance100.mybicocca.util.NetworkMonitor
+import it.attendance100.mybicocca.manager.NetworkManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -16,7 +15,7 @@ import javax.inject.Inject
 @HiltViewModel
 class CareerViewModel @Inject constructor(
     private val userRepository: UserRepository,
-    networkMonitor: NetworkMonitor,
+    networkManager: NetworkManager,
 ) : ViewModel() {
 
     private val _user = MutableStateFlow<User?>(null)
@@ -29,7 +28,7 @@ class CareerViewModel @Inject constructor(
         loadData()
 
         viewModelScope.launch {
-            networkMonitor.isOnline.collect { isOnline ->
+            networkManager.isOnline.collect { isOnline ->
                 if (isOnline) {
                     refreshData()
                 }

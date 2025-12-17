@@ -1,7 +1,0 @@
-package it.attendance100.mybicocca.data.remote.dto.elearning
-import com.google.gson.annotations.SerializedName
-
-data class GetCalendarUpcomingViewRequest(
-    @SerializedName("courseid") val courseId: Int? = null,
-    @SerializedName("categoryid") val categoryId: Int? = null
-)

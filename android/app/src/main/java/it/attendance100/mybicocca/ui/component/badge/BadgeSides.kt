@@ -55,7 +55,6 @@ import dev.chrisbanes.haze.hazeEffect
 import dev.chrisbanes.haze.materials.ExperimentalHazeMaterialsApi
 import dev.chrisbanes.haze.materials.HazeMaterials
 import it.attendance100.mybicocca.R
-import it.attendance100.mybicocca.domain.model.User
 import it.attendance100.mybicocca.ui.component.DitheredTexture
 import it.attendance100.mybicocca.ui.theme.BadgeSignatureBoxColorRed
 import it.attendance100.mybicocca.ui.theme.BadgeSignatureBoxColorRed2
@@ -64,8 +63,8 @@ import it.attendance100.mybicocca.ui.theme.BadgeSignatureBoxColorWhite2
 import it.attendance100.mybicocca.ui.theme.BadgeWhiteDrawableColor
 import it.attendance100.mybicocca.ui.theme.OnBackgroundColor
 import it.attendance100.mybicocca.ui.theme.PrimaryColor
-import it.attendance100.mybicocca.util.rememberPreferencesManager
-import it.attendance100.mybicocca.util.titleCase
+import it.attendance100.mybicocca.manager.rememberPreferencesManager
+import it.attendance100.mybicocca.extension.titleCase
 
 val usr = User(
     name = "Federico Giarrusso",

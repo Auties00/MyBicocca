@@ -1,7 +1,0 @@
-package it.attendance100.mybicocca.data.remote.dto.elearning
-import com.google.gson.annotations.SerializedName
-
-data class GetAttemptReviewRequest(
-    @SerializedName("attemptid") val attemptId: Int,
-    @SerializedName("page") val page: Int? = null
-)

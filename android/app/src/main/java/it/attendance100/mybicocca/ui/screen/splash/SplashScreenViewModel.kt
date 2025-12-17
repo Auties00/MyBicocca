@@ -6,7 +6,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import it.attendance100.mybicocca.domain.repository.AuthRepository
 import it.attendance100.mybicocca.domain.repository.UserRepository
 import kotlinx.coroutines.launch
 import retrofit2.HttpException

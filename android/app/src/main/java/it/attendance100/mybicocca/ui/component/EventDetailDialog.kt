@@ -72,9 +72,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogProperties
 import it.attendance100.mybicocca.R
-import it.attendance100.mybicocca.data.local.entity.CourseEvent
-import it.attendance100.mybicocca.data.local.entity.EventType
-import it.attendance100.mybicocca.util.CalendarUtils
+import it.attendance100.mybicocca.domain.model.CourseEvent
+import it.attendance100.mybicocca.domain.model.EventType
+import it.attendance100.mybicocca.ui.screen.main.calendar.CalendarUtils
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.time.Duration
