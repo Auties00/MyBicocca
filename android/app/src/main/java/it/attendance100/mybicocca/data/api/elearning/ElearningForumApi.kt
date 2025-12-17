@@ -1,33 +1,8 @@
 package it.attendance100.mybicocca.data.api.elearning
 
-import it.attendance100.mybicocca.data.remote.dto.elearning.AddDiscussionPostRequest
-import it.attendance100.mybicocca.data.remote.dto.elearning.AddDiscussionPostResponse
-import it.attendance100.mybicocca.data.remote.dto.elearning.AddDiscussionRequest
-import it.attendance100.mybicocca.data.remote.dto.elearning.AddDiscussionResponse
-import it.attendance100.mybicocca.data.remote.dto.elearning.CanAddDiscussionRequest
-import it.attendance100.mybicocca.data.remote.dto.elearning.CanAddDiscussionResponse
-import it.attendance100.mybicocca.data.remote.dto.elearning.DeletePostRequest
-import it.attendance100.mybicocca.data.remote.dto.elearning.DiscussionPostsResponse
-import it.attendance100.mybicocca.data.remote.dto.elearning.Forum
-import it.attendance100.mybicocca.data.remote.dto.elearning.ForumAccessInfoResponse
-import it.attendance100.mybicocca.data.remote.dto.elearning.ForumDiscussionPostsResponse
-import it.attendance100.mybicocca.data.remote.dto.elearning.ForumDiscussionsResponse
-import it.attendance100.mybicocca.data.remote.dto.elearning.GetDiscussionPostsRequest
-import it.attendance100.mybicocca.data.remote.dto.elearning.GetForumAccessInfoRequest
-import it.attendance100.mybicocca.data.remote.dto.elearning.GetForumDiscussionPostsRequest
-import it.attendance100.mybicocca.data.remote.dto.elearning.GetForumDiscussionsRequest
-import it.attendance100.mybicocca.data.remote.dto.elearning.GetForumsByCoursesRequest
-import it.attendance100.mybicocca.data.remote.dto.elearning.PrepareDraftAreaRequest
-import it.attendance100.mybicocca.data.remote.dto.elearning.PrepareDraftAreaResponse
-import it.attendance100.mybicocca.data.remote.dto.elearning.SetLockStateRequest
-import it.attendance100.mybicocca.data.remote.dto.elearning.SetLockStateResponse
-import it.attendance100.mybicocca.data.remote.dto.elearning.StatusWithWarningsResponse
-import it.attendance100.mybicocca.data.remote.dto.elearning.UpdateDiscussionPostRequest
-import it.attendance100.mybicocca.data.remote.dto.elearning.ViewForumDiscussionRequest
-import it.attendance100.mybicocca.data.remote.dto.elearning.ViewForumRequest
-import retrofit2.Response
-import retrofit2.http.Body
-import retrofit2.http.POST
+import it.attendance100.mybicocca.data.dto.elearning.*
+import retrofit2.*
+import retrofit2.http.*
 
 /**
  * # Elearning Forum API

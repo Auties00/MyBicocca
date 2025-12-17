@@ -1,46 +1,8 @@
 package it.attendance100.mybicocca.data.api.elearning
 
-import it.attendance100.mybicocca.data.remote.dto.elearning.CheckUpdatesRequest
-import it.attendance100.mybicocca.data.remote.dto.elearning.CheckUpdatesResponse
-import it.attendance100.mybicocca.data.remote.dto.elearning.Course
-import it.attendance100.mybicocca.data.remote.dto.elearning.CourseCategory
-import it.attendance100.mybicocca.data.remote.dto.elearning.CourseModuleResponse
-import it.attendance100.mybicocca.data.remote.dto.elearning.CourseSection
-import it.attendance100.mybicocca.data.remote.dto.elearning.EnrolledCourse
-import it.attendance100.mybicocca.data.remote.dto.elearning.EnrolledUser
-import it.attendance100.mybicocca.data.remote.dto.elearning.EnrolmentMethod
-import it.attendance100.mybicocca.data.remote.dto.elearning.GetCategoriesRequest
-import it.attendance100.mybicocca.data.remote.dto.elearning.GetCourseContentsRequest
-import it.attendance100.mybicocca.data.remote.dto.elearning.GetCourseModuleByInstanceRequest
-import it.attendance100.mybicocca.data.remote.dto.elearning.GetCourseModuleRequest
-import it.attendance100.mybicocca.data.remote.dto.elearning.GetCoursesByFieldRequest
-import it.attendance100.mybicocca.data.remote.dto.elearning.GetCoursesByFieldResponse
-import it.attendance100.mybicocca.data.remote.dto.elearning.GetCoursesRequest
-import it.attendance100.mybicocca.data.remote.dto.elearning.GetEnrolledUsersRequest
-import it.attendance100.mybicocca.data.remote.dto.elearning.GetEnrolmentMethodsRequest
-import it.attendance100.mybicocca.data.remote.dto.elearning.GetGuestEnrolInfoRequest
-import it.attendance100.mybicocca.data.remote.dto.elearning.GetRecentCoursesRequest
-import it.attendance100.mybicocca.data.remote.dto.elearning.GetSelfEnrolInfoRequest
-import it.attendance100.mybicocca.data.remote.dto.elearning.GetUserAdministrationOptionsRequest
-import it.attendance100.mybicocca.data.remote.dto.elearning.GetUserNavigationOptionsRequest
-import it.attendance100.mybicocca.data.remote.dto.elearning.GetUsersCoursesRequest
-import it.attendance100.mybicocca.data.remote.dto.elearning.GuestEnrolInfoResponse
-import it.attendance100.mybicocca.data.remote.dto.elearning.RecentCourse
-import it.attendance100.mybicocca.data.remote.dto.elearning.SearchCoursesRequest
-import it.attendance100.mybicocca.data.remote.dto.elearning.SearchCoursesResponse
-import it.attendance100.mybicocca.data.remote.dto.elearning.SearchUsersRequest
-import it.attendance100.mybicocca.data.remote.dto.elearning.SearchedUser
-import it.attendance100.mybicocca.data.remote.dto.elearning.SelfEnrolInfoResponse
-import it.attendance100.mybicocca.data.remote.dto.elearning.SelfEnrolUserRequest
-import it.attendance100.mybicocca.data.remote.dto.elearning.SelfEnrolUserResponse
-import it.attendance100.mybicocca.data.remote.dto.elearning.SetFavouriteCoursesRequest
-import it.attendance100.mybicocca.data.remote.dto.elearning.UserNavigationOptionsResponse
-import it.attendance100.mybicocca.data.remote.dto.elearning.ValidateGuestPasswordRequest
-import it.attendance100.mybicocca.data.remote.dto.elearning.ValidateGuestPasswordResponse
-import it.attendance100.mybicocca.data.remote.dto.elearning.ViewCourseRequest
-import retrofit2.Response
-import retrofit2.http.Body
-import retrofit2.http.POST
+import it.attendance100.mybicocca.data.dto.elearning.*
+import retrofit2.*
+import retrofit2.http.*
 
 /**
  * # Elearning Course & Enrolment API
