@@ -1,56 +1,28 @@
 package it.attendance100.mybicocca.ui.screen.main.settings.manager
 
-import androidx.compose.animation.AnimatedContentScope
-import androidx.compose.animation.ExperimentalSharedTransitionApi
-import androidx.compose.animation.SharedTransitionScope
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.ContactPage
-import androidx.compose.material.icons.filled.School
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.scale
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalUriHandler
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.res.vectorResource
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import androidx.navigation.NavHostController
+import androidx.compose.animation.*
+import androidx.compose.foundation.*
+import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.*
+import androidx.compose.material.icons.automirrored.filled.*
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.*
+import androidx.compose.ui.draw.*
+import androidx.compose.ui.graphics.vector.*
+import androidx.compose.ui.platform.*
+import androidx.compose.ui.res.*
+import androidx.compose.ui.text.font.*
+import androidx.compose.ui.unit.*
+import androidx.hilt.lifecycle.viewmodel.compose.*
+import androidx.navigation.*
+import it.attendance100.mybicocca.*
 import it.attendance100.mybicocca.R
-import it.attendance100.mybicocca.Screen
-import it.attendance100.mybicocca.ui.component.appbar.SharedAvatar
-import it.attendance100.mybicocca.ui.component.appbar.StatusIndicator
-import it.attendance100.mybicocca.ui.screen.login.LoginViewModel
-import it.attendance100.mybicocca.ui.screen.main.MainViewModel
-import it.attendance100.mybicocca.ui.theme.GrayColor
+import it.attendance100.mybicocca.ui.component.appbar.*
+import it.attendance100.mybicocca.ui.screen.login.*
+import it.attendance100.mybicocca.ui.screen.main.*
+import it.attendance100.mybicocca.ui.theme.*
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
@@ -72,15 +44,15 @@ fun LoginManagerScreen(
         topBar = {
             Surface(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .statusBarsPadding()
-                    .height(60.dp),
+                  .fillMaxWidth()
+                  .statusBarsPadding()
+                  .height(60.dp),
                 color = MaterialTheme.colorScheme.background
             ) {
                 Row(
                     modifier = Modifier
-                        .fillMaxSize()
-                        .padding(horizontal = 13.dp),
+                      .fillMaxSize()
+                      .padding(horizontal = 13.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     IconButton(onClick = { navController.navigateUp() }) {
@@ -103,24 +75,24 @@ fun LoginManagerScreen(
     ) { paddingValues ->
         Column(
             modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .background(MaterialTheme.colorScheme.background)
+              .fillMaxSize()
+              .padding(paddingValues)
+              .background(MaterialTheme.colorScheme.background)
         ) {
             StatusIndicator(
                 isOffline = isOffline
             )
             Column(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .verticalScroll(rememberScrollState())
+                  .fillMaxSize()
+                  .verticalScroll(rememberScrollState())
             ) {
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(16.dp),
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 24.dp, bottom = 32.dp)
+                      .fillMaxWidth()
+                      .padding(top = 24.dp, bottom = 32.dp)
                 ) {
                     SharedAvatar(
                         sharedTransitionScope = sharedTransitionScope,
@@ -152,17 +124,17 @@ fun LoginManagerScreen(
                 // Elearning
                 Surface(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { uriHandler.openUri("https://elearning.unimib.it") },
+                      .fillMaxWidth()
+                      .clickable { uriHandler.openUri("https://elearning.unimib.it") },
                     color = MaterialTheme.colorScheme.background
                 ) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(16.dp),
                         modifier = Modifier
-                            .weight(1f)
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 16.dp),
+                          .weight(1f)
+                          .fillMaxWidth()
+                          .padding(horizontal = 16.dp, vertical = 16.dp),
                     ) {
                         Icon(
                             imageVector = Icons.Default.School,
@@ -182,17 +154,17 @@ fun LoginManagerScreen(
                 // Segreterie
                 Surface(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { uriHandler.openUri("https://s3w.si.unimib.it") },
+                      .fillMaxWidth()
+                      .clickable { uriHandler.openUri("https://s3w.si.unimib.it") },
                     color = MaterialTheme.colorScheme.background
                 ) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(16.dp),
                         modifier = Modifier
-                            .weight(1f)
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 16.dp),
+                          .weight(1f)
+                          .fillMaxWidth()
+                          .padding(horizontal = 16.dp, vertical = 16.dp),
                     ) {
                         Icon(
                             imageVector = Icons.Default.ContactPage,
@@ -212,28 +184,28 @@ fun LoginManagerScreen(
                 // BicoccApp
                 Surface(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable {
-                            // Navigate to the WebView
-                            navController.navigate(Screen.Login.route)
-                        },
+                      .fillMaxWidth()
+                      .clickable {
+	                      // Navigate to the WebView
+	                      navController.navigate(Screen.Login.route)
+                      },
                     color = MaterialTheme.colorScheme.background
                 ) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(16.dp),
                         modifier = Modifier
-                            .weight(1f)
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 16.dp),
+                          .weight(1f)
+                          .fillMaxWidth()
+                          .padding(horizontal = 16.dp, vertical = 16.dp),
                     ) {
                         Icon(
                             imageVector = ImageVector.vectorResource(R.drawable.logo),
                             contentDescription = null,
                             tint = primaryColor,
                             modifier = Modifier
-                                .scale(1.5f)
-                                .size(24.dp)
+                              .scale(1.5f)
+                              .size(24.dp)
                         )
                         Text(
                             text = stringResource(R.string.bicoccapp),
@@ -248,8 +220,7 @@ fun LoginManagerScreen(
     }
 
     LaunchedEffect(Unit) {
-        // If we have a token, try to fetch data to prove it works
-        viewModel.fetchAndLogProfile()
+	    viewModel.startLoginFlow()
     }
 }
 

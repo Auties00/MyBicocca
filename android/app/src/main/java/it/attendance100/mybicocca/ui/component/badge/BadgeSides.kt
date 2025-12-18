@@ -1,70 +1,29 @@
 package it.attendance100.mybicocca.ui.component.badge
 
 
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.absoluteOffset
-import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentSize
-import androidx.compose.foundation.shape.CornerSize
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.BasicText
-import androidx.compose.foundation.text.TextAutoSize
-import androidx.compose.material3.Icon
-import androidx.compose.material3.LocalTextStyle
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.draw.scale
-import androidx.compose.ui.graphics.BlendMode
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.graphics.ColorMatrix
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.Font
-import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.compose.ui.unit.times
-import coil.compose.AsyncImage
-import dev.chrisbanes.haze.HazeState
-import dev.chrisbanes.haze.hazeEffect
-import dev.chrisbanes.haze.materials.ExperimentalHazeMaterialsApi
-import dev.chrisbanes.haze.materials.HazeMaterials
+import androidx.compose.foundation.*
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.*
+import androidx.compose.foundation.text.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.*
+import androidx.compose.ui.draw.*
+import androidx.compose.ui.graphics.*
+import androidx.compose.ui.layout.*
+import androidx.compose.ui.res.*
+import androidx.compose.ui.text.font.*
+import androidx.compose.ui.tooling.preview.*
+import androidx.compose.ui.unit.*
+import coil.compose.*
+import dev.chrisbanes.haze.*
+import dev.chrisbanes.haze.materials.*
 import it.attendance100.mybicocca.R
-import it.attendance100.mybicocca.ui.component.DitheredTexture
-import it.attendance100.mybicocca.ui.theme.BadgeSignatureBoxColorRed
-import it.attendance100.mybicocca.ui.theme.BadgeSignatureBoxColorRed2
-import it.attendance100.mybicocca.ui.theme.BadgeSignatureBoxColorWhite
-import it.attendance100.mybicocca.ui.theme.BadgeSignatureBoxColorWhite2
-import it.attendance100.mybicocca.ui.theme.BadgeWhiteDrawableColor
-import it.attendance100.mybicocca.ui.theme.OnBackgroundColor
-import it.attendance100.mybicocca.ui.theme.PrimaryColor
-import it.attendance100.mybicocca.manager.rememberPreferencesManager
-import it.attendance100.mybicocca.extension.titleCase
+import it.attendance100.mybicocca.domain.model.*
+import it.attendance100.mybicocca.extension.*
+import it.attendance100.mybicocca.manager.*
+import it.attendance100.mybicocca.ui.component.*
+import it.attendance100.mybicocca.ui.theme.*
 
 val usr = User(
     name = "Federico Giarrusso",
@@ -136,18 +95,18 @@ fun BadgeFront(
 
     Box(
         modifier = Modifier
-            .fillMaxSize()
-            .padding(top = 40.dp, start = 40.dp)
+          .fillMaxSize()
+          .padding(top = 40.dp, start = 40.dp)
     ) {
         // BG Texture
         DitheredTexture(
             modifier = Modifier
-                .fillMaxSize()
-                .offset(
-                    x = (-190 + (-touchX + 0.5f) * (movementCoeff * 1.5)).dp,
-                    y = ((-touchY + 0.5f) * (movementCoeff * 1.5)).dp
-                )
-                .rotate(10f),
+              .fillMaxSize()
+              .offset(
+	              x = (-190 + (-touchX + 0.5f) * (movementCoeff * 1.5)).dp,
+	              y = ((-touchY + 0.5f) * (movementCoeff * 1.5)).dp
+              )
+              .rotate(10f),
             color = Color.Black,
             spacing = 10f,          // Distance between dots
             dotSize = 5f,          // Size of the dot
@@ -163,17 +122,17 @@ fun BadgeFront(
             contentDescription = null,
 
             modifier = Modifier
-                .wrapContentSize()
-                .size(900.dp)
+              .wrapContentSize()
+              .size(900.dp)
 
-                .scale(2f)
-                .rotate(7.5f)
-                .absoluteOffset(
-                    x = (43 + (-touchX + 0.5f) * (movementCoeff)).dp,
-                    y = (30 + (-touchY + 0.5f) * (movementCoeff / 2.5)).dp
-                )
+              .scale(2f)
+              .rotate(7.5f)
+              .absoluteOffset(
+	              x = (43 + (-touchX + 0.5f) * (movementCoeff)).dp,
+	              y = (30 + (-touchY + 0.5f) * (movementCoeff / 2.5)).dp
+              )
 
-                .alpha(0.2f),
+              .alpha(0.2f),
             colorFilter = ColorFilter.lighting(drawableColor, drawableColor)
         )
 
@@ -182,10 +141,10 @@ fun BadgeFront(
             painter = painterResource(R.drawable.logo_mono),
             contentDescription = null,
             modifier = Modifier
-                .align(Alignment.TopEnd)
-                .padding(top = 8.dp, end = 12.dp)
-                .absoluteOffset(y = (-35).dp)
-                .size(90.dp),
+              .align(Alignment.TopEnd)
+              .padding(top = 8.dp, end = 12.dp)
+              .absoluteOffset(y = (-35).dp)
+              .size(90.dp),
             colorFilter = ColorFilter.lighting(drawableColor, drawableColor)
         )
 

@@ -1,19 +1,16 @@
 package it.attendance100.mybicocca.ui.screen.splash
 
-import android.util.Log
-import androidx.compose.runtime.State
-import androidx.compose.runtime.mutableStateOf
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
-import dagger.hilt.android.lifecycle.HiltViewModel
-import it.attendance100.mybicocca.domain.repository.UserRepository
-import kotlinx.coroutines.launch
-import retrofit2.HttpException
-import javax.inject.Inject
+import android.util.*
+import androidx.compose.runtime.*
+import androidx.lifecycle.*
+import dagger.hilt.android.lifecycle.*
+import it.attendance100.mybicocca.domain.repository.*
+import kotlinx.coroutines.*
+import retrofit2.*
+import javax.inject.*
 
 @HiltViewModel
 class SplashViewModel @Inject constructor(
-    private val authRepository: AuthRepository,
     private val userRepository: UserRepository,
 ) : ViewModel() {
 
@@ -34,10 +31,10 @@ class SplashViewModel @Inject constructor(
     private fun checkLoginStatus() {
         viewModelScope.launch {
             Log.d("SplashViewModel", "Checking login status...")
-            if (authRepository.isUserLoggedIn()) {
+	        if (userRepository.isLoggedIn()) {
                 Log.d("SplashViewModel", "User is logged in. Fetching data...")
                 try {
-                    userRepository.refreshUser()
+	                userRepository.syncUser()
                     Log.d("SplashViewModel", "Data fetch successful. Navigating to Home.")
                     _splashState.value = SplashState.NavigateHome
                 } catch (e: Exception) {
@@ -45,7 +42,7 @@ class SplashViewModel @Inject constructor(
                     // Check for ExpiredJWTApiException or 401
                     if (e is HttpException && e.code() == 401) {
                         Log.w("SplashViewModel", "Auth error (JWT expired). Redirecting to Login.")
-                        authRepository.logout()
+	                    userRepository.logout()
                         _splashState.value = SplashState.NavigateLogin
                     } else {
                         // Offline mode or other error -> Proceed to Home

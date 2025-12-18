@@ -1,86 +1,32 @@
 package it.attendance100.mybicocca.ui.component
 
-import androidx.compose.animation.core.EaseInCubic
-import androidx.compose.animation.core.EaseOutCubic
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.spring
-import androidx.compose.animation.core.tween
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.outlined.Assignment
-import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.outlined.Event
-import androidx.compose.material.icons.outlined.LocationOn
-import androidx.compose.material.icons.outlined.Notes
-import androidx.compose.material.icons.outlined.Person
-import androidx.compose.material.icons.outlined.School
-import androidx.compose.material.icons.outlined.Science
-import androidx.compose.material.icons.outlined.Timer
-import androidx.compose.material3.AssistChip
-import androidx.compose.material3.AssistChipDefaults
-import androidx.compose.material3.BasicAlertDialog
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilledIconButton
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButtonDefaults
-import androidx.compose.material3.LinearProgressIndicator
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.DialogProperties
+import androidx.compose.animation.core.*
+import androidx.compose.foundation.*
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.*
+import androidx.compose.material.icons.*
+import androidx.compose.material.icons.automirrored.outlined.*
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.outlined.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.*
+import androidx.compose.ui.draw.*
+import androidx.compose.ui.geometry.*
+import androidx.compose.ui.graphics.*
+import androidx.compose.ui.graphics.vector.*
+import androidx.compose.ui.platform.*
+import androidx.compose.ui.res.*
+import androidx.compose.ui.text.font.*
+import androidx.compose.ui.unit.*
+import androidx.compose.ui.window.*
 import it.attendance100.mybicocca.R
-import it.attendance100.mybicocca.domain.model.CourseEvent
-import it.attendance100.mybicocca.domain.model.EventType
-import it.attendance100.mybicocca.ui.screen.main.calendar.CalendarUtils
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import java.time.Duration
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
-import java.util.Locale
+import it.attendance100.mybicocca.domain.model.*
+import it.attendance100.mybicocca.ui.screen.main.calendar.*
+import kotlinx.coroutines.*
+import java.time.*
+import java.time.format.*
+import java.util.*
 
 // EVENT STATUS ENUM
 
@@ -216,14 +162,14 @@ fun EventDetailDialog(
     BasicAlertDialog(
         onDismissRequest = animatedDismiss,
         modifier = Modifier
-            .fillMaxWidth(0.94f)
-            .wrapContentHeight()
-            .graphicsLayer {
-                scaleX = cardScale
-                scaleY = cardScale
-                alpha = cardAlpha
-                translationY = cardOffsetY
-            },
+          .fillMaxWidth(0.94f)
+          .wrapContentHeight()
+          .graphicsLayer {
+	          scaleX = cardScale
+	          scaleY = cardScale
+	          alpha = cardAlpha
+	          translationY = cardOffsetY
+          },
         properties = DialogProperties(
             dismissOnBackPress = true,
             dismissOnClickOutside = true,
@@ -297,38 +243,38 @@ private fun EventDialogHeader(
 
     Box(
         modifier = Modifier
-            .fillMaxWidth()
-            .graphicsLayer { alpha = headerVisible }
-            .background(
-                brush = Brush.linearGradient(
-                    colors = listOf(
-                        eventColor,
-                        eventColor.copy(alpha = 0.85f),
-                        Color(
-                            red = (eventColor.red * 0.8f + gradientOffset * 0.1f).coerceIn(0f, 1f),
-                            green = (eventColor.green * 0.9f).coerceIn(0f, 1f),
-                            blue = (eventColor.blue * 1.1f).coerceIn(0f, 1f),
-                            alpha = 1f
-                        )
-                    ),
-                    start = Offset(0f, 0f),
-                    end = Offset(500f + gradientOffset * 200f, 500f)
-                )
-            )
+          .fillMaxWidth()
+          .graphicsLayer { alpha = headerVisible }
+          .background(
+	          brush = Brush.linearGradient(
+		          colors = listOf(
+			          eventColor,
+			          eventColor.copy(alpha = 0.85f),
+			          Color(
+				          red = (eventColor.red * 0.8f + gradientOffset * 0.1f).coerceIn(0f, 1f),
+				          green = (eventColor.green * 0.9f).coerceIn(0f, 1f),
+				          blue = (eventColor.blue * 1.1f).coerceIn(0f, 1f),
+				          alpha = 1f
+			          )
+		          ),
+		          start = Offset(0f, 0f),
+		          end = Offset(500f + gradientOffset * 200f, 500f)
+	          )
+          )
     ) {
         // Overlay decorativo
         Box(
             modifier = Modifier
-                .matchParentSize()
-                .background(
-                    brush = Brush.verticalGradient(
-                        colors = listOf(
-                            Color.White.copy(alpha = 0.05f),
-                            Color.Transparent,
-                            Color.Black.copy(alpha = 0.1f)
-                        )
-                    )
-                )
+              .matchParentSize()
+              .background(
+	              brush = Brush.verticalGradient(
+		              colors = listOf(
+			              Color.White.copy(alpha = 0.05f),
+			              Color.Transparent,
+			              Color.Black.copy(alpha = 0.1f)
+		              )
+	              )
+              )
         )
 
         Column(
@@ -438,13 +384,13 @@ private fun EventDialogTimeSection(
 
     Card(
         modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = contentPadding)
-            .offset(y = (-8).dp)
-            .graphicsLayer {
-                alpha = timeCardVisible
-                translationY = (1f - timeCardVisible) * 30f
-            },
+          .fillMaxWidth()
+          .padding(horizontal = contentPadding)
+          .offset(y = (-8).dp)
+          .graphicsLayer {
+	          alpha = timeCardVisible
+	          translationY = (1f - timeCardVisible) * 30f
+          },
         shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 12.dp)
@@ -458,8 +404,8 @@ private fun EventDialogTimeSection(
 
         Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(contentPadding + 4.dp),
+              .fillMaxWidth()
+              .padding(contentPadding + 4.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // Time row with duration indicator
@@ -488,8 +434,8 @@ private fun EventDialogTimeSection(
                 // Duration indicator
                 Box(
                     modifier = Modifier
-                        .weight(1f)
-                        .padding(top = durationIndicatorTopOffset),
+                      .weight(1f)
+                      .padding(top = durationIndicatorTopOffset),
                     contentAlignment = Alignment.TopCenter
                 ) {
                     DurationIndicator(
@@ -615,18 +561,18 @@ private fun DurationIndicator(
     ) {
         Box(
             modifier = Modifier
-                .weight(1f)
-                .height(2.dp)
-                .padding(horizontal = 8.dp)
-                .background(
-                    brush = Brush.horizontalGradient(
-                        listOf(
-                            Color.Transparent,
-                            eventColor.copy(alpha = 0.5f)
-                        )
-                    ),
-                    shape = RoundedCornerShape(1.dp)
-                )
+              .weight(1f)
+              .height(2.dp)
+              .padding(horizontal = 8.dp)
+              .background(
+	              brush = Brush.horizontalGradient(
+		              listOf(
+			              Color.Transparent,
+			              eventColor.copy(alpha = 0.5f)
+		              )
+	              ),
+	              shape = RoundedCornerShape(1.dp)
+              )
         )
         AssistChip(
             onClick = {},
@@ -647,18 +593,18 @@ private fun DurationIndicator(
         )
         Box(
             modifier = Modifier
-                .weight(1f)
-                .height(2.dp)
-                .padding(horizontal = 8.dp)
-                .background(
-                    brush = Brush.horizontalGradient(
-                        listOf(
-                            eventColor.copy(alpha = 0.5f),
-                            Color.Transparent
-                        )
-                    ),
-                    shape = RoundedCornerShape(1.dp)
-                )
+              .weight(1f)
+              .height(2.dp)
+              .padding(horizontal = 8.dp)
+              .background(
+	              brush = Brush.horizontalGradient(
+		              listOf(
+			              eventColor.copy(alpha = 0.5f),
+			              Color.Transparent
+		              )
+	              ),
+	              shape = RoundedCornerShape(1.dp)
+              )
         )
     }
 }
@@ -680,11 +626,11 @@ private fun EventProgressBar(
     LinearProgressIndicator(
         progress = { animatedProgress },
         modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 20.dp)
-            .padding(bottom = 16.dp)
-            .height(6.dp)
-            .clip(RoundedCornerShape(3.dp)),
+          .fillMaxWidth()
+          .padding(horizontal = 20.dp)
+          .padding(bottom = 16.dp)
+          .height(6.dp)
+          .clip(RoundedCornerShape(3.dp)),
         color = eventColor,
         trackColor = grayColor.copy(alpha = 0.2f)
     )
@@ -703,13 +649,13 @@ private fun EventDialogDetailsSection(
 ) {
     Column(
         modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = contentPadding)
-            .padding(top = 8.dp)
-            .graphicsLayer {
-                alpha = detailsVisible
-                translationY = (1f - detailsVisible) * 30f
-            },
+          .fillMaxWidth()
+          .padding(horizontal = contentPadding)
+          .padding(top = 8.dp)
+          .graphicsLayer {
+	          alpha = detailsVisible
+	          translationY = (1f - detailsVisible) * 30f
+          },
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         // Location
@@ -739,12 +685,12 @@ private fun EventDialogDetailsSection(
         // Notes
         if (!event.notes.isNullOrBlank()) {
             DetailInfoRow(
-                icon = Icons.Outlined.Notes,
-                label = stringResource(R.string.event_detail_notes),
-                value = event.notes,
-                accentColor = eventColor,
-                textColor = textColor,
-                grayColor = grayColor
+	            icon = Icons.AutoMirrored.Outlined.Notes,
+	            label = stringResource(R.string.event_detail_notes),
+	            value = event.notes,
+	            accentColor = eventColor,
+	            textColor = textColor,
+	            grayColor = grayColor,
             )
         }
     }
@@ -766,17 +712,17 @@ private fun DetailInfoRow(
     ) {
         Row(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
+              .fillMaxWidth()
+              .padding(16.dp),
             horizontalArrangement = Arrangement.spacedBy(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Icon container
             Box(
                 modifier = Modifier
-                    .size(44.dp)
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(accentColor.copy(alpha = 0.1f)),
+                  .size(44.dp)
+                  .clip(RoundedCornerShape(12.dp))
+                  .background(accentColor.copy(alpha = 0.1f)),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
@@ -820,21 +766,21 @@ private fun EventDialogELearningButton(
     Surface(
         onClick = onClick,
         modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = contentPadding)
-            .padding(bottom = contentPadding)
-            .graphicsLayer {
-                alpha = buttonVisible
-                translationY = (1f - buttonVisible) * 30f
-            },
+          .fillMaxWidth()
+          .padding(horizontal = contentPadding)
+          .padding(bottom = contentPadding)
+          .graphicsLayer {
+	          alpha = buttonVisible
+	          translationY = (1f - buttonVisible) * 30f
+          },
         shape = RoundedCornerShape(16.dp),
         color = buttonColor,
         shadowElevation = 6.dp
     ) {
         Box(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 14.dp, horizontal = 16.dp)
+              .fillMaxWidth()
+              .padding(vertical = 14.dp, horizontal = 16.dp)
         ) {
             Row(
                 modifier = Modifier.align(Alignment.Center),
@@ -862,8 +808,8 @@ private fun EventDialogELearningButton(
                 contentDescription = null,
                 tint = Color.White.copy(alpha = 0.7f),
                 modifier = Modifier
-                    .align(Alignment.CenterEnd)
-                    .size(24.dp)
+                  .align(Alignment.CenterEnd)
+                  .size(24.dp)
             )
         }
     }

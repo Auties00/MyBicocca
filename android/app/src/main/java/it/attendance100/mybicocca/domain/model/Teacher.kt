@@ -2,13 +2,6 @@ package it.attendance100.mybicocca.domain.model
 
 import androidx.room.*
 
-
-package it.attendance100.mybicocca.domain.model
-
-import androidx.room.ColumnInfo
-import androidx.room.Entity
-import androidx.room.PrimaryKey
-
 @Entity(tableName = "teachers")
 data class Teacher(
 	@PrimaryKey val id: String,
