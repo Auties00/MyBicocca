@@ -1,18 +1,16 @@
 package it.attendance100.mybicocca.di
 
-import dagger.Module
-import dagger.Provides
-import dagger.hilt.InstallIn
-import dagger.hilt.components.SingletonComponent
+import dagger.*
+import dagger.hilt.*
+import dagger.hilt.components.*
 import it.attendance100.mybicocca.data.api.bicoccapp.*
-import it.attendance100.mybicocca.manager.StorageManager
-import okhttp3.OkHttpClient
-import okhttp3.logging.HttpLoggingInterceptor
-import retrofit2.Retrofit
-import retrofit2.converter.gson.GsonConverterFactory
-import java.util.concurrent.TimeUnit
-import javax.inject.Qualifier
-import javax.inject.Singleton
+import it.attendance100.mybicocca.manager.*
+import okhttp3.*
+import okhttp3.logging.*
+import retrofit2.*
+import retrofit2.converter.gson.*
+import java.util.concurrent.*
+import javax.inject.*
 
 /**
  * # BicoccApp API Module
@@ -52,7 +50,7 @@ object BicoccappApiModule {
     /**
      * Base URL for the BicoccApp API.
      */
-    private const val BASE_URL = "https://backoffice-app.unimib.it/api/v1"
+    private const val BASE_URL = "https://backoffice-app.unimib.it/api/v1/"
 
     /**
      * Connection timeout in seconds.

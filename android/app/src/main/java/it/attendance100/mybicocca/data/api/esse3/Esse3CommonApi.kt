@@ -1,13 +1,8 @@
 package it.attendance100.mybicocca.data.api.esse3
 
-import it.attendance100.mybicocca.data.remote.dto.esse3.Esse3AttachmentUploadResponse
-import it.attendance100.mybicocca.data.remote.dto.esse3.Esse3PageLoadedResponse
-import retrofit2.Response
-import retrofit2.http.Field
-import retrofit2.http.FormUrlEncoded
-import retrofit2.http.GET
-import retrofit2.http.POST
-import retrofit2.http.Query
+import it.attendance100.mybicocca.data.dto.esse3.*
+import retrofit2.*
+import retrofit2.http.*
 
 /**
  * # Esse3 Common API

@@ -1,39 +1,20 @@
 package it.attendance100.mybicocca.ui.screen.login
 
-import android.annotation.SuppressLint
-import android.util.Log
-import android.view.ViewGroup
-import android.webkit.CookieManager
-import android.webkit.WebChromeClient
-import android.webkit.WebResourceRequest
-import android.webkit.WebView
-import android.webkit.WebViewClient
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.viewinterop.AndroidView
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import android.annotation.*
+import android.net.http.*
+import android.util.*
+import android.view.*
+import android.webkit.*
+import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.*
+import androidx.compose.material.icons.automirrored.filled.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.*
+import androidx.compose.ui.res.*
+import androidx.compose.ui.unit.*
+import androidx.compose.ui.viewinterop.*
+import androidx.hilt.lifecycle.viewmodel.compose.*
 import it.attendance100.mybicocca.R
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -69,8 +50,8 @@ fun LoginWebViewScreen(
     ) { paddingValues ->
         Box(
             modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
+              .fillMaxSize()
+              .padding(paddingValues)
         ) {
             when (state) {
                 is LoginViewModel.LoginState.Success -> {
@@ -102,43 +83,52 @@ fun LoginWebViewScreen(
 
                 else -> { // Idle
                     AndroidView(
-                        modifier = Modifier.fillMaxSize(),
-                        factory = { context ->
-                            WebView(context).apply {
-                                layoutParams = ViewGroup.LayoutParams(
-                                    ViewGroup.LayoutParams.MATCH_PARENT,
-                                    ViewGroup.LayoutParams.MATCH_PARENT
-                                )
-                                settings.apply {
-                                    javaScriptEnabled = true
-                                    domStorageEnabled = true
-                                    userAgentString = userAgentString.replace("; wv", "")
-                                }
-                                webChromeClient = WebChromeClient()
-                                webViewClient = object : WebViewClient() {
-                                    override fun shouldOverrideUrlLoading(
-                                        view: WebView?,
-                                        request: WebResourceRequest?,
-                                    ): Boolean {
-                                        val url = request?.url?.toString() ?: return false
+	                    modifier = Modifier.fillMaxSize(),
+	                    factory = { context ->
+		                    WebView(context).apply {
+			                    layoutParams = ViewGroup.LayoutParams(
+				                    ViewGroup.LayoutParams.MATCH_PARENT,
+				                    ViewGroup.LayoutParams.MATCH_PARENT
+			                    )
+			                    settings.apply {
+				                    javaScriptEnabled = true
+				                    domStorageEnabled = true
+				                    userAgentString = userAgentString.replace("; wv", "")
+			                    }
+			                    webChromeClient = WebChromeClient()
 
-                                        if (url.startsWith(callbackPrefix)) {
-                                            Log.v("WebViewDebug", "Callback intercepted! URL: $url")
+			                    webViewClient = object : WebViewClient() {
+				                    @SuppressLint("WebViewClientOnReceivedSslError")
+				                    override fun onReceivedSslError(
+					                    view: WebView?,
+					                    handler: SslErrorHandler?,
+					                    error: SslError?
+				                    ) {
+					                    handler?.proceed()
+				                    }
 
-                                            // FIX: Extract Cookies for the domain
-                                            val cookies = CookieManager.getInstance()
-                                                .getCookie("https://backoffice-app.unimib.it") ?: ""
-                                            // Log.d("WebViewDebug", "Extracted Cookies: $cookies")
+				                    override fun shouldOverrideUrlLoading(
+					                    view: WebView?,
+					                    request: WebResourceRequest?,
+				                    ): Boolean {
+					                    val url = request?.url?.toString() ?: return false
 
-                                            viewModel.handleCallbackUrl(url, cookies)
-                                            return true
-                                        }
-                                        return false
-                                    }
-                                }
-                                loadUrl(startUrl)
-                            }
-                        }
+					                    if (url.startsWith(callbackPrefix)) {
+						                    Log.v("WebViewDebug", "Callback intercepted! URL: $url")
+
+						                    val cookies = CookieManager.getInstance()
+						                      .getCookie("https://backoffice-app.unimib.it") ?: ""
+						                    Log.d("WebViewDebug", "Extracted Cookies: $cookies")
+
+						                    viewModel.handleCallbackUrl(url, cookies)
+						                    return true
+					                    }
+					                    return false
+				                    }
+			                    }
+			                    loadUrl(startUrl)
+		                    }
+	                    },
                     )
                 }
             }

@@ -1,16 +1,13 @@
 package it.attendance100.mybicocca.ui.screen.main.career
 
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
-import dagger.hilt.android.lifecycle.HiltViewModel
-import it.attendance100.mybicocca.domain.model.CareerStats
-import it.attendance100.mybicocca.domain.repository.UserRepository
-import it.attendance100.mybicocca.manager.NetworkManager
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.launch
-import javax.inject.Inject
+import androidx.lifecycle.*
+import dagger.hilt.android.lifecycle.*
+import it.attendance100.mybicocca.domain.model.*
+import it.attendance100.mybicocca.domain.repository.*
+import it.attendance100.mybicocca.manager.*
+import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.*
+import javax.inject.*
 
 @HiltViewModel
 class CareerViewModel @Inject constructor(
@@ -39,7 +36,8 @@ class CareerViewModel @Inject constructor(
     private fun refreshData() {
         viewModelScope.launch {
             try {
-                userRepository.refreshUser()
+	            userRepository.syncUser()
+	            userRepository.syncCareerStats()
             } catch (_: Exception) {
             }
         }
@@ -47,12 +45,12 @@ class CareerViewModel @Inject constructor(
 
     private fun loadData() {
         viewModelScope.launch {
-            userRepository.getUser().collect {
+	        userRepository.observeUser().asFlow().collect {
                 _user.value = it
             }
         }
         viewModelScope.launch {
-            userRepository.getCareerStats().collect {
+	        userRepository.observeCareerStats().asFlow().collect {
                 _stats.value = it
             }
         }

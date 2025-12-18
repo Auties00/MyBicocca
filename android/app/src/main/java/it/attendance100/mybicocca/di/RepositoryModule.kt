@@ -1,14 +1,10 @@
 package it.attendance100.mybicocca.di
 
-import dagger.Module
-import dagger.Provides
-import dagger.hilt.InstallIn
-import dagger.hilt.components.SingletonComponent
-import it.attendance100.mybicocca.data.repository.CalendarRepository
-import it.attendance100.mybicocca.data.repository.ElearningRepository
-import it.attendance100.mybicocca.data.repository.RegistryRepository
-import it.attendance100.mybicocca.data.repository.UserRepository
-import javax.inject.Singleton
+import dagger.*
+import dagger.hilt.*
+import dagger.hilt.components.*
+import it.attendance100.mybicocca.data.repository.*
+import javax.inject.*
 import it.attendance100.mybicocca.domain.repository.CalendarRepository as ICalendarRepository
 import it.attendance100.mybicocca.domain.repository.ElearningRepository as IElearningRepository
 import it.attendance100.mybicocca.domain.repository.RegistryRepository as IRegistryRepository
@@ -27,8 +23,11 @@ object RepositoryModule {
      */
     @Provides
     @Singleton
-    fun provideCalendarRepository(): ICalendarRepository {
-        return CalendarRepository()
+    fun provideCalendarRepository(
+	    api: it.attendance100.mybicocca.data.api.bicoccapp.BicoccappApi,
+	    database: it.attendance100.mybicocca.di.AppDatabase,
+    ): ICalendarRepository {
+	    return CalendarRepository(api, database)
     }
 
     /**
@@ -37,8 +36,12 @@ object RepositoryModule {
      */
     @Provides
     @Singleton
-    fun providesElearningRepository(): IElearningRepository {
-        return ElearningRepository()
+    fun providesElearningRepository(
+	    api: it.attendance100.mybicocca.data.api.elearning.ElearningApi,
+	    database: it.attendance100.mybicocca.di.AppDatabase,
+	    storageManager: it.attendance100.mybicocca.manager.StorageManager,
+    ): IElearningRepository {
+	    return ElearningRepository(api, database, storageManager)
     }
 
     /**
@@ -47,8 +50,11 @@ object RepositoryModule {
      */
     @Provides
     @Singleton
-    fun providesRegistryRepository(): IRegistryRepository {
-        return RegistryRepository()
+    fun providesRegistryRepository(
+	    api: it.attendance100.mybicocca.data.api.esse3.Esse3Api,
+	    database: it.attendance100.mybicocca.di.AppDatabase,
+    ): IRegistryRepository {
+	    return RegistryRepository(api, database)
     }
 
     /**
@@ -58,7 +64,12 @@ object RepositoryModule {
 
     @Provides
     @Singleton
-    fun providesUserRepository(): IUserRepository {
-        return UserRepository()
+    fun providesUserRepository(
+	    bicoccappApi: it.attendance100.mybicocca.data.api.bicoccapp.BicoccappApi,
+	    esse3Api: it.attendance100.mybicocca.data.api.esse3.Esse3Api,
+	    database: it.attendance100.mybicocca.di.AppDatabase,
+	    storageManager: it.attendance100.mybicocca.manager.StorageManager,
+    ): IUserRepository {
+	    return UserRepository(bicoccappApi, esse3Api, database, storageManager)
     }
 }

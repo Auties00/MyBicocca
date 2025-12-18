@@ -15,8 +15,8 @@ import java.time.*
 	entities = [
 		CourseEvent::class,
 		CourseSchedule::class,
-		UserEntity::class,
-		CareerStatsEntity::class,
+		User::class,
+		CareerStats::class,
 		ElearningCourse::class,
 		Teacher::class,
 		MapLocation::class,
@@ -35,6 +35,9 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun courseEventDao(): CourseEventDao
     abstract fun courseScheduleDao(): CourseScheduleDao
     abstract fun userDao(): UserDao
+	abstract fun campusDao(): CampusDao
+	abstract fun elearningDao(): ElearningDao
+	abstract fun registryDao(): RegistryDao
 }
 
 class Converters {

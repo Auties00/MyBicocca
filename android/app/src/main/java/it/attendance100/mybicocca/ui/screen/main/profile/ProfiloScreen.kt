@@ -1,103 +1,48 @@
 package it.attendance100.mybicocca.ui.screen.main.profile
 
-import android.content.res.Configuration
-import androidx.compose.animation.AnimatedContentScope
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.ExperimentalSharedTransitionApi
-import androidx.compose.animation.SharedTransitionScope
-import androidx.compose.animation.expandHorizontally
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkHorizontally
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.List
-import androidx.compose.material3.BasicAlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import androidx.navigation.NavHostController
-import com.patrykandpatrick.vico.compose.cartesian.CartesianChartHost
-import com.patrykandpatrick.vico.compose.cartesian.axis.rememberAxisLabelComponent
-import com.patrykandpatrick.vico.compose.cartesian.axis.rememberBottom
-import com.patrykandpatrick.vico.compose.cartesian.axis.rememberEnd
-import com.patrykandpatrick.vico.compose.cartesian.layer.rememberLine
-import com.patrykandpatrick.vico.compose.cartesian.layer.rememberLineCartesianLayer
-import com.patrykandpatrick.vico.compose.cartesian.rememberCartesianChart
-import com.patrykandpatrick.vico.compose.cartesian.rememberVicoScrollState
-import com.patrykandpatrick.vico.compose.cartesian.rememberVicoZoomState
-import com.patrykandpatrick.vico.compose.common.component.shapeComponent
-import com.patrykandpatrick.vico.compose.common.fill
-import com.patrykandpatrick.vico.core.cartesian.Zoom
-import com.patrykandpatrick.vico.core.cartesian.axis.HorizontalAxis
-import com.patrykandpatrick.vico.core.cartesian.axis.VerticalAxis
-import com.patrykandpatrick.vico.core.cartesian.data.CartesianChartModelProducer
-import com.patrykandpatrick.vico.core.cartesian.data.CartesianLayerRangeProvider
-import com.patrykandpatrick.vico.core.cartesian.data.lineSeries
-import com.patrykandpatrick.vico.core.cartesian.layer.LineCartesianLayer
-import com.patrykandpatrick.vico.core.common.Insets
-import com.patrykandpatrick.vico.core.common.shape.CorneredShape
+import android.content.res.*
+import androidx.compose.animation.*
+import androidx.compose.foundation.*
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.*
+import androidx.compose.foundation.shape.*
+import androidx.compose.foundation.text.*
+import androidx.compose.material.icons.*
+import androidx.compose.material.icons.automirrored.filled.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.*
+import androidx.compose.ui.draw.*
+import androidx.compose.ui.graphics.*
+import androidx.compose.ui.res.*
+import androidx.compose.ui.text.font.*
+import androidx.compose.ui.text.input.*
+import androidx.compose.ui.tooling.preview.*
+import androidx.compose.ui.unit.*
+import androidx.hilt.lifecycle.viewmodel.compose.*
+import androidx.navigation.*
+import com.patrykandpatrick.vico.compose.cartesian.*
+import com.patrykandpatrick.vico.compose.cartesian.axis.*
+import com.patrykandpatrick.vico.compose.cartesian.layer.*
+import com.patrykandpatrick.vico.compose.common.*
+import com.patrykandpatrick.vico.compose.common.component.*
+import com.patrykandpatrick.vico.core.cartesian.*
+import com.patrykandpatrick.vico.core.cartesian.axis.*
+import com.patrykandpatrick.vico.core.cartesian.data.*
+import com.patrykandpatrick.vico.core.cartesian.layer.*
+import com.patrykandpatrick.vico.core.common.*
+import com.patrykandpatrick.vico.core.common.shape.*
+import it.attendance100.mybicocca.*
 import it.attendance100.mybicocca.R
-import it.attendance100.mybicocca.Screen
-import it.attendance100.mybicocca.domain.model.GradePoint
-import it.attendance100.mybicocca.manager.rememberPreferencesManager
-import it.attendance100.mybicocca.ui.component.DialogOpenerSettingItem
-import it.attendance100.mybicocca.ui.component.badge.BadgeBack
-import it.attendance100.mybicocca.ui.component.badge.BadgeFront
-import it.attendance100.mybicocca.ui.component.badge.CreditCard
-import it.attendance100.mybicocca.ui.component.card.ProgressStatCard
-import it.attendance100.mybicocca.ui.component.card.StatCard
-import it.attendance100.mybicocca.ui.screen.main.career.CareerViewModel
-import it.attendance100.mybicocca.ui.theme.BadgeWhiteDrawableColor
-import it.attendance100.mybicocca.ui.theme.GrayColor
-import it.attendance100.mybicocca.ui.theme.MyBicoccaDarkColorScheme
-import it.attendance100.mybicocca.ui.theme.OnBackgroundColor
-import java.util.Locale
+import it.attendance100.mybicocca.domain.model.*
+import it.attendance100.mybicocca.manager.*
+import it.attendance100.mybicocca.ui.component.*
+import it.attendance100.mybicocca.ui.component.badge.*
+import it.attendance100.mybicocca.ui.component.card.*
+import it.attendance100.mybicocca.ui.screen.main.career.*
+import it.attendance100.mybicocca.ui.theme.*
+import java.time.*
+import java.util.*
 
 
 @OptIn(ExperimentalSharedTransitionApi::class, ExperimentalMaterial3Api::class)
@@ -250,8 +195,8 @@ fun ProfiloScreen(
     ) { paddingValues ->
         LazyColumn(
             modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues),
+              .fillMaxSize()
+              .padding(paddingValues),
             contentPadding = PaddingValues(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(16.dp),
@@ -268,8 +213,8 @@ fun ProfiloScreen(
                 Button(
                     onClick = { showDialog = true },
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .height(48.dp),
+                      .fillMaxWidth()
+                      .height(48.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = primaryColor
                     )
@@ -294,8 +239,8 @@ fun ProfiloScreen(
                     Spacer(modifier = Modifier.height(4.dp))
                     Card(
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .height(250.dp),
+                          .fillMaxWidth()
+                          .height(250.dp),
                         colors = CardDefaults.cardColors(
                             containerColor = MaterialTheme.colorScheme.surfaceDim
                         ),
@@ -347,7 +292,7 @@ fun GradesChart(grades: List<GradePoint>, primaryColor: Color) {
         return
     }
 
-    val values = grades.map { it.value }
+	val values = grades.map { it.average }
     val minGrade = values.minOrNull() ?: 18f
     val maxGrade = values.maxOrNull() ?: 30f
 
@@ -409,8 +354,8 @@ fun GradesChart(grades: List<GradePoint>, primaryColor: Color) {
         ),
         modelProducer = modelProducer,
         modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
+          .fillMaxSize()
+          .padding(16.dp)
     )
 }
 
@@ -451,8 +396,8 @@ fun HypotheticalGradeDialog(
     ) {
         Card(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
+              .fillMaxWidth()
+              .padding(16.dp),
             shape = RoundedCornerShape(28.dp),
             colors = CardDefaults.cardColors(
                 containerColor = MaterialTheme.colorScheme.surfaceContainerLow
@@ -460,8 +405,8 @@ fun HypotheticalGradeDialog(
         ) {
             Column(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(24.dp),
+                  .fillMaxWidth()
+                  .padding(24.dp),
                 verticalArrangement = Arrangement.spacedBy(20.dp)
             ) {
                 // Title
@@ -597,8 +542,8 @@ fun HypotheticalStatCard(
     ) {
         Column(
             modifier = Modifier
-                .padding(12.dp)
-                .fillMaxWidth(),
+              .padding(12.dp)
+              .fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             Text(
@@ -706,11 +651,8 @@ fun DifferenceIndicator(
 fun GradesChartDarkPreview() {
     val grades = listOf(
         GradePoint(
-            cfu = "8.0",
-            value = 30f,
-            date = "2023-10-25",
-            name = "Test Grade 1",
-            isLode = false,
+	        date = LocalDate.now(),
+	        average = 30f,
         ),
     )
     Box(
@@ -727,11 +669,8 @@ fun GradesChartDarkPreview() {
 fun GradesChartLightPreview() {
     val grades = listOf(
         GradePoint(
-            cfu = "8.0",
-            value = 30f,
-            date = "2023-10-25",
-            name = "Test Grade 1",
-            isLode = false,
+	        date = LocalDate.now(),
+	        average = 30f,
         ),
     )
     Box(

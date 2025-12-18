@@ -1,12 +1,9 @@
 package it.attendance100.mybicocca.domain.model
 
-import androidx.room.Entity
-import androidx.room.PrimaryKey
-import it.attendance100.mybicocca.domain.model.Exam
-import it.attendance100.mybicocca.domain.model.GradePoint
+import androidx.room.*
 
 @Entity(tableName = "career_stats")
-data class CareerStatsEntity(
+data class CareerStats(
     @PrimaryKey val id: Int = 0, // Constant ID = 0 because we only store the current logged-in user's stats
     val mediaAritmetica: Float,
     val mediaPonderata: Float,

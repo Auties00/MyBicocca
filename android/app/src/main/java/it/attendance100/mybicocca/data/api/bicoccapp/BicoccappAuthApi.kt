@@ -1,8 +1,7 @@
 package it.attendance100.mybicocca.data.api.bicoccapp
 
-import retrofit2.Response
-import retrofit2.http.GET
-import retrofit2.http.Query
+import retrofit2.*
+import retrofit2.http.*
 
 /**
  * # BicoccApp Authentication API
@@ -97,7 +96,8 @@ interface BicoccappAuthApi {
      */
     @GET("auth/openid_connect/callback")
     suspend fun handleLoginCallback(
-        @Query("code") code: String? = null,
-        @Query("state") state: String? = null
+	    @Query("code") code: String? = null,
+	    @Query("state") state: String? = null,
+	    @Header("Cookie") cookies: String? = null,
     ): Response<Unit>
 }
