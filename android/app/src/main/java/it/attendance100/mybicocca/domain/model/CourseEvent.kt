@@ -1,36 +1,45 @@
 package it.attendance100.mybicocca.domain.model
 
+import androidx.room.*
+import java.time.*
+
+@Entity(tableName = "course_events")
 data class CourseEvent(
-    val id: Long = 0,
+	@PrimaryKey(autoGenerate = true)
+	val id: Long = 0,
 
-    val courseName: String,
+	@ColumnInfo(name = "course_name")
+	val courseName: String,
 
-    val courseCode: String?,
+	@ColumnInfo(name = "course_code")
+	val courseCode: String?,
 
-    val professor: String?,
+	@ColumnInfo(name = "professor")
+	val professor: String?,
 
-    val room: String?,
+	@ColumnInfo(name = "room")
+	val room: String?,
 
-    @ColumnInfo(name = "building")
-    val building: String?,
+	@ColumnInfo(name = "building")
+	val building: String?,
 
-    @ColumnInfo(name = "start_time")
-    val startTime: LocalDateTime,
+	@ColumnInfo(name = "start_time")
+	val startTime: LocalDateTime,
 
-    @ColumnInfo(name = "end_time")
-    val endTime: LocalDateTime,
+	@ColumnInfo(name = "end_time")
+	val endTime: LocalDateTime,
 
-    @ColumnInfo(name = "event_type")
-    val eventType: EventType = EventType.LECTURE,
+	@ColumnInfo(name = "event_type")
+	val eventType: EventType = EventType.LECTURE,
 
-    @ColumnInfo(name = "notes")
-    val notes: String? = null,
+	@ColumnInfo(name = "notes")
+	val notes: String? = null,
 
-    @ColumnInfo(name = "is_cancelled")
-    val isCancelled: Boolean = false,
+	@ColumnInfo(name = "is_cancelled")
+	val isCancelled: Boolean = false,
 
-    @ColumnInfo(name = "color")
-    val color: String? = null
+	@ColumnInfo(name = "color")
+	val color: String? = null,
 )
 
 /**

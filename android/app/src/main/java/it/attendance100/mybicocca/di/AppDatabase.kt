@@ -12,14 +12,23 @@ import java.time.*
  * The instance is managed by Hilt (see DatabaseModule)
  */
 @Database(
-    entities = [
-        CourseEvent::class,
-        CourseSchedule::class,
-        UserEntity::class,
-        CareerStatsEntity::class,
-    ],
-    version = 3,
-    exportSchema = false
+	entities = [
+		CourseEvent::class,
+		CourseSchedule::class,
+		UserEntity::class,
+		CareerStatsEntity::class,
+		ElearningCourse::class,
+		Teacher::class,
+		MapLocation::class,
+		Tax::class,
+		Alert::class,
+		Internship::class,
+		Questionnaire::class,
+		Conversation::class,
+		Message::class,
+	],
+	version = 3,
+	exportSchema = false,
 )
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
@@ -103,5 +112,59 @@ class Converters {
 		if (value == null) return null
 		val type = object : TypeToken<List<Float>>() {}.type
 		return gson.fromJson(value, type)
+	}
+
+
+	@TypeConverter
+	fun fromExamList(value: List<Exam>?): String? {
+		return gson.toJson(value)
+	}
+
+
+	@TypeConverter
+	fun toExamList(value: String?): List<Exam>? {
+		if (value == null) return null
+		val type = object : TypeToken<List<Exam>>() {}.type
+		return gson.fromJson(value, type)
+	}
+
+
+	@TypeConverter
+	fun fromGradePointList(value: List<GradePoint>?): String? {
+		return gson.toJson(value)
+	}
+
+
+	@TypeConverter
+	fun toGradePointList(value: String?): List<GradePoint>? {
+		if (value == null) return null
+		val type = object : TypeToken<List<GradePoint>>() {}.type
+		return gson.fromJson(value, type)
+	}
+
+
+	@TypeConverter
+	fun fromStringList(value: List<String>?): String? {
+		return gson.toJson(value)
+	}
+
+
+	@TypeConverter
+	fun toStringList(value: String?): List<String>? {
+		if (value == null) return null
+		val type = object : TypeToken<List<String>>() {}.type
+		return gson.fromJson(value, type)
+	}
+
+
+	@TypeConverter
+	fun fromInstant(value: Instant?): Long? {
+		return value?.toEpochMilli()
+	}
+
+
+	@TypeConverter
+	fun toInstant(value: Long?): Instant? {
+		return value?.let { Instant.ofEpochMilli(it) }
 	}
 }
