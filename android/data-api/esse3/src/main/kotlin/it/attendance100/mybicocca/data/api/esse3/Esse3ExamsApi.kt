@@ -1,13 +1,13 @@
 package it.attendance100.mybicocca.data.api.esse3
 
 import okhttp3.ResponseBody
-import retrofit2.Response
-import retrofit2.http.Field
-import retrofit2.http.FieldMap
-import retrofit2.http.FormUrlEncoded
-import retrofit2.http.GET
-import retrofit2.http.POST
-import retrofit2.http.Query
+import de.jensklingenberg.ktorfit.Response
+import de.jensklingenberg.ktorfit.http.Field
+import de.jensklingenberg.ktorfit.http.FieldMap
+import de.jensklingenberg.ktorfit.http.FormUrlEncoded
+import de.jensklingenberg.ktorfit.http.GET
+import de.jensklingenberg.ktorfit.http.POST
+import de.jensklingenberg.ktorfit.http.Query
 
 /**
  * # Esse3 Exams API
@@ -110,7 +110,7 @@ interface Esse3ExamsApi {
      * @param offYear Offer academic year.
      * @param adsceId Student career activity ID.
      * @param startDate Exam start date.
-     * @return A [Response] containing the PDF [ResponseBody].
+     * @return A [Response] containing the PDF [okhttp3.ResponseBody].
      */
     @GET("auth/studente/Appelli/StampaStatinoPDF.do")
     suspend fun printExamSlipPdf(

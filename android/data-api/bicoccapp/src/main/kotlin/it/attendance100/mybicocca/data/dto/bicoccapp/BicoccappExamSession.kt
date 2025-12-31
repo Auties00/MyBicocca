@@ -1,35 +1,37 @@
 package it.attendance100.mybicocca.data.dto.bicoccapp
 
-import com.google.gson.annotations.SerializedName
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
+@Serializable
 data class BicoccappExamSession(
-    @SerializedName("yearFreqId")
+    @SerialName("yearFreqId")
     val yearFreqId: Int? = null,
 
-    @SerializedName("activityCode")
+    @SerialName("activityCode")
     val activityCode: String? = null,
 
-    @SerializedName("activityItemId")
+    @SerialName("activityItemId")
     val activityItemId: Int? = null,
 
-    @SerializedName("activityDescr")
+    @SerialName("activityDescr")
     val activityDescr: String? = null,
 
-    @SerializedName("courseYear")
+    @SerialName("courseYear")
     val courseYear: Int? = null,
 
-    @SerializedName("activityId")
+    @SerialName("activityId")
     val activityId: Int? = null,
 
-    @SerializedName("activityId_o")
+    @SerialName("activityId_o")
     val activityIdOriginal: Int? = null, // mapped from activityId_o
 
-    @SerializedName("cdsId")
+    @SerialName("cdsId")
     val cdsId: Int? = null,
 
-    @SerializedName("cdsId_o")
+    @SerialName("cdsId_o")
     val cdsIdOriginal: Int? = null, // mapped from cdsId_o
 
-    @SerializedName("appeals")
-    val appeals: List<it.attendance100.mybicocca.data.dto.bicoccapp.BicoccappAppealSession> = emptyList()
+    @SerialName("appeals")
+    val appeals: List<BicoccappAppealSession> = emptyList()
 )

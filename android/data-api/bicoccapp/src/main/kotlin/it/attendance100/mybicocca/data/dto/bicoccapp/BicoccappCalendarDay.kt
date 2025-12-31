@@ -1,14 +1,16 @@
 package it.attendance100.mybicocca.data.dto.bicoccapp
 
-import com.google.gson.annotations.SerializedName
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
+@Serializable
 data class BicoccappCalendarDay(
-    @SerializedName("day")
+    @SerialName("day")
     val date: String? = null,
 
-    @SerializedName("events")
-    val events: List<it.attendance100.mybicocca.data.dto.bicoccapp.BicoccappCourseEvent> = emptyList(),
+    @SerialName("events")
+    val events: List<BicoccappCourseEvent> = emptyList(),
 
-    @SerializedName("appeals")
-    val appeals: List<it.attendance100.mybicocca.data.dto.bicoccapp.BicoccappCourseAppeal> = emptyList()
+    @SerialName("appeals")
+    val appeals: List<BicoccappCourseAppeal> = emptyList()
 )

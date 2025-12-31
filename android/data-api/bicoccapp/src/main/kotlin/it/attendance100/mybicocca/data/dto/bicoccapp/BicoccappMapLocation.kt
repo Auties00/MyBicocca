@@ -1,16 +1,18 @@
 package it.attendance100.mybicocca.data.dto.bicoccapp
 
-import com.google.gson.annotations.SerializedName
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
+@Serializable
 data class BicoccappMapLocation(
-    @SerializedName("name")
+    @SerialName("name")
     val name: String? = null,
-    @SerializedName("latitude")
+    @SerialName("latitude")
     val latitude: String? = null,
-    @SerializedName("longitude")
+    @SerialName("longitude")
     val longitude: String? = null,
-    @SerializedName("description")
+    @SerialName("description")
     val description: String? = null,
-    @SerializedName("type")
+    @SerialName("type")
     val type: String? = null
 )

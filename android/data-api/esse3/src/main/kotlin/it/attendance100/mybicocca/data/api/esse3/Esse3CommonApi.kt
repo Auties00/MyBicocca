@@ -1,8 +1,13 @@
 package it.attendance100.mybicocca.data.api.esse3
 
-import it.attendance100.mybicocca.data.dto.esse3.*
-import retrofit2.*
-import retrofit2.http.*
+import it.attendance100.mybicocca.data.dto.esse3.Esse3AttachmentUploadResponse
+import it.attendance100.mybicocca.data.dto.esse3.Esse3PageLoadedResponse
+import de.jensklingenberg.ktorfit.Response
+import de.jensklingenberg.ktorfit.http.Field
+import de.jensklingenberg.ktorfit.http.FormUrlEncoded
+import de.jensklingenberg.ktorfit.http.GET
+import de.jensklingenberg.ktorfit.http.POST
+import de.jensklingenberg.ktorfit.http.Query
 
 /**
  * # Esse3 Common API
@@ -42,7 +47,7 @@ interface Esse3CommonApi {
     /**
      * Checks if the page/system is loaded correctly.
      *
-     * @return A [Response] containing [Esse3PageLoadedResponse] JSON.
+     * @return A [Response] containing [it.attendance100.mybicocca.data.dto.esse3.Esse3PageLoadedResponse] JSON.
      */
     @GET("PageLoaded.do")
     suspend fun pageLoaded(): Response<Esse3PageLoadedResponse>
@@ -146,7 +151,7 @@ interface Esse3CommonApi {
      * Initiates a chunked upload.
      *
      * @param raw Raw request data (JSON).
-     * @return A [Response] containing [Esse3PageLoadedResponse].
+     * @return A [Response] containing [it.attendance100.mybicocca.data.dto.esse3.Esse3PageLoadedResponse].
      */
     @FormUrlEncoded
     @POST("auth/ChunkUploadStart.do")
@@ -155,7 +160,7 @@ interface Esse3CommonApi {
     /**
      * Uploads a chunk of data.
      *
-     * @return A [Response] containing [Esse3PageLoadedResponse].
+     * @return A [Response] containing [it.attendance100.mybicocca.data.dto.esse3.Esse3PageLoadedResponse].
      */
     @POST("auth/ChunkUpload.do")
     suspend fun chunkUpload(): Response<Esse3PageLoadedResponse>
@@ -164,7 +169,7 @@ interface Esse3CommonApi {
      * Finalizes the chunked upload.
      *
      * @param raw Raw request data (JSON).
-     * @return A [Response] containing [Esse3AttachmentUploadResponse].
+     * @return A [Response] containing [it.attendance100.mybicocca.data.dto.esse3.Esse3AttachmentUploadResponse].
      */
     @FormUrlEncoded
     @POST("auth/ChunkUploadEnd.do")

@@ -1,13 +1,11 @@
 package it.attendance100.mybicocca.domain.repository
 
-import androidx.lifecycle.*
-import it.attendance100.mybicocca.domain.model.*
+import androidx.lifecycle.LiveData
+import it.attendance100.mybicocca.domain.model.CalendarEvent
+import it.attendance100.mybicocca.domain.model.CourseEventSelector
+import java.time.LocalDate
 
 interface CalendarRepository {
-    fun observeEvents(filter: CourseEventSelector): LiveData<List<CourseEvent>>
-    suspend fun syncEvents()
-
-	suspend fun insertEvent(event: CourseEvent): Long
-	suspend fun updateEvent(event: CourseEvent)
-	suspend fun deleteEvent(event: CourseEvent)
+    fun observeEvents(filter: CourseEventSelector): LiveData<List<CalendarEvent>>
+    suspend fun syncEvents(startDate: LocalDate? = null): Boolean
 }

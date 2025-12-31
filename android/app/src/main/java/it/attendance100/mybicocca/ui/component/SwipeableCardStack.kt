@@ -83,8 +83,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import it.attendance100.mybicocca.R
-import it.attendance100.mybicocca.domain.model.CourseEvent
-import it.attendance100.mybicocca.domain.model.EventType
+import it.attendance100.mybicocca.domain.model.CalendarEvent
+import it.attendance100.mybicocca.domain.model.CalendarEventType
 import it.attendance100.mybicocca.ui.theme.EventInProgressColor
 import it.attendance100.mybicocca.ui.screen.main.calendar.CalendarUtils
 import kotlinx.coroutines.launch
@@ -94,10 +94,10 @@ import java.time.LocalDateTime
 
 @Composable
 fun SwipeableCardStack(
-    events: List<CourseEvent>,
+    events: List<CalendarEvent>,
     currentEventId: Long,
     onEventSelected: (Long) -> Unit,
-    onEventClick: (CourseEvent) -> Unit,
+    onEventClick: (CalendarEvent) -> Unit,
     cardHeight: Dp,
     textColor: Color,
     grayColor: Color,
@@ -342,7 +342,7 @@ private fun PositionIndicator(
 
 @Composable
 private fun ExpandedEventsList(
-    events: List<CourseEvent>,
+    events: List<CalendarEvent>,
     currentIndex: Int,
     textColor: Color,
     grayColor: Color,
@@ -392,7 +392,7 @@ private fun ExpandedEventsList(
             }
         }
         events.forEachIndexed { index, event ->
-            val eventColor = CalendarUtils.getEventColor(event.eventType, primaryColor)
+            val eventColor = CalendarUtils.getEventColor(event.type, primaryColor)
             val isSelected = index == currentIndex
             Surface(
                 modifier = Modifier
@@ -424,7 +424,7 @@ private fun ExpandedEventsList(
                         verticalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
                         Text(
-                            text = event.courseName,
+                            text = event.name,
                             color = textColor,
                             fontSize = 14.sp,
                             fontWeight = FontWeight.SemiBold,
@@ -447,7 +447,7 @@ private fun ExpandedEventsList(
 
 @Composable
 private fun DeckCard(
-    event: CourseEvent,
+    event: CalendarEvent,
     stackPosition: Int,
     dragOffset: Float,
     rotation: Float,
@@ -460,7 +460,7 @@ private fun DeckCard(
     onClick: () -> Unit,
 ) {
     val density = LocalDensity.current
-    val eventColor = CalendarUtils.getEventColor(event.eventType, primaryColor)
+    val eventColor = CalendarUtils.getEventColor(event.type, primaryColor)
     val eventStatus = remember(event) { getEventStatus(event) }
 
     val baseOffsetX = with(density) { CalendarUtils.STACK_OFFSET_X.toPx() * stackPosition }
@@ -508,7 +508,7 @@ private fun DeckCard(
 
 @Composable
 private fun EventCardContent(
-    event: CourseEvent,
+    event: CalendarEvent,
     height: Dp,
     eventStatus: TimelineEventStatus,
     eventColor: Color,
@@ -534,7 +534,7 @@ private fun EventCardContent(
             verticalAlignment = Alignment.Top
         ) {
             Text(
-                text = event.courseName,
+                text = event.name,
                 color = textColor,
                 fontSize = 15.sp,
                 fontWeight = FontWeight.SemiBold,
@@ -595,7 +595,7 @@ private fun EventCardContent(
 
 @Composable
 private fun EventStatusIndicator(
-    event: CourseEvent,
+    event: CalendarEvent,
     eventStatus: TimelineEventStatus,
     eventColor: Color,
 ) {
@@ -650,7 +650,7 @@ private fun EventStatusIndicator(
             ) {
                 Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
                     Icon(
-                        getEventTypeIcon(event.eventType),
+                        getEventTypeIcon(event.type),
                         null,
                         tint = eventColor,
                         modifier = Modifier.size(16.dp)
@@ -707,16 +707,16 @@ private fun EventInfoChip(icon: ImageVector, text: String, color: Color) {
     }
 }
 
-private fun getEventTypeIcon(eventType: EventType): ImageVector = when (eventType) {
-    EventType.LECTURE -> Icons.Outlined.School
-    EventType.LAB -> Icons.Outlined.Science
-    EventType.EXAM -> Icons.AutoMirrored.Outlined.Assignment
-    EventType.OTHER -> Icons.Outlined.Event
+private fun getEventTypeIcon(eventType: CalendarEventType): ImageVector = when (eventType) {
+    CalendarEventType.LECTURE -> Icons.Outlined.School
+    CalendarEventType.LAB -> Icons.Outlined.Science
+    CalendarEventType.EXAM -> Icons.AutoMirrored.Outlined.Assignment
+    CalendarEventType.OTHER -> Icons.Outlined.Event
 }
 
 private enum class TimelineEventStatus { ENDED, IN_PROGRESS, UPCOMING }
 
-private fun getEventStatus(event: CourseEvent): TimelineEventStatus {
+private fun getEventStatus(event: CalendarEvent): TimelineEventStatus {
     val now = LocalDateTime.now()
     return when {
         event.isCancelled -> TimelineEventStatus.ENDED

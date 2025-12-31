@@ -1,27 +1,29 @@
 package it.attendance100.mybicocca.data.dto.bicoccapp
 
-import com.google.gson.annotations.SerializedName
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
+@Serializable
 data class BicoccappCourseDetailResponse(
-    @SerializedName("activity_code")
+    @SerialName("activity_code")
     val activityCode: String? = null,
 
-    @SerializedName("cds_code")
+    @SerialName("cds_code")
     val cdsCode: String? = null,
 
-    @SerializedName("lesson_name")
+    @SerialName("lesson_name")
     val lessonName: String? = null,
 
-    @SerializedName("partition")
+    @SerialName("partition")
     val partition: String? = null,
 
-    @SerializedName("course_code")
+    @SerialName("course_code")
     val courseCode: String? = null,
 
-    @SerializedName("teachers")
-    val teachers: List<it.attendance100.mybicocca.data.dto.bicoccapp.BicoccappCourseTeacher> = emptyList(),
+    @SerialName("teachers")
+    val teachers: List<BicoccappCourseTeacher> = emptyList(),
 
-    @SerializedName("events")
-    val events: List<it.attendance100.mybicocca.data.dto.bicoccapp.BicoccappCourseEvent> = emptyList()
+    @SerialName("events")
+    val events: List<BicoccappCourseEvent> = emptyList()
 )
 

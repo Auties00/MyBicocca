@@ -1,38 +1,40 @@
 package it.attendance100.mybicocca.data.dto.bicoccapp
 
-import com.google.gson.annotations.SerializedName
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
+@Serializable
 data class BicoccappCourseAppeal(
-    @SerializedName("cdsId")
+    @SerialName("cdsId")
     val id: Int,
-    @SerializedName("type")
+    @SerialName("type")
     val type: String,
-    @SerializedName("activityId")
+    @SerialName("activityId")
     val activityId: Int,
-    @SerializedName("activityAppealId")
+    @SerialName("activityAppealId")
     val activityAppealId: Int,
-    @SerializedName("activityItemId")
+    @SerialName("activityItemId")
     val activityItemId: Int,
-    @SerializedName("studentId")
+    @SerialName("studentId")
     val studentId: Int,
-    @SerializedName("appealDate")
+    @SerialName("appealDate")
     val appealDate: String,
-    @SerializedName("date")
+    @SerialName("date")
     val date: String,
-    @SerializedName("time")
+    @SerialName("time")
     val time: String,
-    @SerializedName("appealDescr")
+    @SerialName("appealDescr")
     val appealDescription: String,
-    @SerializedName("courseDescr")
+    @SerialName("courseDescr")
     val courseDescription: String,
-    @SerializedName("sessionDescr")
+    @SerialName("sessionDescr")
     val sessionDescription: String,
-    @SerializedName("typeAppealCode")
+    @SerialName("typeAppealCode")
     val typeAppealCode: String,
-    @SerializedName("position")
+    @SerialName("position")
     val position: Int,
-    @SerializedName("status")
+    @SerialName("status")
     val status: String,
-    @SerializedName("session_booked")
+    @SerialName("session_booked")
     val sessionBooked: Boolean
 )

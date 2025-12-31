@@ -1,9 +1,11 @@
 package it.attendance100.mybicocca.data.dto.bicoccapp
 
-import com.google.gson.annotations.SerializedName
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
+@Serializable
 data class BicoccappPointOfInterestsResponse(
-    @SerializedName("maps")
-    val maps: it.attendance100.mybicocca.data.dto.bicoccapp.BicoccappPointOfInterestsMaps? = null
+    @SerialName("maps")
+    val maps: BicoccappPointOfInterestsMaps? = null
 )
 

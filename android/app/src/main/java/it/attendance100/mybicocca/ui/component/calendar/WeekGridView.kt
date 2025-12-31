@@ -56,7 +56,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import it.attendance100.mybicocca.domain.model.CourseEvent
+import it.attendance100.mybicocca.domain.model.CalendarEvent
 import it.attendance100.mybicocca.ui.screen.main.calendar.CalendarUtils
 import kotlinx.coroutines.delay
 import java.time.LocalDate
@@ -69,12 +69,12 @@ import kotlin.math.absoluteValue
 @Composable
 fun WeekGridView(
     displayedWeekStart: LocalDate,
-    events: List<CourseEvent>,
+    events: List<CalendarEvent>,
     isLoading: Boolean,
     grayColor: Color,
     primaryColor: Color,
     scrollState: ScrollState,
-    onEventClick: (CourseEvent) -> Unit,
+    onEventClick: (CalendarEvent) -> Unit,
     onSwipeWeek: (Int) -> Unit,
     onDayZoom: (LocalDate) -> Unit
 ) {
@@ -123,11 +123,11 @@ private fun WeekGridLoadingState(primaryColor: Color) {
 @Composable
 private fun WeekGridContentWithZoom(
     daysOfWeek: List<LocalDate>,
-    events: List<CourseEvent>,
+    events: List<CalendarEvent>,
     grayColor: Color,
     primaryColor: Color,
     scrollState: ScrollState,
-    onEventClick: (CourseEvent) -> Unit,
+    onEventClick: (CalendarEvent) -> Unit,
     onSwipeWeek: (Int) -> Unit,
     onDayZoom: (LocalDate) -> Unit
 ) {
@@ -309,8 +309,8 @@ private fun WeekGridContentWithZoom(
 @Composable
 private fun CompactWeekView(
     daysOfWeek: List<LocalDate>,
-    events: List<CourseEvent>,
-    onEventClick: (CourseEvent) -> Unit,
+    events: List<CalendarEvent>,
+    onEventClick: (CalendarEvent) -> Unit,
     onDayZoom: (LocalDate) -> Unit,
     primaryColor: Color,
     grayColor: Color,
@@ -369,7 +369,7 @@ private fun CompactWeekView(
                     verticalArrangement = Arrangement.spacedBy(eventSpacing)
                 ) {
                     dayEvents.forEach { event ->
-                        val eventColor = CalendarUtils.getEventColor(event.eventType, primaryColor)
+                        val eventColor = CalendarUtils.getEventColor(event.type, primaryColor)
                         dayEvents.any { other ->
                             other.id != event.id &&
                                     event.startTime.isBefore(other.endTime) &&
@@ -395,7 +395,7 @@ private fun CompactWeekView(
                                     verticalArrangement = Arrangement.Center
                                 ) {
                                     Text(
-                                        text = event.courseName,
+                                        text = event.name,
                                         color = Color.White,
                                         fontSize = 9.sp,
                                         fontWeight = FontWeight.Bold,
@@ -511,7 +511,7 @@ private fun DashedDivider(
  * Rappresenta un gruppo di eventi che si sovrappongono temporalmente.
  */
 private data class OverlapGroup(
-    val events: List<CourseEvent>,
+    val events: List<CalendarEvent>,
     val groupStartMinutes: Int,
     val groupEndMinutes: Int
 )
@@ -520,7 +520,7 @@ private data class OverlapGroup(
  * Raggruppa gli eventi di un giorno in base alle sovrapposizioni.
  */
 private fun groupOverlappingEvents(
-    dayEvents: List<CourseEvent>,
+    dayEvents: List<CalendarEvent>,
     startHour: Int
 ): List<OverlapGroup> {
     if (dayEvents.isEmpty()) return emptyList()
@@ -528,7 +528,7 @@ private fun groupOverlappingEvents(
     val sortedEvents = dayEvents.sortedBy { it.startTime }
     val groups = mutableListOf<OverlapGroup>()
 
-    var currentGroupEvents = mutableListOf<CourseEvent>()
+    var currentGroupEvents = mutableListOf<CalendarEvent>()
     var currentGroupEnd = Int.MIN_VALUE
 
     sortedEvents.forEach { event ->
@@ -566,9 +566,9 @@ private fun groupOverlappingEvents(
 @Composable
 private fun WeekEventsOverlay(
     daysOfWeek: List<LocalDate>,
-    events: List<CourseEvent>,
+    events: List<CalendarEvent>,
     startHour: Int,
-    onEventClick: (CourseEvent) -> Unit,
+    onEventClick: (CalendarEvent) -> Unit,
     onDayZoom: (LocalDate) -> Unit,
     primaryColor: Color,
     zoomLevel: Float
@@ -751,7 +751,7 @@ private data class PlaceableInfo(
 
 @Composable
 private fun WeekEventCard(
-    event: CourseEvent,
+    event: CalendarEvent,
     height: Dp,
     onClick: () -> Unit,
     primaryColor: Color,
@@ -760,7 +760,7 @@ private fun WeekEventCard(
     totalInStack: Int,
     modifier: Modifier = Modifier
 ) {
-    val eventColor = CalendarUtils.getEventColor(event.eventType, primaryColor)
+    val eventColor = CalendarUtils.getEventColor(event.type, primaryColor)
     val showText = height >= 16.dp
     val showLocation = height >= 40.dp
 
@@ -787,7 +787,7 @@ private fun WeekEventCard(
                         .padding(horizontal = 4.dp, vertical = 3.dp)
                 ) {
                     Text(
-                        text = event.courseName,
+                        text = event.name,
                         color = Color.White,
                         fontSize = 10.sp,
                         fontWeight = FontWeight.SemiBold,

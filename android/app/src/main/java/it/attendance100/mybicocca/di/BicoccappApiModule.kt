@@ -1,16 +1,24 @@
 package it.attendance100.mybicocca.di
 
-import dagger.*
-import dagger.hilt.*
-import dagger.hilt.components.*
-import it.attendance100.mybicocca.data.api.bicoccapp.*
-import it.attendance100.mybicocca.manager.*
-import okhttp3.*
-import okhttp3.logging.*
-import retrofit2.*
-import retrofit2.converter.gson.*
-import java.util.concurrent.*
-import javax.inject.*
+import dagger.Module
+import dagger.Provides
+import dagger.hilt.InstallIn
+import dagger.hilt.components.SingletonComponent
+import it.attendance100.mybicocca.data.api.bicoccapp.BicoccappApi
+import it.attendance100.mybicocca.data.api.bicoccapp.BicoccappAuthApi
+import it.attendance100.mybicocca.data.api.bicoccapp.BicoccappCalendarApi
+import it.attendance100.mybicocca.data.api.bicoccapp.BicoccappCampusApi
+import it.attendance100.mybicocca.data.api.bicoccapp.BicoccappMessagesApi
+import it.attendance100.mybicocca.data.api.bicoccapp.BicoccappUserApi
+import it.attendance100.mybicocca.data.api.bicoccapp.BicoccappWizardApi
+import it.attendance100.mybicocca.manager.StorageManager
+import okhttp3.OkHttpClient
+import okhttp3.logging.HttpLoggingInterceptor
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
+import java.util.concurrent.TimeUnit
+import javax.inject.Qualifier
+import javax.inject.Singleton
 
 /**
  * # BicoccApp API Module

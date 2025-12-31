@@ -1,8 +1,10 @@
 package it.attendance100.mybicocca.data.dto.bicoccapp
 
-import com.google.gson.annotations.SerializedName
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
+@Serializable
 data class BicoccappUserRegistrationsCareer(
-    @SerializedName("registrations")
-    val registrations: List<it.attendance100.mybicocca.data.dto.bicoccapp.BicoccappCareerRegistration> = emptyList()
+    @SerialName("registrations")
+    val registrations: List<BicoccappCareerRegistration> = emptyList()
 )

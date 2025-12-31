@@ -1,53 +1,55 @@
 package it.attendance100.mybicocca.data.dto.bicoccapp
 
-import com.google.gson.annotations.SerializedName
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
+@Serializable
 data class BicoccappCourseEvent(
-    @SerializedName("eventId")
+    @SerialName("eventId")
     val eventId: String? = null,
 
-    @SerializedName("courseName")
+    @SerialName("courseName")
     val courseName: String? = null,
 
-    @SerializedName("courseCode")
+    @SerialName("courseCode")
     val courseCode: String? = null,
 
-    @SerializedName("partition")
+    @SerialName("partition")
     val partition: String? = null,
 
-    @SerializedName("date")
+    @SerialName("date")
     val date: String? = null,
 
-    @SerializedName("time")
+    @SerialName("time")
     val time: String? = null,
 
-    @SerializedName("type")
+    @SerialName("type")
     val type: String? = null,
 
-    @SerializedName("day")
+    @SerialName("day")
     val dayOfWeek: String? = null,
 
-    @SerializedName("roomCode")
+    @SerialName("roomCode")
     val roomCode: String? = null,
 
-    @SerializedName("room")
+    @SerialName("room")
     val room: String? = null,
 
-    @SerializedName("canceled")
+    @SerialName("canceled")
     val canceled: String? = null,
 
-    @SerializedName("maps")
+    @SerialName("maps")
     val maps: String? = null,
 
-    @SerializedName("coordinates")
-    val coordinates: it.attendance100.mybicocca.data.dto.bicoccapp.BicoccappEventCoordinates? = null,
+    @SerialName("coordinates")
+    val coordinates: BicoccappEventCoordinates? = null,
 
-    @SerializedName("teachers")
-    val teachers: List<it.attendance100.mybicocca.data.dto.bicoccapp.BicoccappCourseTeacher> = emptyList(),
+    @SerialName("teachers")
+    val teachers: List<BicoccappCourseTeacher> = emptyList(),
 
-    @SerializedName("activityCode")
+    @SerialName("activityCode")
     val activityCode: String? = null,
 
-    @SerializedName("session_booked")
+    @SerialName("session_booked")
     val sessionBooked: Boolean? = null
 )

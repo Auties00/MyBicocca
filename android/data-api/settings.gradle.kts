@@ -13,7 +13,7 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "data-api"
+rootProject.name = "MyBicoccaDataAPI"
 include(":bicoccapp")
 include(":elearning")
 include(":esse3")

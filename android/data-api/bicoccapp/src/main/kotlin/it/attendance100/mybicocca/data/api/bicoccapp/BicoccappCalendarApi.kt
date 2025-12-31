@@ -1,15 +1,15 @@
 package it.attendance100.mybicocca.data.api.bicoccapp
 
+import de.jensklingenberg.ktorfit.Response
+import de.jensklingenberg.ktorfit.http.Field
+import de.jensklingenberg.ktorfit.http.FormUrlEncoded
+import de.jensklingenberg.ktorfit.http.GET
+import de.jensklingenberg.ktorfit.http.POST
+import de.jensklingenberg.ktorfit.http.Query
 import it.attendance100.mybicocca.data.dto.bicoccapp.BicoccappCalendarCoursesResponse
 import it.attendance100.mybicocca.data.dto.bicoccapp.BicoccappCalendarResponse
 import it.attendance100.mybicocca.data.dto.bicoccapp.BicoccappCourseDetailResponse
 import it.attendance100.mybicocca.data.dto.bicoccapp.BicoccappSetCalendarResponse
-import retrofit2.Response
-import retrofit2.http.Field
-import retrofit2.http.FormUrlEncoded
-import retrofit2.http.GET
-import retrofit2.http.POST
-import retrofit2.http.Query
 
 /**
  * # BicoccApp Calendar API
@@ -100,7 +100,7 @@ interface BicoccappCalendarApi {
      *             Format: ISO 8601 date string (e.g., "2024-03-15").
      *             When omitted, defaults to the current date.
      *
-     * @return A [retrofit2.Response] containing [it.attendance100.mybicocca.data.dto.bicoccapp.BicoccappCalendarResponse] with the scheduled events.
+     * @return A [Response] containing [it.attendance100.mybicocca.data.dto.bicoccapp.BicoccappCalendarResponse] with the scheduled events.
      *
      * @see getAvailableCourses For courses that can be added to the calendar
      * @see addCourseToCalendar For subscribing to course schedules
@@ -139,7 +139,7 @@ interface BicoccappCalendarApi {
      * to their calendar, allowing the UI to show appropriate actions
      * (add vs. remove).
      *
-     * @return A [retrofit2.Response] containing [it.attendance100.mybicocca.data.dto.bicoccapp.BicoccappCalendarCoursesResponse] with the course catalog.
+     * @return A [Response] containing [it.attendance100.mybicocca.data.dto.bicoccapp.BicoccappCalendarCoursesResponse] with the course catalog.
      *
      * @see getCourseDetail For detailed information about a specific course
      * @see addCourseToCalendar For adding a course to the calendar
@@ -202,7 +202,7 @@ interface BicoccappCalendarApi {
      *                   This identifies the course type regardless of section
      *                   (e.g., "F0801Q" for "Computer Science Fundamentals").
      *
-     * @return A [retrofit2.Response] containing [it.attendance100.mybicocca.data.dto.bicoccapp.BicoccappCourseDetailResponse] with course information.
+     * @return A [Response] containing [it.attendance100.mybicocca.data.dto.bicoccapp.BicoccappCourseDetailResponse] with course information.
      *
      * @see getAvailableCourses For browsing the course catalog
      */
@@ -269,7 +269,7 @@ interface BicoccappCalendarApi {
      *                  Required when the course has multiple sections
      *                  with different schedules.
      *
-     * @return A [retrofit2.Response] containing [it.attendance100.mybicocca.data.dto.bicoccapp.BicoccappSetCalendarResponse] with the result.
+     * @return A [Response] containing [it.attendance100.mybicocca.data.dto.bicoccapp.BicoccappSetCalendarResponse] with the result.
      *
      * @see getCalendar For viewing the updated calendar
      * @see getAvailableCourses For browsing courses to add

@@ -46,7 +46,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import it.attendance100.mybicocca.domain.model.CourseEvent
+import it.attendance100.mybicocca.domain.model.CalendarEvent
 import it.attendance100.mybicocca.ui.theme.EventExamColor
 import it.attendance100.mybicocca.ui.screen.main.calendar.CalendarUtils
 import java.time.DayOfWeek
@@ -63,7 +63,7 @@ import kotlin.math.absoluteValue
 fun MonthGridView(
     currentMonth: YearMonth,
     selectedDate: LocalDate,
-    events: List<CourseEvent>,
+    events: List<CalendarEvent>,
     isLoading: Boolean,
     textColor: Color,
     grayColor: Color,
@@ -118,7 +118,7 @@ fun MonthGridView(
 private fun MonthGridContent(
     currentMonth: YearMonth,
     selectedDate: LocalDate,
-    eventsByDate: Map<LocalDate, List<CourseEvent>>,
+    eventsByDate: Map<LocalDate, List<CalendarEvent>>,
     textColor: Color,
     grayColor: Color,
     primaryColor: Color,
@@ -203,7 +203,7 @@ private fun MonthDaysGrid(
     startDayOffset: Int,
     previousMonth: YearMonth,
     daysInPreviousMonth: Int,
-    eventsByDate: Map<LocalDate, List<CourseEvent>>,
+    eventsByDate: Map<LocalDate, List<CalendarEvent>>,
     textColor: Color,
     grayColor: Color,
     primaryColor: Color,
@@ -305,7 +305,7 @@ private fun calculateDayInfo(
 private fun MonthDayCell(
     dayInfo: DayInfo,
     selectedDate: LocalDate,
-    eventsByDate: Map<LocalDate, List<CourseEvent>>,
+    eventsByDate: Map<LocalDate, List<CalendarEvent>>,
     textColor: Color,
     grayColor: Color,
     primaryColor: Color,
@@ -376,12 +376,12 @@ private fun MonthDayCell(
 
 @Composable
 private fun EventIndicators(
-    events: List<CourseEvent>,
+    events: List<CalendarEvent>,
     isSelected: Boolean,
     primaryColor: Color
 ) {
     // Mostra fino a 3 indicatori colorati per tipo di evento
-    val eventTypes = events.map { it.eventType }.distinct().take(3)
+    val eventTypes = events.map { it.type }.distinct().take(3)
 
     Row(
         horizontalArrangement = Arrangement.spacedBy(2.dp),
@@ -435,11 +435,11 @@ private fun MonthGridLoadingState(primaryColor: Color) {
 @Composable
 fun SelectedDateEventsPreview(
     selectedDate: LocalDate,
-    events: List<CourseEvent>,
+    events: List<CalendarEvent>,
     textColor: Color,
     grayColor: Color,
     primaryColor: Color,
-    onEventClick: (CourseEvent) -> Unit,
+    onEventClick: (CalendarEvent) -> Unit,
     onShowAllEvents: () -> Unit
 ) {
     val dayEvents = remember(events, selectedDate) {
@@ -537,13 +537,13 @@ fun SelectedDateEventsPreview(
 
 @Composable
 private fun EventPreviewItem(
-    event: CourseEvent,
+    event: CalendarEvent,
     textColor: Color,
     grayColor: Color,
     primaryColor: Color,
     onClick: () -> Unit
 ) {
-    val eventColor = CalendarUtils.getEventColor(event.eventType, primaryColor)
+    val eventColor = CalendarUtils.getEventColor(event.type, primaryColor)
     val timeFormatter = CalendarUtils.timeFormatter
 
     Surface(
@@ -572,7 +572,7 @@ private fun EventPreviewItem(
             // Info evento
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = event.courseName,
+                    text = event.name,
                     color = textColor,
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Medium,
@@ -621,11 +621,11 @@ private fun formatSelectedDate(date: LocalDate): String {
 
 @Composable
 fun UpcomingExamsSection(
-    exams: List<CourseEvent>,
+    exams: List<CalendarEvent>,
     textColor: Color,
     grayColor: Color,
     primaryColor: Color,
-    onExamClick: (CourseEvent) -> Unit
+    onExamClick: (CalendarEvent) -> Unit
 ) {
     if (exams.isEmpty()) return
 
@@ -676,7 +676,7 @@ fun UpcomingExamsSection(
 
 @Composable
 private fun ExamPreviewItem(
-    exam: CourseEvent,
+    exam: CalendarEvent,
     textColor: Color,
     grayColor: Color,
     onClick: () -> Unit
@@ -703,7 +703,7 @@ private fun ExamPreviewItem(
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = exam.courseName,
+                    text = exam.name,
                     color = textColor,
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Medium,

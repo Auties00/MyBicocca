@@ -71,7 +71,7 @@ class CalendarViewModel @Inject constructor(
 	/**
 	 * Ottiene gli eventi per la data selezionata
 	 */
-	val eventsForSelectedDate: LiveData<List<CourseEvent>> = _selectedDate.switchMap { date ->
+	val eventsForSelectedDate: LiveData<List<CalendarEvent>> = _selectedDate.switchMap { date ->
 		calendarRepository.observeEvents(
 			CourseEventSelector.ByDay(date),
 		)
@@ -81,7 +81,7 @@ class CalendarViewModel @Inject constructor(
 	/**
 	 * Ottiene gli eventi per il mese corrente
 	 */
-	val eventsForCurrentMonth: LiveData<List<CourseEvent>> = _currentMonth.switchMap { month ->
+	val eventsForCurrentMonth: LiveData<List<CalendarEvent>> = _currentMonth.switchMap { month ->
 		calendarRepository.observeEvents(
 			CourseEventSelector.ByMonth(month),
 		)
@@ -181,7 +181,7 @@ class CalendarViewModel @Inject constructor(
 	/**
 	 * Inserisce un nuovo evento
 	 */
-	fun insertEvent(event: CourseEvent) = viewModelScope.launch {
+	fun insertEvent(event: CalendarEvent) = viewModelScope.launch {
 		try {
 			_isLoading.value = true
 			calendarRepository.insertEvent(event)
@@ -197,7 +197,7 @@ class CalendarViewModel @Inject constructor(
 	/**
 	 * Aggiorna un evento esistente
 	 */
-	fun updateEvent(event: CourseEvent) = viewModelScope.launch {
+	fun updateEvent(event: CalendarEvent) = viewModelScope.launch {
 		try {
 			_isLoading.value = true
 			calendarRepository.updateEvent(event)
@@ -213,7 +213,7 @@ class CalendarViewModel @Inject constructor(
 	/**
 	 * Elimina un evento
 	 */
-	fun deleteEvent(event: CourseEvent) = viewModelScope.launch {
+	fun deleteEvent(event: CalendarEvent) = viewModelScope.launch {
 		try {
 			_isLoading.value = true
 			calendarRepository.deleteEvent(event)

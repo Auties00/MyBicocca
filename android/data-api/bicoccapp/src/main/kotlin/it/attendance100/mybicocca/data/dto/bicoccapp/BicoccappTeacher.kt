@@ -1,45 +1,47 @@
 package it.attendance100.mybicocca.data.dto.bicoccapp
 
-import com.google.gson.annotations.SerializedName
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
+@Serializable
 data class BicoccappTeacher(
-    @SerializedName("title")
+    @SerialName("title")
     val title: String? = null,
 
-    @SerializedName("name")
+    @SerialName("name")
     val name: String? = null,
 
-    @SerializedName("surname")
+    @SerialName("surname")
     val surname: String? = null,
 
-    @SerializedName("email")
+    @SerialName("email")
     val email: String? = null,
 
-    @SerializedName("email_alternate")
+    @SerialName("email_alternate")
     val emailAlternate: String? = null,
 
-    @SerializedName("teacherCode")
+    @SerialName("teacherCode")
     val teacherCode: String? = null,
 
-    @SerializedName("gender")
+    @SerialName("gender")
     val gender: String? = null,
 
-    @SerializedName("teacherKey")
+    @SerialName("teacherKey")
     val teacherKey: String? = null,
 
-    @SerializedName("receivesOn")
+    @SerialName("receivesOn")
     val receivesOn: String? = null,
 
-    @SerializedName("roles")
-    val roles: List<it.attendance100.mybicocca.data.dto.bicoccapp.BicoccappTeacherRole> = emptyList(),
+    @SerialName("roles")
+    val roles: List<BicoccappTeacherRole> = emptyList(),
 
-    @SerializedName("phones")
-    val phones: List<it.attendance100.mybicocca.data.dto.bicoccapp.BicoccappTeacherPhone> = emptyList(),
+    @SerialName("phones")
+    val phones: List<BicoccappTeacherPhone> = emptyList(),
 
-    @SerializedName("rooms")
-    val rooms: List<it.attendance100.mybicocca.data.dto.bicoccapp.BicoccappTeacherRoom> = emptyList(),
+    @SerialName("rooms")
+    val rooms: List<BicoccappTeacherRoom> = emptyList(),
 
-    @SerializedName("offices")
-    val offices: List<it.attendance100.mybicocca.data.dto.bicoccapp.BicoccappTeacherOffice> = emptyList()
+    @SerialName("offices")
+    val offices: List<BicoccappTeacherOffice> = emptyList()
 )
 

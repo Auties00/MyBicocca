@@ -1,10 +1,10 @@
 package it.attendance100.mybicocca.data.api.bicoccapp
 
+import de.jensklingenberg.ktorfit.Response
+import de.jensklingenberg.ktorfit.http.GET
+import de.jensklingenberg.ktorfit.http.Query
 import it.attendance100.mybicocca.data.dto.bicoccapp.BicoccappPointOfInterestsResponse
 import it.attendance100.mybicocca.data.dto.bicoccapp.BicoccappTeacherResponse
-import retrofit2.Response
-import retrofit2.http.GET
-import retrofit2.http.Query
 
 /**
  * # BicoccApp Campus API
@@ -93,7 +93,7 @@ interface BicoccappCampusApi {
      * - Refresh on app launch (background)
      * - Force refresh on user request
      *
-     * @return A [retrofit2.Response] containing [it.attendance100.mybicocca.data.dto.bicoccapp.BicoccappPointOfInterestsResponse] with all campus
+     * @return A [Response] containing [it.attendance100.mybicocca.data.dto.bicoccapp.BicoccappPointOfInterestsResponse] with all campus
      *         locations organized by category. Includes coordinates for
      *         map display and metadata for filtering/searching.
      *
@@ -154,7 +154,7 @@ interface BicoccappCampusApi {
      *              Must be a valid `@unimib.it` email address.
      *              Example: `"mario.rossi@unimib.it"`
      *
-     * @return A [retrofit2.Response] containing [it.attendance100.mybicocca.data.dto.bicoccapp.BicoccappTeacherResponse] with the complete profile.
+     * @return A [Response] containing [it.attendance100.mybicocca.data.dto.bicoccapp.BicoccappTeacherResponse] with the complete profile.
      *         Returns 404 if no teacher matches the provided email.
      *
      * @see getPointsOfInterest For campus building locations

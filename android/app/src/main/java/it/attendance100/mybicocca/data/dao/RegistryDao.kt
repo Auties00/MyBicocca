@@ -1,12 +1,15 @@
 package it.attendance100.mybicocca.data.dao
 
-import androidx.lifecycle.*
-import androidx.room.*
-import it.attendance100.mybicocca.domain.model.*
+import androidx.lifecycle.LiveData
+import androidx.room.Dao
+import androidx.room.Insert
+import androidx.room.OnConflictStrategy
+import androidx.room.Query
+import it.attendance100.mybicocca.domain.model.Internship
+import it.attendance100.mybicocca.domain.model.Questionnaire
 
 @Dao
 interface RegistryDao {
-	// --- Internships ---
 	@Query("SELECT * FROM internships")
 	fun observeInternships(): LiveData<List<Internship>>
 
@@ -19,7 +22,6 @@ interface RegistryDao {
 	suspend fun clearInternships()
 
 
-	// --- Questionnaires ---
 	@Query("SELECT * FROM questionnaires")
 	fun observeQuestionnaires(): LiveData<List<Questionnaire>>
 

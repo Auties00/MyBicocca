@@ -1,20 +1,22 @@
 package it.attendance100.mybicocca.data.dto.bicoccapp
 
-import com.google.gson.annotations.SerializedName
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
+@Serializable
 data class BicoccappWizardTeacher(
-    @SerializedName("teacher_surname")
+    @SerialName("teacher_surname")
     val teacherSurname: String? = null,
 
-    @SerializedName("teacher_email")
+    @SerialName("teacher_email")
     val teacherEmail: String? = null,
 
-    @SerializedName("teacher_code")
+    @SerialName("teacher_code")
     val teacherCode: String? = null,
 
-    @SerializedName("teacher_name")
+    @SerialName("teacher_name")
     val teacherName: String? = null,
 
-    @SerializedName("teacher_id")
+    @SerialName("teacher_id")
     val teacherId: Int? = null
 )

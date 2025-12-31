@@ -1,39 +1,41 @@
 package it.attendance100.mybicocca.data.dto.bicoccapp
 
-import com.google.gson.annotations.SerializedName
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
+@Serializable
 data class BicoccappUserProfileUser(
-    @SerializedName("appuser_id")
+    @SerialName("appuser_id")
     val appuserId: Int? = null,
 
-    @SerializedName("personId")
+    @SerialName("personId")
     val personId: Int? = null,
 
-    @SerializedName("userId")
+    @SerialName("userId")
     val userId: String? = null,
 
-    @SerializedName("fiscalCode")
+    @SerialName("fiscalCode")
     val fiscalCode: String? = null,
 
-    @SerializedName("name")
+    @SerialName("name")
     val name: String? = null,
 
-    @SerializedName("surname")
+    @SerialName("surname")
     val surname: String? = null,
 
-    @SerializedName("mobile")
+    @SerialName("mobile")
     val mobile: String? = null,
 
-    @SerializedName("email")
+    @SerialName("email")
     val email: String? = null,
 
-    @SerializedName("fotoId")
+    @SerialName("fotoId")
     val fotoId: Int? = null,
 
-    @SerializedName("photo")
+    @SerialName("photo")
     val photo: String? = null,
 
-    @SerializedName("has_calendar")
+    @SerialName("has_calendar")
     val hasCalendar: Boolean? = null
 )
 

@@ -1,9 +1,11 @@
 package it.attendance100.mybicocca.data.dto.bicoccapp
 
-import com.google.gson.annotations.SerializedName
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
+@Serializable
 data class BicoccappWizardDegreesResponse(
-    @SerializedName("degrees")
-    val degrees: List<it.attendance100.mybicocca.data.dto.bicoccapp.BicoccappWizardDegree> = emptyList()
+    @SerialName("degrees")
+    val degrees: List<BicoccappWizardDegree> = emptyList()
 )
 

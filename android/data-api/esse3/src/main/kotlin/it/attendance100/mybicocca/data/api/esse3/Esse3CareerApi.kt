@@ -1,14 +1,14 @@
 package it.attendance100.mybicocca.data.api.esse3
 
 import okhttp3.ResponseBody
-import retrofit2.Response
-import retrofit2.http.Field
-import retrofit2.http.FormUrlEncoded
-import retrofit2.http.GET
-import retrofit2.http.Multipart
-import retrofit2.http.POST
-import retrofit2.http.Part
-import retrofit2.http.Query
+import de.jensklingenberg.ktorfit.Response
+import de.jensklingenberg.ktorfit.http.Field
+import de.jensklingenberg.ktorfit.http.FormUrlEncoded
+import de.jensklingenberg.ktorfit.http.GET
+import de.jensklingenberg.ktorfit.http.Multipart
+import de.jensklingenberg.ktorfit.http.POST
+import de.jensklingenberg.ktorfit.http.Part
+import de.jensklingenberg.ktorfit.http.Query
 
 /**
  * # Esse3 Career API
@@ -126,7 +126,7 @@ interface Esse3CareerApi {
      *
      * @param planId The ID of the study plan.
      * @param btnSubmit Button action.
-     * @return A [Response] containing the PDF/document [ResponseBody].
+     * @return A [Response] containing the PDF/document [okhttp3.ResponseBody].
      */
     @FormUrlEncoded
     @POST("auth/studente/Piani/PianiStampaPiano.do")

@@ -3,8 +3,8 @@ package it.attendance100.mybicocca.ui.screen.main.calendar
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import it.attendance100.mybicocca.R
-import it.attendance100.mybicocca.domain.model.CourseEvent
-import it.attendance100.mybicocca.domain.model.EventType
+import it.attendance100.mybicocca.domain.model.CalendarEvent
+import it.attendance100.mybicocca.domain.model.CalendarEventType
 import it.attendance100.mybicocca.ui.theme.EventExamColor
 import it.attendance100.mybicocca.ui.theme.EventLabColor
 import it.attendance100.mybicocca.ui.theme.EventLectureColor
@@ -64,18 +64,18 @@ object CalendarUtils {
     fun monthYearFormatter(locale: Locale = Locale.getDefault()): DateTimeFormatter =
         DateTimeFormatter.ofPattern("MMMM", locale)
 
-    fun getEventColor(eventType: EventType, primaryColor: Color): Color = when (eventType) {
-        EventType.LECTURE -> EventLectureColor
-        EventType.LAB -> EventLabColor
-        EventType.EXAM -> EventExamColor
-        EventType.OTHER -> primaryColor
+    fun getEventColor(eventType: CalendarEventType, primaryColor: Color): Color = when (eventType) {
+        CalendarEventType.LECTURE -> EventLectureColor
+        CalendarEventType.LAB -> EventLabColor
+        CalendarEventType.EXAM -> EventExamColor
+        CalendarEventType.OTHER -> primaryColor
     }
 
-    fun getEventTypeStringRes(eventType: EventType): Int = when (eventType) {
-        EventType.LECTURE -> R.string.event_type_lecture
-        EventType.LAB -> R.string.event_type_lab
-        EventType.EXAM -> R.string.event_type_exam
-        EventType.OTHER -> R.string.event_type_other
+    fun getEventTypeStringRes(eventType: CalendarEventType): Int = when (eventType) {
+        CalendarEventType.LECTURE -> R.string.event_type_lecture
+        CalendarEventType.LAB -> R.string.event_type_lab
+        CalendarEventType.EXAM -> R.string.event_type_exam
+        CalendarEventType.OTHER -> R.string.event_type_other
     }
 
     fun isToday(date: LocalDate): Boolean = date == LocalDate.now()
@@ -102,7 +102,7 @@ object CalendarUtils {
         }
     }
 
-    fun calculateEventProgress(event: CourseEvent): Float {
+    fun calculateEventProgress(event: CalendarEvent): Float {
         val now = LocalDateTime.now()
         val start = event.startTime
         val end = event.endTime

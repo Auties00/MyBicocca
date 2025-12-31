@@ -66,8 +66,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.times
 import it.attendance100.mybicocca.R
-import it.attendance100.mybicocca.domain.model.CourseEvent
-import it.attendance100.mybicocca.domain.model.EventType
+import it.attendance100.mybicocca.domain.model.CalendarEvent
+import it.attendance100.mybicocca.domain.model.CalendarEventType
 import it.attendance100.mybicocca.ui.component.SwipeableCardStack
 import it.attendance100.mybicocca.ui.theme.EventInProgressColor
 import it.attendance100.mybicocca.ui.screen.main.calendar.CalendarUtils
@@ -79,13 +79,13 @@ import java.time.LocalTime
 
 @Composable
 fun DayTimelineView(
-    events: List<CourseEvent>,
+    events: List<CalendarEvent>,
     selectedDate: LocalDate,
     isLoading: Boolean,
     textColor: Color,
     grayColor: Color,
     primaryColor: Color,
-    onEventClick: (CourseEvent) -> Unit,
+    onEventClick: (CalendarEvent) -> Unit,
     scrollState: ScrollState // [SYNC] Scroll condiviso
 ) {
     val isToday = selectedDate == LocalDate.now()
@@ -136,12 +136,12 @@ private fun DayTimelineHeader(eventsCount: Int, primaryColor: Color) {
 
 @Composable
 private fun TimelineContent(
-    events: List<CourseEvent>,
+    events: List<CalendarEvent>,
     isToday: Boolean,
     textColor: Color,
     grayColor: Color,
     primaryColor: Color,
-    onEventClick: (CourseEvent) -> Unit,
+    onEventClick: (CalendarEvent) -> Unit,
     scrollState: ScrollState
 ) {
     val currentTime by produceState(initialValue = LocalTime.now()) {
@@ -230,12 +230,12 @@ private fun TimelineBackground(startHour: Int, endHour: Int, grayColor: Color) {
 
 @Composable
 private fun TimelineEventsOverlay(
-    events: List<CourseEvent>,
+    events: List<CalendarEvent>,
     startHour: Int,
     textColor: Color,
     grayColor: Color,
     primaryColor: Color,
-    onEventClick: (CourseEvent) -> Unit
+    onEventClick: (CalendarEvent) -> Unit
 ) {
     val density = LocalDensity.current
     val selectedEventsByGroup = remember { mutableStateMapOf<Int, Long>() }
@@ -364,7 +364,7 @@ private fun TimelineEventsOverlay(
     }
 }
 
-private fun calculateOverlappingGroups(events: List<CourseEvent>): List<OverlappingGroup> {
+private fun calculateOverlappingGroups(events: List<CalendarEvent>): List<OverlappingGroup> {
     val sortedEvents = events.sortedBy { it.startTime }
     val groups = mutableListOf<OverlappingGroup>()
 
@@ -386,11 +386,11 @@ private fun calculateOverlappingGroups(events: List<CourseEvent>): List<Overlapp
     return groups
 }
 
-private data class OverlappingGroup(val events: MutableList<CourseEvent>) {
-    val visibleEvents: List<CourseEvent> get() = if (events.size > 2) listOf(events.first()) else events
+private data class OverlappingGroup(val events: MutableList<CalendarEvent>) {
+    val visibleEvents: List<CalendarEvent> get() = if (events.size > 2) listOf(events.first()) else events
 }
 
-private fun getEarliestEvent(events: List<CourseEvent>): CourseEvent =
+private fun getEarliestEvent(events: List<CalendarEvent>): CalendarEvent =
     events.minByOrNull { it.startTime } ?: events.first()
 
 @Composable
@@ -445,7 +445,7 @@ private fun DashedHourLine(grayColor: Color) {
 
 @Composable
 private fun TimelineEventCard(
-    event: CourseEvent,
+    event: CalendarEvent,
     height: Dp,
     textColor: Color,
     grayColor: Color,
@@ -454,7 +454,7 @@ private fun TimelineEventCard(
     modifier: Modifier = Modifier,
     stackDepth: Int = 0
 ) {
-    val eventColor = CalendarUtils.getEventColor(event.eventType, primaryColor)
+    val eventColor = CalendarUtils.getEventColor(event.type, primaryColor)
     val eventStatus = remember(event) { getEventStatus(event) }
     val cardBackgroundColor = MaterialTheme.colorScheme.surface
     val durationText =
@@ -529,7 +529,7 @@ private fun EventColorBar(color: Color, status: TimelineEventStatus) {
 
 @Composable
 private fun EventCardContent(
-    event: CourseEvent,
+    event: CalendarEvent,
     height: Dp,
     durationText: String,
     eventStatus: TimelineEventStatus,
@@ -550,7 +550,7 @@ private fun EventCardContent(
             verticalAlignment = Alignment.Top
         ) {
             Text(
-                text = event.courseName,
+                text = event.name,
                 color = textColor,
                 style = MaterialTheme.typography.titleSmall,
                 maxLines = 2,
@@ -598,7 +598,7 @@ private fun EventCardContent(
 
 @Composable
 private fun EventStatusIndicator(
-    event: CourseEvent, eventStatus: TimelineEventStatus, eventColor: Color
+    event: CalendarEvent, eventStatus: TimelineEventStatus, eventColor: Color
 ) {
     when (eventStatus) {
         TimelineEventStatus.ENDED -> {
@@ -647,7 +647,7 @@ private fun EventStatusIndicator(
             ) {
                 Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
                     Icon(
-                        getEventTypeIcon(event.eventType),
+                        getEventTypeIcon(event.type),
                         null,
                         tint = eventColor,
                         modifier = Modifier.size(16.dp)
@@ -675,16 +675,16 @@ private fun EventInfoChip(icon: ImageVector, text: String, color: Color) {
     }
 }
 
-private fun getEventTypeIcon(eventType: EventType): ImageVector = when (eventType) {
-    EventType.LECTURE -> Icons.Outlined.School
-    EventType.LAB -> Icons.Outlined.Science
-    EventType.EXAM -> Icons.AutoMirrored.Outlined.Assignment
-    EventType.OTHER -> Icons.Outlined.Event
+private fun getEventTypeIcon(eventType: CalendarEventType): ImageVector = when (eventType) {
+    CalendarEventType.LECTURE -> Icons.Outlined.School
+    CalendarEventType.LAB -> Icons.Outlined.Science
+    CalendarEventType.EXAM -> Icons.AutoMirrored.Outlined.Assignment
+    CalendarEventType.OTHER -> Icons.Outlined.Event
 }
 
 private enum class TimelineEventStatus { ENDED, IN_PROGRESS, UPCOMING }
 
-private fun getEventStatus(event: CourseEvent): TimelineEventStatus {
+private fun getEventStatus(event: CalendarEvent): TimelineEventStatus {
     val now = LocalDateTime.now()
     return when {
         event.isCancelled -> TimelineEventStatus.ENDED

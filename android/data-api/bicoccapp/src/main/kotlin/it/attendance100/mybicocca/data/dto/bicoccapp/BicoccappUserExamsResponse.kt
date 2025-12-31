@@ -1,9 +1,11 @@
 package it.attendance100.mybicocca.data.dto.bicoccapp
 
-import com.google.gson.annotations.SerializedName
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
+@Serializable
 data class BicoccappUserExamsResponse(
-    @SerializedName("career")
-    val career: it.attendance100.mybicocca.data.dto.bicoccapp.BicoccappUserExamsCareer? = null
+    @SerialName("career")
+    val career: BicoccappUserExamsCareer? = null
 )
 

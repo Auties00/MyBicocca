@@ -1,21 +1,23 @@
 package it.attendance100.mybicocca.data.dto.bicoccapp
 
-import com.google.gson.annotations.SerializedName
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
+@Serializable
 data class BicoccappUserProfileCareersInner(
-    @SerializedName("matricId")
-    val matricId: Int? = null,
+    @SerialName("matricId")
+    val enrollmentId: Int? = null,
 
-    @SerializedName("selected")
+    @SerialName("selected")
     val selected: Boolean? = null,
 
-    @SerializedName("oldCode")
+    @SerialName("oldCode")
     val oldCode: Boolean? = null,
 
-    @SerializedName("matricCode")
-    val enrollmentId: String? = null,
+    @SerialName("matricCode")
+    val enrollmentCode: String? = null,
 
-    @SerializedName("studentId")
+    @SerialName("studentId")
     val studentId: Int? = null
 )
 

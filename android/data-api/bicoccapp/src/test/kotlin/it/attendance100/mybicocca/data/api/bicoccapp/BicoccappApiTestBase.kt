@@ -1,32 +1,33 @@
 package it.attendance100.mybicocca.data.api.bicoccapp
 
-import com.google.gson.GsonBuilder
-import okhttp3.Cookie
-import okhttp3.CookieJar
-import okhttp3.HttpUrl
-import okhttp3.OkHttpClient
-import okhttp3.logging.HttpLoggingInterceptor
+import de.jensklingenberg.ktorfit.Ktorfit
+import de.jensklingenberg.ktorfit.Response
+import de.jensklingenberg.ktorfit.converter.ResponseConverterFactory
+import io.ktor.client.HttpClient
+import io.ktor.client.engine.okhttp.OkHttp
+import io.ktor.client.plugins.HttpTimeout
+import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.client.plugins.cookies.AcceptAllCookiesStorage
+import io.ktor.client.plugins.cookies.HttpCookies
+import io.ktor.client.plugins.defaultRequest
+import io.ktor.client.request.header
+import io.ktor.serialization.kotlinx.json.json
+import kotlinx.serialization.json.Json
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.TestInstance
 import org.openqa.selenium.chrome.ChromeDriver
 import org.openqa.selenium.chrome.ChromeOptions
 import org.openqa.selenium.devtools.v131.network.Network
 import org.openqa.selenium.devtools.v131.network.model.ResponseReceived
-import retrofit2.Response
-import retrofit2.Retrofit
-import retrofit2.converter.gson.GsonConverterFactory
 import java.net.URLDecoder
 import java.util.Optional
-import java.util.concurrent.TimeUnit
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 abstract class BicoccappApiTestBase {
 
     companion object {
         private const val BASE_URL = "https://backoffice-app.unimib.it/api/v1/"
-        private const val CONNECT_TIMEOUT = 30L
-        private const val READ_TIMEOUT = 30L
-        private const val WRITE_TIMEOUT = 30L
+        private const val TIMEOUT = 30_000L
 
         private const val HEADER_ACCESS_TOKEN = "access-token"
         private const val HEADER_CLIENT = "client"
@@ -55,114 +56,69 @@ abstract class BicoccappApiTestBase {
         fun hasUserProfile(): Boolean = personId != null && enrollmentId != null && studentId != null
     }
 
-    /**
-     * In-memory cookie jar that persists cookies across requests.
-     */
-    protected class InMemoryCookieJar : CookieJar {
-        private val cookieStore = mutableMapOf<String, MutableList<Cookie>>()
+    private val httpClient: HttpClient by lazy {
+        HttpClient(OkHttp) {
+            followRedirects = false
 
-        override fun saveFromResponse(url: HttpUrl, cookies: List<Cookie>) {
-            val host = url.host
-            cookieStore.getOrPut(host) { mutableListOf() }.apply {
-                cookies.forEach { newCookie ->
-                    removeAll { it.name == newCookie.name }
-                    add(newCookie)
-                }
+            install(ContentNegotiation) {
+                json(Json {
+                    ignoreUnknownKeys = true
+                    isLenient = true
+                    prettyPrint = false
+                })
             }
-            if (host.contains(".")) {
-                val baseDomain = host.substringAfter(".")
-                cookieStore.getOrPut(baseDomain) { mutableListOf() }.apply {
-                    cookies.forEach { newCookie ->
-                        removeAll { it.name == newCookie.name }
-                        add(newCookie)
-                    }
+
+            install(HttpTimeout) {
+                connectTimeoutMillis = TIMEOUT
+                socketTimeoutMillis = TIMEOUT
+                requestTimeoutMillis = TIMEOUT
+            }
+
+            install(HttpCookies) {
+                storage = AcceptAllCookiesStorage()
+            }
+
+            defaultRequest {
+                if (AuthTokens.isLoggedIn()) {
+                    header(HEADER_ACCESS_TOKEN, AuthTokens.accessToken ?: "")
+                    header(HEADER_CLIENT, AuthTokens.client ?: "")
+                    header(HEADER_UID, AuthTokens.uid ?: "")
                 }
             }
         }
-
-        override fun loadForRequest(url: HttpUrl): List<Cookie> {
-            val host = url.host
-            val cookies = mutableListOf<Cookie>()
-
-            cookieStore[host]?.let { cookies.addAll(it) }
-
-            if (host.contains(".")) {
-                val baseDomain = host.substringAfter(".")
-                cookieStore[baseDomain]?.let { cookies.addAll(it) }
-            }
-
-            val now = System.currentTimeMillis()
-            return cookies.filter { it.expiresAt > now }.distinctBy { it.name }
-        }
-
-        fun getAllCookies(): Map<String, List<Cookie>> = cookieStore.toMap()
-
-        fun clear() = cookieStore.clear()
     }
 
-    protected val gson = GsonBuilder().setPrettyPrinting().create()
-    protected val cookieJar = InMemoryCookieJar()
-
-    private val loggingInterceptor = HttpLoggingInterceptor().apply {
-        level = HttpLoggingInterceptor.Level.HEADERS
-    }
-
-    private val httpClient: OkHttpClient by lazy {
-        OkHttpClient.Builder()
-            .cookieJar(cookieJar)
-            .followRedirects(false)
-            .followSslRedirects(false)
-            .addInterceptor { chain ->
-                val originalRequest = chain.request()
-                if (!AuthTokens.isLoggedIn()) {
-                    chain.proceed(originalRequest)
-                } else {
-                    val authenticatedRequest = originalRequest.newBuilder().apply {
-                        AuthTokens.accessToken?.let { header(HEADER_ACCESS_TOKEN, it) }
-                        AuthTokens.client?.let { header(HEADER_CLIENT, it) }
-                        AuthTokens.uid?.let { header(HEADER_UID, it) }
-                    }.build()
-                    chain.proceed(authenticatedRequest)
-                }
-            }
-            .addInterceptor(loggingInterceptor)
-            .connectTimeout(CONNECT_TIMEOUT, TimeUnit.SECONDS)
-            .readTimeout(READ_TIMEOUT, TimeUnit.SECONDS)
-            .writeTimeout(WRITE_TIMEOUT, TimeUnit.SECONDS)
-            .build()
-    }
-
-    private val retrofitClient: Retrofit by lazy {
-        Retrofit.Builder()
+    private val ktorfitClient: Ktorfit by lazy {
+        Ktorfit.Builder()
             .baseUrl(BASE_URL)
-            .client(httpClient)
-            .addConverterFactory(GsonConverterFactory.create())
+            .httpClient(httpClient)
+            .converterFactories(ResponseConverterFactory())
             .build()
     }
 
     // API instances
     protected val authApi: BicoccappAuthApi by lazy {
-        retrofitClient.create(BicoccappAuthApi::class.java)
+        ktorfitClient.createBicoccappAuthApi()
     }
 
     protected val userApi: BicoccappUserApi by lazy {
-        retrofitClient.create(BicoccappUserApi::class.java)
+        ktorfitClient.createBicoccappUserApi()
     }
 
     protected val calendarApi: BicoccappCalendarApi by lazy {
-        retrofitClient.create(BicoccappCalendarApi::class.java)
+        ktorfitClient.createBicoccappCalendarApi()
     }
 
     protected val wizardApi: BicoccappWizardApi by lazy {
-        retrofitClient.create(BicoccappWizardApi::class.java)
+        ktorfitClient.createBicoccappWizardApi()
     }
 
     protected val messagesApi: BicoccappMessagesApi by lazy {
-        retrofitClient.create(BicoccappMessagesApi::class.java)
+        ktorfitClient.createBicoccappMessagesApi()
     }
 
     protected val campusApi: BicoccappCampusApi by lazy {
-        retrofitClient.create(BicoccappCampusApi::class.java)
+        ktorfitClient.createBicoccappCampusApi()
     }
 
     @BeforeAll
@@ -205,7 +161,7 @@ abstract class BicoccappApiTestBase {
                     // Get the first (active) career from the careers list
                     val career = profile.careers.firstOrNull()
                     if (career != null) {
-                        AuthTokens.enrollmentId = career.enrollmentId
+                        AuthTokens.enrollmentId = career.enrollmentId?.toString()
                         AuthTokens.studentId = career.studentId?.toString()
                     }
 
@@ -217,8 +173,8 @@ abstract class BicoccappApiTestBase {
                     println("User profile response body is null")
                 }
             } else {
-                println("Failed to fetch user profile: ${response.code()} ${response.message()}")
-                println("Error body: ${response.errorBody()?.string()}")
+                println("Failed to fetch user profile: ${response.code} ${response.message}")
+                println("Error body: ${response.errorBody()}")
             }
         } catch (e: Exception) {
             println("Exception while fetching user profile: ${e.message}")
@@ -258,32 +214,17 @@ abstract class BicoccappApiTestBase {
 
             devTools.addListener(Network.responseReceived()) { response: ResponseReceived ->
                 val url = response.response.url
-
-                if (url.contains("access_token=") || url.contains("inappbrowser")) {
+                if (url.startsWith("https://backoffice-app.unimib.it/inappbrowser")) {
                     println("\n[DETECTED] Redirect URL with tokens: $url")
                     extractTokensFromUrl(url)
                     if (AuthTokens.isLoggedIn()) {
                         foundTokens = true
                     }
                 }
-
-                val headers = response.response.headers
-                val accessToken = headers["access-token"] as? String
-                val client = headers["client"] as? String
-                val uid = headers["uid"] as? String
-
-                if (accessToken != null && client != null && uid != null) {
-                    AuthTokens.accessToken = accessToken
-                    AuthTokens.client = client
-                    AuthTokens.uid = uid
-                    foundTokens = true
-                    println("\n[CAPTURED] Auth tokens from headers: $url")
-                }
             }
 
-            val loginUrl = "https://backoffice-app.unimib.it/api/v1/auth/openid_connect"
-            println("\nOpening browser and navigating to login...")
-            println("URL: $loginUrl")
+            val loginUrl = BASE_URL + BICOCCAPP_AUTH_URL
+            println("Redirect URL: $loginUrl")
             driver.get(loginUrl)
 
             println("\n${"=".repeat(60)}")
@@ -294,23 +235,6 @@ abstract class BicoccappApiTestBase {
             val startTime = System.currentTimeMillis()
 
             while (!foundTokens && System.currentTimeMillis() - startTime < AUTH_TIMEOUT_MS) {
-                try {
-                    val currentUrl = driver.currentUrl ?: continue
-
-                    if (currentUrl.contains("access_token=") || currentUrl.contains("inappbrowser?")) {
-                        println("\n[DETECTED] Current URL contains tokens!")
-                        println("URL: $currentUrl")
-                        extractTokensFromUrl(currentUrl)
-                        if (AuthTokens.isLoggedIn()) {
-                            foundTokens = true
-                            break
-                        }
-                    }
-                } catch (_: Exception) {
-                    println("\nBrowser was closed.")
-                    break
-                }
-
                 Thread.sleep(500)
             }
 
@@ -361,6 +285,10 @@ abstract class BicoccappApiTestBase {
             AuthTokens.matricId = it.toIntOrNull()
             println("  Found favourite_career (matricId): ${AuthTokens.matricId}")
         }
+        params["fiscal_code"]?.let {
+            AuthTokens.fiscalCode = it
+            println("  Found fiscal_code (fiscalCode): ${AuthTokens.fiscalCode}")
+        }
     }
 
     /**
@@ -388,20 +316,20 @@ abstract class BicoccappApiTestBase {
     protected fun <T> printResponse(name: String, response: Response<T>) {
         println("\n${"=".repeat(60)}")
         println("API: $name")
-        println("Status: ${response.code()} ${response.message()}")
+        println("Status: ${response.code} ${response.message}")
         println("=".repeat(60))
 
         if (response.isSuccessful) {
             val body = response.body()
             if (body != null) {
                 println("Response Body:")
-                println(gson.toJson(body))
+                println(body)
             } else {
                 println("Response body is null")
             }
         } else {
             println("Error Body:")
-            println(response.errorBody()?.string() ?: "No error body")
+            println(response.errorBody() ?: "No error body")
         }
     }
 
@@ -410,9 +338,9 @@ abstract class BicoccappApiTestBase {
      */
     protected fun <T> assertSuccessfulResponse(response: Response<T>, apiName: String) {
         if (!response.isSuccessful) {
-            val errorBody = response.errorBody()?.string() ?: "No error body"
+            val errorBody = response.errorBody() ?: "No error body"
             throw AssertionError(
-                "$apiName failed with status ${response.code()}: $errorBody"
+                "$apiName failed with status ${response.code}: $errorBody"
             )
         }
     }
