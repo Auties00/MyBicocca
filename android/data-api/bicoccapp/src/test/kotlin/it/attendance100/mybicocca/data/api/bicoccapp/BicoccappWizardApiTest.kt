@@ -14,14 +14,14 @@ class BicoccappWizardApiTest : BicoccappApiTestBase() {
 
     // Known category codes for testing
     companion object {
-        const val CATEGORY_SCIENCES = "SCI"
-        const val CATEGORY_ECONOMICS = "ECO"
-        const val CATEGORY_LAW = "GIU"
+        const val CATEGORY_SCIENCES = "SCIENT"
+        const val CATEGORY_ECONOMICS = "ECOSTAT"
+        const val CATEGORY_LAW = "GIUR"
 
-        const val DEGREE_BACHELOR = "L"
+        const val DEGREE_BACHELOR = "L2"
         const val DEGREE_MASTER = "LM"
 
-        const val COURSE_INFORMATICA = "F0801Q"
+        const val COURSE_INFORMATICA = "E3101Q-E3102Q"
     }
 
     @Nested
@@ -138,7 +138,7 @@ class BicoccappWizardApiTest : BicoccappApiTestBase() {
             // Then
             printResponse("getDegreeTypes(categoryCode=INVALID)", response)
             // Should either return empty list or all degrees
-            println("API responded with code: ${response.code()}")
+            println("API responded with code: ${response.code}")
         }
     }
 
@@ -265,7 +265,7 @@ class BicoccappWizardApiTest : BicoccappApiTestBase() {
             // Then
             printResponse("getCourseLessons(categoryCode=$CATEGORY_SCIENCES, degreeCode=$DEGREE_BACHELOR, courseCode=$COURSE_INFORMATICA)", response)
             // API may return empty if course not found
-            println("API responded with code: ${response.code()}")
+            println("API responded with code: ${response.code}")
         }
 
         @Test
@@ -291,7 +291,7 @@ class BicoccappWizardApiTest : BicoccappApiTestBase() {
         @Test
         @DisplayName("getCourseLessons() with Sciences Bachelor and Informatica")
         fun `getCourseLessons with Sciences Bachelor and Informatica returns lessons`() = runTest {
-            // When - all parameters are now required
+            // When
             val response = wizardApi.getCourseLessons(
                 categoryCode = CATEGORY_SCIENCES,
                 degreeCode = DEGREE_BACHELOR,
@@ -310,7 +310,7 @@ class BicoccappWizardApiTest : BicoccappApiTestBase() {
         @Test
         @DisplayName("getCourseLessons() with all required parameters")
         fun `getCourseLessons with all required params returns lessons`() = runTest {
-            // When - all parameters are now required
+            // When
             val response = wizardApi.getCourseLessons(
                 categoryCode = CATEGORY_SCIENCES,
                 degreeCode = DEGREE_BACHELOR,
@@ -328,7 +328,7 @@ class BicoccappWizardApiTest : BicoccappApiTestBase() {
         @Test
         @DisplayName("getCourseLessons() with Economics Bachelor")
         fun `getCourseLessons with Economics Bachelor returns lessons`() = runTest {
-            // When - all parameters are now required
+            // When
             val response = wizardApi.getCourseLessons(
                 categoryCode = CATEGORY_ECONOMICS,
                 degreeCode = DEGREE_BACHELOR,
@@ -356,7 +356,7 @@ class BicoccappWizardApiTest : BicoccappApiTestBase() {
             // Then
             printResponse("getCourseLessons(INVALID_COURSE)", response)
             // Should return 404 or empty list
-            println("API responded with code: ${response.code()}")
+            println("API responded with code: ${response.code}")
         }
     }
 

@@ -1,10 +1,12 @@
 package it.attendance100.mybicocca.data.dto.bicoccapp
 
-import com.google.gson.annotations.SerializedName
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
+@Serializable
 data class BicoccappMapFilter(
-    @SerializedName("type")
+    @SerialName("type")
     val type: String? = null,
-    @SerializedName("color")
+    @SerialName("color")
     val color: String? = null
 )

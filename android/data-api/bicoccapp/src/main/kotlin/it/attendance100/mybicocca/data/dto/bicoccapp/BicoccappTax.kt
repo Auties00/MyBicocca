@@ -1,74 +1,76 @@
 package it.attendance100.mybicocca.data.dto.bicoccapp
 
-import com.google.gson.annotations.SerializedName
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
+@Serializable
 data class BicoccappTax(
-    @SerializedName("yearId")
+    @SerialName("yearId")
     val yearId: Int? = null,
 
-    @SerializedName("fiscalCode")
+    @SerialName("fiscalCode")
     val fiscalCode: String? = null,
 
-    @SerializedName("invoiceId")
+    @SerialName("invoiceId")
     val invoiceId: Int? = null,
 
-    @SerializedName("paymentId")
+    @SerialName("paymentId")
     val paymentId: Int? = null,
 
-    @SerializedName("paidFlag")
+    @SerialName("paidFlag")
     val paidFlag: Int? = null, // 0 = Unpaid, 1 = Paid
 
-    @SerializedName("description")
+    @SerialName("description")
     val description: String? = null,
 
-    @SerializedName("releaseDate")
+    @SerialName("releaseDate")
     val releaseDate: String? = null,
 
-    @SerializedName("paymentDate")
+    @SerialName("paymentDate")
     val paymentDate: String? = null, // Note: JSON contains "null" string literal or date "dd/MM/yyyy"
 
-    @SerializedName("mavDescription")
+    @SerialName("mavDescription")
     val mavDescription: String? = null,
 
-    @SerializedName("mavDescriptionNext")
+    @SerialName("mavDescriptionNext")
     val mavDescriptionNext: String? = null,
 
-    @SerializedName("invoiceCanceled")
+    @SerialName("invoiceCanceled")
     val invoiceCanceled: Int? = null,
 
-    @SerializedName("invoiceWrong")
+    @SerialName("invoiceWrong")
     val invoiceWrong: String? = null,
 
-    @SerializedName("invoiceArrearId")
+    @SerialName("invoiceArrearId")
     val invoiceArrearId: Int? = null,
 
-    @SerializedName("invoiceOverdue")
+    @SerialName("invoiceOverdue")
     val invoiceOverdue: String? = null,
 
-    @SerializedName("invoiceAmount")
+    @SerialName("invoiceAmount")
     val invoiceAmount: String? = null, // Money comes as String "1074.02"
 
-    @SerializedName("invoiceAmountPaid")
+    @SerialName("invoiceAmountPaid")
     val invoiceAmountPaid: String? = null,
 
-    @SerializedName("cashedBy")
+    @SerialName("cashedBy")
     val cashedBy: String? = null,
 
-    @SerializedName("arrearAddFlag")
+    @SerialName("arrearAddFlag")
     val arrearAddFlag: Int? = null,
 
-    @SerializedName("arrearCount")
+    @SerialName("arrearCount")
     val arrearCount: Int? = null,
 
-    @SerializedName("personId")
+    @SerialName("personId")
     val personId: Int? = null,
 
-    @SerializedName("manuallyRegisteredFlag")
+    @SerialName("manuallyRegisteredFlag")
     val manuallyRegisteredFlag: Int? = null,
 
-    @SerializedName("reportId")
+    @SerialName("reportId")
     val reportId: String? = null,
 
-    @SerializedName("invoiceExpiration")
+    @SerialName("invoiceExpiration")
     val invoiceExpiration: String? = null
 )

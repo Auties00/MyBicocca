@@ -1,18 +1,29 @@
 package it.attendance100.mybicocca.data.repository
 
-import androidx.lifecycle.*
-import it.attendance100.mybicocca.data.api.bicoccapp.*
-import it.attendance100.mybicocca.di.*
-import it.attendance100.mybicocca.domain.model.*
-import javax.inject.*
+import androidx.lifecycle.LiveData
+import it.attendance100.mybicocca.data.api.bicoccapp.BicoccappApi
+import it.attendance100.mybicocca.di.AppDatabase
+import it.attendance100.mybicocca.domain.model.CalendarEvent
+import it.attendance100.mybicocca.domain.model.CalendarEventTeacher
+import it.attendance100.mybicocca.domain.model.CalendarEventType
+import it.attendance100.mybicocca.domain.model.CourseEventSelector
+import it.attendance100.mybicocca.manager.StorageManager
+import java.time.LocalDate
+import java.time.LocalTime
+import java.time.format.DateTimeFormatter
+import javax.inject.Inject
 import it.attendance100.mybicocca.domain.repository.CalendarRepository as ICalendarRepository
 
 class CalendarRepository @Inject constructor(
 	private val api: BicoccappApi,
 	private val database: AppDatabase,
+    private val storage: StorageManager
 ) : ICalendarRepository {
+    companion object {
+        private val dateFormatter = DateTimeFormatter.ofPattern("dd-MM-yyyy")
+    }
 
-	override fun observeEvents(filter: CourseEventSelector): LiveData<List<CourseEvent>> {
+	override fun observeEvents(filter: CourseEventSelector): LiveData<List<CalendarEvent>> {
 		val dao = database.courseEventDao()
 		return when (filter) {
 			is CourseEventSelector.ByDay -> {
@@ -29,104 +40,109 @@ class CalendarRepository @Inject constructor(
 		}
     }
 
-    override suspend fun syncEvents() {
-	    val response = api.calendar.getCalendar()
-	    if (response.isSuccessful) {
-		    val calendarDays = response.body()?.calendar ?: emptyList()
-		    val domainEvents = mutableListOf<CourseEvent>()
+    override suspend fun syncEvents(startDate: LocalDate?): Boolean {
+        val enrollmentId = storage.authEnrollmentId ?: return false
+	    val response = api.calendar.getCalendar(enrollmentId, startDate?.format(DateTimeFormatter.ISO_DATE))
+        if (!response.isSuccessful) return false
+        val calendar = response.body() ?: return false
 
-		    calendarDays.forEach { day ->
-			    val dateStr = day.day // "YYYY-MM-DD" presumably, or DD-MM-YYYY. Assuming ISO based on API docs.
-			    if (dateStr == null) return@forEach
+        val domainEvents = mutableListOf<CalendarEvent>()
 
-			    // Parse Date
-			    // DTO date format verification needed. Assuming "yyyy-MM-dd" for now based on API.
-			    // If parsing fails, we skip.
-			    val date = try {
-				    java.time.LocalDate.parse(dateStr)
-			    } catch (e: Exception) {
-				    return@forEach
-			    }
+        var calendarStartDate: LocalDate? = null
+        var calendarEndDate: LocalDate? = null
 
-			    // 1. Map Events (Lectures)
-			    day.events.forEach { eventDto ->
-				    val timeRange = eventDto.time // "08:30 - 10:30"
-				    val (startStr, endStr) = if (!timeRange.isNullOrBlank() && timeRange.contains("-")) {
-					    timeRange.split("-").map { it.trim() }
-				    } else {
-					    listOf("00:00", "00:00") // Fallback
-				    }
+        calendar.days.forEach { day ->
+            val date = day.date.let {
+                LocalDate.parse(it, dateFormatter)
+            } ?: return@forEach
 
-				    val startDateTime = date.atTime(java.time.LocalTime.parse(startStr))
-				    val endDateTime = date.atTime(java.time.LocalTime.parse(endStr))
+            if(calendarStartDate == null || date < calendarStartDate) {
+                calendarStartDate = date
+            }
 
-				    domainEvents.add(
-					    CourseEvent(
-						    courseName = eventDto.courseName ?: "Unknown",
-						    courseCode = eventDto.courseCode,
-						    professor = eventDto.teachers.joinToString(", ") { "${it.teacherFullName} (${it.teacherEmail})" },
-						    room = eventDto.room,
-						    building = null, // DTO doesn't give explicit building
-						    startTime = startDateTime,
-						    endTime = endDateTime,
-						    eventType = EventType.LECTURE,
-						    notes = null,
-						    isCancelled = eventDto.canceled == "true",
-						    color = null, // Calendar events might not have color, or check DTO
-					    ),
-				    )
-			    }
+            if(calendarEndDate == null || date > calendarEndDate) {
+                calendarEndDate = date
+            }
 
-			    // 2. Map Appeals (Exams)
-			    day.appeals.forEach { appealDto ->
-				    val timeStr = appealDto.time // "09:00"
-				    val startDateTime = if (!timeStr.isNullOrBlank()) {
-					    date.atTime(java.time.LocalTime.parse(timeStr))
-				    } else {
-					    date.atStartOfDay()
-				    }
-				    // Exams often default to 1-2 hours if end not specified
-				    val endDateTime = startDateTime.plusHours(2)
+            day.events.forEach { eventDto ->
+                val courseCode = eventDto.courseCode ?: return@forEach
 
-				    domainEvents.add(
-					    CourseEvent(
-						    courseName = appealDto.courseName ?: "Esame",
-						    courseCode = null,
-						    professor = null,
-						    room = appealDto.room,
-						    building = null,
-						    startTime = startDateTime,
-						    endTime = endDateTime,
-						    eventType = EventType.EXAM,
-						    notes = "Status: ${appealDto.status}",
-						    isCancelled = false,
-						    color = "#FF5252", // Red for exams
-					    ),
-				    )
-			    }
-		    }
+                val courseName = eventDto.courseName
 
-		    // Clear old events? Or upsert?
-		    // For now, we insert. Ideally clear events in the fetched range.
-		    // Since API returns a range, we might duplicate if we just insert.
-		    // But CourseEvent has auto-gen ID.
-		    // Strategy: Clear all and insert is safest for simple sync, or clear specific range.
-		    // Assuming full sync for now.
-		    // database.courseEventDao().clearAll() // If method existed
+                val (startStr, endStr) = (eventDto.time ?: "00-00").split("-", limit = 2).map {
+                        section -> section.trim()
+                }
 
-		    domainEvents.forEach { database.courseEventDao().insert(it) }
-	    }
+
+                val startDateTime = date.atTime(LocalTime.parse(startStr))
+                val endDateTime = date.atTime(LocalTime.parse(endStr))
+
+                val teachers = eventDto.teachers.mapNotNull {
+                    val code = it.code ?: return@mapNotNull null
+                    val fullName = it.fullName ?: return@mapNotNull null
+                    val email = it.email ?: return@mapNotNull null
+
+                    CalendarEventTeacher(
+                        code = code,
+                        fullName = fullName,
+                        email = email
+                    )
+                }
+
+                val room = eventDto.room
+
+                val building = eventDto.courseCode
+                    .split("-", limit = 2)
+                    .first()
+
+                domainEvents.add(
+                    CalendarEvent(
+                        id = courseCode,
+                        name = courseName,
+                        teachers = teachers,
+                        room = room,
+                        building = building,
+                        startTime = startDateTime,
+                        endTime = endDateTime,
+                        type = CalendarEventType.LECTURE,
+                        notes = null,
+                        isCancelled = eventDto.canceled == "1",
+                        color = null, // Calendar events might not have color, or check DTO
+                    ),
+                )
+            }
+
+            day.appeals.forEach { appealDto ->
+                val code = appealDto.activityAppealId.toString()
+
+                val dateTime = date.atTime(LocalTime.parse(appealDto.time))
+
+                domainEvents.add(
+                    CalendarEvent(
+                        id = code,
+                        name = appealDto.appealDescription,
+                        teachers = emptyList(),
+                        room = null,
+                        building = null,
+                        startTime = dateTime,
+                        endTime = dateTime,
+                        type = CalendarEventType.EXAM,
+                        notes = "Status: ${appealDto.status}",
+                        isCancelled = false,
+                        color = "#FF5252", // Red for exams
+                    ),
+                )
+            }
+        }
+
+        if(calendarStartDate != null && calendarEndDate != null) {
+            database.courseEventDao()
+                .deleteEventsBetween(calendarStartDate.atStartOfDay(), calendarEndDate.atStartOfDay())
+        }
+
+        database.courseEventDao()
+            .insertEvents(domainEvents)
+
+        return true
     }
-
-	override suspend fun insertEvent(event: CourseEvent): Long {
-		return database.courseEventDao().insert(event)
-	}
-
-	override suspend fun updateEvent(event: CourseEvent) {
-		database.courseEventDao().update(event)
-	}
-
-	override suspend fun deleteEvent(event: CourseEvent) {
-		database.courseEventDao().delete(event)
-	}
 }

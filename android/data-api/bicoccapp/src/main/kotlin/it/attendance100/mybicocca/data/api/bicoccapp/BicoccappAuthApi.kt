@@ -1,11 +1,25 @@
 package it.attendance100.mybicocca.data.api.bicoccapp
 
+import de.jensklingenberg.ktorfit.Response
+import de.jensklingenberg.ktorfit.http.DELETE
+import de.jensklingenberg.ktorfit.http.GET
+import de.jensklingenberg.ktorfit.http.Header
+import de.jensklingenberg.ktorfit.http.Query
 import it.attendance100.mybicocca.data.dto.bicoccapp.BicoccappLogoutResponse
-import retrofit2.Response
-import retrofit2.http.DELETE
-import retrofit2.http.GET
-import retrofit2.http.Header
-import retrofit2.http.Query
+
+/**
+ * Initiates the OpenID Connect authentication flow.
+ *
+ * This endpoint redirects the user to the University of Milano-Bicocca's
+ * identity provider (IdP) for authentication. The IdP will present the
+ * university's login page where users can enter their credentials.
+ *
+ * @return A string that represents the URL of the auth provider
+ *
+ * @see handleLoginCallback For processing the authentication result
+ */
+
+const val BICOCCAPP_AUTH_URL = "/auth/openid_connect"
 
 /**
  * # BicoccApp Authentication API
@@ -36,35 +50,6 @@ import retrofit2.http.Query
  */
 interface BicoccappAuthApi {
     /**
-     * Initiates the OpenID Connect authentication flow.
-     *
-     * This endpoint redirects the user to the University of Milano-Bicocca's
-     * identity provider (IdP) for authentication. The IdP will present the
-     * university's login page where users can enter their credentials.
-     *
-     * ## Response Behavior
-     * This endpoint always returns a **302 redirect** to the university's
-     * IdP login page. The redirect URL contains:
-     * - `client_id`: The application's registered client identifier
-     * - `redirect_uri`: The callback URL ([handleLoginCallback])
-     * - `scope`: Requested OAuth scopes (typically `openid profile email`)
-     * - `state`: CSRF protection token
-     * - `nonce`: Replay attack prevention token
-     *
-     * ## Error Handling
-     * - **Network errors:** Connection timeout or DNS resolution failures
-     * - **Server errors:** 5xx responses indicate IdP or server issues
-     *
-     * @return A [retrofit2.Response] containing [Unit]. The response will have:
-     *         - Status code 302 with `Location` header pointing to the IdP
-     *         - Empty body (redirects don't contain response bodies)
-     *
-     * @see handleLoginCallback For processing the authentication result
-     */
-    @GET("auth/openid_connect")
-    suspend fun initiateLogin(): Response<Unit>
-
-    /**
      * Handles the OAuth2/OpenID Connect callback from the identity provider.
      *
      * After the user successfully authenticates with the university's IdP,
@@ -92,7 +77,7 @@ interface BicoccappAuthApi {
      *              stored state to prevent cross-site request forgery attacks.
      *              Will be `null` if authentication failed.
      *
-     * @return A [retrofit2.Response] containing [Unit]. The response will be a 302 redirect:
+     * @return A [Response] containing [Unit]. The response will be a 302 redirect:
      *         - On success: Redirects to the app with tokens in cookies/headers
      *         - On failure: Redirects to an error page or login screen
      *
@@ -100,9 +85,9 @@ interface BicoccappAuthApi {
      */
     @GET("auth/openid_connect/callback")
     suspend fun handleLoginCallback(
-	    @Query("code") code: String? = null,
-	    @Query("state") state: String? = null,
-	    @Header("Cookie") cookies: String? = null,
+	    @Query("code") code: String,
+	    @Query("state") state: String,
+	    @Header("Cookie") cookies: String
     ): Response<Unit>
 
     /**
@@ -133,7 +118,7 @@ interface BicoccappAuthApi {
      * Even if the request fails, the client should still perform local cleanup
      * to ensure the user is logged out on the device.
      *
-     * @return A [retrofit2.Response] containing [it.attendance100.mybicocca.data.dto.bicoccapp.BicoccappLogoutResponse] with:
+     * @return A [Response] containing [it.attendance100.mybicocca.data.dto.bicoccapp.BicoccappLogoutResponse] with:
      *         - Status code 200 on successful logout
      *         - Confirmation of session termination in the response body
      *

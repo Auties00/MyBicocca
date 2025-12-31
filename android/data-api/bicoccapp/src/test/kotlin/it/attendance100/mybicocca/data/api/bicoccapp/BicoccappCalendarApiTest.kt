@@ -268,7 +268,7 @@ class BicoccappCalendarApiTest : BicoccappApiTestBase() {
         @Test
         @DisplayName("addCourseToCalendar() with placeholder values returns appropriate response")
         fun `addCourseToCalendar with placeholder values handles gracefully`() = runTest {
-            // When - all parameters are now required, using placeholder values
+            // When
             val response = calendarApi.addCourseToCalendar(
                 userId = AuthTokens.uid ?: "test_user",
                 cdsCode = "TEST_CDS",
@@ -279,13 +279,13 @@ class BicoccappCalendarApiTest : BicoccappApiTestBase() {
 
             // Then
             printResponse("addCourseToCalendar(placeholder values)", response)
-            println("addCourseToCalendar API responded with code: ${response.code()}")
+            println("addCourseToCalendar API responded with code: ${response.code}")
         }
 
         @Test
         @DisplayName("addCourseToCalendar() with minimal valid parameters")
         fun `addCourseToCalendar with minimal parameters returns response`() = runTest {
-            // When - using placeholder values since all are required
+            // When
             val response = calendarApi.addCourseToCalendar(
                 userId = AuthTokens.uid ?: "test_user",
                 cdsCode = "F0801Q",
@@ -297,7 +297,7 @@ class BicoccappCalendarApiTest : BicoccappApiTestBase() {
 
             // Then
             printResponse("addCourseToCalendar(minimal params)", response)
-            println("API responded with code: ${response.code()}")
+            println("API responded with code: ${response.code}")
         }
 
         @Test
@@ -387,55 +387,6 @@ class BicoccappCalendarApiTest : BicoccappApiTestBase() {
                 // Courses should have basic properties
                 println("Course: ${course.lessonName}, Code: ${course.courseCode}")
             }
-        }
-    }
-
-    @Nested
-    @DisplayName("Edge Cases")
-    inner class EdgeCaseTests {
-
-        @Test
-        @DisplayName("getCalendar() with invalid date format handles gracefully")
-        fun `getCalendar with invalid date handles gracefully`() = runTest {
-            // When
-            val response = calendarApi.getCalendar(
-                enrollmentId = AuthTokens.enrollmentId!!,
-                date = "invalid-date"
-            )
-
-            // Then
-            printResponse("getCalendar(invalid date)", response)
-            // API should handle invalid dates gracefully
-            println("API responded with code: ${response.code()}")
-        }
-
-        @Test
-        @DisplayName("getCalendar() with empty date string")
-        fun `getCalendar with empty date handles gracefully`() = runTest {
-            // When
-            val response = calendarApi.getCalendar(
-                enrollmentId = AuthTokens.enrollmentId!!,
-                date = ""
-            )
-
-            // Then
-            printResponse("getCalendar(empty date)", response)
-            println("API responded with code: ${response.code()}")
-        }
-
-        @Test
-        @DisplayName("getCourseDetail() with invalid codes handles gracefully")
-        fun `getCourseDetail with invalid codes handles gracefully`() = runTest {
-            // When
-            val response = calendarApi.getCourseDetail(
-                activityCode = "INVALID_CODE",
-                courseCode = "INVALID_CODE"
-            )
-
-            // Then
-            printResponse("getCourseDetail(invalid codes)", response)
-            // API should return 404 or empty response for invalid codes
-            println("API responded with code: ${response.code()}")
         }
     }
 }

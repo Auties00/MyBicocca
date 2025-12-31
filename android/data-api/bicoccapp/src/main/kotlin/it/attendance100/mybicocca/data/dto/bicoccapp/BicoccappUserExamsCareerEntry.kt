@@ -1,83 +1,85 @@
 package it.attendance100.mybicocca.data.dto.bicoccapp
 
-import com.google.gson.annotations.SerializedName
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
+@Serializable
 data class BicoccappUserExamsCareerEntry(
-    @SerializedName("yearFreqId")
+    @SerialName("yearFreqId")
     val yearFreqId: Int? = null,
 
-    @SerializedName("activityCode")
+    @SerialName("activityCode")
     val activityCode: String? = null,
 
-    @SerializedName("activityDescr")
+    @SerialName("activityDescr")
     val activityDescr: String? = null,
 
-    @SerializedName("courseYear")
+    @SerialName("courseYear")
     val courseYear: Int? = null,
 
-    @SerializedName("order")
+    @SerialName("order")
     val order: Int? = null,
 
-    @SerializedName("cfu")
+    @SerialName("cfu")
     val cfu: String? = null, // JSON sends "8.0" as a String
 
-    @SerializedName("statusDescr")
+    @SerialName("statusDescr")
     val statusDescr: String? = null,
 
-    @SerializedName("typeExamCode")
+    @SerialName("typeExamCode")
     val typeExamCode: String? = null,
 
-    @SerializedName("typeExamDescr")
+    @SerialName("typeExamDescr")
     val typeExamDescr: String? = null,
 
-    @SerializedName("typeCourseCode")
+    @SerialName("typeCourseCode")
     val typeCourseCode: String? = null,
 
-    @SerializedName("typeCourseDescr")
+    @SerialName("typeCourseDescr")
     val typeCourseDescr: String? = null,
 
-    @SerializedName("status")
+    @SerialName("status")
     val status: String? = null, // "S" for Superata, "F" for Frequentata/Future
 
-    @SerializedName("year")
+    @SerialName("year")
     val year: Int? = null,
 
-    @SerializedName("dateExam")
+    @SerialName("dateExam")
     val dateExam: String? = null,
 
-    @SerializedName("valueType")
+    @SerialName("valueType")
     val valueType: String? = null,
 
-    @SerializedName("grade")
+    @SerialName("grade")
     val grade: String? = null, // Note: In 'exams', grade is a String (e.g., "30L", "24")
 
-    @SerializedName("laudFlag")
+    @SerialName("laudFlag")
     val laudFlag: Int? = null,
 
-    @SerializedName("evaluationCode")
+    @SerialName("evaluationCode")
     val evaluationCode: String? = null,
 
-    @SerializedName("evaluationDescr")
+    @SerialName("evaluationDescr")
     val evaluationDescr: String? = null,
 
-    @SerializedName("editable")
+    @SerialName("editable")
     val editable: Boolean? = null,
 
-    @SerializedName("teacherId")
+    @SerialName("teacherId")
     val teacherId: String? = null,
 
-    @SerializedName("teacherCode")
+    @SerialName("teacherCode")
     val teacherCode: String? = null,
 
-    @SerializedName("teacherFiscalCode")
+    @SerialName("teacherFiscalCode")
     val teacherFiscalCode: String? = null,
 
-    @SerializedName("teacherFullname")
+    @SerialName("teacherFullname")
     val teacherFullname: String? = null,
 
-    @SerializedName("teacherEmail")
+    @SerialName("teacherEmail")
     val teacherEmail: String? = null,
 
-    @SerializedName("teacherKey")
+    @SerialName("teacherKey")
     val teacherKey: String? = null
 )

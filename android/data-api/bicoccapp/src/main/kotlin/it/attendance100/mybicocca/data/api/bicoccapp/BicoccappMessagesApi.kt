@@ -1,11 +1,11 @@
 package it.attendance100.mybicocca.data.api.bicoccapp
 
 import it.attendance100.mybicocca.data.dto.bicoccapp.BicoccappAlertsResponse
-import retrofit2.Response
-import retrofit2.http.Field
-import retrofit2.http.FormUrlEncoded
-import retrofit2.http.GET
-import retrofit2.http.POST
+import de.jensklingenberg.ktorfit.Response
+import de.jensklingenberg.ktorfit.http.Field
+import de.jensklingenberg.ktorfit.http.FormUrlEncoded
+import de.jensklingenberg.ktorfit.http.GET
+import de.jensklingenberg.ktorfit.http.POST
 
 /**
  * # BicoccApp Messages API
@@ -69,7 +69,7 @@ interface BicoccappMessagesApi {
      * Alerts are fetched fresh on each request. Consider implementing
      * client-side caching with a short TTL (e.g., 5 minutes) for better UX.
      *
-     * @return A [retrofit2.Response] containing [it.attendance100.mybicocca.data.dto.bicoccapp.BicoccappAlertsResponse] with all active notifications.
+     * @return A [Response] containing [it.attendance100.mybicocca.data.dto.bicoccapp.BicoccappAlertsResponse] with all active notifications.
      *         Returns an empty list if no alerts are available.
      *
      * @see getSystemInfoMessage For app-wide announcements
@@ -119,7 +119,7 @@ interface BicoccappMessagesApi {
      *                    Should clearly state the purpose of the meeting
      *                    and any relevant context. HTML is not supported.
      *
-     * @return A [retrofit2.Response] containing [Unit]. A successful response (200)
+     * @return A [Response] containing [Unit]. A successful response (200)
      *         indicates the message was sent. Check [Response.isSuccessful]
      *         to verify delivery.
      */

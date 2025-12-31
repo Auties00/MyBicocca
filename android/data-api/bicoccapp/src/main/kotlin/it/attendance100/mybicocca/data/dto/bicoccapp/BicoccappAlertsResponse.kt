@@ -1,12 +1,14 @@
 package it.attendance100.mybicocca.data.dto.bicoccapp
 
-import com.google.gson.annotations.SerializedName
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
+@Serializable
 data class BicoccappAlertsResponse(
-    @SerializedName("alerts_to_read")
+    @SerialName("alerts_to_read")
     val alertsToRead: Int? = null,
 
-    @SerializedName("alerts")
-    val alerts: List<it.attendance100.mybicocca.data.dto.bicoccapp.BicoccappAlert> = emptyList()
+    @SerialName("alerts")
+    val alerts: List<BicoccappAlert> = emptyList()
 )
 

@@ -1,9 +1,12 @@
 package it.attendance100.mybicocca.domain.repository
 
-import androidx.lifecycle.*
-import it.attendance100.mybicocca.domain.model.*
-import kotlinx.coroutines.flow.*
-import java.net.*
+import androidx.lifecycle.LiveData
+import it.attendance100.mybicocca.domain.model.Alert
+import it.attendance100.mybicocca.domain.model.CareerStats
+import it.attendance100.mybicocca.domain.model.Tax
+import it.attendance100.mybicocca.domain.model.User
+import kotlinx.coroutines.flow.Flow
+import java.net.URI
 
 interface UserRepository {
     fun isLoggedIn(): Boolean
@@ -16,8 +19,8 @@ interface UserRepository {
 	fun observeTaxes(): LiveData<List<Tax>>
 	fun observeAlerts(): LiveData<List<Alert>>
 
-	suspend fun syncUser()
-	suspend fun syncCareerStats()
-	suspend fun syncTaxes()
-	suspend fun syncAlerts()
+	suspend fun syncUser(): Boolean
+	suspend fun syncCareerStats(): Boolean
+	suspend fun syncTaxes(): Boolean
+	suspend fun syncAlerts(): Boolean
 }

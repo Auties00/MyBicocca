@@ -1,8 +1,10 @@
 package it.attendance100.mybicocca.data.dto.bicoccapp
 
-import com.google.gson.annotations.SerializedName
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
+@Serializable
 data class BicoccappTeacherRole(
-    @SerializedName("roleDescr")
+    @SerialName("roleDescr")
     val roleDescr: String? = null
 )

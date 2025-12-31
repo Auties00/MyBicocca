@@ -242,7 +242,7 @@ class BicoccappUserApiTest : BicoccappApiTestBase() {
             printResponse("addExamSession(invalid IDs)", response)
             // The API should either fail gracefully or return an error
             // We're testing the API doesn't crash
-            println("addExamSession API responded with code: ${response.code()}")
+            println("addExamSession API responded with code: ${response.code}")
         }
 
         @Test
@@ -261,7 +261,7 @@ class BicoccappUserApiTest : BicoccappApiTestBase() {
 
             // Then
             printResponse("cancelExamSession(invalid IDs)", response)
-            println("cancelExamSession API responded with code: ${response.code()}")
+            println("cancelExamSession API responded with code: ${response.code}")
         }
     }
 

@@ -43,11 +43,11 @@ enum class EventStatus {
         /**
          * Calcola lo status di un evento
          */
-        fun fromEvent(event: CourseEvent): EventStatus {
+        fun fromEvent(event: CalendarEvent): EventStatus {
             val now = LocalDateTime.now()
             return when {
                 event.isCancelled -> CANCELLED
-                now.isAfter(event.endTime) -> ENDED
+                now.isAfter(event.time) -> ENDED
                 now.isAfter(event.startTime) && now.isBefore(event.endTime) -> IN_PROGRESS
                 else -> UPCOMING
             }
@@ -61,14 +61,14 @@ enum class EventStatus {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EventDetailDialog(
-    event: CourseEvent,
+    event: CalendarEvent,
     onDismiss: () -> Unit,
     textColor: Color,
     grayColor: Color,
     primaryColor: Color,
     backgroundColor: Color
 ) {
-    val eventColor = CalendarUtils.getEventColor(event.eventType, primaryColor)
+    val eventColor = CalendarUtils.getEventColor(event.type, primaryColor)
 
     // Calcola status
     val eventStatus = remember(event) { EventStatus.fromEvent(event) }
@@ -230,7 +230,7 @@ fun EventDetailDialog(
 // DIALOG HEADER SECTION
 @Composable
 private fun EventDialogHeader(
-    event: CourseEvent,
+    event: CalendarEvent,
     eventColor: Color,
     gradientOffset: Float,
     headerVisible: Float,
@@ -288,7 +288,7 @@ private fun EventDialogHeader(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 // Event type chip
-                EventTypeChip(event.eventType)
+                EventTypeChip(event.type)
                 // Close button
                 FilledIconButton(
                     onClick = onClose,
@@ -308,7 +308,7 @@ private fun EventDialogHeader(
 
             // Course name
             Text(
-                text = event.courseName,
+                text = event.name,
                 color = Color.White,
                 fontSize = 22.sp,
                 fontWeight = FontWeight.Bold,
@@ -333,7 +333,7 @@ private fun EventDialogHeader(
 }
 
 @Composable
-private fun EventTypeChip(eventType: EventType) {
+private fun EventTypeChip(eventType: CalendarEventType) {
     Surface(
         shape = RoundedCornerShape(16.dp),
         color = Color.White.copy(alpha = 0.2f)
@@ -345,10 +345,10 @@ private fun EventTypeChip(eventType: EventType) {
         ) {
             Icon(
                 imageVector = when (eventType) {
-                    EventType.LECTURE -> Icons.Outlined.School
-                    EventType.LAB -> Icons.Outlined.Science
-                    EventType.EXAM -> Icons.AutoMirrored.Outlined.Assignment
-                    EventType.OTHER -> Icons.Outlined.Event
+                    CalendarEventType.LECTURE -> Icons.Outlined.School
+                    CalendarEventType.LAB -> Icons.Outlined.Science
+                    CalendarEventType.EXAM -> Icons.AutoMirrored.Outlined.Assignment
+                    CalendarEventType.OTHER -> Icons.Outlined.Event
                 },
                 contentDescription = null,
                 tint = Color.White,
@@ -368,7 +368,7 @@ private fun EventTypeChip(eventType: EventType) {
 // DIALOG TIME SECTION
 @Composable
 private fun EventDialogTimeSection(
-    event: CourseEvent,
+    event: CalendarEvent,
     eventColor: Color,
     eventStatus: EventStatus,
     textColor: Color,
@@ -480,7 +480,7 @@ private fun EventDialogTimeSection(
 }
 
 @Composable
-private fun getStatusText(event: CourseEvent, eventStatus: EventStatus): String {
+private fun getStatusText(event: CalendarEvent, eventStatus: EventStatus): String {
     return when (eventStatus) {
         EventStatus.CANCELLED -> stringResource(R.string.event_status_cancelled)
         EventStatus.ENDED -> {
@@ -611,7 +611,7 @@ private fun DurationIndicator(
 
 @Composable
 private fun EventProgressBar(
-    event: CourseEvent,
+    event: CalendarEvent,
     eventColor: Color,
     grayColor: Color
 ) {
@@ -640,7 +640,7 @@ private fun EventProgressBar(
 // DIALOG DETAILS SECTION
 @Composable
 private fun EventDialogDetailsSection(
-    event: CourseEvent,
+    event: CalendarEvent,
     eventColor: Color,
     textColor: Color,
     grayColor: Color,

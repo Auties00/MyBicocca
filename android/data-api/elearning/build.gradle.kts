@@ -1,10 +1,19 @@
-// Plugins
 plugins {
     id("org.jetbrains.kotlin.jvm")
+    id("com.google.devtools.ksp")
+    kotlin("plugin.serialization")
 }
 
-// Dependencies
 dependencies {
+    // KtorFit
+    implementation("io.ktor:ktor-client-core:3.3.3")
+    implementation("io.ktor:ktor-client-content-negotiation:3.3.3")
+    implementation("io.ktor:ktor-serialization-kotlinx-json:3.3.3")
+    implementation("io.ktor:ktor-client-okhttp:3.3.3")
+
+    // Coroutines
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
+
     // JUnit 5 (Jupiter) for modern Kotlin testing
     testImplementation(platform("org.junit:junit-bom:6.0.1"))
     testImplementation("org.junit.jupiter:junit-jupiter")
@@ -21,25 +30,4 @@ dependencies {
 
     // WebDriverManager for automatic browser driver management
     testImplementation("io.github.bonigarcia:webdrivermanager:6.3.3")
-
-    // Retrofit & OkHttp for test API clients
-    testImplementation("com.squareup.retrofit2:retrofit:3.0.0")
-    testImplementation("com.squareup.retrofit2:converter-gson:3.0.0")
-    testImplementation("com.squareup.okhttp3:okhttp:5.3.2")
-    testImplementation("com.squareup.okhttp3:logging-interceptor:5.3.2")
-
-    // Retrofit
-    implementation("com.squareup.retrofit2:retrofit:3.0.0")
-    implementation("com.squareup.retrofit2:converter-gson:3.0.0")
-    implementation("com.squareup.retrofit2:converter-scalars:3.0.0")
-
-    // Gson
-    implementation("com.google.code.gson:gson:2.13.2")
-
-    // Coroutines
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
-
-    // OkHttp (Retrofit dependency)
-    implementation("com.squareup.okhttp3:okhttp:5.3.2")
-    implementation("com.squareup.okhttp3:logging-interceptor:5.3.2")
 }

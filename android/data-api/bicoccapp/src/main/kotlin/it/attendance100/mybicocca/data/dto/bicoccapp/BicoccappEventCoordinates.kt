@@ -1,11 +1,13 @@
 package it.attendance100.mybicocca.data.dto.bicoccapp
 
-import com.google.gson.annotations.SerializedName
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
+@Serializable
 data class BicoccappEventCoordinates(
-    @SerializedName("latitude")
+    @SerialName("latitude")
     val latitude: String? = null,
 
-    @SerializedName("longitude")
+    @SerialName("longitude")
     val longitude: String? = null
 )

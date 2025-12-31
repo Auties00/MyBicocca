@@ -72,8 +72,8 @@ fun CalendarRoute(
 fun CalendarScreen(
     selectedDate: LocalDate,
     currentMonth: YearMonth,
-    eventsForSelectedDate: List<CourseEvent>,
-    eventsForCurrentMonth: List<CourseEvent>,
+    eventsForSelectedDate: List<CalendarEvent>,
+    eventsForCurrentMonth: List<CalendarEvent>,
     isLoading: Boolean,
     onDateSelected: (LocalDate) -> Unit,
     onMonthChange: (YearMonth) -> Unit,
@@ -89,7 +89,7 @@ fun CalendarScreen(
     var viewMode by remember { mutableStateOf(CalendarViewMode.LIST) }
     var displayedWeekStart by remember { mutableStateOf(selectedDate.with(DayOfWeek.MONDAY)) }
     var todayPressCount by remember { mutableIntStateOf(0) }
-    var selectedEvent by remember { mutableStateOf<CourseEvent?>(null) }
+    var selectedEvent by remember { mutableStateOf<CalendarEvent?>(null) }
 
     // [SYNC] Scroll State condiviso per mantenere l'allineamento verticale tra le viste
     val sharedScrollState = rememberScrollState()

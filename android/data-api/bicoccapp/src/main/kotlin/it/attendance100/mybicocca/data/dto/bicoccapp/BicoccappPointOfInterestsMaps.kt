@@ -1,12 +1,14 @@
 package it.attendance100.mybicocca.data.dto.bicoccapp
 
-import com.google.gson.annotations.SerializedName
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
+@Serializable
 data class BicoccappPointOfInterestsMaps(
-    @SerializedName("filters")
-    val filters: List<it.attendance100.mybicocca.data.dto.bicoccapp.BicoccappMapFilter> = emptyList(),
+    @SerialName("filters")
+    val filters: List<BicoccappMapFilter> = emptyList(),
 
-    @SerializedName("map_locations")
-    val mapLocations: List<it.attendance100.mybicocca.data.dto.bicoccapp.BicoccappMapLocation> = emptyList()
+    @SerialName("map_locations")
+    val mapLocations: List<BicoccappMapLocation> = emptyList()
 )
 

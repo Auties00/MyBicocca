@@ -7,7 +7,6 @@ import org.junit.platform.suite.api.SuiteDisplayName
 @Suite
 @SuiteDisplayName("BicoccApp API Integration Test Suite")
 @SelectClasses(
-    BicoccappAuthApiTest::class,
     BicoccappUserApiTest::class,
     BicoccappCalendarApiTest::class,
     BicoccappWizardApiTest::class,

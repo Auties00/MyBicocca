@@ -63,7 +63,6 @@ package it.attendance100.mybicocca.data.api.bicoccapp
  * @see BicoccappCampusApi
  */
 interface BicoccappApi {
-
     /**
      * Authentication API for OAuth2/OpenID Connect flows.
      *

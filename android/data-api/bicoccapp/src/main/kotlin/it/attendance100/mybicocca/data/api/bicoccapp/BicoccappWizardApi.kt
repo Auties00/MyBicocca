@@ -3,9 +3,9 @@ package it.attendance100.mybicocca.data.api.bicoccapp
 import it.attendance100.mybicocca.data.dto.bicoccapp.BicoccappWizardCategoriesResponse
 import it.attendance100.mybicocca.data.dto.bicoccapp.BicoccappWizardDegreesResponse
 import it.attendance100.mybicocca.data.dto.bicoccapp.BicoccappWizardLessonsResponse
-import retrofit2.Response
-import retrofit2.http.GET
-import retrofit2.http.Query
+import de.jensklingenberg.ktorfit.Response
+import de.jensklingenberg.ktorfit.http.GET
+import de.jensklingenberg.ktorfit.http.Query
 
 /**
  * # BicoccApp Wizard API
@@ -96,7 +96,7 @@ interface BicoccappWizardApi {
      * - **Psicologia:** Psychology
      * - **Scienze della Formazione:** Education
      *
-     * @return A [retrofit2.Response] containing [it.attendance100.mybicocca.data.dto.bicoccapp.BicoccappWizardCategoriesResponse] with all academic areas.
+     * @return A [Response] containing [it.attendance100.mybicocca.data.dto.bicoccapp.BicoccappWizardCategoriesResponse] with all academic areas.
      *
      * @see getDegreeTypes For the next step after selecting a category
      */
@@ -134,7 +134,7 @@ interface BicoccappWizardApi {
      *                     Required to filter degree types to those offered
      *                     in the selected academic area.
      *
-     * @return A [retrofit2.Response] containing [it.attendance100.mybicocca.data.dto.bicoccapp.BicoccappWizardDegreesResponse] with available degree types.
+     * @return A [Response] containing [it.attendance100.mybicocca.data.dto.bicoccapp.BicoccappWizardDegreesResponse] with available degree types.
      *
      * @see getCategories For obtaining category codes
      * @see getDegreePrograms For the next step after selecting a degree type
@@ -176,7 +176,7 @@ interface BicoccappWizardApi {
      *                   Filters programs to the selected degree level
      *                   (e.g., "L" for Bachelor's, "LM" for Master's).
      *
-     * @return A [retrofit2.Response] containing [it.attendance100.mybicocca.data.dto.bicoccapp.BicoccappWizardLessonsResponse] with degree programs.
+     * @return A [Response] containing [it.attendance100.mybicocca.data.dto.bicoccapp.BicoccappWizardLessonsResponse] with degree programs.
      *
      * @see getDegreeTypes For obtaining degree codes
      * @see getCourseLessons For the next step after selecting a program
@@ -224,7 +224,7 @@ interface BicoccappWizardApi {
      * @param courseCode The degree program code from step 3.
      *                   Identifies which Corso di Studio to fetch lessons for.
      *
-     * @return A [retrofit2.Response] containing [it.attendance100.mybicocca.data.dto.bicoccapp.BicoccappWizardLessonsResponse] with course listings.
+     * @return A [Response] containing [it.attendance100.mybicocca.data.dto.bicoccapp.BicoccappWizardLessonsResponse] with course listings.
      *
      * @see getDegreePrograms For obtaining course codes
      * @see BicoccappCalendarApi.addCourseToCalendar For adding lessons to calendar
@@ -271,7 +271,7 @@ interface BicoccappWizardApi {
      *
      * @param enrollmentId enrollment number to fetch the courses for a specific student.
      *
-     * @return A [retrofit2.Response] containing [it.attendance100.mybicocca.data.dto.bicoccapp.BicoccappWizardLessonsResponse] with the user's courses.
+     * @return A [Response] containing [it.attendance100.mybicocca.data.dto.bicoccapp.BicoccappWizardLessonsResponse] with the user's courses.
      *
      * @see getCourseLessons For browsing courses from any program
      */

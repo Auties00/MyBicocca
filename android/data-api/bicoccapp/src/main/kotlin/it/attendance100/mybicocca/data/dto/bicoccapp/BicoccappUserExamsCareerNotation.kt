@@ -1,17 +1,19 @@
 package it.attendance100.mybicocca.data.dto.bicoccapp
 
-import com.google.gson.annotations.SerializedName
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
+@Serializable
 data class BicoccappUserExamsCareerNotation(
-    @SerializedName("year")
+    @SerialName("year")
     val year: Int? = null,
 
-    @SerializedName("dateExam")
+    @SerialName("dateExam")
     val dateExam: String? = null,
 
-    @SerializedName("laudFlag")
+    @SerialName("laudFlag")
     val laudFlag: Int? = null,
 
-    @SerializedName("grade")
-    val grade: Int? = null
+    @SerialName("grade")
+    val grade: Float? = null
 )

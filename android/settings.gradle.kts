@@ -23,4 +23,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "MyBicocca"
 include(":app")
- 
+includeBuild("data-api")

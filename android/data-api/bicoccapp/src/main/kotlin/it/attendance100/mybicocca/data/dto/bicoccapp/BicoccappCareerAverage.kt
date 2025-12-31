@@ -1,17 +1,19 @@
 package it.attendance100.mybicocca.data.dto.bicoccapp
 
-import com.google.gson.annotations.SerializedName
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
+@Serializable
 data class BicoccappCareerAverage(
-    @SerializedName("base")
+    @SerialName("base")
     val base: Int? = null,
 
-    @SerializedName("basedefinition")
+    @SerialName("basedefinition")
     val baseDefinition: String? = null,
 
-    @SerializedName("weighted")
+    @SerialName("weighted")
     val weighted: Double? = null,
 
-    @SerializedName("arithmetic")
+    @SerialName("arithmetic")
     val arithmetic: Double? = null
 )

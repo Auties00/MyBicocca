@@ -26,7 +26,7 @@ import javax.inject.Singleton
  *
  * - [OkHttpClient]: HTTP client with cookie management and logging
  * - [Retrofit]: Retrofit instance configured for Esse3 API
- * - [Esse3Api]: Unified API access point with all sub-APIs
+ * - [it.attendance100.mybicocca.data.api.esse3.Esse3Api]: Unified API access point with all sub-APIs
  *
  * ## Configuration
  *
@@ -40,7 +40,7 @@ import javax.inject.Singleton
  *
  * ## Usage
  *
- * Simply inject [Esse3Api] in your classes:
+ * Simply inject [it.attendance100.mybicocca.data.api.esse3.Esse3Api] in your classes:
  *
  * ```kotlin
  * class MyRepository @Inject constructor(
@@ -143,7 +143,7 @@ object Esse3ApiModule {
     }
 
     /**
-     * Provides the [Esse3AuthApi] implementation.
+     * Provides the [it.attendance100.mybicocca.data.api.esse3.Esse3AuthApi] implementation.
      */
     @Provides
     @Singleton
@@ -152,7 +152,7 @@ object Esse3ApiModule {
     }
 
     /**
-     * Provides the [Esse3UserApi] implementation.
+     * Provides the [it.attendance100.mybicocca.data.api.esse3.Esse3UserApi] implementation.
      */
     @Provides
     @Singleton
@@ -161,7 +161,7 @@ object Esse3ApiModule {
     }
 
     /**
-     * Provides the [Esse3CareerApi] implementation.
+     * Provides the [it.attendance100.mybicocca.data.api.esse3.Esse3CareerApi] implementation.
      */
     @Provides
     @Singleton
@@ -170,7 +170,7 @@ object Esse3ApiModule {
     }
 
     /**
-     * Provides the [Esse3ExamsApi] implementation.
+     * Provides the [it.attendance100.mybicocca.data.api.esse3.Esse3ExamsApi] implementation.
      */
     @Provides
     @Singleton
@@ -179,7 +179,7 @@ object Esse3ApiModule {
     }
 
     /**
-     * Provides the [Esse3InternshipApi] implementation.
+     * Provides the [it.attendance100.mybicocca.data.api.esse3.Esse3InternshipApi] implementation.
      */
     @Provides
     @Singleton
@@ -188,7 +188,7 @@ object Esse3ApiModule {
     }
 
     /**
-     * Provides the [Esse3AdmissionApi] implementation.
+     * Provides the [it.attendance100.mybicocca.data.api.esse3.Esse3AdmissionApi] implementation.
      */
     @Provides
     @Singleton
@@ -197,7 +197,7 @@ object Esse3ApiModule {
     }
 
     /**
-     * Provides the [Esse3QuestionnaireApi] implementation.
+     * Provides the [it.attendance100.mybicocca.data.api.esse3.Esse3QuestionnaireApi] implementation.
      */
     @Provides
     @Singleton
@@ -206,7 +206,7 @@ object Esse3ApiModule {
     }
 
     /**
-     * Provides the [Esse3CommonApi] implementation.
+     * Provides the [it.attendance100.mybicocca.data.api.esse3.Esse3CommonApi] implementation.
      */
     @Provides
     @Singleton
@@ -215,7 +215,7 @@ object Esse3ApiModule {
     }
 
     /**
-     * Provides the unified [Esse3Api] that aggregates all sub-APIs.
+     * Provides the unified [it.attendance100.mybicocca.data.api.esse3.Esse3Api] that aggregates all sub-APIs.
      *
      * This is the recommended dependency to inject when you need
      * access to multiple Esse3 API endpoints.
@@ -262,7 +262,7 @@ object Esse3ApiModule {
     private annotation class Esse3OkHttpClient
 
     /**
-     * Default implementation of [Esse3Api].
+     * Default implementation of [it.attendance100.mybicocca.data.api.esse3.Esse3Api].
      *
      * Holds references to all Retrofit-generated API implementations.
      * Created by [it.attendance100.mybicocca.di.Esse3ApiModule].

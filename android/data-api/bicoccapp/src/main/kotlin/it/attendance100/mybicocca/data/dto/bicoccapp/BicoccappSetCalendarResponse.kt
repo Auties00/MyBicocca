@@ -1,12 +1,14 @@
 package it.attendance100.mybicocca.data.dto.bicoccapp
 
-import com.google.gson.annotations.SerializedName
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
+@Serializable
 data class BicoccappSetCalendarResponse(
-    @SerializedName("message")
+    @SerialName("message")
     val message: String? = null,
 
-    @SerializedName("status")
+    @SerialName("status")
     val status: Int? = null
 )
 

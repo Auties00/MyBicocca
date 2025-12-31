@@ -2,38 +2,34 @@ package it.attendance100.mybicocca.data.dao
 
 import androidx.lifecycle.LiveData
 import androidx.room.Dao
-import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
-import androidx.room.Update
-import it.attendance100.mybicocca.domain.model.CourseEvent
+import it.attendance100.mybicocca.domain.model.CalendarEvent
 import java.time.LocalDateTime
 
-/**
- * Data Access Object for calendar events
- */
 @Dao
 interface CourseEventDao {
-    // Methods for DataSource with LocalDateTime
-    @Query("SELECT * FROM course_events WHERE start_time >= :startDateTime AND end_time <= :endDateTime ORDER BY start_time")
+    @Query("SELECT * FROM calendar_event WHERE start_time >= :startDate AND end_time <= :endDate ORDER BY start_time")
     suspend fun getEventsBetween(
-        startDateTime: LocalDateTime,
-        endDateTime: LocalDateTime
-    ): List<CourseEvent>
+        startDate: LocalDateTime,
+        endDate: LocalDateTime
+    ): List<CalendarEvent>
 
-    @Query("SELECT * FROM course_events WHERE start_time >= :startDateTime AND end_time <= :endDateTime ORDER BY start_time")
+    @Query("SELECT * FROM calendar_event WHERE start_time >= :startDate AND end_time <= :endDate ORDER BY start_time")
     fun observeEventsBetween(
-        startDateTime: LocalDateTime,
-        endDateTime: LocalDateTime
-    ): LiveData<List<CourseEvent>>
+        startDate: LocalDateTime,
+        endDate: LocalDateTime
+    ): LiveData<List<CalendarEvent>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insert(event: CourseEvent): Long
+    suspend fun insertEvents(
+        events: List<CalendarEvent>
+    )
 
-    @Update
-    suspend fun update(event: CourseEvent)
-
-    @Delete
-    suspend fun delete(event: CourseEvent)
+    @Query("DELETE FROM calendar_event WHERE start_time >= :startDate AND end_time <= :endDate")
+    suspend fun deleteEventsBetween(
+        startDate: LocalDateTime,
+        endDate: LocalDateTime
+    )
 }

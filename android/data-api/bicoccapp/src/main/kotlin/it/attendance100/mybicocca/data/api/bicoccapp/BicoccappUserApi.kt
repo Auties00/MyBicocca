@@ -1,5 +1,10 @@
 package it.attendance100.mybicocca.data.api.bicoccapp
 
+import de.jensklingenberg.ktorfit.Response
+import de.jensklingenberg.ktorfit.http.DELETE
+import de.jensklingenberg.ktorfit.http.GET
+import de.jensklingenberg.ktorfit.http.POST
+import de.jensklingenberg.ktorfit.http.Query
 import it.attendance100.mybicocca.data.dto.bicoccapp.BicoccappExamsSessionsResponse
 import it.attendance100.mybicocca.data.dto.bicoccapp.BicoccappModificationResponse
 import it.attendance100.mybicocca.data.dto.bicoccapp.BicoccappTaxesResponse
@@ -7,11 +12,6 @@ import it.attendance100.mybicocca.data.dto.bicoccapp.BicoccappUserCareerResponse
 import it.attendance100.mybicocca.data.dto.bicoccapp.BicoccappUserExamsResponse
 import it.attendance100.mybicocca.data.dto.bicoccapp.BicoccappUserProfile
 import it.attendance100.mybicocca.data.dto.bicoccapp.BicoccappUserRegistrationsResponse
-import retrofit2.Response
-import retrofit2.http.DELETE
-import retrofit2.http.GET
-import retrofit2.http.POST
-import retrofit2.http.Query
 
 /**
  * # BicoccApp User API
@@ -81,7 +81,7 @@ interface BicoccappUserApi {
      * @param fiscalCode Fiscal code to look up a specific user.
      *                   Format: 16 alphanumeric characters (e.g., "RSSMRA80A01F205X").
      *
-     * @return A [retrofit2.Response] containing [it.attendance100.mybicocca.data.dto.bicoccapp.BicoccappUserProfile] with the user's complete profile.
+     * @return A [Response] containing [it.attendance100.mybicocca.data.dto.bicoccapp.BicoccappUserProfile] with the user's complete profile.
      */
     @GET("user_profile")
     suspend fun getProfile(
@@ -118,7 +118,7 @@ interface BicoccappUserApi {
      *
      * @param studentId The student record identifier.
      *
-     * @return A [retrofit2.Response] containing [it.attendance100.mybicocca.data.dto.bicoccapp.BicoccappUserCareerResponse] with academic career details.
+     * @return A [Response] containing [it.attendance100.mybicocca.data.dto.bicoccapp.BicoccappUserCareerResponse] with academic career details.
      */
     @GET("user_career")
     suspend fun getCareer(
@@ -155,7 +155,7 @@ interface BicoccappUserApi {
      *
      * @param enrollmentId Enrollment number to fetch registrations for a specific student.
      *
-     * @return A [retrofit2.Response] containing [it.attendance100.mybicocca.data.dto.bicoccapp.BicoccappUserExamsResponse] with the complete exam history.
+     * @return A [Response] containing [it.attendance100.mybicocca.data.dto.bicoccapp.BicoccappUserExamsResponse] with the complete exam history.
      *
      * @see getExamsSessions For upcoming exam sessions the student can register for
      */
@@ -196,7 +196,7 @@ interface BicoccappUserApi {
      *
      * @param enrollmentId Enrollment number to fetch registrations for a specific student.
      *
-     * @return A [retrofit2.Response] containing [it.attendance100.mybicocca.data.dto.bicoccapp.BicoccappExamsSessionsResponse] with exam session information.
+     * @return A [Response] containing [it.attendance100.mybicocca.data.dto.bicoccapp.BicoccappExamsSessionsResponse] with exam session information.
      *
      * @see getExams For completed exam results
      */
@@ -244,7 +244,7 @@ interface BicoccappUserApi {
      * @param studentId The student record identifier.
      *                  Identifies which student's registration to cancel.
      *
-     * @return A [retrofit2.Response] containing [it.attendance100.mybicocca.data.dto.elearning.BicoccappModificationResponse] with the operation result.
+     * @return A [Response] containing [it.attendance100.mybicocca.data.dto.elearning.BicoccappModificationResponse] with the operation result.
      *
      * @see getExamsSessions To retrieve registered exam sessions and their identifiers
      * @see addExamSession To register for an exam session
@@ -299,7 +299,7 @@ interface BicoccappUserApi {
      * @param activityAppealId The exam session identifier.
      *                         Identifies the specific date/time slot to register for.
      *
-     * @return A [retrofit2.Response] containing [it.attendance100.mybicocca.data.dto.elearning.BicoccappModificationResponse] with the operation result.
+     * @return A [Response] containing [it.attendance100.mybicocca.data.dto.elearning.BicoccappModificationResponse] with the operation result.
      *
      * @see getExamsSessions To retrieve available exam sessions and their identifiers
      * @see cancelExamSession To cancel an existing registration
@@ -346,7 +346,7 @@ interface BicoccappUserApi {
      *
      * @param enrollmentId Enrollment number to fetch registrations for a specific student.
      *
-     * @return A [retrofit2.Response] containing [it.attendance100.mybicocca.data.dto.bicoccapp.BicoccappTaxesResponse] with payment information.
+     * @return A [Response] containing [it.attendance100.mybicocca.data.dto.bicoccapp.BicoccappTaxesResponse] with payment information.
      */
     @GET("user_fees")
     suspend fun getTaxes(
@@ -384,7 +384,7 @@ interface BicoccappUserApi {
      *
      * @param enrollmentId Enrollment number to fetch registrations for a specific student.
      *
-     * @return A [retrofit2.Response] containing [it.attendance100.mybicocca.data.dto.bicoccapp.BicoccappUserRegistrationsResponse] with enrollment history.
+     * @return A [Response] containing [it.attendance100.mybicocca.data.dto.bicoccapp.BicoccappUserRegistrationsResponse] with enrollment history.
      */
     @GET("user_registrations")
     suspend fun getRegistrations(

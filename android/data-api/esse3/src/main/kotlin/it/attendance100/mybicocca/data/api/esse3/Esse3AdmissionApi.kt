@@ -1,12 +1,12 @@
 package it.attendance100.mybicocca.data.api.esse3
 
 import okhttp3.ResponseBody
-import retrofit2.Response
-import retrofit2.http.Field
-import retrofit2.http.FormUrlEncoded
-import retrofit2.http.GET
-import retrofit2.http.POST
-import retrofit2.http.Query
+import de.jensklingenberg.ktorfit.Response
+import de.jensklingenberg.ktorfit.http.Field
+import de.jensklingenberg.ktorfit.http.FormUrlEncoded
+import de.jensklingenberg.ktorfit.http.GET
+import de.jensklingenberg.ktorfit.http.POST
+import de.jensklingenberg.ktorfit.http.Query
 
 /**
  * # Esse3 Admission API
@@ -81,7 +81,7 @@ interface Esse3AdmissionApi {
      * @param profCode Profile code.
      * @param specTypeCode Specialization code.
      * @param posTypeCode Position type code.
-     * @return A [Response] containing the PDF [ResponseBody].
+     * @return A [Response] containing the PDF [okhttp3.ResponseBody].
      */
     @GET("auth/studente/Admission/ConcStampa.do")
     suspend fun printAdmissionSlip(

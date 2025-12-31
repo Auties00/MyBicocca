@@ -1,8 +1,14 @@
 package it.attendance100.mybicocca.data.dao
 
-import androidx.room.*
-import it.attendance100.mybicocca.domain.model.*
-import kotlinx.coroutines.flow.*
+import androidx.room.Dao
+import androidx.room.Insert
+import androidx.room.OnConflictStrategy
+import androidx.room.Query
+import it.attendance100.mybicocca.domain.model.Alert
+import it.attendance100.mybicocca.domain.model.CareerStats
+import it.attendance100.mybicocca.domain.model.Tax
+import it.attendance100.mybicocca.domain.model.User
+import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface UserDao {
@@ -28,11 +34,11 @@ interface UserDao {
 
   // --- Taxes ---
   @Query("SELECT * FROM taxes ORDER BY due_date DESC")
-  fun observeTaxes(): androidx.lifecycle.LiveData<List<it.attendance100.mybicocca.domain.model.Tax>>
+  fun observeTaxes(): androidx.lifecycle.LiveData<List<Tax>>
 
 
   @Insert(onConflict = OnConflictStrategy.REPLACE)
-  suspend fun insertTaxes(taxes: List<it.attendance100.mybicocca.domain.model.Tax>)
+  suspend fun insertTaxes(taxes: List<Tax>)
 
 
   @Query("DELETE FROM taxes")
@@ -41,11 +47,11 @@ interface UserDao {
 
   // --- Alerts ---
   @Query("SELECT * FROM alerts ORDER BY date DESC")
-  fun observeAlerts(): androidx.lifecycle.LiveData<List<it.attendance100.mybicocca.domain.model.Alert>>
+  fun observeAlerts(): androidx.lifecycle.LiveData<List<Alert>>
 
 
   @Insert(onConflict = OnConflictStrategy.REPLACE)
-  suspend fun insertAlerts(alerts: List<it.attendance100.mybicocca.domain.model.Alert>)
+  suspend fun insertAlerts(alerts: List<Alert>)
 
 
   @Query("DELETE FROM alerts")
