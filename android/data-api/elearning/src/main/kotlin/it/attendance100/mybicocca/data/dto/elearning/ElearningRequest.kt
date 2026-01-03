@@ -1,14 +1,13 @@
 package it.attendance100.mybicocca.data.dto.elearning
 
-import kotlinx.serialization.SerialName
+import io.ktor.http.ParametersBuilder
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class ElearningRequest<REQUEST_ARGS : ElearningRequestArgs<*>>(
-    @SerialName("index")
-    val index: Int,
-    @SerialName("methodname")
-    val methodName: String,
-    @SerialName("args")
-    val args: REQUEST_ARGS
-)
+sealed interface ElearningRequest<RESPONSE : ElearningResponse> {
+    val functionName: String
+
+    fun writeAdditionalData(formData: ParametersBuilder) {
+        // Default: no additional data
+    }
+}
