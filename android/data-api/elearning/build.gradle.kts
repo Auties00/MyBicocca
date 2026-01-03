@@ -30,4 +30,7 @@ dependencies {
 
     // WebDriverManager for automatic browser driver management
     testImplementation("io.github.bonigarcia:webdrivermanager:6.3.3")
+
+    // Jsoup for HTML parsing
+    implementation("org.jsoup:jsoup:1.18.3")
 }
