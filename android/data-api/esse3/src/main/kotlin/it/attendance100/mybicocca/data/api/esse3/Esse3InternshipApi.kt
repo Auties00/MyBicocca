@@ -1,316 +1,559 @@
 package it.attendance100.mybicocca.data.api.esse3
 
-import de.jensklingenberg.ktorfit.Response
-import de.jensklingenberg.ktorfit.http.Field
-import de.jensklingenberg.ktorfit.http.FormUrlEncoded
-import de.jensklingenberg.ktorfit.http.GET
-import de.jensklingenberg.ktorfit.http.POST
-import de.jensklingenberg.ktorfit.http.Query
+import io.ktor.client.*
+import io.ktor.client.call.*
+import it.attendance100.mybicocca.data.dto.esse3.*
+import org.jsoup.nodes.Document
+import org.jsoup.nodes.Element
 
 /**
- * # Esse3 Internship API
+ * API for internship and stage operations.
  *
- * Manages Internships (Tirocini) and Stages.
- * Allows searching for companies and opportunities, and managing candidacies.
- *
- * ## Key Features
- *
- * - **Home:** Dashboard for internships.
- * - **Search:** Search for companies and internship opportunities.
- * - **Candidacy:** Apply for opportunities and track status.
- * - **My Internships:** View active and past internships.
- * - **Favorites:** Save interesting opportunities.
- *
- * ## Usage Example
- *
- * ```kotlin
- * // Search for companies in the IT sector
- * internshipApi.filterCompanies(
- *     sector = "IT",
- *     businessName = "Tech Corp"
- * )
- *
- * // View details of an opportunity
- * val details = internshipApi.getOpportunityDetail(
- *     opportunityId = "998877"
- * )
- * ```
+ * Provides access to:
+ * - Search internship opportunities
+ * - View company information
+ * - Manage applications
+ * - View active internships
+ * - Save/unsave opportunities
  */
-interface Esse3InternshipApi {
+class Esse3InternshipApi(
+    client: HttpClient
+) : Esse3AbstractApi(client) {
+    /**
+     * Searches for internship opportunities.
+     *
+     * @param filters Search filters
+     * @return List of internship opportunities
+     */
+    suspend fun searchOpportunities(
+        filters: Esse3InternshipSearchFilters = Esse3InternshipSearchFilters()
+    ): List<Esse3InternshipOpportunity> {
+        val formFields = filters.toFormFields().toMutableMap()
+        formFields["sbmFiltra"] = "Cerca"
+        formFields["form_id_tiro-formSearchOpportunita"] = "tiro-formSearchOpportunita"
+
+        val doc = executePost(
+            "/auth/tirocini/TiroSearchOpportunita.do",
+            formFields
+        )
+        return parseOpportunities(doc)
+    }
 
     /**
-     * Accesses the Internship Student Home page.
+     * Gets opportunity details.
      *
-     * @param menuOpenedCod Optional menu context.
-     * @return A [Response] containing the HTML page.
+     * @param opportunityId The opportunity ID
+     * @return The opportunity details or null if not found
      */
-    @GET("auth/studente/tirocini/TiroHomeStudente.do")
-    suspend fun getInternshipHome(@Query("menu_opened_cod") menuOpenedCod: String? = null): Response<String>
-
-    /**
-     * Retrieves the "My Internships" page.
-     *
-     * Lists current and historical internship activities.
-     *
-     * @param menuOpenedCod Optional menu context.
-     * @return A [Response] containing the HTML list.
-     */
-    @GET("auth/studente/tirocini/MieiStage.do")
-    suspend fun getMyInternships(@Query("menu_opened_cod") menuOpenedCod: String? = null): Response<String>
-
-    /**
-     * Accesses the Company Search page.
-     *
-     * @param menuOpenedCod Optional menu context.
-     * @return A [Response] containing the HTML search form.
-     */
-    @GET("auth/studente/tirocini/RicercaAzienda.do")
-    suspend fun searchCompanies(@Query("menu_opened_cod") menuOpenedCod: String? = null): Response<String>
-
-    /**
-     * Filters and lists companies based on search criteria.
-     *
-     * @param businessName Name of the company.
-     * @param sector Business sector.
-     * @param cdsFlag Course of study flag.
-     * @param advancedSearch Enable advanced search.
-     * @param areaOldId Old area ID.
-     * @param formId Form identifier, defaults to "tiro-Aziende-formSearch".
-     * @param btnFilter Filter button action.
-     * @param employeesRange Range of employees code.
-     * @param areaId Geographic area ID.
-     * @param areaDes Area description.
-     * @param dateFrom Opportunity date from.
-     * @param dateTo Opportunity date to.
-     * @param dipFlag Department flag.
-     * @return A [Response] containing the HTML results.
-     */
-    @FormUrlEncoded
-    @POST("auth/studente/tirocini/ElencoAziende.do")
-    suspend fun filterCompanies(
-        @Field("ragione_sociale") businessName: String? = null,
-        @Field("settore") sector: String? = null,
-        @Field("cds_flg") cdsFlag: String? = null,
-        @Field("advanced_search") advancedSearch: String? = null,
-        @Field("area_old_id") areaOldId: String? = null,
-        @Field("form_id_tiro-Aziende-formSearch") formId: String? = "tiro-Aziende-formSearch",
-        @Field("sbmFiltra") btnFilter: String? = null,
-        @Field("fascia_dip_cod") employeesRange: String? = null,
-        @Field("area_id") areaId: String? = null,
-        @Field("area_des") areaDes: String? = null,
-        @Field("data_opp_da") dateFrom: String? = null,
-        @Field("data_opp_a") dateTo: String? = null,
-        @Field("dip_flg") dipFlag: String? = null
-    ): Response<String>
-
-    /**
-     * Accesses the Opportunity Search page.
-     *
-     * @param menuOpenedCod Optional menu context.
-     * @return A [Response] containing the HTML search form.
-     */
-    @GET("auth/studente/tirocini/RicercaOpportunita.do")
-    suspend fun searchOpportunities(@Query("menu_opened_cod") menuOpenedCod: String? = null): Response<String>
-
-    /**
-     * Submits a search for internship opportunities.
-     *
-     * @param searchText Text to search.
-     * @param opportunityType Type of opportunity.
-     * @param btnFilter Filter button action.
-     * @param advancedSearch Advanced search flag.
-     * @param saveDescription Description to save search.
-     * @param searchId ID of saved search.
-     * @param userInsId Insert user ID.
-     * @param campaignId Campaign ID.
-     * @param discAreaId Disciplinary area ID.
-     * @param discAreaOldId Old disciplinary area ID.
-     * @param formId Form identifier, defaults to "searchForm".
-     * @param title Opportunity title.
-     * @param description Opportunity description.
-     * @param objectives Objectives.
-     * @param dateStartFrom Start date range (from).
-     * @param dateStartTo Start date range (to).
-     * @param dateEndFrom End date range (from).
-     * @param dateEndTo End date range (to).
-     * @param sectorAreaId Sector area ID.
-     * @param area Geographic area.
-     * @param sector Business sector.
-     * @param company Company name.
-     * @param nation Nation.
-     * @param protectedCategory Protected category flag.
-     * @param btnSave Save button action.
-     * @return A [Response] containing the HTML results.
-     */
-    @FormUrlEncoded
-    @POST("auth/tirocini/TiroSearchOpportunita.do")
-    suspend fun submitOpportunitySearch(
-        @Field("search_testo") searchText: String? = null,
-        @Field("tipoOpportunita") opportunityType: String? = null,
-        @Field("sbmFiltra") btnFilter: String? = null,
-        @Field("advanced_search") advancedSearch: String? = null,
-        @Field("saveDescription") saveDescription: String? = null,
-        @Field("search_id") searchId: String? = null,
-        @Field("userInsId") userInsId: String? = null,
-        @Field("campagna_id") campaignId: String? = null,
-        @Field("area_disc_id") discAreaId: String? = null,
-        @Field("area_disc_old_id") discAreaOldId: String? = null,
-        @Field("form_id_searchForm") formId: String? = "searchForm",
-        @Field("title") title: String? = null,
-        @Field("description") description: String? = null,
-        @Field("req_obiett") objectives: String? = null,
-        @Field("data_ini_iscr_da") dateStartFrom: String? = null,
-        @Field("data_ini_iscr_a") dateStartTo: String? = null,
-        @Field("data_fin_iscr_da") dateEndFrom: String? = null,
-        @Field("data_fin_iscr_a") dateEndTo: String? = null,
-        @Field("sett_area_disc_id") sectorAreaId: String? = null,
-        @Field("area") area: String? = null,
-        @Field("settore") sector: String? = null,
-        @Field("azienda") company: String? = null,
-        @Field("sedeNazione") nation: String? = null,
-        @Field("categoriaProtetta") protectedCategory: String? = null,
-        @Field("sbmSave") btnSave: String? = null
-    ): Response<String>
-
-    /**
-     * Retrieves the details of a specific opportunity.
-     *
-     * @param opportunityId The ID of the opportunity (convenzione offerta ID).
-     * @param fromPage Context of the previous page.
-     * @return A [Response] containing the HTML detail page.
-     */
-    @GET("auth/studente/tirocini/DettaglioOpportunita.do")
     suspend fun getOpportunityDetail(
-        @Query("cnvz_off_id") opportunityId: String,
-        @Query("from_page") fromPage: String? = null
-    ): Response<String>
+        opportunityId: Long
+    ): Esse3InternshipOpportunity? {
+        val doc = executeGet(
+            "/auth/studente/tirocini/DettaglioOpportunita.do",
+            mapOf("cnvz_off_id" to opportunityId.toString(), "from_page" to "TIRO_SEARCH_OPP")
+        )
+        return parseOpportunityDetail(doc, opportunityId)
+    }
 
     /**
-     * Saves an opportunity to the favorites list.
+     * Gets saved (favorite) opportunities.
      *
-     * @param opportunityId The opportunity ID.
-     * @return A [Response] containing [Unit].
+     * @return List of saved opportunities
      */
-    @GET("auth/tirocini/SalvaOpportunitaFav.do")
-    suspend fun saveOpportunity(@Query("cnvz_off_id") opportunityId: String): Response<Unit>
+    suspend fun getSavedOpportunities(): List<Esse3InternshipOpportunity> {
+        val doc = executeGet("/auth/studente/tirocini/OpportunitaSalvate.do")
+        return parseOpportunities(doc)
+    }
 
     /**
-     * Removes an opportunity from the favorites list.
+     * Saves an opportunity to favorites.
      *
-     * @param opportunityId The opportunity ID.
-     * @param goToList Flag to redirect to list.
-     * @return A [Response] containing [Unit].
+     * @param opportunityId The opportunity ID
+     * @return True if successful
      */
-    @GET("auth/tirocini/RimuoviOpportunitaFav.do")
-    suspend fun removeOpportunity(
-        @Query("cnvz_off_id") opportunityId: String,
-        @Query("GO_TO_LISTA_OPP_SAVED") goToList: String? = null
-    ): Response<Unit>
+    suspend fun saveOpportunity(opportunityId: Long): Boolean {
+        val response = executeGetRaw(
+            "/auth/tirocini/SalvaOpportunitaFav.do",
+            mapOf("cnvz_off_id" to opportunityId.toString())
+        )
+        return response.status.value in 200..399
+    }
 
     /**
-     * Retrieves the list of saved opportunities.
+     * Removes an opportunity from favorites.
      *
-     * @param menuOpenedCod Optional menu context.
-     * @param goToList Flag to view list.
-     * @param opportunityId Optional ID context.
-     * @return A [Response] containing the HTML list.
+     * @param opportunityId The opportunity ID
+     * @return True if successful
      */
-    @GET("auth/studente/tirocini/OpportunitaSalvate.do")
-    suspend fun getSavedOpportunities(
-        @Query("menu_opened_cod") menuOpenedCod: String? = null,
-        @Query("GO_TO_LISTA_OPP_SAVED") goToList: String? = null,
-        @Query("cnvz_off_id") opportunityId: String? = null
-    ): Response<String>
+    suspend fun unsaveOpportunity(opportunityId: Long): Boolean {
+        val response = executeGetRaw(
+            "/auth/tirocini/RimuoviOpportunitaFav.do",
+            mapOf("cnvz_off_id" to opportunityId.toString())
+        )
+        return response.status.value in 200..399
+    }
 
     /**
-     * Retrieves the summary of student candidacies.
+     * Gets the student's internship applications.
      *
-     * @param menuOpenedCod Optional menu context.
-     * @return A [Response] containing the HTML summary.
+     * @return List of applications
      */
-    @GET("auth/studente/tirocini/RiepilogoCandidature.do")
-    suspend fun getCandidaciesSummary(@Query("menu_opened_cod") menuOpenedCod: String? = null): Response<String>
+    suspend fun getApplications(): List<Esse3InternshipApplication> {
+        val doc = executeGet("/auth/studente/tirocini/RiepilogoCandidature.do")
+        return parseApplications(doc)
+    }
 
     /**
-     * Initiates the candidacy process for an opportunity.
+     * Gets the student's active internships.
      *
-     * @param opportunityId The opportunity ID.
-     * @param onlyEnrolled Filter for only enrolled students.
-     * @param receiptMode Receipt mode flag.
-     * @param fromPage Context of previous page.
-     * @return A [Response] containing the HTML candidacy form.
+     * @return List of internships
      */
-    @GET("auth/studente/tirocini/TiroCandidaturaOpportunita.do")
-    suspend fun startCandidacy(
-        @Query("cnvz_off_id") opportunityId: String,
-        @Query("soloIscr") onlyEnrolled: String? = null,
-        @Query("mod_ricez_candidat") receiptMode: String? = null,
-        @Query("from_page") fromPage: String? = null
-    ): Response<String>
+    suspend fun getInternships(): List<Esse3Internship> {
+        val doc = executeGet("/auth/studente/tirocini/MieiStage.do")
+        return parseInternships(doc)
+    }
 
     /**
-     * Submits the candidacy for an opportunity.
+     * Searches for companies.
      *
-     * @return A [Response] containing [Unit].
+     * @param companyName Company name to search
+     * @param sector Sector ID
+     * @return List of companies
      */
-    @POST("auth/studente/tirocini/CandidaturaOpportunitaSubmit.do")
-    suspend fun submitCandidacy(): Response<Unit>
+    suspend fun searchCompanies(
+        companyName: String? = null,
+        sector: String? = null
+    ): List<Esse3Company> {
+        val formFields = mutableMapOf(
+            "form_id_tiro-Aziende-formSearch" to "tiro-Aziende-formSearch",
+            "sbmFiltra" to "Cerca",
+            "cds_flg" to "1",
+            "advanced_search" to "0"
+        )
+        companyName?.let { formFields["ragione_sociale"] = it }
+        sector?.let { formFields["settore"] = it }
+
+        val doc = executePost("/auth/studente/tirocini/ElencoAziende.do", formFields)
+        return parseCompanies(doc)
+    }
 
     /**
-     * Downloads the logo of a company.
+     * Gets company details.
      *
-     * @param attachmentId The ID of the logo attachment.
-     * @return A [Response] containing [Unit] (image data).
+     * @param companyId The company ID
+     * @return The company details or null if not found
      */
-    @GET("auth/tirocini/DownloadLogoAzienda.do")
-    suspend fun downloadCompanyLogo(@Query("allegato_id") attachmentId: String): Response<Unit>
+    suspend fun getCompanyDetail(companyId: Long): Esse3Company? {
+        val doc = executeGet(
+            "/auth/studente/tirocini/VisualizzaPresentazioneAzienda.do",
+            mapOf("sog_id" to companyId.toString())
+        )
+        return parseCompanyDetail(doc, companyId)
+    }
 
     /**
-     * Views the company presentation/profile.
+     * Gets company logo.
      *
-     * @param companyId The ID of the company/entity.
-     * @param fromPage Context of previous page.
-     * @return A [Response] containing the HTML profile.
+     * @param companyId The company ID
+     * @return The logo bytes or null
      */
-    @GET("auth/studente/tirocini/VisualizzaPresentazioneAzienda.do")
-    suspend fun viewCompanyPresentation(
-        @Query("ente_id") companyId: String,
-        @Query("from_page") fromPage: String? = null
-    ): Response<String>
-    
-    /**
-     * Saves the current search criteria for future use.
-     *
-     * @param advancedSearch Flag for advanced search.
-     * @param description Description for the saved search.
-     * @param formId Form identifier, defaults to "formSave".
-     * @param btnSave Save button action.
-     * @return A [Response] containing [Unit].
-     */
-    @FormUrlEncoded
-    @POST("auth/tirocini/TiroSaveSearchSubmit.do")
-    suspend fun saveSearch(
-         @Query("advanced_search") advancedSearch: String? = null,
-         @Field("saveDescription") description: String? = null,
-         @Field("form_id_formSave") formId: String? = "formSave",
-         @Field("sbmSave") btnSave: String? = null
-    ): Response<Unit>
+    suspend fun getCompanyLogo(companyId: Long): ByteArray? = runCatching {
+        val response = executeGetRaw(
+            "/auth/tirocini/DownloadLogoAzienda.do",
+            mapOf("sog_id" to companyId.toString())
+        )
+        response.body<ByteArray>()
+    }.getOrNull()
 
     /**
-     * Lists the saved searches.
+     * Gets saved searches.
      *
-     * @param menuOpenedCod Optional menu context.
-     * @return A [Response] containing the HTML list.
+     * @return List of saved searches
      */
-    @GET("auth/tirocini/TiroListaSavedSearch.do")
-    suspend fun getSavedSearches(@Query("menu_opened_cod") menuOpenedCod: String? = null): Response<String>
+    suspend fun getSavedSearches(): List<Esse3SavedSearch> {
+        val doc = executeGet("/auth/tirocini/TiroListaSavedSearch.do")
+        return parseSavedSearches(doc)
+    }
 
     /**
      * Deletes a saved search.
      *
-     * @param searchId The ID of the search to delete.
-     * @return A [Response] containing the HTML confirmation.
+     * @param searchId The search ID
+     * @return True if successful
      */
-    @GET("auth/tirocini/TiroDeleteSearch.do")
-    suspend fun deleteSavedSearch(@Query("search_id") searchId: String): Response<String>
+    suspend fun deleteSavedSearch(searchId: Long): Boolean {
+        val response = executeGetRaw(
+            "/auth/tirocini/TiroDeleteSearch.do",
+            mapOf("search_id" to searchId.toString())
+        )
+        return response.status.value in 200..399
+    }
+
+    private fun parseOpportunities(doc: Document): List<Esse3InternshipOpportunity> {
+        val opportunities = mutableListOf<Esse3InternshipOpportunity>()
+
+        // Look for opportunity cards
+        val cards = doc.select("div.box-1, div.tiro_box_FloatingBox3Col")
+        for (card in cards) {
+            val opportunity = parseOpportunityCard(card)
+            if (opportunity != null) {
+                opportunities.add(opportunity)
+            }
+        }
+
+        return opportunities
+    }
+
+    private fun parseOpportunityCard(card: Element): Esse3InternshipOpportunity? {
+        val text = card.text()
+
+        // Extract title
+        val title = card.selectFirst("h3, h4, .title, strong")?.text()?.cleanText()
+            ?: text.substringBefore("presso:").trim().takeIf { it.isNotBlank() }
+            ?: return null
+
+        // Extract company name
+        val companyName = "presso:\\s*(.+?)(?:Iscrizioni|Tipo|$)".toRegex()
+            .find(text)?.groupValues?.get(1)?.trim()
+            ?: card.selectFirst("a[href*=Azienda]")?.text()?.trim()
+            ?: ""
+
+        // Extract dates
+        val startMatch = "dal:\\s*(\\d{2}/\\d{2}/\\d{4})".toRegex().find(text)
+        val applicationStart = startMatch?.groupValues?.get(1)?.let { parseDate(it)?.atStartOfDay() }
+
+        val deadlineMatch = "al:\\s*(\\d{2}/\\d{2}/\\d{4})".toRegex().find(text)
+        val deadline = deadlineMatch?.groupValues?.get(1)?.let { parseDate(it)?.atStartOfDay() }
+
+        // Extract type
+        val typeMatch = "Tipo\\s*:?\\s*(curriculare|extracurriculare)".toRegex(RegexOption.IGNORE_CASE)
+            .find(text)
+        val type = typeMatch?.groupValues?.get(1)?.let { Esse3InternshipType.fromString(it) }
+            ?: Esse3InternshipType.CURRICULAR
+
+        // Extract ID from link
+        val link = card.selectFirst("a[href*=cnvz_off_id]")?.attr("href")
+        val idMatch = "cnvz_off_id=(\\d+)".toRegex().find(link ?: "")
+        val id = idMatch?.groupValues?.get(1)?.toLongOrNull() ?: return null
+
+        // Extract company ID
+        val companyLink = card.selectFirst("a[href*=sog_id]")?.attr("href")
+        val companyIdMatch = "sog_id=(\\d+)".toRegex().find(companyLink ?: "")
+        val companyId = companyIdMatch?.groupValues?.get(1)?.toLongOrNull() ?: 0L
+
+        // Extract sector from card
+        val sector = "Settore\\s*:?\\s*(.+?)(?:\\s{2,}|Tipo|$)".toRegex()
+            .find(text)?.groupValues?.get(1)?.trim()
+
+        // Extract location
+        val location = "(?:Sede|Luogo|Location)\\s*:?\\s*(.+?)(?:\\s{2,}|Tipo|Durata|$)".toRegex()
+            .find(text)?.groupValues?.get(1)?.trim()
+
+        // Extract duration
+        val duration = "Durata\\s*:?\\s*(.+?)(?:\\s{2,}|Tipo|$)".toRegex()
+            .find(text)?.groupValues?.get(1)?.trim()
+
+        // Extract description snippet if present
+        val description = card.selectFirst("p.description, div.description, .abstract")?.text()?.cleanText()
+
+        return Esse3InternshipOpportunity(
+            id = id,
+            title = title,
+            company = Esse3Company(
+                id = companyId,
+                name = companyName,
+                description = null,
+                sector = sector,
+                logoUrl = if (companyId > 0) "$BASE_URL/auth/tirocini/DownloadLogoAzienda.do?sog_id=$companyId" else null,
+                website = null
+            ),
+            type = type,
+            applicationStart = applicationStart,
+            applicationEnd = deadline,
+            description = description,
+            requirements = null,
+            location = location,
+            duration = duration,
+            isSaved = card.selectFirst("a[href*=Rimuovi]") != null
+        )
+    }
+
+    private fun parseOpportunityDetail(doc: Document, opportunityId: Long): Esse3InternshipOpportunity? {
+        val title = doc.pageTitle() ?: "Opportunity $opportunityId"
+        val text = doc.text()
+
+        // Extract dates
+        val startMatch = "Candidature dal\\s*(\\d{2}/\\d{2}/\\d{4}\\s*\\d{2}:\\d{2})".toRegex().find(text)
+        val applicationStart = startMatch?.groupValues?.get(1)?.let { parseDateTime(it) }
+
+        val endMatch = "al\\s*(\\d{2}/\\d{2}/\\d{4})".toRegex().find(text)
+        val applicationEnd = endMatch?.groupValues?.get(1)?.let { parseDate(it)?.atStartOfDay() }
+
+        // Extract type
+        val typeMatch = "(Tirocinio curriculare|Tirocinio extracurriculare)".toRegex()
+            .find(text)
+        val type = typeMatch?.groupValues?.get(1)?.let { Esse3InternshipType.fromString(it) }
+            ?: Esse3InternshipType.CURRICULAR
+
+        // Extract company info
+        val record = doc.selectFirst("div.record")
+        val recordText = record?.text() ?: ""
+        val companyName = "Azienda\\s*(.+?)(?:\\s{2,}|Descizione|Descrizione|$)".toRegex()
+            .find(recordText)?.groupValues?.get(1)?.trim() ?: ""
+
+        // Extract company ID from link
+        val companyLink = doc.selectFirst("a[href*=sog_id]")?.attr("href")
+        val companyId = "sog_id=(\\d+)".toRegex().find(companyLink ?: "")?.groupValues?.get(1)?.toLongOrNull() ?: 0L
+
+        // Extract description
+        val description = doc.selectFirst("div.description, div:contains(Descrizione) + div, p.description")?.text()?.cleanText()
+            ?: record?.selectFirst("p")?.text()?.cleanText()
+
+        // Extract requirements
+        val requirements = "(?:Requisiti|Requirements)\\s*:?\\s*(.+?)(?:\\s{2,}|Competenze|Sede|$)".toRegex()
+            .find(text)?.groupValues?.get(1)?.trim()
+
+        // Extract location
+        val location = "(?:Sede|Luogo|Location)\\s*:?\\s*(.+?)(?:\\s{2,}|Durata|Requisiti|$)".toRegex()
+            .find(text)?.groupValues?.get(1)?.trim()
+
+        // Extract duration
+        val duration = "Durata\\s*:?\\s*(.+?)(?:\\s{2,}|Sede|Requisiti|$)".toRegex()
+            .find(text)?.groupValues?.get(1)?.trim()
+
+        // Extract sector
+        val sector = "Settore\\s*:?\\s*(.+?)(?:\\s{2,}|Tipo|$)".toRegex()
+            .find(text)?.groupValues?.get(1)?.trim()
+
+        return Esse3InternshipOpportunity(
+            id = opportunityId,
+            title = title,
+            company = Esse3Company(
+                id = companyId,
+                name = companyName,
+                description = null,
+                sector = sector,
+                logoUrl = if (companyId > 0) "$BASE_URL/auth/tirocini/DownloadLogoAzienda.do?sog_id=$companyId" else null,
+                website = null
+            ),
+            type = type,
+            applicationStart = applicationStart,
+            applicationEnd = applicationEnd,
+            description = description,
+            requirements = requirements,
+            location = location,
+            duration = duration,
+            isSaved = doc.selectFirst("a[href*=Rimuovi]") != null
+        )
+    }
+
+    private fun parseApplications(doc: Document): List<Esse3InternshipApplication> {
+        val applications = mutableListOf<Esse3InternshipApplication>()
+
+        val table = doc.selectFirst("table.table-1")
+        if (table != null) {
+            val rows = table.select("tbody tr, tr:has(td)")
+            for (row in rows) {
+                val cells = row.select("td")
+                if (cells.size >= 3) {
+                    // Extract application ID from action links or hidden fields
+                    val applicationId = row.select("a[href*=cand_id], a[href*=candidatura_id], input[name*=cand_id]")
+                        .firstNotNullOfOrNull { element ->
+                            val href = element.attr("href").ifBlank { element.attr("value") }
+                            "(?:cand_id|candidatura_id)=(\\d+)".toRegex().find(href)?.groupValues?.get(1)?.toLongOrNull()
+                        }
+                        ?: row.selectFirst("input[type=radio], input[type=checkbox]")?.attr("value")?.toLongOrNull()
+
+                    // Extract opportunity ID from link
+                    val opportunityId = row.selectFirst("a[href*=cnvz_off_id]")?.attr("href")?.let {
+                        "cnvz_off_id=(\\d+)".toRegex().find(it)?.groupValues?.get(1)?.toLongOrNull()
+                    } ?: 0L
+
+                    // Extract notes column if present
+                    val notes = cells.getOrNull(4)?.text()?.cleanText()?.takeIf { it.isNotBlank() }
+
+                    applications.add(
+                        Esse3InternshipApplication(
+                            id = applicationId,
+                            opportunityId = opportunityId,
+                            opportunityTitle = cells[0].text().cleanText(),
+                            companyName = cells[1].text().cleanText(),
+                            status = Esse3ApplicationStatus.fromString(cells[2].text().cleanText()),
+                            applicationDate = cells.getOrNull(3)?.text()?.let { parseDateTime(it) },
+                            notes = notes
+                        )
+                    )
+                }
+            }
+        }
+
+        return applications
+    }
+
+    private fun parseInternships(doc: Document): List<Esse3Internship> {
+        val internships = mutableListOf<Esse3Internship>()
+
+        val cards = doc.select("div.record, div.box-1, tr:has(td)")
+        for (card in cards) {
+            val text = card.text()
+
+            val title = card.selectFirst("h3, h4, strong")?.text()?.cleanText()
+                ?: text.substringBefore("\n").trim().takeIf { it.isNotBlank() }
+                ?: continue
+
+            // Extract internship ID from links
+            val internshipId = card.select("a[href*=tiro_id], a[href*=stage_id]")
+                .firstNotNullOfOrNull { element ->
+                    val href = element.attr("href")
+                    "(?:tiro_id|stage_id)=(\\d+)".toRegex().find(href)?.groupValues?.get(1)?.toLongOrNull()
+                } ?: 0L
+
+            // Extract opportunity ID
+            val opportunityId = card.selectFirst("a[href*=cnvz_off_id]")?.attr("href")?.let {
+                "cnvz_off_id=(\\d+)".toRegex().find(it)?.groupValues?.get(1)?.toLongOrNull()
+            }
+
+            // Extract company info
+            val companyName = "(?:Azienda|Ente)\\s*:?\\s*(.+?)(?:\\s{2,}|Tutor|Data|$)".toRegex()
+                .find(text)?.groupValues?.get(1)?.trim() ?: ""
+            val companyLink = card.selectFirst("a[href*=sog_id]")?.attr("href")
+            val companyId = "sog_id=(\\d+)".toRegex().find(companyLink ?: "")?.groupValues?.get(1)?.toLongOrNull() ?: 0L
+
+            // Extract dates
+            val startDate = "(?:Data inizio|Inizio)\\s*:?\\s*(\\d{2}/\\d{2}/\\d{4})".toRegex()
+                .find(text)?.groupValues?.get(1)?.let { parseDate(it) }
+            val endDate = "(?:Data fine|Fine)\\s*:?\\s*(\\d{2}/\\d{2}/\\d{4})".toRegex()
+                .find(text)?.groupValues?.get(1)?.let { parseDate(it) }
+
+            // Extract tutor
+            val tutor = "Tutor\\s*:?\\s*(.+?)(?:\\s{2,}|Data|Crediti|$)".toRegex()
+                .find(text)?.groupValues?.get(1)?.trim()
+
+            // Extract credits
+            val credits = "(?:Crediti|CFU)\\s*:?\\s*(\\d+)".toRegex()
+                .find(text)?.groupValues?.get(1)?.toIntOrNull()
+
+            // Determine status
+            val status = when {
+                text.contains("completato", ignoreCase = true) -> Esse3InternshipStatus.COMPLETED
+                text.contains("sospeso", ignoreCase = true) -> Esse3InternshipStatus.SUSPENDED
+                text.contains("annullato", ignoreCase = true) -> Esse3InternshipStatus.CANCELLED
+                else -> Esse3InternshipStatus.ACTIVE
+            }
+
+            internships.add(
+                Esse3Internship(
+                    id = internshipId,
+                    opportunityId = opportunityId,
+                    title = title,
+                    company = Esse3Company(
+                        id = companyId,
+                        name = companyName,
+                        description = null,
+                        sector = null,
+                        logoUrl = if (companyId > 0) "$BASE_URL/auth/tirocini/DownloadLogoAzienda.do?sog_id=$companyId" else null,
+                        website = null
+                    ),
+                    startDate = startDate,
+                    endDate = endDate,
+                    status = status,
+                    tutor = tutor,
+                    credits = credits
+                )
+            )
+        }
+
+        return internships
+    }
+
+    private fun parseCompanies(doc: Document): List<Esse3Company> {
+        val companies = mutableListOf<Esse3Company>()
+
+        val table = doc.selectFirst("table.table-1")
+        if (table != null) {
+            val rows = table.select("tbody tr, tr:has(td)")
+            for (row in rows) {
+                val cells = row.select("td")
+                if (cells.isNotEmpty()) {
+                    val link = cells[0].selectFirst("a")
+                    val idMatch = "sog_id=(\\d+)".toRegex().find(link?.attr("href") ?: "")
+                    val id = idMatch?.groupValues?.get(1)?.toLongOrNull() ?: continue
+
+                    companies.add(
+                        Esse3Company(
+                            id = id,
+                            name = link?.text()?.cleanText() ?: "",
+                            description = null,
+                            sector = cells.getOrNull(1)?.text()?.cleanText(),
+                            logoUrl = "$BASE_URL/auth/tirocini/DownloadLogoAzienda.do?sog_id=$id",
+                            website = null,
+                            hasConvention = cells.any { it.text().contains("convenzione", ignoreCase = true) }
+                        )
+                    )
+                }
+            }
+        }
+
+        return companies
+    }
+
+    private fun parseCompanyDetail(doc: Document, companyId: Long): Esse3Company? {
+        val title = doc.pageTitle() ?: return null
+        val text = doc.text()
+
+        val description = doc.selectFirst("div.record p, div.description")?.text()?.cleanText()
+        val sector = "Settore\\s*:?\\s*(.+?)(?:\\s{2,}|$)".toRegex()
+            .find(text)?.groupValues?.get(1)?.trim()
+
+        return Esse3Company(
+            id = companyId,
+            name = title,
+            description = description,
+            sector = sector,
+            logoUrl = "$BASE_URL/auth/tirocini/DownloadLogoAzienda.do?sog_id=$companyId",
+            website = null
+        )
+    }
+
+    private fun parseSavedSearches(doc: Document): List<Esse3SavedSearch> {
+        val searches = mutableListOf<Esse3SavedSearch>()
+
+        val items = doc.select("div.saved-search, li.search-item, tr:has(td)")
+        for (item in items) {
+            val link = item.selectFirst("a[href*=search_id]")
+            val idMatch = "search_id=(\\d+)".toRegex().find(link?.attr("href") ?: "")
+            val id = idMatch?.groupValues?.get(1)?.toLongOrNull() ?: continue
+
+            val text = item.text().cleanText()
+
+            // Extract description (usually the first part)
+            val description = link?.text()?.cleanText()
+                ?: text.substringBefore(":").trim().takeIf { it.isNotBlank() }
+                ?: text
+
+            // Extract search text from criteria displayed
+            val searchText = "(?:Testo|Keyword|Ricerca)\\s*:?\\s*(.+?)(?:\\s{2,}|Settore|Tipo|$)".toRegex()
+                .find(text)?.groupValues?.get(1)?.trim()
+
+            // Extract filters from the display text
+            val filters = mutableMapOf<String, String>()
+            "Settore\\s*:?\\s*(.+?)(?:\\s{2,}|Tipo|$)".toRegex()
+                .find(text)?.groupValues?.get(1)?.trim()?.let { filters["settore"] = it }
+            "Tipo\\s*:?\\s*(.+?)(?:\\s{2,}|Sede|$)".toRegex()
+                .find(text)?.groupValues?.get(1)?.trim()?.let { filters["tipo"] = it }
+            "(?:Sede|Luogo)\\s*:?\\s*(.+?)(?:\\s{2,}|$)".toRegex()
+                .find(text)?.groupValues?.get(1)?.trim()?.let { filters["sede"] = it }
+
+            searches.add(
+                Esse3SavedSearch(
+                    id = id,
+                    description = description,
+                    searchText = searchText,
+                    filters = filters.toMap()
+                )
+            )
+        }
+
+        return searches
+    }
 }

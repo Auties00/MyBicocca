@@ -1,91 +1,29 @@
 package it.attendance100.mybicocca.data.api.esse3
 
-import de.jensklingenberg.ktorfit.Response
-import de.jensklingenberg.ktorfit.http.Field
-import de.jensklingenberg.ktorfit.http.FormUrlEncoded
-import de.jensklingenberg.ktorfit.http.GET
-import de.jensklingenberg.ktorfit.http.POST
-import de.jensklingenberg.ktorfit.http.Query
+import io.ktor.client.*
+import it.attendance100.mybicocca.data.api.esse3.Esse3AbstractApi.Companion.BASE_URL
 
 /**
- * # Esse3 Authentication API
+ * Initiates the OpenID Connect authentication flow.
  *
- * This interface defines the endpoints for handling user authentication
- * and session management within the Esse3 system.
+ * This endpoint redirects the user to the University of Milano-Bicocca's
+ * identity provider (IdP) for authentication. The IdP will present the
+ * university's login page where users can enter their credentials.
  *
- * ## Authentication Flow
- *
- * 1.  **Access Home/Login Page:** Call [getLogin] to initiate the session and
- *     redirect to the identity provider (IdP).
- * 2.  **IdP Interaction:** The user authenticates via the external IdP (Shibboleth/SAML).
- * 3.  **SAML Response:** The IdP posts a SAML response to [postShibbolethSaml].
- * 4.  **Session Establishment:** Upon successful SAML validation, the Esse3 session
- *     cookie is established.
- *
- * ## Usage Example
- *
- * ```kotlin
- * // Step 1: Access login page to start flow
- * val loginResponse = authApi.getLogin()
- *
- * // Step 2: Handle SAML POST (usually automated by web view or specialized handler)
- * val samlResponse = authApi.postShibbolethSaml(
- *     relayState = "...",
- *     samlResponse = "..."
- * )
- * ```
+ * @return A string that represents the URL of the auth provider
  */
-interface Esse3AuthApi {
+val ESSE3_LOGIN_URL = "$BASE_URL/auth/studente/HomePageStudente.do"
 
+/**
+ * API for authentication operations.
+ */
+class Esse3AuthApi(
+    client: HttpClient
+) : Esse3AbstractApi(client) {
     /**
-     * Accesses the Esse3 Home page.
-     *
-     * This endpoint is often used to check if a valid session exists or to
-     * keep the session alive.
-     *
-     * @param menuOpenedCod Optional menu code to open a specific section.
-     * @return A [Response] containing [Unit].
+     * Logs out and invalidates the session.
      */
-    @GET("auth/Home.do")
-    suspend fun getHome(@Query("menu_opened_cod") menuOpenedCod: String? = null): Response<Unit>
-
-    /**
-     * Initiates the login process.
-     *
-     * Accessing this endpoint typically triggers a redirect to the configured
-     * Identity Provider (e.g., Shibboleth) if the user is not already authenticated.
-     *
-     * @param menuOpenedCod Optional menu code to navigate to after login.
-     * @return A [Response] containing [Unit] (usually a 302 Redirect).
-     */
-    @GET("auth/Logon.do")
-    suspend fun getLogin(@Query("menu_opened_cod") menuOpenedCod: String? = null): Response<Unit>
-
-    /**
-     * Root endpoint of the Esse3 system.
-     *
-     * Can be used for connectivity checks or initial handshake.
-     *
-     * @return A [Response] containing the HTML content of the root page.
-     */
-    @GET("Root.do")
-    suspend fun getRoot(): Response<String>
-
-    /**
-     * Consumes the SAML Response from the Identity Provider.
-     *
-     * This is the assertion consumer service (ACS) endpoint for Shibboleth/SAML.
-     * It validates the signed SAML response provided by the IdP and establishes
-     * the user's session.
-     *
-     * @param relayState The state parameter preserved during the SSO flow.
-     * @param samlResponse The Base64-encoded SAML assertion XML.
-     * @return A [Response] containing [Unit]. On success, this sets the session cookie.
-     */
-    @FormUrlEncoded
-    @POST("Shibboleth.sso/SAML2/POST")
-    suspend fun postShibbolethSaml(
-        @Field("RelayState") relayState: String? = null,
-        @Field("SAMLResponse") samlResponse: String? = null
-    ): Response<Unit>
+    suspend fun logout() {
+        executeGet("/Logout.do")
+    }
 }
