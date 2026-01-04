@@ -1,19 +1,11 @@
 plugins {
     id("org.jetbrains.kotlin.jvm")
     id("com.google.devtools.ksp")
-    id("de.jensklingenberg.ktorfit")
     kotlin("plugin.serialization")
-}
-
-
-ktorfit {
-    compilerPluginVersion = "2.3.3"
 }
 
 dependencies {
     // KtorFit
-    implementation("de.jensklingenberg.ktorfit:ktorfit-lib:2.7.1")
-    implementation("de.jensklingenberg.ktorfit:ktorfit-converters-response:2.7.1")
     implementation("io.ktor:ktor-client-core:3.3.3")
     implementation("io.ktor:ktor-client-content-negotiation:3.3.3")
     implementation("io.ktor:ktor-serialization-kotlinx-json:3.3.3")
@@ -38,4 +30,7 @@ dependencies {
 
     // WebDriverManager for automatic browser driver management
     testImplementation("io.github.bonigarcia:webdrivermanager:6.3.3")
+
+    // Jsoup for HTML parsing
+    implementation("org.jsoup:jsoup:1.22.1")
 }

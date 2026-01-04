@@ -223,7 +223,7 @@ abstract class BicoccappApiTestBase {
                 }
             }
 
-            val loginUrl = BASE_URL + BICOCCAPP_AUTH_URL
+            val loginUrl = BASE_URL + BICOCCAPP_AUTH_PATH
             println("Redirect URL: $loginUrl")
             driver.get(loginUrl)
 

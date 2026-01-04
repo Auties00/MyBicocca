@@ -1,231 +1,269 @@
 package it.attendance100.mybicocca.data.api.esse3
 
-import okhttp3.ResponseBody
-import de.jensklingenberg.ktorfit.Response
-import de.jensklingenberg.ktorfit.http.Field
-import de.jensklingenberg.ktorfit.http.FieldMap
-import de.jensklingenberg.ktorfit.http.FormUrlEncoded
-import de.jensklingenberg.ktorfit.http.GET
-import de.jensklingenberg.ktorfit.http.POST
-import de.jensklingenberg.ktorfit.http.Query
+import io.ktor.client.*
+import io.ktor.client.call.*
+import it.attendance100.mybicocca.data.dto.esse3.*
+import org.jsoup.nodes.Document
 
 /**
- * # Esse3 Exams API
+ * API for exam operations.
  *
- * Handles exam management, including viewing available exam sessions (Appelli),
- * booking exams, viewing results, and checking the exam calendar.
- *
- * ## Key Features
- *
- * - **Exam Sessions:** List available exams for booking.
- * - **Booking:** Book or cancel exam reservations.
- * - **Results:** View grades and outcomes of taken exams.
- * - **Calendar:** View exam schedule.
- * - **Slips (Statini):** Generate exam slips for attendance.
- *
- * ## Usage Example
- *
- * ```kotlin
- * // List available exam sessions
- * val sessions = examsApi.getExamSessions()
- *
- * // Book an exam shift
- * examsApi.submitShiftBooking(
- *     shiftId = "12345",
- *     calType = "WRITTEN"
- * )
- * ```
+ * Provides access to:
+ * - Available exam sessions
+ * - Exam reservations
+ * - Exam results
+ * - Reservation printing
  */
-interface Esse3ExamsApi {
+class Esse3ExamsApi(
+    client: HttpClient
+) : Esse3AbstractApi(client) {
 
     /**
-     * Retrieves the list of available Exam Sessions (Appelli).
+     * Gets available exam sessions for the student.
      *
-     * Displays exams that the student can currently book.
-     *
-     * @param menuOpenedCod Optional menu context.
-     * @return A [Response] containing the HTML list.
+     * @return List of available exam sessions
      */
-    @GET("auth/studente/Appelli/Appelli.do")
-    suspend fun getExamSessions(@Query("menu_opened_cod") menuOpenedCod: String? = null): Response<String>
+    suspend fun getAvailableExamSessions(): List<Esse3ExamSession> {
+        val doc = executeGet(
+            "/auth/studente/Appelli/Appelli.do",
+            mapOf("menu_opened_cod" to "menu_link-navbox_studenti_Esami")
+        )
+        return parseExamSessions(doc)
+    }
 
     /**
-     * Retrieves the list of currently booked exams (Bacheca Prenotazioni).
+     * Gets the student's exam reservations.
      *
-     * @param menuOpenedCod Optional menu context.
-     * @return A [Response] containing the HTML list.
+     * @return List of exam reservations
      */
-    @GET("auth/studente/Appelli/BachecaPrenotazioni.do")
-    suspend fun getBookedExams(@Query("menu_opened_cod") menuOpenedCod: String? = null): Response<String>
+    suspend fun getExamReservations(): List<Esse3ExamReservation> {
+        val doc =  executeGet(
+            "/auth/studente/Appelli/BachecaPrenotazioni.do",
+            mapOf("menu_opened_cod" to "menu_link-navbox_studenti_Esami")
+        )
+        return parseExamReservations(doc)
+    }
 
     /**
-     * Retrieves the board of exam results (Bacheca Esiti).
+     * Gets exam results.
      *
-     * Shows grades for completed exams waiting for acceptance or already recorded.
-     *
-     * @param menuOpenedCod Optional menu context.
-     * @return A [Response] containing the HTML board.
+     * @return List of exam results
      */
-    @GET("auth/studente/Appelli/BachecaEsiti.do")
-    suspend fun getExamResults(@Query("menu_opened_cod") menuOpenedCod: String? = null): Response<String>
+    suspend fun getExamResults(): List<Esse3ExamResult> {
+        val doc = executeGet(
+            "/auth/studente/Appelli/BachecaEsiti.do",
+            mapOf("menu_opened_cod" to "menu_link-navbox_studenti_Esami")
+        )
+        return parseExamResults(doc)
+    }
 
     /**
-     * Generates the Exam Slip (Statino) download.
+     * Prints an exam reservation as PDF.
      *
-     * Triggers the generation of the attendance slip.
-     *
-     * @param examCourseId ID of the exam course.
-     * @param appId Exam session application ID.
-     * @param activityId Didactic activity ID.
-     * @param freqYear Frequency academic year.
-     * @param preCourseId Pre-course ID.
-     * @param preActivityId Pre-activity ID.
-     * @param offYear Offer academic year.
-     * @param adsceId Student career activity ID.
-     * @param startDate Exam start date.
-     * @return A [Response] containing [Unit].
+     * @param reservation The reservation to print
+     * @return The PDF bytes
      */
-    @GET("auth/studente/Appelli/StampaStatino.do")
-    suspend fun printExamSlip(
-        @Query("CDS_ESA_ID") examCourseId: String? = null,
-        @Query("APP_ID") appId: String? = null,
-        @Query("ATT_DID_ESA_ID") activityId: String? = null,
-        @Query("AA_FREQ_ID") freqYear: String? = null,
-        @Query("CDS_PRE_ID") preCourseId: String? = null,
-        @Query("AD_PRE_ID") preActivityId: String? = null,
-        @Query("AA_OFF_PRE_ID") offYear: String? = null,
-        @Query("ADSCE_ID") adsceId: String? = null,
-        @Query("DATA_INIZIO_APP") startDate: String? = null
-    ): Response<Unit>
+    suspend fun printReservation(
+        reservation: Esse3ExamReservation
+    ): ByteArray {
+        executeGet(
+            "/auth/studente/Appelli/BachecaPrenotazioni.do",
+            mapOf("menu_opened_cod" to "menu_link-navbox_studenti_Esami")
+        )
+        val response = executeGetRaw(
+            "/auth/studente/Appelli/StampaStatino.do",
+            reservation.toPrintParams()
+        )
+        return response.body<ByteArray>()
+    }
 
-    /**
-     * Downloads the Exam Slip (Statino) as a PDF.
-     *
-     * @param examCourseId ID of the exam course.
-     * @param appId Exam session application ID.
-     * @param activityId Didactic activity ID.
-     * @param freqYear Frequency academic year.
-     * @param preCourseId Pre-course ID.
-     * @param preActivityId Pre-activity ID.
-     * @param offYear Offer academic year.
-     * @param adsceId Student career activity ID.
-     * @param startDate Exam start date.
-     * @return A [Response] containing the PDF [okhttp3.ResponseBody].
-     */
-    @GET("auth/studente/Appelli/StampaStatinoPDF.do")
-    suspend fun printExamSlipPdf(
-        @Query("CDS_ESA_ID") examCourseId: String? = null,
-        @Query("APP_ID") appId: String? = null,
-        @Query("ATT_DID_ESA_ID") activityId: String? = null,
-        @Query("AA_FREQ_ID") freqYear: String? = null,
-        @Query("CDS_PRE_ID") preCourseId: String? = null,
-        @Query("AD_PRE_ID") preActivityId: String? = null,
-        @Query("AA_OFF_PRE_ID") offYear: String? = null,
-        @Query("ADSCE_ID") adsceId: String? = null,
-        @Query("DATA_INIZIO_APP") startDate: String? = null
-    ): Response<ResponseBody>
+    private fun parseExamSessions(doc: Document): List<Esse3ExamSession> {
+        val sessions = mutableListOf<Esse3ExamSession>()
 
-    /**
-     * Retrieves the Calendar Appointments list for booking.
-     *
-     * @return A [Response] containing the HTML list.
-     */
-    @GET("auth/Calendar/CAPrenotazCalendarioAppElenco.do")
-    suspend fun getCalendarAppointments(): Response<String>
+        // Select all exam reservation boxes
+        val examBoxes = doc.select("div#boxPrenotazione, div.breaks3.record")
 
-    /**
-     * Starts the booking process for a specific calendar shift.
-     *
-     * @param menuOpenedCod Optional menu context.
-     * @param shiftId The ID of the shift (turno) to book.
-     * @param calType Calendar type code.
-     * @param subContType Sub-context type.
-     * @param formId Form identifier.
-     * @param btnSave Button action to save.
-     * @param gestType Management type code.
-     * @return A [Response] containing [Unit].
-     */
-    @GET("auth/Calendar/CAPrenotazCalendarioAppStartFakeProcessAction.do")
-    suspend fun startBookingProcess(
-        @Query("menu_opened_cod") menuOpenedCod: String? = null,
-        @Query("sel_turno") shiftId: String? = null,
-        @Query("TIPO_CAL_COD") calType: String? = null,
-        @Query("TIPO_SUBCONT_COD") subContType: String? = null,
-        @Query("form_id_formTurni") formId: String? = null,
-        @Query("btnSalva") btnSave: String? = null,
-        @Query("TIPO_GEST_COD_CAL") gestType: String? = null
-    ): Response<Unit>
+        for (box in examBoxes) {
+            // Extract course name and code from h2
+            val headerText = box.selectFirst("h2.record-h2")?.text()?.cleanText() ?: continue
+            val codeMatch = "\\[([A-Z0-9]+)\\]".toRegex().find(headerText)
+            val code = codeMatch?.groupValues?.get(1) ?: ""
+            val name = headerText.replace("\\[.*?\\]".toRegex(), "").trim()
 
-    /**
-     * Retrieves the Shift Booking form.
-     *
-     * @return A [Response] containing the HTML form.
-     */
-    @GET("auth/Calendar/PrenotazioneTurnoForm.do")
-    suspend fun getShiftBookingForm(): Response<String>
+            // Parse the definition list
+            val dl = box.selectFirst("dl.record-riga") ?: continue
+            val dtElements = dl.select("dt")
+            val ddElements = dl.select("dd")
 
-    /**
-     * Submits a booking for an exam shift.
-     *
-     * @param shiftId The ID of the shift.
-     * @param calType Calendar type code.
-     * @param gestType Management type code.
-     * @param subContType Sub-context type.
-     * @param formId Form identifier, defaults to "formTurni".
-     * @param btnSave Save button action.
-     * @param dynamicFields Additional dynamic fields (e.g., `sel_turno_nota_{id}`).
-     * @return A [Response] containing the HTML response.
-     */
-    @FormUrlEncoded
-    @POST("auth/Calendar/PrenotazioneTurnoFormSubmit.do")
-    suspend fun submitShiftBooking(
-        @Field("sel_turno") shiftId: String? = null,
-        @Field("TIPO_CAL_COD") calType: String? = null,
-        @Field("TIPO_GEST_COD_CAL") gestType: String? = null,
-        @Field("TIPO_SUBCONT_COD") subContType: String? = null,
-        @Field("form_id_formTurni") formId: String? = "formTurni",
-        @Field("btnSalva") btnSave: String? = null,
-        @FieldMap dynamicFields: Map<String, String> = emptyMap()
-    ): Response<String>
+            // Build a map of label -> value
+            val dataMap = mutableMapOf<String, String>()
+            for (i in dtElements.indices) {
+                val label = dtElements.getOrNull(i)?.text()?.cleanText()?.lowercase() ?: continue
+                val value = ddElements.getOrNull(i)?.text()?.cleanText() ?: ""
+                dataMap[label] = value
+            }
 
-    /**
-     * Checks if an appointment can be cancelled.
-     *
-     * @param subContType Sub-context type.
-     * @param gestType Management type code.
-     * @param calType Calendar type code.
-     * @param appointmentId The ID of the booked appointment.
-     * @param description Description of the appointment.
-     * @return A [Response] containing the HTML confirmation or error.
-     */
-    @GET("auth/Calendar/CACancellaAppuntamentoSubmit.do")
-    suspend fun checkCancelAppointment(
-        @Query("TIPO_SUBCONT_COD") subContType: String? = null,
-        @Query("TIPO_GEST_COD_CAL") gestType: String? = null,
-        @Query("TIPO_CAL_COD") calType: String? = null,
-        @Query("CAL_APP_ISCRITTI_ID") appointmentId: String? = null,
-        @Query("APP_DES") description: String? = null
-    ): Response<String>
+            // Extract date/time from the first dt (has special class)
+            val dateTimeText = box.selectFirst("dt.app-box_dati_data_esame")?.text()?.cleanText() ?: ""
+            val date = parseDateTime(dateTimeText)
 
-    /**
-     * Submits the cancellation of an appointment.
-     *
-     * @param subContType Sub-context type.
-     * @param gestType Management type code.
-     * @param calType Calendar type code.
-     * @param appointmentId The ID of the booked appointment.
-     * @param formId Form identifier, defaults to "form1".
-     * @param btnOk Confirmation button.
-     * @return A [Response] containing [Unit].
-     */
-    @FormUrlEncoded
-    @POST("auth/Calendar/CACancellaAppuntamentoSubmit.do")
-    suspend fun submitCancelAppointment(
-        @Field("TIPO_SUBCONT_COD") subContType: String? = null,
-        @Field("TIPO_GEST_COD_CAL") gestType: String? = null,
-        @Field("TIPO_CAL_COD") calType: String? = null,
-        @Field("CAL_APP_ISCRITTI_ID") appointmentId: String? = null,
-        @Field("form_id_form1") formId: String? = "form1",
-        @Field("btnOk") btnOk: String? = null
-    ): Response<Unit>
+            // Extract other fields from the map
+            val typeText = dataMap["tipo prova"] ?: ""
+            val type = Esse3ExamType.fromString(typeText)
+
+            val building = dataMap["edificio"]?.takeIf { it.isNotBlank() }
+            val room = dataMap["aula"]?.takeIf { it.isNotBlank() }
+            val location = listOfNotNull(building, room).joinToString(" - ").takeIf { it.isNotBlank() }
+
+            val professor = dataMap["docenti"]?.takeIf { it.isNotBlank() }
+
+            // Find the toolbar that follows this box
+            val toolbar = box.nextElementSibling()?.takeIf {
+                it.hasClass("tool-bar") || it.id() == "toolbarAzioni"
+            } ?: box.parent()?.selectFirst("div#toolbarAzioni")
+
+            // Check reservation status
+            val cannotCancel = dataMap["cancella prenotazione"]?.contains("Impossibile", ignoreCase = true) == true
+
+            // Extract exam ID from cancel or print link
+            val idMatch = toolbar?.selectFirst("a[href*=APP_ID]")
+                ?.attr("href")
+                ?.let { "APP_ID=(\\d+)".toRegex().find(it) }
+            val id = idMatch?.groupValues?.get(1)?.toLongOrNull() ?: 0L
+
+            // Extract registration number
+            val registrationInfo = dataMap["numero iscrizione"] // e.g., "12 su 49"
+
+            sessions.add(
+                Esse3ExamSession(
+                    id = id,
+                    courseCode = code,
+                    courseName = name,
+                    date = date,
+                    type = type,
+                    location = location,
+                    professor = professor,
+                    closed = cannotCancel,
+                    notes = registrationInfo
+                )
+            )
+        }
+
+        return sessions
+    }
+
+    private fun parseExamReservations(doc: Document): List<Esse3ExamReservation> {
+        val reservations = mutableListOf<Esse3ExamReservation>()
+
+        // Look for reservation cards
+        val cards = doc.select("div.record, div.breaks3.record")
+        for (card in cards) {
+            val text = card.text()
+
+            // Extract course info
+            val courseMatch = "([A-Z0-9]+)\\s*-?\\s*(.+?)(?:\\d{2}/\\d{2}/\\d{4}|$)".toRegex()
+                .find(text)
+            val courseCode = courseMatch?.groupValues?.get(1)?.trim() ?: ""
+            val courseName = courseMatch?.groupValues?.get(2)?.trim() ?: text.substringBefore("\\d".toRegex().pattern)
+
+            // Extract date
+            val dateMatch = "(\\d{2}/\\d{2}/\\d{4}\\s*\\d{2}:\\d{2})".toRegex().find(text)
+            val date = dateMatch?.groupValues?.get(1)?.let { parseDateTime(it) }
+
+            // Extract type
+            val typeMatch = "(Prova parziale|Scritto|Orale|Laboratorio)".toRegex(RegexOption.IGNORE_CASE)
+                .find(text)
+            val type = typeMatch?.value?.let { Esse3ExamType.fromString(it) } ?: Esse3ExamType.OTHER
+
+            // Extract IDs from print link
+            val printLink = card.selectFirst("a[href*=StampaStatino]")?.attr("href") ?: ""
+            val appId = "APP_ID=(\\d+)".toRegex().find(printLink)?.groupValues?.get(1)?.toLongOrNull() ?: 0L
+            val adsceId = "ADSCE_ID=(\\d+)".toRegex().find(printLink)?.groupValues?.get(1)?.toLongOrNull() ?: 0L
+            val attDidId = "ATT_DID_ESA_ID=(\\d+)".toRegex().find(printLink)?.groupValues?.get(1)?.toLongOrNull() ?: 0L
+            val cdsId = "CDS_ESA_ID=(\\d+)".toRegex().find(printLink)?.groupValues?.get(1)?.toLongOrNull() ?: 0L
+            val aaFreqId = "AA_FREQ_ID=(\\d+)".toRegex().find(printLink)?.groupValues?.get(1)?.toLongOrNull() ?: 0L
+
+            // Extract location
+            val location = "(?:Aula|Luogo|Location)\\s*:?\\s*(.+?)(?:\\s{2,}|Docente|Tipo|$)".toRegex()
+                .find(text)?.groupValues?.get(1)?.trim()
+                ?: card.selectFirst("span.location, div.location")?.text()?.cleanText()
+
+            // Extract status
+            val status = when {
+                text.contains("Confermata", ignoreCase = true) -> "Confermata"
+                text.contains("In attesa", ignoreCase = true) -> "In attesa"
+                text.contains("Annullata", ignoreCase = true) -> "Annullata"
+                text.contains("Prenotata", ignoreCase = true) -> "Prenotata"
+                else -> card.selectFirst("span.status, div.status")?.text()?.cleanText()
+            }
+
+            if (appId > 0 || courseCode.isNotBlank()) {
+                reservations.add(
+                    Esse3ExamReservation(
+                        appId = appId,
+                        adsceId = adsceId,
+                        attDidEsaId = attDidId,
+                        cdsEsaId = cdsId,
+                        aaFreqId = aaFreqId,
+                        date = date,
+                        courseCode = courseCode,
+                        courseName = courseName,
+                        type = type,
+                        location = location,
+                        status = status
+                    )
+                )
+            }
+        }
+
+        return reservations
+    }
+
+    private fun parseExamResults(doc: Document): List<Esse3ExamResult> {
+        val results = mutableListOf<Esse3ExamResult>()
+
+        val table = doc.selectFirst("table.table-1")
+        if (table != null) {
+            val rows = table.select("tbody tr, tr:has(td)")
+            for (row in rows) {
+                val cells = row.select("td")
+                if (cells.size >= 3) {
+                    val courseText = cells[0].text().cleanText()
+                    val codeMatch = "\\[([A-Z0-9]+)\\]".toRegex().find(courseText)
+                    val code = codeMatch?.groupValues?.get(1) ?: courseText.substringBefore(" ")
+                    val name = courseText.replace("\\[.*?\\]".toRegex(), "").trim()
+
+                    val dateText = cells.getOrNull(1)?.text()?.cleanText() ?: ""
+                    val date = parseDate(dateText)
+
+                    val gradeText = cells.getOrNull(2)?.text()?.cleanText() ?: ""
+                    val grade = Esse3Grade.parse(gradeText)
+
+                    val statusText = cells.getOrNull(3)?.text()?.cleanText() ?: ""
+                    val status = Esse3ResultStatus.fromString(statusText)
+
+                    val professor = cells.getOrNull(4)?.text()?.cleanText()?.takeIf { it.isNotBlank() }
+
+                    // Extract notes from dedicated column or title attribute
+                    val notes = cells.getOrNull(5)?.text()?.cleanText()?.takeIf { it.isNotBlank() }
+                        ?: row.attr("title")?.takeIf { it.isNotBlank() }
+                        ?: row.selectFirst("td.note, span.note")?.text()?.cleanText()
+
+                    results.add(
+                        Esse3ExamResult(
+                            courseCode = code,
+                            courseName = name,
+                            date = date,
+                            grade = grade,
+                            status = status,
+                            professor = professor,
+                            notes = notes
+                        )
+                    )
+                }
+            }
+        }
+
+        return results
+    }
 }

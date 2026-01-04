@@ -1,299 +1,322 @@
 package it.attendance100.mybicocca.data.api.esse3
 
-import okhttp3.ResponseBody
-import de.jensklingenberg.ktorfit.Response
-import de.jensklingenberg.ktorfit.http.Field
-import de.jensklingenberg.ktorfit.http.FormUrlEncoded
-import de.jensklingenberg.ktorfit.http.GET
-import de.jensklingenberg.ktorfit.http.Multipart
-import de.jensklingenberg.ktorfit.http.POST
-import de.jensklingenberg.ktorfit.http.Part
-import de.jensklingenberg.ktorfit.http.Query
+import io.ktor.client.*
+import io.ktor.client.call.*
+import io.ktor.http.Parameters
+import it.attendance100.mybicocca.data.dto.esse3.*
+import org.jsoup.nodes.Document
 
 /**
- * # Esse3 Career API
+ * API for academic career operations.
  *
- * Manages the student's academic career, including enrollment, study plans,
- * degree progress, certificates, and fee payments.
- *
- * ## Key Features
- *
- * - **Booklet (Libretto):** View grades and passed exams.
- * - **Enrollment:** Manage annual enrollment and matriculation.
- * - **Study Plans:** Create and modify study plans.
- * - **Fees (Tasse):** View invoices and payment status (PagoPA).
- * - **Certificates:** Request and download career certificates.
- * - **Degrees:** Manage graduation application and title registry.
- *
- * ## Usage Example
- *
- * ```kotlin
- * // Get digital booklet
- * val booklet = careerApi.getBooklet()
- *
- * // List fee invoices
- * val invoices = careerApi.getInvoices()
- * ```
+ * Provides access to:
+ * - Academic record (libretto)
+ * - Study plan
+ * - Career acts
+ * - Course evaluation questionnaires
  */
-interface Esse3CareerApi {
+class Esse3CareerApi(
+    client: HttpClient
+) : Esse3AbstractApi(client) {
 
     /**
-     * Accesses the student's digital booklet (Libretto).
+     * Gets the academic record (libretto) with all courses and grades.
      *
-     * Displays a list of all educational activities, grades, and credits.
-     *
-     * @param menuOpenedCod Optional menu context.
-     * @return A [Response] containing the HTML booklet page.
+     * @return The academic record
      */
-    @GET("auth/studente/Libretto/LibrettoHome.do")
-    suspend fun getBooklet(@Query("menu_opened_cod") menuOpenedCod: String? = null): Response<String>
+    suspend fun getAcademicRecord(): Esse3AcademicRecord {
+        val doc = executeGet(
+            "/auth/studente/Libretto/LibrettoHome.do",
+            mapOf("menu_opened_cod" to "menu_link-navbox_studenti_Carriera")
+        )
+        return parseAcademicRecord(doc)
+    }
 
     /**
-     * Accesses the Career Certificates page.
+     * Gets the study plan.
      *
-     * Allows the student to request self-certifications or official certificates.
-     *
-     * @param menuOpenedCod Optional menu context.
-     * @return A [Response] containing the HTML page.
+     * @return The study plan or null if not available
      */
-    @GET("auth/studente/Carriera/AttiCarriera.do")
-    suspend fun getCareerCertificates(@Query("menu_opened_cod") menuOpenedCod: String? = null): Response<String>
+    suspend fun getStudyPlan(): Esse3StudyPlan? {
+        val doc = executeGet(
+            "/auth/studente/Piani/PianiHome.do",
+            mapOf("menu_opened_cod" to "menu_link-navbox_studenti_Carriera")
+        )
+        return parseStudyPlan(doc)
+    }
 
     /**
-     * Submits a request for a career certificate.
+     * Prints the study plan as PDF.
      *
-     * @param year Academic year.
-     * @param btnSubmit Button action.
-     * @param includeAttachment Flag to include attachments.
-     * @param status Status filter.
-     * @param type Certificate type.
-     * @param segment Career segment.
-     * @return A [Response] containing the HTML result.
+     * @param planId The plan ID
+     * @return The PDF bytes
      */
-    @FormUrlEncoded
-    @POST("auth/studente/Carriera/AttiCarriera.do")
-    suspend fun submitCareerCertificateRequest(
-        @Field("anno") year: String? = null,
-        @Field("btnSubmit") btnSubmit: String? = null,
-        @Field("includiAllegato") includeAttachment: String? = null,
-        @Field("stato") status: String? = null,
-        @Field("tipo") type: String? = null,
-        @Field("tratto") segment: String? = null
-    ): Response<String>
+    suspend fun printStudyPlan(planId: Long): ByteArray {
+        val response = executePostRaw(
+            "/auth/studente/Piani/PianiStampaPiano.do",
+            Parameters.build {
+                append("btnSubmit", "")
+            },
+            mapOf("PIANO_ID" to planId.toString())
+        )
+        return response.call.body()
+    }
 
     /**
-     * Retrieves the list of annual enrollments.
+     * Gets course evaluation questionnaires that need to be filled.
      *
-     * Shows history of enrollments for each academic year.
-     *
-     * @param menuOpenedCod Optional menu context.
-     * @return A [Response] containing the HTML list.
+     * @return List of courses with pending questionnaires
      */
-    @GET("auth/studente/ListaIscrizioni.do")
-    suspend fun getEnrollments(@Query("menu_opened_cod") menuOpenedCod: String? = null): Response<String>
+    suspend fun getCourseEvaluations(): List<Esse3CourseEvaluation> {
+        val doc = executeGet(
+            "/auth/studente/QuestAdLibrettoValDid.do",
+            mapOf("menu_opened_cod" to "menu_link-navbox_studenti_Carriera")
+        )
+        return parseCourseEvaluations(doc)
+    }
 
-    /**
-     * Initiates a new matriculation process.
-     *
-     * @param menuOpenedCod Optional menu context.
-     * @return A [Response] containing the HTML page.
-     */
-    @GET("auth/Enrollment/EImmatricolazioneNewAction.do")
-    suspend fun startNewMatriculation(@Query("menu_opened_cod") menuOpenedCod: String? = null): Response<String>
+    private fun parseAcademicRecord(doc: Document): Esse3AcademicRecord {
+        val courses = mutableListOf<Esse3CourseEntry>()
 
-    /**
-     * Retrieves the list of deadline extension requests.
-     *
-     * @param menuOpenedCod Optional menu context.
-     * @return A [Response] containing the HTML list.
-     */
-    @GET("auth/studente/AdministrativeFunctions/DomProrogaElencoDomandeAction.do")
-    suspend fun getExtensionRequests(@Query("menu_opened_cod") menuOpenedCod: String? = null): Response<String>
+        // Find the main courses table
+        val table = doc.selectFirst("table.breaks3.table-1") ?: doc.selectFirst("table.table-1")
 
-    /**
-     * Accesses the Study Plans home page.
-     *
-     * Allows viewing and modifying the student's study plan.
-     *
-     * @param menuOpenedCod Optional menu context.
-     * @return A [Response] containing the HTML page.
-     */
-    @GET("auth/studente/Piani/PianiHome.do")
-    suspend fun getStudyPlans(@Query("menu_opened_cod") menuOpenedCod: String? = null): Response<String>
+        if (table != null) {
+            val rows = table.select("tbody tr, tr:has(td)")
+            for (row in rows) {
+                val cells = row.select("td")
+                if (cells.size >= 5) {
+                    val courseEntry = parseCourseRow(cells)
+                    if (courseEntry != null) {
+                        courses.add(courseEntry)
+                    }
+                }
+            }
+        }
 
-    /**
-     * Generates a printable version of the study plan.
-     *
-     * @param planId The ID of the study plan.
-     * @param btnSubmit Button action.
-     * @return A [Response] containing the PDF/document [okhttp3.ResponseBody].
-     */
-    @FormUrlEncoded
-    @POST("auth/studente/Piani/PianiStampaPiano.do")
-    suspend fun printStudyPlan(
-        @Query("PIANO_ID") planId: String,
-        @Field("btnSubmit") btnSubmit: String? = null
-    ): Response<ResponseBody>
+        // Parse statistics
+        val statistics = parseRecordStatistics(doc)
 
-    /**
-     * Retrieves the list of invoices (Tasse).
-     *
-     * Displays paid and pending fees.
-     *
-     * @param menuOpenedCod Optional menu context.
-     * @return A [Response] containing the HTML list.
-     */
-    @GET("auth/studente/Tasse/ListaFatture.do")
-    suspend fun getInvoices(@Query("menu_opened_cod") menuOpenedCod: String? = null): Response<String>
+        return Esse3AcademicRecord(
+            courses = courses,
+            statistics = statistics
+        )
+    }
 
-    /**
-     * Triggers a payment check or update.
-     *
-     * @param formId Form identifier, defaults to "formCtrlPagamenti".
-     * @param checkPayments Action parameter to check payments.
-     * @return A [Response] containing the updated HTML page.
-     */
-    @FormUrlEncoded
-    @POST("auth/studente/Tasse/ListaFatture.do")
-    suspend fun checkPayments(
-        @Field("form_id_formCtrlPagamenti") formId: String? = "formCtrlPagamenti",
-        @Field("bCtrlPagamenti") checkPayments: String? = null
-    ): Response<String>
+    private fun parseCourseRow(cells: org.jsoup.select.Elements): Esse3CourseEntry? {
+        if (cells.isEmpty()) return null
 
-    /**
-     * Retrieves details for a specific invoice.
-     *
-     * @param invoiceId The ID of the invoice (fattura).
-     * @return A [Response] containing the HTML detail page.
-     */
-    @GET("auth/studente/Tasse/FatturaDettaglio.do")
-    suspend fun getInvoiceDetail(@Query("fatt_id") invoiceId: String): Response<String>
+        // Column order: Attività Didattiche, Anno, Peso in crediti, Stato, AA Freq., Voto - Data Esame, Ric., Prove, Appelli
+        val activityCell = cells[0]
+        val activityText = activityCell.text().cleanText()
 
-    /**
-     * Downloads the PagoPA payment receipt (Quietanza).
-     *
-     * @param invoiceId The invoice ID.
-     * @param rptId The payment report ID.
-     * @return A [Response] containing the receipt PDF.
-     */
-    @GET("auth/studente/Tasse/StampaQuietanzaPagoPA.do")
-    suspend fun printPagoPaReceipt(
-        @Query("fatt_id") invoiceId: String,
-        @Query("rpt_id") rptId: String
-    ): Response<ResponseBody>
+        // Parse course code and name
+        val codeNameMatch = "^([A-Z0-9]+)\\s*-\\s*(.+)$".toRegex().find(activityText)
+        val code = codeNameMatch?.groupValues?.get(1) ?: activityText.substringBefore(" - ")
+        val name = codeNameMatch?.groupValues?.get(2) ?: activityText.substringAfter(" - ")
 
-    /**
-     * Lists internal transfer requests (Passaggi di corso).
-     *
-     * @param menuOpenedCod Optional menu context.
-     * @return A [Response] containing [Unit].
-     */
-    @GET("auth/studente/Carriera/DomPassLista.do")
-    suspend fun getInternalTransferRequests(@Query("menu_opened_cod") menuOpenedCod: String? = null): Response<Unit>
+        val year = cells.getOrNull(1)?.text()?.trim()?.toIntOrNull() ?: 0
+        val credits = cells.getOrNull(2)?.text()?.trim()?.toIntOrNull() ?: 0
+        val statusText = cells.getOrNull(3)?.text()?.cleanText() ?: ""
+        val academicYear = cells.getOrNull(4)?.text()?.cleanText()
 
-    /**
-     * Retrieves the action page for transfer requests.
-     *
-     * @return A [Response] containing the HTML page.
-     */
-    @GET("auth/Enrollment/EDomPassElencoAction.do")
-    suspend fun getTransferRequestsAction(): Response<String>
+        // Parse grade and exam date (format: "29 - 28/06/2024" or "IDO - 17/10/2024")
+        val gradeCell = cells.getOrNull(5)?.text()?.cleanText() ?: ""
+        val (grade, examDate) = parseGradeAndDate(gradeCell)
 
-    /**
-     * Lists external transfer requests (Trasferimenti in uscita).
-     *
-     * @param menuOpenedCod Optional menu context.
-     * @return A [Response] containing the HTML list.
-     */
-    @GET("auth/studente/Carriera/DomTrasfLista.do")
-    suspend fun getExternalTransferRequests(@Query("menu_opened_cod") menuOpenedCod: String? = null): Response<String>
+        val isRecognized = cells.getOrNull(6)?.text()?.isNotBlank() == true
+        val attempts = cells.getOrNull(7)?.text()?.trim()?.toIntOrNull() ?: 0
+        val hasAvailableExams = cells.getOrNull(8)?.selectFirst("a") != null
 
-    /**
-     * Starts the process for managing academic titles/degrees.
-     *
-     * @param menuOpenedCod Optional menu context.
-     * @return A [Response] containing [Unit].
-     */
-    @GET("auth/Degrees/DGAnagaficaTitoliStartProcesso.do")
-    suspend fun startTitleRegistryProcess(@Query("menu_opened_cod") menuOpenedCod: String? = null): Response<Unit>
+        // Determine status
+        val status = when {
+            grade != null -> Esse3CourseStatus.PASSED
+            statusText.isNotBlank() -> Esse3CourseStatus.fromString(statusText)
+            else -> Esse3CourseStatus.PLANNED
+        }
 
-    /**
-     * Retrieves the form for managing academic titles.
-     *
-     * @return A [Response] containing the HTML form.
-     */
-    @GET("auth/Degrees/DGAnagraficaTitoliForm.do")
-    suspend fun getTitleRegistryForm(): Response<String>
+        return Esse3CourseEntry(
+            code = code,
+            name = name,
+            year = year,
+            credits = credits,
+            status = status,
+            academicYear = academicYear,
+            grade = grade,
+            examDate = examDate,
+            isRecognized = isRecognized,
+            attempts = attempts,
+            hasAvailableExams = hasAvailableExams
+        )
+    }
 
-    /**
-     * Submits data for an Italian university title.
-     *
-     * @param year Year of graduation.
-     * @param description Course description.
-     * @param path Study path/curriculum.
-     * @param code Title code.
-     * @param btnSubmit Button action.
-     * @param formId Form identifier, defaults to "formDatiTit".
-     * @return A [Response] containing [Unit].
-     */
-    @FormUrlEncoded
-    @POST("auth/Degrees/DatiTitoloUnvSubmit.do")
-    suspend fun submitUniversityTitleData(
-        @Field("/WS/DataSet[@LocalEntityName='TIT_IT_WEB']/Row[@Num='1']/aa_conseg_titolo") year: String? = null,
-        @Field("/WS/DataSet[@LocalEntityName='TIT_IT_WEB']/Row[@Num='1']/des_cds") description: String? = null,
-        @Field("/WS/DataSet[@LocalEntityName='TIT_IT_WEB']/Row[@Num='1']/percorso_di_studio") path: String? = null,
-        @Field("/WS/DataSet[@LocalEntityName='TIT_IT_WEB']/Row[@Num='1']/titit_cod") code: String? = null,
-        @Field("btnSubmit") btnSubmit: String? = null,
-        @Field("form_id_formDatiTit") formId: String? = "formDatiTit"
-    ): Response<Unit>
+    private fun parseGradeAndDate(text: String): Pair<Esse3Grade?, java.time.LocalDate?> {
+        if (text.isBlank()) return null to null
 
-    /**
-     * Submits data for a foreign university title.
-     *
-     * @param foreignUniversityId Foreign university ID.
-     * @param foreignCourse Name of the foreign course.
-     * @param date Date of graduation.
-     * @param durationYears Duration in years.
-     * @param nationId Nation ID.
-     * @param typeCode Title type code.
-     * @param grade Grade/Mark.
-     * @param gradeAlpha Alphanumeric grade.
-     * @param refresh Refresh parameter.
-     * @param proceed Action parameter.
-     * @param formId Form identifier, defaults to "formDatiTitolo".
-     * @return A [Response] containing the HTML response.
-     */
-    @FormUrlEncoded
-    @POST("auth/Degrees/DatiTitoloUnvStraSubmit.do")
-    suspend fun submitForeignUniversityTitleData(
-        @Field("/WS/DataSet[@LocalEntityName='TIT_STRA_WEB']/Row[@Num='1']/ateneo_straniero_id") foreignUniversityId: String? = null,
-        @Field("/WS/DataSet[@LocalEntityName='TIT_STRA_WEB']/Row[@Num='1']/cds_straniero") foreignCourse: String? = null,
-        @Field("/WS/DataSet[@LocalEntityName='TIT_STRA_WEB']/Row[@Num='1']/data_conseg_titolo") date: String? = null,
-        @Field("/WS/DataSet[@LocalEntityName='TIT_STRA_WEB']/Row[@Num='1']/durata_anni") durationYears: String? = null,
-        @Field("/WS/DataSet[@LocalEntityName='TIT_STRA_WEB']/Row[@Num='1']/nazione_id") nationId: String? = null,
-        @Field("/WS/DataSet[@LocalEntityName='TIT_STRA_WEB']/Row[@Num='1']/tipo_titst_cod") typeCode: String? = null,
-        @Field("/WS/DataSet[@LocalEntityName='TIT_STRA_WEB']/Row[@Num='1']/voto") grade: String? = null,
-        @Field("/WS/DataSet[@LocalEntityName='TIT_STRA_WEB']/Row[@Num='1']/voto_alfanumerico") gradeAlpha: String? = null,
-        @Field("_fw_refresh-form.x") refresh: String? = null,
-        @Field("btnProcedi") proceed: String? = null,
-        @Field("form_id_formDatiTitolo") formId: String? = "formDatiTitolo"
-    ): Response<String>
+        // Split by " - " or similar separator
+        val parts = text.split(Regex("\\s*[-–]\\s*"))
+        if (parts.isEmpty()) return null to null
 
-    /**
-     * Retrieves the list of available certificates.
-     *
-     * @param menuOpenedCod Optional menu context.
-     * @return A [Response] containing the HTML list.
-     */
-    @GET("auth/studente/Certificati/ListaCertificati.do")
-    suspend fun getCertificatesList(@Query("menu_opened_cod") menuOpenedCod: String? = null): Response<String>
+        val gradeText = parts[0].trim()
+        val dateText = parts.getOrNull(1)?.trim()
 
-    /**
-     * Accesses the page for requesting duplicate documents.
-     *
-     * @param menuOpenedCod Optional menu context.
-     * @return A [Response] containing the HTML page.
-     */
-    @GET("auth/studente/RichiestaDuplicati.do")
-    suspend fun getDuplicateRequests(@Query("menu_opened_cod") menuOpenedCod: String? = null): Response<String>
+        val grade = Esse3Grade.parse(gradeText)
+        val date = dateText?.let { parseDate(it) }
+
+        return grade to date
+    }
+
+    private fun parseRecordStatistics(doc: Document): Esse3RecordStatistics {
+        // Look for statistics box
+        val statsBox = doc.selectFirst("div.box-2") ?: doc.selectFirst("div:contains(Media)")
+
+        var arithmeticAvg: Double? = null
+        var weightedAvg: Double? = null
+        var totalCredits = 0
+        var earnedCredits = 0
+
+        if (statsBox != null) {
+            val text = statsBox.text()
+
+            // Parse arithmetic average
+            "Media Aritmetica[^\\d]*(\\d+[.,]\\d+)".toRegex()
+                .find(text)?.groupValues?.get(1)?.let {
+                    arithmeticAvg = it.replace(",", ".").toDoubleOrNull()
+                }
+
+            // Parse weighted average
+            "Media Ponderata[^\\d]*(\\d+[.,]\\d+)".toRegex()
+                .find(text)?.groupValues?.get(1)?.let {
+                    weightedAvg = it.replace(",", ".").toDoubleOrNull()
+                }
+
+            // Parse credits
+            "Crediti totali[^\\d]*(\\d+)".toRegex()
+                .find(text)?.groupValues?.get(1)?.let {
+                    totalCredits = it.toIntOrNull() ?: 0
+                }
+
+            "Crediti acquisiti[^\\d]*(\\d+)".toRegex()
+                .find(text)?.groupValues?.get(1)?.let {
+                    earnedCredits = it.toIntOrNull() ?: 0
+                }
+        }
+
+        return Esse3RecordStatistics(
+            arithmeticAverage = arithmeticAvg,
+            weightedAverage = weightedAvg,
+            totalCredits = totalCredits,
+            earnedCredits = earnedCredits
+        )
+    }
+
+    private fun parseStudyPlan(doc: Document): Esse3StudyPlan? {
+        // Parse plan metadata
+        val text = doc.text()
+
+        val statusMatch = "Stato:\\s*(\\w+)".toRegex().find(text)
+        val status = statusMatch?.groupValues?.get(1)?.let { Esse3PlanStatus.fromString(it) }
+            ?: Esse3PlanStatus.DRAFT
+
+        val typeMatch = "Tipo Piano:\\s*([^\\n]+)".toRegex().find(text)
+        val type = typeMatch?.groupValues?.get(1)?.trim() ?: "Unknown"
+
+        // Try to extract plan ID from forms
+        val planIdMatch = "PIANO_ID=(\\d+)".toRegex().find(doc.html())
+        val planId = planIdMatch?.groupValues?.get(1)?.toLongOrNull() ?: 0L
+
+        // Extract offer year and regulation year from page text
+        val offerYearMatch = "(?:Anno Offerta|A\\.A\\. Offerta)\\s*:?\\s*(\\d{4})".toRegex().find(text)
+        val offerYear = offerYearMatch?.groupValues?.get(1)?.toIntOrNull()
+
+        val regulationYearMatch = "(?:Anno Regolamento|Regolamento)\\s*:?\\s*(\\d{4})".toRegex().find(text)
+        val regulationYear = regulationYearMatch?.groupValues?.get(1)?.toIntOrNull()
+
+        // Extract last modified date
+        val lastModifiedMatch = "(?:Ultima modifica|Modificato il)\\s*:?\\s*(\\d{2}/\\d{2}/\\d{4})".toRegex().find(text)
+        val lastModified = lastModifiedMatch?.groupValues?.get(1)?.let { parseDate(it) }
+
+        // Parse courses from table
+        val courses = mutableListOf<Esse3PlannedCourse>()
+        val tables = doc.select("table")
+        for (table in tables) {
+            val headers = table.select("th").map { it.text().trim() }
+            if (headers.contains("Codice") || headers.contains("Descrizione")) {
+                // Find year column index if present
+                val yearColIndex = headers.indexOfFirst { it.contains("Anno", ignoreCase = true) }
+
+                val rows = table.select("tbody tr, tr:has(td)")
+                for (row in rows) {
+                    val cells = row.select("td")
+                    if (cells.size >= 2) {
+                        // Extract year from the dedicated column or from course text
+                        val year = if (yearColIndex >= 0) {
+                            cells.getOrNull(yearColIndex)?.text()?.trim()?.toIntOrNull()
+                        } else {
+                            "(?:Anno|Year)\\s*(\\d+)".toRegex().find(row.text())?.groupValues?.get(1)?.toIntOrNull()
+                        }
+
+                        courses.add(
+                            Esse3PlannedCourse(
+                                code = cells.getOrNull(0)?.text()?.cleanText() ?: "",
+                                description = cells.getOrNull(1)?.text()?.cleanText() ?: "",
+                                status = cells.getOrNull(2)?.text()?.cleanText(),
+                                credits = cells.getOrNull(3)?.text()?.toIntOrNull() ?: 0,
+                                year = year,
+                                university = cells.getOrNull(4)?.text()?.cleanText()
+                            )
+                        )
+                    }
+                }
+            }
+        }
+
+        return Esse3StudyPlan(
+            id = planId,
+            status = status,
+            type = type,
+            lastModified = lastModified,
+            offerYear = offerYear,
+            regulationYear = regulationYear,
+            courses = courses
+        )
+    }
+
+    private fun parseCourseEvaluations(doc: Document): List<Esse3CourseEvaluation> {
+        val evaluations = mutableListOf<Esse3CourseEvaluation>()
+
+        // Table columns: Anno di corso | Attività Didattiche | Peso in crediti | Stato | AA Freq. | Ric. | Q.Val.
+        val table = doc.selectFirst("table.table-1")
+        if (table != null) {
+            val rows = table.select("tbody tr, tr:has(td)")
+            for (row in rows) {
+                val cells = row.select("td")
+                if (cells.size >= 6) {
+                    val courseYear = cells.getOrNull(0)?.text()?.trim()?.toIntOrNull() ?: 0
+                    val courseText = cells.getOrNull(1)?.text()?.cleanText() ?: ""
+                    val codeMatch = "^([A-Z0-9]+)\\s*-\\s*(.+)$".toRegex().find(courseText)
+                    val credits = cells.getOrNull(2)?.text()?.trim()?.toIntOrNull() ?: 0
+                    val status = cells.getOrNull(3)?.text()?.cleanText()?.takeIf { it.isNotBlank() }
+                    val academicYear = cells.getOrNull(4)?.text()?.cleanText()?.takeIf { it.isNotBlank() }
+                    val isRecognized = cells.getOrNull(5)?.text()?.isNotBlank() == true
+                    val questionnaireLink = cells.getOrNull(6)?.selectFirst("a")?.attr("href")
+
+                    evaluations.add(
+                        Esse3CourseEvaluation(
+                            courseCode = codeMatch?.groupValues?.get(1) ?: courseText.substringBefore(" "),
+                            courseName = codeMatch?.groupValues?.get(2) ?: courseText,
+                            courseYear = courseYear,
+                            credits = credits,
+                            academicYear = academicYear,
+                            status = status,
+                            isRecognized = isRecognized,
+                            questionnaireUrl = questionnaireLink?.let { "$BASE_URL/$it" }
+                        )
+                    )
+                }
+            }
+        }
+
+        return evaluations
+    }
 }
