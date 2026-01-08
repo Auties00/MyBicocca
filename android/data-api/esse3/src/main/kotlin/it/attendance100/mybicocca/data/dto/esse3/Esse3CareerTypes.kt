@@ -6,27 +6,85 @@ import java.time.LocalDate
  * Academic record (libretto) containing all courses and statistics.
  */
 data class Esse3AcademicRecord(
-    val courses: List<Esse3CourseEntry>,
-    val statistics: Esse3RecordStatistics
+    val courses: List<Esse3Course>,
+    val unweightedGpa: Double,
+    val weightedGpa: Double,
 )
 
 /**
  * A single course entry in the academic record.
  */
-data class Esse3CourseEntry(
+data class Esse3Course(
     val code: String,
     val name: String,
+    val urlPath: String,
     val year: Int,
     val credits: Int,
-    val status: Esse3CourseStatus,
-    val academicYear: String?,
+    val academicYear: String,
     val grade: Esse3Grade?,
     val examDate: LocalDate?,
-    val isRecognized: Boolean,
-    val attempts: Int,
-    val hasAvailableExams: Boolean,
-    val questionnaireRequired: Boolean = false
+    val examAttemptsUrlPath: String
 )
+
+/**
+ * Detailed information about a course.
+ */
+data class Esse3CourseDetails(
+    val code: String,
+    val name: String,
+    val courseCode: String,
+    val courseName: String,
+    val degreeCode: String,
+    val degreeDescription: String,
+    val year: Int,
+    val status: Esse3CourseStatus,
+    val examDate: LocalDate?,
+    val grade: Esse3Grade?,
+    val notes: String,
+    val units: List<Esse3CourseUnit>
+)
+
+/**
+ * Status of a course in the academic record details.
+ */
+sealed class Esse3CourseStatus {
+    data object NotAttended : Esse3CourseStatus()
+    data class Attended(val year: String) : Esse3CourseStatus()
+    data class Passed(val year: String, val attendedYear: String) : Esse3CourseStatus()
+}
+
+/**
+ * A didactic unit (module) within a course.
+ */
+data class Esse3CourseUnit(
+    val name: String,
+    val activityType: String,
+    val formationType: String,
+    val sector: String,
+    val credits: Int,
+    val duration: Int?
+)
+
+/**
+ * An exam attempt for a course.
+ */
+data class Esse3ExamAttempt(
+    val examDate: LocalDate?,
+    val examType: String,
+    val outcome: Esse3ExamAttemptOutcome,
+    val verbalizationDate: LocalDate?
+)
+
+/**
+ * Outcome of an exam attempt.
+ */
+sealed class Esse3ExamAttemptOutcome {
+    data class Passed(val grade: Esse3Grade) : Esse3ExamAttemptOutcome()
+    data object Failed : Esse3ExamAttemptOutcome()
+    data object Absent : Esse3ExamAttemptOutcome()
+    data object Withdrawn : Esse3ExamAttemptOutcome()
+    data object Booked : Esse3ExamAttemptOutcome()
+}
 
 /**
  * Grade representation.
@@ -37,7 +95,7 @@ sealed class Esse3Grade {
      */
     data class Numeric(
         val value: Int,
-        val cumLaude: Boolean = false
+        val cumLaude: Boolean
     ) : Esse3Grade() {
         override fun toString(): String = if (cumLaude) "30L" else value.toString()
     }
@@ -82,7 +140,7 @@ sealed class Esse3Grade {
                 trimmed == "INS" || trimmed == "INSUFFICIENTE" -> Failed
                 trimmed == "RIT" || trimmed == "RITIRATO" -> Withdrawn
                 trimmed == "30L" || trimmed == "30 E LODE" -> Numeric(30, true)
-                trimmed.toIntOrNull() != null -> Numeric(trimmed.toInt())
+                trimmed.toIntOrNull() != null -> Numeric(trimmed.toInt(), false)
                 else -> null
             }
         }
@@ -90,46 +148,14 @@ sealed class Esse3Grade {
 }
 
 /**
- * Status of a course in the study plan.
- */
-enum class Esse3CourseStatus {
-    PLANNED,
-    IN_PROGRESS,
-    PASSED,
-    FAILED;
-
-    companion object {
-        fun fromString(value: String): Esse3CourseStatus {
-            return when (value.lowercase()) {
-                "superato", "passed" -> PASSED
-                "in corso", "in progress" -> IN_PROGRESS
-                "non superato", "failed" -> FAILED
-                else -> PLANNED
-            }
-        }
-    }
-}
-
-/**
- * Statistics for the academic record.
- */
-data class Esse3RecordStatistics(
-    val arithmeticAverage: Double?,
-    val weightedAverage: Double?,
-    val totalCredits: Int,
-    val earnedCredits: Int
-)
-
-/**
  * Study plan information.
  */
 data class Esse3StudyPlan(
-    val id: Long,
     val status: Esse3PlanStatus,
     val type: String,
-    val lastModified: LocalDate?,
-    val offerYear: Int?,
-    val regulationYear: Int?,
+    val lastModified: LocalDate,
+    val offerYear: Int,
+    val regulationYear: Int,
     val courses: List<Esse3PlannedCourse>
 )
 
@@ -139,11 +165,31 @@ data class Esse3StudyPlan(
 data class Esse3PlannedCourse(
     val code: String,
     val description: String,
-    val status: String?,
+    val status: Esse3PlannedCourseStatus,
     val credits: Int,
-    val year: Int?,
-    val university: String?
+    val year: Int,
+    val university: String
 )
+
+/**
+ * Status of a course in the study plan.
+ */
+sealed class Esse3PlannedCourseStatus {
+    data object Passed : Esse3PlannedCourseStatus()
+    data object Attended : Esse3PlannedCourseStatus()
+    data object Planned : Esse3PlannedCourseStatus()
+
+    companion object {
+        fun fromString(value: String): Esse3PlannedCourseStatus? {
+            return when (value.trim().lowercase()) {
+                "superata" -> Passed
+                "frequentata" -> Attended
+                "pianificata" -> Planned
+                else -> null
+            }
+        }
+    }
+}
 
 /**
  * Status of a study plan.
@@ -155,13 +201,13 @@ enum class Esse3PlanStatus {
     DRAFT;
 
     companion object {
-        fun fromString(value: String): Esse3PlanStatus {
-            return when (value.uppercase()) {
-                "APPROVATO", "APPROVED" -> APPROVED
-                "IN ATTESA", "PENDING" -> PENDING
-                "RIFIUTATO", "REJECTED" -> REJECTED
-                "BOZZA", "DRAFT" -> DRAFT
-                else -> DRAFT
+        fun fromString(value: String): Esse3PlanStatus? {
+            return when (value.trim().uppercase()) {
+                "APPROVATO" -> APPROVED
+                "IN ATTESA" -> PENDING
+                "RIFIUTATO" -> REJECTED
+                "BOZZA" -> DRAFT
+                else -> null
             }
         }
     }

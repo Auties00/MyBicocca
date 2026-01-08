@@ -4,12 +4,8 @@ import io.ktor.client.*
 import io.ktor.client.request.*
 import io.ktor.client.request.forms.*
 import io.ktor.client.statement.*
-import io.ktor.http.HttpHeaders
-import io.ktor.http.HttpStatusCode
-import io.ktor.http.Parameters
-import io.ktor.http.ParametersBuilder
-import io.ktor.http.parameters
-import io.ktor.utils.io.jvm.javaio.toInputStream
+import io.ktor.http.*
+import io.ktor.utils.io.jvm.javaio.*
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
@@ -93,9 +89,7 @@ abstract class Esse3AbstractApi(
     ): Document {
         val url = buildUrl(path, queryParams)
         val response = client.get(url)
-        handleRedirectIfNeeded(response)
-        val html = response.bodyAsText()
-        val doc = Jsoup.parse(html, BASE_URL)
+        val doc = Jsoup.parse(response.bodyAsChannel().toInputStream(), "UTF-8", BASE_URL)
         checkForErrorPage(doc)
         return doc
     }
@@ -140,9 +134,7 @@ abstract class Esse3AbstractApi(
             setBody(FormDataContent(parameters))
         }
 
-        handleRedirectIfNeeded(response)
-        val html = response.bodyAsText()
-        val doc = Jsoup.parse(html, BASE_URL)
+        val doc = Jsoup.parse(response.bodyAsChannel().toInputStream(), "UTF-8", BASE_URL)
         checkForErrorPage(doc)
         return doc
     }
@@ -156,9 +148,16 @@ abstract class Esse3AbstractApi(
         queryParams: Map<String, String> = emptyMap()
     ): HttpResponse {
         val url = buildUrl(path, queryParams)
-        return client.post(url) {
+        val response = client.post(url) {
             setBody(FormDataContent(parameters))
         }
+        if(response.status == HttpStatusCode.Found) {
+            val redirectUrl = response.headers[HttpHeaders.Location]
+            if (redirectUrl != null) {
+                return executeGetRaw(redirectUrl)
+            }
+        }
+        return response;
     }
 
     /**
@@ -173,20 +172,6 @@ abstract class Esse3AbstractApi(
                 "$k=${encodeFormValue(v)}"
             }
             "$basePath?$query"
-        }
-    }
-
-    /**
-     * Handles redirect responses if needed.
-     */
-    protected fun handleRedirectIfNeeded(response: HttpResponse) {
-        if (response.status == HttpStatusCode.Found ||
-            response.status == HttpStatusCode.MovedPermanently
-        ) {
-            val location = response.headers[HttpHeaders.Location]
-            if (location != null && location.contains("Logon")) {
-                throw IllegalStateException("Session expired, please re-authenticate")
-            }
         }
     }
 
@@ -222,7 +207,7 @@ abstract class Esse3AbstractApi(
      */
     protected suspend fun checkForUpdateError(response: HttpResponse) {
         if (response.status.value != 200) {
-            throw IllegalStateException("Cannot change contact info: invalid response status: ${response.status.value}")
+            throw IllegalStateException("Invalid response status: ${response.status.value}")
         }
 
         val document = Jsoup.parse(response.bodyAsChannel().toInputStream(), "UTF-8", BASE_URL)
@@ -233,7 +218,7 @@ abstract class Esse3AbstractApi(
             if(errorMessage.isBlank()) {
                 errorMessage = "unknown error"
             }
-            throw IllegalStateException("Cannot change contact info: $errorMessage")
+            throw IllegalStateException(errorMessage)
         }
     }
 
@@ -259,7 +244,7 @@ abstract class Esse3AbstractApi(
                 else -> input.attr("value")
             }
             name to value
-        }.filterKeys { it.isNotBlank() }
+        }
     }
 
     /**
@@ -268,7 +253,7 @@ abstract class Esse3AbstractApi(
     protected fun Element.extractHiddenFields(): Map<String, String> {
         return select("input[type=hidden]").associate { input ->
             input.attr("name") to input.attr("value")
-        }.filterKeys { it.isNotBlank() }
+        }
     }
 
     /**
