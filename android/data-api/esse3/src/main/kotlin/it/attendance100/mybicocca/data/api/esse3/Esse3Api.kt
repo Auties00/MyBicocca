@@ -3,7 +3,7 @@ package it.attendance100.mybicocca.data.api.esse3
 import io.ktor.client.*
 import io.ktor.client.plugins.*
 import io.ktor.client.plugins.cookies.*
-import io.ktor.http.Cookie
+import io.ktor.http.*
 
 
 /**
@@ -40,9 +40,6 @@ class Esse3Api(sessionCookies: List<Cookie>) : AutoCloseable {
             requestTimeoutMillis = TIMEOUT
             connectTimeoutMillis = TIMEOUT
             socketTimeoutMillis = TIMEOUT
-        }
-        engine {
-            followRedirects = true
         }
         followRedirects = true
     }

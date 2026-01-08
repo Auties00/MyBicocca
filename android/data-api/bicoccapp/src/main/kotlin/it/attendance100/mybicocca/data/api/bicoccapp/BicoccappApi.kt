@@ -3,22 +3,28 @@ package it.attendance100.mybicocca.data.api.bicoccapp
 /**
  * Unified access point for all BicoccApp REST API services.
  */
-interface BicoccappApi {
+data class BicoccappApi(
     /** Authentication and OAuth2/OpenID Connect flows. */
-    val auth: BicoccappAuthApi
+    val auth: BicoccappAuthApi,
 
-    /** Student profile, career, exams, fees, and registrations. */
-    val user: BicoccappUserApi
+    /** Student profile. */
+    val profile: BicoccappProfileApi,
+
+    /** Student career and registrations. */
+    val career: BicoccappCareerApi,
+
+    /** Student exams and exam sessions. */
+    val exams: BicoccappExamsApi,
+
+    /** Student tuition fees. */
+    val taxes: BicoccappTaxesApi,
 
     /** Academic calendar and course scheduling. */
-    val calendar: BicoccappCalendarApi
+    val calendar: BicoccappCalendarApi,
 
     /** Course selection wizard for calendar setup. */
-    val wizard: BicoccappWizardApi
-
-    /** Notifications and appointment requests. */
-    val messages: BicoccappMessagesApi
+    val wizard: BicoccappWizardApi,
 
     /** Points of interest and faculty directory. */
     val campus: BicoccappCampusApi
-}
+)

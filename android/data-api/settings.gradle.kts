@@ -17,3 +17,5 @@ rootProject.name = "MyBicoccaDataAPI"
 include(":bicoccapp")
 include(":elearning")
 include(":esse3")
+
+include("easystaff")

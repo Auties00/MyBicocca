@@ -7,69 +7,91 @@ import java.time.LocalDateTime
  * An exam session available for booking.
  */
 data class Esse3ExamSession(
-    val id: Long,
-    val courseCode: String,
     val courseName: String,
-    val date: LocalDateTime?,
-    val type: Esse3ExamType,
-    val location: String?,
-    val professor: String?,
-    val closed: Boolean,
-    val notes: String?
+    val examDate: LocalDate,
+    val registrationStartDate: LocalDate,
+    val registrationEndDate: LocalDate,
+    val description: String,
+    val examMode: Esse3ExamSessionMode,
+    val academicYears: List<String>,
+    val infoPath: String
 )
 
 /**
- * Type of exam.
+ * Complete exam session information.
  */
-enum class Esse3ExamType {
-    WRITTEN,
-    ORAL,
-    PARTIAL,
-    LAB,
-    PROJECT,
-    OTHER;
+data class Esse3ExamSessionInformation(
+    val examSession: Esse3ExamSession,
+    val teachingActivity: String,
+    val description: String,
+    val sessions: List<String>,
+    val type: Esse3ExamType,
+    val verbalization: String,
+    val teachers: List<String>,
+    val notes: String?,
+    val datetime: LocalDateTime,
+    val building: String,
+    val room: String,
+    val registrationNumber: Int?
+)
+
+/**
+ * The exam session mode.
+ */
+enum class Esse3ExamSessionMode {
+    IN_PERSON,
+    REMOTE;
 
     companion object {
-        fun fromString(value: String): Esse3ExamType {
-            return when (value.lowercase()) {
-                "scritto", "written" -> WRITTEN
-                "orale", "oral" -> ORAL
-                "parziale", "prova parziale", "partial" -> PARTIAL
-                "laboratorio", "lab" -> LAB
-                "progetto", "project" -> PROJECT
-                else -> OTHER
+        fun fromString(value: String): Esse3ExamSessionMode? {
+            return when (value.trim().lowercase()) {
+                "p", "esame in presenza" -> IN_PERSON
+                "d", "esame a distanza" -> REMOTE
+                else -> null
             }
         }
     }
 }
 
 /**
- * An exam reservation made by the student.
+ * Booked exam session.
  */
 data class Esse3ExamReservation(
-    val appId: Long,
-    val adsceId: Long,
-    val attDidEsaId: Long,
-    val cdsEsaId: Long,
-    val aaFreqId: Long,
-    val date: LocalDateTime?,
-    val courseCode: String,
-    val courseName: String,
+    val teachingActivity: String,
+    val reservationNumber: Int,
+    val maxReservationsCount: Int,
+    val examMode: Esse3ExamSessionMode,
+    val description: String,
     val type: Esse3ExamType,
-    val location: String?,
-    val status: String?
-) {
-    /**
-     * Returns query parameters for printing the reservation.
-     */
-    fun toPrintParams(): Map<String, String> = mapOf(
-        "APP_ID" to appId.toString(),
-        "ADSCE_ID" to adsceId.toString(),
-        "ATT_DID_ESA_ID" to attDidEsaId.toString(),
-        "CDS_ESA_ID" to cdsEsaId.toString(),
-        "AA_FREQ_ID" to aaFreqId.toString(),
-        "DATA_INIZIO_APP" to (date?.toLocalDate()?.toString() ?: "")
-    )
+    val teachers: List<String>,
+    val notes: String?,
+    val datetime: LocalDateTime,
+    val building: String,
+    val room: String,
+    val sessionId: String,
+    val teachingActivityId: String
+)
+
+
+/**
+ * Type of exam.
+ */
+sealed interface Esse3ExamType {
+    data object Written : Esse3ExamType
+    data object Oral : Esse3ExamType
+    data object Partial : Esse3ExamType
+    data class Other(val value: String) : Esse3ExamType
+
+    companion object {
+        fun fromString(value: String): Esse3ExamType {
+            return when (value.trim().lowercase()) {
+                "scritto", "scritto e orale" -> Written
+                "orale" -> Oral
+                "parziale", "prova parziale" -> Partial
+                else -> Other(value)
+            }
+        }
+    }
 }
 
 /**
@@ -104,6 +126,44 @@ enum class Esse3ResultStatus {
                 "rifiutato", "rejected" -> REJECTED
                 "verbalizzato", "verbalized" -> VERBALIZED
                 else -> PENDING
+            }
+        }
+    }
+}
+
+
+/**
+ * Represents the reservation history for a specific course.
+ */
+data class Esse3CourseReservationHistory(
+    val course: String,
+    val entries: List<Esse3ReservationHistoryEntry>
+)
+
+/**
+ * Represents a single entry in the reservation history log.
+ */
+data class Esse3ReservationHistoryEntry(
+    val operationDateTime: LocalDateTime,
+    val examDescription: String,
+    val examDate: LocalDate?,
+    val operation: Esse3ReservationOperation,
+    val performedBy: String
+)
+
+/**
+ * Represents an operation type in reservation history.
+ */
+enum class Esse3ReservationOperation {
+    RESERVED,
+    CANCELLED;
+
+    companion object {
+        fun fromString(text: String): Esse3ReservationOperation? {
+            return when {
+                text.contains("Effettuata", ignoreCase = true) -> RESERVED
+                text.contains("Cancellata", ignoreCase = true) -> CANCELLED
+                else -> null
             }
         }
     }

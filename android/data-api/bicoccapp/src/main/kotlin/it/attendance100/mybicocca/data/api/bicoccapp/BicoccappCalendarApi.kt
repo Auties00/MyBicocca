@@ -1,6 +1,5 @@
 package it.attendance100.mybicocca.data.api.bicoccapp
 
-import de.jensklingenberg.ktorfit.Response
 import de.jensklingenberg.ktorfit.http.Field
 import de.jensklingenberg.ktorfit.http.FormUrlEncoded
 import de.jensklingenberg.ktorfit.http.GET
@@ -26,7 +25,7 @@ interface BicoccappCalendarApi {
     suspend fun getCalendar(
         @Query("matricId") enrollmentId: String,
         @Query("date") date: String? = null
-    ): Response<BicoccappCalendarResponse>
+    ): BicoccappCalendarResponse
 
     /**
      * Lists all courses available for calendar subscription.
@@ -34,7 +33,7 @@ interface BicoccappCalendarApi {
      * @return Course catalog with subscription status for each course.
      */
     @GET("calendar_courses")
-    suspend fun getAvailableCourses(): Response<BicoccappCalendarCoursesResponse>
+    suspend fun getAvailableCourses(): BicoccappCalendarCoursesResponse
 
     /**
      * Retrieves detailed information about a specific course.
@@ -47,7 +46,7 @@ interface BicoccappCalendarApi {
     suspend fun getCourseDetail(
         @Query("activityCode") activityCode: String,
         @Query("courseCode") courseCode: String
-    ): Response<BicoccappCourseDetailResponse>
+    ): BicoccappCourseDetailResponse
 
     /**
      * Adds a course's lecture schedule to the user's calendar.
@@ -68,6 +67,6 @@ interface BicoccappCalendarApi {
         @Field("activityCode") activityCode: String,
         @Field("lessonName") lessonName: String,
         @Field("courseCode") courseCode: String,
-        @Field("partition") partition: String? = null
-    ): Response<BicoccappSetCalendarResponse>
+        @Field("partition") partition: String?
+    ): BicoccappSetCalendarResponse
 }

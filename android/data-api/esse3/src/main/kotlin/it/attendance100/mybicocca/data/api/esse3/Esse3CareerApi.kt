@@ -1,10 +1,10 @@
 package it.attendance100.mybicocca.data.api.esse3
 
 import io.ktor.client.*
-import io.ktor.client.call.*
-import io.ktor.http.Parameters
+import io.ktor.client.statement.*
+import io.ktor.http.*
+import io.ktor.utils.io.*
 import it.attendance100.mybicocca.data.dto.esse3.*
-import org.jsoup.nodes.Document
 
 /**
  * API for academic career operations.
@@ -18,261 +18,104 @@ import org.jsoup.nodes.Document
 class Esse3CareerApi(
     client: HttpClient
 ) : Esse3AbstractApi(client) {
-
-    /**
-     * Gets the academic record (libretto) with all courses and grades.
-     *
-     * @return The academic record
-     */
-    suspend fun getAcademicRecord(): Esse3AcademicRecord {
-        val doc = executeGet(
-            "/auth/studente/Libretto/LibrettoHome.do",
-            mapOf("menu_opened_cod" to "menu_link-navbox_studenti_Carriera")
-        )
-        return parseAcademicRecord(doc)
+    companion object {
+        private const val LIBRETTO_ENTRYPOINT = "/auth/studente/Libretto/LibrettoHome.do?menu_opened_cod=menu_link-navbox_studenti_Carriera"
+        private const val STUDY_PLAN_ENTRYPOINT = "/auth/studente/Piani/PianiHome.do?menu_opened_cod=menu_link-navbox_studenti_Carriera"
+        private val UNWEIGHTED_GPA_REGEX = "Media Aritmetica degli esami.*?(\\d+\\.\\d+)".toRegex(RegexOption.IGNORE_CASE)
+        private val WEIGHTED_GPA_REGEX = "Media Ponderata degli esami.*?(\\d+\\.\\d+)".toRegex(RegexOption.IGNORE_CASE)
+        private val TEACHING_ACTIVITY_REGEX = "Attività Didattica: (.+?) \\[([^]]+)]".toRegex(RegexOption.IGNORE_CASE)
+        private val COURSE_AND_DEGREE_REGEX = """Offerta nel corso di studio:\s*(.+?)\s*\[(.+?)]\s*.*?Classe di Laurea:\s*(.+?)\s*-\s*(.+)""".toRegex(RegexOption.IGNORE_CASE)
+        private val PASSED_STATUS_REGEX = "Superata nell' AA (\\d{4}/\\d{4}) \\(con frequenza nell' AA (\\d{4}/\\d{4})\\)".toRegex(RegexOption.IGNORE_CASE)
+        private val ATTENDED_STATUS_REGEX = "Frequentata \\(nell' AA (\\d{4}/\\d{4})\\)".toRegex(RegexOption.IGNORE_CASE)
+        private val YEAR_OF_COURSE_REGEX = "Anno di Corso (\\d+)".toRegex(RegexOption.IGNORE_CASE)
     }
 
     /**
      * Gets the study plan.
      *
-     * @return The study plan or null if not available
+     * @return The study plan
      */
-    suspend fun getStudyPlan(): Esse3StudyPlan? {
-        val doc = executeGet(
-            "/auth/studente/Piani/PianiHome.do",
-            mapOf("menu_opened_cod" to "menu_link-navbox_studenti_Carriera")
-        )
-        return parseStudyPlan(doc)
-    }
+    suspend fun getStudyPlan(): Esse3StudyPlan {
+        val doc = executeGet(STUDY_PLAN_ENTRYPOINT)
 
-    /**
-     * Prints the study plan as PDF.
-     *
-     * @param planId The plan ID
-     * @return The PDF bytes
-     */
-    suspend fun printStudyPlan(planId: Long): ByteArray {
-        val response = executePostRaw(
-            "/auth/studente/Piani/PianiStampaPiano.do",
-            Parameters.build {
-                append("btnSubmit", "")
-            },
-            mapOf("PIANO_ID" to planId.toString())
-        )
-        return response.call.body()
-    }
+        val metadataMap = doc.select("th.tplMaster").associate { th ->
+            val key = th.text().cleanText().removeSuffix(":").lowercase()
+            val value = th.nextElementSibling()?.text()?.cleanText() ?: ""
+            key to value
+        }
 
-    /**
-     * Gets course evaluation questionnaires that need to be filled.
-     *
-     * @return List of courses with pending questionnaires
-     */
-    suspend fun getCourseEvaluations(): List<Esse3CourseEvaluation> {
-        val doc = executeGet(
-            "/auth/studente/QuestAdLibrettoValDid.do",
-            mapOf("menu_opened_cod" to "menu_link-navbox_studenti_Carriera")
-        )
-        return parseCourseEvaluations(doc)
-    }
+        val statusText = metadataMap["stato"]
+            ?: throw IllegalStateException("Cannot get study plan: missing status")
+        val status = Esse3PlanStatus.fromString(statusText)
+            ?: throw IllegalStateException("Cannot get study plan: invalid status '$statusText'")
 
-    private fun parseAcademicRecord(doc: Document): Esse3AcademicRecord {
-        val courses = mutableListOf<Esse3CourseEntry>()
+        val type = metadataMap["tipo piano"]
+            ?: throw IllegalStateException("Cannot get study plan: missing type")
 
-        // Find the main courses table
-        val table = doc.selectFirst("table.breaks3.table-1") ?: doc.selectFirst("table.table-1")
+        val lastModifiedText = metadataMap["data ultima variazione"]
+            ?: throw IllegalStateException("Cannot get study plan: missing last modified date")
+        val lastModified = parseDate(lastModifiedText)
+            ?: throw IllegalStateException("Cannot get study plan: invalid date '$lastModifiedText'")
 
-        if (table != null) {
-            val rows = table.select("tbody tr, tr:has(td)")
-            for (row in rows) {
-                val cells = row.select("td")
-                if (cells.size >= 5) {
-                    val courseEntry = parseCourseRow(cells)
-                    if (courseEntry != null) {
-                        courses.add(courseEntry)
-                    }
-                }
+        val offerYearText = metadataMap["anno di offerta"]
+            ?: throw IllegalStateException("Cannot get study plan: missing offer year")
+        val offerYear = offerYearText.toIntOrNull()
+            ?: throw IllegalStateException("Cannot get study plan: invalid offer year '$offerYearText'")
+
+        val regulationYearText = metadataMap["anno del regolamento"]
+            ?: throw IllegalStateException("Cannot get study plan: missing regulation year")
+        val regulationYear = regulationYearText.toIntOrNull()
+            ?: throw IllegalStateException("Cannot get study plan: invalid regulation year '$regulationYearText'")
+
+        val yearTitles = doc.select("td.tplTitolo")
+        val tables = doc.select("table.detail_table")
+
+        val courses = yearTitles.zip(tables).flatMap { (titleTd, table) ->
+            val year = YEAR_OF_COURSE_REGEX.find(titleTd.text())
+                ?.groupValues?.get(1)?.toIntOrNull() ?: 0
+
+            // Build headers list, expanding for colspan
+            val headers = table.select("thead tr th").map {
+                val node = it.firstChild() ?: it
+                node.nodeValue().trim().lowercase()
             }
-        }
 
-        // Parse statistics
-        val statistics = parseRecordStatistics(doc)
+            table.select("tbody tr").map { row ->
+                val rows = row.select("td")
+                val rowMap = headers.zip(rows).toMap()
 
-        return Esse3AcademicRecord(
-            courses = courses,
-            statistics = statistics
-        )
-    }
+                val code = rowMap["codice"]?.text()?.cleanText()
+                    ?: throw IllegalStateException("Cannot get study plan: missing code")
 
-    private fun parseCourseRow(cells: org.jsoup.select.Elements): Esse3CourseEntry? {
-        if (cells.isEmpty()) return null
+                val description = rowMap["descrizione"]?.text()?.cleanText()
+                    ?: throw IllegalStateException("Cannot get study plan: missing description")
 
-        // Column order: Attività Didattiche, Anno, Peso in crediti, Stato, AA Freq., Voto - Data Esame, Ric., Prove, Appelli
-        val activityCell = cells[0]
-        val activityText = activityCell.text().cleanText()
+                val statusText = rowMap["stato"]?.text()?.cleanText()
+                    ?: throw IllegalStateException("Cannot get study plan: missing status")
+                val status = Esse3PlannedCourseStatus.fromString(statusText)
+                    ?: throw IllegalStateException("Cannot get study plan: invalid status '$statusText'")
 
-        // Parse course code and name
-        val codeNameMatch = "^([A-Z0-9]+)\\s*-\\s*(.+)$".toRegex().find(activityText)
-        val code = codeNameMatch?.groupValues?.get(1) ?: activityText.substringBefore(" - ")
-        val name = codeNameMatch?.groupValues?.get(2) ?: activityText.substringAfter(" - ")
+                val credits = rowMap["peso"]?.text()?.cleanText()?.toIntOrNull()
+                    ?: throw IllegalStateException("Cannot get study plan: missing credits")
 
-        val year = cells.getOrNull(1)?.text()?.trim()?.toIntOrNull() ?: 0
-        val credits = cells.getOrNull(2)?.text()?.trim()?.toIntOrNull() ?: 0
-        val statusText = cells.getOrNull(3)?.text()?.cleanText() ?: ""
-        val academicYear = cells.getOrNull(4)?.text()?.cleanText()
+                val universityCell = rowMap["ateneo"]
+                    ?: throw IllegalStateException("Cannot get study plan: missing university")
+                val university = universityCell.selectFirst("span")?.attr("title")
+                    ?.takeIf { it.isNotBlank() }
+                    ?: universityCell.text().cleanText()
 
-        // Parse grade and exam date (format: "29 - 28/06/2024" or "IDO - 17/10/2024")
-        val gradeCell = cells.getOrNull(5)?.text()?.cleanText() ?: ""
-        val (grade, examDate) = parseGradeAndDate(gradeCell)
-
-        val isRecognized = cells.getOrNull(6)?.text()?.isNotBlank() == true
-        val attempts = cells.getOrNull(7)?.text()?.trim()?.toIntOrNull() ?: 0
-        val hasAvailableExams = cells.getOrNull(8)?.selectFirst("a") != null
-
-        // Determine status
-        val status = when {
-            grade != null -> Esse3CourseStatus.PASSED
-            statusText.isNotBlank() -> Esse3CourseStatus.fromString(statusText)
-            else -> Esse3CourseStatus.PLANNED
-        }
-
-        return Esse3CourseEntry(
-            code = code,
-            name = name,
-            year = year,
-            credits = credits,
-            status = status,
-            academicYear = academicYear,
-            grade = grade,
-            examDate = examDate,
-            isRecognized = isRecognized,
-            attempts = attempts,
-            hasAvailableExams = hasAvailableExams
-        )
-    }
-
-    private fun parseGradeAndDate(text: String): Pair<Esse3Grade?, java.time.LocalDate?> {
-        if (text.isBlank()) return null to null
-
-        // Split by " - " or similar separator
-        val parts = text.split(Regex("\\s*[-–]\\s*"))
-        if (parts.isEmpty()) return null to null
-
-        val gradeText = parts[0].trim()
-        val dateText = parts.getOrNull(1)?.trim()
-
-        val grade = Esse3Grade.parse(gradeText)
-        val date = dateText?.let { parseDate(it) }
-
-        return grade to date
-    }
-
-    private fun parseRecordStatistics(doc: Document): Esse3RecordStatistics {
-        // Look for statistics box
-        val statsBox = doc.selectFirst("div.box-2") ?: doc.selectFirst("div:contains(Media)")
-
-        var arithmeticAvg: Double? = null
-        var weightedAvg: Double? = null
-        var totalCredits = 0
-        var earnedCredits = 0
-
-        if (statsBox != null) {
-            val text = statsBox.text()
-
-            // Parse arithmetic average
-            "Media Aritmetica[^\\d]*(\\d+[.,]\\d+)".toRegex()
-                .find(text)?.groupValues?.get(1)?.let {
-                    arithmeticAvg = it.replace(",", ".").toDoubleOrNull()
-                }
-
-            // Parse weighted average
-            "Media Ponderata[^\\d]*(\\d+[.,]\\d+)".toRegex()
-                .find(text)?.groupValues?.get(1)?.let {
-                    weightedAvg = it.replace(",", ".").toDoubleOrNull()
-                }
-
-            // Parse credits
-            "Crediti totali[^\\d]*(\\d+)".toRegex()
-                .find(text)?.groupValues?.get(1)?.let {
-                    totalCredits = it.toIntOrNull() ?: 0
-                }
-
-            "Crediti acquisiti[^\\d]*(\\d+)".toRegex()
-                .find(text)?.groupValues?.get(1)?.let {
-                    earnedCredits = it.toIntOrNull() ?: 0
-                }
-        }
-
-        return Esse3RecordStatistics(
-            arithmeticAverage = arithmeticAvg,
-            weightedAverage = weightedAvg,
-            totalCredits = totalCredits,
-            earnedCredits = earnedCredits
-        )
-    }
-
-    private fun parseStudyPlan(doc: Document): Esse3StudyPlan? {
-        // Parse plan metadata
-        val text = doc.text()
-
-        val statusMatch = "Stato:\\s*(\\w+)".toRegex().find(text)
-        val status = statusMatch?.groupValues?.get(1)?.let { Esse3PlanStatus.fromString(it) }
-            ?: Esse3PlanStatus.DRAFT
-
-        val typeMatch = "Tipo Piano:\\s*([^\\n]+)".toRegex().find(text)
-        val type = typeMatch?.groupValues?.get(1)?.trim() ?: "Unknown"
-
-        // Try to extract plan ID from forms
-        val planIdMatch = "PIANO_ID=(\\d+)".toRegex().find(doc.html())
-        val planId = planIdMatch?.groupValues?.get(1)?.toLongOrNull() ?: 0L
-
-        // Extract offer year and regulation year from page text
-        val offerYearMatch = "(?:Anno Offerta|A\\.A\\. Offerta)\\s*:?\\s*(\\d{4})".toRegex().find(text)
-        val offerYear = offerYearMatch?.groupValues?.get(1)?.toIntOrNull()
-
-        val regulationYearMatch = "(?:Anno Regolamento|Regolamento)\\s*:?\\s*(\\d{4})".toRegex().find(text)
-        val regulationYear = regulationYearMatch?.groupValues?.get(1)?.toIntOrNull()
-
-        // Extract last modified date
-        val lastModifiedMatch = "(?:Ultima modifica|Modificato il)\\s*:?\\s*(\\d{2}/\\d{2}/\\d{4})".toRegex().find(text)
-        val lastModified = lastModifiedMatch?.groupValues?.get(1)?.let { parseDate(it) }
-
-        // Parse courses from table
-        val courses = mutableListOf<Esse3PlannedCourse>()
-        val tables = doc.select("table")
-        for (table in tables) {
-            val headers = table.select("th").map { it.text().trim() }
-            if (headers.contains("Codice") || headers.contains("Descrizione")) {
-                // Find year column index if present
-                val yearColIndex = headers.indexOfFirst { it.contains("Anno", ignoreCase = true) }
-
-                val rows = table.select("tbody tr, tr:has(td)")
-                for (row in rows) {
-                    val cells = row.select("td")
-                    if (cells.size >= 2) {
-                        // Extract year from the dedicated column or from course text
-                        val year = if (yearColIndex >= 0) {
-                            cells.getOrNull(yearColIndex)?.text()?.trim()?.toIntOrNull()
-                        } else {
-                            "(?:Anno|Year)\\s*(\\d+)".toRegex().find(row.text())?.groupValues?.get(1)?.toIntOrNull()
-                        }
-
-                        courses.add(
-                            Esse3PlannedCourse(
-                                code = cells.getOrNull(0)?.text()?.cleanText() ?: "",
-                                description = cells.getOrNull(1)?.text()?.cleanText() ?: "",
-                                status = cells.getOrNull(2)?.text()?.cleanText(),
-                                credits = cells.getOrNull(3)?.text()?.toIntOrNull() ?: 0,
-                                year = year,
-                                university = cells.getOrNull(4)?.text()?.cleanText()
-                            )
-                        )
-                    }
-                }
+                Esse3PlannedCourse(
+                    code = code,
+                    description = description,
+                    status = status,
+                    credits = credits,
+                    year = year,
+                    university = university
+                )
             }
         }
 
         return Esse3StudyPlan(
-            id = planId,
             status = status,
             type = type,
             lastModified = lastModified,
@@ -282,41 +125,243 @@ class Esse3CareerApi(
         )
     }
 
-    private fun parseCourseEvaluations(doc: Document): List<Esse3CourseEvaluation> {
-        val evaluations = mutableListOf<Esse3CourseEvaluation>()
+    /**
+     * Prints the study plan as PDF.
+     *
+     * @return The PDF bytes
+     */
+    suspend fun printStudyPlan(): ByteReadChannel {
+        val doc = executeGet(STUDY_PLAN_ENTRYPOINT)
 
-        // Table columns: Anno di corso | Attività Didattiche | Peso in crediti | Stato | AA Freq. | Ric. | Q.Val.
-        val table = doc.selectFirst("table.table-1")
-        if (table != null) {
-            val rows = table.select("tbody tr, tr:has(td)")
-            for (row in rows) {
-                val cells = row.select("td")
-                if (cells.size >= 6) {
-                    val courseYear = cells.getOrNull(0)?.text()?.trim()?.toIntOrNull() ?: 0
-                    val courseText = cells.getOrNull(1)?.text()?.cleanText() ?: ""
-                    val codeMatch = "^([A-Z0-9]+)\\s*-\\s*(.+)$".toRegex().find(courseText)
-                    val credits = cells.getOrNull(2)?.text()?.trim()?.toIntOrNull() ?: 0
-                    val status = cells.getOrNull(3)?.text()?.cleanText()?.takeIf { it.isNotBlank() }
-                    val academicYear = cells.getOrNull(4)?.text()?.cleanText()?.takeIf { it.isNotBlank() }
-                    val isRecognized = cells.getOrNull(5)?.text()?.isNotBlank() == true
-                    val questionnaireLink = cells.getOrNull(6)?.selectFirst("a")?.attr("href")
+        val printForm = doc.selectFirst("form[action*='PianiStampaPiano.do']")
+            ?: throw IllegalStateException("Cannot find print study plan form")
 
-                    evaluations.add(
-                        Esse3CourseEvaluation(
-                            courseCode = codeMatch?.groupValues?.get(1) ?: courseText.substringBefore(" "),
-                            courseName = codeMatch?.groupValues?.get(2) ?: courseText,
-                            courseYear = courseYear,
-                            credits = credits,
-                            academicYear = academicYear,
-                            status = status,
-                            isRecognized = isRecognized,
-                            questionnaireUrl = questionnaireLink?.let { "$BASE_URL/$it" }
-                        )
-                    )
-                }
+        val actionUrl = printForm.attr("action")
+
+        val response = executePostRaw(
+            actionUrl,
+            Parameters.build {
+                append("btnSubmit", "Stampa Piano")
             }
+        )
+        return response.bodyAsChannel()
+    }
+
+    /**
+     * Gets the academic record (libretto) with all courses and grades.
+     *
+     * @return The academic record
+     */
+    suspend fun getAcademicRecord(): Esse3AcademicRecord {
+        val doc = executeGet(LIBRETTO_ENTRYPOINT)
+
+        val gpaBox = doc.selectFirst("#boxMedie")?.text()?.cleanText()
+            ?: throw IllegalStateException("Cannot get academic record: missing GPA box")
+        val unweightedGpa = UNWEIGHTED_GPA_REGEX.find(gpaBox)?.groupValues?.get(1)?.toDoubleOrNull()
+            ?: throw IllegalStateException("Cannot get academic record: missing unweighted GPA")
+        val weightedGpa = WEIGHTED_GPA_REGEX.find(gpaBox)?.groupValues?.get(1)?.toDoubleOrNull()
+            ?: throw IllegalStateException("Cannot get academic record: missing weighted GPA")
+
+        val table = doc.selectFirst("#tableLibretto")
+            ?: throw IllegalStateException("Cannot get academic record: missing table")
+        val headers = table.select("thead tr th").map {
+            val node = it.firstChild() ?: it
+            node.nodeValue().trim().lowercase()
         }
 
-        return evaluations
+        val rows = table.select("tbody tr")
+        val courses = rows.mapNotNull { row ->
+            val cells = row.select("td")
+            val rowMap = headers.zip(cells).toMap()
+
+            val teachingActivityElement = rowMap["attività didattiche"]
+                ?: throw IllegalStateException("Cannot get academic record: missing teaching activity")
+            val urlPath = teachingActivityElement.selectFirst("a")?.attr("href")
+                ?: throw IllegalStateException("Cannot get academic record: missing teaching activity url")
+            val teachingActivityParts = teachingActivityElement.text().cleanText().split(" - ", limit = 2)
+            val code = teachingActivityParts.elementAtOrNull(0)
+                ?: throw IllegalStateException("Cannot get academic record: missing code")
+            val name = teachingActivityParts.elementAtOrNull(1)
+                ?: throw IllegalStateException("Cannot get academic record: missing name")
+
+            val year = rowMap["anno"]?.text()?.cleanText()?.toIntOrNull()
+                ?: throw IllegalStateException("Cannot get academic record: missing year")
+
+            val credits = rowMap["peso in crediti"]?.text()?.cleanText()?.toIntOrNull()
+                ?: throw IllegalStateException("Cannot get academic record: missing credits")
+
+            val academicYear = rowMap["aa. freq"]?.text()?.cleanText()
+                ?: throw IllegalStateException("Cannot get academic record: missing academic year")
+
+            val gradeAndDate = rowMap["voto - data esame"]?.text()?.cleanText()
+                ?: throw IllegalStateException("Cannot get academic record: missing grade and date")
+            val gradeAndDateParts = gradeAndDate.split(" - ", limit = 2)
+            val grade = gradeAndDateParts.elementAtOrNull(0)?.let { Esse3Grade.parse(it) }
+                ?: throw IllegalStateException("Cannot get academic record: missing grade")
+            val dateText = gradeAndDateParts.elementAtOrNull(1)
+                ?: throw IllegalStateException("Cannot get academic record: missing date")
+            val date = parseDate(dateText)
+                ?: throw IllegalStateException("Cannot get academic record: invalid date '$dateText'")
+
+            val attemptsUrl = rowMap["prove"]?.text()?.cleanText()
+                ?: throw IllegalStateException("Cannot get academic record: missing attempts")
+
+            Esse3Course(
+                code = code,
+                name = name,
+                urlPath = urlPath,
+                year = year,
+                credits = credits,
+                academicYear = academicYear,
+                grade = grade,
+                examDate = date,
+                examAttemptsUrlPath = attemptsUrl
+            )
+        }
+
+        return Esse3AcademicRecord(
+            courses = courses,
+            unweightedGpa = unweightedGpa,
+            weightedGpa = weightedGpa,
+        )
+    }
+
+    /**
+     * Gets detailed information about a course.
+     *
+     * @param course The course to get details for
+     * @return The course details including didactic units
+     */
+    suspend fun getCourseInfo(course: Esse3Course): Esse3CourseDetails {
+        val doc = executeGet(course.urlPath)
+
+        val header = doc.selectFirst("#desAdCds")
+            ?: throw IllegalStateException("Cannot get course info: missing header")
+        val titleText = header.selectFirst("h2")?.text()?.cleanText() ?: ""
+        val (name, code) = TEACHING_ACTIVITY_REGEX.find(titleText)?.destructured?.let { (n, c) -> n to c }
+            ?: throw IllegalStateException("Cannot match teaching activity in: $titleText")
+
+        val courseAndDegreeText = header.selectFirst("p")?.text()?.cleanText() ?: ""
+        val (courseName, courseCode, degreeCode, degreeDesc) = COURSE_AND_DEGREE_REGEX.find(courseAndDegreeText)?.destructured
+            ?: throw IllegalStateException("Cannot match course and degree: $courseAndDegreeText")
+
+        val detailsBox = doc.selectFirst("#boxDatiAd")
+            ?: throw IllegalStateException("Cannot get course info: missing details box")
+        val detailsMap = detailsBox.select("dt").associate { dt ->
+            dt.text().trim().removeSuffix(":").lowercase() to dt.nextElementSibling()?.text()?.cleanText()
+        }
+
+        val year = detailsMap["anno di corso"]?.toIntOrNull()
+            ?: throw IllegalStateException("Cannot get course info: missing or invalid year")
+
+        val statusText = detailsMap["stato"] ?: ""
+        val status = PASSED_STATUS_REGEX.find(statusText)?.let {
+            Esse3CourseStatus.Passed(it.groupValues[1], it.groupValues[2])
+        } ?: ATTENDED_STATUS_REGEX.find(statusText)?.let {
+            Esse3CourseStatus.Attended(it.groupValues[1])
+        } ?: Esse3CourseStatus.NotAttended
+
+        val examDate = detailsMap["data esame"]?.let { parseDate(it) }
+        val grade = detailsMap["voto / giudizio"]?.let { Esse3Grade.parse(it) }
+        val notes = detailsMap["note"] ?: ""
+
+        val table = doc.selectFirst("#tableUD")
+            ?: throw IllegalStateException("Cannot get course info: missing didactic units table")
+        val headers = table.select("thead tr th").map {
+            val node = it.firstChild() ?: it
+            node.nodeValue().trim().lowercase()
+        }
+        val units = table.select("tbody tr").map { row ->
+            val cells = row.select("td")
+            val rowMap = headers.zip(cells).toMap()
+
+            val unitName = rowMap["unità dididattica"]?.text()?.cleanText()
+                ?: throw IllegalStateException("Cannot get course unit: missing name")
+            val activityType = rowMap["tipo attività"]?.text()?.cleanText() ?: ""
+            val formationType = rowMap["tipo formaz."]?.text()?.cleanText() ?: ""
+            val sector = rowMap["settore"]?.text()?.cleanText() ?: ""
+            val credits = rowMap["cfu"]?.text()?.cleanText()?.toIntOrNull()
+                ?: throw IllegalStateException("Cannot get course unit: missing or invalid credits")
+            val duration = rowMap["durata"]?.text()?.cleanText()?.toIntOrNull()
+
+            Esse3CourseUnit(
+                name = unitName,
+                activityType = activityType,
+                formationType = formationType,
+                sector = sector,
+                credits = credits,
+                duration = duration
+            )
+        }
+
+        return Esse3CourseDetails(
+            code = code,
+            name = name,
+            courseCode = courseCode,
+            courseName = courseName,
+            degreeCode = degreeCode,
+            degreeDescription = degreeDesc,
+            year = year,
+            status = status,
+            examDate = examDate,
+            grade = grade,
+            notes = notes,
+            units = units
+        )
+    }
+
+    /**
+     * Gets all exam attempts for a course.
+     *
+     * @param course The course to get exam attempts for
+     * @return The list of exam attempts
+     */
+    suspend fun getCourseExamAttempts(course: Esse3Course): List<Esse3ExamAttempt> {
+        val doc = executeGet(course.examAttemptsUrlPath)
+
+        val table = doc.selectFirst("#tableProve")
+            ?: throw IllegalStateException("Cannot get exam attempts: missing table")
+
+        val headers = table.select("thead tr th").map {
+            val node = it.firstChild() ?: it
+            node.nodeValue().trim().lowercase()
+        }
+
+        return table.select("tbody tr").map { row ->
+            val cells = row.select("td")
+            val rowMap = headers.zip(cells).toMap()
+
+            val examDate = rowMap["data appello"]?.text()?.cleanText()?.let { parseDate(it) }
+            val examType = rowMap["tipo d'esame"]?.text()?.cleanText() ?: ""
+            val gradeText = rowMap["voto/giudizio"]?.text()?.cleanText() ?: ""
+            val status = rowMap["stato"]?.text()?.cleanText() ?: ""
+            val verbalizationDate = rowMap["data verb"]?.text()?.cleanText()?.let { parseDate(it) }
+            val passedText = rowMap["superato"]?.text()?.cleanText() ?: ""
+
+            val outcome = when {
+                status.equals("Prenotato", ignoreCase = true) -> Esse3ExamAttemptOutcome.Booked
+                gradeText.equals("Assente", ignoreCase = true) -> Esse3ExamAttemptOutcome.Absent
+                gradeText.equals("Ritirato", ignoreCase = true) -> Esse3ExamAttemptOutcome.Withdrawn
+                gradeText.equals("Respinto", ignoreCase = true) || 
+                gradeText.equals("Non superato", ignoreCase = true) -> Esse3ExamAttemptOutcome.Failed
+                else -> {
+                    val grade = Esse3Grade.parse(gradeText)
+                    if (grade != null) {
+                        Esse3ExamAttemptOutcome.Passed(grade)
+                    } else if (gradeText.isEmpty() && passedText.equals("No", ignoreCase = true)) {
+                        Esse3ExamAttemptOutcome.Failed
+                    } else {
+                        throw IllegalStateException("Cannot determine exam outcome for attempt on $examDate with status '$status', grade '$gradeText' and passed '$passedText'")
+                    }
+                }
+            }
+
+            Esse3ExamAttempt(
+                examDate = examDate,
+                examType = examType,
+                outcome = outcome,
+                verbalizationDate = verbalizationDate
+            )
+        }
     }
 }

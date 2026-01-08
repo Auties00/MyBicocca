@@ -29,18 +29,6 @@ class ElearningCourseApi(
     /**
      * Gets all courses the user is enrolled in.
      *
-     * Returns a list of courses with their basic information including:
-     * - Course ID, name, and description
-     * - Enrollment dates (start/end)
-     * - Completion progress (if enabled)
-     * - Course image
-     * - Category information
-     *
-     * ## Note
-     *
-     * The `userId` parameter should be the ID of the authenticated user,
-     * which can be obtained from [ElearningSiteApi.getSiteInfo].
-     *
      * @param wsToken The web service token (32 characters)
      * @param userId The user ID to get courses for (from site info)
      * @return List of enrolled courses wrapped in [ElearningGetUserCoursesResponse]
@@ -53,28 +41,6 @@ class ElearningCourseApi(
 
     /**
      * Gets the contents of a course (sections and modules).
-     *
-     * Returns the complete structure of a course including:
-     * - All sections with their names, summaries, and visibility
-     * - All modules/activities within each section
-     * - Module details (type, completion status, files, dates)
-     *
-     * ## Module Types
-     *
-     * Common module types include:
-     * - `quiz`: Quiz activity
-     * - `assign`: Assignment
-     * - `forum`: Discussion forum
-     * - `resource`: File resource
-     * - `url`: URL resource
-     * - `page`: Page resource
-     * - `label`: Text label
-     *
-     * ## Completion Tracking
-     *
-     * If completion tracking is enabled for the course, each module
-     * will have completion data indicating whether the user has
-     * completed the activity.
      *
      * @param wsToken The web service token (32 characters)
      * @param courseId The course ID to get contents for

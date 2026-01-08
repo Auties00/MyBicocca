@@ -1,101 +1,103 @@
 package it.attendance100.mybicocca.data.api.esse3
 
-import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.fail
+import java.time.LocalDate
 
-/**
- * Integration tests for [Esse3ExamsApi].
- */
 class Esse3ExamsApiTest : Esse3TestBase() {
-
-    @Test
-    fun `getAvailableExamSessions returns exam list`() {
-        runBlocking {
-            val sessions = api.exams.getAvailableExamSessions()
-
-            assertNotNull(sessions, "Exam sessions should not be null")
-
-            println("Available exam sessions: ${sessions.size}")
-            sessions.take(10).forEach { exam ->
-                println("  [${exam.courseCode}] ${exam.courseName}")
-                exam.date?.let { println("    Date: $it") }
-                println("    Type: ${exam.type}")
-                exam.location?.let { println("    Location: $it") }
-                exam.professor?.let { println("    Professor: $it") }
-            }
-
-            if (sessions.size > 10) {
-                println("  ... and ${sessions.size - 10} more exam sessions")
-            }
-        }
+    companion object {
+        private const val MOCK_EXAM_NOTES = "TEST - PRENOTAZIONE AUTOMATICA"
     }
 
     @Test
-    fun `getExamReservations returns current reservations`() {
-        runBlocking {
-            val reservations = api.exams.getExamReservations()
-
-            assertNotNull(reservations, "Exam reservations should not be null")
-
-            println("Current exam reservations: ${reservations.size}")
-            reservations.forEach { reservation ->
-                println("  [${reservation.courseCode}] ${reservation.courseName}")
-                reservation.date?.let { println("    Date: $it") }
-                println("    Type: ${reservation.type}")
-                reservation.location?.let { println("    Location: $it") }
-            }
-        }
+    suspend fun getAvailableExamSessions() {
+        val sessions = api.exams.getAvailableExamSessions()
+        assertNotNull(sessions)
     }
 
     @Test
-    fun `getExamResults returns past results`() {
-        runBlocking {
-            val results = api.exams.getExamResults()
+    suspend fun getExamSessionInfo() {
+        val sessions = api.exams.getAvailableExamSessions()
+        if (sessions.isEmpty()) return
 
-            assertNotNull(results, "Exam results should not be null")
-
-            println("Exam results: ${results.size}")
-            results.take(10).forEach { result ->
-                println("  [${result.courseCode}] ${result.courseName}")
-                result.date?.let { println("    Date: $it") }
-                println("    Grade: ${result.grade}")
-                println("    Status: ${result.status}")
-                result.professor?.let { println("    Professor: $it") }
-            }
-
-            if (results.size > 10) {
-                println("  ... and ${results.size - 10} more results")
-            }
-        }
+        val session = sessions.first()
+        val sessionInfo = api.exams.getExamSessionInfo(session)
+        assertNotNull(sessionInfo.teachingActivity)
+        assertNotNull(sessionInfo.description)
+        assertNotNull(sessionInfo.type)
+        assertNotNull(sessionInfo.datetime)
     }
 
     @Test
-    fun `printReservation returns PDF bytes`() {
-        runBlocking {
-            val reservations = api.exams.getExamReservations()
+    suspend fun getExamReservations() {
+        val reservations = api.exams.getExamReservations()
+        assertNotNull(reservations)
+    }
 
-            if (reservations.isNotEmpty()) {
-                val firstReservation = reservations.first()
-                val pdfBytes = api.exams.printReservation(firstReservation)
+    @Test
+    suspend fun printExamReservation() {
+        val reservations = api.exams.getExamReservations()
+        if (reservations.isEmpty()) return
 
-                assertNotNull(pdfBytes, "PDF bytes should not be null")
-                assertTrue(pdfBytes.isNotEmpty(), "PDF bytes should not be empty")
+        val reservation = reservations.first()
+        val pdfChannel = api.exams.printExamReservation(reservation)
+        assertNotNull(pdfChannel)
+    }
 
-                // Check PDF header %PDF-
-                val isPdf = pdfBytes.size > 4 &&
-                        pdfBytes[0] == 0x25.toByte() &&
-                        pdfBytes[1] == 0x50.toByte() &&
-                        pdfBytes[2] == 0x44.toByte() &&
-                        pdfBytes[3] == 0x46.toByte()
+    @Test
+    suspend fun getExamReservationsHistory() {
+        val history = api.exams.getExamReservationsHistory()
+        assertNotNull(history)
+    }
 
-                assertTrue(isPdf, "Should be a valid PDF file")
+    @Test
+    suspend fun manageExamReservation() {
+        val sessions = api.exams.getAvailableExamSessions()
+        if (sessions.isEmpty()) {
+            return
+        }
 
-                println("Exam reservation PDF retrieved: ${pdfBytes.size} bytes")
-            } else {
-                println("No reservations available to test printing")
+        val today = LocalDate.now()
+        val bookableSessions = sessions.filter { session ->
+            !session.registrationStartDate.isAfter(today) && !session.registrationEndDate.isBefore(today)
+        }
+
+        if (bookableSessions.isEmpty()) {
+            return
+        }
+
+        var success = false
+        for (session in bookableSessions) {
+            if (success) break
+
+            try {
+                api.exams.reserveExamSession(session, MOCK_EXAM_NOTES)
+
+                val reservations = api.exams.getExamReservations()
+                val newReservation = reservations.find { it.teachingActivity.contains(session.courseName, ignoreCase = true) }
+                    ?: continue
+
+                assertTrue(reservations.isNotEmpty())
+
+                api.exams.cancelExamReservation(newReservation)
+
+                val verifyReservations = api.exams.getExamReservations()
+                val cancelled = verifyReservations.none {
+                    it.sessionId == newReservation.sessionId &&
+                    it.teachingActivityId == newReservation.teachingActivityId
+                }
+                assertTrue(cancelled)
+
+                success = true
+            } catch (_: Throwable) {
+                continue
             }
+        }
+
+        if (!success && bookableSessions.isNotEmpty()) {
+            fail { "Cannot manage exam reservation: no valid session found for booking" }
         }
     }
 }

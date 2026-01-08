@@ -1,6 +1,5 @@
 package it.attendance100.mybicocca.data.api.bicoccapp
 
-import de.jensklingenberg.ktorfit.Response
 import de.jensklingenberg.ktorfit.http.DELETE
 import de.jensklingenberg.ktorfit.http.GET
 import de.jensklingenberg.ktorfit.http.Header
@@ -21,19 +20,18 @@ interface BicoccappAuthApi {
      * @param code Authorization code from the IdP (single-use).
      * @param state CSRF token to validate against the original request.
      * @param cookies Session cookies from the auth flow.
-     * @return 302 redirect with tokens on success.
      */
     @GET("auth/openid_connect/callback")
     suspend fun handleLoginCallback(
 	    @Query("code") code: String,
 	    @Query("state") state: String,
 	    @Header("Cookie") cookies: String
-    ): Response<Unit>
+    )
 
     /**
      * Terminates the user session and revokes all associated tokens.
      * Client should clear local tokens regardless of response status.
      */
     @DELETE("auth/sign_out")
-    suspend fun logout(): Response<BicoccappLogoutResponse>
+    suspend fun logout(): BicoccappLogoutResponse
 }

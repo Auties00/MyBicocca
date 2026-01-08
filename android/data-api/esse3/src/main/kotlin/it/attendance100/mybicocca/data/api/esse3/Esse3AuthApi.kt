@@ -12,7 +12,7 @@ import it.attendance100.mybicocca.data.api.esse3.Esse3AbstractApi.Companion.BASE
  *
  * @return A string that represents the URL of the auth provider
  */
-val ESSE3_LOGIN_URL = "$BASE_URL/auth/studente/HomePageStudente.do"
+const val ESSE3_LOGIN_URL = "$BASE_URL/auth/studente/HomePageStudente.do"
 
 /**
  * API for authentication operations.
