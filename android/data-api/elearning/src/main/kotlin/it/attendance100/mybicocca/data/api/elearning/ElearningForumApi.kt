@@ -1,18 +1,7 @@
 package it.attendance100.mybicocca.data.api.elearning
 
-import io.ktor.client.HttpClient
-import it.attendance100.mybicocca.data.dto.elearning.DiscussionOption
-import it.attendance100.mybicocca.data.dto.elearning.ElearningAddForumDiscussionRequest
-import it.attendance100.mybicocca.data.dto.elearning.ElearningAddForumDiscussionResponse
-import it.attendance100.mybicocca.data.dto.elearning.ElearningAddForumPostRequest
-import it.attendance100.mybicocca.data.dto.elearning.ElearningAddForumPostResponse
-import it.attendance100.mybicocca.data.dto.elearning.ElearningGetForumDiscussionPostsRequest
-import it.attendance100.mybicocca.data.dto.elearning.ElearningGetForumDiscussionPostsResponse
-import it.attendance100.mybicocca.data.dto.elearning.ElearningGetForumDiscussionsRequest
-import it.attendance100.mybicocca.data.dto.elearning.ElearningGetForumDiscussionsResponse
-import it.attendance100.mybicocca.data.dto.elearning.ElearningGetForumsRequest
-import it.attendance100.mybicocca.data.dto.elearning.ElearningGetForumsResponse
-import it.attendance100.mybicocca.data.dto.elearning.ElearningSortOrder
+import io.ktor.client.*
+import it.attendance100.mybicocca.data.dto.elearning.*
 import kotlinx.serialization.json.Json
 
 /**
@@ -46,7 +35,7 @@ class ElearningForumApi(
     suspend fun getForumDiscussions(
         wsToken: String,
         forumId: Int,
-        sortOrder: ElearningSortOrder = ElearningSortOrder.LAST_POST_DESCENDING,
+        sortOrder: ElearningDiscussionSortOrder = ElearningDiscussionSortOrder.LAST_POST_DESCENDING,
         page: Int = 0,
         perPage: Int = 10,
         groupId: Int = 0
@@ -80,7 +69,7 @@ class ElearningForumApi(
         subject: String,
         message: String,
         groupId: Int? = null,
-        options: List<DiscussionOption>? = null
+        options: List<ElearningDiscussionOption>? = null
     ): ElearningAddForumDiscussionResponse {
         return executeAuthenticatedRequest(
             wsToken,
@@ -96,7 +85,7 @@ class ElearningForumApi(
         postId: Int,
         subject: String,
         message: String,
-        options: List<DiscussionOption>? = null
+        options: List<ElearningDiscussionOption>? = null
     ): ElearningAddForumPostResponse {
         return executeAuthenticatedRequest(
             wsToken,

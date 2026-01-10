@@ -7,7 +7,7 @@ import kotlinx.serialization.Serializable
  * Represents a Moodle warning returned by API calls.
  */
 @Serializable
-data class ElearningWarning(
+data class ElearningResponseWarning(
     @SerialName("item")
     val item: String? = null,
     @SerialName("itemid")

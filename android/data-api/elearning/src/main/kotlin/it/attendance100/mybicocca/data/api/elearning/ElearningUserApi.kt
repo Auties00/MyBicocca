@@ -1,24 +1,7 @@
 package it.attendance100.mybicocca.data.api.elearning
 
-import io.ktor.client.HttpClient
-import it.attendance100.mybicocca.data.dto.elearning.ElearningAddUserDeviceRequest
-import it.attendance100.mybicocca.data.dto.elearning.ElearningAddUserDeviceResponse
-import it.attendance100.mybicocca.data.dto.elearning.ElearningGetCourseUserProfilesRequest
-import it.attendance100.mybicocca.data.dto.elearning.ElearningGetCourseUserProfilesResponse
-import it.attendance100.mybicocca.data.dto.elearning.ElearningGetPrivateFilesInfoRequest
-import it.attendance100.mybicocca.data.dto.elearning.ElearningGetPrivateFilesInfoResponse
-import it.attendance100.mybicocca.data.dto.elearning.ElearningGetUserPreferencesRequest
-import it.attendance100.mybicocca.data.dto.elearning.ElearningGetUserPreferencesResponse
-import it.attendance100.mybicocca.data.dto.elearning.ElearningGetUsersByFieldRequest
-import it.attendance100.mybicocca.data.dto.elearning.ElearningGetUsersByFieldResponse
-import it.attendance100.mybicocca.data.dto.elearning.ElearningRemoveUserDeviceRequest
-import it.attendance100.mybicocca.data.dto.elearning.ElearningRemoveUserDeviceResponse
-import it.attendance100.mybicocca.data.dto.elearning.ElearningUpdateUserPreferencesRequest
-import it.attendance100.mybicocca.data.dto.elearning.ElearningUpdateUserPreferencesResponse
-import it.attendance100.mybicocca.data.dto.elearning.ElearningUserPreference
-import it.attendance100.mybicocca.data.dto.elearning.ElearningViewUserProfileRequest
-import it.attendance100.mybicocca.data.dto.elearning.ElearningViewUserProfileResponse
-import it.attendance100.mybicocca.data.dto.elearning.UserCourseRequest
+import io.ktor.client.*
+import it.attendance100.mybicocca.data.dto.elearning.*
 import kotlinx.serialization.json.Json
 
 /**
@@ -65,7 +48,7 @@ class ElearningUserApi(
      */
     suspend fun getCourseUserProfiles(
         wsToken: String,
-        userList: List<UserCourseRequest>
+        userList: List<ElearningUserCourseRequest>
     ): ElearningGetCourseUserProfilesResponse {
         return executeAuthenticatedRequest(wsToken, ElearningGetCourseUserProfilesRequest(userList))
     }
@@ -78,7 +61,7 @@ class ElearningUserApi(
         userId: Int,
         courseId: Int
     ): ElearningGetCourseUserProfilesResponse {
-        return getCourseUserProfiles(wsToken, listOf(UserCourseRequest(userId, courseId)))
+        return getCourseUserProfiles(wsToken, listOf(ElearningUserCourseRequest(userId, courseId)))
     }
 
     /**
