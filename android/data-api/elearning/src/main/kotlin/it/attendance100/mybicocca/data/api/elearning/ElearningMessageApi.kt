@@ -1,24 +1,7 @@
 package it.attendance100.mybicocca.data.api.elearning
 
-import io.ktor.client.HttpClient
-import it.attendance100.mybicocca.data.dto.elearning.ConversationType
-import it.attendance100.mybicocca.data.dto.elearning.ElearningBlockUserRequest
-import it.attendance100.mybicocca.data.dto.elearning.ElearningBlockUserResponse
-import it.attendance100.mybicocca.data.dto.elearning.ElearningDeleteConversationsRequest
-import it.attendance100.mybicocca.data.dto.elearning.ElearningDeleteConversationsResponse
-import it.attendance100.mybicocca.data.dto.elearning.ElearningGetConversationMessagesRequest
-import it.attendance100.mybicocca.data.dto.elearning.ElearningGetConversationMessagesResponse
-import it.attendance100.mybicocca.data.dto.elearning.ElearningGetConversationsRequest
-import it.attendance100.mybicocca.data.dto.elearning.ElearningGetConversationsResponse
-import it.attendance100.mybicocca.data.dto.elearning.ElearningGetUnreadConversationCountsRequest
-import it.attendance100.mybicocca.data.dto.elearning.ElearningGetUnreadConversationCountsResponse
-import it.attendance100.mybicocca.data.dto.elearning.ElearningMarkAllConversationMessagesAsReadRequest
-import it.attendance100.mybicocca.data.dto.elearning.ElearningMarkAsReadResponse
-import it.attendance100.mybicocca.data.dto.elearning.ElearningSendInstantMessagesRequest
-import it.attendance100.mybicocca.data.dto.elearning.ElearningSendInstantMessagesResponse
-import it.attendance100.mybicocca.data.dto.elearning.ElearningUnblockUserRequest
-import it.attendance100.mybicocca.data.dto.elearning.ElearningUnblockUserResponse
-import it.attendance100.mybicocca.data.dto.elearning.InstantMessage
+import io.ktor.client.*
+import it.attendance100.mybicocca.data.dto.elearning.*
 import kotlinx.serialization.json.Json
 
 /**
@@ -48,7 +31,7 @@ class ElearningMessageApi(
         userId: Int,
         limitFrom: Int = 0,
         limitNum: Int = 20,
-        type: ConversationType? = null,
+        type: ElearningConversationType? = null,
         favourites: Boolean? = null
     ): ElearningGetConversationsResponse {
         return executeAuthenticatedRequest(
@@ -95,7 +78,7 @@ class ElearningMessageApi(
      */
     suspend fun sendInstantMessages(
         wsToken: String,
-        messages: List<InstantMessage>
+        messages: List<ElearningInstantMessage>
     ): ElearningSendInstantMessagesResponse {
         return executeAuthenticatedRequest(wsToken, ElearningSendInstantMessagesRequest(messages))
     }
@@ -113,7 +96,7 @@ class ElearningMessageApi(
         toUserId: Int,
         text: String
     ): ElearningSendInstantMessagesResponse {
-        return sendInstantMessages(wsToken, listOf(InstantMessage(toUserId, text)))
+        return sendInstantMessages(wsToken, listOf(ElearningInstantMessage(toUserId, text)))
     }
 
     /**

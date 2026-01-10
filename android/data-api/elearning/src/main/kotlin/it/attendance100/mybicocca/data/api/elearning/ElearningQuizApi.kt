@@ -1,28 +1,8 @@
 package it.attendance100.mybicocca.data.api.elearning
 
-import io.ktor.client.HttpClient
-import it.attendance100.mybicocca.data.dto.elearning.AttemptDataItem
-import it.attendance100.mybicocca.data.dto.elearning.ElearningGetAttemptDataRequest
-import it.attendance100.mybicocca.data.dto.elearning.ElearningGetAttemptDataResponse
-import it.attendance100.mybicocca.data.dto.elearning.ElearningGetAttemptReviewRequest
-import it.attendance100.mybicocca.data.dto.elearning.ElearningGetAttemptReviewResponse
-import it.attendance100.mybicocca.data.dto.elearning.ElearningGetAttemptSummaryRequest
-import it.attendance100.mybicocca.data.dto.elearning.ElearningGetAttemptSummaryResponse
-import it.attendance100.mybicocca.data.dto.elearning.ElearningGetQuizAccessInfoRequest
-import it.attendance100.mybicocca.data.dto.elearning.ElearningGetQuizAccessInfoResponse
-import it.attendance100.mybicocca.data.dto.elearning.ElearningGetQuizzesRequest
-import it.attendance100.mybicocca.data.dto.elearning.ElearningGetQuizzesResponse
-import it.attendance100.mybicocca.data.dto.elearning.ElearningGetUserAttemptsRequest
-import it.attendance100.mybicocca.data.dto.elearning.ElearningGetUserAttemptsResponse
-import it.attendance100.mybicocca.data.dto.elearning.ElearningGetUserBestGradeRequest
-import it.attendance100.mybicocca.data.dto.elearning.ElearningGetUserBestGradeResponse
-import it.attendance100.mybicocca.data.dto.elearning.ElearningProcessAttemptRequest
-import it.attendance100.mybicocca.data.dto.elearning.ElearningProcessAttemptResponse
-import it.attendance100.mybicocca.data.dto.elearning.ElearningSaveAttemptRequest
-import it.attendance100.mybicocca.data.dto.elearning.ElearningSaveAttemptResponse
-import it.attendance100.mybicocca.data.dto.elearning.ElearningStartAttemptRequest
-import it.attendance100.mybicocca.data.dto.elearning.ElearningStartAttemptResponse
-import it.attendance100.mybicocca.data.dto.elearning.PreflightDataItem
+import io.ktor.client.*
+import it.attendance100.mybicocca.data.dto.elearning.*
+import it.attendance100.mybicocca.data.dto.elearning.ElearningGetUserAttemptsRequest.AttemptStatusFilter
 import kotlinx.serialization.json.Json
 
 /**
@@ -92,7 +72,7 @@ class ElearningQuizApi(
         wsToken: String,
         quizId: Int,
         userId: Int? = null,
-        status: ElearningGetUserAttemptsRequest.AttemptStatus = ElearningGetUserAttemptsRequest.AttemptStatus.ALL,
+        status: AttemptStatusFilter = AttemptStatusFilter.ALL,
         includePreviews: Boolean = false
     ): ElearningGetUserAttemptsResponse {
         return executeAuthenticatedRequest(
@@ -115,7 +95,7 @@ class ElearningQuizApi(
     suspend fun startAttempt(
         wsToken: String,
         quizId: Int,
-        preflightData: List<PreflightDataItem> = emptyList(),
+        preflightData: List<ElearningPreflightDataItem> = emptyList(),
         forceNew: Boolean = false
     ): ElearningStartAttemptResponse {
         return executeAuthenticatedRequest(
@@ -139,7 +119,7 @@ class ElearningQuizApi(
         wsToken: String,
         attemptId: Int,
         page: Int = 0,
-        preflightData: List<PreflightDataItem> = emptyList()
+        preflightData: List<ElearningPreflightDataItem> = emptyList()
     ): ElearningGetAttemptDataResponse {
         return executeAuthenticatedRequest(
             wsToken,
@@ -160,7 +140,7 @@ class ElearningQuizApi(
     suspend fun getAttemptSummary(
         wsToken: String,
         attemptId: Int,
-        preflightData: List<PreflightDataItem> = emptyList()
+        preflightData: List<ElearningPreflightDataItem> = emptyList()
     ): ElearningGetAttemptSummaryResponse {
         return executeAuthenticatedRequest(
             wsToken,
@@ -182,8 +162,8 @@ class ElearningQuizApi(
     suspend fun saveAttempt(
         wsToken: String,
         attemptId: Int,
-        data: List<AttemptDataItem> = emptyList(),
-        preflightData: List<PreflightDataItem> = emptyList()
+        data: List<ElearningAttemptDataItem> = emptyList(),
+        preflightData: List<ElearningPreflightDataItem> = emptyList()
     ): ElearningSaveAttemptResponse {
         return executeAuthenticatedRequest(
             wsToken,
@@ -207,10 +187,10 @@ class ElearningQuizApi(
     suspend fun processAttempt(
         wsToken: String,
         attemptId: Int,
-        data: List<AttemptDataItem> = emptyList(),
+        data: List<ElearningAttemptDataItem> = emptyList(),
         finishAttempt: Boolean = true,
         timeUp: Boolean = false,
-        preflightData: List<PreflightDataItem> = emptyList()
+        preflightData: List<ElearningPreflightDataItem> = emptyList()
     ): ElearningProcessAttemptResponse {
         return executeAuthenticatedRequest(
             wsToken,

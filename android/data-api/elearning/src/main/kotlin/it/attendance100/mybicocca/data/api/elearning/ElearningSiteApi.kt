@@ -1,24 +1,13 @@
 package it.attendance100.mybicocca.data.api.elearning
 
-import io.ktor.client.HttpClient
-import io.ktor.client.call.body
-import io.ktor.client.request.post
-import io.ktor.client.request.setBody
-import io.ktor.http.ContentType
-import io.ktor.http.URLBuilder
-import io.ktor.http.contentType
+import io.ktor.client.*
+import io.ktor.client.call.*
+import io.ktor.client.request.*
+import io.ktor.http.*
 import it.attendance100.mybicocca.data.dto.elearning.ElearningGetPublicConfigResponse
 import it.attendance100.mybicocca.data.dto.elearning.ElearningGetSiteInfoRequest
 import it.attendance100.mybicocca.data.dto.elearning.ElearningGetSiteInfoResponse
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonArray
-import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.json.buildJsonArray
-import kotlinx.serialization.json.buildJsonObject
-import kotlinx.serialization.json.contentOrNull
-import kotlinx.serialization.json.decodeFromJsonElement
-import kotlinx.serialization.json.jsonObject
-import kotlinx.serialization.json.put
+import kotlinx.serialization.json.*
 
 /**
  * API for site-level operations and authentication.
@@ -80,7 +69,7 @@ class ElearningSiteApi(
             ?: throw IllegalStateException("Invalid response: 'data' field missing")
         val config = json.decodeFromJsonElement<ElearningGetPublicConfigResponse>(data)
 
-        val baseUrl = config.launchurl ?: throw IllegalStateException("No auth url found")
+        val baseUrl = config.launchUrl ?: throw IllegalStateException("No auth url found")
         return URLBuilder(baseUrl).apply {
             parameters.append("service", "moodle_mobile_app")
             parameters.append("passport", (Math.random() * 1000).toString())
