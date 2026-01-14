@@ -1,9 +1,11 @@
 package it.attendance100.mybicocca.data.api.esse3
 
 import io.ktor.client.*
+import io.ktor.http.*
 import it.attendance100.mybicocca.data.dto.esse3.*
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
+import org.jsoup.nodes.FormElement
 
 /**
  * API for questionnaire operations.
@@ -20,6 +22,7 @@ class Esse3QuestionnaireApi(
         private const val VALDID_MENU_COD = "menu_link-navbox_questionari_Questionari_generici"
         private const val WRAPPER_VALDID_ENTRYPOINT = "/auth/questionari/QuestionariWrapperAdLibrettoValDid.do"
         private const val QUESTIONNAIRE_SUBMIT_ENTRYPOINT = "/questionari/QuestionariPaginaSubmitNew.do"
+        private const val NEW_QUESTIONNAIRE_ENTRYPOINT = "/questionari/QuestionariWrapperCompilaNew.do"
     }
 
     /**
@@ -57,7 +60,7 @@ class Esse3QuestionnaireApi(
                 ?: throw IllegalStateException("Cannot get evaluation courses: missing academic year")
 
             val questionnaireCell = rowMap["q.val."]
-            val questionnaireLink = questionnaireCell?.selectFirst("a[href*=adsce_id]")
+            val questionnaireLink = questionnaireCell?.selectFirst("a")
             val status = parseEvaluationCourseStatus(questionnaireLink)
 
             Esse3EvaluationCourse(
@@ -82,11 +85,13 @@ class Esse3QuestionnaireApi(
      * @throws IllegalArgumentException if the course has no questionnaire available
      */
     suspend fun getEvaluationPartitions(course: Esse3EvaluationCourse): List<Esse3EvaluationPartition> {
+        if(course.status is Esse3EvaluationCourseStatus.NotAvailable) {
+            return emptyList()
+        }
+
         val adsceId = when (val status = course.status) {
-            is Esse3EvaluationCourseStatus.Pending -> status.adsceId
-            is Esse3EvaluationCourseStatus.Completed -> status.adsceId
-            is Esse3EvaluationCourseStatus.NotAvailable ->
-                throw IllegalArgumentException("Cannot get partitions: course '${course.courseName}' has no questionnaire available")
+            is Esse3EvaluationCourseStatus.Pending -> status.activityId
+            is Esse3EvaluationCourseStatus.Completed -> status.activityId
         }
 
         val doc = executeGet(
@@ -97,34 +102,38 @@ class Esse3QuestionnaireApi(
         val table = doc.selectFirst("table[id*=tabellaPartizioni]")
             ?: throw IllegalStateException("Cannot get evaluation partitions: missing partitions table")
 
-        val rows = table.select("tbody tr")
+        val headers = table.select("thead tr th").map {
+            val node = it.firstChild() ?: it
+            node.nodeValue().trim().lowercase()
+        }
 
-        return rows.map { row ->
+        return table.select("tbody tr").mapNotNull { row ->
             val cells = row.select("td")
-            if (cells.size < 5) {
-                throw IllegalStateException("Cannot get evaluation partitions: expected at least 5 columns, got ${cells.size}")
-            }
+            val rowMap = headers.zip(cells).toMap()
 
-            val unitName = cells[0].text().cleanText()
-            val teacher = cells[1].text().cleanText()
-            val activityType = cells[2].text().cleanText()
-            val partition = cells[3].text().cleanText()
+            val unitName = rowMap["unità didattica"]?.text()?.cleanText()
+                ?: throw IllegalStateException("Cannot get evaluation partitions: missing unit")
 
-            val questionnaireCell = cells[4]
-            val link = questionnaireCell.selectFirst("a[href*=QuestionariWrapperNew]")
-                ?: throw IllegalStateException("Cannot get evaluation partitions: missing questionnaire link")
+            val teacher = rowMap["docente"]?.text()?.cleanText()
+                ?: throw IllegalStateException("Cannot get evaluation partitions: missing teacher")
 
-            val questionnaireUrl = link.attr("href")
-            val imgAlt = link.selectFirst("img")?.attr("alt") ?: ""
-            val status = Esse3EvaluationPartitionStatus.fromImageAlt(imgAlt)
+            val activityType = rowMap["tipo attività"]?.text()?.cleanText()
+                ?: throw IllegalStateException("Cannot get evaluation partitions: missing activity type")
+
+            val partition = rowMap["partizione"]?.text()?.cleanText()
+                ?: throw IllegalStateException("Cannot get evaluation partitions: missing partition")
+
+            val questionnaire = rowMap["questionario"]
+                ?: throw IllegalStateException("Cannot get evaluation partitions: missing questionnaire")
+            val questionnaireLink = questionnaire.selectFirst("a")
+            val status = parseEvaluationPartitionStatus(questionnaireLink)
 
             Esse3EvaluationPartition(
                 unitName = unitName,
                 teacher = teacher,
                 activityType = activityType,
                 partition = partition,
-                status = status,
-                questionnaireUrl = questionnaireUrl
+                status = status
             )
         }
     }
@@ -135,25 +144,20 @@ class Esse3QuestionnaireApi(
      * @param partition The partition to start the questionnaire for
      * @return The first page of the questionnaire
      */
-    suspend fun startQuestionnaire(partition: Esse3EvaluationPartition): Esse3QuestionnairePage {
-        // First, load the wrapper page to initialize the questionnaire
-        val wrapperDoc = executeGet(partition.questionnaireUrl)
-
-        // Check if there's a form to start the questionnaire
-        val startForm = wrapperDoc.selectFirst("form[action*=QuestionariWrapperCompila]")
-        val pageDoc = if (startForm != null) {
-            val formFields = startForm.extractHiddenFields()
-            executePost("/questionari/QuestionariWrapperCompilaNew.do", formFields)
-        } else {
-            // Try to find direct link to questionnaire page
-            val pageLink = wrapperDoc.selectFirst("a[href*=QuestionariPaginaNew]")?.attr("href")
-            if (pageLink != null) {
-                executeGet(pageLink)
-            } else {
-                wrapperDoc
-            }
+    suspend fun startQuestionnaire(partition: Esse3EvaluationPartition): Esse3QuestionnairePage? {
+        if(partition.status !is Esse3EvaluationPartitionStatus.Pending) {
+            return null
         }
 
+        val wrapperDoc = executeGet(partition.status.questionnaireUrl)
+        val startForm = wrapperDoc.selectFirst("form#quest_form_compilazioni1") as? FormElement
+        if(startForm == null) {
+            return null
+        }
+
+        val formFields = startForm.formData()
+            .associate { it.key() to it.value() }
+        val pageDoc = executePost(NEW_QUESTIONNAIRE_ENTRYPOINT, formFields)
         return parseQuestionnairePage(pageDoc)
     }
 
@@ -175,18 +179,15 @@ class Esse3QuestionnaireApi(
 
         val doc = executePost(QUESTIONNAIRE_SUBMIT_ENTRYPOINT, formFields)
 
-        // Check for validation errors
         val errorMessage = doc.selectFirst(".alert-danger, .errore, #error")?.text()?.cleanText()
         if (errorMessage != null && errorMessage.isNotBlank()) {
             return Esse3QuestionnaireSubmitResult.ValidationError(errorMessage)
         }
 
-        // Check if questionnaire is completed (summary page)
         if (doc.selectFirst("form[action*=QuestionariRiepilogo]") != null || doc.selectFirst("#quest-toolbarEsci") != null || doc.title().contains("Riepilogo", ignoreCase = true)) {
             return Esse3QuestionnaireSubmitResult.Completed
         }
 
-        // Parse next page
         return Esse3QuestionnaireSubmitResult.NextPage(parseQuestionnairePage(doc))
     }
 
@@ -238,14 +239,38 @@ class Esse3QuestionnaireApi(
         }
 
         val href = link.attr("href")
-        val adsceIdMatch = "adsce_id=(\\d+)".toRegex().find(href)
-        val adsceId = adsceIdMatch?.groupValues?.get(1)?.toLongOrNull()
+        val queryParameters = parseQueryString(href)
+        val activityId= queryParameters["adsce_id"]
+            ?.toLongOrNull()
             ?: return Esse3EvaluationCourseStatus.NotAvailable
 
-        val imgAlt = link.selectFirst("img")?.attr("alt") ?: ""
-        return when {
-            imgAlt.contains("compilato", ignoreCase = true) -> Esse3EvaluationCourseStatus.Completed(adsceId)
-            else -> Esse3EvaluationCourseStatus.Pending(adsceId)
+        val imgAlt = link.selectFirst("img")
+            ?.attr("alt")
+            ?: ""
+        return if(imgAlt.contains("Questionario compilato", ignoreCase = true)) {
+            Esse3EvaluationCourseStatus.Completed(activityId)
+        } else {
+            Esse3EvaluationCourseStatus.Pending(activityId)
+        }
+    }
+
+    private fun parseEvaluationPartitionStatus(link: Element?): Esse3EvaluationPartitionStatus {
+        if (link == null) {
+            return Esse3EvaluationPartitionStatus.NotAvailable
+        }
+
+        val href = link.attr("href")
+        if(href.isBlank()) {
+            return Esse3EvaluationPartitionStatus.NotAvailable
+        }
+
+        val imgAlt = link.selectFirst("img")
+            ?.attr("alt")
+            ?: ""
+        return if(imgAlt.contains("Tutti i questionari compilati", ignoreCase = true)) {
+            Esse3EvaluationPartitionStatus.Completed
+        } else {
+            Esse3EvaluationPartitionStatus.Pending(href)
         }
     }
 
@@ -267,12 +292,10 @@ class Esse3QuestionnaireApi(
             }
         }
 
-        // Parse required question IDs from hidden field
         val requiredField = form.selectFirst("input[name=lista_obbligatorie]")?.attr("value") ?: ""
         val requiredIds = requiredField.split("|")
             .mapNotNull { it.trim().toLongOrNull() }
 
-        // Check navigation buttons
         val canGoBack = form.selectFirst("input[name=sbmPrecedente]") != null
         val canGoForward = form.selectFirst("input[name=sbmSuccessivo]") != null
 
@@ -313,7 +336,6 @@ class Esse3QuestionnaireApi(
         val idMatch = "quest_container_domanda_(\\d+)".toRegex().find(container.id())
         val questionId = idMatch?.groupValues?.get(1)?.toLongOrNull() ?: return null
 
-        // Get question text from legend, label, or header
         val text = container.selectFirst("legend:not(.no-title)")?.text()?.cleanText()
             ?: container.selectFirst(".header-h4 h4 b")?.text()?.cleanText()
             ?: container.selectFirst("label")?.text()?.cleanText()
@@ -323,7 +345,6 @@ class Esse3QuestionnaireApi(
         val required = text.endsWith("*") ||
                 container.selectFirst("[data-required=true], [aria-required=true]") != null
 
-        // Determine question type
         val radios = container.select("input[type=radio]")
         val checkboxes = container.select("input[type=checkbox]")
         val textarea = container.selectFirst("textarea")

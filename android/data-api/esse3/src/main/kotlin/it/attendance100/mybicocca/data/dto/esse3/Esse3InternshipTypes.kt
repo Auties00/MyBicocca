@@ -2,6 +2,7 @@ package it.attendance100.mybicocca.data.dto.esse3
 
 import java.time.LocalDate
 import java.time.LocalDateTime
+import kotlin.time.Duration
 
 /**
  * Type of internship opportunity.
@@ -122,12 +123,10 @@ sealed interface Esse3CareerType {
 data class Esse3InternshipOpportunity(
     val id: Long,
     val title: String,
-    val companyId: Long,
     val companyName: String,
     val type: Esse3InternshipType,
-    val applicationStartDate: LocalDateTime?,
-    val applicationEndDate: LocalDateTime?,
-    val isSaved: Boolean
+    val applicationEndDate: LocalDate,
+    var isSaved: Boolean
 )
 
 /**
@@ -137,19 +136,17 @@ data class Esse3InternshipOpportunityDetail(
     val id: Long,
     val title: String,
     val type: Esse3InternshipType,
-    val companyId: Long,
     val companyName: String,
-    val companyDescription: String,
+    val companyDescription: String?,
     val description: String,
     val trainingObjectives: String,
     val location: String,
     val functionalArea: String,
-    val benefits: String,
-    val expectedStartDate: LocalDate?,
-    val expectedDuration: String,
+    val benefits: String?,
+    val expectedStartDate: LocalDate,
+    val expectedDuration: Duration,
     val requirements: Esse3InternshipRequirements,
-    val applicationStartDate: LocalDateTime?,
-    val applicationEndDate: LocalDateTime?,
+    val applicationEndDate: LocalDate,
     val isSaved: Boolean
 )
 
@@ -159,7 +156,6 @@ data class Esse3InternshipOpportunityDetail(
 data class Esse3InternshipRequirements(
     val reservedFor: String,
     val careerTypes: List<Esse3CareerType>,
-    val computerSkills: String,
     val languages: List<Esse3LanguageRequirement>
 )
 

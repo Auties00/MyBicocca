@@ -1,16 +1,9 @@
 package it.attendance100.mybicocca.data.api.elearning
 
-import io.ktor.client.HttpClient
-import io.ktor.client.request.get
-import io.ktor.client.statement.bodyAsText
-import it.attendance100.mybicocca.data.dto.elearning.ElearningCourse
-import it.attendance100.mybicocca.data.dto.elearning.ElearningCourseArea
-import it.attendance100.mybicocca.data.dto.elearning.ElearningCourseCategory
-import it.attendance100.mybicocca.data.dto.elearning.ElearningCourseCategoryContents
-import it.attendance100.mybicocca.data.dto.elearning.ElearningGetCourseContentsRequest
-import it.attendance100.mybicocca.data.dto.elearning.ElearningGetCourseContentsResponse
-import it.attendance100.mybicocca.data.dto.elearning.ElearningGetUserCoursesRequest
-import it.attendance100.mybicocca.data.dto.elearning.ElearningGetUserCoursesResponse
+import io.ktor.client.*
+import io.ktor.client.request.*
+import io.ktor.client.statement.*
+import it.attendance100.mybicocca.data.dto.elearning.*
 import kotlinx.serialization.json.Json
 import org.jsoup.Jsoup
 import java.net.URI
@@ -132,5 +125,7 @@ class ElearningCourseApi(
 
         return ElearningCourseCategoryContents(name, subcategories, courses)
     }
+
+    // TODO: Register to course method
 }
 

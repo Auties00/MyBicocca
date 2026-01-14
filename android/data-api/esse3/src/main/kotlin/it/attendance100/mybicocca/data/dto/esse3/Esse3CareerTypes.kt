@@ -23,7 +23,7 @@ data class Esse3Course(
     val academicYear: String,
     val grade: Esse3Grade?,
     val examDate: LocalDate?,
-    val examAttemptsUrlPath: String
+    val examAttemptsUrlPath: String?
 )
 
 /**
@@ -108,6 +108,13 @@ sealed class Esse3Grade {
     }
 
     /**
+     * Approved without numeric grade (APPR - Approvato).
+     */
+    data object Approved : Esse3Grade() {
+        override fun toString(): String = "APPR"
+    }
+
+    /**
      * Absent from exam.
      */
     data object Absent : Esse3Grade() {
@@ -136,6 +143,7 @@ sealed class Esse3Grade {
             val trimmed = value.trim().uppercase()
             return when {
                 trimmed == "IDO" || trimmed == "IDONEO" -> Passed
+                trimmed == "APPR" || trimmed == "APPROVATO" -> Approved
                 trimmed == "ASS" || trimmed == "ASSENTE" -> Absent
                 trimmed == "INS" || trimmed == "INSUFFICIENTE" -> Failed
                 trimmed == "RIT" || trimmed == "RITIRATO" -> Withdrawn

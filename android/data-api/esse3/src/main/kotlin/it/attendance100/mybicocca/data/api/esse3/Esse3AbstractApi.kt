@@ -233,21 +233,6 @@ abstract class Esse3AbstractApi(
     }
 
     /**
-     * Extracts form fields from a form element.
-     */
-    protected fun Element.extractFormFields(): Map<String, String> {
-        return select("input, select, textarea").associate { input ->
-            val name = input.attr("name")
-            val value = when (input.tagName()) {
-                "select" -> input.selectFirst("option[selected]")?.attr("value") ?: ""
-                "textarea" -> input.text()
-                else -> input.attr("value")
-            }
-            name to value
-        }
-    }
-
-    /**
      * Extracts hidden form fields from a form.
      */
     protected fun Element.extractHiddenFields(): Map<String, String> {

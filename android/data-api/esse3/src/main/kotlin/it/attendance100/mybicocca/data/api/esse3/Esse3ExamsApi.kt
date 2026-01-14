@@ -147,7 +147,7 @@ class Esse3ExamsApi(
         val shiftCells = shiftRows.select("td")
         val shiftData = shiftHeaders.zip(shiftCells).toMap()
 
-        val datetimeText = shiftData["data - ora"]?.text()?.cleanText()
+        val datetimeText = shiftData["data - ora"]?.text()?.cleanText()?.split("-", limit = 2)[0]
             ?: throw IllegalStateException("Cannot reserve exam session: missing shift date")
         val datetime = parseDateTime(datetimeText)
             ?: throw IllegalStateException("Cannot reserve exam session: invalid datetime '$datetimeText'")
@@ -425,7 +425,7 @@ class Esse3ExamsApi(
                 val operation = Esse3ReservationOperation.fromString(operationText)
                     ?: throw IllegalStateException("Cannot get exam reservations history: invalid operation '$operationText'")
 
-                val performedBy = rowMap["effettuato da"]?.text()?.cleanText()
+                val performedBy = rowMap["effettuata da"]?.text()?.cleanText()
                     ?: throw IllegalStateException("Cannot get exam reservations history: missing performed by")
 
                 Esse3ReservationHistoryEntry(

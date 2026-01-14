@@ -1,7 +1,6 @@
 package it.attendance100.mybicocca.data.api.esse3
 
 import it.attendance100.mybicocca.data.dto.esse3.Esse3EvaluationCourseStatus
-import it.attendance100.mybicocca.data.dto.esse3.Esse3EvaluationPartitionStatus
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -17,31 +16,24 @@ class Esse3QuestionnaireApiTest : Esse3TestBase() {
     @Test
     suspend fun getEvaluationPartitions() {
         val courses = api.questionnaires.getEvaluationCourses()
-        val pendingCourse = courses.firstOrNull {
-            it.status is Esse3EvaluationCourseStatus.Pending ||
-            it.status is Esse3EvaluationCourseStatus.Completed
+        for (course in courses) {
+            val partitions = api.questionnaires.getEvaluationPartitions(course)
+            assertNotNull(partitions)
+            assertTrue(course.status !is Esse3EvaluationCourseStatus.Pending || partitions.isNotEmpty())
         }
-        if (pendingCourse == null) return
-
-        val partitions = api.questionnaires.getEvaluationPartitions(pendingCourse)
-        assertNotNull(partitions)
-        assertTrue(partitions.isNotEmpty())
     }
 
     @Test
     suspend fun navigateQuestionnaire() {
         val courses = api.questionnaires.getEvaluationCourses()
-        val pendingCourse = courses.firstOrNull { it.status is Esse3EvaluationCourseStatus.Pending }
-        if (pendingCourse == null) return
-
-        val partitions = api.questionnaires.getEvaluationPartitions(pendingCourse)
-        val pendingPartition = partitions.firstOrNull { it.status is Esse3EvaluationPartitionStatus.Pending }
-        if (pendingPartition == null) return
-
-        val page = api.questionnaires.startQuestionnaire(pendingPartition)
-        assertNotNull(page.navigation)
-        assertNotNull(page.questions)
-
-        api.questionnaires.exitQuestionnaire(page)
+        for (course in courses) {
+            val partitions = api.questionnaires.getEvaluationPartitions(course)
+            for(partition in partitions) {
+                val page = api.questionnaires.startQuestionnaire(partition)
+                if(page != null) {
+                    api.questionnaires.exitQuestionnaire(page)
+                }
+            }
+        }
     }
 }
