@@ -185,7 +185,7 @@ data class Esse3TaxBillItem(
     /**
      * Item description (e.g., "Contributi Universitari").
      */
-    val description: String,
+    val description: String?,
 
     /**
      * Item amount.
@@ -215,37 +215,37 @@ data class Esse3TaxBillDetail(
     /**
      * pagoPA payment information, if available.
      */
-    val pagoPaInfo: Esse3PagoPaInfo?
+    val pagoPAInfo: Esse3PagoPAInfo?
 )
 
 /**
  * pagoPA payment information for a tax bill.
  */
-data class Esse3PagoPaInfo(
+data class Esse3PagoPAInfo(
     /**
      * Payment notice code (Codice Avviso).
      */
-    val paymentNoticeCode: String,
+    val noticeCode: String,
 
     /**
      * IUV (Identificativo Univoco Versamento) - unique payment identifier.
      */
-    val iuv: String?,
+    val id: String?,
 
     /**
      * RPT ID (Richiesta Pagamento Telematico identifier).
      */
-    val rptId: String?,
+    val requestId: String?,
 
     /**
      * Date when payment was made.
      */
-    val paymentDate: LocalDate?,
+    val date: LocalDate?,
 
     /**
      * Status of the RPT transaction.
      */
-    val rptStatus: Esse3RptStatus?,
+    val requestStatus: Esse3RptStatus?,
 
     /**
      * Detailed transaction outcome message.

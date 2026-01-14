@@ -2,6 +2,7 @@ package it.attendance100.mybicocca.data.api.esse3
 
 import io.ktor.client.*
 import io.ktor.client.statement.*
+import io.ktor.http.*
 import io.ktor.utils.io.*
 import it.attendance100.mybicocca.data.dto.esse3.*
 import java.math.BigDecimal
@@ -24,14 +25,21 @@ class Esse3TaxesApi(
         private const val PAYMENT_RECEIPT_PATH = "/auth/studente/Tasse/StampaQuietanzaPagoPA.do"
         private const val REFRESH_PAYMENT_PATH = "/auth/studente/Tasse/ListaFatture.do"
 
-        private val BILL_ID_REGEX = "fatt_id=(\\d+)".toRegex()
-        private val RPT_ID_REGEX = "rpt_id=(\\w+)".toRegex()
         private val IUV_REGEX = "IUV\\s*:?\\s*(\\S+)".toRegex()
         private val PAYMENT_METHOD_REGEX = "Modalità\\s*:?\\s*(.+?)(?=\\s{2,}|Codice|IUV|$)".toRegex()
         private val PAYMENT_NOTICE_CODE_REGEX = "Codice Avviso\\s*:?\\s*(\\d+)".toRegex()
         private val PAYMENT_DATE_REGEX = "Data Pagamento\\s*:?\\s*([\\d/]+)".toRegex()
         private val RPT_STATUS_REGEX = "Stato RPT\\s*:?\\s*(.+?)(?=\\s{2,}|Esito|$)".toRegex()
         private val TRANSACTION_OUTCOME_REGEX = "Esito transazione pagoPA\\s*:?\\s*(.+?)(?=\\s{2,}|$)".toRegex()
+    }
+
+    /**
+     * Extracts a query parameter from a URL or href string.
+     */
+    private fun extractQueryParam(href: String, vararg paramNames: String): String? {
+        val queryString = href.substringAfter("?", "")
+        val params = parseQueryString(queryString)
+        return paramNames.firstNotNullOfOrNull { params[it] }
     }
 
     /**
@@ -63,7 +71,7 @@ class Esse3TaxesApi(
 
             val billId = invoiceCell.selectFirst("a[href*=fatt_id]")
                 ?.attr("href")
-                ?.let { BILL_ID_REGEX.find(it)?.groupValues?.get(1)?.toLongOrNull() }
+                ?.let { extractQueryParam(it, "fatt_id")?.toLongOrNull() }
                 ?: invoiceNumber.toLongOrNull()
                 ?: throw IllegalStateException("Cannot get tax bills: missing bill ID for invoice '$invoiceNumber'")
 
@@ -106,35 +114,48 @@ class Esse3TaxesApi(
     suspend fun getTaxBillDetail(bill: Esse3TaxBill): Esse3TaxBillDetail {
         val doc = executeGet(TAX_BILL_DETAIL_PATH, mapOf("fatt_id" to bill.id.toString()))
 
-        val recordText = doc.select("div.record, div.breaks3").text()
+        // Parse record info from dl structure
+        val dlElement = doc.selectFirst("dl.record-riga")
+        val recordMap = mutableMapOf<String, String>()
+        if (dlElement != null) {
+            val dts = dlElement.select("dt")
+            val dds = dlElement.select("dd")
+            dts.forEachIndexed { index, dt ->
+                val key = dt.text().cleanText().lowercase()
+                val value = dds.getOrNull(index)?.text()?.cleanText() ?: ""
+                recordMap[key] = value
+            }
+        }
+
         val html = doc.html()
 
-        val paymentDateText = PAYMENT_DATE_REGEX.find(recordText)?.groupValues?.get(1)
+        val paymentDateText = recordMap["data pagamento"]
         val paymentDate = paymentDateText?.let { parseDate(it) }
 
-        val paymentMethodText = PAYMENT_METHOD_REGEX.find(recordText)?.groupValues?.get(1)?.cleanText()
+        val paymentMethodText = recordMap["modalità"]
         val paymentMethod = paymentMethodText
             ?.let { Esse3PaymentMethod.fromString(it) }
             ?: Esse3PaymentMethod.Other("")
 
-        val paymentNoticeCode = PAYMENT_NOTICE_CODE_REGEX.find(recordText)?.groupValues?.get(1)
-        val rptStatusText = RPT_STATUS_REGEX.find(recordText)?.groupValues?.get(1)?.cleanText()
+        val paymentNoticeCode = recordMap["codice avviso"]
+        val rptStatusText = recordMap["stato rpt"]
         val rptStatus = rptStatusText?.let { Esse3RptStatus.fromString(it) }
-        val transactionOutcome = TRANSACTION_OUTCOME_REGEX.find(recordText)?.groupValues?.get(1)?.cleanText()
+
+        val transactionOutcome = doc.selectFirst("#tasse-textInfoTransPagoPA")?.text()
+            ?.let { TRANSACTION_OUTCOME_REGEX.find(it)?.groupValues?.get(1)?.cleanText() }
 
         val rptId = doc.selectFirst("input[name=rpt_id]")?.attr("value")
-            ?: RPT_ID_REGEX.find(html)?.groupValues?.get(1)
+            ?: doc.selectFirst("a[href*=rpt_id]")?.attr("href")?.let { extractQueryParam(it, "rpt_id") }
 
-        val iuv = IUV_REGEX.find(recordText)?.groupValues?.get(1)
-            ?: IUV_REGEX.find(html)?.groupValues?.get(1)
+        val iuv = IUV_REGEX.find(html)?.groupValues?.get(1)
 
         val pagoPaInfo = paymentNoticeCode?.let {
-            Esse3PagoPaInfo(
-                paymentNoticeCode = it,
-                iuv = iuv,
-                rptId = rptId,
-                paymentDate = paymentDate,
-                rptStatus = rptStatus,
+            Esse3PagoPAInfo(
+                noticeCode = it,
+                id = iuv,
+                requestId = rptId,
+                date = paymentDate,
+                requestStatus = rptStatus,
                 transactionOutcome = transactionOutcome
             )
         }
@@ -143,21 +164,55 @@ class Esse3TaxesApi(
             ?: doc.selectFirst("table.table-1")
 
         val items = if (itemsTable != null) {
-            val headers = itemsTable.select("thead tr th").map { it.text().cleanText().lowercase() }
-            itemsTable.select("tbody tr").map { row ->
-                val cells = row.select("td")
-                val rowMap = headers.zip(cells).toMap()
+            val headerRow = itemsTable.selectFirst("tbody tr")
+            val headers = headerRow?.select("th")?.map { it.text().cleanText().lowercase() } ?: emptyList()
 
-                val academicYear = rowMap["anno"]?.text()?.cleanText()
+            val dataRows = itemsTable.select("tbody tr")
+                .drop(1) // Skip header row
+                .filter { row ->
+                    // Skip section header rows (th with colspan spanning all columns)
+                    val ths = row.select("th[colspan]")
+                    ths.isEmpty()
+                }
+
+            // Track cells that span multiple rows: Map<columnIndex, Pair<value, remainingRows>>
+            val spanningCells = mutableMapOf<Int, Pair<String, Int>>()
+
+            dataRows.mapNotNull { row ->
+                val cells = row.select("td")
+                if (cells.isEmpty()) return@mapNotNull null
+
+                val rowMap = mutableMapOf<String, String>()
+                var cellIndex = 0
+
+                for ((headerIndex, header) in headers.withIndex()) {
+                    val spanning = spanningCells[headerIndex]
+                    if (spanning != null && spanning.second > 0) {
+                        rowMap[header] = spanning.first
+                        spanningCells[headerIndex] = spanning.first to (spanning.second - 1)
+                    } else {
+                        val cell = cells.getOrNull(cellIndex)
+                        val value = cell?.text()?.cleanText() ?: ""
+                        rowMap[header] = value
+
+                        val rowspan = cell?.attr("rowspan")?.toIntOrNull() ?: 1
+                        if (rowspan > 1) {
+                            spanningCells[headerIndex] = value to (rowspan - 1)
+                        }
+                        cellIndex++
+                    }
+                }
+
+                val academicYear = rowMap["anno"]
                     ?: throw IllegalStateException("Cannot get tax bill items: missing 'anno' column")
 
-                val installment = rowMap["rata"]?.text()?.cleanText()
+                val installment = rowMap["rata"]
                     ?: throw IllegalStateException("Cannot get tax bill items: missing 'rata' column")
 
-                val itemDescription = rowMap["voce"]?.text()?.cleanText()
+                val itemDescription = rowMap["voce"]
                     ?: throw IllegalStateException("Cannot get tax bill items: missing 'voce' column")
 
-                val itemAmountText = rowMap["importo"]?.text()?.cleanText()
+                val itemAmountText = rowMap["importo"]
                     ?: throw IllegalStateException("Cannot get tax bill items: missing 'importo' column")
                 val itemAmount = parseAmount(itemAmountText)
 
@@ -176,7 +231,7 @@ class Esse3TaxesApi(
             bill = bill,
             items = items,
             paymentMethod = paymentMethod,
-            pagoPaInfo = pagoPaInfo
+            pagoPAInfo = pagoPaInfo
         )
     }
 
@@ -187,10 +242,9 @@ class Esse3TaxesApi(
      * @return The PDF content as a byte channel
      * @throws IllegalStateException if the bill has no pagoPA info or rptId
      */
-    suspend fun downloadPaymentReceipt(detail: Esse3TaxBillDetail): ByteReadChannel {
-        val rptId = detail.pagoPaInfo?.rptId
-            ?: throw IllegalStateException("Cannot download payment receipt: missing RPT ID for bill '${detail.bill.invoiceNumber}'")
-
+    suspend fun downloadPaymentReceipt(detail: Esse3TaxBillDetail): ByteReadChannel? {
+        val rptId = detail.pagoPAInfo?.requestId
+            ?: return null
         val response = executeGetRaw(
             PAYMENT_RECEIPT_PATH,
             mapOf("fatt_id" to detail.bill.id.toString(), "rpt_id" to rptId)
@@ -221,7 +275,7 @@ class Esse3TaxesApi(
             .replace(".", "")
             .replace(",", ".")
             .trim()
-
-        return cleaned.toBigDecimalOrNull() ?: BigDecimal.ZERO
+        return cleaned.toBigDecimalOrNull()
+            ?: throw IllegalStateException("Invalid amount: $value")
     }
 }

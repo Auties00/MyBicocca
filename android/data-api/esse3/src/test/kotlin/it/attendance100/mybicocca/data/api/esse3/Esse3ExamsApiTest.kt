@@ -20,14 +20,13 @@ class Esse3ExamsApiTest : Esse3TestBase() {
     @Test
     suspend fun getExamSessionInfo() {
         val sessions = api.exams.getAvailableExamSessions()
-        if (sessions.isEmpty()) return
-
-        val session = sessions.first()
-        val sessionInfo = api.exams.getExamSessionInfo(session)
-        assertNotNull(sessionInfo.teachingActivity)
-        assertNotNull(sessionInfo.description)
-        assertNotNull(sessionInfo.type)
-        assertNotNull(sessionInfo.datetime)
+        for (session in sessions) {
+            val sessionInfo = api.exams.getExamSessionInfo(session)
+            assertNotNull(sessionInfo.teachingActivity)
+            assertNotNull(sessionInfo.description)
+            assertNotNull(sessionInfo.type)
+            assertNotNull(sessionInfo.datetime)
+        }
     }
 
     @Test
@@ -39,11 +38,10 @@ class Esse3ExamsApiTest : Esse3TestBase() {
     @Test
     suspend fun printExamReservation() {
         val reservations = api.exams.getExamReservations()
-        if (reservations.isEmpty()) return
-
-        val reservation = reservations.first()
-        val pdfChannel = api.exams.printExamReservation(reservation)
-        assertNotNull(pdfChannel)
+        for (reservation in reservations) {
+            val pdfChannel = api.exams.printExamReservation(reservation)
+            assertNotNull(pdfChannel)
+        }
     }
 
     @Test
@@ -54,16 +52,11 @@ class Esse3ExamsApiTest : Esse3TestBase() {
 
     @Test
     suspend fun manageExamReservation() {
-        val sessions = api.exams.getAvailableExamSessions()
-        if (sessions.isEmpty()) {
-            return
-        }
-
         val today = LocalDate.now()
+        val sessions = api.exams.getAvailableExamSessions()
         val bookableSessions = sessions.filter { session ->
             !session.registrationStartDate.isAfter(today) && !session.registrationEndDate.isBefore(today)
         }
-
         if (bookableSessions.isEmpty()) {
             return
         }
@@ -95,7 +88,6 @@ class Esse3ExamsApiTest : Esse3TestBase() {
                 continue
             }
         }
-
         if (!success && bookableSessions.isNotEmpty()) {
             fail { "Cannot manage exam reservation: no valid session found for booking" }
         }

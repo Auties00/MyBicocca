@@ -22,8 +22,8 @@ dependencies {
 
     // Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
-    implementation("org.jetbrains.kotlin:kotlin-reflect:2.1.0")
-    testImplementation("org.slf4j:slf4j-simple:2.0.16")
+    implementation("org.jetbrains.kotlin:kotlin-reflect:2.2.0")
+    testImplementation("org.slf4j:slf4j-simple:2.0.17")
 
     // JUnit 5 (Jupiter) for modern Kotlin testing
     testImplementation(platform("org.junit:junit-bom:6.0.1"))

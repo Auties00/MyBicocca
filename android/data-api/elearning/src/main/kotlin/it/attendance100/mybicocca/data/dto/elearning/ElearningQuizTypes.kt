@@ -817,20 +817,6 @@ data class ElearningAttemptDataItem(
 )
 
 /**
- * Represents an attempt grade with numeric and formatted values.
- *
- * @property value The numeric grade value.
- * @property formattedString The grade formatted as a string.
- */
-@Serializable
-data class ElearningAttemptGrade(
-    @SerialName("value")
-    val value: Double? = null,
-    @SerialName("str")
-    val formattedString: String? = null
-)
-
-/**
  * Represents additional data displayed in quiz reviews.
  *
  * @property id The identifier of the additional data item.

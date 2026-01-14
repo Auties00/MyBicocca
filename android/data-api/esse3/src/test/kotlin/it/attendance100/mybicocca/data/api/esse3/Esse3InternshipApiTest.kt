@@ -19,13 +19,12 @@ class Esse3InternshipApiTest : Esse3TestBase() {
     @Test
     suspend fun getOpportunityDetail() {
         val opportunities = api.internships.searchOpportunities(MOCK_SEARCH_TEXT)
-        if (opportunities.isEmpty()) return
-
-        val opportunity = opportunities.first()
-        val detail = api.internships.getOpportunityDetail(opportunity)
-        assertNotNull(detail.title)
-        assertNotNull(detail.description)
-        assertNotNull(detail.companyName)
+        for(opportunity in opportunities) {
+            val detail = api.internships.getOpportunityDetail(opportunity)
+            assertNotNull(detail.title)
+            assertNotNull(detail.description)
+            assertNotNull(detail.companyName)
+        }
     }
 
     @Test
@@ -37,22 +36,21 @@ class Esse3InternshipApiTest : Esse3TestBase() {
     @Test
     suspend fun manageSavedOpportunity() {
         val opportunities = api.internships.searchOpportunities(MOCK_SEARCH_TEXT)
-        if (opportunities.isEmpty()) return
+        for(opportunity in opportunities) {
+            if(opportunity.isSaved) {
+                api.internships.saveOpportunity(opportunity)
 
-        val unsavedOpportunity = opportunities.firstOrNull { !it.isSaved }
-        if (unsavedOpportunity == null) return
+                val savedOpportunities = api.internships.getSavedOpportunities()
+                val isSaved = savedOpportunities.any { it.id == opportunity.id }
+                assertTrue(isSaved)
 
-        api.internships.saveOpportunity(unsavedOpportunity)
+                api.internships.unsaveOpportunity(opportunity)
 
-        val savedOpportunities = api.internships.getSavedOpportunities()
-        val isSaved = savedOpportunities.any { it.id == unsavedOpportunity.id }
-        assertTrue(isSaved)
-
-        api.internships.unsaveOpportunity(unsavedOpportunity.id)
-
-        val verifyOpportunities = api.internships.getSavedOpportunities()
-        val isUnsaved = verifyOpportunities.none { it.id == unsavedOpportunity.id }
-        assertTrue(isUnsaved)
+                val verifyOpportunities = api.internships.getSavedOpportunities()
+                val isUnsaved = verifyOpportunities.none { it.id == opportunity.id }
+                assertTrue(isUnsaved)
+            }
+        }
     }
 
     @Test
@@ -76,22 +74,21 @@ class Esse3InternshipApiTest : Esse3TestBase() {
     @Test
     suspend fun getCompanyInformation() {
         val companies = api.internships.searchCompanies(MOCK_COMPANY_NAME)
-        if (companies.isEmpty()) return
-
-        val company = companies.first()
-        val companyInfo = api.internships.getCompanyInformation(company)
-        assertNotNull(companyInfo.name)
-        assertNotNull(companyInfo.description)
+        for(company in companies) {
+            val companyInfo = api.internships.getCompanyInformation(company)
+            assertNotNull(companyInfo.name)
+            assertNotNull(companyInfo.description)
+        }
     }
 
     @Test
     suspend fun getCompanyLogo() {
         val companies = api.internships.searchCompanies(MOCK_COMPANY_NAME)
-        if (companies.isEmpty()) return
-
-        val company = companies.first()
-        val logoChannel = api.internships.getCompanyLogo(company)
-        assertNotNull(logoChannel)
+        for(company in companies) {
+            val logoChannel = api.internships.getCompanyLogo(company)
+            assertNotNull(logoChannel)
+            assertTrue(logoChannel.isPdf())
+        }
     }
 
     @Test

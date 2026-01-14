@@ -27,12 +27,12 @@ sealed interface Esse3EvaluationCourseStatus {
     /**
      * Questionnaire is available and pending completion.
      */
-    data class Pending(val adsceId: Long) : Esse3EvaluationCourseStatus
+    data class Pending(val activityId: Long) : Esse3EvaluationCourseStatus
 
     /**
      * Questionnaire has been completed.
      */
-    data class Completed(val adsceId: Long) : Esse3EvaluationCourseStatus
+    data class Completed(val activityId: Long) : Esse3EvaluationCourseStatus
 }
 
 /**
@@ -46,33 +46,29 @@ data class Esse3EvaluationPartition(
     val teacher: String,
     val activityType: String,
     val partition: String,
-    val status: Esse3EvaluationPartitionStatus,
-    val questionnaireUrl: String
+    val status: Esse3EvaluationPartitionStatus
 )
 
 /**
- * Status of a partition evaluation questionnaire.
+ * Status of a course evaluation section.
  */
 sealed interface Esse3EvaluationPartitionStatus {
     /**
-     * Questionnaire is pending completion.
+     * No questionnaire available for this section.
      */
-    data object Pending : Esse3EvaluationPartitionStatus
+    data object NotAvailable : Esse3EvaluationPartitionStatus
+
+    /**
+     * Questionnaire is available and pending completion.
+     */
+    data class Pending(val questionnaireUrl: String) : Esse3EvaluationPartitionStatus
 
     /**
      * Questionnaire has been completed.
      */
     data object Completed : Esse3EvaluationPartitionStatus
-
-    companion object {
-        fun fromImageAlt(alt: String): Esse3EvaluationPartitionStatus {
-            return when {
-                alt.contains("compilato", ignoreCase = true) -> Completed
-                else -> Pending
-            }
-        }
-    }
 }
+
 
 /**
  * Navigation state for questionnaire pages.

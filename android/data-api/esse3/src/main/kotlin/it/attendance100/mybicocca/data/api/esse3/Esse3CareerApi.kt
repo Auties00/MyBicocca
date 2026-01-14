@@ -5,6 +5,7 @@ import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.ktor.utils.io.*
 import it.attendance100.mybicocca.data.dto.esse3.*
+import java.time.LocalDate
 
 /**
  * API for academic career operations.
@@ -21,6 +22,7 @@ class Esse3CareerApi(
     companion object {
         private const val LIBRETTO_ENTRYPOINT = "/auth/studente/Libretto/LibrettoHome.do?menu_opened_cod=menu_link-navbox_studenti_Carriera"
         private const val STUDY_PLAN_ENTRYPOINT = "/auth/studente/Piani/PianiHome.do?menu_opened_cod=menu_link-navbox_studenti_Carriera"
+
         private val UNWEIGHTED_GPA_REGEX = "Media Aritmetica degli esami.*?(\\d+\\.\\d+)".toRegex(RegexOption.IGNORE_CASE)
         private val WEIGHTED_GPA_REGEX = "Media Ponderata degli esami.*?(\\d+\\.\\d+)".toRegex(RegexOption.IGNORE_CASE)
         private val TEACHING_ACTIVITY_REGEX = "Attività Didattica: (.+?) \\[([^]]+)]".toRegex(RegexOption.IGNORE_CASE)
@@ -75,13 +77,16 @@ class Esse3CareerApi(
                 ?.groupValues?.get(1)?.toIntOrNull() ?: 0
 
             // Build headers list, expanding for colspan
-            val headers = table.select("thead tr th").map {
+            val headers = table.select("tbody tr th").map {
                 val node = it.firstChild() ?: it
                 node.nodeValue().trim().lowercase()
             }
 
-            table.select("tbody tr").map { row ->
-                val rows = row.select("td")
+            table.select("tbody tr").asSequence().drop(1).map { row ->
+                val rows = row.select("td").filter {
+                    it.text().isNotBlank()
+                }
+
                 val rowMap = headers.zip(rows).toMap()
 
                 val code = rowMap["codice"]?.text()?.cleanText()
@@ -190,21 +195,14 @@ class Esse3CareerApi(
             val credits = rowMap["peso in crediti"]?.text()?.cleanText()?.toIntOrNull()
                 ?: throw IllegalStateException("Cannot get academic record: missing credits")
 
-            val academicYear = rowMap["aa. freq"]?.text()?.cleanText()
+            val academicYear = rowMap["aa freq."]?.text()?.cleanText()
                 ?: throw IllegalStateException("Cannot get academic record: missing academic year")
 
             val gradeAndDate = rowMap["voto - data esame"]?.text()?.cleanText()
                 ?: throw IllegalStateException("Cannot get academic record: missing grade and date")
-            val gradeAndDateParts = gradeAndDate.split(" - ", limit = 2)
-            val grade = gradeAndDateParts.elementAtOrNull(0)?.let { Esse3Grade.parse(it) }
-                ?: throw IllegalStateException("Cannot get academic record: missing grade")
-            val dateText = gradeAndDateParts.elementAtOrNull(1)
-                ?: throw IllegalStateException("Cannot get academic record: missing date")
-            val date = parseDate(dateText)
-                ?: throw IllegalStateException("Cannot get academic record: invalid date '$dateText'")
+            val (grade, date) = parseGradeAndDate(gradeAndDate)
 
-            val attemptsUrl = rowMap["prove"]?.text()?.cleanText()
-                ?: throw IllegalStateException("Cannot get academic record: missing attempts")
+            val attemptsUrl = rowMap["prove"]?.text()?.cleanText()?.takeIf { it.isNotBlank() }
 
             Esse3Course(
                 code = code,
@@ -224,6 +222,23 @@ class Esse3CareerApi(
             unweightedGpa = unweightedGpa,
             weightedGpa = weightedGpa,
         )
+    }
+
+    private fun parseGradeAndDate(gradeAndDate: String): Pair<Esse3Grade?, LocalDate?> {
+        if(gradeAndDate.isEmpty()) {
+            return null to null
+        } else {
+            val gradeAndDateParts = gradeAndDate.split(" - ", limit = 2)
+            val gradeText = gradeAndDateParts.elementAtOrNull(0)
+                ?: throw IllegalStateException("Cannot get academic record: missing grade")
+            val grade = Esse3Grade.parse(gradeText)
+                ?: throw IllegalStateException("Cannot get academic record: invalid grade '$gradeText'")
+            val dateText = gradeAndDateParts.elementAtOrNull(1)
+                ?: throw IllegalStateException("Cannot get academic record: missing date")
+            val date = parseDate(dateText)
+                ?: throw IllegalStateException("Cannot get academic record: invalid date '$dateText'")
+            return grade to date
+        }
     }
 
     /**
@@ -317,7 +332,10 @@ class Esse3CareerApi(
      * @return The list of exam attempts
      */
     suspend fun getCourseExamAttempts(course: Esse3Course): List<Esse3ExamAttempt> {
-        val doc = executeGet(course.examAttemptsUrlPath)
+        val attemptsUrlPath = course.examAttemptsUrlPath
+        ?: return emptyList()
+
+        val doc = executeGet(attemptsUrlPath)
 
         val table = doc.selectFirst("#tableProve")
             ?: throw IllegalStateException("Cannot get exam attempts: missing table")

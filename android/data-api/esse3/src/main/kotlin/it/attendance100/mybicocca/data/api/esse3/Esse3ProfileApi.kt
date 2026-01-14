@@ -49,31 +49,31 @@ class Esse3ProfileApi(
     suspend fun getPersonalData(): Esse3PersonalData {
         val doc = executeGet(ANAGRAFICA_ENTRY_POINT)
 
-        val personalData = doc.selectFirst(".idsummaryFormNestedTemplateBox_1")
+        val personalData = doc.selectFirst("#idsummaryFormNestedTemplateBox_1")
             ?: throw IllegalStateException("Error getting personal data: missing 'idsummaryFormNestedTemplateBox_1' table")
         val personalDataMap = personalData.select("dt").associate { dt ->
             val key = dt.text().trim().removeSuffix(":")
             val value = dt.nextElementSibling()
-            key to value?.nodeValue()
+            key.lowercase() to value?.nodeValue()?.cleanText()
         }
 
-        val name = personalDataMap["Nome"]
+        val name = personalDataMap["nome"]
             ?: throw IllegalStateException("Error getting personal data: missing 'Nome' in table")
-        val surname = personalDataMap["Cognome"]
+        val surname = personalDataMap["cognome"]
             ?: throw IllegalStateException("Error getting personal data: missing 'Cognome' in table")
-        val sex = personalDataMap["Sesso"]?.let { Esse3Sex.fromCode(it) }
+        val sex = personalDataMap["sesso"]?.let { Esse3Sex.fromCode(it) }
             ?: throw IllegalStateException("Error getting personal data: missing 'Sesso' in table")
-        val birthDate = personalDataMap["Data di nascita"]?.let { parseDate(it) }
+        val birthDate = personalDataMap["data di nascita"]?.let { parseDate(it) }
             ?: throw IllegalStateException("Error getting personal data: missing 'Data di nascita' in table")
-        val citizenship = personalDataMap["Cittadinanza"]
+        val citizenship = personalDataMap["cittadinanza"]
             ?: throw IllegalStateException("Error getting personal data: missing 'Cittadinanza' table")
-        val birthCountry = personalDataMap["Nazione di nascita"]
+        val birthCountry = personalDataMap["nazione di nascita"]
             ?: throw IllegalStateException("Error getting personal data: missing 'Nazione di nascita' table")
-        val birthProvince = personalDataMap["Provincia di nascita"]
+        val birthProvince = personalDataMap["provincia di nascita"]
             ?: throw IllegalStateException("Error getting personal data: missing 'Provincia di nascita' in table")
-        val birthCity = personalDataMap["Comune/Città di nascita"]
+        val birthCity = personalDataMap["comune/città di nascita"]
             ?: throw IllegalStateException("Error getting personal data: missing 'Comune/Città di nascita' in table")
-        val fiscalcode = personalDataMap["Codice Fiscale"]
+        val fiscalcode = personalDataMap["codice fiscale"]
             ?: throw IllegalStateException("Error getting personal data: missing 'Codice Fiscale' in table")
 
         return Esse3PersonalData(
@@ -139,17 +139,17 @@ class Esse3ProfileApi(
 
         val countrySelector = form.selectFirst("#selectionNazione")
             ?: throw IllegalStateException("Error getting residence address: missing country selector")
-        val country = countrySelector.selectFirst("option[selected]")?.attr("value")
+        val country = countrySelector.selectFirst("option[selected]")?.attr("title")
             ?: ""
 
         val provinceSelector = form.selectFirst("#selectionProvincia")
             ?: throw IllegalStateException("Error getting residence address: missing province selector")
-        val province = provinceSelector.selectFirst("option[selected]")?.attr("value")
+        val province = provinceSelector.selectFirst("option[selected]")?.attr("title")
             ?: ""
 
         val citySelector = form.selectFirst("#cmbComuni")
             ?: throw IllegalStateException("Error getting residence address: missing city selector")
-        val city = citySelector.selectFirst("option[selected]")?.attr("value")
+        val city = citySelector.selectFirst("option[selected]")?.attr("title")
             ?: ""
 
         val zipCodeInput = form.selectFirst("input[id*=cap_res]")
@@ -205,21 +205,21 @@ class Esse3ProfileApi(
         val countrySelector = form.selectFirst("#selectionNazione")
             ?: throw IllegalStateException("Error getting residence address: missing country selector")
         val countryValue = countrySelector.select("option")
-            .firstOrNull { it.text() == address.country }
+            .firstOrNull { it.attr("title") == address.country || it.attr("value") == address.country }
             ?.attr("value")
             ?: throw IllegalStateException("Error getting residence address: country '${address.country}' not found")
 
         val provinceSelector = form.selectFirst("#selectionProvincia")
             ?: throw IllegalStateException("Error getting residence address: missing province selector")
         val provinceValue = provinceSelector.select("option")
-            .firstOrNull { it.text() == address.province }
+            .firstOrNull { it.attr("title") == address.province || it.attr("value") == address.province }
             ?.attr("value")
             ?: throw IllegalStateException("Error getting residence address: province '${address.province}' not found")
 
         val citySelector = form.selectFirst("#cmbComuni")
             ?: throw IllegalStateException("Error getting residence address: missing city selector")
         val cityValue = citySelector.select("option")
-            .firstOrNull { it.text() == address.province }
+            .firstOrNull { it.attr("title") == address.city || it.attr("value") == address.city }
             ?.attr("value")
             ?: throw IllegalStateException("Error getting residence address: city '${address.city}' not found")
 
@@ -278,9 +278,9 @@ class Esse3ProfileApi(
         val mobilePrefix = mobilePrefixSelector.selectFirst("option[selected]")?.attr("value")
             ?: ""
 
-        val mobileInput = form.selectFirst("input[id*=cellulare]")
+        val mobileInput = form.selectFirst("input[id*=/cellulare]")?.attr("value")
             ?: throw IllegalStateException("Error getting contact info: missing mobile input")
-        val mobile = "${mobilePrefix}${mobileInput.attr("value")}$"
+        val mobile = "${mobilePrefix}${mobileInput}"
 
         val privacyConsentInput = form.selectFirst("input[name*=cons_dp_flg][checked]")
             ?: throw IllegalStateException("Error getting contact info: missing privacy consent radio button")

@@ -1,10 +1,7 @@
 package it.attendance100.mybicocca.data.api.esse3
 
-import io.ktor.http.Cookie
-import io.ktor.http.CookieEncoding
-import io.ktor.util.date.GMTDate
-import it.attendance100.mybicocca.data.dto.esse3.Esse3PersonalData
-import kotlinx.coroutines.runBlocking
+import io.ktor.http.*
+import io.ktor.util.date.*
 import org.junit.jupiter.api.extension.BeforeAllCallback
 import org.junit.jupiter.api.extension.ExtensionContext
 import org.openqa.selenium.chrome.ChromeDriver
@@ -16,18 +13,11 @@ object Esse3GlobalApiData : BeforeAllCallback, AutoCloseable {
     private val AUTH_TIMEOUT = Duration.ofSeconds(300)
 
     var api: Esse3Api? = null
-    var profile: Esse3PersonalData? = null
 
     override fun beforeAll(context: ExtensionContext) {
         if (api == null) {
             val cookies = performLogin()
             api = Esse3Api(cookies)
-        }
-
-        if (profile == null) {
-            runBlocking {
-                profile = fetchUserProfile(api!!)
-            }
         }
     }
 
@@ -51,7 +41,7 @@ object Esse3GlobalApiData : BeforeAllCallback, AutoCloseable {
 
             val wait = WebDriverWait(driver, AUTH_TIMEOUT)
             wait.until { d ->
-                d.currentUrl?.endsWith("auth/studente/HomePageStudente.do") == true
+                d.currentUrl?.contains("auth/studente/HomePageStudente.do") == true
             }
 
             driver.manage().cookies.map {
@@ -72,10 +62,6 @@ object Esse3GlobalApiData : BeforeAllCallback, AutoCloseable {
                 driver.quit()
             }
         }
-    }
-
-    private suspend fun fetchUserProfile(api: Esse3Api): Esse3PersonalData {
-        return api.profile.getPersonalData()
     }
 
     override fun close() {

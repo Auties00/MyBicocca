@@ -19,6 +19,7 @@ class Esse3CareerApiTest : Esse3TestBase() {
     suspend fun printStudyPlan() {
         val pdfChannel = api.career.printStudyPlan()
         assertNotNull(pdfChannel)
+        assertTrue(pdfChannel.isPdf())
     }
 
     @Test
@@ -32,22 +33,20 @@ class Esse3CareerApiTest : Esse3TestBase() {
     @Test
     suspend fun getCourseInfo() {
         val academicRecord = api.career.getAcademicRecord()
-        if (academicRecord.courses.isEmpty()) return
-
-        val course = academicRecord.courses.first()
-        val courseDetails = api.career.getCourseInfo(course)
-        assertNotNull(courseDetails.code)
-        assertNotNull(courseDetails.name)
-        assertNotNull(courseDetails.units)
+        for(course in academicRecord.courses) {
+            val courseDetails = api.career.getCourseInfo(course)
+            assertNotNull(courseDetails.code)
+            assertNotNull(courseDetails.name)
+            assertNotNull(courseDetails.units)
+        }
     }
 
     @Test
     suspend fun getCourseExamAttempts() {
         val academicRecord = api.career.getAcademicRecord()
-        if (academicRecord.courses.isEmpty()) return
-
-        val course = academicRecord.courses.first()
-        val examAttempts = api.career.getCourseExamAttempts(course)
-        assertNotNull(examAttempts)
+        for(course in academicRecord.courses) {
+            val examAttempts = api.career.getCourseExamAttempts(course)
+            assertNotNull(examAttempts)
+        }
     }
 }
