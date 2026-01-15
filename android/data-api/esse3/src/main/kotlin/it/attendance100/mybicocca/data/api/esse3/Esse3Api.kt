@@ -113,17 +113,6 @@ class Esse3Api(
     val internships: Esse3InternshipApi = Esse3InternshipApi(client)
 
     /**
-     * API for address book and contact operations.
-     *
-     * Provides access to:
-     * - Residence/domicile addresses
-     * - Contact information
-     * - Privacy consents
-     * - Disability declarations
-     */
-    val address: Esse3ProfileApi = Esse3ProfileApi(client)
-
-    /**
      * API for questionnaire operations.
      *
      * Provides access to:

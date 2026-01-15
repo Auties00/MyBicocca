@@ -1,16 +1,13 @@
 package it.attendance100.mybicocca.data.api.easystaff
 
-import com.sun.org.apache.xalan.internal.lib.ExsltDatetime.date
 import io.ktor.client.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
-import io.ktor.http.ContentType
-import io.ktor.http.contentType
+import io.ktor.http.*
 import io.ktor.utils.io.jvm.javaio.*
 import kotlinx.serialization.json.Json
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
-import org.jsoup.nodes.Element
 import java.net.URLEncoder
 import java.time.LocalDate
 import java.time.LocalTime
@@ -105,7 +102,7 @@ abstract class EasyStaffAbstractApi(
         /**
          * Formats a date to Agenda Web time format (HH:mm).
          *
-         * @param date The date to format
+         * @param time The time to format
          * @return The formatted time string
          */
         fun formatTime(time: LocalTime): String = time.format(TIME_FORMAT)
@@ -212,49 +209,6 @@ abstract class EasyStaffAbstractApi(
             }
             if (basePath.contains("?")) "$basePath&$query" else "$basePath?$query"
         }
-    }
-
-    /**
-     * Extracts text content from an element, cleaning whitespace and special characters.
-     *
-     * @return The cleaned text content
-     */
-    protected fun Element.cleanText(): String {
-        return text()
-            .replace("\u200b", "") // Remove zero-width spaces
-            .replace("\u00a0", " ") // Replace non-breaking spaces
-            .trim()
-    }
-
-    /**
-     * Finds a cell element by trying multiple header names.
-     */
-    protected fun findCell(
-        cellMap: Map<String, Element>,
-        vararg headerNames: String
-    ): Element? {
-        for (name in headerNames) {
-            val cell = cellMap.entries.find { it.key.contains(name) }?.value
-            if (cell != null) return cell
-        }
-        return null
-    }
-
-    /**
-     * Finds a cell value by trying multiple header names.
-     */
-    protected fun findCellValue(
-        cellMap: Map<String, Element>,
-        vararg headerNames: String
-    ): String? {
-        for (name in headerNames) {
-            val cell = cellMap.entries.find { it.key.contains(name) }?.value
-            if (cell != null) {
-                val text = cell.cleanText()
-                if (text.isNotBlank()) return text
-            }
-        }
-        return null
     }
 
     /**

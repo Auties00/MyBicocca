@@ -5,6 +5,10 @@ import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.ktor.utils.io.*
 import io.ktor.utils.io.jvm.javaio.*
+import it.attendance100.mybicocca.data.api.cleanText
+import it.attendance100.mybicocca.data.api.extractQueryParam
+import it.attendance100.mybicocca.data.api.parseGrid
+import it.attendance100.mybicocca.data.api.parseTable
 import it.attendance100.mybicocca.data.dto.esse3.*
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
@@ -34,48 +38,41 @@ class Esse3ExamsApi(
         val table = doc.selectFirst("#app-tabella_appelli")
             ?: throw IllegalStateException("Cannot get available exam sessions: missing 'app-tabella_appelli' table")
 
-        val headers = table.select("thead tr th").map {
-            val node = it.firstChild() ?: it
-            node.nodeValue().trim().lowercase()
-        }
-
-        val rows = table.select("tbody tr")
-
-        return rows.map { row ->
-            val cells = row.select("td")
-            val rowMap = headers.zip(cells).toMap()
-
-            val infoLinkCell = rowMap[""] ?: row
+        return table.parseTable().map { row ->
+            val infoLinkCell = row.getElementOrNull("") ?: row.getElementOrThrow("attività didattica")
             val infoPath = infoLinkCell.selectFirst("a[href*='APP_ID=']")?.attr("href")
-                ?: throw IllegalStateException("Cannot get available exam sessions: mmissing APP_ID link")
+                ?: throw IllegalStateException("Cannot get available exam sessions: missing APP_ID link")
 
-            val courseName = rowMap["attività didattica"]?.text()?.cleanText()
-                ?: throw IllegalStateException("Cannot get available exam sessions: missing course name")
+            val courseName = row.getTextOrThrow("attività didattica")
 
-            val examDateText = rowMap["appello"]?.text()?.cleanText()
-                ?: throw IllegalStateException("Cannot get available exam sessions: missing description")
-            val examDate = parseDate(examDateText)
-                ?: throw IllegalArgumentException("Cannot get available exam sessions: invalid exam date '$examDateText'")
+            val examDate = row.getTextAsOrThrow("appello") {
+                parseDate(it)
+            }
 
-            val registrationNodes = rowMap["iscrizione"]?.childNodes()
-                ?: throw IllegalStateException("Cannot get available exam sessions: missing registration column")
-            if (registrationNodes.isEmpty()) throw IllegalArgumentException("Expected non-empty registration cell")
-            val registrationStartDate = parseDate(registrationNodes.first().nodeValue())
-                ?: throw IllegalArgumentException("Cannot get available exam sessions: invalid registration start date")
-            val registrationEndDate = parseDate(registrationNodes.last().nodeValue()) ?: throw IllegalArgumentException(
-                "Cannot get available exam sessions: invalid registration end date"
-            )
+            val (registrationStartDate, registrationEndDate) = row.getElementAsOrThrow("iscrizione") {
+                val registrationNodes = it.childNodes()
+                val registrationStartDateText = registrationNodes.firstOrNull()?.nodeValue()
+                    ?: return@getElementAsOrThrow null
+                val registrationStartDate = parseDate(registrationStartDateText)
+                    ?: return@getElementAsOrThrow null
+                val registrationEndDateText = registrationNodes.lastOrNull()?.nodeValue()
+                    ?: return@getElementAsOrThrow null
+                val registrationEndDate = parseDate(registrationEndDateText)
+                    ?: return@getElementAsOrThrow null
+                registrationStartDate to registrationEndDate
+            }
 
-            val description = rowMap["descrizione"]?.text()?.cleanText()
-                ?: throw IllegalStateException("Cannot get available exam sessions: missing description column")
+            val description = row.getTextOrThrow("descrizione")
 
-            val modeText = rowMap["svolg. esame"]?.text()?.cleanText() ?: ""
-            val examMode = Esse3ExamSessionMode.fromString(modeText)
-                ?: throw IllegalArgumentException("Cannot get available exam sessions: invalid exam mode code '$modeText'")
+            val examMode = row.getTextAsOrThrow("svolg. esame (d = distanza, p = presenza)") {
+                Esse3ExamSessionMode.fromString(it)
+            }
 
-            val academicYears = rowMap["sessioni"]?.childNodes()?.asSequence()?.map { it.nodeValue().cleanText() }
-                ?.filter { it.isNotBlank() }?.toList()
-                ?: throw IllegalArgumentException("Cannot get available exam sessions: missing academic years")
+            val sessionsCell = row.getElementOrThrow("sessioni")
+            val academicYears = sessionsCell.childNodes().asSequence()
+                .map { it.nodeValue().cleanText() }
+                .filter { it.isNotBlank() }
+                .toList()
 
             Esse3ExamSession(
                 courseName = courseName,
@@ -87,7 +84,7 @@ class Esse3ExamsApi(
                 academicYears = academicYears,
                 infoPath = infoPath
             )
-        }
+        }.toList()
     }
 
     /**
@@ -99,40 +96,35 @@ class Esse3ExamsApi(
     suspend fun getExamSessionInfo(session: Esse3ExamSession): Esse3ExamSessionInformation {
         val doc = executeGet(session.infoPath)
 
-        val dl = doc.selectFirst(".record-riga")
-            ?: throw IllegalArgumentException("Cannot get exam session info: missing 'record-riga' table")
-        val dataMap = dl.select("dt").associate { dt ->
-            val key = dt.text().trim().removeSuffix(":").lowercase()
-            val value = dt.nextElementSibling()
-            key to value
-        }
+        val data = doc.selectFirst(".record-riga")?.parseGrid()
+            ?: throw IllegalStateException("Cannot get exam session info: missing 'record-riga' table")
 
-        val teachingActivity = dataMap["attività didattica"]?.nodeValue()?.cleanText()
-            ?: throw IllegalStateException("Cannot get exam session info: missing teaching activity")
+        val teachingActivity = data.getTextOrThrow("attività didattica")
+        val description = data.getTextOrThrow("appello")
 
-        val description = dataMap["appello"]?.nodeValue()?.cleanText()
-            ?: throw IllegalStateException("Cannot get exam session info: missing description")
+        val sessions = data.getTextOrNull("sessioni")
+            ?.splitToSequence(",")
+            ?.map { it.cleanText() }
+            ?.filter { it.isNotBlank() }
+            ?.distinct()
+            ?.toList()
+            ?: emptyList()
 
-        val sessions =
-            dataMap["sessioni"]?.nodeValue()?.splitToSequence(",")?.map { it.cleanText() }?.filter { it.isNotBlank() }
-                ?.distinct()?.toList() ?: emptyList()
+        val type = data.getTextAsOrThrow("tipo esame") { Esse3ExamType.fromString(it) }
+        val verbalization = data.getTextOrThrow("verbalizzazione")
 
-        val typeCode = dataMap["tipo esame"]?.nodeValue()?.cleanText()
-            ?: throw IllegalStateException("Cannot get exam session info: missing exam type")
-        val type = Esse3ExamType.fromString(typeCode)
-
-        val verbalization = dataMap["verbalizzazione"]?.nodeValue()?.cleanText()
-            ?: throw IllegalStateException("Cannot get exam session info: missing verbalization")
-
-        val teachersNodes = dataMap["docenti"]?.childNodes()
-            ?: throw IllegalStateException("Cannot get exam session info: missing teachers")
-        val teachers = teachersNodes.map { teacherNode ->
-            val teacherText = teacherNode.nodeValue().cleanText()
-            teacherText.lastIndexOf('(').takeIf { it != -1 }?.let { teacherText.take(it) }
+        val teachersElement = data.getElementOrThrow("docenti")
+        val teachers = teachersElement.childNodes().mapNotNull { node ->
+            node.nodeValue()
+            // Get text content from text nodes, skip other node types
+            node.nodeValue().cleanText().takeIf { it.isNotBlank() }
+        }.map { teacherText ->
+            // Remove the parenthetical part (e.g., "(Docente Responsabile)")
+            teacherText.lastIndexOf('(').takeIf { it != -1 }?.let { teacherText.take(it).trim() }
                 ?: teacherText
         }
 
-        val notes = dataMap["note"]?.nodeValue()?.cleanText()
+        val notes = data.getTextOrNull("note")
 
         val shiftsTable = doc.selectFirst("#app-tabella_turni")
             ?: throw IllegalStateException("Cannot reserve exam session: missing shifts table")
@@ -288,8 +280,9 @@ class Esse3ExamsApi(
         val actionLinks = doc.select("a#$buttonId, a[id=$buttonId]")
         for (link in actionLinks) {
             val href = link.attr("href")
-            val linkParams = parseQueryString(href.substringAfter("?", ""))
-            if (linkParams["APP_ID"] == reservation.sessionId && linkParams["ADSCE_ID"] == reservation.teachingActivityId) {
+            val appId = extractQueryParam(href, "APP_ID")
+            val adsceId = extractQueryParam(href, "ADSCE_ID")
+            if (appId == reservation.sessionId && adsceId == reservation.teachingActivityId) {
                 return href
             }
         }
@@ -309,10 +302,10 @@ class Esse3ExamsApi(
                 ?: throw IllegalStateException("Cannot get exam reservations: missing toolbar")
             val printButton = toolbar.selectFirst("#btnStampa")
                 ?: throw IllegalStateException("Cannot get exam reservations: missing print button")
-            val printButtonHrefParams = parseQueryString(printButton.attr("href").substringAfter("?"))
-            val sessionId = printButtonHrefParams["APP_ID"]
+            val printButtonHref = printButton.attr("href")
+            val sessionId = extractQueryParam(printButtonHref, "APP_ID")
                 ?: throw IllegalStateException("Cannot get exam reservations: missing session id in print button url")
-            val teachingActivityId = printButtonHrefParams["ADSCE_ID"]
+            val teachingActivityId = extractQueryParam(printButtonHref, "ADSCE_ID")
                 ?: throw IllegalStateException("Cannot get exam reservations: missing teaching activity id in print button url")
 
             val teachingActivity = reservation.selectFirst("h2")?.text()?.cleanText()
@@ -330,47 +323,32 @@ class Esse3ExamsApi(
                 ?: throw IllegalStateException("Cannot get exam reservations: missing 'dd.app-box_dati_data_esame' element")
             val examIsPartial = examDateDd.text().contains("Prova parziale", ignoreCase = true)
 
-            val dataMap = dl.select("dt").associate { dt ->
-                val key = dt.text().trim().removeSuffix(":").lowercase()
-                val value = dt.nextElementSibling()
-                key to value
-            }
+            val data = dl.parseGrid()
 
-            val description = dataMap["appello"]?.text()?.cleanText()
-                ?: throw IllegalStateException("Cannot get exam reservations: missing description")
+            val description = data.getTextOrThrow("appello")
 
             val type = if (examIsPartial) {
                 Esse3ExamType.Partial
             } else {
-                val typeCode = dataMap["tipo prova"]?.text()?.cleanText()
-                    ?: throw IllegalStateException("Cannot get exam reservations: missing type")
-                Esse3ExamType.fromString(typeCode)
+                data.getTextAsOrThrow("tipo prova") { Esse3ExamType.fromString(it) }
             }
 
-            val examBuilding = dataMap["edificio"]?.text()?.cleanText()
-                ?: throw IllegalStateException("Cannot get exam reservations: missing building")
+            val examBuilding = data.getTextOrThrow("edificio")
+            val examRoom = data.getTextOrThrow("aula")
 
-            val examRoom = dataMap["aula"]?.text()?.cleanText()
-                ?: throw IllegalStateException("Cannot get exam reservations: missing room")
+            val teachersElement = data.getElementOrThrow("docenti")
+            val teachers = teachersElement.childNodes().mapNotNull { node ->
+                node.nodeValue().cleanText().takeIf { it.isNotBlank() }
+            }
 
-            val teacherElements =
-                dataMap["docenti"] ?: throw IllegalStateException("Cannot get exam reservations: missing teachers")
-            val teachers =
-                teacherElements.childNodes().asSequence().map { it.nodeValue().cleanText() }.filter { it.isNotBlank() }
-                    .toList()
-
-            val reservationNumberText = dataMap["numero iscrizione"]?.nodeValue()?.cleanText()
-                ?: throw IllegalStateException("Cannot reserve exam session: missing reservation number")
+            val reservationNumberText = data.getTextOrThrow("numero iscrizione")
             val reservationNumberParts = reservationNumberText.split(" su ", limit = 2)
             val reservationNumber = reservationNumberParts[0].trim().toInt()
             val maxReservationsCount = reservationNumberParts[1].trim().toInt()
 
-            val modeText = dataMap["svolgimento esame"]?.nodeValue()?.cleanText()
-                ?: throw IllegalStateException("Cannot reserve exam session: missing exam mode")
-            val mode = Esse3ExamSessionMode.fromString(modeText)
-                ?: throw IllegalStateException("Cannot reserve exam session: invalid mode $modeText")
+            val mode = data.getTextAsOrThrow("svolgimento esame") { Esse3ExamSessionMode.fromString(it) }
 
-            val notes = dataMap["note"]?.nodeValue()?.cleanText()
+            val notes = data.getTextOrNull("note")
 
             Esse3ExamReservation(
                 teachingActivity = teachingActivity,
@@ -402,31 +380,19 @@ class Esse3ExamsApi(
             val caption = table.selectFirst("caption")?.text()?.cleanText()
                 ?: throw IllegalStateException("Cannot get exam reservations: missing caption")
 
-            val headers = table.select("thead tr th").map {
-                val node = it.firstChild() ?: it
-                node.nodeValue().trim().lowercase()
-            }
-            val rows = table.select("tbody tr")
-            val entries = rows.map { row ->
-                val cells = row.select("td")
-
-                val rowMap = headers.zip(cells).toMap()
-
-                val operationDateTime = rowMap["data"]?.text()?.cleanText()?.let { parseDateTime(it) }
+            val entries = table.parseTable().map { row ->
+                val operationDateTime = row.getTextAsOrNull("data") { parseDateTime(it) }
                     ?: throw IllegalStateException("Cannot get exam reservations history: missing date")
 
-                val (examDescription, examDate) = rowMap["appello (descrizione - data)"]?.text()?.cleanText()
-                    ?.let { it.substringBeforeLast("-") to parseDate(it.substringAfterLast("-")) }
-                    ?: throw IllegalStateException("Cannot get exam reservations history: missing session data")
+                val sessionData = row.getTextOrThrow("appello (descrizione - data)")
+                val examDescription = sessionData.substringBeforeLast("-")
+                val examDate = parseDate(sessionData.substringAfterLast("-"))
 
-                val operationText = rowMap["operazione"]?.text()?.cleanText()
-                    ?: throw IllegalStateException("Cannot get exam reservations history: missing operation")
-
+                val operationText = row.getTextOrThrow("operazione")
                 val operation = Esse3ReservationOperation.fromString(operationText)
                     ?: throw IllegalStateException("Cannot get exam reservations history: invalid operation '$operationText'")
 
-                val performedBy = rowMap["effettuata da"]?.text()?.cleanText()
-                    ?: throw IllegalStateException("Cannot get exam reservations history: missing performed by")
+                val performedBy = row.getTextOrThrow("effettuata da")
 
                 Esse3ReservationHistoryEntry(
                     operationDateTime = operationDateTime,
@@ -435,7 +401,7 @@ class Esse3ExamsApi(
                     operation = operation,
                     performedBy = performedBy
                 )
-            }
+            }.toList()
 
             Esse3CourseReservationHistory(
                 course = caption, entries = entries

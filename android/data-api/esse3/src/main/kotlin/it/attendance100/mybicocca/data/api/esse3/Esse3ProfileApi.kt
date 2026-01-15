@@ -6,6 +6,7 @@ import io.ktor.client.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.ktor.utils.io.*
+import it.attendance100.mybicocca.data.api.parseGrid
 import it.attendance100.mybicocca.data.dto.esse3.*
 
 /**
@@ -49,32 +50,18 @@ class Esse3ProfileApi(
     suspend fun getPersonalData(): Esse3PersonalData {
         val doc = executeGet(ANAGRAFICA_ENTRY_POINT)
 
-        val personalData = doc.selectFirst("#idsummaryFormNestedTemplateBox_1")
+        val data = doc.selectFirst("#idsummaryFormNestedTemplateBox_1")?.parseGrid()
             ?: throw IllegalStateException("Error getting personal data: missing 'idsummaryFormNestedTemplateBox_1' table")
-        val personalDataMap = personalData.select("dt").associate { dt ->
-            val key = dt.text().trim().removeSuffix(":")
-            val value = dt.nextElementSibling()
-            key.lowercase() to value?.nodeValue()?.cleanText()
-        }
 
-        val name = personalDataMap["nome"]
-            ?: throw IllegalStateException("Error getting personal data: missing 'Nome' in table")
-        val surname = personalDataMap["cognome"]
-            ?: throw IllegalStateException("Error getting personal data: missing 'Cognome' in table")
-        val sex = personalDataMap["sesso"]?.let { Esse3Sex.fromCode(it) }
-            ?: throw IllegalStateException("Error getting personal data: missing 'Sesso' in table")
-        val birthDate = personalDataMap["data di nascita"]?.let { parseDate(it) }
-            ?: throw IllegalStateException("Error getting personal data: missing 'Data di nascita' in table")
-        val citizenship = personalDataMap["cittadinanza"]
-            ?: throw IllegalStateException("Error getting personal data: missing 'Cittadinanza' table")
-        val birthCountry = personalDataMap["nazione di nascita"]
-            ?: throw IllegalStateException("Error getting personal data: missing 'Nazione di nascita' table")
-        val birthProvince = personalDataMap["provincia di nascita"]
-            ?: throw IllegalStateException("Error getting personal data: missing 'Provincia di nascita' in table")
-        val birthCity = personalDataMap["comune/città di nascita"]
-            ?: throw IllegalStateException("Error getting personal data: missing 'Comune/Città di nascita' in table")
-        val fiscalcode = personalDataMap["codice fiscale"]
-            ?: throw IllegalStateException("Error getting personal data: missing 'Codice Fiscale' in table")
+        val name = data.getTextOrThrow("nome")
+        val surname = data.getTextOrThrow("cognome")
+        val sex = data.getTextAsOrThrow("sesso") { Esse3Sex.fromCode(it) }
+        val birthDate = data.getTextAsOrThrow("data di nascita") { parseDate(it) }
+        val citizenship = data.getTextOrThrow("cittadinanza")
+        val birthCountry = data.getTextOrThrow("nazione di nascita")
+        val birthProvince = data.getTextOrThrow("provincia di nascita")
+        val birthCity = data.getTextOrThrow("comune/città di nascita")
+        val fiscalcode = data.getTextOrThrow("codice fiscale")
 
         return Esse3PersonalData(
             name = name,

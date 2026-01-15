@@ -1,6 +1,7 @@
 package it.attendance100.mybicocca.data.api.easystaff
 
 import io.ktor.client.*
+import it.attendance100.mybicocca.data.api.cleanText
 import it.attendance100.mybicocca.data.dto.easystaff.*
 import kotlinx.serialization.json.Json
 import org.jsoup.nodes.Element
@@ -120,33 +121,29 @@ class EasyStaffRoomsApi(
         val gridRows = doc.select(".riga-aula, .room-row, tr[data-aula]")
 
         for (row in gridRows) {
-            try {
-                val roomCode = row.attr("data-aula").ifBlank {
-                    row.selectFirst(".nome-aula, .room-name, td:first-child")?.cleanText()
-                } ?: continue
+            val roomCode = row.attr("data-aula").ifBlank {
+                row.selectFirst(".nome-aula, .room-name, td:first-child")?.cleanText()
+            } ?: continue
 
-                val roomName = row.selectFirst(".nome-aula, .room-name")?.cleanText() ?: roomCode
+            val roomName = row.selectFirst(".nome-aula, .room-name")?.cleanText() ?: roomCode
 
-                val room = EasyStaffRoom(
-                    code = roomCode,
-                    name = roomName,
-                    buildingCode = query.buildingCode,
-                    buildingName = buildingName
-                )
+            val room = EasyStaffRoom(
+                code = roomCode,
+                name = roomName,
+                buildingCode = query.buildingCode,
+                buildingName = buildingName
+            )
 
-                val timeSlots = parseRoomTimeSlots(row)
+            val timeSlots = parseRoomTimeSlots(row)
 
-                rooms.add(EasyStaffRoomDailyOccupation(
-                    room = room,
-                    building = building,
-                    date = query.date,
-                    timeSlots = timeSlots,
-                    gridStartTime = GRID_START_TIME,
-                    gridEndTime = GRID_END_TIME
-                ))
-            } catch (e: Exception) {
-                continue
-            }
+            rooms.add(EasyStaffRoomDailyOccupation(
+                room = room,
+                building = building,
+                date = query.date,
+                timeSlots = timeSlots,
+                gridStartTime = GRID_START_TIME,
+                gridEndTime = GRID_END_TIME
+            ))
         }
 
         // If no grid rows found, try alternative parsing

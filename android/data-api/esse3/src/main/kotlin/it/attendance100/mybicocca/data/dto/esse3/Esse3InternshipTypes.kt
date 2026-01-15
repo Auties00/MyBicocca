@@ -217,9 +217,9 @@ data class Esse3InternshipApplication(
     val opportunityId: Long,
     val opportunityTitle: String,
     val companyName: String,
+    val type: String?,
     val status: Esse3ApplicationStatus,
-    val applicationDate: LocalDateTime?,
-    val notes: String?
+    val applicationDate: LocalDateTime?
 )
 
 /**

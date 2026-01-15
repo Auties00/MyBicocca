@@ -1,6 +1,9 @@
 package it.attendance100.mybicocca.data.api.easystaff
 
 import io.ktor.client.*
+import it.attendance100.mybicocca.data.api.cleanText
+import it.attendance100.mybicocca.data.api.extractQueryParam
+import it.attendance100.mybicocca.data.api.parseTable
 import it.attendance100.mybicocca.data.dto.easystaff.*
 import kotlinx.serialization.json.Json
 import org.jsoup.nodes.Document
@@ -72,16 +75,18 @@ class EasyStaffExamCalendarApi(
         query: EasyStaffExamsByTeacherQuery,
         language: EasyStaffLanguage = EasyStaffLanguage.ITALIAN
     ): EasyStaffExamSearchResults {
-        val doc = executeGet(AGENDA_WEB_API, mapOf(
-            "view" to EXAM_VIEW,
-            "form-type" to EasyStaffExamSearchMode.BY_TEACHER.formType,
-            "include" to EasyStaffExamSearchMode.BY_TEACHER.includeValue,
-            "anno" to query.academicYear.value,
-            "docente" to query.teacherId,
-            "date" to formatDate(query.startDate),
-            "date2" to formatDate(query.endDate),
-            "_lang" to language.code
-        ))
+        val doc = executeGet(
+            AGENDA_WEB_API, mapOf(
+                "view" to EXAM_VIEW,
+                "form-type" to EasyStaffExamSearchMode.BY_TEACHER.formType,
+                "include" to EasyStaffExamSearchMode.BY_TEACHER.includeValue,
+                "anno" to query.academicYear.value,
+                "docente" to query.teacherId,
+                "date" to formatDate(query.startDate),
+                "date2" to formatDate(query.endDate),
+                "_lang" to language.code
+            )
+        )
 
         return parseExamResults(doc)
     }
@@ -97,17 +102,19 @@ class EasyStaffExamCalendarApi(
         query: EasyStaffExamsBySubjectQuery,
         language: EasyStaffLanguage = EasyStaffLanguage.ITALIAN
     ): EasyStaffExamSearchResults {
-        val doc = executeGet(AGENDA_WEB_API, mapOf(
-            "view" to EXAM_VIEW,
-            "form-type" to EasyStaffExamSearchMode.BY_SUBJECT.formType,
-            "include" to EasyStaffExamSearchMode.BY_SUBJECT.includeValue,
-            "anno" to query.academicYear.value,
-            "scuola" to query.teachingAreaCode,
-            "attession" to query.subjectId,
-            "date" to formatDate(query.startDate),
-            "date2" to formatDate(query.endDate),
-            "_lang" to language.code
-        ))
+        val doc = executeGet(
+            AGENDA_WEB_API, mapOf(
+                "view" to EXAM_VIEW,
+                "form-type" to EasyStaffExamSearchMode.BY_SUBJECT.formType,
+                "include" to EasyStaffExamSearchMode.BY_SUBJECT.includeValue,
+                "anno" to query.academicYear.value,
+                "scuola" to query.teachingAreaCode,
+                "attession" to query.subjectId,
+                "date" to formatDate(query.startDate),
+                "date2" to formatDate(query.endDate),
+                "_lang" to language.code
+            )
+        )
 
         return parseExamResults(doc)
     }
@@ -155,65 +162,53 @@ class EasyStaffExamCalendarApi(
         // Parse exams from the table
         val table = doc.selectFirst("table.table-bordered, table.detail_table, #tableEsami")
         if (table != null) {
-            val headers = table.select("thead th, thead td")
-                .map { it.cleanText().lowercase() }
-
-            val rows = table.select("tbody tr")
-
-            for (row in rows) {
-                val cells = row.select("td")
-                if (cells.isEmpty()) continue
-
-                // Map cells to headers
-                val cellMap = headers.zip(cells).toMap()
-
+            table.parseTable().forEach { row ->
                 // Extract subject name
-                val subjectName = findCellValue(cellMap, "descrizione", "insegnamento", "materia", "corso")
-                    ?: cells.firstOrNull()?.cleanText()
-                    ?: continue
+                val subjectName = row.getTextOrNull("descrizione", "insegnamento", "materia", "corso")
+                    ?: row.headers.firstOrNull()?.let { row.getTextOrNull(it) }
+                    ?: return@forEach
 
                 // Extract date
-                val dateText = findCellValue(cellMap, "data", "date")
-                val date = dateText?.let { parseDate(it) } ?: continue
+                val date = row.getTextAsOrNull("data", "date") { parseDate(it) } ?: return@forEach
 
                 // Extract time
-                val timeText = findCellValue(cellMap, "ora", "orario", "time", "orari")
-                val (startTime, endTime) = parseTimeRange(timeText)
+                val (startTime, endTime) = parseTimeRange(row.getTextOrNull("ora", "orario", "time", "orari"))
 
                 // Extract room and building
-                val roomText = findCellValue(cellMap, "aula", "room", "sede")
-                val (room, building) = parseRoomAndBuilding(roomText)
+                val (room, building) = parseRoomAndBuilding(row.getTextOrNull("aula", "room", "sede"))
 
                 // Extract teachers
-                val teacherText = findCellValue(cellMap, "docente", "docenti", "teacher", "professore")
+                val teacherText = row.getTextOrNull("docente", "docenti", "teacher", "professore")
                 val teachers = teacherText?.split(",", ";", "/")
                     ?.map { it.trim() }
                     ?.filter { it.isNotBlank() }
                     ?: emptyList()
 
                 // Extract notes/info
-                val notes = findCellValue(cellMap, "note", "info", "dettagli", "descrizione aggiuntiva")
+                val notes = row.getTextOrNull("note", "info", "dettagli", "descrizione aggiuntiva")
 
                 // Extract exam type
-                val examTypeText = findCellValue(cellMap, "tipo", "type", "modalità")
-                val examType = examTypeText?.let { EasyStaffExamType.fromItalian(it) }
+                val examType = row.getTextAsOrNull("tipo", "type", "modalità") { EasyStaffExamType.fromItalian(it) }
 
                 // Extract subject code from link or cell
-                val subjectCode = row.selectFirst("a[href*=codice]")?.attr("href")
-                    ?.let { """codice=([^&]+)""".toRegex().find(it)?.groupValues?.get(1) }
+                val subjectCode = row.getElementOrNull("descrizione", "insegnamento", "materia", "corso")
+                    ?.selectFirst("a[href*=codice]")?.attr("href")
+                    ?.let { extractQueryParam(it, "codice") }
 
-                exams.add(EasyStaffScheduledExam(
-                    subjectName = subjectName,
-                    subjectCode = subjectCode,
-                    date = date,
-                    startTime = startTime,
-                    endTime = endTime,
-                    room = room,
-                    building = building,
-                    teachers = teachers,
-                    notes = notes,
-                    examType = examType
-                ))
+                exams.add(
+                    EasyStaffScheduledExam(
+                        subjectName = subjectName,
+                        subjectCode = subjectCode,
+                        date = date,
+                        startTime = startTime,
+                        endTime = endTime,
+                        room = room,
+                        building = building,
+                        teachers = teachers,
+                        notes = notes,
+                        examType = examType
+                    )
+                )
             }
         }
 
@@ -237,18 +232,20 @@ class EasyStaffExamCalendarApi(
             val teachers = teacherText?.split(",", ";")?.map { it.trim() }?.filter { it.isNotBlank() }
                 ?: emptyList()
 
-            exams.add(EasyStaffScheduledExam(
-                subjectName = subjectName,
-                subjectCode = null,
-                date = date,
-                startTime = startTime,
-                endTime = endTime,
-                room = room,
-                building = building,
-                teachers = teachers,
-                notes = null,
-                examType = null
-            ))
+            exams.add(
+                EasyStaffScheduledExam(
+                    subjectName = subjectName,
+                    subjectCode = null,
+                    date = date,
+                    startTime = startTime,
+                    endTime = endTime,
+                    room = room,
+                    building = building,
+                    teachers = teachers,
+                    notes = null,
+                    examType = null
+                )
+            )
         }
 
         return EasyStaffExamSearchResults(

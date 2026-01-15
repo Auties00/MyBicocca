@@ -1,7 +1,9 @@
 package it.attendance100.mybicocca.data.api.esse3
 
 import io.ktor.client.*
-import io.ktor.http.*
+import it.attendance100.mybicocca.data.api.cleanText
+import it.attendance100.mybicocca.data.api.extractQueryParamAsLong
+import it.attendance100.mybicocca.data.api.parseTable
 import it.attendance100.mybicocca.data.dto.esse3.*
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
@@ -39,27 +41,16 @@ class Esse3QuestionnaireApi(
         val table = doc.selectFirst("#quest_table_quest_valutazione")
             ?: throw IllegalStateException("Cannot get evaluation courses: missing 'quest_table_quest_valutazione' table")
 
-        val headers = table.select("thead tr th").map { it.text().cleanText().lowercase() }
-        val rows = table.select("tbody tr")
+        return table.parseTable().map { row ->
+            val year = row.getTextAsOrThrow("anno di corso") { it.toIntOrNull() }
 
-        return rows.map { row ->
-            val cells = row.select("td")
-            val rowMap = headers.zip(cells).toMap()
+            val (courseCode, courseName) = parseCourseCodeAndName(row.getTextOrThrow("attività didattiche"))
 
-            val year = rowMap["anno di corso"]?.text()?.cleanText()?.toIntOrNull()
-                ?: throw IllegalStateException("Cannot get evaluation courses: missing year")
+            val credits = row.getTextAsOrThrow("peso in crediti") { it.toIntOrNull() }
 
-            val courseText = rowMap["attività didattiche"]?.text()?.cleanText()
-                ?: throw IllegalStateException("Cannot get evaluation courses: missing course")
-            val (courseCode, courseName) = parseCourseCodeAndName(courseText)
+            val academicYear = row.getTextOrThrow("aa freq.")
 
-            val credits = rowMap["peso in crediti"]?.text()?.cleanText()?.toIntOrNull()
-                ?: throw IllegalStateException("Cannot get evaluation courses: missing credits")
-
-            val academicYear = rowMap["aa freq."]?.text()?.cleanText()
-                ?: throw IllegalStateException("Cannot get evaluation courses: missing academic year")
-
-            val questionnaireCell = rowMap["q.val."]
+            val questionnaireCell = row.getElementOrNull("q.val.")
             val questionnaireLink = questionnaireCell?.selectFirst("a")
             val status = parseEvaluationCourseStatus(questionnaireLink)
 
@@ -71,7 +62,7 @@ class Esse3QuestionnaireApi(
                 academicYear = academicYear,
                 status = status
             )
-        }
+        }.toList()
     }
 
     /**
@@ -102,29 +93,13 @@ class Esse3QuestionnaireApi(
         val table = doc.selectFirst("table[id*=tabellaPartizioni]")
             ?: throw IllegalStateException("Cannot get evaluation partitions: missing partitions table")
 
-        val headers = table.select("thead tr th").map {
-            val node = it.firstChild() ?: it
-            node.nodeValue().trim().lowercase()
-        }
+        return table.parseTable().map { row ->
+            val unitName = row.getTextOrThrow("unità didattica")
+            val teacher = row.getTextOrThrow("docente")
+            val activityType = row.getTextOrThrow("tipo attività")
+            val partition = row.getTextOrThrow("partizione")
 
-        return table.select("tbody tr").mapNotNull { row ->
-            val cells = row.select("td")
-            val rowMap = headers.zip(cells).toMap()
-
-            val unitName = rowMap["unità didattica"]?.text()?.cleanText()
-                ?: throw IllegalStateException("Cannot get evaluation partitions: missing unit")
-
-            val teacher = rowMap["docente"]?.text()?.cleanText()
-                ?: throw IllegalStateException("Cannot get evaluation partitions: missing teacher")
-
-            val activityType = rowMap["tipo attività"]?.text()?.cleanText()
-                ?: throw IllegalStateException("Cannot get evaluation partitions: missing activity type")
-
-            val partition = rowMap["partizione"]?.text()?.cleanText()
-                ?: throw IllegalStateException("Cannot get evaluation partitions: missing partition")
-
-            val questionnaire = rowMap["questionario"]
-                ?: throw IllegalStateException("Cannot get evaluation partitions: missing questionnaire")
+            val questionnaire = row.getElementOrThrow("questionario")
             val questionnaireLink = questionnaire.selectFirst("a")
             val status = parseEvaluationPartitionStatus(questionnaireLink)
 
@@ -135,7 +110,7 @@ class Esse3QuestionnaireApi(
                 partition = partition,
                 status = status
             )
-        }
+        }.toList()
     }
 
     /**
@@ -151,9 +126,7 @@ class Esse3QuestionnaireApi(
 
         val wrapperDoc = executeGet(partition.status.questionnaireUrl)
         val startForm = wrapperDoc.selectFirst("form#quest_form_compilazioni1") as? FormElement
-        if(startForm == null) {
-            return null
-        }
+            ?: return null
 
         val formFields = startForm.formData()
             .associate { it.key() to it.value() }
@@ -239,9 +212,7 @@ class Esse3QuestionnaireApi(
         }
 
         val href = link.attr("href")
-        val queryParameters = parseQueryString(href)
-        val activityId= queryParameters["adsce_id"]
-            ?.toLongOrNull()
+        val activityId = extractQueryParamAsLong(href, "adsce_id")
             ?: return Esse3EvaluationCourseStatus.NotAvailable
 
         val imgAlt = link.selectFirst("img")
