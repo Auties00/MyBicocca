@@ -1,5 +1,6 @@
 package it.attendance100.mybicocca.data.api.esse3
 
+import io.ktor.client.plugins.logging.*
 import io.ktor.http.*
 import io.ktor.util.date.*
 import org.junit.jupiter.api.extension.BeforeAllCallback
@@ -17,7 +18,12 @@ object Esse3GlobalApiData : BeforeAllCallback, AutoCloseable {
     override fun beforeAll(context: ExtensionContext) {
         if (api == null) {
             val cookies = performLogin()
-            api = Esse3Api(cookies)
+            api = Esse3Api(cookies) {
+                install(Logging) {
+                    logger = Logger.DEFAULT
+                    level = LogLevel.ALL
+                }
+            }
         }
     }
 

@@ -1,5 +1,6 @@
 package it.attendance100.mybicocca.data.api.elearning
 
+import io.ktor.client.plugins.logging.*
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.extension.BeforeAllCallback
 import org.junit.jupiter.api.extension.ExtensionContext
@@ -23,9 +24,12 @@ object ElearningGlobalApiData : BeforeAllCallback, AutoCloseable {
 
     override fun beforeAll(context: ExtensionContext) {
         if (api == null) {
-            api = ElearningApi(
-                enableLogging = true
-            )
+            api = ElearningApi {
+                install(Logging) {
+                    logger = Logger.DEFAULT
+                    level = LogLevel.ALL
+                }
+            }
         }
 
         if (session == null) {

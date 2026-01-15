@@ -2,10 +2,15 @@ package it.attendance100.mybicocca.data.api.elearning
 
 import io.ktor.client.*
 import io.ktor.client.request.*
+import io.ktor.client.request.forms.FormDataContent
 import io.ktor.client.statement.*
+import io.ktor.http.Parameters
+import io.ktor.http.parseQueryString
+import io.ktor.utils.io.jvm.javaio.*
 import it.attendance100.mybicocca.data.dto.elearning.*
 import kotlinx.serialization.json.Json
 import org.jsoup.Jsoup
+import org.jsoup.nodes.FormElement
 import java.net.URI
 
 /**
@@ -36,6 +41,19 @@ class ElearningCourseApi(
      * Gets the contents of a course (sections and modules).
      *
      * @param wsToken The web service token (32 characters)
+     * @param course The course to get contents for
+     * @return Course contents with sections and modules wrapped in [ElearningGetCourseContentsResponse]
+     * @throws IllegalArgumentException If the token is invalid
+     * @throws IllegalStateException If the request fails
+     */
+    suspend fun getCourseContents(wsToken: String, course: ElearningCourse): ElearningGetCourseContentsResponse {
+        return getCourseContents(wsToken, course.id)
+    }
+
+    /**
+     * Gets the contents of a course (sections and modules).
+     *
+     * @param wsToken The web service token (32 characters)
      * @param courseId The course ID to get contents for
      * @return Course contents with sections and modules wrapped in [ElearningGetCourseContentsResponse]
      * @throws IllegalArgumentException If the token is invalid
@@ -52,8 +70,7 @@ class ElearningCourseApi(
      */
     suspend fun getCoursesAreas(): List<ElearningCourseArea> {
         val response = client.get(BASE_URL)
-        val html = response.bodyAsText()
-        val doc = Jsoup.parse(html, BASE_URL)
+        val doc = Jsoup.parse(response.bodyAsChannel().toInputStream(), "UTF-8", BASE_URL)
         return doc.select("div.frontpage-box").map { sectionElement ->
             val sectionName = sectionElement.selectFirst("h2.navigation-title")?.text()?.trim() ?: "Unknown Section"
             val categories = sectionElement.select("div.card .navigation-block").mapNotNull { item ->
@@ -79,8 +96,7 @@ class ElearningCourseApi(
     suspend fun getCourseCategoryContents(category: ElearningCourseCategory): ElearningCourseCategoryContents {
         val url = category.url
         val response = client.get(url)
-        val html = response.bodyAsText()
-        val doc = Jsoup.parse(html, url)
+        val doc = Jsoup.parse(response.bodyAsChannel().toInputStream(), "UTF-8", BASE_URL)
 
         val name = doc.selectFirst("h1")?.text()?.trim() ?: "Unknown Category"
 
@@ -93,7 +109,7 @@ class ElearningCourseApi(
             ElearningCourseCategory(subName, subUrl)
         }
 
-        val courses =  doc.select("div.coursebox").mapNotNull { box ->
+        val courses = doc.select("div.coursebox").mapNotNull { box ->
             val link = box.selectFirst("a.coursename")
             if (link == null) {
                 null
@@ -106,26 +122,62 @@ class ElearningCourseApi(
 
                 val code = box.selectFirst(".course-shortname")?.text()?.trim() ?: ""
 
-                var courseId = box.attr("data-courseid")
-                if (courseId.isBlank()) {
-                    val uri = URI(courseUrl)
-                    val query = uri.query
-                    if (query != null) {
-                        val params = query.split("&").associate {
-                            val parts = it.split("=")
-                            if (parts.size == 2) parts[0] to parts[1] else parts[0] to ""
-                        }
-                        courseId = params.getOrDefault("id", "")
-                    }
-                }
+                val courseId = box.attr("data-courseid")
+                    .takeIf { it.isNotEmpty() }
+                    ?.toIntOrNull()
+                    ?: URI(courseUrl).query.let { parseQueryString(it)["id"]?.toIntOrNull() }
+                    ?: return@mapNotNull null
 
-                ElearningCourse(title, code, courseUrl, courseId)
+                val hasPassword = doc.selectFirst("#fitem_id_nokey") == null
+
+                ElearningCourse(title, code, courseUrl, courseId, hasPassword)
             }
         }
 
         return ElearningCourseCategoryContents(name, subcategories, courses)
     }
 
-    // TODO: Register to course method
+    /**
+     * Enrolls the current user into a course using self-enrollment.
+     *
+     * @param wsToken The web service token (32 characters)
+     * @param course The course to enroll into
+     * @param password The enrollment password, if the course requires one
+     * @param instanceId The self-enrollment instance ID, if multiple enrollment methods exist
+     * @return Enrollment result wrapped in [ElearningEnrollIntoCourseResponse]
+     * @throws IllegalArgumentException If the token is invalid
+     * @throws IllegalStateException If the request fails or enrollment is not allowed
+     */
+    suspend fun enrollIntoCourse(
+        wsToken: String,
+        course: ElearningCourse,
+        password: String? = null,
+        instanceId: Int? = null
+    ): ElearningEnrollIntoCourseResponse {
+        return enrollIntoCourse(wsToken, course.id, password, instanceId)
+    }
+
+    /**
+     * Enrolls the current user into a course using self-enrollment.
+     *
+     * @param wsToken The web service token (32 characters)
+     * @param courseId The course ID to enroll into
+     * @param password The enrollment password, if the course requires one
+     * @param instanceId The self-enrollment instance ID, if multiple enrollment methods exist
+     * @return Enrollment result wrapped in [ElearningEnrollIntoCourseResponse]
+     * @throws IllegalArgumentException If the token is invalid
+     * @throws IllegalStateException If the request fails or enrollment is not allowed
+     */
+    suspend fun enrollIntoCourse(
+        wsToken: String,
+        courseId: Int,
+        password: String? = null,
+        instanceId: Int? = null
+    ): ElearningEnrollIntoCourseResponse {
+        return executeAuthenticatedRequest(wsToken, ElearningEnrollIntoCourseRequest(courseId, password, instanceId))
+    }
+
+    // There is no method to unenroll from a course
+    // https://moodle.atlassian.net/browse/MDL-30063
 }
 

@@ -11,6 +11,7 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.http.ParametersBuilder
 import it.attendance100.mybicocca.data.dto.elearning.ElearningRequest
 import it.attendance100.mybicocca.data.dto.elearning.ElearningResponse
+import it.attendance100.mybicocca.data.exception.ElearningException
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
@@ -55,7 +56,7 @@ abstract class ElearningAbstractApi(
      * @param requestArgs The request object containing the function name and parameters
      * @return The parsed response of type [T]
      * @throws IllegalArgumentException If the token is not 32 characters
-     * @throws IllegalStateException If the HTTP request fails or Moodle returns an error
+     * @throws ElearningException If the HTTP request fails or Moodle returns an error
      */
     protected suspend inline fun <reified T : ElearningResponse> executeAuthenticatedRequest(
         wsToken: String,
@@ -84,7 +85,7 @@ abstract class ElearningAbstractApi(
         }
 
         if (response.status != HttpStatusCode.OK) {
-            throw IllegalStateException("Invalid response status: ${response.status}")
+            throw ElearningException(null, "Invalid response status: ${response.status}")
         }
 
         when (val element = response.body<JsonElement>()) {
@@ -101,27 +102,26 @@ abstract class ElearningAbstractApi(
                     val exceptionData = element["exception"]?.jsonPrimitive?.contentOrNull
                     if (exceptionData == null) {
                         val errorCode = element["errorcode"]?.jsonPrimitive?.contentOrNull
-                        val message = element["message"]?.jsonPrimitive?.contentOrNull
-                        throw IllegalStateException("Moodle error: ${errorCode ?: "unknown"} - ${message ?: "unknown error"}")
+                        val message = element["message"]?.jsonPrimitive?.contentOrNull ?: "unknown error"
+                        throw ElearningException(errorCode, message)
                     } else {
                         val exception = json.decodeFromString<JsonObject>(exceptionData)
-                        val errorCode =
-                            exception["errorcode"]?.jsonPrimitive?.contentOrNull ?: "unknown"
+                        val errorCode = exception["errorcode"]?.jsonPrimitive?.contentOrNull
                         val errorModule = exception["module"]?.jsonPrimitive?.contentOrNull ?: "unknown"
-                        throw IllegalStateException("Moodle error: $errorCode in module $errorModule")
+                        throw ElearningException(errorCode, "Generic error in module '$errorModule'")
                     }
                 } else {
                     val errorCode = element["errorcode"]?.jsonPrimitive?.contentOrNull
                     if (errorCode != null) {
                         val message = element["message"]?.jsonPrimitive?.contentOrNull ?: "unknown error"
-                        throw IllegalStateException("Moodle error: $errorCode - $message")
+                        throw ElearningException(errorCode, message)
                     } else {
                         return json.decodeFromJsonElement<T>(element)
                     }
                 }
             }
 
-            else -> throw IllegalStateException("Invalid response type: $element")
+            else -> throw ElearningException(null, "Invalid response type: $element")
         }
     }
 }
