@@ -1,180 +1,145 @@
 package it.attendance100.mybicocca.data.dto.easystaff
 
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 import java.time.LocalDate
-import java.time.LocalTime
+import java.time.LocalDateTime
 
 /**
- * Type of bookable event in the system.
+ * Type of event
  *
- * These correspond to the "tipo prenotazione" values in the Agenda Web system.
+ * @param code the code of the event type
+ * @param label the name of the event type
  */
-enum class EasyStaffEventType(val id: Int, val italianName: String) {
-    LESSON(1, "Lezione"),
-    EXAM(2, "Esame"),
-    SEMINAR(3, "Seminari"),
-    MASTER(4, "Master"),
-    CONGRESS(6, "Congressi"),
-    UNION_MEETING(7, "Riunione sindacale"),
-    OTHER(8, "Altro"),
-    INSTITUTIONAL_ACTIVITY(12, "Attività istituzionali"),
-    CONFERENCE(13, "Convegni"),
-    BLENDED_COURSE(14, "Corsi Blended"),
-    TRAINING_COURSE(15, "Corsi di Formazione"),
-    ELECTION(18, "Elezioni"),
-    EXERCISE(19, "Esercitazioni"),
-    ENTRANCE_TEST(24, "Test d'ingresso"),
-    INTERNSHIP(26, "Tirocini"),
-    STUDENT_ASSOCIATION_MEETING(28, "Incontri ass. studentesche"),
-    GRADUATION(29, "Lauree"),
-    PUBLIC_COMPETITION(31, "Concorsi pubblici"),
-    MAINTENANCE(32, "Manutenzione/Lavori"),
-    STATE_EXAM(33, "Esami di Stato"),
-    OPEN_DAY(34, "Open day"),
-    TEACHING_LAB(35, "Laboratori didattici"),
-    TUTOR_PRESENCE(36, "Presenza Tutor (LIB)"),
-    RESERVATION(37, "Prenotazione"),
-    SELF_SERVICE_OPENING(38, "Apertura self-service (LIB)"),
-    NON_CURRICULAR_ACTIVITY(39, "Altre attività didattiche non curriculari"),
-    TUTORING(40, "Tutorato"),
-    PHD(41, "Dottorati"),
-    MASTER_LESSON(42, "Lezioni master"),
-    MASTER_EXAM(43, "Esami master"),
-    ADVANCED_COURSE(44, "Corsi di Perfezionamento"),
-    PODIUM_RESERVATION(45, "Prenotazione PODIO (registrazione lezione)"),
-    EVENT(46, "Eventi"),
-    STUDENT_EVENT(47, "ZZZ Evento STUDENTI"),
-    MENTORING(48, "Tutoraggio"),
-    MEETING(49, "Riunione");
+@Serializable
+data class EasyStaffEventType(
+    @SerialName("valore")
+    val code: Int,
 
-    companion object {
-        /**
-         * Gets an event type by its ID.
-         *
-         * @param id The event type ID
-         * @return The matching [EasyStaffEventType], or [OTHER] if not found
-         */
-        fun fromId(id: Int): EasyStaffEventType {
-            return entries.find { it.id == id } ?: OTHER
-        }
-
-        /**
-         * Gets an event type by its Italian name.
-         *
-         * @param name The Italian name
-         * @return The matching [EasyStaffEventType], or [OTHER] if not found
-         */
-        fun fromItalianName(name: String): EasyStaffEventType {
-            val normalized = name.trim().lowercase()
-            return entries.find { it.italianName.lowercase() == normalized } ?: OTHER
-        }
-    }
-}
+    @SerialName("label")
+    val label: String,
+)
 
 /**
  * Status of a booking/event.
  */
-enum class EasyStaffBookingStatus(val value: String, val italianName: String) {
-    CONFIRMED("0", "Confermato"),
-    CANCELLED("1", "Annullato");
+@Serializable
+enum class EasyStaffBookingStatus(val value: String) {
+    @SerialName("0")
+    CONFIRMED("0"),
 
-    companion object {
-        /**
-         * Gets a booking status by its value.
-         *
-         * @param value The status value ("0" or "1")
-         * @return The matching [EasyStaffBookingStatus], or [CONFIRMED] as default
-         */
-        fun fromValue(value: String): EasyStaffBookingStatus {
-            return entries.find { it.value == value } ?: CONFIRMED
-        }
-
-        /**
-         * Gets a booking status from Italian text.
-         *
-         * @param text The Italian status text
-         * @return The matching [EasyStaffBookingStatus], or [CONFIRMED] as default
-         */
-        fun fromItalian(text: String): EasyStaffBookingStatus {
-            return when (text.trim().lowercase()) {
-                "annullato" -> CANCELLED
-                else -> CONFIRMED
-            }
-        }
-    }
+    @SerialName("1")
+    CANCELLED("1")
 }
 
+@Serializable
+internal data class EasyStaffEventsResponse(
+    @SerialName("events")
+    val events: List<EasyStaffEvent> = emptyList()
+)
+
 /**
- * Represents a scheduled event/booking in the system.
+ * A scheduled event.
  *
- * @property title The event title
+ * @property id The event ID
+ * @property title The event title (usually the subject name)
  * @property date The date of the event
- * @property startTime The start time
- * @property endTime The end time
- * @property room The room name
- * @property building The building name
+ * @property startDateTime The start time as LocalDateTime
+ * @property endDateTime The end time as LocalDateTime
+ * @property roomName The room where the event takes place
+ * @property facultyId The faculty ID
  * @property eventType The type of event
- * @property organizers List of organizers/teachers
- * @property status The booking status
+ * @property isPast Whether the event is in the past
+ * @property isUniversityEvent Whether this is a university-wide event
+ * @property teachersList List of teachers for this event
+ * @property activities Educational activities linked to this event
  */
-data class EasyStaffScheduledEvent(
+@Serializable
+data class EasyStaffEvent(
+    @SerialName("id")
+    val id: String,
+
+    @SerialName("name")
     val title: String,
+
+    @SerialName("Giorno")
+    @Serializable(with = LocalDateSerializer::class)
     val date: LocalDate,
-    val startTime: LocalTime,
-    val endTime: LocalTime,
-    val room: String?,
-    val building: String?,
-    val eventType: EasyStaffEventType,
-    val organizers: List<String>,
-    val status: EasyStaffBookingStatus
+
+    @SerialName("timestamp_from")
+    @Serializable(with = LocalDateTimeSerializer::class)
+    val startDateTime: LocalDateTime,
+
+    @SerialName("timestamp_to")
+    @Serializable(with = LocalDateTimeSerializer::class)
+    val endDateTime: LocalDateTime,
+
+    @SerialName("NomeAula")
+    val roomName: String,
+
+    @SerialName("faculty")
+    val facultyId: String,
+
+    @SerialName("Annullato")
+    val status: EasyStaffBookingStatus,
+
+    @SerialName("type_id")
+    val eventType: String,
+
+    @SerialName("passato")
+    @Serializable(with = StringBooleanSerializer::class)
+    val isPast: Boolean,
+
+    @SerialName("EventoAteneo")
+    @Serializable(with = IntBooleanSerializer::class)
+    val isUniversityEvent: Boolean,
+
+    @SerialName("Utenti")
+    val teachersList: List<EasyStaffEventTeacher> = emptyList(),
+
+    @SerialName("attivita_didattiche")
+    val activities: List<EasyStaffEventActivity> = emptyList()
 )
 
 /**
- * Parameters for searching events.
- *
- * @property buildings Buildings to search (empty for all)
- * @property rooms Rooms to search (empty for all)
- * @property startDate The start date for the search range
- * @property endDate The end date for the search range
- * @property eventTypes Event types to filter by (empty for all)
- * @property status Booking status filter (null for all)
- * @property keyword Optional keyword search
- * @property daysOfWeek Days of week to filter by (empty for all)
- * @property startTime Optional start time filter
- * @property endTime Optional end time filter
+ * Represents teacher contact and identity information associated with a specific event or lesson.
+ * @param name The teacher's first name.
+ * @param surname The teacher's last name.
+ * @param email The official institutional email address of the teacher.
+ * @param code The unique alphanumeric identifier or staff code for the teacher.
  */
-data class EasyStaffEventSearchQuery(
-    val buildings: List<String> = emptyList(),
-    val rooms: List<String> = emptyList(),
-    val startDate: LocalDate,
-    val endDate: LocalDate,
-    val eventTypes: List<EasyStaffEventType> = emptyList(),
-    val status: EasyStaffBookingStatus? = null,
-    val keyword: String? = null,
-    val daysOfWeek: List<EasyStaffDayOfWeek> = emptyList(),
-    val startTime: LocalTime? = null,
-    val endTime: LocalTime? = null
+@Serializable
+data class EasyStaffEventTeacher(
+    @SerialName("Nome")
+    val name: String,
+
+    @SerialName("Cognome")
+    val surname: String,
+
+    @SerialName("Mail")
+    @Serializable(with = EmptyStringAsNullSerializer::class)
+    val email: String?,
+
+    @SerialName("Codice")
+    @Serializable(with = EmptyStringAsNullSerializer::class)
+    val code: String?
 )
 
 /**
- * Results from an event search.
+ * Represents an educational activity (insegnamento/attività didattica).
  *
- * @property events The list of matching events
- * @property searchSummary A summary of the search parameters
+ * @property id The activity ID
+ * @property code The activity code
+ * @property name The activity name
  */
-data class EasyStaffEventSearchResults(
-    val events: List<EasyStaffScheduledEvent>,
-    val searchSummary: String
-)
+@Serializable
+data class EasyStaffEventActivity(
+    @SerialName("ID")
+    val id: String,
 
-/**
- * Options available for event searches, loaded from the server.
- *
- * @property buildings Available buildings
- * @property rooms Available rooms (may be filtered by building)
- * @property eventTypes Available event types
- */
-data class EasyStaffEventSearchOptions(
-    val buildings: List<EasyStaffBuilding>,
-    val rooms: List<EasyStaffRoom>,
-    val eventTypes: List<EasyStaffEventType>
+    @SerialName("Codice")
+    val code: String,
+
+    @SerialName("Nome")
+    val name: String
 )

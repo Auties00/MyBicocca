@@ -1,12 +1,13 @@
 package it.attendance100.mybicocca.data.api.easystaff
 
 import io.ktor.client.*
-import it.attendance100.mybicocca.data.api.cleanText
-import it.attendance100.mybicocca.data.api.parseTable
 import it.attendance100.mybicocca.data.dto.easystaff.*
 import kotlinx.serialization.json.Json
+import java.lang.IllegalStateException
+import java.time.DayOfWeek
 import java.time.LocalDate
-import java.time.LocalTime.of
+import java.time.LocalTime
+import java.time.temporal.TemporalAdjusters
 
 /**
  * API for event search operations (Ricerca eventi).
@@ -15,78 +16,35 @@ import java.time.LocalTime.of
  * - Universal event search across all types
  * - Filtering by building, room, event type, status, date range
  * - Keyword search
- *
- * This is the most flexible search interface, allowing queries across
- * all event types (lessons, exams, seminars, etc.) with various filters.
  */
 class EasyStaffEventsApi(
     client: HttpClient,
     json: Json
 ) : EasyStaffAbstractApi(client, json) {
     companion object {
-        private const val EVENTS_VIEW = "bookings"
+        private const val BOOKINGS_ENDPOINT = "/PortaleStudentiUnimib/bookings_call.php"
 
-        private val DEFAULT_START_TIME = of(0, 0)
-        private val DEFAULT_END_TIME = of(23, 59)
+        private val DEFAULT_BUILDINGS = listOf(EasyStaffBuilding.FILTER_ALLOW_ALL, EasyStaffBuilding.FILTER_ALLOW_NO_ROOM)
     }
 
     /**
-     * Gets the available search options for events.
-     *
-     * This includes available buildings, rooms, and event types.
+     * Gets the list of available event types.
      *
      * @param language The language for labels
-     * @return The available search options
+     * @return The available event types
      */
-    suspend fun getSearchOptions(language: EasyStaffLanguage = EasyStaffLanguage.ITALIAN): EasyStaffEventSearchOptions {
-        val doc = executeGet(
-            AGENDA_WEB_API, mapOf(
-                "view" to EVENTS_VIEW,
-                "include" to "bookings",
+    suspend fun getEventTypes(
+        language: EasyStaffLanguage,
+    ): List<EasyStaffEventType> {
+        val response = executeGetText(
+            COMBO_ENDPOINT, mapOf(
+                "sw" to "rooms_",
                 "_lang" to language.code
             )
         )
-
-        // Parse buildings
-        val buildings = doc.select("select[name*=sede] option").mapNotNull { option ->
-            option.attr("value")
-                .takeIf { it.isNotBlank() }
-                ?.let {
-                    EasyStaffBuilding(
-                        code = it,
-                        name = option.text().trim()
-                    )
-                }
-        }
-
-        // Parse rooms
-        val rooms = doc.select("select[name*=aula] option").mapNotNull { option ->
-            option.attr("value")
-                .takeIf { it.isNotBlank() }
-                ?.let {
-                    EasyStaffRoom(
-                        code = it,
-                        name = option.text().trim(),
-                        buildingCode = "",
-                        buildingName = ""
-                    )
-                }
-        }
-
-        // Parse event types
-        val eventTypes = doc.select("select[name=tipo] option")
-            .mapNotNull { option ->
-                val id = option.attr("value").toIntOrNull() ?: return@mapNotNull null
-                EasyStaffEventType.fromId(id)
-            }
-            .distinct()
-            .ifEmpty { EasyStaffEventType.entries.toList() }
-
-        return EasyStaffEventSearchOptions(
-            buildings = buildings,
-            rooms = rooms,
-            eventTypes = eventTypes
-        )
+        val jsonString = extractJsonFromJsVariable(response, "elenco_tipi")
+            ?: throw IllegalStateException("Missing 'elenco_tipi' field")
+        return json.decodeFromString(jsonString)
     }
 
     /**
@@ -95,22 +53,23 @@ class EasyStaffEventsApi(
      * @param buildings Optional building filter
      * @param eventTypes Optional event type filter
      * @param language The language for labels
+     * @param keyword Optional keyword search
      * @return The search results
      */
     suspend fun getTodayEvents(
-        buildings: List<String> = emptyList(),
+        buildings: List<EasyStaffBuilding> = emptyList(),
         eventTypes: List<EasyStaffEventType> = emptyList(),
-        language: EasyStaffLanguage = EasyStaffLanguage.ITALIAN
-    ): EasyStaffEventSearchResults {
+        language: EasyStaffLanguage = EasyStaffLanguage.ITALIAN,
+        keyword: String? = null
+    ): List<EasyStaffEvent> {
         val today = LocalDate.now()
-        return searchEvents(
-            EasyStaffEventSearchQuery(
-                buildings = buildings,
-                startDate = today,
-                endDate = today,
-                eventTypes = eventTypes
-            ),
-            language
+        return getEvents(
+            buildings = buildings,
+            startDate = today,
+            endDate = today,
+            eventTypes = eventTypes,
+            language = language,
+            keyword = keyword
         )
     }
 
@@ -120,188 +79,122 @@ class EasyStaffEventsApi(
      * @param buildings Optional building filter
      * @param eventTypes Optional event type filter
      * @param language The language for labels
+     * @param keyword Optional keyword search
      * @return The search results
      */
     suspend fun getWeekEvents(
-        buildings: List<String> = emptyList(),
+        buildings: List<EasyStaffBuilding> = emptyList(),
         eventTypes: List<EasyStaffEventType> = emptyList(),
-        language: EasyStaffLanguage = EasyStaffLanguage.ITALIAN
-    ): EasyStaffEventSearchResults {
+        language: EasyStaffLanguage = EasyStaffLanguage.ITALIAN,
+        keyword: String? = null
+    ): List<EasyStaffEvent> {
         val today = LocalDate.now()
-        val weekStart = today.with(java.time.DayOfWeek.MONDAY)
-        val weekEnd = weekStart.plusDays(6)
-
-        return searchEvents(
-            EasyStaffEventSearchQuery(
-                buildings = buildings,
-                startDate = weekStart,
-                endDate = weekEnd,
-                eventTypes = eventTypes
-            ),
-            language
+        val weekStart = today.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
+        val weekEnd = today.with(TemporalAdjusters.nextOrSame(DayOfWeek.SUNDAY))
+        return getEvents(
+            buildings = buildings,
+            startDate = weekStart,
+            endDate = weekEnd,
+            eventTypes = eventTypes,
+            language = language,
+            keyword = keyword
         )
     }
 
     /**
-     * Searches for events by keyword.
+     * Gets all events for this month.
      *
-     * @param keyword The search keyword
-     * @param startDate The start date for the search range
-     * @param endDate The end date for the search range
+     * @param buildings Optional building filter
+     * @param eventTypes Optional event type filter
      * @param language The language for labels
+     * @param keyword Optional keyword search
      * @return The search results
      */
-    suspend fun searchByKeyword(
-        keyword: String,
-        startDate: LocalDate = LocalDate.now(),
-        endDate: LocalDate = LocalDate.now().plusMonths(1),
-        language: EasyStaffLanguage = EasyStaffLanguage.ITALIAN
-    ): EasyStaffEventSearchResults {
-        return searchEvents(
-            EasyStaffEventSearchQuery(
-                startDate = startDate,
-                endDate = endDate,
-                keyword = keyword
-            ),
-            language
-        )
-    }
-
-    /**
-     * Gets events of a specific type.
-     *
-     * @param eventType The event type to filter by
-     * @param startDate The start date for the search range
-     * @param endDate The end date for the search range
-     * @param language The language for labels
-     * @return The search results
-     */
-    suspend fun getEventsByType(
-        eventType: EasyStaffEventType,
-        startDate: LocalDate = LocalDate.now(),
-        endDate: LocalDate = LocalDate.now().plusMonths(1),
-        language: EasyStaffLanguage = EasyStaffLanguage.ITALIAN
-    ): EasyStaffEventSearchResults {
-        return searchEvents(
-            EasyStaffEventSearchQuery(
-                startDate = startDate,
-                endDate = endDate,
-                eventTypes = listOf(eventType)
-            ),
-            language
+    suspend fun getMonthEvents(
+        buildings: List<EasyStaffBuilding> = emptyList(),
+        eventTypes: List<EasyStaffEventType> = emptyList(),
+        language: EasyStaffLanguage = EasyStaffLanguage.ITALIAN,
+        keyword: String? = null,
+    ): List<EasyStaffEvent> {
+        val today = LocalDate.now()
+        val monthStart = today.with(TemporalAdjusters.firstDayOfMonth())
+        val monthEnd = today.with(TemporalAdjusters.lastDayOfMonth())
+        return getEvents(
+            buildings = buildings,
+            startDate = monthStart,
+            endDate = monthEnd,
+            eventTypes = eventTypes,
+            language = language,
+            keyword = keyword
         )
     }
 
     /**
      * Searches for events matching the given criteria.
      *
-     * @param query The search parameters
+     * @param startDate The start date for the search range
+     * @param endDate The end date for the search range
+     * @param buildings Buildings to search (empty for all)
+     * @param rooms Rooms to search (empty for all)
+     * @param eventTypes Event types to filter by (empty for all)
+     * @param status Booking status filter (null for all)
+     * @param keyword Optional keyword search
+     * @param daysOfWeek Days of week to filter by (empty for all)
+     * @param startTime Optional start time filter
+     * @param endTime Optional end time filter
      * @param language The language for labels
      * @return The search results
      */
-    suspend fun searchEvents(
-        query: EasyStaffEventSearchQuery,
+    suspend fun getEvents(
+        startDate: LocalDate,
+        endDate: LocalDate,
+        buildings: List<EasyStaffBuilding> = emptyList(),
+        rooms: List<EasyStaffRoom> = emptyList(),
+        eventTypes: List<EasyStaffEventType> = emptyList(),
+        status: EasyStaffBookingStatus? = null,
+        keyword: String? = null,
+        daysOfWeek: List<EasyStaffDayOfWeek> = emptyList(),
+        startTime: LocalTime? = null,
+        endTime: LocalTime? = null,
         language: EasyStaffLanguage = EasyStaffLanguage.ITALIAN
-    ): EasyStaffEventSearchResults {
+    ): List<EasyStaffEvent> {
         val params = buildMap {
-            put("view", EVENTS_VIEW)
-            put("include", "bookings")
-            put("datefrom", formatDate(query.startDate))
-            put("dateto", formatDate(query.endDate))
-            put("_lang", language.code)
+            put("view", listOf("bookings"))
+            put("form-type", listOf("bookings"))
+            put("include", listOf("bookings"))
+            put("mode", listOf("bookings"))
 
-            // Add building filters
-            if (query.buildings.isNotEmpty()) {
-                put("sede", query.buildings.joinToString(","))
+            put("sede[]", buildings.ifEmpty { DEFAULT_BUILDINGS }.map { it.code })
+
+            if (rooms.isNotEmpty()) {
+                put("aula[]", rooms.map { it.code })
             }
 
-            // Add room filter (if single room)
-            if (query.rooms.size == 1) {
-                put("aula", query.rooms.first())
-            }
+            put("tipo", listOf(eventTypes.firstOrNull()?.code?.toString() ?: ""))
+            put("stato", listOf(status?.value ?: ""))
+            put("ricerca", listOf(keyword ?: ""))
 
-            // Add event type filters
-            if (query.eventTypes.isNotEmpty()) {
-                put("tipo", query.eventTypes.first().id.toString())
-            }
+            put("datefrom", listOf(formatDate(startDate)))
+            put("dateto", listOf(formatDate(endDate)))
 
-            // Add status filter
-            query.status?.let { put("stato", it.value) }
+            put("giorno_settimana[]", daysOfWeek.map { it.value }.ifEmpty { listOf("") })
 
-            // Add keyword
-            query.keyword?.let { put("search", it) }
+            put("start_time", listOf(startTime?.let { formatTime(it) } ?: ""))
+            put("end_time", listOf(endTime?.let { formatTime(it) } ?: ""))
 
-            // Add day of week filter
-            if (query.daysOfWeek.isNotEmpty()) {
-                put("giorno_settimana", query.daysOfWeek.first().value)
-            }
-
-            // Add time filters
-            query.startTime?.let { put("dalle_ore", formatTime(it)) }
-            query.endTime?.let { put("alle_ore", formatTime(it)) }
+            put("_lang", listOf(language.code))
+            put("list", listOf(""))
+            put("week_grid_type", listOf("-1"))
+            put("ar_codes_", listOf(""))
+            put("ar_select_", listOf(""))
+            put("col_cells", listOf("0"))
+            put("empty_box", listOf("0"))
+            put("only_grid", listOf("0"))
+            put("highlighted_date", listOf("0"))
+            put("all_events", listOf("0"))
         }
-        val doc = executeGet(AGENDA_WEB_API, params)
 
-        val searchSummary = doc.selectFirst(".dati-ricerca, .search-summary, .risultati-ricerca")
-            ?.cleanText()
-            ?: ""
-
-        val table = doc.selectFirst("table.table-bordered, table.detail_table, #tableEventi")
-            ?: return EasyStaffEventSearchResults(
-                events = listOf(),
-                searchSummary = searchSummary
-            )
-
-        val events = table.parseTable().mapNotNull { row ->
-            // Extract title
-            val title = row.getTextOrNull("titolo", "descrizione", "evento", "title")
-                ?: row.headers.firstOrNull()?.let { row.getTextOrNull(it) }
-                ?: return@mapNotNull null
-
-            // Extract room
-            val (room, building) = parseRoomAndBuilding(row.getTextOrNull("aula", "room", "sede"))
-
-            // Extract date
-            val date = row.getTextAsOrNull("data", "date") { parseDate(it) } ?: return@mapNotNull null
-
-            // Extract time
-            val (startTime, endTime) = parseTimeRange(row.getTextOrNull("orari", "ora", "time"))
-
-            // Extract event type
-            val eventTypeText = row.getTextOrNull("tipo", "type")
-            val eventType = if (eventTypeText != null) {
-                EasyStaffEventType.fromItalianName(eventTypeText)
-            } else {
-                EasyStaffEventType.OTHER
-            }
-
-            // Extract organizers
-            val organizerText = row.getTextOrNull("utilizzatori", "docente", "organizer")
-            val organizers = organizerText?.split(",", ";")
-                ?.map { it.trim() }
-                ?.filter { it.isNotBlank() }
-                ?: emptyList()
-
-            // Extract status
-            val status = row.getTextAsOrNull("stato", "status") { EasyStaffBookingStatus.fromItalian(it) }
-                ?: EasyStaffBookingStatus.CONFIRMED
-
-            EasyStaffScheduledEvent(
-                title = title,
-                date = date,
-                startTime = startTime ?: DEFAULT_START_TIME,
-                endTime = endTime ?: DEFAULT_END_TIME,
-                room = room,
-                building = building,
-                eventType = eventType,
-                organizers = organizers,
-                status = status
-            )
-        }.toList()
-
-        return EasyStaffEventSearchResults(
-            events = events.sortedWith(compareBy({ it.date }, { it.startTime })),
-            searchSummary = searchSummary
-        )
+        val response = executePostForm<EasyStaffEventsResponse>(BOOKINGS_ENDPOINT, params)
+        return response.events
     }
 }

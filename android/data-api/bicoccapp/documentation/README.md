@@ -1,4 +1,5 @@
-# BicoccApp Security Research
+# BicoccApp 
+
 
 ## Problem Statement
 

@@ -2,10 +2,13 @@ package it.attendance100.mybicocca.data.api.easystaff
 
 import io.ktor.client.*
 import io.ktor.client.request.*
+import io.ktor.client.request.forms.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.ktor.utils.io.jvm.javaio.*
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.decodeFromStream
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import java.net.URLEncoder
@@ -19,12 +22,6 @@ import java.time.format.DateTimeFormatter
  * This class provides common infrastructure for making requests to the
  * Agenda Web application (powered by EasyStaff) and parsing HTML/JSON responses.
  *
- * The Agenda Web platform uses:
- * - GET requests with query parameters
- * - HTML responses parsed with JSoup
- * - JSON data wrapped in JavaScript variable assignments for AJAX calls
- * - Date format DD-MM-YYYY
- *
  * @param client The shared [HttpClient] instance for making HTTP requests
  */
 abstract class EasyStaffAbstractApi(
@@ -35,7 +32,7 @@ abstract class EasyStaffAbstractApi(
         /**
          * Base URL for all Agenda Web requests.
          */
-        const val BASE_URL = "https://gestioneorari.didattica.unimib.it"
+        private const val BASE_URL = "https://gestioneorari.didattica.unimib.it"
 
         /**
          * Date format used by Agenda Web (DD-MM-YYYY).
@@ -43,63 +40,20 @@ abstract class EasyStaffAbstractApi(
         private val DATE_FORMAT: DateTimeFormatter = DateTimeFormatter.ofPattern("dd-MM-yyyy")
 
         /**
-         * Alternative date format used in some responses (DD/MM/YYYY).
-         */
-        private val DATE_FORMAT_SLASH: DateTimeFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy")
-
-        /**
          * Time format used by Agenda Web (HH:mm).
          */
         private val TIME_FORMAT: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm")
 
         /**
-         * Time range format used by Agenda Web.
+         * Endpoint to query search options.
          */
-        private val TIME_RANGE_REGEX = """(\d{2}:\d{2})\s*-\s*(\d{2}:\d{2})""".toRegex()
+        protected const val COMBO_ENDPOINT = "/PortaleStudentiUnimib/combo.php"
 
-        /**
-         * Time entry format used by Agenda Web.
-         */
-        private val TIME_SINGLE_REGEX = """(\d{2}:\d{2})""".toRegex()
 
         /**
          * API endpoint used by Agenda Web.
          */
-        const val AGENDA_WEB_API = "/PortaleStudentiUnimib/index.php"
-
-        /**
-         * Regex to extract the (Building).
-         */
-        private val BUILDING_SQUARE_BRACKETS_REGEX = """(.+?)\s*\[(.+?)]""".toRegex()
-
-        /**
-         * Regex to extract the [Building].
-         */
-        private val BUILDING_ROUND_BRACKETS_REGEX = """(.+?)\s*\((.+?)\)""".toRegex()
-
-        /**
-         * Parses a date string in Agenda Web format (DD-MM-YYYY).
-         *
-         * @param value The date string to parse
-         * @return The parsed [LocalDate], or null if parsing fails
-         */
-        fun parseDate(value: String): LocalDate? = runCatching {
-            LocalDate.parse(value.trim(), DATE_FORMAT)
-        }.getOrElse {
-            runCatching {
-                LocalDate.parse(value.trim(), DATE_FORMAT_SLASH)
-            }.getOrNull()
-        }
-
-        /**
-         * Parses a time string in Agenda Web format (HH:mm).
-         *
-         * @param value The time string to parse
-         * @return The parsed [LocalTime], or null if parsing fails
-         */
-        fun parseTime(value: String): LocalTime? = runCatching {
-            LocalTime.parse(value.trim(), TIME_FORMAT)
-        }.getOrNull()
+        protected const val AGENDA_WEB_ENDPOINT = "/PortaleStudentiUnimib/index.php"
 
         /**
          * Formats a date to Agenda Web format (DD-MM-YYYY).
@@ -151,7 +105,7 @@ abstract class EasyStaffAbstractApi(
      * @param queryParams Query parameters to append to the URL
      * @return The parsed HTML [Document]
      */
-    protected suspend fun executeGet(
+    protected suspend fun executeGetHtml(
         path: String,
         queryParams: Map<String, String> = emptyMap()
     ): Document {
@@ -186,16 +140,50 @@ abstract class EasyStaffAbstractApi(
      * @param queryParams Query parameters to append to the URL
      * @return The [HttpResponse]
      */
-    protected suspend fun executePostRaw(
+    @OptIn(ExperimentalSerializationApi::class)
+    protected suspend inline fun <reified T> executePostJson(
         path: String,
         body: Any,
         queryParams: Map<String, String> = emptyMap()
-    ): HttpResponse {
+    ): T {
         val url = buildUrl(path, queryParams)
-        return client.post(url) {
+        val response = client.post(url) {
             contentType(ContentType.Application.Json)
             setBody(body)
         }
+        if(!response.status.isSuccess()) {
+            throw IllegalStateException("Invalid status code: ${response.status.value}")
+        }
+        return json.decodeFromStream(response.bodyAsChannel().toInputStream())
+    }
+
+    /**
+     * Executes a POST request with form parameters and returns the raw response body as a deserialized JSON type.
+     *
+     * @param T the JSON type
+     * @param path The request path (relative to BASE_URL)
+     * @param formParameters The form parameters to send (supports multiple values per key)
+     * @return The response body as a JSON
+     */
+    @OptIn(ExperimentalSerializationApi::class)
+    protected suspend inline fun <reified T> executePostForm(
+        path: String,
+        formParameters: Map<String, List<String>>
+    ): T {
+        val url = buildUrl(path)
+        val response = client.post(url) {
+            setBody(FormDataContent(Parameters.build {
+                formParameters.forEach { (key, values) ->
+                    values.forEach { value ->
+                        append(key, value)
+                    }
+                }
+            }))
+        }
+        if(!response.status.isSuccess()) {
+            throw IllegalStateException("Invalid status code: ${response.status.value}")
+        }
+        return json.decodeFromStream(response.bodyAsChannel().toInputStream())
     }
 
     /**
@@ -219,48 +207,5 @@ abstract class EasyStaffAbstractApi(
             }
             if (basePath.contains("?")) "$basePath&$query" else "$basePath?$query"
         }
-    }
-
-    /**
-     * Parses a time range from text.
-     */
-    protected fun parseTimeRange(text: String?): Pair<LocalTime?, LocalTime?> {
-        if (text.isNullOrBlank()) return Pair(null, null)
-
-        val rangeMatch = TIME_RANGE_REGEX.find(text)
-        if (rangeMatch != null) {
-            return Pair(
-                parseTime(rangeMatch.groupValues[1]),
-                parseTime(rangeMatch.groupValues[2])
-            )
-        }
-
-        val singleMatch = TIME_SINGLE_REGEX.find(text)
-        if (singleMatch != null) {
-            return Pair(parseTime(singleMatch.groupValues[1]), null)
-        }
-
-        return Pair(null, null)
-    }
-
-    /**
-     * Parses room and building from a combined string.
-     */
-    protected fun parseRoomAndBuilding(text: String?): Pair<String?, String?> {
-        if (text.isNullOrBlank()) return Pair(null, null)
-
-        // Try [Building] format
-        val bracketMatch = BUILDING_SQUARE_BRACKETS_REGEX.find(text)
-        if (bracketMatch != null) {
-            return Pair(bracketMatch.groupValues[1].trim(), bracketMatch.groupValues[2].trim())
-        }
-
-        // Try (Building) format
-        val parenMatch = BUILDING_ROUND_BRACKETS_REGEX.find(text)
-        if (parenMatch != null) {
-            return Pair(parenMatch.groupValues[1].trim(), parenMatch.groupValues[2].trim())
-        }
-
-        return Pair(text.trim(), null)
     }
 }

@@ -1,3 +1,9 @@
+/*
+TODO: Authentication seems to be broken on the UniMiB courses application
+      Even if I log in, the app still uses for auth Bearer RWFzeUJhZGdlQVBJOkVhc3kyMDE5IQ==
+      Not sure why, but the login url shoud be https://gestioneorari.didattica.unimib.it/auth/auth_app.php
+ */
+
 package it.attendance100.mybicocca.data.api.easystaff
 
 import io.ktor.client.*
@@ -9,14 +15,12 @@ import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.decodeFromJsonElement
+import kotlinx.serialization.json.jsonObject
 import java.time.Instant
 
 /**
  * API for attendance operations.
  */
-// TODO: Authentication seems to be broken on the UniMiB courses application
-//       Even if I log in, the app still uses for auth Bearer RWFzeUJhZGdlQVBJOkVhc3kyMDE5IQ==
-//       Not sure why, but the login url shoud be https://gestioneorari.didattica.unimib.it/auth/auth_app.php
 class EasyStaffAttendanceApi(
     client: HttpClient,
     json: Json
@@ -39,23 +43,16 @@ class EasyStaffAttendanceApi(
             studentId = studentId
         )
 
-        val jsonBody = json.encodeToString(requestBody)
-
-        val httpResponse = executePostRaw(
+        val httpResponse = executePostJson<JsonElement>(
             ATTENDANCE_HISTORY_ENDPOINT,
-            jsonBody
+            requestBody
         )
 
-        if(httpResponse.status != HttpStatusCode.OK) {
-            throw IllegalStateException("Cannot get attendance history: status code ${httpResponse.status.value}")
-        }
-
-        val jsonResponse: JsonElement = httpResponse.body()
-        if(jsonResponse !is JsonObject) {
+        if(httpResponse !is JsonObject) {
             throw IllegalArgumentException("Cannot get attendance history: invalid json body")
         }
 
-        return when(val studentResults = jsonResponse[studentId]) {
+        return when (val studentResults = httpResponse[studentId]) {
             is JsonArray -> listOf()
             is JsonObject -> {
                 studentResults.map { (courseTitle, recordsJson) ->
@@ -66,6 +63,7 @@ class EasyStaffAttendanceApi(
                     )
                 }
             }
+
             else -> throw IllegalStateException("Cannot get attendance history: invalid json body")
         }
     }
@@ -104,17 +102,9 @@ class EasyStaffAttendanceApi(
             additionalData = additionalData
         )
 
-        val jsonBody = json.encodeToString(requestBody)
-
-        val httpResponse = executePostRaw(
+        return executePostJson<EasyStaffCertifyAttendanceResult>(
             CERTIFY_ATTENDANCE_ENDPOINT,
-            jsonBody
+            requestBody
         )
-
-        if(httpResponse.status != HttpStatusCode.OK) {
-            throw IllegalStateException("Cannot certify attendance: status code ${httpResponse.status.value}")
-        }
-
-        return httpResponse.body()
     }
 }

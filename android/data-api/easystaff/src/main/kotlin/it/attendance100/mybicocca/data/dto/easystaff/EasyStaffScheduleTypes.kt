@@ -1,235 +1,168 @@
 package it.attendance100.mybicocca.data.dto.easystaff
 
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.LocalTime
-
-/**
- * Search mode for lesson schedule queries.
- */
-enum class EasyStaffScheduleSearchMode(val includeValue: String, val formType: String) {
-    /**
-     * Search by study program (corso di studio).
-     */
-    BY_STUDY_PROGRAM("corso", "corso"),
-
-    /**
-     * Search by teacher (docente).
-     */
-    BY_TEACHER("docente", "docente"),
-
-    /**
-     * Search by subject/course (insegnamento/attività).
-     */
-    BY_SUBJECT("attivita", "attivita");
-
-    companion object {
-        /**
-         * Gets a search mode by its include value.
-         */
-        fun fromIncludeValue(value: String): EasyStaffScheduleSearchMode? {
-            return entries.find { it.includeValue == value }
-        }
-    }
-}
-
-/**
- * Represents a teacher in the system.
- *
- * @property id The teacher's internal ID
- * @property name The teacher's full name
- */
-data class EasyStaffTeacher(
-    val id: String,
-    val name: String
-) {
-    override fun toString(): String = name
-}
 
 /**
  * Represents a subject/course (insegnamento) that can be scheduled.
  *
- * @property id The subject's internal ID
- * @property code The subject code
- * @property name The subject name
- * @property teacherName The primary teacher's name
- * @property periodId The teaching period ID
+ * @property id The subject's internal ID (ex. 516278)
+ * @property code The subject code (ex. EC510731)
+ * @property name The subject name (ex. METODI QUALITATIVI PER LA RICERCA DIGITALE)
+ * @property teacherName The primary teacher's name (ex. M. LUCCHINI)
+ * @property periodId The teaching period ID (ex. 1444)
  */
+@Serializable
 data class EasyStaffSubject(
+    @SerialName("id")
     val id: String,
+
+    @SerialName("valore")
     val code: String,
+
+    @SerialName("label")
     val name: String,
+
+    @SerialName("docente")
     val teacherName: String,
+
+    @SerialName("id_periodo")
     val periodId: String
-) {
-    override fun toString(): String = name
-}
+)
 
 /**
- * A scheduled lesson/event in the timetable.
+ * Response wrapper for schedule API (grid_call.php).
  *
- * @property title The event title (usually the subject name)
+ * Note: The API returns data in the "celle" array (Italian for "cells"),
+ * representing schedule grid cells.
+ */
+@Serializable
+internal data class EasyStaffScheduleResponse(
+    @SerialName("celle")
+    val cells: List<EasyStaffScheduleCell> = emptyList()
+)
+
+/**
+ * A schedule cell from the grid_call.php API.
+ *
+ * This represents a single lesson/event in the weekly schedule grid.
+ * The structure is different from [EasyStaffEvent] (bookings_call.php) and
+ * [EasyStaffRoomOccupationEvent] (rooms_call.php).
+ *
+ * @property id The cell/event ID
+ * @property dateTime The start time as LocalDateTime (parsed from Unix timestamp)
  * @property date The date of the lesson
- * @property startTime The start time
- * @property endTime The end time
- * @property room The room where the lesson takes place
- * @property building The building containing the room
- * @property teachers List of teachers for this lesson
- * @property eventType The type of event
- * @property notes Additional notes or description
- * @property subjectCode The subject code if available
+ * @property startTime The lesson start time
+ * @property endTime The lesson end time
+ * @property roomCode The room code (e.g., "U24-DISCO-C2")
+ * @property buildingCode The building code (e.g., "U24")
+ * @property roomName The room name with building (e.g., "U24-DISCO-AulaC2 con Podio [ZIFERA ex U24]")
+ * @property showRoom Whether to display room information
+ * @property eventType The type of event (e.g., "Lezione")
+ * @property eventTypeCode The event type code (e.g., "LEZ", may be empty)
+ * @property status The booking status (confirmed/cancelled)
+ * @property subjectCode The subject/course code
+ * @property subjectName The subject/course name
+ * @property teacherCodes List of teacher codes (parsed from comma-separated string)
+ * @property teacherNames List of teacher names (parsed from comma-separated string)
+ * @property teacherEmails List of teacher email addresses (parsed from comma-separated string)
+ * @property teacherPhones List of teacher phone numbers (parsed from comma-separated string)
+ * @property curriculumPath The curriculum/study path description
+ * @property subjectTypes List of subject type labels (e.g., ["Obbligatorio"], ["Consigliato"])
+ * @property mapsUrl Google Maps embed URL extracted from iframe HTML (null if not available)
+ * @property displayFields List of field names to display in the UI
+ * @property isHighlighted Whether this cell is highlighted in the grid (parsed from int 0/1)
+ * @property isExternal Whether this event comes from an external source (parsed from int 0/1)
  */
-data class EasyStaffScheduledLesson(
-    val title: String,
+@Serializable
+data class EasyStaffScheduleCell(
+    @SerialName("id")
+    val id: String,
+
+    @SerialName("timestamp")
+    @Serializable(with = LocalDateTimeSerializer::class)
+    val dateTime: LocalDateTime,
+
+    @SerialName("data")
+    @Serializable(with = ItalianLocalDateSerializer::class)
     val date: LocalDate,
+
+    @SerialName("ora_inizio")
+    @Serializable(with = LocalTimeSerializer::class)
     val startTime: LocalTime,
+
+    @SerialName("ora_fine")
+    @Serializable(with = LocalTimeSerializer::class)
     val endTime: LocalTime,
-    val room: String?,
-    val building: String?,
-    val teachers: List<String>,
-    val eventType: EasyStaffLessonEventType,
-    val notes: String?,
-    val subjectCode: String?
-)
 
-/**
- * Type of lesson/event.
- */
-enum class EasyStaffLessonEventType(val italianName: String) {
-    LESSON("Lezione"),
-    EXERCISE("Esercitazione"),
-    LAB("Laboratorio"),
-    SEMINAR("Seminario"),
-    TUTORING("Tutorato"),
-    EXAM("Esame"),
-    OTHER("Altro");
+    @SerialName("codice_aula")
+    @Serializable(with = EmptyStringAsNullSerializer::class)
+    val roomCode: String?,
 
-    companion object {
-        /**
-         * Parses an event type from Italian text.
-         *
-         * @param text The Italian event type text
-         * @return The matching [EasyStaffLessonEventType]
-         */
-        fun fromItalian(text: String): EasyStaffLessonEventType {
-            val normalized = text.trim().lowercase()
-            return when {
-                normalized.contains("lezione") -> LESSON
-                normalized.contains("esercitazione") -> EXERCISE
-                normalized.contains("laboratorio") || normalized.contains("lab") -> LAB
-                normalized.contains("seminario") -> SEMINAR
-                normalized.contains("tutorato") || normalized.contains("tutoring") -> TUTORING
-                normalized.contains("esame") -> EXAM
-                else -> OTHER
-            }
-        }
-    }
-}
+    @SerialName("codice_sede")
+    @Serializable(with = EmptyStringAsNullSerializer::class)
+    val buildingCode: String?,
 
-/**
- * A weekly schedule containing lessons for multiple days.
- *
- * @property weekStartDate The Monday of the displayed week
- * @property weekEndDate The Sunday of the displayed week
- * @property studyProgram The study program if searching by program
- * @property yearOfStudy The year of study if applicable
- * @property lessons All lessons in the week
- */
-data class EasyStaffWeeklySchedule(
-    val weekStartDate: LocalDate,
-    val weekEndDate: LocalDate,
-    val studyProgram: EasyStaffStudyProgram?,
-    val yearOfStudy: EasyStaffYearOfStudy?,
-    val lessons: List<EasyStaffScheduledLesson>
-) {
-    /**
-     * Gets lessons for a specific day of the week.
-     *
-     * @param date The date to filter by
-     * @return Lessons on that date, sorted by start time
-     */
-    fun getLessonsForDay(date: LocalDate): List<EasyStaffScheduledLesson> {
-        return lessons.filter { it.date == date }.sortedBy { it.startTime }
-    }
+    @SerialName("aula")
+    val roomName: String,
 
-    /**
-     * Gets lessons grouped by day.
-     *
-     * @return Map of date to lessons
-     */
-    fun getLessonsByDay(): Map<LocalDate, List<EasyStaffScheduledLesson>> {
-        return lessons.groupBy { it.date }.mapValues { (_, lessons) ->
-            lessons.sortedBy { it.startTime }
-        }
-    }
-}
+    @SerialName("mostra_aula")
+    val showRoom: Boolean = true,
 
-/**
- * Parameters for searching lesson schedules by study program.
- *
- * @property academicYear The academic year
- * @property teachingAreaCode The teaching area code
- * @property studyProgramCode The study program code
- * @property yearsOfStudy The years of study to include
- * @property weekStartDate The starting date for the schedule
- * @property displayMode The display mode for results
- * @property teachingPeriodCode Optional teaching period filter
- */
-data class EasyStaffScheduleByProgramQuery(
-    val academicYear: EasyStaffAcademicYear,
-    val teachingAreaCode: String,
-    val studyProgramCode: String,
-    val yearsOfStudy: List<String>,
-    val weekStartDate: LocalDate,
-    val displayMode: EasyStaffScheduleDisplayMode = EasyStaffScheduleDisplayMode.WEEKLY_AGENDA,
-    val teachingPeriodCode: String? = null
-)
+    @SerialName("tipo")
+    val eventType: String,
 
-/**
- * Parameters for searching lesson schedules by teacher.
- *
- * @property academicYear The academic year
- * @property teacherId The teacher's ID
- * @property weekStartDate The starting date for the schedule
- */
-data class EasyStaffScheduleByTeacherQuery(
-    val academicYear: EasyStaffAcademicYear,
-    val teacherId: String,
-    val weekStartDate: LocalDate
-)
+    @SerialName("codice_tipo")
+    val eventTypeCode: String = "",
 
-/**
- * Parameters for searching lesson schedules by subject.
- *
- * @property academicYear The academic year
- * @property teachingAreaCode The teaching area code
- * @property subjectId The subject ID
- * @property weekStartDate The starting date for the schedule
- */
-data class EasyStaffScheduleBySubjectQuery(
-    val academicYear: EasyStaffAcademicYear,
-    val teachingAreaCode: String,
-    val subjectId: String,
-    val weekStartDate: LocalDate
-)
+    @SerialName("Annullato")
+    val status: EasyStaffBookingStatus,
 
-/**
- * Options available for schedule searches, loaded from the server.
- *
- * @property academicYears Available academic years
- * @property teachingAreas Available teaching areas
- */
-data class EasyStaffScheduleSearchOptions(
-    val academicYears: List<EasyStaffAcademicYear>,
-    val teachingAreas: List<EasyStaffTeachingArea>
-)
+    @SerialName("codice_insegnamento")
+    val subjectCode: String,
 
-/**
- * Study programs available for a teaching area.
- *
- * @property studyPrograms List of available study programs with their details
- */
-data class EasyStaffStudyProgramsForArea(
-    val studyPrograms: List<EasyStaffStudyProgramDetails>
+    @SerialName("nome_insegnamento")
+    val subjectName: String,
+
+    @SerialName("codice_docente")
+    @Serializable(with = CommaSeparatedListSerializer::class)
+    val teacherCodes: List<String> = emptyList(),
+
+    @SerialName("docente")
+    @Serializable(with = CommaSeparatedListSerializer::class)
+    val teacherNames: List<String> = emptyList(),
+
+    @SerialName("mail_docente")
+    @Serializable(with = CommaSeparatedListSerializer::class)
+    val teacherEmails: List<String> = emptyList(),
+
+    @SerialName("tel_docente")
+    @Serializable(with = CommaSeparatedListSerializer::class)
+    val teacherPhones: List<String> = emptyList(),
+
+    @SerialName("percorso_didattico")
+    val curriculumPath: String = "",
+
+    @SerialName("insegnamento_tipo")
+    val subjectTypes: List<String> = emptyList(),
+
+    @SerialName("maps")
+    @Serializable(with = MapsIframeUrlSerializer::class)
+    val mapsUrl: String? = null,
+
+    @SerialName("display")
+    val displayFields: List<String> = emptyList(),
+
+    @SerialName("highlighted")
+    @Serializable(with = IntBooleanSerializer::class)
+    val isHighlighted: Boolean = false,
+
+    @SerialName("from_esterno")
+    @Serializable(with = IntBooleanSerializer::class)
+    val isExternal: Boolean = false
 )
 
 /**
@@ -237,37 +170,83 @@ data class EasyStaffStudyProgramsForArea(
  *
  * @property code The program code
  * @property name The program name
- * @property degreeType The degree type
+ * @property degreeType The degree type text (Italian)
  * @property internalId The internal database ID
  * @property teachingAreaCode The teaching area code
  * @property years The available years of study
  * @property teachingPeriods The available teaching periods
- * @property defaultDisplayMode The default schedule display mode
+ * @property displayMode The default schedule display mode value
  */
+@Serializable
 data class EasyStaffStudyProgramDetails(
+    @SerialName("valore")
     val code: String,
+
+    @SerialName("label")
     val name: String,
-    val degreeType: EasyStaffDegreeType,
+
+    @SerialName("tipo")
+    val degreeType: String,
+
+    @SerialName("cdl_id")
     val internalId: String,
+
+    @SerialName("scuola")
     val teachingAreaCode: String,
-    val years: List<EasyStaffYearOfStudyDetails>,
-    val teachingPeriods: List<EasyStaffTeachingPeriod>,
-    val defaultDisplayMode: EasyStaffScheduleDisplayMode
+
+    @SerialName("elenco_anni")
+    val years: List<EasyStaffYearOfStudyDetails> = emptyList(),
+
+    @SerialName("periodi")
+    val teachingPeriods: List<EasyStaffTeachingPeriod> = emptyList(),
+
+    @SerialName("pub_type")
+    val displayMode: String
 )
 
 /**
  * Detailed year of study including available subjects.
  *
  * @property value The API value (e.g., "GGG|1")
- * @property year The numeric year
+ * @property year The year index (e.g. 1)
  * @property label The display label
  * @property trackName The curriculum/track name
  * @property subjects Subjects available in this year
  */
+@Serializable
 data class EasyStaffYearOfStudyDetails(
+    @SerialName("valore")
     val value: String,
-    val year: Int,
+
+    @SerialName("label")
     val label: String,
+
+    @SerialName("order_lbl")
     val trackName: String,
-    val subjects: List<EasyStaffSubject>
-)
+
+    @SerialName("elenco_insegnamenti")
+    val subjects: List<EasyStaffSubject> = emptyList()
+) {
+    val year: Int = value.substringAfter("|").toInt()
+}
+
+/**
+ * Represents a teaching period (semester) within an academic year.
+ *
+ * @property id The period ID
+ * @property code The period code (e.g., "S1", "S2")
+ * @property label The display label (e.g., "Primo semestre (S1)")
+ */
+@Serializable
+data class EasyStaffTeachingPeriod(
+    @SerialName("id")
+    val id: String,
+
+    @SerialName("valore")
+    val code: String,
+
+    @SerialName("label")
+    val label: String
+) {
+    override fun toString(): String = label
+}

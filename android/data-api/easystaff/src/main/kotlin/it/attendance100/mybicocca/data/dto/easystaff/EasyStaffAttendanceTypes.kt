@@ -76,9 +76,13 @@ data class EasyStaffAttendanceRecord(
  * @property title The title/header of the history view
  * @property records The list of attendance statistics for each course
  */
+@Serializable
 data class EasyStaffCourseAttendanceHistory(
+    @SerialName("title")
     val title: String,
-    val records: List<EasyStaffAttendanceRecord>
+
+    @SerialName("records")
+    val records: List<EasyStaffAttendanceRecord> = emptyList()
 )
 
 /**
@@ -142,14 +146,14 @@ internal data class EasyStaffCertifyAttendanceAdditionalData(
 /**
  * Response received after an attendance certification attempt.
  *
- * @property result Whether the certification was successful
+ * @property success Whether the certification was successful
  * @property message A descriptive message from the server (often displayed to the user)
  */
 @Serializable
 data class EasyStaffCertifyAttendanceResult(
     @SerialName("result")
     @Serializable(with = ResponseResultSerializer::class)
-    val result: Boolean,
+    val success: Boolean,
 
     @SerialName("message")
     val message: String

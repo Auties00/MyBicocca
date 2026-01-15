@@ -1,9 +1,8 @@
 package it.attendance100.mybicocca.data.api.easystaff
 
-import it.attendance100.mybicocca.data.dto.easystaff.EasyStaffExamsByProgramQuery
-import it.attendance100.mybicocca.data.dto.easystaff.EasyStaffExamsBySubjectQuery
-import it.attendance100.mybicocca.data.dto.easystaff.EasyStaffExamsByTeacherQuery
+import it.attendance100.mybicocca.data.dto.easystaff.EasyStaffScheduledExam
 import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
 
@@ -15,102 +14,151 @@ class EasyStaffExamCalendarApiTest : EasyStaffTestBase() {
 
     @Test
     suspend fun getExamsByProgram() {
-        val options = api.schedule.getSearchOptions()
-        if (options.academicYears.isEmpty() || options.teachingAreas.isEmpty()) return
+        val academicYears = api.core.getAcademicYears()
+        val teachingAreas = api.core.getTeachingAreas()
+        assertTrue(academicYears.isNotEmpty(), "Academic years should not be empty")
+        assertTrue(teachingAreas.isNotEmpty(), "Teaching areas should not be empty")
 
-        val academicYear = options.academicYears.first()
-        val teachingArea = options.teachingAreas.first()
-        val programs = api.schedule.getStudyPrograms(academicYear, teachingArea.code)
-        if (programs.studyPrograms.isEmpty()) return
+        val academicYear = academicYears.first()
+        val teachingArea = teachingAreas.first()
+        val programs = api.core.getStudyPrograms(academicYear, teachingArea.code)
+        assertTrue(programs.isNotEmpty(), "Study programs should not be empty")
 
-        val program = programs.studyPrograms.first()
-        val yearsOfStudy = program.years.map { it.value }
-        if (yearsOfStudy.isEmpty()) return
+        val program = programs.first()
+        assertTrue(program.years.isNotEmpty(), "Program should have years")
 
-        val query = EasyStaffExamsByProgramQuery(
-            academicYear = academicYear,
-            teachingAreaCode = teachingArea.code,
-            studyProgramCode = program.code,
-            yearsOfStudy = yearsOfStudy,
+        val results = api.exams.getExamsByProgram(
+            studyProgram = program,
+            yearsOfStudy = program.years,
             startDate = MOCK_START_DATE,
             endDate = MOCK_END_DATE
         )
+        assertNotNull(results)
 
-        val results = api.exams.getExamsByProgram(query)
-        assertNotNull(results.exams)
-        assertNotNull(results.searchSummary)
+        // Verify each exam if results are not empty
+        results.forEach { exam ->
+            validateExam(exam)
+
+            // Exam should be within the date range
+            assertTrue(
+                !exam.date.isBefore(MOCK_START_DATE) && !exam.date.isAfter(MOCK_END_DATE),
+                "Exam date ${exam.date} should be within range $MOCK_START_DATE - $MOCK_END_DATE"
+            )
+        }
+
+        // Verify exams are sorted by date (ascending)
+        for (i in 0 until results.size - 1) {
+            assertTrue(
+                !results[i].date.isAfter(results[i + 1].date) ||
+                    (results[i].date == results[i + 1].date && !results[i].startTime.isAfter(results[i + 1].startTime)),
+                "Exams should be sorted by date and time"
+            )
+        }
     }
 
     @Test
     suspend fun getExamsByTeacher() {
-        val options = api.schedule.getSearchOptions()
-        if (options.academicYears.isEmpty()) return
+        val academicYears = api.core.getAcademicYears()
+        assertTrue(academicYears.isNotEmpty(), "Academic years should not be empty")
 
-        val academicYear = options.academicYears.first()
-        val teachers = api.schedule.getTeachers(academicYear)
-        if (teachers.isEmpty()) return
+        val academicYear = academicYears.first()
+        val teachers = api.core.getTeachers(academicYear)
+        assertTrue(teachers.isNotEmpty(), "Teachers should not be empty")
 
         val teacher = teachers.first()
-        val query = EasyStaffExamsByTeacherQuery(
-            academicYear = academicYear,
-            teacherId = teacher.id,
+        val results = api.exams.getExamsByTeacher(
+            teacher = teacher,
             startDate = MOCK_START_DATE,
             endDate = MOCK_END_DATE
         )
+        assertNotNull(results)
 
-        val results = api.exams.getExamsByTeacher(query)
-        assertNotNull(results.exams)
-        assertNotNull(results.searchSummary)
+        // Verify each exam if results are not empty
+        results.forEach { exam ->
+            validateExam(exam)
+
+            // Exam should be within the date range
+            assertTrue(
+                !exam.date.isBefore(MOCK_START_DATE) && !exam.date.isAfter(MOCK_END_DATE),
+                "Exam date ${exam.date} should be within range"
+            )
+        }
     }
 
     @Test
     suspend fun getExamsBySubject() {
-        val options = api.schedule.getSearchOptions()
-        if (options.academicYears.isEmpty() || options.teachingAreas.isEmpty()) return
+        val academicYears = api.core.getAcademicYears()
+        val teachingAreas = api.core.getTeachingAreas()
+        assertTrue(academicYears.isNotEmpty(), "Academic years should not be empty")
+        assertTrue(teachingAreas.isNotEmpty(), "Teaching areas should not be empty")
 
-        val academicYear = options.academicYears.first()
-        val teachingArea = options.teachingAreas.first()
-        val programs = api.schedule.getStudyPrograms(academicYear, teachingArea.code)
-        if (programs.studyPrograms.isEmpty()) return
+        val academicYear = academicYears.first()
+        val teachingArea = teachingAreas.first()
+        val programs = api.core.getStudyPrograms(academicYear, teachingArea.code)
+        assertTrue(programs.isNotEmpty(), "Study programs should not be empty")
 
-        val program = programs.studyPrograms.first()
-        val subject = program.years.flatMap { it.subjects }.firstOrNull()
-        if (subject == null) return
+        val program = programs.first()
+        val subject = program.years.flatMap { it.subjects }.first()
 
-        val query = EasyStaffExamsBySubjectQuery(
-            academicYear = academicYear,
-            teachingAreaCode = teachingArea.code,
-            subjectId = subject.id,
+        val results = api.exams.getExamsBySubject(
+            subject = subject,
             startDate = MOCK_START_DATE,
             endDate = MOCK_END_DATE
         )
+        assertNotNull(results)
 
-        val results = api.exams.getExamsBySubject(query)
-        assertNotNull(results.exams)
-        assertNotNull(results.searchSummary)
+        // Verify each exam if results are not empty
+        results.forEach { exam ->
+            validateExam(exam)
+
+            // Exam should be within the date range
+            assertTrue(
+                !exam.date.isBefore(MOCK_START_DATE) && !exam.date.isAfter(MOCK_END_DATE),
+                "Exam date ${exam.date} should be within range"
+            )
+        }
     }
 
-    @Test
-    suspend fun getUpcomingExamsForProgram() {
-        val options = api.schedule.getSearchOptions()
-        if (options.academicYears.isEmpty() || options.teachingAreas.isEmpty()) return
+    private fun validateExam(exam: EasyStaffScheduledExam) {
+        // Verify basic exam properties
+        assertTrue(exam.subjectName.isNotBlank(), "Exam subject name should not be blank")
+        assertNotNull(exam.date, "Exam date should not be null")
 
-        val academicYear = options.academicYears.first()
-        val teachingArea = options.teachingAreas.first()
-        val programs = api.schedule.getStudyPrograms(academicYear, teachingArea.code)
-        if (programs.studyPrograms.isEmpty()) return
-
-        val program = programs.studyPrograms.first()
-        val yearsOfStudy = program.years.map { it.value }
-        if (yearsOfStudy.isEmpty()) return
-
-        val results = api.exams.getUpcomingExamsForProgram(
-            academicYear = academicYear,
-            teachingAreaCode = teachingArea.code,
-            studyProgramCode = program.code,
-            yearsOfStudy = yearsOfStudy
+        // Verify date is reasonable (within academic year range)
+        assertTrue(
+            exam.date.year >= 2020,
+            "Exam date ${exam.date} should be recent"
         )
-        assertNotNull(results.exams)
-        assertNotNull(results.searchSummary)
+        assertTrue(
+            exam.date.year <= LocalDate.now().year + 2,
+            "Exam date ${exam.date} should not be too far in the future"
+        )
+
+        // Verify time
+        assertNotNull(exam.startTime, "Exam start time should not be null")
+        assertNotNull(exam.endTime, "Exam end time should not be null")
+
+        // Verify room
+        assertTrue(exam.room.isNotBlank(), "Room should not be blank")
+
+        // Verify building
+        assertTrue(exam.building == null || exam.building.isNotBlank(), "Building should not be blank if present")
+
+        // Verify examiners (List<EasyStaffTeacher>)
+        assertNotNull(exam.examiners, "Examiners should not be null")
+        exam.examiners.forEach { teacher ->
+            assertTrue(teacher.code != null || teacher.email != null, "Teacher code and email cannot be null at the same time")
+            assertTrue(teacher.code == null || teacher.code.isNotBlank(), "Teacher code should not be blank if present")
+            assertTrue(teacher.email == null || teacher.email.isNotBlank(), "Teacher email should not be blank if present")
+        }
+
+        // Verify exam type
+        assertNotNull(exam.examType, "Exam type should not be null")
+
+        // Verify event ID
+        assertTrue(exam.eventId.isNotBlank(), "Event ID should not be blank")
+
+        // Notes may be empty, so just check it's not null
+        assertNotNull(exam.notes, "Notes should not be null")
     }
 }
