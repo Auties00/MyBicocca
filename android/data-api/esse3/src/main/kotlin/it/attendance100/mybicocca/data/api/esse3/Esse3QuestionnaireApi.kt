@@ -25,6 +25,7 @@ class Esse3QuestionnaireApi(
         private const val WRAPPER_VALDID_ENTRYPOINT = "/auth/questionari/QuestionariWrapperAdLibrettoValDid.do"
         private const val QUESTIONNAIRE_SUBMIT_ENTRYPOINT = "/questionari/QuestionariPaginaSubmitNew.do"
         private const val NEW_QUESTIONNAIRE_ENTRYPOINT = "/questionari/QuestionariWrapperCompilaNew.do"
+        private val QUESTION_REGEX = "quest_container_domanda_(\\d+)".toRegex()
     }
 
     /**
@@ -304,7 +305,7 @@ class Esse3QuestionnaireApi(
     }
 
     private fun parseQuestion(container: Element): Esse3Question? {
-        val idMatch = "quest_container_domanda_(\\d+)".toRegex().find(container.id())
+        val idMatch = QUESTION_REGEX.find(container.id())
         val questionId = idMatch?.groupValues?.get(1)?.toLongOrNull() ?: return null
 
         val text = container.selectFirst("legend:not(.no-title)")?.text()?.cleanText()

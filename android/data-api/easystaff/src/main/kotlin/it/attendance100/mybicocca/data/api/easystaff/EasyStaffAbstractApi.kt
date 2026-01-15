@@ -68,6 +68,16 @@ abstract class EasyStaffAbstractApi(
         const val AGENDA_WEB_API = "/PortaleStudentiUnimib/index.php"
 
         /**
+         * Regex to extract the (Building).
+         */
+        private val BUILDING_SQUARE_BRACKETS_REGEX = """(.+?)\s*\[(.+?)]""".toRegex()
+
+        /**
+         * Regex to extract the [Building].
+         */
+        private val BUILDING_ROUND_BRACKETS_REGEX = """(.+?)\s*\((.+?)\)""".toRegex()
+
+        /**
          * Parses a date string in Agenda Web format (DD-MM-YYYY).
          *
          * @param value The date string to parse
@@ -240,13 +250,13 @@ abstract class EasyStaffAbstractApi(
         if (text.isNullOrBlank()) return Pair(null, null)
 
         // Try [Building] format
-        val bracketMatch = """(.+?)\s*\[(.+?)]""".toRegex().find(text)
+        val bracketMatch = BUILDING_SQUARE_BRACKETS_REGEX.find(text)
         if (bracketMatch != null) {
             return Pair(bracketMatch.groupValues[1].trim(), bracketMatch.groupValues[2].trim())
         }
 
         // Try (Building) format
-        val parenMatch = """(.+?)\s*\((.+?)\)""".toRegex().find(text)
+        val parenMatch = BUILDING_ROUND_BRACKETS_REGEX.find(text)
         if (parenMatch != null) {
             return Pair(parenMatch.groupValues[1].trim(), parenMatch.groupValues[2].trim())
         }
