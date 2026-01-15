@@ -1,11 +1,8 @@
 package it.attendance100.mybicocca.data.api.elearning
 
 import io.ktor.client.HttpClient
+import io.ktor.client.HttpClientConfig
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
-import io.ktor.client.plugins.logging.DEFAULT
-import io.ktor.client.plugins.logging.LogLevel
-import io.ktor.client.plugins.logging.Logger
-import io.ktor.client.plugins.logging.Logging
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
 
@@ -15,8 +12,9 @@ import kotlinx.serialization.json.Json
  * This class serves as a facade that provides access to all specialized API classes
  * for interacting with a Moodle learning management system.
  *
+ * @param httpClientConfig Optional configuration block for the underlying HTTP client.
  */
-class ElearningApi(enableLogging: Boolean = false) : AutoCloseable {
+class ElearningApi(httpClientConfig: HttpClientConfig<*>.() -> Unit = {}) : AutoCloseable {
     /**
      * JSON serializer configured for Moodle API responses.
      */
@@ -31,12 +29,7 @@ class ElearningApi(enableLogging: Boolean = false) : AutoCloseable {
      * Shared HTTP client for all API requests.
      */
     private val client = HttpClient {
-        if(enableLogging) {
-            install(Logging) {
-                logger = Logger.DEFAULT
-                level = LogLevel.ALL
-            }
-        }
+        httpClientConfig()
 
         install(ContentNegotiation) {
             json(json)

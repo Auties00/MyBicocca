@@ -9,9 +9,14 @@ import io.ktor.http.*
 /**
  * Main entry point for the Esse3 API.
  *
+ * @param sessionCookies The session cookies obtained from authentication.
+ * @param httpClientConfig Optional configuration block for the underlying HTTP client.
  * @see Esse3AuthApi for authentication operations
  */
-class Esse3Api(sessionCookies: List<Cookie>) : AutoCloseable {
+class Esse3Api(
+    sessionCookies: List<Cookie>,
+    httpClientConfig: HttpClientConfig<*>.() -> Unit = {}
+) : AutoCloseable {
     companion object {
         /**
          * HTTP timeout in milliseconds.
@@ -27,6 +32,7 @@ class Esse3Api(sessionCookies: List<Cookie>) : AutoCloseable {
      * - Extended timeouts for slow university servers
      */
     private val client = HttpClient {
+        httpClientConfig()
         install(HttpCookies) {
             default {
                 sessionCookies.forEach { cookie ->

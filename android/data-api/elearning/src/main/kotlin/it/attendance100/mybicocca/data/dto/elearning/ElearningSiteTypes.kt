@@ -254,31 +254,10 @@ data class ElearningGetPublicConfigResponse(
     @SerialName("tool_mobile_qrcodetype")
     val mobileQuickResponseCodeType: QuickResponseCodeType? = null,
     @SerialName("warnings")
-    val warnings: List<Warning>? = null,
+    val warnings: List<ElearningResponseWarning>? = null,
     @SerialName("showloginform")
     val showLoginForm: Int? = null,
 ) : ElearningResponse {
-
-    /**
-     * Represents a warning returned by a web service call.
-     *
-     * @property item The item the warning relates to.
-     * @property itemId The identifier of the item.
-     * @property warningCode A code identifying the type of warning.
-     * @property message A human-readable warning message.
-     */
-    @Serializable
-    data class Warning(
-        @SerialName("item")
-        val item: String? = null,
-        @SerialName("itemid")
-        val itemId: Int? = null,
-        @SerialName("warningcode")
-        val warningCode: String,
-        @SerialName("message")
-        val message: String,
-    )
-
     /**
      * Defines the default home page type for users.
      *

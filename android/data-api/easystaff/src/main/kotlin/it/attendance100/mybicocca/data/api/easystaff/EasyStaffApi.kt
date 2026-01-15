@@ -23,13 +23,14 @@ import kotlinx.serialization.json.Json
  * - Multiple search modes (by program, teacher, subject)
  * - Various display options (weekly agenda, basic schedule, compact view)
  *
+ * @param httpClientConfig Optional configuration block for the underlying HTTP client.
  * @see EasyStaffScheduleApi for lesson schedule operations
  * @see EasyStaffExamCalendarApi for exam calendar operations
  * @see EasyStaffRoomsApi for room operations
  * @see EasyStaffEventsApi for event search operations
  * @see EasyStaffAttendanceApi for attendance operations
  */
-class EasyStaffApi : AutoCloseable {
+class EasyStaffApi(httpClientConfig: HttpClientConfig<*>.() -> Unit = {}) : AutoCloseable {
 
     companion object {
         /**
@@ -42,7 +43,10 @@ class EasyStaffApi : AutoCloseable {
      * Json instance.
      */
     private val json: Json = Json {
+        coerceInputValues = true
         ignoreUnknownKeys = true
+        isLenient = true
+        prettyPrint = false
     }
 
     /**
@@ -54,6 +58,7 @@ class EasyStaffApi : AutoCloseable {
      * - Automatic redirect following
      */
     private val client = HttpClient {
+        httpClientConfig()
         install(HttpTimeout) {
             requestTimeoutMillis = TIMEOUT
             connectTimeoutMillis = TIMEOUT

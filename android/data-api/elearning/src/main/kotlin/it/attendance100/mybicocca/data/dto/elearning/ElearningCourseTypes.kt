@@ -472,11 +472,50 @@ data class ElearningCourseCategoryContents(
  * @property code The short code identifying the course.
  * @property url The URL to access the course.
  * @property id The unique identifier of the course.
+ * @property hasPassword Whether the course requires a password to enrol.
  */
 @Serializable
 data class ElearningCourse(
     val name: String,
     val code: String,
     val url: String,
-    val id: String
+    val id: Int,
+    val hasPassword: Boolean
 )
+
+/**
+ * Request to enroll the current user into a course using self-enrollment.
+ *
+ * @property courseId The unique identifier of the course to enroll into.
+ * @property password The enrollment password, if the course requires one.
+ * @property instanceId The self-enrollment instance ID, if multiple enrollment methods exist.
+ */
+@Serializable
+class ElearningEnrollIntoCourseRequest(
+    private val courseId: Int,
+    private val password: String? = null,
+    private val instanceId: Int? = null
+) : ElearningRequest<ElearningEnrollIntoCourseResponse> {
+    override val functionName: String
+        get() = "enrol_self_enrol_user"
+
+    override fun writeAdditionalData(formData: ParametersBuilder) {
+        formData.append("courseid", courseId.toString())
+        password?.let { formData.append("password", it) }
+        instanceId?.let { formData.append("instanceid", it.toString()) }
+    }
+}
+
+/**
+ * Response from enrolling into a course.
+ *
+ * @property status Whether the enrollment was successful.
+ * @property warnings List of warnings that occurred during enrollment.
+ */
+@Serializable
+data class ElearningEnrollIntoCourseResponse(
+    @SerialName("status")
+    val status: Boolean,
+    @SerialName("warnings")
+    val warnings: List<ElearningResponseWarning> = emptyList()
+) : ElearningResponse

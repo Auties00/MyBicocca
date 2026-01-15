@@ -1,5 +1,6 @@
 package it.attendance100.mybicocca.data.api.easystaff
 
+import io.ktor.client.plugins.logging.*
 import org.junit.jupiter.api.extension.BeforeAllCallback
 import org.junit.jupiter.api.extension.ExtensionContext
 
@@ -8,7 +9,12 @@ object EasyStaffGlobalApiData : BeforeAllCallback, AutoCloseable {
 
     override fun beforeAll(context: ExtensionContext) {
         if (api == null) {
-            api = EasyStaffApi()
+            api = EasyStaffApi {
+                install(Logging) {
+                    logger = Logger.DEFAULT
+                    level = LogLevel.ALL
+                }
+            }
         }
     }
 

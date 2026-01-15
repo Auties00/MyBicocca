@@ -1,5 +1,8 @@
 package it.attendance100.mybicocca.data.dto.elearning
 
+/**
+ * Marker interface for responses that come as JSON object from Moodle.
+ */
 sealed interface ElearningResponse
 
 /**
