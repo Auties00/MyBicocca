@@ -24,9 +24,11 @@ import kotlinx.serialization.json.Json
  * - Various display options (weekly agenda, basic schedule, compact view)
  *
  * @param httpClientConfig Optional configuration block for the underlying HTTP client.
+ *
+ * @see EasyStaffCoreApi for core query operations
  * @see EasyStaffScheduleApi for lesson schedule operations
  * @see EasyStaffExamCalendarApi for exam calendar operations
- * @see EasyStaffRoomsApi for room operations
+ * @see EasyStaffBuildingsApi for room operations
  * @see EasyStaffEventsApi for event search operations
  * @see EasyStaffAttendanceApi for attendance operations
  */
@@ -72,6 +74,17 @@ class EasyStaffApi(httpClientConfig: HttpClientConfig<*>.() -> Unit = {}) : Auto
     }
 
     /**
+     * API for core query operations.
+     *
+     * Provides access to:
+     * - Academic years
+     * - Teaching areas
+     * - Study programs
+     * - Teachers
+     */
+    val core = EasyStaffCoreApi(client, json)
+
+    /**
      * API for lesson schedule operations (Orario delle lezioni).
      *
      * Provides access to:
@@ -93,15 +106,15 @@ class EasyStaffApi(httpClientConfig: HttpClientConfig<*>.() -> Unit = {}) : Auto
     val exams: EasyStaffExamCalendarApi = EasyStaffExamCalendarApi(client, json)
 
     /**
-     * API for room operations (Occupazione delle aule & Vetrina aule).
+     * API for building operations (Occupazione delle aule & Vetrina aule).
      *
      * Provides access to:
+     * - Building and room listings
      * - Room occupation schedules (daily grid view)
      * - Room showcase (detailed room information)
-     * - Building and room listings
      * - Room equipment and accessibility information
      */
-    val rooms: EasyStaffRoomsApi = EasyStaffRoomsApi(client, json)
+    val buildings: EasyStaffBuildingsApi = EasyStaffBuildingsApi(client, json)
 
     /**
      * API for event search operations (Ricerca eventi).

@@ -1,10 +1,14 @@
 package it.attendance100.mybicocca.data.api.easystaff
 
-import it.attendance100.mybicocca.data.dto.easystaff.EasyStaffEventSearchQuery
-import it.attendance100.mybicocca.data.dto.easystaff.EasyStaffEventType
+import it.attendance100.mybicocca.data.dto.easystaff.EasyStaffEvent
+import it.attendance100.mybicocca.data.dto.easystaff.EasyStaffLanguage
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
+import java.time.temporal.WeekFields
+import java.util.Locale
 
 class EasyStaffEventsApiTest : EasyStaffTestBase() {
     companion object {
@@ -14,88 +18,186 @@ class EasyStaffEventsApiTest : EasyStaffTestBase() {
     }
 
     @Test
-    suspend fun getSearchOptions() {
-        val options = api.events.getSearchOptions()
-        assertNotNull(options.buildings)
-        assertNotNull(options.rooms)
-        assertNotNull(options.eventTypes)
-    }
-
-    @Test
     suspend fun getTodayEvents() {
-        val results = api.events.getTodayEvents()
-        assertNotNull(results.events)
+        val events = api.events.getTodayEvents()
+        assertNotNull(events)
+
+        // Today's events might be empty on weekends/holidays
+        // Verify events if any exist
+        val today = LocalDate.now()
+        events.forEach { event ->
+            validateEvent(event)
+            assertTrue(
+                event.date == today,
+                "Event date ${event.date} should be today ($today)"
+            )
+        }
     }
 
     @Test
     suspend fun getTodayEventsWithBuilding() {
-        val options = api.events.getSearchOptions()
-        if (options.buildings.isEmpty()) return
+        val buildings = api.buildings.getBuildings()
+        assertTrue(buildings.isNotEmpty(), "Buildings should not be empty")
 
-        val building = options.buildings.first()
-        val results = api.events.getTodayEvents(buildings = listOf(building.code))
-        assertNotNull(results.events)
+        val building = buildings.first()
+        val events = api.events.getTodayEvents(buildings = listOf(building))
+        assertNotNull(events)
+
+        // Verify events have valid properties
+        events.forEach { event ->
+            validateEvent(event)
+        }
     }
 
     @Test
     suspend fun getWeekEvents() {
-        val results = api.events.getWeekEvents()
-        assertNotNull(results.events)
+        val events = api.events.getWeekEvents()
+        assertNotNull(events)
+
+        // Verify events are within the week
+        val today = LocalDate.now()
+        events.forEach { event ->
+            validateEvent(event)
+            assertTrue(
+                event.date.isSameWeek(today),
+                "Event date ${event.date} should be within the week"
+            )
+        }
+    }
+
+    private fun LocalDate.isSameWeek(other: LocalDate, locale: Locale = Locale.getDefault()): Boolean {
+        val weekFields = WeekFields.of(locale)
+
+        val thisWeek = this.get(weekFields.weekOfWeekBasedYear())
+        val otherWeek = other.get(weekFields.weekOfWeekBasedYear())
+
+        val thisYear = this.get(weekFields.weekBasedYear())
+        val otherYear = other.get(weekFields.weekBasedYear())
+
+        return thisWeek == otherWeek && thisYear == otherYear
     }
 
     @Test
-    suspend fun getWeekEventsWithEventType() {
-        val results = api.events.getWeekEvents(eventTypes = listOf(EasyStaffEventType.LESSON))
-        assertNotNull(results.events)
+    suspend fun getMonthEvents() {
+        val events = api.events.getMonthEvents()
+        assertNotNull(events)
+
+        // Verify events are within the month
+        val today = LocalDate.now()
+        val monthStart = today.withDayOfMonth(1)
+        val monthEnd = today.withDayOfMonth(today.lengthOfMonth())
+        events.forEach { event ->
+            validateEvent(event)
+            assertTrue(
+                !event.date.isBefore(monthStart) && !event.date.isAfter(monthEnd),
+                "Event date ${event.date} should be within the month"
+            )
+        }
     }
 
     @Test
-    suspend fun searchByKeyword() {
-        val results = api.events.searchByKeyword(
-            keyword = MOCK_KEYWORD,
+    suspend fun getEvents() {
+        val events = api.events.getEvents(
             startDate = MOCK_START_DATE,
             endDate = MOCK_END_DATE
         )
-        assertNotNull(results.events)
+        assertNotNull(events)
+
+        // Verify events are within the date range
+        events.forEach { event ->
+            validateEvent(event)
+            assertTrue(
+                !event.date.isBefore(MOCK_START_DATE) && !event.date.isAfter(MOCK_END_DATE),
+                "Event date ${event.date} should be within range $MOCK_START_DATE - $MOCK_END_DATE"
+            )
+        }
     }
 
     @Test
-    suspend fun getEventsByType() {
-        val results = api.events.getEventsByType(
-            eventType = EasyStaffEventType.LESSON,
-            startDate = MOCK_START_DATE,
-            endDate = MOCK_END_DATE
-        )
-        assertNotNull(results.events)
-    }
-
-    @Test
-    suspend fun searchEvents() {
-        val query = EasyStaffEventSearchQuery(
-            startDate = MOCK_START_DATE,
-            endDate = MOCK_END_DATE
-        )
-
-        val results = api.events.searchEvents(query)
-        assertNotNull(results.events)
-        assertNotNull(results.searchSummary)
-    }
-
-    @Test
-    suspend fun searchEventsWithFilters() {
-        val options = api.events.getSearchOptions()
-        if (options.buildings.isEmpty()) return
-
-        val building = options.buildings.first()
-        val query = EasyStaffEventSearchQuery(
+    suspend fun getEventsWithKeyword() {
+        val events = api.events.getEvents(
             startDate = MOCK_START_DATE,
             endDate = MOCK_END_DATE,
-            buildings = listOf(building.code),
-            eventTypes = listOf(EasyStaffEventType.LESSON)
+            keyword = MOCK_KEYWORD
+        )
+        assertNotNull(events)
+
+        // Verify events have valid properties
+        events.forEach { event ->
+            validateEvent(event)
+        }
+    }
+
+    @Test
+    suspend fun getEventsWithBuildingFilter() {
+        val buildings = api.buildings.getBuildings()
+        assertTrue(buildings.isNotEmpty(), "Buildings should not be empty")
+
+        val building = buildings.first()
+        val events = api.events.getEvents(
+            startDate = MOCK_START_DATE,
+            endDate = MOCK_END_DATE,
+            buildings = listOf(building)
+        )
+        assertNotNull(events)
+
+        // Verify events have valid properties
+        events.forEach { event ->
+            validateEvent(event)
+        }
+    }
+
+    @Test
+    suspend fun getEventTypes() {
+        val eventTypes = api.events.getEventTypes(EasyStaffLanguage.ITALIAN)
+        assertNotNull(eventTypes)
+        assertTrue(eventTypes.isNotEmpty(), "Event types should not be empty")
+
+        // Verify each event type has valid properties
+        eventTypes.forEach { eventType ->
+            assertTrue(eventType.code > 0, "Event type ID should be positive")
+            assertTrue(eventType.label.isNotBlank(), "Event type label should not be blank")
+        }
+
+        // Verify event type IDs are unique
+        val eventTypeIds = eventTypes.map { it.code }
+        assertEquals(
+            eventTypeIds.size,
+            eventTypeIds.toSet().size,
+            "Event type IDs should be unique"
+        )
+    }
+
+    private fun validateEvent(event: EasyStaffEvent) {
+        assertTrue(event.id.isNotBlank(), "Event ID is missing")
+        assertTrue(event.title.isNotBlank(), "Event title is blank for ID: ${event.id}")
+        assertTrue(event.roomName.isNotBlank(), "Room name is missing for: ${event.title}")
+
+        assertNotNull(event.status, "Status parsing failed for: ${event.title}")
+
+        assertNotNull(event.date, "Date object is null")
+        assertTrue(
+            event.startDateTime.toLocalDate() == event.date,
+            "Start time date (${event.startDateTime.toLocalDate()}) does not match event date (${event.date})"
+        )
+        assertTrue(
+            event.startDateTime.isBefore(event.endDateTime),
+            "Event starts after it ends: ${event.startDateTime} -> ${event.endDateTime}"
         )
 
-        val results = api.events.searchEvents(query)
-        assertNotNull(results.events)
-        assertNotNull(results.searchSummary)
+        // Verify event type has valid properties
+        assertNotNull(event.eventType, "Event type should not be null")
+        assertTrue(event.eventType.isNotBlank(), "Event type code should not be blank")
+
+        // Verify teachers list is not null (may be empty)
+        assertNotNull(event.teachersList, "Teachers list should not be null")
+        event.teachersList.forEach { teacher ->
+            assertTrue(teacher.code != null || teacher.email != null, "Teacher code and email cannot be null at the same time")
+            assertTrue(teacher.code == null || teacher.code.isNotBlank(), "Teacher code should not be blank if present")
+            assertTrue(teacher.email == null || teacher.email.isNotBlank(), "Teacher email should not be blank if present")
+        }
+
+        // Verify activities list is not null (may be empty)
+        assertNotNull(event.activities, "Activities list should not be null")
     }
 }
