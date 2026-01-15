@@ -2,16 +2,12 @@ package it.attendance100.mybicocca.data.api.elearning
 
 import io.ktor.client.*
 import io.ktor.client.request.*
-import io.ktor.client.request.forms.FormDataContent
 import io.ktor.client.statement.*
-import io.ktor.http.Parameters
-import io.ktor.http.parseQueryString
 import io.ktor.utils.io.jvm.javaio.*
+import it.attendance100.mybicocca.data.api.extractQueryParamAsInt
 import it.attendance100.mybicocca.data.dto.elearning.*
 import kotlinx.serialization.json.Json
 import org.jsoup.Jsoup
-import org.jsoup.nodes.FormElement
-import java.net.URI
 
 /**
  * API for course-related operations.
@@ -125,7 +121,7 @@ class ElearningCourseApi(
                 val courseId = box.attr("data-courseid")
                     .takeIf { it.isNotEmpty() }
                     ?.toIntOrNull()
-                    ?: URI(courseUrl).query.let { parseQueryString(it)["id"]?.toIntOrNull() }
+                    ?: extractQueryParamAsInt(courseUrl, "id")
                     ?: return@mapNotNull null
 
                 val hasPassword = doc.selectFirst("#fitem_id_nokey") == null

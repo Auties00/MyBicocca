@@ -241,12 +241,4 @@ abstract class Esse3AbstractApi(
         }
     }
 
-    /**
-     * Cleans and normalizes text content.
-     */
-    protected fun String.cleanText(): String {
-        return replace("\u200b", "") // Remove zero-width spaces
-            .replace("\u00a0", " ")  // Replace non-breaking spaces
-            .trim()
-    }
 }

@@ -4,6 +4,7 @@ import io.ktor.client.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.ktor.utils.io.*
+import it.attendance100.mybicocca.data.api.*
 import it.attendance100.mybicocca.data.dto.esse3.*
 import kotlin.time.Duration.Companion.days
 
@@ -36,15 +37,6 @@ class Esse3InternshipApi(
         private const val DELETE_SEARCH_ENTRYPOINT = "/auth/tirocini/TiroDeleteSearch.do"
 
         private val DATE_REGEX = "(\\d{2}/\\d{2}/\\d{4})".toRegex()
-    }
-
-    /**
-     * Extracts a query parameter from a URL or href string.
-     */
-    private fun extractQueryParam(href: String, vararg paramNames: String): String? {
-        val queryString = href.substringAfter("?", "")
-        val params = parseQueryString(queryString)
-        return paramNames.firstNotNullOfOrNull { params[it] }
     }
 
     /**
@@ -150,50 +142,25 @@ class Esse3InternshipApi(
 
         val detailLists = doc.select("dl.record-riga")
 
-        val mainDetails = mutableMapOf<String, String>()
-        val requirementDetails = mutableMapOf<String, String>()
-        val languageDetails = mutableMapOf<String, String>()
+        val mainData = detailLists.getOrNull(0)?.parseGrid()
+            ?: throw IllegalStateException("Cannot get opportunity detail: missing main details")
+        val requirementData = detailLists.getOrNull(1)?.parseGrid()
+            ?: throw IllegalStateException("Cannot get opportunity detail: missing requirement details")
 
-        for ((index, dl) in detailLists.withIndex()) {
-            val target = when (index) {
-                0 -> mainDetails
-                1 -> requirementDetails
-                else -> languageDetails
-            }
-            for (dt in dl.select("dt")) {
-                val key = dt.text().cleanText().removeSuffix(":").lowercase()
-                val value = dt.nextElementSibling()?.text()?.cleanText() ?: ""
-                target[key] = value
-            }
-        }
+        // Language details: all dls after index 1 contain language -> level pairs
+        val languageData = detailLists.drop(2).flatMap { it.parseGrid().toTextMap().entries }
 
-        val companyName = mainDetails["azienda"]
-            ?: throw IllegalStateException("Cannot get opportunity detail: missing company name")
+        val companyName = mainData.getTextOrThrow("azienda")
+        val companyDescription = mainData.getTextOrNull("descrizione azienda", "descizione azienda")
+        val description = mainData.getTextOrThrow("descrizione opportunità")
+        val trainingObjectives = mainData.getTextOrThrow("obiettivi formativi")
+        val location = mainData.getTextOrThrow("sede svolgimento")
+        val functionalArea = mainData.getTextOrThrow("area funzionale")
+        val benefits = mainData.getTextOrNull("facilitazioni previste")
 
-        val companyDescription = mainDetails["descrizione azienda"]
-            ?: mainDetails["descizione azienda"]
+        val expectedStartDate = mainData.getTextAsOrThrow("data indicativa inizio") { parseDate(it) }
 
-        val description = mainDetails["descrizione opportunità"]
-            ?: throw IllegalStateException("Cannot get opportunity detail: missing description")
-
-        val trainingObjectives = mainDetails["obiettivi formativi"]
-            ?: throw IllegalStateException("Cannot get opportunity detail: missing training objectives")
-
-        val location = mainDetails["sede svolgimento"]
-            ?: throw IllegalStateException("Cannot get opportunity detail: missing location")
-
-        val functionalArea = mainDetails["area funzionale"]
-            ?: throw IllegalStateException("Cannot get opportunity detail: missing functional area")
-
-        val benefits = mainDetails["facilitazioni previste"]
-
-        val expectedStartDateText = mainDetails["data indicativa inizio"]
-            ?: throw IllegalStateException("Cannot get opportunity detail: missing expected start date")
-        val expectedStartDate = parseDate(expectedStartDateText)
-            ?: throw IllegalStateException("Cannot get opportunity detail: invalid start date '${expectedStartDateText}'")
-
-        val expectedDurationText = mainDetails["durata indicativa prevista"]
-            ?: throw IllegalStateException("Cannot get opportunity detail: missing expected duration")
+        val expectedDurationText = mainData.getTextOrThrow("durata indicativa prevista")
         val expectedDurationTextSpaceIndex = expectedDurationText.indexOf(' ').takeIf { it != -1 }
             ?: throw IllegalStateException("Cannot get opportunity detail: invalid expected duration '${expectedDurationText}'")
         val expectedDurationTextNumber = expectedDurationText.take(expectedDurationTextSpaceIndex).toLongOrNull()
@@ -206,13 +173,10 @@ class Esse3InternshipApi(
             else -> throw IllegalStateException("Cannot get opportunity detail: invalid expected duration '${expectedDurationText}'")
         }
 
-        val reservedFor = requirementDetails["riservato a"]
-            ?: throw IllegalStateException("Cannot get opportunity detail: missing reserved for")
-        val careerTypesText = requirementDetails["tipo carriera"]
-            ?: throw IllegalStateException("Cannot get opportunity detail: missing career types")
-        val careerTypes = Esse3CareerType.parseList(careerTypesText)
+        val reservedFor = requirementData.getTextOrThrow("riservato a")
+        val careerTypes = requirementData.getTextAsOrThrow("tipo carriera") { Esse3CareerType.parseList(it) }
 
-        val languages = languageDetails.map { (lang, level) ->
+        val languages = languageData.map { (lang, level) ->
             Esse3LanguageRequirement(language = lang, level = level)
         }
 
@@ -255,34 +219,22 @@ class Esse3InternshipApi(
         val table = doc.selectFirst("#tableOpportunitaSalvate")
             ?: throw IllegalStateException("Cannot get applications: missing table")
 
-        val headers = table.select("thead tr th").map {
-            val node = it.firstChild() ?: it
-            node.nodeValue().trim().lowercase()
-        }
-
-        return table.select("tbody tr").map { row ->
-            val cells = row.select("td")
-            val rowMap = headers.zip(cells).toMap()
-
-            val link = rowMap["titolo"]?.selectFirst("a")
+        return table.parseTable().map { row ->
+            val titleCell = row.getElementOrThrow("titolo")
+            val link = titleCell.selectFirst("a")
                 ?: throw IllegalStateException("Cannot get saved opportunities: missing opportunity link")
             val id = extractQueryParam(link.attr("href"), "cnvz_off_id")?.toLongOrNull()
                 ?: throw IllegalStateException("Cannot get saved opportunities: missing opportunity ID")
 
-            val title = rowMap["titolo"]?.text()?.cleanText()
-                ?: throw IllegalStateException("Cannot get saved opportunities: missing title")
+            val title = row.getTextOrThrow("titolo")
+            val companyName = row.getTextOrThrow("azienda")
 
-            val companyName = rowMap["azienda"]?.text()?.cleanText()
-                ?: throw IllegalStateException("Cannot get saved opportunities: missing company name")
-
-            val typeText = rowMap["tipo"]?.text()?.cleanText()
-                ?: throw IllegalStateException("Cannot get saved opportunities: missing type")
+            val typeText = row.getTextOrThrow("tipo")
             val type = Esse3InternshipType.fromDescription(typeText)
 
-            val applicationEndDateText = rowMap["chiusura iscrizioni"]?.text()?.cleanText()
-                ?: throw IllegalStateException("Cannot get saved opportunities: missing end date")
+            val applicationEndDateText = row.getTextOrThrow("chiusura iscrizioni")
             val applicationEndDate = parseDate(applicationEndDateText)
-                ?: throw IllegalStateException("Cannot get saved opportunities: invalid date '${applicationEndDateText}'")
+                ?: throw IllegalStateException("Cannot get saved opportunities: invalid date '$applicationEndDateText'")
 
             Esse3InternshipOpportunity(
                 id = id,
@@ -292,7 +244,7 @@ class Esse3InternshipApi(
                 applicationEndDate = applicationEndDate,
                 isSaved = true
             )
-        }
+        }.toList()
     }
 
     /**
@@ -356,54 +308,49 @@ class Esse3InternshipApi(
     suspend fun getApplications(): List<Esse3InternshipApplication> {
         val doc = executeGet(APPLICATIONS_ENTRYPOINT)
 
-        val table = doc.selectFirst("table.table-1")
+        val headerTable = doc.selectFirst("table.ui-jqgrid-htable")
+        val dataTable = doc.selectFirst("table.ui-jqgrid-btable")
             ?: return emptyList()
 
-        val headers = table.select("thead tr th").map {
-            val node = it.firstChild() ?: it
-            node.nodeValue().trim().lowercase()
-        }
+        val headers = headerTable?.select("thead tr.ui-jqgrid-labels th")
+            ?.map { it.attr("title").lowercase() }
+            ?.filter { it.isNotBlank() }
+            ?: return emptyList()
 
-        return table.select("tbody tr").map { row ->
-            val cells = row.select("td")
-            if (cells.size < 3) throw IllegalStateException("Cannot get applications: insufficient columns")
+        // Parse data rows (skip sizing row which has class jqgfirstrow)
+        return dataTable.select("tbody tr.jqgrow")
+            .asSequence()
+            .map { row ->
+                val cells = row.select("td")
 
-            val rowMap = headers.zip(cells).toMap()
+                val row = DataRowElement(headers.zip(cells).toMap())
 
-            val applicationId = row.select("a[href*=cand_id], a[href*=candidatura_id]")
-                .firstNotNullOfOrNull { element ->
-                    extractQueryParam(element.attr("href"), "cand_id", "candidatura_id")?.toLongOrNull()
+                // Application ID from the actions column link
+                val applicationId = row.getElementAsOrNull("azioni") { cell ->
+                    cell.selectFirst("a[href*=dom_tiro_id], a[href*=cand_id], a[href*=candidatura_id]")
+                        ?.attr("href")
+                        ?.let { extractQueryParamAsLong(it, "dom_tiro_id", "cand_id", "candidatura_id") }
                 }
 
-            val opportunityLink = row.selectFirst("a[href*=cnvz_off_id]")
-                ?: throw IllegalStateException("Cannot get applications: missing opportunity link")
-            val opportunityId = extractQueryParam(opportunityLink.attr("href"), "cnvz_off_id")?.toLongOrNull()
-                ?: throw IllegalStateException("Cannot get applications: missing opportunity ID")
+                // Opportunity ID and title from the opportunity column
+                val opportunityCell = row.getElementOrThrow("opportunità")
+                val opportunityLink = opportunityCell.selectFirst("a[href*=cnvz_off_id]")
+                    ?: throw IllegalStateException("Cannot get applications: missing opportunity link")
+                val opportunityId = extractQueryParamAsLong(opportunityLink.attr("href"), "cnvz_off_id")
+                    ?: throw IllegalStateException("Cannot get applications: missing opportunity ID")
+                val opportunityTitle = opportunityCell.cleanText()
 
-            val opportunityTitle = rowMap.entries.firstOrNull()?.value?.text()?.cleanText()
-                ?: throw IllegalStateException("Cannot get applications: missing opportunity title")
-
-            val companyName = rowMap.entries.drop(1).firstOrNull()?.value?.text()?.cleanText()
-                ?: throw IllegalStateException("Cannot get applications: missing company name")
-
-            val statusText = rowMap.entries.drop(2).firstOrNull()?.value?.text()?.cleanText()
-                ?: throw IllegalStateException("Cannot get applications: missing status")
-            val status = Esse3ApplicationStatus.fromString(statusText)
-
-            val applicationDate = rowMap.entries.drop(3).firstOrNull()?.value?.text()?.let { parseDateTime(it) }
-
-            val notes = rowMap.entries.drop(4).firstOrNull()?.value?.text()?.cleanText()?.takeIf { it.isNotBlank() }
-
-            Esse3InternshipApplication(
-                id = applicationId,
-                opportunityId = opportunityId,
-                opportunityTitle = opportunityTitle,
-                companyName = companyName,
-                status = status,
-                applicationDate = applicationDate,
-                notes = notes
-            )
-        }
+                Esse3InternshipApplication(
+                    id = applicationId,
+                    opportunityId = opportunityId,
+                    opportunityTitle = opportunityTitle,
+                    companyName = row.getTextOrThrow("azienda"),
+                    type = row.getTextOrNull("tipo"),
+                    status = Esse3ApplicationStatus.fromString(row.getTextOrThrow("stato")),
+                    applicationDate = row.getTextAsOrNull("data candidatura") { parseDateTime(it) }
+                )
+            }
+            .toList()
     }
 
     /**

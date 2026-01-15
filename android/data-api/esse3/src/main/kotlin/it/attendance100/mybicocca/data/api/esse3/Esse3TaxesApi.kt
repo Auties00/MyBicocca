@@ -2,8 +2,11 @@ package it.attendance100.mybicocca.data.api.esse3
 
 import io.ktor.client.*
 import io.ktor.client.statement.*
-import io.ktor.http.*
 import io.ktor.utils.io.*
+import it.attendance100.mybicocca.data.api.cleanText
+import it.attendance100.mybicocca.data.api.extractQueryParam
+import it.attendance100.mybicocca.data.api.parseGrid
+import it.attendance100.mybicocca.data.api.parseTable
 import it.attendance100.mybicocca.data.dto.esse3.*
 import java.math.BigDecimal
 
@@ -26,20 +29,7 @@ class Esse3TaxesApi(
         private const val REFRESH_PAYMENT_PATH = "/auth/studente/Tasse/ListaFatture.do"
 
         private val IUV_REGEX = "IUV\\s*:?\\s*(\\S+)".toRegex()
-        private val PAYMENT_METHOD_REGEX = "Modalità\\s*:?\\s*(.+?)(?=\\s{2,}|Codice|IUV|$)".toRegex()
-        private val PAYMENT_NOTICE_CODE_REGEX = "Codice Avviso\\s*:?\\s*(\\d+)".toRegex()
-        private val PAYMENT_DATE_REGEX = "Data Pagamento\\s*:?\\s*([\\d/]+)".toRegex()
-        private val RPT_STATUS_REGEX = "Stato RPT\\s*:?\\s*(.+?)(?=\\s{2,}|Esito|$)".toRegex()
         private val TRANSACTION_OUTCOME_REGEX = "Esito transazione pagoPA\\s*:?\\s*(.+?)(?=\\s{2,}|$)".toRegex()
-    }
-
-    /**
-     * Extracts a query parameter from a URL or href string.
-     */
-    private fun extractQueryParam(href: String, vararg paramNames: String): String? {
-        val queryString = href.substringAfter("?", "")
-        val params = parseQueryString(queryString)
-        return paramNames.firstNotNullOfOrNull { params[it] }
     }
 
     /**
@@ -54,20 +44,9 @@ class Esse3TaxesApi(
             ?: doc.selectFirst("table.table-1")
             ?: throw IllegalStateException("Cannot get tax bills: missing tax bills table")
 
-        val headers = table.select("thead tr th").map { it.text().cleanText().lowercase() }
-        val rows = table.select("tbody tr")
-
-        if (rows.isEmpty()) {
-            return emptyList()
-        }
-
-        return rows.map { row ->
-            val cells = row.select("td")
-            val rowMap = headers.zip(cells).toMap()
-
-            val invoiceCell = rowMap["fattura"]
-                ?: throw IllegalStateException("Cannot get tax bills: missing 'fattura' column")
-            val invoiceNumber = invoiceCell.text().cleanText()
+        return table.parseTable().map { row ->
+            val invoiceCell = row.getElementOrThrow("fattura")
+            val invoiceNumber = invoiceCell.cleanText()
 
             val billId = invoiceCell.selectFirst("a[href*=fatt_id]")
                 ?.attr("href")
@@ -75,23 +54,18 @@ class Esse3TaxesApi(
                 ?: invoiceNumber.toLongOrNull()
                 ?: throw IllegalStateException("Cannot get tax bills: missing bill ID for invoice '$invoiceNumber'")
 
-            val description = rowMap["descrizione"]?.text()?.cleanText()
-                ?: throw IllegalStateException("Cannot get tax bills: missing 'descrizione' column")
+            val description = row.getTextOrThrow("descrizione")
 
-            val dueDateText = rowMap["data scadenza"]?.text()?.cleanText()
-                ?: throw IllegalStateException("Cannot get tax bills: missing 'data scadenza' column")
-            val dueDate = parseDate(dueDateText)
+            val dueDate = row.getTextAsOrNull("data scadenza") { parseDate(it) }
 
-            val amountText = rowMap["importo"]?.text()?.cleanText()
-                ?: throw IllegalStateException("Cannot get tax bills: missing 'importo' column")
+            val amountText = row.getTextOrThrow("importo")
             val amount = parseAmount(amountText)
 
-            val statusText = rowMap["stato pagamento"]?.text()?.cleanText()
-                ?: throw IllegalStateException("Cannot get tax bills: missing 'stato pagamento' column")
+            val statusText = row.getTextOrThrow("stato pagamento")
             val paymentStatus = Esse3PaymentStatus.fromString(statusText)
 
-            val hasPagoPa = rowMap["pagamento pagopa"]?.selectFirst("a, button, form") != null ||
-                    rowMap["avviso pagopa"]?.selectFirst("a, button, form") != null
+            val hasPagoPa = row.getElementOrNull("pagamento pagopa")?.selectFirst("a, button, form") != null ||
+                    row.getElementOrNull("avviso pagopa")?.selectFirst("a, button, form") != null
 
             Esse3TaxBill(
                 id = billId,
@@ -102,7 +76,7 @@ class Esse3TaxesApi(
                 paymentStatus = paymentStatus,
                 pagoPaAvailable = hasPagoPa
             )
-        }
+        }.toList()
     }
 
     /**
@@ -115,31 +89,17 @@ class Esse3TaxesApi(
         val doc = executeGet(TAX_BILL_DETAIL_PATH, mapOf("fatt_id" to bill.id.toString()))
 
         // Parse record info from dl structure
-        val dlElement = doc.selectFirst("dl.record-riga")
-        val recordMap = mutableMapOf<String, String>()
-        if (dlElement != null) {
-            val dts = dlElement.select("dt")
-            val dds = dlElement.select("dd")
-            dts.forEachIndexed { index, dt ->
-                val key = dt.text().cleanText().lowercase()
-                val value = dds.getOrNull(index)?.text()?.cleanText() ?: ""
-                recordMap[key] = value
-            }
-        }
+        val recordData = doc.selectFirst("dl.record-riga")?.parseGrid()
 
         val html = doc.html()
 
-        val paymentDateText = recordMap["data pagamento"]
-        val paymentDate = paymentDateText?.let { parseDate(it) }
+        val paymentDate = recordData?.getTextAsOrNull("data pagamento") { parseDate(it) }
 
-        val paymentMethodText = recordMap["modalità"]
-        val paymentMethod = paymentMethodText
-            ?.let { Esse3PaymentMethod.fromString(it) }
+        val paymentMethod = recordData?.getTextAsOrNull("modalità") { Esse3PaymentMethod.fromString(it) }
             ?: Esse3PaymentMethod.Other("")
 
-        val paymentNoticeCode = recordMap["codice avviso"]
-        val rptStatusText = recordMap["stato rpt"]
-        val rptStatus = rptStatusText?.let { Esse3RptStatus.fromString(it) }
+        val paymentNoticeCode = recordData?.getTextOrNull("codice avviso")
+        val rptStatus = recordData?.getTextAsOrNull("stato rpt") { Esse3RptStatus.fromString(it) }
 
         val transactionOutcome = doc.selectFirst("#tasse-textInfoTransPagoPA")?.text()
             ?.let { TRANSACTION_OUTCOME_REGEX.find(it)?.groupValues?.get(1)?.cleanText() }

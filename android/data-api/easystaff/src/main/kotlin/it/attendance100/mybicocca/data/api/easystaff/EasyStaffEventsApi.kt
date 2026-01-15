@@ -1,11 +1,9 @@
 package it.attendance100.mybicocca.data.api.easystaff
 
 import io.ktor.client.*
+import it.attendance100.mybicocca.data.api.cleanText
+import it.attendance100.mybicocca.data.api.parseTable
 import it.attendance100.mybicocca.data.dto.easystaff.*
-import it.attendance100.mybicocca.data.dto.easystaff.EasyStaffBookingStatus
-import it.attendance100.mybicocca.data.dto.easystaff.EasyStaffEventSearchResults
-import it.attendance100.mybicocca.data.dto.easystaff.EasyStaffEventType
-import it.attendance100.mybicocca.data.dto.easystaff.EasyStaffScheduledEvent
 import kotlinx.serialization.json.Json
 import java.time.LocalDate
 import java.time.LocalTime.of
@@ -27,6 +25,9 @@ class EasyStaffEventsApi(
 ) : EasyStaffAbstractApi(client, json) {
     companion object {
         private const val EVENTS_VIEW = "bookings"
+
+        private val DEFAULT_START_TIME = of(0, 0)
+        private val DEFAULT_END_TIME = of(23, 59)
     }
 
     /**
@@ -251,43 +252,23 @@ class EasyStaffEventsApi(
                 searchSummary = searchSummary
             )
 
-        val headers = table.select("thead th, thead td")
-            .map { it.cleanText().lowercase() }
-
-        val events = table.select("tbody tr").mapNotNull { row ->
-            val cells = row.select("td")
-            if (cells.isEmpty()) return@mapNotNull null
-
-            // Map cells to headers
-            val cellMap = if (headers.isNotEmpty()) {
-                headers.zip(cells).toMap()
-            } else {
-                emptyMap()
-            }
-
+        val events = table.parseTable().mapNotNull { row ->
             // Extract title
-            val title = findCellValue(cellMap, "titolo", "descrizione", "evento", "title")
-                ?: cells.getOrNull(0)?.cleanText()
+            val title = row.getTextOrNull("titolo", "descrizione", "evento", "title")
+                ?: row.headers.firstOrNull()?.let { row.getTextOrNull(it) }
                 ?: return@mapNotNull null
 
             // Extract room
-            val roomText = findCellValue(cellMap, "aula", "room", "sede")
-                ?: cells.getOrNull(1)?.cleanText()
-            val (room, building) = parseRoomAndBuilding(roomText)
+            val (room, building) = parseRoomAndBuilding(row.getTextOrNull("aula", "room", "sede"))
 
             // Extract date
-            val dateText = findCellValue(cellMap, "data", "date")
-                ?: cells.getOrNull(2)?.cleanText()
-            val date = dateText?.let { parseDate(it) } ?: return@mapNotNull null
+            val date = row.getTextAsOrNull("data", "date") { parseDate(it) } ?: return@mapNotNull null
 
             // Extract time
-            val timeText = findCellValue(cellMap, "orari", "ora", "time")
-                ?: cells.getOrNull(3)?.cleanText()
-            val (startTime, endTime) = parseTimeRange(timeText)
+            val (startTime, endTime) = parseTimeRange(row.getTextOrNull("orari", "ora", "time"))
 
             // Extract event type
-            val eventTypeCell = findCell(cellMap, "tipo", "type")
-            val eventTypeText = eventTypeCell?.cleanText()
+            val eventTypeText = row.getTextOrNull("tipo", "type")
             val eventType = if (eventTypeText != null) {
                 EasyStaffEventType.fromItalianName(eventTypeText)
             } else {
@@ -295,31 +276,28 @@ class EasyStaffEventsApi(
             }
 
             // Extract organizers
-            val organizerText = findCellValue(cellMap, "utilizzatori", "docente", "organizer")
-                ?: cells.getOrNull(5)?.cleanText()
+            val organizerText = row.getTextOrNull("utilizzatori", "docente", "organizer")
             val organizers = organizerText?.split(",", ";")
                 ?.map { it.trim() }
                 ?.filter { it.isNotBlank() }
                 ?: emptyList()
 
             // Extract status
-            val statusText = findCellValue(cellMap, "stato", "status")
-                ?: cells.lastOrNull()?.cleanText()
-            val status =
-                statusText?.let { EasyStaffBookingStatus.fromItalian(it) } ?: EasyStaffBookingStatus.CONFIRMED
+            val status = row.getTextAsOrNull("stato", "status") { EasyStaffBookingStatus.fromItalian(it) }
+                ?: EasyStaffBookingStatus.CONFIRMED
 
             EasyStaffScheduledEvent(
                 title = title,
                 date = date,
-                startTime = startTime ?: of(0, 0),
-                endTime = endTime ?: of(23, 59),
+                startTime = startTime ?: DEFAULT_START_TIME,
+                endTime = endTime ?: DEFAULT_END_TIME,
                 room = room,
                 building = building,
                 eventType = eventType,
                 organizers = organizers,
                 status = status
             )
-        }
+        }.toList()
 
         return EasyStaffEventSearchResults(
             events = events.sortedWith(compareBy({ it.date }, { it.startTime })),
