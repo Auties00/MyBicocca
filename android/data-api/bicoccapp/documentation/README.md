@@ -1,5 +1,4 @@
-# BicoccApp 
-
+# BicoccApp
 
 ## Problem Statement
 
