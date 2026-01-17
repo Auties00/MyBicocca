@@ -32,16 +32,14 @@ class EasyStaffScheduleApi(
      * @param studyProgram The study program
      * @param yearsOfStudy The years of study to include
      * @param weekStartDate The starting date for the schedule
-     * @param teachingPeriod Optional teaching period filter
      * @param language The language for labels
      * @return The weekly schedule as a list of schedule cells
      */
     suspend fun getScheduleByProgram(
         academicYear: EasyStaffAcademicYear,
-        studyProgram: EasyStaffStudyProgramDetails,
-        yearsOfStudy: List<EasyStaffYearOfStudyDetails>,
+        studyProgram: EasyStaffStudyProgram,
+        yearsOfStudy: List<EasyStaffStudyProgramYear>,
         weekStartDate: LocalDate,
-        teachingPeriod: EasyStaffTeachingPeriod? = null,
         language: EasyStaffLanguage = EasyStaffLanguage.ITALIAN
     ): List<EasyStaffScheduleCell> {
         val params = buildMap {
@@ -49,26 +47,18 @@ class EasyStaffScheduleApi(
             put("form-type", listOf("corso"))
             put("include", listOf("corso"))
             put("anno", listOf(academicYear.value))
-            put("scuola", listOf(studyProgram.teachingAreaCode))
             put("corso", listOf(studyProgram.code))
-            put("date", listOf(formatDate(weekStartDate)))
-            put("visualizzazione_orario", listOf("cal"))
+            put("anno2[]", yearsOfStudy.map { it.code })
             put("_lang", listOf(language.code))
-            put("anno2[]", yearsOfStudy.map { it.value })
-            teachingPeriod?.let { put("periodo_didattico", listOf(it.code)) }
-            put("list", listOf(""))
-            put("week_grid_type", listOf("-1"))
+            put("empty_box", listOf("1"))
+            put("highlighted_date", listOf("0"))
+            put("all_events", listOf("1"))
+            put("date", listOf(formatDate(weekStartDate)))
             put("ar_codes_", listOf(""))
             put("ar_select_", listOf(""))
-            put("col_cells", listOf("0"))
-            put("empty_box", listOf("0"))
-            put("only_grid", listOf("0"))
-            put("highlighted_date", listOf("0"))
-            put("all_events", listOf("0"))
         }
-
         val response = executePostForm<EasyStaffScheduleResponse>(SCHEDULE_ENDPOINT, params)
-        return response.cells.sortedWith(compareBy { it.dateTime })
+        return response.cells.sorted()
     }
 
     /**
@@ -76,6 +66,7 @@ class EasyStaffScheduleApi(
      *
      * @param academicYear The academic year
      * @param teacher The teacher
+     * @param course The study course
      * @param weekStartDate The starting date for the schedule
      * @param language The language for labels
      * @return The weekly schedule as a list of schedule cells
@@ -83,6 +74,8 @@ class EasyStaffScheduleApi(
     suspend fun getScheduleByTeacher(
         academicYear: EasyStaffAcademicYear,
         teacher: EasyStaffTeacher,
+        course: EasyStaffTeacherCourse,
+        yearsOfStudy: List<EasyStaffTeacherCourseYearOfStudy>,
         weekStartDate: LocalDate,
         language: EasyStaffLanguage = EasyStaffLanguage.ITALIAN
     ): List<EasyStaffScheduleCell> {
@@ -91,29 +84,34 @@ class EasyStaffScheduleApi(
             put("form-type", listOf("docente"))
             put("include", listOf("docente"))
             put("anno", listOf(academicYear.value))
-            put("docente", listOf(teacher.id.toString()))
+            put("docente", listOf(teacher.code))
+            put("corso", listOf(course.code))
+            put("anno2[]", yearsOfStudy.map { it.code })
+            put("visualizzazione_orario", listOf("cal"))
             put("date", listOf(formatDate(weekStartDate)))
+            put("periodo_didattico", listOf(""))
             put("_lang", listOf(language.code))
             put("list", listOf(""))
             put("week_grid_type", listOf("-1"))
             put("ar_codes_", listOf(""))
             put("ar_select_", listOf(""))
             put("col_cells", listOf("0"))
-            put("empty_box", listOf("0"))
+            put("empty_box", listOf("1"))
             put("only_grid", listOf("0"))
             put("highlighted_date", listOf("0"))
-            put("all_events", listOf("0"))
+            put("all_events", listOf("1"))
+            put("faculty_group", listOf("0"))
+            put("txtcurr", listOf(yearsOfStudy.joinToString(",") { it.name }))
         }
 
         val response = executePostForm<EasyStaffScheduleResponse>(SCHEDULE_ENDPOINT, params)
-        return response.cells.sortedWith(compareBy { it.dateTime })
+        return response.cells.sorted()
     }
 
     /**
      * Gets the weekly schedule for a subject.
      *
      * @param academicYear The academic year
-     * @param teachingArea The teaching area
      * @param subject The subject
      * @param weekStartDate The starting date for the schedule
      * @param language The language for labels
@@ -121,8 +119,7 @@ class EasyStaffScheduleApi(
      */
     suspend fun getScheduleBySubject(
         academicYear: EasyStaffAcademicYear,
-        teachingArea: EasyStaffTeachingArea,
-        subject: EasyStaffSubject,
+        subject: EasyStaffStudyProgramSubject,
         weekStartDate: LocalDate,
         language: EasyStaffLanguage = EasyStaffLanguage.ITALIAN
     ): List<EasyStaffScheduleCell> {
@@ -131,8 +128,9 @@ class EasyStaffScheduleApi(
             put("form-type", listOf("attivita"))
             put("include", listOf("attivita"))
             put("anno", listOf(academicYear.value))
-            put("scuola", listOf(teachingArea.code))
-            put("attession", listOf(subject.id))
+            put("attivita[]", listOf(subject.code))
+            put("visualizzazione_orario", listOf("cal"))
+            put("periodo_didattico", listOf(""))
             put("date", listOf(formatDate(weekStartDate)))
             put("_lang", listOf(language.code))
             put("list", listOf(""))
@@ -140,13 +138,14 @@ class EasyStaffScheduleApi(
             put("ar_codes_", listOf(""))
             put("ar_select_", listOf(""))
             put("col_cells", listOf("0"))
-            put("empty_box", listOf("0"))
+            put("empty_box", listOf("1"))
             put("only_grid", listOf("0"))
             put("highlighted_date", listOf("0"))
-            put("all_events", listOf("0"))
+            put("all_events", listOf("1"))
+            put("faculty_group", listOf("0"))
         }
 
         val response = executePostForm<EasyStaffScheduleResponse>(SCHEDULE_ENDPOINT, params)
-        return response.cells.sortedWith(compareBy { it.dateTime })
+        return response.cells.sorted()
     }
 }

@@ -162,7 +162,7 @@ class EasyStaffEventsApiTest : EasyStaffTestBase() {
         // Verify each event type has valid properties
         eventTypes.forEach { eventType ->
             assertTrue(eventType.code > 0, "Event type ID should be positive")
-            assertTrue(eventType.label.isNotBlank(), "Event type label should not be blank")
+            assertTrue(eventType.name.isNotBlank(), "Event type label should not be blank")
         }
 
         // Verify event type IDs are unique

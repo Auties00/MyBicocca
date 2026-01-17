@@ -93,8 +93,12 @@ abstract class EasyStaffAbstractApi(
          * @return The JSON string, or null if not found
          */
         fun extractJsonFromJsVariable(jsContent: String, variableName: String): String? {
-            val regex = """var\s+$variableName\s*=\s*(.+?);""".toRegex(RegexOption.DOT_MATCHES_ALL)
-            return regex.find(jsContent)?.groupValues?.get(1)?.trim()?.removeSuffix(";")
+            val prefix = "var $variableName ="
+            return jsContent.lineSequence()
+                .firstOrNull { it.startsWith(prefix) }
+                ?.removePrefix(prefix)
+                ?.removeSuffix(";")
+                ?.trim()
         }
     }
 

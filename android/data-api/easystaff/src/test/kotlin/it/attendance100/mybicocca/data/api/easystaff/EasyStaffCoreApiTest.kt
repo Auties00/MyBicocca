@@ -64,8 +64,8 @@ class EasyStaffCoreApiTest : EasyStaffTestBase() {
 
             // Verify years have valid properties
             program.years.forEach { year ->
-                assertTrue(year.value.isNotBlank(), "Year value should not be blank")
-                assertTrue(year.label.isNotBlank(), "Year label should not be blank")
+                assertTrue(year.code.isNotBlank(), "Year value should not be blank")
+                assertTrue(year.name.isNotBlank(), "Year label should not be blank")
                 assertNotNull(year.subjects, "Year subjects should not be null")
             }
 
@@ -73,7 +73,7 @@ class EasyStaffCoreApiTest : EasyStaffTestBase() {
             program.teachingPeriods.forEach { period ->
                 assertTrue(period.id.isNotBlank(), "Period id should not be blank")
                 assertTrue(period.code.isNotBlank(), "Period code should not be blank")
-                assertTrue(period.label.isNotBlank(), "Period label should not be blank")
+                assertTrue(period.name.isNotBlank(), "Period label should not be blank")
             }
         }
 
