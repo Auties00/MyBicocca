@@ -1,66 +1,104 @@
 # MyBicocca
 
-**One App to Rule Them All.**
+The all-in-one Android app for University of Milano-Bicocca students.
 
-As a student at the University of Milano-Bicocca, you know the struggle. To manage your university life, you constantly juggle between multiple disconnected platforms:
-*   **Esse3 (Segreterie Online):** Where you check your grades, book exams, manage your study plan, and pay fees.
-*   **E-Learning (Moodle):** Where you download lecture slides, submit assignments, and take quizzes.
-*   **The Official "Bicocca" App:** Where you might check your class schedule or find a building on the map.
+## What is MyBicocca?
 
-**MyBicocca** solves this fragmentation. It is an unofficial, open-source "Super App" that unifies all these services into a single, modern, and beautiful interface. No more logging into three different websites to get through your day.
+MyBicocca unifies all your university services in a single app. No more switching between multiple websites and apps to manage your academic life. 
+Access everything you need from one place.
 
-## 🚀 The Ecosystem: Unified
+### Unified Services
 
-MyBicocca deeply integrates with the university's existing infrastructure to bring you a seamless experience:
+MyBicocca brings together:
 
-### 1. Esse3 Integration (Career & Administration)
-*Connects directly to `s3w.si.unimib.it`*
-Instead of navigating the clunky web interface of Segreterie Online, MyBicocca provides a native mobile experience for:
-*   **Digital Transcript (Libretto):** View your passed exams, grades, and credits at a glance.
-*   **Exam Booking:** Search for exam sessions (Appelli) and register for them instantly.
-*   **Study Plan:** Review your "Piano di Studi" to see what exams you still need to take.
-*   **Stats & Analytics:** Visualize your academic progress with beautiful charts (Average Grade, ECTS progress, Grade predictions).
-*   **Administrative Tasks:** Handle questionnaires and admissions directly in the app.
+- **[Segreterie OnLine](https://s3w.si.unimib.it)** - Your student administration portal
+- **[E-Learning](https://elearning.unimib.it)** - The university's Moodle platform
+- **[Agenda Web](https://gestioneorari.didattica.unimib.it)** - Lesson and exam schedules
+- **[BicoccApp](https://play.google.com/store/apps/details?id=it.bicoccapp.unimib)** - Official university app features
 
-### 2. E-Learning / Moodle Integration (Didactics)
-*Connects directly to `elearning.unimib.it`*
-Accessing course materials on mobile has never been easier. MyBicocca supports the full range of Moodle features:
-*   **Course Content:** Download files, folders, and view pages for all your enrolled courses.
-*   **Assignments & Quizzes:** Check deadlines and even submit assignments or take quizzes from your phone.
-*   **Interactive Modules:** Full support for Forums, BigBlueButton, H5P activities, and more.
-*   **Grades:** View your partial grades for coursework directly.
+## Features
 
-### 3. Campus Services
-*Connects to the official app's backend*
-*   **Smart Calendar:** Your daily class schedule, automatically synced and organized.
-*   **Campus Maps:** Find buildings, classrooms, and study spots easily.
-*   **Messages:** Receive official communications from the university.
-*   **Badges:** Access your virtual student badge for campus entry.
+### Academic Career
+- View your complete academic record (libretto)
+- Track your grades, GPA, and earned credits
+- Monitor exam results and career progress
+- Access your study plan
 
----
+### Exams
+- Browse available exam sessions
+- Register for exams directly from the app
+- View exam details (date, time, room, professor)
+- Check your exam reservations
 
-## ✨ Key Features
-*   **Unified Login:** Log in once with your university credentials and access everything.
-*   **Modern UI:** Built with Google's latest **Material 3** design system for a fluid and accessible experience.
-*   **Dark Mode:** Fully supported system-wide dark theme.
-*   **Privacy Focused:** Your data stays on your device. MyBicocca communicates directly with university servers; no intermediate servers collect your credentials.
+### Class Schedule
+- View your weekly lesson timetable
+- Search schedules by course, professor, or subject
+- Get notified about schedule changes
+- Check room availability
 
-## 🛠 For Developers
+### E-Learning
+- Access your Moodle courses
+- View assignments and deadlines
+- Check quiz results and grades
+- Read forum discussions
+- Track course completion progress
 
-MyBicocca is an open-source project built with the latest Android technology stack. We welcome contributions!
+### Tuition & Payments
+- Check your tuition fee status
+- View payment deadlines
+- Access MAV/PagoPA payment documents
+- Download payment receipts
 
-**Tech Stack:**
-*   **Kotlin** & **Jetpack Compose** (UI)
-*   **Hilt** (Dependency Injection)
-*   **Retrofit** & **OkHttp** (Networking)
-*   **Room** (Local Database)
-*   **Vico** (Charting)
+### Internships
+- Search internship and stage opportunities
+- View company profiles
+- Save interesting opportunities
+- Track your applications
 
-### Setup & Build
-1.  Clone the repo: `git clone https://github.com/yourusername/MyBicocca.git`
-2.  Open in **Android Studio Ladybug** (or newer).
-3.  Sync Gradle and run on an emulator/device (min SDK 25).
+### Campus
+- Interactive campus map
+- Find buildings, departments, and facilities
+- Locate cafeterias, libraries, and study rooms
+- Get directions to points of interest
 
-## 📄 License
-MyBicocca is an unofficial project and is not endorsed by the University of Milano-Bicocca.
-Licensed under the terms found in the [LICENSE](LICENSE) file.
+### Notifications
+- Receive alerts for schedule changes
+- Get reminders for upcoming exams and deadlines
+- Stay updated on course announcements
+
+## Requirements
+
+- Android 8.0 (Oreo) or higher
+- University of Milano-Bicocca student credentials
+
+## Installation
+
+*Coming soon to Google Play Store*
+
+## How to Use
+
+1. **Login** - Sign in with your university credentials (@campus.unimib.it)
+2. **Explore** - Navigate through the different sections
+3. **Customize** - Set up your preferred courses and notifications
+
+## Privacy & Security
+
+- Your credentials are securely stored on your device
+- All communications use encrypted HTTPS connections
+- No personal data is shared with third parties
+- Authentication uses official university SSO
+
+## Support
+
+If you encounter any issues or have suggestions, open an issue on GitHub
+
+## Disclaimer
+
+This is an unofficial application not affiliated with the University of Milano-Bicocca. It uses publicly available APIs and web services. Please use responsibly and in accordance with university policies.
+
+## Acknowledgments
+
+- [University of Milano-Bicocca](https://www.unimib.it/) for the digital services
+- [CINECA](https://www.cineca.it/) for the Esse3 platform
+- [Moodle](https://moodle.org/) for the e-learning platform
+- [EasyStaff](https://www.easystaff.it/) for the scheduling system
