@@ -3,12 +3,13 @@ package it.attendance100.mybicocca.data.api.easystaff
 import io.ktor.client.*
 import it.attendance100.mybicocca.data.api.cleanText
 import it.attendance100.mybicocca.data.dto.easystaff.*
-import it.attendance100.mybicocca.data.dto.easystaff.EasyStaffRoom
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
-import java.lang.IllegalStateException
+import org.jsoup.nodes.Document
+import org.jsoup.nodes.Element
+import org.jsoup.nodes.TextNode
 import java.time.LocalDate
 
 /**
@@ -43,8 +44,8 @@ class EasyStaffBuildingsApi(
         val responseBody = executeGetText(
             COMBO_ENDPOINT,
             mapOf(
-                "sw" to "rooms_",
-                "_" to System.currentTimeMillis().toString()
+                "sw" to listOf("rooms_"),
+                "_" to listOf(System.currentTimeMillis().toString())
             )
         )
         val jsonString = extractJsonFromJsVariable(responseBody, "elenco_sedi")
@@ -66,9 +67,9 @@ class EasyStaffBuildingsApi(
         val responseBody = executeGetText(
             COMBO_ENDPOINT,
             mapOf(
-                "sw" to "rooms_",
-                "_lang" to language.code,
-                "_" to System.currentTimeMillis().toString()
+                "sw" to listOf("rooms_"),
+                "_lang" to listOf(language.code),
+                "_" to listOf(System.currentTimeMillis().toString())
             )
         )
 
@@ -121,128 +122,185 @@ class EasyStaffBuildingsApi(
     }
 
     /**
-     * Gets the daily occupation schedule for a specific room.
-     *
-     * @param building The building
-     * @param room The room in the building
-     * @param date The date to query
-     * @param language The language for labels
-     * @return The room's daily occupation schedule
-     */
-    suspend fun getRoomOccupation(
-        building: EasyStaffBuilding,
-        room: EasyStaffRoom,
-        date: LocalDate,
-        language: EasyStaffLanguage = EasyStaffLanguage.ITALIAN
-    ): List<EasyStaffRoomOccupationEvent> {
-        val buildingOccupation = getBuildingOccupation(
-            building = building,
-            date = date,
-            room = room,
-            language = language
-        )
-        return buildingOccupation.filter { it.roomCode == room.code }
-    }
-
-    /**
      * Gets detailed room information from the room showcase.
      *
-     * @param building The building (optional, returns all buildings if null)
-     * @param room The room in the building (optional, returns all rooms if null)
+     * @param buildings The buildings
+     * @param rooms The rooms (optional, returns data for all rooms if empty)
      * @param language The language for labels
+     * @throws IllegalArgumentException if the buildings are empty
      * @return The room showcase results
      */
-    suspend fun getRoomShowcase(
-        building: EasyStaffBuilding? = null,
-        room: EasyStaffRoom? = null,
+    suspend fun getRoomDetails(
+        buildings: List<EasyStaffBuilding>,
+        rooms: List<EasyStaffRoom> = emptyList(),
         language: EasyStaffLanguage = EasyStaffLanguage.ITALIAN
     ): List<EasyStaffRoomDetails> {
-        val params = buildMap {
-            put("view", "vetrina_aule")
-            put("include", "vetrina_aule")
-            put("_lang", language.code)
-            building?.let { put("sede", it.code) }
+        if(buildings.isEmpty()) {
+            throw IllegalArgumentException("Buildings cannot be empty")
         }
 
+        val params = buildMap {
+            put("form-type", listOf("vetrina_aule"))
+            put("view", listOf("vetrina_aule"))
+            put("include", listOf("vetrina_aule"))
+            put("sede[]", buildings.map { it.code })
+            if(rooms.isNotEmpty()) {
+                put("aula[]", rooms.map { it.code })
+            }
+            put("list", listOf(""))
+            put("week_grid_type", listOf("-1"))
+            put("ar_codes_", listOf(""))
+            put("ar_select_", listOf(""))
+            put("col_cells", listOf("0"))
+            put("empty_box", listOf("1"))
+            put("only_grid", listOf("0"))
+            put("highlighted_date", listOf("0"))
+            put("all_events", listOf("0"))
+            put("_lang", listOf(language.code))
+
+        }
         val doc = executeGetHtml(AGENDA_WEB_ENDPOINT, params)
 
-        val rooms = mutableListOf<EasyStaffRoomDetails>()
+        return doc.select(".attendance-section")
+            .mapNotNull { parseRoomDetails(doc, it)  }
+    }
 
-        val roomCards = doc.select(".room-card, .aula-card, .vetrina-item, .box-aula")
+    private fun parseRoomDetails(doc: Document, card: Element): EasyStaffRoomDetails? {
+        val headerToNodeMap = card.select(".custom-color-bold")
+            .associate { it.text().cleanText() to it.siblingNodes().lastOrNull()}
 
-        for (card in roomCards) {
-            val roomCode = card.attr("data-aula").ifBlank {
-                card.selectFirst(".room-code, .codice-aula")?.cleanText()
-            } ?: continue
-            if(room != null && room.code != roomCode) {
-                continue
+        fun extractText(label: String): String? {
+            val node = headerToNodeMap[label]
+            return if(node is TextNode) {
+                node.text()
+                    .cleanText()
+                    .takeIf { !it.equals("Dato mancante", ignoreCase = true) }
+            } else {
+                null
             }
-
-            val roomName = card.selectFirst(".room-name, .nome-aula, h4, h5")?.cleanText() ?: roomCode
-
-            val roomBuildingCode = card.attr("data-sede").ifBlank { building?.code ?: "" }
-            val roomBuildingName = card.selectFirst(".building-name, .nome-edificio")?.cleanText()
-                ?: building?.name ?: roomBuildingCode
-            val roomBuilding = EasyStaffBuilding(roomBuildingCode, roomBuildingName)
-
-            val capacityText = card.selectFirst(".capacity, .capienza, [data-capacity]")?.cleanText()
-            val capacity = capacityText?.filter { it.isDigit() }?.toIntOrNull()
-
-            val examCapacityText = card.selectFirst(".exam-capacity, .capienza-esame")?.cleanText()
-            val examCapacity = examCapacityText?.filter { it.isDigit() }?.toIntOrNull()
-
-            val floor = card.selectFirst(".floor, .piano")?.cleanText()
-
-            val isAccessible = card.selectFirst(".accessible, .accessibile, [data-accessible]") != null
-                    || card.text().contains("accessibile", ignoreCase = true)
-
-            val hasVideo = card.selectFirst(".has-video, [data-video]") != null
-                    || card.text().contains("video", ignoreCase = true)
-            val hasMicrophone = card.selectFirst(".has-mic, [data-microphone]") != null
-                    || card.text().contains("microfono", ignoreCase = true)
-            val hasProjector = card.selectFirst(".has-projector, [data-projector]") != null
-                    || card.text().contains("proiettore", ignoreCase = true)
-                    || card.text().contains("videoproiettore", ignoreCase = true)
-            val hasComputer = card.selectFirst(".has-computer, .has-podio, [data-computer]") != null
-                    || card.text().contains("podio", ignoreCase = true)
-                    || card.text().contains("computer", ignoreCase = true)
-            val hasWhiteboard = card.text().contains("lavagna bianca", ignoreCase = true)
-                    || card.text().contains("whiteboard", ignoreCase = true)
-            val hasBlackboard = card.text().contains("lavagna", ignoreCase = true)
-                    && !card.text().contains("lavagna bianca", ignoreCase = true)
-
-            val otherEquipment = card.select(".equipment-item, .dotazione li")
-                .map { it.cleanText() }
-                .filter { it.isNotBlank() }
-
-            val notes = card.selectFirst(".notes, .note")?.cleanText()
-
-            val imageUrl = card.selectFirst("img")?.attr("src")?.ifBlank { null }
-            val mapsUrl = card.selectFirst("a[href*=maps], a[href*=google]")?.attr("href")?.ifBlank { null }
-
-            rooms.add(
-                EasyStaffRoomDetails(
-                    code = roomCode,
-                    name = roomName,
-                    building = roomBuilding,
-                    capacity = capacity,
-                    examCapacity = examCapacity,
-                    floor = floor,
-                    isAccessible = isAccessible,
-                    hasVideo = hasVideo,
-                    hasMicrophone = hasMicrophone,
-                    hasProjector = hasProjector,
-                    hasComputer = hasComputer,
-                    hasWhiteboard = hasWhiteboard,
-                    hasBlackboard = hasBlackboard,
-                    otherEquipment = otherEquipment,
-                    notes = notes,
-                    imageUrl = imageUrl,
-                    mapsUrl = mapsUrl
-                )
-            )
         }
 
-        return rooms
+        fun extractLink(label: String): String? {
+            val node = headerToNodeMap[label]
+            return if(node != null && node.hasAttr("href")) {
+                node.attr("href")
+            } else {
+                null
+            }
+        }
+
+        val locationName = extractText("Sede")
+            ?: return null
+
+        val address = extractText("Indirizzo")
+
+        val googleMapsLink = extractLink("Google Maps")
+            ?.let { parseRoomMapsLink(doc, it) }
+
+        val interactive360Link = extractLink("Immagine interattiva 360°")
+
+        val description = extractText("Descrizione")
+
+        val capacity = extractText("Capacità")
+            ?.let { parseRoomCapacity(it) }
+
+        val roomType = extractText("Tipo")
+            ?.takeIf { it != "non definito" }
+
+        val floor = extractText("Piano")
+            ?.let { parseRoomFloor(it) }
+
+        val accessibility = extractText("Accessibile")
+        val isAccessible = parseRoomAccessibility(accessibility)
+
+        val equipment = extractLink("Attrezzature")
+            ?.let { parseRoomEquipment(card, it) }
+            ?: emptyList()
+
+        return EasyStaffRoomDetails(
+            name = locationName,
+            address = address,
+            googleMapsLink = googleMapsLink,
+            interactive360Link = interactive360Link,
+            description = description,
+            capacity = capacity,
+            roomType = roomType,
+            floor = floor,
+            isAccessible = isAccessible,
+            equipment = equipment
+        )
+    }
+
+    private fun parseRoomMapsLink(doc: Document, selector: String): String? {
+        val iframe = doc.selectFirst(selector)
+            ?.selectFirst("iframe")
+        return if (iframe != null && iframe.hasAttr("src")) {
+            iframe.attr("src")
+        } else {
+            null
+        }
+    }
+
+    private fun parseRoomCapacity(string: String): Int? {
+        return string.removeSuffix(" posti").toIntOrNull()
+    }
+
+    private fun parseRoomFloor(string: String): Int? {
+        return if (string.equals("Terra", ignoreCase = true) || string.equals("T", ignoreCase = true) || string.equals("PT", ignoreCase = true)) {
+            0
+        } else {
+            string.toIntOrNull()
+        }
+    }
+
+    private fun parseRoomAccessibility(accessibility: String?): Boolean {
+        return accessibility != null && accessibility.equals("sì", ignoreCase = true)
+    }
+
+    private fun parseRoomEquipment(card: Element, selector: String): List<Esse3RoomEquipment> {
+        return card.selectFirst(selector)
+            ?.select(".contenuto span")
+            ?.mapNotNull { parseRoomEquipmentEntry(it) }
+            ?: emptyList()
+    }
+
+    private fun parseRoomEquipmentEntry(span: Element): Esse3RoomEquipment? {
+        val name = span.text().trim()
+        return if (span.nextElementSibling()?.text()?.contains("DISPONIBILE", ignoreCase = true) == true) {
+            when (name) {
+                "Attrezzature fisse" -> Esse3RoomEquipment.FixedEquipment
+                "Attrezzature mobili" -> Esse3RoomEquipment.MobileEquipment
+                "Cattedra" -> Esse3RoomEquipment.TeacherDesk
+                "Finestre oscurabili" -> Esse3RoomEquipment.BlackoutWindows
+                "Gradoni" -> Esse3RoomEquipment.TieredSeating
+                "Impianto audio" -> Esse3RoomEquipment.AudioSystem
+                "Kit aule standard per videolezioni" -> Esse3RoomEquipment.StandardVideoLessonKit
+                "Lavagna a fogli" -> Esse3RoomEquipment.FlipChart
+                "Lavagna a pennarelli" -> Esse3RoomEquipment.Whiteboard
+                "Lavagna in ardesia" -> Esse3RoomEquipment.SlateBlackboard
+                "Lavagna luminosa" -> Esse3RoomEquipment.OverheadProjector
+                "Lavagna saliscendi" -> Esse3RoomEquipment.SlidingBlackboard
+                "Lettini" -> Esse3RoomEquipment.ExaminationBeds
+                "Monitor-Tv lcd-plasma" -> Esse3RoomEquipment.LcdPlasmaMonitor
+                "PC cattedra" -> Esse3RoomEquipment.TeacherPc
+                "Podio" -> Esse3RoomEquipment.Podium
+                "Presa elettrica su postazione studente" -> Esse3RoomEquipment.StudentPowerSocket
+                "Registrazione" -> Esse3RoomEquipment.RecordingSystem
+                "Rete fissa" -> Esse3RoomEquipment.WiredNetwork
+                "Rete wifi" -> Esse3RoomEquipment.WifiNetwork
+                "Sedie Fisse con Banco" -> Esse3RoomEquipment.FixedChairsWithDesks
+                "Sedie fisse con ribaltina" -> Esse3RoomEquipment.FixedChairsWithTabletArms
+                "Sedie mobili con ribaltina" -> Esse3RoomEquipment.MobileChairsWithTabletArms
+                "Sedie mobili senza ribaltina" -> Esse3RoomEquipment.MobileChairsWithoutTabletArms
+                "Tavolo Accessibile (disabilità)" -> Esse3RoomEquipment.AccessibleTable
+                "Telecamera" -> Esse3RoomEquipment.Camera
+                "Video-Call conference" -> Esse3RoomEquipment.VideoConference
+                "Videoproiettore soffitto+Telo" -> Esse3RoomEquipment.CeilingProjectorAndScreen
+                "Webconference" -> Esse3RoomEquipment.WebConference
+                else -> Esse3RoomEquipment.Other(name)
+            }
+        } else {
+            null
+        }
     }
 }

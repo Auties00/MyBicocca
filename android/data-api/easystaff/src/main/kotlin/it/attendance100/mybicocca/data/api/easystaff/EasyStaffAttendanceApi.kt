@@ -7,15 +7,8 @@ TODO: Authentication seems to be broken on the UniMiB courses application
 package it.attendance100.mybicocca.data.api.easystaff
 
 import io.ktor.client.*
-import io.ktor.client.call.body
-import io.ktor.http.HttpStatusCode
 import it.attendance100.mybicocca.data.dto.easystaff.*
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonArray
-import kotlinx.serialization.json.JsonElement
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.decodeFromJsonElement
-import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.*
 import java.time.Instant
 
 /**

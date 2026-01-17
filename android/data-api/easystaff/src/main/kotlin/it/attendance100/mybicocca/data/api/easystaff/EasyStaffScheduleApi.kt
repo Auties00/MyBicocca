@@ -2,7 +2,7 @@ package it.attendance100.mybicocca.data.api.easystaff
 
 import io.ktor.client.*
 import it.attendance100.mybicocca.data.dto.easystaff.*
-import kotlinx.serialization.json.*
+import kotlinx.serialization.json.Json
 import java.time.LocalDate
 
 /**

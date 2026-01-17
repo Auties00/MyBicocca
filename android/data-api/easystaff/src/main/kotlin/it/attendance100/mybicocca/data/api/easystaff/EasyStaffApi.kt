@@ -2,9 +2,9 @@ package it.attendance100.mybicocca.data.api.easystaff
 
 import io.ktor.client.*
 import io.ktor.client.plugins.*
-import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
-import io.ktor.http.ContentType
-import io.ktor.serialization.kotlinx.json.json
+import io.ktor.client.plugins.contentnegotiation.*
+import io.ktor.http.*
+import io.ktor.serialization.kotlinx.json.*
 import kotlinx.serialization.json.Json
 
 /**

@@ -4,25 +4,29 @@ import it.attendance100.mybicocca.data.dto.easystaff.EasyStaffScheduleCell
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
-import java.time.DayOfWeek
 import java.time.Duration
 import java.time.LocalDate
 
 class EasyStaffScheduleApiTest : EasyStaffTestBase() {
     companion object {
-        private val MOCK_WEEK_START_DATE = LocalDate.now().withMonth(3).with(DayOfWeek.MONDAY)
+        private val MOCK_WEEK_START_DATE = LocalDate.now()
     }
     
     @Test
     suspend fun getScheduleByProgram() {
         val academicYears = api.core.getAcademicYears()
-        val teachingAreas = api.core.getTeachingAreas()
+        assertNotNull(academicYears)
         assertTrue(academicYears.isNotEmpty(), "Academic years should not be empty")
+        val academicYear = academicYears.first()
+
+        val teachingAreas = api.core.getTeachingAreas()
+        assertNotNull(teachingAreas)
         assertTrue(teachingAreas.isNotEmpty(), "Teaching areas should not be empty")
 
-        val academicYear = academicYears.first()
         val teachingArea = teachingAreas.first()
+
         val programs = api.core.getStudyPrograms(academicYear, teachingArea.code)
+        assertNotNull(programs)
         assertTrue(programs.isNotEmpty(), "Study programs should not be empty")
 
         val program = programs.first()
@@ -34,8 +38,8 @@ class EasyStaffScheduleApiTest : EasyStaffTestBase() {
             yearsOfStudy = program.years,
             weekStartDate = MOCK_WEEK_START_DATE
         )
-
         assertNotNull(cells)
+        assertTrue(cells.isNotEmpty(), "Cells should not be empty")
 
         // Verify cells are sorted by dateTime
         for (i in 0 until cells.size - 1) {
@@ -54,10 +58,12 @@ class EasyStaffScheduleApiTest : EasyStaffTestBase() {
     @Test
     suspend fun getScheduleByTeacher() {
         val academicYears = api.core.getAcademicYears()
+        assertNotNull(academicYears)
         assertTrue(academicYears.isNotEmpty(), "Academic years should not be empty")
-
         val academicYear = academicYears.first()
+
         val teachers = api.core.getTeachers(academicYear)
+        assertNotNull(teachers)
         assertTrue(teachers.isNotEmpty(), "Teachers list should not be empty")
 
         val teacher = teachers.first()
@@ -66,8 +72,8 @@ class EasyStaffScheduleApiTest : EasyStaffTestBase() {
             teacher = teacher,
             weekStartDate = MOCK_WEEK_START_DATE
         )
-
         assertNotNull(cells)
+        assertTrue(cells.isNotEmpty(), "Cells should not be empty")
 
         // Verify each cell
         cells.forEach { cell ->
@@ -78,21 +84,23 @@ class EasyStaffScheduleApiTest : EasyStaffTestBase() {
     @Test
     suspend fun getScheduleBySubject() {
         val academicYears = api.core.getAcademicYears()
-        val teachingAreas = api.core.getTeachingAreas()
+        assertNotNull(academicYears)
         assertTrue(academicYears.isNotEmpty(), "Academic years should not be empty")
-        assertTrue(teachingAreas.isNotEmpty(), "Teaching areas should not be empty")
-
         val academicYear = academicYears.first()
-        val teachingArea = teachingAreas.first()
-        val programs = api.core.getStudyPrograms(academicYear, teachingArea.code)
-        assertTrue(programs.isNotEmpty(), "Study programs should not be empty")
 
+        val teachingAreas = api.core.getTeachingAreas()
+        assertNotNull(teachingAreas)
+        assertTrue(teachingAreas.isNotEmpty(), "Teaching areas should not be empty")
+        val teachingArea = teachingAreas.first()
+
+        val programs = api.core.getStudyPrograms(
+            academicYear = academicYear,
+            teachingAreaCode = teachingArea.code
+        )
+        assertNotNull(programs)
+        assertTrue(programs.isNotEmpty(), "Study programs should not be empty")
         val program = programs.first()
-        val subject = program.years.flatMap { it.subjects }.firstOrNull()
-        if (subject == null) {
-            // Skip test if no subjects found
-            return
-        }
+        val subject = program.years.flatMap { it.subjects }.first()
 
         // Verify subject has valid properties
         assertTrue(subject.id.isNotBlank(), "Subject id should not be blank")
@@ -105,8 +113,8 @@ class EasyStaffScheduleApiTest : EasyStaffTestBase() {
             subject = subject,
             weekStartDate = MOCK_WEEK_START_DATE
         )
-
         assertNotNull(cells)
+        assertTrue(cells.isNotEmpty(), "Cells should not be empty")
 
         // Verify each cell
         cells.forEach { cell ->

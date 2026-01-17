@@ -107,11 +107,11 @@ abstract class EasyStaffAbstractApi(
      */
     protected suspend fun executeGetHtml(
         path: String,
-        queryParams: Map<String, String> = emptyMap()
+        queryParams: Map<String, List<String>> = emptyMap()
     ): Document {
         val url = buildUrl(path, queryParams)
         val response = client.get(url)
-        return Jsoup.parse(response.bodyAsChannel().toInputStream(), "UTF-8", BASE_URL)
+        return Jsoup.parse(response.bodyAsChannel().toInputStream(), null, BASE_URL)
     }
 
     /**
@@ -125,7 +125,7 @@ abstract class EasyStaffAbstractApi(
      */
     protected suspend fun executeGetText(
         path: String,
-        queryParams: Map<String, String> = emptyMap()
+        queryParams: Map<String, List<String>> = emptyMap()
     ): String {
         val url = buildUrl(path, queryParams)
         val response = client.get(url)
@@ -144,7 +144,7 @@ abstract class EasyStaffAbstractApi(
     protected suspend inline fun <reified T> executePostJson(
         path: String,
         body: Any,
-        queryParams: Map<String, String> = emptyMap()
+        queryParams: Map<String, List<String>> = emptyMap()
     ): T {
         val url = buildUrl(path, queryParams)
         val response = client.post(url) {
@@ -193,7 +193,7 @@ abstract class EasyStaffAbstractApi(
      * @param queryParams Query parameters to append
      * @return The full URL string
      */
-    protected fun buildUrl(path: String, queryParams: Map<String, String> = emptyMap()): String {
+    protected fun buildUrl(path: String, queryParams: Map<String, List<String>> = emptyMap()): String {
         val basePath = when {
             path.startsWith("http") -> path
             path.startsWith("/") -> "$BASE_URL$path"
@@ -202,10 +202,14 @@ abstract class EasyStaffAbstractApi(
         return if (queryParams.isEmpty()) {
             basePath
         } else {
-            val query = queryParams.entries.joinToString("&") { (key, value) ->
-                "$key=${encodeQueryValue(value)}"
+            val query = queryParams.entries
+                .flatMap { (key, values) -> values.map { value -> "$key=${encodeQueryValue(value)}" } }
+                .joinToString("&")
+            if (basePath.contains("?")) {
+                "$basePath&$query"
+            } else {
+                "$basePath?$query"
             }
-            if (basePath.contains("?")) "$basePath&$query" else "$basePath?$query"
         }
     }
 }

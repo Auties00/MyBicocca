@@ -2,8 +2,10 @@ package it.attendance100.mybicocca.data.api.easystaff
 
 import io.ktor.client.*
 import it.attendance100.mybicocca.data.dto.easystaff.*
-import kotlinx.serialization.json.*
-import java.time.LocalDate
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.decodeFromJsonElement
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
 
 /**
  * API for core query operations.
@@ -25,9 +27,10 @@ class EasyStaffCoreApi(
      */
     suspend fun getAcademicYears(): List<EasyStaffAcademicYear> {
         val response = executeGetText(
-            COMBO_ENDPOINT, mapOf(
-                "sw" to "ec_",
-                "aa" to "1"
+            COMBO_ENDPOINT,
+            mapOf(
+                "sw" to listOf("ec_"),
+                "aa" to listOf("1")
             )
         )
 
@@ -52,9 +55,10 @@ class EasyStaffCoreApi(
         language: EasyStaffLanguage = EasyStaffLanguage.ITALIAN
     ): List<EasyStaffTeachingArea> {
         val response = executeGetText(
-            COMBO_ENDPOINT, mapOf(
-                "sw" to "rooms_",
-                "_lang" to language.code
+            COMBO_ENDPOINT,
+            mapOf(
+                "sw" to listOf("rooms_"),
+                "_lang" to listOf(language.code)
             )
         )
 
@@ -75,9 +79,9 @@ class EasyStaffCoreApi(
     ): List<EasyStaffTeacher> {
         val response = executeGetText(
             COMBO_ENDPOINT, mapOf(
-                "sw" to "ec_",
-                "aa" to academicYear.value,
-                "page" to "docenti"
+                "sw" to listOf("ec_"),
+                "aa" to listOf(academicYear.value),
+                "page" to listOf("docenti")
             )
         )
 
@@ -104,10 +108,11 @@ class EasyStaffCoreApi(
         teachingAreaCode: String? = null
     ): List<EasyStaffStudyProgramDetails> {
         val response = executeGetText(
-            COMBO_ENDPOINT, mapOf(
-                "sw" to "ec_",
-                "aa" to academicYear.value,
-                "page" to "corsi"
+            COMBO_ENDPOINT,
+            mapOf(
+                "sw" to listOf("ec_"),
+                "aa" to listOf(academicYear.value),
+                "page" to listOf("corsi")
             )
         )
 

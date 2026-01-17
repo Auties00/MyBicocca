@@ -66,7 +66,7 @@ class ElearningCourseApi(
      */
     suspend fun getCoursesAreas(): List<ElearningCourseArea> {
         val response = client.get(BASE_URL)
-        val doc = Jsoup.parse(response.bodyAsChannel().toInputStream(), "UTF-8", BASE_URL)
+        val doc = Jsoup.parse(response.bodyAsChannel().toInputStream(), null, BASE_URL)
         return doc.select("div.frontpage-box").map { sectionElement ->
             val sectionName = sectionElement.selectFirst("h2.navigation-title")?.text()?.trim() ?: "Unknown Section"
             val categories = sectionElement.select("div.card .navigation-block").mapNotNull { item ->
@@ -92,7 +92,7 @@ class ElearningCourseApi(
     suspend fun getCourseCategoryContents(category: ElearningCourseCategory): ElearningCourseCategoryContents {
         val url = category.url
         val response = client.get(url)
-        val doc = Jsoup.parse(response.bodyAsChannel().toInputStream(), "UTF-8", BASE_URL)
+        val doc = Jsoup.parse(response.bodyAsChannel().toInputStream(), null, BASE_URL)
 
         val name = doc.selectFirst("h1")?.text()?.trim() ?: "Unknown Category"
 

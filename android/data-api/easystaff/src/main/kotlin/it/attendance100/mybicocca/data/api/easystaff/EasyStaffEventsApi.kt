@@ -3,7 +3,6 @@ package it.attendance100.mybicocca.data.api.easystaff
 import io.ktor.client.*
 import it.attendance100.mybicocca.data.dto.easystaff.*
 import kotlinx.serialization.json.Json
-import java.lang.IllegalStateException
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalTime
@@ -37,9 +36,10 @@ class EasyStaffEventsApi(
         language: EasyStaffLanguage,
     ): List<EasyStaffEventType> {
         val response = executeGetText(
-            COMBO_ENDPOINT, mapOf(
-                "sw" to "rooms_",
-                "_lang" to language.code
+            COMBO_ENDPOINT,
+            mapOf(
+                "sw" to listOf("rooms_"),
+                "_lang" to listOf(language.code)
             )
         )
         val jsonString = extractJsonFromJsVariable(response, "elenco_tipi")

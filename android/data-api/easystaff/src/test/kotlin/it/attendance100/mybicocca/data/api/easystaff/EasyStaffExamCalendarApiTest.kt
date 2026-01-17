@@ -15,13 +15,20 @@ class EasyStaffExamCalendarApiTest : EasyStaffTestBase() {
     @Test
     suspend fun getExamsByProgram() {
         val academicYears = api.core.getAcademicYears()
-        val teachingAreas = api.core.getTeachingAreas()
+        assertNotNull(academicYears)
         assertTrue(academicYears.isNotEmpty(), "Academic years should not be empty")
-        assertTrue(teachingAreas.isNotEmpty(), "Teaching areas should not be empty")
-
         val academicYear = academicYears.first()
+
+        val teachingAreas = api.core.getTeachingAreas()
+        assertNotNull(teachingAreas)
+        assertTrue(teachingAreas.isNotEmpty(), "Teaching areas should not be empty")
         val teachingArea = teachingAreas.first()
-        val programs = api.core.getStudyPrograms(academicYear, teachingArea.code)
+
+        val programs = api.core.getStudyPrograms(
+            academicYear = academicYear,
+            teachingAreaCode = teachingArea.code
+        )
+        assertNotNull(programs)
         assertTrue(programs.isNotEmpty(), "Study programs should not be empty")
 
         val program = programs.first()
@@ -59,19 +66,22 @@ class EasyStaffExamCalendarApiTest : EasyStaffTestBase() {
     @Test
     suspend fun getExamsByTeacher() {
         val academicYears = api.core.getAcademicYears()
+        assertNotNull(academicYears)
         assertTrue(academicYears.isNotEmpty(), "Academic years should not be empty")
-
         val academicYear = academicYears.first()
-        val teachers = api.core.getTeachers(academicYear)
-        assertTrue(teachers.isNotEmpty(), "Teachers should not be empty")
 
+        val teachers = api.core.getTeachers(academicYear)
+        assertNotNull(teachers)
+        assertTrue(teachers.isNotEmpty(), "Teachers should not be empty")
         val teacher = teachers.first()
+
         val results = api.exams.getExamsByTeacher(
             teacher = teacher,
             startDate = MOCK_START_DATE,
             endDate = MOCK_END_DATE
         )
         assertNotNull(results)
+        assertTrue(results.isNotEmpty(), "Exams should not be empty")
 
         // Verify each exam if results are not empty
         results.forEach { exam ->
@@ -88,24 +98,31 @@ class EasyStaffExamCalendarApiTest : EasyStaffTestBase() {
     @Test
     suspend fun getExamsBySubject() {
         val academicYears = api.core.getAcademicYears()
-        val teachingAreas = api.core.getTeachingAreas()
+        assertNotNull(academicYears)
         assertTrue(academicYears.isNotEmpty(), "Academic years should not be empty")
-        assertTrue(teachingAreas.isNotEmpty(), "Teaching areas should not be empty")
-
         val academicYear = academicYears.first()
+
+        val teachingAreas = api.core.getTeachingAreas()
+        assertNotNull(teachingAreas)
+        assertTrue(teachingAreas.isNotEmpty(), "Teaching areas should not be empty")
         val teachingArea = teachingAreas.first()
-        val programs = api.core.getStudyPrograms(academicYear, teachingArea.code)
+
+        val programs = api.core.getStudyPrograms(
+            academicYear = academicYear,
+            teachingAreaCode = teachingArea.code
+        )
+        assertNotNull(programs)
         assertTrue(programs.isNotEmpty(), "Study programs should not be empty")
-
         val program = programs.first()
-        val subject = program.years.flatMap { it.subjects }.first()
 
+        val subject = program.years.flatMap { it.subjects }.first()
         val results = api.exams.getExamsBySubject(
             subject = subject,
             startDate = MOCK_START_DATE,
             endDate = MOCK_END_DATE
         )
         assertNotNull(results)
+        assertTrue(results.isNotEmpty(), "Exams should not be empty")
 
         // Verify each exam if results are not empty
         results.forEach { exam ->

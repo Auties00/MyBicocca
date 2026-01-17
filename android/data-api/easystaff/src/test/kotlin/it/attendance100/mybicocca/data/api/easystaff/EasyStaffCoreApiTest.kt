@@ -43,11 +43,11 @@ class EasyStaffCoreApiTest : EasyStaffTestBase() {
     @Test
     suspend fun getStudyPrograms() {
         val academicYears = api.core.getAcademicYears()
+        assertNotNull(academicYears)
         assertTrue(academicYears.isNotEmpty(), "Academic years should not be empty")
 
         val academicYear = academicYears.first()
         val programs = api.core.getStudyPrograms(academicYear)
-
         assertNotNull(programs)
         assertTrue(programs.isNotEmpty(), "Study programs should not be empty")
 
@@ -89,17 +89,19 @@ class EasyStaffCoreApiTest : EasyStaffTestBase() {
     @Test
     suspend fun getStudyProgramsWithArea() {
         val academicYears = api.core.getAcademicYears()
-        val teachingAreas = api.core.getTeachingAreas()
+        assertNotNull(academicYears)
         assertTrue(academicYears.isNotEmpty(), "Academic years should not be empty")
-        assertTrue(teachingAreas.isNotEmpty(), "Teaching areas should not be empty")
-
         val academicYear = academicYears.first()
+
+        val teachingAreas = api.core.getTeachingAreas()
+        assertNotNull(teachingAreas)
+        assertTrue(teachingAreas.isNotEmpty(), "Teaching areas should not be empty")
         val teachingArea = teachingAreas.first()
+
         val programs = api.core.getStudyPrograms(academicYear, teachingArea.code)
-
         assertNotNull(programs)
+        assertTrue(programs.isNotEmpty(), "Study programs should not be empty")
 
-        // All programs should belong to the requested teaching area
         programs.forEach { program ->
             assertTrue(program.code.isNotBlank(), "Program code should not be blank")
             assertTrue(program.name.isNotBlank(), "Program name should not be blank")
@@ -114,11 +116,11 @@ class EasyStaffCoreApiTest : EasyStaffTestBase() {
     @Test
     suspend fun getTeachers() {
         val academicYears = api.core.getAcademicYears()
+        assertNotNull(academicYears)
         assertTrue(academicYears.isNotEmpty(), "Academic years should not be empty")
-
         val academicYear = academicYears.first()
-        val teachers = api.core.getTeachers(academicYear)
 
+        val teachers = api.core.getTeachers(academicYear)
         assertNotNull(teachers)
         assertTrue(teachers.isNotEmpty(), "Teachers list should not be empty")
 
