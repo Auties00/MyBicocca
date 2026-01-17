@@ -9,7 +9,7 @@ import java.time.LocalDateTime
  * Type of event
  *
  * @param code the code of the event type
- * @param label the name of the event type
+ * @param name the name of the event type
  */
 @Serializable
 data class EasyStaffEventType(
@@ -17,7 +17,7 @@ data class EasyStaffEventType(
     val code: Int,
 
     @SerialName("label")
-    val label: String,
+    val name: String,
 )
 
 /**

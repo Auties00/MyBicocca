@@ -106,7 +106,7 @@ class EasyStaffCoreApi(
     suspend fun getStudyPrograms(
         academicYear: EasyStaffAcademicYear,
         teachingAreaCode: String? = null
-    ): List<EasyStaffStudyProgramDetails> {
+    ): List<EasyStaffStudyProgram> {
         val response = executeGetText(
             COMBO_ENDPOINT,
             mapOf(
@@ -119,7 +119,7 @@ class EasyStaffCoreApi(
         val jsonString = extractJsonFromJsVariable(response, "elenco_corsi")
             ?: throw IllegalStateException("Failed to parse study programs response")
 
-        val allPrograms: List<EasyStaffStudyProgramDetails> = json.decodeFromString(jsonString)
+        val allPrograms: List<EasyStaffStudyProgram> = json.decodeFromString(jsonString)
 
         return if (teachingAreaCode != null) {
             allPrograms.filter { it.teachingAreaCode == teachingAreaCode }

@@ -37,8 +37,8 @@ class EasyStaffExamCalendarApi(
      * @return The exam search results
      */
     suspend fun getExamsByProgram(
-        studyProgram: EasyStaffStudyProgramDetails,
-        yearsOfStudy: List<EasyStaffYearOfStudyDetails>,
+        studyProgram: EasyStaffStudyProgram,
+        yearsOfStudy: List<EasyStaffStudyProgramYear>,
         startDate: LocalDate,
         endDate: LocalDate,
         language: EasyStaffLanguage = EasyStaffLanguage.ITALIAN
@@ -116,18 +116,32 @@ class EasyStaffExamCalendarApi(
      * @return The exam search results
      */
     suspend fun getExamsBySubject(
-        subject: EasyStaffSubject,
+        subject: EasyStaffStudyProgramSubject,
         startDate: LocalDate,
         endDate: LocalDate,
         language: EasyStaffLanguage = EasyStaffLanguage.ITALIAN
     ): List<EasyStaffScheduledExam> {
+        val now = System.currentTimeMillis()
+        val subjectsResponse = executeGetText(
+            COMBO_ENDPOINT,
+            mapOf(
+                "sw" to listOf("et_"),
+                "page" to listOf("insegnamento"),
+                "_" to listOf(System.currentTimeMillis().toString())
+            )
+        )
+        val subjectsJsonString = extractJsonFromJsVariable(subjectsResponse, "esami_insegnamento")
+            ?: throw IllegalStateException("Failed to parse subjects response: missing 'esami_insegnamento'")
+        val bookableExamSubject = json.decodeFromString<List<EasyStaffBookableExamSubject>>(subjectsJsonString)
+            .firstOrNull { subject.code.endsWith(it.code) }
+            ?: return emptyList()
         val params = buildMap {
             put("view", listOf("easytest"))
             put("form-type", listOf("et_insegnamento"))
             put("include", listOf("et_insegnamento"))
             put("et_er", listOf("1"))
-            put("text_ins", listOf(subject.name))
-            put("esami_insegnamento", listOf(subject.code))
+            put("text_ins", listOf(bookableExamSubject.name))
+            put("esami_insegnamento", listOf(bookableExamSubject.id))
             put("datefrom", listOf(formatDate(startDate)))
             put("dateto", listOf(formatDate(endDate)))
             put("_lang", listOf(language.code))

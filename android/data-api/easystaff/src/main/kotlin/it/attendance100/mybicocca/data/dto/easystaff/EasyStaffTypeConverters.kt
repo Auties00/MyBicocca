@@ -7,30 +7,13 @@ import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.descriptors.PrimitiveKind
 import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
 import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.descriptors.buildClassSerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
-import kotlinx.serialization.json.JsonArray
-import kotlinx.serialization.json.JsonDecoder
-import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.*
 import org.jsoup.Jsoup
 import java.time.*
 import java.time.format.DateTimeFormatter
-
-object ResponseResultSerializer : KSerializer<Boolean> {
-    private const val SUCCESS = "ok"
-    private const val FAILURE = "failure"
-
-    override val descriptor: SerialDescriptor
-        get() =  PrimitiveSerialDescriptor("ResultSerializer", PrimitiveKind.STRING)
-
-    override fun deserialize(decoder: Decoder): Boolean {
-        return decoder.decodeString() == SUCCESS
-    }
-
-    override fun serialize(encoder: Encoder, value: Boolean) {
-        encoder.encodeString(if (value) SUCCESS else FAILURE)
-    }
-}
 
 object LocalDateTimeSerializer : KSerializer<LocalDateTime> {
     override val descriptor = PrimitiveSerialDescriptor("LocalDateTime", PrimitiveKind.LONG)
@@ -80,6 +63,35 @@ object LocalTimeSerializer : KSerializer<LocalTime> {
     override val descriptor = PrimitiveSerialDescriptor("LocalTime", PrimitiveKind.STRING)
     override fun serialize(encoder: Encoder, value: LocalTime) = encoder.encodeString(value.format(formatter))
     override fun deserialize(decoder: Decoder): LocalTime = LocalTime.parse(decoder.decodeString(), formatter)
+}
+
+object EmptyStringAsNullSerializer : KSerializer<String?> {
+    override val descriptor = PrimitiveSerialDescriptor("EmptyStringAsNull", PrimitiveKind.STRING)
+
+    override fun serialize(encoder: Encoder, value: String?) {
+        encoder.encodeString(value ?: "")
+    }
+
+    override fun deserialize(decoder: Decoder): String? {
+        val value = decoder.decodeString()
+        return value.ifBlank { null }
+    }
+}
+
+object ResponseResultSerializer : KSerializer<Boolean> {
+    private const val SUCCESS = "ok"
+    private const val FAILURE = "failure"
+
+    override val descriptor: SerialDescriptor
+        get() =  PrimitiveSerialDescriptor("ResultSerializer", PrimitiveKind.STRING)
+
+    override fun deserialize(decoder: Decoder): Boolean {
+        return decoder.decodeString() == SUCCESS
+    }
+
+    override fun serialize(encoder: Encoder, value: Boolean) {
+        encoder.encodeString(if (value) SUCCESS else FAILURE)
+    }
 }
 
 object EasyStaffExamTypeSerializer : KSerializer<EasyStaffExamType> {
@@ -132,19 +144,6 @@ object ExamSubjectsSerializer : KSerializer<List<EasyStaffExamSubject>> {
     }
 }
 
-object EmptyStringAsNullSerializer : KSerializer<String?> {
-    override val descriptor = PrimitiveSerialDescriptor("EmptyStringAsNull", PrimitiveKind.STRING)
-
-    override fun serialize(encoder: Encoder, value: String?) {
-        encoder.encodeString(value ?: "")
-    }
-
-    override fun deserialize(decoder: Decoder): String? {
-        val value = decoder.decodeString()
-        return value.ifBlank { null }
-    }
-}
-
 object MapsIframeUrlSerializer : KSerializer<String?> {
     override val descriptor = PrimitiveSerialDescriptor("MapsIframeUrl", PrimitiveKind.STRING)
 
@@ -175,5 +174,55 @@ object CommaSeparatedListSerializer : KSerializer<List<String>> {
         return raw.split(",")
             .map { it.trim() }
             .filter { it.isNotBlank() }
+    }
+}
+
+object ScheduleCellSerializer : KSerializer<EasyStaffScheduleCell> {
+    override val descriptor: SerialDescriptor = buildClassSerialDescriptor("EasyStaffScheduleCell")
+
+    override fun serialize(encoder: Encoder, value: EasyStaffScheduleCell) {
+        val jsonEncoder = encoder as? JsonEncoder
+            ?: throw IllegalStateException("EasyStaffScheduleCell can only be serialized to JSON")
+
+        val jsonElement = when (value) {
+            is EasyStaffScheduleCell.Lesson -> jsonEncoder.json.encodeToJsonElement(
+                EasyStaffScheduleCell.Lesson.serializer(),
+                value
+            )
+            is EasyStaffScheduleCell.Closure -> jsonEncoder.json.encodeToJsonElement(
+                EasyStaffScheduleCell.Closure.serializer(),
+                value
+            )
+            is EasyStaffScheduleCell.Other -> JsonObject(
+                value.rawFields + ("tipo" to JsonPrimitive(value.type))
+            )
+        }
+        jsonEncoder.encodeJsonElement(jsonElement)
+    }
+
+    override fun deserialize(decoder: Decoder): EasyStaffScheduleCell {
+        val jsonDecoder = decoder as? JsonDecoder
+            ?: throw IllegalStateException("EasyStaffScheduleCell can only be deserialized from JSON")
+
+        val jsonObject = jsonDecoder.decodeJsonElement().jsonObject
+        val type = jsonObject["tipo"]?.jsonPrimitive?.contentOrNull ?: ""
+
+        return when (type) {
+            EasyStaffScheduleCell.Closure.TYPE -> {
+                jsonDecoder.json.decodeFromJsonElement(
+                    EasyStaffScheduleCell.Closure.serializer(),
+                    jsonObject
+                )
+            }
+            EasyStaffScheduleCell.Lesson.TYPE -> {
+                jsonDecoder.json.decodeFromJsonElement(
+                    EasyStaffScheduleCell.Lesson.serializer(),
+                    jsonObject
+                )
+            }
+            else -> {
+                EasyStaffScheduleCell.Other(type, jsonObject)
+            }
+        }
     }
 }

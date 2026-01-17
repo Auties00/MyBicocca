@@ -7,11 +7,6 @@ import org.junit.jupiter.api.Test
 import java.time.LocalDate
 
 class EasyStaffExamCalendarApiTest : EasyStaffTestBase() {
-    companion object {
-        private val MOCK_START_DATE = LocalDate.now()
-        private val MOCK_END_DATE = LocalDate.now().plusMonths(3)
-    }
-
     @Test
     suspend fun getExamsByProgram() {
         val academicYears = api.core.getAcademicYears()
@@ -37,8 +32,8 @@ class EasyStaffExamCalendarApiTest : EasyStaffTestBase() {
         val results = api.exams.getExamsByProgram(
             studyProgram = program,
             yearsOfStudy = program.years,
-            startDate = MOCK_START_DATE,
-            endDate = MOCK_END_DATE
+            startDate = academicYear.toStartDate(),
+            endDate = academicYear.toEndDate()
         )
         assertNotNull(results)
 
@@ -48,8 +43,8 @@ class EasyStaffExamCalendarApiTest : EasyStaffTestBase() {
 
             // Exam should be within the date range
             assertTrue(
-                !exam.date.isBefore(MOCK_START_DATE) && !exam.date.isAfter(MOCK_END_DATE),
-                "Exam date ${exam.date} should be within range $MOCK_START_DATE - $MOCK_END_DATE"
+                !exam.date.isBefore(academicYear.toStartDate()) && !exam.date.isAfter(academicYear.toEndDate()),
+                "Exam date ${exam.date} should be within range $academicYear.toStartDate() - $academicYear.toEndDate()"
             )
         }
 
@@ -77,8 +72,8 @@ class EasyStaffExamCalendarApiTest : EasyStaffTestBase() {
 
         val results = api.exams.getExamsByTeacher(
             teacher = teacher,
-            startDate = MOCK_START_DATE,
-            endDate = MOCK_END_DATE
+            startDate = academicYear.toStartDate(),
+            endDate = academicYear.toEndDate()
         )
         assertNotNull(results)
         assertTrue(results.isNotEmpty(), "Exams should not be empty")
@@ -89,7 +84,7 @@ class EasyStaffExamCalendarApiTest : EasyStaffTestBase() {
 
             // Exam should be within the date range
             assertTrue(
-                !exam.date.isBefore(MOCK_START_DATE) && !exam.date.isAfter(MOCK_END_DATE),
+                !exam.date.isBefore(academicYear.toStartDate()) && !exam.date.isAfter(academicYear.toEndDate()),
                 "Exam date ${exam.date} should be within range"
             )
         }
@@ -118,8 +113,8 @@ class EasyStaffExamCalendarApiTest : EasyStaffTestBase() {
         val subject = program.years.flatMap { it.subjects }.first()
         val results = api.exams.getExamsBySubject(
             subject = subject,
-            startDate = MOCK_START_DATE,
-            endDate = MOCK_END_DATE
+            startDate = academicYear.toStartDate(),
+            endDate = academicYear.toEndDate()
         )
         assertNotNull(results)
         assertTrue(results.isNotEmpty(), "Exams should not be empty")
@@ -130,7 +125,7 @@ class EasyStaffExamCalendarApiTest : EasyStaffTestBase() {
 
             // Exam should be within the date range
             assertTrue(
-                !exam.date.isBefore(MOCK_START_DATE) && !exam.date.isAfter(MOCK_END_DATE),
+                !exam.date.isBefore(academicYear.toStartDate()) && !exam.date.isAfter(academicYear.toEndDate()),
                 "Exam date ${exam.date} should be within range"
             )
         }

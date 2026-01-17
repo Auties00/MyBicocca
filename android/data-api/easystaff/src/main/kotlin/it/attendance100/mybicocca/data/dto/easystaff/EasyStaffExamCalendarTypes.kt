@@ -145,3 +145,22 @@ sealed interface EasyStaffExamType {
     @Serializable
     data class Other(val value: String) : EasyStaffExamType
 }
+
+/**
+ * Represents an exam that can be booked bu subject (Insegnamento).
+ *
+ * @property id The subject's internal ID (ex. E3101Q124)
+ * @property code The subject code (ex. 509278)
+ * @property name The subject name (ex. SISTEMI EMBEDDED  [D. SORRENTI, P. BRAIONE])
+ */
+@Serializable
+internal data class EasyStaffBookableExamSubject(
+    @SerialName("valore")
+    val id: String,
+
+    @SerialName("codice")
+    val code: String,
+
+    @SerialName("label")
+    val name: String,
+)
