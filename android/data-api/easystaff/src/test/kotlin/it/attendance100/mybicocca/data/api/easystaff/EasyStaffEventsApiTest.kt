@@ -2,13 +2,11 @@ package it.attendance100.mybicocca.data.api.easystaff
 
 import it.attendance100.mybicocca.data.dto.easystaff.EasyStaffEvent
 import it.attendance100.mybicocca.data.dto.easystaff.EasyStaffLanguage
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertNotNull
-import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
 import java.time.temporal.WeekFields
-import java.util.Locale
+import java.util.*
 
 class EasyStaffEventsApiTest : EasyStaffTestBase() {
     companion object {
@@ -21,8 +19,8 @@ class EasyStaffEventsApiTest : EasyStaffTestBase() {
     suspend fun getTodayEvents() {
         val events = api.events.getTodayEvents()
         assertNotNull(events)
-
         // Today's events might be empty on weekends/holidays
+
         // Verify events if any exist
         val today = LocalDate.now()
         events.forEach { event ->
@@ -37,11 +35,13 @@ class EasyStaffEventsApiTest : EasyStaffTestBase() {
     @Test
     suspend fun getTodayEventsWithBuilding() {
         val buildings = api.buildings.getBuildings()
+        assertNotNull(buildings)
         assertTrue(buildings.isNotEmpty(), "Buildings should not be empty")
-
         val building = buildings.first()
+
         val events = api.events.getTodayEvents(buildings = listOf(building))
         assertNotNull(events)
+        // Today's events might be empty on weekends/holidays
 
         // Verify events have valid properties
         events.forEach { event ->
@@ -53,6 +53,7 @@ class EasyStaffEventsApiTest : EasyStaffTestBase() {
     suspend fun getWeekEvents() {
         val events = api.events.getWeekEvents()
         assertNotNull(events)
+        // Weeks's events might be empty
 
         // Verify events are within the week
         val today = LocalDate.now()
@@ -81,6 +82,7 @@ class EasyStaffEventsApiTest : EasyStaffTestBase() {
     suspend fun getMonthEvents() {
         val events = api.events.getMonthEvents()
         assertNotNull(events)
+        assertTrue(events.isNotEmpty(), "Month events should not be empty")
 
         // Verify events are within the month
         val today = LocalDate.now()
@@ -102,6 +104,7 @@ class EasyStaffEventsApiTest : EasyStaffTestBase() {
             endDate = MOCK_END_DATE
         )
         assertNotNull(events)
+        assertTrue(events.isNotEmpty(), "Event should not be empty")
 
         // Verify events are within the date range
         events.forEach { event ->
@@ -121,6 +124,7 @@ class EasyStaffEventsApiTest : EasyStaffTestBase() {
             keyword = MOCK_KEYWORD
         )
         assertNotNull(events)
+        assertTrue(events.isNotEmpty(), "Event should not be empty")
 
         // Verify events have valid properties
         events.forEach { event ->
@@ -131,15 +135,17 @@ class EasyStaffEventsApiTest : EasyStaffTestBase() {
     @Test
     suspend fun getEventsWithBuildingFilter() {
         val buildings = api.buildings.getBuildings()
+        assertNotNull(buildings)
         assertTrue(buildings.isNotEmpty(), "Buildings should not be empty")
-
         val building = buildings.first()
+
         val events = api.events.getEvents(
             startDate = MOCK_START_DATE,
             endDate = MOCK_END_DATE,
             buildings = listOf(building)
         )
         assertNotNull(events)
+        assertTrue(events.isNotEmpty(), "Events should not be empty")
 
         // Verify events have valid properties
         events.forEach { event ->

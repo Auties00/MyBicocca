@@ -205,7 +205,7 @@ class Esse3ExamsApi(
             throw IllegalStateException("Cannot reserve exam session: invalid response status ${response.status.value}")
         }
 
-        val document = Jsoup.parse(response.bodyAsChannel().toInputStream(), "UTF-8", BASE_URL)
+        val document = Jsoup.parse(response.bodyAsChannel().toInputStream(), null, BASE_URL)
         val errorMessage = document.selectFirst("#app-text_esito_pren_msg")?.text()
         if (errorMessage != null && errorMessage.contains("Attenzione")) {
             throw IllegalStateException(errorMessage)
@@ -246,7 +246,7 @@ class Esse3ExamsApi(
             throw IllegalStateException("Cannot cancel exam reservation: stats code ${response.status.value}")
         }
 
-        val resultDoc = Jsoup.parse(response.bodyAsChannel().toInputStream(), "UTF-8", BASE_URL)
+        val resultDoc = Jsoup.parse(response.bodyAsChannel().toInputStream(), null, BASE_URL)
         val resultError = resultDoc.selectFirst(".alert-danger, .errore, #error")?.text()
         if (resultError != null && resultError.contains("Attenzione", ignoreCase = true)) {
             throw IllegalStateException(resultError)

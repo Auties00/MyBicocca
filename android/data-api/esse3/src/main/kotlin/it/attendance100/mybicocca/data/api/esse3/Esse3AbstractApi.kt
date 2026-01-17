@@ -89,7 +89,7 @@ abstract class Esse3AbstractApi(
     ): Document {
         val url = buildUrl(path, queryParams)
         val response = client.get(url)
-        val doc = Jsoup.parse(response.bodyAsChannel().toInputStream(), "UTF-8", BASE_URL)
+        val doc = Jsoup.parse(response.bodyAsChannel().toInputStream(), null, BASE_URL)
         checkForErrorPage(doc)
         return doc
     }
@@ -134,7 +134,7 @@ abstract class Esse3AbstractApi(
             setBody(FormDataContent(parameters))
         }
 
-        val doc = Jsoup.parse(response.bodyAsChannel().toInputStream(), "UTF-8", BASE_URL)
+        val doc = Jsoup.parse(response.bodyAsChannel().toInputStream(), null, BASE_URL)
         checkForErrorPage(doc)
         return doc
     }
@@ -210,7 +210,7 @@ abstract class Esse3AbstractApi(
             throw IllegalStateException("Invalid response status: ${response.status.value}")
         }
 
-        val document = Jsoup.parse(response.bodyAsChannel().toInputStream(), "UTF-8", BASE_URL)
+        val document = Jsoup.parse(response.bodyAsChannel().toInputStream(), null, BASE_URL)
 
         val alertError = document.selectFirst("#alertError")
         if (alertError != null) {

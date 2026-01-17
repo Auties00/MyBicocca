@@ -60,79 +60,191 @@ data class EasyStaffRoom(
 }
 
 /**
- * Extended room information from the room showcase (vetrina aule).
+ * Represents the comprehensive details of a university room as extracted from the
+ * EasyStaff/Esse3 system.
  *
- * @property code The room code
- * @property name The room name
- * @property building The building
- * @property capacity The seating capacity
- * @property examCapacity The exam seating capacity (may differ from regular)
- * @property floor The floor number/name
- * @property isAccessible Whether the room is wheelchair accessible
- * @property hasVideo Whether the room has video equipment
- * @property hasMicrophone Whether the room has a microphone system
- * @property hasProjector Whether the room has a projector
- * @property hasComputer Whether the room has a computer/podium
- * @property hasWhiteboard Whether the room has a whiteboard
- * @property hasBlackboard Whether the room has a blackboard
- * @property otherEquipment List of other available equipment
- * @property notes Additional notes about the room
- * @property imageUrl URL to the room image if available
- * @property mapsUrl URL to Google Maps location
+ * @param name The name of the building or site where the room is located (e.g., "Sede Centrale").
+ * @param address The physical street address of the location.
+ * @param googleMapsLink The URL for the Google Maps iframe or external navigation link.
+ * @param interactive360Link The URL for the 360-degree interactive panoramic view of the room.
+ * @param description A brief textual description of the room's intended use or characteristics.
+ * @param capacity The maximum number of students the room can accommodate.
+ * @param roomType The category of the room (e.g., "Aula Magna", "Laboratorio Informatica").
+ * @param floor The numerical floor level, where 0 represents the ground floor (Piano Terra).
+ * @param isAccessible Indicates whether the room is officially marked as accessible for individuals with disabilities.
+ * @param equipment A list of available facilities and tools found within the room.
  */
-@Serializable
 data class EasyStaffRoomDetails(
-    @SerialName("code")
-    val code: String,
-
-    @SerialName("name")
     val name: String,
-
-    @SerialName("building")
-    val building: EasyStaffBuilding,
-
-    @SerialName("capacity")
+    val address: String?,
+    val googleMapsLink: String?,
+    val interactive360Link: String?,
+    val description: String?,
     val capacity: Int?,
-
-    @SerialName("examCapacity")
-    val examCapacity: Int?,
-
-    @SerialName("floor")
-    val floor: String?,
-
-    @SerialName("isAccessible")
+    val roomType: String?,
+    val floor: Int?,
     val isAccessible: Boolean,
-
-    @SerialName("hasVideo")
-    val hasVideo: Boolean,
-
-    @SerialName("hasMicrophone")
-    val hasMicrophone: Boolean,
-
-    @SerialName("hasProjector")
-    val hasProjector: Boolean,
-
-    @SerialName("hasComputer")
-    val hasComputer: Boolean,
-
-    @SerialName("hasWhiteboard")
-    val hasWhiteboard: Boolean,
-
-    @SerialName("hasBlackboard")
-    val hasBlackboard: Boolean,
-
-    @SerialName("otherEquipment")
-    val otherEquipment: List<String> = emptyList(),
-
-    @SerialName("notes")
-    val notes: String?,
-
-    @SerialName("imageUrl")
-    val imageUrl: String?,
-
-    @SerialName("mapsUrl")
-    val mapsUrl: String?
+    val equipment: List<Esse3RoomEquipment>
 )
+
+/**
+ * Represents the various types of equipment and facilities available within a university room
+ * as defined in the Esse3 system.
+ */
+sealed interface Esse3RoomEquipment {
+
+    /**
+     * Standard non-movable installations within the room.
+     */
+    data object FixedEquipment : Esse3RoomEquipment
+
+    /**
+     * General portable tools or equipment not categorized elsewhere.
+     */
+    data object MobileEquipment : Esse3RoomEquipment
+
+    /**
+     * The primary desk designated for the instructor or lecturer.
+     */
+    data object TeacherDesk : Esse3RoomEquipment
+
+    /**
+     * Windows equipped with curtains or blinds capable of fully blocking external light.
+     */
+    data object BlackoutWindows : Esse3RoomEquipment
+
+    /**
+     * Stepped or stadium-style floor levels for improved visibility (Gradoni).
+     */
+    data object TieredSeating : Esse3RoomEquipment
+
+    /**
+     * Height-adjustable or specifically designed desks for students with disabilities.
+     */
+    data object AccessibleTable : Esse3RoomEquipment
+
+    /**
+     * A raised platform or stand for a speaker.
+     */
+    data object Podium : Esse3RoomEquipment
+
+    /**
+     * A large pad of paper sheets fixed to the upper edge of a whiteboard or tripod.
+     */
+    data object FlipChart : Esse3RoomEquipment
+
+    /**
+     * A smooth, white surface for non-permanent markers.
+     */
+    data object Whiteboard : Esse3RoomEquipment
+
+    /**
+     * A traditional dark stone writing surface for use with chalk.
+     */
+    data object SlateBlackboard : Esse3RoomEquipment
+
+    /**
+     * A device that projects images from transparent sheets onto a screen or wall.
+     */
+    data object OverheadProjector : Esse3RoomEquipment
+
+    /**
+     * A large writing surface that can be moved vertically via a pulley or sliding system.
+     */
+    data object SlidingBlackboard : Esse3RoomEquipment
+
+    /**
+     * Built-in speakers and amplifiers for voice and media playback.
+     */
+    data object AudioSystem : Esse3RoomEquipment
+
+    /**
+     * A standardized hardware bundle optimized for recording and streaming lectures.
+     */
+    data object StandardVideoLessonKit : Esse3RoomEquipment
+
+    /**
+     * A flat-panel display (LCD or Plasma) for high-definition video output.
+     */
+    data object LcdPlasmaMonitor : Esse3RoomEquipment
+
+    /**
+     * Digital camera hardware for capturing the room or the lecturer.
+     */
+    data object Camera : Esse3RoomEquipment
+
+    /**
+     * A permanent ceiling-mounted projector paired with a retractable projection screen.
+     */
+    data object CeilingProjectorAndScreen : Esse3RoomEquipment
+
+    /**
+     * A dedicated computer terminal located at the teacher's desk.
+     */
+    data object TeacherPc : Esse3RoomEquipment
+
+    /**
+     * High-speed internet access via physical Ethernet ports.
+     */
+    data object WiredNetwork : Esse3RoomEquipment
+
+    /**
+     * Wireless local area network access.
+     */
+    data object WifiNetwork : Esse3RoomEquipment
+
+    /**
+     * Electrical outlets integrated directly into student workstations or desks.
+     */
+    data object StudentPowerSocket : Esse3RoomEquipment
+
+    /**
+     * Dedicated hardware or software setup for capturing audio/video for archival.
+     */
+    data object RecordingSystem : Esse3RoomEquipment
+
+    /**
+     * High-end hardware solutions for professional remote video communication.
+     */
+    data object VideoConference : Esse3RoomEquipment
+
+    /**
+     * Support for browser-based or software-based remote meetings (e.g., Zoom, Teams).
+     */
+    data object WebConference : Esse3RoomEquipment
+
+    /**
+     * Medical or clinical examination tables, typically for health science laboratories.
+     */
+    data object ExaminationBeds : Esse3RoomEquipment
+
+    /**
+     * Non-movable seating permanently attached to a shared long desk.
+     */
+    data object FixedChairsWithDesks : Esse3RoomEquipment
+
+    /**
+     * Non-movable seating featuring an integrated, individual fold-down writing surface.
+     */
+    data object FixedChairsWithTabletArms : Esse3RoomEquipment
+
+    /**
+     * Portable chairs equipped with an integrated fold-down writing surface.
+     */
+    data object MobileChairsWithTabletArms : Esse3RoomEquipment
+
+    /**
+     * Basic portable chairs without any integrated writing surface.
+     */
+    data object MobileChairsWithoutTabletArms : Esse3RoomEquipment
+
+    /**
+     * A custom equipment type for items not covered by the standard enumeration.
+     *
+     * @property name The descriptive name of the specific equipment.
+     */
+    data class Other(val name: String) : Esse3RoomEquipment
+}
 
 /**
  * Response wrapper for room occupation API (rooms_call.php).

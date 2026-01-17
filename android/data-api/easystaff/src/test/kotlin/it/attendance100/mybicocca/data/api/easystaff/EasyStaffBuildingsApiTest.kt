@@ -1,9 +1,8 @@
 package it.attendance100.mybicocca.data.api.easystaff
 
+import it.attendance100.mybicocca.data.dto.easystaff.EasyStaffRoomDetails
 import it.attendance100.mybicocca.data.dto.easystaff.EasyStaffRoomOccupationEvent
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertNotNull
-import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
 
@@ -93,81 +92,49 @@ class EasyStaffBuildingsApiTest : EasyStaffTestBase() {
     }
 
     @Test
-    suspend fun getRoomOccupation() {
+    suspend fun getRoomDetailsByBuildings() {
         val buildings = api.buildings.getBuildings()
+        assertNotNull(buildings)
         assertTrue(buildings.isNotEmpty(), "Buildings list should not be empty")
 
+        val roomsDetails = api.buildings.getRoomDetails(buildings)
+        assertNotNull(roomsDetails)
+        assertTrue(roomsDetails.isNotEmpty(), "Rooms details list should not be empty")
+
+        // Verify room showcase details if any rooms are returned
+        roomsDetails.forEach { roomDetails ->
+            validateRoomDetails(roomDetails)
+        }
+    }
+
+    @Test
+    suspend fun getRoomDetailsByRooms() {
+        val buildings = api.buildings.getBuildings()
+        assertNotNull(buildings)
+        assertTrue(buildings.isNotEmpty(), "Buildings list should not be empty")
         val building = buildings.first()
+
         val rooms = api.buildings.getRooms(building)
+        assertNotNull(rooms)
         assertTrue(rooms.isNotEmpty(), "Rooms list should not be empty")
 
-        val room = rooms.first()
-        val events = api.buildings.getRoomOccupation(
-            building = building,
-            room = room,
-            date = MOCK_DATE
-        )
+        val roomsDetails = api.buildings.getRoomDetails(listOf(building))
+        assertNotNull(roomsDetails)
+        assertTrue(roomsDetails.isNotEmpty(), "Rooms details list should not be empty")
 
-        assertNotNull(events)
-
-        // Verify each event for the room
-        events.forEach { event ->
-            validateEvent(event)
-            // Events should be for the requested room
-            assertEquals(room.code, event.roomCode, "Event room code should match requested room")
-        }
-    }
-
-    @Test
-    suspend fun getRoomShowcase() {
-        val rooms = api.buildings.getRoomShowcase()
-        assertNotNull(rooms)
-
-        // Room showcase might be empty if no detailed room data is available
         // Verify room showcase details if any rooms are returned
-        rooms.forEach { roomDetails ->
-            assertTrue(roomDetails.code.isNotBlank(), "Room code should not be blank")
-            assertTrue(roomDetails.name.isNotBlank(), "Room name should not be blank")
-            assertNotNull(roomDetails.building)
-            assertTrue(roomDetails.building.code.isNotBlank(), "Building code should not be blank")
-
-            // Verify capacity is reasonable if present
-            roomDetails.capacity?.let { capacity ->
-                assertTrue(capacity > 0, "Capacity should be positive")
-                assertTrue(capacity < 2000, "Capacity should be reasonable")
-            }
-
-            // Verify exam capacity is reasonable if present
-            roomDetails.examCapacity?.let { examCapacity ->
-                assertTrue(examCapacity > 0, "Exam capacity should be positive")
-                assertTrue(examCapacity < 2000, "Exam capacity should be reasonable")
-                // Exam capacity is usually less than or equal to regular capacity
-                roomDetails.capacity?.let { capacity ->
-                    assertTrue(
-                        examCapacity <= capacity,
-                        "Exam capacity ($examCapacity) should not exceed regular capacity ($capacity)"
-                    )
-                }
-            }
+        roomsDetails.forEach { roomDetails ->
+            validateRoomDetails(roomDetails)
         }
     }
 
-    @Test
-    suspend fun getRoomShowcaseByBuilding() {
-        val buildings = api.buildings.getBuildings()
-        assertTrue(buildings.isNotEmpty(), "Buildings list should not be empty")
+    private fun validateRoomDetails(roomDetails: EasyStaffRoomDetails) {
+        assertTrue(roomDetails.name.isNotBlank(), "Room name should not be blank")
 
-        val building = buildings.first()
-        val rooms = api.buildings.getRoomShowcase(building)
-        assertNotNull(rooms)
-
-        // Verify all returned rooms belong to the requested building
-        rooms.forEach { roomDetails ->
-            assertEquals(
-                building.code,
-                roomDetails.building.code,
-                "Room ${roomDetails.code} should belong to building ${building.code}"
-            )
+        // Verify capacity is reasonable if present
+        roomDetails.capacity?.let { capacity ->
+            assertTrue(capacity > 0, "Capacity should be positive")
+            assertTrue(capacity < 2000, "Capacity should be reasonable")
         }
     }
 
