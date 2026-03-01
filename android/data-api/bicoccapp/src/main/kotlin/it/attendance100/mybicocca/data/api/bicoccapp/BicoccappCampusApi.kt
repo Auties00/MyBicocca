@@ -1,48 +1,79 @@
 package it.attendance100.mybicocca.data.api.bicoccapp
 
-import de.jensklingenberg.ktorfit.http.Field
-import de.jensklingenberg.ktorfit.http.FormUrlEncoded
-import de.jensklingenberg.ktorfit.http.GET
-import de.jensklingenberg.ktorfit.http.POST
-import de.jensklingenberg.ktorfit.http.Query
+import io.ktor.client.HttpClient
+import io.ktor.client.request.forms.FormDataContent
+import io.ktor.client.request.parameter
+import io.ktor.client.request.setBody
+import io.ktor.http.Parameters
+import io.ktor.http.isSuccess
+import it.attendance100.mybicocca.data.dto.bicoccapp.BicoccappPointOfInterestsMaps
 import it.attendance100.mybicocca.data.dto.bicoccapp.BicoccappPointOfInterestsResponse
-import it.attendance100.mybicocca.data.dto.bicoccapp.BicoccappTeacherResponse
+import it.attendance100.mybicocca.data.dto.bicoccapp.BicoccappTeacher
+import it.attendance100.mybicocca.data.dto.bicoccapp.BicoccappTeacherDetails
+import it.attendance100.mybicocca.data.dto.bicoccapp.BicoccappTeacherDetailsResponse
+import kotlinx.serialization.json.Json
 
 /**
- * Campus API for locations, facilities, and faculty directory.
+ * API client for campus-related operations.
  */
-interface BicoccappCampusApi {
+class BicoccappCampusApi(
+    client: HttpClient,
+    json: Json
+) : BicoccappAbstractApi(client, json) {
+
     /**
      * Retrieves all campus points of interest (buildings, facilities, services).
      *
-     * @return Categorized locations with coordinates and metadata.
+     * @return Points of interest with filters and locations.
      */
-    @GET("point_of_interests")
-    suspend fun getPointsOfInterest(): BicoccappPointOfInterestsResponse
+    suspend fun getPointsOfInterest(): BicoccappPointOfInterestsMaps {
+        val response = executeJsonGet<BicoccappPointOfInterestsResponse>("/point_of_interests")
+        return response.maps
+    }
+
+    /**
+     * Retrieves a teacher's profile by their institutional email.
+     *
+     * @param teacher the teacher's reference
+     * @return Teacher profile details.
+     */
+    suspend fun getTeacherDetails(teacher: BicoccappTeacher): BicoccappTeacherDetails {
+        return getTeacherDetails(teacher.email)
+    }
 
     /**
      * Retrieves a teacher's profile by their institutional email.
      *
      * @param email Teacher's @unimib.it email address.
-     * @return Teacher profile with contact info and office location, or 404 if not found.
+     * @return Teacher profile details.
      */
-    @GET("teacher")
-    suspend fun getTeacherByEmail(
-        @Query("teacherEmail") email: String
-    ): BicoccappTeacherResponse
+    suspend fun getTeacherDetails(email: String): BicoccappTeacherDetails {
+        val response = executeJsonGet<BicoccappTeacherDetailsResponse>("/teacher") {
+            parameter("teacherEmail", email)
+        }
+        return response.teacher
+    }
 
     /**
      * Sends an appointment request to a teacher.
      *
      * @param teacherKey Teacher's identifier (typically their email).
      * @param appUserId Student's app user numeric identifier.
-     * @param messageBody Optional message explaining the appointment purpose.
+     * @param messageBody Message explaining the appointment purpose.
+     * @throws ApiRequestException if the appointment cannot be booked
      */
-    @FormUrlEncoded
-    @POST("messages/appointment")
     suspend fun sendAppointmentRequest(
-        @Field("teacher_key") teacherKey: String,
-        @Field("student_id") appUserId: Int,
-        @Field("message_body") messageBody: String = ""
-    )
+        teacherKey: String,
+        appUserId: String,
+        messageBody: String
+    ): Boolean {
+        val response = executePost("/messages/appointment") {
+            setBody(FormDataContent(Parameters.build {
+                append("teacher_key", teacherKey)
+                append("student_id", appUserId)
+                append("message_body", messageBody)
+            }))
+        }
+        return response.status.isSuccess()
+    }
 }

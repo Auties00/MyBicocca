@@ -1,0 +1,4040 @@
+---
+swagger: "2.0"
+info:
+  description: "Il servizio fornisce le API per l'accesso al regolamento di scelta\n\
+    \n## ChangeLog\n\nVersione       | Versione di Esse3 di rilascio | Interventi\
+    \ \n-              | -                             | -\n    1.1.0      | 18.02.00.00\
+    \                   | aggiunto il campo opzionale dataUltimaModifica al RegolamentoDiScelta\
+    \ e il relativo parametro di filtro su /regsce    \n  \n"
+  version: "1.1.0"
+  title: "ESSE3 Regolamento di Scelta API"
+basePath: "/regsce-service-v1"
+tags:
+- name: "regolamento"
+  description: "informazioni sulla testata dei regolamenti"
+- name: "massivo"
+  description: "recuperi massivi dei regolamenti"
+- name: "finestra"
+  description: "informazioni sulle finestre di compilazione"
+- name: "schema di piano"
+  description: "informazioni sugli schhemi di piano"
+- name: "regola"
+  description: "informazioni sulle regole di scelta"
+- name: "piano"
+  description: "informazioni sui piani di studio collegati alle regole"
+schemes:
+- "https"
+- "http"
+consumes:
+- "application/json"
+produces:
+- "application/json"
+paths:
+  /regsce:
+    get:
+      tags:
+      - "regolamento"
+      summary: "informazioni di testata sul regolamento di scelta"
+      description: "Recupera gli oggetti `RegolamentoDiScelta`  \nE' necessario valorizzare\
+        \ almeno un filtro tra quelli presenti per poter effettuare il recupero dati\n\
+        \n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n-|-|-\nx-cache-type|configuration|Risorsa\
+        \ di configurazione, la variazione è molto lenta, cache Http abilitata, cache\
+        \ server abilitata. Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: common-public-permissions**\n\nProfilo|Controllo| Funzione\n-|-|-\n\
+        ALL|Funzione Pubblica|Security.checkDummy()\n\n\nClasse di modello : RegolamentoDiScelta\n\
+        ======\n\nEstensioni sulle proprietà\n----\nProprietà | x-field-type\n-|-|\n\
+        regsceId|primaryKey\ndataUltimaModifica|optional\ndataInserimento|optional\n\
+        \n\nClasse di modello : DettaglioErroreAggiuntivo\n======\n\nEstensioni sulle\
+        \ proprietà\n----\nProprietà | x-field-type\n-|-|\nrawValue|rawJson\n"
+      operationId: "getRegolamentiDiScelta"
+      parameters:
+      - name: "statoRegsce"
+        in: "query"
+        description: "stato del regolamento di scelta, se non valorizzato vengono\
+          \ recuperati i regolamenti attivi"
+        required: false
+        type: "array"
+        items:
+          type: "string"
+        collectionFormat: "multi"
+        enum:
+        - "A"
+        - "B"
+        - "X"
+      - name: "facId"
+        in: "query"
+        description: "id della facoltà di afferenza del regolamento"
+        required: false
+        type: "integer"
+        format: "int64"
+      - name: "facCod"
+        in: "query"
+        description: "codice della facoltà di afferenza del regolamento"
+        required: false
+        type: "string"
+      - name: "cdsId"
+        in: "query"
+        description: "id della corso di studio di afferenza del regolamento"
+        required: false
+        type: "integer"
+        format: "int64"
+      - name: "cdsCod"
+        in: "query"
+        description: "codice del corso di studio di afferenza del regolamento"
+        required: false
+        type: "string"
+      - name: "aaOrdId"
+        in: "query"
+        description: "anno di ordinamento"
+        required: false
+        type: "integer"
+        format: "int64"
+      - name: "aaRevisioneId"
+        in: "query"
+        description: "anno di revisione"
+        required: false
+        type: "integer"
+        format: "int64"
+      - name: "tipoCorsoCod"
+        in: "query"
+        description: "codice del tipo di corso di afferenza del regolamento"
+        required: false
+        type: "string"
+      - name: "coorte"
+        in: "query"
+        description: "coorte di afferenza del regolamento"
+        required: false
+        type: "integer"
+        format: "int64"
+      - name: "daDataMod"
+        in: "query"
+        description: "data di ultima modifica, verranno recuperati tutti i record\
+          \ inseriti con data di ultima modifica successiva a questa data"
+        required: false
+        type: "string"
+      - name: "fields"
+        in: "query"
+        description: "specifica la lista dei campi opzionali (che non vengono recupeati\
+          \ di default);\nimpostando il valore `ALL` vengono mostrati tutti i campi.\
+          \ \n\nPer gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns*\
+          \  \nI dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello)\n\
+          \nEsempi\n* per il campo childObj con la poprietà childProp utilizzare la\
+          \ notazione `childProp.prop1`\n* Per visualizzare tutte le proprietà di\
+          \ childObj utilizzare la notazione `childProp.*`\n* Per visualizzare tutte\
+          \ le proprietà di childObj e di tutti i discendenti utilizzare la notazione\
+          \ `childProp.**`\n"
+        required: false
+        type: "string"
+      - name: "start"
+        in: "query"
+        description: "utilizzato insieme a `limit` per indicare la paginazione sui\
+          \ record; `start` indica il numero del primo record da caricare (se non\
+          \ indicato viene utilizzato 0)\n"
+        required: false
+        type: "integer"
+        format: "int32"
+      - name: "limit"
+        in: "query"
+        description: "utilizzato insieme a `start` per indicare la paginazione sui\
+          \ record, `limit` indica il numero di record da recuperare (a partire da\
+          \ `start`); \nse non indicato viene utilizzato 50, i valori consentiti vanno\
+          \ da 0 a 100\n"
+        required: false
+        type: "integer"
+        format: "int32"
+      - name: "optionalFields"
+        in: "query"
+        description: "specifica la lista dei campi opzionali (che non vengono recupeati\
+          \ di default);\nimpostando il valore `ALL` vengono mostrati tutti i campi.\
+          \ \n\nPer gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns*\
+          \  \nI dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello)\n\
+          \nEsempi\n* per il campo childObj con la poprietà childProp utilizzare la\
+          \ notazione `childProp.prop1`\n* Per visualizzare tutte le proprietà di\
+          \ childObj utilizzare la notazione `childProp.*`\n* Per visualizzare tutte\
+          \ le proprietà di childObj e di tutti i discendenti utilizzare la notazione\
+          \ `childProp.**`\n"
+        required: false
+        type: "string"
+      - name: "order"
+        in: "query"
+        description: "consente di specificare un ordine per il recupero dei record.\
+          \ La sintassi è la seguente\n * +/- : specifica l'ordinamento (+ = ASC,\
+          \ - = DESC); se omesso viene utilizzato +\n * field : nome del campo da\
+          \ ordinare\n \n E' possibile indicare più campi separandoli da virgola (Es:\
+          \ +annoCorso,+adCod) \n"
+        required: false
+        type: "string"
+      responses:
+        "200":
+          description: "successful operation"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/RegolamentoDiScelta"
+        "422":
+          description: "parametri Errati"
+          schema:
+            $ref: "#/definitions/DettaglioErrore"
+      x-enabled-profiles:
+      - common-public-permissions:
+          kind: "ALL"
+          profiles:
+          - profile:
+              name: "ALL"
+              description: "Funzione Pubblica"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkDummy"
+                  description: "funzione che ritorna sempre true"
+  /regsce/{regsceId}:
+    get:
+      tags:
+      - "regolamento"
+      summary: "informazioni generali del regolamento (testata e schemi)"
+      description: "fornisce l'oggetto `RegolamentoDiSceltaConSchemi` con il dettaglio\
+        \ degli schemi associati.  \nL'oggetto ritornato è composto dalla seguente\
+        \ struttura (in relazione 1-n)\n\n* Testata regolamento di scelta\n  * Schemi\
+        \ di piano\n\n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n-|-|-\n\
+        x-cache-type|configuration|Risorsa di configurazione, la variazione è molto\
+        \ lenta, cache Http abilitata, cache server abilitata. Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: ALL**\n\nProfilo|Controllo| Funzione\n-|-|-\nALL|Funzione Pubblica|Security.checkDummy()\n\
+        \n\nClasse di modello : RegolamentoDiSceltaConSchemi\n======\n\nEstensioni\
+        \ sulle proprietà\n----\nProprietà | x-field-type\n-|-|\nregsceId|primaryKey\n\
+        dataUltimaModifica|optional\ndataInserimento|optional\nfinestreDiCompilazione|optional\n\
+        \n\nClasse di modello : RegolamentoDiScelta\n======\n\nEstensioni sulle proprietà\
+        \n----\nProprietà | x-field-type\n-|-|\nregsceId|primaryKey\ndataUltimaModifica|optional\n\
+        dataInserimento|optional\n\n\nClasse di modello : FinestraRegolamentoDiScelta\n\
+        ======\n\nEstensioni sulle proprietà\n----\nProprietà | x-field-type\n-|-|\n\
+        finregsceId|primaryKey\nextId|optional\n\n\nClasse di modello : SchemaDiPiano\n\
+        ======\n\nEstensioni sulle proprietà\n----\nProprietà | x-field-type\n-|-|\n\
+        schemaId|primaryKey\npdsDes|optional\ncondDes|optional\norientDes|optional\n\
+        profDes|optional\naptDes|optional\n"
+      operationId: "getRegolamentoDiSceltaConSchemi"
+      parameters:
+      - name: "regsceId"
+        in: "path"
+        description: "id univoco del regolamento di scelta"
+        required: true
+        type: "integer"
+        format: "int64"
+      - name: "fields"
+        in: "query"
+        description: "specifica la lista dei campi opzionali (che non vengono recupeati\
+          \ di default);\nimpostando il valore `ALL` vengono mostrati tutti i campi.\
+          \ \n\nPer gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns*\
+          \  \nI dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello)\n\
+          \nEsempi\n* per il campo childObj con la poprietà childProp utilizzare la\
+          \ notazione `childProp.prop1`\n* Per visualizzare tutte le proprietà di\
+          \ childObj utilizzare la notazione `childProp.*`\n* Per visualizzare tutte\
+          \ le proprietà di childObj e di tutti i discendenti utilizzare la notazione\
+          \ `childProp.**`\n"
+        required: false
+        type: "string"
+      - name: "optionalFields"
+        in: "query"
+        description: "specifica la lista dei campi opzionali (che non vengono recupeati\
+          \ di default);\nimpostando il valore `ALL` vengono mostrati tutti i campi.\
+          \ \n\nPer gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns*\
+          \  \nI dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello)\n\
+          \nEsempi\n* per il campo childObj con la poprietà childProp utilizzare la\
+          \ notazione `childProp.prop1`\n* Per visualizzare tutte le proprietà di\
+          \ childObj utilizzare la notazione `childProp.*`\n* Per visualizzare tutte\
+          \ le proprietà di childObj e di tutti i discendenti utilizzare la notazione\
+          \ `childProp.**`\n"
+        required: false
+        type: "string"
+      - name: "order"
+        in: "query"
+        description: "consente di specificare un ordine per il recupero dei record.\
+          \ La sintassi è la seguente\n * +/- : specifica l'ordinamento (+ = ASC,\
+          \ - = DESC); se omesso viene utilizzato +\n * field : nome del campo da\
+          \ ordinare\n \n E' possibile indicare più campi separandoli da virgola (Es:\
+          \ +annoCorso,+adCod) \n"
+        required: false
+        type: "string"
+      - name: "filter"
+        in: "query"
+        description: "il parametro consente di applicare dei filtri alla classe di\
+          \ modello utilizzando il linguaggio  [RSQL](https://github.com/jirutka/rsql-parser).\n\
+          La lista degli operatori utilizzabili è disponibile [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosullerigherecuperate)\
+          \   \n   *NB* il filtro viene applicato DOPO aver recuperato i dati\n"
+        required: false
+        type: "string"
+      responses:
+        "200":
+          description: "successful operation"
+          schema:
+            $ref: "#/definitions/RegolamentoDiSceltaConSchemi"
+      x-enabled-profiles:
+      - common-public-permissions:
+          kind: "ALL"
+          profiles:
+          - profile:
+              name: "ALL"
+              description: "Funzione Pubblica"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkDummy"
+                  description: "funzione che ritorna sempre true"
+    patch:
+      tags:
+      - "regolamento"
+      summary: "Aggiornamento del regolamento di scelta"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>consente di aggiornare il regolamento di scelta,\
+        \ sono concesse le seguenti operazioni\n\n* {stato:\"value\"} : Aggiorna lo\
+        \ stato del regolamento di scelta\n\n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n\
+        -|-|-\nx-cache-type|configuration|Risorsa di configurazione, la variazione\
+        \ è molto lenta, cache Http abilitata, cache server abilitata. Maggiori dettagli\
+        \ [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: user-tecnico-massive-permissions**\n\nProfilo|Controllo| Funzione\n\
+        -|-|-\nUserTecnicoMassivo|funzione massiva riservata ad utenti tecnici autorizzati|Security.checkMassiveGET()\n\
+        \n\nClasse di modello : RegolamentoDiSceltaConSchemi\n======\n\nEstensioni\
+        \ sulle proprietà\n----\nProprietà | x-field-type\n-|-|\nregsceId|primaryKey\n\
+        dataUltimaModifica|optional\ndataInserimento|optional\nfinestreDiCompilazione|optional\n\
+        \n\nClasse di modello : RegolamentoDiScelta\n======\n\nEstensioni sulle proprietà\
+        \n----\nProprietà | x-field-type\n-|-|\nregsceId|primaryKey\ndataUltimaModifica|optional\n\
+        dataInserimento|optional\n\n\nClasse di modello : FinestraRegolamentoDiScelta\n\
+        ======\n\nEstensioni sulle proprietà\n----\nProprietà | x-field-type\n-|-|\n\
+        finregsceId|primaryKey\nextId|optional\n\n\nClasse di modello : SchemaDiPiano\n\
+        ======\n\nEstensioni sulle proprietà\n----\nProprietà | x-field-type\n-|-|\n\
+        schemaId|primaryKey\npdsDes|optional\ncondDes|optional\norientDes|optional\n\
+        profDes|optional\naptDes|optional\n\n\nClasse di modello : DettaglioErroreAggiuntivo\n\
+        ======\n\nEstensioni sulle proprietà\n----\nProprietà | x-field-type\n-|-|\n\
+        rawValue|rawJson\n"
+      operationId: "patchRegsce"
+      parameters:
+      - name: "regsceId"
+        in: "path"
+        description: "id univoco del regolamento di scelta"
+        required: true
+        type: "integer"
+        format: "int64"
+      - in: "body"
+        name: "body"
+        description: "Oggetto che contiene la riga da inserire"
+        required: true
+        schema:
+          $ref: "#/definitions/AggiornamentoRegolamentoDiScelta"
+      - name: "fields"
+        in: "query"
+        description: "specifica la lista dei campi opzionali (che non vengono recupeati\
+          \ di default);\nimpostando il valore `ALL` vengono mostrati tutti i campi.\
+          \ \n\nPer gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns*\
+          \  \nI dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello)\n\
+          \nEsempi\n* per il campo childObj con la poprietà childProp utilizzare la\
+          \ notazione `childProp.prop1`\n* Per visualizzare tutte le proprietà di\
+          \ childObj utilizzare la notazione `childProp.*`\n* Per visualizzare tutte\
+          \ le proprietà di childObj e di tutti i discendenti utilizzare la notazione\
+          \ `childProp.**`\n"
+        required: false
+        type: "string"
+      - name: "optionalFields"
+        in: "query"
+        description: "specifica la lista dei campi opzionali (che non vengono recupeati\
+          \ di default);\nimpostando il valore `ALL` vengono mostrati tutti i campi.\
+          \ \n\nPer gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns*\
+          \  \nI dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello)\n\
+          \nEsempi\n* per il campo childObj con la poprietà childProp utilizzare la\
+          \ notazione `childProp.prop1`\n* Per visualizzare tutte le proprietà di\
+          \ childObj utilizzare la notazione `childProp.*`\n* Per visualizzare tutte\
+          \ le proprietà di childObj e di tutti i discendenti utilizzare la notazione\
+          \ `childProp.**`\n"
+        required: false
+        type: "string"
+      - name: "order"
+        in: "query"
+        description: "consente di specificare un ordine per il recupero dei record.\
+          \ La sintassi è la seguente\n * +/- : specifica l'ordinamento (+ = ASC,\
+          \ - = DESC); se omesso viene utilizzato +\n * field : nome del campo da\
+          \ ordinare\n \n E' possibile indicare più campi separandoli da virgola (Es:\
+          \ +annoCorso,+adCod) \n"
+        required: false
+        type: "string"
+      - name: "filter"
+        in: "query"
+        description: "il parametro consente di applicare dei filtri alla classe di\
+          \ modello utilizzando il linguaggio  [RSQL](https://github.com/jirutka/rsql-parser).\n\
+          La lista degli operatori utilizzabili è disponibile [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosullerigherecuperate)\
+          \   \n   *NB* il filtro viene applicato DOPO aver recuperato i dati\n"
+        required: false
+        type: "string"
+      responses:
+        "200":
+          description: "successful operation"
+          schema:
+            $ref: "#/definitions/RegolamentoDiSceltaConSchemi"
+        "422":
+          description: "Operazione non concessa"
+          schema:
+            $ref: "#/definitions/DettaglioErrore"
+      security:
+      - basicAuth: []
+      - jwt:
+        - "openid"
+      x-enabled-profiles:
+      - user-tecnico-massive-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UserTecnicoMassivo"
+              description: "funzione massiva riservata ad utenti tecnici autorizzati"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkMassiveGET"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+  /regsce/{regsceId}/finestre:
+    get:
+      tags:
+      - "finestra"
+      summary: "informazioni sulle finestre di compilazione piani di un regolamento\
+        \ di scelta"
+      description: "\n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n-|-|-\n\
+        x-cache-type|configuration|Risorsa di configurazione, la variazione è molto\
+        \ lenta, cache Http abilitata, cache server abilitata. Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: ALL**\n\nProfilo|Controllo| Funzione\n-|-|-\nALL|Funzione Pubblica|Security.checkDummy()\n\
+        \n\nClasse di modello : FinestraRegolamentoDiScelta\n======\n\nEstensioni\
+        \ sulle proprietà\n----\nProprietà | x-field-type\n-|-|\nfinregsceId|primaryKey\n\
+        extId|optional\n"
+      operationId: "getFinestreRegolamentoDiScelta"
+      parameters:
+      - name: "regsceId"
+        in: "path"
+        description: "id univoco del regolamento di scelta"
+        required: true
+        type: "integer"
+        format: "int64"
+      - name: "fields"
+        in: "query"
+        description: "specifica la lista dei campi opzionali (che non vengono recupeati\
+          \ di default);\nimpostando il valore `ALL` vengono mostrati tutti i campi.\
+          \ \n\nPer gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns*\
+          \  \nI dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello)\n\
+          \nEsempi\n* per il campo childObj con la poprietà childProp utilizzare la\
+          \ notazione `childProp.prop1`\n* Per visualizzare tutte le proprietà di\
+          \ childObj utilizzare la notazione `childProp.*`\n* Per visualizzare tutte\
+          \ le proprietà di childObj e di tutti i discendenti utilizzare la notazione\
+          \ `childProp.**`\n"
+        required: false
+        type: "string"
+      - name: "optionalFields"
+        in: "query"
+        description: "specifica la lista dei campi opzionali (che non vengono recupeati\
+          \ di default);\nimpostando il valore `ALL` vengono mostrati tutti i campi.\
+          \ \n\nPer gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns*\
+          \  \nI dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello)\n\
+          \nEsempi\n* per il campo childObj con la poprietà childProp utilizzare la\
+          \ notazione `childProp.prop1`\n* Per visualizzare tutte le proprietà di\
+          \ childObj utilizzare la notazione `childProp.*`\n* Per visualizzare tutte\
+          \ le proprietà di childObj e di tutti i discendenti utilizzare la notazione\
+          \ `childProp.**`\n"
+        required: false
+        type: "string"
+      - name: "filter"
+        in: "query"
+        description: "il parametro consente di applicare dei filtri alla classe di\
+          \ modello utilizzando il linguaggio  [RSQL](https://github.com/jirutka/rsql-parser).\n\
+          La lista degli operatori utilizzabili è disponibile [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosullerigherecuperate)\
+          \   \n   *NB* il filtro viene applicato DOPO aver recuperato i dati\n"
+        required: false
+        type: "string"
+      responses:
+        "200":
+          description: "successful operation"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/FinestraRegolamentoDiScelta"
+      x-enabled-profiles:
+      - common-public-permissions:
+          kind: "ALL"
+          profiles:
+          - profile:
+              name: "ALL"
+              description: "Funzione Pubblica"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkDummy"
+                  description: "funzione che ritorna sempre true"
+  /regsce/{regsceId}/finestre/{finregsceId}:
+    get:
+      tags:
+      - "finestra"
+      summary: "informazioni sulla finestra di compilazione piani selezionata"
+      description: "\n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n-|-|-\n\
+        x-cache-type|configuration|Risorsa di configurazione, la variazione è molto\
+        \ lenta, cache Http abilitata, cache server abilitata. Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: ALL**\n\nProfilo|Controllo| Funzione\n-|-|-\nALL|Funzione Pubblica|Security.checkDummy()\n\
+        \n\nClasse di modello : FinestraRegolamentoDiScelta\n======\n\nEstensioni\
+        \ sulle proprietà\n----\nProprietà | x-field-type\n-|-|\nfinregsceId|primaryKey\n\
+        extId|optional\n"
+      operationId: "getFinestraRegolamentoDiScelta"
+      parameters:
+      - name: "regsceId"
+        in: "path"
+        description: "id univoco del regolamento di scelta"
+        required: true
+        type: "integer"
+        format: "int64"
+      - name: "finregsceId"
+        in: "path"
+        description: "id univoco della finestra di compilazione del regolamento di\
+          \ scelta"
+        required: true
+        type: "integer"
+        format: "int64"
+      - name: "fields"
+        in: "query"
+        description: "specifica la lista dei campi opzionali (che non vengono recupeati\
+          \ di default);\nimpostando il valore `ALL` vengono mostrati tutti i campi.\
+          \ \n\nPer gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns*\
+          \  \nI dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello)\n\
+          \nEsempi\n* per il campo childObj con la poprietà childProp utilizzare la\
+          \ notazione `childProp.prop1`\n* Per visualizzare tutte le proprietà di\
+          \ childObj utilizzare la notazione `childProp.*`\n* Per visualizzare tutte\
+          \ le proprietà di childObj e di tutti i discendenti utilizzare la notazione\
+          \ `childProp.**`\n"
+        required: false
+        type: "string"
+      - name: "optionalFields"
+        in: "query"
+        description: "specifica la lista dei campi opzionali (che non vengono recupeati\
+          \ di default);\nimpostando il valore `ALL` vengono mostrati tutti i campi.\
+          \ \n\nPer gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns*\
+          \  \nI dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello)\n\
+          \nEsempi\n* per il campo childObj con la poprietà childProp utilizzare la\
+          \ notazione `childProp.prop1`\n* Per visualizzare tutte le proprietà di\
+          \ childObj utilizzare la notazione `childProp.*`\n* Per visualizzare tutte\
+          \ le proprietà di childObj e di tutti i discendenti utilizzare la notazione\
+          \ `childProp.**`\n"
+        required: false
+        type: "string"
+      responses:
+        "200":
+          description: "successful operation"
+          schema:
+            $ref: "#/definitions/FinestraRegolamentoDiScelta"
+      x-enabled-profiles:
+      - common-public-permissions:
+          kind: "ALL"
+          profiles:
+          - profile:
+              name: "ALL"
+              description: "Funzione Pubblica"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkDummy"
+                  description: "funzione che ritorna sempre true"
+  /regsce/{regsceId}/piani-collegati/conteggi:
+    put:
+      tags:
+      - "piano"
+      summary: "informazioni sui conteggi piani collegati"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>\n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n\
+        -|-|-\nx-cache-type|configuration|Risorsa di configurazione, la variazione\
+        \ è molto lenta, cache Http abilitata, cache server abilitata. Maggiori dettagli\
+        \ [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: user-tecnico-permissions**\n\nProfilo|Controllo| Funzione\n-|-|-\n\
+        UTENTE_TECNICO|funzione accessibile alle utenze tecniche per accessi ai servizi\
+        \ REST|Security.checkUserTecnico()\n\n\nClasse di modello : RegolamentoDiSceltaConConteggi\n\
+        ======\n\nEstensioni sulle proprietà\n----\nProprietà | x-field-type\n-|-|\n\
+        regsceId|primaryKey\ndataUltimaModifica|optional\ndataInserimento|optional\n\
+        schemi|optional\nregole|optional\nattivita|optional\nfinestre|optional\n\n\
+        \nClasse di modello : RegolamentoDiScelta\n======\n\nEstensioni sulle proprietà\
+        \n----\nProprietà | x-field-type\n-|-|\nregsceId|primaryKey\ndataUltimaModifica|optional\n\
+        dataInserimento|optional\n\n\nClasse di modello : DettaglioErroreAggiuntivo\n\
+        ======\n\nEstensioni sulle proprietà\n----\nProprietà | x-field-type\n-|-|\n\
+        rawValue|rawJson\n\n\nClasse di modello : DettaglioErroreAggiuntivo\n======\n\
+        \nEstensioni sulle proprietà\n----\nProprietà | x-field-type\n-|-|\nrawValue|rawJson\n"
+      operationId: "putConteggioPianiCollegati"
+      parameters:
+      - name: "regsceId"
+        in: "path"
+        description: "id univoco del regolamento di scelta"
+        required: true
+        type: "integer"
+        format: "int64"
+      - in: "body"
+        name: "body"
+        description: "Oggetto con i dati per gestione visualizzazione conteggi e filtri"
+        required: true
+        schema:
+          $ref: "#/definitions/ConteggiPianiFiltri"
+      - name: "optionalFields"
+        in: "query"
+        description: "specifica la lista dei campi opzionali (che non vengono recupeati\
+          \ di default);\nimpostando il valore `ALL` vengono mostrati tutti i campi.\
+          \ \n\nPer gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns*\
+          \  \nI dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello)\n\
+          \nEsempi\n* per il campo childObj con la poprietà childProp utilizzare la\
+          \ notazione `childProp.prop1`\n* Per visualizzare tutte le proprietà di\
+          \ childObj utilizzare la notazione `childProp.*`\n* Per visualizzare tutte\
+          \ le proprietà di childObj e di tutti i discendenti utilizzare la notazione\
+          \ `childProp.**`\n"
+        required: false
+        type: "string"
+      responses:
+        "200":
+          description: "successful operation"
+          schema:
+            $ref: "#/definitions/RegolamentoDiSceltaConConteggi"
+        "404":
+          description: "nessun dato presente"
+          schema:
+            $ref: "#/definitions/DettaglioErrore"
+        "422":
+          description: "dati in ingresso errati"
+          schema:
+            $ref: "#/definitions/DettaglioErrore"
+      security:
+      - basicAuth: []
+      - jwt:
+        - "openid"
+      x-enabled-profiles:
+      - user-tecnico-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UTENTE_TECNICO"
+              description: "funzione accessibile alle utenze tecniche per accessi\
+                \ ai servizi REST"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkUserTecnico"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+  /regsce/{regsceId}/piani/stats:
+    get:
+      tags:
+      - "piano"
+      summary: "statistiche dei piani collegati al regolamento di scelta"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>fornisce le statistiche dei piani collegati\
+        \ al regolamento di scelta\n\n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n\
+        -|-|-\nx-cache-type|configuration|Risorsa di configurazione, la variazione\
+        \ è molto lenta, cache Http abilitata, cache server abilitata. Maggiori dettagli\
+        \ [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: USER_TECNICO**\n\nProfilo|Controllo| Funzione\n-|-|-\nUserTecnicoMassivo|funzione\
+        \ massiva riservata ad utenti tecnici autorizzati|Security.checkMassiveGET()\n"
+      operationId: "getStatsPianiByRegsceId"
+      parameters:
+      - name: "regsceId"
+        in: "path"
+        description: "id univoco del regolamento di scelta"
+        required: true
+        type: "integer"
+        format: "int64"
+      responses:
+        "200":
+          description: "Successful operation"
+          schema:
+            $ref: "#/definitions/StatStudenti"
+      security:
+      - basicAuth: []
+      - jwt:
+        - "openid"
+      x-enabled-profiles:
+      - user-tecnico-massive-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UserTecnicoMassivo"
+              description: "funzione massiva riservata ad utenti tecnici autorizzati"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkMassiveGET"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+  /regsce/{regsceId}/regole:
+    get:
+      tags:
+      - "regola"
+      summary: "informazioni sulle regole di scelta del regolamento"
+      description: "Restituisce una lista di oggetti  `RegoleDiSceltaConSchemi` con\
+        \ la seguente struttura (in relazione 1-n)\n* Regola di Scelta\n  * Schemi\
+        \ di piano (collegati alla regola di scelta)\n\n\n**Estensioni:**\n\nCodice\
+        \ Estensione|Valore|Nota\n-|-|-\nx-cache-type|configuration|Risorsa di configurazione,\
+        \ la variazione è molto lenta, cache Http abilitata, cache server abilitata.\
+        \ Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: ALL**\n\nProfilo|Controllo| Funzione\n-|-|-\nALL|Funzione Pubblica|Security.checkDummy()\n\
+        \n\nClasse di modello : RegolaDiScelta\n======\n\nEstensioni sulle proprietà\
+        \n----\nProprietà | x-field-type\n-|-|\nsceltaId|primaryKey\nabilFlg|optional\n\
+        pesoRosaRist|optional\nassegnazionePostiFlg|optional\ndeliberaFlg|optional\n\
+        azzeraCfuFlg|optional\nparametriLogisticaFlg|optional\nnotaPre|optional\n\
+        notaPreEng|optional\nnotaPreVisPubblFlg|optional\nnotaPost|optional\nnotaPostEng|optional\n\
+        notaPostVisPubblFlg|optional\nextId|optional\nextCod|optional\n\n\nClasse\
+        \ di modello : SchemaDiPianoRegolaDiScelta\n======\n\nEstensioni sulle proprietà\
+        \n----\nProprietà | x-field-type\n-|-|\nsceltaId|primaryKey\nschemaId|primaryKey\n\
+        ptSlotDes|optional\n"
+      operationId: "getRegoleDiScelta"
+      parameters:
+      - name: "regsceId"
+        in: "path"
+        description: "id univoco del regolamento di scelta"
+        required: true
+        type: "integer"
+        format: "int64"
+      - name: "fields"
+        in: "query"
+        description: "specifica la lista dei campi opzionali (che non vengono recupeati\
+          \ di default);\nimpostando il valore `ALL` vengono mostrati tutti i campi.\
+          \ \n\nPer gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns*\
+          \  \nI dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello)\n\
+          \nEsempi\n* per il campo childObj con la poprietà childProp utilizzare la\
+          \ notazione `childProp.prop1`\n* Per visualizzare tutte le proprietà di\
+          \ childObj utilizzare la notazione `childProp.*`\n* Per visualizzare tutte\
+          \ le proprietà di childObj e di tutti i discendenti utilizzare la notazione\
+          \ `childProp.**`\n"
+        required: false
+        type: "string"
+      - name: "optionalFields"
+        in: "query"
+        description: "specifica la lista dei campi opzionali (che non vengono recupeati\
+          \ di default);\nimpostando il valore `ALL` vengono mostrati tutti i campi.\
+          \ \n\nPer gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns*\
+          \  \nI dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello)\n\
+          \nEsempi\n* per il campo childObj con la poprietà childProp utilizzare la\
+          \ notazione `childProp.prop1`\n* Per visualizzare tutte le proprietà di\
+          \ childObj utilizzare la notazione `childProp.*`\n* Per visualizzare tutte\
+          \ le proprietà di childObj e di tutti i discendenti utilizzare la notazione\
+          \ `childProp.**`\n"
+        required: false
+        type: "string"
+      - name: "order"
+        in: "query"
+        description: "consente di specificare un ordine per il recupero dei record.\
+          \ La sintassi è la seguente\n * +/- : specifica l'ordinamento (+ = ASC,\
+          \ - = DESC); se omesso viene utilizzato +\n * field : nome del campo da\
+          \ ordinare\n \n E' possibile indicare più campi separandoli da virgola (Es:\
+          \ +annoCorso,+adCod) \n"
+        required: false
+        type: "string"
+      - name: "filter"
+        in: "query"
+        description: "il parametro consente di applicare dei filtri alla classe di\
+          \ modello utilizzando il linguaggio  [RSQL](https://github.com/jirutka/rsql-parser).\n\
+          La lista degli operatori utilizzabili è disponibile [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosullerigherecuperate)\
+          \   \n   *NB* il filtro viene applicato DOPO aver recuperato i dati\n"
+        required: false
+        type: "string"
+      responses:
+        "200":
+          description: "successful operation"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/RegolaDiSceltaConSchemi"
+      x-enabled-profiles:
+      - common-public-permissions:
+          kind: "ALL"
+          profiles:
+          - profile:
+              name: "ALL"
+              description: "Funzione Pubblica"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkDummy"
+                  description: "funzione che ritorna sempre true"
+  /regsce/{regsceId}/regole/{sceltaId}:
+    get:
+      tags:
+      - "regola"
+      summary: "informazioni su una singola regola di scelta"
+      description: "Restituisce l'oggetto `RegoleDiSceltaConDettagli` con la seguente\
+        \ struttura (in relazione 1-n)\n\n* Regole di scelta\n  * Schemi di piano\
+        \ (collegati alle regole di scelta)\n  * Blocchi di scelta\n    * Attività\
+        \ didattiche dei blocchi\n      * Regole sulle UD\n  * Condizioni sulle regole\n\
+        \  * Filtri sulle regole libere Da OD\n\n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n\
+        -|-|-\nx-cache-type|configuration|Risorsa di configurazione, la variazione\
+        \ è molto lenta, cache Http abilitata, cache server abilitata. Maggiori dettagli\
+        \ [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: ALL**\n\nProfilo|Controllo| Funzione\n-|-|-\nALL|Funzione Pubblica|Security.checkDummy()\n\
+        \n\nClasse di modello : RegolaDiScelta\n======\n\nEstensioni sulle proprietà\
+        \n----\nProprietà | x-field-type\n-|-|\nsceltaId|primaryKey\nabilFlg|optional\n\
+        pesoRosaRist|optional\nassegnazionePostiFlg|optional\ndeliberaFlg|optional\n\
+        azzeraCfuFlg|optional\nparametriLogisticaFlg|optional\nnotaPre|optional\n\
+        notaPreEng|optional\nnotaPreVisPubblFlg|optional\nnotaPost|optional\nnotaPostEng|optional\n\
+        notaPostVisPubblFlg|optional\nextId|optional\nextCod|optional\n\n\nClasse\
+        \ di modello : SchemaDiPianoRegolaDiScelta\n======\n\nEstensioni sulle proprietà\
+        \n----\nProprietà | x-field-type\n-|-|\nsceltaId|primaryKey\nschemaId|primaryKey\n\
+        ptSlotDes|optional\n\n\nClasse di modello : BloccoRegolaDiScelta\n======\n\
+        \nEstensioni sulle proprietà\n----\nProprietà | x-field-type\n-|-|\nsceltaId|primaryKey\n\
+        blkId|primaryKey\nregsceId|optional\nextId|optional\n\n\nClasse di modello\
+        \ : ADRegolaDiScelta\n======\n\nEstensioni sulle proprietà\n----\nProprietà\
+        \ | x-field-type\n-|-|\nsceltaAdId|primaryKey\nregsceId|optional\nsceltaId|optional\n\
+        blkId|optional\n\n\nClasse di modello : RegUDRegolaDiScelta\n======\n\nEstensioni\
+        \ sulle proprietà\n----\nProprietà | x-field-type\n-|-|\nregUdId|primaryKey\n\
+        sceltaAdId|primaryKey\nregsceId|optional\n\n\nClasse di modello : UDRegolaDiScelta\n\
+        ======\n\nEstensioni sulle proprietà\n----\nProprietà | x-field-type\n-|-|\n\
+        udId|primaryKey\nregUdId|primaryKey\nsceltaAdId|primaryKey\nextId|optional\n\
+        \n\nClasse di modello : CondizioneBloccoRegolaDiScelta\n======\n\nEstensioni\
+        \ sulle proprietà\n----\nProprietà | x-field-type\n-|-|\nsceltaId|primaryKey\n\
+        regsceId|optional\nextId|optional\ncondBlkId|primaryKey\nblkId|primaryKey\n\
+        \n\nClasse di modello : CondizioneDiScelta\n======\n\nEstensioni sulle proprietà\
+        \n----\nProprietà | x-field-type\n-|-|\nsceltaId|primaryKey\nregsceId|optional\n\
+        extId|optional\n\n\nClasse di modello : CondizioneRegolaDiScelta\n======\n\
+        \nEstensioni sulle proprietà\n----\nProprietà | x-field-type\n-|-|\nsceltaId|primaryKey\n\
+        regsceId|optional\nextId|optional\ncondSceId|primaryKey\n\n\nClasse di modello\
+        \ : CondizioneDiScelta\n======\n\nEstensioni sulle proprietà\n----\nProprietà\
+        \ | x-field-type\n-|-|\nsceltaId|primaryKey\nregsceId|optional\nextId|optional\n\
+        \n\nClasse di modello : FiltroODRegolaDiScelta\n======\n\nEstensioni sulle\
+        \ proprietà\n----\nProprietà | x-field-type\n-|-|\nsceltaId|primaryKey\norId|primaryKey\n\
+        regsceId|optional\nextId|optional\n\n\nClasse di modello : FiltroANDRegolaDiScelta\n\
+        ======\n\nEstensioni sulle proprietà\n----\nProprietà | x-field-type\n-|-|\n\
+        sceltaId|primaryKey\norId|primaryKey\nandId|primaryKey\nregsceId|optional\n\
+        extId|optional\n"
+      operationId: "getRegolaDiSceltaConDettagli"
+      parameters:
+      - name: "regsceId"
+        in: "path"
+        description: "id univoco del regolamento di scelta"
+        required: true
+        type: "integer"
+        format: "int64"
+      - name: "sceltaId"
+        in: "path"
+        description: "id univoco della regola di scelta"
+        required: true
+        type: "integer"
+        format: "int64"
+      - name: "fields"
+        in: "query"
+        description: "specifica la lista dei campi opzionali (che non vengono recupeati\
+          \ di default);\nimpostando il valore `ALL` vengono mostrati tutti i campi.\
+          \ \n\nPer gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns*\
+          \  \nI dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello)\n\
+          \nEsempi\n* per il campo childObj con la poprietà childProp utilizzare la\
+          \ notazione `childProp.prop1`\n* Per visualizzare tutte le proprietà di\
+          \ childObj utilizzare la notazione `childProp.*`\n* Per visualizzare tutte\
+          \ le proprietà di childObj e di tutti i discendenti utilizzare la notazione\
+          \ `childProp.**`\n"
+        required: false
+        type: "string"
+      - name: "optionalFields"
+        in: "query"
+        description: "specifica la lista dei campi opzionali (che non vengono recupeati\
+          \ di default);\nimpostando il valore `ALL` vengono mostrati tutti i campi.\
+          \ \n\nPer gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns*\
+          \  \nI dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello)\n\
+          \nEsempi\n* per il campo childObj con la poprietà childProp utilizzare la\
+          \ notazione `childProp.prop1`\n* Per visualizzare tutte le proprietà di\
+          \ childObj utilizzare la notazione `childProp.*`\n* Per visualizzare tutte\
+          \ le proprietà di childObj e di tutti i discendenti utilizzare la notazione\
+          \ `childProp.**`\n"
+        required: false
+        type: "string"
+      responses:
+        "200":
+          description: "successful operation"
+          schema:
+            $ref: "#/definitions/RegolaDiSceltaConDettagli"
+      x-enabled-profiles:
+      - common-public-permissions:
+          kind: "ALL"
+          profiles:
+          - profile:
+              name: "ALL"
+              description: "Funzione Pubblica"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkDummy"
+                  description: "funzione che ritorna sempre true"
+  /regsce/{regsceId}/regole/{sceltaId}/AD/{sceltaAdId}/piani:
+    get:
+      tags:
+      - "piano"
+      summary: "informazioni sui piani collegati alla attività didattica delle regola\
+        \ di scelta"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>\n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n\
+        -|-|-\nx-cache-type|configuration|Risorsa di configurazione, la variazione\
+        \ è molto lenta, cache Http abilitata, cache server abilitata. Maggiori dettagli\
+        \ [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: USER_TECNICO**\n\nProfilo|Controllo| Funzione\n-|-|-\nUTENTE_TECNICO|funzione\
+        \ accessibile alle utenze tecniche per accessi ai servizi REST|Security.checkUserTecnico()\n\
+        \n\nClasse di modello : TestataPianoDiStudioPerAD\n======\n\nEstensioni sulle\
+        \ proprietà\n----\nProprietà | x-field-type\n-|-|\nstuId|primaryKey\npianoId|primaryKey\n\
+        staStuCod|optional\nmotStastuCod|optional\nstaMatCod|optional\nmotStamatCod|optional\n\
+        finregsceId|optional\ncoorte|optional\naaRevisioneId|optional\ncdsStuDes|optional\n\
+        pdsStuId|optional\npdsDes|optional\npdsSceId|optional\npdsSceDes|optional\n\
+        aaIscrId|optional\naptDes|optional\nextCod|optional\nsceltaId|optional\nsceltaAdId|optional\n\
+        \n\nClasse di modello : TestataPianoDiStudio\n======\n\nEstensioni sulle proprietà\
+        \n----\nProprietà | x-field-type\n-|-|\nstuId|primaryKey\npianoId|primaryKey\n\
+        staStuCod|optional\nmotStastuCod|optional\nstaMatCod|optional\nmotStamatCod|optional\n\
+        finregsceId|optional\ncoorte|optional\naaRevisioneId|optional\ncdsStuDes|optional\n\
+        pdsStuId|optional\npdsDes|optional\npdsSceId|optional\npdsSceDes|optional\n\
+        aaIscrId|optional\naptDes|optional\nextCod|optional\n"
+      operationId: "getPianiCollegatiSceltaAdId"
+      parameters:
+      - name: "regsceId"
+        in: "path"
+        description: "id univoco del regolamento di scelta"
+        required: true
+        type: "integer"
+        format: "int64"
+      - name: "sceltaId"
+        in: "path"
+        description: "id univoco della regola di scelta"
+        required: true
+        type: "integer"
+        format: "int64"
+      - name: "sceltaAdId"
+        in: "path"
+        description: "id univoco dell'attività inserita nella regola di scelta"
+        required: true
+        type: "integer"
+        format: "int64"
+      - name: "statiPiano"
+        in: "query"
+        description: "stati del piano; è possibile passare gli stati separati da virgola.\
+          \ Se non passato il valore viene impostato di default A,P,V"
+        required: false
+        type: "string"
+      - name: "fields"
+        in: "query"
+        description: "specifica la lista dei campi opzionali (che non vengono recupeati\
+          \ di default);\nimpostando il valore `ALL` vengono mostrati tutti i campi.\
+          \ \n\nPer gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns*\
+          \  \nI dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello)\n\
+          \nEsempi\n* per il campo childObj con la poprietà childProp utilizzare la\
+          \ notazione `childProp.prop1`\n* Per visualizzare tutte le proprietà di\
+          \ childObj utilizzare la notazione `childProp.*`\n* Per visualizzare tutte\
+          \ le proprietà di childObj e di tutti i discendenti utilizzare la notazione\
+          \ `childProp.**`\n"
+        required: false
+        type: "string"
+      - name: "optionalFields"
+        in: "query"
+        description: "specifica la lista dei campi opzionali (che non vengono recupeati\
+          \ di default);\nimpostando il valore `ALL` vengono mostrati tutti i campi.\
+          \ \n\nPer gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns*\
+          \  \nI dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello)\n\
+          \nEsempi\n* per il campo childObj con la poprietà childProp utilizzare la\
+          \ notazione `childProp.prop1`\n* Per visualizzare tutte le proprietà di\
+          \ childObj utilizzare la notazione `childProp.*`\n* Per visualizzare tutte\
+          \ le proprietà di childObj e di tutti i discendenti utilizzare la notazione\
+          \ `childProp.**`\n"
+        required: false
+        type: "string"
+      - name: "start"
+        in: "query"
+        description: "utilizzato insieme a `limit` per indicare la paginazione sui\
+          \ record; `start` indica il numero del primo record da caricare (se non\
+          \ indicato viene utilizzato 0)\n"
+        required: false
+        type: "integer"
+        format: "int32"
+      - name: "limit"
+        in: "query"
+        description: "utilizzato insieme a `start` per indicare la paginazione sui\
+          \ record, `limit` indica il numero di record da recuperare (a partire da\
+          \ `start`); \nse non indicato viene utilizzato 50, i valori consentiti vanno\
+          \ da 0 a 100\n"
+        required: false
+        type: "integer"
+        format: "int32"
+      - name: "order"
+        in: "query"
+        description: "consente di specificare un ordine per il recupero dei record.\
+          \ La sintassi è la seguente\n * +/- : specifica l'ordinamento (+ = ASC,\
+          \ - = DESC); se omesso viene utilizzato +\n * field : nome del campo da\
+          \ ordinare\n \n E' possibile indicare più campi separandoli da virgola (Es:\
+          \ +annoCorso,+adCod) \n"
+        required: false
+        type: "string"
+      responses:
+        "200":
+          description: "successful operation"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/TestataPianoDiStudioPerAD"
+      security:
+      - basicAuth: []
+      - jwt:
+        - "openid"
+      x-enabled-profiles:
+      - user-tecnico-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UTENTE_TECNICO"
+              description: "funzione accessibile alle utenze tecniche per accessi\
+                \ ai servizi REST"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkUserTecnico"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+  /regsce/{regsceId}/regole/{sceltaId}/piani:
+    get:
+      tags:
+      - "piano"
+      summary: "informazioni sui piani collegati alla regola di scelta"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>\n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n\
+        -|-|-\nx-cache-type|configuration|Risorsa di configurazione, la variazione\
+        \ è molto lenta, cache Http abilitata, cache server abilitata. Maggiori dettagli\
+        \ [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: USER_TECNICO**\n\nProfilo|Controllo| Funzione\n-|-|-\nUTENTE_TECNICO|funzione\
+        \ accessibile alle utenze tecniche per accessi ai servizi REST|Security.checkUserTecnico()\n\
+        \n\nClasse di modello : TestataPianoDiStudioPerRegola\n======\n\nEstensioni\
+        \ sulle proprietà\n----\nProprietà | x-field-type\n-|-|\nstuId|primaryKey\n\
+        pianoId|primaryKey\nstaStuCod|optional\nmotStastuCod|optional\nstaMatCod|optional\n\
+        motStamatCod|optional\nfinregsceId|optional\ncoorte|optional\naaRevisioneId|optional\n\
+        cdsStuDes|optional\npdsStuId|optional\npdsDes|optional\npdsSceId|optional\n\
+        pdsSceDes|optional\naaIscrId|optional\naptDes|optional\nextCod|optional\n\
+        sceltaId|optional\n\n\nClasse di modello : TestataPianoDiStudio\n======\n\n\
+        Estensioni sulle proprietà\n----\nProprietà | x-field-type\n-|-|\nstuId|primaryKey\n\
+        pianoId|primaryKey\nstaStuCod|optional\nmotStastuCod|optional\nstaMatCod|optional\n\
+        motStamatCod|optional\nfinregsceId|optional\ncoorte|optional\naaRevisioneId|optional\n\
+        cdsStuDes|optional\npdsStuId|optional\npdsDes|optional\npdsSceId|optional\n\
+        pdsSceDes|optional\naaIscrId|optional\naptDes|optional\nextCod|optional\n"
+      operationId: "getPianiCollegatiSceltaId"
+      parameters:
+      - name: "regsceId"
+        in: "path"
+        description: "id univoco del regolamento di scelta"
+        required: true
+        type: "integer"
+        format: "int64"
+      - name: "sceltaId"
+        in: "path"
+        description: "id univoco della regola di scelta"
+        required: true
+        type: "integer"
+        format: "int64"
+      - name: "statiPiano"
+        in: "query"
+        description: "stati del piano; è possibile passare gli stati separati da virgola.\
+          \ Se non passato il valore viene impostato di default A,P,V"
+        required: false
+        type: "string"
+      - name: "fields"
+        in: "query"
+        description: "specifica la lista dei campi opzionali (che non vengono recupeati\
+          \ di default);\nimpostando il valore `ALL` vengono mostrati tutti i campi.\
+          \ \n\nPer gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns*\
+          \  \nI dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello)\n\
+          \nEsempi\n* per il campo childObj con la poprietà childProp utilizzare la\
+          \ notazione `childProp.prop1`\n* Per visualizzare tutte le proprietà di\
+          \ childObj utilizzare la notazione `childProp.*`\n* Per visualizzare tutte\
+          \ le proprietà di childObj e di tutti i discendenti utilizzare la notazione\
+          \ `childProp.**`\n"
+        required: false
+        type: "string"
+      - name: "optionalFields"
+        in: "query"
+        description: "specifica la lista dei campi opzionali (che non vengono recupeati\
+          \ di default);\nimpostando il valore `ALL` vengono mostrati tutti i campi.\
+          \ \n\nPer gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns*\
+          \  \nI dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello)\n\
+          \nEsempi\n* per il campo childObj con la poprietà childProp utilizzare la\
+          \ notazione `childProp.prop1`\n* Per visualizzare tutte le proprietà di\
+          \ childObj utilizzare la notazione `childProp.*`\n* Per visualizzare tutte\
+          \ le proprietà di childObj e di tutti i discendenti utilizzare la notazione\
+          \ `childProp.**`\n"
+        required: false
+        type: "string"
+      - name: "start"
+        in: "query"
+        description: "utilizzato insieme a `limit` per indicare la paginazione sui\
+          \ record; `start` indica il numero del primo record da caricare (se non\
+          \ indicato viene utilizzato 0)\n"
+        required: false
+        type: "integer"
+        format: "int32"
+      - name: "limit"
+        in: "query"
+        description: "utilizzato insieme a `start` per indicare la paginazione sui\
+          \ record, `limit` indica il numero di record da recuperare (a partire da\
+          \ `start`); \nse non indicato viene utilizzato 50, i valori consentiti vanno\
+          \ da 0 a 100\n"
+        required: false
+        type: "integer"
+        format: "int32"
+      - name: "order"
+        in: "query"
+        description: "consente di specificare un ordine per il recupero dei record.\
+          \ La sintassi è la seguente\n * +/- : specifica l'ordinamento (+ = ASC,\
+          \ - = DESC); se omesso viene utilizzato +\n * field : nome del campo da\
+          \ ordinare\n \n E' possibile indicare più campi separandoli da virgola (Es:\
+          \ +annoCorso,+adCod) \n"
+        required: false
+        type: "string"
+      responses:
+        "200":
+          description: "successful operation"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/TestataPianoDiStudioPerRegola"
+      security:
+      - basicAuth: []
+      - jwt:
+        - "openid"
+      x-enabled-profiles:
+      - user-tecnico-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UTENTE_TECNICO"
+              description: "funzione accessibile alle utenze tecniche per accessi\
+                \ ai servizi REST"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkUserTecnico"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+  /regsce/{regsceId}/regole/{sceltaId}/piani/stats:
+    get:
+      tags:
+      - "piano"
+      summary: "statistiche dei piani collegati alla regola di scelta"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>fornisce le statistiche dei piani collegati\
+        \ alla regola di scelta\n\n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n\
+        -|-|-\nx-cache-type|configuration|Risorsa di configurazione, la variazione\
+        \ è molto lenta, cache Http abilitata, cache server abilitata. Maggiori dettagli\
+        \ [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: USER_TECNICO**\n\nProfilo|Controllo| Funzione\n-|-|-\nUserTecnicoMassivo|funzione\
+        \ massiva riservata ad utenti tecnici autorizzati|Security.checkMassiveGET()\n"
+      operationId: "getStatsPianiBySceltaId"
+      parameters:
+      - name: "regsceId"
+        in: "path"
+        description: "id univoco del regolamento di scelta"
+        required: true
+        type: "integer"
+        format: "int64"
+      - name: "sceltaId"
+        in: "path"
+        description: "id univoco della regola di scelta"
+        required: true
+        type: "integer"
+        format: "int64"
+      responses:
+        "200":
+          description: "Successful operation"
+          schema:
+            $ref: "#/definitions/StatStudenti"
+      security:
+      - basicAuth: []
+      - jwt:
+        - "openid"
+      x-enabled-profiles:
+      - user-tecnico-massive-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UserTecnicoMassivo"
+              description: "funzione massiva riservata ad utenti tecnici autorizzati"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkMassiveGET"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+  /regsce/{regsceId}/schemi:
+    get:
+      tags:
+      - "schema di piano"
+      summary: "informazioni sugli schemi di piano collegati al regolamento di scelta"
+      description: "\n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n-|-|-\n\
+        x-cache-type|configuration|Risorsa di configurazione, la variazione è molto\
+        \ lenta, cache Http abilitata, cache server abilitata. Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: ALL**\n\nProfilo|Controllo| Funzione\n-|-|-\nALL|Funzione Pubblica|Security.checkDummy()\n\
+        \n\nClasse di modello : SchemaDiPiano\n======\n\nEstensioni sulle proprietà\
+        \n----\nProprietà | x-field-type\n-|-|\nschemaId|primaryKey\npdsDes|optional\n\
+        condDes|optional\norientDes|optional\nprofDes|optional\naptDes|optional\n"
+      operationId: "getSchemiDiPiano"
+      parameters:
+      - name: "regsceId"
+        in: "path"
+        description: "id univoco del regolamento di scelta"
+        required: true
+        type: "integer"
+        format: "int64"
+      - name: "fields"
+        in: "query"
+        description: "specifica la lista dei campi opzionali (che non vengono recupeati\
+          \ di default);\nimpostando il valore `ALL` vengono mostrati tutti i campi.\
+          \ \n\nPer gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns*\
+          \  \nI dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello)\n\
+          \nEsempi\n* per il campo childObj con la poprietà childProp utilizzare la\
+          \ notazione `childProp.prop1`\n* Per visualizzare tutte le proprietà di\
+          \ childObj utilizzare la notazione `childProp.*`\n* Per visualizzare tutte\
+          \ le proprietà di childObj e di tutti i discendenti utilizzare la notazione\
+          \ `childProp.**`\n"
+        required: false
+        type: "string"
+      - name: "optionalFields"
+        in: "query"
+        description: "specifica la lista dei campi opzionali (che non vengono recupeati\
+          \ di default);\nimpostando il valore `ALL` vengono mostrati tutti i campi.\
+          \ \n\nPer gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns*\
+          \  \nI dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello)\n\
+          \nEsempi\n* per il campo childObj con la poprietà childProp utilizzare la\
+          \ notazione `childProp.prop1`\n* Per visualizzare tutte le proprietà di\
+          \ childObj utilizzare la notazione `childProp.*`\n* Per visualizzare tutte\
+          \ le proprietà di childObj e di tutti i discendenti utilizzare la notazione\
+          \ `childProp.**`\n"
+        required: false
+        type: "string"
+      - name: "order"
+        in: "query"
+        description: "consente di specificare un ordine per il recupero dei record.\
+          \ La sintassi è la seguente\n * +/- : specifica l'ordinamento (+ = ASC,\
+          \ - = DESC); se omesso viene utilizzato +\n * field : nome del campo da\
+          \ ordinare\n \n E' possibile indicare più campi separandoli da virgola (Es:\
+          \ +annoCorso,+adCod) \n"
+        required: false
+        type: "string"
+      - name: "filter"
+        in: "query"
+        description: "il parametro consente di applicare dei filtri alla classe di\
+          \ modello utilizzando il linguaggio  [RSQL](https://github.com/jirutka/rsql-parser).\n\
+          La lista degli operatori utilizzabili è disponibile [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosullerigherecuperate)\
+          \   \n   *NB* il filtro viene applicato DOPO aver recuperato i dati\n"
+        required: false
+        type: "string"
+      responses:
+        "200":
+          description: "successful operation"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/SchemaDiPiano"
+      x-enabled-profiles:
+      - common-public-permissions:
+          kind: "ALL"
+          profiles:
+          - profile:
+              name: "ALL"
+              description: "Funzione Pubblica"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkDummy"
+                  description: "funzione che ritorna sempre true"
+  /regsce/{regsceId}/schemi/{schemaId}:
+    get:
+      tags:
+      - "schema di piano"
+      summary: "informazioni sullo schema di piano selezionato"
+      description: "Viene restituito  l'oggetto `RegolamentoDiSceltaConDettagli` che\
+        \ contiene le seguenti entità (in relazione 1-n)\n\n* Schema di piano\n  *\
+        \ Regole di scelta\n    * Blocchi di scelta\n      * Attività didattiche dei\
+        \ blocchi\n        * Regole sulle UD\n    * Condizioni sulle regole\n    *\
+        \ Filtri sulle regole libere Da OD\n\n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n\
+        -|-|-\nx-cache-type|configuration|Risorsa di configurazione, la variazione\
+        \ è molto lenta, cache Http abilitata, cache server abilitata. Maggiori dettagli\
+        \ [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: ALL**\n\nProfilo|Controllo| Funzione\n-|-|-\nALL|Funzione Pubblica|Security.checkDummy()\n\
+        \n\nClasse di modello : SchemaDiPiano\n======\n\nEstensioni sulle proprietà\
+        \n----\nProprietà | x-field-type\n-|-|\nschemaId|primaryKey\npdsDes|optional\n\
+        condDes|optional\norientDes|optional\nprofDes|optional\naptDes|optional\n\n\
+        \nClasse di modello : RegolaDiSceltaSchemaConDettagli\n======\n\nEstensioni\
+        \ sulle proprietà\n----\nProprietà | x-field-type\n-|-|\nsceltaId|primaryKey\n\
+        abilFlg|optional\npesoRosaRist|optional\nassegnazionePostiFlg|optional\ndeliberaFlg|optional\n\
+        azzeraCfuFlg|optional\nparametriLogisticaFlg|optional\nnotaPre|optional\n\
+        notaPreEng|optional\nnotaPreVisPubblFlg|optional\nnotaPost|optional\nnotaPostEng|optional\n\
+        notaPostVisPubblFlg|optional\nextId|optional\nextCod|optional\nptSlotDes|optional\n\
+        \n\nClasse di modello : RegolaDiScelta\n======\n\nEstensioni sulle proprietà\
+        \n----\nProprietà | x-field-type\n-|-|\nsceltaId|primaryKey\nabilFlg|optional\n\
+        pesoRosaRist|optional\nassegnazionePostiFlg|optional\ndeliberaFlg|optional\n\
+        azzeraCfuFlg|optional\nparametriLogisticaFlg|optional\nnotaPre|optional\n\
+        notaPreEng|optional\nnotaPreVisPubblFlg|optional\nnotaPost|optional\nnotaPostEng|optional\n\
+        notaPostVisPubblFlg|optional\nextId|optional\nextCod|optional\n\n\nClasse\
+        \ di modello : BloccoRegolaDiScelta\n======\n\nEstensioni sulle proprietà\n\
+        ----\nProprietà | x-field-type\n-|-|\nsceltaId|primaryKey\nblkId|primaryKey\n\
+        regsceId|optional\nextId|optional\n\n\nClasse di modello : ADRegolaDiScelta\n\
+        ======\n\nEstensioni sulle proprietà\n----\nProprietà | x-field-type\n-|-|\n\
+        sceltaAdId|primaryKey\nregsceId|optional\nsceltaId|optional\nblkId|optional\n\
+        \n\nClasse di modello : RegUDRegolaDiScelta\n======\n\nEstensioni sulle proprietà\
+        \n----\nProprietà | x-field-type\n-|-|\nregUdId|primaryKey\nsceltaAdId|primaryKey\n\
+        regsceId|optional\n\n\nClasse di modello : UDRegolaDiScelta\n======\n\nEstensioni\
+        \ sulle proprietà\n----\nProprietà | x-field-type\n-|-|\nudId|primaryKey\n\
+        regUdId|primaryKey\nsceltaAdId|primaryKey\nextId|optional\n\n\nClasse di modello\
+        \ : CondizioneBloccoRegolaDiScelta\n======\n\nEstensioni sulle proprietà\n\
+        ----\nProprietà | x-field-type\n-|-|\nsceltaId|primaryKey\nregsceId|optional\n\
+        extId|optional\ncondBlkId|primaryKey\nblkId|primaryKey\n\n\nClasse di modello\
+        \ : CondizioneDiScelta\n======\n\nEstensioni sulle proprietà\n----\nProprietà\
+        \ | x-field-type\n-|-|\nsceltaId|primaryKey\nregsceId|optional\nextId|optional\n\
+        \n\nClasse di modello : CondizioneRegolaDiScelta\n======\n\nEstensioni sulle\
+        \ proprietà\n----\nProprietà | x-field-type\n-|-|\nsceltaId|primaryKey\nregsceId|optional\n\
+        extId|optional\ncondSceId|primaryKey\n\n\nClasse di modello : CondizioneDiScelta\n\
+        ======\n\nEstensioni sulle proprietà\n----\nProprietà | x-field-type\n-|-|\n\
+        sceltaId|primaryKey\nregsceId|optional\nextId|optional\n\n\nClasse di modello\
+        \ : FiltroODRegolaDiScelta\n======\n\nEstensioni sulle proprietà\n----\nProprietà\
+        \ | x-field-type\n-|-|\nsceltaId|primaryKey\norId|primaryKey\nregsceId|optional\n\
+        extId|optional\n\n\nClasse di modello : FiltroANDRegolaDiScelta\n======\n\n\
+        Estensioni sulle proprietà\n----\nProprietà | x-field-type\n-|-|\nsceltaId|primaryKey\n\
+        orId|primaryKey\nandId|primaryKey\nregsceId|optional\nextId|optional\n"
+      operationId: "getSchemaDiPianoConDettagli"
+      parameters:
+      - name: "regsceId"
+        in: "path"
+        description: "id univoco del regolamento di scelta"
+        required: true
+        type: "integer"
+        format: "int64"
+      - name: "schemaId"
+        in: "path"
+        description: "id univoco della regola di scelta"
+        required: true
+        type: "integer"
+        format: "int64"
+      - name: "fields"
+        in: "query"
+        description: "specifica la lista dei campi opzionali (che non vengono recupeati\
+          \ di default);\nimpostando il valore `ALL` vengono mostrati tutti i campi.\
+          \ \n\nPer gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns*\
+          \  \nI dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello)\n\
+          \nEsempi\n* per il campo childObj con la poprietà childProp utilizzare la\
+          \ notazione `childProp.prop1`\n* Per visualizzare tutte le proprietà di\
+          \ childObj utilizzare la notazione `childProp.*`\n* Per visualizzare tutte\
+          \ le proprietà di childObj e di tutti i discendenti utilizzare la notazione\
+          \ `childProp.**`\n"
+        required: false
+        type: "string"
+      - name: "optionalFields"
+        in: "query"
+        description: "specifica la lista dei campi opzionali (che non vengono recupeati\
+          \ di default);\nimpostando il valore `ALL` vengono mostrati tutti i campi.\
+          \ \n\nPer gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns*\
+          \  \nI dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello)\n\
+          \nEsempi\n* per il campo childObj con la poprietà childProp utilizzare la\
+          \ notazione `childProp.prop1`\n* Per visualizzare tutte le proprietà di\
+          \ childObj utilizzare la notazione `childProp.*`\n* Per visualizzare tutte\
+          \ le proprietà di childObj e di tutti i discendenti utilizzare la notazione\
+          \ `childProp.**`\n"
+        required: false
+        type: "string"
+      responses:
+        "200":
+          description: "successful operation"
+          schema:
+            $ref: "#/definitions/SchemaDiPianoConDettagli"
+      x-enabled-profiles:
+      - common-public-permissions:
+          kind: "ALL"
+          profiles:
+          - profile:
+              name: "ALL"
+              description: "Funzione Pubblica"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkDummy"
+                  description: "funzione che ritorna sempre true"
+  /regsce/{regsceId}/schemi/{schemaId}/piani/stats:
+    get:
+      tags:
+      - "piano"
+      summary: "statistiche dei piani collegati allo schema di piano"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>fornisce le statistiche dei piani collegati\
+        \ allo schema di piano\n\n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n\
+        -|-|-\nx-cache-type|configuration|Risorsa di configurazione, la variazione\
+        \ è molto lenta, cache Http abilitata, cache server abilitata. Maggiori dettagli\
+        \ [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: USER_TECNICO**\n\nProfilo|Controllo| Funzione\n-|-|-\nUserTecnicoMassivo|funzione\
+        \ massiva riservata ad utenti tecnici autorizzati|Security.checkMassiveGET()\n"
+      operationId: "getStatsPianiBySchemaId"
+      parameters:
+      - name: "regsceId"
+        in: "path"
+        description: "id univoco del regolamento di scelta"
+        required: true
+        type: "integer"
+        format: "int64"
+      - name: "schemaId"
+        in: "path"
+        description: "id univoco della regola di scelta"
+        required: true
+        type: "integer"
+        format: "int64"
+      responses:
+        "200":
+          description: "Successful operation"
+          schema:
+            $ref: "#/definitions/StatStudenti"
+      security:
+      - basicAuth: []
+      - jwt:
+        - "openid"
+      x-enabled-profiles:
+      - user-tecnico-massive-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UserTecnicoMassivo"
+              description: "funzione massiva riservata ad utenti tecnici autorizzati"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkMassiveGET"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+  /regsceFull/{regsceId}:
+    get:
+      tags:
+      - "massivo"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>recupera un oggetto `RegolamentoDiSceltaConDettagli`\
+        \ con la seguente struttura (in relazione 1-n)\n* Testata regolamento di scelta\n\
+        \  * Schemi di piano\n    * Regole di scelta\n      * Blocchi di scelta\n\
+        \        * Attività didattiche dei blocchi\n          * Regole sulle UD\n\
+        \      * Condizioni sulle regole\n      * Filtri sulle regole libere Da OD\n\
+        \n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n-|-|-\nx-cache-type|configuration|Risorsa\
+        \ di configurazione, la variazione è molto lenta, cache Http abilitata, cache\
+        \ server abilitata. Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: USER_TECNICO**\n\nProfilo|Controllo| Funzione\n-|-|-\nUserTecnicoMassivo|funzione\
+        \ massiva riservata ad utenti tecnici autorizzati|Security.checkMassiveGET()\n\
+        \n\nClasse di modello : RegolamentoDiSceltaConDettagli\n======\n\nEstensioni\
+        \ sulle proprietà\n----\nProprietà | x-field-type\n-|-|\nregsceId|primaryKey\n\
+        dataUltimaModifica|optional\ndataInserimento|optional\nfinesteDiCompilazione|optional\n\
+        \n\nClasse di modello : RegolamentoDiScelta\n======\n\nEstensioni sulle proprietà\
+        \n----\nProprietà | x-field-type\n-|-|\nregsceId|primaryKey\ndataUltimaModifica|optional\n\
+        dataInserimento|optional\n\n\nClasse di modello : FinestraRegolamentoDiScelta\n\
+        ======\n\nEstensioni sulle proprietà\n----\nProprietà | x-field-type\n-|-|\n\
+        finregsceId|primaryKey\nextId|optional\n\n\nClasse di modello : SchemaDiPiano\n\
+        ======\n\nEstensioni sulle proprietà\n----\nProprietà | x-field-type\n-|-|\n\
+        schemaId|primaryKey\npdsDes|optional\ncondDes|optional\norientDes|optional\n\
+        profDes|optional\naptDes|optional\n\n\nClasse di modello : RegolaDiSceltaSchemaConDettagli\n\
+        ======\n\nEstensioni sulle proprietà\n----\nProprietà | x-field-type\n-|-|\n\
+        sceltaId|primaryKey\nabilFlg|optional\npesoRosaRist|optional\nassegnazionePostiFlg|optional\n\
+        deliberaFlg|optional\nazzeraCfuFlg|optional\nparametriLogisticaFlg|optional\n\
+        notaPre|optional\nnotaPreEng|optional\nnotaPreVisPubblFlg|optional\nnotaPost|optional\n\
+        notaPostEng|optional\nnotaPostVisPubblFlg|optional\nextId|optional\nextCod|optional\n\
+        ptSlotDes|optional\n\n\nClasse di modello : RegolaDiScelta\n======\n\nEstensioni\
+        \ sulle proprietà\n----\nProprietà | x-field-type\n-|-|\nsceltaId|primaryKey\n\
+        abilFlg|optional\npesoRosaRist|optional\nassegnazionePostiFlg|optional\ndeliberaFlg|optional\n\
+        azzeraCfuFlg|optional\nparametriLogisticaFlg|optional\nnotaPre|optional\n\
+        notaPreEng|optional\nnotaPreVisPubblFlg|optional\nnotaPost|optional\nnotaPostEng|optional\n\
+        notaPostVisPubblFlg|optional\nextId|optional\nextCod|optional\n\n\nClasse\
+        \ di modello : BloccoRegolaDiScelta\n======\n\nEstensioni sulle proprietà\n\
+        ----\nProprietà | x-field-type\n-|-|\nsceltaId|primaryKey\nblkId|primaryKey\n\
+        regsceId|optional\nextId|optional\n\n\nClasse di modello : ADRegolaDiScelta\n\
+        ======\n\nEstensioni sulle proprietà\n----\nProprietà | x-field-type\n-|-|\n\
+        sceltaAdId|primaryKey\nregsceId|optional\nsceltaId|optional\nblkId|optional\n\
+        \n\nClasse di modello : RegUDRegolaDiScelta\n======\n\nEstensioni sulle proprietà\
+        \n----\nProprietà | x-field-type\n-|-|\nregUdId|primaryKey\nsceltaAdId|primaryKey\n\
+        regsceId|optional\n\n\nClasse di modello : UDRegolaDiScelta\n======\n\nEstensioni\
+        \ sulle proprietà\n----\nProprietà | x-field-type\n-|-|\nudId|primaryKey\n\
+        regUdId|primaryKey\nsceltaAdId|primaryKey\nextId|optional\n\n\nClasse di modello\
+        \ : CondizioneBloccoRegolaDiScelta\n======\n\nEstensioni sulle proprietà\n\
+        ----\nProprietà | x-field-type\n-|-|\nsceltaId|primaryKey\nregsceId|optional\n\
+        extId|optional\ncondBlkId|primaryKey\nblkId|primaryKey\n\n\nClasse di modello\
+        \ : CondizioneDiScelta\n======\n\nEstensioni sulle proprietà\n----\nProprietà\
+        \ | x-field-type\n-|-|\nsceltaId|primaryKey\nregsceId|optional\nextId|optional\n\
+        \n\nClasse di modello : CondizioneRegolaDiScelta\n======\n\nEstensioni sulle\
+        \ proprietà\n----\nProprietà | x-field-type\n-|-|\nsceltaId|primaryKey\nregsceId|optional\n\
+        extId|optional\ncondSceId|primaryKey\n\n\nClasse di modello : CondizioneDiScelta\n\
+        ======\n\nEstensioni sulle proprietà\n----\nProprietà | x-field-type\n-|-|\n\
+        sceltaId|primaryKey\nregsceId|optional\nextId|optional\n\n\nClasse di modello\
+        \ : FiltroODRegolaDiScelta\n======\n\nEstensioni sulle proprietà\n----\nProprietà\
+        \ | x-field-type\n-|-|\nsceltaId|primaryKey\norId|primaryKey\nregsceId|optional\n\
+        extId|optional\n\n\nClasse di modello : FiltroANDRegolaDiScelta\n======\n\n\
+        Estensioni sulle proprietà\n----\nProprietà | x-field-type\n-|-|\nsceltaId|primaryKey\n\
+        orId|primaryKey\nandId|primaryKey\nregsceId|optional\nextId|optional\n"
+      operationId: "getRegolamentoDiSceltaConDettagli"
+      parameters:
+      - name: "regsceId"
+        in: "path"
+        description: "id univoco del regolamento di scelta"
+        required: true
+        type: "integer"
+        format: "int64"
+      - name: "order"
+        in: "query"
+        description: "consente di specificare un ordine per il recupero dei record.\
+          \ La sintassi è la seguente\n * +/- : specifica l'ordinamento (+ = ASC,\
+          \ - = DESC); se omesso viene utilizzato +\n * field : nome del campo da\
+          \ ordinare\n \n E' possibile indicare più campi separandoli da virgola (Es:\
+          \ +annoCorso,+adCod) \n"
+        required: false
+        type: "string"
+      - name: "fields"
+        in: "query"
+        description: "specifica la lista dei campi opzionali (che non vengono recupeati\
+          \ di default);\nimpostando il valore `ALL` vengono mostrati tutti i campi.\
+          \ \n\nPer gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns*\
+          \  \nI dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello)\n\
+          \nEsempi\n* per il campo childObj con la poprietà childProp utilizzare la\
+          \ notazione `childProp.prop1`\n* Per visualizzare tutte le proprietà di\
+          \ childObj utilizzare la notazione `childProp.*`\n* Per visualizzare tutte\
+          \ le proprietà di childObj e di tutti i discendenti utilizzare la notazione\
+          \ `childProp.**`\n"
+        required: false
+        type: "string"
+      - name: "optionalFields"
+        in: "query"
+        description: "specifica la lista dei campi opzionali (che non vengono recupeati\
+          \ di default);\nimpostando il valore `ALL` vengono mostrati tutti i campi.\
+          \ \n\nPer gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns*\
+          \  \nI dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello)\n\
+          \nEsempi\n* per il campo childObj con la poprietà childProp utilizzare la\
+          \ notazione `childProp.prop1`\n* Per visualizzare tutte le proprietà di\
+          \ childObj utilizzare la notazione `childProp.*`\n* Per visualizzare tutte\
+          \ le proprietà di childObj e di tutti i discendenti utilizzare la notazione\
+          \ `childProp.**`\n"
+        required: false
+        type: "string"
+      - name: "filter"
+        in: "query"
+        description: "il parametro consente di applicare dei filtri alla classe di\
+          \ modello utilizzando il linguaggio  [RSQL](https://github.com/jirutka/rsql-parser).\n\
+          La lista degli operatori utilizzabili è disponibile [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosullerigherecuperate)\
+          \   \n   *NB* il filtro viene applicato DOPO aver recuperato i dati\n"
+        required: false
+        type: "string"
+      responses:
+        "200":
+          description: "successful operation"
+          schema:
+            $ref: "#/definitions/RegolamentoDiSceltaConDettagli"
+      security:
+      - basicAuth: []
+      - jwt:
+        - "openid"
+      x-enabled-profiles:
+      - user-tecnico-massive-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UserTecnicoMassivo"
+              description: "funzione massiva riservata ad utenti tecnici autorizzati"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkMassiveGET"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+  /regsceFull/{regsceId}/regprop:
+    get:
+      tags:
+      - "massivo"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>Recupera l'oggetto `RegolamentoDiPropedeuticita`\
+        \ collegato al regolamento di scelta.  \nIl recupero avviene con la stessa\
+        \ chiave del regolamento di scelta (cds_id,aa_ord_id,coorte,anno_revisione).\
+        \ \n\nL'oggetto ritornato è composto dalla seguente struttura (in relazione\
+        \ 1-n)\n - Testata del regolamento di propedeuticità\n  - Vincoli del regolamento\
+        \ di propedeuticità\n    - Regole OR \n      - Regole AND\n        - Elementi\
+        \ Propedeutici\n\n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n-|-|-\n\
+        x-cache-type|configuration|Risorsa di configurazione, la variazione è molto\
+        \ lenta, cache Http abilitata, cache server abilitata. Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: USER_TECNICO**\n\nProfilo|Controllo| Funzione\n-|-|-\nUserTecnicoMassivo|funzione\
+        \ massiva riservata ad utenti tecnici autorizzati|Security.checkMassiveGET()\n\
+        \n\nClasse di modello : RegolamentoDiPropepeduticita\n======\n\nEstensioni\
+        \ sulle proprietà\n----\nProprietà | x-field-type\n-|-|\nregpropId|primaryKey\n\
+        extId|optional\n\n\nClasse di modello : VincoloDiPropedeuticita\n======\n\n\
+        Estensioni sulle proprietà\n----\nProprietà | x-field-type\n-|-|\nregpropVincId|primaryKey\n\
+        extId|optional\n\n\nClasse di modello : RegolaPropOR\n======\n\nEstensioni\
+        \ sulle proprietà\n----\nProprietà | x-field-type\n-|-|\nregpropOrId|primaryKey\n\
+        \n\nClasse di modello : RegolaPropAND\n======\n\nEstensioni sulle proprietà\
+        \n----\nProprietà | x-field-type\n-|-|\nregpropAndId|primaryKey\n\n\nClasse\
+        \ di modello : RegolaPropFiglio\n======\n\nEstensioni sulle proprietà\n----\n\
+        Proprietà | x-field-type\n-|-|\nregpropPropId|primaryKey\n"
+      operationId: "getRegolamentoDiPropedeuticitaPerREGSCE"
+      parameters:
+      - name: "regsceId"
+        in: "path"
+        description: "id univoco del regolamento di scelta"
+        required: true
+        type: "integer"
+        format: "int64"
+      - name: "fields"
+        in: "query"
+        description: "specifica la lista dei campi opzionali (che non vengono recupeati\
+          \ di default);\nimpostando il valore `ALL` vengono mostrati tutti i campi.\
+          \ \n\nPer gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns*\
+          \  \nI dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello)\n\
+          \nEsempi\n* per il campo childObj con la poprietà childProp utilizzare la\
+          \ notazione `childProp.prop1`\n* Per visualizzare tutte le proprietà di\
+          \ childObj utilizzare la notazione `childProp.*`\n* Per visualizzare tutte\
+          \ le proprietà di childObj e di tutti i discendenti utilizzare la notazione\
+          \ `childProp.**`\n"
+        required: false
+        type: "string"
+      - name: "optionalFields"
+        in: "query"
+        description: "specifica la lista dei campi opzionali (che non vengono recupeati\
+          \ di default);\nimpostando il valore `ALL` vengono mostrati tutti i campi.\
+          \ \n\nPer gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns*\
+          \  \nI dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello)\n\
+          \nEsempi\n* per il campo childObj con la poprietà childProp utilizzare la\
+          \ notazione `childProp.prop1`\n* Per visualizzare tutte le proprietà di\
+          \ childObj utilizzare la notazione `childProp.*`\n* Per visualizzare tutte\
+          \ le proprietà di childObj e di tutti i discendenti utilizzare la notazione\
+          \ `childProp.**`\n"
+        required: false
+        type: "string"
+      - name: "filter"
+        in: "query"
+        description: "il parametro consente di applicare dei filtri alla classe di\
+          \ modello utilizzando il linguaggio  [RSQL](https://github.com/jirutka/rsql-parser).\n\
+          La lista degli operatori utilizzabili è disponibile [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosullerigherecuperate)\
+          \   \n   *NB* il filtro viene applicato DOPO aver recuperato i dati\n"
+        required: false
+        type: "string"
+      responses:
+        "200":
+          description: "successful operation"
+          schema:
+            $ref: "#/definitions/RegolamentoDiPropedeuticitaConVincoli"
+      security:
+      - basicAuth: []
+      - jwt:
+        - "openid"
+      x-enabled-profiles:
+      - user-tecnico-massive-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UserTecnicoMassivo"
+              description: "funzione massiva riservata ad utenti tecnici autorizzati"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkMassiveGET"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+securityDefinitions:
+  basicAuth:
+    description: "Autenticazione tramite BASIC authentication. Questa modalità è disponibile\
+      \ se l'autenticazione su esse3 non usa shibboleth per il gruppo dell'utente"
+    type: "basic"
+  jwt:
+    description: "Autenticazione tramite OAUTH2, occorre configurare il parametro\
+      \ di configurazione di ESSE3 che indica il server OAUTH2 da utilizzare"
+    type: "oauth2"
+    authorizationUrl: "https://idp-idm.unimib.it/idp/profile/oidc/authorize"
+    flow: "implicit"
+    scopes:
+      openid: "informazioni sull'utente"
+definitions:
+  CondizioneDiScelta:
+    type: "object"
+    discriminator: "condizioneType"
+    properties:
+      sceltaId:
+        type: "integer"
+        format: "int64"
+        example: 1234
+        description: "id univoco della regola di scelta"
+        x-field-type: "primaryKey"
+      regsceId:
+        type: "integer"
+        format: "int64"
+        example: 123
+        description: "id univoco di definizione del regolamento di scelta"
+        x-field-type: "optional"
+      tipoCondCod:
+        type: "string"
+        description: "tipo di condizione, in valore viene decodificato sui campi valDes*\
+          \ (\nA => Attività didattiche;\nB => Blocchi della stessa regola;\nP =>\
+          \ provenienza dal primo livello (3-2);\nR => regola di scelta;\nS => condizione\
+          \ SQL)\n"
+        enum:
+        - "A"
+        - "B"
+        - "P"
+        - "R"
+        - "S"
+      valSelId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "id del valore selezionato"
+      valSelCod:
+        type: "string"
+        example: "1"
+        description: "codice del valore selezionato"
+      valSelDes:
+        type: "string"
+        example: "1"
+        description: "descrizione del valore selezionato"
+      notFlg:
+        type: "integer"
+        format: "int32"
+        example: 0
+        description: "flag che consente di negare la condizione"
+        minimum: 0.0
+        maximum: 1.0
+      extId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "id univoco della condizione della regola di scelta di un eventuale\
+          \ sistema esterno"
+        x-field-type: "optional"
+    x-model-sub-package: "piani.v1"
+    x-model-sub-path: "piani/v1"
+  RegolaPropAND:
+    type: "object"
+    properties:
+      regpropAndId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "id univoco del della regola AND"
+        x-field-type: "primaryKey"
+      regpropOrId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "id univoco del della regola OR"
+      regpropVincId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "id univoco del vincolo di propedeuticità"
+      regpropId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "id univoco del regolamento di propedeuticità"
+      tipoVincoloRegola:
+        type: "string"
+        example: "NUM_AF"
+        description: "per poter soddisfare la regola occorre che venga rispettato\
+          \ il tipo di vincolo indicato \n(NUM_AD => Numero di Attività Formative\
+          \ da superare (tra quelle possibili); \n TUTTE_AD => vanno superate tutte\
+          \ le attività formative elencate; \n PESO => Peso minimo valido)\n"
+        enum:
+        - "NUM_AD"
+        - "TUTTE_AD"
+        - "PESO"
+        x-internal-name: "tipo_regprop_cod"
+      numAd:
+        type: "integer"
+        format: "int32"
+        example: 1
+        description: "nel caso il tipoVincoloRegola sia NUM_AF rappresenta il numero\
+          \ minimo di AD da superare"
+      peso:
+        type: "number"
+        format: "float"
+        example: 5.0
+        description: "nel caso il tipoVincoloRegola sia PESO rappresenta il numero\
+          \ minimo CFU da superare"
+      raggruppamentoFigli:
+        type: "integer"
+        format: "int32"
+        example: 1
+        description: "indica come gli elementi figli della regola vanno considerati\
+          \ (1 => OR; 2 => AND)"
+      figli:
+        type: "array"
+        items:
+          $ref: "#/definitions/RegolaPropFiglio"
+    x-layout-name: "REGPROP_VINC_AND_REST"
+    x-winsession-name: "p09/n_di_09_067_gest_proped_coorte"
+    x-model-sub-package: "offerta.v1"
+    x-model-sub-path: "offerta/v1"
+  RegolaPropFiglio:
+    type: "object"
+    properties:
+      regpropPropId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "id univoco del figlio della regola"
+        x-field-type: "primaryKey"
+      regpropAndId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "id univoco del figlio della regola"
+      tipoElemento:
+        type: "string"
+        example: "AC"
+        description: "tipo di elemento vincolato\n(AC => anno di corso, AD => Attività\
+          \ didattica, SET => Settore Scientifico Disciplinare)\n"
+        enum:
+        - "AC"
+        - "AD"
+        - "SET"
+        x-internal-name: "tipo_ele_regprop_cod"
+      chiaveADContestualizzata:
+        $ref: "#/definitions/ChiaveADContestualizzata"
+      annoCorso:
+        type: "integer"
+        format: "int32"
+        example: 1
+        description: "anno di corso nel caso in cui il tipoElemento sia AC"
+      settCod:
+        type: "string"
+        example: "123"
+        description: "codice del SSD nel caso in cui il tipoElemento sia SET"
+        maxLength: 10
+    x-layout-name: "REGPROP_VINC_PROP_REST"
+    x-winsession-name: "p09/n_di_09_067_gest_proped_coorte"
+    x-model-sub-package: "offerta.v1"
+    x-mapping-fields:
+      chiaveADContestualizzata:
+        cdsId: "adpdsord_cds_id"
+        cdsCod: "adpdsord_cds_cod"
+        cdsDes: "adpdsord_cds_des"
+        aaOrdId: "adpdsord_aa_ord_id"
+        aaOrdCod: "adpdsord_cdsord_cod"
+        aaOrdDes: "adpdsord_cdsord_des"
+        pdsId: "adpdsord_pds_id"
+        pdsCod: "adpdsord_pds_cod"
+        pdsDes: "adpdsord_pds_des"
+        aaOffId: "adpdsord_aa_off_id"
+        adId: "adpdsord_ad_id"
+        adCod: "adpdsord_ad_cod"
+        adDes: "adpdsord_ad_des"
+    x-model-sub-path: "offerta/v1"
+  CondizioneBloccoRegolaDiScelta:
+    allOf:
+    - $ref: "#/definitions/CondizioneDiScelta"
+    - type: "object"
+      properties:
+        condBlkId:
+          type: "integer"
+          format: "int64"
+          description: "id progressivo della condizione all'interno della regola di\
+            \ scelta"
+          x-field-type: "primaryKey"
+        blkId:
+          type: "integer"
+          format: "int32"
+          example: 1
+          description: "id progressivo all'interno della regola di scelta del numero\
+            \ del blocco"
+          x-field-type: "primaryKey"
+        manualeFlg:
+          type: "integer"
+          format: "int32"
+          example: 1
+          description: "indica se la condizione è stata inserita dall'utete (manualeFlg=1)\
+            \ oppure dal sistema (manualeFlg=0)"
+          minimum: 0.0
+          maximum: 1.0
+    x-layout-name: "REGSCE_COND_BLK_REST"
+    x-winsession-name: "p08/n_di_08_015_regole_di_scelta_new"
+    x-model-sub-package: "piani.v1"
+    x-model-sub-path: "piani/v1"
+  RegolaDiSceltaConSchemi:
+    allOf:
+    - $ref: "#/definitions/RegolaDiScelta"
+    - type: "object"
+      properties:
+        schemi:
+          type: "array"
+          items:
+            $ref: "#/definitions/SchemaDiPianoRegolaDiScelta"
+    x-model-sub-package: "piani.v1"
+    x-model-sub-path: "piani/v1"
+  RegolaPropOR:
+    type: "object"
+    properties:
+      regpropOrId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "id univoco del della regola OR"
+        x-field-type: "primaryKey"
+      regpropVincId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "id univoco del vincolo di propedeuticità"
+      regpropId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "id univoco del regolamento di propedeuticità"
+      des:
+        type: "string"
+        example: "123"
+        description: "descrizione della regola in OR"
+        maxLength: 10
+      regolePropAND:
+        type: "array"
+        items:
+          $ref: "#/definitions/RegolaPropAND"
+    x-layout-name: "REGPROP_VINC_OR_REST"
+    x-winsession-name: "p09/n_di_09_067_gest_proped_coorte"
+    x-model-sub-package: "offerta.v1"
+    x-model-sub-path: "offerta/v1"
+  FinestraRegolamentoDiScelta:
+    type: "object"
+    properties:
+      finregsceId:
+        type: "integer"
+        format: "int64"
+        example: 1222
+        description: "id della finestra del regolamento di scelta"
+        x-field-type: "primaryKey"
+      regsceId:
+        type: "integer"
+        format: "int64"
+        example: 123
+        description: "id univoco di definizione del regolamento di scelta"
+      tipoFinestra:
+        type: "string"
+        description: "tipo di finestra di ricompilazione"
+        x-internal-name: "tipo_finregsce_cod"
+      dataInizio:
+        type: "string"
+        example: "15/10/2015"
+        description: "data di inizio validità dello schema (DD/MM/YYYY), se nulla\
+          \ lo schema risulta sempre valido"
+        minLength: 10
+        maxLength: 10
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+        x-internal-name: "data_ini"
+      dataFine:
+        type: "string"
+        example: "15/10/2015"
+        description: "data di fine validità dello schema (DD/MM/YYYY), se nulla lo\
+          \ schema risulta sempre valido"
+        minLength: 10
+        maxLength: 10
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+        x-internal-name: "data_fin"
+      extId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "id univoco della finestra del regolamento di scelta di un eventuale\
+          \ sistema esterno"
+        x-field-type: "optional"
+    x-layout-name: "REGSCE_FIN_REST"
+    x-winsession-name: "p08/n_di_08_015_regole_di_scelta_new"
+    x-model-sub-package: "piani.v1"
+    x-model-sub-path: "piani/v1"
+  DettaglioErrore:
+    type: "object"
+    properties:
+      statusCode:
+        type: "integer"
+        format: "int32"
+        example: 200
+        description: "Http Status Code"
+      retCode:
+        type: "integer"
+        format: "int32"
+        example: -1
+        description: "codice di errore"
+      retErrMsg:
+        type: "string"
+        example: "Parametri non corretti"
+        description: "descrizione dell'errore"
+      errDetails:
+        type: "array"
+        items:
+          $ref: "#/definitions/DettaglioErroreAggiuntivo"
+    x-model-sub-package: "frk.v1"
+    x-model-sub-path: "frk/v1"
+  RegolamentoDiPropedeuticitaConVincoli:
+    allOf:
+    - $ref: "#/definitions/RegolamentoDiPropepeduticita"
+    - type: "object"
+      required:
+      - "vincoli"
+      properties:
+        vincoli:
+          type: "array"
+          items:
+            $ref: "#/definitions/VincoloDiPropedeuticita"
+    x-model-sub-package: "offerta.v1"
+    x-model-sub-path: "offerta/v1"
+  TestataPianoDiStudio:
+    type: "object"
+    discriminator: "typeTestataPianodiStudio"
+    properties:
+      stuId:
+        type: "integer"
+        format: "int64"
+        example: 123
+        description: "id della carriera dello studente"
+        x-field-type: "primaryKey"
+      pianoId:
+        type: "integer"
+        format: "int32"
+        example: 1
+        description: "progressivo del piano di studio per la carriera dello studente"
+        x-field-type: "primaryKey"
+      staStuCod:
+        type: "string"
+        example: "A"
+        description: "stato dello studente"
+        x-field-type: "optional"
+      motStastuCod:
+        type: "string"
+        example: "ATT"
+        description: "motivo dello stato dello studente"
+        x-field-type: "optional"
+      staMatCod:
+        type: "string"
+        example: "A"
+        description: "stato della matricola"
+        x-field-type: "optional"
+      motStamatCod:
+        type: "string"
+        example: "IMM"
+        description: "motivo dello stato della matricola"
+        x-field-type: "optional"
+      matId:
+        type: "integer"
+        format: "int64"
+        example: 123
+        description: "id del tratto di carriera a cui si riferisce il piano di studio"
+      regsceId:
+        type: "integer"
+        format: "int64"
+        example: 122
+        description: "id del regolamento di scelta collegato al piano, vale solo per\
+          \ i piani standard"
+      schemaId:
+        type: "integer"
+        format: "int64"
+        example: 122
+        description: "id dello schema di piano utilizzato per la compilazione del\
+          \ piano standard"
+      finregsceId:
+        type: "integer"
+        format: "int64"
+        example: 122
+        description: "id della finestra di compilazione in cui è stato compilato il\
+          \ piano"
+        x-field-type: "optional"
+      stato:
+        type: "string"
+        example: "A"
+        description: "stato del piano (B => Bozza, P => Proposto, V => in Valutuazione,\
+          \ A => Approvato, R => Respinto, X => Annullato)"
+        enum:
+        - "B"
+        - "P"
+        - "V"
+        - "A"
+        - "R"
+        - "X"
+        x-internal-name: "sta_piano_cod"
+      statoDes:
+        type: "string"
+        description: "descrizione dello stato del piano"
+        x-internal-name: "sta_piano_des"
+      dataUltimaVarStato:
+        type: "string"
+        example: "15/10/2015"
+        description: "data di ultima variazione dello stato del piano"
+        minLength: 10
+        maxLength: 10
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+        x-internal-name: "data_var"
+      tipoPiano:
+        type: "string"
+        example: "I"
+        description: "tipo di piano (S => Standard, I => Individuale)"
+        enum:
+        - "S"
+        - "I"
+        x-internal-name: "tip_piano"
+      statutarioFlg:
+        type: "integer"
+        format: "int32"
+        example: 0
+        description: "indica se il piano è statutario oppure no"
+        minimum: 0.0
+        maximum: 1.0
+        x-internal-name: "statu_flg"
+      coorte:
+        type: "integer"
+        format: "int32"
+        example: 2012
+        description: "anno di coorte su cui è definito il regolamento di scelta (nel\
+          \ caso di piani standard)"
+        x-field-type: "optional"
+        x-internal-name: "aa_reg_id"
+      aaRevisioneId:
+        type: "integer"
+        format: "int32"
+        example: 2012
+        description: "anno di revisione su cui è definito il regolamento di scelta"
+        x-field-type: "optional"
+        x-internal-name: "aa_reg_id"
+      cdsStuId:
+        type: "integer"
+        format: "int64"
+        example: 1223
+        description: "id del corso di studio di iscrizione dello studente al momento\
+          \ della  compilazione del piano"
+        x-internal-name: "cds_id"
+      cdsStuCod:
+        type: "string"
+        example: "GEN"
+        description: "codice del corso di iscrizione dello studente al momento della\
+          \ compilazione del piano"
+        x-internal-name: "cds_stu_cod"
+      cdsStuDes:
+        type: "string"
+        example: "percorso generico"
+        description: "descrizione del corso di iscrizione dello studente al momento\
+          \ della compilazione del piano"
+        x-field-type: "optional"
+        x-internal-name: "cds_stu_des"
+      aaOrdStuId:
+        type: "integer"
+        format: "int64"
+        example: 1223
+        description: "id del corso di studio di iscrizione dello studente al momento\
+          \ della  compilazione del piano"
+        x-internal-name: "aa_ord_id"
+      pdsStuId:
+        type: "integer"
+        format: "int64"
+        example: 123
+        description: "id del percorso di iscrizione dello studente al momento della\
+          \ compilazione del piano"
+        x-field-type: "optional"
+        x-internal-name: "pds_id"
+      pdsStuCod:
+        type: "string"
+        example: "GEN"
+        description: "codice del percorso di iscrizione dello studente al momento\
+          \ della compilazione del piano"
+        x-internal-name: "pds_stu_cod"
+      pdsDes:
+        type: "string"
+        example: "percorso generico"
+        description: "descrizione del percorso di iscrizione dello studente al momento\
+          \ della compilazione del piano"
+        x-field-type: "optional"
+        x-internal-name: "pds_stu_des"
+      pdsSceId:
+        type: "integer"
+        format: "int64"
+        example: 123
+        description: "id del percorso di compilazione del piano (coincide con quello\
+          \ dello schema di piano)"
+        x-field-type: "optional"
+      pdsSceCod:
+        type: "string"
+        example: "GEN"
+        description: "codice del percorso di compilazione del piano (coincide con\
+          \ quello dello schema di piano)"
+      pdsSceDes:
+        type: "string"
+        example: "percorso generico"
+        description: "descrizione del percorso di compilazione del piano (coincide\
+          \ con quello dello schema di piano)"
+        x-field-type: "optional"
+      aaDefId:
+        type: "integer"
+        format: "int32"
+        example: 2012
+        description: "anno di definizione del piano"
+        x-internal-name: "aa_att_id"
+      aaIscrId:
+        type: "integer"
+        format: "int32"
+        example: 2012
+        description: "anno di iscrizione dello studente nella queale è stata eseguita\
+          \ la compilazione del piano standard"
+        x-field-type: "optional"
+        x-internal-name: "aa_att_id"
+      aptId:
+        type: "integer"
+        format: "int64"
+        example: 122
+        description: "id dell'alternativa di part time utilizzata per la compilazione\
+          \ del piano"
+      aptCod:
+        type: "string"
+        example: "B2"
+        description: "codice dell'alternativa di part time utilizzata per la compilazione\
+          \ del piano"
+      aptDes:
+        type: "string"
+        example: "Part Time al 50%"
+        description: "descrizione dell'alternativa di part time utilizzata per la\
+          \ compilazione del piano"
+        x-field-type: "optional"
+      aaUltimaAttuazioneId:
+        type: "integer"
+        format: "int32"
+        example: 2012
+        description: "anno di ultima attuazione del piano"
+        x-internal-name: "aa_att_id"
+      dataUltimaAttuazione:
+        type: "string"
+        example: "15/10/2015"
+        description: "data di ultima attuazione del piano"
+        minLength: 10
+        maxLength: 10
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+        x-internal-name: "data_att"
+      userUltimaAttuazione:
+        type: "string"
+        example: "m.rossi"
+        description: "id dell'utente che ha eseguito l'ultima attuazione del piano"
+        x-internal-name: "usr_att_id"
+      userControllo:
+        type: "string"
+        example: "m.rossi"
+        description: "utente che ha effettuato il controllo del piano nel caso di\
+          \ approvazione"
+        x-internal-name: "usr_controllo_id"
+      notaControllo:
+        type: "string"
+        example: "per approvare il piano occorre sostituire l'attività X con l'attività\
+          \ Y"
+        description: "nota che ha inserito l'utente per la procedura di controllo\
+          \ piani"
+      noteSistema:
+        type: "string"
+        example: "Annullamento massivo per attivazione piani approvati"
+        description: "note sul piano inserite dal sistema in seguito a procedure automatiche"
+        x-internal-name: "nota"
+      noteUtente:
+        type: "string"
+        example: "note libere"
+        description: "note sul piano inserite dall'utente"
+        x-internal-name: "note"
+      extCod:
+        type: "string"
+        example: "per approvare il piano occorre sostituire l'attività X con l'attività\
+          \ Y"
+        description: "codice del piano nel sistema esterno"
+        x-field-type: "optional"
+        x-internal-name: "ext_piano_cod"
+    x-layout-name: "PIANI_REST"
+    x-winsession-name: "p11/n_di_11_001_piano_carriera_web"
+    x-model-sub-package: "piani.v1"
+    x-model-sub-path: "piani/v1"
+  DettaglioErroreAggiuntivo:
+    type: "object"
+    properties:
+      errorType:
+        type: "string"
+        example: "stackTrace"
+        description: "descrizione del tipo di errore aggiuntivo"
+      value:
+        type: "string"
+        example: "SocketTimeoutException...."
+        description: "descrizione dell'errore"
+      rawValue:
+        type: "string"
+        example: "SocketTimeoutException...."
+        description: "descrizione dell'errore"
+        x-field-type: "rawJson"
+    x-model-sub-package: "frk.v1"
+    x-model-sub-path: "frk/v1"
+  CondizioneRegolaDiScelta:
+    allOf:
+    - $ref: "#/definitions/CondizioneDiScelta"
+    - type: "object"
+      properties:
+        condSceId:
+          type: "integer"
+          format: "int64"
+          description: "id progressivo della condizione all'interno della regola di\
+            \ scelta"
+          x-field-type: "primaryKey"
+    x-layout-name: "REGSCE_COND_REST"
+    x-winsession-name: "p08/n_di_08_015_regole_di_scelta_new"
+    x-model-sub-package: "piani.v1"
+    x-model-sub-path: "piani/v1"
+  RegolaDiScelta:
+    type: "object"
+    discriminator: "tipoRegolaDiScelta"
+    properties:
+      sceltaId:
+        type: "integer"
+        format: "int64"
+        example: 1234
+        description: "id univoco della regola di scelta"
+        x-field-type: "primaryKey"
+      regsceId:
+        type: "integer"
+        format: "int64"
+        example: 123
+        description: "id univoco di definizione del regolamento di scelta"
+      sceId:
+        type: "integer"
+        format: "int32"
+        example: 12
+        description: "id progressivo all'interno del regolamento di scelta per la\
+          \ regola"
+      ordNum:
+        type: "integer"
+        format: "int32"
+        example: 12
+        description: "ordine di visualizzazione della regola all'interno dello schema\
+          \ di piano"
+      des:
+        type: "string"
+        example: "Descrizione della regola di scelta"
+        description: "descrizione della regola di scelta"
+      desEng:
+        type: "string"
+        example: "Descrizione inglese della regola di scelta"
+        description: "descrizione della regola di scelta in inglese (se presente)"
+      pdsId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "id del percorso collegato alla regola di scelta (codice e descrizione\
+          \ si trovano sullo schema di piano)"
+      pdsCod:
+        type: "string"
+        example: "PDS_COD"
+        description: "codice del percorso collegato allo schema di piano"
+      aptId:
+        type: "integer"
+        format: "int64"
+        example: 123
+        description: "id dell'alternativa di part-time collegataalla regola di scelta\
+          \ (codice e descrizione si trovano sullo schema di piano)"
+      aptCod:
+        type: "string"
+        example: "PT_50"
+        description: "codice dell'alternativa di part-time collegata allo schema di\
+          \ piano"
+      annoCorso:
+        type: "integer"
+        format: "int32"
+        example: 1
+        description: "anno di corso della regola (zero indica anno di corso generico)"
+      annoCorsoAnticipo:
+        type: "integer"
+        format: "int32"
+        example: 1
+        description: "anno di corso di anticipo della regola"
+      tipSce:
+        type: "string"
+        example: "O"
+        description: "tipo di regola di scelta (\nO => Obbligatoria;\nF => Da Elenco;\n\
+          T => Da Elenco Libero da OD;\nG => Gruppo;\nW => Gruppo Libero da OD;\n\
+          S => Libera da OD;\nV => Vincolo;\nD => Regola per Dottorandi)\n"
+        enum:
+        - "O"
+        - "F"
+        - "T"
+        - "G"
+        - "W"
+        - "S"
+        - "V"
+        - "D"
+      tipSceDes:
+        type: "string"
+        example: "regola da Elenco"
+        description: "descrizione della tipologia di regola di scelta"
+        x-internal-name: "v08_regsce_sce_rest_tip_sce_des"
+      tipUnt:
+        type: "string"
+        example: "CFU"
+        description: "tipo di unità di misura"
+        enum:
+        - "BLK"
+        - "CFU"
+        - "ANN"
+      minUnt:
+        type: "number"
+        format: "float"
+        example: 1.0
+        description: "valore minimo del vincolo"
+      maxUnt:
+        type: "number"
+        format: "float"
+        example: 1.0
+        description: "valore massimo del vincolo"
+      vinId:
+        type: "integer"
+        format: "int32"
+        example: 1
+        description: "id della regola vincolo a cui la regola fa riferimento (vinId=sceId)"
+      livello:
+        type: "integer"
+        format: "int32"
+        example: 1
+        description: "livello del vincolo, valorizzato solo per le regole vincolo"
+      modTAF:
+        type: "string"
+        description: "modificatore del TAF della regola di scelta"
+        enum:
+        - "A"
+        - "B"
+        - "C"
+        - "D"
+        - "E"
+        - "F"
+        - "G"
+        - "S"
+        x-internal-name: "mod_taf"
+      abilFlg:
+        type: "integer"
+        format: "int32"
+        example: 0
+        description: "flag per l'abilitazione al sostegno"
+        minimum: 0.0
+        maximum: 1.0
+        x-field-type: "optional"
+      opzFlg:
+        type: "integer"
+        format: "int32"
+        example: 0
+        description: "flag per le regole opzionali"
+        minimum: 0.0
+        maximum: 1.0
+      sovranFlg:
+        type: "integer"
+        format: "int32"
+        example: 0
+        description: "flag per le regole sovrannumerarie"
+        minimum: 0.0
+        maximum: 1.0
+      tesorettoFlg:
+        type: "integer"
+        format: "int32"
+        example: 0
+        description: "flag per l'abilitiazione del tesoretto sulla regola"
+        minimum: 0.0
+        maximum: 1.0
+      pesoRosaRist:
+        type: "integer"
+        format: "int64"
+        example: 0
+        description: "peso della rosa ristretta associato alla regola"
+        x-field-type: "optional"
+      assegnazionePostiFlg:
+        type: "integer"
+        format: "int32"
+        example: 0
+        description: "flag per l'abilitazione dell'assegnazione posti nella regola\
+          \ di scelta"
+        minimum: 0.0
+        maximum: 1.0
+        x-field-type: "optional"
+      deliberaFlg:
+        type: "integer"
+        format: "int32"
+        example: 0
+        description: "flag per la generazione di una delibera per le AD nella regola"
+        minimum: 0.0
+        maximum: 1.0
+        x-field-type: "optional"
+      azzeraCfuFlg:
+        type: "integer"
+        format: "int32"
+        example: 0
+        description: "flag per azzerare il peso delle attività della regola nell'attuazione"
+        minimum: 0.0
+        maximum: 1.0
+        x-field-type: "optional"
+      parametriLogisticaFlg:
+        type: "integer"
+        format: "int32"
+        example: 0
+        description: "flag per la selezione dei parametri della logistica durante\
+          \ la compilazione del piano"
+        minimum: 0.0
+        maximum: 1.0
+        x-field-type: "optional"
+      notaPre:
+        type: "string"
+        example: "nota pre"
+        description: "Nota opzionale da visualizzare prima delle attività da scegliere"
+        x-field-type: "optional"
+      notaPreEng:
+        type: "string"
+        example: "nota pre in inglese"
+        description: "Nota opzionale da visualizzare prima delle attività da scegliere\
+          \ in inglese (se presente)"
+        x-field-type: "optional"
+      notaPreVisPubblFlg:
+        type: "integer"
+        format: "int32"
+        example: 0
+        description: "Flag di visibilità per la descrizione della nota_pre del regolamento\
+          \ nell'area pubblica"
+        minimum: 0.0
+        maximum: 1.0
+        x-field-type: "optional"
+      notaPost:
+        type: "string"
+        example: "nota post"
+        description: "Nota opzionale da visualizzare dopo le attività da scegliere"
+        x-field-type: "optional"
+      notaPostEng:
+        type: "string"
+        example: "nota post in inglese"
+        description: "Nota opzionale da visualizzare dopo le attività da scegliere\
+          \ in inglese (se presente)"
+        x-field-type: "optional"
+      notaPostVisPubblFlg:
+        type: "integer"
+        format: "int32"
+        example: 0
+        description: "Flag di visibilità per la descrizione della nota_post del regolamento\
+          \ nell'area pubblica"
+        minimum: 0.0
+        maximum: 1.0
+        x-field-type: "optional"
+      extId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "id univoco della regola di scelta di un eventuale sistema esterno"
+        x-field-type: "optional"
+      extCod:
+        type: "string"
+        example: "EXT_COD"
+        description: "codice univoco della regola di scelta di un eventuale sistema\
+          \ esterno"
+        x-field-type: "optional"
+    x-layout-name: "REGSCE_SCE_REST"
+    x-winsession-name: "p08/n_di_08_015_regole_di_scelta_new"
+    x-model-sub-package: "piani.v1"
+    x-model-sub-path: "piani/v1"
+  TestataPianoDiStudioPerAD:
+    allOf:
+    - $ref: "#/definitions/TestataPianoDiStudio"
+    - type: "object"
+      properties:
+        sceltaId:
+          type: "integer"
+          format: "int64"
+          example: 1234
+          description: "id univoco della regola di scelta"
+          x-field-type: "optional"
+        sceltaAdId:
+          type: "integer"
+          format: "int32"
+          description: "id univoco dell'attività dalle regole di scelta scelta durante\
+            \ la compilazione del piano"
+          x-field-type: "optional"
+    x-layout-name: "PIANI_X_AD_REST"
+    x-winsession-name: "p11/n_di_11_001_piano_carriera_web"
+    x-model-sub-package: "piani.v1"
+    x-model-sub-path: "piani/v1"
+  RegolaDiSceltaSchemaConDettagli:
+    allOf:
+    - $ref: "#/definitions/RegolaDiScelta"
+    - type: "object"
+      properties:
+        schemaId:
+          type: "integer"
+          format: "int64"
+          example: 1
+          description: "id univoco dello schema di piano"
+        schemaCod:
+          type: "string"
+          example: "SC_COD"
+          description: "codice dello schema di piano, univoco in base al regolamento\
+            \ di scelta dove è stato definito"
+        ptSlotId:
+          type: "integer"
+          format: "int64"
+          example: 2
+          description: "id dello slot di part-time collegato alla regola"
+        ptSlotCod:
+          type: "string"
+          example: "PT_COD"
+          description: "codice dello slot di part-time collegato alla regola"
+        ptSlotDes:
+          type: "string"
+          example: "Descrizione dello slot"
+          description: "descrizione dello slot di part-time collegato alla regola"
+          x-field-type: "optional"
+        blocchi:
+          type: "array"
+          items:
+            $ref: "#/definitions/BloccoRegolaDiScelta"
+        condizioni:
+          type: "array"
+          items:
+            $ref: "#/definitions/CondizioneRegolaDiScelta"
+        filtriOD:
+          type: "array"
+          items:
+            $ref: "#/definitions/FiltroODRegolaDiScelta"
+    x-layout-name: "REGSCE_SCESCHEMA_REST"
+    x-winsession-name: "p08/n_di_08_015_regole_di_scelta_new"
+    x-model-sub-package: "piani.v1"
+    x-model-sub-path: "piani/v1"
+  StatStudenti:
+    type: "object"
+    properties:
+      numPianiStandardValidi:
+        type: "integer"
+        format: "int32"
+        example: 11
+        description: "Numero di piani standard validi. (Stati A, P, V)."
+      numPianiIndividualiValidi:
+        type: "integer"
+        format: "int32"
+        example: 12
+        description: "Numero di piani individuali validi. (Stati A, P, V)."
+      numPiani:
+        type: "integer"
+        format: "int32"
+        example: 13
+        description: "Numero di piani totali."
+    x-model-sub-package: "piani.v1"
+    x-model-sub-path: "piani/v1"
+  PianiCollegatiAttivita:
+    type: "object"
+    properties:
+      cdsAdCod:
+        type: "string"
+        example: "CDS_1"
+        description: "codice del corso di studio di erogazione dell'attività didattica"
+      cdsAdDes:
+        type: "string"
+        example: "Matematica"
+        description: "descrizione del corso di erogazione dell'attività didattica"
+      aaOrdAdId:
+        type: "integer"
+        format: "int32"
+        example: 2025
+        description: "anno di ordinamento dell'attività didattica"
+        x-internal-name: "adpdsord_aa_ord_id"
+      aaOffAdId:
+        type: "integer"
+        format: "int32"
+        example: 2025
+        description: "anno di offerta dell'attività didattica"
+        x-internal-name: "adpdsord_aa_off_id"
+      pdsAdCod:
+        type: "string"
+        example: "PDS_1"
+        description: "codice percorso di studio di erogazione dell'attività"
+      pdsAdDes:
+        type: "string"
+        example: "Comune"
+        description: "descrizione percorso di studio di erogazione dell'attività"
+      adCod:
+        type: "string"
+        example: "AD_1"
+        description: "codice attività didattica"
+      adDes:
+        type: "string"
+        example: "Matematica"
+        description: "descrizione attività didattica"
+      sceltaAdId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "id univoco della ad inserita nella regola di scelta"
+      sceId:
+        type: "integer"
+        format: "int32"
+        example: 1
+        description: "id della scelta"
+      blkId:
+        type: "integer"
+        format: "int32"
+        example: 1
+        description: "Identificativo del blocco di scelta che contiene l'attività\
+          \ didattica"
+      conteggio:
+        type: "integer"
+        format: "int32"
+        example: 1
+        description: "conteggio piani collegati alla attività"
+        x-internal-name: "piani_collegati"
+    x-layout-name: "PIANI_COLLEGATI_ATTIVITA_REST"
+    x-winsession-name: "p08/n_di_08_015_regole_di_scelta_new"
+    x-model-sub-package: "piani.v1"
+    x-model-sub-path: "piani/v1"
+  TestataPianoDiStudioPerRegola:
+    allOf:
+    - $ref: "#/definitions/TestataPianoDiStudio"
+    - type: "object"
+      properties:
+        sceltaId:
+          type: "integer"
+          format: "int64"
+          example: 1234
+          description: "id univoco della regola di scelta"
+          x-field-type: "optional"
+    x-layout-name: "PIANI_X_REGOLA_REST"
+    x-winsession-name: "p11/n_di_11_001_piano_carriera_web"
+    x-model-sub-package: "piani.v1"
+    x-model-sub-path: "piani/v1"
+  RegolamentoDiPropepeduticita:
+    type: "object"
+    discriminator: "regolamentoDiPropedeuticitaType"
+    properties:
+      regpropId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "id univoco del regolamento di propedeuticità"
+        x-field-type: "primaryKey"
+      facId:
+        type: "integer"
+        format: "int64"
+        example: 123
+        description: "id univoco del dipartimento su cui è definito il regolamento\
+          \ di propedeuticità"
+      facCod:
+        type: "string"
+        example: "123"
+        description: "codice del dipartimento su cui è definito il regolamento di\
+          \ propedeuticità"
+        maxLength: 10
+      tipoCorsoCod:
+        type: "string"
+        example: "123"
+        description: "codice del tipo di corso su cui è definito il regolamento di\
+          \ propedeuticità"
+        maxLength: 10
+      cdsId:
+        type: "integer"
+        format: "int64"
+        example: 123
+        description: "id univoco del corso di studio su cui è definito il regolamento\
+          \ di propedeuticità"
+      cdsCod:
+        type: "string"
+        example: "123"
+        description: "codice del corso di studio su cui è definito il regolamento\
+          \ di propedeuticità"
+        maxLength: 10
+      cdsDes:
+        type: "string"
+        example: "123"
+        description: "descrizione del corso di studio su cui è definito il regolamento\
+          \ di propedeuticità"
+        maxLength: 255
+      aaOrdId:
+        type: "integer"
+        format: "int64"
+        example: 123
+        description: "id univoco dell'ordinamento di corso di studio su cui è definito\
+          \ il regolamento di propedeuticità"
+      coorte:
+        type: "integer"
+        format: "int32"
+        example: 2012
+        description: "anno di coorte su cui è definito il regolamento di propedeuticità"
+      aaRevisioneId:
+        type: "integer"
+        format: "int32"
+        example: 2012
+        description: "anno di revisione su cui è definito il regolamento di propedeuticità"
+      stato:
+        type: "string"
+        example: "A"
+        description: "stato del regolamento di propedeuticità"
+        enum:
+        - "A"
+        - "B"
+        - "X"
+        x-internal-name: "sta_regprop_cod"
+      extId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "id univoco del regolamento di propedeuticità di un eventuale\
+          \ sistema esterno"
+        x-field-type: "optional"
+    x-layout-name: "REGPROP_REST"
+    x-winsession-name: "p09/n_di_09_067_gest_proped_coorte"
+    x-model-sub-package: "offerta.v1"
+    x-model-sub-path: "offerta/v1"
+  ConteggiPianiFiltri:
+    type: "object"
+    properties:
+      conteggiSchemi:
+        type: "boolean"
+        example: true
+        description: "Visualizzazione nella response del conteggio schemi"
+      conteggiRegole:
+        type: "boolean"
+        example: true
+        description: "Visualizzazione nella response del conteggio regole"
+      conteggiAttivita:
+        type: "boolean"
+        example: true
+        description: "Visualizzazione nella response del conteggio attività"
+      conteggiFinestre:
+        type: "boolean"
+        example: true
+        description: "Visualizzazione nella response del conteggio finestre"
+      filtroSchemaCod:
+        type: "string"
+        example: "SC_COD"
+        description: "codice dello schema scelto dallo studente"
+        maxLength: 10
+      filtroRegolaOrdNum:
+        type: "integer"
+        format: "int32"
+        example: 1
+        description: "numero di compilazione della regola nel piano"
+      filtroADCod:
+        type: "string"
+        example: "AD_1"
+        description: "codice dell'attività didattica"
+        maxLength: 10
+      filtroADCdsCod:
+        type: "string"
+        example: "CDS_1"
+        description: "codice del corso dell'attività didattica"
+        maxLength: 10
+      filtroADAaOrdId:
+        type: "integer"
+        format: "int32"
+        example: 2025
+        description: "anno di ordinamento del corso di studio di erogazione dell'attività\
+          \ didattica"
+      filtroADPdsCod:
+        type: "string"
+        example: "PDS_1"
+        description: "codice del percorso di erogazione dell'attività didattica"
+        maxLength: 10
+      filtroADAaOffId:
+        type: "integer"
+        format: "int32"
+        example: 2025
+        description: "anno di offerta dell'attività"
+      filtroFinregsceCod:
+        type: "string"
+        example: "FIN_COD_1"
+        description: "codice della finestra del regolamento di scelta"
+        maxLength: 10
+    x-model-sub-package: "piani.v1"
+    x-model-sub-path: "piani/v1"
+  PianiCollegatiRegola:
+    type: "object"
+    properties:
+      ordNum:
+        type: "integer"
+        format: "int32"
+        example: 1
+        description: "Numero di ordine della scelta"
+      sceltaId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "id scelta"
+      sceId:
+        type: "integer"
+        format: "int32"
+        example: 1
+        description: "id della scelta"
+      sceDes:
+        type: "string"
+        example: "Insegnamenti obbligatori"
+        description: "descrizione della regola"
+      tipSce:
+        type: "string"
+        example: "O"
+        description: "tipo regola"
+      tipSceDes:
+        type: "string"
+        example: "Obbligatorio"
+        description: "descrizione tipo regola"
+      conteggio:
+        type: "integer"
+        format: "int32"
+        example: 10
+        description: "conteggio piani collegati alla regola"
+        x-internal-name: "piani_collegati"
+    x-layout-name: "PIANI_COLLEGATI_REGOLA_REST"
+    x-winsession-name: "p08/n_di_08_015_regole_di_scelta_new"
+    x-model-sub-package: "piani.v1"
+    x-model-sub-path: "piani/v1"
+  RegUDRegolaDiScelta:
+    type: "object"
+    properties:
+      regUdId:
+        type: "integer"
+        format: "int64"
+        example: 123
+        description: "id progressivo della regola sulle UD"
+        x-field-type: "primaryKey"
+        x-internal-name: "regud_id"
+      blkId:
+        type: "integer"
+        format: "int32"
+        example: 1
+        description: "id progressivo all'interno della regola di scelta del numero\
+          \ del blocco"
+      sceltaAdId:
+        type: "integer"
+        format: "int64"
+        example: 123
+        description: "id univoco della ad inserita nella regola di scelta"
+        x-field-type: "primaryKey"
+      regsceId:
+        type: "integer"
+        format: "int64"
+        example: 123
+        description: "id univoco di definizione del regolamento di scelta"
+        x-field-type: "optional"
+      tipoUdCod:
+        type: "string"
+        description: "tipo di unità didattica"
+      tipo1:
+        type: "string"
+        example: "LEZ"
+        description: "tipo di unità didattica del vincolo 1"
+      um1:
+        type: "string"
+        example: "UD"
+        description: "unità di misura del vincolo 1"
+        enum:
+        - "CFU"
+        - "UD"
+      qta1:
+        type: "integer"
+        format: "int32"
+        example: 1
+        description: "quantità da selezionare del vincolo 1"
+      tipo2:
+        type: "string"
+        example: "LEZ"
+        description: "tipo di unità didattica del vincolo 2"
+      um2:
+        type: "string"
+        example: "UD"
+        description: "unità di misura del vincolo 2"
+        enum:
+        - "CFU"
+        - "UD"
+      qta2:
+        type: "integer"
+        format: "int32"
+        example: 1
+        description: "quantità da selezionare del vincolo 2"
+      tipo3:
+        type: "string"
+        example: "LEZ"
+        description: "tipo di unità didattica del vincolo 3"
+      um3:
+        type: "string"
+        example: "UD"
+        description: "unità di misura del vincolo 3"
+        enum:
+        - "CFU"
+        - "UD"
+      qta3:
+        type: "integer"
+        format: "int32"
+        example: 1
+        description: "quantità da selezionare del vincolo 3"
+      moduli:
+        type: "array"
+        items:
+          $ref: "#/definitions/UDRegolaDiScelta"
+    x-layout-name: "REGSCE_REGUD_REST"
+    x-winsession-name: "p08/n_di_08_015_regole_di_scelta_new"
+    x-model-sub-package: "piani.v1"
+    x-model-sub-path: "piani/v1"
+  RegolamentoDiSceltaConSchemi:
+    allOf:
+    - $ref: "#/definitions/RegolamentoDiScelta"
+    - type: "object"
+      properties:
+        finestreDiCompilazione:
+          type: "array"
+          items:
+            $ref: "#/definitions/FinestraRegolamentoDiScelta"
+          x-field-type: "optional"
+        schemiDiPiano:
+          type: "array"
+          items:
+            $ref: "#/definitions/SchemaDiPiano"
+    x-model-sub-package: "piani.v1"
+    x-model-sub-path: "piani/v1"
+  ADRegolaDiScelta:
+    type: "object"
+    properties:
+      sceltaAdId:
+        type: "integer"
+        format: "int64"
+        example: 123
+        description: "id univoco della ad inserita nella regola di scelta"
+        x-field-type: "primaryKey"
+      regsceId:
+        type: "integer"
+        format: "int64"
+        example: 123
+        description: "id univoco di definizione del regolamento di scelta"
+        x-field-type: "optional"
+      sceltaId:
+        type: "integer"
+        format: "int64"
+        example: 1234
+        description: "id univoco della regola di scelta"
+        x-field-type: "optional"
+      regUdDesAuto:
+        type: "string"
+        example: "Selezionare 1 modulo"
+        description: "nel caso l'attività sia ad UD configurabili visualizza la descrizione\
+          \ delle regola sulla selezione delle UD (calcolata dal sistema)"
+        x-internal-name: "regud_des_auto"
+      regUdDesUte:
+        type: "string"
+        example: "Selezionare 1 modulo"
+        description: "nel caso l'attività sia ad UD configurabili visualizza la descrizione\
+          \ delle regola sulla selezione delle UD (inserita dall'utente)"
+        x-internal-name: "regud_des_ute"
+      blkId:
+        type: "integer"
+        format: "int32"
+        example: 1
+        description: "id progressivo all'interno della regola di scelta del numero\
+          \ del blocco"
+        x-field-type: "optional"
+      peso:
+        type: "number"
+        format: "float"
+        example: 4.0
+        description: "peso associato all'attività didattica"
+      chiaveADContestualizzata:
+        $ref: "#/definitions/ChiaveADContestualizzata"
+      regoleUD:
+        type: "array"
+        items:
+          $ref: "#/definitions/RegUDRegolaDiScelta"
+    x-layout-name: "REGSCE_AD_REST"
+    x-winsession-name: "p08/n_di_08_015_regole_di_scelta_new"
+    x-model-sub-package: "piani.v1"
+    x-mapping-fields:
+      chiaveADContestualizzata:
+        cdsId: "adpdsord_cds_id"
+        cdsCod: "adpdsord_cds_cod"
+        cdsDes: "adpdsord_cds_des"
+        aaOrdId: "adpdsord_aa_ord_id"
+        aaOrdCod: "adpdsord_cdsord_cod"
+        aaOrdDes: "adpdsord_cdsord_des"
+        pdsId: "adpdsord_pds_id"
+        pdsCod: "adpdsord_pds_cod"
+        pdsDes: "adpdsord_pds_des"
+        aaOffId: "adpdsord_aa_off_id"
+        adId: "adpdsord_ad_id"
+        adCod: "adpdsord_ad_cod"
+        adDes: "adpdsord_ad_des"
+    x-model-sub-path: "piani/v1"
+  RegolamentoDiScelta:
+    type: "object"
+    discriminator: "tipoRegolamentoDiScelta"
+    properties:
+      regsceId:
+        type: "integer"
+        format: "int64"
+        example: 123
+        description: "id univoco di definizione del regolamento di scelta"
+        x-field-type: "primaryKey"
+      facId:
+        type: "integer"
+        format: "int64"
+        example: 123
+        description: "id univoco del dipartimento su cui è definito il regolamento\
+          \ di scelta"
+      facCod:
+        type: "string"
+        example: "123"
+        description: "codice del dipartimento su cui è definito il regolamento di\
+          \ scelta"
+        maxLength: 10
+      tipoCorsoCod:
+        type: "string"
+        example: "123"
+        description: "codice del tipo di corso su cui è definito il regolamento di\
+          \ scelta"
+        maxLength: 10
+      cdsId:
+        type: "integer"
+        format: "int64"
+        example: 123
+        description: "id univoco del corso di studio su cui è definito il regolamento\
+          \ di scelta"
+      cdsCod:
+        type: "string"
+        example: "123"
+        description: "codice del corso di studio su cui è definito il regolamento\
+          \ di scelta"
+        maxLength: 10
+      cdsDes:
+        type: "string"
+        example: "123"
+        description: "descrizione del corso di studio su cui è definito il regolamento\
+          \ di scelta"
+        maxLength: 255
+      aaOrdId:
+        type: "integer"
+        format: "int64"
+        example: 123
+        description: "id univoco dell'ordinamento di corso di studio su cui è definito\
+          \ il regolamento di scelta"
+      coorte:
+        type: "integer"
+        format: "int32"
+        example: 2012
+        description: "anno di coorte su cui è definito il regolamento di scelta"
+      aaRevisioneId:
+        type: "integer"
+        format: "int32"
+        example: 2012
+        description: "anno di revisione su cui è definito il regolamento di scelta"
+      stato:
+        type: "string"
+        example: "A"
+        description: "stato del regolamento di scelta"
+        enum:
+        - "A"
+        - "B"
+        - "X"
+      dataUltimaModifica:
+        type: "string"
+        example: "15/10/2015"
+        description: "data di ultima modifica del regolamento, nel caso il regolamento\
+          \ sia attivo coincide con la data di ultima modifica di tutte le entità\
+          \ sottostanti"
+        minLength: 10
+        maxLength: 10
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+        x-field-type: "optional"
+        x-internal-name: "data_mod"
+      dataInserimento:
+        type: "string"
+        example: "15/10/2015"
+        description: "data di inserimento del regolamento"
+        minLength: 10
+        maxLength: 10
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+        x-field-type: "optional"
+        x-internal-name: "data_ins"
+    x-layout-name: "REGSCE_REST"
+    x-winsession-name: "p08/n_di_08_015_regole_di_scelta_new"
+    x-model-sub-package: "piani.v1"
+    x-model-sub-path: "piani/v1"
+  ChiaveADContestualizzata:
+    type: "object"
+    required:
+    - "aaOffId"
+    - "aaOrdId"
+    - "adId"
+    - "cdsId"
+    - "pdsId"
+    properties:
+      cdsId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "chiave del corso di studio di erogazione dell'attività didattica"
+      cdsCod:
+        type: "string"
+        example: "CDS_AD_1"
+        description: "codice del corso di studio di erogazione dell'attività didattica"
+      cdsDes:
+        type: "string"
+        example: "Esempio di CDS AD"
+        description: "descrizione del corso di erogazione dell'attività didattica"
+      aaOrdId:
+        type: "integer"
+        format: "int32"
+        example: 2016
+        description: "anno di ordinamento del corso di studio di erogazione dell'attività\
+          \ didattica"
+      aaOrdCod:
+        type: "string"
+        example: "CDS_AD_1"
+        description: "codice dell''ordinamento di erogazione dell'attività didattica"
+      aaOrdDes:
+        type: "string"
+        example: "Esempio di CDS AD"
+        description: "descrizione dell''ordinamento di erogazione dell'attività didattica"
+      pdsId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "chiave del percorso di studio di erogazione dell'attività didattica"
+      pdsCod:
+        type: "string"
+        example: "PDS_AD_1"
+        description: "codice del percorso di erogazione dell'attività didattica"
+      pdsDes:
+        type: "string"
+        example: "Esempio di PDS AD"
+        description: "descrizione del percorso di erogazione dell'attività didattica"
+      aaOffId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "anno di offerta di erogazione dell'attività didattica"
+      adId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "chiave dell'attività didattica"
+      adCod:
+        type: "string"
+        example: "PDS_AD_1"
+        description: "codice dell''attività didattica"
+      adDes:
+        type: "string"
+        example: "Esempio di PDS AD"
+        description: "descrizione dell''attività didattica"
+      afId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "id della afId proveniente da U-Gov Didattica"
+    x-model-sub-package: "offerta.v1"
+    x-model-sub-path: "offerta/v1"
+  ChiaveUDContestualizzata:
+    type: "object"
+    required:
+    - "chiaveAdContestualizzata"
+    - "udId"
+    properties:
+      chiaveAdContestualizzata:
+        $ref: "#/definitions/ChiaveADContestualizzata"
+      udId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "chiave del'unità (modulo) dell'attività didattica"
+      udCod:
+        type: "string"
+        example: "CDS_AD_1"
+        description: "codice del'unità (modulo) dell'attività didattica"
+      udDes:
+        type: "string"
+        example: "Esempio di CDS AD"
+        description: "descrizione del'unità (modulo) dell'attività didattica"
+      udDesEng:
+        type: "string"
+        example: "Example of Description"
+        description: "descrizione del'unità (modulo) dell'attività didattica in lingua\
+          \ inglese"
+    x-model-sub-package: "offerta.v1"
+    x-model-sub-path: "offerta/v1"
+  FiltroANDRegolaDiScelta:
+    type: "object"
+    properties:
+      sceltaId:
+        type: "integer"
+        format: "int64"
+        example: 1234
+        description: "id univoco della regola di scelta"
+        x-field-type: "primaryKey"
+      orId:
+        type: "integer"
+        format: "int32"
+        description: "id progressivo all'interno della regola"
+        x-field-type: "primaryKey"
+      andId:
+        type: "integer"
+        format: "int32"
+        example: 1
+        description: "id progressivo all'interno del filtro OR"
+        x-field-type: "primaryKey"
+      regsceId:
+        type: "integer"
+        format: "int64"
+        example: 123
+        description: "id univoco di definizione del regolamento di scelta"
+        x-field-type: "optional"
+      tipoFiltroCod:
+        type: "string"
+        description: "codice tipo di filtro in AND, in valore selezionato va decodificato\
+          \ sui campi valSel*"
+      tipoFiltroDes:
+        type: "string"
+        description: "descrizione tipo di filtro in AND, in valore selezionato va\
+          \ decodificato sui campi valSel*"
+      valSelId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "id del valore selezionato"
+      valSelCod:
+        type: "string"
+        example: "1"
+        description: "codice del valore selezionato"
+      valSelDes:
+        type: "string"
+        example: "1"
+        description: "descrizione del valore selezionato"
+      notFlg:
+        type: "integer"
+        format: "int32"
+        example: 0
+        description: "flag che consente di negare la filtro"
+        minimum: 0.0
+        maximum: 1.0
+      extId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "id univoco della fintro in AND della regola di scelta di un\
+          \ eventuale sistema esterno"
+        x-field-type: "optional"
+    x-layout-name: "REGSCE_FILAND_REST"
+    x-winsession-name: "p08/n_di_08_015_regole_di_scelta_new"
+    x-model-sub-package: "piani.v1"
+    x-model-sub-path: "piani/v1"
+  VincoloDiPropedeuticita:
+    type: "object"
+    properties:
+      regpropVincId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "id univoco del vincolo di propedeuticità"
+        x-field-type: "primaryKey"
+      regpropId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "id univoco del regolamento di propedeuticità"
+      tipoVincolo:
+        type: "string"
+        example: "AD"
+        description: "tipo di vincolo dell'elemento del vincolo di propedeuticità\n\
+          (AC => anno di corso, AD => Attività didattica, SET => Settore Scientifico\
+          \ Disciplinare)\n"
+        enum:
+        - "AC"
+        - "AD"
+        - "SET"
+        x-internal-name: "tipo_ele_regprop_cod"
+      chiaveADContestualizzata:
+        $ref: "#/definitions/ChiaveADContestualizzata"
+      annoCorso:
+        type: "integer"
+        format: "int32"
+        example: 1
+        description: "anno di corso nel caso in cui il tipoVicolo sia AC"
+      settCod:
+        type: "string"
+        example: "123"
+        description: "codice del SSD nel caso in cui il tipoVincolo sia SET"
+        maxLength: 10
+      regolePropOR:
+        type: "array"
+        items:
+          $ref: "#/definitions/RegolaPropOR"
+      extId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "id univoco del vincolo di propedeuticità di un eventuale sistema\
+          \ esterno"
+        x-field-type: "optional"
+    x-layout-name: "REGPROP_VINC_REST"
+    x-winsession-name: "p09/n_di_09_067_gest_proped_coorte"
+    x-model-sub-package: "offerta.v1"
+    x-mapping-fields:
+      chiaveADContestualizzata:
+        cdsId: "adpdsord_cds_id"
+        cdsCod: "adpdsord_cds_cod"
+        cdsDes: "adpdsord_cds_des"
+        aaOrdId: "adpdsord_aa_ord_id"
+        aaOrdCod: "adpdsord_cdsord_cod"
+        aaOrdDes: "adpdsord_cdsord_des"
+        pdsId: "adpdsord_pds_id"
+        pdsCod: "adpdsord_pds_cod"
+        pdsDes: "adpdsord_pds_des"
+        aaOffId: "adpdsord_aa_off_id"
+        adId: "adpdsord_ad_id"
+        adCod: "adpdsord_ad_cod"
+        adDes: "adpdsord_ad_des"
+    x-model-sub-path: "offerta/v1"
+  BloccoRegolaDiScelta:
+    type: "object"
+    properties:
+      sceltaId:
+        type: "integer"
+        format: "int64"
+        example: 1234
+        description: "id univoco della regola di scelta"
+        x-field-type: "primaryKey"
+      blkId:
+        type: "integer"
+        format: "int32"
+        example: 1
+        description: "id progressivo all'interno della regola di scelta del numero\
+          \ del blocco"
+        x-field-type: "primaryKey"
+      regsceId:
+        type: "integer"
+        format: "int64"
+        example: 123
+        description: "id univoco di definizione del regolamento di scelta"
+        x-field-type: "optional"
+      linguaId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "id della lingua collegata al blocco"
+      linguaCod:
+        type: "string"
+        example: "eng"
+        description: "codice iso_6352 della lingua collegata al blocco"
+      linguaNum:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "numero della lingua"
+      defFlg:
+        type: "integer"
+        format: "int32"
+        example: 0
+        description: "flag per indicare se il blocco va incluso nel piano statutario"
+        minimum: 0.0
+        maximum: 1.0
+      ctrlFlg:
+        type: "integer"
+        format: "int32"
+        example: 0
+        description: "flag per il controllo sull'anno di offerta per la visualizzazione\
+          \ durante la compilazione del piano"
+        minimum: 0.0
+        maximum: 1.0
+      aaOffAdId:
+        type: "integer"
+        format: "int32"
+        example: 2012
+        description: "anno di offerta di erogazione delle attività del blocco"
+      attivita:
+        type: "array"
+        items:
+          $ref: "#/definitions/ADRegolaDiScelta"
+      condizioni:
+        type: "array"
+        items:
+          $ref: "#/definitions/CondizioneBloccoRegolaDiScelta"
+      extId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "id univoco del blocco della regola di scelta di un eventuale\
+          \ sistema esterno"
+        x-field-type: "optional"
+    x-layout-name: "REGSCE_BLK_REST"
+    x-winsession-name: "p08/n_di_08_015_regole_di_scelta_new"
+    x-model-sub-package: "piani.v1"
+    x-model-sub-path: "piani/v1"
+  PianiCollegatiSchema:
+    type: "object"
+    properties:
+      schemaCod:
+        type: "string"
+        example: "COD_1"
+        description: "codice schema"
+      schemaDes:
+        type: "string"
+        example: "Schema di esempio"
+        description: "descrizione schema"
+      schemaId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "id schema"
+      conteggio:
+        type: "integer"
+        format: "int32"
+        example: 3
+        description: "conteggio piani collegati allo schema"
+        x-internal-name: "piani_collegati"
+    x-layout-name: "PIANI_COLLEGATI_SCHEMA_REST"
+    x-winsession-name: "p08/n_di_08_015_regole_di_scelta_new"
+    x-model-sub-package: "piani.v1"
+    x-model-sub-path: "piani/v1"
+  FiltroODRegolaDiScelta:
+    type: "object"
+    properties:
+      sceltaId:
+        type: "integer"
+        format: "int64"
+        example: 1234
+        description: "id univoco della regola di scelta"
+        x-field-type: "primaryKey"
+      orId:
+        type: "integer"
+        format: "int32"
+        description: "id progressivo all'interno della regola"
+        x-field-type: "primaryKey"
+      regsceId:
+        type: "integer"
+        format: "int64"
+        example: 123
+        description: "id univoco di definizione del regolamento di scelta"
+        x-field-type: "optional"
+      des:
+        type: "string"
+        example: "condizione or 1"
+        description: "descrizione del filtro in or"
+      filtriAND:
+        type: "array"
+        items:
+          $ref: "#/definitions/FiltroANDRegolaDiScelta"
+      extId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "id univoco della fintro in OR della regola di scelta di un eventuale\
+          \ sistema esterno"
+        x-field-type: "optional"
+    x-layout-name: "REGSCE_FILOR_REST"
+    x-winsession-name: "p08/n_di_08_015_regole_di_scelta_new"
+    x-model-sub-package: "piani.v1"
+    x-model-sub-path: "piani/v1"
+  UDRegolaDiScelta:
+    type: "object"
+    properties:
+      udId:
+        type: "integer"
+        format: "int64"
+        example: 123
+        description: "id progressivo della ud rispetto alla regUd"
+        x-field-type: "primaryKey"
+      regUdId:
+        type: "integer"
+        format: "int64"
+        example: 123
+        description: "id progressivo della regola sulle UD"
+        x-field-type: "primaryKey"
+        x-internal-name: "regud_id"
+      blkId:
+        type: "integer"
+        format: "int32"
+        example: 1
+        description: "id progressivo all'interno della regola di scelta del numero\
+          \ del blocco"
+      sceltaAdId:
+        type: "integer"
+        format: "int64"
+        example: 123
+        description: "id univoco della ad inserita nella regola di scelta"
+        x-field-type: "primaryKey"
+      statutFlg:
+        type: "integer"
+        format: "int32"
+        example: 0
+        description: "flag che indica se l'UD deve essere statutaria"
+        minimum: 0.0
+        maximum: 1.0
+      obbligFlg:
+        type: "integer"
+        format: "int32"
+        example: 0
+        description: "flag che indica se l'UD deve essere obbligatoria"
+        minimum: 0.0
+        maximum: 1.0
+      chiaveUDContestualizzata:
+        $ref: "#/definitions/ChiaveUDContestualizzata"
+      extId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "id univoco del blocco della regola di scelta di un eventuale\
+          \ sistema esterno"
+        x-field-type: "optional"
+    x-layout-name: "REGSCE_UD_REST"
+    x-winsession-name: "p08/n_di_08_015_regole_di_scelta_new"
+    x-model-sub-package: "piani.v1"
+    x-mapping-fields:
+      chiaveUDContestualizzata:
+        chiaveAdContestualizzata:
+          cdsId: "adpdsord_cds_id"
+          cdsCod: "adpdsord_cds_cod"
+          cdsDes: "adpdsord_cds_des"
+          aaOrdId: "adpdsord_aa_ord_id"
+          aaOrdCod: "adpdsord_cdsord_cod"
+          aaOrdDes: "adpdsord_cdsord_des"
+          pdsId: "adpdsord_pds_id"
+          pdsCod: "adpdsord_pds_cod"
+          pdsDes: "adpdsord_pds_des"
+          aaOffId: "adpdsord_aa_off_id"
+          adId: "adpdsord_ad_id"
+          adCod: "adpdsord_ad_cod"
+          adDes: "adpdsord_ad_des"
+          afId: "adpdsord_af_id"
+        udId: "ud_id"
+        udCod: "ud_cod"
+        udDes: "ud_des"
+    x-model-sub-path: "piani/v1"
+  RegolamentoDiSceltaConConteggi:
+    allOf:
+    - $ref: "#/definitions/RegolamentoDiScelta"
+    - type: "object"
+      properties:
+        schemi:
+          type: "array"
+          items:
+            $ref: "#/definitions/PianiCollegatiSchema"
+          x-field-type: "optional"
+        regole:
+          type: "array"
+          items:
+            $ref: "#/definitions/PianiCollegatiRegola"
+          x-field-type: "optional"
+        attivita:
+          type: "array"
+          items:
+            $ref: "#/definitions/PianiCollegatiAttivita"
+          x-field-type: "optional"
+        finestre:
+          type: "array"
+          items:
+            $ref: "#/definitions/PianiCollegatiFinestra"
+          x-field-type: "optional"
+    x-model-sub-package: "piani.v1"
+    x-model-sub-path: "piani/v1"
+  RegolaDiSceltaConDettagli:
+    allOf:
+    - $ref: "#/definitions/RegolaDiScelta"
+    - type: "object"
+      properties:
+        schemi:
+          type: "array"
+          items:
+            $ref: "#/definitions/SchemaDiPianoRegolaDiScelta"
+        blocchi:
+          type: "array"
+          items:
+            $ref: "#/definitions/BloccoRegolaDiScelta"
+        condizioni:
+          type: "array"
+          items:
+            $ref: "#/definitions/CondizioneRegolaDiScelta"
+        filtriOD:
+          type: "array"
+          items:
+            $ref: "#/definitions/FiltroODRegolaDiScelta"
+    x-model-sub-package: "piani.v1"
+    x-model-sub-path: "piani/v1"
+  PianiCollegatiFinestra:
+    type: "object"
+    properties:
+      finregsceCod:
+        type: "string"
+        example: "FIN_COD_1"
+        description: "codice finestra"
+      finregsceDes:
+        type: "string"
+        example: "Finestra 1"
+        description: "descrizione finestra"
+      finregsceId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "id finestra regolamento scelta"
+      conteggio:
+        type: "integer"
+        format: "int32"
+        example: 1
+        description: "conteggio piani collegatia lla finestra"
+        x-internal-name: "piani_collegati"
+    x-layout-name: "PIANI_COLLEGATI_FINESTRA_REST"
+    x-winsession-name: "p08/n_di_08_015_regole_di_scelta_new"
+    x-model-sub-package: "piani.v1"
+    x-model-sub-path: "piani/v1"
+  SchemaDiPiano:
+    type: "object"
+    discriminator: "tipoSchemaDiPiano"
+    properties:
+      schemaId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "id univoco dello schema di piano"
+        x-field-type: "primaryKey"
+      schemaCod:
+        type: "string"
+        example: "SC_COD"
+        description: "codice dello schema di piano, univoco in base al regolamento\
+          \ di scelta dove è stato definito"
+      schemaDes:
+        type: "string"
+        example: "Descrizione schema di piano"
+        description: "descrizione dello schema di piano"
+      schemaDesEng:
+        type: "string"
+        example: "Descrizione in inglese schema di piano"
+        description: "descrizione dello schema di piano in inglese (se presente)"
+      regsceId:
+        type: "integer"
+        format: "int64"
+        example: 123
+        description: "id univoco di definizione del regolamento di scelta"
+      pdsId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "id del percorso collegato allo schema di piano"
+      pdsCod:
+        type: "string"
+        example: "PDS_COD"
+        description: "codice del percorso collegato allo schema di piano"
+      pdsDes:
+        type: "string"
+        example: "Descrizione del percorso di studio"
+        description: "descrizione del percorso collegato allo schema di piano"
+        x-field-type: "optional"
+      tipoApprovazione:
+        type: "integer"
+        format: "int32"
+        example: 0
+        description: "tipo di approvazione dello schema di piano (\n0 => piano standard\
+          \ ad appovazione automatica\n1 => piano standard senza approvazione automatica\n\
+          2 => piano standard con approvazione automatica se conforme al regolamento\
+          \ di scelta\n"
+        x-internal-name: "tipo_regsce"
+      gestAnnoCorsoFlg:
+        type: "integer"
+        format: "int32"
+        example: 0
+        description: "flag che permette di filtrare la regola di scelta in base all'anno\
+          \ di corso dello studente\n0 => nessun controllo\n1 => anni di corso minori\
+          \ o uguali a quello dello studente\n"
+        minimum: 0.0
+        maximum: 1.0
+        x-internal-name: "gest_anno_corso"
+      statutarioFlg:
+        type: "integer"
+        format: "int32"
+        example: 0
+        description: "flag che indica se lo schema di piano è statutatio per i parametri\
+          \ indicati"
+        minimum: 0.0
+        maximum: 1.0
+      dataInizioVal:
+        type: "string"
+        example: "15/10/2015"
+        description: "data di inizio validità dello schema (DD/MM/YYYY), se nulla\
+          \ lo schema risulta sempre valido"
+        minLength: 10
+        maxLength: 10
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+      dataFineVal:
+        type: "string"
+        example: "15/10/2015"
+        description: "data di fine validità dello schema (DD/MM/YYYY), se nulla lo\
+          \ schema risulta sempre valido"
+        minLength: 10
+        maxLength: 10
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+      condId:
+        type: "integer"
+        format: "int64"
+        example: 123
+        description: "id della condizione SQL per restringere l'accesso allo schema\
+          \ di piano"
+      condCod:
+        type: "string"
+        example: "COND_COD"
+        description: "codice della condizione SQL per restringere l'accesso allo schema\
+          \ di piano"
+      condDes:
+        type: "string"
+        example: "Descrizione condizione sql"
+        description: "descrizione della condizione SQL per restringere l'accesso allo\
+          \ schema di piano"
+        x-field-type: "optional"
+      orientId:
+        type: "integer"
+        format: "int64"
+        example: 123
+        description: "id dell'orientamento collegato allo schema di piano"
+      orientCod:
+        type: "string"
+        example: "codice dell'orientamento"
+        description: "codice dell'orientamento collegato allo schema di piano"
+      orientDes:
+        type: "string"
+        example: "Descrizione dell'orientamento"
+        description: "descrizione dell'orientamento collegato allo schema di piano"
+        x-field-type: "optional"
+      profCod:
+        type: "string"
+        example: "1"
+        description: "codice del prifilo studente collegato allo schema di piano"
+      profDes:
+        type: "string"
+        example: "1"
+        description: "descrizione del prifilo studente collegato allo schema di piano"
+        x-field-type: "optional"
+      aptId:
+        type: "integer"
+        format: "int64"
+        example: 123
+        description: "id dell'alternativa di part-time collegata allo schema di piano"
+      aptCod:
+        type: "string"
+        example: "PT_50"
+        description: "codice dell'alternativa di part-time collegata allo schema di\
+          \ piano"
+      aptDes:
+        type: "string"
+        example: "Part time al 50%"
+        description: "descrizione dell'alternativa di part-time collegata allo schema\
+          \ di piano"
+        x-field-type: "optional"
+      webViewFlg:
+        type: "integer"
+        format: "int32"
+        example: 0
+        description: "consente di visualizzare lo schema di piano nell'area pubblica"
+        minimum: 0.0
+        maximum: 1.0
+    x-layout-name: "REGSCE_SCHEMI_REST"
+    x-winsession-name: "p08/n_di_08_015_regole_di_scelta_new"
+    x-model-sub-package: "piani.v1"
+    x-model-sub-path: "piani/v1"
+  SchemaDiPianoConDettagli:
+    allOf:
+    - $ref: "#/definitions/SchemaDiPiano"
+    - type: "object"
+      properties:
+        regoleDiScelta:
+          type: "array"
+          items:
+            $ref: "#/definitions/RegolaDiSceltaSchemaConDettagli"
+    x-model-sub-package: "piani.v1"
+    x-model-sub-path: "piani/v1"
+  SchemaDiPianoRegolaDiScelta:
+    type: "object"
+    properties:
+      sceltaId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "id univoco della regola di scelta"
+        x-field-type: "primaryKey"
+      schemaId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "id univoco dello schema di piano"
+        x-field-type: "primaryKey"
+      schemaCod:
+        type: "string"
+        example: "SC_COD"
+        description: "codice dello schema di piano, univoco in base al regolamento\
+          \ di scelta dove è stato definito"
+      ordNum:
+        type: "integer"
+        format: "int32"
+        example: 2
+        description: "ordine di visualizzazione della regola di scelta nello schema\
+          \ di piano"
+      ptSlotId:
+        type: "integer"
+        format: "int64"
+        example: 2
+        description: "id dello slot di part-time collegato alla regola"
+      ptSlotCod:
+        type: "string"
+        example: "PT_COD"
+        description: "codice dello slot di part-time collegato alla regola"
+      ptSlotDes:
+        type: "string"
+        example: "Descrizione dello slot"
+        description: "descrizione dello slot di part-time collegato alla regola"
+        x-field-type: "optional"
+    x-layout-name: "REGSCE_SCE_SCHEMI_REST"
+    x-winsession-name: "p08/n_di_08_015_regole_di_scelta_new"
+    x-model-sub-package: "piani.v1"
+    x-model-sub-path: "piani/v1"
+  AggiornamentoRegolamentoDiScelta:
+    type: "object"
+    properties:
+      stato:
+        type: "string"
+        example: "A"
+        description: "stato del regolamento di scelta"
+        enum:
+        - "A"
+        - "B"
+    x-model-sub-package: "piani.v1"
+    x-model-sub-path: "piani/v1"
+  RegolamentoDiSceltaConDettagli:
+    allOf:
+    - $ref: "#/definitions/RegolamentoDiScelta"
+    - type: "object"
+      properties:
+        finesteDiCompilazione:
+          type: "array"
+          items:
+            $ref: "#/definitions/FinestraRegolamentoDiScelta"
+          x-field-type: "optional"
+        schemiDiPiano:
+          type: "array"
+          items:
+            $ref: "#/definitions/SchemaDiPianoConDettagli"
+    x-model-sub-package: "piani.v1"
+    x-model-sub-path: "piani/v1"
+parameters:
+  finregsceId:
+    name: "finregsceId"
+    in: "path"
+    description: "id univoco della finestra di compilazione del regolamento di scelta"
+    required: true
+    type: "integer"
+    format: "int64"
+  cdsCod:
+    name: "cdsCod"
+    in: "query"
+    description: "codice del corso di studio di afferenza del regolamento"
+    required: false
+    type: "string"
+  coorte:
+    name: "coorte"
+    in: "query"
+    description: "coorte di afferenza del regolamento"
+    required: false
+    type: "integer"
+    format: "int64"
+  facCod:
+    name: "facCod"
+    in: "query"
+    description: "codice della facoltà di afferenza del regolamento"
+    required: false
+    type: "string"
+  tipoCorsoCod:
+    name: "tipoCorsoCod"
+    in: "query"
+    description: "codice del tipo di corso di afferenza del regolamento"
+    required: false
+    type: "string"
+  statoRegsce:
+    name: "statoRegsce"
+    in: "query"
+    description: "stato del regolamento di scelta, se non valorizzato vengono recuperati\
+      \ i regolamenti attivi"
+    required: false
+    type: "array"
+    items:
+      type: "string"
+    collectionFormat: "multi"
+    enum:
+    - "A"
+    - "B"
+    - "X"
+  facId:
+    name: "facId"
+    in: "query"
+    description: "id della facoltà di afferenza del regolamento"
+    required: false
+    type: "integer"
+    format: "int64"
+  aaOrdId:
+    name: "aaOrdId"
+    in: "query"
+    description: "anno di ordinamento"
+    required: false
+    type: "integer"
+    format: "int64"
+  sceltaId:
+    name: "sceltaId"
+    in: "path"
+    description: "id univoco della regola di scelta"
+    required: true
+    type: "integer"
+    format: "int64"
+  cdsId:
+    name: "cdsId"
+    in: "query"
+    description: "id della corso di studio di afferenza del regolamento"
+    required: false
+    type: "integer"
+    format: "int64"
+  schemaId:
+    name: "schemaId"
+    in: "path"
+    description: "id univoco della regola di scelta"
+    required: true
+    type: "integer"
+    format: "int64"
+  sceltaAdId:
+    name: "sceltaAdId"
+    in: "path"
+    description: "id univoco dell'attività inserita nella regola di scelta"
+    required: true
+    type: "integer"
+    format: "int64"
+  aaRevisioneId:
+    name: "aaRevisioneId"
+    in: "query"
+    description: "anno di revisione"
+    required: false
+    type: "integer"
+    format: "int64"
+  regsceId:
+    name: "regsceId"
+    in: "path"
+    description: "id univoco del regolamento di scelta"
+    required: true
+    type: "integer"
+    format: "int64"
+  statiPiano:
+    name: "statiPiano"
+    in: "query"
+    description: "stati del piano; è possibile passare gli stati separati da virgola.\
+      \ Se non passato il valore viene impostato di default A,P,V"
+    required: false
+    type: "string"
+externalDocs:
+  description: "Documentazione Geneale sui servizi REST"
+  url: "https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3"
+x-file-status: "PROD"
+x-file-name: "p08-regsceApiV1.yaml"
+x-api-status: "PROD"
+x-func-cod: "RST_RSCEV1"
+x-cache-type: "configuration"

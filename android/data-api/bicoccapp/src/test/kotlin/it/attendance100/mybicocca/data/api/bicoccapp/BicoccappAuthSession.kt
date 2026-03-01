@@ -5,5 +5,5 @@ data class BicoccappAuthSession(
     val client: String,
     val uid: String,
     val fiscalCode: String,
-    val matricId: Int
+    val matricId: Long
 )

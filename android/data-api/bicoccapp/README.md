@@ -2,6 +2,9 @@
 
 Kotlin API client for the [BicoccApp](https://play.google.com/store/apps/details?id=it.bicoccapp.unimib) backend REST API.
 
+> **IMPORTANT**: We decided not to use this API module because we discovered BicoccApp is a wrapper for the esse3 API.
+> This module remains here to show the research that went into creating the application: check [documentation](./documentation) to learn more.
+
 ## Overview
 
 This module provides a type-safe Kotlin client for interacting with the BicoccApp backend API. BicoccApp is the official mobile application of the University of Milano-Bicocca, and this module enables programmatic access to its features.
@@ -59,9 +62,3 @@ The API uses token-based authentication with three headers:
 - `access-token` - Access token for authorization
 
 Tokens are obtained through the OpenID Connect flow with the university's identity provider.
-
-## Dependencies
-
-- Ktor 3.3 (HTTP client)
-- Ktorfit 2.7 (type-safe HTTP)
-- Kotlinx Serialization (JSON)

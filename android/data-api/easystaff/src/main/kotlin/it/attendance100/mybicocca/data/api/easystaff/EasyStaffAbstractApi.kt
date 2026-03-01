@@ -6,12 +6,13 @@ import io.ktor.client.request.forms.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.ktor.utils.io.jvm.javaio.*
+import it.attendance100.mybicocca.data.common.exception.ApiRequestException
+import it.attendance100.mybicocca.data.common.util.buildUrl
+import it.attendance100.mybicocca.data.common.util.toHtml
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromStream
-import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
-import java.net.URLEncoder
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
@@ -32,7 +33,17 @@ abstract class EasyStaffAbstractApi(
         /**
          * Base URL for all Agenda Web requests.
          */
-        private const val BASE_URL = "https://gestioneorari.didattica.unimib.it"
+        protected const val BASE_URL = "https://gestioneorari.didattica.unimib.it"
+
+        /**
+         * Endpoint to query search options.
+         */
+        protected const val COMBO_ENDPOINT = "/PortaleStudentiUnimib/combo.php"
+
+        /**
+         * API endpoint used by Agenda Web.
+         */
+        protected const val AGENDA_WEB_ENDPOINT = "/PortaleStudentiUnimib/index.php"
 
         /**
          * Date format used by Agenda Web (DD-MM-YYYY).
@@ -43,17 +54,6 @@ abstract class EasyStaffAbstractApi(
          * Time format used by Agenda Web (HH:mm).
          */
         private val TIME_FORMAT: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm")
-
-        /**
-         * Endpoint to query search options.
-         */
-        protected const val COMBO_ENDPOINT = "/PortaleStudentiUnimib/combo.php"
-
-
-        /**
-         * API endpoint used by Agenda Web.
-         */
-        protected const val AGENDA_WEB_ENDPOINT = "/PortaleStudentiUnimib/index.php"
 
         /**
          * Formats a date to Agenda Web format (DD-MM-YYYY).
@@ -70,15 +70,6 @@ abstract class EasyStaffAbstractApi(
          * @return The formatted time string
          */
         fun formatTime(time: LocalTime): String = time.format(TIME_FORMAT)
-
-        /**
-         * URL-encodes a query parameter value.
-         *
-         * @param value The value to encode
-         * @return The URL-encoded value
-         */
-        fun encodeQueryValue(value: String): String =
-            URLEncoder.encode(value, Charsets.UTF_8.name())
 
         /**
          * Extracts JSON content from a JavaScript variable assignment.
@@ -113,9 +104,9 @@ abstract class EasyStaffAbstractApi(
         path: String,
         queryParams: Map<String, List<String>> = emptyMap()
     ): Document {
-        val url = buildUrl(path, queryParams)
+        val url = buildUrl(BASE_URL, path, queryParams)
         val response = client.get(url)
-        return Jsoup.parse(response.bodyAsChannel().toInputStream(), null, BASE_URL)
+        return response.toHtml()
     }
 
     /**
@@ -131,7 +122,7 @@ abstract class EasyStaffAbstractApi(
         path: String,
         queryParams: Map<String, List<String>> = emptyMap()
     ): String {
-        val url = buildUrl(path, queryParams)
+        val url = buildUrl(BASE_URL, path, queryParams)
         val response = client.get(url)
         return response.bodyAsText()
     }
@@ -150,13 +141,13 @@ abstract class EasyStaffAbstractApi(
         body: Any,
         queryParams: Map<String, List<String>> = emptyMap()
     ): T {
-        val url = buildUrl(path, queryParams)
+        val url = buildUrl(BASE_URL, path, queryParams)
         val response = client.post(url) {
             contentType(ContentType.Application.Json)
             setBody(body)
         }
         if(!response.status.isSuccess()) {
-            throw IllegalStateException("Invalid status code: ${response.status.value}")
+            throw ApiRequestException(response.status.value)
         }
         return json.decodeFromStream(response.bodyAsChannel().toInputStream())
     }
@@ -174,7 +165,7 @@ abstract class EasyStaffAbstractApi(
         path: String,
         formParameters: Map<String, List<String>>
     ): T {
-        val url = buildUrl(path)
+        val url = buildUrl(BASE_URL, path)
         val response = client.post(url) {
             setBody(FormDataContent(Parameters.build {
                 formParameters.forEach { (key, values) ->
@@ -185,35 +176,8 @@ abstract class EasyStaffAbstractApi(
             }))
         }
         if(!response.status.isSuccess()) {
-            throw IllegalStateException("Invalid status code: ${response.status.value}")
+            throw ApiRequestException(response.status.value)
         }
         return json.decodeFromStream(response.bodyAsChannel().toInputStream())
-    }
-
-    /**
-     * Builds a full URL from a path and query parameters.
-     *
-     * @param path The request path (can be relative or absolute)
-     * @param queryParams Query parameters to append
-     * @return The full URL string
-     */
-    protected fun buildUrl(path: String, queryParams: Map<String, List<String>> = emptyMap()): String {
-        val basePath = when {
-            path.startsWith("http") -> path
-            path.startsWith("/") -> "$BASE_URL$path"
-            else -> "$BASE_URL/$path"
-        }
-        return if (queryParams.isEmpty()) {
-            basePath
-        } else {
-            val query = queryParams.entries
-                .flatMap { (key, values) -> values.map { value -> "$key=${encodeQueryValue(value)}" } }
-                .joinToString("&")
-            if (basePath.contains("?")) {
-                "$basePath&$query"
-            } else {
-                "$basePath?$query"
-            }
-        }
     }
 }

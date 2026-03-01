@@ -1,13 +1,8 @@
 package it.attendance100.mybicocca.data.dto.bicoccapp
 
-import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.descriptors.PrimitiveKind
-import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
-import kotlinx.serialization.descriptors.SerialDescriptor
-import kotlinx.serialization.encoding.Decoder
-import kotlinx.serialization.encoding.Encoder
+import java.time.LocalDate
 
 /**
  * Payment status of a tax fee.
@@ -24,7 +19,7 @@ enum class BicoccappPaymentStatus {
  * Response containing user tax/fee information.
  */
 @Serializable
-data class BicoccappTaxesResponse(
+internal data class BicoccappTaxesResponse(
     /**
      * Career object containing tax fees.
      */
@@ -36,7 +31,7 @@ data class BicoccappTaxesResponse(
  * Container for tax fees.
  */
 @Serializable
-data class BicoccappUserTaxes(
+internal data class BicoccappUserTaxes(
     /**
      * List of tax fees.
      */
@@ -89,13 +84,15 @@ data class BicoccappTax(
      * Date the invoice was released/issued.
      */
     @SerialName("releaseDate")
-    val releaseDate: String? = null,
+    @Serializable(with = BicoccappLocalDateSerializer::class)
+    val releaseDate: LocalDate? = null,
 
     /**
      * Date the payment was made.
      */
     @SerialName("paymentDate")
-    val paymentDate: String? = null,
+    @Serializable(with = BicoccappNullableLocalDateSerializer::class)
+    val paymentDate: LocalDate? = null,
 
     /**
      * MAV payment slip description.
@@ -113,14 +110,14 @@ data class BicoccappTax(
      * Whether the invoice is canceled.
      */
     @SerialName("invoiceCanceled")
-    @Serializable(with = BinaryBooleanSerializer::class)
+    @Serializable(with = BicoccappIntBooleanSerializer::class)
     val isCanceled: Boolean = false,
 
     /**
      * Whether the invoice has errors.
      */
     @SerialName("invoiceWrong")
-    @Serializable(with = YesNoBooleanSerializer::class)
+    @Serializable(with = BioccappStringBooleanSerializer::class)
     val hasErrors: Boolean = false,
 
     /**
@@ -133,7 +130,7 @@ data class BicoccappTax(
      * Whether the invoice is overdue.
      */
     @SerialName("invoiceOverdue")
-    @Serializable(with = YesNoBooleanSerializer::class)
+    @Serializable(with = BioccappStringBooleanSerializer::class)
     val isOverdue: Boolean = false,
 
     /**
@@ -158,7 +155,7 @@ data class BicoccappTax(
      * Whether arrears have been added.
      */
     @SerialName("arrearAddFlag")
-    @Serializable(with = BinaryBooleanSerializer::class)
+    @Serializable(with = BicoccappIntBooleanSerializer::class)
     val hasArrearsAdded: Boolean = false,
 
     /**
@@ -177,7 +174,7 @@ data class BicoccappTax(
      * Whether manually registered.
      */
     @SerialName("manuallyRegisteredFlag")
-    @Serializable(with = BinaryBooleanSerializer::class)
+    @Serializable(with = BicoccappIntBooleanSerializer::class)
     val isManuallyRegistered: Boolean = false,
 
     /**
@@ -190,5 +187,6 @@ data class BicoccappTax(
      * Expiration date of the invoice.
      */
     @SerialName("invoiceExpiration")
-    val expirationDate: String
+    @Serializable(with = BicoccappLocalDateSerializer::class)
+    val expirationDate: LocalDate
 )

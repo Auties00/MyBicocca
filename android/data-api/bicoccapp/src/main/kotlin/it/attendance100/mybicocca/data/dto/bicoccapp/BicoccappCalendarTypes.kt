@@ -2,12 +2,14 @@ package it.attendance100.mybicocca.data.dto.bicoccapp
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import java.time.LocalDate
+import java.time.LocalDateTime
 
 /**
  * Response wrapper for the user's calendar.
  */
 @Serializable
-data class BicoccappCalendarResponse(
+internal data class BicoccappCalendarResponse(
     /**
      * List of calendar days containing events.
      */
@@ -21,10 +23,11 @@ data class BicoccappCalendarResponse(
 @Serializable
 data class BicoccappCalendarDay(
     /**
-     * The date of this calendar entry (e.g., ISO 8601 format).
+     * The date of this calendar entry
      */
     @SerialName("day")
-    val date: String,
+    @Serializable(with = BicoccappLocalDateSerializer::class)
+    val date: LocalDate,
 
     /**
      * List of course events/lessons for this day.
@@ -72,7 +75,8 @@ data class BicoccappCourseEvent(
      * Date of the event.
      */
     @SerialName("date")
-    val date: String,
+    @Serializable(with = BicoccappLocalDateSerializer::class)
+    val date: LocalDate,
 
     /**
      * Time of the event.
@@ -87,12 +91,6 @@ data class BicoccappCourseEvent(
     val type: String,
 
     /**
-     * Day of the week.
-     */
-    @SerialName("day")
-    val dayOfWeek: String,
-
-    /**
      * Code of the room where the event takes place.
      */
     @SerialName("roomCode")
@@ -105,34 +103,31 @@ data class BicoccappCourseEvent(
     val room: String,
 
     /**
-     * Status indicating if the event is canceled (String value).
+     * Status indicating if the event is canceled.
      */
     @SerialName("canceled")
-    val cancellationStatus: String,
-
-    /**
-     * URL or data for the map location.
-     */
-    @SerialName("maps")
-    val mapUrl: String? = null,
+    @Serializable(with = BioccappStringBooleanSerializer::class)
+    val cancellationStatus: Boolean,
 
     /**
      * Geographic coordinates of the event location.
      */
     @SerialName("coordinates")
+    @Serializable(with = BicoccappEventCoordinatesSerializer::class)
     val coordinates: BicoccappEventCoordinates? = null,
 
     /**
      * List of teachers associated with this event.
      */
     @SerialName("teachers")
-    val teachers: List<BicoccappCourseTeacher> = emptyList(),
+    @Serializable(with = BicoccappTeachersSerializer::class)
+    val teachers: List<BicoccappTeacher> = emptyList(),
 
     /**
      * Activity code associated with the event.
      */
     @SerialName("activityCode")
-    val activityCode: String,
+    val activityCode: String? = null,
 
     /**
      * Indicates if the session is booked.
@@ -150,43 +145,13 @@ data class BicoccappEventCoordinates(
      * Latitude value as a string.
      */
     @SerialName("latitude")
-    val latitude: String? = null,
+    val latitude: Double,
 
     /**
      * Longitude value as a string.
      */
     @SerialName("longitude")
-    val longitude: String? = null
-)
-
-/**
- * Represents a teacher associated with a course.
- */
-@Serializable
-data class BicoccappCourseTeacher(
-    /**
-     * Unique key or ID for the teacher.
-     */
-    @SerialName("teacher_key")
-    val key: String,
-
-    /**
-     * Code identifying the teacher.
-     */
-    @SerialName("teacher_code")
-    val code: String,
-
-    /**
-     * Full name of the teacher.
-     */
-    @SerialName("teacher_fullname")
-    val fullName: String,
-
-    /**
-     * Email address of the teacher.
-     */
-    @SerialName("teacher_email")
-    val email: String? = null
+    val longitude: Double
 )
 
 /**
@@ -234,19 +199,8 @@ data class BicoccappCourseAppeal(
      * Date of the appeal.
      */
     @SerialName("appealDate")
-    val appealDate: String,
-
-    /**
-     * Date of the event/session.
-     */
-    @SerialName("date")
-    val date: String,
-
-    /**
-     * Time of the appeal.
-     */
-    @SerialName("time")
-    val time: String,
+    @Serializable(with = BicoccappLocalDateTimeSerializer::class)
+    val appealDate: LocalDateTime,
 
     /**
      * Description of the appeal.
@@ -279,12 +233,6 @@ data class BicoccappCourseAppeal(
     val position: Int,
 
     /**
-     * Status of the appeal (e.g., "ISCRITTO").
-     */
-    @SerialName("status")
-    val status: String,
-
-    /**
      * Indicates if the session is booked.
      */
     @SerialName("session_booked")
@@ -295,7 +243,7 @@ data class BicoccappCourseAppeal(
  * Response containing a list of courses available for calendar subscription.
  */
 @Serializable
-data class BicoccappCalendarCoursesResponse(
+internal data class BicoccappCalendarCoursesResponse(
     /**
      * List of available courses.
      */
@@ -354,7 +302,7 @@ data class BicoccappCourse(
      * Enrollment ID (Matricola numeric ID).
      */
     @SerialName("matricId")
-    val enrollmentId: Double? = null,
+    val enrollmentId: Int? = null,
 
     /**
      * Activity item ID.
@@ -367,7 +315,7 @@ data class BicoccappCourse(
  * Detailed information about a specific course.
  */
 @Serializable
-data class BicoccappCourseDetailResponse(
+data class BicoccappCourseDetails(
     /**
      * Activity code.
      */
@@ -402,7 +350,8 @@ data class BicoccappCourseDetailResponse(
      * List of teachers for this course.
      */
     @SerialName("teachers")
-    val teachers: List<BicoccappCourseTeacher> = emptyList(),
+    @Serializable(with = BicoccappTeachersSerializer::class)
+    val teachers: List<BicoccappTeacher> = emptyList(),
 
     /**
      * List of events associated with this course.
@@ -412,19 +361,28 @@ data class BicoccappCourseDetailResponse(
 )
 
 /**
- * Response after setting/adding a course to the calendar.
+ * Represents the outcome of modifying the calendar.
+ * This sealed hierarchy allows for exhaustive handling of the different states
+ * returned by the Bicoccapp API. Use a `when` expression to branch logic based
+ * on whether the operation was a standard [Success] or an [Error].
  */
-@Serializable
-data class BicoccappSetCalendarResponse(
+@Serializable(with = BicoccappSetCalendarResultSerializer::class)
+sealed interface BicoccappSetCalendarResult {
     /**
-     * Response message.
+     * Indicates the operation completed successfully
      */
-    @SerialName("message")
-    val message: String? = null,
+    @Serializable
+    object Success : BicoccappSetCalendarResult
 
     /**
-     * Status code of the operation.
+     * Indicates the operation failed.
+     *
+     * @property message A human-readable message describing the failure.
      */
-    @SerialName("status")
-    val status: Int? = null
-)
+    @Serializable
+    data class Error(
+        val message: String,
+    ) : BicoccappSetCalendarResult
+}
+
+

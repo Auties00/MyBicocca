@@ -9,6 +9,4 @@ package it.attendance100.mybicocca.data.exception
 class ElearningException(
     val errorCode: String?,
     val errorMessage: String
-) : Exception(errorMessage) {
-
-}
+) : Exception(errorMessage)

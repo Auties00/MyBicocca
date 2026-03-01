@@ -1,6 +1,7 @@
 package it.attendance100.mybicocca.data.api.easystaff
 
 import io.ktor.client.*
+import it.attendance100.mybicocca.data.common.exception.HtmlParsingException
 import it.attendance100.mybicocca.data.dto.easystaff.*
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromJsonElement
@@ -35,7 +36,7 @@ class EasyStaffCoreApi(
         )
 
         val jsonString = extractJsonFromJsVariable(response, "anni_accademici_ec")
-            ?: throw IllegalStateException("Failed to parse academic years response")
+            ?: throw HtmlParsingException("Failed to parse academic years response")
 
         return json.parseToJsonElement(jsonString)
             .jsonObject
@@ -63,7 +64,7 @@ class EasyStaffCoreApi(
         )
 
         val jsonString = extractJsonFromJsVariable(response, "elenco_scuole")
-            ?: throw IllegalStateException("Failed to parse teaching areas response")
+            ?: throw HtmlParsingException("Failed to parse teaching areas response")
 
         return json.decodeFromString(jsonString)
     }
@@ -87,7 +88,7 @@ class EasyStaffCoreApi(
 
         // Extract JSON from JavaScript variable assignment
         val jsonString = extractJsonFromJsVariable(response, "elenco_docenti")
-            ?: throw IllegalStateException("Failed to parse teachers response")
+            ?: throw HtmlParsingException("Failed to parse teachers response")
 
         return json.parseToJsonElement(jsonString)
             .jsonArray
@@ -117,7 +118,7 @@ class EasyStaffCoreApi(
         )
 
         val jsonString = extractJsonFromJsVariable(response, "elenco_corsi")
-            ?: throw IllegalStateException("Failed to parse study programs response")
+            ?: throw HtmlParsingException("Failed to parse study programs response")
 
         val allPrograms: List<EasyStaffStudyProgram> = json.decodeFromString(jsonString)
 

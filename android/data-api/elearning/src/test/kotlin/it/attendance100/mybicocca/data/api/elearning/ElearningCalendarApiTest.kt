@@ -4,7 +4,7 @@ import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
 
-class ElearningCalendarApiTest : ElearningTestBase() {
+class ElearningCalendarApiTest : ElearningTestApiBase() {
 
     @Test
     suspend fun getCalendarUpcomingView() {

@@ -1,72 +1,110 @@
 package it.attendance100.mybicocca.data.api.bicoccapp
 
-import de.jensklingenberg.ktorfit.http.Field
-import de.jensklingenberg.ktorfit.http.FormUrlEncoded
-import de.jensklingenberg.ktorfit.http.GET
-import de.jensklingenberg.ktorfit.http.POST
-import de.jensklingenberg.ktorfit.http.Query
+import io.ktor.client.HttpClient
+import io.ktor.client.request.forms.FormDataContent
+import io.ktor.client.request.parameter
+import io.ktor.client.request.setBody
+import io.ktor.http.Parameters
 import it.attendance100.mybicocca.data.dto.bicoccapp.BicoccappCalendarCoursesResponse
+import it.attendance100.mybicocca.data.dto.bicoccapp.BicoccappCalendarDay
 import it.attendance100.mybicocca.data.dto.bicoccapp.BicoccappCalendarResponse
-import it.attendance100.mybicocca.data.dto.bicoccapp.BicoccappCourseDetailResponse
-import it.attendance100.mybicocca.data.dto.bicoccapp.BicoccappSetCalendarResponse
+import it.attendance100.mybicocca.data.dto.bicoccapp.BicoccappCourse
+import it.attendance100.mybicocca.data.dto.bicoccapp.BicoccappCourseDetails
+import it.attendance100.mybicocca.data.dto.bicoccapp.BicoccappSetCalendarResult
+import kotlinx.serialization.json.Json
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 
 /**
- * Calendar API for managing academic schedules and course subscriptions.
+ * API client for calendar-related operations.
  */
-interface BicoccappCalendarApi {
+class BicoccappCalendarApi(
+    client: HttpClient,
+    json: Json
+) : BicoccappAbstractApi(client, json) {
+    companion object {
+        /**
+         * Italian date formatter.
+         **/
+        private val formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy")
+    }
+
     /**
      * Retrieves calendar events (lectures, exams, deadlines) for a student.
      *
      * @param enrollmentId Student's enrollment number (matricola).
-     * @param date Optional ISO 8601 date to center the view (defaults to current date).
-     * @return Calendar events for the specified period.
+     * @param date Optional date of the results (this is not a start date, if specified the method will return only the events at this date)
+     * @return Calendar with days and events.
      */
-    @GET("calendar")
-    suspend fun getCalendar(
-        @Query("matricId") enrollmentId: String,
-        @Query("date") date: String? = null
-    ): BicoccappCalendarResponse
+    suspend fun getCalendarDays(
+        enrollmentId: String,
+        date: LocalDate? = null
+    ): List<BicoccappCalendarDay> {
+        val response = executeJsonGet<BicoccappCalendarResponse>("/calendar") {
+            parameter("matricId", enrollmentId)
+            date?.let { parameter("date", formatter.format(it)) }
+        }
+        return response.days
+    }
 
     /**
      * Lists all courses available for calendar subscription.
      *
-     * @return Course catalog with subscription status for each course.
+     * @return Available courses.
      */
-    @GET("calendar_courses")
-    suspend fun getAvailableCourses(): BicoccappCalendarCoursesResponse
+    suspend fun getAvailableCourses(): List<BicoccappCourse> {
+        val response = executeJsonGet<BicoccappCalendarCoursesResponse>("/calendar_courses")
+        return response.courses
+    }
 
     /**
      * Retrieves detailed information about a specific course.
      *
      * @param activityCode Unique identifier for this course instance.
      * @param courseCode General course identifier.
-     * @return Course details including syllabus, schedule, and teaching staff.
+     * @return Course details with events.
      */
-    @GET("course_detail")
     suspend fun getCourseDetail(
-        @Query("activityCode") activityCode: String,
-        @Query("courseCode") courseCode: String
-    ): BicoccappCourseDetailResponse
+        activityCode: String,
+        courseCode: String
+    ): BicoccappCourseDetails {
+        val response = executeJsonGet<BicoccappCourseDetails>("/course_detail") {
+            parameter("activityCode", activityCode)
+            parameter("courseCode", courseCode)
+        }
+        return response
+    }
 
     /**
      * Adds a course's lecture schedule to the user's calendar.
      *
-     * @param userId User identifier.
-     * @param cdsCode Degree program code (Corso di Studi).
+     * @param appUserId User identifier.
+     * @param degreeCourseCode Degree program code (Corso di Studi).
      * @param activityCode Specific course instance identifier.
      * @param lessonName Course display name for calendar events.
      * @param courseCode General course code.
      * @param partition Optional section identifier for partitioned courses.
-     * @return Operation result with number of events added.
+     * @return Result of the operation.
      */
-    @FormUrlEncoded
-    @POST("set_calendar")
     suspend fun addCourseToCalendar(
-        @Field("user_id") userId: String,
-        @Field("cdsCode") cdsCode: String,
-        @Field("activityCode") activityCode: String,
-        @Field("lessonName") lessonName: String,
-        @Field("courseCode") courseCode: String,
-        @Field("partition") partition: String?
-    ): BicoccappSetCalendarResponse
+        appUserId: String,
+        degreeCourseCode: String,
+        activityCode: String,
+        lessonName: String,
+        courseCode: String,
+        partition: String?
+    ): BicoccappSetCalendarResult {
+        return executeJsonPost<BicoccappSetCalendarResult>("/set_calendar") {
+            setBody(FormDataContent(Parameters.build {
+                append("user_id", appUserId)
+                append("cdsCode", degreeCourseCode)
+                append("activityCode", activityCode)
+                append("lessonName", lessonName)
+                append("courseCode", courseCode)
+                partition?.let { append("partition", it) }
+            }))
+        }
+    }
+
+    // There is no way to remove courses (bruh)
 }

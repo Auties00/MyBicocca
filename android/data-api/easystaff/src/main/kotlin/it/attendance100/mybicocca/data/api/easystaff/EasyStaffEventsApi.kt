@@ -1,6 +1,7 @@
 package it.attendance100.mybicocca.data.api.easystaff
 
 import io.ktor.client.*
+import it.attendance100.mybicocca.data.common.exception.HtmlParsingException
 import it.attendance100.mybicocca.data.dto.easystaff.*
 import kotlinx.serialization.json.Json
 import java.time.DayOfWeek
@@ -43,7 +44,7 @@ class EasyStaffEventsApi(
             )
         )
         val jsonString = extractJsonFromJsVariable(response, "elenco_tipi")
-            ?: throw IllegalStateException("Missing 'elenco_tipi' field")
+            ?: throw HtmlParsingException("Missing 'elenco_tipi' field")
         return json.decodeFromString(jsonString)
     }
 

@@ -1,40 +1,77 @@
 package it.attendance100.mybicocca.data.api.bicoccapp
 
-import de.jensklingenberg.ktorfit.http.DELETE
-import de.jensklingenberg.ktorfit.http.GET
-import de.jensklingenberg.ktorfit.http.POST
-import de.jensklingenberg.ktorfit.http.Query
+import io.ktor.client.HttpClient
+import io.ktor.client.request.parameter
+import it.attendance100.mybicocca.data.dto.bicoccapp.BicoccappExamBookingResult
+import it.attendance100.mybicocca.data.dto.bicoccapp.BicoccappExamSession
 import it.attendance100.mybicocca.data.dto.bicoccapp.BicoccappExamsSessionsResponse
-import it.attendance100.mybicocca.data.dto.bicoccapp.BicoccappExamBookingResponse
+import it.attendance100.mybicocca.data.dto.bicoccapp.BicoccappUserExamsCareer
 import it.attendance100.mybicocca.data.dto.bicoccapp.BicoccappUserExamsResponse
+import kotlinx.serialization.json.Json
 
 /**
- * API for managing user exams and exam sessions.
+ * API client for exam-related operations.
  */
-interface BicoccappExamsApi {
+class BicoccappExamsApi(
+    client: HttpClient,
+    json: Json
+) : BicoccappAbstractApi(client, json) {
+
     /**
      * Retrieves the student's completed exam history.
      *
      * @param enrollmentId Enrollment number (matricola).
-     * @return Exam list with grades (18-30 scale), dates, and credits.
+     * @return Exams career data.
      */
-    @GET("user_exams")
     suspend fun getExams(
-        @Query("matricId") enrollmentId: String
-    ): BicoccappUserExamsResponse
+        enrollmentId: String
+    ): BicoccappUserExamsCareer {
+        val response = executeJsonGet<BicoccappUserExamsResponse>("/user_exams") {
+            parameter("matricId", enrollmentId)
+        }
+        return response.career
+    }
 
     /**
      * Retrieves available and registered exam sessions (appelli).
      *
      * @param personId Internal person identifier.
      * @param enrollmentId Enrollment number (matricola).
-     * @return Exam sessions with dates, locations, and registration status.
+     * @return Exam sessions with appeals.
      */
-    @GET("user_appeals")
     suspend fun getExamsSessions(
-        @Query("personId") personId: String,
-        @Query("matricId") enrollmentId: String
-    ): BicoccappExamsSessionsResponse
+        personId: String,
+        enrollmentId: String
+    ): List<BicoccappExamSession> {
+        val response = executeJsonGet<BicoccappExamsSessionsResponse>("/user_appeals") {
+            parameter("personId", personId)
+            parameter("matricId", enrollmentId)
+        }
+        return response.career.courses
+    }
+
+    /**
+     * Registers the student for an exam session.
+     *
+     * @param degreeCourseCode Degree program identifier.
+     * @param activityId Teaching activity identifier.
+     * @param activityItemId Activity item identifier.
+     * @param activityAppealId Exam session identifier.
+     * @return Booking result (success or error).
+     */
+    suspend fun addExamSession(
+        degreeCourseCode: Int,
+        activityId: Int,
+        activityItemId: Int,
+        activityAppealId: Int
+    ): BicoccappExamBookingResult {
+        return executeJsonPost("/user_appeals") {
+            parameter("cdsId", degreeCourseCode)
+            parameter("activityId", activityId)
+            parameter("activityItemId", activityItemId)
+            parameter("activityAppealId", activityAppealId)
+        }
+    }
 
     /**
      * Cancels a student's exam session registration.
@@ -44,31 +81,21 @@ interface BicoccappExamsApi {
      * @param activityItemId Activity item identifier.
      * @param activityAppealId Exam session identifier.
      * @param studentId Student record identifier.
-     * @return Operation result with success status and message.
+     * @return Booking result (success or error).
      */
-    @DELETE("user_appeals")
     suspend fun cancelExamSession(
-        @Query("cdsId") cdsId: Int,
-        @Query("activityId") activityId: Int,
-        @Query("activityItemId") activityItemId: Int,
-        @Query("activityAppealId") activityAppealId: Int,
-        @Query("studentId") studentId: String
-    ): BicoccappExamBookingResponse
-
-    /**
-     * Registers the student for an exam session.
-     *
-     * @param cdsId Degree program identifier.
-     * @param activityId Teaching activity identifier.
-     * @param activityItemId Activity item identifier.
-     * @param activityAppealId Exam session identifier.
-     * @return Operation result with success status and message.
-     */
-    @POST("user_appeals")
-    suspend fun addExamSession(
-        @Query("cdsId") cdsId: Int,
-        @Query("activityId") activityId: Int,
-        @Query("activityItemId") activityItemId: Int,
-        @Query("activityAppealId") activityAppealId: Int
-    ): BicoccappExamBookingResponse
+        cdsId: Int,
+        activityId: Int,
+        activityItemId: Int,
+        activityAppealId: Int,
+        studentId: String
+    ): BicoccappExamBookingResult {
+        return executeJsonDelete("/user_appeals") {
+            parameter("cdsId", cdsId)
+            parameter("activityId", activityId)
+            parameter("activityItemId", activityItemId)
+            parameter("activityAppealId", activityAppealId)
+            parameter("studentId", studentId)
+        }
+    }
 }

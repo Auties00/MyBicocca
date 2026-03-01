@@ -1,76 +1,88 @@
 package it.attendance100.mybicocca.data.api.esse3
 
+import io.ktor.client.plugins.*
 import io.ktor.client.plugins.logging.*
-import io.ktor.http.*
-import io.ktor.util.date.*
+import io.ktor.client.request.*
+import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.extension.BeforeAllCallback
 import org.junit.jupiter.api.extension.ExtensionContext
-import org.openqa.selenium.chrome.ChromeDriver
-import org.openqa.selenium.chrome.ChromeOptions
-import org.openqa.selenium.support.ui.WebDriverWait
-import java.time.Duration
+import java.util.*
 
 object Esse3GlobalApiData : BeforeAllCallback, AutoCloseable {
-    private val AUTH_TIMEOUT = Duration.ofSeconds(300)
+    private const val TIMEOUT_MS = 30_000L
 
-    var api: Esse3Api? = null
+    val username: String
+        get() = System.getenv("ESSE3_USERNAME")
+            ?: throw IllegalStateException("Missing username: set ESSE3_USERNAME environment variable")
 
-    override fun beforeAll(context: ExtensionContext) {
-        if (api == null) {
-            val cookies = performLogin()
-            api = Esse3Api(cookies) {
-                install(Logging) {
-                    logger = Logger.DEFAULT
-                    level = LogLevel.ALL
-                }
+    val password: String
+        get() = System.getenv("ESSE3_PASSWORD")
+            ?: throw IllegalStateException("Missing password: set ESSE3_PASSWORD environment variable")
+
+    val api: Esse3Api by lazy {
+        Esse3Api {
+            install(Logging) {
+                logger = Logger.DEFAULT
+                level = LogLevel.ALL
+            }
+
+            install(HttpTimeout) {
+                connectTimeoutMillis = TIMEOUT_MS
+                socketTimeoutMillis = TIMEOUT_MS
+                requestTimeoutMillis = TIMEOUT_MS
+            }
+
+            defaultRequest {
+                val credentials = Base64.getEncoder().encodeToString("$username:$password".toByteArray())
+                header("Authorization", "Basic $credentials")
             }
         }
     }
 
-    private fun performLogin(): List<Cookie> {
-        val options = ChromeOptions().apply {
-            browserVersion = "131"
-            addArguments(
-                "--start-maximized",
-                "--disable-blink-features=AutomationControlled",
-                "--remote-allow-origins=*",
-                "--no-sandbox",
-                "--disable-dev-shm-usage"
-            )
-            setExperimentalOption("excludeSwitches", listOf("enable-automation"))
-        }
+    var session: Esse3AuthSession? = null
+    var studentProfile: Esse3StudentProfile? = null
 
-        val driver = ChromeDriver(options)
-
-        return try {
-            driver.get(ESSE3_LOGIN_URL)
-
-            val wait = WebDriverWait(driver, AUTH_TIMEOUT)
-            wait.until { d ->
-                d.currentUrl?.contains("auth/studente/HomePageStudente.do") == true
-            }
-
-            driver.manage().cookies.map {
-                Cookie(
-                    name = it.name,
-                    value = it.value,
-                    encoding = CookieEncoding.URI_ENCODING,
-                    maxAge = null,
-                    expires = it.expiry?.time?.let { timestamp -> GMTDate(timestamp) },
-                    domain = it.domain,
-                    path = it.path,
-                    secure = it.isSecure,
-                    httpOnly = it.isHttpOnly
-                )
-            }
-        } finally {
-            runCatching {
-                driver.quit()
+    override fun beforeAll(context: ExtensionContext) {
+        if (session == null) {
+            runBlocking {
+                session = performLogin()
             }
         }
+
+        if (studentProfile == null) {
+            runBlocking {
+                studentProfile = fetchStudentProfile()
+            }
+        }
+    }
+
+    private suspend fun performLogin(): Esse3AuthSession {
+        val result = api.auth.login()
+        return Esse3AuthSession(
+            authToken = result.authToken,
+            internalAuthToken = result.internalAuthToken,
+            jwt = result.jwt,
+            userId = result.user.userId,
+            fiscalCode = result.user.fiscalCode
+        )
+    }
+
+    private suspend fun fetchStudentProfile(): Esse3StudentProfile {
+        val careers = api.careers.getCareers()
+        val career = careers.firstOrNull()
+            ?: throw IllegalStateException("No careers found for user")
+
+        return Esse3StudentProfile(
+            personId = career.personId ?: throw IllegalStateException("No personId in career"),
+            studentId = career.studentId ?: throw IllegalStateException("No studentId in career"),
+            enrollmentId = career.enrollmentId ?: throw IllegalStateException("No enrollmentId in career"),
+            enrollmentNumber = career.enrollmentId.toString(),
+            degreeCourseId = career.courseOfStudyId ?: throw IllegalStateException("No degreeCourseId in career"),
+            userId = session?.userId ?: throw IllegalStateException("No userId in session")
+        )
     }
 
     override fun close() {
-        api?.close()
+        api.close()
     }
 }

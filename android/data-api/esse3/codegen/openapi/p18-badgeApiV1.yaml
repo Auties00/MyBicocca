@@ -1,0 +1,713 @@
+---
+swagger: "2.0"
+info:
+  description: "API REST di ESSE3 per l'accesso ai servizi rest dell'area Badge\n"
+  version: "1.1.0"
+  title: "ESSE3 Badge API"
+basePath: "/badge-service-v1"
+tags:
+- name: "badge"
+  description: "informazioni sul badge"
+schemes:
+- "https"
+- "http"
+consumes:
+- "application/json"
+produces:
+- "application/json"
+security:
+- basicAuth: []
+- jwt:
+  - "openid"
+paths:
+  /badges:
+    get:
+      tags:
+      - "badge"
+      summary: "recupera i dati del badge"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>\n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n\
+        -|-|-\nx-cache-type|midRefreshRateUserIndependent|Risorsa che varia con frequenza\
+        \ media, cache Http abilitata, cache server abilitata. Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: USER_TECNICO**\n\nProfilo|Controllo| Funzione\n-|-|-\nUTENTE_TECNICO|funzione\
+        \ accessibile alle utenze tecniche per accessi ai servizi REST|Security.checkUserTecnico()\n\
+        \n**Utente: STUDENTE**\n\nProfilo|Controllo| Funzione\n-|-|-\nSTUDENTE|filtra\
+        \ i badge collegati alla persona|SecurityBadge.filterBadgeStu(rfid, stuId,\
+        \ codFis, cdsCod, aaIscrAnn)\n\n\nClasse di modello : DatiBadge\n======\n\n\
+        Estensioni sulle proprietà\n----\nProprietà | x-field-type\n-|-|\nbdgId|primaryKey\n\
+        \n\nClasse di modello : DettaglioErroreAggiuntivo\n======\n\nEstensioni sulle\
+        \ proprietà\n----\nProprietà | x-field-type\n-|-|\nrawValue|rawJson\n"
+      operationId: "getBadgesNew"
+      parameters:
+      - name: "rfid"
+        in: "query"
+        description: "rfid associato al badge dello studente"
+        required: false
+        type: "string"
+      - name: "stuId"
+        in: "query"
+        description: "identificativo della carriera"
+        required: false
+        type: "integer"
+        format: "int64"
+      - name: "codFis"
+        in: "query"
+        description: "codice fiscale della persona"
+        required: false
+        type: "string"
+      - name: "cdsCod"
+        in: "query"
+        description: "corso di studio di iscrizione dello studente"
+        required: false
+        type: "string"
+      - name: "aaIscrAnn"
+        in: "query"
+        description: "anno di iscrizione"
+        required: false
+        type: "integer"
+        format: "int32"
+      - name: "staStuCod"
+        in: "query"
+        description: "stato studente"
+        required: false
+        type: "string"
+        enum:
+        - "A"
+        - "S"
+        - "X"
+        - "I"
+      - name: "staMatCod"
+        in: "query"
+        description: "stato matricola"
+        required: false
+        type: "string"
+        enum:
+        - "A"
+        - "S"
+        - "I"
+      - name: "order"
+        in: "query"
+        description: "consente di specificare un ordine per il recupero dei record.\
+          \ La sintassi è la seguente\n * +/- : specifica l'ordinamento (+ = ASC,\
+          \ - = DESC); se omesso viene utilizzato +\n * field : nome del campo da\
+          \ ordinare\n \n E' possibile indicare più campi separandoli da virgola (Es:\
+          \ +annoCorso,+adCod) \n"
+        required: false
+        type: "string"
+      - name: "fields"
+        in: "query"
+        description: "specifica la lista dei campi opzionali (che non vengono recupeati\
+          \ di default);\nimpostando il valore `ALL` vengono mostrati tutti i campi.\
+          \ \n\nPer gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns*\
+          \  \nI dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello)\n\
+          \nEsempi\n* per il campo childObj con la poprietà childProp utilizzare la\
+          \ notazione `childProp.prop1`\n* Per visualizzare tutte le proprietà di\
+          \ childObj utilizzare la notazione `childProp.*`\n* Per visualizzare tutte\
+          \ le proprietà di childObj e di tutti i discendenti utilizzare la notazione\
+          \ `childProp.**`\n"
+        required: false
+        type: "string"
+      - name: "filter"
+        in: "query"
+        description: "il parametro consente di applicare dei filtri alla classe di\
+          \ modello utilizzando il linguaggio  [RSQL](https://github.com/jirutka/rsql-parser).\n\
+          La lista degli operatori utilizzabili è disponibile [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosullerigherecuperate)\
+          \   \n   *NB* il filtro viene applicato DOPO aver recuperato i dati\n"
+        required: false
+        type: "string"
+      responses:
+        "200":
+          description: "Successful response"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/DatiBadge"
+        "422":
+          description: "Parametri Errati"
+          schema:
+            $ref: "#/definitions/DettaglioErrore"
+      x-enabled-profiles:
+      - user-tecnico-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UTENTE_TECNICO"
+              description: "funzione accessibile alle utenze tecniche per accessi\
+                \ ai servizi REST"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkUserTecnico"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+      - filter-badge-stu-permission:
+          kind: "STUDENTE"
+          profiles:
+          - profile:
+              name: "STUDENTE"
+              description: "filtra i badge collegati alla persona"
+              checks:
+              - checkTipologiaAllegato:
+                  className: "SecurityBadge"
+                  functionName: "filterBadgeStu"
+                  description: "la funzione controlla che esistano dei badge collegati\
+                    \ allo studente con i filtri richiesti"
+                  parameters:
+                  - rfid: "{\"name\":\"rfid\",\"in\":\"query\",\"description\":\"\
+                      rfid associato al badge dello studente\",\"required\":false,\"\
+                      type\":\"string\",\"items\":null,\"collectionFormat\":null,\"\
+                      default\":null,\"maximum\":null,\"exclusiveMaximum\":null,\"\
+                      minimum\":null,\"exclusiveMinimum\":null,\"maxLength\":null,\"\
+                      minLength\":null,\"pattern\":null,\"maxItems\":null,\"minItems\"\
+                      :null,\"uniqueItems\":null,\"multipleOf\":null,\"format\":null,\"\
+                      x-example\":null,\"enum\":null}"
+                  - stuId: "{\"name\":\"stuId\",\"in\":\"query\",\"description\":\"\
+                      identificativo della carriera\",\"required\":false,\"type\"\
+                      :\"integer\",\"items\":null,\"collectionFormat\":null,\"default\"\
+                      :null,\"maximum\":null,\"exclusiveMaximum\":null,\"minimum\"\
+                      :null,\"exclusiveMinimum\":null,\"maxLength\":null,\"minLength\"\
+                      :null,\"pattern\":null,\"maxItems\":null,\"minItems\":null,\"\
+                      uniqueItems\":null,\"multipleOf\":null,\"format\":\"int64\"\
+                      ,\"x-example\":null,\"enum\":null}"
+                  - codFis: "{\"name\":\"codFis\",\"in\":\"query\",\"description\"\
+                      :\"codice fiscale della persona\",\"required\":false,\"type\"\
+                      :\"string\",\"items\":null,\"collectionFormat\":null,\"default\"\
+                      :null,\"maximum\":null,\"exclusiveMaximum\":null,\"minimum\"\
+                      :null,\"exclusiveMinimum\":null,\"maxLength\":null,\"minLength\"\
+                      :null,\"pattern\":null,\"maxItems\":null,\"minItems\":null,\"\
+                      uniqueItems\":null,\"multipleOf\":null,\"format\":null,\"x-example\"\
+                      :null,\"enum\":null}"
+                  - cdsCod: "{\"name\":\"cdsCod\",\"in\":\"query\",\"description\"\
+                      :\"corso di studio di iscrizione dello studente\",\"required\"\
+                      :false,\"type\":\"string\",\"items\":null,\"collectionFormat\"\
+                      :null,\"default\":null,\"maximum\":null,\"exclusiveMaximum\"\
+                      :null,\"minimum\":null,\"exclusiveMinimum\":null,\"maxLength\"\
+                      :null,\"minLength\":null,\"pattern\":null,\"maxItems\":null,\"\
+                      minItems\":null,\"uniqueItems\":null,\"multipleOf\":null,\"\
+                      format\":null,\"x-example\":null,\"enum\":null}"
+                  - aaIscrAnn: "{\"name\":\"aaIscrAnn\",\"in\":\"query\",\"description\"\
+                      :\"anno di iscrizione\",\"required\":false,\"type\":\"integer\"\
+                      ,\"items\":null,\"collectionFormat\":null,\"default\":null,\"\
+                      maximum\":null,\"exclusiveMaximum\":null,\"minimum\":null,\"\
+                      exclusiveMinimum\":null,\"maxLength\":null,\"minLength\":null,\"\
+                      pattern\":null,\"maxItems\":null,\"minItems\":null,\"uniqueItems\"\
+                      :null,\"multipleOf\":null,\"format\":\"int32\",\"x-example\"\
+                      :null,\"enum\":null}"
+    x-alias-path: "badges"
+  /badges/blobs/{badgeBlobId}/front:
+    get:
+      tags:
+      - "badge"
+      summary: "recupera la pagina frontale di un badge"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>\n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n\
+        -|-|-\nx-cache-type|midRefreshRateUserIndependent|Risorsa che varia con frequenza\
+        \ media, cache Http abilitata, cache server abilitata. Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: USER_TECNICO**\n\nProfilo|Controllo| Funzione\n-|-|-\nUTENTE_TECNICO|funzione\
+        \ accessibile alle utenze tecniche per accessi ai servizi REST|Security.checkUserTecnico()\n\
+        \n**Utente: STUDENTE**\n\nProfilo|Controllo| Funzione\n-|-|-\nSTUDENTE|controlla\
+        \ che il badge richeisto sia collegato alla persona|SecurityBadge.checkBadgeStu(badgeBlobId)\n\
+        \n\nClasse di modello : DettaglioErroreAggiuntivo\n======\n\nEstensioni sulle\
+        \ proprietà\n----\nProprietà | x-field-type\n-|-|\nrawValue|rawJson\n"
+      operationId: "getBadgeBlobFrontPage"
+      produces:
+      - "application/octet-stream"
+      parameters:
+      - name: "badgeBlobId"
+        in: "path"
+        description: "id del blob con le immagini del badge"
+        required: true
+        type: "integer"
+        format: "int64"
+      responses:
+        "200":
+          description: "Successful response"
+          schema:
+            type: "file"
+        "422":
+          description: "Parametri Errati"
+          schema:
+            $ref: "#/definitions/DettaglioErrore"
+      x-enabled-profiles:
+      - user-tecnico-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UTENTE_TECNICO"
+              description: "funzione accessibile alle utenze tecniche per accessi\
+                \ ai servizi REST"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkUserTecnico"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+      - badge-stu-permission:
+          kind: "STUDENTE"
+          profiles:
+          - profile:
+              name: "STUDENTE"
+              description: "controlla che il badge richeisto sia collegato alla persona"
+              checks:
+              - checkTipologiaAllegato:
+                  className: "SecurityBadge"
+                  functionName: "checkBadgeStu"
+                  description: "la funzione controlla che il il badge sia accessibile\
+                    \ dallo studente"
+                  parameters:
+                  - badgeBlobId: "{\"name\":\"badgeBlobId\",\"in\":\"path\",\"description\"\
+                      :\"id del blob con le immagini del badge\",\"required\":true,\"\
+                      type\":\"integer\",\"items\":null,\"collectionFormat\":null,\"\
+                      default\":null,\"maximum\":null,\"exclusiveMaximum\":null,\"\
+                      minimum\":null,\"exclusiveMinimum\":null,\"maxLength\":null,\"\
+                      minLength\":null,\"pattern\":null,\"maxItems\":null,\"minItems\"\
+                      :null,\"uniqueItems\":null,\"multipleOf\":null,\"format\":\"\
+                      int64\",\"x-example\":null,\"enum\":null}"
+  /badges/blobs/{badgeBlobId}/rear:
+    get:
+      tags:
+      - "badge"
+      summary: "recupera la pagina posteriore di un badge"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>\n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n\
+        -|-|-\nx-cache-type|midRefreshRateUserIndependent|Risorsa che varia con frequenza\
+        \ media, cache Http abilitata, cache server abilitata. Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: USER_TECNICO**\n\nProfilo|Controllo| Funzione\n-|-|-\nUTENTE_TECNICO|funzione\
+        \ accessibile alle utenze tecniche per accessi ai servizi REST|Security.checkUserTecnico()\n\
+        \n**Utente: STUDENTE**\n\nProfilo|Controllo| Funzione\n-|-|-\nSTUDENTE|controlla\
+        \ che il badge richeisto sia collegato alla persona|SecurityBadge.checkBadgeStu(badgeBlobId)\n\
+        \n\nClasse di modello : DettaglioErroreAggiuntivo\n======\n\nEstensioni sulle\
+        \ proprietà\n----\nProprietà | x-field-type\n-|-|\nrawValue|rawJson\n"
+      operationId: "getBadgeBlobRearPage"
+      produces:
+      - "application/octet-stream"
+      parameters:
+      - name: "badgeBlobId"
+        in: "path"
+        description: "id del blob con le immagini del badge"
+        required: true
+        type: "integer"
+        format: "int64"
+      responses:
+        "200":
+          description: "Successful response"
+          schema:
+            type: "file"
+        "422":
+          description: "Parametri Errati"
+          schema:
+            $ref: "#/definitions/DettaglioErrore"
+      x-enabled-profiles:
+      - user-tecnico-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UTENTE_TECNICO"
+              description: "funzione accessibile alle utenze tecniche per accessi\
+                \ ai servizi REST"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkUserTecnico"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+      - badge-stu-permission:
+          kind: "STUDENTE"
+          profiles:
+          - profile:
+              name: "STUDENTE"
+              description: "controlla che il badge richeisto sia collegato alla persona"
+              checks:
+              - checkTipologiaAllegato:
+                  className: "SecurityBadge"
+                  functionName: "checkBadgeStu"
+                  description: "la funzione controlla che il il badge sia accessibile\
+                    \ dallo studente"
+                  parameters:
+                  - badgeBlobId: "{\"name\":\"badgeBlobId\",\"in\":\"path\",\"description\"\
+                      :\"id del blob con le immagini del badge\",\"required\":true,\"\
+                      type\":\"integer\",\"items\":null,\"collectionFormat\":null,\"\
+                      default\":null,\"maximum\":null,\"exclusiveMaximum\":null,\"\
+                      minimum\":null,\"exclusiveMinimum\":null,\"maxLength\":null,\"\
+                      minLength\":null,\"pattern\":null,\"maxItems\":null,\"minItems\"\
+                      :null,\"uniqueItems\":null,\"multipleOf\":null,\"format\":\"\
+                      int64\",\"x-example\":null,\"enum\":null}"
+securityDefinitions:
+  basicAuth:
+    description: "Autenticazione tramite BASIC authentication. Questa modalità è disponibile\
+      \ se l'autenticazione su esse3 non usa shibboleth per il gruppo dell'utente"
+    type: "basic"
+  jwt:
+    description: "Autenticazione tramite OAUTH2, occorre configurare il parametro\
+      \ di configurazione di ESSE3 che indica il server OAUTH2 da utilizzare"
+    type: "oauth2"
+    authorizationUrl: "https://idp-idm.unimib.it/idp/profile/oidc/authorize"
+    flow: "implicit"
+    scopes:
+      openid: "informazioni sull'utente"
+definitions:
+  DettaglioErroreAggiuntivo:
+    type: "object"
+    properties:
+      errorType:
+        type: "string"
+        example: "stackTrace"
+        description: "descrizione del tipo di errore aggiuntivo"
+      value:
+        type: "string"
+        example: "SocketTimeoutException...."
+        description: "descrizione dell'errore"
+      rawValue:
+        type: "string"
+        example: "SocketTimeoutException...."
+        description: "descrizione dell'errore"
+        x-field-type: "rawJson"
+    x-model-sub-package: "frk.v1"
+    x-model-sub-path: "frk/v1"
+  DettaglioErrore:
+    type: "object"
+    properties:
+      statusCode:
+        type: "integer"
+        format: "int32"
+        example: 200
+        description: "Http Status Code"
+      retCode:
+        type: "integer"
+        format: "int32"
+        example: -1
+        description: "codice di errore"
+      retErrMsg:
+        type: "string"
+        example: "Parametri non corretti"
+        description: "descrizione dell'errore"
+      errDetails:
+        type: "array"
+        items:
+          $ref: "#/definitions/DettaglioErroreAggiuntivo"
+    x-model-sub-package: "frk.v1"
+    x-model-sub-path: "frk/v1"
+  DatiBadge:
+    type: "object"
+    required:
+    - "rfid"
+    discriminator: "typeDatiBadge"
+    properties:
+      bdgId:
+        type: "integer"
+        format: "int64"
+        example: 123
+        description: "id del badge"
+        x-field-type: "primaryKey"
+      annFlg:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "flag che indica se il badge è stato restituito"
+      badgeBlbId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "id del blob con le immagini del badge"
+      frontImagePresent:
+        type: "integer"
+        format: "int32"
+        example: 1
+        description: "flag che indica se è presente un blob con l'immagine anteriore"
+        minimum: 0.0
+        maximum: 1.0
+      rearImagePresent:
+        type: "integer"
+        format: "int32"
+        example: 1
+        description: "flag che indica se è presente un blob con l'immagine posteriore"
+        minimum: 0.0
+        maximum: 1.0
+      restFlg:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "flag che indica se il badge è annullato"
+      consFlg:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "flag che indica se il badge è stato consegnato"
+      dataIni:
+        type: "string"
+        example: "10/09/2019 11:00:00"
+        description: "data e ora di creazione del badge (DD/MM/YYYY HH24:MI:SS)"
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})\
+          \ ([01][0-9]|2[0-4]):[0-5][0-9]:[0-5][0-9]"
+        x-internal-name: "data_emissione"
+      dataStampa:
+        type: "string"
+        example: "10/10/2019 10:00:00"
+        description: "data e ora di stampa del badge (DD/MM/YYYY HH24:MI:SS)"
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})\
+          \ ([01][0-9]|2[0-4]):[0-5][0-9]:[0-5][0-9]"
+      dataFin:
+        type: "string"
+        example: "10/10/2019 10:00:00"
+        description: "data e ora di annullamento del badge (DD/MM/YYYY HH24:MI:SS)"
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})\
+          \ ([01][0-9]|2[0-4]):[0-5][0-9]:[0-5][0-9]"
+      dataConsegna:
+        type: "string"
+        example: "10/10/2019 10:00:00"
+        description: "data e ora di consegna del badge (DD/MM/YYYY HH24:MI:SS)"
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})\
+          \ ([01][0-9]|2[0-4]):[0-5][0-9]:[0-5][0-9]"
+      persId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "id univoco che consente di individuare la persona"
+      stuId:
+        type: "integer"
+        format: "int64"
+        example: 123
+        description: "id della carriera dello studente"
+      matId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "id univoco della matricola"
+      matricola:
+        type: "string"
+        example: "123456"
+        description: "matricola dello studente, è il numero assegnato dalle segreterie\n\
+          allo studente per identificarlo nel sistema, una matricola potrebbe non\n\
+          identificare univocamente un libretto collegato ad un tratto di carriera\n"
+      cognome:
+        type: "string"
+        example: "Rossi"
+        description: "cognome della persona"
+        maxLength: 80
+      nome:
+        type: "string"
+        example: "Mario"
+        description: "nome della persona"
+        maxLength: 80
+      codFis:
+        type: "string"
+        example: "GGGTTT81XA944H"
+        description: "codice fiscale della persona"
+        maxLength: 16
+      statoNascita:
+        type: "string"
+        example: "ITALIA"
+        description: "denominazione della nazione di nascita"
+        maxLength: 255
+      statoResidenza:
+        type: "string"
+        example: "ITALIA"
+        description: "denominazione della nazione di residenza"
+        maxLength: 255
+      codCds:
+        type: "string"
+        example: "CDS_1"
+        description: "codice del corso di studio di iscrizione dello studente"
+      desCds:
+        type: "string"
+        example: "Esempio di CDS"
+        description: "descrizione del corso di iscrizione dello studente"
+      codFac:
+        type: "string"
+        example: "65"
+        description: "Codice del dipartimento/facoltà"
+      desFac:
+        type: "string"
+        example: "Facoltà di ECONOMIA"
+        description: "Descrizione del dipartimento/facoltà"
+      aaIscrAnn:
+        type: "integer"
+        format: "int32"
+        example: 2016
+        description: "anno di ordinamento del corso di iscrizione dello studente"
+      rfid:
+        type: "string"
+        example: "83"
+        description: "rfid associato al badge"
+      codUniversita:
+        type: "string"
+        example: "A"
+        description: "Codice dell'università"
+      universita:
+        type: "string"
+        example: "A"
+        description: "Descrizione dell'università"
+      staStuCod:
+        type: "string"
+        example: "A"
+        description: "Descrizione dell'università"
+      staMatCod:
+        type: "string"
+        example: "A"
+        description: "Descrizione dell'università"
+    x-layout-name: "ANAGR_BADGE_REST"
+    x-winsession-name: "p18/n_si_18_022_stampa_badge"
+    x-model-sub-package: "badge.v1"
+    x-model-sub-path: "badge/v1"
+parameters:
+  cdsCod:
+    name: "cdsCod"
+    in: "query"
+    description: "corso di studio di iscrizione dello studente"
+    required: false
+    type: "string"
+  codFis:
+    name: "codFis"
+    in: "query"
+    description: "codice fiscale della persona"
+    required: false
+    type: "string"
+  badgeBlobId:
+    name: "badgeBlobId"
+    in: "path"
+    description: "id del blob con le immagini del badge"
+    required: true
+    type: "integer"
+    format: "int64"
+  stuId:
+    name: "stuId"
+    in: "query"
+    description: "identificativo della carriera"
+    required: false
+    type: "integer"
+    format: "int64"
+  aaIscrAnn:
+    name: "aaIscrAnn"
+    in: "query"
+    description: "anno di iscrizione"
+    required: false
+    type: "integer"
+    format: "int32"
+  staStuCod:
+    name: "staStuCod"
+    in: "query"
+    description: "stato studente"
+    required: false
+    type: "string"
+    enum:
+    - "A"
+    - "S"
+    - "X"
+    - "I"
+  rfid:
+    name: "rfid"
+    in: "query"
+    description: "rfid associato al badge dello studente"
+    required: false
+    type: "string"
+  staMatCod:
+    name: "staMatCod"
+    in: "query"
+    description: "stato matricola"
+    required: false
+    type: "string"
+    enum:
+    - "A"
+    - "S"
+    - "I"
+externalDocs:
+  description: "Documentazione Geneale sui servizi REST"
+  url: "https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3"
+x-file-status: "PROD"
+x-file-name: "p18-badgeApiV1.yaml"
+x-api-status: "PROD"
+x-func-cod: "RST_BDGV01"
+x-anchor-definitions:
+  common-produces-mediaType:
+    produces:
+    - "application/octet-stream"
+x-security-definitions:
+  filter-badge-stu-permission:
+    kind: "STUDENTE"
+    profiles:
+    - profile:
+        name: "STUDENTE"
+        description: "filtra i badge collegati alla persona"
+        checks:
+        - checkTipologiaAllegato:
+            className: "SecurityBadge"
+            functionName: "filterBadgeStu"
+            description: "la funzione controlla che esistano dei badge collegati allo\
+              \ studente con i filtri richiesti"
+            parameters:
+            - rfid: "{\"name\":\"rfid\",\"in\":\"query\",\"description\":\"rfid associato\
+                \ al badge dello studente\",\"required\":false,\"type\":\"string\"\
+                ,\"items\":null,\"collectionFormat\":null,\"default\":null,\"maximum\"\
+                :null,\"exclusiveMaximum\":null,\"minimum\":null,\"exclusiveMinimum\"\
+                :null,\"maxLength\":null,\"minLength\":null,\"pattern\":null,\"maxItems\"\
+                :null,\"minItems\":null,\"uniqueItems\":null,\"multipleOf\":null,\"\
+                format\":null,\"x-example\":null,\"enum\":null}"
+            - stuId: "{\"name\":\"stuId\",\"in\":\"query\",\"description\":\"identificativo\
+                \ della carriera\",\"required\":false,\"type\":\"integer\",\"items\"\
+                :null,\"collectionFormat\":null,\"default\":null,\"maximum\":null,\"\
+                exclusiveMaximum\":null,\"minimum\":null,\"exclusiveMinimum\":null,\"\
+                maxLength\":null,\"minLength\":null,\"pattern\":null,\"maxItems\"\
+                :null,\"minItems\":null,\"uniqueItems\":null,\"multipleOf\":null,\"\
+                format\":\"int64\",\"x-example\":null,\"enum\":null}"
+            - codFis: "{\"name\":\"codFis\",\"in\":\"query\",\"description\":\"codice\
+                \ fiscale della persona\",\"required\":false,\"type\":\"string\",\"\
+                items\":null,\"collectionFormat\":null,\"default\":null,\"maximum\"\
+                :null,\"exclusiveMaximum\":null,\"minimum\":null,\"exclusiveMinimum\"\
+                :null,\"maxLength\":null,\"minLength\":null,\"pattern\":null,\"maxItems\"\
+                :null,\"minItems\":null,\"uniqueItems\":null,\"multipleOf\":null,\"\
+                format\":null,\"x-example\":null,\"enum\":null}"
+            - cdsCod: "{\"name\":\"cdsCod\",\"in\":\"query\",\"description\":\"corso\
+                \ di studio di iscrizione dello studente\",\"required\":false,\"type\"\
+                :\"string\",\"items\":null,\"collectionFormat\":null,\"default\":null,\"\
+                maximum\":null,\"exclusiveMaximum\":null,\"minimum\":null,\"exclusiveMinimum\"\
+                :null,\"maxLength\":null,\"minLength\":null,\"pattern\":null,\"maxItems\"\
+                :null,\"minItems\":null,\"uniqueItems\":null,\"multipleOf\":null,\"\
+                format\":null,\"x-example\":null,\"enum\":null}"
+            - aaIscrAnn: "{\"name\":\"aaIscrAnn\",\"in\":\"query\",\"description\"\
+                :\"anno di iscrizione\",\"required\":false,\"type\":\"integer\",\"\
+                items\":null,\"collectionFormat\":null,\"default\":null,\"maximum\"\
+                :null,\"exclusiveMaximum\":null,\"minimum\":null,\"exclusiveMinimum\"\
+                :null,\"maxLength\":null,\"minLength\":null,\"pattern\":null,\"maxItems\"\
+                :null,\"minItems\":null,\"uniqueItems\":null,\"multipleOf\":null,\"\
+                format\":\"int32\",\"x-example\":null,\"enum\":null}"
+  badge-stu-permission:
+    kind: "STUDENTE"
+    profiles:
+    - profile:
+        name: "STUDENTE"
+        description: "controlla che il badge richeisto sia collegato alla persona"
+        checks:
+        - checkTipologiaAllegato:
+            className: "SecurityBadge"
+            functionName: "checkBadgeStu"
+            description: "la funzione controlla che il il badge sia accessibile dallo\
+              \ studente"
+            parameters:
+            - badgeBlobId: "{\"name\":\"badgeBlobId\",\"in\":\"path\",\"description\"\
+                :\"id del blob con le immagini del badge\",\"required\":true,\"type\"\
+                :\"integer\",\"items\":null,\"collectionFormat\":null,\"default\"\
+                :null,\"maximum\":null,\"exclusiveMaximum\":null,\"minimum\":null,\"\
+                exclusiveMinimum\":null,\"maxLength\":null,\"minLength\":null,\"pattern\"\
+                :null,\"maxItems\":null,\"minItems\":null,\"uniqueItems\":null,\"\
+                multipleOf\":null,\"format\":\"int64\",\"x-example\":null,\"enum\"\
+                :null}"
+  user-tecnico-permissions:
+    kind: "USER_TECNICO"
+    profiles:
+    - profile:
+        name: "UTENTE_TECNICO"
+        description: "funzione accessibile alle utenze tecniche per accessi ai servizi\
+          \ REST"
+        checks:
+        - checkDummy:
+            className: "Security"
+            functionName: "checkUserTecnico"
+            description: "controlla che l'utente abbia gli accessi per i corsi a lui\
+              \ abilitati"
+x-cache-type: "midRefreshRateUserIndependent"

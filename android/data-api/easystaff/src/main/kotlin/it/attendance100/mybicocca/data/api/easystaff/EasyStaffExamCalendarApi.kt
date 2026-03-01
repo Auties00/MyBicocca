@@ -1,6 +1,7 @@
 package it.attendance100.mybicocca.data.api.easystaff
 
 import io.ktor.client.*
+import it.attendance100.mybicocca.data.common.exception.HtmlParsingException
 import it.attendance100.mybicocca.data.dto.easystaff.*
 import kotlinx.serialization.json.Json
 import java.time.LocalDate
@@ -131,7 +132,7 @@ class EasyStaffExamCalendarApi(
             )
         )
         val subjectsJsonString = extractJsonFromJsVariable(subjectsResponse, "esami_insegnamento")
-            ?: throw IllegalStateException("Failed to parse subjects response: missing 'esami_insegnamento'")
+            ?: throw HtmlParsingException("Failed to parse subjects response: missing 'esami_insegnamento'")
         val bookableExamSubject = json.decodeFromString<List<EasyStaffBookableExamSubject>>(subjectsJsonString)
             .firstOrNull { subject.code.endsWith(it.code) }
             ?: return emptyList()

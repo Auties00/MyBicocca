@@ -1,0 +1,2703 @@
+---
+swagger: "2.0"
+info:
+  description: "API REST di ESSE3 per la visualizzazione dei verbali e l'import di\
+    \ verbali dall'esterno.\n\n## Nomenclatura\n* **VERBALE** : rappresenta il singolo\
+    \ statino con l'esito di un esame di uno studente \n* **LOTTO** : rappresenta\
+    \ una aggregazione di verbali rispetto al momento di generazione degli stessi.\
+    \ \n  _(Esempio: un lotto relativo ad un appello contiene l'insieme dei verbali\
+    \ degli studenti della iscrtti)_\n* **BATCH** : rappresenta una aggregazione di\
+    \ verbali rispetto al momemnto dell'acquisizione da parte di in sistema esterno\
+    \ \n  _(Esempio: dato un lotto di verbali di un appello è possibile acquisire\
+    \ gli esiti in differenti momenti tramite Batch differenti)_\n\nIn fase di importazione\
+    \ è possibile utilizzare due differenti approcci \n\n* **Aggiornamento** (AGG):\
+    \ In questo caso i verbali sono già presenti a sistema (generati con la funzione\
+    \ Stampa verbali di Esse3) e possono essere collegati ad una singola prenotazione\
+    \ di uno studente (verbale nominale) oppure prevedere la possibilità di inserire\
+    \ anche i dettagli dello studente (verbale anonimo). E' necessario specificare\
+    \ il numero di verbale da aggiornare. Una volta che l'aggionrnamento è stato effettuato\
+    \ non è possibile più effettuare un secondo aggiornamento per il medesimo numero\
+    \ di verbale\n* **Inserimento** (INS): In questo caso i verbali NON sono presenti\
+    \ a sistema, ogni chiamata con i medesimi dati effettua la creazione di un nuovo\
+    \ verbale con un numero differente. Occorre passare i dati dello studente e i\
+    \ dati di verbalizzazione.\n\n## Workflow\nPer i dettagli del processo di gestione\
+    \ degli appelli e dei verbali è possibile consultare la documentazione presente\
+    \ su [wiki](https://wiki.u-gov.it/confluence/display/ESSE3/Verbalizzazione)\n\n\
+    Per quanto rigurada l'import dei verbali il processo si divide in due step, il\
+    \ primo è obbgligatorio e il secondo facoltativo.\n\n1. _Caricmaneto dei metadati\
+    \ dei verbali_: Va invocato l'enpoint `PUT /batches` per effettuare il caricamento\
+    \ dei dati dei verbali.  \n  Il JSON passato nel body contiene, oltre ad altre\
+    \ informazioni, un array con i metadati di ogni singolo verbale; In ogni oggetto\
+    \ verbale è possibile indicare se oltre i metadati del file deve essere caricato\
+    \ anche il blob con l'immagine del verbale stesso indicando il nome del file da\
+    \ caricare.  \n  Nella reponse del metodo viene restituito un oggetto che contiene\
+    \ la lista con i dati aggiornati dei verbali, per ogni verbale su cui è stato\
+    \ richiesto l'upload del file viene fornito un url di caricamento sul quale effettuare\
+    \ l'ulpload.  \n  I verbali con Blob pendente hanno impostato il campo stato_Warn\
+    \ = 1  (in attesa di sblocco del warning) e il warn_num = 1 (mancanza dell'immagine\
+    \ del verbale). Pertanto per effettuare il caricamento occorre eseguire il pnto\
+    \ 2 oppure sbloccare l'acquisizione da Acquisizione verbali di Esse3.\n2. _Caricamento\
+    \ dei BLOB dei verbali_: tramite il campo `uploadUrl` del verbale presente nella\
+    \ responnse è possibile effettuare il caricamento del blob. Viene utilizzato il\
+    \ servizio `PUT /batches/upload/{uploadId}/blob` per effettuare il caricamento.\
+    \ Al caricamento corretto del blob viene sbloccata l'acquisizione del verbale\
+    \ e cancellato l'url di upload che non risulta più disponibile\n \n## ChangeLog\n\
+    \nVersione       | Versione di Esse3 di rilascio | Interventi \n -           \
+    \  | -                             | -\n    1.0.0      | 20.01.00.00         \
+    \          | prima versione\n    \n    \n"
+  version: "1.0.0"
+  title: "ESSE3 Verbali API"
+basePath: "/verbali-service-v1"
+schemes:
+- "https"
+- "http"
+consumes:
+- "application/json"
+produces:
+- "application/json"
+security:
+- basicAuth: []
+- jwt:
+  - "openid"
+paths:
+  /batches:
+    get:
+      tags:
+      - "batch"
+      summary: "recupera le informazioni di un batch di importazione"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>\n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n\
+        -|-|-\nx-cache-type|lowRefreshRateUserIndependent|Risorsa che varia con frequenza\
+        \ bassa, cache Http abilitata, cache server abilitata. Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: USER_TECNICO**\n\nProfilo|Controllo| Funzione\n-|-|-\nUTENTE_TECNICO|funzione\
+        \ accessibile alle utenze tecniche per accessi ai servizi REST|Security.checkUserTecnico()\n\
+        \n\nClasse di modello : BatchVerb\n======\n\nEstensioni sulle proprietà\n\
+        ----\nProprietà | x-field-type\n-|-|\nbatchId|primaryKey\n\n\nClasse di modello\
+        \ : DettaglioErroreAggiuntivo\n======\n\nEstensioni sulle proprietà\n----\n\
+        Proprietà | x-field-type\n-|-|\nrawValue|rawJson\n"
+      operationId: "getBatches"
+      parameters:
+      - name: "adCod"
+        in: "query"
+        description: "codice dell'ad di definizione del lotto"
+        required: false
+        type: "string"
+      - name: "cdsCod"
+        in: "query"
+        description: "codice del cds di definizione del lotto"
+        required: false
+        type: "string"
+      - name: "aData"
+        in: "query"
+        description: "recupero dei vebali con data di verbalizzazione fino ad una\
+          \ certa data"
+        required: false
+        type: "string"
+      - name: "daData"
+        in: "query"
+        description: "recupero dei vebali con data di verbalizzazione a partire da\
+          \ una certa data"
+        required: false
+        type: "string"
+      - name: "start"
+        in: "query"
+        description: "utilizzato insieme a `limit` per indicare la paginazione sui\
+          \ record; `start` indica il numero del primo record da caricare (se non\
+          \ indicato viene utilizzato 0)\n"
+        required: false
+        type: "integer"
+        format: "int32"
+      - name: "limit"
+        in: "query"
+        description: "utilizzato insieme a `start` per indicare la paginazione sui\
+          \ record, `limit` indica il numero di record da recuperare (a partire da\
+          \ `start`); \nse non indicato viene utilizzato 50, i valori consentiti vanno\
+          \ da 0 a 100\n"
+        required: false
+        type: "integer"
+        format: "int32"
+      - name: "order"
+        in: "query"
+        description: "consente di specificare un ordine per il recupero dei record.\
+          \ La sintassi è la seguente\n * +/- : specifica l'ordinamento (+ = ASC,\
+          \ - = DESC); se omesso viene utilizzato +\n * field : nome del campo da\
+          \ ordinare\n \n E' possibile indicare più campi separandoli da virgola (Es:\
+          \ +annoCorso,+adCod) \n"
+        required: false
+        type: "string"
+      responses:
+        "200":
+          description: "Successful response"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/BatchVerb"
+        "422":
+          description: "parametri Errati"
+          schema:
+            $ref: "#/definitions/DettaglioErrore"
+      x-enabled-profiles:
+      - user-tecnico-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UTENTE_TECNICO"
+              description: "funzione accessibile alle utenze tecniche per accessi\
+                \ ai servizi REST"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkUserTecnico"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+    post:
+      tags:
+      - "batch"
+      summary: "import dei verbali"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>Inserimento dei metadati di import dei verbali.\
+        \  \nIl body da creare contiene: \n\n* il tipo di import da effettuare (INS\
+        \ | AGG)\n* i dati del batch da importare (facoltativi)\n* la lista dei verbali,\
+        \ va popolata la lista relativa al tipo di import richiesto  \n  INS ==> verbaliInserimento\
+        \  \n  AGG ==> verbaliAggiornamento\n\n## Esito\nGli esiti sono definiti dalla\
+        \ coppia di valori del verbale `(voto,causale)` \n\n\n TIPO ESITO        |\
+        \ VOTO  | CAUSALE\n -                 | -     | -\n voto numerico     | voto\
+        \  | null\n IDONEO            | 999   | null\n NON IDONEO        | -1    |\
+        \ null\n INSUFFICIENTE     | 994   | null\n SUFFICIENTE       | 998   | null\n\
+        \ DISCRETO          | 997   | null\n BUONO             | 996   | null\n OTTIMO\
+        \            | 995   | null\n ASSENTE           | 0     | 2\n Ritirato/Respinto\
+        \ | 0     | 1\n\nPer i dettagli di tutti i possibili valori è possibile consultare\
+        \ la tabella tipi_Giudizio di esse3. I campi verbale_decode_voto e verbale_decode_causale\
+        \ contengono i valori da utilizzare.\n\n## Modifiche su sistemi esterni\n\
+        L'insieme correzioni consente di indicare le possibili modifiche effettuare\
+        \ durante la fase di acquisizione degli esiti (nel caso di lettura ottica)\
+        \ che l'operatore ha effettuato perchè l'esito o qualche altra informazione\
+        \ non risultava corretta. \nVegnono riportati i valori più comuni della proprietà\
+        \ campo\n \n CAMPO    |  DESCRIZIONE\n -        | -\n NOME     | Nome dello\
+        \ studente\n COGNOME  | Cognome dello studente\n MAT      | Matricola dello\
+        \ studente\n VOTO     | Voto esame\n CAUSALE  | Causale di non verbalizzazione\n\
+        \ NUMERO   | Numero del verbale\n AD_COD   | Codice dell'AD del lotto\n AD_DES\
+        \   | Descrizione dell'AD del lotto\n DATA_APP | Data dell'appello\n DATA_ESA\
+        \ | Data dell'esame\n\nI possibili campi sui quali è possibile registrare\
+        \ la modifica sono definiti nella tabella TIPI_VERB_CAMPO_LOG\n## Inserimento\n\
+        In questa modalità vegnono creati differenti verbali ad ogni invocazione (anche\
+        \ se i dati sono i medesimi)  \nI verbali hanno dei campi obblogatori che\
+        \ sono esplicitati in chiaro e dei campi facoltativi che sono utilizzati in\
+        \ casi particolari, questi sono popolati con la coppia nome,valore nell'insieme\
+        \ campiAggiuntivi  \nNel campo verbaliErrati vengono inseriti i verbali la\
+        \ cui creazione è fallita.\n## Aggiornamento             \nIn questa modalità\
+        \ i verbali devono essere già creati all'interno di esse3 e l'aggiormaneto\
+        \ viene effettuato solo la prima volta.  \nNel campo verbaliErrati vegnono\
+        \ inseriti i verbali che presentano erroriu durante  l'importazione. \n\n\n\
+        **Estensioni:**\n\nCodice Estensione|Valore|Nota\n-|-|-\nx-cache-type|lowRefreshRateUserIndependent|Risorsa\
+        \ che varia con frequenza bassa, cache Http abilitata, cache server abilitata.\
+        \ Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: USER_TECNICO**\n\nProfilo|Controllo| Funzione\n-|-|-\nUTENTE_TECNICO|funzione\
+        \ accessibile alle utenze tecniche per accessi ai servizi REST|Security.checkUserTecnico()\n\
+        \n\nClasse di modello : BatchVerb\n======\n\nEstensioni sulle proprietà\n\
+        ----\nProprietà | x-field-type\n-|-|\nbatchId|primaryKey\n\n\nClasse di modello\
+        \ : VerbaleRoot\n======\n\nEstensioni sulle proprietà\n----\nProprietà | x-field-type\n\
+        -|-|\nlottoId|primaryKey\nverbId|primaryKey\n\n\nClasse di modello : VerbaleRoot\n\
+        ======\n\nEstensioni sulle proprietà\n----\nProprietà | x-field-type\n-|-|\n\
+        lottoId|primaryKey\nverbId|primaryKey\n\n\nClasse di modello : DettaglioErroreAggiuntivo\n\
+        ======\n\nEstensioni sulle proprietà\n----\nProprietà | x-field-type\n-|-|\n\
+        rawValue|rawJson\n"
+      operationId: "importVerbali"
+      parameters:
+      - in: "body"
+        name: "body"
+        description: "Oggetto che contiene la riga da inserire"
+        required: true
+        schema:
+          $ref: "#/definitions/ImportBatch"
+      responses:
+        "201":
+          description: "Insert succeded"
+          schema:
+            $ref: "#/definitions/ImportVerbaliResponse"
+        "422":
+          description: "Inserimento non riuscito"
+          schema:
+            $ref: "#/definitions/DettaglioErrore"
+      x-enabled-profiles:
+      - user-tecnico-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UTENTE_TECNICO"
+              description: "funzione accessibile alle utenze tecniche per accessi\
+                \ ai servizi REST"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkUserTecnico"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+      x-custom-operation: "single"
+      x-cache-endpoint-relations:
+        canonicalEndpointsAction: "invalidate"
+        customEndpoints:
+        - operationId: "findVerbali"
+          action: "invalidate"
+  /batches/upload/{uploadId}/blob:
+    put:
+      tags:
+      - "batch"
+      summary: "upload di un immagine del verbale"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>Consente di effetture l'upload di una immagine\
+        \ collegata ad un verbale. l'url di importazione è fornita nella response\
+        \ del metodo `PUT /batches` nel capo uploadUrl per i verbali per i quali è\
+        \ stato richiesto l'upload del blob.\n\nAd operazione effettuata venon eseguite\
+        \ le seguenti operazioni\n1. viene aggiornato il blob sul verbale\n2. viene\
+        \ sbloccato il warning per il caricamento del blob\n3. viene lanciata l'acquisizione\
+        \ del verbale\n\n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n-|-|-\n\
+        x-cache-type|lowRefreshRateUserIndependent|Risorsa che varia con frequenza\
+        \ bassa, cache Http abilitata, cache server abilitata. Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: USER_TECNICO**\n\nProfilo|Controllo| Funzione\n-|-|-\nUTENTE_TECNICO|funzione\
+        \ accessibile alle utenze tecniche per accessi ai servizi REST|Security.checkUserTecnico()\n\
+        \n\nClasse di modello : DettaglioErroreAggiuntivo\n======\n\nEstensioni sulle\
+        \ proprietà\n----\nProprietà | x-field-type\n-|-|\nrawValue|rawJson\n"
+      operationId: "uploadBlobVerbale"
+      consumes:
+      - "multipart/form-data"
+      parameters:
+      - name: "uploadId"
+        in: "path"
+        description: "identificativo dell'upload per il caricamento di un blob di\
+          \ un verbale"
+        required: true
+        type: "integer"
+        format: "int64"
+      - name: "uploadFile"
+        in: "formData"
+        description: "verbale da inserire"
+        required: false
+        type: "file"
+      responses:
+        "200":
+          description: "Successful response"
+          schema:
+            type: "string"
+        "422":
+          description: "Parametri Errati"
+          schema:
+            $ref: "#/definitions/DettaglioErrore"
+      x-enabled-profiles:
+      - user-tecnico-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UTENTE_TECNICO"
+              description: "funzione accessibile alle utenze tecniche per accessi\
+                \ ai servizi REST"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkUserTecnico"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+      x-custom-operation: "single"
+      x-cache-endpoint-relations:
+        canonicalEndpointsAction: "none"
+  /batches/{batchId}:
+    get:
+      tags:
+      - "batch"
+      summary: "recupera le informazioni di un batch di importazione"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>\n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n\
+        -|-|-\nx-cache-type|lowRefreshRateUserIndependent|Risorsa che varia con frequenza\
+        \ bassa, cache Http abilitata, cache server abilitata. Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: USER_TECNICO**\n\nProfilo|Controllo| Funzione\n-|-|-\nUTENTE_TECNICO|funzione\
+        \ accessibile alle utenze tecniche per accessi ai servizi REST|Security.checkUserTecnico()\n\
+        \n\nClasse di modello : BatchVerb\n======\n\nEstensioni sulle proprietà\n\
+        ----\nProprietà | x-field-type\n-|-|\nbatchId|primaryKey\n\n\nClasse di modello\
+        \ : VerbaleRoot\n======\n\nEstensioni sulle proprietà\n----\nProprietà | x-field-type\n\
+        -|-|\nlottoId|primaryKey\nverbId|primaryKey\n"
+      operationId: "getBatch"
+      parameters:
+      - name: "batchId"
+        in: "path"
+        description: "identificativo del batch"
+        required: true
+        type: "integer"
+        format: "int64"
+      responses:
+        "200":
+          description: "Successful response"
+          schema:
+            $ref: "#/definitions/BatchVerbConDettagli"
+      x-enabled-profiles:
+      - user-tecnico-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UTENTE_TECNICO"
+              description: "funzione accessibile alle utenze tecniche per accessi\
+                \ ai servizi REST"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkUserTecnico"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+  /lotti:
+    get:
+      tags:
+      - "lotto"
+      summary: "Recupero dei lotti presenti a sistema"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>\n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n\
+        -|-|-\nx-cache-type|lowRefreshRateUserDependent|Risorsa che varia con frequenza\
+        \ bassa, cache Http abilitata, cache server disabilitata. Maggiori dettagli\
+        \ [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: USER_TECNICO**\n\nProfilo|Controllo| Funzione\n-|-|-\nUTENTE_TECNICO|funzione\
+        \ accessibile alle utenze tecniche per accessi ai servizi REST|Security.checkUserTecnico()\n\
+        \n**Utente: DOCENTE**\n\nProfilo|Controllo| Funzione\n-|-|-\nDOCENTE|Controlla\
+        \ che il docente possa accedere ai lotti con i filtri impostati|SecurityCarrieraStudente.findLottoDoc(matricolaDoc,\
+        \ codFisDoc, tipoGestAppCod, statoLotto, adCod, cdsCod, daData, aData)\n\n\
+        \nClasse di modello : Lotto\n======\n\nEstensioni sulle proprietà\n----\n\
+        Proprietà | x-field-type\n-|-|\nlottoId|primaryKey\n\n\nClasse di modello\
+        \ : DettaglioErroreAggiuntivo\n======\n\nEstensioni sulle proprietà\n----\n\
+        Proprietà | x-field-type\n-|-|\nrawValue|rawJson\n"
+      operationId: "findLotti"
+      parameters:
+      - name: "matricolaStu"
+        in: "query"
+        description: "matricola dello studente per il quale cercare i lotti"
+        required: false
+        type: "string"
+      - name: "matricolaDoc"
+        in: "query"
+        description: "matricola del docente per il quale cercare i lotti"
+        required: false
+        type: "string"
+      - name: "codFisStu"
+        in: "query"
+        description: "matricola dello studente per il quale cercare i lotti"
+        required: false
+        type: "string"
+      - name: "codFisDoc"
+        in: "query"
+        description: "matricola del docente per il quale cercare i lotti"
+        required: false
+        type: "string"
+      - name: "tipoGestAppCod"
+        in: "query"
+        description: "codice del tipo di verbalizzazione assegnata al lotto"
+        required: false
+        type: "string"
+      - name: "statoLotto"
+        in: "query"
+        description: "stato del lotto"
+        required: false
+        type: "string"
+      - name: "adCod"
+        in: "query"
+        description: "codice dell'ad di definizione del lotto"
+        required: false
+        type: "string"
+      - name: "cdsCod"
+        in: "query"
+        description: "codice del cds di definizione del lotto"
+        required: false
+        type: "string"
+      - name: "daData"
+        in: "query"
+        description: "recupero dei vebali con data di verbalizzazione a partire da\
+          \ una certa data"
+        required: false
+        type: "string"
+      - name: "aData"
+        in: "query"
+        description: "recupero dei vebali con data di verbalizzazione fino ad una\
+          \ certa data"
+        required: false
+        type: "string"
+      - name: "start"
+        in: "query"
+        description: "utilizzato insieme a `limit` per indicare la paginazione sui\
+          \ record; `start` indica il numero del primo record da caricare (se non\
+          \ indicato viene utilizzato 0)\n"
+        required: false
+        type: "integer"
+        format: "int32"
+      - name: "limit"
+        in: "query"
+        description: "utilizzato insieme a `start` per indicare la paginazione sui\
+          \ record, `limit` indica il numero di record da recuperare (a partire da\
+          \ `start`); \nse non indicato viene utilizzato 50, i valori consentiti vanno\
+          \ da 0 a 100\n"
+        required: false
+        type: "integer"
+        format: "int32"
+      - name: "fields"
+        in: "query"
+        description: "specifica la lista dei campi opzionali (che non vengono recupeati\
+          \ di default);\nimpostando il valore `ALL` vengono mostrati tutti i campi.\
+          \ \n\nPer gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns*\
+          \  \nI dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello)\n\
+          \nEsempi\n* per il campo childObj con la poprietà childProp utilizzare la\
+          \ notazione `childProp.prop1`\n* Per visualizzare tutte le proprietà di\
+          \ childObj utilizzare la notazione `childProp.*`\n* Per visualizzare tutte\
+          \ le proprietà di childObj e di tutti i discendenti utilizzare la notazione\
+          \ `childProp.**`\n"
+        required: false
+        type: "string"
+      - name: "order"
+        in: "query"
+        description: "consente di specificare un ordine per il recupero dei record.\
+          \ La sintassi è la seguente\n * +/- : specifica l'ordinamento (+ = ASC,\
+          \ - = DESC); se omesso viene utilizzato +\n * field : nome del campo da\
+          \ ordinare\n \n E' possibile indicare più campi separandoli da virgola (Es:\
+          \ +annoCorso,+adCod) \n"
+        required: false
+        type: "string"
+      responses:
+        "200":
+          description: "Successful response"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/Lotto"
+        "422":
+          description: "parametri Errati"
+          schema:
+            $ref: "#/definitions/DettaglioErrore"
+      x-enabled-profiles:
+      - user-tecnico-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UTENTE_TECNICO"
+              description: "funzione accessibile alle utenze tecniche per accessi\
+                \ ai servizi REST"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkUserTecnico"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+      - filter-teacher-lotto-permissions:
+          kind: "DOCENTE"
+          profiles:
+          - profile:
+              name: "DOCENTE"
+              description: "Controlla che il docente possa accedere ai lotti con i\
+                \ filtri impostati"
+              checks:
+              - checkVerbaleStudente:
+                  className: "SecurityCarrieraStudente"
+                  functionName: "findLottoDoc"
+                  description: "controlla che il lotto appartenga al docente loggato\
+                    \ (è stato generato da lui oppure è stato indicato come destinatario)"
+                  parameters:
+                  - matricolaDoc: "{\"name\":\"matricolaDoc\",\"in\":\"query\",\"\
+                      description\":\"matricola del docente per il quale cercare i\
+                      \ lotti\",\"required\":false,\"type\":\"string\",\"items\":null,\"\
+                      collectionFormat\":null,\"default\":null,\"maximum\":null,\"\
+                      exclusiveMaximum\":null,\"minimum\":null,\"exclusiveMinimum\"\
+                      :null,\"maxLength\":null,\"minLength\":null,\"pattern\":null,\"\
+                      maxItems\":null,\"minItems\":null,\"uniqueItems\":null,\"multipleOf\"\
+                      :null,\"format\":null,\"x-example\":null,\"enum\":null}"
+                  - codFisDoc: "{\"name\":\"codFisDoc\",\"in\":\"query\",\"description\"\
+                      :\"matricola del docente per il quale cercare i lotti\",\"required\"\
+                      :false,\"type\":\"string\",\"items\":null,\"collectionFormat\"\
+                      :null,\"default\":null,\"maximum\":null,\"exclusiveMaximum\"\
+                      :null,\"minimum\":null,\"exclusiveMinimum\":null,\"maxLength\"\
+                      :null,\"minLength\":null,\"pattern\":null,\"maxItems\":null,\"\
+                      minItems\":null,\"uniqueItems\":null,\"multipleOf\":null,\"\
+                      format\":null,\"x-example\":null,\"enum\":null}"
+                  - tipoGestAppCod: "{\"name\":\"tipoGestAppCod\",\"in\":\"query\"\
+                      ,\"description\":\"codice del tipo di verbalizzazione assegnata\
+                      \ al lotto\",\"required\":false,\"type\":\"string\",\"items\"\
+                      :null,\"collectionFormat\":null,\"default\":null,\"maximum\"\
+                      :null,\"exclusiveMaximum\":null,\"minimum\":null,\"exclusiveMinimum\"\
+                      :null,\"maxLength\":null,\"minLength\":null,\"pattern\":null,\"\
+                      maxItems\":null,\"minItems\":null,\"uniqueItems\":null,\"multipleOf\"\
+                      :null,\"format\":null,\"x-example\":null,\"enum\":null}"
+                  - statoLotto: "{\"name\":\"statoLotto\",\"in\":\"query\",\"description\"\
+                      :\"stato del lotto\",\"required\":false,\"type\":\"string\"\
+                      ,\"items\":null,\"collectionFormat\":null,\"default\":null,\"\
+                      maximum\":null,\"exclusiveMaximum\":null,\"minimum\":null,\"\
+                      exclusiveMinimum\":null,\"maxLength\":null,\"minLength\":null,\"\
+                      pattern\":null,\"maxItems\":null,\"minItems\":null,\"uniqueItems\"\
+                      :null,\"multipleOf\":null,\"format\":null,\"x-example\":null,\"\
+                      enum\":null}"
+                  - adCod: "{\"name\":\"adCod\",\"in\":\"query\",\"description\":\"\
+                      codice dell'ad di definizione del lotto\",\"required\":false,\"\
+                      type\":\"string\",\"items\":null,\"collectionFormat\":null,\"\
+                      default\":null,\"maximum\":null,\"exclusiveMaximum\":null,\"\
+                      minimum\":null,\"exclusiveMinimum\":null,\"maxLength\":null,\"\
+                      minLength\":null,\"pattern\":null,\"maxItems\":null,\"minItems\"\
+                      :null,\"uniqueItems\":null,\"multipleOf\":null,\"format\":null,\"\
+                      x-example\":null,\"enum\":null}"
+                  - cdsCod: "{\"name\":\"cdsCod\",\"in\":\"query\",\"description\"\
+                      :\"codice del cds di definizione del lotto\",\"required\":false,\"\
+                      type\":\"string\",\"items\":null,\"collectionFormat\":null,\"\
+                      default\":null,\"maximum\":null,\"exclusiveMaximum\":null,\"\
+                      minimum\":null,\"exclusiveMinimum\":null,\"maxLength\":null,\"\
+                      minLength\":null,\"pattern\":null,\"maxItems\":null,\"minItems\"\
+                      :null,\"uniqueItems\":null,\"multipleOf\":null,\"format\":null,\"\
+                      x-example\":null,\"enum\":null}"
+                  - daData: "{\"name\":\"daData\",\"in\":\"query\",\"description\"\
+                      :\"recupero dei vebali con data di verbalizzazione a partire\
+                      \ da una certa data\",\"required\":false,\"type\":\"string\"\
+                      ,\"items\":null,\"collectionFormat\":null,\"default\":null,\"\
+                      maximum\":null,\"exclusiveMaximum\":null,\"minimum\":null,\"\
+                      exclusiveMinimum\":null,\"maxLength\":null,\"minLength\":null,\"\
+                      pattern\":null,\"maxItems\":null,\"minItems\":null,\"uniqueItems\"\
+                      :null,\"multipleOf\":null,\"format\":null,\"x-example\":null,\"\
+                      enum\":null}"
+                  - aData: "{\"name\":\"aData\",\"in\":\"query\",\"description\":\"\
+                      recupero dei vebali con data di verbalizzazione fino ad una\
+                      \ certa data\",\"required\":false,\"type\":\"string\",\"items\"\
+                      :null,\"collectionFormat\":null,\"default\":null,\"maximum\"\
+                      :null,\"exclusiveMaximum\":null,\"minimum\":null,\"exclusiveMinimum\"\
+                      :null,\"maxLength\":null,\"minLength\":null,\"pattern\":null,\"\
+                      maxItems\":null,\"minItems\":null,\"uniqueItems\":null,\"multipleOf\"\
+                      :null,\"format\":null,\"x-example\":null,\"enum\":null}"
+      x-cache-type: "lowRefreshRateUserDependent"
+  /lotti/{lottoId}:
+    get:
+      tags:
+      - "lotto"
+      summary: "recupera un lotto"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>\n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n\
+        -|-|-\nx-cache-type|lowRefreshRateUserDependent|Risorsa che varia con frequenza\
+        \ bassa, cache Http abilitata, cache server disabilitata. Maggiori dettagli\
+        \ [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: USER_TECNICO**\n\nProfilo|Controllo| Funzione\n-|-|-\nUTENTE_TECNICO|funzione\
+        \ accessibile alle utenze tecniche per accessi ai servizi REST|Security.checkUserTecnico()\n\
+        \n**Utente: DOCENTE**\n\nProfilo|Controllo| Funzione\n-|-|-\nDOCENTE|Controlla\
+        \ che il lotto appartenga al docente loggato|SecurityCarrieraStudente.checkLottoDoc(lottoId)\n\
+        \n\nClasse di modello : LottoConDettagli\n======\n\nEstensioni sulle proprietà\
+        \n----\nProprietà | x-field-type\n-|-|\nlottoId|primaryKey\ntransizioniStato|optional\n\
+        \n\nClasse di modello : Lotto\n======\n\nEstensioni sulle proprietà\n----\n\
+        Proprietà | x-field-type\n-|-|\nlottoId|primaryKey\n\n\nClasse di modello\
+        \ : LottoCommissione\n======\n\nEstensioni sulle proprietà\n----\nProprietà\
+        \ | x-field-type\n-|-|\nlottoId|primaryKey\ndocenteId|primaryKey\n\n\nClasse\
+        \ di modello : LottoTransStato\n======\n\nEstensioni sulle proprietà\n----\n\
+        Proprietà | x-field-type\n-|-|\nlottoTransStatoId|primaryKey\n\n\nClasse di\
+        \ modello : DettaglioErroreAggiuntivo\n======\n\nEstensioni sulle proprietà\
+        \n----\nProprietà | x-field-type\n-|-|\nrawValue|rawJson\n"
+      operationId: "getLotto"
+      parameters:
+      - name: "lottoId"
+        in: "path"
+        description: "identificativo del lotto"
+        required: true
+        type: "integer"
+        format: "int64"
+      - name: "fields"
+        in: "query"
+        description: "specifica la lista dei campi opzionali (che non vengono recupeati\
+          \ di default);\nimpostando il valore `ALL` vengono mostrati tutti i campi.\
+          \ \n\nPer gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns*\
+          \  \nI dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello)\n\
+          \nEsempi\n* per il campo childObj con la poprietà childProp utilizzare la\
+          \ notazione `childProp.prop1`\n* Per visualizzare tutte le proprietà di\
+          \ childObj utilizzare la notazione `childProp.*`\n* Per visualizzare tutte\
+          \ le proprietà di childObj e di tutti i discendenti utilizzare la notazione\
+          \ `childProp.**`\n"
+        required: false
+        type: "string"
+      - name: "optionalFields"
+        in: "query"
+        description: "specifica la lista dei campi opzionali (che non vengono recupeati\
+          \ di default);\nimpostando il valore `ALL` vengono mostrati tutti i campi.\
+          \ \n\nPer gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns*\
+          \  \nI dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello)\n\
+          \nEsempi\n* per il campo childObj con la poprietà childProp utilizzare la\
+          \ notazione `childProp.prop1`\n* Per visualizzare tutte le proprietà di\
+          \ childObj utilizzare la notazione `childProp.*`\n* Per visualizzare tutte\
+          \ le proprietà di childObj e di tutti i discendenti utilizzare la notazione\
+          \ `childProp.**`\n"
+        required: false
+        type: "string"
+      responses:
+        "200":
+          description: "Successful response"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/LottoConDettagli"
+        "422":
+          description: "parametri Errati"
+          schema:
+            $ref: "#/definitions/DettaglioErrore"
+      x-enabled-profiles:
+      - user-tecnico-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UTENTE_TECNICO"
+              description: "funzione accessibile alle utenze tecniche per accessi\
+                \ ai servizi REST"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkUserTecnico"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+      - check-teacher-lotto-permissions:
+          kind: "DOCENTE"
+          profiles:
+          - profile:
+              name: "DOCENTE"
+              description: "Controlla che il lotto appartenga al docente loggato"
+              checks:
+              - checkVerbaleStudente:
+                  className: "SecurityCarrieraStudente"
+                  functionName: "checkLottoDoc"
+                  description: "controlla che lo lotto appartenga al docente loggato\
+                    \ oppure ad uno dei docenti della commissione se presente"
+                  parameters:
+                  - lottoId: "{\"name\":\"lottoId\",\"in\":\"path\",\"description\"\
+                      :\"identificativo del lotto\",\"required\":true,\"type\":\"\
+                      integer\",\"items\":null,\"collectionFormat\":null,\"default\"\
+                      :null,\"maximum\":null,\"exclusiveMaximum\":null,\"minimum\"\
+                      :null,\"exclusiveMinimum\":null,\"maxLength\":null,\"minLength\"\
+                      :null,\"pattern\":null,\"maxItems\":null,\"minItems\":null,\"\
+                      uniqueItems\":null,\"multipleOf\":null,\"format\":\"int64\"\
+                      ,\"x-example\":null,\"enum\":null}"
+      x-cache-type: "lowRefreshRateUserDependent"
+  /lotti/{lottoId}/verbali:
+    get:
+      tags:
+      - "lotto"
+      - "verbale"
+      summary: "recupera i verbali di un lotto"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>\n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n\
+        -|-|-\nx-cache-type|lowRefreshRateUserIndependent|Risorsa che varia con frequenza\
+        \ bassa, cache Http abilitata, cache server abilitata. Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: USER_TECNICO**\n\nProfilo|Controllo| Funzione\n-|-|-\nUTENTE_TECNICO|funzione\
+        \ accessibile alle utenze tecniche per accessi ai servizi REST|Security.checkUserTecnico()\n\
+        \n**Utente: DOCENTE**\n\nProfilo|Controllo| Funzione\n-|-|-\nDOCENTE|Controlla\
+        \ che il lotto appartenga al docente loggato|SecurityCarrieraStudente.checkLottoDoc(lottoId)\n\
+        \n\nClasse di modello : VerbaleConDettagli\n======\n\nEstensioni sulle proprietà\
+        \n----\nProprietà | x-field-type\n-|-|\nlottoId|primaryKey\nverbId|primaryKey\n\
+        modifiche|optional\n\n\nClasse di modello : VerbaleRoot\n======\n\nEstensioni\
+        \ sulle proprietà\n----\nProprietà | x-field-type\n-|-|\nlottoId|primaryKey\n\
+        verbId|primaryKey\n\n\nClasse di modello : VerbaleLogMod\n======\n\nEstensioni\
+        \ sulle proprietà\n----\nProprietà | x-field-type\n-|-|\nlottoId|primaryKey\n\
+        verbId|primaryKey\n\n\nClasse di modello : DettaglioErroreAggiuntivo\n======\n\
+        \nEstensioni sulle proprietà\n----\nProprietà | x-field-type\n-|-|\nrawValue|rawJson\n"
+      operationId: "getVerbaliByLotto"
+      parameters:
+      - name: "lottoId"
+        in: "path"
+        description: "identificativo del lotto"
+        required: true
+        type: "integer"
+        format: "int64"
+      - name: "filter"
+        in: "query"
+        description: "il parametro consente di applicare dei filtri alla classe di\
+          \ modello utilizzando il linguaggio  [RSQL](https://github.com/jirutka/rsql-parser).\n\
+          La lista degli operatori utilizzabili è disponibile [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosullerigherecuperate)\
+          \   \n   *NB* il filtro viene applicato DOPO aver recuperato i dati\n"
+        required: false
+        type: "string"
+      - name: "fields"
+        in: "query"
+        description: "specifica la lista dei campi opzionali (che non vengono recupeati\
+          \ di default);\nimpostando il valore `ALL` vengono mostrati tutti i campi.\
+          \ \n\nPer gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns*\
+          \  \nI dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello)\n\
+          \nEsempi\n* per il campo childObj con la poprietà childProp utilizzare la\
+          \ notazione `childProp.prop1`\n* Per visualizzare tutte le proprietà di\
+          \ childObj utilizzare la notazione `childProp.*`\n* Per visualizzare tutte\
+          \ le proprietà di childObj e di tutti i discendenti utilizzare la notazione\
+          \ `childProp.**`\n"
+        required: false
+        type: "string"
+      - name: "optionalFields"
+        in: "query"
+        description: "specifica la lista dei campi opzionali (che non vengono recupeati\
+          \ di default);\nimpostando il valore `ALL` vengono mostrati tutti i campi.\
+          \ \n\nPer gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns*\
+          \  \nI dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello)\n\
+          \nEsempi\n* per il campo childObj con la poprietà childProp utilizzare la\
+          \ notazione `childProp.prop1`\n* Per visualizzare tutte le proprietà di\
+          \ childObj utilizzare la notazione `childProp.*`\n* Per visualizzare tutte\
+          \ le proprietà di childObj e di tutti i discendenti utilizzare la notazione\
+          \ `childProp.**`\n"
+        required: false
+        type: "string"
+      responses:
+        "200":
+          description: "Successful response"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/VerbaleConDettagli"
+        "422":
+          description: "parametri Errati"
+          schema:
+            $ref: "#/definitions/DettaglioErrore"
+      x-enabled-profiles:
+      - user-tecnico-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UTENTE_TECNICO"
+              description: "funzione accessibile alle utenze tecniche per accessi\
+                \ ai servizi REST"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkUserTecnico"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+      - check-teacher-lotto-permissions:
+          kind: "DOCENTE"
+          profiles:
+          - profile:
+              name: "DOCENTE"
+              description: "Controlla che il lotto appartenga al docente loggato"
+              checks:
+              - checkVerbaleStudente:
+                  className: "SecurityCarrieraStudente"
+                  functionName: "checkLottoDoc"
+                  description: "controlla che lo lotto appartenga al docente loggato\
+                    \ oppure ad uno dei docenti della commissione se presente"
+                  parameters:
+                  - lottoId: "{\"name\":\"lottoId\",\"in\":\"path\",\"description\"\
+                      :\"identificativo del lotto\",\"required\":true,\"type\":\"\
+                      integer\",\"items\":null,\"collectionFormat\":null,\"default\"\
+                      :null,\"maximum\":null,\"exclusiveMaximum\":null,\"minimum\"\
+                      :null,\"exclusiveMinimum\":null,\"maxLength\":null,\"minLength\"\
+                      :null,\"pattern\":null,\"maxItems\":null,\"minItems\":null,\"\
+                      uniqueItems\":null,\"multipleOf\":null,\"format\":\"int64\"\
+                      ,\"x-example\":null,\"enum\":null}"
+  /lotti/{lottoId}/verbali/{verbId}:
+    get:
+      tags:
+      - "lotto"
+      - "verbale"
+      summary: "recupera un verbale di un lotto"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>\n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n\
+        -|-|-\nx-cache-type|lowRefreshRateUserIndependent|Risorsa che varia con frequenza\
+        \ bassa, cache Http abilitata, cache server abilitata. Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: USER_TECNICO**\n\nProfilo|Controllo| Funzione\n-|-|-\nUTENTE_TECNICO|funzione\
+        \ accessibile alle utenze tecniche per accessi ai servizi REST|Security.checkUserTecnico()\n\
+        \n**Utente: DOCENTE**\n\nProfilo|Controllo| Funzione\n-|-|-\nDOCENTE|Controlla\
+        \ che il lotto appartenga al docente loggato|SecurityCarrieraStudente.checkLottoDoc(lottoId)\n\
+        \n**Utente: STUDENTE**\n\nProfilo|Controllo| Funzione\n-|-|-\nSTUDENTE|controlla\
+        \ che il verbale appartenga allo studente loggato|SecurityCarrieraStudente.checkVerbaleStu(lottoId,\
+        \ verbId)\n\n\nClasse di modello : VerbaleConDettagli\n======\n\nEstensioni\
+        \ sulle proprietà\n----\nProprietà | x-field-type\n-|-|\nlottoId|primaryKey\n\
+        verbId|primaryKey\nmodifiche|optional\n\n\nClasse di modello : VerbaleRoot\n\
+        ======\n\nEstensioni sulle proprietà\n----\nProprietà | x-field-type\n-|-|\n\
+        lottoId|primaryKey\nverbId|primaryKey\n\n\nClasse di modello : VerbaleLogMod\n\
+        ======\n\nEstensioni sulle proprietà\n----\nProprietà | x-field-type\n-|-|\n\
+        lottoId|primaryKey\nverbId|primaryKey\n\n\nClasse di modello : DettaglioErroreAggiuntivo\n\
+        ======\n\nEstensioni sulle proprietà\n----\nProprietà | x-field-type\n-|-|\n\
+        rawValue|rawJson\n"
+      operationId: "getVerbale"
+      parameters:
+      - name: "lottoId"
+        in: "path"
+        description: "identificativo del lotto"
+        required: true
+        type: "integer"
+        format: "int64"
+      - name: "verbId"
+        in: "path"
+        description: "identificativo del verbale"
+        required: true
+        type: "integer"
+        format: "int64"
+      - name: "fields"
+        in: "query"
+        description: "specifica la lista dei campi opzionali (che non vengono recupeati\
+          \ di default);\nimpostando il valore `ALL` vengono mostrati tutti i campi.\
+          \ \n\nPer gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns*\
+          \  \nI dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello)\n\
+          \nEsempi\n* per il campo childObj con la poprietà childProp utilizzare la\
+          \ notazione `childProp.prop1`\n* Per visualizzare tutte le proprietà di\
+          \ childObj utilizzare la notazione `childProp.*`\n* Per visualizzare tutte\
+          \ le proprietà di childObj e di tutti i discendenti utilizzare la notazione\
+          \ `childProp.**`\n"
+        required: false
+        type: "string"
+      - name: "optionalFields"
+        in: "query"
+        description: "specifica la lista dei campi opzionali (che non vengono recupeati\
+          \ di default);\nimpostando il valore `ALL` vengono mostrati tutti i campi.\
+          \ \n\nPer gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns*\
+          \  \nI dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello)\n\
+          \nEsempi\n* per il campo childObj con la poprietà childProp utilizzare la\
+          \ notazione `childProp.prop1`\n* Per visualizzare tutte le proprietà di\
+          \ childObj utilizzare la notazione `childProp.*`\n* Per visualizzare tutte\
+          \ le proprietà di childObj e di tutti i discendenti utilizzare la notazione\
+          \ `childProp.**`\n"
+        required: false
+        type: "string"
+      responses:
+        "200":
+          description: "Successful response"
+          schema:
+            $ref: "#/definitions/VerbaleConDettagli"
+        "422":
+          description: "parametri Errati"
+          schema:
+            $ref: "#/definitions/DettaglioErrore"
+      x-enabled-profiles:
+      - user-tecnico-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UTENTE_TECNICO"
+              description: "funzione accessibile alle utenze tecniche per accessi\
+                \ ai servizi REST"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkUserTecnico"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+      - check-teacher-lotto-permissions:
+          kind: "DOCENTE"
+          profiles:
+          - profile:
+              name: "DOCENTE"
+              description: "Controlla che il lotto appartenga al docente loggato"
+              checks:
+              - checkVerbaleStudente:
+                  className: "SecurityCarrieraStudente"
+                  functionName: "checkLottoDoc"
+                  description: "controlla che lo lotto appartenga al docente loggato\
+                    \ oppure ad uno dei docenti della commissione se presente"
+                  parameters:
+                  - lottoId: "{\"name\":\"lottoId\",\"in\":\"path\",\"description\"\
+                      :\"identificativo del lotto\",\"required\":true,\"type\":\"\
+                      integer\",\"items\":null,\"collectionFormat\":null,\"default\"\
+                      :null,\"maximum\":null,\"exclusiveMaximum\":null,\"minimum\"\
+                      :null,\"exclusiveMinimum\":null,\"maxLength\":null,\"minLength\"\
+                      :null,\"pattern\":null,\"maxItems\":null,\"minItems\":null,\"\
+                      uniqueItems\":null,\"multipleOf\":null,\"format\":\"int64\"\
+                      ,\"x-example\":null,\"enum\":null}"
+      - check-student-verbale-permissions:
+          kind: "STUDENTE"
+          profiles:
+          - profile:
+              name: "STUDENTE"
+              description: "controlla che il verbale appartenga allo studente loggato"
+              checks:
+              - checkVerbaleStudente:
+                  className: "SecurityCarrieraStudente"
+                  functionName: "checkVerbaleStu"
+                  description: "controlla che il verbale appartenga allo studente\
+                    \ loggato"
+                  parameters:
+                  - lottoId: "{\"name\":\"lottoId\",\"in\":\"path\",\"description\"\
+                      :\"identificativo del lotto\",\"required\":true,\"type\":\"\
+                      integer\",\"items\":null,\"collectionFormat\":null,\"default\"\
+                      :null,\"maximum\":null,\"exclusiveMaximum\":null,\"minimum\"\
+                      :null,\"exclusiveMinimum\":null,\"maxLength\":null,\"minLength\"\
+                      :null,\"pattern\":null,\"maxItems\":null,\"minItems\":null,\"\
+                      uniqueItems\":null,\"multipleOf\":null,\"format\":\"int64\"\
+                      ,\"x-example\":null,\"enum\":null}"
+                  - verbId: "{\"name\":\"verbId\",\"in\":\"path\",\"description\"\
+                      :\"identificativo del verbale\",\"required\":true,\"type\":\"\
+                      integer\",\"items\":null,\"collectionFormat\":null,\"default\"\
+                      :null,\"maximum\":null,\"exclusiveMaximum\":null,\"minimum\"\
+                      :null,\"exclusiveMinimum\":null,\"maxLength\":null,\"minLength\"\
+                      :null,\"pattern\":null,\"maxItems\":null,\"minItems\":null,\"\
+                      uniqueItems\":null,\"multipleOf\":null,\"format\":\"int64\"\
+                      ,\"x-example\":null,\"enum\":null}"
+  /verbali:
+    get:
+      tags:
+      - "verbale"
+      summary: "Recupero dei verbali presenti a sistema"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>Recupera i verbali di uno studente, è obbligatorio\
+        \ uno dei due parametri (matricolaStu, codFisStu) gli altri sono opzionali\n\
+        \n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n-|-|-\nx-cache-type|lowRefreshRateUserDependent|Risorsa\
+        \ che varia con frequenza bassa, cache Http abilitata, cache server disabilitata.\
+        \ Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: USER_TECNICO**\n\nProfilo|Controllo| Funzione\n-|-|-\nUTENTE_TECNICO|funzione\
+        \ accessibile alle utenze tecniche per accessi ai servizi REST|Security.checkUserTecnico()\n\
+        \n**Utente: DOCENTE**\n\nProfilo|Controllo| Funzione\n-|-|-\nDOCENTE|Controlla\
+        \ che il docente possa accedere ai verbali con i filtri impostati|SecurityCarrieraStudente.findVerbaleDoc(matricolaDoc,\
+        \ codFisDoc, matricolaStu, codFisStu, statoVerbale, adCod, cdsCod, adStuCod,\
+        \ cdsStuCod, daData, aData)\n\n**Utente: STUDENTE**\n\nProfilo|Controllo|\
+        \ Funzione\n-|-|-\nSTUDENTE|Controlla che lo studente possa accedere ai verbali\
+        \ con i filtri impostati|SecurityCarrieraStudente.findVerbaleStu(matricolaDoc,\
+        \ codFisDoc, matricolaStu, codFisStu, statoVerbale, adCod, cdsCod, adStuCod,\
+        \ cdsStuCod, daData, aData)\n\n\nClasse di modello : VerbaleRoot\n======\n\
+        \nEstensioni sulle proprietà\n----\nProprietà | x-field-type\n-|-|\nlottoId|primaryKey\n\
+        verbId|primaryKey\n\n\nClasse di modello : DettaglioErroreAggiuntivo\n======\n\
+        \nEstensioni sulle proprietà\n----\nProprietà | x-field-type\n-|-|\nrawValue|rawJson\n"
+      operationId: "findVerbali"
+      parameters:
+      - name: "matricolaStu"
+        in: "query"
+        description: "matricola dello studente per il quale cercare i lotti"
+        required: false
+        type: "string"
+      - name: "matricolaDoc"
+        in: "query"
+        description: "matricola del docente per il quale cercare i lotti"
+        required: false
+        type: "string"
+      - name: "codFisStu"
+        in: "query"
+        description: "matricola dello studente per il quale cercare i lotti"
+        required: false
+        type: "string"
+      - name: "codFisDoc"
+        in: "query"
+        description: "matricola del docente per il quale cercare i lotti"
+        required: false
+        type: "string"
+      - name: "statoVerbale"
+        in: "query"
+        description: "stato del verbale"
+        required: false
+        type: "string"
+      - name: "adCod"
+        in: "query"
+        description: "codice dell'ad di definizione del lotto"
+        required: false
+        type: "string"
+      - name: "cdsCod"
+        in: "query"
+        description: "codice del cds di definizione del lotto"
+        required: false
+        type: "string"
+      - name: "adStuCod"
+        in: "query"
+        description: "codice dell'ad di definizione del lotto"
+        required: false
+        type: "string"
+      - name: "cdsStuCod"
+        in: "query"
+        description: "codice del cds di definizione del lotto"
+        required: false
+        type: "string"
+      - name: "daData"
+        in: "query"
+        description: "recupero dei vebali con data di verbalizzazione a partire da\
+          \ una certa data"
+        required: false
+        type: "string"
+      - name: "aData"
+        in: "query"
+        description: "recupero dei vebali con data di verbalizzazione fino ad una\
+          \ certa data"
+        required: false
+        type: "string"
+      - name: "start"
+        in: "query"
+        description: "utilizzato insieme a `limit` per indicare la paginazione sui\
+          \ record; `start` indica il numero del primo record da caricare (se non\
+          \ indicato viene utilizzato 0)\n"
+        required: false
+        type: "integer"
+        format: "int32"
+      - name: "limit"
+        in: "query"
+        description: "utilizzato insieme a `start` per indicare la paginazione sui\
+          \ record, `limit` indica il numero di record da recuperare (a partire da\
+          \ `start`); \nse non indicato viene utilizzato 50, i valori consentiti vanno\
+          \ da 0 a 100\n"
+        required: false
+        type: "integer"
+        format: "int32"
+      - name: "order"
+        in: "query"
+        description: "consente di specificare un ordine per il recupero dei record.\
+          \ La sintassi è la seguente\n * +/- : specifica l'ordinamento (+ = ASC,\
+          \ - = DESC); se omesso viene utilizzato +\n * field : nome del campo da\
+          \ ordinare\n \n E' possibile indicare più campi separandoli da virgola (Es:\
+          \ +annoCorso,+adCod) \n"
+        required: false
+        type: "string"
+      responses:
+        "200":
+          description: "Successful response"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/Verbale"
+        "422":
+          description: "parametri Errati"
+          schema:
+            $ref: "#/definitions/DettaglioErrore"
+      x-enabled-profiles:
+      - user-tecnico-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UTENTE_TECNICO"
+              description: "funzione accessibile alle utenze tecniche per accessi\
+                \ ai servizi REST"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkUserTecnico"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+      - filter-teacher-verbale-permissions:
+          kind: "DOCENTE"
+          profiles:
+          - profile:
+              name: "DOCENTE"
+              description: "Controlla che il docente possa accedere ai verbali con\
+                \ i filtri impostati"
+              checks:
+              - checkVerbaleStudente:
+                  className: "SecurityCarrieraStudente"
+                  functionName: "findVerbaleDoc"
+                  description: "controlla che i verbali recuperati appartengano a\
+                    \ lotti collegati al al docente loggato (i lotti sono generati\
+                    \ da lui oppure è statto indicato come destinatario)"
+                  parameters:
+                  - matricolaDoc: "{\"name\":\"matricolaDoc\",\"in\":\"query\",\"\
+                      description\":\"matricola del docente per il quale cercare i\
+                      \ lotti\",\"required\":false,\"type\":\"string\",\"items\":null,\"\
+                      collectionFormat\":null,\"default\":null,\"maximum\":null,\"\
+                      exclusiveMaximum\":null,\"minimum\":null,\"exclusiveMinimum\"\
+                      :null,\"maxLength\":null,\"minLength\":null,\"pattern\":null,\"\
+                      maxItems\":null,\"minItems\":null,\"uniqueItems\":null,\"multipleOf\"\
+                      :null,\"format\":null,\"x-example\":null,\"enum\":null}"
+                  - codFisDoc: "{\"name\":\"codFisDoc\",\"in\":\"query\",\"description\"\
+                      :\"matricola del docente per il quale cercare i lotti\",\"required\"\
+                      :false,\"type\":\"string\",\"items\":null,\"collectionFormat\"\
+                      :null,\"default\":null,\"maximum\":null,\"exclusiveMaximum\"\
+                      :null,\"minimum\":null,\"exclusiveMinimum\":null,\"maxLength\"\
+                      :null,\"minLength\":null,\"pattern\":null,\"maxItems\":null,\"\
+                      minItems\":null,\"uniqueItems\":null,\"multipleOf\":null,\"\
+                      format\":null,\"x-example\":null,\"enum\":null}"
+                  - matricolaStu: "{\"name\":\"matricolaStu\",\"in\":\"query\",\"\
+                      description\":\"matricola dello studente per il quale cercare\
+                      \ i lotti\",\"required\":false,\"type\":\"string\",\"items\"\
+                      :null,\"collectionFormat\":null,\"default\":null,\"maximum\"\
+                      :null,\"exclusiveMaximum\":null,\"minimum\":null,\"exclusiveMinimum\"\
+                      :null,\"maxLength\":null,\"minLength\":null,\"pattern\":null,\"\
+                      maxItems\":null,\"minItems\":null,\"uniqueItems\":null,\"multipleOf\"\
+                      :null,\"format\":null,\"x-example\":null,\"enum\":null}"
+                  - codFisStu: "{\"name\":\"codFisStu\",\"in\":\"query\",\"description\"\
+                      :\"matricola dello studente per il quale cercare i lotti\",\"\
+                      required\":false,\"type\":\"string\",\"items\":null,\"collectionFormat\"\
+                      :null,\"default\":null,\"maximum\":null,\"exclusiveMaximum\"\
+                      :null,\"minimum\":null,\"exclusiveMinimum\":null,\"maxLength\"\
+                      :null,\"minLength\":null,\"pattern\":null,\"maxItems\":null,\"\
+                      minItems\":null,\"uniqueItems\":null,\"multipleOf\":null,\"\
+                      format\":null,\"x-example\":null,\"enum\":null}"
+                  - statoVerbale: "{\"name\":\"statoVerbale\",\"in\":\"query\",\"\
+                      description\":\"stato del verbale\",\"required\":false,\"type\"\
+                      :\"string\",\"items\":null,\"collectionFormat\":null,\"default\"\
+                      :null,\"maximum\":null,\"exclusiveMaximum\":null,\"minimum\"\
+                      :null,\"exclusiveMinimum\":null,\"maxLength\":null,\"minLength\"\
+                      :null,\"pattern\":null,\"maxItems\":null,\"minItems\":null,\"\
+                      uniqueItems\":null,\"multipleOf\":null,\"format\":null,\"x-example\"\
+                      :null,\"enum\":null}"
+                  - adCod: "{\"name\":\"adCod\",\"in\":\"query\",\"description\":\"\
+                      codice dell'ad di definizione del lotto\",\"required\":false,\"\
+                      type\":\"string\",\"items\":null,\"collectionFormat\":null,\"\
+                      default\":null,\"maximum\":null,\"exclusiveMaximum\":null,\"\
+                      minimum\":null,\"exclusiveMinimum\":null,\"maxLength\":null,\"\
+                      minLength\":null,\"pattern\":null,\"maxItems\":null,\"minItems\"\
+                      :null,\"uniqueItems\":null,\"multipleOf\":null,\"format\":null,\"\
+                      x-example\":null,\"enum\":null}"
+                  - cdsCod: "{\"name\":\"cdsCod\",\"in\":\"query\",\"description\"\
+                      :\"codice del cds di definizione del lotto\",\"required\":false,\"\
+                      type\":\"string\",\"items\":null,\"collectionFormat\":null,\"\
+                      default\":null,\"maximum\":null,\"exclusiveMaximum\":null,\"\
+                      minimum\":null,\"exclusiveMinimum\":null,\"maxLength\":null,\"\
+                      minLength\":null,\"pattern\":null,\"maxItems\":null,\"minItems\"\
+                      :null,\"uniqueItems\":null,\"multipleOf\":null,\"format\":null,\"\
+                      x-example\":null,\"enum\":null}"
+                  - adStuCod: "{\"name\":\"adStuCod\",\"in\":\"query\",\"description\"\
+                      :\"codice dell'ad di definizione del lotto\",\"required\":false,\"\
+                      type\":\"string\",\"items\":null,\"collectionFormat\":null,\"\
+                      default\":null,\"maximum\":null,\"exclusiveMaximum\":null,\"\
+                      minimum\":null,\"exclusiveMinimum\":null,\"maxLength\":null,\"\
+                      minLength\":null,\"pattern\":null,\"maxItems\":null,\"minItems\"\
+                      :null,\"uniqueItems\":null,\"multipleOf\":null,\"format\":null,\"\
+                      x-example\":null,\"enum\":null}"
+                  - cdsStuCod: "{\"name\":\"cdsStuCod\",\"in\":\"query\",\"description\"\
+                      :\"codice del cds di definizione del lotto\",\"required\":false,\"\
+                      type\":\"string\",\"items\":null,\"collectionFormat\":null,\"\
+                      default\":null,\"maximum\":null,\"exclusiveMaximum\":null,\"\
+                      minimum\":null,\"exclusiveMinimum\":null,\"maxLength\":null,\"\
+                      minLength\":null,\"pattern\":null,\"maxItems\":null,\"minItems\"\
+                      :null,\"uniqueItems\":null,\"multipleOf\":null,\"format\":null,\"\
+                      x-example\":null,\"enum\":null}"
+                  - daData: "{\"name\":\"daData\",\"in\":\"query\",\"description\"\
+                      :\"recupero dei vebali con data di verbalizzazione a partire\
+                      \ da una certa data\",\"required\":false,\"type\":\"string\"\
+                      ,\"items\":null,\"collectionFormat\":null,\"default\":null,\"\
+                      maximum\":null,\"exclusiveMaximum\":null,\"minimum\":null,\"\
+                      exclusiveMinimum\":null,\"maxLength\":null,\"minLength\":null,\"\
+                      pattern\":null,\"maxItems\":null,\"minItems\":null,\"uniqueItems\"\
+                      :null,\"multipleOf\":null,\"format\":null,\"x-example\":null,\"\
+                      enum\":null}"
+                  - aData: "{\"name\":\"aData\",\"in\":\"query\",\"description\":\"\
+                      recupero dei vebali con data di verbalizzazione fino ad una\
+                      \ certa data\",\"required\":false,\"type\":\"string\",\"items\"\
+                      :null,\"collectionFormat\":null,\"default\":null,\"maximum\"\
+                      :null,\"exclusiveMaximum\":null,\"minimum\":null,\"exclusiveMinimum\"\
+                      :null,\"maxLength\":null,\"minLength\":null,\"pattern\":null,\"\
+                      maxItems\":null,\"minItems\":null,\"uniqueItems\":null,\"multipleOf\"\
+                      :null,\"format\":null,\"x-example\":null,\"enum\":null}"
+      - filter-student-verbale-permissions:
+          kind: "STUDENTE"
+          profiles:
+          - profile:
+              name: "STUDENTE"
+              description: "Controlla che lo studente possa accedere ai verbali con\
+                \ i filtri impostati"
+              checks:
+              - checkVerbaleStudente:
+                  className: "SecurityCarrieraStudente"
+                  functionName: "findVerbaleStu"
+                  description: "controlla che i verbali recuperati appartengano allo\
+                    \ studente loggato"
+                  parameters:
+                  - matricolaDoc: "{\"name\":\"matricolaDoc\",\"in\":\"query\",\"\
+                      description\":\"matricola del docente per il quale cercare i\
+                      \ lotti\",\"required\":false,\"type\":\"string\",\"items\":null,\"\
+                      collectionFormat\":null,\"default\":null,\"maximum\":null,\"\
+                      exclusiveMaximum\":null,\"minimum\":null,\"exclusiveMinimum\"\
+                      :null,\"maxLength\":null,\"minLength\":null,\"pattern\":null,\"\
+                      maxItems\":null,\"minItems\":null,\"uniqueItems\":null,\"multipleOf\"\
+                      :null,\"format\":null,\"x-example\":null,\"enum\":null}"
+                  - codFisDoc: "{\"name\":\"codFisDoc\",\"in\":\"query\",\"description\"\
+                      :\"matricola del docente per il quale cercare i lotti\",\"required\"\
+                      :false,\"type\":\"string\",\"items\":null,\"collectionFormat\"\
+                      :null,\"default\":null,\"maximum\":null,\"exclusiveMaximum\"\
+                      :null,\"minimum\":null,\"exclusiveMinimum\":null,\"maxLength\"\
+                      :null,\"minLength\":null,\"pattern\":null,\"maxItems\":null,\"\
+                      minItems\":null,\"uniqueItems\":null,\"multipleOf\":null,\"\
+                      format\":null,\"x-example\":null,\"enum\":null}"
+                  - matricolaStu: "{\"name\":\"matricolaStu\",\"in\":\"query\",\"\
+                      description\":\"matricola dello studente per il quale cercare\
+                      \ i lotti\",\"required\":false,\"type\":\"string\",\"items\"\
+                      :null,\"collectionFormat\":null,\"default\":null,\"maximum\"\
+                      :null,\"exclusiveMaximum\":null,\"minimum\":null,\"exclusiveMinimum\"\
+                      :null,\"maxLength\":null,\"minLength\":null,\"pattern\":null,\"\
+                      maxItems\":null,\"minItems\":null,\"uniqueItems\":null,\"multipleOf\"\
+                      :null,\"format\":null,\"x-example\":null,\"enum\":null}"
+                  - codFisStu: "{\"name\":\"codFisStu\",\"in\":\"query\",\"description\"\
+                      :\"matricola dello studente per il quale cercare i lotti\",\"\
+                      required\":false,\"type\":\"string\",\"items\":null,\"collectionFormat\"\
+                      :null,\"default\":null,\"maximum\":null,\"exclusiveMaximum\"\
+                      :null,\"minimum\":null,\"exclusiveMinimum\":null,\"maxLength\"\
+                      :null,\"minLength\":null,\"pattern\":null,\"maxItems\":null,\"\
+                      minItems\":null,\"uniqueItems\":null,\"multipleOf\":null,\"\
+                      format\":null,\"x-example\":null,\"enum\":null}"
+                  - statoVerbale: "{\"name\":\"statoVerbale\",\"in\":\"query\",\"\
+                      description\":\"stato del verbale\",\"required\":false,\"type\"\
+                      :\"string\",\"items\":null,\"collectionFormat\":null,\"default\"\
+                      :null,\"maximum\":null,\"exclusiveMaximum\":null,\"minimum\"\
+                      :null,\"exclusiveMinimum\":null,\"maxLength\":null,\"minLength\"\
+                      :null,\"pattern\":null,\"maxItems\":null,\"minItems\":null,\"\
+                      uniqueItems\":null,\"multipleOf\":null,\"format\":null,\"x-example\"\
+                      :null,\"enum\":null}"
+                  - adCod: "{\"name\":\"adCod\",\"in\":\"query\",\"description\":\"\
+                      codice dell'ad di definizione del lotto\",\"required\":false,\"\
+                      type\":\"string\",\"items\":null,\"collectionFormat\":null,\"\
+                      default\":null,\"maximum\":null,\"exclusiveMaximum\":null,\"\
+                      minimum\":null,\"exclusiveMinimum\":null,\"maxLength\":null,\"\
+                      minLength\":null,\"pattern\":null,\"maxItems\":null,\"minItems\"\
+                      :null,\"uniqueItems\":null,\"multipleOf\":null,\"format\":null,\"\
+                      x-example\":null,\"enum\":null}"
+                  - cdsCod: "{\"name\":\"cdsCod\",\"in\":\"query\",\"description\"\
+                      :\"codice del cds di definizione del lotto\",\"required\":false,\"\
+                      type\":\"string\",\"items\":null,\"collectionFormat\":null,\"\
+                      default\":null,\"maximum\":null,\"exclusiveMaximum\":null,\"\
+                      minimum\":null,\"exclusiveMinimum\":null,\"maxLength\":null,\"\
+                      minLength\":null,\"pattern\":null,\"maxItems\":null,\"minItems\"\
+                      :null,\"uniqueItems\":null,\"multipleOf\":null,\"format\":null,\"\
+                      x-example\":null,\"enum\":null}"
+                  - adStuCod: "{\"name\":\"adStuCod\",\"in\":\"query\",\"description\"\
+                      :\"codice dell'ad di definizione del lotto\",\"required\":false,\"\
+                      type\":\"string\",\"items\":null,\"collectionFormat\":null,\"\
+                      default\":null,\"maximum\":null,\"exclusiveMaximum\":null,\"\
+                      minimum\":null,\"exclusiveMinimum\":null,\"maxLength\":null,\"\
+                      minLength\":null,\"pattern\":null,\"maxItems\":null,\"minItems\"\
+                      :null,\"uniqueItems\":null,\"multipleOf\":null,\"format\":null,\"\
+                      x-example\":null,\"enum\":null}"
+                  - cdsStuCod: "{\"name\":\"cdsStuCod\",\"in\":\"query\",\"description\"\
+                      :\"codice del cds di definizione del lotto\",\"required\":false,\"\
+                      type\":\"string\",\"items\":null,\"collectionFormat\":null,\"\
+                      default\":null,\"maximum\":null,\"exclusiveMaximum\":null,\"\
+                      minimum\":null,\"exclusiveMinimum\":null,\"maxLength\":null,\"\
+                      minLength\":null,\"pattern\":null,\"maxItems\":null,\"minItems\"\
+                      :null,\"uniqueItems\":null,\"multipleOf\":null,\"format\":null,\"\
+                      x-example\":null,\"enum\":null}"
+                  - daData: "{\"name\":\"daData\",\"in\":\"query\",\"description\"\
+                      :\"recupero dei vebali con data di verbalizzazione a partire\
+                      \ da una certa data\",\"required\":false,\"type\":\"string\"\
+                      ,\"items\":null,\"collectionFormat\":null,\"default\":null,\"\
+                      maximum\":null,\"exclusiveMaximum\":null,\"minimum\":null,\"\
+                      exclusiveMinimum\":null,\"maxLength\":null,\"minLength\":null,\"\
+                      pattern\":null,\"maxItems\":null,\"minItems\":null,\"uniqueItems\"\
+                      :null,\"multipleOf\":null,\"format\":null,\"x-example\":null,\"\
+                      enum\":null}"
+                  - aData: "{\"name\":\"aData\",\"in\":\"query\",\"description\":\"\
+                      recupero dei vebali con data di verbalizzazione fino ad una\
+                      \ certa data\",\"required\":false,\"type\":\"string\",\"items\"\
+                      :null,\"collectionFormat\":null,\"default\":null,\"maximum\"\
+                      :null,\"exclusiveMaximum\":null,\"minimum\":null,\"exclusiveMinimum\"\
+                      :null,\"maxLength\":null,\"minLength\":null,\"pattern\":null,\"\
+                      maxItems\":null,\"minItems\":null,\"uniqueItems\":null,\"multipleOf\"\
+                      :null,\"format\":null,\"x-example\":null,\"enum\":null}"
+      x-cache-type: "lowRefreshRateUserDependent"
+securityDefinitions:
+  basicAuth:
+    description: "Autenticazione tramite BASIC authentication. Questa modalità è disponibile\
+      \ se l'autenticazione su esse3 non usa shibboleth per il gruppo dell'utente"
+    type: "basic"
+  jwt:
+    description: "Autenticazione tramite OAUTH2, occorre configurare il parametro\
+      \ di configurazione di ESSE3 che indica il server OAUTH2 da utilizzare"
+    type: "oauth2"
+    authorizationUrl: "https://idp-idm.unimib.it/idp/profile/oidc/authorize"
+    flow: "implicit"
+    scopes:
+      openid: "informazioni sull'utente"
+definitions:
+  ImportBatch:
+    type: "object"
+    required:
+    - "tipo"
+    properties:
+      nomeFileBatch:
+        type: "string"
+        example: "batch"
+        description: "nome del file batch"
+      batchNum:
+        type: "integer"
+        format: "int32"
+        example: 111
+        description: "numero del file batch da caricare sul campo batchNum, se non\
+          \ popolato viene inserito il batchId"
+      tipo:
+        type: "string"
+        example: "INS"
+        description: "indica se il batch è di tipo INS (non sono stati creati i verbali)\
+          \ oppure AGG (i verbali sono già presenti a sistema)\nIn base al valore\
+          \ va popolato l'insieme corrispondente di verbali\n"
+        pattern: "INS|AGG"
+      verbaliInserimento:
+        type: "array"
+        items:
+          $ref: "#/definitions/ImportVerbaleInserimento"
+      verbaliAggiornamento:
+        type: "array"
+        items:
+          $ref: "#/definitions/ImportVerbaleAggiornamento"
+    x-model-sub-package: "verbali.v1"
+    x-model-sub-path: "verbali/v1"
+  BatchVerb:
+    type: "object"
+    discriminator: "batchType"
+    properties:
+      batchId:
+        type: "integer"
+        format: "int64"
+        example: 22
+        description: "id del batch creato"
+        x-field-type: "primaryKey"
+      batchNum:
+        type: "integer"
+        format: "int64"
+        example: 22
+        description: "numero del batch assegnato in fase di importazione"
+      des:
+        type: "string"
+        example: "batch di acquisizione"
+        description: "descrizione libera"
+      adId:
+        type: "integer"
+        format: "int64"
+        example: 123
+        description: "id dell'attivita' didattica associata al batch"
+      adCod:
+        type: "string"
+        example: "AD1_COD"
+        description: "codice Attivita' didattica associata al batch"
+      adDes:
+        type: "string"
+        example: "Attivita libera"
+        description: "descrizione Attivita' didattica associata al batch"
+      cdsId:
+        type: "integer"
+        format: "int64"
+        example: 123
+        description: "id del corso di studio associato al batch"
+      cdsCod:
+        type: "string"
+        example: "AD1_COD"
+        description: "codice Corso di studio associato al batch"
+      cdsDes:
+        type: "string"
+        example: "Attivita libera"
+        description: "descrizione Corso di studio associato al batch"
+      dataAcq:
+        type: "string"
+        example: "10/10/2018"
+        description: "data di acquisizione del batch"
+      dataApp:
+        type: "string"
+        example: "10/10/2018"
+        description: "data dell'appello"
+    x-layout-name: "BATCH_VERB_REST"
+    x-winsession-name: "p11/n_di_11_999_ws"
+    x-model-sub-package: "verbali.v1"
+    x-model-sub-path: "verbali/v1"
+  LottoConDettagli:
+    allOf:
+    - $ref: "#/definitions/Lotto"
+    - type: "object"
+      properties:
+        commissione:
+          type: "array"
+          items:
+            $ref: "#/definitions/LottoCommissione"
+        transizioniStato:
+          type: "array"
+          items:
+            $ref: "#/definitions/LottoTransStato"
+          x-field-type: "optional"
+    x-model-sub-package: "verbali.v1"
+    x-model-sub-path: "verbali/v1"
+  VerbaleRoot:
+    type: "object"
+    discriminator: "verbaleType"
+    properties:
+      lottoId:
+        type: "integer"
+        format: "int64"
+        example: 123
+        description: "Il del lotto dei verbali"
+        x-field-type: "primaryKey"
+      verbId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "Il del verbale all'interno del lotto"
+        x-field-type: "primaryKey"
+      batchId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "Il del batch di importazione"
+      stuId:
+        type: "integer"
+        format: "int64"
+        example: 2
+        description: "id della carriera dello studente a cui risulta associato il\
+          \ verbale, per i verbali non collegati a prenotazione  potrebbe non essere\
+          \ valorizzato"
+      matId:
+        type: "integer"
+        format: "int64"
+        example: 3
+        description: "id del tratto di carriera dello studente a cui risulta associato\
+          \ il verbale, per i verbali non collegati a prenotazione  potrebbe non essere\
+          \ valorizzato"
+      appId:
+        type: "integer"
+        format: "int64"
+        example: 4
+        description: "id dell'appello collegato al verbale"
+      appLogId:
+        type: "integer"
+        format: "int64"
+        example: 4
+        description: "id del turno collegato al verbale"
+      verbNum:
+        type: "string"
+        description: "numero del verbale"
+        pattern: "\\d{8}\\s\\d{4}\\s\\d"
+      statoVerbale:
+        type: "integer"
+        format: "int32"
+        example: 4
+        description: "stato del verbale"
+        minimum: 0.0
+        maximum: 7.0
+      errNum:
+        type: "integer"
+        format: "int32"
+        example: 17
+        description: "tipo di errore impostato"
+      statoWarn:
+        type: "integer"
+        format: "int32"
+        example: 2
+        description: "stato di warning del verbale (0=nessun warning, 1=warning impostato,\
+          \ 2=warning validato), Nel caso di 1 l'acquisizione del verbale in carriera\
+          \ è bloccata"
+        minimum: 0.0
+        maximum: 2.0
+      warnNum:
+        type: "integer"
+        format: "int32"
+        example: 1
+        description: "tipo di warning impostato"
+      tipoVerbCod:
+        type: "string"
+        description: "codice della tipologia di verbale (STD, REV, REV_ERR)"
+      lottoCollId:
+        type: "integer"
+        format: "int64"
+        description: "id del lotto collegato al verbale nel caso di tipologie REV\
+          \ e REV_ERR"
+      verbCollId:
+        type: "integer"
+        format: "int64"
+        description: "id del verbale collegato al verbale nel caso di tipologie REV\
+          \ e REV_ERR"
+      matricola:
+        type: "string"
+        example: "MAT-123"
+        description: "matricola dello studente"
+      nome:
+        type: "string"
+        example: "ROSSI"
+        description: "nome dello studente"
+      cognome:
+        type: "string"
+        example: "MARIO"
+        description: "cogome dello studente"
+      adId:
+        type: "integer"
+        format: "int64"
+        example: 123
+        description: "id dell'attivita' didattica associata al lotto"
+      adCod:
+        type: "string"
+        example: "AD1_COD"
+        description: "codice Attivita' didattica associata al lotto"
+      adDes:
+        type: "string"
+        example: "Attivita libera"
+        description: "descrizione Attivita' didattica associata al lotto"
+      cdsId:
+        type: "integer"
+        format: "int64"
+        example: 123
+        description: "id del corso di studio associato al lotto"
+      cdsCod:
+        type: "string"
+        example: "CDS1_COD"
+        description: "codice Corso di studio associato al lotto"
+      cdsDes:
+        type: "string"
+        example: "corso di studio"
+        description: "descrizione Corso di studio associato al lotto"
+      adStuId:
+        type: "integer"
+        format: "int64"
+        example: 123
+        description: "id dell'attivita' didattica associata all'attivita' dello studente"
+      adStuCod:
+        type: "string"
+        example: "AD2_STU_COD"
+        description: "codice Attivita' didattica associata allo studente"
+      adStuDes:
+        type: "string"
+        example: "Attivita studente"
+        description: "descrizione Attivita' didattica associata allo studente"
+      cdsStuId:
+        type: "integer"
+        format: "int64"
+        example: 123
+        description: "id del corso di studio associato all'attivita' dello studente"
+      cdsStuCod:
+        type: "string"
+        example: "CDS2_STU_COD"
+        description: "codice Corso di studio associato all'attività allo studente"
+      cdsStuDes:
+        type: "string"
+        example: "corso studente"
+        description: "descrizione Corso di studio associata all'attività allo studente"
+      voto:
+        type: "integer"
+        format: "int32"
+        example: 18
+        description: "voto del verbale, insieme a causale rappresenta tutte i possibili\
+          \ esiti (voti, giudizi, causali di non verbalizzazione)"
+      causale:
+        type: "integer"
+        format: "int32"
+        example: 1
+        description: "causale del verbale, insieme a causale rappresenta tutte i possibili\
+          \ esiti (voti, giudizi, causali di non verbalizzazione)"
+      dataEsa:
+        type: "string"
+        example: "10/10/2019"
+        description: "data del verbale"
+      dataApp:
+        type: "string"
+        example: "10/10/2019"
+        description: "data dell'appello collegato al verbale"
+      livelloUscitaLinguaCod:
+        type: "string"
+        example: "B1"
+        description: "livello di uscita della lingua"
+      tipoSvolgimentoEsameCod:
+        type: "string"
+        example: "P"
+        description: "codice del tipo svolgimento esame"
+      imgId:
+        type: "integer"
+        format: "int64"
+        description: "id dell'allegato con il quale recuperare il blob del verbale"
+    x-model-sub-package: "verbali.v1"
+    x-model-sub-path: "verbali/v1"
+  BatchVerbConDettagli:
+    allOf:
+    - $ref: "#/definitions/BatchVerb"
+    - type: "object"
+      properties:
+        verbali:
+          type: "array"
+          items:
+            $ref: "#/definitions/VerbaleConUploadUrl"
+    x-layout-name: "BATCH_VERB_REST"
+    x-winsession-name: "p11/n_di_11_999_ws"
+    x-model-sub-package: "verbali.v1"
+    x-model-sub-path: "verbali/v1"
+  ImportVerbaleCampoAggiuntivo:
+    type: "object"
+    required:
+    - "nome"
+    - "valore"
+    properties:
+      nome:
+        type: "string"
+        example: "key"
+        description: "nome del campo aggiuntivo"
+      valore:
+        type: "string"
+        example: "value"
+        description: "valore del campo aggiuntivo"
+    x-model-sub-package: "verbali.v1"
+    x-model-sub-path: "verbali/v1"
+  VerbaleConDettagli:
+    allOf:
+    - $ref: "#/definitions/VerbaleRoot"
+    - type: "object"
+      properties:
+        modifiche:
+          type: "array"
+          items:
+            $ref: "#/definitions/VerbaleLogMod"
+          x-field-type: "optional"
+        applistaId:
+          type: "integer"
+          format: "int64"
+          example: 44
+          description: "id della prentoazione a cui risulta associato il verbale"
+        adsceId:
+          type: "integer"
+          format: "int64"
+          example: 4
+          description: "id della riga di libretto cui risulta associato il verbale,\
+            \ per i verbali non collegati a prenotazione è valorizzato solo per gli\
+            \ stati 3 e 4"
+        adregId:
+          type: "integer"
+          format: "int64"
+          example: 4
+          description: "id della prova della riga di libretto cui risulta associato\
+            \ il verbale, , per i verbali non collegati a prenotazione è valorizzato\
+            \ solo per gli stati 3 e 4"
+        domandeEsame:
+          type: "string"
+          example: "la derivata prima"
+          description: "domande d'esame"
+        errDes:
+          type: "string"
+          example: "tasse non regolari"
+          description: "descrizione del tipo di errore impostato"
+        warnDes:
+          type: "string"
+          example: "immagine verbale non caricata"
+          description: "descrizione del tipo di warning impostato"
+        tipoVerbDes:
+          type: "string"
+          description: "descrizione della tipologia di verbale (STD=verbale standard,\
+            \ REV=verbale di revoca, REV_ERR=verbale di correzione per errore materiale)"
+        codFis:
+          type: "string"
+          example: "RSSMRR80R75H333V"
+          description: "codice fiscale dello studente"
+        docenteMatricola:
+          type: "string"
+          example: "MAT-123"
+          description: "matricola del presidente della commissione del lotto"
+        docenteCodFis:
+          type: "string"
+          example: "RSSMRR80R75H333V"
+          description: "codice fiscale del presidente della commissione del lotto"
+        docenteNome:
+          type: "string"
+          example: "ROSSI"
+          description: "nome del presidente della commissione del lotto"
+        docenteCognome:
+          type: "string"
+          example: "MARIO"
+          description: "cogome del presidente della commissione del lotto"
+        cfu:
+          type: "number"
+          format: "float"
+          example: 10.0
+          description: "CFU previsti per il verbale"
+        esito:
+          type: "string"
+          example: "30 e lode"
+          description: "decodifica della coppia (voto,causale)"
+    x-layout-name: "VERBALI_REST"
+    x-winsession-name: "p11/n_di_11_999_ws"
+    x-model-sub-package: "verbali.v1"
+    x-model-sub-path: "verbali/v1"
+  ImportVerbaleInserimento:
+    allOf:
+    - $ref: "#/definitions/ImportVerbaleRoot"
+    - type: "object"
+      required:
+      - "adStuCod"
+      - "cdsStuCod"
+      properties:
+        adStuCod:
+          type: "string"
+          example: "AD_STU_COD"
+          description: "codice AD che lo studente deve riportare nel proprio libretto"
+          maxLength: 10
+        cdsStuCod:
+          type: "string"
+          example: "CDS_STU_COD"
+          description: "codice CDS dove è eroagtata l'AD che lo studente deve riportare\
+            \ nel proprio libretto"
+          maxLength: 10
+    x-model-sub-package: "verbali.v1"
+    x-model-sub-path: "verbali/v1"
+  ImportVerbaleAggiornamento:
+    allOf:
+    - $ref: "#/definitions/ImportVerbaleRoot"
+    - type: "object"
+      required:
+      - "adCod"
+      - "adDes"
+      - "cdsCod"
+      - "cdsDes"
+      - "cognome"
+      - "lottoId"
+      - "nome"
+      - "verbId"
+      - "verbNum"
+      properties:
+        lottoId:
+          type: "integer"
+          format: "int64"
+          example: 123
+          description: "Il del lotto dei verbali"
+          minimum: 0.0
+          maximum: 9.9999999E7
+        verbId:
+          type: "integer"
+          format: "int64"
+          example: 1
+          description: "Il del verbale all'interno del lotto"
+          minimum: 0.0
+          maximum: 9999.0
+        verbNum:
+          type: "string"
+          example: "00000123 0001 3"
+          description: "numero del verbale"
+          pattern: "\\d{8}\\s\\d{4}\\s\\d"
+        cognome:
+          type: "string"
+          example: "rossi"
+          description: "cognome dello studente"
+          maxLength: 80
+        nome:
+          type: "string"
+          example: "mario"
+          description: "nome dello studente"
+          maxLength: 80
+        adCod:
+          type: "string"
+          example: "AD_COD"
+          description: "codice AD del lotto, il codice AD dello studente viene calcolato\
+            \ dal sistema"
+          maxLength: 10
+        cdsCod:
+          type: "string"
+          example: "CDS_COD"
+          description: "codice CDS del lotto, il codice CDS dell'AD dello studente\
+            \ viene calcolato dal sistema"
+          maxLength: 10
+        adDes:
+          type: "string"
+          example: "AD_DES"
+          description: "descrizione AD del lotto, la descrizione AD dello studente\
+            \ viene calcolato dal sistema"
+          maxLength: 255
+        cdsDes:
+          type: "string"
+          example: "CDS_DES"
+          description: "descrizione CDS del lotto, la descrizione CDS dell'AD dello\
+            \ studente viene calcolato dal sistema"
+          maxLength: 255
+    x-model-sub-package: "verbali.v1"
+    x-model-sub-path: "verbali/v1"
+  DettaglioErrore:
+    type: "object"
+    properties:
+      statusCode:
+        type: "integer"
+        format: "int32"
+        example: 200
+        description: "Http Status Code"
+      retCode:
+        type: "integer"
+        format: "int32"
+        example: -1
+        description: "codice di errore"
+      retErrMsg:
+        type: "string"
+        example: "Parametri non corretti"
+        description: "descrizione dell'errore"
+      errDetails:
+        type: "array"
+        items:
+          $ref: "#/definitions/DettaglioErroreAggiuntivo"
+    x-model-sub-package: "frk.v1"
+    x-model-sub-path: "frk/v1"
+  Lotto:
+    type: "object"
+    discriminator: "lottoType"
+    properties:
+      lottoId:
+        type: "integer"
+        format: "int64"
+        example: 123
+        description: "Il del lotto dei verbali"
+        x-field-type: "primaryKey"
+      adId:
+        type: "integer"
+        format: "int64"
+        example: 123
+        description: "id dell'attivita' didattica associata al lotto"
+      adCod:
+        type: "string"
+        example: "AD1_COD"
+        description: "codice Attivita' didattica associata al lotto"
+      adDes:
+        type: "string"
+        example: "Attivita libera"
+        description: "descrizione Attivita' didattica associata al lotto"
+      cdsId:
+        type: "integer"
+        format: "int64"
+        example: 123
+        description: "id del corso di studio associato al lotto"
+      cdsCod:
+        type: "string"
+        example: "AD1_COD"
+        description: "codice Corso di studio associato al lotto"
+      cdsDes:
+        type: "string"
+        example: "Attivita libera"
+        description: "descrizione Corso di studio associato al lotto"
+      tipoGestAppCod:
+        type: "string"
+        example: "STD"
+        description: "codice di verbalizzazione associato al lotto"
+      statoLotto:
+        type: "string"
+        example: "P"
+        description: "stato del lotto"
+      statoLottoDes:
+        type: "string"
+        example: "Preview"
+        description: "descrizione dello stato del lotto"
+      dataApp:
+        type: "string"
+        example: "10/10/2019"
+        description: "data di verbalizzazione"
+      docenteId:
+        type: "integer"
+        format: "int64"
+        example: 123
+        description: "id del docente che ha generato il verbale"
+      docenteNome:
+        type: "string"
+        example: "Mario"
+        description: "nome del docente che ha generato il verbale"
+      docenteCognome:
+        type: "string"
+        example: "Rossi"
+        description: "cognome del docente che ha generato il verbale"
+      docenteCodFis:
+        type: "string"
+        example: "RSSMRR60R12H333V"
+        description: "codice fiscale del docente che ha generato il verbale"
+      linguaId:
+        type: "integer"
+        format: "int64"
+        example: 123
+        description: "id della lingua nel caso di verbali che prevedono il livello\
+          \ di lingua"
+      linguaCod:
+        type: "string"
+        example: "eng"
+        description: "codice della lingua nel caso di verbali che prevedono il livello\
+          \ di lingua"
+      motivoRifirma:
+        type: "string"
+        example: "errore"
+        description: "motivo di rifirma del verbale, nel caso di lotti di correzione\
+          \ e/o revoca"
+      progRifirma:
+        type: "integer"
+        format: "int32"
+        example: 1
+        description: "progressivo di rifirma del verbale, indica il numero di rifirma\
+          \ rispetto all'originale. Nel caso di lotti di correzione e/o revoca"
+    x-layout-name: "LOTTI_VERB_REST"
+    x-winsession-name: "p11/n_di_11_999_ws"
+    x-model-sub-package: "verbali.v1"
+    x-model-sub-path: "verbali/v1"
+  ImportVerbaleCorrezione:
+    type: "object"
+    required:
+    - "campo"
+    - "dataModifica"
+    - "utente"
+    - "valoreNuovo"
+    - "valoreVecchio"
+    properties:
+      campo:
+        type: "string"
+        example: "dataEsa"
+        description: "nome del campo modificato, controllare i valori sulla tabella\
+          \ TIPI_VERB_LOG_MOD"
+      valoreVecchio:
+        type: "string"
+        description: "valore del campo prima della modifica"
+        maxLength: 500
+      valoreNuovo:
+        type: "string"
+        description: "valore del campo dopèo della modifica"
+        maxLength: 500
+      dataModifica:
+        type: "string"
+        example: "10/10/2018"
+        description: "data di modifica del verbale"
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+      utente:
+        type: "string"
+        example: "m.rossi"
+        description: "utente che ha effettuato la modifica"
+        maxLength: 20
+    x-model-sub-package: "verbali.v1"
+    x-model-sub-path: "verbali/v1"
+  DettaglioErroreAggiuntivo:
+    type: "object"
+    properties:
+      errorType:
+        type: "string"
+        example: "stackTrace"
+        description: "descrizione del tipo di errore aggiuntivo"
+      value:
+        type: "string"
+        example: "SocketTimeoutException...."
+        description: "descrizione dell'errore"
+      rawValue:
+        type: "string"
+        example: "SocketTimeoutException...."
+        description: "descrizione dell'errore"
+        x-field-type: "rawJson"
+    x-model-sub-package: "frk.v1"
+    x-model-sub-path: "frk/v1"
+  LottoCommissione:
+    type: "object"
+    properties:
+      lottoId:
+        type: "integer"
+        format: "int64"
+        example: 123
+        description: "Il del lotto dei verbali"
+        x-field-type: "primaryKey"
+      docenteId:
+        type: "integer"
+        format: "int64"
+        example: 11
+        description: "Il del  docente"
+        x-field-type: "primaryKey"
+      nome:
+        type: "string"
+        example: "Mario"
+        description: "nome del docente"
+      cognome:
+        type: "string"
+        example: "Rossi"
+        description: "cognome del docente"
+      codFis:
+        type: "string"
+        example: "RSSMRR60R12H333V"
+        description: "codice fiscale del docente"
+      ruoloCod:
+        type: "string"
+        example: "P"
+        description: "codice del ruolo del docente nella commissione"
+      ruoloDes:
+        type: "string"
+        example: "Presidente"
+        description: "descrizione del ruolo del docente nella commissione"
+      ordineVisNum:
+        type: "integer"
+        format: "int32"
+        example: "P"
+        description: "progressivo di visualizzazione del docente all'interno della\
+          \ commissione"
+    x-layout-name: "LOTTI_VERB_DOC_REST"
+    x-winsession-name: "p11/n_di_11_999_ws"
+    x-model-sub-package: "verbali.v1"
+    x-model-sub-path: "verbali/v1"
+  LottoTransStato:
+    type: "object"
+    properties:
+      lottoTransStatoId:
+        type: "integer"
+        format: "int64"
+        example: 11
+        description: "Il del  docente"
+        x-field-type: "primaryKey"
+      lottoId:
+        type: "integer"
+        format: "int64"
+        example: 123
+        description: "Il del lotto dei verbali"
+      statoLottoOld:
+        type: "string"
+        example: "G"
+        description: "stato di partenza del lotto"
+      statoLottoNew:
+        type: "string"
+        example: "S"
+        description: "stato di arrivo del lotto"
+      statoLottoOldDes:
+        type: "string"
+        example: "Generato"
+        description: "descrizione dello stato di partenza del lotto"
+      statoLottoNewDes:
+        type: "string"
+        example: "Sospeso"
+        description: "descrizione dello stato di arrivo del lotto"
+      dataIns:
+        type: "string"
+        description: "data di variazione dello stato"
+    x-layout-name: "LOTTI_VERB_TRANS_STATO_REST"
+    x-winsession-name: "p11/n_di_11_999_ws"
+    x-model-sub-package: "verbali.v1"
+    x-model-sub-path: "verbali/v1"
+  ImportVerbaleConEsito:
+    allOf:
+    - $ref: "#/definitions/VerbaleRoot"
+    - type: "object"
+      properties:
+        risultatoImport:
+          type: "boolean"
+          example: false
+          description: "indica se l'import è andato a buon fine"
+        risultatoImportErrMsg:
+          type: "string"
+          example: "il codice ad è insesistente"
+          description: "descrizione dell'errore incontrato in fase di import"
+    x-model-sub-package: "verbali.v1"
+    x-model-sub-path: "verbali/v1"
+  VerbaleConUploadUrl:
+    allOf:
+    - $ref: "#/definitions/VerbaleRoot"
+    - type: "object"
+      properties:
+        uploadUrl:
+          type: "string"
+          example: "http://localhost/e3rest/docs/allegati-service-v1/upload/22/blob'"
+          description: "url sulla quale effettuare l'upload del blob del verbale"
+    x-layout-name: "VERBALI_REST"
+    x-winsession-name: "p11/n_di_11_999_ws"
+    x-model-sub-package: "verbali.v1"
+    x-model-sub-path: "verbali/v1"
+  VerbaleLogMod:
+    type: "object"
+    properties:
+      lottoId:
+        type: "integer"
+        format: "int64"
+        example: 123
+        description: "Il del lotto dei verbali"
+        x-field-type: "primaryKey"
+      verbId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "Il del verbale all'interno del lotto"
+        x-field-type: "primaryKey"
+      verbOrigLogId:
+        type: "integer"
+        format: "int64"
+        example: 2
+        description: "id del tipo di origine della modifica del verbale"
+      verbOrigLogDes:
+        type: "string"
+        example: "Modifica acquisizione manuale Esse3"
+        description: "descrizione del tipo di origine della modifica del verbale"
+      origineLogCod:
+        type: "string"
+        example: "STATO"
+        description: "nome del campo modificato"
+      valoreVecchio:
+        type: "string"
+        example: "3"
+        description: "valore del campo prima della modifica"
+      valoreNuovo:
+        type: "string"
+        example: "4"
+        description: "valore del campo dopo della modifica"
+      dataIns:
+        type: "string"
+        example: "10/10/2019"
+        description: "data di modifica del valore"
+      usrInsId:
+        type: "string"
+        example: "m.rossi"
+        description: "userId dell'utente che ha modificato il valore"
+    x-layout-name: "VERB_LOG_MOD_REST"
+    x-winsession-name: "p11/n_di_11_999_ws"
+    x-model-sub-package: "verbali.v1"
+    x-model-sub-path: "verbali/v1"
+  ImportVerbaleRoot:
+    type: "object"
+    required:
+    - "dataApp"
+    - "dataEsa"
+    - "matricola"
+    - "voto"
+    discriminator: "verbaleType"
+    properties:
+      matricola:
+        type: "string"
+        example: "10-MAT"
+        description: "matricola dello studente"
+        maxLength: 20
+      dataEsa:
+        type: "string"
+        example: "10/10/2018"
+        description: "data di registrazione del verbale"
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+      dataApp:
+        type: "string"
+        example: "10/10/2018"
+        description: "data di registrazione del verbale"
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+      voto:
+        type: "integer"
+        format: "int32"
+        example: 10
+        description: "votazione del verbale, definisce insieme a causale tutti i possibili\
+          \ valori (voti, giudizi, causali di non verbalizzazione)"
+      causale:
+        type: "integer"
+        format: "int32"
+        example: 10
+        description: "causale del verbale, definisce insieme a causale tutti i possibili\
+          \ valori (voti, giudizi, causali di non verbalizzazione)"
+        minimum: 0.0
+      blobFileName:
+        type: "string"
+        example: "immagine.tif"
+        description: "richiede la generazione di un uploadId (fornito nella response)\
+          \ per poter effettuare il caricamento del blob con il nome file indicato"
+      correzioni:
+        type: "array"
+        items:
+          $ref: "#/definitions/ImportVerbaleCorrezione"
+      campiAggiuntivi:
+        type: "array"
+        items:
+          $ref: "#/definitions/ImportVerbaleCampoAggiuntivo"
+    x-model-sub-package: "verbali.v1"
+    x-model-sub-path: "verbali/v1"
+  ImportVerbaliResponse:
+    type: "object"
+    properties:
+      esito:
+        type: "boolean"
+        description: "esito dell'operazione di import"
+      batchCorretti:
+        type: "array"
+        items:
+          $ref: "#/definitions/BatchVerbConDettagli"
+      verbaliErrati:
+        type: "array"
+        items:
+          $ref: "#/definitions/ImportVerbaleConEsito"
+      logElaborazione:
+        type: "array"
+        description: "log delle elaborazioni effettuate"
+        items:
+          type: "string"
+          example: "rigaLog"
+    x-model-sub-package: "verbali.v1"
+    x-model-sub-path: "verbali/v1"
+  Verbale:
+    allOf:
+    - $ref: "#/definitions/VerbaleRoot"
+    - type: "object"
+      properties:
+        esito:
+          type: "string"
+          example: "30 e lode"
+          description: "decodifica della coppia (voto,causale)"
+        cfu:
+          type: "number"
+          format: "float"
+          example: 10.0
+          description: "CFU previsti per il verbale"
+        docenteCognome:
+          type: "string"
+          example: "MARIO"
+          description: "cogome del presidente della commissione del lotto"
+        docenteNome:
+          type: "string"
+          example: "ROSSI"
+          description: "nome del presidente della commissione del lotto"
+        docenteCodFis:
+          type: "string"
+          example: "RSSMRR80R75H333V"
+          description: "codice fiscale del presidente della commissione del lotto"
+        docenteMatricola:
+          type: "string"
+          example: "MAT-123"
+          description: "matricola del presidente della commissione del lotto"
+        codFis:
+          type: "string"
+          example: "RSSMRR80R75H333V"
+          description: "codice fiscale dello studente"
+        tipoVerbDes:
+          type: "string"
+          description: "descrizione della tipologia di verbale (STD=verbale standard,\
+            \ REV=verbale di revoca, REV_ERR=verbale di correzione per errore materiale)"
+        warnDes:
+          type: "string"
+          example: "immagine verbale non caricata"
+          description: "descrizione del tipo di warning impostato"
+        errDes:
+          type: "string"
+          example: "tasse non regolari"
+          description: "descrizione del tipo di errore impostato"
+        domandeEsame:
+          type: "string"
+          example: "la derivata prima"
+          description: "domande d'esame"
+        adregId:
+          type: "integer"
+          format: "int64"
+          example: 4
+          description: "id della prova della riga di libretto cui risulta associato\
+            \ il verbale, , per i verbali non collegati a prenotazione è valorizzato\
+            \ solo per gli stati 3 e 4"
+        adsceId:
+          type: "integer"
+          format: "int64"
+          example: 4
+          description: "id della riga di libretto cui risulta associato il verbale,\
+            \ per i verbali non collegati a prenotazione è valorizzato solo per gli\
+            \ stati 3 e 4"
+        applistaId:
+          type: "integer"
+          format: "int64"
+          example: 44
+          description: "id della prentoazione a cui risulta associato il verbale"
+    x-layout-name: "VERBALI_REST"
+    x-winsession-name: "p11/n_di_11_999_ws"
+    x-model-sub-package: "verbali.v1"
+    x-model-sub-path: "verbali/v1"
+parameters:
+  cdsCod:
+    name: "cdsCod"
+    in: "query"
+    description: "codice del cds di definizione del lotto"
+    required: false
+    type: "string"
+  cdsStuCod:
+    name: "cdsStuCod"
+    in: "query"
+    description: "codice del cds di definizione del lotto"
+    required: false
+    type: "string"
+  statoLotto:
+    name: "statoLotto"
+    in: "query"
+    description: "stato del lotto"
+    required: false
+    type: "string"
+  lottoId:
+    name: "lottoId"
+    in: "path"
+    description: "identificativo del lotto"
+    required: true
+    type: "integer"
+    format: "int64"
+  uploadId:
+    name: "uploadId"
+    in: "path"
+    description: "identificativo dell'upload per il caricamento di un blob di un verbale"
+    required: true
+    type: "integer"
+    format: "int64"
+  codFisStu:
+    name: "codFisStu"
+    in: "query"
+    description: "matricola dello studente per il quale cercare i lotti"
+    required: false
+    type: "string"
+  matricolaStu:
+    name: "matricolaStu"
+    in: "query"
+    description: "matricola dello studente per il quale cercare i lotti"
+    required: false
+    type: "string"
+  tipoGestAppCod:
+    name: "tipoGestAppCod"
+    in: "query"
+    description: "codice del tipo di verbalizzazione assegnata al lotto"
+    required: false
+    type: "string"
+  batchId:
+    name: "batchId"
+    in: "path"
+    description: "identificativo del batch"
+    required: true
+    type: "integer"
+    format: "int64"
+  statoVerbale:
+    name: "statoVerbale"
+    in: "query"
+    description: "stato del verbale"
+    required: false
+    type: "string"
+  adCod:
+    name: "adCod"
+    in: "query"
+    description: "codice dell'ad di definizione del lotto"
+    required: false
+    type: "string"
+  codFisDoc:
+    name: "codFisDoc"
+    in: "query"
+    description: "matricola del docente per il quale cercare i lotti"
+    required: false
+    type: "string"
+  matricolaDoc:
+    name: "matricolaDoc"
+    in: "query"
+    description: "matricola del docente per il quale cercare i lotti"
+    required: false
+    type: "string"
+  verbId:
+    name: "verbId"
+    in: "path"
+    description: "identificativo del verbale"
+    required: true
+    type: "integer"
+    format: "int64"
+  adStuCod:
+    name: "adStuCod"
+    in: "query"
+    description: "codice dell'ad di definizione del lotto"
+    required: false
+    type: "string"
+  daData:
+    name: "daData"
+    in: "query"
+    description: "recupero dei vebali con data di verbalizzazione a partire da una\
+      \ certa data"
+    required: false
+    type: "string"
+  aData:
+    name: "aData"
+    in: "query"
+    description: "recupero dei vebali con data di verbalizzazione fino ad una certa\
+      \ data"
+    required: false
+    type: "string"
+externalDocs:
+  description: "Documentazione Geneale sui servizi REST"
+  url: "https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3"
+x-file-status: "PROD"
+x-file-name: "p11-verbaliApiV1.yaml"
+x-api-status: "PROD"
+x-func-cod: "RST_VERBV1"
+x-anchor-definitions:
+  common-produces-mediaType:
+    produces:
+    - "application/octet-stream"
+x-security-definitions:
+  filter-teacher-lotto-permissions:
+    kind: "DOCENTE"
+    profiles:
+    - profile:
+        name: "DOCENTE"
+        description: "Controlla che il docente possa accedere ai lotti con i filtri\
+          \ impostati"
+        checks:
+        - checkVerbaleStudente:
+            className: "SecurityCarrieraStudente"
+            functionName: "findLottoDoc"
+            description: "controlla che il lotto appartenga al docente loggato (è\
+              \ stato generato da lui oppure è stato indicato come destinatario)"
+            parameters:
+            - matricolaDoc: "{\"name\":\"matricolaDoc\",\"in\":\"query\",\"description\"\
+                :\"matricola del docente per il quale cercare i lotti\",\"required\"\
+                :false,\"type\":\"string\",\"items\":null,\"collectionFormat\":null,\"\
+                default\":null,\"maximum\":null,\"exclusiveMaximum\":null,\"minimum\"\
+                :null,\"exclusiveMinimum\":null,\"maxLength\":null,\"minLength\":null,\"\
+                pattern\":null,\"maxItems\":null,\"minItems\":null,\"uniqueItems\"\
+                :null,\"multipleOf\":null,\"format\":null,\"x-example\":null,\"enum\"\
+                :null}"
+            - codFisDoc: "{\"name\":\"codFisDoc\",\"in\":\"query\",\"description\"\
+                :\"matricola del docente per il quale cercare i lotti\",\"required\"\
+                :false,\"type\":\"string\",\"items\":null,\"collectionFormat\":null,\"\
+                default\":null,\"maximum\":null,\"exclusiveMaximum\":null,\"minimum\"\
+                :null,\"exclusiveMinimum\":null,\"maxLength\":null,\"minLength\":null,\"\
+                pattern\":null,\"maxItems\":null,\"minItems\":null,\"uniqueItems\"\
+                :null,\"multipleOf\":null,\"format\":null,\"x-example\":null,\"enum\"\
+                :null}"
+            - tipoGestAppCod: "{\"name\":\"tipoGestAppCod\",\"in\":\"query\",\"description\"\
+                :\"codice del tipo di verbalizzazione assegnata al lotto\",\"required\"\
+                :false,\"type\":\"string\",\"items\":null,\"collectionFormat\":null,\"\
+                default\":null,\"maximum\":null,\"exclusiveMaximum\":null,\"minimum\"\
+                :null,\"exclusiveMinimum\":null,\"maxLength\":null,\"minLength\":null,\"\
+                pattern\":null,\"maxItems\":null,\"minItems\":null,\"uniqueItems\"\
+                :null,\"multipleOf\":null,\"format\":null,\"x-example\":null,\"enum\"\
+                :null}"
+            - statoLotto: "{\"name\":\"statoLotto\",\"in\":\"query\",\"description\"\
+                :\"stato del lotto\",\"required\":false,\"type\":\"string\",\"items\"\
+                :null,\"collectionFormat\":null,\"default\":null,\"maximum\":null,\"\
+                exclusiveMaximum\":null,\"minimum\":null,\"exclusiveMinimum\":null,\"\
+                maxLength\":null,\"minLength\":null,\"pattern\":null,\"maxItems\"\
+                :null,\"minItems\":null,\"uniqueItems\":null,\"multipleOf\":null,\"\
+                format\":null,\"x-example\":null,\"enum\":null}"
+            - adCod: "{\"name\":\"adCod\",\"in\":\"query\",\"description\":\"codice\
+                \ dell'ad di definizione del lotto\",\"required\":false,\"type\":\"\
+                string\",\"items\":null,\"collectionFormat\":null,\"default\":null,\"\
+                maximum\":null,\"exclusiveMaximum\":null,\"minimum\":null,\"exclusiveMinimum\"\
+                :null,\"maxLength\":null,\"minLength\":null,\"pattern\":null,\"maxItems\"\
+                :null,\"minItems\":null,\"uniqueItems\":null,\"multipleOf\":null,\"\
+                format\":null,\"x-example\":null,\"enum\":null}"
+            - cdsCod: "{\"name\":\"cdsCod\",\"in\":\"query\",\"description\":\"codice\
+                \ del cds di definizione del lotto\",\"required\":false,\"type\":\"\
+                string\",\"items\":null,\"collectionFormat\":null,\"default\":null,\"\
+                maximum\":null,\"exclusiveMaximum\":null,\"minimum\":null,\"exclusiveMinimum\"\
+                :null,\"maxLength\":null,\"minLength\":null,\"pattern\":null,\"maxItems\"\
+                :null,\"minItems\":null,\"uniqueItems\":null,\"multipleOf\":null,\"\
+                format\":null,\"x-example\":null,\"enum\":null}"
+            - daData: "{\"name\":\"daData\",\"in\":\"query\",\"description\":\"recupero\
+                \ dei vebali con data di verbalizzazione a partire da una certa data\"\
+                ,\"required\":false,\"type\":\"string\",\"items\":null,\"collectionFormat\"\
+                :null,\"default\":null,\"maximum\":null,\"exclusiveMaximum\":null,\"\
+                minimum\":null,\"exclusiveMinimum\":null,\"maxLength\":null,\"minLength\"\
+                :null,\"pattern\":null,\"maxItems\":null,\"minItems\":null,\"uniqueItems\"\
+                :null,\"multipleOf\":null,\"format\":null,\"x-example\":null,\"enum\"\
+                :null}"
+            - aData: "{\"name\":\"aData\",\"in\":\"query\",\"description\":\"recupero\
+                \ dei vebali con data di verbalizzazione fino ad una certa data\"\
+                ,\"required\":false,\"type\":\"string\",\"items\":null,\"collectionFormat\"\
+                :null,\"default\":null,\"maximum\":null,\"exclusiveMaximum\":null,\"\
+                minimum\":null,\"exclusiveMinimum\":null,\"maxLength\":null,\"minLength\"\
+                :null,\"pattern\":null,\"maxItems\":null,\"minItems\":null,\"uniqueItems\"\
+                :null,\"multipleOf\":null,\"format\":null,\"x-example\":null,\"enum\"\
+                :null}"
+  filter-teacher-verbale-permissions:
+    kind: "DOCENTE"
+    profiles:
+    - profile:
+        name: "DOCENTE"
+        description: "Controlla che il docente possa accedere ai verbali con i filtri\
+          \ impostati"
+        checks:
+        - checkVerbaleStudente:
+            className: "SecurityCarrieraStudente"
+            functionName: "findVerbaleDoc"
+            description: "controlla che i verbali recuperati appartengano a lotti\
+              \ collegati al al docente loggato (i lotti sono generati da lui oppure\
+              \ è statto indicato come destinatario)"
+            parameters:
+            - matricolaDoc: "{\"name\":\"matricolaDoc\",\"in\":\"query\",\"description\"\
+                :\"matricola del docente per il quale cercare i lotti\",\"required\"\
+                :false,\"type\":\"string\",\"items\":null,\"collectionFormat\":null,\"\
+                default\":null,\"maximum\":null,\"exclusiveMaximum\":null,\"minimum\"\
+                :null,\"exclusiveMinimum\":null,\"maxLength\":null,\"minLength\":null,\"\
+                pattern\":null,\"maxItems\":null,\"minItems\":null,\"uniqueItems\"\
+                :null,\"multipleOf\":null,\"format\":null,\"x-example\":null,\"enum\"\
+                :null}"
+            - codFisDoc: "{\"name\":\"codFisDoc\",\"in\":\"query\",\"description\"\
+                :\"matricola del docente per il quale cercare i lotti\",\"required\"\
+                :false,\"type\":\"string\",\"items\":null,\"collectionFormat\":null,\"\
+                default\":null,\"maximum\":null,\"exclusiveMaximum\":null,\"minimum\"\
+                :null,\"exclusiveMinimum\":null,\"maxLength\":null,\"minLength\":null,\"\
+                pattern\":null,\"maxItems\":null,\"minItems\":null,\"uniqueItems\"\
+                :null,\"multipleOf\":null,\"format\":null,\"x-example\":null,\"enum\"\
+                :null}"
+            - matricolaStu: "{\"name\":\"matricolaStu\",\"in\":\"query\",\"description\"\
+                :\"matricola dello studente per il quale cercare i lotti\",\"required\"\
+                :false,\"type\":\"string\",\"items\":null,\"collectionFormat\":null,\"\
+                default\":null,\"maximum\":null,\"exclusiveMaximum\":null,\"minimum\"\
+                :null,\"exclusiveMinimum\":null,\"maxLength\":null,\"minLength\":null,\"\
+                pattern\":null,\"maxItems\":null,\"minItems\":null,\"uniqueItems\"\
+                :null,\"multipleOf\":null,\"format\":null,\"x-example\":null,\"enum\"\
+                :null}"
+            - codFisStu: "{\"name\":\"codFisStu\",\"in\":\"query\",\"description\"\
+                :\"matricola dello studente per il quale cercare i lotti\",\"required\"\
+                :false,\"type\":\"string\",\"items\":null,\"collectionFormat\":null,\"\
+                default\":null,\"maximum\":null,\"exclusiveMaximum\":null,\"minimum\"\
+                :null,\"exclusiveMinimum\":null,\"maxLength\":null,\"minLength\":null,\"\
+                pattern\":null,\"maxItems\":null,\"minItems\":null,\"uniqueItems\"\
+                :null,\"multipleOf\":null,\"format\":null,\"x-example\":null,\"enum\"\
+                :null}"
+            - statoVerbale: "{\"name\":\"statoVerbale\",\"in\":\"query\",\"description\"\
+                :\"stato del verbale\",\"required\":false,\"type\":\"string\",\"items\"\
+                :null,\"collectionFormat\":null,\"default\":null,\"maximum\":null,\"\
+                exclusiveMaximum\":null,\"minimum\":null,\"exclusiveMinimum\":null,\"\
+                maxLength\":null,\"minLength\":null,\"pattern\":null,\"maxItems\"\
+                :null,\"minItems\":null,\"uniqueItems\":null,\"multipleOf\":null,\"\
+                format\":null,\"x-example\":null,\"enum\":null}"
+            - adCod: "{\"name\":\"adCod\",\"in\":\"query\",\"description\":\"codice\
+                \ dell'ad di definizione del lotto\",\"required\":false,\"type\":\"\
+                string\",\"items\":null,\"collectionFormat\":null,\"default\":null,\"\
+                maximum\":null,\"exclusiveMaximum\":null,\"minimum\":null,\"exclusiveMinimum\"\
+                :null,\"maxLength\":null,\"minLength\":null,\"pattern\":null,\"maxItems\"\
+                :null,\"minItems\":null,\"uniqueItems\":null,\"multipleOf\":null,\"\
+                format\":null,\"x-example\":null,\"enum\":null}"
+            - cdsCod: "{\"name\":\"cdsCod\",\"in\":\"query\",\"description\":\"codice\
+                \ del cds di definizione del lotto\",\"required\":false,\"type\":\"\
+                string\",\"items\":null,\"collectionFormat\":null,\"default\":null,\"\
+                maximum\":null,\"exclusiveMaximum\":null,\"minimum\":null,\"exclusiveMinimum\"\
+                :null,\"maxLength\":null,\"minLength\":null,\"pattern\":null,\"maxItems\"\
+                :null,\"minItems\":null,\"uniqueItems\":null,\"multipleOf\":null,\"\
+                format\":null,\"x-example\":null,\"enum\":null}"
+            - adStuCod: "{\"name\":\"adStuCod\",\"in\":\"query\",\"description\":\"\
+                codice dell'ad di definizione del lotto\",\"required\":false,\"type\"\
+                :\"string\",\"items\":null,\"collectionFormat\":null,\"default\":null,\"\
+                maximum\":null,\"exclusiveMaximum\":null,\"minimum\":null,\"exclusiveMinimum\"\
+                :null,\"maxLength\":null,\"minLength\":null,\"pattern\":null,\"maxItems\"\
+                :null,\"minItems\":null,\"uniqueItems\":null,\"multipleOf\":null,\"\
+                format\":null,\"x-example\":null,\"enum\":null}"
+            - cdsStuCod: "{\"name\":\"cdsStuCod\",\"in\":\"query\",\"description\"\
+                :\"codice del cds di definizione del lotto\",\"required\":false,\"\
+                type\":\"string\",\"items\":null,\"collectionFormat\":null,\"default\"\
+                :null,\"maximum\":null,\"exclusiveMaximum\":null,\"minimum\":null,\"\
+                exclusiveMinimum\":null,\"maxLength\":null,\"minLength\":null,\"pattern\"\
+                :null,\"maxItems\":null,\"minItems\":null,\"uniqueItems\":null,\"\
+                multipleOf\":null,\"format\":null,\"x-example\":null,\"enum\":null}"
+            - daData: "{\"name\":\"daData\",\"in\":\"query\",\"description\":\"recupero\
+                \ dei vebali con data di verbalizzazione a partire da una certa data\"\
+                ,\"required\":false,\"type\":\"string\",\"items\":null,\"collectionFormat\"\
+                :null,\"default\":null,\"maximum\":null,\"exclusiveMaximum\":null,\"\
+                minimum\":null,\"exclusiveMinimum\":null,\"maxLength\":null,\"minLength\"\
+                :null,\"pattern\":null,\"maxItems\":null,\"minItems\":null,\"uniqueItems\"\
+                :null,\"multipleOf\":null,\"format\":null,\"x-example\":null,\"enum\"\
+                :null}"
+            - aData: "{\"name\":\"aData\",\"in\":\"query\",\"description\":\"recupero\
+                \ dei vebali con data di verbalizzazione fino ad una certa data\"\
+                ,\"required\":false,\"type\":\"string\",\"items\":null,\"collectionFormat\"\
+                :null,\"default\":null,\"maximum\":null,\"exclusiveMaximum\":null,\"\
+                minimum\":null,\"exclusiveMinimum\":null,\"maxLength\":null,\"minLength\"\
+                :null,\"pattern\":null,\"maxItems\":null,\"minItems\":null,\"uniqueItems\"\
+                :null,\"multipleOf\":null,\"format\":null,\"x-example\":null,\"enum\"\
+                :null}"
+  filter-student-verbale-permissions:
+    kind: "STUDENTE"
+    profiles:
+    - profile:
+        name: "STUDENTE"
+        description: "Controlla che lo studente possa accedere ai verbali con i filtri\
+          \ impostati"
+        checks:
+        - checkVerbaleStudente:
+            className: "SecurityCarrieraStudente"
+            functionName: "findVerbaleStu"
+            description: "controlla che i verbali recuperati appartengano allo studente\
+              \ loggato"
+            parameters:
+            - matricolaDoc: "{\"name\":\"matricolaDoc\",\"in\":\"query\",\"description\"\
+                :\"matricola del docente per il quale cercare i lotti\",\"required\"\
+                :false,\"type\":\"string\",\"items\":null,\"collectionFormat\":null,\"\
+                default\":null,\"maximum\":null,\"exclusiveMaximum\":null,\"minimum\"\
+                :null,\"exclusiveMinimum\":null,\"maxLength\":null,\"minLength\":null,\"\
+                pattern\":null,\"maxItems\":null,\"minItems\":null,\"uniqueItems\"\
+                :null,\"multipleOf\":null,\"format\":null,\"x-example\":null,\"enum\"\
+                :null}"
+            - codFisDoc: "{\"name\":\"codFisDoc\",\"in\":\"query\",\"description\"\
+                :\"matricola del docente per il quale cercare i lotti\",\"required\"\
+                :false,\"type\":\"string\",\"items\":null,\"collectionFormat\":null,\"\
+                default\":null,\"maximum\":null,\"exclusiveMaximum\":null,\"minimum\"\
+                :null,\"exclusiveMinimum\":null,\"maxLength\":null,\"minLength\":null,\"\
+                pattern\":null,\"maxItems\":null,\"minItems\":null,\"uniqueItems\"\
+                :null,\"multipleOf\":null,\"format\":null,\"x-example\":null,\"enum\"\
+                :null}"
+            - matricolaStu: "{\"name\":\"matricolaStu\",\"in\":\"query\",\"description\"\
+                :\"matricola dello studente per il quale cercare i lotti\",\"required\"\
+                :false,\"type\":\"string\",\"items\":null,\"collectionFormat\":null,\"\
+                default\":null,\"maximum\":null,\"exclusiveMaximum\":null,\"minimum\"\
+                :null,\"exclusiveMinimum\":null,\"maxLength\":null,\"minLength\":null,\"\
+                pattern\":null,\"maxItems\":null,\"minItems\":null,\"uniqueItems\"\
+                :null,\"multipleOf\":null,\"format\":null,\"x-example\":null,\"enum\"\
+                :null}"
+            - codFisStu: "{\"name\":\"codFisStu\",\"in\":\"query\",\"description\"\
+                :\"matricola dello studente per il quale cercare i lotti\",\"required\"\
+                :false,\"type\":\"string\",\"items\":null,\"collectionFormat\":null,\"\
+                default\":null,\"maximum\":null,\"exclusiveMaximum\":null,\"minimum\"\
+                :null,\"exclusiveMinimum\":null,\"maxLength\":null,\"minLength\":null,\"\
+                pattern\":null,\"maxItems\":null,\"minItems\":null,\"uniqueItems\"\
+                :null,\"multipleOf\":null,\"format\":null,\"x-example\":null,\"enum\"\
+                :null}"
+            - statoVerbale: "{\"name\":\"statoVerbale\",\"in\":\"query\",\"description\"\
+                :\"stato del verbale\",\"required\":false,\"type\":\"string\",\"items\"\
+                :null,\"collectionFormat\":null,\"default\":null,\"maximum\":null,\"\
+                exclusiveMaximum\":null,\"minimum\":null,\"exclusiveMinimum\":null,\"\
+                maxLength\":null,\"minLength\":null,\"pattern\":null,\"maxItems\"\
+                :null,\"minItems\":null,\"uniqueItems\":null,\"multipleOf\":null,\"\
+                format\":null,\"x-example\":null,\"enum\":null}"
+            - adCod: "{\"name\":\"adCod\",\"in\":\"query\",\"description\":\"codice\
+                \ dell'ad di definizione del lotto\",\"required\":false,\"type\":\"\
+                string\",\"items\":null,\"collectionFormat\":null,\"default\":null,\"\
+                maximum\":null,\"exclusiveMaximum\":null,\"minimum\":null,\"exclusiveMinimum\"\
+                :null,\"maxLength\":null,\"minLength\":null,\"pattern\":null,\"maxItems\"\
+                :null,\"minItems\":null,\"uniqueItems\":null,\"multipleOf\":null,\"\
+                format\":null,\"x-example\":null,\"enum\":null}"
+            - cdsCod: "{\"name\":\"cdsCod\",\"in\":\"query\",\"description\":\"codice\
+                \ del cds di definizione del lotto\",\"required\":false,\"type\":\"\
+                string\",\"items\":null,\"collectionFormat\":null,\"default\":null,\"\
+                maximum\":null,\"exclusiveMaximum\":null,\"minimum\":null,\"exclusiveMinimum\"\
+                :null,\"maxLength\":null,\"minLength\":null,\"pattern\":null,\"maxItems\"\
+                :null,\"minItems\":null,\"uniqueItems\":null,\"multipleOf\":null,\"\
+                format\":null,\"x-example\":null,\"enum\":null}"
+            - adStuCod: "{\"name\":\"adStuCod\",\"in\":\"query\",\"description\":\"\
+                codice dell'ad di definizione del lotto\",\"required\":false,\"type\"\
+                :\"string\",\"items\":null,\"collectionFormat\":null,\"default\":null,\"\
+                maximum\":null,\"exclusiveMaximum\":null,\"minimum\":null,\"exclusiveMinimum\"\
+                :null,\"maxLength\":null,\"minLength\":null,\"pattern\":null,\"maxItems\"\
+                :null,\"minItems\":null,\"uniqueItems\":null,\"multipleOf\":null,\"\
+                format\":null,\"x-example\":null,\"enum\":null}"
+            - cdsStuCod: "{\"name\":\"cdsStuCod\",\"in\":\"query\",\"description\"\
+                :\"codice del cds di definizione del lotto\",\"required\":false,\"\
+                type\":\"string\",\"items\":null,\"collectionFormat\":null,\"default\"\
+                :null,\"maximum\":null,\"exclusiveMaximum\":null,\"minimum\":null,\"\
+                exclusiveMinimum\":null,\"maxLength\":null,\"minLength\":null,\"pattern\"\
+                :null,\"maxItems\":null,\"minItems\":null,\"uniqueItems\":null,\"\
+                multipleOf\":null,\"format\":null,\"x-example\":null,\"enum\":null}"
+            - daData: "{\"name\":\"daData\",\"in\":\"query\",\"description\":\"recupero\
+                \ dei vebali con data di verbalizzazione a partire da una certa data\"\
+                ,\"required\":false,\"type\":\"string\",\"items\":null,\"collectionFormat\"\
+                :null,\"default\":null,\"maximum\":null,\"exclusiveMaximum\":null,\"\
+                minimum\":null,\"exclusiveMinimum\":null,\"maxLength\":null,\"minLength\"\
+                :null,\"pattern\":null,\"maxItems\":null,\"minItems\":null,\"uniqueItems\"\
+                :null,\"multipleOf\":null,\"format\":null,\"x-example\":null,\"enum\"\
+                :null}"
+            - aData: "{\"name\":\"aData\",\"in\":\"query\",\"description\":\"recupero\
+                \ dei vebali con data di verbalizzazione fino ad una certa data\"\
+                ,\"required\":false,\"type\":\"string\",\"items\":null,\"collectionFormat\"\
+                :null,\"default\":null,\"maximum\":null,\"exclusiveMaximum\":null,\"\
+                minimum\":null,\"exclusiveMinimum\":null,\"maxLength\":null,\"minLength\"\
+                :null,\"pattern\":null,\"maxItems\":null,\"minItems\":null,\"uniqueItems\"\
+                :null,\"multipleOf\":null,\"format\":null,\"x-example\":null,\"enum\"\
+                :null}"
+  check-student-verbale-permissions:
+    kind: "STUDENTE"
+    profiles:
+    - profile:
+        name: "STUDENTE"
+        description: "controlla che il verbale appartenga allo studente loggato"
+        checks:
+        - checkVerbaleStudente:
+            className: "SecurityCarrieraStudente"
+            functionName: "checkVerbaleStu"
+            description: "controlla che il verbale appartenga allo studente loggato"
+            parameters:
+            - lottoId: "{\"name\":\"lottoId\",\"in\":\"path\",\"description\":\"identificativo\
+                \ del lotto\",\"required\":true,\"type\":\"integer\",\"items\":null,\"\
+                collectionFormat\":null,\"default\":null,\"maximum\":null,\"exclusiveMaximum\"\
+                :null,\"minimum\":null,\"exclusiveMinimum\":null,\"maxLength\":null,\"\
+                minLength\":null,\"pattern\":null,\"maxItems\":null,\"minItems\":null,\"\
+                uniqueItems\":null,\"multipleOf\":null,\"format\":\"int64\",\"x-example\"\
+                :null,\"enum\":null}"
+            - verbId: "{\"name\":\"verbId\",\"in\":\"path\",\"description\":\"identificativo\
+                \ del verbale\",\"required\":true,\"type\":\"integer\",\"items\":null,\"\
+                collectionFormat\":null,\"default\":null,\"maximum\":null,\"exclusiveMaximum\"\
+                :null,\"minimum\":null,\"exclusiveMinimum\":null,\"maxLength\":null,\"\
+                minLength\":null,\"pattern\":null,\"maxItems\":null,\"minItems\":null,\"\
+                uniqueItems\":null,\"multipleOf\":null,\"format\":\"int64\",\"x-example\"\
+                :null,\"enum\":null}"
+  check-teacher-lotto-permissions:
+    kind: "DOCENTE"
+    profiles:
+    - profile:
+        name: "DOCENTE"
+        description: "Controlla che il lotto appartenga al docente loggato"
+        checks:
+        - checkVerbaleStudente:
+            className: "SecurityCarrieraStudente"
+            functionName: "checkLottoDoc"
+            description: "controlla che lo lotto appartenga al docente loggato oppure\
+              \ ad uno dei docenti della commissione se presente"
+            parameters:
+            - lottoId: "{\"name\":\"lottoId\",\"in\":\"path\",\"description\":\"identificativo\
+                \ del lotto\",\"required\":true,\"type\":\"integer\",\"items\":null,\"\
+                collectionFormat\":null,\"default\":null,\"maximum\":null,\"exclusiveMaximum\"\
+                :null,\"minimum\":null,\"exclusiveMinimum\":null,\"maxLength\":null,\"\
+                minLength\":null,\"pattern\":null,\"maxItems\":null,\"minItems\":null,\"\
+                uniqueItems\":null,\"multipleOf\":null,\"format\":\"int64\",\"x-example\"\
+                :null,\"enum\":null}"
+  user-tecnico-permissions:
+    kind: "USER_TECNICO"
+    profiles:
+    - profile:
+        name: "UTENTE_TECNICO"
+        description: "funzione accessibile alle utenze tecniche per accessi ai servizi\
+          \ REST"
+        checks:
+        - checkDummy:
+            className: "Security"
+            functionName: "checkUserTecnico"
+            description: "controlla che l'utente abbia gli accessi per i corsi a lui\
+              \ abilitati"
+x-cache-type: "lowRefreshRateUserIndependent"

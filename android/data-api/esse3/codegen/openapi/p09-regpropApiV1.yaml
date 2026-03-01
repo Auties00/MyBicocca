@@ -1,0 +1,830 @@
+---
+swagger: "2.0"
+info:
+  description: "Il servizio fornisce le API per l'accesso al regolamento di propedeuticità\
+    \n\n  \n"
+  version: "1.0.0"
+  title: "ESSE3 Regolamento di Propedeuticità API"
+basePath: "/regprop-service-v1"
+tags:
+- name: "regolamento"
+  description: "informazioni sulle testate dei regolamenti"
+- name: "vincolo"
+  description: "informazioni sui vincoli di propedeuticità"
+schemes:
+- "https"
+- "http"
+consumes:
+- "application/json"
+produces:
+- "application/json"
+paths:
+  /regprop:
+    get:
+      tags:
+      - "regolamento"
+      summary: "Informazioni di testata sui regolamenti di propedeuticità"
+      description: "\n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n-|-|-\n\
+        x-cache-type|configuration|Risorsa di configurazione, la variazione è molto\
+        \ lenta, cache Http abilitata, cache server abilitata. Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: common-public-permissions**\n\nProfilo|Controllo| Funzione\n-|-|-\n\
+        ALL|Funzione Pubblica|Security.checkDummy()\n\n\nClasse di modello : RegolamentoDiPropepeduticita\n\
+        ======\n\nEstensioni sulle proprietà\n----\nProprietà | x-field-type\n-|-|\n\
+        regpropId|primaryKey\nextId|optional\n\n\nClasse di modello : DettaglioErroreAggiuntivo\n\
+        ======\n\nEstensioni sulle proprietà\n----\nProprietà | x-field-type\n-|-|\n\
+        rawValue|rawJson\n"
+      operationId: "getRegolamentiDiPropedeuticita"
+      parameters:
+      - name: "statoRegprop"
+        in: "query"
+        description: "stato del regolamento, se non valorizzato vengono recuperati\
+          \ i regolamenti attivi"
+        required: false
+        type: "string"
+        enum:
+        - "A"
+        - "B"
+        - "X"
+      - name: "facId"
+        in: "query"
+        description: "id della facoltà di afferenza del regolamento"
+        required: false
+        type: "integer"
+        format: "int64"
+      - name: "facCod"
+        in: "query"
+        description: "codice della facoltà di afferenza del regolamento"
+        required: false
+        type: "string"
+      - name: "cdsId"
+        in: "query"
+        description: "id della corso di studio di afferenza del regolamento"
+        required: false
+        type: "integer"
+        format: "int64"
+      - name: "cdsCod"
+        in: "query"
+        description: "codice del corso di studio di afferenza del regolamento"
+        required: false
+        type: "string"
+      - name: "tipoCorsoCod"
+        in: "query"
+        description: "codice del tipo di corso di afferenza del regolamento"
+        required: false
+        type: "string"
+      - name: "coorte"
+        in: "query"
+        description: "coorte di afferenza del regolamento"
+        required: false
+        type: "integer"
+        format: "int64"
+      - name: "start"
+        in: "query"
+        description: "utilizzato insieme a `limit` per indicare la paginazione sui\
+          \ record; `start` indica il numero del primo record da caricare (se non\
+          \ indicato viene utilizzato 0)\n"
+        required: false
+        type: "integer"
+        format: "int32"
+      - name: "limit"
+        in: "query"
+        description: "utilizzato insieme a `start` per indicare la paginazione sui\
+          \ record, `limit` indica il numero di record da recuperare (a partire da\
+          \ `start`); \nse non indicato viene utilizzato 50, i valori consentiti vanno\
+          \ da 0 a 100\n"
+        required: false
+        type: "integer"
+        format: "int32"
+      - name: "order"
+        in: "query"
+        description: "consente di specificare un ordine per il recupero dei record.\
+          \ La sintassi è la seguente\n * +/- : specifica l'ordinamento (+ = ASC,\
+          \ - = DESC); se omesso viene utilizzato +\n * field : nome del campo da\
+          \ ordinare\n \n E' possibile indicare più campi separandoli da virgola (Es:\
+          \ +annoCorso,+adCod) \n"
+        required: false
+        type: "string"
+      - name: "fields"
+        in: "query"
+        description: "specifica la lista dei campi opzionali (che non vengono recupeati\
+          \ di default);\nimpostando il valore `ALL` vengono mostrati tutti i campi.\
+          \ \n\nPer gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns*\
+          \  \nI dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello)\n\
+          \nEsempi\n* per il campo childObj con la poprietà childProp utilizzare la\
+          \ notazione `childProp.prop1`\n* Per visualizzare tutte le proprietà di\
+          \ childObj utilizzare la notazione `childProp.*`\n* Per visualizzare tutte\
+          \ le proprietà di childObj e di tutti i discendenti utilizzare la notazione\
+          \ `childProp.**`\n"
+        required: false
+        type: "string"
+      - name: "optionalFields"
+        in: "query"
+        description: "specifica la lista dei campi opzionali (che non vengono recupeati\
+          \ di default);\nimpostando il valore `ALL` vengono mostrati tutti i campi.\
+          \ \n\nPer gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns*\
+          \  \nI dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello)\n\
+          \nEsempi\n* per il campo childObj con la poprietà childProp utilizzare la\
+          \ notazione `childProp.prop1`\n* Per visualizzare tutte le proprietà di\
+          \ childObj utilizzare la notazione `childProp.*`\n* Per visualizzare tutte\
+          \ le proprietà di childObj e di tutti i discendenti utilizzare la notazione\
+          \ `childProp.**`\n"
+        required: false
+        type: "string"
+      responses:
+        "200":
+          description: "successful operation"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/RegolamentoDiPropepeduticita"
+        "422":
+          description: "parametri Errati"
+          schema:
+            $ref: "#/definitions/DettaglioErrore"
+      x-enabled-profiles:
+      - common-public-permissions:
+          kind: "ALL"
+          profiles:
+          - profile:
+              name: "ALL"
+              description: "Funzione Pubblica"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkDummy"
+                  description: "funzione che ritorna sempre true"
+  /regprop/{regpropId}:
+    get:
+      tags:
+      - "regolamento"
+      - "vincolo"
+      summary: "informazioni su un singolo regolamento"
+      description: "Viene restituita una struttura contenente i seguenti oggetti (\
+        \ in relazione 1-n)     \n - Testata del regolamento\n  - Vincoli del regolamento\n\
+        \    - Regole OR \n      - Regole AND\n        - Elementi Propedeutici\n\n\
+        \n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n-|-|-\nx-cache-type|configuration|Risorsa\
+        \ di configurazione, la variazione è molto lenta, cache Http abilitata, cache\
+        \ server abilitata. Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: ALL**\n\nProfilo|Controllo| Funzione\n-|-|-\nALL|Funzione Pubblica|Security.checkDummy()\n\
+        \n\nClasse di modello : RegolamentoDiPropepeduticita\n======\n\nEstensioni\
+        \ sulle proprietà\n----\nProprietà | x-field-type\n-|-|\nregpropId|primaryKey\n\
+        extId|optional\n\n\nClasse di modello : VincoloDiPropedeuticita\n======\n\n\
+        Estensioni sulle proprietà\n----\nProprietà | x-field-type\n-|-|\nregpropVincId|primaryKey\n\
+        extId|optional\n\n\nClasse di modello : RegolaPropOR\n======\n\nEstensioni\
+        \ sulle proprietà\n----\nProprietà | x-field-type\n-|-|\nregpropOrId|primaryKey\n\
+        \n\nClasse di modello : RegolaPropAND\n======\n\nEstensioni sulle proprietà\
+        \n----\nProprietà | x-field-type\n-|-|\nregpropAndId|primaryKey\n\n\nClasse\
+        \ di modello : RegolaPropFiglio\n======\n\nEstensioni sulle proprietà\n----\n\
+        Proprietà | x-field-type\n-|-|\nregpropPropId|primaryKey\n"
+      operationId: "getRegolamentoDiPropedeuticitaConDettagli"
+      parameters:
+      - name: "regpropId"
+        in: "path"
+        description: "id univoco del regolamento di propedeuticità"
+        required: true
+        type: "integer"
+        format: "int64"
+      - name: "fields"
+        in: "query"
+        description: "specifica la lista dei campi opzionali (che non vengono recupeati\
+          \ di default);\nimpostando il valore `ALL` vengono mostrati tutti i campi.\
+          \ \n\nPer gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns*\
+          \  \nI dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello)\n\
+          \nEsempi\n* per il campo childObj con la poprietà childProp utilizzare la\
+          \ notazione `childProp.prop1`\n* Per visualizzare tutte le proprietà di\
+          \ childObj utilizzare la notazione `childProp.*`\n* Per visualizzare tutte\
+          \ le proprietà di childObj e di tutti i discendenti utilizzare la notazione\
+          \ `childProp.**`\n"
+        required: false
+        type: "string"
+      - name: "optionalFields"
+        in: "query"
+        description: "specifica la lista dei campi opzionali (che non vengono recupeati\
+          \ di default);\nimpostando il valore `ALL` vengono mostrati tutti i campi.\
+          \ \n\nPer gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns*\
+          \  \nI dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello)\n\
+          \nEsempi\n* per il campo childObj con la poprietà childProp utilizzare la\
+          \ notazione `childProp.prop1`\n* Per visualizzare tutte le proprietà di\
+          \ childObj utilizzare la notazione `childProp.*`\n* Per visualizzare tutte\
+          \ le proprietà di childObj e di tutti i discendenti utilizzare la notazione\
+          \ `childProp.**`\n"
+        required: false
+        type: "string"
+      - name: "filter"
+        in: "query"
+        description: "il parametro consente di applicare dei filtri alla classe di\
+          \ modello utilizzando il linguaggio  [RSQL](https://github.com/jirutka/rsql-parser).\n\
+          La lista degli operatori utilizzabili è disponibile [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosullerigherecuperate)\
+          \   \n   *NB* il filtro viene applicato DOPO aver recuperato i dati\n"
+        required: false
+        type: "string"
+      responses:
+        "200":
+          description: "successful operation"
+          schema:
+            $ref: "#/definitions/RegolamentoDiPropedeuticitaConVincoli"
+      x-enabled-profiles:
+      - common-public-permissions:
+          kind: "ALL"
+          profiles:
+          - profile:
+              name: "ALL"
+              description: "Funzione Pubblica"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkDummy"
+                  description: "funzione che ritorna sempre true"
+  /regprop/{regpropId}/{regpropVincId}:
+    get:
+      tags:
+      - "vincolo"
+      summary: "informazioni su un vincolo di propedeuticità"
+      description: "Viene restituita una struttura contenente i seguenti oggetti (\
+        \ in relazione 1-n)       \n- Vincoli del regolamento\n - Regole OR \n   -\
+        \ Regole AND\n     - Elementi Propedeutici\n\n\n**Estensioni:**\n\nCodice\
+        \ Estensione|Valore|Nota\n-|-|-\nx-cache-type|configuration|Risorsa di configurazione,\
+        \ la variazione è molto lenta, cache Http abilitata, cache server abilitata.\
+        \ Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: ALL**\n\nProfilo|Controllo| Funzione\n-|-|-\nALL|Funzione Pubblica|Security.checkDummy()\n\
+        \n\nClasse di modello : VincoloDiPropedeuticita\n======\n\nEstensioni sulle\
+        \ proprietà\n----\nProprietà | x-field-type\n-|-|\nregpropVincId|primaryKey\n\
+        extId|optional\n\n\nClasse di modello : RegolaPropOR\n======\n\nEstensioni\
+        \ sulle proprietà\n----\nProprietà | x-field-type\n-|-|\nregpropOrId|primaryKey\n\
+        \n\nClasse di modello : RegolaPropAND\n======\n\nEstensioni sulle proprietà\
+        \n----\nProprietà | x-field-type\n-|-|\nregpropAndId|primaryKey\n\n\nClasse\
+        \ di modello : RegolaPropFiglio\n======\n\nEstensioni sulle proprietà\n----\n\
+        Proprietà | x-field-type\n-|-|\nregpropPropId|primaryKey\n"
+      operationId: "getVincoliDelRegolamento"
+      parameters:
+      - name: "regpropId"
+        in: "path"
+        description: "id univoco del regolamento di propedeuticità"
+        required: true
+        type: "integer"
+        format: "int64"
+      - name: "regpropVincId"
+        in: "path"
+        description: "id univoco del vincolo di propedeuticità"
+        required: true
+        type: "integer"
+        format: "int64"
+      - name: "fields"
+        in: "query"
+        description: "specifica la lista dei campi opzionali (che non vengono recupeati\
+          \ di default);\nimpostando il valore `ALL` vengono mostrati tutti i campi.\
+          \ \n\nPer gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns*\
+          \  \nI dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello)\n\
+          \nEsempi\n* per il campo childObj con la poprietà childProp utilizzare la\
+          \ notazione `childProp.prop1`\n* Per visualizzare tutte le proprietà di\
+          \ childObj utilizzare la notazione `childProp.*`\n* Per visualizzare tutte\
+          \ le proprietà di childObj e di tutti i discendenti utilizzare la notazione\
+          \ `childProp.**`\n"
+        required: false
+        type: "string"
+      - name: "optionalFields"
+        in: "query"
+        description: "specifica la lista dei campi opzionali (che non vengono recupeati\
+          \ di default);\nimpostando il valore `ALL` vengono mostrati tutti i campi.\
+          \ \n\nPer gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns*\
+          \  \nI dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello)\n\
+          \nEsempi\n* per il campo childObj con la poprietà childProp utilizzare la\
+          \ notazione `childProp.prop1`\n* Per visualizzare tutte le proprietà di\
+          \ childObj utilizzare la notazione `childProp.*`\n* Per visualizzare tutte\
+          \ le proprietà di childObj e di tutti i discendenti utilizzare la notazione\
+          \ `childProp.**`\n"
+        required: false
+        type: "string"
+      - name: "filter"
+        in: "query"
+        description: "il parametro consente di applicare dei filtri alla classe di\
+          \ modello utilizzando il linguaggio  [RSQL](https://github.com/jirutka/rsql-parser).\n\
+          La lista degli operatori utilizzabili è disponibile [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosullerigherecuperate)\
+          \   \n   *NB* il filtro viene applicato DOPO aver recuperato i dati\n"
+        required: false
+        type: "string"
+      responses:
+        "200":
+          description: "successful operation"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/VincoloDiPropedeuticita"
+      x-enabled-profiles:
+      - common-public-permissions:
+          kind: "ALL"
+          profiles:
+          - profile:
+              name: "ALL"
+              description: "Funzione Pubblica"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkDummy"
+                  description: "funzione che ritorna sempre true"
+definitions:
+  DettaglioErroreAggiuntivo:
+    type: "object"
+    properties:
+      errorType:
+        type: "string"
+        example: "stackTrace"
+        description: "descrizione del tipo di errore aggiuntivo"
+      value:
+        type: "string"
+        example: "SocketTimeoutException...."
+        description: "descrizione dell'errore"
+      rawValue:
+        type: "string"
+        example: "SocketTimeoutException...."
+        description: "descrizione dell'errore"
+        x-field-type: "rawJson"
+    x-model-sub-package: "frk.v1"
+    x-model-sub-path: "frk/v1"
+  RegolaPropAND:
+    type: "object"
+    properties:
+      regpropAndId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "id univoco del della regola AND"
+        x-field-type: "primaryKey"
+      regpropOrId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "id univoco del della regola OR"
+      regpropVincId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "id univoco del vincolo di propedeuticità"
+      regpropId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "id univoco del regolamento di propedeuticità"
+      tipoVincoloRegola:
+        type: "string"
+        example: "NUM_AF"
+        description: "per poter soddisfare la regola occorre che venga rispettato\
+          \ il tipo di vincolo indicato \n(NUM_AD => Numero di Attività Formative\
+          \ da superare (tra quelle possibili); \n TUTTE_AD => vanno superate tutte\
+          \ le attività formative elencate; \n PESO => Peso minimo valido)\n"
+        enum:
+        - "NUM_AD"
+        - "TUTTE_AD"
+        - "PESO"
+        x-internal-name: "tipo_regprop_cod"
+      numAd:
+        type: "integer"
+        format: "int32"
+        example: 1
+        description: "nel caso il tipoVincoloRegola sia NUM_AF rappresenta il numero\
+          \ minimo di AD da superare"
+      peso:
+        type: "number"
+        format: "float"
+        example: 5.0
+        description: "nel caso il tipoVincoloRegola sia PESO rappresenta il numero\
+          \ minimo CFU da superare"
+      raggruppamentoFigli:
+        type: "integer"
+        format: "int32"
+        example: 1
+        description: "indica come gli elementi figli della regola vanno considerati\
+          \ (1 => OR; 2 => AND)"
+      figli:
+        type: "array"
+        items:
+          $ref: "#/definitions/RegolaPropFiglio"
+    x-layout-name: "REGPROP_VINC_AND_REST"
+    x-winsession-name: "p09/n_di_09_067_gest_proped_coorte"
+    x-model-sub-package: "offerta.v1"
+    x-model-sub-path: "offerta/v1"
+  RegolaPropFiglio:
+    type: "object"
+    properties:
+      regpropPropId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "id univoco del figlio della regola"
+        x-field-type: "primaryKey"
+      regpropAndId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "id univoco del figlio della regola"
+      tipoElemento:
+        type: "string"
+        example: "AC"
+        description: "tipo di elemento vincolato\n(AC => anno di corso, AD => Attività\
+          \ didattica, SET => Settore Scientifico Disciplinare)\n"
+        enum:
+        - "AC"
+        - "AD"
+        - "SET"
+        x-internal-name: "tipo_ele_regprop_cod"
+      chiaveADContestualizzata:
+        $ref: "#/definitions/ChiaveADContestualizzata"
+      annoCorso:
+        type: "integer"
+        format: "int32"
+        example: 1
+        description: "anno di corso nel caso in cui il tipoElemento sia AC"
+      settCod:
+        type: "string"
+        example: "123"
+        description: "codice del SSD nel caso in cui il tipoElemento sia SET"
+        maxLength: 10
+    x-layout-name: "REGPROP_VINC_PROP_REST"
+    x-winsession-name: "p09/n_di_09_067_gest_proped_coorte"
+    x-model-sub-package: "offerta.v1"
+    x-mapping-fields:
+      chiaveADContestualizzata:
+        cdsId: "adpdsord_cds_id"
+        cdsCod: "adpdsord_cds_cod"
+        cdsDes: "adpdsord_cds_des"
+        aaOrdId: "adpdsord_aa_ord_id"
+        aaOrdCod: "adpdsord_cdsord_cod"
+        aaOrdDes: "adpdsord_cdsord_des"
+        pdsId: "adpdsord_pds_id"
+        pdsCod: "adpdsord_pds_cod"
+        pdsDes: "adpdsord_pds_des"
+        aaOffId: "adpdsord_aa_off_id"
+        adId: "adpdsord_ad_id"
+        adCod: "adpdsord_ad_cod"
+        adDes: "adpdsord_ad_des"
+    x-model-sub-path: "offerta/v1"
+  ChiaveADContestualizzata:
+    type: "object"
+    required:
+    - "aaOffId"
+    - "aaOrdId"
+    - "adId"
+    - "cdsId"
+    - "pdsId"
+    properties:
+      cdsId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "chiave del corso di studio di erogazione dell'attività didattica"
+      cdsCod:
+        type: "string"
+        example: "CDS_AD_1"
+        description: "codice del corso di studio di erogazione dell'attività didattica"
+      cdsDes:
+        type: "string"
+        example: "Esempio di CDS AD"
+        description: "descrizione del corso di erogazione dell'attività didattica"
+      aaOrdId:
+        type: "integer"
+        format: "int32"
+        example: 2016
+        description: "anno di ordinamento del corso di studio di erogazione dell'attività\
+          \ didattica"
+      aaOrdCod:
+        type: "string"
+        example: "CDS_AD_1"
+        description: "codice dell''ordinamento di erogazione dell'attività didattica"
+      aaOrdDes:
+        type: "string"
+        example: "Esempio di CDS AD"
+        description: "descrizione dell''ordinamento di erogazione dell'attività didattica"
+      pdsId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "chiave del percorso di studio di erogazione dell'attività didattica"
+      pdsCod:
+        type: "string"
+        example: "PDS_AD_1"
+        description: "codice del percorso di erogazione dell'attività didattica"
+      pdsDes:
+        type: "string"
+        example: "Esempio di PDS AD"
+        description: "descrizione del percorso di erogazione dell'attività didattica"
+      aaOffId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "anno di offerta di erogazione dell'attività didattica"
+      adId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "chiave dell'attività didattica"
+      adCod:
+        type: "string"
+        example: "PDS_AD_1"
+        description: "codice dell''attività didattica"
+      adDes:
+        type: "string"
+        example: "Esempio di PDS AD"
+        description: "descrizione dell''attività didattica"
+      afId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "id della afId proveniente da U-Gov Didattica"
+    x-model-sub-package: "offerta.v1"
+    x-model-sub-path: "offerta/v1"
+  VincoloDiPropedeuticita:
+    type: "object"
+    properties:
+      regpropVincId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "id univoco del vincolo di propedeuticità"
+        x-field-type: "primaryKey"
+      regpropId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "id univoco del regolamento di propedeuticità"
+      tipoVincolo:
+        type: "string"
+        example: "AD"
+        description: "tipo di vincolo dell'elemento del vincolo di propedeuticità\n\
+          (AC => anno di corso, AD => Attività didattica, SET => Settore Scientifico\
+          \ Disciplinare)\n"
+        enum:
+        - "AC"
+        - "AD"
+        - "SET"
+        x-internal-name: "tipo_ele_regprop_cod"
+      chiaveADContestualizzata:
+        $ref: "#/definitions/ChiaveADContestualizzata"
+      annoCorso:
+        type: "integer"
+        format: "int32"
+        example: 1
+        description: "anno di corso nel caso in cui il tipoVicolo sia AC"
+      settCod:
+        type: "string"
+        example: "123"
+        description: "codice del SSD nel caso in cui il tipoVincolo sia SET"
+        maxLength: 10
+      regolePropOR:
+        type: "array"
+        items:
+          $ref: "#/definitions/RegolaPropOR"
+      extId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "id univoco del vincolo di propedeuticità di un eventuale sistema\
+          \ esterno"
+        x-field-type: "optional"
+    x-layout-name: "REGPROP_VINC_REST"
+    x-winsession-name: "p09/n_di_09_067_gest_proped_coorte"
+    x-model-sub-package: "offerta.v1"
+    x-mapping-fields:
+      chiaveADContestualizzata:
+        cdsId: "adpdsord_cds_id"
+        cdsCod: "adpdsord_cds_cod"
+        cdsDes: "adpdsord_cds_des"
+        aaOrdId: "adpdsord_aa_ord_id"
+        aaOrdCod: "adpdsord_cdsord_cod"
+        aaOrdDes: "adpdsord_cdsord_des"
+        pdsId: "adpdsord_pds_id"
+        pdsCod: "adpdsord_pds_cod"
+        pdsDes: "adpdsord_pds_des"
+        aaOffId: "adpdsord_aa_off_id"
+        adId: "adpdsord_ad_id"
+        adCod: "adpdsord_ad_cod"
+        adDes: "adpdsord_ad_des"
+    x-model-sub-path: "offerta/v1"
+  RegolaPropOR:
+    type: "object"
+    properties:
+      regpropOrId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "id univoco del della regola OR"
+        x-field-type: "primaryKey"
+      regpropVincId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "id univoco del vincolo di propedeuticità"
+      regpropId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "id univoco del regolamento di propedeuticità"
+      des:
+        type: "string"
+        example: "123"
+        description: "descrizione della regola in OR"
+        maxLength: 10
+      regolePropAND:
+        type: "array"
+        items:
+          $ref: "#/definitions/RegolaPropAND"
+    x-layout-name: "REGPROP_VINC_OR_REST"
+    x-winsession-name: "p09/n_di_09_067_gest_proped_coorte"
+    x-model-sub-package: "offerta.v1"
+    x-model-sub-path: "offerta/v1"
+  RegolamentoDiPropepeduticita:
+    type: "object"
+    discriminator: "regolamentoDiPropedeuticitaType"
+    properties:
+      regpropId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "id univoco del regolamento di propedeuticità"
+        x-field-type: "primaryKey"
+      facId:
+        type: "integer"
+        format: "int64"
+        example: 123
+        description: "id univoco del dipartimento su cui è definito il regolamento\
+          \ di propedeuticità"
+      facCod:
+        type: "string"
+        example: "123"
+        description: "codice del dipartimento su cui è definito il regolamento di\
+          \ propedeuticità"
+        maxLength: 10
+      tipoCorsoCod:
+        type: "string"
+        example: "123"
+        description: "codice del tipo di corso su cui è definito il regolamento di\
+          \ propedeuticità"
+        maxLength: 10
+      cdsId:
+        type: "integer"
+        format: "int64"
+        example: 123
+        description: "id univoco del corso di studio su cui è definito il regolamento\
+          \ di propedeuticità"
+      cdsCod:
+        type: "string"
+        example: "123"
+        description: "codice del corso di studio su cui è definito il regolamento\
+          \ di propedeuticità"
+        maxLength: 10
+      cdsDes:
+        type: "string"
+        example: "123"
+        description: "descrizione del corso di studio su cui è definito il regolamento\
+          \ di propedeuticità"
+        maxLength: 255
+      aaOrdId:
+        type: "integer"
+        format: "int64"
+        example: 123
+        description: "id univoco dell'ordinamento di corso di studio su cui è definito\
+          \ il regolamento di propedeuticità"
+      coorte:
+        type: "integer"
+        format: "int32"
+        example: 2012
+        description: "anno di coorte su cui è definito il regolamento di propedeuticità"
+      aaRevisioneId:
+        type: "integer"
+        format: "int32"
+        example: 2012
+        description: "anno di revisione su cui è definito il regolamento di propedeuticità"
+      stato:
+        type: "string"
+        example: "A"
+        description: "stato del regolamento di propedeuticità"
+        enum:
+        - "A"
+        - "B"
+        - "X"
+        x-internal-name: "sta_regprop_cod"
+      extId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "id univoco del regolamento di propedeuticità di un eventuale\
+          \ sistema esterno"
+        x-field-type: "optional"
+    x-layout-name: "REGPROP_REST"
+    x-winsession-name: "p09/n_di_09_067_gest_proped_coorte"
+    x-model-sub-package: "offerta.v1"
+    x-model-sub-path: "offerta/v1"
+  DettaglioErrore:
+    type: "object"
+    properties:
+      statusCode:
+        type: "integer"
+        format: "int32"
+        example: 200
+        description: "Http Status Code"
+      retCode:
+        type: "integer"
+        format: "int32"
+        example: -1
+        description: "codice di errore"
+      retErrMsg:
+        type: "string"
+        example: "Parametri non corretti"
+        description: "descrizione dell'errore"
+      errDetails:
+        type: "array"
+        items:
+          $ref: "#/definitions/DettaglioErroreAggiuntivo"
+    x-model-sub-package: "frk.v1"
+    x-model-sub-path: "frk/v1"
+  RegolamentoDiPropedeuticitaConVincoli:
+    allOf:
+    - $ref: "#/definitions/RegolamentoDiPropepeduticita"
+    - type: "object"
+      required:
+      - "vincoli"
+      properties:
+        vincoli:
+          type: "array"
+          items:
+            $ref: "#/definitions/VincoloDiPropedeuticita"
+    x-model-sub-package: "offerta.v1"
+    x-model-sub-path: "offerta/v1"
+parameters:
+  cdsCod:
+    name: "cdsCod"
+    in: "query"
+    description: "codice del corso di studio di afferenza del regolamento"
+    required: false
+    type: "string"
+  coorte:
+    name: "coorte"
+    in: "query"
+    description: "coorte di afferenza del regolamento"
+    required: false
+    type: "integer"
+    format: "int64"
+  facCod:
+    name: "facCod"
+    in: "query"
+    description: "codice della facoltà di afferenza del regolamento"
+    required: false
+    type: "string"
+  statoRegprop:
+    name: "statoRegprop"
+    in: "query"
+    description: "stato del regolamento, se non valorizzato vengono recuperati i regolamenti\
+      \ attivi"
+    required: false
+    type: "string"
+    enum:
+    - "A"
+    - "B"
+    - "X"
+  tipoCorsoCod:
+    name: "tipoCorsoCod"
+    in: "query"
+    description: "codice del tipo di corso di afferenza del regolamento"
+    required: false
+    type: "string"
+  regpropId:
+    name: "regpropId"
+    in: "path"
+    description: "id univoco del regolamento di propedeuticità"
+    required: true
+    type: "integer"
+    format: "int64"
+  facId:
+    name: "facId"
+    in: "query"
+    description: "id della facoltà di afferenza del regolamento"
+    required: false
+    type: "integer"
+    format: "int64"
+  regpropVincId:
+    name: "regpropVincId"
+    in: "path"
+    description: "id univoco del vincolo di propedeuticità"
+    required: true
+    type: "integer"
+    format: "int64"
+  cdsId:
+    name: "cdsId"
+    in: "query"
+    description: "id della corso di studio di afferenza del regolamento"
+    required: false
+    type: "integer"
+    format: "int64"
+externalDocs:
+  description: "Documentazione Geneale sui servizi REST"
+  url: "https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3"
+x-file-status: "PROD"
+x-file-name: "p09-regpropApiV1.yaml"
+x-api-status: "PROD"
+x-func-cod: "RST_RPRPV1"
+x-cache-type: "configuration"

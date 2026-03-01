@@ -22,7 +22,7 @@ class ElearningQuizApi(
      * @param courseIds List of course IDs to get quizzes from
      * @return List of quizzes in the specified courses
      * @throws IllegalArgumentException If the token is invalid
-     * @throws IllegalStateException If the request fails
+     * @throws ElearningException If the request fails
      */
     suspend fun getQuizzes(wsToken: String, courseIds: List<Int>): ElearningGetQuizzesResponse {
         return executeAuthenticatedRequest(wsToken, ElearningGetQuizzesRequest(courseIds))
@@ -37,7 +37,7 @@ class ElearningQuizApi(
      * @param courseId The course ID to get quizzes from
      * @return List of quizzes in the course
      * @throws IllegalArgumentException If the token is invalid
-     * @throws IllegalStateException If the request fails
+     * @throws ElearningException If the request fails
      */
     suspend fun getQuizzesForCourse(wsToken: String, courseId: Int): ElearningGetQuizzesResponse {
         return getQuizzes(wsToken, listOf(courseId))
@@ -50,7 +50,7 @@ class ElearningQuizApi(
      * @param quizId The quiz ID
      * @return Quiz access information
      * @throws IllegalArgumentException If the token is invalid
-     * @throws IllegalStateException If the request fails
+     * @throws ElearningException If the request fails
      */
     suspend fun getQuizAccessInfo(wsToken: String, quizId: Int): ElearningGetQuizAccessInfoResponse {
         return executeAuthenticatedRequest(wsToken, ElearningGetQuizAccessInfoRequest(quizId))
@@ -66,7 +66,7 @@ class ElearningQuizApi(
      * @param includePreviews Whether to include preview attempts
      * @return List of quiz attempts
      * @throws IllegalArgumentException If the token is invalid
-     * @throws IllegalStateException If the request fails
+     * @throws ElearningException If the request fails
      */
     suspend fun getUserAttempts(
         wsToken: String,
@@ -90,7 +90,7 @@ class ElearningQuizApi(
      * @param forceNew Force creating a new attempt even if one exists
      * @return The started attempt
      * @throws IllegalArgumentException If the token is invalid
-     * @throws IllegalStateException If the request fails or quiz rules prevent starting
+     * @throws ElearningException If the request fails or quiz rules prevent starting
      */
     suspend fun startAttempt(
         wsToken: String,
@@ -113,7 +113,7 @@ class ElearningQuizApi(
      * @param preflightData Optional preflight data
      * @return Attempt data with questions for the page
      * @throws IllegalArgumentException If the token is invalid
-     * @throws IllegalStateException If the request fails
+     * @throws ElearningException If the request fails
      */
     suspend fun getAttemptData(
         wsToken: String,
@@ -135,7 +135,7 @@ class ElearningQuizApi(
      * @param preflightData Optional preflight data
      * @return Attempt summary with question statuses
      * @throws IllegalArgumentException If the token is invalid
-     * @throws IllegalStateException If the request fails
+     * @throws ElearningException If the request fails
      */
     suspend fun getAttemptSummary(
         wsToken: String,
@@ -157,7 +157,7 @@ class ElearningQuizApi(
      * @param preflightData Optional preflight data
      * @return Save status (success/failure)
      * @throws IllegalArgumentException If the token is invalid
-     * @throws IllegalStateException If the request fails
+     * @throws ElearningException If the request fails
      */
     suspend fun saveAttempt(
         wsToken: String,
@@ -182,7 +182,7 @@ class ElearningQuizApi(
      * @param preflightData Optional preflight data
      * @return The new attempt state
      * @throws IllegalArgumentException If the token is invalid
-     * @throws IllegalStateException If the request fails
+     * @throws ElearningException If the request fails
      */
     suspend fun processAttempt(
         wsToken: String,
@@ -206,7 +206,7 @@ class ElearningQuizApi(
      * @param page Optional page number to get questions for (null for all)
      * @return Attempt review with grade and questions
      * @throws IllegalArgumentException If the token is invalid
-     * @throws IllegalStateException If the request fails
+     * @throws ElearningException If the request fails
      */
     suspend fun getAttemptReview(
         wsToken: String,
@@ -227,7 +227,7 @@ class ElearningQuizApi(
      * @param userId Optional user ID (defaults to current user if null)
      * @return User's best grade information
      * @throws IllegalArgumentException If the token is invalid
-     * @throws IllegalStateException If the request fails
+     * @throws ElearningException If the request fails
      */
     suspend fun getUserBestGrade(
         wsToken: String,

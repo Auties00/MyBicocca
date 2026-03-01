@@ -1,0 +1,1744 @@
+---
+swagger: "2.0"
+info:
+  description: "I servizi presenti permettono di recuperare le informazioni degli\
+    \ utenti ed eseguire operazioni su di essi.\n"
+  version: "1.0.0"
+  title: "ESSE3 Utenti API"
+basePath: "/utenti-service-v1"
+schemes:
+- "https"
+- "http"
+consumes:
+- "application/json"
+produces:
+- "application/json"
+security:
+- basicAuth: []
+- jwt:
+  - "openid"
+paths:
+  /utenti:
+    get:
+      tags:
+      - "utenti"
+      summary: "Recupero degli utenti abilitati presenti a sistema"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>Recupera la lista degli oggetti 'Utente'. I\
+        \ parametri ozionali **start** e **limit** consentono di paginare i risultati.\
+        \ E'' possibile filtrare i libretti da ricercare utilizzando i parametri di\
+        \ corso ordinamento e percorso dei tratti dello studente\n\n\n**Estensioni:**\n\
+        \nCodice Estensione|Valore|Nota\n-|-|-\nx-cache-type|lowRefreshRateUserDependent|Risorsa\
+        \ che varia con frequenza bassa, cache Http abilitata, cache server disabilitata.\
+        \ Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: USER_TECNICO**\n\nProfilo|Controllo| Funzione\n-|-|-\nUTENTE_TECNICO|funzione\
+        \ accessibile alle utenze tecniche per accessi ai servizi REST|Security.checkUserTecnico()\n\
+        \n\nClasse di modello : Utente\n======\n\nEstensioni sulle proprietà\n----\n\
+        Proprietà | x-field-type\n-|-|\nuserId|primaryKey\ngrants|optional\naliasUtente|optional\n\
+        \n\nClasse di modello : UtenteFun\n======\n\nEstensioni sulle proprietà\n\
+        ----\nProprietà | x-field-type\n-|-|\nfunName|primaryKey\nfunDescr|optional\n\
+        \n\nClasse di modello : DettaglioErroreAggiuntivo\n======\n\nEstensioni sulle\
+        \ proprietà\n----\nProprietà | x-field-type\n-|-|\nrawValue|rawJson\n"
+      operationId: "getUtenti"
+      parameters:
+      - name: "nome"
+        in: "query"
+        description: "nome dell'utente (se viene utilizzato il carattere * viene applicato\
+          \ il like)"
+        required: false
+        type: "string"
+      - name: "cognome"
+        in: "query"
+        description: "cognome dell'utente (se viene utilizzato il carattere * viene\
+          \ applicato il like)"
+        required: false
+        type: "string"
+      - name: "codFis"
+        in: "query"
+        description: "codice fiscale dell'utente"
+        required: false
+        type: "string"
+      - name: "grpId"
+        in: "query"
+        description: "id univoco che consente di individuare il gruppo utente"
+        required: false
+        type: "integer"
+        format: "int64"
+      - name: "email"
+        in: "query"
+        description: "indirizzo email (email personale o di ateneo)"
+        required: false
+        type: "string"
+      - name: "userId"
+        in: "query"
+        description: "userId"
+        required: false
+        type: "string"
+      - name: "grants"
+        in: "query"
+        description: "elenco nomi funzioni separati da virgola"
+        required: false
+        type: "string"
+      - name: "optionalFields"
+        in: "query"
+        description: "specifica la lista dei campi opzionali (che non vengono recupeati\
+          \ di default);\nimpostando il valore `ALL` vengono mostrati tutti i campi.\
+          \ \n\nPer gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns*\
+          \  \nI dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello)\n\
+          \nEsempi\n* per il campo childObj con la poprietà childProp utilizzare la\
+          \ notazione `childProp.prop1`\n* Per visualizzare tutte le proprietà di\
+          \ childObj utilizzare la notazione `childProp.*`\n* Per visualizzare tutte\
+          \ le proprietà di childObj e di tutti i discendenti utilizzare la notazione\
+          \ `childProp.**`\n"
+        required: false
+        type: "string"
+      - name: "start"
+        in: "query"
+        description: "utilizzato insieme a `limit` per indicare la paginazione sui\
+          \ record; `start` indica il numero del primo record da caricare (se non\
+          \ indicato viene utilizzato 0)\n"
+        required: false
+        type: "integer"
+        format: "int32"
+      - name: "limit"
+        in: "query"
+        description: "utilizzato insieme a `start` per indicare la paginazione sui\
+          \ record, `limit` indica il numero di record da recuperare (a partire da\
+          \ `start`); \nse non indicato viene utilizzato 50, i valori consentiti vanno\
+          \ da 0 a 100\n"
+        required: false
+        type: "integer"
+        format: "int32"
+      - name: "order"
+        in: "query"
+        description: "consente di specificare un ordine per il recupero dei record.\
+          \ La sintassi è la seguente\n * +/- : specifica l'ordinamento (+ = ASC,\
+          \ - = DESC); se omesso viene utilizzato +\n * field : nome del campo da\
+          \ ordinare\n \n E' possibile indicare più campi separandoli da virgola (Es:\
+          \ +annoCorso,+adCod) \n"
+        required: false
+        type: "string"
+      responses:
+        "200":
+          description: "Successful response"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/Utente"
+        "422":
+          description: "parametri Errati"
+          schema:
+            $ref: "#/definitions/DettaglioErrore"
+      x-enabled-profiles:
+      - user-tecnico-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UTENTE_TECNICO"
+              description: "funzione accessibile alle utenze tecniche per accessi\
+                \ ai servizi REST"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkUserTecnico"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+      x-cache-type: "lowRefreshRateUserDependent"
+  /utenti/datiFirma:
+    post:
+      tags:
+      - "firma"
+      summary: "Consente di aggiornare i dati degli utenti"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>permette di aggioranre i dati di firma degli\
+        \ utenti con codice fiscale indicato. Il formato è analogo a quello del servizio\
+        \ per i csv solo che in formato json\n\n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n\
+        -|-|-\nx-cache-type|lowRefreshRateUserIndependent|Risorsa che varia con frequenza\
+        \ bassa, cache Http abilitata, cache server abilitata. Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: USER_TECNICO**\n\nProfilo|Controllo| Funzione\n-|-|-\nUTENTE_TECNICO|funzione\
+        \ accessibile alle utenze tecniche per accessi ai servizi REST|Security.checkUserTecnico()\n\
+        \n\nClasse di modello : DettaglioErroreAggiuntivo\n======\n\nEstensioni sulle\
+        \ proprietà\n----\nProprietà | x-field-type\n-|-|\nrawValue|rawJson\n"
+      operationId: "postDatiFirmaUtenti"
+      parameters:
+      - in: "body"
+        name: "body"
+        description: "file CSV che contiene i valori da importare"
+        required: true
+        schema:
+          $ref: "#/definitions/DatiFirmaImport"
+      responses:
+        "201":
+          description: "Successful response"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/DatiFirmaResponse"
+        "422":
+          description: "parametri Errati"
+          schema:
+            $ref: "#/definitions/DettaglioErrore"
+      x-enabled-profiles:
+      - user-tecnico-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UTENTE_TECNICO"
+              description: "funzione accessibile alle utenze tecniche per accessi\
+                \ ai servizi REST"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkUserTecnico"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+      x-custom-operation: "single"
+      x-cache-endpoint-relations:
+        canonicalEndpointsAction: "none"
+        customEndpoints:
+        - operationId: "getUtenti"
+          action: "invalidate"
+  /utenti/datiFirma/csv:
+    post:
+      tags:
+      - "firma"
+      summary: "Consente di aggiornare i dati degli utenti"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>permette di aggioranre i dati di firma degli\
+        \ utenti con codice fiscale indicato.\nDeve essere passato in ingresso un\
+        \ file csv formato dai seguenti campi\n\n codFis   | tipoFirmaId | hsmPrefix\
+        \ | tipoFirmaFaId | faPrefix\n -        | -           | -         | -    \
+        \         | -\n cod_fis  | (1)         | (2)       | (1)           | (2)\n\
+        \ \n *Legenda*:\n \n * (1): Va passato il valore della tabella tipi_firma\
+        \ di esse3 (1 - Autografa , 2 Smart_card, 3 INFOCERT, ecc. ecc.)\n   Il campo\
+        \ tipoFirmaId è relativo al valore per la firma REMOTA\n   Il campo tipoFirmaFaId\
+        \ è relativo al valore per la firma AUTOMATICA  \n * (2): il prefisso dipende\
+        \ dal tipo di provider. è lo stesso valore richiesto nel client di esse3\n\
+        \ * Nel caso di campi nulli occorre inserire la stringa null\n  \n\n\n**Estensioni:**\n\
+        \nCodice Estensione|Valore|Nota\n-|-|-\nx-cache-type|lowRefreshRateUserIndependent|Risorsa\
+        \ che varia con frequenza bassa, cache Http abilitata, cache server abilitata.\
+        \ Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: USER_TECNICO**\n\nProfilo|Controllo| Funzione\n-|-|-\nUTENTE_TECNICO|funzione\
+        \ accessibile alle utenze tecniche per accessi ai servizi REST|Security.checkUserTecnico()\n\
+        \n\nClasse di modello : DettaglioErroreAggiuntivo\n======\n\nEstensioni sulle\
+        \ proprietà\n----\nProprietà | x-field-type\n-|-|\nrawValue|rawJson\n"
+      operationId: "postDatiFirmaUtentiCsv"
+      produces:
+      - "text/csv"
+      parameters:
+      - in: "body"
+        name: "body"
+        description: "file CSV che contiene i valori da importare"
+        required: true
+        schema:
+          type: "string"
+      - name: "delimiter"
+        in: "query"
+        description: "delimitatore del file CSV, se non valorizzato vale \",\""
+        required: false
+        type: "string"
+      responses:
+        "201":
+          description: "Successful response"
+          schema:
+            type: "string"
+        "422":
+          description: "parametri Errati"
+          schema:
+            $ref: "#/definitions/DettaglioErrore"
+      x-wrapped-response: true
+      x-enabled-profiles:
+      - user-tecnico-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UTENTE_TECNICO"
+              description: "funzione accessibile alle utenze tecniche per accessi\
+                \ ai servizi REST"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkUserTecnico"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+      x-cache-endpoint-relations:
+        canonicalEndpointsAction: "none"
+        customEndpoints:
+        - operationId: "getUtenti"
+          action: "invalidate"
+  /utenti/{userId}:
+    get:
+      tags:
+      - "utenti"
+      summary: "Recupero delle informazioni relative ad un singolo utente abilitato\
+        \ presente a sistema per identificativo"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>Recupera un singolo oggetto 'Utente'. I parametri\
+        \ ozionali **start** e **limit** consentono di paginare i risultati. E'' possibile\
+        \ filtrare i libretti da ricercare utilizzando i parametri di corso ordinamento\
+        \ e percorso dei tratti dello studente\n\n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n\
+        -|-|-\nx-cache-type|lowRefreshRateUserIndependent|Risorsa che varia con frequenza\
+        \ bassa, cache Http abilitata, cache server abilitata. Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: USER_TECNICO**\n\nProfilo|Controllo| Funzione\n-|-|-\nUTENTE_TECNICO|funzione\
+        \ accessibile alle utenze tecniche per accessi ai servizi REST|Security.checkUserTecnico()\n\
+        \n\nClasse di modello : Utente\n======\n\nEstensioni sulle proprietà\n----\n\
+        Proprietà | x-field-type\n-|-|\nuserId|primaryKey\ngrants|optional\naliasUtente|optional\n\
+        \n\nClasse di modello : UtenteFun\n======\n\nEstensioni sulle proprietà\n\
+        ----\nProprietà | x-field-type\n-|-|\nfunName|primaryKey\nfunDescr|optional\n\
+        \n\nClasse di modello : DettaglioErroreAggiuntivo\n======\n\nEstensioni sulle\
+        \ proprietà\n----\nProprietà | x-field-type\n-|-|\nrawValue|rawJson\n"
+      operationId: "getUtente"
+      parameters:
+      - name: "userId"
+        in: "path"
+        description: "id univoco che consente di individuare l'account utente"
+        required: true
+        type: "string"
+      - name: "caseSensitive"
+        in: "query"
+        description: "1: userId gestito in maniera case sensitive; 0: viene ignorato\
+          \ il case per lo userId. Default 1."
+        required: false
+        type: "integer"
+        maximum: 1.0
+        minimum: 0.0
+        format: "int32"
+      - name: "grants"
+        in: "query"
+        description: "elenco nomi funzioni separati da virgola"
+        required: false
+        type: "string"
+      - name: "abilRecuperoAlias"
+        in: "query"
+        description: "Indica che l’utente indicato sarà ricercato sia tra gli utenti\
+          \ che tra gli alias validi. 0-la ricerca sarà per il solo utente. 1-la ricerca\
+          \ sarà per utente e alias"
+        required: false
+        type: "integer"
+        maximum: 1.0
+        minimum: 0.0
+        format: "int32"
+      - name: "optionalFields"
+        in: "query"
+        description: "specifica la lista dei campi opzionali (che non vengono recupeati\
+          \ di default);\nimpostando il valore `ALL` vengono mostrati tutti i campi.\
+          \ \n\nPer gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns*\
+          \  \nI dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello)\n\
+          \nEsempi\n* per il campo childObj con la poprietà childProp utilizzare la\
+          \ notazione `childProp.prop1`\n* Per visualizzare tutte le proprietà di\
+          \ childObj utilizzare la notazione `childProp.*`\n* Per visualizzare tutte\
+          \ le proprietà di childObj e di tutti i discendenti utilizzare la notazione\
+          \ `childProp.**`\n"
+        required: false
+        type: "string"
+      responses:
+        "200":
+          description: "Successful response"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/Utente"
+        "422":
+          description: "parametri Errati"
+          schema:
+            $ref: "#/definitions/DettaglioErrore"
+      x-enabled-profiles:
+      - user-tecnico-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UTENTE_TECNICO"
+              description: "funzione accessibile alle utenze tecniche per accessi\
+                \ ai servizi REST"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkUserTecnico"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+      x-custom-operation: "multiple"
+  /utenti/{userId}/cie:
+    put:
+      tags:
+      - "identità digitale"
+      summary: "Permette l'associazione delle credenziali CIE ad una utenza, nel caso\
+        \ questa associazione non esista già"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>Servizio che implementa l'associazione del\
+        \ CIE code ad una utenza, nel caso questa associazione non esista già.\nSe\
+        \ il CIE code viene lasciato nullo, verrà impostato con il codice fiscale\
+        \ dell'anagrafica associata.\nNel caso l'aggiornamento vada a buon fine, verrano\
+        \ recuperati i dati dell'utente.\n\n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n\
+        -|-|-\nx-cache-type|lowRefreshRateUserIndependent|Risorsa che varia con frequenza\
+        \ bassa, cache Http abilitata, cache server abilitata. Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: USER_TECNICO**\n\nProfilo|Controllo| Funzione\n-|-|-\nUTENTE_TECNICO|funzione\
+        \ accessibile alle utenze tecniche per accessi ai servizi REST|Security.checkUserTecnico()\n\
+        \n\nClasse di modello : DettaglioErroreAggiuntivo\n======\n\nEstensioni sulle\
+        \ proprietà\n----\nProprietà | x-field-type\n-|-|\nrawValue|rawJson\n"
+      operationId: "putCieCode"
+      parameters:
+      - name: "userId"
+        in: "path"
+        description: "id univoco che consente di individuare l'account utente"
+        required: true
+        type: "string"
+      - name: "cieCode"
+        in: "query"
+        description: "Identificativo credenziali CIE"
+        required: false
+        type: "string"
+      responses:
+        "200":
+          description: "successful operation"
+          schema:
+            $ref: "#/definitions/IdentitaDigitali"
+        "422":
+          description: "parametri Errati"
+          schema:
+            $ref: "#/definitions/DettaglioErrore"
+      x-enabled-profiles:
+      - user-tecnico-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UTENTE_TECNICO"
+              description: "funzione accessibile alle utenze tecniche per accessi\
+                \ ai servizi REST"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkUserTecnico"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+      x-cache-endpoint-relations:
+        canonicalEndpointsAction: "none"
+        customEndpoints:
+        - operationId: "getIdentitaDigitale"
+          action: "invalidate"
+  /utenti/{userId}/identitaDigitale:
+    get:
+      tags:
+      - "identità digitale"
+      summary: "Recupera lo spid code e il cie code associati ad un'utenza"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>Servizio che permette di recuperare lo SPID\
+        \ code e il CIE code associati ad una utenza.\n\n\n**Estensioni:**\n\nCodice\
+        \ Estensione|Valore|Nota\n-|-|-\nx-cache-type|lowRefreshRateUserIndependent|Risorsa\
+        \ che varia con frequenza bassa, cache Http abilitata, cache server abilitata.\
+        \ Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: USER_TECNICO**\n\nProfilo|Controllo| Funzione\n-|-|-\nUTENTE_TECNICO|funzione\
+        \ accessibile alle utenze tecniche per accessi ai servizi REST|Security.checkUserTecnico()\n\
+        \n\nClasse di modello : DettaglioErroreAggiuntivo\n======\n\nEstensioni sulle\
+        \ proprietà\n----\nProprietà | x-field-type\n-|-|\nrawValue|rawJson\n"
+      operationId: "getIdentitaDigitale"
+      parameters:
+      - name: "userId"
+        in: "path"
+        description: "id univoco che consente di individuare l'account utente"
+        required: true
+        type: "string"
+      responses:
+        "200":
+          description: "successful operation"
+          schema:
+            $ref: "#/definitions/IdentitaDigitali"
+        "422":
+          description: "parametri Errati"
+          schema:
+            $ref: "#/definitions/DettaglioErrore"
+      x-enabled-profiles:
+      - user-tecnico-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UTENTE_TECNICO"
+              description: "funzione accessibile alle utenze tecniche per accessi\
+                \ ai servizi REST"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkUserTecnico"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+  /utenti/{userId}/spid:
+    put:
+      tags:
+      - "identità digitale"
+      summary: "Permette l'associazione delle credenziali SPID code ad una utenza,\
+        \ nel caso questa associazione non esista già"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>Servizio che implementa l'associazione dello\
+        \ SPID code ad una utenza, nel caso questa associazione non esista già.\n\
+        Se lo SPID code viene lasciato nullo, verrà impostato con il codice fiscale\
+        \ dell'anagrafica associata.\nNel caso l'aggiornamento vada a buon fine, verrano\
+        \ recuperati i dati dell'utente.\n\n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n\
+        -|-|-\nx-cache-type|lowRefreshRateUserIndependent|Risorsa che varia con frequenza\
+        \ bassa, cache Http abilitata, cache server abilitata. Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: USER_TECNICO**\n\nProfilo|Controllo| Funzione\n-|-|-\nUTENTE_TECNICO|funzione\
+        \ accessibile alle utenze tecniche per accessi ai servizi REST|Security.checkUserTecnico()\n\
+        \n\nClasse di modello : DettaglioErroreAggiuntivo\n======\n\nEstensioni sulle\
+        \ proprietà\n----\nProprietà | x-field-type\n-|-|\nrawValue|rawJson\n"
+      operationId: "putSpidCode"
+      parameters:
+      - name: "userId"
+        in: "path"
+        description: "id univoco che consente di individuare l'account utente"
+        required: true
+        type: "string"
+      - name: "spidCode"
+        in: "query"
+        description: "Identificativo credenziali SPID"
+        required: false
+        type: "string"
+      responses:
+        "200":
+          description: "successful operation"
+          schema:
+            $ref: "#/definitions/IdentitaDigitali"
+        "422":
+          description: "parametri Errati"
+          schema:
+            $ref: "#/definitions/DettaglioErrore"
+      x-enabled-profiles:
+      - user-tecnico-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UTENTE_TECNICO"
+              description: "funzione accessibile alle utenze tecniche per accessi\
+                \ ai servizi REST"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkUserTecnico"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+      x-cache-endpoint-relations:
+        canonicalEndpointsAction: "none"
+        customEndpoints:
+        - operationId: "getIdentitaDigitale"
+          action: "invalidate"
+  /utenti/{userId}/trattiAttivi:
+    get:
+      tags:
+      - "carriere"
+      summary: "Recupero delle carriere degli studenti"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>Recupera la lista degli oggetti 'Utente'. I\
+        \ parametri ozionali **start** e **limit** consentono di paginare i risultati.\
+        \ E'' possibile filtrare i libretti da ricercare utilizzando i parametri di\
+        \ corso ordinamento e percorso dei tratti dello studente\n\n\n**Estensioni:**\n\
+        \nCodice Estensione|Valore|Nota\n-|-|-\nx-cache-type|lowRefreshRateUserIndependent|Risorsa\
+        \ che varia con frequenza bassa, cache Http abilitata, cache server abilitata.\
+        \ Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: USER_TECNICO**\n\nProfilo|Controllo| Funzione\n-|-|-\nUTENTE_TECNICO|funzione\
+        \ accessibile alle utenze tecniche per accessi ai servizi REST|Security.checkUserTecnico()\n\
+        \n**Utente: STUDENTE**\n\nProfilo|Controllo| Funzione\n-|-|-\nSTUDENTE|Permette\
+        \ la visualizzazone delle carriere dello studente|Security.checkUserIdStudente(userId)\n\
+        \n\nClasse di modello : DettaglioErroreAggiuntivo\n======\n\nEstensioni sulle\
+        \ proprietà\n----\nProprietà | x-field-type\n-|-|\nrawValue|rawJson\n"
+      operationId: "getCarrieraEstesa"
+      parameters:
+      - name: "userId"
+        in: "path"
+        description: "id univoco che consente di individuare l'account utente"
+        required: true
+        type: "string"
+      - name: "staStuCod"
+        in: "query"
+        description: "codice dello stato della carriera"
+        required: false
+        type: "string"
+      - name: "motStastuCod"
+        in: "query"
+        description: "codice del motivo dello stato della carriera"
+        required: false
+        type: "string"
+      - name: "codFis"
+        in: "query"
+        description: "codice fiscale dell'utente"
+        required: false
+        type: "string"
+      - name: "identificativo U-Gov"
+        in: "query"
+        description: "identificativo di U-Gov che permette di ritirare le informazioni\
+          \ dei responsabili."
+        required: false
+        type: "string"
+      - name: "matricolaStudente"
+        in: "query"
+        description: "matricola dello studente"
+        required: false
+        type: "string"
+      - name: "Codice esterno carriera"
+        in: "query"
+        description: "codice esterno carriera"
+        required: false
+        type: "string"
+      - name: "order"
+        in: "query"
+        description: "consente di specificare un ordine per il recupero dei record.\
+          \ La sintassi è la seguente\n * +/- : specifica l'ordinamento (+ = ASC,\
+          \ - = DESC); se omesso viene utilizzato +\n * field : nome del campo da\
+          \ ordinare\n \n E' possibile indicare più campi separandoli da virgola (Es:\
+          \ +annoCorso,+adCod) \n"
+        required: false
+        type: "string"
+      responses:
+        "200":
+          description: "Successful response"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/TrattoCarrieraEstesa"
+        "422":
+          description: "parametri Errati"
+          schema:
+            $ref: "#/definitions/DettaglioErrore"
+      x-enabled-profiles:
+      - check-student-permissions:
+          kind: "STUDENTE"
+          profiles:
+          - profile:
+              name: "STUDENTE"
+              description: "Permette la visualizzazone delle carriere dello studente"
+              checks:
+              - checkMatId:
+                  className: "Security"
+                  functionName: "checkUserIdStudente"
+                  description: "controlla che lo user_id appartenga allo studente\
+                    \ loggato"
+                  parameters:
+                  - userId: "{\"name\":\"userId\",\"in\":\"path\",\"description\"\
+                      :\"id univoco che consente di individuare l'account utente\"\
+                      ,\"required\":true,\"type\":\"string\",\"items\":null,\"collectionFormat\"\
+                      :null,\"default\":null,\"maximum\":null,\"exclusiveMaximum\"\
+                      :null,\"minimum\":null,\"exclusiveMinimum\":null,\"maxLength\"\
+                      :null,\"minLength\":null,\"pattern\":null,\"maxItems\":null,\"\
+                      minItems\":null,\"uniqueItems\":null,\"multipleOf\":null,\"\
+                      format\":null,\"x-example\":null,\"enum\":null}"
+      - user-tecnico-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UTENTE_TECNICO"
+              description: "funzione accessibile alle utenze tecniche per accessi\
+                \ ai servizi REST"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkUserTecnico"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+  /utenti/{userId}/trattiCarriera:
+    get:
+      tags:
+      - "carriere"
+      summary: "Recupero dei tratti di carriera di uno studente"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>Permette il recupero di tutti i tratti di carriera\
+        \ di uno studente.\n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n-|-|-\n\
+        x-cache-type|lowRefreshRateUserIndependent|Risorsa che varia con frequenza\
+        \ bassa, cache Http abilitata, cache server abilitata. Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: USER_TECNICO**\n\nProfilo|Controllo| Funzione\n-|-|-\nUTENTE_TECNICO|funzione\
+        \ accessibile alle utenze tecniche per accessi ai servizi REST|Security.checkUserTecnico()\n\
+        \n**Utente: STUDENTE**\n\nProfilo|Controllo| Funzione\n-|-|-\nSTUDENTE|Permette\
+        \ la visualizzazone delle carriere dello studente|Security.checkUserIdStudente(userId)\n\
+        \n\nClasse di modello : DettaglioErroreAggiuntivo\n======\n\nEstensioni sulle\
+        \ proprietà\n----\nProprietà | x-field-type\n-|-|\nrawValue|rawJson\n"
+      operationId: "getTrattiCarriera"
+      parameters:
+      - name: "userId"
+        in: "path"
+        description: "id univoco che consente di individuare l'account utente"
+        required: true
+        type: "string"
+      - name: "staStuCod"
+        in: "query"
+        description: "codice dello stato della carriera"
+        required: false
+        type: "string"
+      - name: "motStastuCod"
+        in: "query"
+        description: "codice del motivo dello stato della carriera"
+        required: false
+        type: "string"
+      - name: "codFis"
+        in: "query"
+        description: "codice fiscale dell'utente"
+        required: false
+        type: "string"
+      - name: "identificativo U-Gov"
+        in: "query"
+        description: "identificativo di U-Gov che permette di ritirare le informazioni\
+          \ dei responsabili."
+        required: false
+        type: "string"
+      - name: "matricolaStudente"
+        in: "query"
+        description: "matricola dello studente"
+        required: false
+        type: "string"
+      - name: "Codice esterno carriera"
+        in: "query"
+        description: "codice esterno carriera"
+        required: false
+        type: "string"
+      - name: "order"
+        in: "query"
+        description: "consente di specificare un ordine per il recupero dei record.\
+          \ La sintassi è la seguente\n * +/- : specifica l'ordinamento (+ = ASC,\
+          \ - = DESC); se omesso viene utilizzato +\n * field : nome del campo da\
+          \ ordinare\n \n E' possibile indicare più campi separandoli da virgola (Es:\
+          \ +annoCorso,+adCod) \n"
+        required: false
+        type: "string"
+      responses:
+        "200":
+          description: "Successful response"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/TrattoCarriera"
+        "422":
+          description: "parametri Errati"
+          schema:
+            $ref: "#/definitions/DettaglioErrore"
+      x-enabled-profiles:
+      - check-student-permissions:
+          kind: "STUDENTE"
+          profiles:
+          - profile:
+              name: "STUDENTE"
+              description: "Permette la visualizzazone delle carriere dello studente"
+              checks:
+              - checkMatId:
+                  className: "Security"
+                  functionName: "checkUserIdStudente"
+                  description: "controlla che lo user_id appartenga allo studente\
+                    \ loggato"
+                  parameters:
+                  - userId: "{\"name\":\"userId\",\"in\":\"path\",\"description\"\
+                      :\"id univoco che consente di individuare l'account utente\"\
+                      ,\"required\":true,\"type\":\"string\",\"items\":null,\"collectionFormat\"\
+                      :null,\"default\":null,\"maximum\":null,\"exclusiveMaximum\"\
+                      :null,\"minimum\":null,\"exclusiveMinimum\":null,\"maxLength\"\
+                      :null,\"minLength\":null,\"pattern\":null,\"maxItems\":null,\"\
+                      minItems\":null,\"uniqueItems\":null,\"multipleOf\":null,\"\
+                      format\":null,\"x-example\":null,\"enum\":null}"
+      - user-tecnico-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UTENTE_TECNICO"
+              description: "funzione accessibile alle utenze tecniche per accessi\
+                \ ai servizi REST"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkUserTecnico"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+securityDefinitions:
+  basicAuth:
+    description: "Autenticazione tramite BASIC authentication. Questa modalità è disponibile\
+      \ se l'autenticazione su esse3 non usa shibboleth per il gruppo dell'utente"
+    type: "basic"
+  jwt:
+    description: "Autenticazione tramite OAUTH2, occorre configurare il parametro\
+      \ di configurazione di ESSE3 che indica il server OAUTH2 da utilizzare"
+    type: "oauth2"
+    authorizationUrl: "https://idp-idm.unimib.it/idp/profile/oidc/authorize"
+    flow: "implicit"
+    scopes:
+      openid: "informazioni sull'utente"
+definitions:
+  DatiFirmaImport:
+    type: "object"
+    properties:
+      datiFirma:
+        type: "array"
+        items:
+          $ref: "#/definitions/DatiFirma"
+    x-model-sub-package: "firmaDigitale.v1"
+    x-model-sub-path: "firmaDigitale/v1"
+  DatiFirmaResponse:
+    allOf:
+    - $ref: "#/definitions/DatiFirma"
+    - type: "object"
+      properties:
+        retCod:
+          type: "integer"
+          format: "int32"
+          example: 1
+          description: "codice di ritorno sull'import della riga"
+        errMsg:
+          type: "string"
+          example: "codicce fiscale non presente"
+    x-model-sub-package: "firmaDigitale.v1"
+    x-model-sub-path: "firmaDigitale/v1"
+  TrattoCarrieraEstesa:
+    type: "object"
+    required:
+    - "aaOrdId"
+    - "cdsId"
+    - "matId"
+    - "matricola"
+    - "pdsId"
+    - "persId"
+    - "stuId"
+    - "userId"
+    properties:
+      persId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "id univoco che consente di individuare la persona"
+      stuId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "id univoco che consente di individuare la carriera dello studente"
+      cdsId:
+        type: "integer"
+        format: "int64"
+        example: 123
+        description: "chiave del corso di studio di erogazione dell''attività didattica"
+      aaOrdId:
+        type: "integer"
+        format: "int32"
+        example: 2016
+        description: "anno di ordinamento del corso di iscrizione dello studente"
+      pdsId:
+        type: "integer"
+        format: "int64"
+        example: 10001
+        description: "chiave del percorso di studio di erogazione dell''attività didattica"
+      matId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "id univoco che consente di individuare il tratto di carriera\
+          \ dello studente"
+      matricola:
+        type: "string"
+        example: "123456"
+        description: "matricola dello studente, è il numero assegnato dalle segreterie\
+          \ allo studente per identificarlo nel sistema, una matricola potrebbe non\
+          \ identificare univocamente un libretto collegato ad un tratto di carriera"
+      userId:
+        type: "string"
+        example: "1"
+        description: "id univoco che consente di individuare l'account utente"
+        maxLength: 20
+      linguaId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "id univoco che consente di individuare la lingua di navigazione"
+      iso6392Cod:
+        type: "string"
+        example: "ita"
+        description: "codice della lingua di navigazione"
+        maxLength: 3
+      staStuCod:
+        type: "string"
+        example: "X"
+        description: "codice dello stato dello studente"
+        maxLength: 5
+      staStuDes:
+        type: "string"
+        example: "Cessato"
+        description: "descrizione dello stato dello studente"
+        maxLength: 40
+      motStastuCod:
+        type: "string"
+        example: "TIT"
+        description: "codice del motivo dello stato dello studente"
+        maxLength: 5
+      motStastuDes:
+        type: "string"
+        example: "Conseguimento Titolo"
+        description: "descrizione del motivo dello stato dello studente"
+        maxLength: 40
+      tipoCorsoCod:
+        type: "string"
+        example: "L2"
+        description: "codice del tipo di corso di studio"
+        maxLength: 10
+      tipoCorsoDes:
+        type: "string"
+        example: "Corso di Laurea"
+        description: "descrizione del tipo di corso di studio"
+        maxLength: 80
+      tipoTititCod:
+        type: "string"
+        example: "L2"
+        description: "codice del tipo di corso di studio"
+        maxLength: 10
+      tipoTititDes:
+        type: "string"
+        example: "Corso di Laurea"
+        description: "descrizione del tipo di corso di studio"
+        maxLength: 255
+      cdsCod:
+        type: "string"
+        example: "CDS_1"
+        description: "codice del corso di studio di iscrizione dello studente"
+      cdsDes:
+        type: "string"
+        example: "Esempio di CDS"
+        description: "descrizione del corso di iscrizione dello studente"
+      ordCod:
+        type: "string"
+        example: "ORD_1"
+        description: "codice dell'ordinamento di studio di iscrizione dello studente"
+      ordDes:
+        type: "string"
+        example: "Esempio di ORD"
+        description: "descrizione dell'ordinamento di iscrizione dello studente"
+      ordNumCiclo:
+        type: "integer"
+        format: "int64"
+        example: 31
+        description: "Numero ciclo corso di studio"
+      pdsCod:
+        type: "string"
+        example: "PDS_1"
+        description: "codice del percorso di iscrizione dello studente"
+      pdsDes:
+        type: "string"
+        example: "Esempio di PDS"
+        description: "descrizione del percorso di iscrizione dello studente"
+      aaId:
+        type: "integer"
+        format: "int32"
+        example: 2011
+        description: "anno accademico di ingresso/immatricolazione in ateneo"
+      aaImm1:
+        type: "integer"
+        format: "int32"
+        example: 2016
+        description: "anno accademico di inizio carriera"
+      aaImmSu:
+        type: "integer"
+        format: "int32"
+        example: 2016
+        description: "anno accademico di prima immatricolazione al sistema universitario"
+      dataImm:
+        type: "string"
+        example: "10/10/2016"
+        description: "data ingresso/immatricolazione in ateneo"
+      dataImm1:
+        type: "string"
+        example: "10/10/2016"
+        description: "data inizio carriera"
+      dataImmSu:
+        type: "string"
+        example: "10/10/2016"
+        description: "data prima immatricolazione nel sistema universitario"
+      dataChiusura:
+        type: "string"
+        example: "10/10/2017"
+        description: "data chiusura della carriera"
+      aaRegId:
+        type: "integer"
+        format: "int32"
+        example: 2016
+        description: "anno di coorte dello studente"
+      codiceLettore:
+        type: "string"
+        example: "7000"
+        description: "codice istat dell ateneo"
+      titoloStudio:
+        type: "integer"
+        format: "int64"
+        example: 3
+        description: "rappresentazione numerica del tipo titolo di studio"
+      tipoLettore:
+        type: "string"
+        example: "SM"
+        description: "sigla del tipo titolo (sd, PE, SP, SM, SF)"
+      autDatiPersonali:
+        type: "string"
+        example: "S"
+        description: "autorizzazione ai dati personali (sar� sempre si altrimenti\
+          \ non sarebbe possibile conservare i dati della persona)"
+      statoTasse:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "rappresentazione numerica dello stato del pagamento delle tasse"
+      aaIscrId:
+        type: "integer"
+        format: "int64"
+        example: 2016
+        description: "anno accademico di ultima iscrizione"
+      dataIscr:
+        type: "string"
+        example: "22/02/2016"
+        description: "data di ultima iscrizione"
+      ssd:
+        type: "string"
+        example: "S123"
+        description: "SSD. Valorizzato solo se il codice del tipo di corso è dottorato"
+      ssdArea:
+        type: "string"
+        example: "SA123"
+        description: "SSD dell'area. Valorizzato solo se il codice del tipo di corso\
+          \ è dottorato"
+      sdrDott:
+        type: "string"
+        description: "SDR scuola di dottorato. Valorizzato solo se il codice del tipo\
+          \ di corso è dottorato"
+      struttResponsabileCds:
+        description: "Struttura del responsabile del cds (facoltà o dipartimento)"
+        $ref: "#/definitions/StrutturaCds"
+      tutor:
+        $ref: "#/definitions/DatiTutor"
+      tipoCatAmmId:
+        type: "integer"
+        format: "int64"
+        example: 994
+        description: "identificativo della tipologia di categoria amministrativa"
+      tipoCatAmmDes:
+        type: "string"
+        example: "Cadetti"
+        description: "descrizione della tipologia di categoria amministrativa"
+      settCod:
+        type: "string"
+        example: "L15A"
+        description: "Codice del settore associato alla prima iscrizione in ateneo"
+      settDes:
+        type: "string"
+        example: "ASSIRIOLOGIA"
+        description: "Descrizione del settore associato alla prima iscrizione in ateneo"
+      idAb:
+        type: "integer"
+        example: 423
+        description: "identificativo U-gov"
+      codFis:
+        type: "string"
+        example: "QWEASD98Z12L456G"
+        description: "codice fiscale della personae"
+        maxLength: 16
+      extStuCod:
+        type: "string"
+        example: "codiceEsterno123"
+        description: "Codice esterno carriera"
+      areaCod:
+        type: "string"
+        example: "2"
+        description: "Codice area scientifico/disciplinare"
+      areaDes:
+        type: "string"
+        example: "Scienze fisiche"
+        description: "Descrizione area scientifico/disciplinare"
+    x-layout-name: "STU_CARRIERE_REST"
+    x-winsession-name: "p04/n_am_p04_winsession_rest"
+    x-model-sub-package: "anagrafica.v1"
+    x-model-sub-path: "anagrafica/v1"
+  Utente:
+    type: "object"
+    required:
+    - "cognome"
+    - "grpId"
+    - "nome"
+    - "userId"
+    properties:
+      userId:
+        type: "string"
+        example: "1"
+        description: "id univoco che consente di individuare l'account utente"
+        maxLength: 20
+        x-field-type: "primaryKey"
+      persId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "id univoco che consente di individuare la persona"
+      docenteId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "id univoco che consente di individuare il docente"
+      soggEstId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "id univoco che consente di individuare il soggetto esterno all'ateneo"
+      codFis:
+        type: "string"
+        example: "GGGTTT81XA944H"
+        description: "codice fiscale dell'utente"
+        maxLength: 16
+      nome:
+        type: "string"
+        example: "Paolo"
+        description: "nome dell'utente"
+        maxLength: 80
+      cognome:
+        type: "string"
+        example: "Rossi"
+        description: "cognome dell'utente"
+        maxLength: 80
+      docenteDataFinAtt:
+        type: "string"
+        example: "01/01/2017"
+        description: "data di fine attività del docente"
+      grpId:
+        type: "integer"
+        format: "int64"
+        example: 3
+        description: "id univoco che consente di individuare il gruppo utente"
+      grpName:
+        type: "string"
+        example: "Administrator"
+        description: "descrizione del gruppo utente"
+        maxLength: 20
+      dataModPwd:
+        type: "string"
+        example: "01/01/2017"
+        description: "data modifica password"
+      cambiaPwdFlg:
+        type: "integer"
+        format: "int32"
+        example: 1
+        description: "flg di indicazione di cambio password"
+      pwdExpireStart:
+        type: "string"
+        example: "01/01/2017"
+        description: "data scadenza password"
+      externalId:
+        type: "string"
+        example: "12345"
+        description: "id univoco del servizio di UserProvisioning"
+      flgExternal:
+        type: "integer"
+        format: "int32"
+        example: 1
+        description: "flg che indica se l'utente e' stato creato a fronte di una chiamata\
+          \ al servizio di UserProvisioning"
+      tipoFirmaId:
+        type: "integer"
+        format: "int64"
+        example: 12345
+        description: "id tipologia di firma che l'utente utilizza per firmare i documenti\
+          \ prodotti dal sistema"
+      cod:
+        type: "string"
+        example: "AUTOGRAFA"
+        description: "codice tipologia di firma che l'utente utilizza per firmare\
+          \ i documenti prodotti dal sistema"
+      des:
+        type: "string"
+        example: "Firma Autografa"
+        description: "descrizione tipologia di firma che l'utente utilizza per firmare\
+          \ i documenti prodotti dal sistema"
+      profilo:
+        type: "string"
+        example: "STUDENTE"
+        description: "profilo utente (STUDENTE, DOCENTE, PERSONALE, REGISTRATO, SOGG_EST)"
+        maxLength: 10
+      email:
+        type: "string"
+        example: "user@gmail.com"
+        description: "email personale"
+        maxLength: 100
+      emailAte:
+        type: "string"
+        example: "user@ateneo.com"
+        description: "email di ateneo"
+        maxLength: 100
+      alias:
+        type: "string"
+        example: "12345"
+        description: "alias"
+      grants:
+        type: "array"
+        items:
+          $ref: "#/definitions/UtenteFun"
+        x-field-type: "optional"
+      aliasUtente:
+        type: "array"
+        items:
+          $ref: "#/definitions/UtenteAlias"
+        x-field-type: "optional"
+    x-layout-name: "UTENTI_REST"
+    x-winsession-name: "p18/n_si_18_winsession_rest"
+    x-model-sub-package: "anagrafica.v1"
+    x-model-sub-path: "anagrafica/v1"
+  DettaglioErrore:
+    type: "object"
+    properties:
+      statusCode:
+        type: "integer"
+        format: "int32"
+        example: 200
+        description: "Http Status Code"
+      retCode:
+        type: "integer"
+        format: "int32"
+        example: -1
+        description: "codice di errore"
+      retErrMsg:
+        type: "string"
+        example: "Parametri non corretti"
+        description: "descrizione dell'errore"
+      errDetails:
+        type: "array"
+        items:
+          $ref: "#/definitions/DettaglioErroreAggiuntivo"
+    x-model-sub-package: "frk.v1"
+    x-model-sub-path: "frk/v1"
+  IdentitaDigitali:
+    type: "object"
+    properties:
+      userId:
+        type: "string"
+        example: "1"
+        description: "id univoco che consente di individuare l'account utente"
+      spidCode:
+        type: "string"
+        example: "SVRMTT91A24B819G"
+        description: "Identificativo credenziali SPID"
+      cieCode:
+        type: "string"
+        example: "CRCNMO03C67Z112V"
+        description: "Identificativo credenziali CIE"
+    x-model-sub-package: "anagrafica.v1"
+    x-model-sub-path: "anagrafica/v1"
+  DatiTutor:
+    type: "object"
+    properties:
+      cognomeTutor:
+        type: "string"
+        example: "Verdi"
+        description: "cognome del tutor"
+        maxLength: 50
+      nomeTutor:
+        type: "string"
+        example: "Luigi"
+        description: "nome del tutor"
+        maxLength: 50
+      docenteIdTutor:
+        type: "integer"
+        format: "int32"
+        example: 4821
+        description: "id del tutor"
+      soggEstIdTutor:
+        type: "integer"
+        format: "int32"
+        example: 1864
+        description: "id del tutor se è un soggetto esterno"
+      idAbTutor:
+        type: "integer"
+        format: "int32"
+        example: 65255
+        description: "id address book"
+      matricolaTutor:
+        type: "string"
+        example: "5823"
+        description: "matricola del tutor"
+    x-model-sub-package: "anagrafica.v1"
+    x-model-sub-path: "anagrafica/v1"
+  DettaglioErroreAggiuntivo:
+    type: "object"
+    properties:
+      errorType:
+        type: "string"
+        example: "stackTrace"
+        description: "descrizione del tipo di errore aggiuntivo"
+      value:
+        type: "string"
+        example: "SocketTimeoutException...."
+        description: "descrizione dell'errore"
+      rawValue:
+        type: "string"
+        example: "SocketTimeoutException...."
+        description: "descrizione dell'errore"
+        x-field-type: "rawJson"
+    x-model-sub-package: "frk.v1"
+    x-model-sub-path: "frk/v1"
+  StrutturaCds:
+    type: "object"
+    properties:
+      cod:
+        type: "string"
+        example: "scds123"
+        description: "codice struttura"
+      des:
+        type: "string"
+        example: "questa stringa descrive la struttura"
+        description: "descrizione della struttura"
+      csaCod:
+        type: "string"
+        example: "csacds123"
+        description: "codice csa della struttura"
+    x-model-sub-package: "anagrafica.v1"
+    x-model-sub-path: "anagrafica/v1"
+  DatiFirma:
+    type: "object"
+    required:
+    - "codFis"
+    discriminator: "datiFirmaType"
+    properties:
+      codFis:
+        type: "string"
+        example: "MRRSSS33D33G456G"
+        description: "codice fiscale dell'utente"
+        minLength: 16
+        maxLength: 16
+      tipoFirmaId:
+        type: "integer"
+        format: "int32"
+        example: 3
+        description: "tipo di provider per la firma remota"
+      hsmPrefix:
+        type: "string"
+        example: "CINECA"
+        description: "prefisso di firma da associare alla firma remota"
+      tipoFirmaFaId:
+        type: "integer"
+        format: "int32"
+        example: 8
+        description: "tipo di provider per la firma automatica"
+      faPrefix:
+        type: "string"
+        example: "CINECA_AAH04"
+        description: "prefisso di firma da associare alla firma automatica"
+    x-model-sub-package: "firmaDigitale.v1"
+    x-model-sub-path: "firmaDigitale/v1"
+  UtenteFun:
+    type: "object"
+    properties:
+      funName:
+        type: "string"
+        example: "MOD_SBK_CAL_APP"
+        description: "codice funzione"
+        maxLength: 80
+        x-field-type: "primaryKey"
+      funId:
+        type: "integer"
+        format: "int64"
+        example: 1526
+        description: "id funzione"
+      funDescr:
+        type: "string"
+        example: "Modulo SBK: StudentBooking - Accesso Operatore Calendario appuntamenti"
+        description: "descrizione funzione"
+        maxLength: 255
+        x-field-type: "optional"
+    x-layout-name: "UTENTI_FUN_REST"
+    x-winsession-name: "p18/n_si_18_winsession_rest"
+    x-model-sub-package: "anagrafica.v1"
+    x-model-sub-path: "anagrafica/v1"
+  TrattoCarriera:
+    type: "object"
+    properties:
+      persId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "id univoco che consente di individuare la persona"
+      stuId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "id univoco che consente di individuare la carriera dello studente"
+      cdsId:
+        type: "integer"
+        format: "int64"
+        example: 123
+        description: "chiave del corso di studio di erogazione dell''attività didattica"
+      aaOrdId:
+        type: "integer"
+        format: "int32"
+        example: 2016
+        description: "anno di ordinamento del corso di iscrizione dello studente"
+      pdsId:
+        type: "integer"
+        format: "int64"
+        example: 10001
+        description: "chiave del percorso di studio di erogazione dell''attività didattica"
+      matId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "id univoco che consente di individuare il tratto di carriera\
+          \ dello studente"
+      matricola:
+        type: "string"
+        example: "123456"
+        description: "matricola dello studente, è il numero assegnato dalle segreterie\
+          \ allo studente per identificarlo nel sistema, una matricola potrebbe non\
+          \ identificare univocamente un libretto collegato ad un tratto di carriera"
+      userId:
+        type: "string"
+        example: "1"
+        description: "id univoco che consente di individuare l'account utente"
+        maxLength: 20
+      linguaId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "id univoco che consente di individuare la lingua di navigazione"
+      iso6392Cod:
+        type: "string"
+        example: "ita"
+        description: "codice della lingua di navigazione"
+        maxLength: 3
+      staStuCod:
+        type: "string"
+        example: "X"
+        description: "codice dello stato dello studente"
+        maxLength: 5
+      staStuDes:
+        type: "string"
+        example: "Cessato"
+        description: "descrizione dello stato dello studente"
+        maxLength: 40
+      motStastuCod:
+        type: "string"
+        example: "TIT"
+        description: "codice del motivo dello stato dello studente"
+        maxLength: 5
+      motStastuDes:
+        type: "string"
+        example: "Conseguimento Titolo"
+        description: "descrizione del motivo dello stato dello studente"
+        maxLength: 40
+      tipoCorsoCod:
+        type: "string"
+        example: "L2"
+        description: "codice del tipo di corso di studio"
+        maxLength: 10
+      tipoCorsoDes:
+        type: "string"
+        example: "Corso di Laurea"
+        description: "descrizione del tipo di corso di studio"
+        maxLength: 80
+      tipoTititCod:
+        type: "string"
+        example: "L2"
+        description: "codice del tipo di corso di studio"
+        maxLength: 10
+      tipoTititDes:
+        type: "string"
+        example: "Corso di Laurea"
+        description: "descrizione del tipo di corso di studio"
+        maxLength: 255
+      cdsCod:
+        type: "string"
+        example: "CDS_1"
+        description: "codice del corso di studio di iscrizione dello studente"
+      cdsDes:
+        type: "string"
+        example: "Esempio di CDS"
+        description: "descrizione del corso di iscrizione dello studente"
+      ordCod:
+        type: "string"
+        example: "ORD_1"
+        description: "codice dell'ordinamento di studio di iscrizione dello studente"
+      ordDes:
+        type: "string"
+        example: "Esempio di ORD"
+        description: "descrizione dell'ordinamento di iscrizione dello studente"
+      pdsCod:
+        type: "string"
+        example: "PDS_1"
+        description: "codice del percorso di iscrizione dello studente"
+      pdsDes:
+        type: "string"
+        example: "Esempio di PDS"
+        description: "descrizione del percorso di iscrizione dello studente"
+      aaId:
+        type: "integer"
+        format: "int32"
+        example: 2011
+        description: "anno accademico di ingresso/immatricolazione in ateneo"
+      aaImm1:
+        type: "integer"
+        format: "int32"
+        example: 2016
+        description: "anno accademico di inizio carriera"
+      aaImmSu:
+        type: "integer"
+        format: "int32"
+        example: 2016
+        description: "anno accademico di prima immatricolazione al sistema universitario"
+      dataImm:
+        type: "string"
+        example: "10/10/2016"
+        description: "data ingresso/immatricolazione in ateneo"
+      dataImm1:
+        type: "string"
+        example: "10/10/2016"
+        description: "data inizio carriera"
+      dataImmSu:
+        type: "string"
+        example: "10/10/2016"
+        description: "data prima immatricolazione nel sistema universitario"
+      dataChiusura:
+        type: "string"
+        example: "10/10/2017"
+        description: "data chiusura della carriera"
+      aaRegId:
+        type: "integer"
+        format: "int32"
+        example: 2016
+        description: "anno di coorte dello studente"
+      staMatCod:
+        type: "string"
+        example: "S"
+        description: "codice del dello stato dello matricola"
+      motStamatCod:
+        type: "string"
+        example: "P"
+        description: "codice del motivo dello stato dello matricola"
+      umPesoDes:
+        type: "string"
+        example: "Crediti"
+        description: "Descrizione della misura per il peso degli insegnamenti"
+      codiceLettore:
+        type: "string"
+        example: "7000"
+        description: "codice istat dell ateneo"
+      titoloStudio:
+        type: "integer"
+        format: "int64"
+        example: 3
+        description: "rappresentazione numerica del tipo titolo di studio"
+      tipoLettore:
+        type: "string"
+        example: "SM"
+        description: "sigla del tipo titolo (sd, PE, SP, SM, SF)"
+      autDatiPersonali:
+        type: "string"
+        example: "S"
+        description: "autorizzazione ai dati personali"
+      statoTasse:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "rappresentazione numerica dello stato del pagamento delle tasse"
+      aaIscrId:
+        type: "integer"
+        format: "int64"
+        example: 2016
+        description: "anno accademico di ultima iscrizione"
+      dataIscr:
+        type: "string"
+        example: "22/02/2016"
+        description: "data di ultima iscrizione"
+      tipoCatAmmId:
+        type: "integer"
+        format: "int64"
+        example: 994
+        description: "identificativo della tipologia di categoria amministrativa"
+      tipoCatAmmDes:
+        type: "string"
+        example: "Cadetti"
+        description: "descrizione della tipologia di categoria amministrativa"
+      idAb:
+        type: "integer"
+        example: 423
+        description: "identificativo U-gov"
+      codFis:
+        type: "string"
+        example: "QWEASD98Z12L456G"
+        description: "codice fiscale della personae"
+        maxLength: 16
+      extStuCod:
+        type: "string"
+        example: "codiceEsterno123"
+        description: "Codice esterno carriera"
+    x-layout-name: "STU_TRATTICARRIERE_REST"
+    x-winsession-name: "p04/n_am_p04_winsession_rest"
+    x-model-sub-package: "anagrafica.v1"
+    x-model-sub-path: "anagrafica/v1"
+  UtenteAlias:
+    type: "object"
+    properties:
+      alias:
+        type: "string"
+        example: "alias"
+        description: "alias dell'utente"
+        maxLength: 512
+      dataScadenza:
+        type: "string"
+        format: "int64"
+        example: "01/01/2025"
+        description: "data di scadenza dell'alias"
+      tipologia:
+        type: "string"
+        example: "SPID_CODE"
+        description: "tipologia dell'alias"
+        maxLength: 80
+    x-layout-name: "ALIAS_INFO_REST"
+    x-winsession-name: "p18/n_si_18_021_gestione_utente"
+    x-model-sub-package: "anagrafica.v1"
+    x-model-sub-path: "anagrafica/v1"
+parameters:
+  grpId:
+    name: "grpId"
+    in: "query"
+    description: "id univoco che consente di individuare il gruppo utente"
+    required: false
+    type: "integer"
+    format: "int64"
+  grants:
+    name: "grants"
+    in: "query"
+    description: "elenco nomi funzioni separati da virgola"
+    required: false
+    type: "string"
+  codFis:
+    name: "codFis"
+    in: "query"
+    description: "codice fiscale dell'utente"
+    required: false
+    type: "string"
+  userIdQuery:
+    name: "userId"
+    in: "query"
+    description: "userId"
+    required: false
+    type: "string"
+  cognome:
+    name: "cognome"
+    in: "query"
+    description: "cognome dell'utente (se viene utilizzato il carattere * viene applicato\
+      \ il like)"
+    required: false
+    type: "string"
+  abilRecuperoAlias:
+    name: "abilRecuperoAlias"
+    in: "query"
+    description: "Indica che l’utente indicato sarà ricercato sia tra gli utenti che\
+      \ tra gli alias validi. 0-la ricerca sarà per il solo utente. 1-la ricerca sarà\
+      \ per utente e alias"
+    required: false
+    type: "integer"
+    maximum: 1.0
+    minimum: 0.0
+    format: "int32"
+  cieCode:
+    name: "cieCode"
+    in: "query"
+    description: "Identificativo credenziali CIE"
+    required: false
+    type: "string"
+  spidCode:
+    name: "spidCode"
+    in: "query"
+    description: "Identificativo credenziali SPID"
+    required: false
+    type: "string"
+  nome:
+    name: "nome"
+    in: "query"
+    description: "nome dell'utente (se viene utilizzato il carattere * viene applicato\
+      \ il like)"
+    required: false
+    type: "string"
+  userId:
+    name: "userId"
+    in: "path"
+    description: "id univoco che consente di individuare l'account utente"
+    required: true
+    type: "string"
+  motStastuCod:
+    name: "motStastuCod"
+    in: "query"
+    description: "codice del motivo dello stato della carriera"
+    required: false
+    type: "string"
+  idAb:
+    name: "identificativo U-Gov"
+    in: "query"
+    description: "identificativo di U-Gov che permette di ritirare le informazioni\
+      \ dei responsabili."
+    required: false
+    type: "string"
+  staStuCod:
+    name: "staStuCod"
+    in: "query"
+    description: "codice dello stato della carriera"
+    required: false
+    type: "string"
+  matricolaStudente:
+    name: "matricolaStudente"
+    in: "query"
+    description: "matricola dello studente"
+    required: false
+    type: "string"
+  extStuCod:
+    name: "Codice esterno carriera"
+    in: "query"
+    description: "codice esterno carriera"
+    required: false
+    type: "string"
+externalDocs:
+  description: "Documentazione Geneale sui servizi REST"
+  url: "https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3"
+x-file-status: "PROD"
+x-file-name: "p18-utentiApiV1.yaml"
+x-api-status: "PROD"
+x-func-cod: "RST_UTENV1"
+x-anchor-definitions:
+  common-produces-mediaType:
+    produces:
+    - "application/octet-stream"
+x-security-definitions:
+  check-student-permissions:
+    kind: "STUDENTE"
+    profiles:
+    - profile:
+        name: "STUDENTE"
+        description: "Permette la visualizzazone delle carriere dello studente"
+        checks:
+        - checkMatId:
+            className: "Security"
+            functionName: "checkUserIdStudente"
+            description: "controlla che lo user_id appartenga allo studente loggato"
+            parameters:
+            - userId: "{\"name\":\"userId\",\"in\":\"path\",\"description\":\"id univoco\
+                \ che consente di individuare l'account utente\",\"required\":true,\"\
+                type\":\"string\",\"items\":null,\"collectionFormat\":null,\"default\"\
+                :null,\"maximum\":null,\"exclusiveMaximum\":null,\"minimum\":null,\"\
+                exclusiveMinimum\":null,\"maxLength\":null,\"minLength\":null,\"pattern\"\
+                :null,\"maxItems\":null,\"minItems\":null,\"uniqueItems\":null,\"\
+                multipleOf\":null,\"format\":null,\"x-example\":null,\"enum\":null}"
+  user-tecnico-permissions:
+    kind: "USER_TECNICO"
+    profiles:
+    - profile:
+        name: "UTENTE_TECNICO"
+        description: "funzione accessibile alle utenze tecniche per accessi ai servizi\
+          \ REST"
+        checks:
+        - checkDummy:
+            className: "Security"
+            functionName: "checkUserTecnico"
+            description: "controlla che l'utente abbia gli accessi per i corsi a lui\
+              \ abilitati"
+x-cache-type: "lowRefreshRateUserIndependent"

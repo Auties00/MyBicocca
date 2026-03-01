@@ -1,0 +1,3938 @@
+---
+swagger: "2.0"
+info:
+  description: "API REST di ESSE3 per accedere alle strutture concorsuali, i servizi\
+    \ permettono di recuperare la configurazione dei concorsi, recuperare le iscrizioni,\
+    \ le classifiche, le graduatorie ed effettuare gli inserimenti di esse.\nLa documentazione\
+    \ è consultabile al link https://wiki.u-gov.it/confluence/display/ESSE3/WS+ESSE3+Area+Concorsi\n\
+    ## ChangeLog\n  \nVersione       | Versione di Esse3 di rilascio | Interventi\
+    \ \n-              | -                             | -\n    1.0.0      | 21.10.00.00\
+    \                   | aggiunta API recupero dati di configurazione dei concorsi\n"
+  version: "1.0.0"
+  title: "ESSE3 servizi API"
+basePath: "/concorsi-service-v2"
+schemes:
+- "https"
+- "http"
+consumes:
+- "application/json"
+produces:
+- "application/json"
+security:
+- basicAuth: []
+- jwt:
+  - "openid"
+paths:
+  /concorsi:
+    get:
+      tags:
+      - "concorsi"
+      summary: "Configurazione concorsi"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>Recupera la lista degli oggetti  `Concorso`.\n\
+        \n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n-|-|-\nx-cache-type|lowRefreshRateUserDependent|Risorsa\
+        \ che varia con frequenza bassa, cache Http abilitata, cache server disabilitata.\
+        \ Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: user-tecnico-permissions**\n\nProfilo|Controllo| Funzione\n-|-|-\n\
+        UTENTE_TECNICO|funzione accessibile alle utenze tecniche per accessi ai servizi\
+        \ REST|Security.checkUserTecnico()\n\n\nClasse di modello : Concorso\n======\n\
+        \nEstensioni sulle proprietà\n----\nProprietà | x-field-type\n-|-|\naaId|primaryKey\n\
+        testId|primaryKey\n\n\nClasse di modello : DettaglioErroreAggiuntivo\n======\n\
+        \nEstensioni sulle proprietà\n----\nProprietà | x-field-type\n-|-|\nrawValue|rawJson\n"
+      operationId: "getConcorsi"
+      parameters:
+      - name: "aaId"
+        in: "query"
+        description: "anno concorso"
+        required: false
+        type: "integer"
+        format: "int64"
+      - name: "filter"
+        in: "query"
+        description: "il parametro consente di applicare dei filtri alla classe di\
+          \ modello utilizzando il linguaggio  [RSQL](https://github.com/jirutka/rsql-parser).\n\
+          La lista degli operatori utilizzabili è disponibile [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosullerigherecuperate)\
+          \   \n   *NB* il filtro viene applicato DOPO aver recuperato i dati\n"
+        required: false
+        type: "string"
+      responses:
+        "200":
+          description: "Successful response"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/Concorso"
+        "422":
+          description: "parametri Errati"
+          schema:
+            $ref: "#/definitions/DettaglioErrore"
+      x-enabled-profiles:
+      - user-tecnico-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UTENTE_TECNICO"
+              description: "funzione accessibile alle utenze tecniche per accessi\
+                \ ai servizi REST"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkUserTecnico"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+      x-cache-type: "lowRefreshRateUserDependent"
+  /concorsi/graduatoria/{aaId}/{testId}:
+    get:
+      tags:
+      - "graduatorie"
+      summary: "Graduatoria di un concorso"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>Recupera la graduatoria di un concorso tramite\
+        \ aaId e testId\n\n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n-|-|-\n\
+        x-cache-type|lowRefreshRateUserDependent|Risorsa che varia con frequenza bassa,\
+        \ cache Http abilitata, cache server disabilitata. Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: USER_TECNICO**\n\nProfilo|Controllo| Funzione\n-|-|-\nUTENTE_TECNICO|funzione\
+        \ accessibile alle utenze tecniche per accessi ai servizi REST|Security.checkUserTecnico()\n\
+        \n\nClasse di modello : DettaglioErroreAggiuntivo\n======\n\nEstensioni sulle\
+        \ proprietà\n----\nProprietà | x-field-type\n-|-|\nrawValue|rawJson\n"
+      operationId: "getGraduatoriaConcorso"
+      parameters:
+      - name: "aaId"
+        in: "path"
+        description: "anno concorso"
+        required: true
+        type: "integer"
+        format: "int64"
+      - name: "testId"
+        in: "path"
+        description: "test id concorso"
+        required: true
+        type: "integer"
+        format: "int64"
+      - name: "persId"
+        in: "query"
+        description: "indetificativo persona"
+        required: false
+        type: "integer"
+        format: "int64"
+      - name: "start"
+        in: "query"
+        description: "utilizzato insieme a `limit` per indicare la paginazione sui\
+          \ record; `start` indica il numero del primo record da caricare (se non\
+          \ indicato viene utilizzato 0)\n"
+        required: false
+        type: "integer"
+        format: "int32"
+      - name: "limit"
+        in: "query"
+        description: "utilizzato insieme a `start` per indicare la paginazione sui\
+          \ record, `limit` indica il numero di record da recuperare (a partire da\
+          \ `start`); \nse non indicato viene utilizzato 50, i valori consentiti vanno\
+          \ da 0 a 100\n"
+        required: false
+        type: "integer"
+        format: "int32"
+      responses:
+        "200":
+          description: "Successful response"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/GraduatoriaConcorso"
+        "422":
+          description: "parametri Errati"
+          schema:
+            $ref: "#/definitions/DettaglioErrore"
+      x-enabled-profiles:
+      - user-tecnico-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UTENTE_TECNICO"
+              description: "funzione accessibile alle utenze tecniche per accessi\
+                \ ai servizi REST"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkUserTecnico"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+      x-cache-type: "lowRefreshRateUserDependent"
+  /concorsi/graduatoria/{aaId}/{testId}/{dettTestId}:
+    get:
+      tags:
+      - "graduatorie"
+      summary: "Graduatoria di un dettaglio concorso"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>Recupera il dettaglio di una graduatoria di\
+        \ un concorso tramite aaId, testId e dettTestId\n\n\n**Estensioni:**\n\nCodice\
+        \ Estensione|Valore|Nota\n-|-|-\nx-cache-type|lowRefreshRateUserDependent|Risorsa\
+        \ che varia con frequenza bassa, cache Http abilitata, cache server disabilitata.\
+        \ Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: USER_TECNICO**\n\nProfilo|Controllo| Funzione\n-|-|-\nUTENTE_TECNICO|funzione\
+        \ accessibile alle utenze tecniche per accessi ai servizi REST|Security.checkUserTecnico()\n\
+        \n\nClasse di modello : DettaglioErroreAggiuntivo\n======\n\nEstensioni sulle\
+        \ proprietà\n----\nProprietà | x-field-type\n-|-|\nrawValue|rawJson\n"
+      operationId: "getDettgalioGraduatoriaConcorso"
+      parameters:
+      - name: "aaId"
+        in: "path"
+        description: "anno concorso"
+        required: true
+        type: "integer"
+        format: "int64"
+      - name: "testId"
+        in: "path"
+        description: "test id concorso"
+        required: true
+        type: "integer"
+        format: "int64"
+      - name: "dettTestId"
+        in: "path"
+        description: "identificativo dettaglio concorso"
+        required: true
+        type: "integer"
+        format: "int64"
+      - name: "start"
+        in: "query"
+        description: "utilizzato insieme a `limit` per indicare la paginazione sui\
+          \ record; `start` indica il numero del primo record da caricare (se non\
+          \ indicato viene utilizzato 0)\n"
+        required: false
+        type: "integer"
+        format: "int32"
+      - name: "limit"
+        in: "query"
+        description: "utilizzato insieme a `start` per indicare la paginazione sui\
+          \ record, `limit` indica il numero di record da recuperare (a partire da\
+          \ `start`); \nse non indicato viene utilizzato 50, i valori consentiti vanno\
+          \ da 0 a 100\n"
+        required: false
+        type: "integer"
+        format: "int32"
+      responses:
+        "200":
+          description: "Successful response"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/GraduatoriaConcorso"
+        "422":
+          description: "parametri Errati"
+          schema:
+            $ref: "#/definitions/DettaglioErrore"
+      x-enabled-profiles:
+      - user-tecnico-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UTENTE_TECNICO"
+              description: "funzione accessibile alle utenze tecniche per accessi\
+                \ ai servizi REST"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkUserTecnico"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+      x-cache-type: "lowRefreshRateUserDependent"
+  /concorsi/graduatoria/{persId}/{posId}/persona:
+    get:
+      tags:
+      - "graduatorie"
+      summary: "Graduatoria di una persona"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>Recupera la graduatoria di una persona a partire\
+        \ da persId e posId\n\n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n\
+        -|-|-\nx-cache-type|lowRefreshRateUserDependent|Risorsa che varia con frequenza\
+        \ bassa, cache Http abilitata, cache server disabilitata. Maggiori dettagli\
+        \ [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: USER_TECNICO**\n\nProfilo|Controllo| Funzione\n-|-|-\nUTENTE_TECNICO|funzione\
+        \ accessibile alle utenze tecniche per accessi ai servizi REST|Security.checkUserTecnico()\n\
+        \n\nClasse di modello : DettaglioErroreAggiuntivo\n======\n\nEstensioni sulle\
+        \ proprietà\n----\nProprietà | x-field-type\n-|-|\nrawValue|rawJson\n"
+      operationId: "getGraduatoriaPersona"
+      parameters:
+      - name: "persId"
+        in: "path"
+        description: "identificativo persona"
+        required: true
+        type: "integer"
+        format: "int64"
+      - name: "posId"
+        in: "path"
+        description: "identificativo posizione"
+        required: true
+        type: "integer"
+        format: "int64"
+      responses:
+        "200":
+          description: "Successful response"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/GraduatoriaConcorso"
+        "422":
+          description: "parametri Errati"
+          schema:
+            $ref: "#/definitions/DettaglioErrore"
+      x-enabled-profiles:
+      - user-tecnico-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UTENTE_TECNICO"
+              description: "funzione accessibile alle utenze tecniche per accessi\
+                \ ai servizi REST"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkUserTecnico"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+      x-cache-type: "lowRefreshRateUserDependent"
+  /concorsi/{aaId}/{testId}:
+    get:
+      tags:
+      - "concorsi"
+      summary: "Configurazione concorsi"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>Recupera la configurazione di un singolo `ConcorsoConDettagli`.\n\
+        \n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n-|-|-\nx-cache-type|lowRefreshRateUserDependent|Risorsa\
+        \ che varia con frequenza bassa, cache Http abilitata, cache server disabilitata.\
+        \ Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: USER_TECNICO**\n\nProfilo|Controllo| Funzione\n-|-|-\nUTENTE_TECNICO|funzione\
+        \ accessibile alle utenze tecniche per accessi ai servizi REST|Security.checkUserTecnico()\n\
+        \n\nClasse di modello : ConcorsoConDettagli\n======\n\nEstensioni sulle proprietà\
+        \n----\nProprietà | x-field-type\n-|-|\naaId|primaryKey\ntestId|primaryKey\n\
+        aaId|primaryKey\ntestId|primaryKey\n\n\nClasse di modello : Concorso\n======\n\
+        \nEstensioni sulle proprietà\n----\nProprietà | x-field-type\n-|-|\naaId|primaryKey\n\
+        testId|primaryKey\n\n\nClasse di modello : DettaglioTestConc\n======\n\nEstensioni\
+        \ sulle proprietà\n----\nProprietà | x-field-type\n-|-|\naaId|primaryKey\n\
+        testId|primaryKey\ndettTestId|primaryKey\n\n\nClasse di modello : DettaglioPrefPds\n\
+        ======\n\nEstensioni sulle proprietà\n----\nProprietà | x-field-type\n-|-|\n\
+        aaId|primaryKey\ntestId|primaryKey\ndettTestId|primaryKey\ncdsId|primaryKey\n\
+        aaOrdId|primaryKey\npdsId|primaryKey\n\n\nClasse di modello : DettaglioPrefSedi\n\
+        ======\n\nEstensioni sulle proprietà\n----\nProprietà | x-field-type\n-|-|\n\
+        aaId|primaryKey\ntestId|primaryKey\ndettTestId|primaryKey\nsedeId|primaryKey\n\
+        \n\nClasse di modello : DettaglioPrefLingue\n======\n\nEstensioni sulle proprietà\
+        \n----\nProprietà | x-field-type\n-|-|\naaId|primaryKey\ntestId|primaryKey\n\
+        concLingueId|primaryKey\n\n\nClasse di modello : DettaglioPrefBorse\n======\n\
+        \nEstensioni sulle proprietà\n----\nProprietà | x-field-type\n-|-|\naaId|primaryKey\n\
+        testId|primaryKey\nconcBorseId|primaryKey\n\n\nClasse di modello : DettaglioErroreAggiuntivo\n\
+        ======\n\nEstensioni sulle proprietà\n----\nProprietà | x-field-type\n-|-|\n\
+        rawValue|rawJson\n"
+      operationId: "getConcorso"
+      parameters:
+      - name: "aaId"
+        in: "path"
+        description: "anno concorso"
+        required: true
+        type: "integer"
+        format: "int64"
+      - name: "testId"
+        in: "path"
+        description: "test id concorso"
+        required: true
+        type: "integer"
+        format: "int64"
+      - name: "start"
+        in: "query"
+        description: "utilizzato insieme a `limit` per indicare la paginazione sui\
+          \ record; `start` indica il numero del primo record da caricare (se non\
+          \ indicato viene utilizzato 0)\n"
+        required: false
+        type: "integer"
+        format: "int32"
+      - name: "limit"
+        in: "query"
+        description: "utilizzato insieme a `start` per indicare la paginazione sui\
+          \ record, `limit` indica il numero di record da recuperare (a partire da\
+          \ `start`); \nse non indicato viene utilizzato 50, i valori consentiti vanno\
+          \ da 0 a 100\n"
+        required: false
+        type: "integer"
+        format: "int32"
+      responses:
+        "200":
+          description: "Successful response"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/ConcorsoConDettagli"
+        "422":
+          description: "parametri Errati"
+          schema:
+            $ref: "#/definitions/DettaglioErrore"
+      x-enabled-profiles:
+      - user-tecnico-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UTENTE_TECNICO"
+              description: "funzione accessibile alle utenze tecniche per accessi\
+                \ ai servizi REST"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkUserTecnico"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+      x-cache-type: "lowRefreshRateUserDependent"
+  /concorsi/{aaId}/{testId}/classifica/{proveConcId}:
+    put:
+      tags:
+      - "classifiche"
+      summary: "operazione di import della classifica di un concorso tramite JSON"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>Operazione di import della classifica di un\
+        \ concorso tramite file JSON. Il file in ingresso deve rispettare il seguente\
+        \ tracciato    https://wiki.u-gov.it/confluence/pages/viewpage.action?pageId=81332397#Tracciatidiimportazione/esportazioneConcorsi-IMPORTAZIONECLASSIFICASTANDARDESSE3\n\
+        \n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n-|-|-\nx-cache-type|configuration|Risorsa\
+        \ di configurazione, la variazione è molto lenta, cache Http abilitata, cache\
+        \ server abilitata. Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: USER_TECNICO**\n\nProfilo|Controllo| Funzione\n-|-|-\nUTENTE_TECNICO|funzione\
+        \ accessibile alle utenze tecniche per accessi ai servizi REST|Security.checkUserTecnico()\n\
+        \n\nClasse di modello : DettaglioErroreAggiuntivo\n======\n\nEstensioni sulle\
+        \ proprietà\n----\nProprietà | x-field-type\n-|-|\nrawValue|rawJson\n"
+      operationId: "putClassificaConcorso"
+      parameters:
+      - name: "aaId"
+        in: "path"
+        description: "anno concorso"
+        required: true
+        type: "integer"
+        format: "int64"
+      - name: "testId"
+        in: "path"
+        description: "test id concorso"
+        required: true
+        type: "integer"
+        format: "int64"
+      - name: "proveConcId"
+        in: "path"
+        description: "identificativo prova concorso"
+        required: true
+        type: "integer"
+        format: "int64"
+      - name: "tipologiaFile"
+        in: "query"
+        description: "tipologia del file di import classifiche"
+        required: true
+        type: "string"
+        enum:
+        - "STD"
+        - "MED_CINECA"
+      - in: "body"
+        name: "body"
+        description: "Oggetto che contiene la riga da inserire"
+        required: true
+        schema:
+          type: "array"
+          items:
+            $ref: "#/definitions/ImportClassifica"
+      responses:
+        "201":
+          description: "Upload Succeded"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/ImportResponse"
+        "422":
+          description: "Aggiornamento non riuscito"
+          schema:
+            $ref: "#/definitions/DettaglioErrore"
+      x-enabled-profiles:
+      - user-tecnico-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UTENTE_TECNICO"
+              description: "funzione accessibile alle utenze tecniche per accessi\
+                \ ai servizi REST"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkUserTecnico"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+      x-custom-operation: "single"
+      x-cache-endpoint-relations:
+        canonicalEndpointsAction: "invalidate"
+        customEndpoints:
+        - operationId: "getClassificaConcorso"
+          action: "invalidate"
+        - operationId: "getClassificaPersona"
+          action: "invalidate"
+  /concorsi/{aaId}/{testId}/classifica/{proveConcId}/file:
+    put:
+      tags:
+      - "classifiche"
+      summary: "operazione di import della classifica di un concorso tramite file\
+        \ txt o csv"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>Operazione di import della classifica di un\
+        \ concorso tramite file txt o csv. Il file in ingresso deve rispettare il\
+        \ seguente tracciato    https://wiki.u-gov.it/confluence/pages/viewpage.action?pageId=81332397#Tracciatidiimportazione/esportazioneConcorsi-IMPORTAZIONECLASSIFICASTANDARDESSE3\n\
+        \n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n-|-|-\nx-cache-type|configuration|Risorsa\
+        \ di configurazione, la variazione è molto lenta, cache Http abilitata, cache\
+        \ server abilitata. Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: USER_TECNICO**\n\nProfilo|Controllo| Funzione\n-|-|-\nUTENTE_TECNICO|funzione\
+        \ accessibile alle utenze tecniche per accessi ai servizi REST|Security.checkUserTecnico()\n\
+        \n\nClasse di modello : DettaglioErroreAggiuntivo\n======\n\nEstensioni sulle\
+        \ proprietà\n----\nProprietà | x-field-type\n-|-|\nrawValue|rawJson\n"
+      operationId: "putClassificaConcorsoFile"
+      consumes:
+      - "multipart/form-data"
+      parameters:
+      - name: "aaId"
+        in: "path"
+        description: "identificativo anno"
+        required: true
+        type: "integer"
+        format: "int64"
+      - name: "testId"
+        in: "path"
+        description: "identificativo del concorso"
+        required: true
+        type: "integer"
+        format: "int64"
+      - name: "proveConcId"
+        in: "path"
+        description: "identificativo della prova"
+        required: true
+        type: "integer"
+        format: "int64"
+      - name: "tipologiaFile"
+        in: "query"
+        description: "tipologia del file di import classifiche"
+        required: true
+        type: "string"
+        enum:
+        - "STD"
+        - "MED_CINECA"
+      - name: "uploadFile"
+        in: "formData"
+        description: "allegato da inserire"
+        required: false
+        type: "file"
+      responses:
+        "201":
+          description: "Upload Succeded"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/ImportResponse"
+        "422":
+          description: "Parametri Errati"
+          schema:
+            $ref: "#/definitions/DettaglioErrore"
+      x-enabled-profiles:
+      - user-tecnico-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UTENTE_TECNICO"
+              description: "funzione accessibile alle utenze tecniche per accessi\
+                \ ai servizi REST"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkUserTecnico"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+      x-custom-operation: "single"
+      x-cache-endpoint-relations:
+        canonicalEndpointsAction: "invalidate"
+        customEndpoints:
+        - operationId: "getClassificaConcorso"
+          action: "invalidate"
+        - operationId: "getClassificaPersona"
+          action: "invalidate"
+  /concorsi/{aaId}/{testId}/classificaConcorso:
+    get:
+      tags:
+      - "classifiche"
+      summary: "Classifica delle prove di un concorso"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>Recupera la classifica di un concorso tramite\
+        \ aaId e testId\n\n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n-|-|-\n\
+        x-cache-type|lowRefreshRateUserDependent|Risorsa che varia con frequenza bassa,\
+        \ cache Http abilitata, cache server disabilitata. Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: USER_TECNICO**\n\nProfilo|Controllo| Funzione\n-|-|-\nUTENTE_TECNICO|funzione\
+        \ accessibile alle utenze tecniche per accessi ai servizi REST|Security.checkUserTecnico()\n\
+        \n\nClasse di modello : ClassificaConcorso\n======\n\nEstensioni sulle proprietà\
+        \n----\nProprietà | x-field-type\n-|-|\nproveConcId|primaryKey\npersId|primaryKey\n\
+        posId|primaryKey\n\n\nClasse di modello : ClassificaMaterie\n======\n\nEstensioni\
+        \ sulle proprietà\n----\nProprietà | x-field-type\n-|-|\nclassifDettId|primaryKey\n\
+        classificaMateriaId|primaryKey\npersId|primaryKey\nposId|primaryKey\nproveConcId|primaryKey\n\
+        \n\nClasse di modello : DettaglioErroreAggiuntivo\n======\n\nEstensioni sulle\
+        \ proprietà\n----\nProprietà | x-field-type\n-|-|\nrawValue|rawJson\n"
+      operationId: "getClassificaConcorso"
+      parameters:
+      - name: "aaId"
+        in: "path"
+        description: "anno concorso"
+        required: true
+        type: "integer"
+        format: "int64"
+      - name: "testId"
+        in: "path"
+        description: "test id concorso"
+        required: true
+        type: "integer"
+        format: "int64"
+      - name: "persId"
+        in: "query"
+        description: "indetificativo persona"
+        required: false
+        type: "integer"
+        format: "int64"
+      - name: "order"
+        in: "query"
+        description: "consente di specificare un ordine per il recupero dei record.\
+          \ La sintassi è la seguente\n * +/- : specifica l'ordinamento (+ = ASC,\
+          \ - = DESC); se omesso viene utilizzato +\n * field : nome del campo da\
+          \ ordinare\n \n E' possibile indicare più campi separandoli da virgola (Es:\
+          \ +annoCorso,+adCod) \n"
+        required: false
+        type: "string"
+      - name: "start"
+        in: "query"
+        description: "utilizzato insieme a `limit` per indicare la paginazione sui\
+          \ record; `start` indica il numero del primo record da caricare (se non\
+          \ indicato viene utilizzato 0)\n"
+        required: false
+        type: "integer"
+        format: "int32"
+      - name: "limit"
+        in: "query"
+        description: "utilizzato insieme a `start` per indicare la paginazione sui\
+          \ record, `limit` indica il numero di record da recuperare (a partire da\
+          \ `start`); \nse non indicato viene utilizzato 50, i valori consentiti vanno\
+          \ da 0 a 100\n"
+        required: false
+        type: "integer"
+        format: "int32"
+      responses:
+        "200":
+          description: "Successful response"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/ClassificaConcorso"
+        "422":
+          description: "parametri Errati"
+          schema:
+            $ref: "#/definitions/DettaglioErrore"
+      x-enabled-profiles:
+      - user-tecnico-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UTENTE_TECNICO"
+              description: "funzione accessibile alle utenze tecniche per accessi\
+                \ ai servizi REST"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkUserTecnico"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+      x-cache-type: "lowRefreshRateUserDependent"
+  /concorsi/{aaId}/{testId}/graduatorie/file:
+    put:
+      tags:
+      - "graduatorie"
+      summary: "operazione di import delle graduatorie di un concorso tramite file\
+        \ txt o csv"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>Operazione di import delle graduatorie di un\
+        \ concorso tramite file txt o csv. Il file in ingresso deve rispettare il\
+        \ seguente tracciato    https://wiki.u-gov.it/confluence/pages/viewpage.action?pageId=81332397#Tracciatidiimportazione/esportazioneConcorsi-IMPORTAZIONEGRADUATORIE\n\
+        \n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n-|-|-\nx-cache-type|configuration|Risorsa\
+        \ di configurazione, la variazione è molto lenta, cache Http abilitata, cache\
+        \ server abilitata. Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: USER_TECNICO**\n\nProfilo|Controllo| Funzione\n-|-|-\nUTENTE_TECNICO|funzione\
+        \ accessibile alle utenze tecniche per accessi ai servizi REST|Security.checkUserTecnico()\n\
+        \n\nClasse di modello : DettaglioErroreAggiuntivo\n======\n\nEstensioni sulle\
+        \ proprietà\n----\nProprietà | x-field-type\n-|-|\nrawValue|rawJson\n"
+      operationId: "putGraduatorieConcorsoFile"
+      consumes:
+      - "multipart/form-data"
+      parameters:
+      - name: "aaId"
+        in: "path"
+        description: "identificativo anno"
+        required: true
+        type: "integer"
+        format: "int64"
+      - name: "testId"
+        in: "path"
+        description: "identificativo del concorso"
+        required: true
+        type: "integer"
+        format: "int64"
+      - name: "uploadFile"
+        in: "formData"
+        description: "allegato da inserire"
+        required: false
+        type: "file"
+      responses:
+        "201":
+          description: "Upload Succeded"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/ImportResponse"
+        "422":
+          description: "Parametri Errati"
+          schema:
+            $ref: "#/definitions/DettaglioErrore"
+      x-enabled-profiles:
+      - user-tecnico-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UTENTE_TECNICO"
+              description: "funzione accessibile alle utenze tecniche per accessi\
+                \ ai servizi REST"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkUserTecnico"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+      x-custom-operation: "single"
+      x-cache-endpoint-relations:
+        canonicalEndpointsAction: "invalidate"
+        customEndpoints:
+        - operationId: "getGraduatoriaConcorso"
+          action: "invalidate"
+        - operationId: "getDettgalioGraduatoriaConcorso"
+          action: "invalidate"
+        - operationId: "getGraduatoriaPersona"
+          action: "invalidate"
+  /concorsi/{aaId}/{testId}/graduatorie/{dettTestId}:
+    put:
+      tags:
+      - "graduatorie"
+      summary: "operazione di import della classifica di un concorso tramite JSON"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>Operazione di import della classifica di un\
+        \ concorso tramite file JSON. Il file in ingresso deve rispettare il seguente\
+        \ tracciato    https://wiki.u-gov.it/confluence/pages/viewpage.action?pageId=81332397#Tracciatidiimportazione/esportazioneConcorsi-IMPORTAZIONEGRADUATORIE\n\
+        \n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n-|-|-\nx-cache-type|configuration|Risorsa\
+        \ di configurazione, la variazione è molto lenta, cache Http abilitata, cache\
+        \ server abilitata. Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: USER_TECNICO**\n\nProfilo|Controllo| Funzione\n-|-|-\nUTENTE_TECNICO|funzione\
+        \ accessibile alle utenze tecniche per accessi ai servizi REST|Security.checkUserTecnico()\n\
+        \n\nClasse di modello : DettaglioErroreAggiuntivo\n======\n\nEstensioni sulle\
+        \ proprietà\n----\nProprietà | x-field-type\n-|-|\nrawValue|rawJson\n"
+      operationId: "putGraduatoriaDettTest"
+      parameters:
+      - name: "aaId"
+        in: "path"
+        description: "anno concorso"
+        required: true
+        type: "integer"
+        format: "int64"
+      - name: "testId"
+        in: "path"
+        description: "test id concorso"
+        required: true
+        type: "integer"
+        format: "int64"
+      - name: "dettTestId"
+        in: "path"
+        description: "identificativo dettaglio concorso"
+        required: true
+        type: "integer"
+        format: "int64"
+      - in: "body"
+        name: "body"
+        description: "Oggetto che contiene la riga da inserire"
+        required: true
+        schema:
+          type: "array"
+          items:
+            $ref: "#/definitions/ImportGraduatoria"
+      responses:
+        "201":
+          description: "Upload Succeded"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/ImportResponse"
+        "422":
+          description: "Aggiornamento non riuscito"
+          schema:
+            $ref: "#/definitions/DettaglioErrore"
+      x-enabled-profiles:
+      - user-tecnico-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UTENTE_TECNICO"
+              description: "funzione accessibile alle utenze tecniche per accessi\
+                \ ai servizi REST"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkUserTecnico"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+      x-custom-operation: "single"
+      x-cache-endpoint-relations:
+        canonicalEndpointsAction: "invalidate"
+        customEndpoints:
+        - operationId: "getGraduatoriaConcorso"
+          action: "invalidate"
+        - operationId: "getDettgalioGraduatoriaConcorso"
+          action: "invalidate"
+        - operationId: "getGraduatoriaPersona"
+          action: "invalidate"
+  /concorsi/{aaId}/{testId}/graduatorie/{dettTestId}/file:
+    put:
+      tags:
+      - "graduatorie"
+      summary: "operazione di import della singola graduatoria tramite file txt o\
+        \ csv"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>Operazione di import delle graduatorie di un\
+        \ concorso tramite file txt o csv. Il file in ingresso deve rispettare il\
+        \ seguente tracciato    https://wiki.u-gov.it/confluence/pages/viewpage.action?pageId=81332397#Tracciatidiimportazione/esportazioneConcorsi-IMPORTAZIONEGRADUATORIE\n\
+        \n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n-|-|-\nx-cache-type|configuration|Risorsa\
+        \ di configurazione, la variazione è molto lenta, cache Http abilitata, cache\
+        \ server abilitata. Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: USER_TECNICO**\n\nProfilo|Controllo| Funzione\n-|-|-\nUTENTE_TECNICO|funzione\
+        \ accessibile alle utenze tecniche per accessi ai servizi REST|Security.checkUserTecnico()\n\
+        \n\nClasse di modello : DettaglioErroreAggiuntivo\n======\n\nEstensioni sulle\
+        \ proprietà\n----\nProprietà | x-field-type\n-|-|\nrawValue|rawJson\n"
+      operationId: "putGraduatoriaDettTestFile"
+      consumes:
+      - "multipart/form-data"
+      parameters:
+      - name: "aaId"
+        in: "path"
+        description: "identificativo anno"
+        required: true
+        type: "integer"
+        format: "int64"
+      - name: "testId"
+        in: "path"
+        description: "identificativo del concorso"
+        required: true
+        type: "integer"
+        format: "int64"
+      - name: "dettTestId"
+        in: "path"
+        description: "identificativo del dettaglio concorso"
+        required: true
+        type: "integer"
+        format: "int64"
+      - name: "uploadFile"
+        in: "formData"
+        description: "allegato da inserire"
+        required: false
+        type: "file"
+      responses:
+        "201":
+          description: "Upload Succeded"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/ImportResponse"
+        "422":
+          description: "Parametri Errati"
+          schema:
+            $ref: "#/definitions/DettaglioErrore"
+      x-enabled-profiles:
+      - user-tecnico-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UTENTE_TECNICO"
+              description: "funzione accessibile alle utenze tecniche per accessi\
+                \ ai servizi REST"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkUserTecnico"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+      x-custom-operation: "single"
+      x-cache-endpoint-relations:
+        canonicalEndpointsAction: "invalidate"
+        customEndpoints:
+        - operationId: "getGraduatoriaConcorso"
+          action: "invalidate"
+        - operationId: "getDettgalioGraduatoriaConcorso"
+          action: "invalidate"
+        - operationId: "getGraduatoriaPersona"
+          action: "invalidate"
+  /concorsi/{aaId}/{testId}/iscrizioni:
+    get:
+      tags:
+      - "iscrizione concorsi"
+      summary: "Iscrizioni concorsi"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>Recupera la lista degli isrcitti ad un concorso.\n\
+        \n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n-|-|-\nx-cache-type|lowRefreshRateUserDependent|Risorsa\
+        \ che varia con frequenza bassa, cache Http abilitata, cache server disabilitata.\
+        \ Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: USER_TECNICO**\n\nProfilo|Controllo| Funzione\n-|-|-\nUTENTE_TECNICO|funzione\
+        \ accessibile alle utenze tecniche per accessi ai servizi REST|Security.checkUserTecnico()\n\
+        \n\nClasse di modello : IscrittiConcorso\n======\n\nEstensioni sulle proprietà\
+        \n----\nProprietà | x-field-type\n-|-|\naaId|primaryKey\ntestId|primaryKey\n\
+        \n\nClasse di modello : DettaglioErroreAggiuntivo\n======\n\nEstensioni sulle\
+        \ proprietà\n----\nProprietà | x-field-type\n-|-|\nrawValue|rawJson\n"
+      operationId: "getIscrittiConcorso"
+      parameters:
+      - name: "aaId"
+        in: "path"
+        description: "anno concorso"
+        required: true
+        type: "integer"
+        format: "int64"
+      - name: "persId"
+        in: "query"
+        description: "indetificativo persona"
+        required: false
+        type: "integer"
+        format: "int64"
+      - name: "testId"
+        in: "path"
+        description: "test id concorso"
+        required: true
+        type: "integer"
+        format: "int64"
+      - name: "start"
+        in: "query"
+        description: "utilizzato insieme a `limit` per indicare la paginazione sui\
+          \ record; `start` indica il numero del primo record da caricare (se non\
+          \ indicato viene utilizzato 0)\n"
+        required: false
+        type: "integer"
+        format: "int32"
+      - name: "limit"
+        in: "query"
+        description: "utilizzato insieme a `start` per indicare la paginazione sui\
+          \ record, `limit` indica il numero di record da recuperare (a partire da\
+          \ `start`); \nse non indicato viene utilizzato 50, i valori consentiti vanno\
+          \ da 0 a 100\n"
+        required: false
+        type: "integer"
+        format: "int32"
+      responses:
+        "200":
+          description: "Successful response"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/IscrittiConcorso"
+        "422":
+          description: "parametri Errati"
+          schema:
+            $ref: "#/definitions/DettaglioErrore"
+      x-enabled-profiles:
+      - user-tecnico-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UTENTE_TECNICO"
+              description: "funzione accessibile alle utenze tecniche per accessi\
+                \ ai servizi REST"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkUserTecnico"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+      x-cache-type: "lowRefreshRateUserDependent"
+  /concorsi/{aaId}/{testId}/iscrizioni/{persId}:
+    put:
+      tags:
+      - "iscrizione concorsi"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>Consente a sistemi esterni di iscrivere un\
+        \ candidato al concorso.\nLe chiavi richieste nel body sono recuperabili dalla\
+        \ GET `/concorsi/{aaId}/{testId}`.\n##### Codici di ritorno della funzione\
+        \ Codice di Ritorno | Descrizione -                 | -\n -1   | Errore\n\
+        \ -2   | Preferenze non corrette \n -3   | Parametri obbligatori non valorizzati\n\
+        \ 1    | Iscrizione avvenuta con successo\n 2    | L'ammissione al test di\
+        \ ingresso è stata effettuata ma la persona non è stata inserita in classifica\
+        \ in quanto non ha pagato la tassa di ammissione \n 3    | Persona gia' ammessa\
+        \ al test \n 4    | Ammissione non fattibile: lo studente non soddisfa le\
+        \ condizioni di ammissibilità\n 5    | Errore in fase di caricamento graduatoria\
+        \ persona da WS\n\n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n-|-|-\n\
+        x-cache-type|configuration|Risorsa di configurazione, la variazione è molto\
+        \ lenta, cache Http abilitata, cache server abilitata. Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: USER_TECNICO**\n\nProfilo|Controllo| Funzione\n-|-|-\nUTENTE_TECNICO|funzione\
+        \ accessibile alle utenze tecniche per accessi ai servizi REST|Security.checkUserTecnico()\n\
+        \n\nClasse di modello : DettaglioIscrittoConcorso\n======\n\nEstensioni sulle\
+        \ proprietà\n----\nProprietà | x-field-type\n-|-|\npersId|primaryKey\nposId|primaryKey\n\
+        \n\nClasse di modello : LinguaConcorso\n======\n\nEstensioni sulle proprietà\
+        \n----\nProprietà | x-field-type\n-|-|\npersId|primaryKey\nposId|primaryKey\n\
+        \n\nClasse di modello : DettaglioSede\n======\n\nEstensioni sulle proprietà\
+        \n----\nProprietà | x-field-type\n-|-|\npersId|primaryKey\nposId|primaryKey\n\
+        \n\nClasse di modello : DettaglioPds\n======\n\nEstensioni sulle proprietà\
+        \n----\nProprietà | x-field-type\n-|-|\npersId|primaryKey\nposId|primaryKey\n\
+        \n\nClasse di modello : BorseConcorso\n======\n\nEstensioni sulle proprietà\
+        \n----\nProprietà | x-field-type\n-|-|\npersId|primaryKey\nposId|primaryKey\n\
+        \n\nClasse di modello : DettaglioTest\n======\n\nEstensioni sulle proprietà\
+        \n----\nProprietà | x-field-type\n-|-|\npersId|primaryKey\nposId|primaryKey\n\
+        \n\nClasse di modello : DettaglioErroreAggiuntivo\n======\n\nEstensioni sulle\
+        \ proprietà\n----\nProprietà | x-field-type\n-|-|\nrawValue|rawJson\n"
+      operationId: "putIscrConc"
+      parameters:
+      - name: "aaId"
+        in: "path"
+        description: "anno concorso"
+        required: true
+        type: "integer"
+        format: "int64"
+      - name: "testId"
+        in: "path"
+        description: "test id concorso"
+        required: true
+        type: "integer"
+        format: "int64"
+      - name: "persId"
+        in: "path"
+        description: "identificativo persona"
+        required: true
+        type: "integer"
+        format: "int64"
+      - in: "body"
+        name: "body"
+        description: "Oggetto che contiene la riga da inserire"
+        required: true
+        schema:
+          $ref: "#/definitions/InserimentoAmmConc"
+      responses:
+        "200":
+          description: "Aggiornamento riuscito"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/DettaglioIscrittoConcorso"
+        "422":
+          description: "Aggiornamento non riuscito"
+          schema:
+            $ref: "#/definitions/DettaglioErrore"
+      x-enabled-profiles:
+      - user-tecnico-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UTENTE_TECNICO"
+              description: "funzione accessibile alle utenze tecniche per accessi\
+                \ ai servizi REST"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkUserTecnico"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+      x-custom-operation: "multiple"
+      x-cache-endpoint-relations:
+        canonicalEndpointsAction: "invalidate"
+        customEndpoints:
+        - operationId: "getIscrittiConcorso"
+          action: "invalidate"
+        - operationId: "getDettaglioIscrittoConcorso"
+          action: "invalidate"
+  /concorsi/{aaId}/{testId}/proveConcorso:
+    get:
+      tags:
+      - "concorsi"
+      summary: "Prove di un concorso"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>Recupera il dettaglio delle prove di un concorso\
+        \ tramite aaId e testId\n\n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n\
+        -|-|-\nx-cache-type|lowRefreshRateUserDependent|Risorsa che varia con frequenza\
+        \ bassa, cache Http abilitata, cache server disabilitata. Maggiori dettagli\
+        \ [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: USER_TECNICO**\n\nProfilo|Controllo| Funzione\n-|-|-\nUTENTE_TECNICO|funzione\
+        \ accessibile alle utenze tecniche per accessi ai servizi REST|Security.checkUserTecnico()\n\
+        \n\nClasse di modello : ProveConcorso\n======\n\nEstensioni sulle proprietà\
+        \n----\nProprietà | x-field-type\n-|-|\nproveConcId|primaryKey\n\n\nClasse\
+        \ di modello : Materie\n======\n\nEstensioni sulle proprietà\n----\nProprietà\
+        \ | x-field-type\n-|-|\nmateriaId|primaryKey\nproveConcId|primaryKey\n\n\n\
+        Classe di modello : DettaglioErroreAggiuntivo\n======\n\nEstensioni sulle\
+        \ proprietà\n----\nProprietà | x-field-type\n-|-|\nrawValue|rawJson\n"
+      operationId: "getProveConcorso"
+      parameters:
+      - name: "aaId"
+        in: "path"
+        description: "anno concorso"
+        required: true
+        type: "integer"
+        format: "int64"
+      - name: "testId"
+        in: "path"
+        description: "test id concorso"
+        required: true
+        type: "integer"
+        format: "int64"
+      - name: "start"
+        in: "query"
+        description: "utilizzato insieme a `limit` per indicare la paginazione sui\
+          \ record; `start` indica il numero del primo record da caricare (se non\
+          \ indicato viene utilizzato 0)\n"
+        required: false
+        type: "integer"
+        format: "int32"
+      - name: "limit"
+        in: "query"
+        description: "utilizzato insieme a `start` per indicare la paginazione sui\
+          \ record, `limit` indica il numero di record da recuperare (a partire da\
+          \ `start`); \nse non indicato viene utilizzato 50, i valori consentiti vanno\
+          \ da 0 a 100\n"
+        required: false
+        type: "integer"
+        format: "int32"
+      responses:
+        "200":
+          description: "Successful response"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/ProveConcorso"
+        "422":
+          description: "parametri Errati"
+          schema:
+            $ref: "#/definitions/DettaglioErrore"
+      x-enabled-profiles:
+      - user-tecnico-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UTENTE_TECNICO"
+              description: "funzione accessibile alle utenze tecniche per accessi\
+                \ ai servizi REST"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkUserTecnico"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+      x-cache-type: "lowRefreshRateUserDependent"
+  /concorsi/{persId}/{posId}/classifica:
+    get:
+      tags:
+      - "classifiche"
+      summary: "Classifica delle prove di una persona"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>Recupera la classifica di una persona tramite\
+        \ aaId e testId\n\n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n-|-|-\n\
+        x-cache-type|lowRefreshRateUserDependent|Risorsa che varia con frequenza bassa,\
+        \ cache Http abilitata, cache server disabilitata. Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: USER_TECNICO**\n\nProfilo|Controllo| Funzione\n-|-|-\nUTENTE_TECNICO|funzione\
+        \ accessibile alle utenze tecniche per accessi ai servizi REST|Security.checkUserTecnico()\n\
+        \n\nClasse di modello : ClassificaPersona\n======\n\nEstensioni sulle proprietà\
+        \n----\nProprietà | x-field-type\n-|-|\nproveConcId|primaryKey\npersId|primaryKey\n\
+        posId|primaryKey\n\n\nClasse di modello : ClassificaMateriePersona\n======\n\
+        \nEstensioni sulle proprietà\n----\nProprietà | x-field-type\n-|-|\nclassifDettId|primaryKey\n\
+        classificaMateriaId|primaryKey\npersId|primaryKey\nposId|primaryKey\nproveConcId|primaryKey\n\
+        \n\nClasse di modello : DettaglioErroreAggiuntivo\n======\n\nEstensioni sulle\
+        \ proprietà\n----\nProprietà | x-field-type\n-|-|\nrawValue|rawJson\n"
+      operationId: "getClassificaPersona"
+      parameters:
+      - name: "persId"
+        in: "path"
+        description: "identificativo persona"
+        required: true
+        type: "integer"
+        format: "int64"
+      - name: "posId"
+        in: "path"
+        description: "identificativo posizione"
+        required: true
+        type: "integer"
+        format: "int64"
+      - name: "order"
+        in: "query"
+        description: "consente di specificare un ordine per il recupero dei record.\
+          \ La sintassi è la seguente\n * +/- : specifica l'ordinamento (+ = ASC,\
+          \ - = DESC); se omesso viene utilizzato +\n * field : nome del campo da\
+          \ ordinare\n \n E' possibile indicare più campi separandoli da virgola (Es:\
+          \ +annoCorso,+adCod) \n"
+        required: false
+        type: "string"
+      responses:
+        "200":
+          description: "Successful response"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/ClassificaPersona"
+        "422":
+          description: "parametri Errati"
+          schema:
+            $ref: "#/definitions/DettaglioErrore"
+      x-enabled-profiles:
+      - user-tecnico-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UTENTE_TECNICO"
+              description: "funzione accessibile alle utenze tecniche per accessi\
+                \ ai servizi REST"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkUserTecnico"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+      x-cache-type: "lowRefreshRateUserDependent"
+  /concorsi/{persId}/{posId}/dettaglioIscritto:
+    get:
+      tags:
+      - "iscrizione concorsi"
+      summary: "Dettaglio di un iscritto ad un concorso"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>Recupera il dettaglio di un iscritto ad un\
+        \ concorso tramite persId e posId\n\n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n\
+        -|-|-\nx-cache-type|lowRefreshRateUserDependent|Risorsa che varia con frequenza\
+        \ bassa, cache Http abilitata, cache server disabilitata. Maggiori dettagli\
+        \ [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: USER_TECNICO**\n\nProfilo|Controllo| Funzione\n-|-|-\nUTENTE_TECNICO|funzione\
+        \ accessibile alle utenze tecniche per accessi ai servizi REST|Security.checkUserTecnico()\n\
+        \n\nClasse di modello : DettaglioIscrittoConcorso\n======\n\nEstensioni sulle\
+        \ proprietà\n----\nProprietà | x-field-type\n-|-|\npersId|primaryKey\nposId|primaryKey\n\
+        \n\nClasse di modello : LinguaConcorso\n======\n\nEstensioni sulle proprietà\
+        \n----\nProprietà | x-field-type\n-|-|\npersId|primaryKey\nposId|primaryKey\n\
+        \n\nClasse di modello : DettaglioSede\n======\n\nEstensioni sulle proprietà\
+        \n----\nProprietà | x-field-type\n-|-|\npersId|primaryKey\nposId|primaryKey\n\
+        \n\nClasse di modello : DettaglioPds\n======\n\nEstensioni sulle proprietà\
+        \n----\nProprietà | x-field-type\n-|-|\npersId|primaryKey\nposId|primaryKey\n\
+        \n\nClasse di modello : BorseConcorso\n======\n\nEstensioni sulle proprietà\
+        \n----\nProprietà | x-field-type\n-|-|\npersId|primaryKey\nposId|primaryKey\n\
+        \n\nClasse di modello : DettaglioTest\n======\n\nEstensioni sulle proprietà\
+        \n----\nProprietà | x-field-type\n-|-|\npersId|primaryKey\nposId|primaryKey\n\
+        \n\nClasse di modello : DettaglioErroreAggiuntivo\n======\n\nEstensioni sulle\
+        \ proprietà\n----\nProprietà | x-field-type\n-|-|\nrawValue|rawJson\n"
+      operationId: "getDettaglioIscrittoConcorso"
+      parameters:
+      - name: "persId"
+        in: "path"
+        description: "identificativo persona"
+        required: true
+        type: "integer"
+        format: "int64"
+      - name: "posId"
+        in: "path"
+        description: "identificativo posizione"
+        required: true
+        type: "integer"
+        format: "int64"
+      responses:
+        "200":
+          description: "Successful response"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/DettaglioIscrittoConcorso"
+        "422":
+          description: "parametri Errati"
+          schema:
+            $ref: "#/definitions/DettaglioErrore"
+      x-enabled-profiles:
+      - user-tecnico-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UTENTE_TECNICO"
+              description: "funzione accessibile alle utenze tecniche per accessi\
+                \ ai servizi REST"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkUserTecnico"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+      x-cache-type: "lowRefreshRateUserDependent"
+securityDefinitions:
+  basicAuth:
+    description: "Autenticazione tramite BASIC authentication. Questa modalità è disponibile\
+      \ se l'autenticazione su esse3 non usa shibboleth per il gruppo dell'utente"
+    type: "basic"
+  jwt:
+    description: "Autenticazione tramite OAUTH2, occorre configurare il parametro\
+      \ di configurazione di ESSE3 che indica il server OAUTH2 da utilizzare"
+    type: "oauth2"
+    authorizationUrl: "https://idp-idm.unimib.it/idp/profile/oidc/authorize"
+    flow: "implicit"
+    scopes:
+      openid: "informazioni sull'utente"
+definitions:
+  DettaglioIscrittoConcorso:
+    type: "object"
+    required:
+    - "persId"
+    - "posId"
+    properties:
+      aaId:
+        type: "integer"
+        format: "int64"
+        example: 2017
+        description: "Anno concorso"
+      testId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "Identificativo del concorso"
+      persId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "Identificativo persona iscritta"
+        x-field-type: "primaryKey"
+      posId:
+        type: "integer"
+        format: "int64"
+        example: 3
+        description: "Identificativo posizione"
+        x-field-type: "primaryKey"
+      tipoTestCod:
+        type: "string"
+        example: "A"
+        description: "Tipo di concorso: A = test di ammissione ad un corso di studio\
+          \ E = Esame di stato S = concorso per accedere ad una SSIS V = test di valutazione\
+          \ conoscenze del candidato"
+      modTest:
+        type: "string"
+        example: "U"
+        description: "Indica la modalità di svolgimento del concorso, test di valutazione,\
+          \ esame di stato: - E: ad esaurimento posti (ordine di presentazione della\
+          \ domanda di immatricolazione) - U: basato sul superamento di una prova\
+          \ unica - M: basato sul superamento di prove multiple - D: basato sull´\
+          ordine di presentazione della domanda di ammissione al concorso."
+      tipoTestDes:
+        type: "string"
+        example: "di Ammissione"
+        description: "Descrizione tipologia concorso"
+      tipoTestDesEng:
+        type: "string"
+        example: "Admission"
+        description: "Descrizione in lingua inglese della tipologia concorso"
+      concorsoDes:
+        type: "string"
+        example: "Ammissione alle lauree triennali"
+        description: "Descrizione del concorso."
+      concorsoDesEng:
+        type: "string"
+        example: "Admission test"
+        description: "Descrizione in lingua inglese del concorso."
+      dataIniAmmWeb:
+        type: "string"
+        example: "18/12/2017"
+        description: "Data d''inizio del periodo valido per la compilazione delle\
+          \ domande di ammissione al concorso, test di valutazione, esame di stato\
+          \ da web."
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+      dataFinAmmWeb:
+        type: "string"
+        example: "18/12/2017"
+        description: "Data di fine del periodo valido per la compilazione delle domande\
+          \ di ammissione al concorso, test di valutazione, esame di stato da web."
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+      dataIniDomRipescaggio:
+        type: "string"
+        example: "22/08/2017"
+        description: "Data di inizio del periodo valido per il ripescaggio al concorso."
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+      dataFinDomRipescaggio:
+        type: "string"
+        example: "17/09/2017"
+        description: "Data di fine del periodo valido per il ripescaggio al concorso."
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+      concNazionale:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "flag che indica se il concorso è nazionale o meno"
+      nota:
+        type: "string"
+        example: "Attenzione"
+        description: "Nota associata al concorso"
+      concorsoNotaEng:
+        type: "string"
+        example: "Attention"
+        description: "Nota associata al concorso."
+      tipoCorsoCod:
+        type: "string"
+        example: "L2"
+        description: "Tipo di corso di studio a cui è associato il concorso, test\
+          \ di valutazione, esame di stato. Per gli esami di stato assume valori nulli."
+      tipoCorsoDes:
+        type: "string"
+        example: "Corso di Laurea"
+        description: "Descrizione tipologia corso di studio associata ala concorso"
+      tipoCorsoDesEng:
+        type: "string"
+        example: "Bachelor Degree"
+        description: "Descrizione in lingua inglese della tipologia corso di studio\
+          \ associata ala concorso"
+      taxPagFlg:
+        type: "integer"
+        format: "int32"
+        example: 1
+        description: "Indica se il candidato ha pagato o meno la tassa di iscrizione\
+          \ al concorso"
+      linguaConcorso:
+        type: "array"
+        items:
+          $ref: "#/definitions/LinguaConcorso"
+      dettaglioSede:
+        type: "array"
+        items:
+          $ref: "#/definitions/DettaglioSede"
+      dettaglioPds:
+        type: "array"
+        items:
+          $ref: "#/definitions/DettaglioPds"
+      borse:
+        type: "array"
+        items:
+          $ref: "#/definitions/BorseConcorso"
+      dettaglioTest:
+        type: "array"
+        items:
+          $ref: "#/definitions/DettaglioTest"
+    x-layout-name: "V03_AMM_CONC_ISCR_REST"
+    x-winsession-name: "p03/n_am_03_winsession_rest"
+    x-model-sub-package: "concorsi.v2"
+    x-model-sub-path: "concorsi/v2"
+  InserimentoPrefDett:
+    type: "object"
+    required:
+    - "dettTestId"
+    - "prefOrd"
+    properties:
+      dettTestId:
+        type: "integer"
+        format: "int64"
+        example: 101
+        description: "Identificativo univoco dettaglio preferenza"
+        minimum: 0.0
+      prefOrd:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "Ordine di preferenza."
+    x-model-sub-package: "concorsi.v2"
+    x-model-sub-path: "concorsi/v2"
+  ProveConcDoc:
+    type: "object"
+    properties:
+      provaId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "Identificativo della prova"
+      aaId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "Identificativo anno"
+        x-field-type: "primaryKey"
+      testId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "Identificativo del concorso"
+        x-field-type: "primaryKey"
+      docenteId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "Identificativo docente"
+        x-field-type: "primaryKey"
+      soggEstId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "Identificativo del soggetto esterno"
+        x-field-type: "primaryKey"
+      livello:
+        type: "string"
+        example: "UNI"
+        description: "livello della prova"
+      dataProva:
+        type: "string"
+        example: "18/12/2017"
+        description: "Data della prova"
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+      dataEsiti:
+        type: "string"
+        example: "18/12/2017"
+        description: "Data esiti"
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+      dataFinEsiti:
+        type: "string"
+        example: "18/12/2017"
+        description: "Data fine esiti"
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+      studentidavalutare:
+        type: "integer"
+        format: "int32"
+        example: 1
+        description: "numero di studenti da valutare"
+      studentiValutati:
+        type: "integer"
+        format: "int32"
+        example: 1
+        description: "numero di studenti valutabili"
+      commConcId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "Identificativo della commissione"
+      urliscritti:
+        type: "string"
+        example: "auth/Admission/ElencoIscrittiTurni.do?prove_conc_id=3555"
+        description: "url degli iscritti alla prova"
+      provaCod:
+        type: "string"
+        example: "P2"
+        description: "Codice prova concorso"
+      provaDes:
+        type: "string"
+        example: "Valutazione Titoli"
+        description: "Descrizione prova concorso"
+    x-layout-name: "PROVE_REST_DOC"
+    x-winsession-name: "p03/n_am_03_winsession_rest"
+    x-model-sub-package: "concorsi.v2"
+    x-model-sub-path: "concorsi/v2"
+  Preferenze:
+    type: "object"
+    properties:
+      persId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "Identificativo della persona"
+        x-field-type: "primaryKey"
+      dettTestId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "Identificativo dell dettaglio del concorso"
+      prefOrd:
+        type: "integer"
+        format: "int32"
+        example: 1
+      posId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "Identificativo della scelta"
+        x-field-type: "primaryKey"
+    x-layout-name: "LISTA_PREF_REST_STU"
+    x-winsession-name: "p03/n_am_03_winsession_rest"
+    x-model-sub-package: "concorsi.v2"
+    x-model-sub-path: "concorsi/v2"
+  DettaglioErrore:
+    type: "object"
+    properties:
+      statusCode:
+        type: "integer"
+        format: "int32"
+        example: 200
+        description: "Http Status Code"
+      retCode:
+        type: "integer"
+        format: "int32"
+        example: -1
+        description: "codice di errore"
+      retErrMsg:
+        type: "string"
+        example: "Parametri non corretti"
+        description: "descrizione dell'errore"
+      errDetails:
+        type: "array"
+        items:
+          $ref: "#/definitions/DettaglioErroreAggiuntivo"
+    x-model-sub-package: "frk.v1"
+    x-model-sub-path: "frk/v1"
+  ListaProveStu:
+    type: "object"
+    properties:
+      aaId:
+        type: "integer"
+        format: "int32"
+        example: 2025
+        description: "Identificativo anno"
+        x-field-type: "primaryKey"
+      testId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "Identificativo del concorso"
+        x-field-type: "primaryKey"
+      proveConcId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "Identificativo della prova concorso"
+      provaCod:
+        type: "string"
+        example: "L2"
+        description: "Codice prova concorso"
+      provaDes:
+        type: "string"
+        example: "L2"
+        description: "Codice prova concorso"
+      livello:
+        type: "string"
+        example: "L2"
+        description: "Codice prova concorso"
+      dataProva:
+        type: "string"
+        example: "18/12/2017"
+        description: "Data della prova."
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+      orarioProva:
+        type: "string"
+        example: "18/12/2017"
+        description: "Data della prova."
+        pattern: "([01][0-9]|2[0-3]):[0-5][0-9]"
+      ordine:
+        type: "integer"
+        format: "int32"
+        example: 1
+        description: "ordine della prova"
+      visStu:
+        type: "integer"
+        format: "int32"
+        example: 1
+        description: "vis stu"
+      dataEsiti:
+        type: "string"
+        example: "18/12/2017"
+        description: "Data della prova."
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+      dataFinEsiti:
+        type: "string"
+        example: "18/12/2017"
+        description: "Data della prova."
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+      punti:
+        type: "number"
+        format: "double"
+        example: 60.5
+      giudizio:
+        type: "string"
+        example: "BUONO"
+        description: "giudizio"
+      puntiMin:
+        type: "number"
+        format: "double"
+        example: 60.5
+      maxPunti:
+        type: "number"
+        format: "double"
+        example: 60.5
+      esito:
+        type: "string"
+        example: "BUONO"
+        description: "giudizio"
+    x-layout-name: "LISTA_PROVE_REST_STU"
+    x-winsession-name: "p03/n_am_03_winsession_rest"
+    x-model-sub-package: "concorsi.v2"
+    x-model-sub-path: "concorsi/v2"
+  ClassificaMaterie:
+    type: "object"
+    properties:
+      classifDettId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "Identificativo della classifica"
+        x-field-type: "primaryKey"
+      classificaMateriaId:
+        type: "integer"
+        format: "int64"
+        example: 3
+        description: "Identificativo della prova"
+        x-field-type: "primaryKey"
+        x-internal-name: "prove_conc_id"
+      turniConcId:
+        type: "integer"
+        format: "int64"
+        example: 3
+        description: "Identificativo del turno"
+      persId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "Identificativo della persona iscritta"
+        x-field-type: "primaryKey"
+      posId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "Identificativo posizione"
+        x-field-type: "primaryKey"
+      proveConcId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "Identificativo della prova padre"
+        x-field-type: "primaryKey"
+        x-internal-name: "prova_dest_id"
+      aaId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "Anno concorso"
+      testId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "Identificativo del concorso"
+      esitoCod:
+        type: "string"
+        example: "PROVA SCRITTA"
+        description: "Descrizione della prova"
+      esitoDes:
+        type: "string"
+        example: "PROVA SCRITTA"
+        description: "Descrizione della prova"
+      punti:
+        type: "number"
+        format: "double"
+        example: 60.5
+      maxPunti:
+        type: "number"
+        format: "double"
+        example: 100.0
+      giudizio:
+        type: "string"
+        example: "BUONO"
+        description: "giudizio"
+      giudizioEng:
+        type: "string"
+        example: "BUONO"
+        description: "giudizio in lingua inglese"
+      materiaFlg:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "indica se la prova è una materia o meno"
+    x-layout-name: "V03_CLASSIF_CONC_REST_MATERIE"
+    x-winsession-name: "p03/n_am_03_winsession_rest"
+    x-model-sub-package: "concorsi.v2"
+    x-model-sub-path: "concorsi/v2"
+  ClassificaMateriePersona:
+    type: "object"
+    properties:
+      classifDettId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "Identificativo della classifica"
+        x-field-type: "primaryKey"
+      classificaMateriaId:
+        type: "integer"
+        format: "int64"
+        example: 3
+        description: "Identificativo della prova"
+        x-field-type: "primaryKey"
+        x-internal-name: "prove_conc_id"
+      turniConcId:
+        type: "integer"
+        format: "int64"
+        example: 3
+        description: "Identificativo del turno"
+      persId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "Identificativo della persona iscritta"
+        x-field-type: "primaryKey"
+      posId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "Identificativo posizione"
+        x-field-type: "primaryKey"
+      proveConcId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "Identificativo della prova padre"
+        x-field-type: "primaryKey"
+        x-internal-name: "prova_dest_id"
+      aaId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "Anno concorso"
+      testId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "Identificativo del concorso"
+      esitoCod:
+        type: "string"
+        example: "PROVA SCRITTA"
+        description: "Descrizione della prova"
+      esitoDes:
+        type: "string"
+        example: "PROVA SCRITTA"
+        description: "Descrizione della prova"
+      punti:
+        type: "number"
+        format: "double"
+        example: 60.5
+      maxPunti:
+        type: "number"
+        format: "double"
+        example: 100.0
+      giudizio:
+        type: "string"
+        example: "BUONO"
+        description: "giudizio"
+      giudizioEng:
+        type: "string"
+        example: "BUONO"
+        description: "giudizio in lingua inglese"
+      materiaFlg:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "indica se la prova è una materia o meno"
+    x-layout-name: "V03_CLASSIF_CONC_REST_MATERIE"
+    x-winsession-name: "p03/n_am_03_winsession_rest"
+    x-model-sub-package: "concorsi.v2"
+    x-model-sub-path: "concorsi/v2"
+  DettaglioPrefBorse:
+    type: "object"
+    properties:
+      aaId:
+        type: "integer"
+        format: "int64"
+        example: 2017
+        description: "Anno concorso"
+        x-field-type: "primaryKey"
+      testId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "Identificativo del concorso"
+        x-field-type: "primaryKey"
+      concBorseId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "Identificativo preferenza borsa di studio"
+        x-field-type: "primaryKey"
+      tipoBorsaCod:
+        type: "string"
+        example: "BOR"
+        description: "Codice borsa di studio"
+      tipoBorsaDes:
+        type: "string"
+        example: "Borsa di studio"
+        description: "Descrizione borsa di studio"
+        x-internal-name: "des"
+      numBorse:
+        type: "integer"
+        format: "int64"
+        example: 3
+        description: "Numero di borse di studio disponibili"
+    x-layout-name: "V03_CONC_BORSE_REST"
+    x-winsession-name: "p03/n_am_03_winsession_rest"
+    x-model-sub-package: "concorsi.v2"
+    x-model-sub-path: "concorsi/v2"
+  Materie:
+    type: "object"
+    properties:
+      aaId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "Anno concorso"
+      testId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "Identificativo del concorso"
+      materiaId:
+        type: "integer"
+        format: "int64"
+        description: "Identificativo della prova"
+        x-field-type: "primaryKey"
+        x-internal-name: "prove_conc_id"
+      provaDes:
+        type: "string"
+        example: "PROVA SCRITTA"
+        description: "Descrizione della prova"
+      provaDesEng:
+        type: "string"
+        example: "32/12 - LINGUE E LETTERATURE MODERNE EUROAMERICANE"
+        description: "Dettaglio del concorso"
+      dataProva:
+        type: "string"
+        example: "22/08/2020"
+        description: "Dettaglio lingua inglese"
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+      orario:
+        type: "string"
+        example: "600"
+        description: "orario della seduta di laurea (HH24:MI)"
+        minLength: 16
+        maxLength: 16
+      dataIniEsiti:
+        type: "string"
+        example: "22/08/2020"
+        description: "Dettaglio lingua inglese"
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+      dataFinEsiti:
+        type: "string"
+        example: "22/08/2020"
+        description: "Dettaglio lingua inglese"
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+      ordVis:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "Identificativo del dettaglio"
+      proveConcId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "Identificativo della prova padre"
+        x-field-type: "primaryKey"
+        x-internal-name: "prova_dest_id"
+    x-layout-name: "V03_CONF_PROVE_CONC_REST_MATERIE"
+    x-winsession-name: "p03/n_am_03_winsession_rest"
+    x-model-sub-package: "concorsi.v2"
+    x-model-sub-path: "concorsi/v2"
+  DettaglioErroreAggiuntivo:
+    type: "object"
+    properties:
+      errorType:
+        type: "string"
+        example: "stackTrace"
+        description: "descrizione del tipo di errore aggiuntivo"
+      value:
+        type: "string"
+        example: "SocketTimeoutException...."
+        description: "descrizione dell'errore"
+      rawValue:
+        type: "string"
+        example: "SocketTimeoutException...."
+        description: "descrizione dell'errore"
+        x-field-type: "rawJson"
+    x-model-sub-package: "frk.v1"
+    x-model-sub-path: "frk/v1"
+  ImportClassifica:
+    type: "object"
+    properties:
+      prematr:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "Indentifica la prematricola"
+      numCompito:
+        type: "string"
+        example: "Buono"
+        description: "Giudizio in lingua inglese"
+      codFis:
+        type: "string"
+        example: "Buono"
+        description: "Giudizio in lingua inglese"
+        minLength: 16
+        maxLength: 16
+      nome:
+        type: "string"
+        example: "Buono"
+        description: "Giudizio in lingua inglese"
+        maxLength: 40
+      cognome:
+        type: "string"
+        example: "Buono"
+        description: "Giudizio in lingua inglese"
+        maxLength: 40
+      puntiTot:
+        type: "number"
+        format: "double"
+        example: 60.5
+      maxPunti:
+        type: "number"
+        format: "double"
+        example: 60.5
+      esitoCod:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "Indentifica la prematricola"
+        minimum: 0.0
+        maximum: 6.0
+      puntiMaterie:
+        type: "array"
+        items:
+          type: "object"
+          properties:
+            puntiMateria:
+              type: "number"
+              format: "double"
+              description: "descrizione dell'errore"
+    x-model-sub-package: "concorsi.v2"
+    x-model-sub-path: "concorsi/v2"
+  ProveConcorso:
+    type: "object"
+    required:
+    - "aaId"
+    - "testId"
+    properties:
+      aaId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "Anno concorso"
+      testId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "Identificativo posizione"
+      proveConcId:
+        type: "integer"
+        format: "int64"
+        example: 3
+        description: "Identificativo della prova"
+        x-field-type: "primaryKey"
+      provaDes:
+        type: "string"
+        example: "PROVA SCRITTA"
+        description: "Descrizione della prova"
+      provaDesEng:
+        type: "string"
+        example: "32/12 - LINGUE E LETTERATURE MODERNE EUROAMERICANE"
+        description: "Dettaglio del concorso"
+      dataProva:
+        type: "string"
+        example: "22/08/2020"
+        description: "Dettaglio lingua inglese"
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+      orario:
+        type: "string"
+        example: "600"
+        description: "orario della seduta di laurea (HH24:MI)"
+        minLength: 16
+        maxLength: 16
+      dataIniEsiti:
+        type: "string"
+        example: "22/08/2020"
+        description: "Dettaglio lingua inglese"
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+      dataFinEsiti:
+        type: "string"
+        example: "22/08/2020"
+        description: "Dettaglio lingua inglese"
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+      ordVis:
+        type: "integer"
+        format: "int64"
+        example: "null"
+        description: "Identificativo del dettaglio"
+      materie:
+        type: "array"
+        items:
+          $ref: "#/definitions/Materie"
+    x-layout-name: "V03_CONF_PROVE_CONC_REST_PROVE"
+    x-winsession-name: "p03/n_am_03_winsession_rest"
+    x-model-sub-package: "concorsi.v2"
+    x-model-sub-path: "concorsi/v2"
+  ImportResponse:
+    type: "object"
+    properties:
+      numeroRecordElaborati:
+        type: "integer"
+        format: "int64"
+        description: "numero di record elaborati correttamente"
+      numeroErrori:
+        type: "integer"
+        format: "int64"
+        description: "numero di record che sono andati in errore"
+      elencoErrori:
+        type: "array"
+        items:
+          type: "object"
+          properties:
+            descrizioneErrore:
+              type: "string"
+              description: "descrizione dell'errore"
+    x-model-sub-package: "concorsi.v2"
+    x-model-sub-path: "concorsi/v2"
+  CommConcDoc:
+    type: "object"
+    properties:
+      docenteId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "Identificativo docente"
+        x-field-type: "primaryKey"
+      commConcId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "Identificativo della commissione"
+      soggEstId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "Identificativo del soggetto esterno"
+        x-field-type: "primaryKey"
+      aaId:
+        type: "integer"
+        format: "int32"
+        example: 2025
+        description: "Identificativo anno"
+        x-field-type: "primaryKey"
+      testId:
+        type: "integer"
+        format: "int32"
+        example: 2025
+        description: "Identificativo concorso"
+        x-field-type: "primaryKey"
+      concDes:
+        type: "string"
+        example: "Concorso di Ammissione Biologia"
+        description: "descrizione concorso"
+      tipoTestCod:
+        type: "string"
+        example: "A"
+        description: "Codice tipoligia concorso"
+      tipoTestDes:
+        type: "string"
+        example: "Ammissione"
+        description: "Descrizione tipoligia concorso"
+      urlprove:
+        type: "string"
+        example: "auth/Admission/ValutazioneTitListaProve.do?comm_prove_conc_id=20"
+        description: "url web delle prove"
+      prove:
+        type: "array"
+        items:
+          $ref: "#/definitions/ProveConcDoc"
+    x-layout-name: "COMM_REST_DOC"
+    x-winsession-name: "p03/n_am_03_winsession_rest"
+    x-model-sub-package: "concorsi.v2"
+    x-model-sub-path: "concorsi/v2"
+  ClassificaPersona:
+    type: "object"
+    required:
+    - "persId"
+    - "posId"
+    properties:
+      classifDettId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "Identificativo della classifica"
+      proveConcId:
+        type: "integer"
+        format: "int64"
+        example: 3
+        description: "Identificativo della prova"
+        x-field-type: "primaryKey"
+      turniConcId:
+        type: "integer"
+        format: "int64"
+        example: 3
+        description: "Identificativo del turno"
+      persId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "Identificativo della persona iscritta"
+        x-field-type: "primaryKey"
+      posId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "Identificativo posizione"
+        x-field-type: "primaryKey"
+      provaDestId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "Identificativo della prova padre"
+      aaId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "Anno concorso"
+      testId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "Identificativo del concorso"
+      esitoCod:
+        type: "string"
+        example: "PROVA SCRITTA"
+        description: "Descrizione della prova"
+      esitoDes:
+        type: "string"
+        example: "PROVA SCRITTA"
+        description: "Descrizione della prova"
+      punti:
+        type: "number"
+        format: "double"
+        example: 60.5
+      maxPunti:
+        type: "number"
+        format: "double"
+        example: 100.0
+      giudizio:
+        type: "string"
+        example: "BUONO"
+        description: "giudizio"
+      giudizioEng:
+        type: "string"
+        example: "BUONO"
+        description: "giudizio in lingua inglese"
+      materiaFlg:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "indica se la prova è una materia o meno"
+      esitoProvaOrigine:
+        type: "array"
+        items:
+          $ref: "#/definitions/ClassificaMateriePersona"
+    x-layout-name: "V03_CLASSIF_CONC_REST_PROVE"
+    x-winsession-name: "p03/n_am_03_winsession_rest"
+    x-model-sub-package: "concorsi.v2"
+    x-model-sub-path: "concorsi/v2"
+  DettaglioPrefPds:
+    type: "object"
+    properties:
+      aaId:
+        type: "integer"
+        format: "int64"
+        example: 2017
+        description: "Anno concorso"
+        x-field-type: "primaryKey"
+      testId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "Identificativo del concorso"
+        x-field-type: "primaryKey"
+      dettTestId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "Identificativo dettaglio della graduatoria del concorso."
+        x-field-type: "primaryKey"
+      cod:
+        type: "string"
+        example: "PDS"
+        description: "Codice percorso di studio"
+      des:
+        type: "string"
+        example: "Percorso generico"
+        description: "Descrizione percorso di studio"
+      cdsId:
+        type: "integer"
+        format: "int64"
+        example: 2017
+        description: "Identificativo corso di studio"
+        x-field-type: "primaryKey"
+      aaOrdId:
+        type: "integer"
+        format: "int64"
+        example: 2017
+        description: "Anno ordinamento corso di studio"
+        x-field-type: "primaryKey"
+      pdsId:
+        type: "integer"
+        format: "int64"
+        example: 2017
+        description: "Identificativo percorso di studio"
+        x-field-type: "primaryKey"
+    x-layout-name: "V03_CONC_DETT_PDS_REST"
+    x-winsession-name: "p03/n_am_03_winsession_rest"
+    x-model-sub-package: "concorsi.v2"
+    x-model-sub-path: "concorsi/v2"
+  DettaglioPrefSedi:
+    type: "object"
+    properties:
+      aaId:
+        type: "integer"
+        format: "int64"
+        example: 2017
+        description: "Anno concorso"
+        x-field-type: "primaryKey"
+      testId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "Identificativo del concorso"
+        x-field-type: "primaryKey"
+      dettTestId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "Identificativo dettaglio della graduatoria del concorso."
+        x-field-type: "primaryKey"
+      sedeDes:
+        type: "string"
+        example: "2017"
+        description: "Descrizione sede"
+        x-internal-name: "des"
+      sedeId:
+        type: "integer"
+        format: "int64"
+        example: 2017
+        description: "Identificativo sede"
+        x-field-type: "primaryKey"
+      postiDettSedeId:
+        type: "integer"
+        format: "int64"
+        example: 2017
+        description: "Posti disponibili per la sede"
+    x-layout-name: "V03_CONC_DETT_SEDE_REST"
+    x-winsession-name: "p03/n_am_03_winsession_rest"
+    x-model-sub-package: "concorsi.v2"
+    x-model-sub-path: "concorsi/v2"
+  OutputPta:
+    type: "object"
+    properties:
+      tipoCorsoCod:
+        type: "string"
+        example: "L2"
+        description: "Codice della tipologia del corso"
+        maxLength: 10
+        x-field-type: "primaryKey"
+      tipoCorsoDes:
+        type: "string"
+        example: "Corso di laurea (triennale)"
+        description: "Descrizione della tipologia del corso"
+        maxLength: 200
+      cdsConfig:
+        type: "integer"
+        format: "int32"
+        example: 1
+      listaConc:
+        type: "array"
+        items:
+          $ref: "#/definitions/ListaConcPta"
+    x-layout-name: "CONC_REST_PTA"
+    x-winsession-name: "p03/n_am_03_winsession_rest"
+    x-model-sub-package: "concorsi.v2"
+    x-model-sub-path: "concorsi/v2"
+  ListaCdsPta:
+    type: "object"
+    properties:
+      tipoCorsoCod:
+        type: "string"
+        example: "L2"
+        description: "Codice della tipologia del corso"
+        maxLength: 10
+      tipoCorsoDes:
+        type: "string"
+        example: "Corso di laurea (triennale)"
+        description: "Descrizione della tipologia del corso"
+        maxLength: 200
+      testId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "Identificativo del concorso"
+        x-field-type: "primaryKey"
+      aaId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "Identificativo anno"
+        x-field-type: "primaryKey"
+      cdsId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "Identificativo del corso di studio"
+      cdsCod:
+        type: "string"
+        example: "LB01"
+        description: "Codice del corso di studio"
+        maxLength: 20
+      cdsDes:
+        type: "string"
+        example: "INGEGNERIA INDUSTRIALE"
+        description: "Descrizione del corso di studio"
+        maxLength: 255
+      claMId:
+        type: "integer"
+        format: "int32"
+        example: 2009
+        description: "Identificativo del corso di studio"
+        x-internal-name: "v06_cla_cds_cla_m_id"
+      claMurstCod:
+        type: "string"
+        example: "L-9"
+        description: "Codice CLA MURST"
+        maxLength: 15
+        x-internal-name: "v06_cla_cds_cla_murst_cod"
+      descrizioneClasse:
+        type: "string"
+        example: "Classe delle lauree in Ingegneria industriale"
+        description: "Descrizione classe"
+        maxLength: 255
+    x-layout-name: "LISTA_CDS_REST_PTA"
+    x-winsession-name: "p03/n_am_03_winsession_rest"
+    x-model-sub-package: "concorsi.v2"
+    x-model-sub-path: "concorsi/v2"
+  InserimentoPrefBorse:
+    type: "object"
+    required:
+    - "concBorseId"
+    - "prefOrd"
+    properties:
+      concBorseId:
+        type: "integer"
+        format: "int64"
+        example: 101
+        description: "Identificativo univoco borsa di preferenza"
+        minimum: 0.0
+      prefOrd:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "Ordine di preferenza."
+        minimum: 1.0
+        maximum: 99.0
+    x-model-sub-package: "concorsi.v2"
+    x-model-sub-path: "concorsi/v2"
+  ListaConcPta:
+    type: "object"
+    properties:
+      tipoCorsoCod:
+        type: "string"
+        example: "L2"
+        description: "Codice della tipologia del corso"
+        maxLength: 10
+      gruppoTcCod:
+        type: "string"
+        example: "LAUREA"
+        description: "Codice raggruppamento tipo corso di studio"
+      aaId:
+        type: "integer"
+        format: "int32"
+        example: 2025
+        description: "Identificativo anno"
+        x-field-type: "primaryKey"
+      testId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "Identificativo del concorso"
+        x-field-type: "primaryKey"
+      concorsoDes:
+        type: "string"
+        example: "Concorso di ammissione Chimica Industriale"
+        description: "Descrizione del concorso"
+        maxLength: 200
+      tipoTestCod:
+        type: "string"
+        example: "A"
+        description: "Descrizione del concorso"
+        maxLength: 2
+      tipoTestDes:
+        type: "string"
+        example: "di Ammissione"
+        description: "Descrizione della tipologia del concorso"
+        maxLength: 50
+      dataIniAmmWeb:
+        type: "string"
+        example: "18/12/2017"
+        description: "Data d''inizio del periodo valido per la compilazione delle\
+          \ domande di ammissione al concorso, test di valutazione, esame di stato\
+          \ da web."
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+      dataFinAmmWeb:
+        type: "string"
+        example: "18/12/2017"
+        description: "Data di fine del periodo valido per la compilazione delle domande\
+          \ di ammissione al concorso, test di valutazione, esame di stato da web."
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+      dataScad:
+        type: "string"
+        example: "18/12/2017"
+        description: "Data scadenza della posizione utile (Ammesso) in graduatoria\
+          \ ai fini della preimmatricolazione"
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+      dataScadPreim:
+        type: "string"
+        example: "18/12/2017"
+        description: "Data d''inizio del periodo valido per la compilazione delle\
+          \ domande di ammissione al concorso, test di valutazione, esame di stato\
+          \ da web."
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+      listaCds:
+        type: "array"
+        items:
+          $ref: "#/definitions/ListaCdsPta"
+    x-layout-name: "LISTA_CONC_REST_PTA"
+    x-winsession-name: "p03/n_am_03_winsession_rest"
+    x-model-sub-package: "concorsi.v2"
+    x-model-sub-path: "concorsi/v2"
+  Concorso:
+    type: "object"
+    properties:
+      aaId:
+        type: "integer"
+        format: "int64"
+        example: 2017
+        description: "Anno concorso"
+        x-field-type: "primaryKey"
+      testId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "Identificativo del concorso"
+        x-field-type: "primaryKey"
+      tipoTestCod:
+        type: "string"
+        example: "A"
+        description: "Tipo di concorso: A = test di ammissione ad un corso di studio\
+          \ E = Esame di stato S = concorso per accedere ad una SSIS V = test di valutazione\
+          \ conoscenze del candidato"
+      modTest:
+        type: "string"
+        example: "U"
+        description: "Indica la modalità di svolgimento del concorso, test di valutazione,\
+          \ esame di stato: - E: ad esaurimento posti (ordine di presentazione della\
+          \ domanda di immatricolazione) - U: basato sul superamento di una prova\
+          \ unica - M: basato sul superamento di prove multiple - D: basato sull´\
+          ordine di presentazione della domanda di ammissione al concorso."
+      numPrefMin:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "numero minimo preferenze"
+      numPrefMax:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "numero massimo preferenze"
+      numPrefLingueMin:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "numero minimo preferenze di lingue"
+      numPrefLingue:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "numero massimo preferenze di lingue"
+      numPrefBorseMin:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "numero minimo borse di studio"
+      numPrefBorse:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "numero massimo borse di studio"
+      tipoTestDes:
+        type: "string"
+        example: "di Ammissione"
+        description: "Descrizione tipologia concorso"
+      concorsoDes:
+        type: "string"
+        example: "Ammissione alle lauree triennali"
+        description: "Descrizione del concorso."
+      concorsoDesEng:
+        type: "string"
+        example: "Admission test"
+        description: "Descrizione in lingua inglese del concorso."
+      dataIniAmmWeb:
+        type: "string"
+        example: "18/12/2017"
+        description: "Data d''inizio del periodo valido per la compilazione delle\
+          \ domande di ammissione al concorso, test di valutazione, esame di stato\
+          \ da web."
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+      dataFinAmmWeb:
+        type: "string"
+        example: "18/12/2017"
+        description: "Data di fine del periodo valido per la compilazione delle domande\
+          \ di ammissione al concorso, test di valutazione, esame di stato da web."
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+      nota:
+        type: "string"
+        example: "Attenzione"
+        description: "Nota associata al concorso"
+      concorsoNotaEng:
+        type: "string"
+        example: "Attention"
+        description: "Nota associata al concorso."
+      tipoCorsoCod:
+        type: "string"
+        example: "L2"
+        description: "Tipo di corso di studio a cui è associato il concorso, test\
+          \ di valutazione, esame di stato. Per gli esami di stato assume valori nulli."
+      tipoCorsoDes:
+        type: "string"
+        example: "Corso di Laurea"
+        description: "Descrizione tipologia corso di studio associata ala concorso"
+      tipoCorsoDesEng:
+        type: "string"
+        example: "Bachelor Degree"
+        description: "Descrizione in lingua inglese della tipologia corso di studio\
+          \ associata ala concorso"
+      linkBando:
+        type: "string"
+        example: "https://www.cineca.it/bando"
+        description: "Link al bando del concorso."
+    x-layout-name: "V03_CONCORSI_CONF_REST"
+    x-winsession-name: "p03/n_am_03_winsession_rest"
+    x-model-sub-package: "concorsi.v2"
+    x-model-sub-path: "concorsi/v2"
+  IscrittiConcorso:
+    type: "object"
+    required:
+    - "aaId"
+    - "testId"
+    properties:
+      aaId:
+        type: "integer"
+        format: "int64"
+        example: 2017
+        description: "Anno concorso"
+        x-field-type: "primaryKey"
+      testId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "Identificativo del concorso"
+        x-field-type: "primaryKey"
+      persId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "Identificativo persona iscritta"
+      posId:
+        type: "integer"
+        format: "int64"
+        example: 3
+        description: "Identificativo posizione"
+      tipoTestCod:
+        type: "string"
+        example: "A"
+        description: "Tipo di concorso: A = test di ammissione ad un corso di studio\
+          \ E = Esame di stato S = concorso per accedere ad una SSIS V = test di valutazione\
+          \ conoscenze del candidato"
+      modTest:
+        type: "string"
+        example: "U"
+        description: "Indica la modalità di svolgimento del concorso, test di valutazione,\
+          \ esame di stato: - E: ad esaurimento posti (ordine di presentazione della\
+          \ domanda di immatricolazione) - U: basato sul superamento di una prova\
+          \ unica - M: basato sul superamento di prove multiple - D: basato sull´\
+          ordine di presentazione della domanda di ammissione al concorso."
+      tipoTestDes:
+        type: "string"
+        example: "di Ammissione"
+        description: "Descrizione tipologia concorso"
+      tipoTestDesEng:
+        type: "string"
+        example: "Admission"
+        description: "Descrizione in lingua inglese della tipologia concorso"
+      concorsoDes:
+        type: "string"
+        example: "Ammissione alle lauree triennali"
+        description: "Descrizione del concorso."
+      concorsoDesEng:
+        type: "string"
+        example: "Admission test"
+        description: "Descrizione in lingua inglese del concorso."
+      dataIniAmmWeb:
+        type: "string"
+        example: "18/12/2017"
+        description: "Data d''inizio del periodo valido per la compilazione delle\
+          \ domande di ammissione al concorso, test di valutazione, esame di stato\
+          \ da web."
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+      dataFinAmmWeb:
+        type: "string"
+        example: "18/12/2017"
+        description: "Data di fine del periodo valido per la compilazione delle domande\
+          \ di ammissione al concorso, test di valutazione, esame di stato da web."
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+      dataIniDomRipescaggio:
+        type: "string"
+        example: "22/08/2017"
+        description: "Data di inizio del periodo valido per il ripescaggio al concorso."
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+      dataFinDomRipescaggio:
+        type: "string"
+        example: "17/09/2017"
+        description: "Data di fine del periodo valido per il ripescaggio al concorso."
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+      concNazionale:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "flag che indica se il concorso è nazionale o meno"
+      nota:
+        type: "string"
+        example: "Attenzione"
+        description: "Nota associata al concorso"
+      concorsoNotaEng:
+        type: "string"
+        example: "Attention"
+        description: "Nota associata al concorso."
+      tipoCorsoCod:
+        type: "string"
+        example: "L2"
+        description: "Tipo di corso di studio a cui è associato il concorso, test\
+          \ di valutazione, esame di stato. Per gli esami di stato assume valori nulli."
+      tipoCorsoDes:
+        type: "string"
+        example: "Corso di Laurea"
+        description: "Descrizione tipologia corso di studio associata ala concorso"
+      tipoCorsoDesEng:
+        type: "string"
+        example: "Bachelor Degree"
+        description: "Descrizione in lingua inglese della tipologia corso di studio\
+          \ associata ala concorso"
+      taxPagFlg:
+        type: "integer"
+        format: "int32"
+        example: 1
+        description: "Indica se il candidato ha pagato o meno la tassa di iscrizione\
+          \ al concorso"
+    x-layout-name: "V03_AMM_CONC_ISCR_REST"
+    x-winsession-name: "p03/n_am_03_winsession_rest"
+    x-model-sub-package: "concorsi.v2"
+    x-model-sub-path: "concorsi/v2"
+  ClassificaConcorso:
+    type: "object"
+    required:
+    - "aaId"
+    - "testId"
+    properties:
+      classifDettId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "Identificativo della classifica"
+      proveConcId:
+        type: "integer"
+        format: "int64"
+        example: 3
+        description: "Identificativo della prova"
+        x-field-type: "primaryKey"
+      turniConcId:
+        type: "integer"
+        format: "int64"
+        example: 3
+        description: "Identificativo del turno"
+      persId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "Identificativo della persona iscritta"
+        x-field-type: "primaryKey"
+      posId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "Identificativo posizione"
+        x-field-type: "primaryKey"
+      provaDestId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "Identificativo della prova padre"
+      aaId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "Anno concorso"
+      testId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "Identificativo del concorso"
+      esitoCod:
+        type: "string"
+        example: "PROVA SCRITTA"
+        description: "Descrizione della prova"
+      esitoDes:
+        type: "string"
+        example: "PROVA SCRITTA"
+        description: "Descrizione della prova"
+      punti:
+        type: "number"
+        format: "double"
+        example: 60.5
+      maxPunti:
+        type: "number"
+        format: "double"
+        example: 100.0
+      giudizio:
+        type: "string"
+        example: "BUONO"
+        description: "giudizio"
+      giudizioEng:
+        type: "string"
+        example: "BUONO"
+        description: "giudizio in lingua inglese"
+      materiaFlg:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "indica se la prova è una materia o meno"
+      esitiProvaOrigine:
+        type: "array"
+        items:
+          $ref: "#/definitions/ClassificaMaterie"
+    x-layout-name: "V03_CLASSIF_CONC_REST_PROVE"
+    x-winsession-name: "p03/n_am_03_winsession_rest"
+    x-model-sub-package: "concorsi.v2"
+    x-model-sub-path: "concorsi/v2"
+  InserimentoAmmConc:
+    type: "object"
+    properties:
+      tipoTititCod:
+        type: "string"
+        example: "1"
+        description: "Tipologia titolo italiano scelto"
+      tipoCatAmmId:
+        type: "integer"
+        format: "int32"
+        example: 999
+        description: "Categoria amministrativa."
+        minimum: 0.0
+      tipoCorsoCod:
+        type: "string"
+        example: "1"
+        description: "Tipologia di corso di studio scelto."
+      trattHandFlg:
+        type: "integer"
+        format: "int32"
+        example: 0
+        description: "Indica se il candidato ha richiesto o meno un trattamento particolare\
+          \ durante lo svolgimento delle prove del concorso in quanto portatore di\
+          \ handicap."
+        minimum: 0.0
+        maximum: 1.0
+      tipoHandicap:
+        type: "string"
+        example: "D"
+        description: "Codice tipo handicap."
+        minLength: 0
+        maxLength: 1
+      noteHand:
+        type: "string"
+        example: "1"
+        description: "Annotazioni dello studente relative alla propria posizione di\
+          \ handicap."
+        minLength: 0
+        maxLength: 2000
+      percHand:
+        type: "number"
+        format: "float"
+        example: 60.25
+        description: "Numero compreso tra 0 e 100 che riporta la percentuale di handicap\
+          \ dichiarata dal candidato."
+      nota:
+        type: "string"
+        example: "1"
+        description: "Nota descrittiva."
+        minLength: 0
+        maxLength: 255
+      prefLingue:
+        type: "array"
+        items:
+          $ref: "#/definitions/InserimentoPrefLingue"
+      prefBorse:
+        type: "array"
+        items:
+          $ref: "#/definitions/InserimentoPrefBorse"
+      prefDett:
+        type: "array"
+        items:
+          $ref: "#/definitions/InserimentoPrefDett"
+    x-model-sub-package: "concorsi.v2"
+    x-model-sub-path: "concorsi/v2"
+  InserimentoPrefLingue:
+    type: "object"
+    required:
+    - "concLingueId"
+    - "prefOrd"
+    properties:
+      concLingueId:
+        type: "integer"
+        format: "int64"
+        example: 101
+        description: "Identificativo univoco lingua di preferenza"
+        minimum: 0.0
+      prefOrd:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "Ordine di preferenza."
+        minimum: 1.0
+        maximum: 99.0
+    x-model-sub-package: "concorsi.v2"
+    x-model-sub-path: "concorsi/v2"
+  DettaglioTestConc:
+    type: "object"
+    properties:
+      aaId:
+        type: "integer"
+        format: "int64"
+        example: 2017
+        description: "Anno concorso"
+        x-field-type: "primaryKey"
+      testId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "Identificativo del concorso"
+        x-field-type: "primaryKey"
+      dettTestId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "Identificativo dettaglio della graduatoria del concorso."
+        x-field-type: "primaryKey"
+      cdsId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "Identificativo corso di studio valorizzato a livello di dettaglio\
+          \ graduatoria"
+      tipoCatAmmId:
+        type: "integer"
+        format: "int64"
+        example: 999
+        description: "Identificativo categoria amministrativa valorizzato a livello\
+          \ di dettaglio graduatoria"
+      dettaglio:
+        type: "string"
+        example: "Descrizione lingua italiana"
+        description: "Descrizione del dettaglio graduatoria"
+      dettaglioEng:
+        type: "string"
+        example: "Description"
+        description: "Descrizione in lingua inglesde del dettaglio graduatoria"
+      numPostiTot:
+        type: "integer"
+        format: "int64"
+        example: 20
+        description: "Numero totale posti dettaglio graduatoria"
+      numPostiLiberi:
+        type: "integer"
+        format: "int64"
+        example: 2
+        description: "Numero posti liberi per il dettaglio graduatoria"
+      dataIniVisGradWeb:
+        type: "string"
+        example: "18/12/2017"
+        description: "Data inizio visibilità della graduatoria associata al dettaglio\
+          \ recuperato"
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+      dataFinVisGradWeb:
+        type: "string"
+        example: "18/12/2017"
+        description: "Data fine visibilità della graduatoria associata al dettaglio\
+          \ recuperato"
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+      annoCorso:
+        type: "integer"
+        format: "int64"
+        example: 2017
+        description: "Anno corso per il quele è valido il dettaglio recuperato"
+      prefPds:
+        type: "array"
+        items:
+          $ref: "#/definitions/DettaglioPrefPds"
+      prefSedi:
+        type: "array"
+        items:
+          $ref: "#/definitions/DettaglioPrefSedi"
+    x-layout-name: "V03_DETT_TEST_CONF_REST"
+    x-winsession-name: "p03/n_am_03_winsession_rest"
+    x-model-sub-package: "concorsi.v2"
+    x-model-sub-path: "concorsi/v2"
+  DettaglioPrefLingue:
+    type: "object"
+    properties:
+      aaId:
+        type: "integer"
+        format: "int64"
+        example: 2017
+        description: "Anno concorso"
+        x-field-type: "primaryKey"
+      testId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "Identificativo del concorso"
+        x-field-type: "primaryKey"
+      concLingueId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "Identificativo dettaglio preferenza in lingua"
+        x-field-type: "primaryKey"
+      linguaId:
+        type: "integer"
+        format: "int64"
+        example: 5
+        description: "Identificativo lingua"
+      linguaDes:
+        type: "string"
+        example: "2017"
+        description: "Descrizione lingua"
+        x-internal-name: "Inglese"
+      iso6392Cod:
+        type: "string"
+        example: "eng"
+        description: "Codice iso6392 lingua"
+    x-layout-name: "V03_CONC_LINGUE_REST"
+    x-winsession-name: "p03/n_am_03_winsession_rest"
+    x-model-sub-package: "concorsi.v2"
+    x-model-sub-path: "concorsi/v2"
+  ConcorsoConDettagli:
+    allOf:
+    - $ref: "#/definitions/Concorso"
+    - type: "object"
+      properties:
+        aaId:
+          type: "integer"
+          format: "int64"
+          example: 2017
+          description: "Anno concorso"
+          x-field-type: "primaryKey"
+        testId:
+          type: "integer"
+          format: "int64"
+          example: 1
+          description: "Identificativo del concorso"
+          x-field-type: "primaryKey"
+        tipoTestCod:
+          type: "string"
+          example: "A"
+          description: "Tipo di concorso: A = test di ammissione ad un corso di studio\
+            \ E = Esame di stato S = concorso per accedere ad una SSIS V = test di\
+            \ valutazione conoscenze del candidato"
+        modTest:
+          type: "string"
+          example: "U"
+          description: "Indica la modalità di svolgimento del concorso, test di valutazione,\
+            \ esame di stato: - E: ad esaurimento posti (ordine di presentazione della\
+            \ domanda di immatricolazione) - U: basato sul superamento di una prova\
+            \ unica - M: basato sul superamento di prove multiple - D: basato sull´\
+            ordine di presentazione della domanda di ammissione al concorso."
+        tipoTestDes:
+          type: "string"
+          example: "di Ammissione"
+          description: "Descrizione tipologia concorso"
+        concorsoDes:
+          type: "string"
+          example: "Ammissione alle lauree triennali"
+          description: "Descrizione del concorso."
+        concorsoDesEng:
+          type: "string"
+          example: "Admission test"
+          description: "Descrizione in lingua inglese del concorso."
+        dataIniAmmWeb:
+          type: "string"
+          example: "18/12/2017"
+          description: "Data d''inizio del periodo valido per la compilazione delle\
+            \ domande di ammissione al concorso, test di valutazione, esame di stato\
+            \ da web."
+          pattern: "regex_e3rest_date"
+        dataFinAmmWeb:
+          type: "string"
+          example: "18/12/2017"
+          description: "Data di fine del periodo valido per la compilazione delle\
+            \ domande di ammissione al concorso, test di valutazione, esame di stato\
+            \ da web."
+          pattern: "regex_e3rest_date"
+        nota:
+          type: "string"
+          example: "Attenzione"
+          description: "Nota associata al concorso"
+        concorsoNotaEng:
+          type: "string"
+          example: "Attention"
+          description: "Nota associata al concorso."
+        tipoCorsoCod:
+          type: "string"
+          example: "L2"
+          description: "Tipo di corso di studio a cui è associato il concorso, test\
+            \ di valutazione, esame di stato. Per gli esami di stato assume valori\
+            \ nulli."
+        tipoCorsoDes:
+          type: "string"
+          example: "Corso di Laurea"
+          description: "Descrizione tipologia corso di studio associata ala concorso"
+        tipoCorsoDesEng:
+          type: "string"
+          example: "Bachelor Degree"
+          description: "Descrizione in lingua inglese della tipologia corso di studio\
+            \ associata ala concorso"
+        linkBando:
+          type: "string"
+          example: "https://www.cineca.it/bando"
+          description: "Link al bando del concorso."
+        numPrefMin:
+          type: "integer"
+          format: "int64"
+          example: 1
+          description: "numero minimo preferenze"
+        numPrefMax:
+          type: "integer"
+          format: "int64"
+          example: 1
+          description: "numero massimo preferenze"
+        numPrefLingueMin:
+          type: "integer"
+          format: "int64"
+          example: 1
+          description: "numero minimo preferenze di lingue"
+        numPrefLingue:
+          type: "integer"
+          format: "int64"
+          example: 1
+          description: "numero massimo preferenze di lingue"
+        numPrefBorseMin:
+          type: "integer"
+          format: "int64"
+          example: 1
+          description: "numero minimo borse di studio"
+        numPrefBorse:
+          type: "integer"
+          format: "int64"
+          example: 1
+          description: "numero massimo borse di studio"
+        dettTest:
+          type: "array"
+          items:
+            $ref: "#/definitions/DettaglioTestConc"
+        prefLingue:
+          type: "array"
+          items:
+            $ref: "#/definitions/DettaglioPrefLingue"
+        prefBorse:
+          type: "array"
+          items:
+            $ref: "#/definitions/DettaglioPrefBorse"
+    x-layout-name: "V03_CONCORSI_CONF_REST"
+    x-winsession-name: "p03/n_am_03_winsession_rest"
+    x-model-sub-package: "concorsi.v2"
+    x-model-sub-path: "concorsi/v2"
+  LinguaConcorso:
+    type: "object"
+    required:
+    - "persId"
+    - "posId"
+    properties:
+      persId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "Identificativo della persona iscritta"
+        x-field-type: "primaryKey"
+      posId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "Identificativo posizione"
+        x-field-type: "primaryKey"
+      concLingueId:
+        type: "integer"
+        format: "int64"
+        example: 2017
+        description: "Anno concorso"
+      prefOrd:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "Ordine di preferenza"
+      des:
+        type: "string"
+        example: "descrizone lingua"
+        description: "Descrizione lingua"
+      linguaId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "Identificativo della lingua del concorso"
+    x-layout-name: "V03_AMM_CONC_LINGUE_REST"
+    x-winsession-name: "p03/n_am_03_winsession_rest"
+    x-model-sub-package: "concorsi.v2"
+    x-model-sub-path: "concorsi/v2"
+  ListaConcStu:
+    type: "object"
+    properties:
+      persId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "Identificativo del concorso"
+        x-field-type: "primaryKey"
+      posId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "Identificativo della scelta"
+        x-field-type: "primaryKey"
+      aaId:
+        type: "integer"
+        format: "int32"
+        example: 2025
+        description: "Identificativo anno"
+        x-field-type: "primaryKey"
+      testId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "Identificativo del concorso"
+        x-field-type: "primaryKey"
+      prematr:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "prematricola studente"
+      concorsoDesEng:
+        type: "string"
+        example: "Concorso di ammissione Chimica Industriale"
+        description: "Descrizione del concorso"
+        maxLength: 200
+      tipoTestCod:
+        type: "string"
+        example: "A"
+        description: "Descrizione del concorso"
+        maxLength: 2
+      tipoTestDes:
+        type: "string"
+        example: "di Ammissione"
+        description: "Descrizione della tipologia del concorso"
+        maxLength: 50
+      dataIniAmmWeb:
+        type: "string"
+        example: "18/12/2017"
+        description: "Data d''inizio del periodo valido per la compilazione delle\
+          \ domande di ammissione al concorso, test di valutazione, esame di stato\
+          \ da web."
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+      dataFinAmmWeb:
+        type: "string"
+        example: "18/12/2017"
+        description: "Data di fine del periodo valido per la compilazione delle domande\
+          \ di ammissione al concorso, test di valutazione, esame di stato da web."
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+      dataScad:
+        type: "string"
+        example: "18/12/2017"
+        description: "Data scadenza della posizione utile (Ammesso) in graduatoria\
+          \ ai fini della preimmatricolazione"
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+      dataScadPreim:
+        type: "string"
+        example: "18/12/2017"
+        description: "Data d''inizio del periodo valido per la compilazione delle\
+          \ domande di ammissione al concorso, test di valutazione, esame di stato\
+          \ da web."
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+      dataIniDomRipescaggio:
+        type: "string"
+        example: "18/12/2017"
+        description: "Data d''inizio del periodo valido per la compilazione delle\
+          \ domande di ammissione al concorso, test di valutazione, esame di stato\
+          \ da web."
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+      dataFinDomRipescaggio:
+        type: "string"
+        example: "18/12/2017"
+        description: "Data di fine del periodo valido per la compilazione delle domande\
+          \ di ammissione al concorso, test di valutazione, esame di stato da web."
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+      tassaFlg:
+        type: "integer"
+        format: "int32"
+        example: 1
+        description: "tassa flg"
+      taxPagFlg:
+        type: "integer"
+        format: "int32"
+        example: 1
+        description: "tassa flg"
+      listaCds:
+        type: "array"
+        items:
+          $ref: "#/definitions/ListaCdsStu"
+      preferenze:
+        type: "array"
+        items:
+          $ref: "#/definitions/Preferenze"
+      listaProve:
+        type: "array"
+        items:
+          $ref: "#/definitions/ListaProveStu"
+    x-layout-name: "LISTA_CONC_REST_STU"
+    x-winsession-name: "p03/n_am_03_winsession_rest"
+    x-model-sub-package: "concorsi.v2"
+    x-model-sub-path: "concorsi/v2"
+  BorseConcorso:
+    type: "object"
+    required:
+    - "persId"
+    - "posId"
+    properties:
+      persId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "Identificativo della persona iscritta"
+        x-field-type: "primaryKey"
+      posId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "Identificativo posizione"
+        x-field-type: "primaryKey"
+      concBorseId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "Anno concorso"
+      tipoBorsaCod:
+        type: "string"
+        example: "2017"
+        description: "Anno concorso"
+      des:
+        type: "string"
+        example: "descrizone"
+        description: "Descrizione borsa"
+    x-layout-name: "V03_AMM_CONC_BORSE_REST"
+    x-winsession-name: "p03/n_am_03_winsession_rest"
+    x-model-sub-package: "concorsi.v2"
+    x-model-sub-path: "concorsi/v2"
+  ListaCdsStu:
+    type: "object"
+    properties:
+      dettTestId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "Identificativo del concorso"
+      aaId:
+        type: "integer"
+        format: "int32"
+        example: 2025
+        description: "Identificativo anno"
+        x-field-type: "primaryKey"
+      testId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "Identificativo del concorso"
+        x-field-type: "primaryKey"
+      cdsId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "Identificativo del corso di studio"
+      cod:
+        type: "string"
+        example: "L2"
+        description: "Codice corso di studio"
+      tipoCorsoCod:
+        type: "string"
+        example: "L2"
+        description: "Codice della tipologia del corso"
+        maxLength: 10
+      cdsDes:
+        type: "string"
+        example: "Concorso di ammissione Chimica Industriale"
+        description: "Descrizione del concorso"
+        maxLength: 255
+      claMId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "Identificativo classe"
+      claMurstCod:
+        type: "string"
+        example: "di Ammissione"
+        description: "Codice classe"
+        maxLength: 50
+      descrizioneClasse:
+        type: "string"
+        example: "Concorso di ammissione Chimica Industriale"
+        description: "Descrizione della classe"
+        maxLength: 255
+      tipoTestCod:
+        type: "string"
+        example: "A"
+        description: "Descrizione del concorso"
+        maxLength: 2
+      aaOrdId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "Anno ordinamento"
+      cdsOrdDes:
+        type: "string"
+        example: "Concorso di ammissione Chimica Industriale"
+        description: "Descrizione ordinamento corso di studio"
+        maxLength: 255
+      pdsId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "Identificativo percorso di studio"
+      pdsOrdDes:
+        type: "string"
+        example: "Concorso di ammissione Chimica Industriale"
+        description: "Descrizione ordinamento percorso di studio"
+        maxLength: 255
+      tipoCatAmmId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "Identificativo tipologia categoria amministrativa"
+      tipoCatAmmDes:
+        type: "string"
+        example: "Concorso di ammissione Chimica Industriale"
+        description: "Descrizione tipologia categoria amministrativa"
+        maxLength: 255
+      sedeId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "Identificativo della sede"
+      sedeDes:
+        type: "string"
+        example: "Concorso di ammissione Chimica Industriale"
+        description: "Descrizione della sede"
+        maxLength: 255
+      annoCorso:
+        type: "integer"
+        format: "int32"
+        example: 1
+        description: "Anno corso"
+      numeroPostiTot:
+        type: "integer"
+        format: "int32"
+        example: 1
+        description: "Numero posti totali"
+      numeroPostiLiberi:
+        type: "integer"
+        format: "int32"
+        example: 1
+        description: "Numero posti totali"
+      dataIniVisGradWeb:
+        type: "string"
+        example: "18/12/2017"
+        description: "Data d''inizio del periodo valido per la compilazione delle\
+          \ domande di ammissione al concorso, test di valutazione, esame di stato\
+          \ da web."
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+      dataFinVisGradWeb:
+        type: "string"
+        example: "18/12/2017"
+        description: "Data di fine del periodo valido per la compilazione delle domande\
+          \ di ammissione al concorso, test di valutazione, esame di stato da web."
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+      dataScad:
+        type: "string"
+        example: "18/12/2017"
+        description: "Data scadenza della posizione utile (Ammesso) in graduatoria\
+          \ ai fini della preimmatricolazione"
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+      dataScadPreim:
+        type: "string"
+        example: "18/12/2017"
+        description: "Data d''inizio del periodo valido per la compilazione delle\
+          \ domande di ammissione al concorso, test di valutazione, esame di stato\
+          \ da web."
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+      dataIniDomRipescaggio:
+        type: "string"
+        example: "18/12/2017"
+        description: "Data d''inizio del periodo valido per la compilazione delle\
+          \ domande di ammissione al concorso, test di valutazione, esame di stato\
+          \ da web."
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+      dataFinDomRipescaggio:
+        type: "string"
+        example: "18/12/2017"
+        description: "Data di fine del periodo valido per la compilazione delle domande\
+          \ di ammissione al concorso, test di valutazione, esame di stato da web."
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+    x-layout-name: "LISTA_CDS_REST_STU"
+    x-winsession-name: "p03/n_am_03_winsession_rest"
+    x-model-sub-package: "concorsi.v2"
+    x-model-sub-path: "concorsi/v2"
+  ImportGraduatoria:
+    type: "object"
+    properties:
+      prematr:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "Indentifica la prematricola"
+      codFis:
+        type: "string"
+        example: "Buono"
+        description: "Giudizio in lingua inglese"
+        minLength: 16
+        maxLength: 16
+      cognome:
+        type: "string"
+        example: "Buono"
+        description: "Giudizio in lingua inglese"
+        maxLength: 40
+      nome:
+        type: "string"
+        example: "Buono"
+        description: "Giudizio in lingua inglese"
+        maxLength: 40
+      posiz:
+        type: "integer"
+        format: "int64"
+        example: 1
+      puntiTot:
+        type: "number"
+        format: "double"
+        example: 60.5
+      maxPunti:
+        type: "number"
+        format: "double"
+        example: 60.5
+      stato:
+        type: "string"
+        example: "Buono"
+        description: "Esito in graduatoria"
+        minLength: 2
+        maxLength: 2
+    x-model-sub-package: "concorsi.v2"
+    x-model-sub-path: "concorsi/v2"
+  DettaglioTest:
+    type: "object"
+    required:
+    - "persId"
+    - "posId"
+    properties:
+      persId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "Identificativo della persona iscritta"
+        x-field-type: "primaryKey"
+      posId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "Identificativo posizione"
+        x-field-type: "primaryKey"
+      dettTestId:
+        type: "integer"
+        format: "int64"
+        example: 3
+        description: "Identificativo del dettaglio"
+      prefOrd:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "Ordine di preferenza"
+      dettaglio:
+        type: "string"
+        example: "32/12 - LINGUE E LETTERATURE MODERNE EUROAMERICANE"
+        description: "Dettaglio del concorso"
+      dettaglioEng:
+        type: "string"
+        example: "32/12 - MODERN EUROAMERICAN LANGUAGES AND LITERATURES"
+        description: "Dettaglio lingua inglese"
+    x-layout-name: "V03_AMM_DETT_TEST_REST"
+    x-winsession-name: "p03/n_am_03_winsession_rest"
+    x-model-sub-package: "concorsi.v2"
+    x-model-sub-path: "concorsi/v2"
+  DettaglioSede:
+    type: "object"
+    required:
+    - "persId"
+    - "posId"
+    properties:
+      persId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "Identificativo della persona iscritta"
+        x-field-type: "primaryKey"
+      posId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "Identificativo posizione"
+        x-field-type: "primaryKey"
+      dettTestId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "Anno concorso"
+      sedeId:
+        type: "integer"
+        format: "int64"
+        example: 2017
+        description: "Anno concorso"
+      prefOrd:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "Ordine di preferenza"
+      des:
+        type: "string"
+        example: "descrizone lingua"
+        description: "Descrizione lingua"
+    x-layout-name: "V03_AMM_CONC_DETT_SEDE_REST"
+    x-winsession-name: "p03/n_am_03_winsession_rest"
+    x-model-sub-package: "concorsi.v2"
+    x-model-sub-path: "concorsi/v2"
+  DettaglioPds:
+    type: "object"
+    required:
+    - "persId"
+    - "posId"
+    properties:
+      persId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "Identificativo della persona iscritta"
+        x-field-type: "primaryKey"
+      posId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "Identificativo posizione"
+        x-field-type: "primaryKey"
+      dettTestId:
+        type: "integer"
+        format: "int64"
+        example: 2017
+        description: "Anno concorso"
+      cdsId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "Identificativo corso di studio"
+      aaOrdId:
+        type: "integer"
+        format: "int64"
+        example: 2020
+        description: "Anno ordinamento corso di studio"
+      pdsId:
+        type: "integer"
+        format: "int64"
+        example: 2017
+        description: "Identificativo percorso di studio"
+      cod:
+        type: "string"
+        example: "PDS"
+        description: "Codice del percorso di studio"
+      des:
+        type: "string"
+        example: "descrizone lingua"
+        description: "Descrizione pdel percorso di studi"
+    x-layout-name: "V03_AMM_CONC_DETT_PDS_REST"
+    x-winsession-name: "p03/n_am_03_winsession_rest"
+    x-model-sub-package: "concorsi.v2"
+    x-model-sub-path: "concorsi/v2"
+  GraduatoriaConcorso:
+    type: "object"
+    properties:
+      aaId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "Anno concorso"
+      testId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "Identificativo posizione"
+      dettTestId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "Identificativo dettaglio test"
+      righeGradId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "Identificativo dettaglio della graduatoria del concorso."
+      persId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "Identificativo della persona iscritta"
+      posId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "Identificativo posizione"
+      statoCod:
+        type: "string"
+        example: "IM"
+        description: "Codice dello stato del candidato"
+      statoGradDes:
+        type: "string"
+        example: "immatricolato"
+        description: "Descrizione dello stato del candidato"
+      statoGradDesEng:
+        type: "string"
+        example: "immatricolato"
+        description: "Descrizione dello stato del candidato in lingua inglese"
+      posiz:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "Identificativo posizione"
+      punti:
+        type: "number"
+        format: "double"
+        example: 90.0
+        description: "Identificativo posizione"
+      maxPunti:
+        type: "number"
+        format: "double"
+        example: 100.0
+        description: "Numero massimo di punti"
+      giudizio:
+        type: "string"
+        example: "Buono"
+        description: "Giudizio"
+      giudizioEng:
+        type: "string"
+        example: "Buono"
+        description: "Giudizio in lingua inglese"
+      presDomRipescaggio:
+        type: "integer"
+        format: "int64"
+        example: 0
+        description: "Indica se è presente la domanda di ripescaggio"
+      dataDomRipescaggio:
+        type: "string"
+        example: "22/08/2020"
+        description: "Data domanda ripescaggio"
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+      dataScadPosAm:
+        type: "string"
+        example: "22/08/2020"
+        description: "Data scadenza posizione ammesso"
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+      dataScadPosPi:
+        type: "string"
+        example: "22/08/2020"
+        description: "Data scadenza posizione preimmatricolato"
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+    x-layout-name: "V03_RIGHE_GRAD_REST"
+    x-winsession-name: "p03/n_am_03_winsession_rest"
+    x-model-sub-package: "concorsi.v2"
+    x-model-sub-path: "concorsi/v2"
+parameters:
+  soggEstId:
+    name: "soggEstId"
+    in: "query"
+    required: false
+    type: "integer"
+    format: "int64"
+  dataFinAmmWeb:
+    name: "dataFinAmmWeb"
+    in: "query"
+    description: "data fine ammissioni web"
+    required: false
+    type: "string"
+    pattern: "regex_e3rest_date"
+  tipoCorsoCod:
+    name: "tipoCorsoCod"
+    in: "query"
+    description: "codice tipologia corso"
+    required: false
+    type: "string"
+  aaIdPath:
+    name: "aaId"
+    in: "path"
+    description: "anno concorso"
+    required: true
+    type: "integer"
+    format: "int64"
+  dataIniAmmWeb:
+    name: "dataIniAmmWeb"
+    in: "query"
+    description: "data inizio ammissioni web"
+    required: false
+    type: "string"
+    pattern: "regex_e3rest_date"
+  docenteId:
+    name: "docenteId"
+    in: "query"
+    required: false
+    type: "integer"
+    format: "int64"
+  testIdPath:
+    name: "testId"
+    in: "path"
+    description: "test id concorso"
+    required: true
+    type: "integer"
+    format: "int64"
+  proveConcIdPath:
+    name: "proveConcId"
+    in: "path"
+    description: "identificativo prova concorso"
+    required: true
+    type: "integer"
+    format: "int64"
+  dettTestIdPath:
+    name: "dettTestId"
+    in: "path"
+    description: "identificativo dettaglio concorso"
+    required: true
+    type: "integer"
+    format: "int64"
+  posIdPath:
+    name: "posId"
+    in: "path"
+    description: "identificativo posizione"
+    required: true
+    type: "integer"
+    format: "int64"
+  gruppoTcCod:
+    name: "gruppoTcCod"
+    in: "query"
+    description: "codice codice raggruppamento tipi corso"
+    required: false
+    type: "string"
+  persId:
+    name: "persId"
+    in: "query"
+    description: "indetificativo persona"
+    required: false
+    type: "integer"
+    format: "int64"
+  cdsIdArray:
+    name: "cdsId"
+    in: "query"
+    description: "codice corso di studio"
+    required: false
+    type: "array"
+    items:
+      type: "integer"
+      format: "int64"
+      example: 1
+    collectionFormat: "multi"
+  dataScadPi:
+    name: "dataScadPi"
+    in: "query"
+    description: "data fine ammissioni web"
+    required: false
+    type: "string"
+    pattern: "regex_e3rest_date"
+  aaId:
+    name: "aaId"
+    in: "query"
+    description: "anno concorso"
+    required: false
+    type: "integer"
+    format: "int64"
+  tipoCorsoCodArray:
+    name: "tipoCorsoCod"
+    in: "query"
+    description: "codice tipologia corso"
+    required: false
+    type: "array"
+    items:
+      type: "string"
+      example: "P"
+    collectionFormat: "multi"
+  persIdPath:
+    name: "persId"
+    in: "path"
+    description: "identificativo persona"
+    required: true
+    type: "integer"
+    format: "int64"
+  tipologiaFilePath:
+    name: "tipologiaFile"
+    in: "query"
+    description: "tipologia del file di import classifiche"
+    required: true
+    type: "string"
+    enum:
+    - "STD"
+    - "MED_CINECA"
+  dataScadAmm:
+    name: "dataScadAmm"
+    in: "query"
+    description: "data scadenza ammissioni"
+    required: false
+    type: "string"
+    pattern: "regex_e3rest_date"
+  taxPagFlg:
+    name: "taxPagFlg"
+    in: "query"
+    description: "flag che indica il pagamento delle tasse"
+    required: false
+    type: "integer"
+    format: "int32"
+externalDocs:
+  description: "Documentazione Geneale sui servizi REST"
+  url: "https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3"
+x-file-status: "PROD"
+x-file-name: "p03-concorsiApiV2.yaml"
+x-api-status: "PROD"
+x-func-cod: "RST_CONCV2"
+x-cache-type: "configuration"

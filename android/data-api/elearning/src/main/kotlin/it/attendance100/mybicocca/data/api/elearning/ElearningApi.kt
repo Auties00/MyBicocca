@@ -2,7 +2,13 @@ package it.attendance100.mybicocca.data.api.elearning
 
 import io.ktor.client.HttpClient
 import io.ktor.client.HttpClientConfig
+import io.ktor.client.plugins.api.Send
+import io.ktor.client.plugins.api.SendingRequest
+import io.ktor.client.plugins.api.createClientPlugin
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.client.plugins.cookies.AcceptAllCookiesStorage
+import io.ktor.client.plugins.cookies.HttpCookies
+import io.ktor.http.HttpHeaders
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
 
@@ -26,10 +32,28 @@ class ElearningApi(httpClientConfig: HttpClientConfig<*>.() -> Unit = {}) : Auto
     }
 
     /**
+     * Plugin to optionally skip cookies.
+     */
+    private val skipCookiesPlugin = createClientPlugin("SkipCookies") {
+        on(SendingRequest) { request, _ ->
+            if (request.attributes.contains(ElearningAttributes.SkipCookies)) {
+                request.headers.remove(HttpHeaders.Cookie)
+            }
+        }
+    }
+
+    /**
      * Shared HTTP client for all API requests.
      */
     private val client = HttpClient {
         httpClientConfig()
+
+        install(HttpCookies) {
+            storage = AcceptAllCookiesStorage()
+        }
+        install(skipCookiesPlugin)
+
+        followRedirects = true
 
         install(ContentNegotiation) {
             json(json)
@@ -37,7 +61,12 @@ class ElearningApi(httpClientConfig: HttpClientConfig<*>.() -> Unit = {}) : Auto
     }
 
     /**
-     * API for site-level operations and authentication.
+     * API for auth-related operations.
+     */
+    val auth: ElearningAuthApi = ElearningAuthApi(client, json)
+
+    /**
+     * API for site-level operations.
      */
     val site: ElearningSiteApi = ElearningSiteApi(client, json)
 

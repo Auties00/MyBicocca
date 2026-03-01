@@ -1,0 +1,1973 @@
+---
+swagger: "2.0"
+info:
+  description: "I servizi presenti permettono di recuperare le informazioni dei docenti\
+    \ ed eseguire operazioni su di essi.\n"
+  version: "1.0.0"
+  title: "ESSE3 Docenti API"
+basePath: "/docenti-service-v1"
+schemes:
+- "https"
+- "http"
+consumes:
+- "application/json"
+produces:
+- "application/json"
+security:
+- basicAuth: []
+- jwt:
+  - "openid"
+paths:
+  /docenti:
+    get:
+      tags:
+      - "docenti"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>Recupera le informazioni sul docenti con gli\
+        \ eventuuali orari di ricevimento. I parametri opzionali filtrano uno o più\
+        \ docenti.\n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n-|-|-\nx-cache-type|lowRefreshRateUserDependent|Risorsa\
+        \ che varia con frequenza bassa, cache Http abilitata, cache server disabilitata.\
+        \ Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: user-tecnico-massive-permissions**\n\nProfilo|Controllo| Funzione\n\
+        -|-|-\nUserTecnicoMassivo|funzione massiva riservata ad utenti tecnici autorizzati|Security.checkMassiveGET()\n\
+        \n\nClasse di modello : DocentiNew\n======\n\nEstensioni sulle proprietà\n\
+        ----\nProprietà | x-field-type\n-|-|\ndocentiRecapiti|optional\ndocentiNote|optional\n\
+        cariche|optional\norario|optional\ndocenteId|primaryKey\n\n\nClasse di modello\
+        \ : DocentiRecapiti\n======\n\nEstensioni sulle proprietà\n----\nProprietà\
+        \ | x-field-type\n-|-|\ndocenteId|primaryKey\n\n\nClasse di modello : DocentiNote\n\
+        ======\n\nEstensioni sulle proprietà\n----\nProprietà | x-field-type\n-|-|\n\
+        docenteId|primaryKey\n\n\nClasse di modello : DocentiOrario\n======\n\nEstensioni\
+        \ sulle proprietà\n----\nProprietà | x-field-type\n-|-|\ndocenteOrarioId|primaryKey\n\
+        \n\nClasse di modello : DettaglioErroreAggiuntivo\n======\n\nEstensioni sulle\
+        \ proprietà\n----\nProprietà | x-field-type\n-|-|\nrawValue|rawJson\n"
+      operationId: "getDocenti"
+      parameters:
+      - name: "docenteMatricola"
+        in: "query"
+        description: "matricola del docente"
+        required: false
+        type: "string"
+      - name: "docenteCognome"
+        in: "query"
+        description: "cognome del docente (se viene utilizzato il carattere * viene\
+          \ applicato il like)"
+        required: false
+        type: "string"
+      - name: "docenteNome"
+        in: "query"
+        description: "nome del docente (se viene utilizzato il carattere * viene applicato\
+          \ il like)"
+        required: false
+        type: "string"
+      - name: "codFis"
+        in: "query"
+        description: "codice fiscale dell'utente"
+        required: false
+        type: "string"
+      - name: "idAb"
+        in: "query"
+        description: "ID address book della  persona in ugov"
+        required: false
+        type: "integer"
+        format: "int64"
+      - name: "dataMod"
+        in: "query"
+        description: "data di ultima modifica"
+        required: false
+        type: "string"
+        maxLength: 10
+        minLength: 10
+      - name: "dataIns"
+        in: "query"
+        description: "data di inserimento"
+        required: false
+        type: "string"
+        maxLength: 10
+        minLength: 10
+      - name: "caricaId"
+        in: "query"
+        description: "ID carica"
+        required: false
+        type: "integer"
+        format: "int64"
+      - name: "cdsIdCarica"
+        in: "query"
+        description: "ID Corso di Studio assiciata alla carica"
+        required: false
+        type: "integer"
+        format: "int64"
+      - name: "facIdCarica"
+        in: "query"
+        description: "ID Facoltà/Dipartimento assiciata alla carica"
+        required: false
+        type: "integer"
+        format: "int64"
+      - name: "dataValiditaCarica"
+        in: "query"
+        description: "Filtro di una carica valida in una determinata data (formato\
+          \ DD/MM/YYYY)"
+        required: false
+        type: "string"
+        maxLength: 10
+      - name: "facIdAppartenenza"
+        in: "query"
+        description: "ID Facoltà/Dipartimento appartenenza"
+        required: false
+        type: "integer"
+        format: "int64"
+      - name: "ruoliDocCod"
+        in: "query"
+        description: "Codice ruoli Docenti"
+        required: false
+        type: "array"
+        items:
+          type: "string"
+          example: "ORD"
+          description: "Codice ruolo Docente"
+      - name: "start"
+        in: "query"
+        description: "utilizzato insieme a `limit` per indicare la paginazione sui\
+          \ record; `start` indica il numero del primo record da caricare (se non\
+          \ indicato viene utilizzato 0)\n"
+        required: false
+        type: "integer"
+        format: "int32"
+      - name: "limit"
+        in: "query"
+        description: "utilizzato insieme a `start` per indicare la paginazione sui\
+          \ record, `limit` indica il numero di record da recuperare (a partire da\
+          \ `start`); \nse non indicato viene utilizzato 50, i valori consentiti vanno\
+          \ da 0 a 100\n"
+        required: false
+        type: "integer"
+        format: "int32"
+      - name: "fields"
+        in: "query"
+        description: "specifica la lista dei campi opzionali (che non vengono recupeati\
+          \ di default);\nimpostando il valore `ALL` vengono mostrati tutti i campi.\
+          \ \n\nPer gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns*\
+          \  \nI dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello)\n\
+          \nEsempi\n* per il campo childObj con la poprietà childProp utilizzare la\
+          \ notazione `childProp.prop1`\n* Per visualizzare tutte le proprietà di\
+          \ childObj utilizzare la notazione `childProp.*`\n* Per visualizzare tutte\
+          \ le proprietà di childObj e di tutti i discendenti utilizzare la notazione\
+          \ `childProp.**`\n"
+        required: false
+        type: "string"
+      - name: "optionalFields"
+        in: "query"
+        description: "specifica la lista dei campi opzionali (che non vengono recupeati\
+          \ di default);\nimpostando il valore `ALL` vengono mostrati tutti i campi.\
+          \ \n\nPer gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns*\
+          \  \nI dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello)\n\
+          \nEsempi\n* per il campo childObj con la poprietà childProp utilizzare la\
+          \ notazione `childProp.prop1`\n* Per visualizzare tutte le proprietà di\
+          \ childObj utilizzare la notazione `childProp.*`\n* Per visualizzare tutte\
+          \ le proprietà di childObj e di tutti i discendenti utilizzare la notazione\
+          \ `childProp.**`\n"
+        required: false
+        type: "string"
+      - name: "order"
+        in: "query"
+        description: "consente di specificare un ordine per il recupero dei record.\
+          \ La sintassi è la seguente\n * +/- : specifica l'ordinamento (+ = ASC,\
+          \ - = DESC); se omesso viene utilizzato +\n * field : nome del campo da\
+          \ ordinare\n \n E' possibile indicare più campi separandoli da virgola (Es:\
+          \ +annoCorso,+adCod) \n"
+        required: false
+        type: "string"
+      responses:
+        "200":
+          description: "successful operation"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/DocentiNew"
+        "422":
+          description: "aggiornamento non riuscito"
+          schema:
+            $ref: "#/definitions/DettaglioErrore"
+      x-circuit-breaker-props:
+        rateLimiter-enable: false
+        circuitBreaker-enable: false
+        bulkhead-enable: true
+      x-enabled-profiles:
+      - user-tecnico-massive-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UserTecnicoMassivo"
+              description: "funzione massiva riservata ad utenti tecnici autorizzati"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkMassiveGET"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+      x-cache-type: "lowRefreshRateUserDependent"
+  /docenti/ruoli:
+    get:
+      tags:
+      - "ruoli"
+      summary: "Recupero ruoli dei docenti"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>Fornisce i ruoli dei docenti configurati su\
+        \ esse3.\n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n-|-|-\nx-cache-type|lowRefreshRateUserIndependent|Risorsa\
+        \ che varia con frequenza bassa, cache Http abilitata, cache server abilitata.\
+        \ Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: user-tecnico-permissions**\n\nProfilo|Controllo| Funzione\n-|-|-\n\
+        UTENTE_TECNICO|funzione accessibile alle utenze tecniche per accessi ai servizi\
+        \ REST|Security.checkUserTecnico()\n"
+      operationId: "getRuoliDoc"
+      parameters:
+      - name: "ruoloDocCod"
+        in: "query"
+        description: "Codice ruolo docente."
+        required: false
+        type: "string"
+      - name: "csaCod"
+        in: "query"
+        description: "Codice CSA."
+        required: false
+        type: "string"
+      - name: "tipoRuoloDocCod"
+        in: "query"
+        description: "Codice tipologia ruolo docente."
+        required: false
+        type: "string"
+      - name: "fields"
+        in: "query"
+        description: "specifica la lista dei campi opzionali (che non vengono recupeati\
+          \ di default);\nimpostando il valore `ALL` vengono mostrati tutti i campi.\
+          \ \n\nPer gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns*\
+          \  \nI dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello)\n\
+          \nEsempi\n* per il campo childObj con la poprietà childProp utilizzare la\
+          \ notazione `childProp.prop1`\n* Per visualizzare tutte le proprietà di\
+          \ childObj utilizzare la notazione `childProp.*`\n* Per visualizzare tutte\
+          \ le proprietà di childObj e di tutti i discendenti utilizzare la notazione\
+          \ `childProp.**`\n"
+        required: false
+        type: "string"
+      - name: "order"
+        in: "query"
+        description: "consente di specificare un ordine per il recupero dei record.\
+          \ La sintassi è la seguente\n * +/- : specifica l'ordinamento (+ = ASC,\
+          \ - = DESC); se omesso viene utilizzato +\n * field : nome del campo da\
+          \ ordinare\n \n E' possibile indicare più campi separandoli da virgola (Es:\
+          \ +annoCorso,+adCod) \n"
+        required: false
+        type: "string"
+      - name: "start"
+        in: "query"
+        description: "utilizzato insieme a `limit` per indicare la paginazione sui\
+          \ record; `start` indica il numero del primo record da caricare (se non\
+          \ indicato viene utilizzato 0)\n"
+        required: false
+        type: "integer"
+        format: "int32"
+      - name: "limit"
+        in: "query"
+        description: "utilizzato insieme a `start` per indicare la paginazione sui\
+          \ record, `limit` indica il numero di record da recuperare (a partire da\
+          \ `start`); \nse non indicato viene utilizzato 50, i valori consentiti vanno\
+          \ da 0 a 100\n"
+        required: false
+        type: "integer"
+        format: "int32"
+      responses:
+        "200":
+          description: "Successful response"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/RuoloDocente"
+      x-enabled-profiles:
+      - user-tecnico-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UTENTE_TECNICO"
+              description: "funzione accessibile alle utenze tecniche per accessi\
+                \ ai servizi REST"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkUserTecnico"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+  /docenti/{docenteId}:
+    get:
+      tags:
+      - "docenti"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>Recupera le informazioni sul docente, opzionalmente\
+        \ è possibile recuperare gli orari\n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n\
+        -|-|-\nx-cache-type|lowRefreshRateUserIndependent|Risorsa che varia con frequenza\
+        \ bassa, cache Http abilitata, cache server abilitata. Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: USER_TECNICO**\n\nProfilo|Controllo| Funzione\n-|-|-\nUserTecnicoMassivo|funzione\
+        \ massiva riservata ad utenti tecnici autorizzati|Security.checkMassiveGET()\n\
+        \n**Utente: common-docente-permissions**\n\nProfilo|Controllo| Funzione\n\
+        -|-|-\nDOCENTE|Permette la visualizzazione delle informazioni collegate ad\
+        \ una anagrafica docente|Security.checkDocenteId(docenteId)\n\n\nClasse di\
+        \ modello : DocentiNew\n======\n\nEstensioni sulle proprietà\n----\nProprietà\
+        \ | x-field-type\n-|-|\ndocentiRecapiti|optional\ndocentiNote|optional\ncariche|optional\n\
+        orario|optional\ndocenteId|primaryKey\n\n\nClasse di modello : DocentiRecapiti\n\
+        ======\n\nEstensioni sulle proprietà\n----\nProprietà | x-field-type\n-|-|\n\
+        docenteId|primaryKey\n\n\nClasse di modello : DocentiNote\n======\n\nEstensioni\
+        \ sulle proprietà\n----\nProprietà | x-field-type\n-|-|\ndocenteId|primaryKey\n\
+        \n\nClasse di modello : DocentiOrario\n======\n\nEstensioni sulle proprietà\
+        \n----\nProprietà | x-field-type\n-|-|\ndocenteOrarioId|primaryKey\n"
+      operationId: "getDocente"
+      parameters:
+      - name: "docenteId"
+        in: "path"
+        description: "id del docente"
+        required: true
+        type: "integer"
+        format: "int64"
+      - name: "fields"
+        in: "query"
+        description: "specifica la lista dei campi opzionali (che non vengono recupeati\
+          \ di default);\nimpostando il valore `ALL` vengono mostrati tutti i campi.\
+          \ \n\nPer gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns*\
+          \  \nI dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello)\n\
+          \nEsempi\n* per il campo childObj con la poprietà childProp utilizzare la\
+          \ notazione `childProp.prop1`\n* Per visualizzare tutte le proprietà di\
+          \ childObj utilizzare la notazione `childProp.*`\n* Per visualizzare tutte\
+          \ le proprietà di childObj e di tutti i discendenti utilizzare la notazione\
+          \ `childProp.**`\n"
+        required: false
+        type: "string"
+      - name: "optionalFields"
+        in: "query"
+        description: "specifica la lista dei campi opzionali (che non vengono recupeati\
+          \ di default);\nimpostando il valore `ALL` vengono mostrati tutti i campi.\
+          \ \n\nPer gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns*\
+          \  \nI dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello)\n\
+          \nEsempi\n* per il campo childObj con la poprietà childProp utilizzare la\
+          \ notazione `childProp.prop1`\n* Per visualizzare tutte le proprietà di\
+          \ childObj utilizzare la notazione `childProp.*`\n* Per visualizzare tutte\
+          \ le proprietà di childObj e di tutti i discendenti utilizzare la notazione\
+          \ `childProp.**`\n"
+        required: false
+        type: "string"
+      responses:
+        "200":
+          description: "successful operation"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/DocentiNew"
+      x-enabled-profiles:
+      - user-tecnico-massive-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UserTecnicoMassivo"
+              description: "funzione massiva riservata ad utenti tecnici autorizzati"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkMassiveGET"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+      - common-docente-permissions:
+          kind: "DOCENTE"
+          profiles:
+          - profile:
+              name: "DOCENTE"
+              description: "Permette la visualizzazione delle informazioni collegate\
+                \ ad una anagrafica docente"
+              checks:
+              - checkAdmin:
+                  className: "Security"
+                  functionName: "checkDocenteId"
+                  description: "funzione che il docenteId appartenga all'utente loggato"
+                  parameters:
+                  - docenteId:
+                      name: "docenteId"
+                      in: "path"
+                      description: "id del docente"
+                      required: true
+                      type: "integer"
+                      format: "int64"
+    patch:
+      tags:
+      - "docenti"
+      summary: "effettua l'aggiornamento dell'email di un docente"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>Consente di modificare la email del docente,\n\
+        nel caso il campo della struttura in ingresso non sia impostato a null oppure\
+        \ non sia passato non verra' passato in ingresso\nper poter impostare a null\
+        \ in campi vanno passati deivalori speciali definiti nella seguente lista\n\
+        * Stringhe  #!N!# \n* Numerici  -2.147.483.649  \n* Date : 01/01/1970  \n\
+        \ \n##### Codici di ritorno della funzione\nCodice di Ritorno | Descrizione\
+        \  \n -                | - \n -1               | Errore generico  \n 1   \
+        \             | Esecuzione Corretta\n\n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n\
+        -|-|-\nx-cache-type|lowRefreshRateUserIndependent|Risorsa che varia con frequenza\
+        \ bassa, cache Http abilitata, cache server abilitata. Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: USER_TECNICO**\n\nProfilo|Controllo| Funzione\n-|-|-\nUTENTE_TECNICO|funzione\
+        \ accessibile alle utenze tecniche per accessi ai servizi REST|Security.checkUserTecnico()\n\
+        \n**Utente: DOCENTE**\n\nProfilo|Controllo| Funzione\n-|-|-\nDOCENTE|Permette\
+        \ la visualizzazione delle informazioni collegate ad una anagrafica docente|Security.checkDocenteId(docenteId)\n\
+        \n\nClasse di modello : DocentiNew\n======\n\nEstensioni sulle proprietà\n\
+        ----\nProprietà | x-field-type\n-|-|\ndocentiRecapiti|optional\ndocentiNote|optional\n\
+        cariche|optional\norario|optional\ndocenteId|primaryKey\n\n\nClasse di modello\
+        \ : DocentiRecapiti\n======\n\nEstensioni sulle proprietà\n----\nProprietà\
+        \ | x-field-type\n-|-|\ndocenteId|primaryKey\n\n\nClasse di modello : DocentiNote\n\
+        ======\n\nEstensioni sulle proprietà\n----\nProprietà | x-field-type\n-|-|\n\
+        docenteId|primaryKey\n\n\nClasse di modello : DocentiOrario\n======\n\nEstensioni\
+        \ sulle proprietà\n----\nProprietà | x-field-type\n-|-|\ndocenteOrarioId|primaryKey\n\
+        \n\nClasse di modello : DettaglioErroreAggiuntivo\n======\n\nEstensioni sulle\
+        \ proprietà\n----\nProprietà | x-field-type\n-|-|\nrawValue|rawJson\n"
+      operationId: "putDocente"
+      consumes:
+      - "application/json"
+      parameters:
+      - name: "docenteId"
+        in: "path"
+        description: "id del docente"
+        required: true
+        type: "integer"
+        format: "int64"
+      - name: "optionalFields"
+        in: "query"
+        description: "specifica la lista dei campi opzionali (che non vengono recupeati\
+          \ di default);\nimpostando il valore `ALL` vengono mostrati tutti i campi.\
+          \ \n\nPer gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns*\
+          \  \nI dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello)\n\
+          \nEsempi\n* per il campo childObj con la poprietà childProp utilizzare la\
+          \ notazione `childProp.prop1`\n* Per visualizzare tutte le proprietà di\
+          \ childObj utilizzare la notazione `childProp.*`\n* Per visualizzare tutte\
+          \ le proprietà di childObj e di tutti i discendenti utilizzare la notazione\
+          \ `childProp.**`\n"
+        required: false
+        type: "string"
+      - in: "body"
+        name: "body"
+        description: "Oggetto con i campi da modificare"
+        required: true
+        schema:
+          $ref: "#/definitions/ParametriDocente"
+      responses:
+        "200":
+          description: "Update succeded"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/DocentiNew"
+        "422":
+          description: "aggiornamento non riuscito"
+          schema:
+            $ref: "#/definitions/DettaglioErrore"
+      x-enabled-profiles:
+      - user-tecnico-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UTENTE_TECNICO"
+              description: "funzione accessibile alle utenze tecniche per accessi\
+                \ ai servizi REST"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkUserTecnico"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+      - common-docente-permissions:
+          kind: "DOCENTE"
+          profiles:
+          - profile:
+              name: "DOCENTE"
+              description: "Permette la visualizzazione delle informazioni collegate\
+                \ ad una anagrafica docente"
+              checks:
+              - checkAdmin:
+                  className: "Security"
+                  functionName: "checkDocenteId"
+                  description: "funzione che il docenteId appartenga all'utente loggato"
+                  parameters:
+                  - docenteId:
+                      name: "docenteId"
+                      in: "path"
+                      description: "id del docente"
+                      required: true
+                      type: "integer"
+                      format: "int64"
+  /docenti/{docenteId}/note:
+    get:
+      tags:
+      - "docenti"
+      summary: "Recupera le note associate ad un docente"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>Recupera le note associate ad un docente.\n\
+        \n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n-|-|-\nx-cache-type|lowRefreshRateUserIndependent|Risorsa\
+        \ che varia con frequenza bassa, cache Http abilitata, cache server abilitata.\
+        \ Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: USER_TECNICO**\n\nProfilo|Controllo| Funzione\n-|-|-\nUTENTE_TECNICO|funzione\
+        \ accessibile alle utenze tecniche per accessi ai servizi REST|Security.checkUserTecnico()\n\
+        \n**Utente: DOCENTE**\n\nProfilo|Controllo| Funzione\n-|-|-\nDOCENTE|Permette\
+        \ la visualizzazione delle informazioni collegate ad una anagrafica docente|Security.checkDocenteId(docenteId)\n\
+        \n\nClasse di modello : DocentiNote\n======\n\nEstensioni sulle proprietà\n\
+        ----\nProprietà | x-field-type\n-|-|\ndocenteId|primaryKey\n"
+      operationId: "getNoteDocente"
+      parameters:
+      - name: "docenteId"
+        in: "path"
+        description: "id del docente"
+        required: true
+        type: "integer"
+        format: "int64"
+      responses:
+        "200":
+          description: "successful operation"
+          schema:
+            $ref: "#/definitions/DocentiNote"
+      x-enabled-profiles:
+      - user-tecnico-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UTENTE_TECNICO"
+              description: "funzione accessibile alle utenze tecniche per accessi\
+                \ ai servizi REST"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkUserTecnico"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+      - common-docente-permissions:
+          kind: "DOCENTE"
+          profiles:
+          - profile:
+              name: "DOCENTE"
+              description: "Permette la visualizzazione delle informazioni collegate\
+                \ ad una anagrafica docente"
+              checks:
+              - checkAdmin:
+                  className: "Security"
+                  functionName: "checkDocenteId"
+                  description: "funzione che il docenteId appartenga all'utente loggato"
+                  parameters:
+                  - docenteId:
+                      name: "docenteId"
+                      in: "path"
+                      description: "id del docente"
+                      required: true
+                      type: "integer"
+                      format: "int64"
+    put:
+      tags:
+      - "docenti"
+      summary: "Inserisce o aggiorna le note associate ad un docente"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>Il sevizio si occupa di inserire o aggiornare\
+        \ le note del docente identificato dal parametro 'docenteId'. Se un campo\
+        \ del body non viene passato o viene impostato a null, il servizio NON modificherà\
+        \ quel campo.\n\n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n-|-|-\n\
+        x-cache-type|lowRefreshRateUserIndependent|Risorsa che varia con frequenza\
+        \ bassa, cache Http abilitata, cache server abilitata. Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: USER_TECNICO**\n\nProfilo|Controllo| Funzione\n-|-|-\nUTENTE_TECNICO|funzione\
+        \ accessibile alle utenze tecniche per accessi ai servizi REST|Security.checkUserTecnico()\n\
+        \n**Utente: DOCENTE**\n\nProfilo|Controllo| Funzione\n-|-|-\nDOCENTE|Permette\
+        \ la visualizzazione delle informazioni collegate ad una anagrafica docente|Security.checkDocenteId(docenteId)\n\
+        \n\nClasse di modello : DocentiNote\n======\n\nEstensioni sulle proprietà\n\
+        ----\nProprietà | x-field-type\n-|-|\ndocenteId|primaryKey\n\n\nClasse di\
+        \ modello : DettaglioErroreAggiuntivo\n======\n\nEstensioni sulle proprietà\
+        \n----\nProprietà | x-field-type\n-|-|\nrawValue|rawJson\n"
+      operationId: "putNoteDocente"
+      parameters:
+      - name: "docenteId"
+        in: "path"
+        description: "id del docente"
+        required: true
+        type: "integer"
+        format: "int64"
+      - in: "body"
+        name: "body"
+        description: "Oggetto con i campi da modificare"
+        required: true
+        schema:
+          $ref: "#/definitions/PutNoteDocente"
+      responses:
+        "200":
+          description: "Update succeded"
+          schema:
+            $ref: "#/definitions/DocentiNote"
+        "422":
+          description: "aggiornamento non riuscito"
+          schema:
+            $ref: "#/definitions/DettaglioErrore"
+      x-enabled-profiles:
+      - user-tecnico-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UTENTE_TECNICO"
+              description: "funzione accessibile alle utenze tecniche per accessi\
+                \ ai servizi REST"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkUserTecnico"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+      - common-docente-permissions:
+          kind: "DOCENTE"
+          profiles:
+          - profile:
+              name: "DOCENTE"
+              description: "Permette la visualizzazione delle informazioni collegate\
+                \ ad una anagrafica docente"
+              checks:
+              - checkAdmin:
+                  className: "Security"
+                  functionName: "checkDocenteId"
+                  description: "funzione che il docenteId appartenga all'utente loggato"
+                  parameters:
+                  - docenteId:
+                      name: "docenteId"
+                      in: "path"
+                      description: "id del docente"
+                      required: true
+                      type: "integer"
+                      format: "int64"
+  /docenti/{docenteId}/orario:
+    get:
+      tags:
+      - "orari"
+      summary: "Recupera gli orari associati ad un docente"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>Recupera gli orari associati ad un docente.\
+        \ E' possibile filtrare gli orari per giorno.\n\n\n**Estensioni:**\n\nCodice\
+        \ Estensione|Valore|Nota\n-|-|-\nx-cache-type|lowRefreshRateUserIndependent|Risorsa\
+        \ che varia con frequenza bassa, cache Http abilitata, cache server abilitata.\
+        \ Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: USER_TECNICO**\n\nProfilo|Controllo| Funzione\n-|-|-\nUTENTE_TECNICO|funzione\
+        \ accessibile alle utenze tecniche per accessi ai servizi REST|Security.checkUserTecnico()\n\
+        \n**Utente: DOCENTE**\n\nProfilo|Controllo| Funzione\n-|-|-\nDOCENTE|Permette\
+        \ la visualizzazione delle informazioni collegate ad una anagrafica docente|Security.checkDocenteId(docenteId)\n\
+        \n\nClasse di modello : DocentiOrario\n======\n\nEstensioni sulle proprietà\
+        \n----\nProprietà | x-field-type\n-|-|\ndocenteOrarioId|primaryKey\n"
+      operationId: "getOrarioDocente"
+      parameters:
+      - name: "docenteId"
+        in: "path"
+        description: "id del docente"
+        required: true
+        type: "integer"
+        format: "int64"
+      - name: "giorno"
+        in: "query"
+        description: "giorno della settimana (1=Lunedì, 2=Martedì, 3=Mercoledì, 4=Giovedì\
+          , 5=Venerdì, 6=Sabato, 7=Domenica)"
+        required: false
+        type: "integer"
+        maximum: 7.0
+        minimum: 1.0
+        format: "int32"
+      responses:
+        "200":
+          description: "successful operation"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/DocentiOrario"
+      x-enabled-profiles:
+      - user-tecnico-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UTENTE_TECNICO"
+              description: "funzione accessibile alle utenze tecniche per accessi\
+                \ ai servizi REST"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkUserTecnico"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+      - common-docente-permissions:
+          kind: "DOCENTE"
+          profiles:
+          - profile:
+              name: "DOCENTE"
+              description: "Permette la visualizzazione delle informazioni collegate\
+                \ ad una anagrafica docente"
+              checks:
+              - checkAdmin:
+                  className: "Security"
+                  functionName: "checkDocenteId"
+                  description: "funzione che il docenteId appartenga all'utente loggato"
+                  parameters:
+                  - docenteId:
+                      name: "docenteId"
+                      in: "path"
+                      description: "id del docente"
+                      required: true
+                      type: "integer"
+                      format: "int64"
+      x-cache-type: "lowRefreshRateUserIndependent"
+    post:
+      tags:
+      - "orari"
+      summary: "Inserisce gli orari associati ad un docente"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>Il sevizio si occupa di inserire gli orari\
+        \ del docente identificato dal parametro 'docenteId'. E' possibile specificare\
+        \ una lista di orari da inserire. Da notare che se un orario della lista risulta\
+        \ non corretto, non verrà inserito nessun orario. Se l'inserimento va a buon\
+        \ fine, il servizio ritorna TUTTI gli orari del docente (non solo quelli appena\
+        \ creati).\n\n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n-|-|-\n\
+        x-cache-type|noCache|Nessuna cache impostata Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: USER_TECNICO**\n\nProfilo|Controllo| Funzione\n-|-|-\nUTENTE_TECNICO|funzione\
+        \ accessibile alle utenze tecniche per accessi ai servizi REST|Security.checkUserTecnico()\n\
+        \n**Utente: DOCENTE**\n\nProfilo|Controllo| Funzione\n-|-|-\nDOCENTE|Permette\
+        \ la visualizzazione delle informazioni collegate ad una anagrafica docente|Security.checkDocenteId(docenteId)\n\
+        \n\nClasse di modello : DocentiOrario\n======\n\nEstensioni sulle proprietà\
+        \n----\nProprietà | x-field-type\n-|-|\ndocenteOrarioId|primaryKey\n\n\nClasse\
+        \ di modello : DettaglioErroreAggiuntivo\n======\n\nEstensioni sulle proprietà\
+        \n----\nProprietà | x-field-type\n-|-|\nrawValue|rawJson\n"
+      operationId: "postOrarioDocente"
+      parameters:
+      - name: "docenteId"
+        in: "path"
+        description: "id del docente"
+        required: true
+        type: "integer"
+        format: "int64"
+      - in: "body"
+        name: "body"
+        description: "Oggetto con i campi da inserire"
+        required: true
+        schema:
+          type: "array"
+          items:
+            $ref: "#/definitions/PostOrarioDocente"
+      responses:
+        "201":
+          description: "Update succeded"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/DocentiOrario"
+        "422":
+          description: "aggiornamento non riuscito"
+          schema:
+            $ref: "#/definitions/DettaglioErrore"
+      x-enabled-profiles:
+      - user-tecnico-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UTENTE_TECNICO"
+              description: "funzione accessibile alle utenze tecniche per accessi\
+                \ ai servizi REST"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkUserTecnico"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+      - common-docente-permissions:
+          kind: "DOCENTE"
+          profiles:
+          - profile:
+              name: "DOCENTE"
+              description: "Permette la visualizzazione delle informazioni collegate\
+                \ ad una anagrafica docente"
+              checks:
+              - checkAdmin:
+                  className: "Security"
+                  functionName: "checkDocenteId"
+                  description: "funzione che il docenteId appartenga all'utente loggato"
+                  parameters:
+                  - docenteId:
+                      name: "docenteId"
+                      in: "path"
+                      description: "id del docente"
+                      required: true
+                      type: "integer"
+                      format: "int64"
+      x-cache-type: "noCache"
+      x-cache-endpoint-relations:
+        canonicalEndpointsAction: "invalidate"
+    put:
+      tags:
+      - "orari"
+      summary: "Aggiorna gli orari associati ad un docente"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>Il sevizio si occupa di aggiornare gli orari\
+        \ del docente identificato dal parametro 'docenteId'.\nE' possibile aggiornare\
+        \ un solo record alla volta. Nel caso venissero trovati più orari con i parametri\
+        \ indicati, non verrebbe aggiornato nessun orario.\nE' possibile identificare\
+        \ il record da aggiornare o per docenteOrarioRicId, o per giorno e oraInizio\
+        \ e oraFine, oppure per tutti quanti questi parametri.\nSe l'aggiornamento\
+        \ va a buon fine, il servizio ritorna TUTTI gli orari del docente (non solo\
+        \ quelli appena creati).\n\nNOTA BENE\nNel caso venga omesso un campo dal\
+        \ body, verrà considerato come da non aggiornare.\nSe si vuole impostare un\
+        \ campo come nullo, impostare\n    * Stringhe : \"null\"\n    * Numerici :\
+        \ -1        \n\n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n-|-|-\n\
+        x-cache-type|noCache|Nessuna cache impostata Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: USER_TECNICO**\n\nProfilo|Controllo| Funzione\n-|-|-\nUTENTE_TECNICO|funzione\
+        \ accessibile alle utenze tecniche per accessi ai servizi REST|Security.checkUserTecnico()\n\
+        \n**Utente: DOCENTE**\n\nProfilo|Controllo| Funzione\n-|-|-\nDOCENTE|Permette\
+        \ la visualizzazione delle informazioni collegate ad una anagrafica docente|Security.checkDocenteId(docenteId)\n\
+        \n\nClasse di modello : DocentiOrario\n======\n\nEstensioni sulle proprietà\
+        \n----\nProprietà | x-field-type\n-|-|\ndocenteOrarioId|primaryKey\n\n\nClasse\
+        \ di modello : DettaglioErroreAggiuntivo\n======\n\nEstensioni sulle proprietà\
+        \n----\nProprietà | x-field-type\n-|-|\nrawValue|rawJson\n"
+      operationId: "putOrarioDocente"
+      parameters:
+      - name: "docenteId"
+        in: "path"
+        description: "id del docente"
+        required: true
+        type: "integer"
+        format: "int64"
+      - name: "giorno"
+        in: "query"
+        description: "giorno della settimana (1=Lunedì, 2=Martedì, 3=Mercoledì, 4=Giovedì\
+          , 5=Venerdì, 6=Sabato, 7=Domenica)"
+        required: false
+        type: "integer"
+        maximum: 7.0
+        minimum: 1.0
+        format: "int32"
+      - name: "docenteOrarioRicId"
+        in: "query"
+        description: "id orario ricevimento docente"
+        required: false
+        type: "integer"
+        format: "int64"
+      - name: "oraInizio"
+        in: "query"
+        description: "orario inizio ricevimento"
+        required: false
+        type: "string"
+      - name: "oraFine"
+        in: "query"
+        description: "orario fine ricevimento"
+        required: false
+        type: "string"
+      - in: "body"
+        name: "body"
+        description: "Oggetto con i campi da inserire"
+        required: true
+        schema:
+          $ref: "#/definitions/PostOrarioDocente"
+      responses:
+        "200":
+          description: "Update succeded"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/DocentiOrario"
+        "422":
+          description: "aggiornamento non riuscito"
+          schema:
+            $ref: "#/definitions/DettaglioErrore"
+      x-enabled-profiles:
+      - user-tecnico-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UTENTE_TECNICO"
+              description: "funzione accessibile alle utenze tecniche per accessi\
+                \ ai servizi REST"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkUserTecnico"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+      - common-docente-permissions:
+          kind: "DOCENTE"
+          profiles:
+          - profile:
+              name: "DOCENTE"
+              description: "Permette la visualizzazione delle informazioni collegate\
+                \ ad una anagrafica docente"
+              checks:
+              - checkAdmin:
+                  className: "Security"
+                  functionName: "checkDocenteId"
+                  description: "funzione che il docenteId appartenga all'utente loggato"
+                  parameters:
+                  - docenteId:
+                      name: "docenteId"
+                      in: "path"
+                      description: "id del docente"
+                      required: true
+                      type: "integer"
+                      format: "int64"
+      x-cache-type: "noCache"
+      x-cache-endpoint-relations:
+        canonicalEndpointsAction: "invalidate"
+    delete:
+      tags:
+      - "orari"
+      summary: "Elimina gli orari associati ad un docente"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>Elimina gli orari associati al docente identificato\
+        \ dal parametro 'docenteId'. Se non si specifica il giorno, vengono eliminati\
+        \ tutti gli orari.\n\n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n\
+        -|-|-\nx-cache-type|noCache|Nessuna cache impostata Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: USER_TECNICO**\n\nProfilo|Controllo| Funzione\n-|-|-\nUTENTE_TECNICO|funzione\
+        \ accessibile alle utenze tecniche per accessi ai servizi REST|Security.checkUserTecnico()\n\
+        \n**Utente: DOCENTE**\n\nProfilo|Controllo| Funzione\n-|-|-\nDOCENTE|Permette\
+        \ la visualizzazione delle informazioni collegate ad una anagrafica docente|Security.checkDocenteId(docenteId)\n\
+        \n\nClasse di modello : DettaglioErroreAggiuntivo\n======\n\nEstensioni sulle\
+        \ proprietà\n----\nProprietà | x-field-type\n-|-|\nrawValue|rawJson\n"
+      operationId: "deleteOrarioDocente"
+      parameters:
+      - name: "docenteId"
+        in: "path"
+        description: "id del docente"
+        required: true
+        type: "integer"
+        format: "int64"
+      - name: "giorno"
+        in: "query"
+        description: "giorno della settimana (1=Lunedì, 2=Martedì, 3=Mercoledì, 4=Giovedì\
+          , 5=Venerdì, 6=Sabato, 7=Domenica)"
+        required: false
+        type: "integer"
+        maximum: 7.0
+        minimum: 1.0
+        format: "int32"
+      - name: "docenteOrarioRicId"
+        in: "query"
+        description: "id orario ricevimento docente"
+        required: false
+        type: "integer"
+        format: "int64"
+      - name: "oraInizio"
+        in: "query"
+        description: "orario inizio ricevimento"
+        required: false
+        type: "string"
+      - name: "oraFine"
+        in: "query"
+        description: "orario fine ricevimento"
+        required: false
+        type: "string"
+      responses:
+        "204":
+          description: "Delete succeded"
+        "422":
+          description: "parametri Errati"
+          schema:
+            $ref: "#/definitions/DettaglioErrore"
+      x-enabled-profiles:
+      - user-tecnico-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UTENTE_TECNICO"
+              description: "funzione accessibile alle utenze tecniche per accessi\
+                \ ai servizi REST"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkUserTecnico"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+      - common-docente-permissions:
+          kind: "DOCENTE"
+          profiles:
+          - profile:
+              name: "DOCENTE"
+              description: "Permette la visualizzazione delle informazioni collegate\
+                \ ad una anagrafica docente"
+              checks:
+              - checkAdmin:
+                  className: "Security"
+                  functionName: "checkDocenteId"
+                  description: "funzione che il docenteId appartenga all'utente loggato"
+                  parameters:
+                  - docenteId:
+                      name: "docenteId"
+                      in: "path"
+                      description: "id del docente"
+                      required: true
+                      type: "integer"
+                      format: "int64"
+      x-cache-type: "noCache"
+      x-cache-endpoint-relations:
+        canonicalEndpointsAction: "invalidate"
+securityDefinitions:
+  basicAuth:
+    description: "Autenticazione tramite BASIC authentication. Questa modalità è disponibile\
+      \ se l'autenticazione su esse3 non usa shibboleth per il gruppo dell'utente"
+    type: "basic"
+  jwt:
+    description: "Autenticazione tramite OAUTH2, occorre configurare il parametro\
+      \ di configurazione di ESSE3 che indica il server OAUTH2 da utilizzare"
+    type: "oauth2"
+    authorizationUrl: "https://idp-idm.unimib.it/idp/profile/oidc/authorize"
+    flow: "implicit"
+    scopes:
+      openid: "informazioni sull'utente"
+definitions:
+  DocentiOrario:
+    type: "object"
+    required:
+    - "docenteId"
+    - "docenteOrarioId"
+    properties:
+      docenteOrarioId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "chiave dell'orario docente"
+        x-field-type: "primaryKey"
+      docenteId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "chiave del docente"
+      giorno:
+        type: "integer"
+        format: "int64"
+        example: "1,2,3,4,5,6,7"
+        description: "giorno della settimana"
+      giornoDes:
+        type: "string"
+        example: "Lunedì"
+        description: "giorno della settimana"
+      oraInizio:
+        type: "string"
+        example: "08:30"
+        description: "ora inizio dell'appuntemento."
+        pattern: "([01][0-9]|2[0-3]):[0-5][0-9]"
+      oraFine:
+        type: "string"
+        example: "08:30"
+        description: "ora fine dell'appuntemento."
+        pattern: "([01][0-9]|2[0-3]):[0-5][0-9]"
+      desLuogo:
+        type: "string"
+        example: "aula 20"
+        description: "luogo dell'appuntamento"
+      nota:
+        type: "string"
+        example: "nota"
+        description: "nota collegata all'appuntamento"
+    x-layout-name: "DOCENTI_ORARIO_REST"
+    x-winsession-name: "p09/n_di_p09_winsession_rest"
+    x-model-sub-package: "anagrafica.v1"
+    x-model-sub-path: "anagrafica/v1"
+  DettaglioErroreAggiuntivo:
+    type: "object"
+    properties:
+      errorType:
+        type: "string"
+        example: "stackTrace"
+        description: "descrizione del tipo di errore aggiuntivo"
+      value:
+        type: "string"
+        example: "SocketTimeoutException...."
+        description: "descrizione dell'errore"
+      rawValue:
+        type: "string"
+        example: "SocketTimeoutException...."
+        description: "descrizione dell'errore"
+        x-field-type: "rawJson"
+    x-model-sub-package: "frk.v1"
+    x-model-sub-path: "frk/v1"
+  PutNoteDocente:
+    type: "object"
+    properties:
+      noteBiografiche:
+        type: "string"
+        example: "note_biografiche"
+        description: "Note biografiche del docente."
+        maxLength: 2000
+      notePubblicazioni:
+        type: "string"
+        example: "note_pubblicazioni"
+        description: "Note sulle pubblicazioni del docente."
+        maxLength: 4000
+      noteCurriculum:
+        type: "string"
+        example: "note_curriculum"
+        description: "Note sul curriculum accademico del docente."
+        maxLength: 4000
+      noteDocente:
+        type: "string"
+        example: "note_docente"
+        description: "Note libere relative al docente."
+        maxLength: 4000
+    x-model-sub-package: "anagrafica.v1"
+    x-model-sub-path: "anagrafica/v1"
+  DocentiRecapiti:
+    type: "object"
+    required:
+    - "docenteId"
+    properties:
+      docenteId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "chiave del docente"
+        x-field-type: "primaryKey"
+      citt1Cod:
+        type: "string"
+        example: "200"
+        description: "codice della cittadinanza"
+      citt1Des:
+        type: "string"
+        example: "italiana"
+        description: "descrizione della cittadinanza"
+      citt1NazioneCod:
+        type: "string"
+        example: "IT"
+        description: "codice nazione della cittadinanza"
+      citt1Dataini:
+        type: "string"
+        example: "10/09/2016"
+        description: "Data inizio cittadinanza"
+      citt1Datafin:
+        type: "string"
+        example: "10/09/2016"
+        description: "Data fine cittadinanza"
+      citt2Cod:
+        type: "string"
+        example: "200"
+        description: "codice della cittadinanza"
+      citt2Des:
+        type: "string"
+        example: "italiana"
+        description: "descrizione della cittadinanza"
+      citt2NazioneCod:
+        type: "string"
+        example: "IT"
+        description: "codice nazione della cittadinanza"
+      citt2Dataini:
+        type: "string"
+        example: "10/09/2016"
+        description: "Data inizio cittadinanza"
+      citt2Datafin:
+        type: "string"
+        example: "10/09/2016"
+        description: "Data fine cittadinanza"
+      citt3Cod:
+        type: "string"
+        example: "200"
+        description: "codice della cittadinanza"
+      citt3Des:
+        type: "string"
+        example: "italiana"
+        description: "descrizione della cittadinanza"
+      citt3NazioneCod:
+        type: "string"
+        example: "IT"
+        description: "codice nazione della cittadinanza"
+      citt3Dataini:
+        type: "string"
+        example: "10/09/2016"
+        description: "Data inizio cittadinanza"
+      citt3Datafin:
+        type: "string"
+        example: "10/09/2016"
+        description: "Data fine cittadinanza"
+      naziResId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "id nazione residenza"
+      comResId:
+        type: "integer"
+        format: "int64"
+        example: 172
+        description: "id comune residenza"
+      naziResCodFis:
+        type: "string"
+        example: "Z112"
+        description: "codice fiscale nazione residenza"
+      naziResDes:
+        type: "string"
+        example: "Germania"
+        description: "descrizione nazione residenza"
+      naziResNazioneCod:
+        type: "string"
+        example: "FR"
+        description: "codice  nazione residenza"
+      naziResCod:
+        type: "string"
+        example: "216"
+        description: "dcodice nazione residenza"
+      comuResCodIstat:
+        type: "string"
+        example: "698"
+        description: "codice istat comune residenza"
+      comuResComuneCod:
+        type: "string"
+        example: "L219"
+        description: "codice  comune residenza"
+      comuResCodIstatMiur:
+        type: "string"
+        example: "698"
+        description: "codice istat miur comune residenza"
+      comuResDes:
+        type: "string"
+        example: "Bologna"
+        description: "descrizione  comune residenza"
+      citstraRes:
+        type: "string"
+        example: "Paris"
+        description: "citta straniera residenza"
+      comuResSigla:
+        type: "string"
+        example: "BO"
+        description: "sigla provincia residenza"
+      provResDes:
+        type: "string"
+        example: "Bologna"
+        description: "descrizione provincia residenza"
+      viaRes:
+        type: "string"
+        example: "via roma"
+        description: "descrizione via residenza"
+      numCivRes:
+        type: "string"
+        example: "3/3"
+        description: "numero civico residenza"
+      capRes:
+        type: "string"
+        example: "40131"
+        description: "cap residenza"
+      telRes:
+        type: "string"
+        example: "10897106"
+        description: "telefono residenza"
+      prefixInternazRes:
+        type: "string"
+        example: "39"
+        description: "prefisso internazionale telefono residenza"
+      nazDomId:
+        type: "integer"
+        format: "int64"
+        example: 172
+        description: "id nazione domicilio"
+      comDomId:
+        type: "integer"
+        format: "int64"
+        example: 172
+        description: "id comune domicilio"
+      naziDomCodFisc:
+        type: "string"
+        example: "a1b2c3d4"
+        description: "codice fiscale nazione domicilio"
+      naziDomDes:
+        type: "string"
+        example: "Italia"
+        description: "descrizione nazione domicilio"
+      naziDomNazioneCod:
+        type: "string"
+        example: "1234"
+        description: "codice nazione domicilio"
+      naziDomCod:
+        type: "string"
+        example: "1234"
+        description: "codice nazione domicilio"
+      comuDomCodIstat:
+        type: "string"
+        example: "1234"
+        description: "codice istat comune domicilio"
+      comuDomComuneCod:
+        type: "string"
+        example: "1234"
+        description: "codice comune domicilio"
+      comuDomCodIstatMiur:
+        type: "string"
+        example: "1243"
+        description: "codice istat miur comune domicilio"
+      comuDomDes:
+        type: "string"
+        example: "Casalecchio di Reno"
+        description: "descrizione comune di domicilio"
+      citstraDom:
+        type: "string"
+        example: "Germania"
+        description: "domicilio citta straniera"
+      comuDomSigla:
+        type: "string"
+        example: "a1b2c3"
+        description: "sigla comune di domicilio"
+      provDomDes:
+        type: "string"
+        example: "Bologna"
+        description: "descrizione provincia domicilio"
+      viaDom:
+        type: "string"
+        example: "via magnanelli"
+        description: "via domicilio"
+      numCivDom:
+        type: "string"
+        example: "16a"
+        description: "numero civico domicilio"
+      capDom:
+        type: "string"
+        example: "40126"
+        description: "CAP domicilio"
+      telDom:
+        type: "string"
+        example: "1234567890"
+        description: "telefono domicilio"
+      prefixInternazDom:
+        type: "string"
+        example: "39"
+        description: "prefisso internazionale domicilio"
+      co:
+        type: "string"
+        example: "mario rossi"
+        description: "presso"
+      fax:
+        type: "string"
+        example: "1234567890"
+        description: "fax"
+      tipoIndirizCod:
+        type: "string"
+        example: "1234"
+        description: "codice tipo indirizzo"
+      domComeResFlg:
+        type: "boolean"
+        example: false
+        description: "flag domicilio come residenza"
+      usrInsId:
+        type: "string"
+        example: "1243"
+        description: "id dell'user di inserimento"
+      dataIns:
+        type: "string"
+        example: "10/12/2022"
+        description: "data inserimento"
+      usrModId:
+        type: "string"
+        example: "1234"
+        description: "id dell'user di modifica"
+      dataMod:
+        type: "string"
+        example: "10/12/2022"
+        description: "data modifica"
+    x-layout-name: "DOCENTI_RECAPITI_REST"
+    x-winsession-name: "p09/n_di_p09_winsession_rest"
+    x-model-sub-package: "anagrafica.v1"
+    x-model-sub-path: "anagrafica/v1"
+  DocentiNote:
+    type: "object"
+    properties:
+      docenteId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "chiave del docente"
+        x-field-type: "primaryKey"
+      noteBiografiche:
+        type: "string"
+        example: "note_biografiche"
+        description: "Note biografiche del docente."
+      notePubblicazioni:
+        type: "string"
+        example: "note_pubblicazioni"
+        description: "Note sulle pubblicazioni del docente."
+      noteCurriculum:
+        type: "string"
+        example: "note_curriculum"
+        description: "Note sul curriculum accademico del docente."
+      noteDocente:
+        type: "string"
+        example: "note_docente"
+        description: "Note libere relative al docente."
+    x-layout-name: "DOCENTI_NOTE_REST"
+    x-winsession-name: "p09/n_di_p09_winsession_rest"
+    x-model-sub-package: "anagrafica.v1"
+    x-model-sub-path: "anagrafica/v1"
+  RuoloDocente:
+    type: "object"
+    properties:
+      ruoloDocCod:
+        type: "string"
+        example: "E"
+        description: "Codice ruolo docente."
+      ruoloDocDes:
+        type: "string"
+        example: "Esterno"
+        description: "Descrizione codice ruolo docente."
+      tipoRuoloDocCod:
+        type: "string"
+        example: "EST"
+        description: "Codice tipologia ruolo docente."
+      tipoRuoliDocDes:
+        type: "string"
+        example: "Docente Esterno"
+        description: "Descrizione codice tipologia ruolo docente."
+      csaCod:
+        type: "string"
+        example: "CL"
+        description: "Codice CSA."
+      ruoloDoc:
+        type: "string"
+        example: "LC"
+        description: "Ruolo docente."
+    x-layout-name: "RUOLI_DOC_REST"
+    x-winsession-name: "p00/n_am_p00_winsession_rest"
+    x-model-sub-package: "anagrafica.v1"
+    x-model-sub-path: "anagrafica/v1"
+  DocentiNew:
+    type: "object"
+    properties:
+      docentiRecapiti:
+        type: "array"
+        items:
+          $ref: "#/definitions/DocentiRecapiti"
+        x-field-type: "optional"
+      docentiNote:
+        type: "array"
+        items:
+          $ref: "#/definitions/DocentiNote"
+        x-field-type: "optional"
+      cariche:
+        type: "array"
+        items:
+          $ref: "#/definitions/CaricheDocente"
+        x-field-type: "optional"
+      orario:
+        type: "array"
+        items:
+          $ref: "#/definitions/DocentiOrario"
+        x-field-type: "optional"
+      docenteId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "chiave del docente"
+        x-field-type: "primaryKey"
+      docenteMatricola:
+        type: "string"
+        example: "MAT1234"
+        description: "matricola del docente"
+      docenteCognome:
+        type: "string"
+        example: "ROSSI"
+        description: "cognome del docente"
+      docenteNome:
+        type: "string"
+        example: "PAOLO"
+        description: "nome del docente"
+      userId:
+        type: "string"
+        example: "userID"
+        description: "userId attivo collegato al docente"
+      settCod:
+        type: "string"
+        example: "MAT/01"
+        description: "settore del docente"
+      badge:
+        type: "string"
+        example: "B90887"
+        description: "numero badge"
+      eMail:
+        type: "string"
+        example: "pr@pers.it"
+        description: "email del docente"
+      emailAte:
+        type: "string"
+        example: "mrossi@ateneo.it"
+        description: "Indirizzo e-mail assegnato dall'ateneo."
+      emailDocenteLa:
+        type: "string"
+        example: "pr@ateneola.it"
+        description: "email di riferimento per i docenti L.A."
+      facId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "ID della struttura di appartenenza del docente"
+      facCod:
+        type: "string"
+        example: "facCod"
+        description: "codice della struttura di appartenenza del docente"
+      facDes:
+        type: "string"
+        example: "facDes"
+        description: "descrizione della struttura di appartenenza del docente"
+      ruoloDocCod:
+        type: "string"
+        example: "ORD"
+        description: "ruolo del docente"
+      codFis:
+        type: "string"
+        example: "LNZFCR67R07A944E"
+        description: "codice fiscale del docente"
+      cellulare:
+        type: "string"
+        example: "3471234562"
+        description: "cellulare del docente"
+      hyperlink:
+        type: "string"
+        example: "www.paolorossi.it"
+        description: "hyperlink del docente"
+      dataIniAtt:
+        type: "string"
+        example: "15/10/2015"
+        description: "Data inizio del attività del docente. Il formato con cui deve\
+          \ essere definita la data DD/MM/YYYY"
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+      dataFinAtt:
+        type: "string"
+        example: "15/10/2015"
+        description: "Data fine del attività del docente. Il formato con cui deve\
+          \ essere definita la data DD/MM/YYYY"
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+      sesso:
+        type: "string"
+        example: "F,M"
+        description: "sesso del docente"
+      dataNascita:
+        type: "string"
+        example: "15/10/1970"
+        description: "Data di nascita del docente. Il formato con cui deve essere\
+          \ definita la data DD/MM/YYYY"
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+      p01NaziCodFisc:
+        type: "string"
+        example: "Z112"
+        description: "codice fiscale della nazione di nascita"
+      p01NaziDes:
+        type: "string"
+        example: "Francia"
+        description: "descrizione della nazione di nascita"
+      p01NaziNazioneCod:
+        type: "string"
+        example: "FR"
+        description: "codice  iso della nazione di nascita"
+      p01NaziCod:
+        type: "string"
+        example: "215"
+        description: "codice  della nazione di nascita"
+      p01ComuComuneId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "ID del comune di nascita"
+      p01ComuCodIstat:
+        type: "string"
+        example: "698"
+        description: "codice  istat del comune di nascita"
+      p01ComuComuneCod:
+        type: "string"
+        example: "L219"
+        description: "codice  del comune di nascita"
+      p01ComuCodIstatMiur:
+        type: "string"
+        example: "698"
+        description: "codice  istat miur del comune di nascita"
+      comuNascDes:
+        type: "string"
+        example: "Milano"
+        description: "descrizione del comune di nascita"
+      citstraNasc:
+        type: "string"
+        example: "Paris"
+        description: "città straniera di nascita"
+      comuNascSigla:
+        type: "string"
+        example: "BO"
+        description: "sigla provincia di nascita"
+      p01ProvDes:
+        type: "string"
+        example: "Bologna"
+        description: "descrizione provincia di nascita"
+      notePubblicazioni:
+        type: "string"
+        example: "note pubblicazioni"
+        description: "note pubblicazioni"
+      noteBiografiche:
+        type: "string"
+        example: "note biografiche"
+        description: "note biografiche"
+      noteCurriculum:
+        type: "string"
+        example: "note curriculum"
+        description: "note curriculum"
+      noteDocente:
+        type: "string"
+        example: "note docente"
+        description: "note docente"
+      idAb:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "ID_AB del docente"
+      dataModDoc:
+        type: "string"
+        example: "15/10/1970"
+        description: "Data di modifica del docente. Il formato con cui deve essere\
+          \ definita la data DD/MM/YYYY"
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+      dataMod:
+        type: "string"
+        example: "15/10/1970"
+        description: "Data di modifica del docente. Il formato con cui deve essere\
+          \ definita la data DD/MM/YYYY"
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+      dataIns:
+        type: "string"
+        example: "15/10/1970"
+        description: "Data di inserimento del docente. Il formato con cui deve essere\
+          \ definita la data DD/MM/YYYY"
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+      settDes:
+        type: "string"
+        example: "BIOLOGIA APPLICATA"
+        description: "Descrizione del settore"
+      dipId:
+        type: "integer"
+        format: "int64"
+        example: 123
+        description: "Identificativo del dipartimento"
+      dipCod:
+        type: "string"
+        example: "A234"
+        description: "Codice del dipartimento"
+      dipDes:
+        type: "string"
+        example: "Dipartimento di Biologia"
+        description: "Descrizione del dipartimento"
+      ruoloDocDes:
+        type: "string"
+        example: "Ricercatore"
+        description: "Descrizione del ruolo del docente"
+      profilo:
+        type: "string"
+        example: "0"
+        description: "Profilo docente"
+      docenteAppellativo:
+        type: "string"
+        example: "Professor"
+        description: "appellativo del docente"
+      dataIniRuolo:
+        type: "string"
+        example: "15/10/1970"
+        description: "Data inizio ruolo docente attuale. Il formato con cui deve essere\
+          \ definita la data DD/MM/YYYY"
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+    x-layout-name: "DOCENTI_REST"
+    x-winsession-name: "p09/n_di_p09_winsession_rest"
+    x-model-sub-package: "anagrafica.v1"
+    x-model-sub-path: "anagrafica/v1"
+  DettaglioErrore:
+    type: "object"
+    properties:
+      statusCode:
+        type: "integer"
+        format: "int32"
+        example: 200
+        description: "Http Status Code"
+      retCode:
+        type: "integer"
+        format: "int32"
+        example: -1
+        description: "codice di errore"
+      retErrMsg:
+        type: "string"
+        example: "Parametri non corretti"
+        description: "descrizione dell'errore"
+      errDetails:
+        type: "array"
+        items:
+          $ref: "#/definitions/DettaglioErroreAggiuntivo"
+    x-model-sub-package: "frk.v1"
+    x-model-sub-path: "frk/v1"
+  PostOrarioDocente:
+    type: "object"
+    required:
+    - "giorno"
+    - "oraFine"
+    - "oraInizio"
+    properties:
+      giorno:
+        type: "integer"
+        format: "int32"
+        example: 1
+        description: "giorno della settimana"
+        minimum: 1.0
+        maximum: 7.0
+      oraInizio:
+        type: "string"
+        example: "08:30"
+        description: "ora inizio dell'appuntemento."
+        pattern: "([01][0-9]|2[0-3]):[0-5][0-9]"
+      oraFine:
+        type: "string"
+        example: "08:30"
+        description: "ora fine dell'appuntemento."
+        pattern: "([01][0-9]|2[0-3]):[0-5][0-9]"
+      desLuogo:
+        type: "string"
+        example: "aula 20"
+        description: "luogo dell'appuntamento"
+        maxLength: 255
+      nota:
+        type: "string"
+        example: "nota"
+        description: "nota collegata all'appuntamento"
+        maxLength: 255
+    x-model-sub-package: "anagrafica.v1"
+    x-model-sub-path: "anagrafica/v1"
+  CaricheDocente:
+    type: "object"
+    properties:
+      struttId:
+        type: "integer"
+        format: "int64"
+        example: 321
+        description: "identificativo struttura."
+      caricaId:
+        type: "integer"
+        format: "int64"
+        example: 12345
+        description: "identificativo carrica."
+      caricaDes:
+        type: "string"
+        example: "Direttore"
+        description: "descrizione carica."
+      caricaCognome:
+        type: "string"
+        example: "Mario"
+        description: "cognome del responsabile."
+      caricaNome:
+        type: "string"
+        example: "Rossi"
+        description: "nome el responsabile."
+      caricaIdAb:
+        type: "integer"
+        format: "int64"
+        example: 123123
+        description: "identificativo U-gov del responsabile."
+      docenteId:
+        type: "integer"
+        format: "int64"
+        example: 54321
+        description: "identificativo docente."
+      dataInizioVal:
+        type: "string"
+        example: "01/01/2020"
+        description: "data inizio validità."
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+      dataFineVal:
+        type: "string"
+        example: "02/02/2020"
+        description: "data fine validità."
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+      codStruttura:
+        type: "string"
+        example: "BO42"
+        description: "codice struttura."
+      desStruttura:
+        type: "string"
+        example: "Università degli Studi di BOLOGNA"
+        description: "descrizione struttura."
+      tipoStruttura:
+        type: "string"
+        example: "CDS"
+        description: "tipologia struttura."
+    x-layout-name: "CARICHE_DOCENTI_REST"
+    x-winsession-name: "p06/n_di_p06_winsession_rest"
+    x-model-sub-package: "anagrafica.v1"
+    x-model-sub-path: "anagrafica/v1"
+  ParametriDocente:
+    type: "object"
+    properties:
+      email:
+        type: "string"
+        example: "mia@mail.com"
+        description: "email"
+        maxLength: 255
+    x-model-sub-package: "anagrafica.v1"
+    x-model-sub-path: "anagrafica/v1"
+parameters:
+  dataIns:
+    name: "dataIns"
+    in: "query"
+    description: "data di inserimento"
+    required: false
+    type: "string"
+    maxLength: 10
+    minLength: 10
+  caricaId:
+    name: "caricaId"
+    in: "query"
+    description: "ID carica"
+    required: false
+    type: "integer"
+    format: "int64"
+  codFis:
+    name: "codFis"
+    in: "query"
+    description: "codice fiscale dell'utente"
+    required: false
+    type: "string"
+  docenteNome:
+    name: "docenteNome"
+    in: "query"
+    description: "nome del docente (se viene utilizzato il carattere * viene applicato\
+      \ il like)"
+    required: false
+    type: "string"
+  cdsIdCarica:
+    name: "cdsIdCarica"
+    in: "query"
+    description: "ID Corso di Studio assiciata alla carica"
+    required: false
+    type: "integer"
+    format: "int64"
+  docenteId:
+    name: "docenteId"
+    in: "path"
+    description: "id del docente"
+    required: true
+    type: "integer"
+    format: "int64"
+  oraFine:
+    name: "oraFine"
+    in: "query"
+    description: "orario fine ricevimento"
+    required: false
+    type: "string"
+  idAb:
+    name: "idAb"
+    in: "query"
+    description: "ID address book della  persona in ugov"
+    required: false
+    type: "integer"
+    format: "int64"
+  docenteCognome:
+    name: "docenteCognome"
+    in: "query"
+    description: "cognome del docente (se viene utilizzato il carattere * viene applicato\
+      \ il like)"
+    required: false
+    type: "string"
+  dataValiditaCarica:
+    name: "dataValiditaCarica"
+    in: "query"
+    description: "Filtro di una carica valida in una determinata data (formato DD/MM/YYYY)"
+    required: false
+    type: "string"
+    maxLength: 10
+  ruoloDocCod:
+    name: "ruoloDocCod"
+    in: "query"
+    description: "Codice ruolo docente."
+    required: false
+    type: "string"
+  csaCod:
+    name: "csaCod"
+    in: "query"
+    description: "Codice CSA."
+    required: false
+    type: "string"
+  giorno:
+    name: "giorno"
+    in: "query"
+    description: "giorno della settimana (1=Lunedì, 2=Martedì, 3=Mercoledì, 4=Giovedì\
+      , 5=Venerdì, 6=Sabato, 7=Domenica)"
+    required: false
+    type: "integer"
+    maximum: 7.0
+    minimum: 1.0
+    format: "int32"
+  facIdCarica:
+    name: "facIdCarica"
+    in: "query"
+    description: "ID Facoltà/Dipartimento assiciata alla carica"
+    required: false
+    type: "integer"
+    format: "int64"
+  oraInizio:
+    name: "oraInizio"
+    in: "query"
+    description: "orario inizio ricevimento"
+    required: false
+    type: "string"
+  docenteMatricola:
+    name: "docenteMatricola"
+    in: "query"
+    description: "matricola del docente"
+    required: false
+    type: "string"
+  tipoRuoloDocCod:
+    name: "tipoRuoloDocCod"
+    in: "query"
+    description: "Codice tipologia ruolo docente."
+    required: false
+    type: "string"
+  docenteOrarioRicId:
+    name: "docenteOrarioRicId"
+    in: "query"
+    description: "id orario ricevimento docente"
+    required: false
+    type: "integer"
+    format: "int64"
+  ruoliDocCod:
+    name: "ruoliDocCod"
+    in: "query"
+    description: "Codice ruoli Docenti"
+    required: false
+    type: "array"
+    items:
+      type: "string"
+      example: "ORD"
+      description: "Codice ruolo Docente"
+  dataMod:
+    name: "dataMod"
+    in: "query"
+    description: "data di ultima modifica"
+    required: false
+    type: "string"
+    maxLength: 10
+    minLength: 10
+  facIdAppartenenza:
+    name: "facIdAppartenenza"
+    in: "query"
+    description: "ID Facoltà/Dipartimento appartenenza"
+    required: false
+    type: "integer"
+    format: "int64"
+externalDocs:
+  description: "Documentazione Geneale sui servizi REST"
+  url: "https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3"
+x-file-status: "PROD"
+x-file-name: "p01-docentiApiV1.yaml"
+x-api-status: "PROD"
+x-func-cod: "RST_DOCEV1"
+x-anchor-definitions:
+  common-produces-mediaType:
+    produces:
+    - "application/octet-stream"
+x-cache-type: "lowRefreshRateUserIndependent"

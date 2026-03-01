@@ -1,70 +1,103 @@
 package it.attendance100.mybicocca.data.api.bicoccapp
 
-import it.attendance100.mybicocca.data.dto.bicoccapp.BicoccappWizardCategoriesResponse
+import io.ktor.client.HttpClient
+import io.ktor.client.request.parameter
+import it.attendance100.mybicocca.data.dto.bicoccapp.BicoccappWizardCourse
+import it.attendance100.mybicocca.data.dto.bicoccapp.BicoccappWizardCoursesResponse
+import it.attendance100.mybicocca.data.dto.bicoccapp.BicoccappWizardDegree
+import it.attendance100.mybicocca.data.dto.bicoccapp.BicoccappWizardDepartmentsResponse
 import it.attendance100.mybicocca.data.dto.bicoccapp.BicoccappWizardDegreesResponse
+import it.attendance100.mybicocca.data.dto.bicoccapp.BicoccappWizardDepartment
+import it.attendance100.mybicocca.data.dto.bicoccapp.BicoccappWizardLesson
 import it.attendance100.mybicocca.data.dto.bicoccapp.BicoccappWizardLessonsResponse
-import de.jensklingenberg.ktorfit.http.GET
-import de.jensklingenberg.ktorfit.http.Query
+import kotlinx.serialization.json.Json
 
 /**
- * Wizard API for hierarchical course selection: Category -> Degree Type -> Program -> Lessons.
+ * API client for course selection wizard operations.
  */
-interface BicoccappWizardApi {
-    /**
-     * Retrieves all academic area categories (step 1).
-     *
-     * @return Categories with codes and names (e.g., "SCI" for Sciences).
-     */
-    @GET("wizard/categories")
-    suspend fun getCategories(): BicoccappWizardCategoriesResponse
+class BicoccappWizardApi(
+    client: HttpClient,
+    json: Json
+) : BicoccappAbstractApi(client, json) {
 
     /**
-     * Retrieves degree types for a category (step 2).
+     * Retrieves available wizard categories (departments/faculties).
      *
-     * @param categoryCode Category code from step 1.
-     * @return Degree types (L=Bachelor's, LM=Master's, etc.).
+     * @return Categories list.
      */
-    @GET("wizard/degrees")
-    suspend fun getDegreeTypes(
-        @Query("category_code") categoryCode: String
-    ): BicoccappWizardDegreesResponse
+    suspend fun getDepartments(
+
+    ): List<BicoccappWizardDepartment> {
+        val response = executeJsonGet<BicoccappWizardDepartmentsResponse>("/wizard/categories")
+        return response.departments
+    }
 
     /**
-     * Lists degree programs for a category and degree type (step 3).
+     * Retrieves available degree types for a department.
      *
-     * @param categoryCode Category code from step 1.
-     * @param degreeCode Degree type code from step 2.
-     * @return Available degree programs (Corsi di Studio).
+     * @param department The department of the degrees.
+     * @return Degrees list.
      */
-    @GET("wizard/courses")
-    suspend fun getDegreePrograms(
-        @Query("category_code") categoryCode: String,
-        @Query("degree_code") degreeCode: String
-    ): BicoccappWizardLessonsResponse
+    suspend fun getDegrees(
+        department: BicoccappWizardDepartment
+    ): List<BicoccappWizardDegree> {
+        val response = executeJsonGet<BicoccappWizardDegreesResponse>("/wizard/degrees") {
+            parameter("category_code", department.code)
+        }
+        return response.degrees
+    }
 
     /**
-     * Retrieves lessons for a specific degree program (step 4).
+     * Retrieves available degree programs for a degree.
      *
-     * @param categoryCode Category code from step 1.
-     * @param degreeCode Degree type code from step 2.
-     * @param courseCode Degree program code from step 3.
-     * @return Course list with credits, year, semester, and professor.
+     * @param department The department of the degree.
+     * @param degree The degree of the courses.
+     * @return Courses list.
      */
-    @GET("wizard/lessons")
-    suspend fun getCourseLessons(
-        @Query("category_code") categoryCode: String,
-        @Query("degree_code") degreeCode: String,
-        @Query("course_code") courseCode: String
-    ): BicoccappWizardLessonsResponse
+    suspend fun getCourses(
+        department: BicoccappWizardDepartment,
+        degree: BicoccappWizardDegree
+    ): List<BicoccappWizardCourse> {
+        val response = executeJsonGet<BicoccappWizardCoursesResponse>("/wizard/courses") {
+            parameter("category_code", department.code)
+            parameter("degree_code", degree.code)
+        }
+        return response.courses
+    }
 
     /**
-     * Retrieves courses from the user's enrolled degree program (shortcut to step 4).
+     * Retrieves lessons for a degree program.
+     *
+     * @param department The department of the degree.
+     * @param degree The degree of the course.
+     * @param course The course of the lessons.
+     * @return Lessons grouped by year.
+     */
+    suspend fun getLessons(
+        department: BicoccappWizardDepartment,
+        degree: BicoccappWizardDegree,
+        course: BicoccappWizardCourse
+    ): Map<String, List<BicoccappWizardLesson>> {
+        val response = executeJsonGet<BicoccappWizardLessonsResponse>("/wizard/lessons") {
+            parameter("category_code", department.code)
+            parameter("degree_code", degree.code)
+            parameter("course_code", course.code)
+        }
+        return response.lessonsByYear
+    }
+
+    /**
+     * Retrieves user's enrolled courses.
      *
      * @param enrollmentId Enrollment number (matricola).
-     * @return User's courses with calendar subscription status.
+     * @return User's courses.
      */
-    @GET("wizard/user_courses")
     suspend fun getUserCourses(
-        @Query("matricId") enrollmentId: String
-    ): BicoccappWizardLessonsResponse
+        enrollmentId: String
+    ): Map<String, List<BicoccappWizardLesson>> {
+        val response = executeJsonGet<BicoccappWizardLessonsResponse>("/wizard/user_courses") {
+            parameter("matricId", enrollmentId)
+        }
+        return response.lessonsByYear
+    }
 }

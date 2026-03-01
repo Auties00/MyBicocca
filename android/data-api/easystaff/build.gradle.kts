@@ -5,18 +5,6 @@ plugins {
 }
 
 dependencies {
-    // KtorFit
-    implementation("de.jensklingenberg.ktorfit:ktorfit-lib:2.7.1")
-    implementation("de.jensklingenberg.ktorfit:ktorfit-converters-response:2.7.1")
-    implementation("io.ktor:ktor-client-core:3.3.3")
-    implementation("io.ktor:ktor-client-content-negotiation:3.3.3")
-    implementation("io.ktor:ktor-client-logging:3.3.3")
-    implementation("io.ktor:ktor-serialization-kotlinx-json:3.3.3")
-    implementation("io.ktor:ktor-client-okhttp:3.3.3")
-
-    // Jsoup for HTML parsing
-    implementation("org.jsoup:jsoup:1.18.3")
-
     // Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
     implementation("org.jetbrains.kotlin:kotlin-reflect:2.1.0")

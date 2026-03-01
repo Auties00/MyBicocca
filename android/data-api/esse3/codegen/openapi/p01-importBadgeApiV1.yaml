@@ -1,0 +1,945 @@
+---
+swagger: "2.0"
+info:
+  description: "API REST di ESSE3 per l'import dati relativi ad Open Badge emessi\
+    \ su piattaforma esterna\n\n## ChangeLog\n\nVersione       | Versione di Esse3\
+    \ di rilascio | Interventi \n -             | -                             |\
+    \ -\n    1.1.0      | 22.02.01.00                   | creazione\n    1.2.0   \
+    \   | 22.10.00.00                   | aggiunto importBadgeIssuing\n    \n"
+  version: "1.1.0"
+  title: "ESSE3 Import Badge"
+basePath: "/importbadge-service-v1"
+tags:
+- name: "importBadgeClass"
+  description: "Import Tipi Titoli da REST"
+schemes:
+- "https"
+- "http"
+consumes:
+- "application/json"
+produces:
+- "application/json"
+security:
+- basicAuth: []
+- jwt:
+  - "openid"
+paths:
+  /importAward:
+    post:
+      tags:
+      - "importAward"
+      summary: "consente di importare uno o più badge (Award)"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>Importa i dati di uno o più badge (Award):\
+        \ in Esse3 vengono inseriti come Titoli universitari, dettagliati per livello\
+        \ (Badge Class)\n\n##### Parametri in ingresso\nCampo       | Campi obbligatori\
+        \                 | Note \n-           | -                               \
+        \  | - \nimport      |  - vedi modello                   | il body json che\
+        \ contiene tutte le informazioni da importare\n\n##### Codici di ritorno della\
+        \ funzione\nCodice di Ritorno | Descrizione\n-                 | -\n-1  |\
+        \ Errore nell'import\n\n\n##### Note \n\n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n\
+        -|-|-\nx-cache-type|lowRefreshRateUserIndependent|Risorsa che varia con frequenza\
+        \ bassa, cache Http abilitata, cache server abilitata. Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: user-tecnico-permissions**\n\nProfilo|Controllo| Funzione\n-|-|-\n\
+        UTENTE_TECNICO|funzione accessibile alle utenze tecniche per accessi ai servizi\
+        \ REST|Security.checkUserTecnico()\n\n\nClasse di modello : DettaglioErroreAggiuntivo\n\
+        ======\n\nEstensioni sulle proprietà\n----\nProprietà | x-field-type\n-|-|\n\
+        rawValue|rawJson\n"
+      operationId: "postImportAward"
+      parameters:
+      - in: "body"
+        name: "body"
+        description: "Oggetto che contiene il json con i dati da inserire"
+        required: true
+        schema:
+          type: "array"
+          items:
+            $ref: "#/definitions/Award"
+      responses:
+        "201":
+          description: "Ritorna idtestata elaborazione se import con successo"
+          schema:
+            $ref: "#/definitions/RitornoAward"
+        "422":
+          description: "Inserimento non riuscito"
+          schema:
+            $ref: "#/definitions/DettaglioErrore"
+      x-enabled-profiles:
+      - user-tecnico-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UTENTE_TECNICO"
+              description: "funzione accessibile alle utenze tecniche per accessi\
+                \ ai servizi REST"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkUserTecnico"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+      x-custom-operation: "single"
+  /importBadgeClass:
+    post:
+      tags:
+      - "importBadgeClass"
+      summary: "consente di importare una o più tipologie di badge (Badge Class)"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>Importa i dati di una o più tipologie di badge\
+        \ (Badge Class): in Esse3 vengono inserite all'interno dei Tipi Titoli universitari\n\
+        \n##### Parametri in ingresso\nCampo       | Campi obbligatori           \
+        \      | Note \n-           | -                                 | - \nimport\
+        \      |  - vedi modello                   | il body json che contiene tutte\
+        \ le informazioni da importare\n\n##### Codici di ritorno della funzione\n\
+        Codice di Ritorno | Descrizione\n-                 | -\n-1  | Errore nell'import\n\
+        \n\n##### Note \n\n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n-|-|-\n\
+        x-cache-type|lowRefreshRateUserIndependent|Risorsa che varia con frequenza\
+        \ bassa, cache Http abilitata, cache server abilitata. Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: USER_TECNICO**\n\nProfilo|Controllo| Funzione\n-|-|-\nUTENTE_TECNICO|funzione\
+        \ accessibile alle utenze tecniche per accessi ai servizi REST|Security.checkUserTecnico()\n\
+        \n\nClasse di modello : DettaglioErroreAggiuntivo\n======\n\nEstensioni sulle\
+        \ proprietà\n----\nProprietà | x-field-type\n-|-|\nrawValue|rawJson\n"
+      operationId: "postImportBadgeClass"
+      parameters:
+      - in: "body"
+        name: "body"
+        description: "Oggetto che contiene il json con i dati da inserire"
+        required: true
+        schema:
+          type: "array"
+          items:
+            $ref: "#/definitions/BadgeClass"
+      responses:
+        "201":
+          description: "Ritorna idtestata elaborazione se import con successo"
+          schema:
+            $ref: "#/definitions/RitornoBadgeClass"
+        "422":
+          description: "Inserimento non riuscito"
+          schema:
+            $ref: "#/definitions/DettaglioErrore"
+      x-enabled-profiles:
+      - user-tecnico-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UTENTE_TECNICO"
+              description: "funzione accessibile alle utenze tecniche per accessi\
+                \ ai servizi REST"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkUserTecnico"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+      x-custom-operation: "single"
+  /importBadgeIssuing:
+    put:
+      tags:
+      - "importBadgeIssuing"
+      summary: "consente di importare i dati di emissione di un badge"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>Consente di acquisire le informazioni relative\
+        \ all'avvenuta emissione (o annullamento) di un badge su piattaforma esterna,\
+        \ a seguito di un evento notificato precedentemente da parte di Esse3.\n\n\
+        ##### Dati in ingresso\nCampo       | Campi obbligatori                  \
+        \          | Note \n-           | -                                      \
+        \      | - \n/           | evento, refId, badgeId, email, dataEmissione |\
+        \ badgeId, email, dataEmissione non sono obbligatori nel caso di evento=ANNULLAMENTO\n\
+        \n##### Codici di errore restituiti\nCodice di Ritorno | Descrizione\n-  \
+        \               | -\n 0                | Errore generico\n-1             \
+        \   | Non risulta inviata alcuna richiesta badge per il caso indicato\n\n\n\
+        **Estensioni:**\n\nCodice Estensione|Valore|Nota\n-|-|-\nx-cache-type|lowRefreshRateUserIndependent|Risorsa\
+        \ che varia con frequenza bassa, cache Http abilitata, cache server abilitata.\
+        \ Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: USER_TECNICO**\n\nProfilo|Controllo| Funzione\n-|-|-\nUTENTE_TECNICO|funzione\
+        \ accessibile alle utenze tecniche per accessi ai servizi REST|Security.checkUserTecnico()\n\
+        \n\nClasse di modello : DettaglioErroreAggiuntivo\n======\n\nEstensioni sulle\
+        \ proprietà\n----\nProprietà | x-field-type\n-|-|\nrawValue|rawJson\n"
+      operationId: "putBadgeIssuing"
+      parameters:
+      - in: "body"
+        name: "body"
+        description: "Oggetto che contiene i dati di emissione/annullamento di un\
+          \ badge"
+        required: true
+        schema:
+          $ref: "#/definitions/NotificaEmissioneBadge"
+      responses:
+        "200":
+          description: "Dati acquisiti con successo"
+          schema:
+            type: "string"
+            description: "Esito dell'operazione"
+        "422":
+          description: "Operazione non riuscita"
+          schema:
+            $ref: "#/definitions/DettaglioErrore"
+      x-enabled-profiles:
+      - user-tecnico-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UTENTE_TECNICO"
+              description: "funzione accessibile alle utenze tecniche per accessi\
+                \ ai servizi REST"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkUserTecnico"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+securityDefinitions:
+  basicAuth:
+    description: "Autenticazione tramite BASIC authentication. Questa modalit� � disponibile\
+      \ se l'autenticazione su esse3 non usa shibboleth per il gruppo dell'utente"
+    type: "basic"
+  jwt:
+    description: "Autenticazione tramite OAUTH2, occorre configurare il parametro\
+      \ di configurazione di ESSE3 che indica il server OAUTH2 da utilizzare"
+    type: "oauth2"
+    authorizationUrl: "https://idp-idm.unimib.it/idp/profile/oidc/authorize"
+    flow: "implicit"
+    scopes:
+      openid: "informazioni sull'utente"
+definitions:
+  BadgeClass:
+    type: "object"
+    required:
+    - "createdAt"
+    - "id"
+    - "issuer"
+    - "obidescription"
+    - "obiname"
+    - "status"
+    properties:
+      id:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "identificativo numerico"
+      identificativo:
+        type: "string"
+        example: "identificativo91"
+        description: "campo Identificativo"
+        maxLength: 255
+      status:
+        type: "string"
+        example: "published"
+        description: "status"
+        maxLength: 255
+      obiname:
+        type: "string"
+        example: "Entrepreneurship Basic"
+        description: "nome della badge class"
+        maxLength: 255
+      obidescription:
+        type: "string"
+        example: "Giardino delle imprese - High School"
+        description: "descrizione"
+        maxLength: 4000
+      createdAt:
+        type: "string"
+        example: "10/10/2007"
+        description: "data di creazione"
+        maxLength: 10
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+      updatedAt:
+        type: "string"
+        example: "10/10/2007"
+        description: "data di ultima modifica"
+        maxLength: 10
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+      imageUrl:
+        type: "string"
+        example: "https://bestr.it/filemanager/show/a88182aa-0dba-4306-84a0-edc7d7245be7.png"
+        description: "visual del badge"
+        maxLength: 255
+      alignment:
+        type: "string"
+        example: "Open badge"
+        description: "attributo aggiuntivo alla badge class viene recuperato solo\
+          \ in get ignorato nella post"
+        maxLength: 255
+      issuer:
+        $ref: "#/definitions/Issuer"
+      customData:
+        type: "array"
+        items:
+          $ref: "#/definitions/CustomData"
+    x-layout-name: "BADGECLASS"
+    x-winsession-name: "p04/n_am_p04_winsession_rest"
+    x-model-sub-package: "anagrafica.v1"
+    x-model-sub-path: "anagrafica/v1"
+  Issuer:
+    type: "object"
+    required:
+    - "idIssuer"
+    properties:
+      idIssuer:
+        type: "string"
+        example: "http://bk.bestr.it/public/systems/bestr/issuers/Fondazione-Golinelli"
+        description: "id alfanumerico del issuer"
+        maxLength: 255
+      miurCode:
+        type: "string"
+        example: "XXXX"
+        description: "codice miur dell issuer"
+        maxLength: 255
+      url:
+        type: "string"
+        example: "http://www.sitoistituzionale.it"
+        description: "sito web istituzionale o dell organizzazione"
+        maxLength: 255
+      email:
+        type: "string"
+        example: "info@dominioissuer.com"
+        description: "email dell issuer"
+        maxLength: 255
+      name:
+        type: "string"
+        example: "Nomeissuer"
+        description: "nome dell issuer"
+        maxLength: 255
+      imageUrl:
+        type: "string"
+        example: "https://bestr.it/filemanager/show/abc.png"
+        description: "visual dell'issuer"
+        maxLength: 255
+      slug:
+        type: "string"
+        example: "bestr"
+        description: "slug dell'issuer"
+        maxLength: 255
+    x-layout-name: "ISSUER"
+    x-winsession-name: "p04/n_am_p04_winsession_rest"
+    x-model-sub-package: "anagrafica.v1"
+    x-model-sub-path: "anagrafica/v1"
+  DettaglioErrore:
+    type: "object"
+    properties:
+      statusCode:
+        type: "integer"
+        format: "int32"
+        example: 200
+        description: "Http Status Code"
+      retCode:
+        type: "integer"
+        format: "int32"
+        example: -1
+        description: "codice di errore"
+      retErrMsg:
+        type: "string"
+        example: "Parametri non corretti"
+        description: "descrizione dell'errore"
+      errDetails:
+        type: "array"
+        items:
+          $ref: "#/definitions/DettaglioErroreAggiuntivo"
+    x-model-sub-package: "frk.v1"
+    x-model-sub-path: "frk/v1"
+  RitornoAward:
+    type: "object"
+    required:
+    - "tstId"
+    properties:
+      tstId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "identificativo numerico della testata"
+      dataCreazione:
+        type: "string"
+        example: "10/10/2007"
+        description: "data di creazione della testata"
+        maxLength: 10
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+      statoCod:
+        type: "string"
+        example: "published"
+        description: "stato dell elenco"
+        maxLength: 255
+      nota:
+        type: "string"
+        example: "una nota"
+        description: "nota"
+        maxLength: 4000
+      idBadgeClass:
+        type: "integer"
+        format: "int64"
+        description: "identificativo numerico"
+      identificativoBadge:
+        type: "string"
+        example: "http://bk.bestr.it/public/systems/bestr/issuers/Fondazione-Golinelli/badges/99795abac91"
+        description: "codice della badge class"
+        maxLength: 255
+      awardInfo:
+        type: "array"
+        items:
+          $ref: "#/definitions/AwardInfo"
+      awardErrorDett:
+        type: "array"
+        items:
+          $ref: "#/definitions/AwardErrorDett"
+    x-layout-name: "RITORNOAWARD"
+    x-winsession-name: "p04/n_am_p04_winsession_rest"
+    x-model-sub-package: "anagrafica.v1"
+    x-model-sub-path: "anagrafica/v1"
+  RitornoBadgeClass:
+    type: "object"
+    required:
+    - "tstId"
+    properties:
+      tstId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "identificativo numerico della testata"
+      dataCreazione:
+        type: "string"
+        example: "10/10/2007"
+        description: "data di creazione della testata"
+        maxLength: 10
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+      statoCod:
+        type: "string"
+        example: "published"
+        description: "stato dell elenco"
+        maxLength: 255
+      nota:
+        type: "string"
+        example: "una nota"
+        description: "nota"
+        maxLength: 4000
+      badgeClassesInfo:
+        type: "array"
+        items:
+          $ref: "#/definitions/BadgeClassInfo"
+      badgeClassesErrorDett:
+        type: "array"
+        items:
+          $ref: "#/definitions/BadgeClassErrorDett"
+    x-layout-name: "RITORNOBADGECLASS"
+    x-winsession-name: "p04/n_am_p04_winsession_rest"
+    x-model-sub-package: "anagrafica.v1"
+    x-model-sub-path: "anagrafica/v1"
+  BadgeClassInfo:
+    type: "object"
+    required:
+    - "createdAt"
+    - "id"
+    - "status"
+    properties:
+      id:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "identificativo"
+      idNumerico:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "identificativo numerico"
+      statoCod:
+        type: "string"
+        example: "E"
+        description: "codice dello stato"
+        maxLength: 255
+      identificativo:
+        type: "string"
+        example: "http://bk.bestr.it/public/systems/bestr/issuers/Fondazione-Golinelli/badges/99795abac91"
+        description: "campo Identificativo"
+        maxLength: 255
+      status:
+        type: "string"
+        example: "published"
+        description: "status"
+        maxLength: 255
+      name:
+        type: "string"
+        example: "Entrepreneurship Basic"
+        description: "nome della badge class"
+        maxLength: 255
+      description:
+        type: "string"
+        example: "Giardino delle imprese - High School"
+        description: "descrizione"
+        maxLength: 4000
+      createdAt:
+        type: "string"
+        example: "10/10/2007"
+        description: "data di creazione"
+        maxLength: 10
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+      updatedAt:
+        type: "string"
+        example: "10/10/2007"
+        description: "data di ultima modifica"
+        maxLength: 10
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+      imageUrl:
+        type: "string"
+        example: "https://bestr.it/filemanager/show/a88182aa-0dba-4306-84a0-edc7d7245be7.png"
+        description: "visual del badge"
+        maxLength: 255
+      idIssuer:
+        type: "string"
+        example: "http://bk.bestr.it/public/systems/bestr/issuers/Fondazione-Golinelli"
+        description: "id alfanumerico del issuer"
+        maxLength: 255
+      codMiurIssuer:
+        type: "string"
+        example: "XXXX"
+        description: "codice miur dell issuer"
+        maxLength: 255
+      urlIssuer:
+        type: "string"
+        example: "http://www.sitoistituzionale.it"
+        description: "sito web istituzionale o dell organizzazione"
+        maxLength: 255
+      emailIssuer:
+        type: "string"
+        example: "info@dominioissuer.com"
+        description: "email dell issuer"
+        maxLength: 255
+      nomeIssuer:
+        type: "string"
+        example: "Nomeissuer"
+        description: "nome dell issuer"
+        maxLength: 255
+      imageUrlIssuer:
+        type: "string"
+        example: "https://bestr.it/filemanager/show/abc.png"
+        description: "visual dell'issuer"
+        maxLength: 255
+      nota:
+        type: "string"
+        example: "una nota"
+        description: "nota"
+        maxLength: 4000
+      slugIssuer:
+        type: "string"
+        example: "bestr"
+        description: "slug dell'issuer"
+        maxLength: 255
+      tipoTititCod:
+        type: "string"
+        example: "TSS"
+        description: "tipo titolo"
+        maxLength: 10
+      tipoTititDes:
+        type: "string"
+        example: "TSS"
+        description: "descrizione del titpo titolo titolo di scuola superiore"
+        maxLength: 255
+      livelloCod:
+        type: "string"
+        example: "ECDLFULL"
+        description: "codice del livello titolo"
+        maxLength: 20
+      livelloDes:
+        type: "string"
+        example: "ECDL Full"
+        description: "descrizione del livello titolo"
+        maxLength: 255
+    x-layout-name: "BADGECLASSINFO"
+    x-winsession-name: "p04/n_am_p04_winsession_rest"
+    x-model-sub-package: "anagrafica.v1"
+    x-model-sub-path: "anagrafica/v1"
+  BadgeClassErrorDett:
+    type: "object"
+    required:
+    - "id"
+    properties:
+      id:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "identificativo"
+      idNumerico:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "identificativo numerico"
+      statoCod:
+        type: "string"
+        example: "E"
+        description: "codice dello stato"
+        maxLength: 255
+      identificativo:
+        type: "string"
+        example: "http://bk.bestr.it/public/systems/bestr/issuers/Fondazione-Golinelli/badges/99795abac91"
+        description: "campo Identificativo"
+        maxLength: 255
+      status:
+        type: "string"
+        example: "published"
+        description: "status"
+        maxLength: 255
+      name:
+        type: "string"
+        example: "Entrepreneurship Basic"
+        description: "nome della badge class"
+        maxLength: 255
+      description:
+        type: "string"
+        example: "Giardino delle imprese - High School"
+        description: "descrizione"
+        maxLength: 4000
+      createdAt:
+        type: "string"
+        example: "10/10/2007"
+        description: "data di creazione"
+        maxLength: 10
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+      updatedAt:
+        type: "string"
+        example: "10/10/2007"
+        description: "data di ultima modifica"
+        maxLength: 10
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+      imageUrl:
+        type: "string"
+        example: "https://bestr.it/filemanager/show/a88182aa-0dba-4306-84a0-edc7d7245be7.png"
+        description: "visual del badge"
+        maxLength: 255
+      idIssuer:
+        type: "string"
+        example: "http://bk.bestr.it/public/systems/bestr/issuers/Fondazione-Golinelli"
+        description: "id alfanumerico del issuer"
+        maxLength: 255
+      codMiurIssuer:
+        type: "string"
+        example: "XXXX"
+        description: "codice miur dell issuer"
+        maxLength: 255
+      urlIssuer:
+        type: "string"
+        example: "http://www.sitoistituzionale.it"
+        description: "sito web istituzionale o dell organizzazione"
+        maxLength: 255
+      emailIssuer:
+        type: "string"
+        example: "info@dominioissuer.com"
+        description: "email dell issuer"
+        maxLength: 255
+      nomeIssuer:
+        type: "string"
+        example: "Nomeissuer"
+        description: "nome dell issuer"
+        maxLength: 255
+      imageUrlIssuer:
+        type: "string"
+        example: "https://bestr.it/filemanager/show/abc.png"
+        description: "visual dell'issuer"
+        maxLength: 255
+      nota:
+        type: "string"
+        example: "una nota"
+        description: "nota"
+        maxLength: 4000
+      slugIssuer:
+        type: "string"
+        example: "bestr"
+        description: "slug dell'issuer"
+        maxLength: 255
+    x-layout-name: "BADGECLASSERRORDETT"
+    x-winsession-name: "p04/n_am_p04_winsession_rest"
+    x-model-sub-package: "anagrafica.v1"
+    x-model-sub-path: "anagrafica/v1"
+  NotificaEmissioneBadge:
+    type: "object"
+    required:
+    - "evento"
+    - "refId"
+    properties:
+      evento:
+        type: "string"
+        example: "SUPERAMENTO"
+        description: "tipo di evento, verificatosi in Esse3, che ha portato alla richiesta\
+          \ di emissione o annullamento badge\n(SUPERAMENTO=superamento esame, ANNULLAMENTO=annullamento\
+          \ esame, CONSEG_TITOLO=conseguimento titolo)\n"
+        pattern: "SUPERAMENTO|ANNULLAMENTO|CONSEG_TITOLO"
+      refId:
+        type: "integer"
+        format: "int64"
+        example: 12345
+        description: "ID univoco del dato a cui si riferisce l'evento\n(nel caso di\
+          \ superamento esame è l'ID della riga di libretto studente con l'AD superata)\n"
+      badgeId:
+        type: "string"
+        example: "erahTTUSd-ABQd-zxcAA1321-5"
+        description: "ID univoco del badge emesso sul sistema esterno"
+      email:
+        type: "string"
+        example: "user@gmail.com"
+        description: "email dello studente per il quale è avvenuta l’emissione del\
+          \ badge sul sistema esterno"
+      dataEmissione:
+        type: "string"
+        example: "11/10/2021 14:24:00"
+        description: "data/ora di emissione del badge sul sistema esterno"
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})\
+          \ ([01][0-9]|2[0-4]):[0-5][0-9]:[0-5][0-9]"
+      causale:
+        type: "string"
+        example: "emesso badge per superamento esame"
+        description: "causale relativa all’emissione/annullamento del badge sul sistema\
+          \ esterno"
+    x-model-sub-package: "anagrafica.v1"
+    x-model-sub-path: "anagrafica/v1"
+  AwardErrorDett:
+    type: "object"
+    required:
+    - "awardedEmail"
+    - "createdAt"
+    - "id"
+    - "statoCod"
+    properties:
+      id:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "identificativo del dettaglio"
+      statoCod:
+        type: "string"
+        example: "E"
+        description: "codice dello stato"
+        maxLength: 255
+      awardedUser:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "identificativo numerico interno dell utente a cui è stato dato\
+          \ l award"
+      earnedBadge:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "identificativo numerico interno del Badge a cui si fa riferimento"
+      awardedEmail:
+        type: "string"
+        example: "m.rossi@amail.com"
+        description: "email  dell' utente a cui è stato rilasciato il badge"
+        maxLength: 255
+      createdAt:
+        type: "string"
+        example: "10/10/2007"
+        description: "data di creazione"
+        maxLength: 10
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+      nota:
+        type: "string"
+        example: "una nota"
+        description: "nota"
+        maxLength: 4000
+      usrInsId:
+        type: "string"
+        example: "Administrator"
+        description: "Utente di inserimento."
+      dataIns:
+        type: "string"
+        example: "01/07/2022"
+        description: "Data di inserimento."
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+      usrModId:
+        type: "string"
+        example: "Administrator"
+        description: "Utente di ultima modifica."
+      dataMod:
+        type: "string"
+        example: "01/07/2022"
+        description: "Data di ultima modifica."
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+    x-layout-name: "AWARDERRORDETT"
+    x-winsession-name: "p04/n_am_p04_winsession_rest"
+    x-model-sub-package: "anagrafica.v1"
+    x-model-sub-path: "anagrafica/v1"
+  DettaglioErroreAggiuntivo:
+    type: "object"
+    properties:
+      errorType:
+        type: "string"
+        example: "stackTrace"
+        description: "descrizione del tipo di errore aggiuntivo"
+      value:
+        type: "string"
+        example: "SocketTimeoutException...."
+        description: "descrizione dell'errore"
+      rawValue:
+        type: "string"
+        example: "SocketTimeoutException...."
+        description: "descrizione dell'errore"
+        x-field-type: "rawJson"
+    x-model-sub-package: "frk.v1"
+    x-model-sub-path: "frk/v1"
+  Award:
+    type: "object"
+    required:
+    - "awardedEmail"
+    - "createdAt"
+    - "earnedBadge"
+    properties:
+      awardedUser:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "identificativo numerico interno dell utente a cui è stato dato\
+          \ l award"
+      earnedBadge:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "identificativo numerico interno del Badge a cui si fa riferimento"
+      awardedEmail:
+        type: "string"
+        example: "m.rossi@amail.com"
+        description: "email  dell' utente a cui è stato rilasciato il badge"
+        maxLength: 255
+      createdAt:
+        type: "string"
+        example: "10/10/2007"
+        description: "data di creazione dell award"
+        maxLength: 10
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+      customData:
+        type: "array"
+        items:
+          $ref: "#/definitions/CustomData"
+    x-layout-name: "AWARD"
+    x-winsession-name: "p04/n_am_p04_winsession_rest"
+    x-model-sub-package: "anagrafica.v1"
+    x-model-sub-path: "anagrafica/v1"
+  CustomData:
+    type: "object"
+    required:
+    - "externalKey"
+    - "externalValue"
+    properties:
+      externalKey:
+        type: "string"
+        example: "codice"
+        description: "codice attributo esterno"
+        maxLength: 255
+      externalValue:
+        type: "string"
+        example: "identificativo"
+        description: "identificativo attributo esterno"
+        maxLength: 255
+    x-layout-name: "CUSTOMDATA"
+    x-winsession-name: "p04/n_am_p04_winsession_rest"
+    x-model-sub-package: "anagrafica.v1"
+    x-model-sub-path: "anagrafica/v1"
+  AwardInfo:
+    type: "object"
+    required:
+    - "awardedEmail"
+    - "createdAt"
+    - "earnedBadge"
+    - "id"
+    properties:
+      id:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "identificativo"
+      statoCod:
+        type: "string"
+        example: "E"
+        description: "codice dello stato"
+        maxLength: 255
+      awardedUser:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "identificativo numerico interno dell utente a cui è stato dato\
+          \ l award"
+      earnedBadge:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "identificativo numerico interno del Badge a cui si fa riferimento"
+      awardedEmail:
+        type: "string"
+        example: "m.rossi@amail.com"
+        description: "email  dell' utente a cui è stato rilasciato il badge"
+        maxLength: 255
+      createdAt:
+        type: "string"
+        example: "10/10/2007"
+        description: "data di creazione"
+        maxLength: 10
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+      nota:
+        type: "string"
+        example: "una nota"
+        description: "nota"
+        maxLength: 4000
+      persId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "identificativo  della persona"
+      aaConsegTitolo:
+        type: "integer"
+        format: "int64"
+        example: 2017
+        description: "anno di conseguimento titolo"
+      dataConseguimentoTitolo:
+        type: "string"
+        example: "10/10/2007"
+        description: "data di conseguimento titolo"
+        maxLength: 10
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+      tipoTititCod:
+        type: "string"
+        example: "TSS"
+        description: "tipo titolo"
+        maxLength: 10
+      tititCod:
+        type: "string"
+        example: "2.0E24"
+        description: "codice di dettaglio del titolo"
+        maxLength: 20
+      tipoDepositoCod:
+        type: "string"
+        example: "AUT"
+        description: "Indica in quale forma è stato depositato il titolo originale,\
+          \ fotocopia, autocertificazione."
+        maxLength: 10
+      stessoAteneoFlg:
+        type: "integer"
+        format: "int64"
+        example: 0
+        description: "Flag che indica se il titolo è stato ottenuto nello stesso ateneo."
+        minimum: 0.0
+        maximum: 1.0
+      staTitItCod:
+        type: "string"
+        example: "C"
+        description: "Stato del titolo"
+        maxLength: 5
+      dataScadenza:
+        type: "string"
+        example: "10/10/2007"
+        description: "Data di scadenza"
+        maxLength: 10
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+    x-layout-name: "BADGECLASSINFO"
+    x-winsession-name: "p04/n_am_p04_winsession_rest"
+    x-model-sub-package: "anagrafica.v1"
+    x-model-sub-path: "anagrafica/v1"
+externalDocs:
+  description: "Documentazione Geneale sui servizi REST"
+  url: "https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3"
+x-file-status: "PROD"
+x-file-name: "p01-importBadgeApiV1.yaml"
+x-api-status: "PROD"
+x-func-cod: "RST_IMBGV1"
+x-cache-type: "lowRefreshRateUserIndependent"
