@@ -3,22 +3,12 @@ package it.attendance100.mybicocca.data.dto.bicoccapp
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
-/**
- * Gender of a person.
- */
-@Serializable
-enum class BicoccappGender {
-    @SerialName("M")
-    MALE,
-    @SerialName("F")
-    FEMALE
-}
 
 /**
  * Response containing points of interest on the campus.
  */
 @Serializable
-data class BicoccappPointOfInterestsResponse(
+internal data class BicoccappPointOfInterestsResponse(
     /**
      * Map data containing filters and locations.
      */
@@ -41,7 +31,7 @@ data class BicoccappPointOfInterestsMaps(
      * List of locations on the map.
      */
     @SerialName("map_locations")
-    val mapLocations: List<BicoccappMapLocation> = emptyList()
+    val locations: List<BicoccappMapLocation> = emptyList()
 )
 
 /**
@@ -97,19 +87,19 @@ data class BicoccappMapLocation(
  * Response containing teacher details.
  */
 @Serializable
-data class BicoccappTeacherResponse(
+internal data class BicoccappTeacherDetailsResponse(
     /**
      * Teacher object containing profile details.
      */
     @SerialName("teacher")
-    val teacher: BicoccappTeacher
+    val teacher: BicoccappTeacherDetails
 )
 
 /**
  * Represents a university teacher/professor.
  */
 @Serializable
-data class BicoccappTeacher(
+data class BicoccappTeacherDetails(
     /**
      * Title (e.g., Prof., Dott.).
      */
@@ -198,7 +188,7 @@ data class BicoccappTeacherRole(
      * Description of the role.
      */
     @SerialName("roleDescr")
-    val description: String? = null
+    val description: String
 )
 
 /**
@@ -210,7 +200,7 @@ data class BicoccappTeacherPhone(
      * Office phone number.
      */
     @SerialName("officePhone")
-    val officePhone: String? = null
+    val officePhone: String
 )
 
 /**
@@ -222,7 +212,7 @@ data class BicoccappTeacherRoom(
      * Location description of the room.
      */
     @SerialName("roomPlace")
-    val location: String? = null
+    val location: String
 )
 
 /**
@@ -234,5 +224,13 @@ data class BicoccappTeacherOffice(
      * Description of the office.
      */
     @SerialName("officeDescription")
-    val description: String? = null
+    val description: String
+)
+
+@Serializable(with = BicoccappTeacherSerializer::class)
+data class BicoccappTeacher(
+    val key: String,
+    val code: String,
+    val fullName: String,
+    val email: String
 )

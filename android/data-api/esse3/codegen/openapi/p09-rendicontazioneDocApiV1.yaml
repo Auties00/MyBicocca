@@ -1,0 +1,1189 @@
+---
+swagger: "2.0"
+info:
+  description: "Il servizio fornisce le API per l'accesso alla rendicontazione docente\n\
+    \n* Registro Docente\n* Diario Docente\n\n## ChangeLog\n\nVersione       | Versione\
+    \ di Esse3 di rilascio | Interventi \n-              | -                     \
+    \        | -\n1.0.0          | 21.12.02.00                   | Prima versione\
+    \  \n  \n"
+  version: "1.0.0"
+  title: "ESSE3 Rendicontazione API"
+basePath: "/rendicontazione-doc-service-v1"
+tags:
+- name: "registro"
+  description: "registro docente"
+- name: "diario"
+  description: "diario docente"
+schemes:
+- "https"
+- "http"
+consumes:
+- "application/json"
+produces:
+- "application/json"
+security:
+- basicAuth: []
+- jwt:
+  - "openid"
+paths:
+  /diari:
+    get:
+      tags:
+      - "diario"
+      summary: "filtra le informazioni di testata dei diari docente"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>\n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n\
+        -|-|-\nx-cache-type|midRefreshRateUserIndependent|Risorsa che varia con frequenza\
+        \ media, cache Http abilitata, cache server abilitata. Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: user-tecnico-permissions**\n\nProfilo|Controllo| Funzione\n-|-|-\n\
+        UTENTE_TECNICO|funzione accessibile alle utenze tecniche per accessi ai servizi\
+        \ REST|Security.checkUserTecnico()\n\n\nClasse di modello : DiarioDocente\n\
+        ======\n\nEstensioni sulle proprietà\n----\nProprietà | x-field-type\n-|-|\n\
+        diarioId|primaryKey\n\n\nClasse di modello : DettaglioErroreAggiuntivo\n======\n\
+        \nEstensioni sulle proprietà\n----\nProprietà | x-field-type\n-|-|\nrawValue|rawJson\n"
+      operationId: "filterDiarioDocente"
+      parameters:
+      - name: "aaId"
+        in: "query"
+        description: "id dell' anno del diario"
+        required: false
+        type: "integer"
+        maximum: 2100.0
+        minimum: 1900.0
+        format: "int32"
+      - name: "docenteId"
+        in: "query"
+        description: "id del docente"
+        required: false
+        type: "integer"
+        format: "int64"
+      - name: "codFis"
+        in: "query"
+        description: "codice fiscale del docente"
+        required: false
+        type: "string"
+      - name: "matricola"
+        in: "query"
+        description: "matricola del docente"
+        required: false
+        type: "string"
+      - name: "cognome"
+        in: "query"
+        description: "cognome del docente (sono necessari almeno i primi 3 caratteri\
+          \ del cognome, poi è possibile aggiungere un * per effettuare una ricerca\
+          \ in like)"
+        required: false
+        type: "string"
+      - name: "staDiarioCod"
+        in: "query"
+        description: "stato del diario"
+        required: false
+        type: "string"
+        enum:
+        - "B"
+        - "S"
+        - "A"
+      - name: "start"
+        in: "query"
+        description: "utilizzato insieme a `limit` per indicare la paginazione sui\
+          \ record; `start` indica il numero del primo record da caricare (se non\
+          \ indicato viene utilizzato 0)\n"
+        required: false
+        type: "integer"
+        format: "int32"
+      - name: "limit"
+        in: "query"
+        description: "utilizzato insieme a `start` per indicare la paginazione sui\
+          \ record, `limit` indica il numero di record da recuperare (a partire da\
+          \ `start`); \nse non indicato viene utilizzato 50, i valori consentiti vanno\
+          \ da 0 a 100\n"
+        required: false
+        type: "integer"
+        format: "int32"
+      - name: "order"
+        in: "query"
+        description: "consente di specificare un ordine per il recupero dei record.\
+          \ La sintassi è la seguente\n * +/- : specifica l'ordinamento (+ = ASC,\
+          \ - = DESC); se omesso viene utilizzato +\n * field : nome del campo da\
+          \ ordinare\n \n E' possibile indicare più campi separandoli da virgola (Es:\
+          \ +annoCorso,+adCod) \n"
+        required: false
+        type: "string"
+      - name: "fields"
+        in: "query"
+        description: "specifica la lista dei campi opzionali (che non vengono recupeati\
+          \ di default);\nimpostando il valore `ALL` vengono mostrati tutti i campi.\
+          \ \n\nPer gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns*\
+          \  \nI dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello)\n\
+          \nEsempi\n* per il campo childObj con la poprietà childProp utilizzare la\
+          \ notazione `childProp.prop1`\n* Per visualizzare tutte le proprietà di\
+          \ childObj utilizzare la notazione `childProp.*`\n* Per visualizzare tutte\
+          \ le proprietà di childObj e di tutti i discendenti utilizzare la notazione\
+          \ `childProp.**`\n"
+        required: false
+        type: "string"
+      responses:
+        "200":
+          description: "successful operation"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/DiarioDocente"
+        "422":
+          description: "parametri Errati"
+          schema:
+            $ref: "#/definitions/DettaglioErrore"
+      x-enabled-profiles:
+      - user-tecnico-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UTENTE_TECNICO"
+              description: "funzione accessibile alle utenze tecniche per accessi\
+                \ ai servizi REST"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkUserTecnico"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+  /diari/{diarioId}:
+    get:
+      tags:
+      - "diario"
+      summary: "recupera le informazioni sul diario docente"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>\n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n\
+        -|-|-\nx-cache-type|midRefreshRateUserIndependent|Risorsa che varia con frequenza\
+        \ media, cache Http abilitata, cache server abilitata. Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: USER_TECNICO**\n\nProfilo|Controllo| Funzione\n-|-|-\nUTENTE_TECNICO|funzione\
+        \ accessibile alle utenze tecniche per accessi ai servizi REST|Security.checkUserTecnico()\n\
+        \n\nClasse di modello : DiarioDocente\n======\n\nEstensioni sulle proprietà\
+        \n----\nProprietà | x-field-type\n-|-|\ndiarioId|primaryKey\n\n\nClasse di\
+        \ modello : DettaglioErroreAggiuntivo\n======\n\nEstensioni sulle proprietà\
+        \n----\nProprietà | x-field-type\n-|-|\nrawValue|rawJson\n"
+      operationId: "getDiarioDocente"
+      parameters:
+      - name: "diarioId"
+        in: "path"
+        description: "id univoco del diario docente"
+        required: true
+        type: "integer"
+        format: "int64"
+      responses:
+        "200":
+          description: "successful operation"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/DiarioDocenteConDettagli"
+        "422":
+          description: "parametri Errati"
+          schema:
+            $ref: "#/definitions/DettaglioErrore"
+      x-enabled-profiles:
+      - user-tecnico-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UTENTE_TECNICO"
+              description: "funzione accessibile alle utenze tecniche per accessi\
+                \ ai servizi REST"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkUserTecnico"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+  /registri:
+    get:
+      tags:
+      - "registro"
+      summary: "filtra le informazioni di testata sui registri docente"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>\n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n\
+        -|-|-\nx-cache-type|midRefreshRateUserIndependent|Risorsa che varia con frequenza\
+        \ media, cache Http abilitata, cache server abilitata. Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: USER_TECNICO**\n\nProfilo|Controllo| Funzione\n-|-|-\nUTENTE_TECNICO|funzione\
+        \ accessibile alle utenze tecniche per accessi ai servizi REST|Security.checkUserTecnico()\n\
+        \n\nClasse di modello : RegistroDocente\n======\n\nEstensioni sulle proprietà\
+        \n----\nProprietà | x-field-type\n-|-|\nregId|primaryKey\nidentificativiCoperture|optional\n\
+        \n\nClasse di modello : DettaglioErroreAggiuntivo\n======\n\nEstensioni sulle\
+        \ proprietà\n----\nProprietà | x-field-type\n-|-|\nrawValue|rawJson\n"
+      operationId: "filterRegistriDocente"
+      parameters:
+      - name: "aaOffId"
+        in: "query"
+        description: "id dell' anno di offerta"
+        required: false
+        type: "integer"
+        maximum: 2100.0
+        minimum: 1900.0
+        format: "int32"
+      - name: "facCod"
+        in: "query"
+        description: "codice della facoltà di afferenza"
+        required: false
+        type: "string"
+      - name: "adCod"
+        in: "query"
+        description: "codice dell' attività didattica di afferenza"
+        required: false
+        type: "string"
+      - name: "docenteId"
+        in: "query"
+        description: "id del docente"
+        required: false
+        type: "integer"
+        format: "int64"
+      - name: "codFis"
+        in: "query"
+        description: "codice fiscale del docente"
+        required: false
+        type: "string"
+      - name: "matricola"
+        in: "query"
+        description: "matricola del docente"
+        required: false
+        type: "string"
+      - name: "cognome"
+        in: "query"
+        description: "cognome del docente (sono necessari almeno i primi 3 caratteri\
+          \ del cognome, poi è possibile aggiungere un * per effettuare una ricerca\
+          \ in like)"
+        required: false
+        type: "string"
+      - name: "staRegCod"
+        in: "query"
+        description: "stato del registro, gli stati validi sono B,C,S,V,A,X è possibile\
+          \ passare più stati passando la lista di stati separati da virgole"
+        required: false
+        type: "string"
+      - name: "daUltimaDataTransStato"
+        in: "query"
+        description: "data di transizione di stato minima dalla quale recuperare i\
+          \ registri, vengono recuperati tutti i registri che hanno data maggiore\
+          \ rispetto a quella indicata oppure null"
+        required: false
+        type: "string"
+      - name: "start"
+        in: "query"
+        description: "utilizzato insieme a `limit` per indicare la paginazione sui\
+          \ record; `start` indica il numero del primo record da caricare (se non\
+          \ indicato viene utilizzato 0)\n"
+        required: false
+        type: "integer"
+        format: "int32"
+      - name: "limit"
+        in: "query"
+        description: "utilizzato insieme a `start` per indicare la paginazione sui\
+          \ record, `limit` indica il numero di record da recuperare (a partire da\
+          \ `start`); \nse non indicato viene utilizzato 50, i valori consentiti vanno\
+          \ da 0 a 100\n"
+        required: false
+        type: "integer"
+        format: "int32"
+      - name: "order"
+        in: "query"
+        description: "consente di specificare un ordine per il recupero dei record.\
+          \ La sintassi è la seguente\n * +/- : specifica l'ordinamento (+ = ASC,\
+          \ - = DESC); se omesso viene utilizzato +\n * field : nome del campo da\
+          \ ordinare\n \n E' possibile indicare più campi separandoli da virgola (Es:\
+          \ +annoCorso,+adCod) \n"
+        required: false
+        type: "string"
+      - name: "fields"
+        in: "query"
+        description: "specifica la lista dei campi opzionali (che non vengono recupeati\
+          \ di default);\nimpostando il valore `ALL` vengono mostrati tutti i campi.\
+          \ \n\nPer gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns*\
+          \  \nI dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello)\n\
+          \nEsempi\n* per il campo childObj con la poprietà childProp utilizzare la\
+          \ notazione `childProp.prop1`\n* Per visualizzare tutte le proprietà di\
+          \ childObj utilizzare la notazione `childProp.*`\n* Per visualizzare tutte\
+          \ le proprietà di childObj e di tutti i discendenti utilizzare la notazione\
+          \ `childProp.**`\n"
+        required: false
+        type: "string"
+      - name: "optionalFields"
+        in: "query"
+        description: "specifica la lista dei campi opzionali (che non vengono recupeati\
+          \ di default);\nimpostando il valore `ALL` vengono mostrati tutti i campi.\
+          \ \n\nPer gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns*\
+          \  \nI dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello)\n\
+          \nEsempi\n* per il campo childObj con la poprietà childProp utilizzare la\
+          \ notazione `childProp.prop1`\n* Per visualizzare tutte le proprietà di\
+          \ childObj utilizzare la notazione `childProp.*`\n* Per visualizzare tutte\
+          \ le proprietà di childObj e di tutti i discendenti utilizzare la notazione\
+          \ `childProp.**`\n"
+        required: false
+        type: "string"
+      responses:
+        "200":
+          description: "successful operation"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/RegistroDocente"
+        "422":
+          description: "parametri Errati"
+          schema:
+            $ref: "#/definitions/DettaglioErrore"
+      x-enabled-profiles:
+      - user-tecnico-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UTENTE_TECNICO"
+              description: "funzione accessibile alle utenze tecniche per accessi\
+                \ ai servizi REST"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkUserTecnico"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+      x-custom-operation: "single"
+  /registri/{regId}:
+    get:
+      tags:
+      - "registro"
+      summary: "recupera le informazioni di un singolo registro docente"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>\n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n\
+        -|-|-\nx-cache-type|midRefreshRateUserIndependent|Risorsa che varia con frequenza\
+        \ media, cache Http abilitata, cache server abilitata. Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: USER_TECNICO**\n\nProfilo|Controllo| Funzione\n-|-|-\nUTENTE_TECNICO|funzione\
+        \ accessibile alle utenze tecniche per accessi ai servizi REST|Security.checkUserTecnico()\n\
+        \n\nClasse di modello : RegistroDocente\n======\n\nEstensioni sulle proprietà\
+        \n----\nProprietà | x-field-type\n-|-|\nregId|primaryKey\nidentificativiCoperture|optional\n\
+        \n\nClasse di modello : RegistroDocenteLog\n======\n\nEstensioni sulle proprietà\
+        \n----\nProprietà | x-field-type\n-|-|\ncdsId|primaryKey\nadId|primaryKey\n\
+        udId|primaryKey\n\n\nClasse di modello : RegistroDocenteDett\n======\n\nEstensioni\
+        \ sulle proprietà\n----\nProprietà | x-field-type\n-|-|\ndettRegId|primaryKey\n\
+        gruppi|optional\n"
+      operationId: "getRegistroDocente"
+      parameters:
+      - name: "regId"
+        in: "path"
+        description: "id univoco del registro docente"
+        required: true
+        type: "integer"
+        format: "int64"
+      - name: "fields"
+        in: "query"
+        description: "specifica la lista dei campi opzionali (che non vengono recupeati\
+          \ di default);\nimpostando il valore `ALL` vengono mostrati tutti i campi.\
+          \ \n\nPer gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns*\
+          \  \nI dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello)\n\
+          \nEsempi\n* per il campo childObj con la poprietà childProp utilizzare la\
+          \ notazione `childProp.prop1`\n* Per visualizzare tutte le proprietà di\
+          \ childObj utilizzare la notazione `childProp.*`\n* Per visualizzare tutte\
+          \ le proprietà di childObj e di tutti i discendenti utilizzare la notazione\
+          \ `childProp.**`\n"
+        required: false
+        type: "string"
+      - name: "optionalFields"
+        in: "query"
+        description: "specifica la lista dei campi opzionali (che non vengono recupeati\
+          \ di default);\nimpostando il valore `ALL` vengono mostrati tutti i campi.\
+          \ \n\nPer gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns*\
+          \  \nI dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello)\n\
+          \nEsempi\n* per il campo childObj con la poprietà childProp utilizzare la\
+          \ notazione `childProp.prop1`\n* Per visualizzare tutte le proprietà di\
+          \ childObj utilizzare la notazione `childProp.*`\n* Per visualizzare tutte\
+          \ le proprietà di childObj e di tutti i discendenti utilizzare la notazione\
+          \ `childProp.**`\n"
+        required: false
+        type: "string"
+      responses:
+        "200":
+          description: "successful operation"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/RegistroDocenteConDettagli"
+      x-enabled-profiles:
+      - user-tecnico-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UTENTE_TECNICO"
+              description: "funzione accessibile alle utenze tecniche per accessi\
+                \ ai servizi REST"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkUserTecnico"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+      x-custom-operation: "multiple"
+securityDefinitions:
+  basicAuth:
+    description: "Autenticazione tramite BASIC authentication. Questa modalità è disponibile\
+      \ se l'autenticazione su esse3 non usa shibboleth per il gruppo dell'utente"
+    type: "basic"
+  jwt:
+    description: "Autenticazione tramite OAUTH2, occorre configurare il parametro\
+      \ di configurazione di ESSE3 che indica il server OAUTH2 da utilizzare"
+    type: "oauth2"
+    authorizationUrl: "https://idp-idm.unimib.it/idp/profile/oidc/authorize"
+    flow: "implicit"
+    scopes:
+      openid: "informazioni sull'utente"
+definitions:
+  DiarioDocenteConDettagli:
+    allOf:
+    - $ref: "#/definitions/DiarioDocente"
+    - type: "object"
+      properties:
+        attivita:
+          type: "array"
+          items:
+            $ref: "#/definitions/DiarioDocenteDett"
+        attivitaAnnuali:
+          type: "array"
+          items:
+            $ref: "#/definitions/DiarioDocenteDettAA"
+        note:
+          type: "array"
+          items:
+            $ref: "#/definitions/DiarioDocenteNote"
+    x-layout-name: "DIARIO_DOC_TESTATA_REST"
+    x-winsession-name: "p09/n_di_09_121_diario_docente"
+    x-model-sub-package: "offerta.v1"
+    x-model-sub-path: "offerta/v1"
+  DiarioDocenteDett:
+    type: "object"
+    required:
+    - "dettDiarioId"
+    properties:
+      dettDiarioId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "id del diario docente"
+        minimum: 1.0
+      tipoAttCod:
+        type: "string"
+        example: "LEZ"
+        description: "codice tipo attività"
+        maxLength: 10
+      tipoAttDes:
+        type: "string"
+        example: "Lezione"
+        description: "descrizione tipo attività"
+        maxLength: 10
+      data:
+        type: "string"
+        example: "10/12/2021"
+        description: "data dell'attività rendicontata nel formato DD/MM/YYYY"
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+      ore:
+        type: "integer"
+        format: "int32"
+        example: 1
+        description: "ore rendicontate"
+        minimum: 0.0
+      minuti:
+        type: "integer"
+        format: "int32"
+        example: 30
+        description: "minuti rendicontati"
+        minimum: 0.0
+    x-layout-name: "DIARIO_DOC_DETT_REST"
+    x-winsession-name: "p09/n_di_09_121_diario_docente"
+    x-model-sub-package: "offerta.v1"
+    x-model-sub-path: "offerta/v1"
+  RegistroDocenteDettGrp:
+    type: "object"
+    properties:
+      des:
+        type: "string"
+        example: "gruppo 1"
+        description: "descrizione del gruppo collegato con il dettaglio del registro"
+    x-layout-name: "GRP_REG_DOC_DETT_REST"
+    x-winsession-name: "p09/n_di_09_120_registro_docente"
+    x-model-sub-package: "offerta.v1"
+    x-model-sub-path: "offerta/v1"
+  DettaglioErrore:
+    type: "object"
+    properties:
+      statusCode:
+        type: "integer"
+        format: "int32"
+        example: 200
+        description: "Http Status Code"
+      retCode:
+        type: "integer"
+        format: "int32"
+        example: -1
+        description: "codice di errore"
+      retErrMsg:
+        type: "string"
+        example: "Parametri non corretti"
+        description: "descrizione dell'errore"
+      errDetails:
+        type: "array"
+        items:
+          $ref: "#/definitions/DettaglioErroreAggiuntivo"
+    x-model-sub-package: "frk.v1"
+    x-model-sub-path: "frk/v1"
+  RegistroDocente:
+    type: "object"
+    required:
+    - "aaOffId"
+    - "docenteId"
+    - "regId"
+    discriminator: "registroDocenteType"
+    properties:
+      regId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "id del registro docente"
+        minimum: 1.0
+        x-field-type: "primaryKey"
+      aaOffId:
+        type: "integer"
+        format: "int32"
+        example: 2020
+        description: "id del registro docente"
+        minimum: 1900.0
+        maximum: 2100.0
+      docenteId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "id del del docente a cui appartiene il registro"
+        minimum: 1.0
+      cognome:
+        type: "string"
+        example: "Rossi"
+        description: "cognome del docente a cui apprtiene il registro"
+        maxLength: 40
+      nome:
+        type: "string"
+        example: "Mario"
+        description: "nome del docente a cui apprtiene il registro"
+        maxLength: 40
+      codFis:
+        type: "string"
+        example: "MRORSS55F12H456F"
+        description: "cognome del docente a cui apprtiene il registro"
+        minLength: 16
+        maxLength: 16
+      matricola:
+        type: "string"
+        example: "12345"
+        description: "matricola del docente a cui apprtiene il registro"
+        maxLength: 20
+      fatPartCod:
+        type: "string"
+        example: "N0"
+        description: "codice del fattore di partizione collegato alla condivisione\
+          \ logista del registro"
+        maxLength: 10
+      fatPartDes:
+        type: "string"
+        example: "Nessun partizionamento"
+        description: "descrizione del fattore di partizione collegato alla condivisione\
+          \ logista del registro"
+        maxLength: 10
+      domPartCod:
+        type: "string"
+        example: "N0"
+        description: "codice del dominio di partizione collegato alla condivisione\
+          \ logista del registro"
+        maxLength: 10
+      domPartDes:
+        type: "string"
+        example: "Nessun partizionamento"
+        description: "descrizione del dominio di partizione collegato alla condivisione\
+          \ logista del registro"
+        maxLength: 10
+      partCod:
+        type: "string"
+        example: "N0"
+        description: "codice del semestre collegato alla condivisione logista del\
+          \ registro"
+        maxLength: 10
+      adLogId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "id del della condivisione logistica del registro"
+        minimum: 1.0
+      statoRegCod:
+        type: "string"
+        example: "S"
+        description: "codice dello stato del registro"
+        maxLength: 1
+      statoRegDes:
+        type: "string"
+        example: "Stampato"
+        description: "descrizione dello stato del registro"
+        maxLength: 10
+      tipoGestRegCod:
+        type: "string"
+        example: "STD"
+        description: "tipo gestione registro"
+      firmaDigitaleFlg:
+        type: "integer"
+        format: "int32"
+        example: 0
+        description: "flag per la firma digitale del registro"
+        minimum: 0.0
+        maximum: 1.0
+      regadDataStampa:
+        type: "string"
+        example: "10/10/2020"
+        description: "data di stampa del registro (DD/MM/YYYY)"
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+      regadFinitaDidFlg:
+        type: "integer"
+        format: "int32"
+        example: 0
+        description: "flag che indica se la didattica risulta conclusa"
+        minimum: 0.0
+        maximum: 1.0
+      numStuL1:
+        type: "integer"
+        format: "int32"
+        example: 0
+        description: "numero di studenti presenti alla prima lezione"
+        minimum: 0.0
+      numStuL4:
+        type: "integer"
+        format: "int32"
+        example: 0
+        description: "numero di studenti presenti alla quarta lezione"
+        minimum: 0.0
+      numStuMedio:
+        type: "integer"
+        format: "int32"
+        example: 0
+        description: "numero medio di studenti frequentanti"
+        minimum: 0.0
+      oreRiconosciute:
+        type: "integer"
+        format: "int32"
+        example: 0
+        description: "numero di ore effettivamente riconosciute al docente rispetto\
+          \ a quelle rendicontate"
+        minimum: 0.0
+        maximum: 9999.0
+      eccedenza:
+        type: "integer"
+        format: "int32"
+        example: 0
+        description: "numero di ore in eccedenza"
+        minimum: 0.0
+        maximum: 9999.0
+      liquidatoFlg:
+        type: "integer"
+        format: "int32"
+        example: 0
+        description: "flag che indica se il registro è stato pagato al docente"
+        minimum: 0.0
+        maximum: 1.0
+      osservazioni:
+        type: "string"
+        example: "lorem ipsum sic ...."
+        description: "Annotazioni del docente proprietario sul suo registro"
+        maxLength: 4000
+      dataUltimoTransStato:
+        type: "string"
+        example: "10/11/2022"
+        description: "data di ultima variazione di stato nel formato DD/MM/YYYY"
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+      identificativiCoperture:
+        type: "array"
+        items:
+          $ref: "#/definitions/RegistroDocenteCoper"
+        x-field-type: "optional"
+      totOreDid:
+        type: "number"
+        format: "float"
+        example: 10.0
+        description: "totale di ore di didattica frontale rendicontate"
+        minimum: 0.0
+      totOreAltro:
+        type: "number"
+        format: "float"
+        example: 10.0
+        description: "totale di ore di altre attività rendicontate"
+        minimum: 0.0
+    x-layout-name: "REG_DOC_TESTATA_REST"
+    x-winsession-name: "p09/n_di_09_120_registro_docente"
+    x-model-sub-package: "offerta.v1"
+    x-model-sub-path: "offerta/v1"
+  DiarioDocenteDettAA:
+    type: "object"
+    required:
+    - "dettAaDiarioId"
+    properties:
+      dettAaDiarioId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "id di rendicontazione del dettaglio attività annuale"
+        minimum: 1.0
+      tipoAttCod:
+        type: "string"
+        example: "LEZ"
+        description: "codice tipo attività"
+        maxLength: 10
+      tipoAttDes:
+        type: "string"
+        example: "Lezione"
+        description: "descrizione tipo attività"
+        maxLength: 10
+      ore:
+        type: "integer"
+        format: "int32"
+        example: 1
+        description: "ore rendicontate"
+        minimum: 0.0
+      minuti:
+        type: "integer"
+        format: "int32"
+        example: 30
+        description: "minuti rendicontati"
+        minimum: 0.0
+      orePrev:
+        type: "integer"
+        format: "int32"
+        example: 1
+        description: "ore previste"
+        minimum: 0.0
+      minutiPrev:
+        type: "integer"
+        format: "int32"
+        example: 30
+        description: "minuti previsti"
+        minimum: 0.0
+    x-layout-name: "DIARIO_DOC_DETT_AA_REST"
+    x-winsession-name: "p09/n_di_09_121_diario_docente"
+    x-model-sub-package: "offerta.v1"
+    x-model-sub-path: "offerta/v1"
+  DettaglioErroreAggiuntivo:
+    type: "object"
+    properties:
+      errorType:
+        type: "string"
+        example: "stackTrace"
+        description: "descrizione del tipo di errore aggiuntivo"
+      value:
+        type: "string"
+        example: "SocketTimeoutException...."
+        description: "descrizione dell'errore"
+      rawValue:
+        type: "string"
+        example: "SocketTimeoutException...."
+        description: "descrizione dell'errore"
+        x-field-type: "rawJson"
+    x-model-sub-package: "frk.v1"
+    x-model-sub-path: "frk/v1"
+  RegistroDocenteDett:
+    type: "object"
+    required:
+    - "dettRegId"
+    properties:
+      dettRegId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "id del dettaglio del registro docente"
+        minimum: 1.0
+        x-field-type: "primaryKey"
+      tipoAttCod:
+        type: "string"
+        example: "LEZ"
+        description: "codice tipo attività"
+        maxLength: 10
+      tipoCreCod:
+        type: "string"
+        example: "LEZ"
+        description: "codice tipo credito"
+        maxLength: 10
+      tipoAttDes:
+        type: "string"
+        example: "Lezione"
+        description: "descrizione tipo attività"
+        maxLength: 10
+      data:
+        type: "string"
+        example: "10/12/2021"
+        description: "data dell'attività rendicontata nel formato DD/MM/YYYY"
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+      oraInizio:
+        type: "string"
+        example: "900"
+        description: "ora di inizio dell'attivita nel formato hh:mm"
+        pattern: "([01][0-9]|2[0-3]):[0-5][0-9]"
+      oraFine:
+        type: "string"
+        example: "900"
+        description: "ora di fine dell'attivita nel formato hh:mm"
+        pattern: "([01][0-9]|2[0-3]):[0-5][0-9]"
+      oreAccademiche:
+        type: "number"
+        format: "float"
+        example: 12.5
+        description: "Durata in ore accademiche dell'attività inserita dal docente\
+          \ (non necessariamente coincide con la differenza tra ORA_FINE e ORA_INIZIO)."
+      titolo:
+        type: "string"
+        example: "titolo lezione"
+        description: "titolo dell'attività rendicontata"
+        maxLength: 255
+      des:
+        type: "string"
+        example: "lorem ipsum sic ..."
+        description: "descrizione dell'attività rendicontata"
+        maxLength: 255
+      nota:
+        type: "string"
+        example: "lorem ipsum sic..."
+        description: "nota del docente che ha compilato il registro"
+        maxLength: 2000
+        x-internal-name: "nota_reg_dett"
+      supplenti:
+        type: "string"
+        example: "Rossi, Bianchi"
+        description: "lista dei nomi dei supplenti che hanno compilato l'attività"
+        x-internal-name: "nota_supplenti"
+      udCod:
+        type: "string"
+        example: "UD1"
+        description: "codice dell'unità didattica al quale si riferisce l'attività\
+          \ rendicontata"
+      udDes:
+        type: "string"
+        example: "Unità didattica 1"
+        description: "descrizione dell'unità didattica al quale si riferisce l'attività\
+          \ rendicontata"
+      gruppi:
+        type: "array"
+        items:
+          $ref: "#/definitions/RegistroDocenteDettGrp"
+        x-field-type: "optional"
+    x-layout-name: "REG_DOC_DETT_REST"
+    x-winsession-name: "p09/n_di_09_120_registro_docente"
+    x-model-sub-package: "offerta.v1"
+    x-model-sub-path: "offerta/v1"
+  RegistroDocenteCoper:
+    type: "object"
+    properties:
+      coperId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "id della copertura importata da U-GOV/GDA"
+    x-model-sub-package: "offerta.v1"
+    x-model-sub-path: "offerta/v1"
+  RegistroDocenteLog:
+    type: "object"
+    properties:
+      cdsId:
+        type: "integer"
+        format: "int64"
+        example: 11
+        description: "id del corso di studio di erogazione dell'attività didattica"
+        x-field-type: "primaryKey"
+      adId:
+        type: "integer"
+        format: "int64"
+        example: 111
+        description: "id del dell'attività didattica"
+        x-field-type: "primaryKey"
+      udId:
+        type: "integer"
+        format: "int64"
+        example: 1111
+        description: "id del del modulo dell'attività didattica"
+        x-field-type: "primaryKey"
+      cdsCod:
+        type: "string"
+        example: "CDS_COD1"
+        description: "codice del corso di studio di erogazione dell'attività didattica"
+      cdsDes:
+        type: "string"
+        example: "Corso di studio 1"
+        description: "descrizione del corso di studio di erogazione dell'attività\
+          \ didattica"
+      adCod:
+        type: "string"
+        example: "AD_COD1"
+        description: "codice dell'attività didattica"
+      adDes:
+        type: "string"
+        example: "Attività didattica 1"
+        description: "descrizione dell'attività didattica"
+      udCod:
+        type: "string"
+        example: "UD_COD1"
+        description: "codice del modulo dell'attività didattica"
+      udDes:
+        type: "string"
+        example: "Unità didattica 1"
+        description: "descrizione del modulo dell'attività didattica"
+      fisicaFlg:
+        type: "integer"
+        format: "int32"
+        example: 1
+        description: "flag che indica se il l'elemento della condivisione logista\
+          \ è quello che eroga effettivamente la didattica"
+        minimum: 0.0
+        maximum: 1.0
+      masterFlg:
+        type: "integer"
+        format: "int32"
+        example: 1
+        description: "flag che indica se il modulo idicato è master per la condivisione\
+          \ logistica"
+        minimum: 0.0
+        maximum: 1.0
+    x-layout-name: "REG_DOC_LOG_REST"
+    x-winsession-name: "p09/n_di_09_120_registro_docente"
+    x-model-sub-package: "offerta.v1"
+    x-model-sub-path: "offerta/v1"
+  DiarioDocente:
+    type: "object"
+    required:
+    - "aaId"
+    - "diarioId"
+    discriminator: "diarioDocenteType"
+    properties:
+      diarioId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "id del diario docente"
+        minimum: 1.0
+        x-field-type: "primaryKey"
+      aaId:
+        type: "integer"
+        format: "int32"
+        example: 1
+        description: "id del diario docente"
+        minimum: 1900.0
+        maximum: 2100.0
+      docenteId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "id del del docente a cui appartiene il registro"
+        minimum: 1.0
+      cognome:
+        type: "string"
+        example: "Rossi"
+        description: "cognome del docente a cui apprtiene il registro"
+        maxLength: 40
+      nome:
+        type: "string"
+        example: "Mario"
+        description: "nome del docente a cui apprtiene il registro"
+        maxLength: 40
+      codFis:
+        type: "string"
+        example: "MRORSS55F12H456F"
+        description: "cognome del docente a cui apprtiene il registro"
+        minLength: 16
+        maxLength: 16
+      statoDiarioCod:
+        type: "string"
+        example: "S"
+        description: "codice dello stato del diario"
+        maxLength: 1
+      statoDiarioDes:
+        type: "string"
+        example: "Stampato"
+        description: "descrizione dello stato del diario"
+        maxLength: 10
+      tipoGestDiarioDocCod:
+        type: "string"
+        example: "STD"
+        description: "tipo gestione diario"
+      firmaDigitaleFlg:
+        type: "integer"
+        format: "int32"
+        example: 0
+        description: "flag per la firma digitale del diario"
+        minimum: 0.0
+        maximum: 1.0
+      osservazioni:
+        type: "string"
+        description: "annotazioni del docente sul proprio diario"
+      oreDett:
+        type: "number"
+        format: "float"
+        example: 1.0
+        description: "totale ore rendicontate del dettaglio"
+        minimum: 0.0
+      oreDettAnnuali:
+        type: "number"
+        format: "float"
+        example: 1.0
+        description: "totale ore rendicontate del dettaglio annuale"
+        minimum: 0.0
+    x-layout-name: "DIARIO_DOC_TESTATA_REST"
+    x-winsession-name: "p09/n_di_09_121_diario_docente"
+    x-model-sub-package: "offerta.v1"
+    x-model-sub-path: "offerta/v1"
+  RegistroDocenteConDettagli:
+    allOf:
+    - $ref: "#/definitions/RegistroDocente"
+    - type: "object"
+      properties:
+        logistica:
+          type: "array"
+          items:
+            $ref: "#/definitions/RegistroDocenteLog"
+        attivita:
+          type: "array"
+          items:
+            $ref: "#/definitions/RegistroDocenteDett"
+    x-layout-name: "REG_DOC_TESTATA_REST"
+    x-winsession-name: "p09/n_di_09_120_registro_docente"
+    x-model-sub-package: "offerta.v1"
+    x-model-sub-path: "offerta/v1"
+  DiarioDocenteNote:
+    type: "object"
+    required:
+    - "notaDiarioId"
+    properties:
+      notaDiarioId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "id della nota del diario"
+        minimum: 1.0
+      nota:
+        type: "string"
+        example: "lorem ipsum sic.."
+        description: "nota del docente sul diario"
+    x-layout-name: "DIARIO_DOC_NOTE_REST"
+    x-winsession-name: "p09/n_di_09_121_diario_docente"
+    x-model-sub-package: "offerta.v1"
+    x-model-sub-path: "offerta/v1"
+parameters:
+  aaOffId:
+    name: "aaOffId"
+    in: "query"
+    description: "id dell' anno di offerta"
+    required: false
+    type: "integer"
+    maximum: 2100.0
+    minimum: 1900.0
+    format: "int32"
+  codFis:
+    name: "codFis"
+    in: "query"
+    description: "codice fiscale del docente"
+    required: false
+    type: "string"
+  facCod:
+    name: "facCod"
+    in: "query"
+    description: "codice della facoltà di afferenza"
+    required: false
+    type: "string"
+  cognome:
+    name: "cognome"
+    in: "query"
+    description: "cognome del docente (sono necessari almeno i primi 3 caratteri del\
+      \ cognome, poi è possibile aggiungere un * per effettuare una ricerca in like)"
+    required: false
+    type: "string"
+  docenteId:
+    name: "docenteId"
+    in: "query"
+    description: "id del docente"
+    required: false
+    type: "integer"
+    format: "int64"
+  staRegCod:
+    name: "staRegCod"
+    in: "query"
+    description: "stato del registro, gli stati validi sono B,C,S,V,A,X è possibile\
+      \ passare più stati passando la lista di stati separati da virgole"
+    required: false
+    type: "string"
+  adCod:
+    name: "adCod"
+    in: "query"
+    description: "codice dell' attività didattica di afferenza"
+    required: false
+    type: "string"
+  statoDiarioCod:
+    name: "staDiarioCod"
+    in: "query"
+    description: "stato del diario"
+    required: false
+    type: "string"
+    enum:
+    - "B"
+    - "S"
+    - "A"
+  diarioId:
+    name: "diarioId"
+    in: "path"
+    description: "id univoco del diario docente"
+    required: true
+    type: "integer"
+    format: "int64"
+  aaId:
+    name: "aaId"
+    in: "query"
+    description: "id dell' anno del diario"
+    required: false
+    type: "integer"
+    maximum: 2100.0
+    minimum: 1900.0
+    format: "int32"
+  adLogId:
+    name: "adLogId"
+    in: "query"
+    description: "id della condivisione logistica"
+    required: false
+    type: "integer"
+    format: "int64"
+  regId:
+    name: "regId"
+    in: "path"
+    description: "id univoco del registro docente"
+    required: true
+    type: "integer"
+    format: "int64"
+  daUltimaDataTransStato:
+    name: "daUltimaDataTransStato"
+    in: "query"
+    description: "data di transizione di stato minima dalla quale recuperare i registri,\
+      \ vengono recuperati tutti i registri che hanno data maggiore rispetto a quella\
+      \ indicata oppure null"
+    required: false
+    type: "string"
+  matricola:
+    name: "matricola"
+    in: "query"
+    description: "matricola del docente"
+    required: false
+    type: "string"
+externalDocs:
+  description: "Documentazione Geneale sui servizi REST"
+  url: "https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3"
+x-file-status: "PROD"
+x-file-name: "p09-rendicontazioneDocApiV1.yaml"
+x-api-status: "PROD"
+x-func-cod: "RST_REGDV1"
+x-cache-type: "midRefreshRateUserIndependent"

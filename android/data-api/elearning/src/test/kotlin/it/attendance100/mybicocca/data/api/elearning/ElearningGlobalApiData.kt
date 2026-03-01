@@ -1,22 +1,20 @@
 package it.attendance100.mybicocca.data.api.elearning
 
 import io.ktor.client.plugins.logging.*
+import it.attendance100.mybicocca.data.dto.elearning.ElearningLoginResponse
 import kotlinx.coroutines.runBlocking
+import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.extension.BeforeAllCallback
 import org.junit.jupiter.api.extension.ExtensionContext
-import org.openqa.selenium.chrome.ChromeDriver
-import org.openqa.selenium.chrome.ChromeOptions
-import org.openqa.selenium.devtools.v131.network.Network
-import org.openqa.selenium.devtools.v131.network.model.RequestWillBeSent
-import java.util.Optional
-import java.util.concurrent.CountDownLatch
-import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.AtomicReference
-import kotlin.io.encoding.Base64
-import kotlin.io.encoding.ExperimentalEncodingApi
 
 object ElearningGlobalApiData : BeforeAllCallback, AutoCloseable {
-    private const val AUTH_TIMEOUT_SEC = 300L
+    val username: String
+        get() = System.getenv("ELEARNING_USERNAME")
+            ?: throw IllegalStateException("Missing username: set ELEARNING_USERNAME environment variable")
+
+    val password: String
+        get() = System.getenv("ELEARNING_PASSWORD")
+            ?: throw IllegalStateException("Missing username: set ELEARNING_PASSWORD environment variable")
 
     var session: ElearningAuthSession? = null
     var profile: ElearningUserProfile? = null
@@ -45,56 +43,10 @@ object ElearningGlobalApiData : BeforeAllCallback, AutoCloseable {
         }
     }
 
-    @OptIn(ExperimentalEncodingApi::class)
     private suspend fun performLogin(api: ElearningApi): ElearningAuthSession {
-        val loginUrl = api.site.getAuthUrl()
-
-        val options = ChromeOptions().apply {
-            browserVersion = "131"
-            addArguments(
-                "--start-maximized",
-                "--disable-blink-features=AutomationControlled",
-                "--remote-allow-origins=*",
-                "--no-sandbox",
-                "--disable-dev-shm-usage"
-            )
-            setExperimentalOption("excludeSwitches", listOf("enable-automation"))
-        }
-
-        val driver = ChromeDriver(options)
-        val tokenRef = AtomicReference<String>()
-        val latch = CountDownLatch(1)
-
-        return try {
-            driver.devTools.apply {
-                createSession()
-                send(Network.enable(Optional.empty(), Optional.empty(), Optional.empty()))
-                addListener(Network.requestWillBeSent()) { response: RequestWillBeSent ->
-                    val url = response.request.url
-                    if (url.startsWith("moodlemobile://")) {
-                        runCatching {
-                            val base64Tokens = url.substringAfter("token=")
-                            val decoded = Base64.decode(base64Tokens).decodeToString()
-                            val token = decoded.split(":::")[1]
-                            tokenRef.set(token)
-                            latch.countDown()
-                        }
-                    }
-                }
-            }
-
-            driver.get(loginUrl)
-
-            val success = latch.await(AUTH_TIMEOUT_SEC, TimeUnit.SECONDS)
-            if (!success) throw IllegalStateException("Authentication timed out")
-
-            val token = tokenRef.get() ?: throw IllegalStateException("Failed to capture authentication token")
-            ElearningAuthSession(wsToken = token)
-        } finally {
-            runCatching {
-                driver.devTools.close()
-                driver.quit()
-            }
+        return when (val result = api.auth.login(username, password)) {
+            is ElearningLoginResponse.Error -> fail(result.message)
+            is ElearningLoginResponse.Success -> result.toSession()
         }
     }
 
@@ -111,3 +63,6 @@ object ElearningGlobalApiData : BeforeAllCallback, AutoCloseable {
         api?.close()
     }
 }
+
+fun ElearningLoginResponse.Success.toSession(): ElearningAuthSession = ElearningAuthSession(wsToken)
+

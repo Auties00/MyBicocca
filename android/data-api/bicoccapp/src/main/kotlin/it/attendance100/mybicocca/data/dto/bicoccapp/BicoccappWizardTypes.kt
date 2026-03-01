@@ -4,22 +4,22 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 /**
- * Response containing available wizard categories.
+ * Response containing available departments.
  */
 @Serializable
-data class BicoccappWizardCategoriesResponse(
+internal data class BicoccappWizardDepartmentsResponse(
     /**
      * List of categories.
      */
     @SerialName("categories")
-    val categories: List<BicoccappWizardCategory> = emptyList()
+    val departments: List<BicoccappWizardDepartment> = emptyList()
 )
 
 /**
  * Represents a category in the wizard (e.g., Department or Faculty).
  */
 @Serializable
-data class BicoccappWizardCategory(
+data class BicoccappWizardDepartment(
     /**
      * Name of the category.
      */
@@ -36,7 +36,7 @@ data class BicoccappWizardCategory(
  * Response containing available degree types.
  */
 @Serializable
-data class BicoccappWizardDegreesResponse(
+internal data class BicoccappWizardDegreesResponse(
     /**
      * List of degree types.
      */
@@ -66,7 +66,7 @@ data class BicoccappWizardDegree(
  * Response containing lessons grouped by year.
  */
 @Serializable
-data class BicoccappWizardLessonsResponse(
+internal data class BicoccappWizardLessonsResponse(
     /**
      * Map of lessons where key is the year and value is the list of lessons.
      */
@@ -113,43 +113,20 @@ data class BicoccappWizardLesson(
      * List of teachers for this lesson.
      */
     @SerialName("teachers")
-    val teachers: List<BicoccappWizardTeacher> = emptyList()
+    @Serializable(with = BicoccappTeachersSerializer::class)
+    val teachers: List<BicoccappTeacher> = emptyList()
 )
 
 /**
- * Represents a teacher in the wizard context.
+ * Response containing courses
  */
 @Serializable
-data class BicoccappWizardTeacher(
+internal data class BicoccappWizardCoursesResponse(
     /**
-     * Surname of the teacher.
+     * List of courses
      */
-    @SerialName("teacher_surname")
-    val surname: String,
-
-    /**
-     * Email of the teacher.
-     */
-    @SerialName("teacher_email")
-    val email: String? = null,
-
-    /**
-     * Code of the teacher.
-     */
-    @SerialName("teacher_code")
-    val code: String,
-
-    /**
-     * Name of the teacher.
-     */
-    @SerialName("teacher_name")
-    val name: String,
-
-    /**
-     * ID of the teacher.
-     */
-    @SerialName("teacher_id")
-    val id: Int
+    @SerialName("courses")
+    val courses: List<BicoccappWizardCourse> = emptyList()
 )
 
 /**

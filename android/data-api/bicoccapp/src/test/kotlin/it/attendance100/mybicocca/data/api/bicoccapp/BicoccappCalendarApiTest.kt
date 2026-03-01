@@ -1,51 +1,65 @@
 package it.attendance100.mybicocca.data.api.bicoccapp
 
+import it.attendance100.mybicocca.data.dto.bicoccapp.BicoccappSetCalendarResult
+import org.jsoup.helper.Validate.fail
 import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.Test
+import java.time.LocalDate
 
 class BicoccappCalendarApiTest : BicoccappApiTestBase() {
 
     @Test
-    suspend fun getCalendar() {
-        val calendar = api.calendar.getCalendar(profile.enrollmentId)
-        assertNotNull(calendar.days)
+    suspend fun getCalendarDays() {
+        val days = api.calendar.getCalendarDays(profile.enrollmentId)
+        assertNotNull(days)
+        assertTrue(days.isNotEmpty())
+    }
+
+    @Test
+    suspend fun getCalendarDaysForDate() {
+        val date = LocalDate.now()
+        val days = api.calendar.getCalendarDays(profile.enrollmentId, date)
+        assertNotNull(days)
+        assertTrue(days.size == 1)
+        assertTrue(days.first().date.equals(date))
     }
 
     @Test
     suspend fun getAvailableCourses() {
         val courses = api.calendar.getAvailableCourses()
-        assertNotNull(courses.courses)
+        assertNotNull(courses)
+        assertTrue(courses.isNotEmpty())
     }
 
     @Test
     suspend fun getCourseDetail() {
-        val coursesResponse = api.calendar.getAvailableCourses()
-        val courses = coursesResponse.courses
-        if (courses.isNotEmpty()) {
-            val course = courses.firstOrNull()
-            if (course != null) {
-                val detail = api.calendar.getCourseDetail(course.activityCode, course.courseCode)
-                assertNotNull(detail)
-            }
+        val courses = api.calendar.getAvailableCourses()
+        assertNotNull(courses)
+        assertTrue(courses.isNotEmpty())
+        for(course in courses) {
+            val detail = api.calendar.getCourseDetail(course.activityCode, course.courseCode)
+            assertNotNull(detail)
         }
     }
 
     @Test
     suspend fun addCourseToCalendar() {
-        val coursesResponse = api.calendar.getAvailableCourses()
-        val courses = coursesResponse.courses
-        val target = courses.firstOrNull()
-
-        if (target != null) {
+        val courses = api.calendar.getAvailableCourses()
+        for(course in courses) {
             val result = api.calendar.addCourseToCalendar(
-                userId = profile.enrollmentId,
-                cdsCode = target.degreeCourseCode,
-                activityCode = target.activityCode,
-                lessonName = target.lessonName,
-                courseCode = target.courseCode,
-                partition = target.partition
+                appUserId = profile.appUserId,
+                degreeCourseCode = course.degreeCourseCode,
+                activityCode = course.activityCode,
+                lessonName = course.lessonName,
+                courseCode = course.courseCode,
+                partition = course.partition
             )
             assertNotNull(result)
+            if (result is BicoccappSetCalendarResult.Error) {
+                fail(result.message)
+            }
         }
     }
 }

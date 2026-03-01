@@ -1,0 +1,4937 @@
+---
+swagger: "2.0"
+info:
+  description: "API REST di ESSE3 per l'accesso alla parte logistica dell'offerta\
+    \ didattica\n\n* Condivisioni Logistiche (AD e UD)\n* Syllabus\n* Aule e Edifici\n\
+    \n## ChangeLog\n \n Versione       | Versione di Esse3 di rilascio | Interventi\
+    \ \n -              | -                             | -\n     1.0.0      |   \
+    \                            | versione iniziale\n     1.1.0      | 18.03.01.00\
+    \                   | aggiunti gli endpoint per le aule ed edifici \n"
+  version: "1.0.0"
+  title: "ESSE3 Logistica API"
+basePath: "/logistica-service-v1"
+schemes:
+- "https"
+- "http"
+consumes:
+- "application/json"
+produces:
+- "application/json"
+paths:
+  /easystaff/logistica/{aaOffId}:
+    get:
+      tags:
+      - "easystaff"
+      summary: "informazioni logistiche per easystaff."
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>\n# <center><span style=\"color:red\">ATTENZIONE</span><center>\n\
+        <div style=\"color:red;font-size:medium;text-align:center\">\n  Il metodo\
+        \ è utilizzabile se è attiva l'integrazione con easystaff ed è dedicato a\
+        \ questa integrazione<br/>\n  La response potrebbe cambiare senza preavviso\
+        \ e senza la garanzia di retrocompatibilità, non utilizzare\n</div>\n    \
+        \    \nVengono ritornate le informazioni logistiche sulle attività di un determinato\
+        \ anno di offerta vanno anche valorizzati i parametri dipCod oppure una lista\
+        \ di cds da passare sul parametro listaCds\n\n\n**Estensioni:**\n\nCodice\
+        \ Estensione|Valore|Nota\n-|-|-\nx-cache-type|noCache|Nessuna cache impostata\
+        \ Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: easystaff-user-tecnico-permissions**\n\nProfilo|Controllo| Funzione\n\
+        -|-|-\nEasyStaff|Funzione abilitata se attivata l'integrazione con Easystaff|Security.checkEasyStaff(),\
+        \ Security.checkUserTecnico()\n\n\nClasse di modello : EasystaffAdLog\n======\n\
+        \nEstensioni sulle proprietà\n----\nProprietà | x-field-type\n-|-|\naaOffId|primaryKey\n\
+        adLogId|primaryKey\nfatPartCod|primaryKey\npartCod|primaryKey\n\n\nClasse\
+        \ di modello : EasystaffDoc\n======\n\nEstensioni sulle proprietà\n----\n\
+        Proprietà | x-field-type\n-|-|\nudLogId|primaryKey\ntipoCreCod|primaryKey\n\
+        \n\nClasse di modello : EasystaffAd\n======\n\nEstensioni sulle proprietà\n\
+        ----\nProprietà | x-field-type\n-|-|\ndipCsaCod|optional\ndipIstatCod|optional\n\
+        tipoSpecCod|optional\ndomPartCod|primaryKey\n\n\nClasse di modello : EasystaffUd\n\
+        ======\n\nEstensioni sulle proprietà\n----\nProprietà | x-field-type\n-|-|\n\
+        fisicaFlg|optional\n\n\nClasse di modello : DettaglioErroreAggiuntivo\n======\n\
+        \nEstensioni sulle proprietà\n----\nProprietà | x-field-type\n-|-|\nrawValue|rawJson\n"
+      operationId: "getEasystaffLogistica"
+      parameters:
+      - name: "aaOffId"
+        in: "path"
+        description: "Id dell'anno di offerta"
+        required: true
+        type: "integer"
+        maxLength: 4
+        minLength: 4
+        format: "int32"
+      - name: "dipCod"
+        in: "query"
+        description: "codice del dipartimento"
+        required: false
+        type: "string"
+      - name: "listaCds"
+        in: "query"
+        description: "lista dei codici corso da estrarre separata da ,"
+        required: false
+        type: "string"
+      - name: "optionalFields"
+        in: "query"
+        description: "specifica la lista dei campi opzionali (che non vengono recupeati\
+          \ di default);\nimpostando il valore `ALL` vengono mostrati tutti i campi.\
+          \ \n\nPer gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns*\
+          \  \nI dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello)\n\
+          \nEsempi\n* per il campo childObj con la poprietà childProp utilizzare la\
+          \ notazione `childProp.prop1`\n* Per visualizzare tutte le proprietà di\
+          \ childObj utilizzare la notazione `childProp.*`\n* Per visualizzare tutte\
+          \ le proprietà di childObj e di tutti i discendenti utilizzare la notazione\
+          \ `childProp.**`\n"
+        required: false
+        type: "string"
+      responses:
+        "200":
+          description: "successful operation"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/EasystaffAdLogConDettagli"
+        "422":
+          description: "errore"
+          schema:
+            $ref: "#/definitions/DettaglioErrore"
+      security:
+      - basicAuth: []
+      - jwt:
+        - "openid"
+      x-enabled-profiles:
+      - easystaff-user-tecnico-permissions:
+          kind: "ALL"
+          profiles:
+          - profile:
+              name: "EasyStaff"
+              description: "Funzione abilitata se attivata l'integrazione con Easystaff"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkEasyStaff"
+                  description: "controlla che sia attivata l'integrazione con easystaff"
+              - checkDummy2:
+                  className: "Security"
+                  functionName: "checkUserTecnico"
+                  description: "controlla che l'utente collegato sia un utente tecnico"
+      x-custom-operation: "multiple"
+      x-cache-type: "noCache"
+  /easystaff/struttura/{aaOffId}:
+    get:
+      tags:
+      - "easystaff"
+      summary: "informazioni di struttura per easystaff."
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>\n# <center><span style=\"color:red\">ATTENZIONE</span><center>\n\
+        <div style=\"color:red;font-size:medium;text-align:center\">\n  Il metodo\
+        \ è utilizzabile se è attiva l'integrazione con easystaff ed è dedicato a\
+        \ questa integrazione<br/>\n  La response potrebbe cambiare senza preavviso\
+        \ e senza la garanzia di retrocompatibilità, non utilizzare\n</div>\n    \
+        \    \nVengono ritornate le informazioni di struttura dei corsi/ordinamenti/percorsi/sedi\
+        \ collegate ad delle offerte di un determinato anno di offerta Vanno anche\
+        \ valorizzati i parametri dipCod oppure una lista di cds da passare sul parametro\
+        \ listaCds\n\n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n-|-|-\n\
+        x-cache-type|noCache|Nessuna cache impostata Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: ALL**\n\nProfilo|Controllo| Funzione\n-|-|-\nEasyStaff|Funzione\
+        \ abilitata se attivata l'integrazione con Easystaff|Security.checkEasyStaff(),\
+        \ Security.checkUserTecnico()\n\n\nClasse di modello : EasystaffCdsord\n======\n\
+        \nEstensioni sulle proprietà\n----\nProprietà | x-field-type\n-|-|\ndipCsaCod|optional\n\
+        dipIstatCod|optional\n\n\nClasse di modello : EasystaffPdsord\n======\n\n\
+        Estensioni sulle proprietà\n----\nProprietà | x-field-type\n-|-|\nstatoCod|optional\n\
+        \n\nClasse di modello : EasystaffSedi\n======\n\nEstensioni sulle proprietà\
+        \n----\nProprietà | x-field-type\n-|-|\nsedePrincipaleFlg|optional\n\n\nClasse\
+        \ di modello : DettaglioErroreAggiuntivo\n======\n\nEstensioni sulle proprietà\
+        \n----\nProprietà | x-field-type\n-|-|\nrawValue|rawJson\n"
+      operationId: "getEasystaffStruttura"
+      parameters:
+      - name: "aaOffId"
+        in: "path"
+        description: "Id dell'anno di offerta"
+        required: true
+        type: "integer"
+        maxLength: 4
+        minLength: 4
+        format: "int32"
+      - name: "dipCod"
+        in: "query"
+        description: "codice del dipartimento"
+        required: false
+        type: "string"
+      - name: "listaCds"
+        in: "query"
+        description: "lista dei codici corso da estrarre separata da ,"
+        required: false
+        type: "string"
+      - name: "optionalFields"
+        in: "query"
+        description: "specifica la lista dei campi opzionali (che non vengono recupeati\
+          \ di default);\nimpostando il valore `ALL` vengono mostrati tutti i campi.\
+          \ \n\nPer gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns*\
+          \  \nI dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello)\n\
+          \nEsempi\n* per il campo childObj con la poprietà childProp utilizzare la\
+          \ notazione `childProp.prop1`\n* Per visualizzare tutte le proprietà di\
+          \ childObj utilizzare la notazione `childProp.*`\n* Per visualizzare tutte\
+          \ le proprietà di childObj e di tutti i discendenti utilizzare la notazione\
+          \ `childProp.**`\n"
+        required: false
+        type: "string"
+      responses:
+        "200":
+          description: "successful operation"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/EasystaffCdsordConDettagli"
+        "422":
+          description: "errore"
+          schema:
+            $ref: "#/definitions/DettaglioErrore"
+      security:
+      - basicAuth: []
+      - jwt:
+        - "openid"
+      x-enabled-profiles:
+      - easystaff-user-tecnico-permissions:
+          kind: "ALL"
+          profiles:
+          - profile:
+              name: "EasyStaff"
+              description: "Funzione abilitata se attivata l'integrazione con Easystaff"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkEasyStaff"
+                  description: "controlla che sia attivata l'integrazione con easystaff"
+              - checkDummy2:
+                  className: "Security"
+                  functionName: "checkUserTecnico"
+                  description: "controlla che l'utente collegato sia un utente tecnico"
+      x-cache-type: "noCache"
+  /logistica:
+    get:
+      tags:
+      - "logistica"
+      summary: "Recupera la lista dei record della tabella di testata P09_AD_LOG,\
+        \ filtrati per i parametri opzionali. I parametri lavorano solo sulla AD FISICA\
+        \ della condivisione."
+      description: "recupera la lista degli oggetti `AdLog` con le informazioni di\
+        \ testata della logistica. I parametri ozionali **start** e **limit** consentono\
+        \ di paginare i risultati.\n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n\
+        -|-|-\nx-cache-type|noCache|Nessuna cache impostata Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: common-public-permissions**\n\nProfilo|Controllo| Funzione\n-|-|-\n\
+        ALL|Funzione Pubblica|Security.checkDummy()\n\n\nClasse di modello : AdLog\n\
+        ======\n\nEstensioni sulle proprietà\n----\nProprietà | x-field-type\n-|-|\n\
+        sedeId|primaryKey\n"
+      operationId: "getLogistica"
+      parameters:
+      - name: "aaOffId"
+        in: "query"
+        description: "Id dell'anno di offerta"
+        required: false
+        type: "integer"
+        maxLength: 4
+        minLength: 4
+        format: "int32"
+      - name: "cdsCod"
+        in: "query"
+        description: "codice del corso di studio"
+        required: false
+        type: "string"
+      - name: "cdsDes"
+        in: "query"
+        description: "descrizione del corso di studio (se viene utilizzato il carattere\
+          \ * viene applicato il like)"
+        required: false
+        type: "string"
+      - name: "aaOrdId"
+        in: "query"
+        description: "Id dell'ordinamento"
+        required: false
+        type: "integer"
+        maxLength: 4
+        minLength: 4
+        format: "int32"
+      - name: "pdsId"
+        in: "query"
+        description: "id del percorso di studio"
+        required: false
+        type: "integer"
+        format: "int64"
+      - name: "pdsCod"
+        in: "query"
+        description: "codice del percorso di studio"
+        required: false
+        type: "string"
+      - name: "pdsDes"
+        in: "query"
+        description: "descrizione del percorso di studio (se viene utilizzato il carattere\
+          \ * viene applicato il like)"
+        required: false
+        type: "string"
+      - name: "adId"
+        in: "query"
+        description: "id dell'attivita didattica"
+        required: false
+        type: "integer"
+        format: "int64"
+      - name: "adCod"
+        in: "query"
+        description: "codice dell'attivita didattica"
+        required: false
+        type: "string"
+      - name: "adDes"
+        in: "query"
+        description: "descrizione  dell'attivita didattica (se viene utilizzato il\
+          \ carattere * viene applicato il like)"
+        required: false
+        type: "string"
+      - name: "linguaDidCod"
+        in: "query"
+        description: "codice ISO6392 della lingua di erogazione della didattica"
+        required: false
+        type: "string"
+      - name: "sedeDes"
+        in: "query"
+        description: "descrizione della sede (se viene utilizzato il carattere * viene\
+          \ applicato il like)"
+        required: false
+        type: "string"
+      - name: "dataModLog"
+        in: "query"
+        description: "data di ultima modifica della logistica"
+        required: false
+        type: "string"
+        maxLength: 10
+        minLength: 10
+      - name: "start"
+        in: "query"
+        description: "utilizzato insieme a `limit` per indicare la paginazione sui\
+          \ record; `start` indica il numero del primo record da caricare (se non\
+          \ indicato viene utilizzato 0)\n"
+        required: false
+        type: "integer"
+        format: "int32"
+      - name: "limit"
+        in: "query"
+        description: "utilizzato insieme a `start` per indicare la paginazione sui\
+          \ record, `limit` indica il numero di record da recuperare (a partire da\
+          \ `start`); \nse non indicato viene utilizzato 50, i valori consentiti vanno\
+          \ da 0 a 100\n"
+        required: false
+        type: "integer"
+        format: "int32"
+      - name: "order"
+        in: "query"
+        description: "consente di specificare un ordine per il recupero dei record.\
+          \ La sintassi è la seguente\n * +/- : specifica l'ordinamento (+ = ASC,\
+          \ - = DESC); se omesso viene utilizzato +\n * field : nome del campo da\
+          \ ordinare\n \n E' possibile indicare più campi separandoli da virgola (Es:\
+          \ +annoCorso,+adCod) \n"
+        required: false
+        type: "string"
+      responses:
+        "200":
+          description: "successful operation"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/AdLog"
+      x-enabled-profiles:
+      - common-public-permissions:
+          kind: "ALL"
+          profiles:
+          - profile:
+              name: "ALL"
+              description: "Funzione Pubblica"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkDummy"
+                  description: "funzione che ritorna sempre true"
+      x-cache-type: "noCache"
+  /logistica/copertura/cancellabile:
+    get:
+      tags:
+      - "logistica"
+      summary: "Indica se una copertura risulta cancellabile."
+      description: "Indica se una copertura risulta cancellabile recuperando un oggetto\
+        \ di tipo 'CoperturaCancellabile'.\nE' necessario specificare almeno un parametro.\n\
+        ##### Codici di ritorno della funzione\nCodice di Ritorno | Descrizione\n\
+        \ -                | -\n 0                | copertura non presente in ESSE3,\
+        \ quindi cancellabile\n 1                | copertura cancellabile\n 2    \
+        \            | copertura NON cancellabile perché è presente in un registro\
+        \ docenti (P09_REG_DOC)\n 3                | copertura NON cancellabile perché\
+        \ è presente in un questionario\n \n\n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n\
+        -|-|-\nx-cache-type|configuration|Risorsa di configurazione, la variazione\
+        \ è molto lenta, cache Http abilitata, cache server abilitata. Maggiori dettagli\
+        \ [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: ALL**\n\nProfilo|Controllo| Funzione\n-|-|-\nALL|Funzione Pubblica|Security.checkDummy()\n\
+        \n\nClasse di modello : DettaglioErroreAggiuntivo\n======\n\nEstensioni sulle\
+        \ proprietà\n----\nProprietà | x-field-type\n-|-|\nrawValue|rawJson\n"
+      operationId: "getCoperturaCancellabile"
+      parameters:
+      - name: "coperId"
+        in: "query"
+        description: "identificativo copertura"
+        required: false
+        type: "integer"
+        format: "int64"
+      - name: "matricola"
+        in: "query"
+        description: "codice della matricola dello studente"
+        required: false
+        type: "string"
+      - name: "aaOffId"
+        in: "query"
+        description: "identificativo dell'anno di offerta"
+        required: false
+        type: "integer"
+        maxLength: 4
+        minLength: 4
+        format: "int32"
+      - name: "cdsCod"
+        in: "query"
+        description: "codice del corso di studio"
+        required: false
+        type: "string"
+      - name: "aaOrdId"
+        in: "query"
+        description: "Id dell'ordinamento"
+        required: false
+        type: "integer"
+        maxLength: 4
+        minLength: 4
+        format: "int32"
+      - name: "pdsCod"
+        in: "query"
+        description: "codice del percorso di studio"
+        required: false
+        type: "string"
+      - name: "adCod"
+        in: "query"
+        description: "codice dell'attivita didattica"
+        required: false
+        type: "string"
+      - name: "udCod"
+        in: "query"
+        description: "codice dell'unità didattica"
+        required: false
+        type: "string"
+      - name: "domPartCod"
+        in: "query"
+        description: "Codice dominio di partizione degli studenti all'interno di un\
+          \ fattore di partizione"
+        required: false
+        type: "string"
+        maxLength: 10
+      responses:
+        "200":
+          description: "successful operation"
+          schema:
+            $ref: "#/definitions/CoperturaCancellabile"
+        "422":
+          description: "errore"
+          schema:
+            $ref: "#/definitions/DettaglioErrore"
+      x-enabled-profiles:
+      - common-public-permissions:
+          kind: "ALL"
+          profiles:
+          - profile:
+              name: "ALL"
+              description: "Funzione Pubblica"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkDummy"
+                  description: "funzione che ritorna sempre true"
+  /logistica/syllabusAD:
+    put:
+      tags:
+      - "logistica"
+      summary: "Aggiorna le informazioni del syllabus associate alla logistica in\
+        \ chiave (completa o parziale). Se non specificati i codici di dominio e/o\
+        \ partizione, verranno utilizzate le informazioni fornite per identificare\
+        \ le entità da aggiornare. In caso di UTENTE_TECNICO, è necessario valorizzare\
+        \ il campo docenteMatricola."
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>Aggiorna le informazioni del syllabus associate\
+        \ alla logistica in chiave (completa o parziale).\n\n\n**Estensioni:**\n\n\
+        Codice Estensione|Valore|Nota\n-|-|-\nx-cache-type|configuration|Risorsa di\
+        \ configurazione, la variazione è molto lenta, cache Http abilitata, cache\
+        \ server abilitata. Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: docente-permissions**\n\nProfilo|Controllo| Funzione\n-|-|-\nDOCENTE|funzione\
+        \ accessibile alle utenze di tipo docente|Security.checkDocente()\n\n**Utente:\
+        \ user-tecnico-permissions**\n\nProfilo|Controllo| Funzione\n-|-|-\nUTENTE_TECNICO|funzione\
+        \ accessibile alle utenze tecniche per accessi ai servizi REST|Security.checkUserTecnico()\n\
+        \n\nClasse di modello : DettaglioErroreAggiuntivo\n======\n\nEstensioni sulle\
+        \ proprietà\n----\nProprietà | x-field-type\n-|-|\nrawValue|rawJson\n"
+      operationId: "putSyllabusAD"
+      parameters:
+      - name: "docenteMatricola"
+        in: "query"
+        description: "matricola del docente"
+        required: false
+        type: "string"
+      - in: "body"
+        name: "body"
+        description: "Informazioni del syllabus da aggiornare. I campi opzionali non\
+          \ indicati non verranno considerati in fase di aggiornamento."
+        required: true
+        schema:
+          $ref: "#/definitions/SyllabusADPatch"
+      responses:
+        "200":
+          description: "Successful response"
+          schema:
+            $ref: "#/definitions/SyllabusADPatchResult"
+        "422":
+          description: "Operazione non concessa"
+          schema:
+            $ref: "#/definitions/DettaglioErrore"
+      security:
+      - basicAuth: []
+      - jwt:
+        - "openid"
+      x-enabled-profiles:
+      - docente-permissions:
+          kind: "DOCENTE"
+          profiles:
+          - profile:
+              name: "DOCENTE"
+              description: "funzione accessibile alle utenze di tipo docente"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkDocente"
+                  description: "controlla che l'utente sia un docente"
+      - user-tecnico-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UTENTE_TECNICO"
+              description: "funzione accessibile alle utenze tecniche per accessi\
+                \ ai servizi REST"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkUserTecnico"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+      x-custom-operation: "multiple"
+      x-cache-endpoint-relations:
+        canonicalEndpointsAction: "invalidate"
+        customEndpoints:
+        - operationId: "getAdLogConSyllabus"
+          action: "invalidate"
+        - operationId: "getLogisticaFull"
+          action: "invalidate"
+        - operationId: "getlogisticaPerAdFull"
+          action: "invalidate"
+        - operationId: "getlogisticaPerOdFullStreamed"
+          action: "invalidate"
+        - operationId: "getlogisticaPerOdFull"
+          action: "invalidate"
+  /logistica/{adLogId}/adLogConSyllabus:
+    get:
+      tags:
+      - "logistica"
+      summary: "Recupera il syllabus  della logistica in chiave. I parametri opzionali\
+        \ filtrano una AD qualsiasi della condivisione."
+      description: "Recupera la lista degli oggetti  `AdLogConSyllabus`.\n\n\n**Estensioni:**\n\
+        \nCodice Estensione|Valore|Nota\n-|-|-\nx-cache-type|configuration|Risorsa\
+        \ di configurazione, la variazione è molto lenta, cache Http abilitata, cache\
+        \ server abilitata. Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: ALL**\n\nProfilo|Controllo| Funzione\n-|-|-\nALL|Funzione Pubblica|Security.checkDummy()\n\
+        \n\nClasse di modello : AdLogConSyllabus\n======\n\nEstensioni sulle proprietà\
+        \n----\nProprietà | x-field-type\n-|-|\nsedeId|primaryKey\n\n\nClasse di modello\
+        \ : SyllabusAD\n======\n\nEstensioni sulle proprietà\n----\nProprietà | x-field-type\n\
+        -|-|\ntipoCatalogoCod|optional\nadLogOpz|optional\nsyllabusOpt1|optional\n\
+        syllabusOpt1Eng|optional\nsyllabusOpt2|optional\nsyllabusOpt2Eng|optional\n\
+        syllabusOpt3|optional\nsyllabusOpt3Eng|optional\ncontenutiSpa|optional\nobiettiviFormativiSpa|optional\n\
+        prerequisitiSpa|optional\nmetodiDidatticiSpa|optional\nmodalitaVerificaApprendimentoSpa|optional\n\
+        altreInfoSpa|optional\ntestiRiferimentoSpa|optional\nsyllabusOpt1Spa|optional\n\
+        syllabusOpt2Spa|optional\nsyllabusOpt3Spa|optional\nobiettiviSvilSostenibileDesSpa|optional\n\
+        contenutiFra|optional\nobiettiviFormativiFra|optional\nprerequisitiFra|optional\n\
+        metodiDidatticiFra|optional\nmodalitaVerificaApprendimentoFra|optional\naltreInfoFra|optional\n\
+        testiRiferimentoFra|optional\nsyllabusOpt1Fra|optional\nsyllabusOpt2Fra|optional\n\
+        syllabusOpt3Fra|optional\nobiettiviSvilSostenibileDesFra|optional\ncontenutiDeu|optional\n\
+        obiettiviFormativiDeu|optional\nprerequisitiDeu|optional\nmetodiDidatticiDeu|optional\n\
+        modalitaVerificaApprendimentoDeu|optional\naltreInfoDeu|optional\ntestiRiferimentoDeu|optional\n\
+        syllabusOpt1Deu|optional\nsyllabusOpt2Deu|optional\nsyllabusOpt3Deu|optional\n\
+        obiettiviSvilSostenibileDesDeu|optional\n"
+      operationId: "getAdLogConSyllabus"
+      parameters:
+      - name: "adLogId"
+        in: "path"
+        description: "id della logistica"
+        required: true
+        type: "integer"
+        format: "int64"
+      - name: "aaOffId"
+        in: "query"
+        description: "Id dell'anno di offerta"
+        required: false
+        type: "integer"
+        maxLength: 4
+        minLength: 4
+        format: "int32"
+      - name: "cdsCod"
+        in: "query"
+        description: "codice del corso di studio"
+        required: false
+        type: "string"
+      - name: "cdsDes"
+        in: "query"
+        description: "descrizione del corso di studio (se viene utilizzato il carattere\
+          \ * viene applicato il like)"
+        required: false
+        type: "string"
+      - name: "aaOrdId"
+        in: "query"
+        description: "Id dell'ordinamento"
+        required: false
+        type: "integer"
+        maxLength: 4
+        minLength: 4
+        format: "int32"
+      - name: "pdsId"
+        in: "query"
+        description: "id del percorso di studio"
+        required: false
+        type: "integer"
+        format: "int64"
+      - name: "pdsCod"
+        in: "query"
+        description: "codice del percorso di studio"
+        required: false
+        type: "string"
+      - name: "pdsDes"
+        in: "query"
+        description: "descrizione del percorso di studio (se viene utilizzato il carattere\
+          \ * viene applicato il like)"
+        required: false
+        type: "string"
+      - name: "adCod"
+        in: "query"
+        description: "codice dell'attivita didattica"
+        required: false
+        type: "string"
+      - name: "adDes"
+        in: "query"
+        description: "descrizione  dell'attivita didattica (se viene utilizzato il\
+          \ carattere * viene applicato il like)"
+        required: false
+        type: "string"
+      - name: "order"
+        in: "query"
+        description: "consente di specificare un ordine per il recupero dei record.\
+          \ La sintassi è la seguente\n * +/- : specifica l'ordinamento (+ = ASC,\
+          \ - = DESC); se omesso viene utilizzato +\n * field : nome del campo da\
+          \ ordinare\n \n E' possibile indicare più campi separandoli da virgola (Es:\
+          \ +annoCorso,+adCod) \n"
+        required: false
+        type: "string"
+      - name: "optionalFields"
+        in: "query"
+        description: "specifica la lista dei campi opzionali (che non vengono recupeati\
+          \ di default);\nimpostando il valore `ALL` vengono mostrati tutti i campi.\
+          \ \n\nPer gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns*\
+          \  \nI dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello)\n\
+          \nEsempi\n* per il campo childObj con la poprietà childProp utilizzare la\
+          \ notazione `childProp.prop1`\n* Per visualizzare tutte le proprietà di\
+          \ childObj utilizzare la notazione `childProp.*`\n* Per visualizzare tutte\
+          \ le proprietà di childObj e di tutti i discendenti utilizzare la notazione\
+          \ `childProp.**`\n"
+        required: false
+        type: "string"
+      responses:
+        "200":
+          description: "Successful response"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/AdLogConSyllabus"
+      x-enabled-profiles:
+      - common-public-permissions:
+          kind: "ALL"
+          profiles:
+          - profile:
+              name: "ALL"
+              description: "Funzione Pubblica"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkDummy"
+                  description: "funzione che ritorna sempre true"
+      x-custom-operation: "multiple"
+  /logistica/{adLogId}/udLogConDettagli:
+    get:
+      tags:
+      - "logistica"
+      summary: "Recupera i dettagli  delle UD della logistica in chiave, ossia il\
+        \ syllabus delle UD e il carico docenti. I parametri opzionali filtrano una\
+        \ UD qualsiasi della condivisione."
+      description: "Recupera la lista degli oggetti  `UdLogConDettagli`.\n\n\n**Estensioni:**\n\
+        \nCodice Estensione|Valore|Nota\n-|-|-\nx-cache-type|configuration|Risorsa\
+        \ di configurazione, la variazione è molto lenta, cache Http abilitata, cache\
+        \ server abilitata. Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: ALL**\n\nProfilo|Controllo| Funzione\n-|-|-\nALL|Funzione Pubblica|Security.checkDummy()\n\
+        \n\nClasse di modello : CaricoDocenti\n======\n\nEstensioni sulle proprietà\
+        \n----\nProprietà | x-field-type\n-|-|\nCaricoDocentiOpz|optional\n\n\nClasse\
+        \ di modello : SyllabusUD\n======\n\nEstensioni sulle proprietà\n----\nProprietà\
+        \ | x-field-type\n-|-|\ncontenutiSpa|optional\nobiettiviFormativiSpa|optional\n\
+        prerequisitiSpa|optional\ntestiRiferimentoSpa|optional\nobiettiviSvilSostenibileDesSpa|optional\n\
+        contenutiFra|optional\nobiettiviFormativiFra|optional\nprerequisitiFra|optional\n\
+        testiRiferimentoFra|optional\nobiettiviSvilSostenibileDesFra|optional\ncontenutiDeu|optional\n\
+        obiettiviFormativiDeu|optional\nprerequisitiDeu|optional\ntestiRiferimentoDeu|optional\n\
+        obiettiviSvilSostenibileDesDeu|optional\n"
+      operationId: "getUdLogConDettagli"
+      parameters:
+      - name: "adLogId"
+        in: "path"
+        description: "id della logistica"
+        required: true
+        type: "integer"
+        format: "int64"
+      - name: "aaOffId"
+        in: "query"
+        description: "Id dell'anno di offerta"
+        required: false
+        type: "integer"
+        maxLength: 4
+        minLength: 4
+        format: "int32"
+      - name: "cdsCod"
+        in: "query"
+        description: "codice del corso di studio"
+        required: false
+        type: "string"
+      - name: "cdsDes"
+        in: "query"
+        description: "descrizione del corso di studio (se viene utilizzato il carattere\
+          \ * viene applicato il like)"
+        required: false
+        type: "string"
+      - name: "aaOrdId"
+        in: "query"
+        description: "Id dell'ordinamento"
+        required: false
+        type: "integer"
+        maxLength: 4
+        minLength: 4
+        format: "int32"
+      - name: "pdsId"
+        in: "query"
+        description: "id del percorso di studio"
+        required: false
+        type: "integer"
+        format: "int64"
+      - name: "pdsCod"
+        in: "query"
+        description: "codice del percorso di studio"
+        required: false
+        type: "string"
+      - name: "pdsDes"
+        in: "query"
+        description: "descrizione del percorso di studio (se viene utilizzato il carattere\
+          \ * viene applicato il like)"
+        required: false
+        type: "string"
+      - name: "adCod"
+        in: "query"
+        description: "codice dell'attivita didattica"
+        required: false
+        type: "string"
+      - name: "adDes"
+        in: "query"
+        description: "descrizione  dell'attivita didattica (se viene utilizzato il\
+          \ carattere * viene applicato il like)"
+        required: false
+        type: "string"
+      - name: "udCod"
+        in: "query"
+        description: "codice dell'unità didattica"
+        required: false
+        type: "string"
+      - name: "udDes"
+        in: "query"
+        description: "descrizione dell'unit� didattica (se viene utilizzato il carattere\
+          \ * viene applicato il like)"
+        required: false
+        type: "string"
+      - name: "docenteMatricola"
+        in: "query"
+        description: "matricola del docente"
+        required: false
+        type: "string"
+      - name: "docenteCognome"
+        in: "query"
+        description: "cognome del docente"
+        required: false
+        type: "string"
+      - name: "docenteNome"
+        in: "query"
+        description: "nome del docente"
+        required: false
+        type: "string"
+      - name: "order"
+        in: "query"
+        description: "consente di specificare un ordine per il recupero dei record.\
+          \ La sintassi è la seguente\n * +/- : specifica l'ordinamento (+ = ASC,\
+          \ - = DESC); se omesso viene utilizzato +\n * field : nome del campo da\
+          \ ordinare\n \n E' possibile indicare più campi separandoli da virgola (Es:\
+          \ +annoCorso,+adCod) \n"
+        required: false
+        type: "string"
+      - name: "optionalFields"
+        in: "query"
+        description: "specifica la lista dei campi opzionali (che non vengono recupeati\
+          \ di default);\nimpostando il valore `ALL` vengono mostrati tutti i campi.\
+          \ \n\nPer gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns*\
+          \  \nI dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello)\n\
+          \nEsempi\n* per il campo childObj con la poprietà childProp utilizzare la\
+          \ notazione `childProp.prop1`\n* Per visualizzare tutte le proprietà di\
+          \ childObj utilizzare la notazione `childProp.*`\n* Per visualizzare tutte\
+          \ le proprietà di childObj e di tutti i discendenti utilizzare la notazione\
+          \ `childProp.**`\n"
+        required: false
+        type: "string"
+      responses:
+        "200":
+          description: "Successful response"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/UdLogConDettagli"
+      x-enabled-profiles:
+      - common-public-permissions:
+          kind: "ALL"
+          profiles:
+          - profile:
+              name: "ALL"
+              description: "Funzione Pubblica"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkDummy"
+                  description: "funzione che ritorna sempre true"
+      x-custom-operation: "multiple"
+  /logisticaFull/{adLogId}/:
+    get:
+      tags:
+      - "logistica"
+      summary: "Recupera tutte le informazioni della logistica in chiave. I parametri\
+        \ opzionali filtrano una AD qualsiasi della condivisione."
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>Recupera la lista degli oggetti `LogisticaConDettagli`\
+        \ con la stessa chiave AD_LOG_ID. I parametri ozionali **start** e **limit**\
+        \ consentono di paginare i risultati.\n\n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n\
+        -|-|-\nx-cache-type|noCache|Nessuna cache impostata Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: user-tecnico-massive-permissions**\n\nProfilo|Controllo| Funzione\n\
+        -|-|-\nUserTecnicoMassivo|funzione massiva riservata ad utenti tecnici autorizzati|Security.checkMassiveGET()\n\
+        \n\nClasse di modello : LogisticaConDettagli\n======\n\nEstensioni sulle proprietà\
+        \n----\nProprietà | x-field-type\n-|-|\nsedeId|primaryKey\n\n\nClasse di modello\
+        \ : CaricoDocenti\n======\n\nEstensioni sulle proprietà\n----\nProprietà |\
+        \ x-field-type\n-|-|\nCaricoDocentiOpz|optional\n\n\nClasse di modello : SyllabusUD\n\
+        ======\n\nEstensioni sulle proprietà\n----\nProprietà | x-field-type\n-|-|\n\
+        contenutiSpa|optional\nobiettiviFormativiSpa|optional\nprerequisitiSpa|optional\n\
+        testiRiferimentoSpa|optional\nobiettiviSvilSostenibileDesSpa|optional\ncontenutiFra|optional\n\
+        obiettiviFormativiFra|optional\nprerequisitiFra|optional\ntestiRiferimentoFra|optional\n\
+        obiettiviSvilSostenibileDesFra|optional\ncontenutiDeu|optional\nobiettiviFormativiDeu|optional\n\
+        prerequisitiDeu|optional\ntestiRiferimentoDeu|optional\nobiettiviSvilSostenibileDesDeu|optional\n\
+        \n\nClasse di modello : SyllabusAD\n======\n\nEstensioni sulle proprietà\n\
+        ----\nProprietà | x-field-type\n-|-|\ntipoCatalogoCod|optional\nadLogOpz|optional\n\
+        syllabusOpt1|optional\nsyllabusOpt1Eng|optional\nsyllabusOpt2|optional\nsyllabusOpt2Eng|optional\n\
+        syllabusOpt3|optional\nsyllabusOpt3Eng|optional\ncontenutiSpa|optional\nobiettiviFormativiSpa|optional\n\
+        prerequisitiSpa|optional\nmetodiDidatticiSpa|optional\nmodalitaVerificaApprendimentoSpa|optional\n\
+        altreInfoSpa|optional\ntestiRiferimentoSpa|optional\nsyllabusOpt1Spa|optional\n\
+        syllabusOpt2Spa|optional\nsyllabusOpt3Spa|optional\nobiettiviSvilSostenibileDesSpa|optional\n\
+        contenutiFra|optional\nobiettiviFormativiFra|optional\nprerequisitiFra|optional\n\
+        metodiDidatticiFra|optional\nmodalitaVerificaApprendimentoFra|optional\naltreInfoFra|optional\n\
+        testiRiferimentoFra|optional\nsyllabusOpt1Fra|optional\nsyllabusOpt2Fra|optional\n\
+        syllabusOpt3Fra|optional\nobiettiviSvilSostenibileDesFra|optional\ncontenutiDeu|optional\n\
+        obiettiviFormativiDeu|optional\nprerequisitiDeu|optional\nmetodiDidatticiDeu|optional\n\
+        modalitaVerificaApprendimentoDeu|optional\naltreInfoDeu|optional\ntestiRiferimentoDeu|optional\n\
+        syllabusOpt1Deu|optional\nsyllabusOpt2Deu|optional\nsyllabusOpt3Deu|optional\n\
+        obiettiviSvilSostenibileDesDeu|optional\n"
+      operationId: "getLogisticaFull"
+      parameters:
+      - name: "adLogId"
+        in: "path"
+        description: "id della logistica"
+        required: true
+        type: "integer"
+        format: "int64"
+      - name: "aaOffId"
+        in: "query"
+        description: "Id dell'anno di offerta"
+        required: false
+        type: "integer"
+        maxLength: 4
+        minLength: 4
+        format: "int32"
+      - name: "cdsCod"
+        in: "query"
+        description: "codice del corso di studio"
+        required: false
+        type: "string"
+      - name: "cdsDes"
+        in: "query"
+        description: "descrizione del corso di studio (se viene utilizzato il carattere\
+          \ * viene applicato il like)"
+        required: false
+        type: "string"
+      - name: "aaOrdId"
+        in: "query"
+        description: "Id dell'ordinamento"
+        required: false
+        type: "integer"
+        maxLength: 4
+        minLength: 4
+        format: "int32"
+      - name: "pdsId"
+        in: "query"
+        description: "id del percorso di studio"
+        required: false
+        type: "integer"
+        format: "int64"
+      - name: "pdsCod"
+        in: "query"
+        description: "codice del percorso di studio"
+        required: false
+        type: "string"
+      - name: "pdsDes"
+        in: "query"
+        description: "descrizione del percorso di studio (se viene utilizzato il carattere\
+          \ * viene applicato il like)"
+        required: false
+        type: "string"
+      - name: "adCod"
+        in: "query"
+        description: "codice dell'attivita didattica"
+        required: false
+        type: "string"
+      - name: "adDes"
+        in: "query"
+        description: "descrizione  dell'attivita didattica (se viene utilizzato il\
+          \ carattere * viene applicato il like)"
+        required: false
+        type: "string"
+      - name: "order"
+        in: "query"
+        description: "consente di specificare un ordine per il recupero dei record.\
+          \ La sintassi è la seguente\n * +/- : specifica l'ordinamento (+ = ASC,\
+          \ - = DESC); se omesso viene utilizzato +\n * field : nome del campo da\
+          \ ordinare\n \n E' possibile indicare più campi separandoli da virgola (Es:\
+          \ +annoCorso,+adCod) \n"
+        required: false
+        type: "string"
+      - name: "optionalFields"
+        in: "query"
+        description: "specifica la lista dei campi opzionali (che non vengono recupeati\
+          \ di default);\nimpostando il valore `ALL` vengono mostrati tutti i campi.\
+          \ \n\nPer gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns*\
+          \  \nI dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello)\n\
+          \nEsempi\n* per il campo childObj con la poprietà childProp utilizzare la\
+          \ notazione `childProp.prop1`\n* Per visualizzare tutte le proprietà di\
+          \ childObj utilizzare la notazione `childProp.*`\n* Per visualizzare tutte\
+          \ le proprietà di childObj e di tutti i discendenti utilizzare la notazione\
+          \ `childProp.**`\n"
+        required: false
+        type: "string"
+      responses:
+        "200":
+          description: "Successful response"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/LogisticaConDettagli"
+      security:
+      - basicAuth: []
+      - jwt:
+        - "openid"
+      x-enabled-profiles:
+      - user-tecnico-massive-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UserTecnicoMassivo"
+              description: "funzione massiva riservata ad utenti tecnici autorizzati"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkMassiveGET"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+      x-custom-operation: "multiple"
+      x-cache-type: "noCache"
+  /logisticaPerAdFull/{aaOffId}:
+    get:
+      tags:
+      - "logistica"
+      summary: "Recupero logistica per corso di studio."
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>Recupera la lista degli oggetti `LogisticaConDettagli`\
+        \ con la stesso anno di offerta e identificativo o codice del corso di studio\
+        \ (occorre specificarne uno dei due). \n\n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n\
+        -|-|-\nx-cache-type|noCache|Nessuna cache impostata Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: USER_TECNICO**\n\nProfilo|Controllo| Funzione\n-|-|-\nUserTecnicoMassivo|funzione\
+        \ massiva riservata ad utenti tecnici autorizzati|Security.checkMassiveGET()\n\
+        \n\nClasse di modello : LogisticaConDettagli\n======\n\nEstensioni sulle proprietà\
+        \n----\nProprietà | x-field-type\n-|-|\nsedeId|primaryKey\n\n\nClasse di modello\
+        \ : CaricoDocenti\n======\n\nEstensioni sulle proprietà\n----\nProprietà |\
+        \ x-field-type\n-|-|\nCaricoDocentiOpz|optional\n\n\nClasse di modello : SyllabusUD\n\
+        ======\n\nEstensioni sulle proprietà\n----\nProprietà | x-field-type\n-|-|\n\
+        contenutiSpa|optional\nobiettiviFormativiSpa|optional\nprerequisitiSpa|optional\n\
+        testiRiferimentoSpa|optional\nobiettiviSvilSostenibileDesSpa|optional\ncontenutiFra|optional\n\
+        obiettiviFormativiFra|optional\nprerequisitiFra|optional\ntestiRiferimentoFra|optional\n\
+        obiettiviSvilSostenibileDesFra|optional\ncontenutiDeu|optional\nobiettiviFormativiDeu|optional\n\
+        prerequisitiDeu|optional\ntestiRiferimentoDeu|optional\nobiettiviSvilSostenibileDesDeu|optional\n\
+        \n\nClasse di modello : SyllabusAD\n======\n\nEstensioni sulle proprietà\n\
+        ----\nProprietà | x-field-type\n-|-|\ntipoCatalogoCod|optional\nadLogOpz|optional\n\
+        syllabusOpt1|optional\nsyllabusOpt1Eng|optional\nsyllabusOpt2|optional\nsyllabusOpt2Eng|optional\n\
+        syllabusOpt3|optional\nsyllabusOpt3Eng|optional\ncontenutiSpa|optional\nobiettiviFormativiSpa|optional\n\
+        prerequisitiSpa|optional\nmetodiDidatticiSpa|optional\nmodalitaVerificaApprendimentoSpa|optional\n\
+        altreInfoSpa|optional\ntestiRiferimentoSpa|optional\nsyllabusOpt1Spa|optional\n\
+        syllabusOpt2Spa|optional\nsyllabusOpt3Spa|optional\nobiettiviSvilSostenibileDesSpa|optional\n\
+        contenutiFra|optional\nobiettiviFormativiFra|optional\nprerequisitiFra|optional\n\
+        metodiDidatticiFra|optional\nmodalitaVerificaApprendimentoFra|optional\naltreInfoFra|optional\n\
+        testiRiferimentoFra|optional\nsyllabusOpt1Fra|optional\nsyllabusOpt2Fra|optional\n\
+        syllabusOpt3Fra|optional\nobiettiviSvilSostenibileDesFra|optional\ncontenutiDeu|optional\n\
+        obiettiviFormativiDeu|optional\nprerequisitiDeu|optional\nmetodiDidatticiDeu|optional\n\
+        modalitaVerificaApprendimentoDeu|optional\naltreInfoDeu|optional\ntestiRiferimentoDeu|optional\n\
+        syllabusOpt1Deu|optional\nsyllabusOpt2Deu|optional\nsyllabusOpt3Deu|optional\n\
+        obiettiviSvilSostenibileDesDeu|optional\n\n\nClasse di modello : DettaglioErroreAggiuntivo\n\
+        ======\n\nEstensioni sulle proprietà\n----\nProprietà | x-field-type\n-|-|\n\
+        rawValue|rawJson\n"
+      operationId: "getlogisticaPerAdFull"
+      parameters:
+      - name: "aaOffId"
+        in: "path"
+        description: "Id dell'anno di offerta"
+        required: true
+        type: "integer"
+        maxLength: 4
+        minLength: 4
+        format: "int32"
+      - name: "cdsId"
+        in: "query"
+        description: "identificativo del corso di studio"
+        required: false
+        type: "integer"
+        format: "int64"
+      - name: "cdsCod"
+        in: "query"
+        description: "codice del corso di studio"
+        required: false
+        type: "string"
+      - name: "cdsDes"
+        in: "query"
+        description: "descrizione del corso di studio (se viene utilizzato il carattere\
+          \ * viene applicato il like)"
+        required: false
+        type: "string"
+      - name: "aaOrdId"
+        in: "query"
+        description: "Id dell'ordinamento"
+        required: false
+        type: "integer"
+        maxLength: 4
+        minLength: 4
+        format: "int32"
+      - name: "pdsId"
+        in: "query"
+        description: "id del percorso di studio"
+        required: false
+        type: "integer"
+        format: "int64"
+      - name: "pdsCod"
+        in: "query"
+        description: "codice del percorso di studio"
+        required: false
+        type: "string"
+      - name: "pdsDes"
+        in: "query"
+        description: "descrizione del percorso di studio (se viene utilizzato il carattere\
+          \ * viene applicato il like)"
+        required: false
+        type: "string"
+      - name: "adCod"
+        in: "query"
+        description: "codice dell'attivita didattica"
+        required: false
+        type: "string"
+      - name: "adDes"
+        in: "query"
+        description: "descrizione  dell'attivita didattica (se viene utilizzato il\
+          \ carattere * viene applicato il like)"
+        required: false
+        type: "string"
+      - name: "dataModLog"
+        in: "query"
+        description: "data di ultima modifica della logistica"
+        required: false
+        type: "string"
+        maxLength: 10
+        minLength: 10
+      - name: "desAdPubblFlg"
+        in: "query"
+        description: "Flag che indica se le descrizioni delle attività didattiche\
+          \ sono pubblicabili"
+        required: false
+        type: "integer"
+        maximum: 1.0
+        minimum: 0.0
+        format: "int32"
+      - name: "order"
+        in: "query"
+        description: "consente di specificare un ordine per il recupero dei record.\
+          \ La sintassi è la seguente\n * +/- : specifica l'ordinamento (+ = ASC,\
+          \ - = DESC); se omesso viene utilizzato +\n * field : nome del campo da\
+          \ ordinare\n \n E' possibile indicare più campi separandoli da virgola (Es:\
+          \ +annoCorso,+adCod) \n"
+        required: false
+        type: "string"
+      - name: "optionalFields"
+        in: "query"
+        description: "specifica la lista dei campi opzionali (che non vengono recupeati\
+          \ di default);\nimpostando il valore `ALL` vengono mostrati tutti i campi.\
+          \ \n\nPer gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns*\
+          \  \nI dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello)\n\
+          \nEsempi\n* per il campo childObj con la poprietà childProp utilizzare la\
+          \ notazione `childProp.prop1`\n* Per visualizzare tutte le proprietà di\
+          \ childObj utilizzare la notazione `childProp.*`\n* Per visualizzare tutte\
+          \ le proprietà di childObj e di tutti i discendenti utilizzare la notazione\
+          \ `childProp.**`\n"
+        required: false
+        type: "string"
+      responses:
+        "200":
+          description: "Successful response"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/LogisticaConDettagli"
+        "422":
+          description: "parametri errati"
+          schema:
+            $ref: "#/definitions/DettaglioErrore"
+      security:
+      - basicAuth: []
+      - jwt:
+        - "openid"
+      x-enabled-profiles:
+      - user-tecnico-massive-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UserTecnicoMassivo"
+              description: "funzione massiva riservata ad utenti tecnici autorizzati"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkMassiveGET"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+      x-custom-operation: "multiple"
+      x-cache-type: "noCache"
+  /logisticaPerDocente:
+    get:
+      tags:
+      - "logistica"
+      summary: "Recupero logistica per docente."
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>Recupero logistica per docente\n\n\n**Estensioni:**\n\
+        \nCodice Estensione|Valore|Nota\n-|-|-\nx-cache-type|noCache|Nessuna cache\
+        \ impostata Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: USER_TECNICO**\n\nProfilo|Controllo| Funzione\n-|-|-\nUserTecnicoMassivo|funzione\
+        \ massiva riservata ad utenti tecnici autorizzati|Security.checkMassiveGET()\n"
+      operationId: "getlogisticaPerDocente"
+      parameters:
+      - name: "docenteId"
+        in: "query"
+        description: "id del docente"
+        required: false
+        type: "integer"
+        format: "int64"
+      - name: "docenteMatricola"
+        in: "query"
+        description: "matricola del docente"
+        required: false
+        type: "string"
+      - name: "docenteCognome"
+        in: "query"
+        description: "cognome del docente"
+        required: false
+        type: "string"
+      - name: "userId"
+        in: "query"
+        description: "id univoco che consente di individuare l'account utente"
+        required: false
+        type: "string"
+      - name: "aaOffId"
+        in: "query"
+        description: "Id dell'anno di offerta"
+        required: false
+        type: "integer"
+        maxLength: 4
+        minLength: 4
+        format: "int32"
+      - name: "adLogId"
+        in: "query"
+        description: "id della logistica"
+        required: false
+        type: "integer"
+        format: "int64"
+      - name: "dataModTCDoc"
+        in: "query"
+        description: "data di ultima modifica della logistica per docente (recupera\
+          \ le modifiche alla anagrafica oppure al carico docente)"
+        required: false
+        type: "string"
+        maxLength: 10
+        minLength: 10
+      - name: "start"
+        in: "query"
+        description: "utilizzato insieme a `limit` per indicare la paginazione sui\
+          \ record; `start` indica il numero del primo record da caricare (se non\
+          \ indicato viene utilizzato 0)\n"
+        required: false
+        type: "integer"
+        format: "int32"
+      - name: "limit"
+        in: "query"
+        description: "utilizzato insieme a `start` per indicare la paginazione sui\
+          \ record, `limit` indica il numero di record da recuperare (a partire da\
+          \ `start`); \nse non indicato viene utilizzato 50, i valori consentiti vanno\
+          \ da 0 a 100\n"
+        required: false
+        type: "integer"
+        format: "int32"
+      - name: "order"
+        in: "query"
+        description: "consente di specificare un ordine per il recupero dei record.\
+          \ La sintassi è la seguente\n * +/- : specifica l'ordinamento (+ = ASC,\
+          \ - = DESC); se omesso viene utilizzato +\n * field : nome del campo da\
+          \ ordinare\n \n E' possibile indicare più campi separandoli da virgola (Es:\
+          \ +annoCorso,+adCod) \n"
+        required: false
+        type: "string"
+      responses:
+        "200":
+          description: "successful operation"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/LogisticaPerDocente"
+      security:
+      - basicAuth: []
+      - jwt:
+        - "openid"
+      x-enabled-profiles:
+      - user-tecnico-massive-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UserTecnicoMassivo"
+              description: "funzione massiva riservata ad utenti tecnici autorizzati"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkMassiveGET"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+      x-cache-type: "noCache"
+  /logisticaPerOdFull/streamed/{aaOffId}/{cdsOffId}/:
+    get:
+      tags:
+      - "logistica"
+      summary: "Recupero logistica per corso di studio. Versione con transfer-encoding."
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>Recupera la lista degli oggetti `LogisticaConDettagli`\
+        \ con la stesso anno di offerta e corso di studio master. La response viene\
+        \ restituita in modo parziale con il [transfer-enconding](https://tools.ietf.org/html/rfc2616#section-3.6)\n\
+        \n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n-|-|-\nx-cache-type|noCache|Nessuna\
+        \ cache impostata Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: USER_TECNICO**\n\nProfilo|Controllo| Funzione\n-|-|-\nUserTecnicoMassivo|funzione\
+        \ massiva riservata ad utenti tecnici autorizzati|Security.checkMassiveGET()\n\
+        \n\nClasse di modello : LogisticaConDettagli\n======\n\nEstensioni sulle proprietà\
+        \n----\nProprietà | x-field-type\n-|-|\nsedeId|primaryKey\n\n\nClasse di modello\
+        \ : CaricoDocenti\n======\n\nEstensioni sulle proprietà\n----\nProprietà |\
+        \ x-field-type\n-|-|\nCaricoDocentiOpz|optional\n\n\nClasse di modello : SyllabusUD\n\
+        ======\n\nEstensioni sulle proprietà\n----\nProprietà | x-field-type\n-|-|\n\
+        contenutiSpa|optional\nobiettiviFormativiSpa|optional\nprerequisitiSpa|optional\n\
+        testiRiferimentoSpa|optional\nobiettiviSvilSostenibileDesSpa|optional\ncontenutiFra|optional\n\
+        obiettiviFormativiFra|optional\nprerequisitiFra|optional\ntestiRiferimentoFra|optional\n\
+        obiettiviSvilSostenibileDesFra|optional\ncontenutiDeu|optional\nobiettiviFormativiDeu|optional\n\
+        prerequisitiDeu|optional\ntestiRiferimentoDeu|optional\nobiettiviSvilSostenibileDesDeu|optional\n\
+        \n\nClasse di modello : SyllabusAD\n======\n\nEstensioni sulle proprietà\n\
+        ----\nProprietà | x-field-type\n-|-|\ntipoCatalogoCod|optional\nadLogOpz|optional\n\
+        syllabusOpt1|optional\nsyllabusOpt1Eng|optional\nsyllabusOpt2|optional\nsyllabusOpt2Eng|optional\n\
+        syllabusOpt3|optional\nsyllabusOpt3Eng|optional\ncontenutiSpa|optional\nobiettiviFormativiSpa|optional\n\
+        prerequisitiSpa|optional\nmetodiDidatticiSpa|optional\nmodalitaVerificaApprendimentoSpa|optional\n\
+        altreInfoSpa|optional\ntestiRiferimentoSpa|optional\nsyllabusOpt1Spa|optional\n\
+        syllabusOpt2Spa|optional\nsyllabusOpt3Spa|optional\nobiettiviSvilSostenibileDesSpa|optional\n\
+        contenutiFra|optional\nobiettiviFormativiFra|optional\nprerequisitiFra|optional\n\
+        metodiDidatticiFra|optional\nmodalitaVerificaApprendimentoFra|optional\naltreInfoFra|optional\n\
+        testiRiferimentoFra|optional\nsyllabusOpt1Fra|optional\nsyllabusOpt2Fra|optional\n\
+        syllabusOpt3Fra|optional\nobiettiviSvilSostenibileDesFra|optional\ncontenutiDeu|optional\n\
+        obiettiviFormativiDeu|optional\nprerequisitiDeu|optional\nmetodiDidatticiDeu|optional\n\
+        modalitaVerificaApprendimentoDeu|optional\naltreInfoDeu|optional\ntestiRiferimentoDeu|optional\n\
+        syllabusOpt1Deu|optional\nsyllabusOpt2Deu|optional\nsyllabusOpt3Deu|optional\n\
+        obiettiviSvilSostenibileDesDeu|optional\n"
+      operationId: "getlogisticaPerOdFullStreamed"
+      parameters:
+      - name: "aaOffId"
+        in: "path"
+        description: "Id dell'anno di offerta"
+        required: true
+        type: "integer"
+        maxLength: 4
+        minLength: 4
+        format: "int32"
+      - name: "cdsOffId"
+        in: "path"
+        description: "id del corso di studio"
+        required: true
+        type: "integer"
+        format: "int64"
+      - name: "cdsCod"
+        in: "query"
+        description: "codice del corso di studio"
+        required: false
+        type: "string"
+      - name: "cdsDes"
+        in: "query"
+        description: "descrizione del corso di studio (se viene utilizzato il carattere\
+          \ * viene applicato il like)"
+        required: false
+        type: "string"
+      - name: "aaOrdId"
+        in: "query"
+        description: "Id dell'ordinamento"
+        required: false
+        type: "integer"
+        maxLength: 4
+        minLength: 4
+        format: "int32"
+      - name: "pdsId"
+        in: "query"
+        description: "id del percorso di studio"
+        required: false
+        type: "integer"
+        format: "int64"
+      - name: "pdsCod"
+        in: "query"
+        description: "codice del percorso di studio"
+        required: false
+        type: "string"
+      - name: "pdsDes"
+        in: "query"
+        description: "descrizione del percorso di studio (se viene utilizzato il carattere\
+          \ * viene applicato il like)"
+        required: false
+        type: "string"
+      - name: "adCod"
+        in: "query"
+        description: "codice dell'attivita didattica"
+        required: false
+        type: "string"
+      - name: "adDes"
+        in: "query"
+        description: "descrizione  dell'attivita didattica (se viene utilizzato il\
+          \ carattere * viene applicato il like)"
+        required: false
+        type: "string"
+      - name: "order"
+        in: "query"
+        description: "consente di specificare un ordine per il recupero dei record.\
+          \ La sintassi è la seguente\n * +/- : specifica l'ordinamento (+ = ASC,\
+          \ - = DESC); se omesso viene utilizzato +\n * field : nome del campo da\
+          \ ordinare\n \n E' possibile indicare più campi separandoli da virgola (Es:\
+          \ +annoCorso,+adCod) \n"
+        required: false
+        type: "string"
+      - name: "optionalFields"
+        in: "query"
+        description: "specifica la lista dei campi opzionali (che non vengono recupeati\
+          \ di default);\nimpostando il valore `ALL` vengono mostrati tutti i campi.\
+          \ \n\nPer gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns*\
+          \  \nI dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello)\n\
+          \nEsempi\n* per il campo childObj con la poprietà childProp utilizzare la\
+          \ notazione `childProp.prop1`\n* Per visualizzare tutte le proprietà di\
+          \ childObj utilizzare la notazione `childProp.*`\n* Per visualizzare tutte\
+          \ le proprietà di childObj e di tutti i discendenti utilizzare la notazione\
+          \ `childProp.**`\n"
+        required: false
+        type: "string"
+      responses:
+        "200":
+          description: "Successful response"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/LogisticaConDettagli"
+      security:
+      - basicAuth: []
+      - jwt:
+        - "openid"
+      x-enabled-profiles:
+      - user-tecnico-massive-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UserTecnicoMassivo"
+              description: "funzione massiva riservata ad utenti tecnici autorizzati"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkMassiveGET"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+      x-custom-operation: "multiple"
+      x-streaming-output: "chunk_size_10"
+      x-cache-type: "noCache"
+  /logisticaPerOdFull/{aaOffId}/{cdsOffId}/:
+    get:
+      tags:
+      - "logistica"
+      summary: "Recupero logistica per corso di studio."
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>Recupera la lista degli oggetti `LogisticaConDettagli`\
+        \ con la stesso anno di offerta e corso di studio master.\n\n\n**Estensioni:**\n\
+        \nCodice Estensione|Valore|Nota\n-|-|-\nx-cache-type|noCache|Nessuna cache\
+        \ impostata Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: USER_TECNICO**\n\nProfilo|Controllo| Funzione\n-|-|-\nUserTecnicoMassivo|funzione\
+        \ massiva riservata ad utenti tecnici autorizzati|Security.checkMassiveGET()\n\
+        \n\nClasse di modello : LogisticaConDettagli\n======\n\nEstensioni sulle proprietà\
+        \n----\nProprietà | x-field-type\n-|-|\nsedeId|primaryKey\n\n\nClasse di modello\
+        \ : CaricoDocenti\n======\n\nEstensioni sulle proprietà\n----\nProprietà |\
+        \ x-field-type\n-|-|\nCaricoDocentiOpz|optional\n\n\nClasse di modello : SyllabusUD\n\
+        ======\n\nEstensioni sulle proprietà\n----\nProprietà | x-field-type\n-|-|\n\
+        contenutiSpa|optional\nobiettiviFormativiSpa|optional\nprerequisitiSpa|optional\n\
+        testiRiferimentoSpa|optional\nobiettiviSvilSostenibileDesSpa|optional\ncontenutiFra|optional\n\
+        obiettiviFormativiFra|optional\nprerequisitiFra|optional\ntestiRiferimentoFra|optional\n\
+        obiettiviSvilSostenibileDesFra|optional\ncontenutiDeu|optional\nobiettiviFormativiDeu|optional\n\
+        prerequisitiDeu|optional\ntestiRiferimentoDeu|optional\nobiettiviSvilSostenibileDesDeu|optional\n\
+        \n\nClasse di modello : SyllabusAD\n======\n\nEstensioni sulle proprietà\n\
+        ----\nProprietà | x-field-type\n-|-|\ntipoCatalogoCod|optional\nadLogOpz|optional\n\
+        syllabusOpt1|optional\nsyllabusOpt1Eng|optional\nsyllabusOpt2|optional\nsyllabusOpt2Eng|optional\n\
+        syllabusOpt3|optional\nsyllabusOpt3Eng|optional\ncontenutiSpa|optional\nobiettiviFormativiSpa|optional\n\
+        prerequisitiSpa|optional\nmetodiDidatticiSpa|optional\nmodalitaVerificaApprendimentoSpa|optional\n\
+        altreInfoSpa|optional\ntestiRiferimentoSpa|optional\nsyllabusOpt1Spa|optional\n\
+        syllabusOpt2Spa|optional\nsyllabusOpt3Spa|optional\nobiettiviSvilSostenibileDesSpa|optional\n\
+        contenutiFra|optional\nobiettiviFormativiFra|optional\nprerequisitiFra|optional\n\
+        metodiDidatticiFra|optional\nmodalitaVerificaApprendimentoFra|optional\naltreInfoFra|optional\n\
+        testiRiferimentoFra|optional\nsyllabusOpt1Fra|optional\nsyllabusOpt2Fra|optional\n\
+        syllabusOpt3Fra|optional\nobiettiviSvilSostenibileDesFra|optional\ncontenutiDeu|optional\n\
+        obiettiviFormativiDeu|optional\nprerequisitiDeu|optional\nmetodiDidatticiDeu|optional\n\
+        modalitaVerificaApprendimentoDeu|optional\naltreInfoDeu|optional\ntestiRiferimentoDeu|optional\n\
+        syllabusOpt1Deu|optional\nsyllabusOpt2Deu|optional\nsyllabusOpt3Deu|optional\n\
+        obiettiviSvilSostenibileDesDeu|optional\n"
+      operationId: "getlogisticaPerOdFull"
+      parameters:
+      - name: "aaOffId"
+        in: "path"
+        description: "Id dell'anno di offerta"
+        required: true
+        type: "integer"
+        maxLength: 4
+        minLength: 4
+        format: "int32"
+      - name: "cdsOffId"
+        in: "path"
+        description: "id del corso di studio"
+        required: true
+        type: "integer"
+        format: "int64"
+      - name: "cdsCod"
+        in: "query"
+        description: "codice del corso di studio"
+        required: false
+        type: "string"
+      - name: "cdsDes"
+        in: "query"
+        description: "descrizione del corso di studio (se viene utilizzato il carattere\
+          \ * viene applicato il like)"
+        required: false
+        type: "string"
+      - name: "aaOrdId"
+        in: "query"
+        description: "Id dell'ordinamento"
+        required: false
+        type: "integer"
+        maxLength: 4
+        minLength: 4
+        format: "int32"
+      - name: "pdsId"
+        in: "query"
+        description: "id del percorso di studio"
+        required: false
+        type: "integer"
+        format: "int64"
+      - name: "pdsCod"
+        in: "query"
+        description: "codice del percorso di studio"
+        required: false
+        type: "string"
+      - name: "pdsDes"
+        in: "query"
+        description: "descrizione del percorso di studio (se viene utilizzato il carattere\
+          \ * viene applicato il like)"
+        required: false
+        type: "string"
+      - name: "adCod"
+        in: "query"
+        description: "codice dell'attivita didattica"
+        required: false
+        type: "string"
+      - name: "adDes"
+        in: "query"
+        description: "descrizione  dell'attivita didattica (se viene utilizzato il\
+          \ carattere * viene applicato il like)"
+        required: false
+        type: "string"
+      - name: "order"
+        in: "query"
+        description: "consente di specificare un ordine per il recupero dei record.\
+          \ La sintassi è la seguente\n * +/- : specifica l'ordinamento (+ = ASC,\
+          \ - = DESC); se omesso viene utilizzato +\n * field : nome del campo da\
+          \ ordinare\n \n E' possibile indicare più campi separandoli da virgola (Es:\
+          \ +annoCorso,+adCod) \n"
+        required: false
+        type: "string"
+      - name: "optionalFields"
+        in: "query"
+        description: "specifica la lista dei campi opzionali (che non vengono recupeati\
+          \ di default);\nimpostando il valore `ALL` vengono mostrati tutti i campi.\
+          \ \n\nPer gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns*\
+          \  \nI dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello)\n\
+          \nEsempi\n* per il campo childObj con la poprietà childProp utilizzare la\
+          \ notazione `childProp.prop1`\n* Per visualizzare tutte le proprietà di\
+          \ childObj utilizzare la notazione `childProp.*`\n* Per visualizzare tutte\
+          \ le proprietà di childObj e di tutti i discendenti utilizzare la notazione\
+          \ `childProp.**`\n"
+        required: false
+        type: "string"
+      responses:
+        "200":
+          description: "Successful response"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/LogisticaConDettagli"
+      security:
+      - basicAuth: []
+      - jwt:
+        - "openid"
+      x-enabled-profiles:
+      - user-tecnico-massive-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UserTecnicoMassivo"
+              description: "funzione massiva riservata ad utenti tecnici autorizzati"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkMassiveGET"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+      x-custom-operation: "multiple"
+      x-cache-type: "noCache"
+  /logisticheEliminate:
+    get:
+      tags:
+      - "struttura"
+      description: "recupera gli oggetti `LogisticaEliminata` con la data di eliminazione\n\
+        \n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n-|-|-\nx-cache-type|configuration|Risorsa\
+        \ di configurazione, la variazione è molto lenta, cache Http abilitata, cache\
+        \ server abilitata. Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: ALL**\n\nProfilo|Controllo| Funzione\n-|-|-\nALL|Funzione Pubblica|Security.checkDummy()\n"
+      operationId: "getLogisticheEliminate"
+      parameters:
+      - name: "dataModLog"
+        in: "query"
+        description: "data di ultima modifica della logistica"
+        required: false
+        type: "string"
+        maxLength: 10
+        minLength: 10
+      - name: "start"
+        in: "query"
+        description: "utilizzato insieme a `limit` per indicare la paginazione sui\
+          \ record; `start` indica il numero del primo record da caricare (se non\
+          \ indicato viene utilizzato 0)\n"
+        required: false
+        type: "integer"
+        format: "int32"
+      - name: "limit"
+        in: "query"
+        description: "utilizzato insieme a `start` per indicare la paginazione sui\
+          \ record, `limit` indica il numero di record da recuperare (a partire da\
+          \ `start`); \nse non indicato viene utilizzato 50, i valori consentiti vanno\
+          \ da 0 a 100\n"
+        required: false
+        type: "integer"
+        format: "int32"
+      - name: "order"
+        in: "query"
+        description: "consente di specificare un ordine per il recupero dei record.\
+          \ La sintassi è la seguente\n * +/- : specifica l'ordinamento (+ = ASC,\
+          \ - = DESC); se omesso viene utilizzato +\n * field : nome del campo da\
+          \ ordinare\n \n E' possibile indicare più campi separandoli da virgola (Es:\
+          \ +annoCorso,+adCod) \n"
+        required: false
+        type: "string"
+      responses:
+        "200":
+          description: "successful operation"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/LogisticaEliminata"
+      x-enabled-profiles:
+      - common-public-permissions:
+          kind: "ALL"
+          profiles:
+          - profile:
+              name: "ALL"
+              description: "Funzione Pubblica"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkDummy"
+                  description: "funzione che ritorna sempre true"
+  /risFisse/aule:
+    get:
+      tags:
+      - "risFisse"
+      summary: "lista degli edifici"
+      description: "\n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n-|-|-\n\
+        x-cache-type|configuration|Risorsa di configurazione, la variazione è molto\
+        \ lenta, cache Http abilitata, cache server abilitata. Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: ALL**\n\nProfilo|Controllo| Funzione\n-|-|-\nALL|Funzione Pubblica|Security.checkDummy()\n\
+        \n\nClasse di modello : Aula\n======\n\nEstensioni sulle proprietà\n----\n\
+        Proprietà | x-field-type\n-|-|\naulaId|primaryKey\nedificioId|primaryKey\n\
+        abilCbt|optional\ndipartimenti|optional\n\n\nClasse di modello : DettaglioErroreAggiuntivo\n\
+        ======\n\nEstensioni sulle proprietà\n----\nProprietà | x-field-type\n-|-|\n\
+        rawValue|rawJson\n"
+      operationId: "getAuleAll"
+      parameters:
+      - name: "aulaCod"
+        in: "query"
+        description: "codice dell'aula (se viene utilizzato il carattere * viene applicato\
+          \ il like)"
+        required: false
+        type: "string"
+      - name: "extAulaCod"
+        in: "query"
+        description: "codice dell'aula nel sistema esterno (se viene utilizzato il\
+          \ carattere * viene applicato il like)"
+        required: false
+        type: "string"
+      - name: "optionalFields"
+        in: "query"
+        description: "specifica la lista dei campi opzionali (che non vengono recupeati\
+          \ di default);\nimpostando il valore `ALL` vengono mostrati tutti i campi.\
+          \ \n\nPer gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns*\
+          \  \nI dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello)\n\
+          \nEsempi\n* per il campo childObj con la poprietà childProp utilizzare la\
+          \ notazione `childProp.prop1`\n* Per visualizzare tutte le proprietà di\
+          \ childObj utilizzare la notazione `childProp.*`\n* Per visualizzare tutte\
+          \ le proprietà di childObj e di tutti i discendenti utilizzare la notazione\
+          \ `childProp.**`\n"
+        required: false
+        type: "string"
+      - name: "fields"
+        in: "query"
+        description: "specifica la lista dei campi opzionali (che non vengono recupeati\
+          \ di default);\nimpostando il valore `ALL` vengono mostrati tutti i campi.\
+          \ \n\nPer gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns*\
+          \  \nI dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello)\n\
+          \nEsempi\n* per il campo childObj con la poprietà childProp utilizzare la\
+          \ notazione `childProp.prop1`\n* Per visualizzare tutte le proprietà di\
+          \ childObj utilizzare la notazione `childProp.*`\n* Per visualizzare tutte\
+          \ le proprietà di childObj e di tutti i discendenti utilizzare la notazione\
+          \ `childProp.**`\n"
+        required: false
+        type: "string"
+      - name: "order"
+        in: "query"
+        description: "consente di specificare un ordine per il recupero dei record.\
+          \ La sintassi è la seguente\n * +/- : specifica l'ordinamento (+ = ASC,\
+          \ - = DESC); se omesso viene utilizzato +\n * field : nome del campo da\
+          \ ordinare\n \n E' possibile indicare più campi separandoli da virgola (Es:\
+          \ +annoCorso,+adCod) \n"
+        required: false
+        type: "string"
+      responses:
+        "200":
+          description: "successful operation"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/Aula"
+        "422":
+          description: "parametri errati"
+          schema:
+            $ref: "#/definitions/DettaglioErrore"
+      x-enabled-profiles:
+      - common-public-permissions:
+          kind: "ALL"
+          profiles:
+          - profile:
+              name: "ALL"
+              description: "Funzione Pubblica"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkDummy"
+                  description: "funzione che ritorna sempre true"
+  /risFisse/edifici:
+    get:
+      tags:
+      - "risFisse"
+      summary: "lista degli edifici"
+      description: "\n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n-|-|-\n\
+        x-cache-type|configuration|Risorsa di configurazione, la variazione è molto\
+        \ lenta, cache Http abilitata, cache server abilitata. Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: ALL**\n\nProfilo|Controllo| Funzione\n-|-|-\nALL|Funzione Pubblica|Security.checkDummy()\n\
+        \n\nClasse di modello : Edificio\n======\n\nEstensioni sulle proprietà\n----\n\
+        Proprietà | x-field-type\n-|-|\nedificioId|primaryKey\nnazioneId|optional\n\
+        nazioneDes|optional\ncomuneId|optional\ncomuneDes|optional\nvia|optional\n\
+        citstra|optional\n"
+      operationId: "getEdifici"
+      parameters:
+      - name: "filter"
+        in: "query"
+        description: "il parametro consente di applicare dei filtri alla classe di\
+          \ modello utilizzando il linguaggio  [RSQL](https://github.com/jirutka/rsql-parser).\n\
+          La lista degli operatori utilizzabili è disponibile [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosullerigherecuperate)\
+          \   \n   *NB* il filtro viene applicato DOPO aver recuperato i dati\n"
+        required: false
+        type: "string"
+      - name: "optionalFields"
+        in: "query"
+        description: "specifica la lista dei campi opzionali (che non vengono recupeati\
+          \ di default);\nimpostando il valore `ALL` vengono mostrati tutti i campi.\
+          \ \n\nPer gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns*\
+          \  \nI dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello)\n\
+          \nEsempi\n* per il campo childObj con la poprietà childProp utilizzare la\
+          \ notazione `childProp.prop1`\n* Per visualizzare tutte le proprietà di\
+          \ childObj utilizzare la notazione `childProp.*`\n* Per visualizzare tutte\
+          \ le proprietà di childObj e di tutti i discendenti utilizzare la notazione\
+          \ `childProp.**`\n"
+        required: false
+        type: "string"
+      - name: "fields"
+        in: "query"
+        description: "specifica la lista dei campi opzionali (che non vengono recupeati\
+          \ di default);\nimpostando il valore `ALL` vengono mostrati tutti i campi.\
+          \ \n\nPer gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns*\
+          \  \nI dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello)\n\
+          \nEsempi\n* per il campo childObj con la poprietà childProp utilizzare la\
+          \ notazione `childProp.prop1`\n* Per visualizzare tutte le proprietà di\
+          \ childObj utilizzare la notazione `childProp.*`\n* Per visualizzare tutte\
+          \ le proprietà di childObj e di tutti i discendenti utilizzare la notazione\
+          \ `childProp.**`\n"
+        required: false
+        type: "string"
+      - name: "order"
+        in: "query"
+        description: "consente di specificare un ordine per il recupero dei record.\
+          \ La sintassi è la seguente\n * +/- : specifica l'ordinamento (+ = ASC,\
+          \ - = DESC); se omesso viene utilizzato +\n * field : nome del campo da\
+          \ ordinare\n \n E' possibile indicare più campi separandoli da virgola (Es:\
+          \ +annoCorso,+adCod) \n"
+        required: false
+        type: "string"
+      responses:
+        "200":
+          description: "successful operation"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/Edificio"
+      x-enabled-profiles:
+      - common-public-permissions:
+          kind: "ALL"
+          profiles:
+          - profile:
+              name: "ALL"
+              description: "Funzione Pubblica"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkDummy"
+                  description: "funzione che ritorna sempre true"
+  /risFisse/edifici/{edificioId}:
+    get:
+      tags:
+      - "risFisse"
+      summary: "dettaglio del singolo edificio"
+      description: "\n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n-|-|-\n\
+        x-cache-type|configuration|Risorsa di configurazione, la variazione è molto\
+        \ lenta, cache Http abilitata, cache server abilitata. Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: ALL**\n\nProfilo|Controllo| Funzione\n-|-|-\nALL|Funzione Pubblica|Security.checkDummy()\n\
+        \n\nClasse di modello : Edificio\n======\n\nEstensioni sulle proprietà\n----\n\
+        Proprietà | x-field-type\n-|-|\nedificioId|primaryKey\nnazioneId|optional\n\
+        nazioneDes|optional\ncomuneId|optional\ncomuneDes|optional\nvia|optional\n\
+        citstra|optional\n"
+      operationId: "getEdificio"
+      parameters:
+      - name: "edificioId"
+        in: "path"
+        description: "id dell'edificio"
+        required: true
+        type: "integer"
+        format: "int64"
+      - name: "optionalFields"
+        in: "query"
+        description: "specifica la lista dei campi opzionali (che non vengono recupeati\
+          \ di default);\nimpostando il valore `ALL` vengono mostrati tutti i campi.\
+          \ \n\nPer gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns*\
+          \  \nI dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello)\n\
+          \nEsempi\n* per il campo childObj con la poprietà childProp utilizzare la\
+          \ notazione `childProp.prop1`\n* Per visualizzare tutte le proprietà di\
+          \ childObj utilizzare la notazione `childProp.*`\n* Per visualizzare tutte\
+          \ le proprietà di childObj e di tutti i discendenti utilizzare la notazione\
+          \ `childProp.**`\n"
+        required: false
+        type: "string"
+      - name: "fields"
+        in: "query"
+        description: "specifica la lista dei campi opzionali (che non vengono recupeati\
+          \ di default);\nimpostando il valore `ALL` vengono mostrati tutti i campi.\
+          \ \n\nPer gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns*\
+          \  \nI dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello)\n\
+          \nEsempi\n* per il campo childObj con la poprietà childProp utilizzare la\
+          \ notazione `childProp.prop1`\n* Per visualizzare tutte le proprietà di\
+          \ childObj utilizzare la notazione `childProp.*`\n* Per visualizzare tutte\
+          \ le proprietà di childObj e di tutti i discendenti utilizzare la notazione\
+          \ `childProp.**`\n"
+        required: false
+        type: "string"
+      responses:
+        "200":
+          description: "successful operation"
+          schema:
+            $ref: "#/definitions/Edificio"
+      x-enabled-profiles:
+      - common-public-permissions:
+          kind: "ALL"
+          profiles:
+          - profile:
+              name: "ALL"
+              description: "Funzione Pubblica"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkDummy"
+                  description: "funzione che ritorna sempre true"
+  /risFisse/edifici/{edificioId}/aule:
+    get:
+      tags:
+      - "risFisse"
+      summary: "lista delle aule di un edificio"
+      description: "\n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n-|-|-\n\
+        x-cache-type|configuration|Risorsa di configurazione, la variazione è molto\
+        \ lenta, cache Http abilitata, cache server abilitata. Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: ALL**\n\nProfilo|Controllo| Funzione\n-|-|-\nALL|Funzione Pubblica|Security.checkDummy()\n\
+        \n\nClasse di modello : Aula\n======\n\nEstensioni sulle proprietà\n----\n\
+        Proprietà | x-field-type\n-|-|\naulaId|primaryKey\nedificioId|primaryKey\n\
+        abilCbt|optional\ndipartimenti|optional\n"
+      operationId: "getAule"
+      parameters:
+      - name: "edificioId"
+        in: "path"
+        description: "id dell'edificio"
+        required: true
+        type: "integer"
+        format: "int64"
+      - name: "filter"
+        in: "query"
+        description: "il parametro consente di applicare dei filtri alla classe di\
+          \ modello utilizzando il linguaggio  [RSQL](https://github.com/jirutka/rsql-parser).\n\
+          La lista degli operatori utilizzabili è disponibile [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosullerigherecuperate)\
+          \   \n   *NB* il filtro viene applicato DOPO aver recuperato i dati\n"
+        required: false
+        type: "string"
+      - name: "optionalFields"
+        in: "query"
+        description: "specifica la lista dei campi opzionali (che non vengono recupeati\
+          \ di default);\nimpostando il valore `ALL` vengono mostrati tutti i campi.\
+          \ \n\nPer gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns*\
+          \  \nI dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello)\n\
+          \nEsempi\n* per il campo childObj con la poprietà childProp utilizzare la\
+          \ notazione `childProp.prop1`\n* Per visualizzare tutte le proprietà di\
+          \ childObj utilizzare la notazione `childProp.*`\n* Per visualizzare tutte\
+          \ le proprietà di childObj e di tutti i discendenti utilizzare la notazione\
+          \ `childProp.**`\n"
+        required: false
+        type: "string"
+      - name: "fields"
+        in: "query"
+        description: "specifica la lista dei campi opzionali (che non vengono recupeati\
+          \ di default);\nimpostando il valore `ALL` vengono mostrati tutti i campi.\
+          \ \n\nPer gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns*\
+          \  \nI dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello)\n\
+          \nEsempi\n* per il campo childObj con la poprietà childProp utilizzare la\
+          \ notazione `childProp.prop1`\n* Per visualizzare tutte le proprietà di\
+          \ childObj utilizzare la notazione `childProp.*`\n* Per visualizzare tutte\
+          \ le proprietà di childObj e di tutti i discendenti utilizzare la notazione\
+          \ `childProp.**`\n"
+        required: false
+        type: "string"
+      - name: "order"
+        in: "query"
+        description: "consente di specificare un ordine per il recupero dei record.\
+          \ La sintassi è la seguente\n * +/- : specifica l'ordinamento (+ = ASC,\
+          \ - = DESC); se omesso viene utilizzato +\n * field : nome del campo da\
+          \ ordinare\n \n E' possibile indicare più campi separandoli da virgola (Es:\
+          \ +annoCorso,+adCod) \n"
+        required: false
+        type: "string"
+      responses:
+        "200":
+          description: "successful operation"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/Aula"
+      x-enabled-profiles:
+      - common-public-permissions:
+          kind: "ALL"
+          profiles:
+          - profile:
+              name: "ALL"
+              description: "Funzione Pubblica"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkDummy"
+                  description: "funzione che ritorna sempre true"
+  /risFisse/edifici/{edificioId}/aule/{aulaId}:
+    get:
+      tags:
+      - "risFisse"
+      summary: "dettaglio della singola aula"
+      description: "\n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n-|-|-\n\
+        x-cache-type|configuration|Risorsa di configurazione, la variazione è molto\
+        \ lenta, cache Http abilitata, cache server abilitata. Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: ALL**\n\nProfilo|Controllo| Funzione\n-|-|-\nALL|Funzione Pubblica|Security.checkDummy()\n\
+        \n\nClasse di modello : Aula\n======\n\nEstensioni sulle proprietà\n----\n\
+        Proprietà | x-field-type\n-|-|\naulaId|primaryKey\nedificioId|primaryKey\n\
+        abilCbt|optional\ndipartimenti|optional\n"
+      operationId: "getAula"
+      parameters:
+      - name: "aulaId"
+        in: "path"
+        description: "id dell'aula"
+        required: true
+        type: "integer"
+        format: "int64"
+      - name: "edificioId"
+        in: "path"
+        description: "id dell'edificio"
+        required: true
+        type: "integer"
+        format: "int64"
+      - name: "optionalFields"
+        in: "query"
+        description: "specifica la lista dei campi opzionali (che non vengono recupeati\
+          \ di default);\nimpostando il valore `ALL` vengono mostrati tutti i campi.\
+          \ \n\nPer gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns*\
+          \  \nI dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello)\n\
+          \nEsempi\n* per il campo childObj con la poprietà childProp utilizzare la\
+          \ notazione `childProp.prop1`\n* Per visualizzare tutte le proprietà di\
+          \ childObj utilizzare la notazione `childProp.*`\n* Per visualizzare tutte\
+          \ le proprietà di childObj e di tutti i discendenti utilizzare la notazione\
+          \ `childProp.**`\n"
+        required: false
+        type: "string"
+      - name: "fields"
+        in: "query"
+        description: "specifica la lista dei campi opzionali (che non vengono recupeati\
+          \ di default);\nimpostando il valore `ALL` vengono mostrati tutti i campi.\
+          \ \n\nPer gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns*\
+          \  \nI dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello)\n\
+          \nEsempi\n* per il campo childObj con la poprietà childProp utilizzare la\
+          \ notazione `childProp.prop1`\n* Per visualizzare tutte le proprietà di\
+          \ childObj utilizzare la notazione `childProp.*`\n* Per visualizzare tutte\
+          \ le proprietà di childObj e di tutti i discendenti utilizzare la notazione\
+          \ `childProp.**`\n"
+        required: false
+        type: "string"
+      responses:
+        "200":
+          description: "successful operation"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/Aula"
+      x-enabled-profiles:
+      - common-public-permissions:
+          kind: "ALL"
+          profiles:
+          - profile:
+              name: "ALL"
+              description: "Funzione Pubblica"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkDummy"
+                  description: "funzione che ritorna sempre true"
+  /risFisse/syncConSistLog:
+    put:
+      tags:
+      - "risFisse"
+      summary: "sincronizzazione con il sistema di logisitica esterno"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>Effettua la sincronizzazione con il sistema\
+        \ di logistica esterno\n\n ##### Codici di ritorno della funzione\nCodice\
+        \ di Ritorno | Descrizione\n-                 | -\n1                 | Esecuzione\
+        \ Corretta\n-1                | Descrizione errore\n\nNel caso di UP 2.0 viene\
+        \ tornato anche il log delle modifiche effettuate \n\n\n**Estensioni:**\n\n\
+        Codice Estensione|Valore|Nota\n-|-|-\nx-cache-type|configuration|Risorsa di\
+        \ configurazione, la variazione è molto lenta, cache Http abilitata, cache\
+        \ server abilitata. Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: USER_TECNICO**\n\nProfilo|Controllo| Funzione\n-|-|-\nUTENTE_TECNICO|funzione\
+        \ accessibile alle utenze tecniche per accessi ai servizi REST|Security.checkUserTecnico()\n"
+      operationId: "syncSistLog"
+      parameters: []
+      responses:
+        "200":
+          description: "successful operation"
+          schema:
+            $ref: "#/definitions/ImportSistLogResult"
+      security:
+      - basicAuth: []
+      - jwt:
+        - "openid"
+      x-enabled-profiles:
+      - user-tecnico-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UTENTE_TECNICO"
+              description: "funzione accessibile alle utenze tecniche per accessi\
+                \ ai servizi REST"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkUserTecnico"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+      x-custom-operation: "multiple"
+      x-cache-endpoint-relations:
+        canonicalEndpointsAction: "invalidate"
+        customEndpoints:
+        - operationId: "getAuleAll"
+          action: "invalidate"
+        - operationId: "getEdifici"
+          action: "invalidate"
+        - operationId: "getEdificio"
+          action: "invalidate"
+        - operationId: "getAule"
+          action: "invalidate"
+        - operationId: "getAula"
+          action: "invalidate"
+securityDefinitions:
+  basicAuth:
+    description: "Autenticazione tramite BASIC authentication. Questa modalità è disponibile\
+      \ se l'autenticazione su esse3 non usa shibboleth per il gruppo dell'utente"
+    type: "basic"
+  jwt:
+    description: "Autenticazione tramite OAUTH2, occorre configurare il parametro\
+      \ di configurazione di ESSE3 che indica il server OAUTH2 da utilizzare"
+    type: "oauth2"
+    authorizationUrl: "https://idp-idm.unimib.it/idp/profile/oidc/authorize"
+    flow: "implicit"
+    scopes:
+      openid: "informazioni sull'utente"
+definitions:
+  EasystaffPdsord:
+    type: "object"
+    discriminator: "cdsordType"
+    properties:
+      pdsCod:
+        type: "string"
+        example: "PDS1"
+        description: "codice del percorso di erogazione dell'attività didattica"
+      pdsDes:
+        type: "string"
+        example: "Percorso di studio 1"
+        description: "descrizione del percorso di erogazione dell'attività didattica"
+      statoCod:
+        type: "string"
+        example: "0"
+        description: "indica lo stato del pds"
+        x-field-type: "optional"
+      comuneFlg:
+        type: "integer"
+        format: "int32"
+        example: 0
+        description: "indica che il percorso è comune"
+    x-layout-name: "V09_EASYSTAFF_PDSORD_REST"
+    x-winsession-name: "p09/n_di_p09_winsession_rest"
+    x-model-sub-package: "integrazioni.v1"
+    x-model-sub-path: "integrazioni/v1"
+  EasystaffPdsordConDettagli:
+    allOf:
+    - $ref: "#/definitions/EasystaffPdsord"
+    - type: "object"
+      properties:
+        sedi:
+          type: "array"
+          items:
+            $ref: "#/definitions/EasystaffSedi"
+    x-layout-name: "V09_EASYSTAFF_PDSORD_REST"
+    x-winsession-name: "p09/n_di_p09_winsession_rest"
+    x-model-sub-package: "integrazioni.v1"
+    x-model-sub-path: "integrazioni/v1"
+  ChiaveADContestualizzataRidotta:
+    type: "object"
+    properties:
+      cdsId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "chiave del corso di studio di erogazione dell'attività didattica"
+      aaOrdId:
+        type: "integer"
+        format: "int32"
+        example: 2016
+        description: "anno di ordinamento del corso di studio di erogazione dell'attività\
+          \ didattica"
+      pdsId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "chiave del percorso di studio di erogazione dell'attività didattica"
+      aaOffId:
+        type: "integer"
+        format: "int32"
+        description: "anno di erogazione della partizione"
+      adId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "chiave dell'attività didattica"
+    x-model-sub-package: "offerta.v1"
+    x-model-sub-path: "offerta/v1"
+  SyllabusAD:
+    type: "object"
+    required:
+    - "adLogId"
+    - "chiaveADContestualizzata"
+    - "chiavePartizione"
+    - "desAdPubblFlg"
+    properties:
+      adLogId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "id univoco che consente di individuare una condivisione logistica"
+      chiavePartizione:
+        $ref: "#/definitions/ChiavePartizione"
+      chiaveADContestualizzata:
+        $ref: "#/definitions/ChiaveADContestualizzata"
+      desAdPubblFlg:
+        type: "integer"
+        format: "int32"
+        example: 0
+        description: "Flag che indica se le descrizioni delle attivit� didattiche\
+          \ sono pubblicabili"
+        minimum: 0.0
+        maximum: 1.0
+      fisicaFlg:
+        type: "integer"
+        format: "int32"
+        example: 0
+        description: "Flag che indica se la AD corrente è la AD fisica della condivisione"
+        minimum: 0.0
+        maximum: 1.0
+      realFisicaFlg:
+        type: "integer"
+        format: "int32"
+        example: 0
+        description: "Flag che indica se la AD corrente è la AD fisica della condivisione.\
+          \ Il flag non subisce delle elaborazioni e coincide con il valore preso\
+          \ dal db."
+        minimum: 0.0
+        maximum: 1.0
+      tipoCatalogoCod:
+        type: "string"
+        example: "C"
+        description: "codice del tipo di catalogo del corso di studio"
+        x-field-type: "optional"
+      contenuti:
+        type: "string"
+        example: "contenuti del corso"
+        description: "contenuti del corso"
+        x-internal-name: "contenuti_des"
+      contenutiEng:
+        type: "string"
+        example: "contenuti del corso"
+        description: "contenuti del corso in inglese"
+        x-internal-name: "contenuti_des_eng"
+      obiettiviFormativi:
+        type: "string"
+        example: "obiettivi formativi"
+        description: "obiettivi formativi"
+        x-internal-name: "obiett_form_des"
+      obiettiviFormativiEng:
+        type: "string"
+        example: "obiettivi formativi"
+        description: "obiettivi formativi in inglese"
+        x-internal-name: "obiett_form_des_eng"
+      prerequisiti:
+        type: "string"
+        example: "prerequisiti"
+        description: "prerequisiti"
+        x-internal-name: "prerequisiti_des"
+      prerequisitiEng:
+        type: "string"
+        example: "prerequisiti"
+        description: "prerequisiti in inglese"
+        x-internal-name: "prerequisiti_des_eng"
+      metodiDidattici:
+        type: "string"
+        example: "metodi didattici"
+        description: "metodi didattici"
+        x-internal-name: "metodi_did_des"
+      metodiDidatticiEng:
+        type: "string"
+        example: "metodi didattici"
+        description: "metodi didattici in inglese"
+        x-internal-name: "metodi_did_des_eng"
+      modalitaVerificaApprendimento:
+        type: "string"
+        example: "modalita verifica apprendimento"
+        description: "modalita di verifica apprendimento"
+        x-internal-name: "mod_ver_appr_des"
+      modalitaVerificaApprendimentoEng:
+        type: "string"
+        example: "modalita verifica apprendimento in inglese"
+        description: "modalita di verifica apprendimento in inglese"
+        x-internal-name: "mod_ver_appr_des_eng"
+      altreInfo:
+        type: "string"
+        example: "altre informazioni"
+        description: "altre informazioni"
+        x-internal-name: "altre_info_des"
+      altreInfoEng:
+        type: "string"
+        example: "altre informazioni"
+        description: "altre informazioni in inglese"
+        x-internal-name: "altre_info_des_eng"
+      testiRiferimento:
+        type: "string"
+        example: "testi riferimento"
+        description: "testi di riferimento"
+        x-internal-name: "testi_rif_des"
+      testiRiferimentoEng:
+        type: "string"
+        example: "testi riferimento"
+        description: "testi di riferimento in inglese"
+        x-internal-name: "testi_rif_des_eng"
+      adLogOpz:
+        type: "array"
+        items:
+          $ref: "#/definitions/AdLogOpz"
+        x-field-type: "optional"
+      syllabusOpt1:
+        type: "string"
+        example: "campo opzionale 1"
+        description: "campo opzionale 1"
+        x-field-type: "optional"
+        x-internal-name: "syllabus_opt_1_des"
+      syllabusOpt1Eng:
+        type: "string"
+        example: "optional field 1"
+        description: "campo opzionale 1 in inglese"
+        x-field-type: "optional"
+        x-internal-name: "syllabus_opt_1_des_eng"
+      syllabusOpt2:
+        type: "string"
+        example: "campo opzionale 2"
+        description: "campo opzionale 2"
+        x-field-type: "optional"
+        x-internal-name: "syllabus_opt_2_des"
+      syllabusOpt2Eng:
+        type: "string"
+        example: "optional field 2"
+        description: "campo opzionale 2 in inglese"
+        x-field-type: "optional"
+        x-internal-name: "syllabus_opt_2_des_eng"
+      syllabusOpt3:
+        type: "string"
+        example: "campo opzionale 3"
+        description: "campo opzionale 3"
+        x-field-type: "optional"
+        x-internal-name: "syllabus_opt_3_des"
+      syllabusOpt3Eng:
+        type: "string"
+        example: "optional field 3"
+        description: "campo opzionale 3 in inglese"
+        x-field-type: "optional"
+        x-internal-name: "syllabus_opt_3_des_eng"
+      obiettiviSvilSostenibileDes:
+        type: "string"
+        example: "obiettivi per lo sviluppo sostenibile"
+        description: "obiettivi per lo sviluppo sostenibile"
+        x-internal-name: "ob_svil_sos_des"
+      obiettiviSvilSostenibileDesEng:
+        type: "string"
+        example: "obiettivi per lo sviluppo sostenibile"
+        description: "obiettivi per lo sviluppo sostenibile in inglese"
+        x-internal-name: "ob_svil_sos_des_eng"
+      obiettiviSvilSostenibileList:
+        type: "string"
+        example: "1-3-13"
+        description: "lista degli obiettivi per lo sviluppo sostenibile associati"
+        x-internal-name: "ob_svil_sos_cod_list"
+      obiettiviSvilSostenibile:
+        type: "array"
+        items:
+          $ref: "#/definitions/ObiettiviSvilSostenibile"
+      contenutiSpa:
+        type: "string"
+        example: "contenuti del corso"
+        description: "contenuti del corso in spagnolo"
+        x-field-type: "optional"
+        x-internal-name: "contenuti_des_spa"
+      obiettiviFormativiSpa:
+        type: "string"
+        example: "obiettivi formativi"
+        description: "obiettivi formativi in spagnolo"
+        x-field-type: "optional"
+        x-internal-name: "obiett_form_des_spa"
+      prerequisitiSpa:
+        type: "string"
+        example: "prerequisiti"
+        description: "prerequisiti in spagnolo"
+        x-field-type: "optional"
+        x-internal-name: "prerequisiti_des_spa"
+      metodiDidatticiSpa:
+        type: "string"
+        example: "metodi didattici"
+        description: "metodi didattici in spagnolo"
+        x-field-type: "optional"
+        x-internal-name: "metodi_did_des_spa"
+      modalitaVerificaApprendimentoSpa:
+        type: "string"
+        example: "modalita verifica apprendimento in spagnolo"
+        description: "modalita di verifica apprendimento in spagnolo"
+        x-field-type: "optional"
+        x-internal-name: "mod_ver_appr_des_spa"
+      altreInfoSpa:
+        type: "string"
+        example: "altre informazioni"
+        description: "altre informazioni in spagnolo"
+        x-field-type: "optional"
+        x-internal-name: "altre_info_des_spa"
+      testiRiferimentoSpa:
+        type: "string"
+        example: "testi riferimento"
+        description: "testi di riferimento in spagnolo"
+        x-field-type: "optional"
+        x-internal-name: "testi_rif_des_spa"
+      syllabusOpt1Spa:
+        type: "string"
+        example: "optional field 1"
+        description: "campo opzionale 1 in spagnolo"
+        x-field-type: "optional"
+        x-internal-name: "syllabus_opt_1_des_spa"
+      syllabusOpt2Spa:
+        type: "string"
+        example: "optional field 2"
+        description: "campo opzionale 2 in spagnolo"
+        x-field-type: "optional"
+        x-internal-name: "syllabus_opt_2_des_spa"
+      syllabusOpt3Spa:
+        type: "string"
+        example: "optional field 3"
+        description: "campo opzionale 3 in spagnolo"
+        x-field-type: "optional"
+        x-internal-name: "syllabus_opt_3_des_spa"
+      obiettiviSvilSostenibileDesSpa:
+        type: "string"
+        example: "obiettivi per lo sviluppo sostenibile"
+        description: "obiettivi per lo sviluppo sostenibile in spagnolo"
+        x-field-type: "optional"
+        x-internal-name: "ob_svil_sos_des_spa"
+      contenutiFra:
+        type: "string"
+        example: "contenuti del corso"
+        description: "contenuti del corso in francese"
+        x-field-type: "optional"
+        x-internal-name: "contenuti_des_fra"
+      obiettiviFormativiFra:
+        type: "string"
+        example: "obiettivi formativi"
+        description: "obiettivi formativi in francese"
+        x-field-type: "optional"
+        x-internal-name: "obiett_form_des_fra"
+      prerequisitiFra:
+        type: "string"
+        example: "prerequisiti"
+        description: "prerequisiti in francese"
+        x-field-type: "optional"
+        x-internal-name: "prerequisiti_des_fra"
+      metodiDidatticiFra:
+        type: "string"
+        example: "metodi didattici"
+        description: "metodi didattici in francese"
+        x-field-type: "optional"
+        x-internal-name: "metodi_did_des_fra"
+      modalitaVerificaApprendimentoFra:
+        type: "string"
+        example: "modalita verifica apprendimento in francese"
+        description: "modalita di verifica apprendimento in francese"
+        x-field-type: "optional"
+        x-internal-name: "mod_ver_appr_des_fra"
+      altreInfoFra:
+        type: "string"
+        example: "altre informazioni"
+        description: "altre informazioni in francese"
+        x-field-type: "optional"
+        x-internal-name: "altre_info_des_fra"
+      testiRiferimentoFra:
+        type: "string"
+        example: "testi riferimento"
+        description: "testi di riferimento in francese"
+        x-field-type: "optional"
+        x-internal-name: "testi_rif_des_fra"
+      syllabusOpt1Fra:
+        type: "string"
+        example: "optional field 1"
+        description: "campo opzionale 1 in francese"
+        x-field-type: "optional"
+        x-internal-name: "syllabus_opt_1_des_fra"
+      syllabusOpt2Fra:
+        type: "string"
+        example: "optional field 2"
+        description: "campo opzionale 2 in francese"
+        x-field-type: "optional"
+        x-internal-name: "syllabus_opt_2_des_fra"
+      syllabusOpt3Fra:
+        type: "string"
+        example: "optional field 3"
+        description: "campo opzionale 3 in francese"
+        x-field-type: "optional"
+        x-internal-name: "syllabus_opt_3_des_fra"
+      obiettiviSvilSostenibileDesFra:
+        type: "string"
+        example: "obiettivi per lo sviluppo sostenibile"
+        description: "obiettivi per lo sviluppo sostenibile in francese"
+        x-field-type: "optional"
+        x-internal-name: "ob_svil_sos_des_fra"
+      contenutiDeu:
+        type: "string"
+        example: "contenuti del corso"
+        description: "contenuti del corso in tedesco"
+        x-field-type: "optional"
+        x-internal-name: "contenuti_des_deu"
+      obiettiviFormativiDeu:
+        type: "string"
+        example: "obiettivi formativi"
+        description: "obiettivi formativi in tedesco"
+        x-field-type: "optional"
+        x-internal-name: "obiett_form_des_deu"
+      prerequisitiDeu:
+        type: "string"
+        example: "prerequisiti"
+        description: "prerequisiti in tedesco"
+        x-field-type: "optional"
+        x-internal-name: "prerequisiti_des_deu"
+      metodiDidatticiDeu:
+        type: "string"
+        example: "metodi didattici"
+        description: "metodi didattici in tedesco"
+        x-field-type: "optional"
+        x-internal-name: "metodi_did_des_deu"
+      modalitaVerificaApprendimentoDeu:
+        type: "string"
+        example: "modalita verifica apprendimento in tedesco"
+        description: "modalita di verifica apprendimento in tedesco"
+        x-field-type: "optional"
+        x-internal-name: "mod_ver_appr_des_deu"
+      altreInfoDeu:
+        type: "string"
+        example: "altre informazioni"
+        description: "altre informazioni in tedesco"
+        x-field-type: "optional"
+        x-internal-name: "altre_info_des_deu"
+      testiRiferimentoDeu:
+        type: "string"
+        example: "testi riferimento"
+        description: "testi di riferimento in tedesco"
+        x-field-type: "optional"
+        x-internal-name: "testi_rif_des_deu"
+      syllabusOpt1Deu:
+        type: "string"
+        example: "optional field 1"
+        description: "campo opzionale 1 in tedesco"
+        x-field-type: "optional"
+        x-internal-name: "syllabus_opt_1_des_deu"
+      syllabusOpt2Deu:
+        type: "string"
+        example: "optional field 2"
+        description: "campo opzionale 2 in tedesco"
+        x-field-type: "optional"
+        x-internal-name: "syllabus_opt_2_des_deu"
+      syllabusOpt3Deu:
+        type: "string"
+        example: "optional field 3"
+        description: "campo opzionale 3 in tedesco"
+        x-field-type: "optional"
+        x-internal-name: "syllabus_opt_3_des_deu"
+      obiettiviSvilSostenibileDesDeu:
+        type: "string"
+        example: "obiettivi per lo sviluppo sostenibile"
+        description: "obiettivi per lo sviluppo sostenibile in tedesco"
+        x-field-type: "optional"
+        x-internal-name: "ob_svil_sos_des_deu"
+    x-layout-name: "AD_LOG_SYLLABUS_REST"
+    x-winsession-name: "p09/n_di_p09_winsession_rest"
+    x-model-sub-package: "offerta.v1"
+    x-mapping-fields:
+      chiaveADContestualizzata:
+        aaOrdCod: "cdsord_cod"
+        aaOrdDes: "cdsord_des"
+      linguaDidCod: "lingue_did_cod"
+      linguaDidDes: "lingue_did_des"
+    x-model-sub-path: "offerta/v1"
+  AdLog:
+    type: "object"
+    required:
+    - "chiavePartizione"
+    discriminator: "adLogType"
+    properties:
+      dataModLog:
+        type: "string"
+        example: "15/10/2015"
+        description: "Data di ultima modifica dell'intera logistica. Il formato con\
+          \ cui deve essere definita la data DD/MM/YYYY"
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+      sedeDesEng:
+        type: "string"
+        example: "Rome"
+        description: "descrizione della sede in inglese"
+        x-internal-name: "sede_des_eng"
+      sedeDes:
+        type: "string"
+        example: "Roma"
+        description: "descrizione della sede"
+        x-internal-name: "sede_des"
+      sedeId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "ID chiave della sede"
+        x-field-type: "primaryKey"
+      tipoDidDesEng:
+        type: "string"
+        example: "Convenzionale"
+        description: "descrizione del tipo di didattica del corso di studio in inglese"
+      tipoDidDes:
+        type: "string"
+        example: "Convenzionale"
+        description: "descrizione del tipo di didattica del corso di studio"
+      tipoDidCod:
+        type: "string"
+        example: "C"
+        description: "codice del tipo di didattica del corso di studio"
+      linguaDidDes:
+        type: "string"
+        example: "Inglese"
+        description: "descrizione della lingua di erogazione della didattica"
+        x-internal-name: "lingua_did_des_lin"
+      linguaDidCod:
+        type: "string"
+        example: "eng"
+        description: "codice ISO6392 della lingua di erogazione della didattica"
+        x-internal-name: "lingua_did_cod"
+      linguaDidId:
+        type: "integer"
+        format: "int64"
+        example: 4
+        description: "id della lingua di erogazione della didattica"
+      partEffDesEng:
+        type: "string"
+        example: "First semester"
+        description: "descrizione della partizione effettiva dell'anno accademico\
+          \ in inglese"
+      partEffDes:
+        type: "string"
+        example: "Primo semestre"
+        description: "descrizione della partizione effettiva dell'anno accademico"
+      partEffCod:
+        type: "string"
+        example: "S1"
+        description: "codice della partizione effettiva dell'anno accademico"
+      domPartEffDes:
+        type: "string"
+        example: "PARI"
+        description: "desrizione del dominio di partizione effettivo"
+      domPartEffCod:
+        type: "string"
+        example: "PARI"
+        description: "codice del dominio di partizione effettivo"
+      fatPartEffDes:
+        type: "string"
+        example: "Alfabetico"
+        description: "descrizione del fattore di partizione effettivo"
+      fatPartEffCod:
+        type: "string"
+        example: "ALF"
+        description: "codice del fattore di partizione effettivo"
+      dataFinValDid:
+        type: "string"
+        example: "15/10/2015"
+        description: "Data fine compilazione questionari per la valutazione della\
+          \ didattica. Il formato con cui deve essere definita la data DD/MM/YYYY"
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+      dataIniValDid:
+        type: "string"
+        example: "15/10/2015"
+        description: "Data di inizio compilazione questionari per la valutazione della\
+          \ didattica. Il formato con cui deve essere definita la data DD/MM/YYYY"
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+      dataFine:
+        type: "string"
+        example: "15/10/2015"
+        description: "Data fine del periodo didattico. Il formato con cui deve essere\
+          \ definita la data DD/MM/YYYY"
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+      dataInizio:
+        type: "string"
+        example: "15/10/2015"
+        description: "Data inizio del periodo didattico. Il formato con cui deve essere\
+          \ definita la data DD/MM/YYYY"
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+      chiaveADFisica:
+        $ref: "#/definitions/ChiaveADContestualizzata"
+      chiavePartizione:
+        $ref: "#/definitions/ChiavePartizione"
+    x-layout-name: "AD_LOG_REST"
+    x-winsession-name: "p09/n_di_p09_winsession_rest"
+    x-model-sub-package: "offerta.v1"
+    x-mapping-fields:
+      chiaveADFisica:
+        aaOrdCod: "cdsord_cod"
+        aaOrdDes: "cdsord_des"
+      linguaDidCod: "lingue_did_cod"
+      linguaDidDes: "lingue_did_des"
+    x-model-sub-path: "offerta/v1"
+  Edificio:
+    type: "object"
+    properties:
+      edificioId:
+        type: "integer"
+        format: "int64"
+        example: 100
+        description: "id dell'edificio di ESSE3, chiave primaria di esse3"
+        x-field-type: "primaryKey"
+      edificioCod:
+        type: "string"
+        example: "ed_cod"
+        description: "Codice dell'edificio di ESSE3, chiave alternativa di esse3"
+        minLength: 1
+        maxLength: 20
+      extEdificioCod:
+        type: "string"
+        example: "ext_aula_cod"
+        description: "Codice dell'edirficio del sistema di logistica esterno, chiave\
+          \ univoca nel sistema esterno"
+        minLength: 1
+        maxLength: 40
+      edificioDes:
+        type: "string"
+        example: "descrizione aula"
+        description: "Descrizione dell'edificio"
+        minLength: 1
+        maxLength: 255
+      nazioneId:
+        type: "integer"
+        format: "int64"
+        example: 34
+        description: "id della nazione di appartendenza dell'edificio"
+        x-field-type: "optional"
+      nazioneCod:
+        type: "string"
+        example: "ita"
+        description: "codice nazione di appartenza dell'edificio"
+        minLength: 1
+        maxLength: 3
+      nazioneDes:
+        type: "string"
+        example: "Italia"
+        description: "descrizione nazione di appartenza dell'edificio"
+        minLength: 1
+        maxLength: 40
+        x-field-type: "optional"
+      comuneId:
+        type: "integer"
+        format: "int64"
+        example: 34
+        description: "nel caso di risorse della nazione di default, rappresenta il\
+          \ comuneId di appartenenza dell'edificio"
+        x-field-type: "optional"
+      comuneCod:
+        type: "string"
+        example: "234T"
+        description: "nel caso di risorse della nazione di default, rappresenta il\
+          \ codice comune di appartenza dell'edificio"
+        minLength: 1
+        maxLength: 10
+      comuneDes:
+        type: "string"
+        example: "Bologna"
+        description: "nel caso di risorse della nazione di default, rappresenta la\
+          \ descrizione del comune di appartenza dell'edificio"
+        minLength: 1
+        maxLength: 80
+        x-field-type: "optional"
+      via:
+        type: "string"
+        example: "via dante alighieri 10"
+        description: "indirizzo aula"
+        minLength: 1
+        maxLength: 80
+        x-field-type: "optional"
+      citstra:
+        type: "string"
+        example: "Rieka"
+        description: "città straniera"
+        minLength: 1
+        maxLength: 80
+        x-field-type: "optional"
+      nota:
+        type: "string"
+        example: "nota libera"
+        description: "nota libera"
+        minLength: 1
+        maxLength: 2000
+      urlWeb:
+        type: "string"
+        example: "http://www.google.com"
+        description: "url pagina web"
+        minLength: 1
+        maxLength: 255
+    x-layout-name: "EDIFICI_REST"
+    x-winsession-name: "p09/n_di_09_011_edifici"
+    x-model-sub-package: "offerta.v1"
+    x-model-sub-path: "offerta/v1"
+  EasystaffAd:
+    type: "object"
+    discriminator: "adType"
+    properties:
+      cdsCod:
+        type: "string"
+        example: "CDS1"
+        description: "codice del corso di erogazione dell'attività didattica"
+      cdsDes:
+        type: "string"
+        example: "Corso di studio 1"
+        description: "descrizione del corso di erogazione dell'attività didattica"
+      cdsordCod:
+        type: "string"
+        example: "ORD1"
+        description: "codice dell'ordinamento di erogazione dell'attività didattica"
+      cdsordDes:
+        type: "string"
+        example: "Ordinamento del corso di studio 1"
+        description: "descrizione dell'ordinamento di erogazione dell'attività didattica"
+      pdsCod:
+        type: "string"
+        example: "PDS1"
+        description: "codice del percorso di erogazione dell'attività didattica"
+      pdsDes:
+        type: "string"
+        example: "Percorso di studio 1"
+        description: "descrizione del percorso di erogazione dell'attività didattica"
+      adCod:
+        type: "string"
+        example: "AD1"
+        description: "codice dell'attività didattica"
+      adDes:
+        type: "string"
+        example: "Attività didattica 1"
+        description: "descrizione dell'attività didattica"
+      annoCorso:
+        type: "integer"
+        format: "int32"
+        example: 1
+        description: "anno di corso in cui è prevista l'attività"
+      dipCod:
+        type: "string"
+        example: "DIP1"
+        description: "codice del dipartimento di erogazione dell'attività didattica"
+      dipCsaCod:
+        type: "string"
+        example: "DIP_CSA1"
+        description: "codice CSA del dipartimento di erogazione dell'attività didattica"
+        x-field-type: "optional"
+      dipIstatCod:
+        type: "string"
+        example: "DIP_ISTAT1"
+        description: "codice ISTAT del dipartimento di erogazione dell'attività didattica"
+        x-field-type: "optional"
+      dipDes:
+        type: "string"
+        example: "Dipartimento 1"
+        description: "descrizione del dipartimento di erogazione dell'attività didattica"
+      tipoCorsoCod:
+        type: "string"
+        example: "LM"
+        description: "codice del tipo corso del corso di studio di erogazione dell'attività\
+          \ didattica"
+      tipoCorsoDes:
+        type: "string"
+        example: "Laurea Specialistica"
+        description: "descrizione del tipo corso del corso di studio di erogazione\
+          \ dell'attività didattica"
+      tipoSpecCod:
+        type: "string"
+        example: "SS1"
+        description: "codice del tipo di specializzazione (tipoCorsoCod = S1) per\
+          \ le scuole di specializzazione"
+        x-field-type: "optional"
+      domPartCod:
+        type: "string"
+        example: "AK"
+        description: "codice dominio di partizione per la scomposizione delle partizioni\
+          \ logistiche"
+        x-field-type: "primaryKey"
+      domPartDes:
+        type: "string"
+        example: "Matricole A-K"
+        description: "descrizione dominio di partizione per la scomposizione delle\
+          \ partizioni logistiche"
+      fisicaFlg:
+        type: "integer"
+        format: "int32"
+        example: 0
+        description: "flag che indica se l'attività didattica è l'attività che eroga\
+          \ la lezione (fisicaFlg=1) oppure quella che la mutua (fisicaFlg=0)"
+      docenteTitolareId:
+        type: "integer"
+        format: "int64"
+        example: 1244
+        description: "id del docente"
+      docenteTitolareMatricola:
+        type: "string"
+        example: "MDOC"
+        description: "matricola del docente"
+      docenteTitolareCodFis:
+        type: "string"
+        example: "MRSDDF44R55H678F"
+        description: "codice fiscale del docente"
+      docenteTitolareIdAb:
+        type: "integer"
+        format: "int64"
+        example: "1233,"
+        description: "id di ugov del docente"
+    x-layout-name: "V09_EASYSTAFF_AD_REST"
+    x-winsession-name: "p09/n_di_p09_winsession_rest"
+    x-model-sub-package: "integrazioni.v1"
+    x-model-sub-path: "integrazioni/v1"
+  CaricoDocentiOpz:
+    type: "object"
+    required:
+    - "adLogId"
+    - "chiavePartizione"
+    - "docenteId"
+    - "tipoCreCod"
+    - "udLogId"
+    properties:
+      adLogId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "id univoco che consente di individuare una condivisione logistica"
+      udLogId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "id univoco che consente di individuare una condivisione logistica\
+          \ a livello di moduli"
+      chiavePartizione:
+        $ref: "#/definitions/ChiavePartizioneRidotta"
+      tipoCreCod:
+        type: "string"
+        example: "LEZ"
+        description: "codice identificativo del tipo di credito del segmento corrente"
+      docenteId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "chiave del docente che fa lezione"
+      codFis:
+        type: "string"
+        example: "LNZFCR67R07A944E"
+        description: "codice fiscale del docente"
+      eMail:
+        type: "string"
+        example: "pr@ateneo.it"
+        description: "email del docente"
+      settCod:
+        type: "string"
+        description: "codice settore scientifico disciplinare"
+      titolareFlg:
+        type: "integer"
+        format: "int32"
+        description: "indica se il docente è titolare della partizione studenti dell´\
+          AD a livello di PDS"
+      respDidFlg:
+        type: "integer"
+        format: "int32"
+        description: "indica se il docente è responsabile didattico della partizione\
+          \ studenti dell´UD"
+      userId:
+        type: "string"
+        description: "id utente"
+      dataModDoc:
+        type: "string"
+        example: "15/10/2015"
+        description: "data modifica informazioni sul docente"
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+      dataMod:
+        type: "string"
+        example: "15/10/2015"
+        description: "data modifica informazioni relative alla ripartizione del carico\
+          \ didattico tra i docenti per tipo di attività"
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+      ugovCoperId:
+        type: "integer"
+        format: "int64"
+        example: 12345
+        description: "id univoco che consente di individuare una copertura"
+      tipoCoperturaCod:
+        type: "string"
+        example: "ORD"
+        description: "codice identificativo del tipo di copertura del docente"
+      tipoCoperturaDes:
+        type: "string"
+        example: "Ordinario"
+        description: "descrizione del tipo di copertura del docente"
+    x-layout-name: "UD_TC_DOC_OPZ_REST"
+    x-winsession-name: "p09/n_di_p09_winsession_rest"
+    x-model-sub-package: "offerta.v1"
+    x-model-sub-path: "offerta/v1"
+  DettaglioErrore:
+    type: "object"
+    properties:
+      statusCode:
+        type: "integer"
+        format: "int32"
+        example: 200
+        description: "Http Status Code"
+      retCode:
+        type: "integer"
+        format: "int32"
+        example: -1
+        description: "codice di errore"
+      retErrMsg:
+        type: "string"
+        example: "Parametri non corretti"
+        description: "descrizione dell'errore"
+      errDetails:
+        type: "array"
+        items:
+          $ref: "#/definitions/DettaglioErroreAggiuntivo"
+    x-model-sub-package: "frk.v1"
+    x-model-sub-path: "frk/v1"
+  ObiettiviSvilSostenibile:
+    type: "object"
+    properties:
+      obiettiviSvilSosCod:
+        type: "string"
+        example: "13"
+        description: "codice obiettivo sviluppo sostenibile"
+      obiettiviSvilSosDes:
+        type: "string"
+        example: "Agire per il clima"
+        description: "descrizione obiettivo sviluppo sostenibile"
+      obiettiviSvilSosDesEstesa:
+        type: "string"
+        example: "Promuovere azioni, a tutti i livelli, per combattere il cambiamento\
+          \ climatico"
+        description: "descrizione estesa obiettivo sviluppo sostenibile"
+      obiettiviSvilSosDesEng:
+        type: "string"
+        example: "Climate action"
+        description: "descrizione obiettivo sviluppo sostenibile in inglese"
+      obiettiviSvilSosDesEngEstesa:
+        type: "string"
+        example: "Take urgent action to combat climate change and its impacts"
+        description: "descrizione estesa obiettivo sviluppo sostenibile in inglese"
+    x-model-sub-package: "offerta.v1"
+    x-model-sub-path: "offerta/v1"
+  SyllabusADPatchResult:
+    type: "object"
+    properties:
+      righeAdLogPdsAggiornate:
+        type: "integer"
+        format: "int32"
+        example: 5
+        description: "Numero di righe aggiornate in P09_AD_LOG_PDS"
+      righeAdLogPdsDesLinAggiornate:
+        type: "array"
+        items:
+          type: "object"
+          properties:
+            righeAggiornate:
+              type: "integer"
+              format: "int32"
+              example: 5
+              description: "Numero di righe aggiornate in P09_AD_LOG_PDS_DES_LIN associate\
+                \ al codice ISO6392"
+            righeEliminate:
+              type: "integer"
+              format: "int32"
+              example: 5
+              description: "Numero di righe aggiornate in P09_AD_LOG_PDS_DES_LIN associate\
+                \ al codice ISO6392"
+            righeInserite:
+              type: "integer"
+              format: "int32"
+              example: 5
+              description: "Numero di righe aggiornate in P09_AD_LOG_PDS_DES_LIN associate\
+                \ al codice ISO6392"
+            iso6392:
+              type: "string"
+              example: "5"
+              description: "Codice ISO6392 degli aggiornamenti in lingua effettuati"
+    x-model-sub-package: "offerta.v1"
+    x-model-sub-path: "offerta/v1"
+  DettaglioErroreAggiuntivo:
+    type: "object"
+    properties:
+      errorType:
+        type: "string"
+        example: "stackTrace"
+        description: "descrizione del tipo di errore aggiuntivo"
+      value:
+        type: "string"
+        example: "SocketTimeoutException...."
+        description: "descrizione dell'errore"
+      rawValue:
+        type: "string"
+        example: "SocketTimeoutException...."
+        description: "descrizione dell'errore"
+        x-field-type: "rawJson"
+    x-model-sub-package: "frk.v1"
+    x-model-sub-path: "frk/v1"
+  Aula:
+    type: "object"
+    required:
+    - "aulaCod"
+    - "edificioCod"
+    - "extAulaCod"
+    properties:
+      aulaId:
+        type: "integer"
+        format: "int64"
+        example: 10
+        description: "id dell'aula di ESSE3, chiave primaria di esse3 insieme a edificioId"
+        x-field-type: "primaryKey"
+      edificioId:
+        type: "integer"
+        format: "int64"
+        example: 100
+        description: "id dell'edificio di ESSE3, chiave primaria di esse3 insieme\
+          \ a aulaId"
+        x-field-type: "primaryKey"
+      aulaCod:
+        type: "string"
+        example: "aula_cod"
+        description: "Codice dell'aula di ESSE3, chiave alternativa insieme al codice\
+          \ edificio"
+        minLength: 1
+        maxLength: 40
+      edificioCod:
+        type: "string"
+        example: "ed_cod"
+        description: "Codice dell'aula di ESSE3, chiave alternativa insieme al codice\
+          \ aula"
+        minLength: 1
+        maxLength: 20
+      extAulaCod:
+        type: "string"
+        example: "ext_aula_cod"
+        description: "Codice dell'aula del sistema di logistica esterno, chiave univoca\
+          \ nel sistema esterno"
+        minLength: 1
+        maxLength: 40
+      aulaDes:
+        type: "string"
+        example: "descrizione aula"
+        description: "Descrizione dell'aula"
+        minLength: 1
+        maxLength: 255
+      capienza:
+        type: "integer"
+        format: "int32"
+        example: 100
+        description: "capienza dell'aula"
+        minimum: 0.0
+        maximum: 99999.0
+      abilCbt:
+        type: "string"
+        example: "N"
+        description: "indica il tipo di aula in relazione al CBT (Computer Base Test),\
+          \ assume i seguenti valori (N=> Non abilitata, C => abilitata solo al CBT,\
+          \ T => entrambi)"
+        enum:
+        - "N"
+        - "C"
+        - "T"
+        x-field-type: "optional"
+      abilFlg:
+        type: "integer"
+        format: "int32"
+        example: 1
+        description: "flag che indica se l'aula risulta abilitata"
+        minimum: 0.0
+        maximum: 1.0
+      dipartimenti:
+        type: "array"
+        items:
+          $ref: "#/definitions/Dipartimento"
+        x-field-type: "optional"
+    x-layout-name: "AULE_REST"
+    x-winsession-name: "p09/n_di_09_011_edifici"
+    x-model-sub-package: "offerta.v1"
+    x-model-sub-path: "offerta/v1"
+  LogisticaConDettagli:
+    type: "object"
+    properties:
+      UdLogConDettagli:
+        type: "array"
+        items:
+          $ref: "#/definitions/UdLogConDettagli"
+      SyllabusAD:
+        type: "array"
+        items:
+          $ref: "#/definitions/SyllabusAD"
+      dataModLog:
+        type: "string"
+        example: "15/10/2015"
+        description: "Data di ultima modifica dell'intera logistica. Il formato con\
+          \ cui deve essere definita la data DD/MM/YYYY"
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+      sedeDesEng:
+        type: "string"
+        example: "Rome"
+        description: "descrizione della sede in inglese"
+        x-internal-name: "sede_des_eng"
+      sedeDes:
+        type: "string"
+        example: "Roma"
+        description: "descrizione della sede"
+        x-internal-name: "sede_des"
+      sedeId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "ID chiave della sede"
+        x-field-type: "primaryKey"
+      tipoDidDesEng:
+        type: "string"
+        example: "Convenzionale"
+        description: "descrizione del tipo di didattica del corso di studio in inglese"
+      tipoDidDes:
+        type: "string"
+        example: "Convenzionale"
+        description: "descrizione del tipo di didattica del corso di studio"
+      tipoDidCod:
+        type: "string"
+        example: "C"
+        description: "codice del tipo di didattica del corso di studio"
+      linguaDidDes:
+        type: "string"
+        example: "Inglese"
+        description: "descrizione della lingua di erogazione della didattica"
+        x-internal-name: "lingua_did_des_lin"
+      linguaDidCod:
+        type: "string"
+        example: "eng"
+        description: "codice ISO6392 della lingua di erogazione della didattica"
+        x-internal-name: "lingua_did_cod"
+      linguaDidId:
+        type: "integer"
+        format: "int64"
+        example: 4
+        description: "id della lingua di erogazione della didattica"
+      partEffDesEng:
+        type: "string"
+        example: "First semester"
+        description: "descrizione della partizione effettiva dell'anno accademico\
+          \ in inglese"
+      partEffDes:
+        type: "string"
+        example: "Primo semestre"
+        description: "descrizione della partizione effettiva dell'anno accademico"
+      partEffCod:
+        type: "string"
+        example: "S1"
+        description: "codice della partizione effettiva dell'anno accademico"
+      domPartEffDes:
+        type: "string"
+        example: "PARI"
+        description: "desrizione del dominio di partizione effettivo"
+      domPartEffCod:
+        type: "string"
+        example: "PARI"
+        description: "codice del dominio di partizione effettivo"
+      fatPartEffDes:
+        type: "string"
+        example: "Alfabetico"
+        description: "descrizione del fattore di partizione effettivo"
+      fatPartEffCod:
+        type: "string"
+        example: "ALF"
+        description: "codice del fattore di partizione effettivo"
+      dataFinValDid:
+        type: "string"
+        example: "15/10/2015"
+        description: "Data fine compilazione questionari per la valutazione della\
+          \ didattica. Il formato con cui deve essere definita la data DD/MM/YYYY"
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+      dataIniValDid:
+        type: "string"
+        example: "15/10/2015"
+        description: "Data di inizio compilazione questionari per la valutazione della\
+          \ didattica. Il formato con cui deve essere definita la data DD/MM/YYYY"
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+      dataFine:
+        type: "string"
+        example: "15/10/2015"
+        description: "Data fine del periodo didattico. Il formato con cui deve essere\
+          \ definita la data DD/MM/YYYY"
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+      dataInizio:
+        type: "string"
+        example: "15/10/2015"
+        description: "Data inizio del periodo didattico. Il formato con cui deve essere\
+          \ definita la data DD/MM/YYYY"
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+      chiaveADFisica:
+        $ref: "#/definitions/ChiaveADContestualizzata"
+      chiavePartizione:
+        $ref: "#/definitions/ChiavePartizione"
+    x-layout-name-streamed-keys: "AD_LOG_STREAM_KEY_REST"
+    x-layout-name: "AD_LOG_REST"
+    x-winsession-name: "p09/n_di_p09_winsession_rest"
+    x-model-sub-package: "offerta.v1"
+    x-mapping-fields:
+      chiaveADFisica:
+        aaOrdCod: "cdsord_cod"
+        aaOrdDes: "cdsord_des"
+      linguaDidCod: "lingue_did_cod"
+      linguaDidDes: "lingue_did_des"
+    x-model-sub-path: "offerta/v1"
+  SyllabusADPatchField:
+    type: "object"
+    required:
+    - "iso6392"
+    properties:
+      nomeCampo:
+        type: "string"
+        description: "Nome del campo da aggiornare"
+        enum:
+        - "CONTENUTI"
+        - "OBIETTIVI_FORMATIVI"
+        - "PREREQUISITI"
+        - "METODI_DIDATTICI"
+        - "MODALITA_VERIFICA_APPRENDIMENTO"
+        - "ALTRE_INFO"
+        - "TESTI_RIFERIMENTO"
+        - "SYLLABUS_OPT_1"
+        - "SYLLABUS_OPT_2"
+        - "SYLLABUS_OPT_3"
+        - "OBIETTIVI_SVIL_SOSTENIBILE_DES"
+      valore:
+        type: "string"
+        description: "Valore da aggiornare nel campo indicato in `nomeCampo`"
+      iso6392:
+        type: "string"
+        example: "ita"
+        description: "Codice iso6392 relativa alla lingua associata al del campo da\
+          \ modificare"
+    x-model-sub-package: "offerta.v1"
+    x-model-sub-path: "offerta/v1"
+  EasystaffSedi:
+    type: "object"
+    properties:
+      sedeDes:
+        type: "string"
+        example: "Sede 1"
+        description: "descrizione della sede"
+      sedePrincipaleFlg:
+        type: "integer"
+        format: "int32"
+        example: 0
+        description: "indica che è la sede principale"
+        x-field-type: "optional"
+    x-layout-name: "V09_EASYSTAFF_SEDI_REST"
+    x-winsession-name: "p09/n_di_p09_winsession_rest"
+    x-model-sub-package: "integrazioni.v1"
+    x-model-sub-path: "integrazioni/v1"
+  ChiavePartizioneRidotta:
+    type: "object"
+    properties:
+      aaOffId:
+        type: "integer"
+        format: "int32"
+        description: "anno di erogazione della partizione"
+      fatPartCod:
+        type: "string"
+        example: "ALF"
+        description: "codice del fattore di partizione"
+      domPartCod:
+        type: "string"
+        example: "PARI"
+        description: "codice del dominio di partizione"
+      partCod:
+        type: "string"
+        example: "S1"
+        description: "codice della partizione dell'anno accademico"
+      adLogId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "id del raggruppamento di logistica"
+    x-model-sub-package: "offerta.v1"
+    x-model-sub-path: "offerta/v1"
+  EasystaffCdsordConDettagli:
+    allOf:
+    - $ref: "#/definitions/EasystaffCdsord"
+    - type: "object"
+      properties:
+        percorsi:
+          type: "array"
+          items:
+            $ref: "#/definitions/EasystaffPdsordConDettagli"
+    x-layout-name: "V09_EASYSTAFF_CDSORD_REST"
+    x-winsession-name: "p09/n_di_p09_winsession_rest"
+    x-model-sub-package: "integrazioni.v1"
+    x-model-sub-path: "integrazioni/v1"
+  ImportSistLogResult:
+    type: "object"
+    properties:
+      sistLog:
+        type: "string"
+        description: "sistema di logistica esterno"
+        enum:
+        - "UP_1"
+        - "UP_2"
+        - "NONE"
+      ret:
+        type: "integer"
+        format: "int32"
+        example: 1
+        description: "codice di ritorno"
+      errMsg:
+        type: "string"
+        example: "Esecuzione corretta"
+        description: "messaggio di errore"
+      logs:
+        type: "array"
+        items:
+          $ref: "#/definitions/MsgImportSistLog"
+    x-model-sub-package: "offerta.v1"
+    x-model-sub-path: "offerta/v1"
+  LogisticaEliminata:
+    type: "object"
+    required:
+    - "adLogId"
+    properties:
+      adLogId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "id univoco che consente di individuare una condivisione logistica"
+      dataModLog:
+        type: "string"
+        example: "15/10/2015"
+        description: "Data di ultima modifica della Logistica e dettagli. Il formato\
+          \ con cui deve essere definita la data DD/MM/YYYY"
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+    x-layout-name: "AD_LOG_INCR_REST"
+    x-winsession-name: "p09/n_di_p09_winsession_rest"
+    x-model-sub-package: "offerta.v1"
+    x-model-sub-path: "offerta/v1"
+  AdLogOpz:
+    type: "object"
+    required:
+    - "chiaveADContestualizzata"
+    - "chiavePartizione"
+    properties:
+      chiaveADContestualizzata:
+        $ref: "#/definitions/ChiaveADContestualizzataRidotta"
+      chiavePartizione:
+        $ref: "#/definitions/ChiavePartizioneRidotta"
+      facId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "id univoco facoltà"
+      facCod:
+        type: "string"
+        example: "FAC_1"
+        description: "codice facoltà"
+      facDes:
+        type: "string"
+        example: "Esempio di FAC"
+        description: "descrizione facoltà"
+      facDesEng:
+        type: "string"
+        example: "Esempio di FAC"
+        description: "descrizione facoltà (in inglese)"
+      areaDiscCod:
+        type: "string"
+        example: "AREA_1"
+        description: "codice area disciplinare di afferenza della facoltà/dipartimento"
+        x-internal-name: "area_disc_cod"
+      areaDiscDes:
+        type: "string"
+        example: "Esempio di AREA_1"
+        description: "descrizione area disciplinare di afferenza della facoltà/dipartimento"
+      areaDiscDesEng:
+        type: "string"
+        example: "Esempio di AREA_1"
+        description: "descrizione area disciplinare di afferenza della facoltà/dipartimento\
+          \ (in inglese)"
+      integratoFlg:
+        type: "integer"
+        format: "int32"
+        example: 1
+        description: "integrato"
+      tipoCorsoCod:
+        type: "string"
+        example: "SP4"
+        description: "codice tipo corso"
+      tipoCorsoDes:
+        type: "string"
+        example: "Specializzazione 4 anni"
+        description: "descrizione del corso"
+      tipoCorsoDesEng:
+        type: "string"
+        example: "Residency Program (4 years)"
+        description: "descrizione del corso (in inglese)"
+    x-layout-name: "AD_LOG_OPZ_REST"
+    x-winsession-name: "p09/n_di_p09_winsession_rest"
+    x-model-sub-package: "offerta.v1"
+    x-model-sub-path: "offerta/v1"
+  Dipartimento:
+    type: "object"
+    properties:
+      facId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "id del dipartimento"
+      facCod:
+        type: "string"
+        example: "1"
+        description: "Codice del dipartimento"
+      facDes:
+        type: "string"
+        example: "INGEGNERIA"
+        description: "Descrizione del dipartimento"
+    x-layout-name: "AULE_FAC_REST"
+    x-winsession-name: "p09/n_di_09_011_edifici"
+    x-model-sub-package: "offerta.v1"
+    x-model-sub-path: "offerta/v1"
+  EasystaffUd:
+    type: "object"
+    properties:
+      udCod:
+        type: "string"
+        example: "UD1"
+        description: "codice del modulo dell'attività didattica"
+      udDes:
+        type: "string"
+        example: "Modulo 1"
+        description: "descrizione del modulo dell'attività didattica"
+      masterFlg:
+        type: "integer"
+        format: "int32"
+        example: 1
+        description: "flag master"
+      fisicaFlg:
+        type: "integer"
+        format: "int32"
+        example: 0
+        description: "flag che indica se l'attività didattica è l'attività che eroga\
+          \ la lezione (fisicaFlg=1) oppure quella che la mutua (fisicaFlg=0)"
+        x-field-type: "optional"
+    x-layout-name: "V09_EASYSTAFF_UD_REST"
+    x-winsession-name: "p09/n_di_p09_winsession_rest"
+    x-model-sub-package: "integrazioni.v1"
+    x-model-sub-path: "integrazioni/v1"
+  ChiaveADContestualizzata:
+    type: "object"
+    required:
+    - "aaOffId"
+    - "aaOrdId"
+    - "adId"
+    - "cdsId"
+    - "pdsId"
+    properties:
+      cdsId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "chiave del corso di studio di erogazione dell'attività didattica"
+      cdsCod:
+        type: "string"
+        example: "CDS_AD_1"
+        description: "codice del corso di studio di erogazione dell'attività didattica"
+      cdsDes:
+        type: "string"
+        example: "Esempio di CDS AD"
+        description: "descrizione del corso di erogazione dell'attività didattica"
+      aaOrdId:
+        type: "integer"
+        format: "int32"
+        example: 2016
+        description: "anno di ordinamento del corso di studio di erogazione dell'attività\
+          \ didattica"
+      aaOrdCod:
+        type: "string"
+        example: "CDS_AD_1"
+        description: "codice dell''ordinamento di erogazione dell'attività didattica"
+      aaOrdDes:
+        type: "string"
+        example: "Esempio di CDS AD"
+        description: "descrizione dell''ordinamento di erogazione dell'attività didattica"
+      pdsId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "chiave del percorso di studio di erogazione dell'attività didattica"
+      pdsCod:
+        type: "string"
+        example: "PDS_AD_1"
+        description: "codice del percorso di erogazione dell'attività didattica"
+      pdsDes:
+        type: "string"
+        example: "Esempio di PDS AD"
+        description: "descrizione del percorso di erogazione dell'attività didattica"
+      aaOffId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "anno di offerta di erogazione dell'attività didattica"
+      adId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "chiave dell'attività didattica"
+      adCod:
+        type: "string"
+        example: "PDS_AD_1"
+        description: "codice dell''attività didattica"
+      adDes:
+        type: "string"
+        example: "Esempio di PDS AD"
+        description: "descrizione dell''attività didattica"
+      afId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "id della afId proveniente da U-Gov Didattica"
+    x-model-sub-package: "offerta.v1"
+    x-model-sub-path: "offerta/v1"
+  ChiaveUDContestualizzata:
+    type: "object"
+    required:
+    - "chiaveAdContestualizzata"
+    - "udId"
+    properties:
+      chiaveAdContestualizzata:
+        $ref: "#/definitions/ChiaveADContestualizzata"
+      udId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "chiave del'unità (modulo) dell'attività didattica"
+      udCod:
+        type: "string"
+        example: "CDS_AD_1"
+        description: "codice del'unità (modulo) dell'attività didattica"
+      udDes:
+        type: "string"
+        example: "Esempio di CDS AD"
+        description: "descrizione del'unità (modulo) dell'attività didattica"
+      udDesEng:
+        type: "string"
+        example: "Example of Description"
+        description: "descrizione del'unità (modulo) dell'attività didattica in lingua\
+          \ inglese"
+    x-model-sub-package: "offerta.v1"
+    x-model-sub-path: "offerta/v1"
+  EasystaffAdLogConDettagli:
+    allOf:
+    - $ref: "#/definitions/EasystaffAdLog"
+    - type: "object"
+      properties:
+        docenti:
+          type: "array"
+          items:
+            $ref: "#/definitions/EasystaffDoc"
+        attivita:
+          type: "array"
+          items:
+            $ref: "#/definitions/EasystaffAdConDettagli"
+    x-layout-name: "V09_EASYSTAFF_LOG_REST"
+    x-winsession-name: "p09/n_di_p09_winsession_rest"
+    x-model-sub-package: "integrazioni.v1"
+    x-model-sub-path: "integrazioni/v1"
+  CaricoDocenti:
+    type: "object"
+    required:
+    - "adLogId"
+    - "chiavePartizione"
+    - "docenteId"
+    - "tipoCreCod"
+    - "udLogId"
+    properties:
+      adLogId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "id univoco che consente di individuare una condivisione logistica"
+      udLogId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "id univoco che consente di individuare una condivisione logistica\
+          \ a livello di moduli"
+      chiavePartizione:
+        $ref: "#/definitions/ChiavePartizione"
+      tipoCreCod:
+        type: "string"
+        example: "LEZ"
+        description: "codice identificativo del tipo di credito del segmento corrente"
+      tipoCreDes:
+        type: "string"
+        example: "Lezione"
+        description: "descrizione identificativo del tipo di credito del segmento\
+          \ corrente"
+      tipoCreDesEng:
+        type: "string"
+        example: "Lezione"
+        description: "descrizione identificativo del tipo di credito in inglese"
+      docenteId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "chiave del docente che fa lezione"
+      docenteMatricola:
+        type: "string"
+        example: "mrrs01"
+        description: "matricola del docente che fa lezione"
+        x-internal-name: "matricola"
+      docenteNome:
+        type: "string"
+        example: "Mario"
+        description: "nome del docente che fa lezione"
+        x-internal-name: "nome"
+      docenteCognome:
+        type: "string"
+        example: "Rossi"
+        description: "cognome del docente che fa lezione"
+        x-internal-name: "cognome"
+      ore:
+        type: "number"
+        format: "float"
+        example: 4.0
+        description: "Ore di lezione"
+      frazioneCarico:
+        type: "number"
+        format: "float"
+        example: 25.0
+        description: "Frazione di carico in percentuale col complessivo delle ore\
+          \ per il tipo di credito"
+      valDidFlg:
+        type: "integer"
+        format: "int32"
+        example: 0
+        description: "Flag che indica se la il docente � valutabile con i questionari"
+        minimum: 0.0
+        maximum: 1.0
+      oreAttSuppDid:
+        type: "number"
+        format: "float"
+        example: 8.0
+        description: "Ore di attività a supporto della didattica"
+      uGovCoperId:
+        type: "integer"
+        format: "int64"
+        example: 12345
+        description: "id univoco che consente di individuare una copertura >- Id tabella\
+          \ DI_COPER (copertura, incarico didattico) in U-Gov Didattica"
+        x-internal-name: "ugov_coper_id"
+      tipoCoperturaCod:
+        type: "string"
+        example: "ORD"
+        description: "codice identificativo del tipo di copertura del docente"
+      tipoCoperturaDes:
+        type: "string"
+        example: "Ordinario"
+        description: "descrizione del tipo di copertura del docente"
+      CaricoDocentiOpz:
+        type: "array"
+        items:
+          $ref: "#/definitions/CaricoDocentiOpz"
+        x-field-type: "optional"
+    x-layout-name: "UD_TC_DOC_REST"
+    x-winsession-name: "p09/n_di_p09_winsession_rest"
+    x-model-sub-package: "offerta.v1"
+    x-model-sub-path: "offerta/v1"
+  LogisticaPerDocente:
+    type: "object"
+    properties:
+      aaOffId:
+        type: "integer"
+        format: "int32"
+        description: "anno di erogazione della partizione"
+      cdsId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "chiave del corso di studio di erogazione dell'attività didattica"
+      cdsCod:
+        type: "string"
+        example: "CDS_AD_1"
+        description: "codice del corso di studio di erogazione dell'attività didattica"
+      cdsDes:
+        type: "string"
+        example: "Esempio di CDS AD"
+        description: "descrizione del corso di erogazione dell'attività didattica"
+      cdsDesEng:
+        type: "string"
+        example: "Esempio descrizione in inglese"
+        description: "descrizione in inglese del corso di erogazione dell'attività\
+          \ didattica"
+      aaOrdId:
+        type: "integer"
+        format: "int32"
+        example: 2016
+        description: "anno di ordinamento del corso di studio di erogazione dell'attività\
+          \ didattica"
+      aaOrdCod:
+        type: "string"
+        example: "CDS_AD_1"
+        description: "codice dell''ordinamento di erogazione dell'attività didattica"
+        x-internal-name: "ordCod"
+      aaOrdDes:
+        type: "string"
+        example: "Esempio di ord"
+        description: "descrizione dell''ordinamento di erogazione dell'attività didattica"
+        x-internal-name: "ordDes"
+      pdsId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "chiave del percorso di studio di erogazione dell'attività didattica"
+      pdsCod:
+        type: "string"
+        example: "PDS_AD_1"
+        description: "codice del percorso di erogazione dell'attività didattica"
+      pdsDes:
+        type: "string"
+        example: "Esempio di PDS AD"
+        description: "descrizione del percorso di erogazione dell'attività didattica"
+      adId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "chiave dell'attività didattica"
+      adCod:
+        type: "string"
+        example: "PDS_AD_1"
+        description: "codice dell''attività didattica"
+      adDes:
+        type: "string"
+        example: "Esempio di PDS AD"
+        description: "descrizione dell''attività didattica"
+      adDesEng:
+        type: "string"
+        example: "Esempio descrizione in inglese"
+        description: "descrizione in inglese dell''attività didattica"
+      udId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "chiave del'unità (modulo) dell'attività didattica"
+      udCod:
+        type: "string"
+        example: "CDS_AD_1"
+        description: "codice dell'unità (modulo) dell'attività didattica"
+      udDes:
+        type: "string"
+        example: "Esempio di CDS AD"
+        description: "descrizione dell'unità (modulo) dell'attività didattica"
+      udDesEng:
+        type: "string"
+        example: "Esempio descrizione in inglese"
+        description: "descrizione in inglese dell'unità (modulo) dell'attività didattica"
+      masterFlg:
+        type: "integer"
+        format: "int32"
+        example: 0
+        description: "Flag che indica se la UD corrente � la UD fisica della condivisione"
+        minimum: 0.0
+        maximum: 1.0
+      uGovArId:
+        type: "integer"
+        format: "int64"
+        example: 12345
+        description: "id univoco che consente di individuare una condivisione logistica\
+          \ a livello di moduli "
+        x-internal-name: "ugovarid"
+      uGovAfId:
+        type: "integer"
+        format: "int64"
+        example: 12345
+        description: "id univoco che consente di individuare una attivit� didattica\
+          \ offerta >- id della afId proveniente da U-Gov Didattica"
+        x-internal-name: "ugov_af_id"
+      adLogId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "id univoco che consente di individuare una condivisione logistica"
+      udLogId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "id univoco che consente di individuare una condivisione logistica\
+          \ a livello di moduli"
+      fatPartCod:
+        type: "string"
+        example: "ALF"
+        description: "codice del fattore di partizione"
+      fatPartDes:
+        type: "string"
+        example: "Alfabetico"
+        description: "descrizione del fattore di partizione"
+      domPartCod:
+        type: "string"
+        example: "PARI"
+        description: "codice del dominio di partizione"
+      domPartDes:
+        type: "string"
+        example: "PARI"
+        description: "desrizione del dominio di partizione"
+      partCod:
+        type: "string"
+        example: "S1"
+        description: "codice della partizione dell'anno accademico"
+      partDes:
+        type: "string"
+        example: "Primo semestre"
+        description: "descrizione della partizione dell'anno accademico"
+      tipoCreCod:
+        type: "string"
+        example: "LEZ"
+        description: "codice identificativo del tipo di credito del segmento corrente"
+      tipoCreDes:
+        type: "string"
+        example: "Lezione"
+        description: "descrizione identificativo del tipo di credito del segmento\
+          \ corrente"
+      docenteId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "chiave del docente che fa lezione"
+      docenteCodFis:
+        type: "string"
+        example: "LNZFCR67R07A944E"
+        description: "codice fiscale del docente"
+      docenteMatricola:
+        type: "string"
+        example: "mrrs01"
+        description: "matricola del docente che fa lezione"
+      docenteNome:
+        type: "string"
+        example: "Mario"
+        description: "nome del docente che fa lezione"
+      docenteCognome:
+        type: "string"
+        example: "Rossi"
+        description: "cognome del docente che fa lezione"
+      docenteEMail:
+        type: "string"
+        example: "pr@ateneo.it"
+        description: "email del docente"
+      settCod:
+        type: "string"
+        description: "codice settore scientifico disciplinare"
+      frazioneCarico:
+        type: "number"
+        format: "float"
+        example: 25.0
+        description: "Frazione di carico in percentuale col complessivo delle ore\
+          \ per il tipo di credito"
+      ore:
+        type: "number"
+        format: "float"
+        example: 4.0
+        description: "Ore di lezione"
+      valDidFlg:
+        type: "integer"
+        format: "int32"
+        example: 0
+        description: "Flag che indica se la il docente � valutabile con i questionari"
+        minimum: 0.0
+        maximum: 1.0
+      oreAttSupDid:
+        type: "number"
+        format: "float"
+        example: 4.0
+      tipoCoperturaCod:
+        type: "string"
+        example: "ORD"
+        description: "codice del tipo di copertura del docente"
+      uGovCoperId:
+        type: "integer"
+        format: "int64"
+        example: 12345
+        description: "id univoco che consente di individuare una copertura >- Id tabella\
+          \ DI_COPER (copertura, incarico didattico) in U-Gov Didattica"
+        x-internal-name: "ugov_coper_id"
+      titolareFlg:
+        type: "integer"
+        format: "int32"
+        example: 0
+        description: "Flag che indica se il docente � titolare per la AD corrente"
+        minimum: 0.0
+        maximum: 1.0
+      respDidFlg:
+        type: "integer"
+        format: "int32"
+        example: 0
+        description: "Flag che indica se il docente � responsabile didattico per la\
+          \ UD corrente"
+        minimum: 0.0
+        maximum: 1.0
+      userId:
+        type: "string"
+        description: "id utente"
+      dataModDoc:
+        type: "string"
+        example: "15/10/2015"
+        description: "data modifica informazioni sul docente"
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+      dataMod:
+        type: "string"
+        example: "15/10/2015"
+        description: "data modifica informazioni relative alla ripartizione del carico\
+          \ didattico tra i docenti per tipo di attività"
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+      fisicaFlg:
+        type: "integer"
+        format: "int32"
+        example: 0
+        description: "Flag di AD fisica della condivisione"
+        minimum: 0.0
+        maximum: 1.0
+      tipoCorsoCod:
+        type: "string"
+        example: "L2"
+        description: "codice della tipologia del corso di erogazione dell'attività\
+          \ didattica"
+      tipoCorsoDes:
+        type: "string"
+        example: "Esempio descrizione"
+        description: "descrizione della tipologia del corso di erogazione dell'attività\
+          \ didattica"
+      tipoCorsoDesEng:
+        type: "string"
+        example: "Esempio descrizione in inglese"
+        description: "descrizione in inglese della tipologia del corso di erogazione\
+          \ dell'attività didattica"
+      claMCod:
+        type: "string"
+        example: "L-8"
+        description: "descrizione"
+    x-layout-name: "V09_UD_TC_DOC_MOODLE_REST"
+    x-winsession-name: "p09/n_di_p09_winsession_rest"
+    x-model-sub-package: "offerta.v1"
+    x-model-sub-path: "offerta/v1"
+  EasystaffAdLog:
+    type: "object"
+    discriminator: "adLogType"
+    properties:
+      aaOffId:
+        type: "integer"
+        format: "int32"
+        example: 2021
+        description: "Anno di offerta di erogazione della logistica"
+        x-field-type: "primaryKey"
+      adLogId:
+        type: "integer"
+        format: "int64"
+        example: 1234
+        description: "chiave identificativa della logistica"
+        x-field-type: "primaryKey"
+      fatPartCod:
+        type: "string"
+        example: "ALF"
+        description: "codice fattore di partizione per la scomposizione delle partizioni\
+          \ logistiche"
+        x-field-type: "primaryKey"
+      fatPartDes:
+        type: "string"
+        example: "Alfabetico"
+        description: "descrizione fattore di partizione per la scomposizione delle\
+          \ partizioni logistiche"
+      partCod:
+        type: "string"
+        example: "S1"
+        description: "semestre di erogazione della logistica"
+        x-field-type: "primaryKey"
+      partDes:
+        type: "string"
+        example: "Primo Semestre"
+        description: "descrizione semestre di erogazione della logistica"
+    x-layout-name: "V09_EASYSTAFF_LOG_REST"
+    x-winsession-name: "p09/n_di_p09_winsession_rest"
+    x-model-sub-package: "integrazioni.v1"
+    x-model-sub-path: "integrazioni/v1"
+  ChiavePartizione:
+    type: "object"
+    required:
+    - "aaOffId"
+    - "adLogId"
+    - "domPartCod"
+    - "fatPartCod"
+    - "partCod"
+    properties:
+      aaOffId:
+        type: "integer"
+        format: "int32"
+        description: "anno di erogazione della partizione"
+      fatPartCod:
+        type: "string"
+        example: "ALF"
+        description: "codice del fattore di partizione"
+      fatPartDes:
+        type: "string"
+        example: "Alfabetico"
+        description: "descrizione del fattore di partizione"
+      fatPartDesEng:
+        type: "string"
+        example: "Alphabetic"
+        description: "descrizione del fattore di partizione in inglese"
+      domPartCod:
+        type: "string"
+        example: "PARI"
+        description: "codice del dominio di partizione"
+      domPartDes:
+        type: "string"
+        example: "PARI"
+        description: "desrizione del dominio di partizione"
+      domPartDesEng:
+        type: "string"
+        example: "ODD"
+        description: "descrizione del dominio di partizione in inglese"
+      partCod:
+        type: "string"
+        example: "S1"
+        description: "codice della partizione dell'anno accademico"
+      partDes:
+        type: "string"
+        example: "Primo semestre"
+        description: "descrizione della partizione dell'anno accademico"
+      partDesEng:
+        type: "string"
+        example: "First Semester"
+        description: "descrizione della partizione dell'anno accademico in inglese"
+      adLogId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "id del raggruppamento di logistica"
+    x-model-sub-package: "offerta.v1"
+    x-model-sub-path: "offerta/v1"
+  EasystaffDoc:
+    type: "object"
+    properties:
+      udLogId:
+        type: "integer"
+        format: "int64"
+        example: 1234
+        description: "chiave identificativa del modulo della logistica"
+        x-field-type: "primaryKey"
+      tipoCreCod:
+        type: "string"
+        example: "LEZ"
+        description: "codice del tipo di credito"
+        x-field-type: "primaryKey"
+      tipoCreDes:
+        type: "string"
+        example: "Lezione"
+        description: "descrizione del tipo di credito"
+      docenteMatricola:
+        type: "string"
+        example: "M001"
+        description: "matricola del docente"
+      docenteCodFis:
+        type: "string"
+        example: "MRSDDF44R55H678F"
+        description: "codice fiscale del docente"
+      docenteIdAb:
+        type: "integer"
+        format: "int64"
+        example: 1233
+        description: "id di ugov del docente"
+    x-layout-name: "V09_EASYSTAFF_DOC_REST"
+    x-winsession-name: "p09/n_di_p09_winsession_rest"
+    x-model-sub-package: "integrazioni.v1"
+    x-model-sub-path: "integrazioni/v1"
+  SyllabusADPatch:
+    type: "object"
+    required:
+    - "aaOffId"
+    - "aaOrdId"
+    - "adCod"
+    - "cdsCod"
+    - "pdsCod"
+    properties:
+      aaOffId:
+        type: "integer"
+        format: "int64"
+        example: 2001
+        description: "anno di offerta di erogazione dell'attività didattica"
+      cdsCod:
+        type: "string"
+        example: "CDS_AD_1"
+        description: "codice del corso di studio di erogazione dell'attività didattica"
+      aaOrdId:
+        type: "integer"
+        format: "int32"
+        example: 2016
+        description: "anno di ordinamento del corso di studio di erogazione dell'attività\
+          \ didattica"
+      pdsCod:
+        type: "string"
+        example: "PDS_AD_1"
+        description: "codice del percorso di erogazione dell'attività didattica"
+      adCod:
+        type: "string"
+        example: "PDS_AD_1"
+        description: "codice dell''attività didattica"
+      fatPartCod:
+        type: "string"
+        example: "ALF"
+        description: "codice del fattore di partizione"
+      domPartCod:
+        type: "string"
+        example: "PARI"
+        description: "codice del dominio di partizione"
+      obiettiviSvilSostenibileList:
+        type: "string"
+        example: "1,3,13"
+        description: "lista degli obiettivi per lo sviluppo sostenibile associati"
+      rimuoviObiettiviSvilSostenibileList:
+        type: "integer"
+        format: "int32"
+        example: 0
+        description: "Se impostato a 1 aggiorna a NULL il contenuto di obiettiviSvilSostenibileList\
+          \ indipendentemente dal valore contenuto nel campo"
+        minimum: 0.0
+        maximum: 1.0
+      desAdPubblFlg:
+        type: "integer"
+        format: "int32"
+        example: 0
+        description: "Flag che indica se le descrizioni delle attivit� didattiche\
+          \ sono pubblicabili"
+        minimum: 0.0
+        maximum: 1.0
+      fisicaFlg:
+        type: "integer"
+        format: "int32"
+        example: 0
+        description: "Flag che indica se la AD corrente è la AD fisica della condivisione"
+        minimum: 0.0
+        maximum: 1.0
+      campiSyllabus:
+        type: "array"
+        items:
+          $ref: "#/definitions/SyllabusADPatchField"
+    x-model-sub-package: "offerta.v1"
+    x-model-sub-path: "offerta/v1"
+  UdLogConDettagli:
+    type: "object"
+    properties:
+      CaricoDocenti:
+        type: "array"
+        items:
+          $ref: "#/definitions/CaricoDocenti"
+      SyllabusUD:
+        type: "array"
+        items:
+          $ref: "#/definitions/SyllabusUD"
+      chiavePartizione:
+        $ref: "#/definitions/ChiavePartizione"
+      chiaveUDMaster:
+        $ref: "#/definitions/ChiaveUDContestualizzata"
+      udLogId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "id non univoco che consente di individuare una condivisione\
+          \ logistica a livello di moduli"
+      uGovArId:
+        type: "integer"
+        format: "int64"
+        example: 12345
+        description: "id univoco che consente di individuare una condivisione logistica\
+          \ a livello di moduli "
+        x-internal-name: "ugovarid"
+    x-layout-name: "UD_LOG_REST"
+    x-winsession-name: "p09/n_di_p09_winsession_rest"
+    x-model-sub-package: "offerta.v1"
+    x-mapping-fields:
+      chiaveUDMaster:
+        chiaveAdContestualizzata:
+          aaOrdCod: "cdsord_cod"
+          aaOrdDes: "cdsord_des"
+          pdsCod: "cod"
+          pdsDes: "des"
+          afId: "ugov_af_id"
+    x-model-sub-path: "offerta/v1"
+  MsgImportSistLog:
+    type: "object"
+    properties:
+      level:
+        type: "string"
+        example: "INFO"
+        description: "livello del messaggio"
+        enum:
+        - "INFO"
+        - "WARN"
+        - "ERROR"
+      msg:
+        type: "string"
+        example: "messaggio di log"
+        description: "messaggio di log"
+    x-model-sub-package: "offerta.v1"
+    x-model-sub-path: "offerta/v1"
+  EasystaffCdsord:
+    type: "object"
+    discriminator: "cdsordType"
+    properties:
+      cdsCod:
+        type: "string"
+        example: "CDS1"
+        description: "codice del corso di erogazione dell'attività didattica"
+      cdsDes:
+        type: "string"
+        example: "Corso di studio 1"
+        description: "descrizione del corso di erogazione dell'attività didattica"
+      cdsordCod:
+        type: "string"
+        example: "ORD1"
+        description: "codice dell'ordinamento di erogazione dell'attività didattica"
+      cdsordDes:
+        type: "string"
+        example: "Ordinamento del corso di studio 1"
+        description: "descrizione dell'ordinamento di erogazione dell'attività didattica"
+      dipCod:
+        type: "string"
+        example: "DIP1"
+        description: "codice del dipartimento di erogazione dell'attività didattica"
+      dipCsaCod:
+        type: "string"
+        example: "DIP_CSA1"
+        description: "codice CSA del dipartimento di erogazione dell'attività didattica"
+        x-field-type: "optional"
+      dipIstatCod:
+        type: "string"
+        example: "DIP_ISTAT1"
+        description: "codice ISTAT del dipartimento di erogazione dell'attività didattica"
+        x-field-type: "optional"
+      dipDes:
+        type: "string"
+        example: "Dipartimento 1"
+        description: "descrizione del dipartimento di erogazione dell'attività didattica"
+      durataAnni:
+        type: "integer"
+        format: "int32"
+        example: 3
+        description: "durata legale dell'ordinamento del corso di studio"
+      acScelta:
+        type: "integer"
+        format: "int32"
+        example: 3
+        description: "anno di scelta del percorso di studio"
+      tipoCorsoCod:
+        type: "string"
+        example: "LM"
+        description: "codice del tipo di corso di studio"
+    x-layout-name: "V09_EASYSTAFF_CDSORD_REST"
+    x-winsession-name: "p09/n_di_p09_winsession_rest"
+    x-model-sub-package: "integrazioni.v1"
+    x-model-sub-path: "integrazioni/v1"
+  EasystaffAdConDettagli:
+    allOf:
+    - $ref: "#/definitions/EasystaffAd"
+    - type: "object"
+      properties:
+        moduli:
+          type: "array"
+          items:
+            $ref: "#/definitions/EasystaffUd"
+    x-layout-name: "V09_EASYSTAFF_AD_REST"
+    x-winsession-name: "p09/n_di_p09_winsession_rest"
+    x-model-sub-package: "integrazioni.v1"
+    x-model-sub-path: "integrazioni/v1"
+  SyllabusUD:
+    type: "object"
+    required:
+    - "adLogId"
+    - "chiavePartizione"
+    - "chiaveUDContestualizzata"
+    - "desUdPubblFlg"
+    - "udLogId"
+    properties:
+      adLogId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "id univoco che consente di individuare una condivisione logistica"
+      udLogId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "id univoco che consente di individuare una condivisione logistica\
+          \ a livello di moduli"
+      chiavePartizione:
+        $ref: "#/definitions/ChiavePartizione"
+      chiaveUDContestualizzata:
+        $ref: "#/definitions/ChiaveUDContestualizzata"
+      desUdPubblFlg:
+        type: "integer"
+        format: "int32"
+        example: 0
+        description: "Flag che indica se le descrizioni delle unit� didattiche sono\
+          \ pubblicabili"
+        minimum: 0.0
+        maximum: 1.0
+      masterFlg:
+        type: "integer"
+        format: "int32"
+        example: 0
+        description: "Flag che indica se la UD corrente è la UD fisica della condivisione"
+        minimum: 0.0
+        maximum: 1.0
+      realMasterFlg:
+        type: "integer"
+        format: "int32"
+        example: 0
+        description: "Flag che indica se la UD corrente è la UD fisica della condivisione.\
+          \ Il flag non subisce delle elaborazioni e coincide con il valore preso\
+          \ dal db."
+        minimum: 0.0
+        maximum: 1.0
+      contenuti:
+        type: "string"
+        example: "contenuti del corso"
+        description: "contenuti del corso"
+        x-internal-name: "contenuti_des"
+      contenutiEng:
+        type: "string"
+        example: "contenuti del corso"
+        description: "contenuti del corso in inglese"
+        x-internal-name: "contenuti_des_eng"
+      obiettiviFormativi:
+        type: "string"
+        example: "obiettivi formativi"
+        description: "obiettivi formativi"
+        x-internal-name: "obiett_form_des"
+      obiettiviFormativiEng:
+        type: "string"
+        example: "obiettivi formativi"
+        description: "obiettivi formativi in inglese"
+        x-internal-name: "obiett_form_des_eng"
+      prerequisiti:
+        type: "string"
+        example: "prerequisiti"
+        description: "prerequisiti"
+        x-internal-name: "prerequisiti_des"
+      prerequisitiEng:
+        type: "string"
+        example: "prerequisiti"
+        description: "prerequisiti in inglese"
+        x-internal-name: "prerequisiti_des_eng"
+      testiRiferimento:
+        type: "string"
+        example: "testi riferimento"
+        description: "testi di riferimento"
+        x-internal-name: "testi_rif_des"
+      testiRiferimentoEng:
+        type: "string"
+        example: "testi riferimento"
+        description: "testi di riferimento in inglese"
+        x-internal-name: "testi_rif_des_eng"
+      uGovAfId:
+        type: "integer"
+        format: "int64"
+        example: 12345
+        description: "id univoco che consente di individuare una attivit� didattica\
+          \ offerta >- id della afId proveniente da U-Gov Didattica"
+        x-internal-name: "ugov_af_id"
+      uGovArId:
+        type: "integer"
+        format: "int64"
+        example: 12345
+        description: "id univoco che consente di individuare una condivisione logistica\
+          \ a livello di moduli"
+        x-internal-name: "ugov_ar_id"
+      obiettiviSvilSostenibileDes:
+        type: "string"
+        example: "obiettivi per lo sviluppo sostenibile"
+        description: "obiettivi per lo sviluppo sostenibile"
+        x-internal-name: "ob_svil_sos_des"
+      obiettiviSvilSostenibileDesEng:
+        type: "string"
+        example: "obiettivi per lo sviluppo sostenibile"
+        description: "obiettivi per lo sviluppo sostenibile in inglese"
+        x-internal-name: "ob_svil_sos_des_eng"
+      obiettiviSvilSostenibileList:
+        type: "string"
+        example: "1-3-13"
+        description: "lista degli obiettivi per lo sviluppo sostenibile associati"
+        x-internal-name: "ob_svil_sos_cod_list"
+      obiettiviSvilSostenibile:
+        type: "array"
+        items:
+          $ref: "#/definitions/ObiettiviSvilSostenibile"
+      contenutiSpa:
+        type: "string"
+        example: "contenuti del corso"
+        description: "contenuti del corso in spagnolo"
+        x-field-type: "optional"
+        x-internal-name: "contenuti_des_spa"
+      obiettiviFormativiSpa:
+        type: "string"
+        example: "obiettivi formativi"
+        description: "obiettivi formativi in spagnolo"
+        x-field-type: "optional"
+        x-internal-name: "obiett_form_des_spa"
+      prerequisitiSpa:
+        type: "string"
+        example: "prerequisiti"
+        description: "prerequisiti in spagnolo"
+        x-field-type: "optional"
+        x-internal-name: "prerequisiti_des_spa"
+      testiRiferimentoSpa:
+        type: "string"
+        example: "testi riferimento"
+        description: "testi di riferimento in spagnolo"
+        x-field-type: "optional"
+        x-internal-name: "testi_rif_des_spa"
+      obiettiviSvilSostenibileDesSpa:
+        type: "string"
+        example: "obiettivi per lo sviluppo sostenibile"
+        description: "obiettivi per lo sviluppo sostenibile in spagnolo"
+        x-field-type: "optional"
+        x-internal-name: "ob_svil_sos_des_spa"
+      contenutiFra:
+        type: "string"
+        example: "contenuti del corso"
+        description: "contenuti del corso in francese"
+        x-field-type: "optional"
+        x-internal-name: "contenuti_des_fra"
+      obiettiviFormativiFra:
+        type: "string"
+        example: "obiettivi formativi"
+        description: "obiettivi formativi in francese"
+        x-field-type: "optional"
+        x-internal-name: "obiett_form_des_fra"
+      prerequisitiFra:
+        type: "string"
+        example: "prerequisiti"
+        description: "prerequisiti in francese"
+        x-field-type: "optional"
+        x-internal-name: "prerequisiti_des_fra"
+      testiRiferimentoFra:
+        type: "string"
+        example: "testi riferimento"
+        description: "testi di riferimento in francese"
+        x-field-type: "optional"
+        x-internal-name: "testi_rif_des_fra"
+      obiettiviSvilSostenibileDesFra:
+        type: "string"
+        example: "obiettivi per lo sviluppo sostenibile"
+        description: "obiettivi per lo sviluppo sostenibile in francese"
+        x-field-type: "optional"
+        x-internal-name: "ob_svil_sos_des_fra"
+      contenutiDeu:
+        type: "string"
+        example: "contenuti del corso"
+        description: "contenuti del corso in tedesco"
+        x-field-type: "optional"
+        x-internal-name: "contenuti_des_deu"
+      obiettiviFormativiDeu:
+        type: "string"
+        example: "obiettivi formativi"
+        description: "obiettivi formativi in tedesco"
+        x-field-type: "optional"
+        x-internal-name: "obiett_form_des_deu"
+      prerequisitiDeu:
+        type: "string"
+        example: "prerequisiti"
+        description: "prerequisiti in tedesco"
+        x-field-type: "optional"
+        x-internal-name: "prerequisiti_des_deu"
+      testiRiferimentoDeu:
+        type: "string"
+        example: "testi riferimento"
+        description: "testi di riferimento in tedesco"
+        x-field-type: "optional"
+        x-internal-name: "testi_rif_des_deu"
+      obiettiviSvilSostenibileDesDeu:
+        type: "string"
+        example: "obiettivi per lo sviluppo sostenibile"
+        description: "obiettivi per lo sviluppo sostenibile in tedesco"
+        x-field-type: "optional"
+        x-internal-name: "ob_svil_sos_des_deu"
+    x-layout-name: "UD_LOG_SYLLABUS_REST"
+    x-winsession-name: "p09/n_di_p09_winsession_rest"
+    x-model-sub-package: "offerta.v1"
+    x-mapping-fields:
+      chiaveUDContestualizzata:
+        chiaveAdContestualizzata:
+          aaOrdCod: "cdsord_cod"
+          aaOrdDes: "cdsord_des"
+          afId: "ugov_af_id"
+    x-model-sub-path: "offerta/v1"
+  CoperturaCancellabile:
+    type: "object"
+    properties:
+      retCode:
+        type: "integer"
+        format: "int32"
+        example: 1
+        description: "codice che indica se la copertura è cancellabile"
+      msg:
+        type: "string"
+        example: "Non è possibile cancellare la copertura in quanto è presente nel\
+          \ registro docenti di ESSE3"
+        description: "eventuale messaggio con informazioni aggiuntive"
+    x-model-sub-package: "offerta.v1"
+    x-model-sub-path: "offerta/v1"
+  AdLogConSyllabus:
+    type: "object"
+    properties:
+      SyllabusAD:
+        type: "array"
+        items:
+          $ref: "#/definitions/SyllabusAD"
+      chiavePartizione:
+        $ref: "#/definitions/ChiavePartizione"
+      chiaveADFisica:
+        $ref: "#/definitions/ChiaveADContestualizzata"
+      dataInizio:
+        type: "string"
+        example: "15/10/2015"
+        description: "Data inizio del periodo didattico. Il formato con cui deve essere\
+          \ definita la data DD/MM/YYYY"
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+      dataFine:
+        type: "string"
+        example: "15/10/2015"
+        description: "Data fine del periodo didattico. Il formato con cui deve essere\
+          \ definita la data DD/MM/YYYY"
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+      dataIniValDid:
+        type: "string"
+        example: "15/10/2015"
+        description: "Data di inizio compilazione questionari per la valutazione della\
+          \ didattica. Il formato con cui deve essere definita la data DD/MM/YYYY"
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+      dataFinValDid:
+        type: "string"
+        example: "15/10/2015"
+        description: "Data fine compilazione questionari per la valutazione della\
+          \ didattica. Il formato con cui deve essere definita la data DD/MM/YYYY"
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+      fatPartEffCod:
+        type: "string"
+        example: "ALF"
+        description: "codice del fattore di partizione effettivo"
+      fatPartEffDes:
+        type: "string"
+        example: "Alfabetico"
+        description: "descrizione del fattore di partizione effettivo"
+      domPartEffCod:
+        type: "string"
+        example: "PARI"
+        description: "codice del dominio di partizione effettivo"
+      domPartEffDes:
+        type: "string"
+        example: "PARI"
+        description: "desrizione del dominio di partizione effettivo"
+      partEffCod:
+        type: "string"
+        example: "S1"
+        description: "codice della partizione effettiva dell'anno accademico"
+      partEffDes:
+        type: "string"
+        example: "Primo semestre"
+        description: "descrizione della partizione effettiva dell'anno accademico"
+      partEffDesEng:
+        type: "string"
+        example: "First semester"
+        description: "descrizione della partizione effettiva dell'anno accademico\
+          \ in inglese"
+      linguaDidId:
+        type: "integer"
+        format: "int64"
+        example: 4
+        description: "id della lingua di erogazione della didattica"
+      linguaDidCod:
+        type: "string"
+        example: "eng"
+        description: "codice ISO6392 della lingua di erogazione della didattica"
+        x-internal-name: "lingua_did_cod"
+      linguaDidDes:
+        type: "string"
+        example: "Inglese"
+        description: "descrizione della lingua di erogazione della didattica"
+        x-internal-name: "lingua_did_des_lin"
+      tipoDidCod:
+        type: "string"
+        example: "C"
+        description: "codice del tipo di didattica del corso di studio"
+      tipoDidDes:
+        type: "string"
+        example: "Convenzionale"
+        description: "descrizione del tipo di didattica del corso di studio"
+      tipoDidDesEng:
+        type: "string"
+        example: "Convenzionale"
+        description: "descrizione del tipo di didattica del corso di studio in inglese"
+      sedeId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "ID chiave della sede"
+        x-field-type: "primaryKey"
+      sedeDes:
+        type: "string"
+        example: "Roma"
+        description: "descrizione della sede"
+        x-internal-name: "sede_des"
+      sedeDesEng:
+        type: "string"
+        example: "Rome"
+        description: "descrizione della sede in inglese"
+        x-internal-name: "sede_des_eng"
+      dataModLog:
+        type: "string"
+        example: "15/10/2015"
+        description: "Data di ultima modifica dell'intera logistica. Il formato con\
+          \ cui deve essere definita la data DD/MM/YYYY"
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+    x-layout-name: "AD_LOG_REST"
+    x-winsession-name: "p09/n_di_p09_winsession_rest"
+    x-model-sub-package: "offerta.v1"
+    x-mapping-fields:
+      chiaveADFisica:
+        aaOrdCod: "cdsord_cod"
+        aaOrdDes: "cdsord_des"
+      linguaDidCod: "lingue_did_cod"
+      linguaDidDes: "lingue_did_des"
+    x-model-sub-path: "offerta/v1"
+parameters:
+  cdsCod:
+    name: "cdsCod"
+    in: "query"
+    description: "codice del corso di studio"
+    required: false
+    type: "string"
+  docenteNome:
+    name: "docenteNome"
+    in: "query"
+    description: "nome del docente"
+    required: false
+    type: "string"
+  pdsDes:
+    name: "pdsDes"
+    in: "query"
+    description: "descrizione del percorso di studio (se viene utilizzato il carattere\
+      \ * viene applicato il like)"
+    required: false
+    type: "string"
+  docenteId:
+    name: "docenteId"
+    in: "query"
+    description: "id del docente"
+    required: false
+    type: "integer"
+    format: "int64"
+  sedeDes:
+    name: "sedeDes"
+    in: "query"
+    description: "descrizione della sede (se viene utilizzato il carattere * viene\
+      \ applicato il like)"
+    required: false
+    type: "string"
+  aulaId:
+    name: "aulaId"
+    in: "path"
+    description: "id dell'aula"
+    required: true
+    type: "integer"
+    format: "int64"
+  aaOrdId:
+    name: "aaOrdId"
+    in: "query"
+    description: "Id dell'ordinamento"
+    required: false
+    type: "integer"
+    maxLength: 4
+    minLength: 4
+    format: "int32"
+  aulaCod:
+    name: "aulaCod"
+    in: "query"
+    description: "codice dell'aula (se viene utilizzato il carattere * viene applicato\
+      \ il like)"
+    required: false
+    type: "string"
+  adCod:
+    name: "adCod"
+    in: "query"
+    description: "codice dell'attivita didattica"
+    required: false
+    type: "string"
+  cdsOffId:
+    name: "cdsOffId"
+    in: "path"
+    description: "id del corso di studio"
+    required: true
+    type: "integer"
+    format: "int64"
+  domPartCod:
+    name: "domPartCod"
+    in: "query"
+    description: "Codice dominio di partizione degli studenti all'interno di un fattore\
+      \ di partizione"
+    required: false
+    type: "string"
+    maxLength: 10
+  adLogId:
+    name: "adLogId"
+    in: "path"
+    description: "id della logistica"
+    required: true
+    type: "integer"
+    format: "int64"
+  udDes:
+    name: "udDes"
+    in: "query"
+    description: "descrizione dell'unit� didattica (se viene utilizzato il carattere\
+      \ * viene applicato il like)"
+    required: false
+    type: "string"
+  linguaDidCod:
+    name: "linguaDidCod"
+    in: "query"
+    description: "codice ISO6392 della lingua di erogazione della didattica"
+    required: false
+    type: "string"
+  coperId:
+    name: "coperId"
+    in: "query"
+    description: "identificativo copertura"
+    required: false
+    type: "integer"
+    format: "int64"
+  aaOffId:
+    name: "aaOffId"
+    in: "path"
+    description: "Id dell'anno di offerta"
+    required: true
+    type: "integer"
+    maxLength: 4
+    minLength: 4
+    format: "int32"
+  dataModTCDoc:
+    name: "dataModTCDoc"
+    in: "query"
+    description: "data di ultima modifica della logistica per docente (recupera le\
+      \ modifiche alla anagrafica oppure al carico docente)"
+    required: false
+    type: "string"
+    maxLength: 10
+    minLength: 10
+  pdsId:
+    name: "pdsId"
+    in: "query"
+    description: "id del percorso di studio"
+    required: false
+    type: "integer"
+    format: "int64"
+  cdsDes:
+    name: "cdsDes"
+    in: "query"
+    description: "descrizione del corso di studio (se viene utilizzato il carattere\
+      \ * viene applicato il like)"
+    required: false
+    type: "string"
+  edificioId:
+    name: "edificioId"
+    in: "path"
+    description: "id dell'edificio"
+    required: true
+    type: "integer"
+    format: "int64"
+  adDes:
+    name: "adDes"
+    in: "query"
+    description: "descrizione  dell'attivita didattica (se viene utilizzato il carattere\
+      \ * viene applicato il like)"
+    required: false
+    type: "string"
+  pdsCod:
+    name: "pdsCod"
+    in: "query"
+    description: "codice del percorso di studio"
+    required: false
+    type: "string"
+  userId:
+    name: "userId"
+    in: "query"
+    description: "id univoco che consente di individuare l'account utente"
+    required: false
+    type: "string"
+  docenteCognome:
+    name: "docenteCognome"
+    in: "query"
+    description: "cognome del docente"
+    required: false
+    type: "string"
+  adId:
+    name: "adId"
+    in: "query"
+    description: "id dell'attivita didattica"
+    required: false
+    type: "integer"
+    format: "int64"
+  aaId:
+    name: "aaOffId"
+    in: "query"
+    description: "Id dell'anno di offerta"
+    required: false
+    type: "integer"
+    maxLength: 4
+    minLength: 4
+    format: "int32"
+  udCod:
+    name: "udCod"
+    in: "query"
+    description: "codice dell'unità didattica"
+    required: false
+    type: "string"
+  docenteMatricola:
+    name: "docenteMatricola"
+    in: "query"
+    description: "matricola del docente"
+    required: false
+    type: "string"
+  adLogLogId:
+    name: "adLogId"
+    in: "query"
+    description: "id della logistica"
+    required: false
+    type: "integer"
+    format: "int64"
+  udId:
+    name: "udId"
+    in: "query"
+    description: "id dell'unit� didattica"
+    required: false
+    type: "integer"
+    format: "int64"
+  matricola:
+    name: "matricola"
+    in: "query"
+    description: "codice della matricola dello studente"
+    required: false
+    type: "string"
+  dataModLog:
+    name: "dataModLog"
+    in: "query"
+    description: "data di ultima modifica della logistica"
+    required: false
+    type: "string"
+    maxLength: 10
+    minLength: 10
+  extAulaCod:
+    name: "extAulaCod"
+    in: "query"
+    description: "codice dell'aula nel sistema esterno (se viene utilizzato il carattere\
+      \ * viene applicato il like)"
+    required: false
+    type: "string"
+externalDocs:
+  description: "Documentazione Geneale sui servizi REST"
+  url: "https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3"
+x-file-status: "PROD"
+x-file-name: "p09-logisticaApiV1.yaml"
+x-api-status: "PROD"
+x-func-cod: "RST_LOGIV1"
+x-cache-type: "configuration"

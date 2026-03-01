@@ -1,0 +1,870 @@
+---
+swagger: "2.0"
+info:
+  description: "API REST di ESSE3 per Calendario Appuntamenti\n\n## ChangeLog\n  \n\
+    Versione       | Versione di Esse3 di rilascio | Interventi \n-              |\
+    \ -                             | -\n    1.0.0      | 20.01.02.00            \
+    \       | aggiunto l'endpoint get    /calendari/contesti/{contestoCalendario}\
+    \ per recuperare i calendari relativi ad un contesto\n    1.0.0      | 20.01.02.00\
+    \                   | aggiunto l'endpoint get    /calendari/turni/{codTipoCalendario}\
+    \ per recuperare i turni relativi ad un calendario\n    1.0.0      | 20.01.02.00\
+    \                   | aggiunto l'endpoint get    /calendari/contesti/{contestoCalendario}/appuntamenti/{persId}\
+    \ per recuperare le prenotazioni di una persona\n    1.0.0      | 20.01.02.00\
+    \                   | aggiunto l'endpoint post   /calendari/appuntamenti/{persId}\
+    \ per prenotare un appuntamento\n    1.0.0      | 20.01.02.00                \
+    \   | aggiunto l'endpoint put    /calendari/appuntamenti/{persId}/{appId} per\
+    \ modificare una prenotazione\n    1.0.0      | 20.01.02.00                  \
+    \ | aggiunto l'endpoint delete /calendari/appuntamenti/{persId}/{appId} per annullare\
+    \ una prenotazione\n"
+  version: "1.0.0"
+  title: "ESSE3 servizi API"
+basePath: "/calendario-app-service-v1"
+schemes:
+- "https"
+- "http"
+consumes:
+- "application/json"
+produces:
+- "application/json"
+security:
+- basicAuth: []
+- jwt:
+  - "openid"
+paths:
+  /calendari/appuntamenti/{persId}:
+    post:
+      tags:
+      - "Appuntamenti"
+      summary: "Prenota un appuntamento"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>Prenota un appuntamento per una determinata\
+        \ persona\n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n-|-|-\nx-cache-type|midRefreshRateUserDependent|Risorsa\
+        \ che varia con frequenza media, cache Http abilitata, cache server disabilitata.\
+        \ Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: user-tecnico-permissions**\n\nProfilo|Controllo| Funzione\n-|-|-\n\
+        UTENTE_TECNICO|funzione accessibile alle utenze tecniche per accessi ai servizi\
+        \ REST|Security.checkUserTecnico()\n\n\nClasse di modello : DettaglioErroreAggiuntivo\n\
+        ======\n\nEstensioni sulle proprietà\n----\nProprietà | x-field-type\n-|-|\n\
+        rawValue|rawJson\n"
+      operationId: "inserisciAppuntamento"
+      parameters:
+      - name: "persId"
+        in: "path"
+        description: "Identificativo persona"
+        required: true
+        type: "integer"
+        format: "int64"
+      - in: "body"
+        name: "body"
+        description: "Parametri"
+        required: true
+        schema:
+          $ref: "#/definitions/Appuntamento"
+      responses:
+        "201":
+          description: "Inserimento riuscito"
+        "422":
+          description: "Inserimento non riuscito"
+          schema:
+            $ref: "#/definitions/DettaglioErrore"
+      x-enabled-profiles:
+      - user-tecnico-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UTENTE_TECNICO"
+              description: "funzione accessibile alle utenze tecniche per accessi\
+                \ ai servizi REST"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkUserTecnico"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+  /calendari/appuntamenti/{persId}/{appId}:
+    put:
+      tags:
+      - "Appuntamenti"
+      summary: "Modifica una prenotazione"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>Modifica una prenotazione di una determinata\
+        \ persona annullando il vecchio appuntamento indicato\n\n**Estensioni:**\n\
+        \nCodice Estensione|Valore|Nota\n-|-|-\nx-cache-type|midRefreshRateUserDependent|Risorsa\
+        \ che varia con frequenza media, cache Http abilitata, cache server disabilitata.\
+        \ Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: USER_TECNICO**\n\nProfilo|Controllo| Funzione\n-|-|-\nUTENTE_TECNICO|funzione\
+        \ accessibile alle utenze tecniche per accessi ai servizi REST|Security.checkUserTecnico()\n\
+        \n\nClasse di modello : DettaglioErroreAggiuntivo\n======\n\nEstensioni sulle\
+        \ proprietà\n----\nProprietà | x-field-type\n-|-|\nrawValue|rawJson\n"
+      operationId: "aggiornaAppuntamento"
+      parameters:
+      - name: "appId"
+        in: "path"
+        description: "Identificativo dell'appuntamento da eliminare"
+        required: true
+        type: "integer"
+        format: "int64"
+      - name: "persId"
+        in: "path"
+        description: "Identificativo persona"
+        required: true
+        type: "integer"
+        format: "int64"
+      - in: "body"
+        name: "body"
+        description: "turnoId      Identificativo turno da prenotare\nnota       \
+          \  Nota\nnotaId       Identificativo nota\n"
+        required: true
+        schema:
+          $ref: "#/definitions/Appuntamento"
+      responses:
+        "200":
+          description: "Aggiornamento riuscito"
+          schema:
+            $ref: "#/definitions/TurnoId"
+        "422":
+          description: "Aggiornamento non riuscito"
+          schema:
+            $ref: "#/definitions/DettaglioErrore"
+      x-enabled-profiles:
+      - user-tecnico-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UTENTE_TECNICO"
+              description: "funzione accessibile alle utenze tecniche per accessi\
+                \ ai servizi REST"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkUserTecnico"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+    delete:
+      tags:
+      - "Appuntamenti"
+      summary: "Annulla una prenotazione"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>Annulla la prenotazione indicata per una determinata\
+        \ persona\n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n-|-|-\nx-cache-type|midRefreshRateUserDependent|Risorsa\
+        \ che varia con frequenza media, cache Http abilitata, cache server disabilitata.\
+        \ Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: USER_TECNICO**\n\nProfilo|Controllo| Funzione\n-|-|-\nUTENTE_TECNICO|funzione\
+        \ accessibile alle utenze tecniche per accessi ai servizi REST|Security.checkUserTecnico()\n\
+        \n\nClasse di modello : DettaglioErroreAggiuntivo\n======\n\nEstensioni sulle\
+        \ proprietà\n----\nProprietà | x-field-type\n-|-|\nrawValue|rawJson\n"
+      operationId: "annullaAppuntamento"
+      parameters:
+      - name: "appId"
+        in: "path"
+        description: "Identificativo dell'appuntamento da eliminare"
+        required: true
+        type: "integer"
+        format: "int64"
+      - name: "persId"
+        in: "path"
+        description: "Identificativo persona"
+        required: true
+        type: "integer"
+        format: "int64"
+      responses:
+        "204":
+          description: "Cancellazione riuscita"
+        "422":
+          description: "Cancellazione non riuscita"
+          schema:
+            $ref: "#/definitions/DettaglioErrore"
+      x-enabled-profiles:
+      - user-tecnico-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UTENTE_TECNICO"
+              description: "funzione accessibile alle utenze tecniche per accessi\
+                \ ai servizi REST"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkUserTecnico"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+  /calendari/contesti/{contestoCalendario}:
+    get:
+      tags:
+      - "Calendari"
+      summary: "Lista calendari"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>Recupera la lista dei calendari relativi ad\
+        \ un contesto\n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n-|-|-\n\
+        x-cache-type|midRefreshRateUserDependent|Risorsa che varia con frequenza media,\
+        \ cache Http abilitata, cache server disabilitata. Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: USER_TECNICO**\n\nProfilo|Controllo| Funzione\n-|-|-\nUTENTE_TECNICO|funzione\
+        \ accessibile alle utenze tecniche per accessi ai servizi REST|Security.checkUserTecnico()\n\
+        \n**Utente: common-auth-permissions**\n\nProfilo|Controllo| Funzione\n-|-|-\n\
+        AUTENTICATO|Funzione riservata a tutti gli utenti autenticati|Security.checkAuthUser()\n\
+        \n\nClasse di modello : DettaglioErroreAggiuntivo\n======\n\nEstensioni sulle\
+        \ proprietà\n----\nProprietà | x-field-type\n-|-|\nrawValue|rawJson\n"
+      operationId: "getListaCalendari"
+      parameters:
+      - name: "contestoCalendario"
+        in: "path"
+        description: "Contesto del calendario"
+        required: true
+        type: "string"
+      - name: "lingua"
+        in: "query"
+        description: "Codice della lingua"
+        required: false
+        type: "string"
+      - name: "sedeId"
+        in: "query"
+        description: "Identificativo della sede"
+        required: false
+        type: "integer"
+        format: "int64"
+      - name: "start"
+        in: "query"
+        description: "utilizzato insieme a `limit` per indicare la paginazione sui\
+          \ record; `start` indica il numero del primo record da caricare (se non\
+          \ indicato viene utilizzato 0)\n"
+        required: false
+        type: "integer"
+        format: "int32"
+      - name: "limit"
+        in: "query"
+        description: "utilizzato insieme a `start` per indicare la paginazione sui\
+          \ record, `limit` indica il numero di record da recuperare (a partire da\
+          \ `start`); \nse non indicato viene utilizzato 50, i valori consentiti vanno\
+          \ da 0 a 100\n"
+        required: false
+        type: "integer"
+        format: "int32"
+      - name: "order"
+        in: "query"
+        description: "consente di specificare un ordine per il recupero dei record.\
+          \ La sintassi è la seguente\n * +/- : specifica l'ordinamento (+ = ASC,\
+          \ - = DESC); se omesso viene utilizzato +\n * field : nome del campo da\
+          \ ordinare\n \n E' possibile indicare più campi separandoli da virgola (Es:\
+          \ +annoCorso,+adCod) \n"
+        required: false
+        type: "string"
+      responses:
+        "200":
+          description: "Successful response"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/ElencoTipiCalApp"
+        "422":
+          description: "Incorrect parameters"
+          schema:
+            $ref: "#/definitions/DettaglioErrore"
+      x-enabled-profiles:
+      - user-tecnico-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UTENTE_TECNICO"
+              description: "funzione accessibile alle utenze tecniche per accessi\
+                \ ai servizi REST"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkUserTecnico"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+      - common-auth-permissions:
+          kind: "AUTHENTICATED"
+          profiles:
+          - profile:
+              name: "AUTENTICATO"
+              description: "Funzione riservata a tutti gli utenti autenticati"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkAuthUser"
+                  description: "funzione che ritorna true se l'utente risulta autenticato"
+      x-custom-operation: "multiple"
+  /calendari/contesti/{contestoCalendario}/appuntamenti/{persId}:
+    get:
+      tags:
+      - "Appuntamenti"
+      summary: "Lista prenotazioni di una persona"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>Recupera la lista delle prenotazioni di una\
+        \ persona relative ad un contesto\n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n\
+        -|-|-\nx-cache-type|midRefreshRateUserDependent|Risorsa che varia con frequenza\
+        \ media, cache Http abilitata, cache server disabilitata. Maggiori dettagli\
+        \ [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: USER_TECNICO**\n\nProfilo|Controllo| Funzione\n-|-|-\nUTENTE_TECNICO|funzione\
+        \ accessibile alle utenze tecniche per accessi ai servizi REST|Security.checkUserTecnico()\n\
+        \n\nClasse di modello : DettaglioErroreAggiuntivo\n======\n\nEstensioni sulle\
+        \ proprietà\n----\nProprietà | x-field-type\n-|-|\nrawValue|rawJson\n"
+      operationId: "getListaPrenotazioni"
+      parameters:
+      - name: "contestoCalendario"
+        in: "path"
+        description: "Contesto del calendario"
+        required: true
+        type: "string"
+      - name: "persId"
+        in: "path"
+        description: "Identificativo persona"
+        required: true
+        type: "integer"
+        format: "int64"
+      - name: "lingua"
+        in: "query"
+        description: "Codice della lingua"
+        required: false
+        type: "string"
+      - name: "stuId"
+        in: "query"
+        description: "Identificativo dello studente."
+        required: false
+        type: "integer"
+        format: "int64"
+      - name: "cdsId"
+        in: "query"
+        description: "Identificativo del corso di studio"
+        required: false
+        type: "integer"
+        format: "int64"
+      - name: "aaOrdId"
+        in: "query"
+        description: "Identificativo dell'ordinamento di corso di studio"
+        required: false
+        type: "integer"
+        format: "int64"
+      - name: "pdsId"
+        in: "query"
+        description: "Identificativo del percorso di studio"
+        required: false
+        type: "integer"
+        format: "int64"
+      - name: "aaIscrId"
+        in: "query"
+        description: "Identificativo dell'anno d'iscrizione."
+        required: false
+        type: "integer"
+        format: "int64"
+      - name: "iscrId"
+        in: "query"
+        description: "Identificativo dell'iscrizione"
+        required: false
+        type: "integer"
+        format: "int64"
+      - name: "sedeId"
+        in: "query"
+        description: "Identificativo della sede"
+        required: false
+        type: "integer"
+        format: "int64"
+      - name: "start"
+        in: "query"
+        description: "utilizzato insieme a `limit` per indicare la paginazione sui\
+          \ record; `start` indica il numero del primo record da caricare (se non\
+          \ indicato viene utilizzato 0)\n"
+        required: false
+        type: "integer"
+        format: "int32"
+      - name: "limit"
+        in: "query"
+        description: "utilizzato insieme a `start` per indicare la paginazione sui\
+          \ record, `limit` indica il numero di record da recuperare (a partire da\
+          \ `start`); \nse non indicato viene utilizzato 50, i valori consentiti vanno\
+          \ da 0 a 100\n"
+        required: false
+        type: "integer"
+        format: "int32"
+      - name: "order"
+        in: "query"
+        description: "consente di specificare un ordine per il recupero dei record.\
+          \ La sintassi è la seguente\n * +/- : specifica l'ordinamento (+ = ASC,\
+          \ - = DESC); se omesso viene utilizzato +\n * field : nome del campo da\
+          \ ordinare\n \n E' possibile indicare più campi separandoli da virgola (Es:\
+          \ +annoCorso,+adCod) \n"
+        required: false
+        type: "string"
+      responses:
+        "200":
+          description: "Successful response"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/Prenotazione"
+        "422":
+          description: "Incorrect parameters"
+          schema:
+            $ref: "#/definitions/DettaglioErrore"
+      x-enabled-profiles:
+      - user-tecnico-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UTENTE_TECNICO"
+              description: "funzione accessibile alle utenze tecniche per accessi\
+                \ ai servizi REST"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkUserTecnico"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+      x-custom-operation: "multiple"
+  /calendari/turni/{codTipoCalendario}:
+    get:
+      tags:
+      - "Calendari"
+      summary: "Lista turni"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>Recupera la lista dei turni per una tipologia\
+        \ di calendari\n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n-|-|-\n\
+        x-cache-type|midRefreshRateUserDependent|Risorsa che varia con frequenza media,\
+        \ cache Http abilitata, cache server disabilitata. Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: USER_TECNICO**\n\nProfilo|Controllo| Funzione\n-|-|-\nUTENTE_TECNICO|funzione\
+        \ accessibile alle utenze tecniche per accessi ai servizi REST|Security.checkUserTecnico()\n\
+        \n**Utente: AUTHENTICATED**\n\nProfilo|Controllo| Funzione\n-|-|-\nAUTENTICATO|Funzione\
+        \ riservata a tutti gli utenti autenticati|Security.checkAuthUser()\n\n\n\
+        Classe di modello : DettaglioErroreAggiuntivo\n======\n\nEstensioni sulle\
+        \ proprietà\n----\nProprietà | x-field-type\n-|-|\nrawValue|rawJson\n"
+      operationId: "getListaTurni"
+      parameters:
+      - name: "codTipoCalendario"
+        in: "path"
+        description: "Codice tipologia calendario"
+        required: true
+        type: "string"
+      - name: "lingua"
+        in: "query"
+        description: "Codice della lingua"
+        required: false
+        type: "string"
+      - name: "sedeId"
+        in: "query"
+        description: "Identificativo della sede"
+        required: false
+        type: "integer"
+        format: "int64"
+      - name: "StrutAmmId"
+        in: "query"
+        description: "Identificativo della struttura amministrativa"
+        required: false
+        type: "integer"
+        format: "int64"
+      - name: "start"
+        in: "query"
+        description: "utilizzato insieme a `limit` per indicare la paginazione sui\
+          \ record; `start` indica il numero del primo record da caricare (se non\
+          \ indicato viene utilizzato 0)\n"
+        required: false
+        type: "integer"
+        format: "int32"
+      - name: "limit"
+        in: "query"
+        description: "utilizzato insieme a `start` per indicare la paginazione sui\
+          \ record, `limit` indica il numero di record da recuperare (a partire da\
+          \ `start`); \nse non indicato viene utilizzato 50, i valori consentiti vanno\
+          \ da 0 a 100\n"
+        required: false
+        type: "integer"
+        format: "int32"
+      - name: "order"
+        in: "query"
+        description: "consente di specificare un ordine per il recupero dei record.\
+          \ La sintassi è la seguente\n * +/- : specifica l'ordinamento (+ = ASC,\
+          \ - = DESC); se omesso viene utilizzato +\n * field : nome del campo da\
+          \ ordinare\n \n E' possibile indicare più campi separandoli da virgola (Es:\
+          \ +annoCorso,+adCod) \n"
+        required: false
+        type: "string"
+      responses:
+        "200":
+          description: "Successful response"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/TurnoCalApp"
+        "422":
+          description: "Incorrect parameters"
+          schema:
+            $ref: "#/definitions/DettaglioErrore"
+      x-enabled-profiles:
+      - user-tecnico-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UTENTE_TECNICO"
+              description: "funzione accessibile alle utenze tecniche per accessi\
+                \ ai servizi REST"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkUserTecnico"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+      - common-auth-permissions:
+          kind: "AUTHENTICATED"
+          profiles:
+          - profile:
+              name: "AUTENTICATO"
+              description: "Funzione riservata a tutti gli utenti autenticati"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkAuthUser"
+                  description: "funzione che ritorna true se l'utente risulta autenticato"
+      x-custom-operation: "multiple"
+securityDefinitions:
+  basicAuth:
+    description: "Autenticazione tramite BASIC authentication. Questa modalità è disponibile\
+      \ se l'autenticazione su esse3 non usa shibboleth per il gruppo dell'utente"
+    type: "basic"
+  jwt:
+    description: "Autenticazione tramite OAUTH2, occorre configurare il parametro\
+      \ di configurazione di ESSE3 che indica il server OAUTH2 da utilizzare"
+    type: "oauth2"
+    authorizationUrl: "https://idp-idm.unimib.it/idp/profile/oidc/authorize"
+    flow: "implicit"
+    scopes:
+      openid: "informazioni sull'utente"
+definitions:
+  Appuntamento:
+    type: "object"
+    required:
+    - "turnoId"
+    properties:
+      turnoId:
+        type: "integer"
+        format: "int32"
+        example: 1670
+        description: "Identificativo turno"
+      stuId:
+        type: "integer"
+        format: "int32"
+        example: 49245
+        description: "Identificativo utente"
+      nota:
+        type: "string"
+        example: "Consegna documenti per il tirocinio"
+        description: "Nota"
+      notaId:
+        type: "integer"
+        format: "int64"
+        example: 1265
+        description: "Identificativo nota"
+    x-model-sub-package: "calendari.v1"
+    x-model-sub-path: "calendari/v1"
+  TurnoId:
+    type: "object"
+    properties:
+      turnoId:
+        type: "integer"
+        format: "int64"
+        example: 1682
+        description: "Identificativo turno"
+    x-model-sub-package: "calendari.v1"
+    x-model-sub-path: "calendari/v1"
+  DettaglioErroreAggiuntivo:
+    type: "object"
+    properties:
+      errorType:
+        type: "string"
+        example: "stackTrace"
+        description: "descrizione del tipo di errore aggiuntivo"
+      value:
+        type: "string"
+        example: "SocketTimeoutException...."
+        description: "descrizione dell'errore"
+      rawValue:
+        type: "string"
+        example: "SocketTimeoutException...."
+        description: "descrizione dell'errore"
+        x-field-type: "rawJson"
+    x-model-sub-package: "frk.v1"
+    x-model-sub-path: "frk/v1"
+  TurnoCalApp:
+    type: "object"
+    properties:
+      calendarioAppId:
+        type: "integer"
+        format: "int64"
+        example: 5
+        description: "Identificativo del calendario"
+      tipoCalAppCod:
+        type: "string"
+        example: "DCT_DOC"
+        description: "Codice tipologia del calendario"
+      calendarioAppCod:
+        type: "string"
+        example: "DOC"
+        description: "Codice del calendario"
+      calendarioAppDes:
+        type: "string"
+        example: "Consegna documenti"
+        description: "Descrizione del calendario"
+      dataIniTurno:
+        type: "string"
+        example: "24/01/2020 09:10:00"
+        description: "Data effettiva di inizio del turno"
+      dataFineTurno:
+        type: "string"
+        example: "24/01/2020 09:20:00"
+        description: "Data effettiva di fine del turno"
+      calendarioAppAaDes:
+        type: "string"
+        example: "2019/2020"
+        description: "Anno accademico di applicazione del calendario"
+      calTurnoId:
+        type: "integer"
+        format: "int64"
+        example: 1663
+        description: "Identificativo del turno"
+      dataIniTurnoVis:
+        type: "string"
+        example: "24/01/2020 09:00:00"
+        description: "Data inizio del turno vista dagli studenti"
+      dataFineTurnoVis:
+        type: "string"
+        example: "24/01/2020 10:00:00"
+        description: "Data fine del turno vista dagli studenti"
+      dataIniPren:
+        type: "string"
+        example: "17/10/2019 00:00:00"
+        description: "Data di apertura delle prenotazioni"
+      dataFinePren:
+        type: "string"
+        example: "24/01/2020 00:00:00"
+        description: "Data di chiusura delle prenotazioni"
+      sedeDes:
+        type: "string"
+        example: "Casalecchio di Reno"
+        description: "Sede"
+      strutAmmDes:
+        type: "string"
+        example: "Cineca, Via Magnanelli, 6/3"
+        description: "Struttura amministrativa"
+      abilNotaprenFlg:
+        type: "integer"
+        format: "int64"
+        example: 0
+        description: "Abilita l'inserimento delle note"
+      tipoNotaId:
+        type: "integer"
+        format: "int64"
+        example: "null"
+        description: "Tipologia della nota"
+      giorno:
+        type: "string"
+        example: "Venerdì"
+        description: "Giorno della settimana"
+    x-layout-name: "CALENDARIO_APP_TURNI_WEB"
+    x-winsession-name: "none"
+    x-model-sub-package: "calendari.v1"
+    x-model-sub-path: "calendari/v1"
+  Prenotazione:
+    type: "object"
+    properties:
+      tipoCalAppCod:
+        type: "string"
+        example: "DCT_DOC"
+        description: "Codice tipologia del calendario"
+      tipoCalAppDes:
+        type: "string"
+        example: "Calendario appuntamenti per consegna documenti"
+        description: "Descrizione tipologia del calendario"
+      modCancIscrCalId:
+        type: "integer"
+        format: "int64"
+        example: 2
+        description: "Modalità di cancellazione dell'iscrizione al calendario"
+      calAppIscrittiId:
+        type: "integer"
+        format: "int64"
+        example: 1337
+        description: "Identificativo iscrizione al calendario"
+      dataIniTurnoVis:
+        type: "string"
+        example: "20/01/2020 09:00:00"
+        description: "Data inizio del turno vista dagli studenti"
+      dataFineTurnoVis:
+        type: "string"
+        example: "20/01/2020 10:00:00"
+        description: "Data fine del turno vista dagli studenti"
+      giorno:
+        type: "string"
+        example: "Venerdì"
+        description: "giorno"
+      nGgModifica:
+        type: "integer"
+        format: "int64"
+        example: 5
+        description: "Numero di giorni ammesso per la modifica della prenotazione"
+      dataPrenotazione:
+        type: "string"
+        example: "20/01/2020 00:00:00"
+        description: "Data di prenotazione"
+      sede:
+        type: "string"
+        example: "Casalecchio di Reno"
+        description: "Sede"
+      strutAmmDes:
+        type: "string"
+        example: "Cineca, Via Magnanelli, 6/3"
+        description: "Struttura amministrativa"
+    x-layout-name: "PRENOTAZIONI"
+    x-winsession-name: "none"
+    x-model-sub-package: "calendari.v1"
+    x-model-sub-path: "calendari/v1"
+  ElencoTipiCalApp:
+    type: "object"
+    properties:
+      tipoCalAppCod:
+        type: "string"
+        example: "DCT_DOC"
+        description: "Codice tipologia del calendario"
+      tipoCalAppDes:
+        type: "string"
+        example: "Calendario appuntamenti per consegna documenti"
+        description: "Descrizione tipologia del calendario"
+      modCancIscrCalId:
+        type: "integer"
+        format: "int64"
+        example: 2
+        description: "Modalità di cancellazione dell'iscrizione al calendario"
+    x-layout-name: "ELENCO_TIPI_CAL_APP"
+    x-winsession-name: "none"
+    x-model-sub-package: "calendari.v1"
+    x-model-sub-path: "calendari/v1"
+  DettaglioErrore:
+    type: "object"
+    properties:
+      statusCode:
+        type: "integer"
+        format: "int32"
+        example: 200
+        description: "Http Status Code"
+      retCode:
+        type: "integer"
+        format: "int32"
+        example: -1
+        description: "codice di errore"
+      retErrMsg:
+        type: "string"
+        example: "Parametri non corretti"
+        description: "descrizione dell'errore"
+      errDetails:
+        type: "array"
+        items:
+          $ref: "#/definitions/DettaglioErroreAggiuntivo"
+    x-model-sub-package: "frk.v1"
+    x-model-sub-path: "frk/v1"
+parameters:
+  pdsId:
+    name: "pdsId"
+    in: "query"
+    description: "Identificativo del percorso di studio"
+    required: false
+    type: "integer"
+    format: "int64"
+  stuId:
+    name: "stuId"
+    in: "query"
+    description: "Identificativo dello studente."
+    required: false
+    type: "integer"
+    format: "int64"
+  lingua:
+    name: "lingua"
+    in: "query"
+    description: "Codice della lingua"
+    required: false
+    type: "string"
+  iscrId:
+    name: "iscrId"
+    in: "query"
+    description: "Identificativo dell'iscrizione"
+    required: false
+    type: "integer"
+    format: "int64"
+  aaOrdId:
+    name: "aaOrdId"
+    in: "query"
+    description: "Identificativo dell'ordinamento di corso di studio"
+    required: false
+    type: "integer"
+    format: "int64"
+  cdsId:
+    name: "cdsId"
+    in: "query"
+    description: "Identificativo del corso di studio"
+    required: false
+    type: "integer"
+    format: "int64"
+  contestoCalendario:
+    name: "contestoCalendario"
+    in: "path"
+    description: "Contesto del calendario"
+    required: true
+    type: "string"
+  persId:
+    name: "persId"
+    in: "path"
+    description: "Identificativo persona"
+    required: true
+    type: "integer"
+    format: "int64"
+  strutAmmId:
+    name: "StrutAmmId"
+    in: "query"
+    description: "Identificativo della struttura amministrativa"
+    required: false
+    type: "integer"
+    format: "int64"
+  sedeId:
+    name: "sedeId"
+    in: "query"
+    description: "Identificativo della sede"
+    required: false
+    type: "integer"
+    format: "int64"
+  appId:
+    name: "appId"
+    in: "path"
+    description: "Identificativo dell'appuntamento da eliminare"
+    required: true
+    type: "integer"
+    format: "int64"
+  aaIscrId:
+    name: "aaIscrId"
+    in: "query"
+    description: "Identificativo dell'anno d'iscrizione."
+    required: false
+    type: "integer"
+    format: "int64"
+  codTipoCalendario:
+    name: "codTipoCalendario"
+    in: "path"
+    description: "Codice tipologia calendario"
+    required: true
+    type: "string"
+externalDocs:
+  description: "Documentazione Geneale sui servizi REST"
+  url: "https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3"
+x-file-status: "PROD"
+x-file-name: "p19-calendarioAppApiV1.yaml"
+x-api-status: "PROD"
+x-func-cod: "RST_CALV1"
+x-cache-type: "midRefreshRateUserDependent"

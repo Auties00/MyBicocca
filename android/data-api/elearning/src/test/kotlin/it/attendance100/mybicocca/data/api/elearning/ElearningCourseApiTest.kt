@@ -1,14 +1,12 @@
 package it.attendance100.mybicocca.data.api.elearning
 
-import it.attendance100.mybicocca.data.dto.elearning.ElearningCourse
 import it.attendance100.mybicocca.data.dto.elearning.ElearningCourseCategory
-import it.attendance100.mybicocca.data.exception.ElearningException
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import java.util.LinkedList
 
-class ElearningCourseApiTest : ElearningTestBase() {
+class ElearningCourseApiTest : ElearningTestApiBase() {
     @Test
     suspend fun getUserCourses() {
         val coursesResponse = api.courses.getUserCourses(session.wsToken, profile.userId)

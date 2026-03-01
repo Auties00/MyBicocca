@@ -1,23 +1,34 @@
 package it.attendance100.mybicocca.data.api.bicoccapp
 
-import de.jensklingenberg.ktorfit.http.GET
-import de.jensklingenberg.ktorfit.http.Query
+import io.ktor.client.HttpClient
+import io.ktor.client.request.parameter
+import it.attendance100.mybicocca.data.dto.bicoccapp.BicoccappTax
 import it.attendance100.mybicocca.data.dto.bicoccapp.BicoccappTaxesResponse
+import kotlinx.serialization.json.Json
 
 /**
- * API for managing user taxes.
+ * API client for tax/fee-related operations.
  */
-interface BicoccappTaxesApi {
+class BicoccappTaxesApi(
+    client: HttpClient,
+    json: Json
+) : BicoccappAbstractApi(client, json) {
+
     /**
-     * Retrieves the student's tuition fee payment history.
+     * Retrieves user's tax/fee information.
      *
      * @param personId Internal person identifier.
      * @param enrollmentId Enrollment number (matricola).
-     * @return Fee summary with installments, payment status, and deadlines.
+     * @return Tax/fee information.
      */
-    @GET("user_fees")
     suspend fun getTaxes(
-        @Query("personId") personId: String,
-        @Query("matricId") enrollmentId: String
-    ): BicoccappTaxesResponse
+        personId: String,
+        enrollmentId: String
+    ): List<BicoccappTax> {
+        val response = executeJsonGet<BicoccappTaxesResponse>("/user_fees") {
+            parameter("personId", personId)
+            parameter("matricId", enrollmentId)
+        }
+        return response.career.fees
+    }
 }

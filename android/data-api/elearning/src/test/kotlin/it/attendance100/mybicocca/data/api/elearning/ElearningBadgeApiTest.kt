@@ -3,7 +3,7 @@ package it.attendance100.mybicocca.data.api.elearning
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Test
 
-class ElearningBadgeApiTest : ElearningTestBase() {
+class ElearningBadgeApiTest : ElearningTestApiBase() {
 
     @Test
     suspend fun getUserBadges() {

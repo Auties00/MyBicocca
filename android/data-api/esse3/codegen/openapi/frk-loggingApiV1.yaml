@@ -1,0 +1,464 @@
+---
+swagger: "2.0"
+info:
+  description: "API REST per log procedure di ESSE3\n\n## ChangeLog\n\nVersione  \
+    \     | Versione di Esse3 di rilascio | Interventi \n-              | -      \
+    \                       | -\n1.0.0          | -                             |\
+    \ Versione iniziale\n"
+  version: "1.0.0"
+  title: "ESSE3 LOG API"
+basePath: "/logging-service-v1"
+schemes:
+- "https"
+- "http"
+consumes:
+- "application/json"
+produces:
+- "application/json"
+security:
+- basicAuth: []
+- jwt:
+  - "openid"
+paths:
+  /tlog/sessions:
+    get:
+      tags:
+      - "TLOG"
+      summary: "Recupera sessioni in override"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>Recupera sessioni in override\n\n\n**Estensioni:**\n\
+        \nCodice Estensione|Valore|Nota\n-|-|-\nx-cache-type|noCache|Nessuna cache\
+        \ impostata Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: common-auth-permissions**\n\nProfilo|Controllo| Funzione\n-|-|-\n\
+        AUTENTICATO|Funzione riservata a tutti gli utenti autenticati|Security.checkAuthUser()\n\
+        \n\nClasse di modello : DettaglioErroreAggiuntivo\n======\n\nEstensioni sulle\
+        \ proprietà\n----\nProprietà | x-field-type\n-|-|\nrawValue|rawJson\n"
+      operationId: "getTlogSessions"
+      parameters: []
+      responses:
+        "200":
+          description: "Successful response"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/TlogSession"
+        "422":
+          description: "Errore"
+          schema:
+            $ref: "#/definitions/DettaglioErrore"
+      x-enabled-profiles:
+      - common-auth-permissions:
+          kind: "AUTHENTICATED"
+          profiles:
+          - profile:
+              name: "AUTENTICATO"
+              description: "Funzione riservata a tutti gli utenti autenticati"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkAuthUser"
+                  description: "funzione che ritorna true se l'utente risulta autenticato"
+  /tlog/sessions/{sessionId}:
+    put:
+      tags:
+      - "TLOG"
+      summary: "Aggiunge una nuova sessione in override oppure la modifica, nel caso\
+        \ esista già"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>Aggiunge una nuova sessione in override oppure\
+        \ la modifica, nel caso esista già \n\n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n\
+        -|-|-\nx-cache-type|noCache|Nessuna cache impostata Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: AUTHENTICATED**\n\nProfilo|Controllo| Funzione\n-|-|-\nAUTENTICATO|Funzione\
+        \ riservata a tutti gli utenti autenticati|Security.checkAuthUser()\n\n\n\
+        Classe di modello : DettaglioErroreAggiuntivo\n======\n\nEstensioni sulle\
+        \ proprietà\n----\nProprietà | x-field-type\n-|-|\nrawValue|rawJson\n"
+      operationId: "putTlogSessions"
+      parameters:
+      - name: "sessionId"
+        in: "path"
+        description: "Id della sessione"
+        required: true
+        type: "string"
+      - in: "body"
+        name: "body"
+        description: "Oggetto che contiene i dati da inserire nella tlog_session"
+        required: true
+        schema:
+          $ref: "#/definitions/TlogSessionBody"
+      responses:
+        "200":
+          description: "Successful response"
+          schema:
+            $ref: "#/definitions/TlogSession"
+        "422":
+          description: "Errore"
+          schema:
+            $ref: "#/definitions/DettaglioErrore"
+      x-enabled-profiles:
+      - common-auth-permissions:
+          kind: "AUTHENTICATED"
+          profiles:
+          - profile:
+              name: "AUTENTICATO"
+              description: "Funzione riservata a tutti gli utenti autenticati"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkAuthUser"
+                  description: "funzione che ritorna true se l'utente risulta autenticato"
+  /tlog/text:
+    get:
+      tags:
+      - "TLOG"
+      summary: "Recupera i log delle procedure"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>Recupera i log delle procedure\n\n\n**Estensioni:**\n\
+        \nCodice Estensione|Valore|Nota\n-|-|-\nx-cache-type|noCache|Nessuna cache\
+        \ impostata Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: AUTHENTICATED**\n\nProfilo|Controllo| Funzione\n-|-|-\nAUTENTICATO|Funzione\
+        \ riservata a tutti gli utenti autenticati|Security.checkAuthUser()\n\n\n\
+        Classe di modello : DettaglioErroreAggiuntivo\n======\n\nEstensioni sulle\
+        \ proprietà\n----\nProprietà | x-field-type\n-|-|\nrawValue|rawJson\n"
+      operationId: "getTlogText"
+      produces:
+      - "text/plain"
+      parameters:
+      - name: "sessionId"
+        in: "query"
+        description: "Id della sessione"
+        required: false
+        type: "string"
+      - name: "ctxParamsId"
+        in: "query"
+        description: "Id del ctx"
+        required: false
+        type: "integer"
+        format: "int64"
+      - name: "transactionId"
+        in: "query"
+        description: "Id della transazion"
+        required: false
+        type: "string"
+      - name: "dataInizio"
+        in: "query"
+        description: "data inizio log"
+        required: false
+        type: "string"
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+      - name: "dataFine"
+        in: "query"
+        description: "data fine log"
+        required: false
+        type: "string"
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+      responses:
+        "200":
+          description: "Successful response"
+          schema:
+            type: "string"
+        "422":
+          description: "Errore"
+          schema:
+            $ref: "#/definitions/DettaglioErrore"
+      x-enabled-profiles:
+      - common-auth-permissions:
+          kind: "AUTHENTICATED"
+          profiles:
+          - profile:
+              name: "AUTENTICATO"
+              description: "Funzione riservata a tutti gli utenti autenticati"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkAuthUser"
+                  description: "funzione che ritorna true se l'utente risulta autenticato"
+      x-custom-operation: "single"
+  /tlog/transactions:
+    get:
+      tags:
+      - "TLOG"
+      summary: "Recupera transazioni Tlog"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>Recupera transazioni Tlog\n\n\n**Estensioni:**\n\
+        \nCodice Estensione|Valore|Nota\n-|-|-\nx-cache-type|noCache|Nessuna cache\
+        \ impostata Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: AUTHENTICATED**\n\nProfilo|Controllo| Funzione\n-|-|-\nAUTENTICATO|Funzione\
+        \ riservata a tutti gli utenti autenticati|Security.checkAuthUser()\n\n\n\
+        Classe di modello : VTlogParams\n======\n\nEstensioni sulle proprietà\n----\n\
+        Proprietà | x-field-type\n-|-|\nctxParamsId|primaryKey\n\n\nClasse di modello\
+        \ : DettaglioErroreAggiuntivo\n======\n\nEstensioni sulle proprietà\n----\n\
+        Proprietà | x-field-type\n-|-|\nrawValue|rawJson\n"
+      operationId: "getTlogTransactions"
+      parameters:
+      - name: "sessionId"
+        in: "query"
+        description: "Id della sessione"
+        required: false
+        type: "string"
+      - name: "ctxParamsId"
+        in: "query"
+        description: "Id del ctx"
+        required: false
+        type: "integer"
+        format: "int64"
+      - name: "transactionId"
+        in: "query"
+        description: "Id della transazion"
+        required: false
+        type: "string"
+      responses:
+        "200":
+          description: "Successful response"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/VTlogParams"
+        "422":
+          description: "Errore"
+          schema:
+            $ref: "#/definitions/DettaglioErrore"
+      x-enabled-profiles:
+      - common-auth-permissions:
+          kind: "AUTHENTICATED"
+          profiles:
+          - profile:
+              name: "AUTENTICATO"
+              description: "Funzione riservata a tutti gli utenti autenticati"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkAuthUser"
+                  description: "funzione che ritorna true se l'utente risulta autenticato"
+securityDefinitions:
+  basicAuth:
+    description: "Autenticazione tramite BASIC authentication. Questa modalità è disponibile\
+      \ se l'autenticazione su esse3 non usa shibboleth per il gruppo dell'utente"
+    type: "basic"
+  jwt:
+    description: "Autenticazione tramite OAUTH2, occorre configurare il parametro\
+      \ di configurazione di ESSE3 che indica il server OAUTH2 da utilizzare"
+    type: "oauth2"
+    authorizationUrl: "https://idp-idm.unimib.it/idp/profile/oidc/authorize"
+    flow: "implicit"
+    scopes:
+      openid: "informazioni sull'utente"
+definitions:
+  TlogSession:
+    type: "object"
+    properties:
+      sessionid:
+        type: "string"
+        example: "k8Cb2oXslTbleR9FR4iL"
+        description: "id della sessione"
+      llevel:
+        type: "integer"
+        format: "int64"
+        example: 20
+        description: "id del livello di log"
+      lcode:
+        type: "string"
+        example: "WARN"
+        description: "codice del livello di log"
+      ldesc:
+        type: "string"
+        example: "WARNING"
+        description: "descrizione del livello di log"
+      addTransactionInfo:
+        type: "integer"
+        format: "int32"
+        example: 1
+        description: "abilitazione inserimento transazioni. 0 -> non abilitato; 1\
+          \ -> abilitato"
+      llevelMinutesTimeout:
+        type: "number"
+        format: "double"
+        example: "1,5"
+        description: "timeout del livello di override"
+      usrInsId:
+        type: "string"
+        example: "Administrator"
+        description: "user di inserimento"
+      dataIns:
+        type: "string"
+        example: "12/11/2025"
+        description: "data di inserimento"
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+    x-layout-name: "TLOG_SESSION"
+    x-winsession-name: "p00/n_am_p00_winsession_rest"
+    x-model-sub-package: "frk.v1"
+    x-model-sub-path: "frk/v1"
+  DettaglioErroreAggiuntivo:
+    type: "object"
+    properties:
+      errorType:
+        type: "string"
+        example: "stackTrace"
+        description: "descrizione del tipo di errore aggiuntivo"
+      value:
+        type: "string"
+        example: "SocketTimeoutException...."
+        description: "descrizione dell'errore"
+      rawValue:
+        type: "string"
+        example: "SocketTimeoutException...."
+        description: "descrizione dell'errore"
+        x-field-type: "rawJson"
+    x-model-sub-package: "frk.v1"
+    x-model-sub-path: "frk/v1"
+  DettaglioErrore:
+    type: "object"
+    properties:
+      statusCode:
+        type: "integer"
+        format: "int32"
+        example: 200
+        description: "Http Status Code"
+      retCode:
+        type: "integer"
+        format: "int32"
+        example: -1
+        description: "codice di errore"
+      retErrMsg:
+        type: "string"
+        example: "Parametri non corretti"
+        description: "descrizione dell'errore"
+      errDetails:
+        type: "array"
+        items:
+          $ref: "#/definitions/DettaglioErroreAggiuntivo"
+    x-model-sub-package: "frk.v1"
+    x-model-sub-path: "frk/v1"
+  TlogSessionBody:
+    type: "object"
+    required:
+    - "addTransactionInfo"
+    - "llevel"
+    - "llevelMinutesTimeout"
+    properties:
+      llevel:
+        type: "integer"
+        format: "int64"
+        example: 30
+        description: "id del livello di log"
+      addTransactionInfo:
+        type: "integer"
+        format: "int32"
+        example: 0
+        description: "abilitazione inserimento transazioni. 0 -> non abilitato; 1\
+          \ -> abilitato"
+      llevelMinutesTimeout:
+        type: "number"
+        format: "double"
+        example: 15.0
+        description: "timeout del livello di override"
+    x-model-sub-package: "frk.v1"
+    x-model-sub-path: "frk/v1"
+  VTlogParamsDett:
+    type: "object"
+    properties:
+      parName:
+        type: "string"
+        example: "elab_id"
+        description: "nome del parametro"
+      parValue:
+        type: "string"
+        example: "2"
+        description: "valore del parametro"
+    x-layout-name: "V_TLOG_PARAMS_DETT_REST"
+    x-winsession-name: "p00/n_am_p00_winsession_rest"
+    x-model-sub-package: "frk.v1"
+    x-model-sub-path: "frk/v1"
+  VTlogParams:
+    type: "object"
+    properties:
+      ctxParamsId:
+        type: "integer"
+        format: "int64"
+        example: 123
+        description: "ctx param id"
+        x-field-type: "primaryKey"
+      transactionId:
+        type: "string"
+        example: "56.1.940813"
+        description: "id della transazione"
+      sessionid:
+        type: "string"
+        example: "k8Cb2oXslTbleR9FR4iL"
+        description: "id della descrizione"
+      des:
+        type: "string"
+        example: "LOG_TEST.P_TEST_SESSION.p_test_session"
+        description: "descrizione"
+      dataIns:
+        type: "string"
+        example: "12/11/2025"
+        description: "data inserimento"
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+      usrInsId:
+        type: "string"
+        example: "Administrator"
+        description: "user inserimento"
+      vTlogParamsDett:
+        type: "array"
+        items:
+          $ref: "#/definitions/VTlogParamsDett"
+    x-layout-name: "V_TLOG_PARAMS_REST"
+    x-winsession-name: "p00/n_am_p00_winsession_rest"
+    x-model-sub-package: "frk.v1"
+    x-model-sub-path: "frk/v1"
+parameters:
+  sessionIdPath:
+    name: "sessionId"
+    in: "path"
+    description: "Id della sessione"
+    required: true
+    type: "string"
+  ctxParamsId:
+    name: "ctxParamsId"
+    in: "query"
+    description: "Id del ctx"
+    required: false
+    type: "integer"
+    format: "int64"
+  dataInizio:
+    name: "dataInizio"
+    in: "query"
+    description: "data inizio log"
+    required: false
+    type: "string"
+    pattern: "regex_e3rest_date"
+  sessionIdQuery:
+    name: "sessionId"
+    in: "query"
+    description: "Id della sessione"
+    required: false
+    type: "string"
+  dataFine:
+    name: "dataFine"
+    in: "query"
+    description: "data fine log"
+    required: false
+    type: "string"
+    pattern: "regex_e3rest_date"
+  transactionId:
+    name: "transactionId"
+    in: "query"
+    description: "Id della transazion"
+    required: false
+    type: "string"
+externalDocs:
+  description: "Documentazione Geneale sui servizi REST"
+  url: "https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3"
+x-file-status: "PROD"
+x-file-name: "frk-loggingApiV1.yaml"
+x-api-status: "PROD"
+x-func-cod: "RST_LOGV1"
+x-cache-type: "noCache"

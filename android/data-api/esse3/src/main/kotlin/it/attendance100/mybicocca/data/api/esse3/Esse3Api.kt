@@ -1,135 +1,67 @@
 package it.attendance100.mybicocca.data.api.esse3
 
-import io.ktor.client.*
-import io.ktor.client.plugins.*
-import io.ktor.client.plugins.cookies.*
-import io.ktor.http.*
+import io.ktor.client.HttpClient
+import io.ktor.client.HttpClientConfig
+import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.client.plugins.cookies.AcceptAllCookiesStorage
+import io.ktor.client.plugins.cookies.HttpCookies
+import io.ktor.serialization.kotlinx.json.json
+import kotlinx.serialization.json.Json
 
+class Esse3Api(httpClientConfig: HttpClientConfig<*>.() -> Unit = {}) : AutoCloseable {
 
-/**
- * Main entry point for the Esse3 API.
- *
- * @param sessionCookies The session cookies obtained from authentication.
- * @param httpClientConfig Optional configuration block for the underlying HTTP client.
- * @see Esse3AuthApi for authentication operations
- */
-class Esse3Api(
-    sessionCookies: List<Cookie>,
-    httpClientConfig: HttpClientConfig<*>.() -> Unit = {}
-) : AutoCloseable {
-    companion object {
-        /**
-         * HTTP timeout in milliseconds.
-         */
-        private const val TIMEOUT = 30_000L
+    private val json = Json {
+        coerceInputValues = true
+        encodeDefaults = true
+        ignoreUnknownKeys = true
+        isLenient = true
+        prettyPrint = false
     }
 
-    /**
-     * Shared HTTP client for all API requests.
-     *
-     * Configured with:
-     * - Cookie storage for session management
-     * - Extended timeouts for slow university servers
-     */
     private val client = HttpClient {
         httpClientConfig()
+
+        install(ContentNegotiation) {
+            json(json)
+        }
+
         install(HttpCookies) {
-            default {
-                sessionCookies.forEach { cookie ->
-                    cookie.domain?.let { domain ->
-                        addCookie(domain, cookie)
-                    }
-                }
-            }
+            storage = AcceptAllCookiesStorage()
         }
-        install(HttpTimeout) {
-            requestTimeoutMillis = TIMEOUT
-            connectTimeoutMillis = TIMEOUT
-            socketTimeoutMillis = TIMEOUT
-        }
+
         followRedirects = true
     }
 
-    /**
-     * API for authentication operations.
-     *
-     * Handles Shibboleth SSO login flow and session management.
-     */
-    val auth: Esse3AuthApi = Esse3AuthApi(client)
+    val attachments = Esse3AttachmentsApi(client, json)
+    val auth = Esse3AuthApi(client, json)
+    val logging = Esse3LoggingApi(client, json)
+    val personalData = Esse3PersonalDataApi(client, json)
+    val careers = Esse3CareersApi(client, json)
+    val teachers = Esse3TeachersApi(client, json)
+    val badgeImport = Esse3BadgeImportApi(client, json)
+    val countries = Esse3CountriesApi(client, json)
+    val internships = Esse3InternshipsApi(client, json)
+    val questionnaires = Esse3QuestionnairesApi(client, json)
+    val competitions = Esse3CompetitionsApi(client, json)
+    val tuitionFees = Esse3TuitionFeesApi(client, json)
+    val structure = Esse3StructureApi(client, json)
+    val choiceRules = Esse3ChoiceRulesApi(client, json)
+    val logistics = Esse3LogisticsApi(client, json)
+    val offer = Esse3OfferApi(client, json)
+    val ruleProperties = Esse3RulePropertiesApi(client, json)
+    val teacherReporting = Esse3TeacherReportingApi(client, json)
+    val calesa = Esse3CalesaApi(client, json)
+    val careerUpdate = Esse3CareerUpdateApi(client, json)
+    val transcript = Esse3TranscriptApi(client, json)
+    val plans = Esse3PlansApi(client, json)
+    val records = Esse3RecordsApi(client, json)
+    val degreeAward = Esse3DegreeAwardApi(client, json)
+    val communications = Esse3CommunicationsApi(client, json)
+    val badge = Esse3BadgeApi(client, json)
+    val services = Esse3ServicesApi(client, json)
+    val users = Esse3UsersApi(client, json)
+    val appointmentsCalendar = Esse3AppointmentsCalendarApi(client, json)
 
-    /**
-     * API for student profile operations.
-     *
-     * Provides access to:
-     * - Student homepage with summary data
-     * - Profile photo
-     * - Personal information
-     */
-    val profile: Esse3ProfileApi = Esse3ProfileApi(client)
-
-    /**
-     * API for academic career operations.
-     *
-     * Provides access to:
-     * - Libretto (academic record)
-     * - Study plan
-     * - Career acts
-     * - Course evaluations
-     */
-    val career: Esse3CareerApi = Esse3CareerApi(client)
-
-    /**
-     * API for exam operations.
-     *
-     * Provides access to:
-     * - Available exam sessions
-     * - Exam reservations
-     * - Exam results
-     * - Reservation printing
-     */
-    val exams: Esse3ExamsApi = Esse3ExamsApi(client)
-
-    /**
-     * API for tax and payment operations.
-     *
-     * Provides access to:
-     * - Tax bill list
-     * - Bill details
-     * - Payment receipts
-     * - MAV/PagoPA documents
-     */
-    val taxes: Esse3TaxesApi = Esse3TaxesApi(client)
-
-    /**
-     * API for internship and stage operations.
-     *
-     * Provides access to:
-     * - Search internship opportunities
-     * - View company information
-     * - Manage applications
-     * - View active internships
-     * - Save/unsave opportunities
-     */
-    val internships: Esse3InternshipApi = Esse3InternshipApi(client)
-
-    /**
-     * API for questionnaire operations.
-     *
-     * Provides access to:
-     * - Pending questionnaires
-     * - Course evaluations
-     * - Fill and submit questionnaires
-     */
-    val questionnaires: Esse3QuestionnaireApi = Esse3QuestionnaireApi(client)
-
-    /**
-     * Closes the underlying HTTP client and releases resources.
-     *
-     * After calling this method, the API instance should not be used.
-     * All API calls will fail after closing.
-     *
-     * This method is idempotent - calling it multiple times has no effect.
-     */
     override fun close() {
         client.close()
     }

@@ -1,28 +1,14 @@
 package it.attendance100.mybicocca.data.dto.bicoccapp
 
-import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.SerializationException
-import kotlinx.serialization.descriptors.PrimitiveKind
-import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
-import kotlinx.serialization.descriptors.SerialDescriptor
-import kotlinx.serialization.descriptors.buildClassSerialDescriptor
-import kotlinx.serialization.encoding.Decoder
-import kotlinx.serialization.encoding.Encoder
-import kotlinx.serialization.json.JsonDecoder
-import kotlinx.serialization.json.JsonEncoder
-import kotlinx.serialization.json.buildJsonObject
-import kotlinx.serialization.json.contentOrNull
-import kotlinx.serialization.json.jsonObject
-import kotlinx.serialization.json.jsonPrimitive
-import kotlinx.serialization.json.put
+import java.time.LocalDateTime
 
 /**
  * Response containing user exams career data.
  */
 @Serializable
-data class BicoccappUserExamsResponse(
+internal data class BicoccappUserExamsResponse(
     /**
      * Career object containing exams and notations.
      */
@@ -69,14 +55,15 @@ data class BicoccappUserExamsCareerNotation(
      * Date of the exam (string format).
      */
     @SerialName("dateExam")
-    val examDate: String,
+    @Serializable(with = BicoccappLocalDateTimeSerializer::class)
+    val examDate: LocalDateTime,
 
     /**
      * Flag indicating cum laude (lode).
      */
     @SerialName("laudFlag")
-    @Serializable(with = BinaryBooleanSerializer::class)
-    val laudFlag: Boolean,
+    @Serializable(with = BicoccappIntBooleanSerializer::class)
+    val cumLaude: Boolean,
 
     /**
      * Grade value.
@@ -131,6 +118,7 @@ data class BicoccappUserExamsCareerEntry(
      */
     @SerialName("statusDescr")
     val statusDescription: String,
+
     /**
      * Code for the type of exam.
      */
@@ -171,7 +159,8 @@ data class BicoccappUserExamsCareerEntry(
      * Date of the exam.
      */
     @SerialName("dateExam")
-    val examDate: String? = null,
+    @Serializable(with = BicoccappLocalDateTimeSerializer::class)
+    val examDate: LocalDateTime,
 
     /**
      * Type of value.
@@ -189,8 +178,8 @@ data class BicoccappUserExamsCareerEntry(
      * Flag indicating cum laude (lode).
      */
     @SerialName("laudFlag")
-    @Serializable(with = BinaryBooleanSerializer::class)
-    val cumLaudeFlag: Boolean,
+    @Serializable(with = BicoccappIntBooleanSerializer::class)
+    val cumLaude: Boolean,
 
     /**
      * Evaluation code.
@@ -251,7 +240,7 @@ data class BicoccappUserExamsCareerEntry(
  * Response containing available exam sessions (appeals).
  */
 @Serializable
-data class BicoccappExamsSessionsResponse(
+internal data class BicoccappExamsSessionsResponse(
     /**
      * Career object containing courses with exam sessions.
      */
@@ -263,7 +252,7 @@ data class BicoccappExamsSessionsResponse(
  * Container for courses with exam sessions.
  */
 @Serializable
-data class BicoccappUserAppealsCareer(
+internal data class BicoccappUserAppealsCareer(
     /**
      * List of courses with available appeals.
      */
@@ -376,19 +365,22 @@ data class BicoccappAppealSession(
      * Start date for registration.
      */
     @SerialName("registrationStartDate")
-    val registrationStartDate: String,
+    @Serializable(with = BicoccappLocalDateTimeSerializer::class)
+    val registrationStartDate: LocalDateTime,
 
     /**
      * End date for registration.
      */
     @SerialName("registrationEndDate")
-    val registrationEndDate: String,
+    @Serializable(with = BicoccappLocalDateTimeSerializer::class)
+    val registrationEndDate: LocalDateTime,
 
     /**
      * Date of the appeal.
      */
     @SerialName("appealStartDate")
-    val appealStartDate: String,
+    @Serializable(with = BicoccappLocalDateTimeSerializer::class)
+    val appealStartDate: LocalDateTime,
 
     /**
      * Description of the appeal.
@@ -470,17 +462,17 @@ data class BicoccappAppealSession(
 
 /**
  * Represents the outcome of an exam booking operation.
- * * This sealed hierarchy allows for exhaustive handling of the different states
+ * This sealed hierarchy allows for exhaustive handling of the different states
  * returned by the Bicoccapp API. Use a `when` expression to branch logic based
  * on whether the operation was a standard [Success] or an [Error].
  */
-@Serializable(with = ExamBookingSerializer::class)
-sealed interface BicoccappExamBookingResponse {
+@Serializable(with = BicoccappExamBookingResultSerializer::class)
+sealed interface BicoccappExamBookingResult {
     /**
      * Indicates the booking operation completed successfully without requiring further navigation.
      */
     @Serializable
-    object Success : BicoccappExamBookingResponse
+    object Success : BicoccappExamBookingResult
 
     /**
      * Indicates the booking operation failed.
@@ -496,5 +488,5 @@ sealed interface BicoccappExamBookingResponse {
         val code: String,
         val message: String,
         val redirectUrl: String?
-    ) : BicoccappExamBookingResponse
+    ) : BicoccappExamBookingResult
 }

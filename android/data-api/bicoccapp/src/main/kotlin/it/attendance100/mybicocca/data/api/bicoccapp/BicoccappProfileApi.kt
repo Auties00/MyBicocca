@@ -1,21 +1,29 @@
 package it.attendance100.mybicocca.data.api.bicoccapp
 
-import de.jensklingenberg.ktorfit.http.GET
-import de.jensklingenberg.ktorfit.http.Query
+import io.ktor.client.HttpClient
+import io.ktor.client.request.parameter
 import it.attendance100.mybicocca.data.dto.bicoccapp.BicoccappUserProfile
+import kotlinx.serialization.json.Json
 
 /**
- * API for managing user profile.
+ * API client for user profile operations.
  */
-interface BicoccappProfileApi {
+class BicoccappProfileApi(
+    client: HttpClient,
+    json: Json
+) : BicoccappAbstractApi(client, json) {
+
     /**
      * Retrieves the user's profile information.
      *
      * @param fiscalCode User's fiscal code (codice fiscale).
-     * @return Profile with personal data, contact info, and academic identifiers.
+     * @return User profile with personal information and careers.
      */
-    @GET("user_profile")
     suspend fun getProfile(
-        @Query("fiscalCode") fiscalCode: String
-    ): BicoccappUserProfile
+        fiscalCode: String
+    ): BicoccappUserProfile {
+        return executeJsonGet("/user_profile") {
+            parameter("fiscalCode", fiscalCode)
+        }
+    }
 }

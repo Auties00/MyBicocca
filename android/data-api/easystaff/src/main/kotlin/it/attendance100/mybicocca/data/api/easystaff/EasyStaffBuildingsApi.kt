@@ -1,7 +1,8 @@
 package it.attendance100.mybicocca.data.api.easystaff
 
 import io.ktor.client.*
-import it.attendance100.mybicocca.data.api.cleanText
+import it.attendance100.mybicocca.data.common.exception.HtmlParsingException
+import it.attendance100.mybicocca.data.common.util.cleanText
 import it.attendance100.mybicocca.data.dto.easystaff.*
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromJsonElement
@@ -49,7 +50,7 @@ class EasyStaffBuildingsApi(
             )
         )
         val jsonString = extractJsonFromJsVariable(responseBody, "elenco_sedi")
-            ?: throw IllegalStateException("Missing 'elenco_sedi' field")
+            ?: throw HtmlParsingException("Missing 'elenco_sedi' field")
         return json.decodeFromString(jsonString)
     }
 
@@ -74,7 +75,7 @@ class EasyStaffBuildingsApi(
         )
 
         val jsonString = extractJsonFromJsVariable(responseBody, "elenco_aule")
-            ?: throw IllegalStateException("Missing 'elenco_aule' field")
+            ?: throw HtmlParsingException("Missing 'elenco_aule' field")
 
         val roomsArray = json.parseToJsonElement(jsonString)
             .jsonObject[building.code]

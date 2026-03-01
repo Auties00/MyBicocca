@@ -7,6 +7,7 @@ TODO: Authentication seems to be broken on the UniMiB courses application
 package it.attendance100.mybicocca.data.api.easystaff
 
 import io.ktor.client.*
+import it.attendance100.mybicocca.data.common.exception.HtmlParsingException
 import it.attendance100.mybicocca.data.dto.easystaff.*
 import kotlinx.serialization.json.*
 import java.time.Instant
@@ -57,7 +58,7 @@ class EasyStaffAttendanceApi(
                 }
             }
 
-            else -> throw IllegalStateException("Cannot get attendance history: invalid json body")
+            else -> throw HtmlParsingException("Cannot get attendance history: invalid json body")
         }
     }
 

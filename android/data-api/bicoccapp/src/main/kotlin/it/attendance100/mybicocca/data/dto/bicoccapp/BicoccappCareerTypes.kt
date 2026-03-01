@@ -2,12 +2,13 @@ package it.attendance100.mybicocca.data.dto.bicoccapp
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import java.time.LocalDateTime
 
 /**
  * Response containing user career details.
  */
 @Serializable
-data class BicoccappUserCareerResponse(
+internal data class BicoccappUserCareerResponse(
     /**
      * Career object containing averages and statistics.
      */
@@ -90,20 +91,20 @@ data class BicoccappCareerStats(
      * Total credits (CFU) to do.
      */
     @SerialName("totalToDo")
-    val totalToDo: Double,
+    val totalCredits: Double,
 
     /**
      * Total credits (CFU) completed.
      */
     @SerialName("totalDone")
-    val totalDone: Double
+    val completedCredits: Double
 )
 
 /**
  * Response containing user registration history.
  */
 @Serializable
-data class BicoccappUserRegistrationsResponse(
+internal data class BicoccappUserRegistrationsResponse(
     /**
      * Career object containing registrations.
      */
@@ -115,7 +116,7 @@ data class BicoccappUserRegistrationsResponse(
  * Container for registration entries.
  */
 @Serializable
-data class BicoccappUserRegistrationsCareer(
+internal data class BicoccappUserRegistrationsCareer(
     /**
      * List of career registrations.
      */
@@ -162,7 +163,8 @@ data class BicoccappCareerRegistration(
      * Date of the appeal.
      */
     @SerialName("appealDate")
-    val appealDate: String,
+    @Serializable(with = BicoccappLocalDateTimeSerializer::class)
+    val appealDate: LocalDateTime,
 
     /**
      * Description of the appeal.

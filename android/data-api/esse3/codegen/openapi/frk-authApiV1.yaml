@@ -1,0 +1,1305 @@
+---
+swagger: "2.0"
+info:
+  description: "### Modalità di autenticazione\n\n**L'autenticazione dei servizi REST\
+    \ avviene tramite l'header Authorization.**\n\nIn questo caso la sessione è collegata\
+    \ all'utente: con questa modalità (LOGIN IMPLICITA)  *non* sono possibili sessioni\
+    \ multiple contemporanee\na parità di utente: cioè tutte le chiamate con il medesimo\
+    \ Authorization header sono collegate alla medesima sessione lato server.\nAlla\
+    \ prima invocazione viene creata in automatico la sessione lato server, nelle\
+    \ invocazioni successive viene utilizzata sempre \nla medesima sessione finchè\
+    \ è non si verifica un timeout oppure viene chiamato esplicitamente il metodo\
+    \ /logout. \n\nNel caso siano necessarie più sessioni contemporanee è necessario\
+    \ utilizzare esplicitamente il metodo /login che ritorna l'identificativo \ndi\
+    \ sessione da utilizzare nelle chiamate successive. In questa modalità (LOGIN\
+    \ ESPLICITA) la sessione è gestita direttamente dal client\n\n*Esempio di sessione\
+    \ autenticata in ambienti con più tomcat, oppure nel caso di sessioni multiple\
+    \ per il medeismo utente*\n\n1. esegure l'autenticazione sull'enpoint `/login`\
+    \ la response fornisce il campo authToken che conteine il jsessionid\n2. effettuare\
+    \ la chiamata ad un enpoint autenticato (es. `/libretti`) passando i seguenti\
+    \ valori\n  1. Header Authorization (vedi sotto)\n  2. jsessionid passato nell'URL\
+    \ (con il valore del punto 1) nel formato http://..../;jsessionid=<authToken>\
+    \ o in alternativa il valore come cookie\n3. una volta finita la sessione effettuare\
+    \ la chiamata (con gli header del punto 2) all'enpoint `/logout`\n\n+NB+: Nel\
+    \ caso siano presenti più sessioni valide per il medesimo utente e non venga passato\
+    \ il jsessionid il sistema risponde con \nstatusCode = 403 e errorCode (presente\
+    \ nel body della response) 111\n\n*Esempio di chiamata con sessione autenticata\
+    \ su un unico tomcat*\n\n1. effettuare la chiamata ad un enpoint autenticato (es.\
+    \ `/libretti`) passando i seguenti valori\n  1. Header Authorization (vedi sotto)\n\
+    \n## Autenticazioni Previste\nSono previste le seugenti autenticazioni\n\nAutenticazione\
+    \ | Note  \n-              | -\nBASIC          | nell' header authorization va\
+    \ passato il valore BASIC <token> come descritto nell' [RFC2617](https://www.ietf.org/rfc/rfc2617.txt)\n\
+    OAUTH2         | il flusso di autenticazione è compatibile con l'[RFC6749](https://tools.ietf.org/html/rfc6749#section-1.3.2).\
+    \  per i dettagli (**)\nAPIKEY         | l'apiKey va passata in tutte le chiamate\
+    \ autenticatione nell'header `X-api-key` (***) \n\n__(**)__\n\n_I flow di autenticazione\
+    \ supportati sono i seugenti_:\n  1. IMPLICIT\n  2. AUTHORIZATION_CODE\n  \n \
+    \ Il tipo di flow da utilizzare dipende dalla singola applicatione registrata\
+    \ su OAUTH, quindi va definito in fase di richiesta di creazione dell'applicazione\n\
+    \  Per poter utilizzare l'autenticazione OAUTH occorre \n   1. Configurare un\
+    \ server OAUTH2 compatibile con le specifiche OPENID \n   2. configurare il parametro\
+    \ di configurazione di esse3 OAUTH_AUTHORIZATION_URL e OAUTH_JWK_KEYS di esse3\n\
+    \   3. opzionalmente è possibile indicare quale sia il claim utilizzato per il\
+    \ riconoscimento dell'utente nel token JWT con il parametro OAUTH_USER_CLAIM (il\
+    \ default è sub)\n\nPer maggiori informazioni è possibile consultare la documentazione\
+    \ sul [wiki](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-ConfigurazioneClientSWAGGERperOAUTH2)\n\
+    \n__(***)__\n_Validazione client tramite ApiKey_:  \nL'autenticazione tramite\
+    \ ApiKey è in aggiunta rispetto ad uno dei flussi previsti (Basic, Oauth2) _è\
+    \ abilitabile tramite configurazione_ (Par_conf = REST_API_KEY_STRICT_MODE), il\
+    \ default è disabilitato.\nIl provisioning delle ApiKey avviene tramite richeista\
+    \ esplicita al personale di ateneo che effettuerà la generazione della chiave\
+    \ tramite l'apposita maschera del client Esse3.  \nUna volta ricevuta la chiave\
+    \ occorre passare l'apiKey nelle chiamate autenticate **in aggiunta** all'autenticazione\
+    \ già prevista (obbligatoria) che avviene tramite basic Authentication oppure\
+    \ Oauth2\nIn ogni metodo della documentazione vengono riportate le autenticazioni\
+    \ previste. \n\n\n### AUTENTICAZIONE PER UTENTI NON PREVISTI\n La login è supportata\
+    \ anche per i gruppi di utenti che non sono abilitati alla gestione delle API\
+    \ REST.\n In questo caso le funzionalità si limitano alle api di autenticazione\
+    \ \n * login\n * logout\n * checkPassword\n * changePassword\n \n Viene inserito\
+    \ un header di warning che indica la limitazione.\n    \n Per gli altri path il\
+    \ servizio risponde con un httpCode 400  \n\n\n### EVICTION DELLE SESSIONI\n\n\
+    Per motivi di sicurezza, le sessioni lato backend durano al massimo 6 ore. \n\n\
+    L'eviction delle sessioni ha comportamenti differenti in base alla modalità utilizzata\n\
+    \n#### LOGIN IMPLICITA\nIl servizio provvede alla rimozione della sessione per\
+    \ timeout quando si verifica una delle seguenti condizioni\n* la sessione non\
+    \ risulta utilizzata da più tempo del valore definito sul gruppo collegato all'utente\
+    \ (p18_grp.http_session_timeout)\n* la sessione risulta creata da più tempo del\
+    \ parametro di configurazione REST_MAX_SESSION_TIME (default 5h 45m)\n \nQuindi\
+    \ un eventuale cambio di password dell'utente viene rilevato dopo al massimo 6\
+    \ ore dalla sua modifica \n(cioè quando la sessione viene rimossa e la login inmplicita\
+    \ viene rieffettuata alla chiamata successiva)\n\n#### LOGIN ESPLICITA\nIn questo\
+    \ caso le sessioni al timeout delle 6 ore *NON* vengono rimosse. La response della\
+    \ login infatti comunica esplicitamente le chiavi di sessione (jsessionid e sessionid)\
+    \ al client \ne quando il sessionid viene rimosso è necessario che il client effettui\
+    \ esplicitamente una nuova login per acquisire i nuovi valori.\nE' quindi responabilità\
+    \ del client chiamante gestire correttamente il timeout massimo della sessione\
+    \ dalla sua creazione.\nIn questa casisitca le sessioni sono raggruppate per authorization\
+    \ header ai fini del timeout configutato configurato sulla p18_grp.http_session_timeout.\
+    \ L'eviction delle sessioni avviene in modo aggregato quando \nil valore dell'ultimo\
+    \ utilizzo di una qualsiasi delle sessioni con lo stesso auth header supera il\
+    \ valore previsto dal campo p18_grp.http_session_timeout.\n\n*Esempio:*\n\nsono\
+    \ presenti due sessioni per lo stesso auth header (Basic GFDmxcdos....)\n\n* la\
+    \ prima sessione ha jsessionid = xdFdskzAAsaj32lzlaaa\n* la seconda session ha\
+    \ jsessionid = aaslke3ksd29i2zoie12\n\nLe ultime chiamate in ordine cronologico\
+    \ riportano i seguenti TimeStamp (e http_session_timeout = 60 min) e Ora corrente\
+    \ 2022-06-29T19:50:00.00Z\n\n*  JSID = xdFdskzAAsaj32lzlaaa => 2022-06-29T19:34:50.63Z\n\
+    *  JSID = xdFdskzAAsaj32lzlaaa => 2022-06-29T19:30:00.12Z\n*  JSID = aaslke3ksd29i2zoie12\
+    \ => 2022-06-29T17:20:30.10Z\n*  JSID = xdFdskzAAsaj32lzlaaa => 2022-06-29T17:10:20.98Z\n\
+    \nLa sessione verrà invalidata alla data 2022-06-29T20:34:50.63Z (cioè al timeout\
+    \ della sessione xdFdskzAAsaj32lzlaaa) e rimossa dal sistema, a quel punto i due\
+    \ JSID non saranno più\nvalidi. La sessione aaslke3ksd29i2zoie12 invece risulterebbe\
+    \ già invalida ma risulta utilizzabile  fintanto che la sessione xdFdskzAAsaj32lzlaaa\
+    \ è attiva.\nIn ogni caso dopo 6 ore dalla loro creazione entrambe le sessioni\
+    \ risulteranno inutilizabili.    \n\n## Token JWT \n\nEsse3 permette di generare\
+    \ dei token JWT che possono essere utilizzati per l'autenticazione alle API,\n\
+    questa funzionalità autogenera una coppia di chiavi (pubblica e privata) nella\
+    \ base dati di esse3 e consente \ndi utilizzarla per generare dei token che vengono\
+    \ riconosciuti dalle API\n\nE' possibile generare un nuovo token in due modalità\
+    \ differenti\n* direttamente dalla login aggiungendo il campo opzionale jwt\n\
+    * tramite l'endpoint `/login/jwt/new`\n\nL'url di esposizione delle chiavi è `GET\
+    \ /jwt/jwk`\nL'url di refresh è `GET /jwt/refresh`\n\n## ChangeLog\n\nVersione\
+    \       | Versione di Esse3 di rilascio | Interventi \n-              | -    \
+    \                         | -\n    1.1.0      | 17.11.00.00                  \
+    \ | deprecato il metodo post changePassword in favore del metodo put \n    1.1.0\
+    \      | 17.11.00.00                   | deprecato il metodo post checkLogon in\
+    \ favore del metodo get\n    1.2.0      | 18.01.02.00                   | Modificata\
+    \ la modalità di autenticazione, il cookie di sessione (jsessionid) è necessario\
+    \ in ambienti con più tomcat per  utilizzare lo stesso tomcat\n    1.3.0     \
+    \ | 18.02.00.00                   | Aggiunto il metodo /sessions/{sessionId}/check\n\
+    \    1.4.0      | 18.07.02.00                   | Aggiunta la possibilità di autenticare\
+    \ gli utenti con gruppi non gestiti per i servizi REST\n    1.4.1      | 18.07.02.00\
+    \                   | rimossi i metodi deprecati [POST /checkLogon] e [POST /changePassword]\n\
+    \    1.5.0      | 19.11.01.00                   | gestione sessioni multiple per\
+    \ il medesimo utente\n    1.6.0      | 20.01.01.00                   | aggiunta\
+    \ la validazione del client tramite ApiKey\n    1.6.1      | 20.11.00.00     \
+    \              | gestione corretta della risposta della login nel caso di più\
+    \ profili disponibili\n    1.7.0      | 22.10.01.00                   | generazione\
+    \ dei token jwt con le chiavi di esse3\n    1.8.0      | 23.03.02.00         \
+    \          | Aggiunto alla response l'oggetto TrattoAttivo per gli utenti studente,\
+    \ aggiunto anche il campo sesso\n    \n"
+  version: "1.8.0"
+  title: "Common Auth API"
+basePath: "/"
+schemes:
+- "https"
+- "http"
+consumes:
+- "application/json"
+produces:
+- "application/json"
+security:
+- basicAuth: []
+- jwt:
+  - "openid"
+paths:
+  /changeUserPassword:
+    put:
+      tags:
+      - "autenticazione"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>Modifica la password di un utente. Per poter\
+        \ accedere al servizio occorrono le credenziali di un'utenza\ntecnica passate\
+        \ tramite header http \"Authorization: Basic ....\".\nNB: l'utente deve poter\
+        \ utilizzare il tipo client REST ed avere abilitato l'accesso alla funzione\
+        \ SI_18_008.\n\n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n-|-|-\n\
+        x-cache-type|noCache|Nessuna cache impostata Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: common-auth-permissions**\n\nProfilo|Controllo| Funzione\n-|-|-\n\
+        AUTENTICATO|Funzione riservata a tutti gli utenti autenticati|Security.checkAuthUser()\n"
+      operationId: "changeUserPassword"
+      parameters:
+      - in: "body"
+        name: "body"
+        description: "Oggetto con i campi da modificare"
+        required: true
+        schema:
+          $ref: "#/definitions/ParametriChangeUserPassword"
+      responses:
+        "200":
+          description: "il contenuto ritornato esprime il risultato dell'operazione.\n"
+          schema:
+            $ref: "#/definitions/ChangePasswordResult"
+        "401":
+          description: "l'header \"Authorization\" non è presente oppure contiene\
+            \ dati non validi o credenziali errate"
+      x-enabled-profiles:
+      - common-auth-permissions:
+          kind: "AUTHENTICATED"
+          profiles:
+          - profile:
+              name: "AUTENTICATO"
+              description: "Funzione riservata a tutti gli utenti autenticati"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkAuthUser"
+                  description: "funzione che ritorna true se l'utente risulta autenticato"
+      x-cache-endpoint-relations:
+        canonicalEndpointsAction: "none"
+  /checkLogon:
+    get:
+      tags:
+      - "autenticazione"
+      description: "Verifica le credenziali di un utente fornite tramite header http\
+        \ \"Authorization: Basic ....\"\n\n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n\
+        -|-|-\nx-cache-type|noCache|Nessuna cache impostata Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: common-public-permissions**\n\nProfilo|Controllo| Funzione\n-|-|-\n\
+        ALL|Funzione Pubblica|Security.checkDummy()\n"
+      operationId: "checkLogon"
+      parameters: []
+      responses:
+        "200":
+          description: "Operazione riuscita; il contenuto della risposta indica se\
+            \ le credenziali sono corrette e se\nl'utente deve modificare la password\
+            \ (ad esempio nel caso in cui sia scaduta).\n"
+          schema:
+            $ref: "#/definitions/CheckLogonResult"
+        "401":
+          description: "l'header \"Authorization\" non è presente o contiene dati\
+            \ non validi"
+      security: []
+      x-enabled-profiles:
+      - common-public-permissions:
+          kind: "ALL"
+          profiles:
+          - profile:
+              name: "ALL"
+              description: "Funzione Pubblica"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkDummy"
+                  description: "funzione che ritorna sempre true"
+  /jwt/jwk:
+    get:
+      tags:
+      - "jwt"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>effettua il refresh di un token jwt passato\
+        \ in ingresso se questo è stato emesso da esse3 tramite la login oppure con\
+        \ l'endopoint di creazione \n\n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n\
+        -|-|-\nx-cache-type|noCache|Nessuna cache impostata Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: ALL**\n\nProfilo|Controllo| Funzione\n-|-|-\nALL|Funzione Pubblica|Security.checkDummy()\n"
+      operationId: "getJWK"
+      parameters: []
+      responses:
+        "200":
+          description: "Successful response"
+          schema:
+            $ref: "#/definitions/JWKModel"
+      x-enabled-profiles:
+      - common-public-permissions:
+          kind: "ALL"
+          profiles:
+          - profile:
+              name: "ALL"
+              description: "Funzione Pubblica"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkDummy"
+                  description: "funzione che ritorna sempre true"
+      x-custom-operation: "multiple"
+  /jwt/refresh:
+    get:
+      tags:
+      - "jwt"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>effettua il refresh di un token jwt passato\
+        \ in ingresso se questo è stato emesso da esse3 tramite la login oppure con\
+        \ l'endopoint di creazione \n\n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n\
+        -|-|-\nx-cache-type|noCache|Nessuna cache impostata Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: ALL**\n\nProfilo|Controllo| Funzione\n-|-|-\nALL|Funzione Pubblica|Security.checkDummy()\n\
+        \n\nClasse di modello : DettaglioErroreAggiuntivo\n======\n\nEstensioni sulle\
+        \ proprietà\n----\nProprietà | x-field-type\n-|-|\nrawValue|rawJson\n"
+      operationId: "refreshJWT"
+      parameters:
+      - name: "jwt"
+        in: "query"
+        description: "token jwt in ingresso per il quale effettuare il refresh"
+        required: false
+        type: "string"
+      responses:
+        "200":
+          description: "Successful response"
+          schema:
+            $ref: "#/definitions/JWTModel"
+        "422":
+          description: "parametri Errati"
+          schema:
+            $ref: "#/definitions/DettaglioErrore"
+      x-enabled-profiles:
+      - common-public-permissions:
+          kind: "ALL"
+          profiles:
+          - profile:
+              name: "ALL"
+              description: "Funzione Pubblica"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkDummy"
+                  description: "funzione che ritorna sempre true"
+  /login:
+    get:
+      tags:
+      - "autenticazione"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>Effettua la login ad esse3.\nE' possibile richiedere\
+        \ una tipologia specifica di profilo utente tramite l'header HTTP X-Esse3-User-Profile,\
+        \ indicando come valore STUDENTE, DOCENTE o USER_TECNICO\nNel caso di utenza\
+        \ con più profili (e accesso tramite codice fiscale) viene ritornato lo status\
+        \ code 300 e *NON* viene effettauta la login.\nOccorre come indicato rieffettuare\
+        \ la chiamata aggiungendo uno dei profili disponibili   \n\n\n**Estensioni:**\n\
+        \nCodice Estensione|Valore|Nota\n-|-|-\nx-cache-type|noCache|Nessuna cache\
+        \ impostata Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: ALL**\n\nProfilo|Controllo| Funzione\n-|-|-\nALL|Funzione Pubblica|Security.checkDummy()\n\
+        \n\nClasse di modello : SessioneUtente\n======\n\nEstensioni sulle proprietà\
+        \n----\nProprietà | x-field-type\n-|-|\njwt|optional\n\n\nClasse di modello\
+        \ : SessioneUtente\n======\n\nEstensioni sulle proprietà\n----\nProprietà\
+        \ | x-field-type\n-|-|\njwt|optional\n"
+      operationId: "login"
+      parameters:
+      - name: "sessionLinguaCod"
+        in: "query"
+        description: "codice ISO_6392 della lingua con la quale recuperare le descrizioni,\
+          \ nel caso non sia passato in ingresso viene utilizzata la lingua di default\
+          \ del sistema, e nel caso la lingua richiesta non sia disponibile, viene\
+          \ restituita la descrizione nella lingua di default"
+        required: false
+        type: "string"
+      - name: "optionalFields"
+        in: "query"
+        description: "specifica la lista dei campi opzionali (che non vengono recupeati\
+          \ di default);\nimpostando il valore `ALL` vengono mostrati tutti i campi.\
+          \ \n\nPer gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns*\
+          \  \nI dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello)\n\
+          \nEsempi\n* per il campo childObj con la poprietà childProp utilizzare la\
+          \ notazione `childProp.prop1`\n* Per visualizzare tutte le proprietà di\
+          \ childObj utilizzare la notazione `childProp.*`\n* Per visualizzare tutte\
+          \ le proprietà di childObj e di tutti i discendenti utilizzare la notazione\
+          \ `childProp.**`\n"
+        required: false
+        type: "string"
+      responses:
+        "200":
+          description: "Successful response"
+          schema:
+            $ref: "#/definitions/SessioneUtente"
+        "300":
+          description: "Più profili disponibili, rieffettuare la login aggiungendo\
+            \ l'header X-Esse3-User-Profile, indicando come valore STUDENTE, DOCENTE\
+            \ o USER_TECNICO"
+          schema:
+            $ref: "#/definitions/SessioneUtente"
+        "401":
+          description: "login failed"
+      x-enabled-profiles:
+      - common-public-permissions:
+          kind: "ALL"
+          profiles:
+          - profile:
+              name: "ALL"
+              description: "Funzione Pubblica"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkDummy"
+                  description: "funzione che ritorna sempre true"
+      x-session-operation: "force"
+      x-custom-operation: "single"
+  /login/cache/:
+    get:
+      tags:
+      - "autenticazione"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>recupea le informazioni sulle cache abilitate\
+        \ per la sessione\n\n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n\
+        -|-|-\nx-cache-type|noCache|Nessuna cache impostata Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: AUTHENTICATED**\n\nProfilo|Controllo| Funzione\n-|-|-\nAUTENTICATO|Funzione\
+        \ riservata a tutti gli utenti autenticati|Security.checkAuthUser()\n"
+      operationId: "getCacheParams"
+      parameters: []
+      responses:
+        "200":
+          description: "Successful response"
+          schema:
+            $ref: "#/definitions/CacheInfo"
+      x-enabled-profiles:
+      - common-auth-permissions:
+          kind: "AUTHENTICATED"
+          profiles:
+          - profile:
+              name: "AUTENTICATO"
+              description: "Funzione riservata a tutti gli utenti autenticati"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkAuthUser"
+                  description: "funzione che ritorna true se l'utente risulta autenticato"
+      x-cache-type: "noCache"
+    put:
+      tags:
+      - "autenticazione"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>Imposta le cache da abiltiare/disabilitare\
+        \ per la sessione utente\n\n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n\
+        -|-|-\nx-cache-type|noCache|Nessuna cache impostata Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: AUTHENTICATED**\n\nProfilo|Controllo| Funzione\n-|-|-\nAUTENTICATO|Funzione\
+        \ riservata a tutti gli utenti autenticati|Security.checkAuthUser()\n\n\n\
+        Classe di modello : DettaglioErroreAggiuntivo\n======\n\nEstensioni sulle\
+        \ proprietà\n----\nProprietà | x-field-type\n-|-|\nrawValue|rawJson\n"
+      operationId: "setCacheParams"
+      parameters:
+      - in: "body"
+        name: "body"
+        description: "Oggetto che contiene le informazioni da impostare sulla cache"
+        required: true
+        schema:
+          $ref: "#/definitions/CacheInfo"
+      responses:
+        "200":
+          description: "Successful response"
+          schema:
+            $ref: "#/definitions/CacheInfo"
+        "422":
+          description: "Aggiornamento non riuscito"
+          schema:
+            $ref: "#/definitions/DettaglioErrore"
+      x-enabled-profiles:
+      - common-auth-permissions:
+          kind: "AUTHENTICATED"
+          profiles:
+          - profile:
+              name: "AUTENTICATO"
+              description: "Funzione riservata a tutti gli utenti autenticati"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkAuthUser"
+                  description: "funzione che ritorna true se l'utente risulta autenticato"
+      x-can-return-void: true
+      x-cache-type: "noCache"
+      x-cache-endpoint-relations:
+        canonicalEndpointsAction: "none"
+  /login/jwt/new:
+    get:
+      tags:
+      - "autenticazione"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>Recupera il token JWT rilasciato da esse3 relativo\
+        \ alla sessione utente già autenticata\n\nLa pagina di recupero delle chiavi\
+        \ per la validazione del token è reperibile sulla installazione di webesse3\
+        \ \nall'indirizzo <webesse3.url>/jwt/jwk.do\n\nIl token rilasciato contiene\
+        \ i seguenti claim\n* sub (secondo il par_cond OAUTH_USER_CLAIM)\n* iss =\
+        \ esse3\n* iat = epoch di generazione del token\n* exp = epoch di expire del\
+        \ token configurata nel gruppo utente\n* profile = profillo dell'utente\n\
+        * fiscalCode = codice Fiscale dell'utente\n* tenant = tenant dell'installazione\n\
+        \n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n-|-|-\nx-cache-type|noCache|Nessuna\
+        \ cache impostata Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: AUTHENTICATED**\n\nProfilo|Controllo| Funzione\n-|-|-\nAUTENTICATO|Funzione\
+        \ riservata a tutti gli utenti autenticati|Security.checkAuthUser()\n"
+      operationId: "getJWT"
+      parameters: []
+      responses:
+        "200":
+          description: "Successful response"
+          schema:
+            $ref: "#/definitions/JWTModel"
+      x-enabled-profiles:
+      - common-auth-permissions:
+          kind: "AUTHENTICATED"
+          profiles:
+          - profile:
+              name: "AUTENTICATO"
+              description: "Funzione riservata a tutti gli utenti autenticati"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkAuthUser"
+                  description: "funzione che ritorna true se l'utente risulta autenticato"
+  /login/lingua:
+    get:
+      tags:
+      - "autenticazione"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>Recupera la lingua impostata nella sessione\
+        \ utente. Questa lingua viene utilizzata nelle operazioni get per \neffettaure\
+        \ i recuperi delle descrizioni nella lingua selezionata (dove previsto) \n\
+        \n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n-|-|-\nx-cache-type|noCache|Nessuna\
+        \ cache impostata Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: AUTHENTICATED**\n\nProfilo|Controllo| Funzione\n-|-|-\nAUTENTICATO|Funzione\
+        \ riservata a tutti gli utenti autenticati|Security.checkAuthUser()\n"
+      operationId: "getLinguaCod"
+      parameters: []
+      responses:
+        "200":
+          description: "Successful response"
+          schema:
+            $ref: "#/definitions/LinguaSessione"
+      x-enabled-profiles:
+      - common-auth-permissions:
+          kind: "AUTHENTICATED"
+          profiles:
+          - profile:
+              name: "AUTENTICATO"
+              description: "Funzione riservata a tutti gli utenti autenticati"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkAuthUser"
+                  description: "funzione che ritorna true se l'utente risulta autenticato"
+    put:
+      tags:
+      - "autenticazione"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>Aggiorna la lingua di sessione. Questa lingua\
+        \ viene utilizzata nelle operazioni get per \neffettaure i recuperi delle\
+        \ descrizioni nella lingua selezionata (dove previsto) \n\n\n**Estensioni:**\n\
+        \nCodice Estensione|Valore|Nota\n-|-|-\nx-cache-type|noCache|Nessuna cache\
+        \ impostata Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: AUTHENTICATED**\n\nProfilo|Controllo| Funzione\n-|-|-\nAUTENTICATO|Funzione\
+        \ riservata a tutti gli utenti autenticati|Security.checkAuthUser()\n"
+      operationId: "setLinguaCod"
+      parameters:
+      - name: "sessionLinguaCod"
+        in: "query"
+        description: "codice ISO_6392 della lingua con la quale recuperare le descrizioni,\
+          \ nel caso non sia passato in ingresso viene utilizzata la lingua di default\
+          \ del sistema, e nel caso la lingua richiesta non sia disponibile, viene\
+          \ restituita la descrizione nella lingua di default"
+        required: false
+        type: "string"
+      responses:
+        "200":
+          description: "Successful response"
+          schema:
+            $ref: "#/definitions/LinguaSessione"
+      x-enabled-profiles:
+      - common-auth-permissions:
+          kind: "AUTHENTICATED"
+          profiles:
+          - profile:
+              name: "AUTENTICATO"
+              description: "Funzione riservata a tutti gli utenti autenticati"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkAuthUser"
+                  description: "funzione che ritorna true se l'utente risulta autenticato"
+      x-can-return-void: true
+      x-cache-endpoint-relations:
+        canonicalEndpointsAction: "none"
+  /logout:
+    get:
+      tags:
+      - "autenticazione"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>Effettua la logout da esse3.\n\n**Estensioni:**\n\
+        \nCodice Estensione|Valore|Nota\n-|-|-\nx-cache-type|noCache|Nessuna cache\
+        \ impostata Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: AUTHENTICATED**\n\nProfilo|Controllo| Funzione\n-|-|-\nAUTENTICATO|Funzione\
+        \ riservata a tutti gli utenti autenticati|Security.checkAuthUser()\n"
+      operationId: "logout"
+      parameters: []
+      responses:
+        "200":
+          description: "Successful response"
+      x-enabled-profiles:
+      - common-auth-permissions:
+          kind: "AUTHENTICATED"
+          profiles:
+          - profile:
+              name: "AUTENTICATO"
+              description: "Funzione riservata a tutti gli utenti autenticati"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkAuthUser"
+                  description: "funzione che ritorna true se l'utente risulta autenticato"
+      x-session-operation: "no-multiple"
+  /sessions/{sessionId}/check:
+    get:
+      tags:
+      - "autenticazione"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>controlla se il sessionId passato in ingresso\
+        \ è valido, nel caso non sia valido viene restituito 404\n\n\n**Estensioni:**\n\
+        \nCodice Estensione|Valore|Nota\n-|-|-\nx-cache-type|noCache|Nessuna cache\
+        \ impostata Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: user-tecnico-permissions**\n\nProfilo|Controllo| Funzione\n-|-|-\n\
+        UTENTE_TECNICO|funzione accessibile alle utenze tecniche per accessi ai servizi\
+        \ REST|Security.checkUserTecnico()\n"
+      operationId: "checkSessionId"
+      parameters:
+      - name: "sessionId"
+        in: "path"
+        description: "sessionId di backend"
+        required: true
+        type: "string"
+      responses:
+        "200":
+          description: "Successful response"
+      x-enabled-profiles:
+      - user-tecnico-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UTENTE_TECNICO"
+              description: "funzione accessibile alle utenze tecniche per accessi\
+                \ ai servizi REST"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkUserTecnico"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+      x-custom-method: "single"
+      x-cache-type: "noCache"
+securityDefinitions:
+  basicAuth:
+    description: "Autenticazione tramite BASIC authentication. Questa modalità è disponibile\
+      \ se l'autenticazione su esse3 non usa shibboleth per il gruppo dell'utente"
+    type: "basic"
+  jwt:
+    description: "Autenticazione tramite OAUTH2, occorre configurare il parametro\
+      \ di configurazione di ESSE3 che indica il server OAUTH2 da utilizzare"
+    type: "oauth2"
+    authorizationUrl: "https://idp-idm.unimib.it/idp/profile/oidc/authorize"
+    flow: "implicit"
+    scopes:
+      openid: "informazioni sull'utente"
+definitions:
+  ChangePasswordResult:
+    type: "object"
+    properties:
+      result:
+        type: "string"
+        description: "risultato dell'operazione, può valere:\n* OK - operazione andata\
+          \ a buon fine\n* NO_PERMISSIONS - l'utenza tecnica non ha i diritti per\
+          \ la funzione SI_18_008\n* EMPTY_PARAM - la password fornita è vuota\n*\
+          \ AUTH_FAILURE - la password passata nel parametro old_password non è corretta,\
+          \ oppure old_password non è fornito ed il parametro PWD_CHANGE_LOW_SECURITY\
+          \ non è popolato correttamente\n* INVALID_NEW_PASSWORD - la password non\
+          \ soddisfa i requisiti minimi configurati nel sistema\n* ERR_1118 - la password\
+          \ coincide con la password precedentemente inserita nel sistema\n* ERR_1003\
+          \ - l'utente specificato non è presenete nel sistema\n"
+    x-model-sub-package: "frk.v1"
+    x-model-sub-path: "frk/v1"
+  Utente:
+    type: "object"
+    required:
+    - "firstName"
+    - "grpDes"
+    - "grpId"
+    - "grpPta"
+    - "grpUserTecnicoFlg"
+    - "id"
+    - "lastName"
+    - "userId"
+    properties:
+      firstName:
+        type: "string"
+        example: "Mario"
+        description: "nome dell'utente"
+        maxLength: 80
+        x-internal-name: "nome"
+      lastName:
+        type: "string"
+        example: "Rossi"
+        description: "cognome dell'utente"
+        maxLength: 80
+        x-internal-name: "cognome"
+      sex:
+        type: "string"
+        example: "M"
+        description: "sesso dell'utente"
+        maxLength: 1
+        x-internal-name: "sesso"
+      codFis:
+        type: "string"
+        example: "XXXYYY99X12K123T"
+        description: "codice fiscale della persona"
+        minLength: 16
+        maxLength: 16
+      idAb:
+        type: "integer"
+        format: "int64"
+        example: 123
+        description: "idAb relativo alle anagrafiche comuni di U-Gov"
+      persId:
+        type: "integer"
+        format: "int64"
+        example: 123
+        description: "identificativo della persona, viene valorizzato solo per determinati\
+          \ gruppi (vedi campo grpId)\n  - 2 : gruppo didattica\n  - 4 : gruppo studenti\
+          \ in ipotesi\n  - 6 : gruppo studenti\n  - 8 : gruppo preiscritti\n  - 9\
+          \ : gruppo registrati\n"
+      docenteId:
+        type: "integer"
+        format: "int64"
+        example: 123
+        description: "identificativo del docente, viene valorizzato solo per determinati\
+          \ gruppi (vedi campo grpId)\n  - 7 : gruppo docenti \n"
+      soggEstId:
+        type: "integer"
+        format: "int64"
+        example: 123
+        description: "identificativo del soggetto esterno, viene valorizzato solo\
+          \ per determinati gruppi (vedi campo grpId)\n"
+      id:
+        type: "integer"
+        format: "int64"
+        example: 123
+        description: "Id identificativo univoco dell'utente"
+      grpId:
+        type: "integer"
+        format: "int32"
+        example: 123
+        description: "id del gruppo utente, viene utilizzato per descriminare l'anagrafica\
+          \ da utilizzare"
+      grpUserTecnicoFlg:
+        type: "integer"
+        format: "int32"
+        example: 0
+        description: "indica se il gruppo dell' utente e' un gruppo di utenti tecnici"
+      grpPta:
+        type: "integer"
+        format: "int32"
+        example: 0
+        description: "indica se il gruppo dell' utente e' un gruppo di personale tecnico\
+          \ amministrativo"
+      grpDes:
+        type: "string"
+        example: "Docente"
+        description: "descrizione del gruppo dell'utente"
+        maxLength: 20
+      sessionTimeout:
+        type: "integer"
+        format: "int32"
+        example: 10
+        description: "timeout di sessione in minuti impostato per il gruppo utente"
+      userId:
+        type: "string"
+        example: "mario.rossi"
+        description: "userId con il quale l'utente ha effettuato il login"
+        maxLength: 20
+      tipoFirmaId:
+        type: "integer"
+        format: "int32"
+        example: 0
+        description: "id del tipo firma collegato all'utente"
+        minimum: 0.0
+      tipoFirmaFaId:
+        type: "integer"
+        format: "int32"
+        example: 0
+        description: "id del tipo firma autmatica collegato all'utente"
+        minimum: 0.0
+      aliasName:
+        type: "string"
+        example: "Luca"
+        description: "nome alias dell'utente"
+        maxLength: 80
+        x-internal-name: "nome_alias"
+      trattiCarriera:
+        type: "array"
+        items:
+          $ref: "#/definitions/ChiaviTrattoCarriera"
+    x-model-sub-package: "frk.v1"
+    x-model-sub-path: "frk/v1"
+  JWKModel:
+    type: "object"
+    properties:
+      keys:
+        type: "array"
+        items:
+          $ref: "#/definitions/JWKKey"
+    x-model-sub-package: "frk.v1"
+    x-model-sub-path: "frk/v1"
+  ChiaviTrattoCarriera:
+    type: "object"
+    required:
+    - "cdsDes"
+    - "cdsId"
+    - "matId"
+    - "matricola"
+    - "staMatCod"
+    - "staMatDes"
+    - "staStuCod"
+    - "staStuDes"
+    - "stuId"
+    properties:
+      stuId:
+        type: "integer"
+        format: "int64"
+        example: 123
+        description: "id interno della carriera a cui appartiene il tratto di carriera\
+          \ dello studente"
+      matId:
+        type: "integer"
+        format: "int64"
+        example: 123
+        description: "id interno del tratto di carriera dello studente"
+        x-internal-name: "p04_mat_mat_id"
+      matricola:
+        type: "string"
+        example: "AA-123"
+        description: "codice matricola associato al tratto di carriera dello studente"
+      cdsId:
+        type: "integer"
+        format: "int64"
+        example: 123
+        description: "id del corso di studio a cui fa riferimento il tratto di carriera"
+      cdsDes:
+        type: "string"
+        description: "descrizione del corso di studio a cui fa riferimento il tratto\
+          \ di carriera"
+      staStuCod:
+        type: "string"
+        example: "A"
+        description: "codice dello stato della carriera a cui è associato il tratto.\
+          \ \nPer il dettaglio dei codici possibili consultare la documentazione di\
+          \ ESSE3\n"
+      staStuDes:
+        type: "string"
+        example: "Attivo"
+        description: "descrizione dello stato della carriera a cui è associato il\
+          \ tratto. \nPer il dettaglio dei codici possibili consultare la documentazione\
+          \ di ESSE3\n"
+        x-internal-name: "stati_stu_des"
+      motStastuCod:
+        type: "string"
+        example: "IMM"
+        description: "codice del motivo dello stato della carriera. Fornisce un dettaglio\
+          \ sulla motivazione dello stato della carriera \nPer il dettaglio dei codici\
+          \ possibili consultare la documentazione di ESSE3\n"
+      motStastuDes:
+        type: "string"
+        example: "Attivo"
+        description: "descrizione del motivo dello stato della carriera. Fornisce\
+          \ un dettaglio sulla motivazione dello stato della carriera\nPer il dettaglio\
+          \ dei codici possibili consultare la documentazione di ESSE3\n"
+      staMatCod:
+        type: "string"
+        example: "A"
+        description: "codice dello stato del tratto di carriera \nPer il dettaglio\
+          \ dei codici possibili consultare la documentazione di ESSE3\n"
+      staMatDes:
+        type: "string"
+        example: "Attivo"
+        description: "descrizione dello stato del tratto di carriera \nPer il dettaglio\
+          \ dei codici possibili consultare la documentazione di ESSE3\n"
+        x-internal-name: "stati_mat_des"
+      dettaglioTratto:
+        $ref: "#/definitions/TrattoCarriera"
+    x-model-sub-package: "frk.v1"
+    x-model-sub-path: "frk/v1"
+  DettaglioErrore:
+    type: "object"
+    properties:
+      statusCode:
+        type: "integer"
+        format: "int32"
+        example: 200
+        description: "Http Status Code"
+      retCode:
+        type: "integer"
+        format: "int32"
+        example: -1
+        description: "codice di errore"
+      retErrMsg:
+        type: "string"
+        example: "Parametri non corretti"
+        description: "descrizione dell'errore"
+      errDetails:
+        type: "array"
+        items:
+          $ref: "#/definitions/DettaglioErroreAggiuntivo"
+    x-model-sub-package: "frk.v1"
+    x-model-sub-path: "frk/v1"
+  SessioneUtente:
+    type: "object"
+    required:
+    - "authToken"
+    - "expPwd"
+    - "user"
+    properties:
+      user:
+        $ref: "#/definitions/Utente"
+      authToken:
+        type: "string"
+        example: "XDddlw213123ws233"
+        description: "contiene il token di autenticazione (jsessionid) della sessione\
+          \ web"
+      internalAuthToken:
+        type: "string"
+        example: "ASDFKLASJKdk12kl341s"
+        description: "token di autenticazione (sessionid) del backend di esse3"
+      expPwd:
+        type: "boolean"
+        example: false
+        description: "indica se la password risulta scaduta"
+      credentials:
+        $ref: "#/definitions/CredenzialiAutenticazione"
+      jwt:
+        type: "string"
+        description: "popolato solo se richiesto tramite l'apposito parametro, rappresenta\
+          \ un token JWT rilasciato da esse3'"
+        x-field-type: "optional"
+      profili:
+        type: "array"
+        items:
+          $ref: "#/definitions/ProfiloUtente"
+    x-model-sub-package: "frk.v1"
+    x-model-sub-path: "frk/v1"
+  ParametriChangeUserPassword:
+    type: "object"
+    required:
+    - "newPassword"
+    - "username"
+    properties:
+      username:
+        type: "string"
+        description: "username dell'utente a cui cambiare la password"
+      oldPassword:
+        type: "string"
+        description: "vecchia password"
+      newPassword:
+        type: "string"
+        description: "nuova password"
+    x-model-sub-package: "frk.v1"
+    x-model-sub-path: "frk/v1"
+  ProfiloUtente:
+    type: "object"
+    properties:
+      grpId:
+        type: "integer"
+        format: "int64"
+        description: "id interno del profilo utente"
+      des:
+        type: "string"
+        description: "descrizione profilo"
+      userId:
+        type: "string"
+        description: "userId dell'utente"
+    x-model-sub-package: "frk.v1"
+    x-model-sub-path: "frk/v1"
+  JWKKey:
+    type: "object"
+    properties:
+      kty:
+        type: "string"
+        description: "key type"
+      kid:
+        type: "string"
+        description: "key ID"
+      alg:
+        type: "string"
+        description: "algoritm"
+      "n":
+        type: "string"
+      e:
+        type: "string"
+    x-model-sub-package: "frk.v1"
+    x-model-sub-path: "frk/v1"
+  DettaglioErroreAggiuntivo:
+    type: "object"
+    properties:
+      errorType:
+        type: "string"
+        example: "stackTrace"
+        description: "descrizione del tipo di errore aggiuntivo"
+      value:
+        type: "string"
+        example: "SocketTimeoutException...."
+        description: "descrizione dell'errore"
+      rawValue:
+        type: "string"
+        example: "SocketTimeoutException...."
+        description: "descrizione dell'errore"
+        x-field-type: "rawJson"
+    x-model-sub-package: "frk.v1"
+    x-model-sub-path: "frk/v1"
+  LinguaSessione:
+    type: "object"
+    required:
+    - "linguaCod"
+    properties:
+      linguaCod:
+        type: "string"
+        example: "ita"
+        description: "codice ISO6392 per la definizione della lingua"
+    x-model-sub-package: "frk.v1"
+    x-model-sub-path: "frk/v1"
+  CredenzialiAutenticazione:
+    type: "object"
+    required:
+    - "kind"
+    properties:
+      kind:
+        type: "string"
+        description: "tipo di autenticazione"
+        enum:
+        - "BASIC"
+        - "BEARER"
+      profile:
+        type: "string"
+        description: "profilo utente"
+        enum:
+        - "GUEST"
+        - "STUDENTE"
+        - "DOCENTE"
+        - "USER_TECNICO"
+        - "IMMATRICOLATI_IN_IPOTESI"
+        - "REGISTRATO"
+      jwtKeyId:
+        type: "string"
+        example: "univ"
+        description: "keyId definito nel token di autenticazione JWT"
+      user:
+        type: "string"
+        example: "m.rossi"
+        description: "userId di autenticazione nel caso di BASIC"
+    x-model-sub-package: "frk.v1"
+    x-model-sub-path: "frk/v1"
+  TrattoCarriera:
+    type: "object"
+    properties:
+      profCod:
+        type: "string"
+        example: "1"
+        description: "codice del profilo assegnato allo studente"
+      facCod:
+        type: "string"
+        example: "FAC"
+        description: "codice del dipartimento dello studente"
+      facId:
+        type: "integer"
+        format: "int64"
+        example: 123
+        description: "facId del tratto attivo dello studente"
+        minimum: 0.0
+        x-internal-name: "p06_fac_fac_id"
+      stuId:
+        type: "integer"
+        format: "int64"
+        example: 123
+        description: "id interno della carriera a cui appartiene il tratto di carriera\
+          \ dello studente"
+      matId:
+        type: "integer"
+        format: "int64"
+        example: 123
+        description: "matId dello studente"
+        minimum: 0.0
+      cdsCod:
+        type: "string"
+        example: "CDS"
+        description: "codice del corso dello studente"
+      cdsId:
+        type: "integer"
+        format: "int64"
+        example: 123
+        description: "cdsId del tratto attivo dello studente"
+        minimum: 0.0
+      aaOrdId:
+        type: "integer"
+        format: "int32"
+        example: 2021
+        description: "anno di ordinamento del tratto attivo dello studente"
+        minimum: 1970.0
+        maximum: 2100.0
+      pdsCod:
+        type: "string"
+        example: "PFS"
+        description: "codice del percorso dello studente"
+      pdsId:
+        type: "integer"
+        format: "int64"
+        example: 123
+        description: "pdsId del tratto attivo dello studente"
+        minimum: 0.0
+      iscrId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "id dell'iscrizione dello studente"
+        minimum: 0.0
+      staStuCod:
+        type: "string"
+        example: "A"
+        description: "codice dello stato della carriera a cui è associato il tratto.\
+          \ \nPer il dettaglio dei codici possibili consultare la documentazione di\
+          \ ESSE3\n"
+      motStastuCod:
+        type: "string"
+        example: "IMM"
+        description: "codice del motivo dello stato della carriera. Fornisce un dettaglio\
+          \ sulla motivazione dello stato della carriera \nPer il dettaglio dei codici\
+          \ possibili consultare la documentazione di ESSE3\n"
+      staMatCod:
+        type: "string"
+        example: "A"
+        description: "codice dello stato del tratto di carriera \nPer il dettaglio\
+          \ dei codici possibili consultare la documentazione di ESSE3\n"
+      motStamatCod:
+        type: "string"
+        example: "TRI"
+        description: "codice del motivo dello stato della matricola. Fornisce un dettaglio\
+          \ sulla motivazione dello stato della matricola \nPer il dettaglio dei codici\
+          \ possibili consultare la documentazione di ESSE3\n"
+      staIscrCod:
+        type: "string"
+        example: "A"
+        description: "codice dello stato dell'iscrizione\nPer il dettaglio dei codici\
+          \ possibili consultare la documentazione di ESSE3\n"
+      motStaiscrCod:
+        type: "string"
+        example: "TRI"
+        description: "codice del motivo dello stato della iscrizione. Fornisce un\
+          \ dettaglio sulla motivazione dello stato della iscrizione \nPer il dettaglio\
+          \ dei codici possibili consultare la documentazione di ESSE3\n"
+      annoCorso:
+        type: "integer"
+        format: "int32"
+        example: 1
+        description: "anno di corso dello studente"
+        minimum: 1.0
+      anniFC:
+        type: "integer"
+        format: "int32"
+        example: 1
+        description: "numero di anni fuori corso dello studente"
+        x-internal-name: "anni_fc"
+      aaIscrId:
+        type: "integer"
+        format: "int32"
+        example: 2022
+        description: "anno di iscrizione dello studente"
+        minimum: 1970.0
+        maximum: 2100.0
+      durataAnni:
+        type: "integer"
+        format: "int32"
+        example: 3
+        description: "durata di anni legale del corso dello studente"
+        minimum: 0.0
+      ultimoAnnoFlg:
+        type: "integer"
+        format: "int32"
+        example: 1
+        description: "flag che indica se l'anno di iscrizione è l'ultimo anno di corso"
+        minimum: 0.0
+        maximum: 1.0
+      condFlg:
+        type: "integer"
+        format: "int32"
+        example: 1
+        description: "flag che indica se l'iscrizione è condizionata"
+        minimum: 0.0
+        maximum: 1.0
+      domiscrFlg:
+        type: "integer"
+        format: "int32"
+        example: 1
+        description: "flag che indica se lo studente ha presentato domanda di iscrizone"
+        minimum: 0.0
+        maximum: 1.0
+      tipoCorsoCod:
+        type: "string"
+        example: "LM"
+        description: "codice del tipo di corso del corso dello studente"
+        x-internal-name: "p06_cds_tipo_corso_cod"
+      aaRegId:
+        type: "integer"
+        format: "int32"
+        example: 1
+        description: "anno di coorte dello studente"
+        minimum: 1970.0
+        maximum: 2100.0
+      tipoSpecCod:
+        type: "string"
+        example: "MED"
+        description: "codice del tipo di specializzazione del corso dello studente"
+      tipoIscrCod:
+        type: "string"
+        example: "IC"
+        description: "codice del tipo di iscrizione dello studente"
+      passaggioFlg:
+        type: "integer"
+        format: "int32"
+        example: 1
+        description: "indica se lo studente ha richiesto un passaggio"
+        minimum: 0.0
+        maximum: 1.0
+      notaBloccanteFlg:
+        type: "integer"
+        format: "int32"
+        example: 1
+        description: "id della nota bloccante se presente"
+        minimum: 0.0
+        maximum: 1.0
+      mobilFlg:
+        type: "integer"
+        format: "int32"
+        example: 1
+        description: "flag che indica se il profilo è attivo su web per gli studenti\
+          \ di mobilità"
+        minimum: 0.0
+        maximum: 1.0
+      ptFlg:
+        type: "integer"
+        format: "int32"
+        example: 1
+        description: "indica se lo studente è part time"
+        minimum: 0.0
+        maximum: 1.0
+      normId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "id del tipo di normativa"
+      tipoCatAmmId:
+        type: "integer"
+        format: "int64"
+        example: 123
+        description: "cid del tipo di categoria amministrativa"
+    x-layout-name: "ISCR_ANN_MAX_WEB"
+    x-winsession-name: "p04/n_am_04_001_studente_web"
+    x-model-sub-package: "frk.v1"
+    x-model-sub-path: "frk/v1"
+  CheckLogonResult:
+    type: "object"
+    properties:
+      ok:
+        type: "boolean"
+        description: "indica se la verifica delle credenziali ha avuto successp"
+      changePassword:
+        type: "boolean"
+        description: "indica se l'utente deve cambiare la password (ad esempio perché\
+          \ scaduta)"
+    x-model-sub-package: "frk.v1"
+    x-model-sub-path: "frk/v1"
+  CacheInfo:
+    type: "object"
+    required:
+    - "httpCacheEnable"
+    - "serverCacheEnable"
+    properties:
+      httpCacheEnable:
+        type: "integer"
+        format: "int32"
+        example: 1
+        description: "indica se ablitare (1)  o disabilitare (0) la cache http tramite\
+          \ gli header sulla response"
+        minimum: 0.0
+        maximum: 1.0
+      serverCacheEnable:
+        type: "integer"
+        format: "int32"
+        example: 1
+        description: "indica se ablitare (1)  o disabilitare (0) la cache lato server"
+        minimum: 0.0
+        maximum: 1.0
+    x-model-sub-package: "frk.v1"
+    x-model-sub-path: "frk/v1"
+  JWTModel:
+    type: "object"
+    properties:
+      jwt:
+        type: "string"
+        description: "jwt"
+    x-model-sub-package: "frk.v1"
+    x-model-sub-path: "frk/v1"
+parameters:
+  password:
+    name: "password"
+    in: "query"
+    description: "password da impostare per l'utente"
+    required: true
+    type: "string"
+  old_password:
+    name: "old_password"
+    in: "query"
+    description: "password attuale dell'utente; se il parametro non è presente è necessario\
+      \ che il parametro di configurazione PWD_CHANGE_LOW_SECURITY sia impostato nel\
+      \ sistema con VAL_NUM=1"
+    required: false
+    type: "string"
+  user:
+    name: "user"
+    in: "query"
+    description: "utente per cui modificare la password"
+    required: true
+    type: "string"
+externalDocs:
+  description: "Documentazione Geneale sui servizi REST"
+  url: "https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3"
+x-file-status: "PROD"
+x-file-name: "frk-authApiV1.yaml"
+x-api-status: "PROD"
+x-func-cod: "RST_AUTHV1"
+x-cache-type: "noCache"

@@ -79,9 +79,3 @@ The API was reverse engineered by analyzing the underlying JSON endpoints used b
 The `combo.php` endpoint returns data embedded in JavaScript variable assignments (e.g., `var elenco_corsi = [...];`), which the client extracts and parses as JSON.
 
 Only one operation uses HTML scraping: `buildings.getRoomDetails()` parses the Vetrina Aule HTML page for detailed room information (capacity, equipment, accessibility).
-
-## Dependencies
-
-- Ktor 3.3 (HTTP client)
-- Kotlinx Serialization (JSON)
-- Jsoup 1.22 (HTML parsing for room details only)

@@ -3,7 +3,7 @@ package it.attendance100.mybicocca.data.api.elearning
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Test
 
-class ElearningMessageApiTest : ElearningTestBase() {
+class ElearningMessageApiTest : ElearningTestApiBase() {
 
     @Test
     suspend fun getUnreadConversationCounts() {

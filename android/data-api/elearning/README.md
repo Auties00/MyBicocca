@@ -95,9 +95,3 @@ Two operations use HTML scraping for course catalog browsing (no authentication 
 
 - `courses.getCoursesAreas()` - Scrapes course categories from the homepage
 - `courses.getCourseCategoryContents()` - Scrapes courses within a category
-
-## Dependencies
-
-- Ktor 3.3 (HTTP client)
-- Kotlinx Serialization (JSON)
-- Jsoup 1.22 (HTML parsing for course catalog)

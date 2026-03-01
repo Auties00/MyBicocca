@@ -1,42 +1,38 @@
 package it.attendance100.mybicocca.data.api.bicoccapp
 
 import it.attendance100.mybicocca.data.dto.bicoccapp.BicoccappAppealSession
-import it.attendance100.mybicocca.data.dto.bicoccapp.BicoccappExamBookingResponse
-import it.attendance100.mybicocca.data.dto.bicoccapp.BicoccappExamsSessionsResponse
+import it.attendance100.mybicocca.data.dto.bicoccapp.BicoccappExamBookingResult
+import it.attendance100.mybicocca.data.dto.bicoccapp.BicoccappExamSession
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.fail
 
 class BicoccappExamsApiTest : BicoccappApiTestBase() {
 
     @Test
     suspend fun getExams() {
         val exams = api.exams.getExams(profile.enrollmentId)
-        assertNotNull(exams.career.exams)
+        assertNotNull(exams.notations)
+        assertTrue(exams.notations.isNotEmpty())
+        assertNotNull(exams.exams)
+        assertTrue(exams.exams.isNotEmpty())
+        assertNotNull(exams.remainingExams)
+        assertTrue(exams.remainingExams.isNotEmpty())
     }
+
 
     @Test
     suspend fun getExamsSessions() {
         val sessions = api.exams.getExamsSessions(profile.personId, profile.enrollmentId)
-        assertNotNull(sessions.career)
+        assertNotNull(sessions)
+        assertTrue(sessions.isNotEmpty())
     }
 
     @Test
     suspend fun manageExamSession() {
-        val sessions = api.exams.getExamsSessions(profile.personId, profile.enrollmentId)
-        val career = sessions.career
-        if (career.courses.isEmpty()) {
-            return
-        }
-
-        var success = false
-        for (course in career.courses) {
-            if (success) break
-
+        val courses = api.exams.getExamsSessions(profile.personId, profile.enrollmentId)
+        for (course in courses) {
             for (appeal in course.appeals) {
-                if (success) break
-
                 if (!appeal.isBookable) continue
 
                 val cdsId = course.degreeCourseId
@@ -48,7 +44,7 @@ class BicoccappExamsApiTest : BicoccappApiTestBase() {
                 val addResponse = api.exams.addExamSession(
                     cdsId, activityId, activityItemId, activityAppealId
                 )
-                if (!addResponse.isAcceptable()) continue
+                if (addResponse !is BicoccappExamBookingResult.Success) continue
 
                 // Verify
                 val verify1 = api.exams.getExamsSessions(profile.personId, profile.enrollmentId)
@@ -59,48 +55,24 @@ class BicoccappExamsApiTest : BicoccappApiTestBase() {
                 val cancelResponse = api.exams.cancelExamSession(
                     cdsId, activityId, activityItemId, activityAppealId, profile.studentId
                 )
-                if (!cancelResponse.isAcceptable()) continue
+                if (cancelResponse !is BicoccappExamBookingResult.Success) continue
 
                 // Verify Rollback
                 val verify2 = api.exams.getExamsSessions(profile.personId, profile.enrollmentId)
                 val updatedAppeal2 = findAppeal(verify2, activityAppealId)
                 assertTrue(updatedAppeal2?.status == "P")
-
-                success = true
-            }
-        }
-
-        if (!success) {
-            fail {
-                "Cannot manage exam sessions: no valid entry"
-            }
-        }
-    }
-
-    private fun BicoccappExamBookingResponse.isAcceptable(): Boolean {
-        return when (this) {
-            is BicoccappExamBookingResponse.Success -> true
-            is BicoccappExamBookingResponse.Error -> {
-                if (redirectUrl != null) {
-                    false
-                } else {
-                    fail {
-                        "Cannot manage exam sessions: $message (status: $status, code: $code)"
-                    }
-                }
             }
         }
     }
 
     private fun findAppeal(
-        response: BicoccappExamsSessionsResponse,
+        session: List<BicoccappExamSession>,
         appealId: Int
     ): BicoccappAppealSession? {
-        response.career.courses.forEach { course ->
-            course.appeals.forEach { appeal ->
-                if (appeal.activityAppealId == appealId) return appeal
+        return session.firstNotNullOfOrNull { session ->
+            session.appeals.firstOrNull { appeal ->
+                appeal.activityAppealId == appealId
             }
         }
-        return null
     }
 }

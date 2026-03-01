@@ -1,0 +1,1830 @@
+---
+swagger: "2.0"
+info:
+  description: "API REST di ESSE3 per servizi generali\n\n## ChangeLog\n\nVersione\
+    \       | Versione di Esse3 di rilascio | Interventi \n-              | -    \
+    \                         | -\n    1.1.0      | 19.09.02.00                  \
+    \ | aggiunto il metodo /elenchi/{tstId}\n    1.1.0      | 19.09.02.00        \
+    \           | aggiunto il metodo /utente-info/{userId} \n"
+  version: "1.1.0"
+  title: "ESSE3 servizi API"
+basePath: "/servizi-service-v1"
+schemes:
+- "https"
+- "http"
+consumes:
+- "application/json"
+produces:
+- "application/json"
+security:
+- basicAuth: []
+- jwt:
+  - "openid"
+paths:
+  /alias/{userId}:
+    get:
+      tags:
+      - "servizi"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>Recupera le informazioni dell'alias.\n\n**Estensioni:**\n\
+        \nCodice Estensione|Valore|Nota\n-|-|-\nx-cache-type|noCache|Nessuna cache\
+        \ impostata Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: USER_TECNICO**\n\nProfilo|Controllo| Funzione\n-|-|-\nUTENTE_TECNICO|funzione\
+        \ accessibile alle utenze tecniche per accessi ai servizi REST|Security.checkUserTecnico()\n\
+        \n\nClasse di modello : DettaglioErroreAggiuntivo\n======\n\nEstensioni sulle\
+        \ proprietà\n----\nProprietà | x-field-type\n-|-|\nrawValue|rawJson\n"
+      operationId: "getAlias"
+      parameters:
+      - name: "userId"
+        in: "path"
+        description: "identificativo univoco che permette di estrarre i dati di utenza\
+          \ dalla tabella P18_USER"
+        required: true
+        type: "string"
+      responses:
+        "200":
+          description: "successful operation"
+          schema:
+            $ref: "#/definitions/Alias"
+        "422":
+          description: "parametri errati"
+          schema:
+            $ref: "#/definitions/DettaglioErrore"
+      x-enabled-profiles:
+      - user-tecnico-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UTENTE_TECNICO"
+              description: "funzione accessibile alle utenze tecniche per accessi\
+                \ ai servizi REST"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkUserTecnico"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+      x-cache-type: "noCache"
+    post:
+      tags:
+      - "alias"
+      summary: "Inserisce gli alias"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>Il sevizio che provvede all’inserimento dell’\
+        alias. Verrà richiesto come parametro di esecuzione utente associato all'anagrafica\
+        \ a cui attribuire l'alias (tramite il servizio di recupero utenti sarà possibile\
+        \ determinare l’utente dal codice fiscale), l'alias da attribuire e l'eventuale\
+        \ data di scadenza dell'alias (parametro opzionale). Nel caso in cui l alias\
+        \ sia già presente effettua un aggiornamento della data.\n\n**Estensioni:**\n\
+        \nCodice Estensione|Valore|Nota\n-|-|-\nx-cache-type|configuration|Risorsa\
+        \ di configurazione, la variazione è molto lenta, cache Http abilitata, cache\
+        \ server abilitata. Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: USER_TECNICO**\n\nProfilo|Controllo| Funzione\n-|-|-\nUTENTE_TECNICO|funzione\
+        \ accessibile alle utenze tecniche per accessi ai servizi REST|Security.checkUserTecnico()\n\
+        \n\nClasse di modello : DettaglioErroreAggiuntivo\n======\n\nEstensioni sulle\
+        \ proprietà\n----\nProprietà | x-field-type\n-|-|\nrawValue|rawJson\n"
+      operationId: "insertUpdateAlias"
+      parameters:
+      - name: "userId"
+        in: "path"
+        description: "identificativo univoco che permette di estrarre i dati di utenza\
+          \ dalla tabella P18_USER"
+        required: true
+        type: "string"
+      - name: "alias"
+        in: "query"
+        description: "alias dell utente"
+        required: true
+        type: "string"
+      - name: "dataScadenza"
+        in: "query"
+        description: "data di scadenza"
+        required: false
+        type: "string"
+      responses:
+        "201":
+          description: "Update succeded"
+          schema:
+            $ref: "#/definitions/Alias"
+        "422":
+          description: "aggiornamento non riuscito"
+          schema:
+            $ref: "#/definitions/DettaglioErrore"
+      x-enabled-profiles:
+      - user-tecnico-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UTENTE_TECNICO"
+              description: "funzione accessibile alle utenze tecniche per accessi\
+                \ ai servizi REST"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkUserTecnico"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+      x-custom-operation: "single"
+      x-cache-endpoint-relations:
+        canonicalEndpointsAction: "invalidate"
+    delete:
+      tags:
+      - "alias"
+      summary: "Elimina l'alias associato ad un utente"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>Provvede alla cancellazione dell’alias\n\n\n\
+        **Estensioni:**\n\nCodice Estensione|Valore|Nota\n-|-|-\nx-cache-type|configuration|Risorsa\
+        \ di configurazione, la variazione è molto lenta, cache Http abilitata, cache\
+        \ server abilitata. Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: user-tecnico-permissions**\n\nProfilo|Controllo| Funzione\n-|-|-\n\
+        UTENTE_TECNICO|funzione accessibile alle utenze tecniche per accessi ai servizi\
+        \ REST|Security.checkUserTecnico()\n\n\nClasse di modello : DettaglioErroreAggiuntivo\n\
+        ======\n\nEstensioni sulle proprietà\n----\nProprietà | x-field-type\n-|-|\n\
+        rawValue|rawJson\n"
+      operationId: "deleteAlias"
+      parameters:
+      - name: "userId"
+        in: "path"
+        description: "identificativo univoco che permette di estrarre i dati di utenza\
+          \ dalla tabella P18_USER"
+        required: true
+        type: "string"
+      - name: "alias"
+        in: "query"
+        description: "alias dell utente"
+        required: true
+        type: "string"
+      responses:
+        "204":
+          description: "Delete succeded"
+          schema:
+            $ref: "#/definitions/RitornoAlias"
+        "422":
+          description: "parametri Errati"
+          schema:
+            $ref: "#/definitions/DettaglioErrore"
+      x-enabled-profiles:
+      - user-tecnico-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UTENTE_TECNICO"
+              description: "funzione accessibile alle utenze tecniche per accessi\
+                \ ai servizi REST"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkUserTecnico"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+      x-cache-endpoint-relations:
+        canonicalEndpointsAction: "invalidate"
+  /annoRif/{tipoDataRifCod}:
+    get:
+      tags:
+      - "servizi"
+      description: "Recupera le informazioni dell'anno accademico di riferimento relativo\
+        \ al tipo data di input.\n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n\
+        -|-|-\nx-cache-type|configuration|Risorsa di configurazione, la variazione\
+        \ è molto lenta, cache Http abilitata, cache server abilitata. Maggiori dettagli\
+        \ [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: common-public-permissions**\n\nProfilo|Controllo| Funzione\n-|-|-\n\
+        ALL|Funzione Pubblica|Security.checkDummy()\n\n\nClasse di modello : AnnoDiRiferimento\n\
+        ======\n\nEstensioni sulle proprietà\n----\nProprietà | x-field-type\n-|-|\n\
+        tipoDataRifCod|primaryKey\n"
+      operationId: "getAnnoAccademico"
+      parameters:
+      - name: "tipoDataRifCod"
+        in: "path"
+        description: "codice del tipo data di riferimento"
+        required: true
+        type: "string"
+      - name: "tipoCorsoCod"
+        in: "query"
+        description: "codice del tipo di corso di studio"
+        required: false
+        type: "string"
+      - name: "dataRif"
+        in: "query"
+        description: "data di riferimento"
+        required: false
+        type: "string"
+      responses:
+        "200":
+          description: "successful operation"
+          schema:
+            $ref: "#/definitions/AnnoDiRiferimento"
+        "422":
+          description: "parametri errati"
+      security: []
+      x-enabled-profiles:
+      - common-public-permissions:
+          kind: "ALL"
+          profiles:
+          - profile:
+              name: "ALL"
+              description: "Funzione Pubblica"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkDummy"
+                  description: "funzione che ritorna sempre true"
+  /dati-strutturali/lingue:
+    get:
+      tags:
+      - "dati strutturali"
+      summary: "Recupera le lista delle lingue"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>\"Recupera le lista delle lingue\"\n\n\n**Estensioni:**\n\
+        \nCodice Estensione|Valore|Nota\n-|-|-\nx-cache-type|configuration|Risorsa\
+        \ di configurazione, la variazione è molto lenta, cache Http abilitata, cache\
+        \ server abilitata. Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: ALL**\n\nProfilo|Controllo| Funzione\n-|-|-\nALL|Funzione Pubblica|Security.checkDummy()\n\
+        \n\nClasse di modello : DettaglioErroreAggiuntivo\n======\n\nEstensioni sulle\
+        \ proprietà\n----\nProprietà | x-field-type\n-|-|\nrawValue|rawJson\n"
+      operationId: "getLingue"
+      parameters: []
+      responses:
+        "200":
+          description: "successful operation"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/Lingue"
+        "422":
+          description: "parametri errati"
+          schema:
+            $ref: "#/definitions/DettaglioErrore"
+      x-enabled-profiles:
+      - common-public-permissions:
+          kind: "ALL"
+          profiles:
+          - profile:
+              name: "ALL"
+              description: "Funzione Pubblica"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkDummy"
+                  description: "funzione che ritorna sempre true"
+  /elenchi/{tstId}:
+    get:
+      tags:
+      - "servizi"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>Servizio REST che provvede all’estrazione dei\
+        \ dati di un elenco identificato da tstId.\n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n\
+        -|-|-\nx-cache-type|configuration|Risorsa di configurazione, la variazione\
+        \ è molto lenta, cache Http abilitata, cache server abilitata. Maggiori dettagli\
+        \ [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: user-tecnico-massive-permissions**\n\nProfilo|Controllo| Funzione\n\
+        -|-|-\nUserTecnicoMassivo|funzione massiva riservata ad utenti tecnici autorizzati|Security.checkMassiveGET()\n"
+      operationId: "getElenchi"
+      parameters:
+      - name: "tstId"
+        in: "path"
+        description: "identificativo univoco che permette di estrarre i dati dalle\
+          \ tabelle P04_ELENCO_TST e P04_ELENCO_DETT"
+        required: true
+        type: "integer"
+        format: "int64"
+      - name: "start"
+        in: "query"
+        description: "utilizzato insieme a `limit` per indicare la paginazione sui\
+          \ record; `start` indica il numero del primo record da caricare (se non\
+          \ indicato viene utilizzato 0)\n"
+        required: false
+        type: "integer"
+        format: "int32"
+      - name: "limit"
+        in: "query"
+        description: "utilizzato insieme a `start` per indicare la paginazione sui\
+          \ record, `limit` indica il numero di record da recuperare (a partire da\
+          \ `start`); \nse non indicato viene utilizzato 50, i valori consentiti vanno\
+          \ da 0 a 100\n"
+        required: false
+        type: "integer"
+        format: "int32"
+      - name: "order"
+        in: "query"
+        description: "consente di specificare un ordine per il recupero dei record.\
+          \ La sintassi è la seguente\n * +/- : specifica l'ordinamento (+ = ASC,\
+          \ - = DESC); se omesso viene utilizzato +\n * field : nome del campo da\
+          \ ordinare\n \n E' possibile indicare più campi separandoli da virgola (Es:\
+          \ +annoCorso,+adCod) \n"
+        required: false
+        type: "string"
+      responses:
+        "200":
+          description: "Successful response"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/ElenchiElaborati"
+      x-enabled-profiles:
+      - user-tecnico-massive-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UserTecnicoMassivo"
+              description: "funzione massiva riservata ad utenti tecnici autorizzati"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkMassiveGET"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+  /grp-utenti:
+    get:
+      tags:
+      - "servizi"
+      summary: "gruppi utente gestiti su e3rest"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>\n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n\
+        -|-|-\nx-cache-type|configuration|Risorsa di configurazione, la variazione\
+        \ è molto lenta, cache Http abilitata, cache server abilitata. Maggiori dettagli\
+        \ [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: USER_TECNICO**\n\nProfilo|Controllo| Funzione\n-|-|-\nUserTecnicoMassivo|funzione\
+        \ massiva riservata ad utenti tecnici autorizzati|Security.checkMassiveGET()\n"
+      operationId: "getGruppiUtente"
+      parameters: []
+      responses:
+        "200":
+          description: "Successful response"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/GruppoUtente"
+      x-enabled-profiles:
+      - user-tecnico-massive-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UserTecnicoMassivo"
+              description: "funzione massiva riservata ad utenti tecnici autorizzati"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkMassiveGET"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+  /grp-utenti/{grpId}:
+    get:
+      tags:
+      - "servizi"
+      summary: "gruppi utente gestiti su e3rest"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>\n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n\
+        -|-|-\nx-cache-type|configuration|Risorsa di configurazione, la variazione\
+        \ è molto lenta, cache Http abilitata, cache server abilitata. Maggiori dettagli\
+        \ [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: USER_TECNICO**\n\nProfilo|Controllo| Funzione\n-|-|-\nUserTecnicoMassivo|funzione\
+        \ massiva riservata ad utenti tecnici autorizzati|Security.checkMassiveGET()\n"
+      operationId: "getGruppoUtente"
+      parameters:
+      - name: "grpId"
+        in: "path"
+        description: "identificativo univoco che permette di estrarre i dati del gruppo\
+          \ di un utente"
+        required: true
+        type: "integer"
+        format: "int32"
+      responses:
+        "200":
+          description: "Successful response"
+          schema:
+            $ref: "#/definitions/GruppoUtente"
+      x-enabled-profiles:
+      - user-tecnico-massive-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UserTecnicoMassivo"
+              description: "funzione massiva riservata ad utenti tecnici autorizzati"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkMassiveGET"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+  /par-conf:
+    get:
+      tags:
+      - "servizi"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>Recupera le informazioni di un array di parametri\
+        \ di configurazione legato al batch input. I parametri opzionali filtrano\
+        \ una UD qualsiasi dell'offerta. I parametri ozionali **start** e **limit**\
+        \ consentono di paginare i risultati.\n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n\
+        -|-|-\nx-cache-type|configuration|Risorsa di configurazione, la variazione\
+        \ è molto lenta, cache Http abilitata, cache server abilitata. Maggiori dettagli\
+        \ [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: USER_TECNICO**\n\nProfilo|Controllo| Funzione\n-|-|-\nUserTecnicoMassivo|funzione\
+        \ massiva riservata ad utenti tecnici autorizzati|Security.checkMassiveGET()\n\
+        \n**Utente: common-soggetto-esterno-permissions**\n\nProfilo|Controllo| Funzione\n\
+        -|-|-\nSOGG_EST|Permette la visualizzazione delle informazioni collegate ad\
+        \ una anagrafica soggetto esterno|Security.checkSoggettoEsterno()\n\n**Utente:\
+        \ docente-permissions**\n\nProfilo|Controllo| Funzione\n-|-|-\nDOCENTE|funzione\
+        \ accessibile alle utenze di tipo docente|Security.checkDocente()\n\n\nClasse\
+        \ di modello : ParametroDiConfigurazione\n======\n\nEstensioni sulle proprietà\
+        \n----\nProprietà | x-field-type\n-|-|\nparCod|primaryKey\n"
+      operationId: "getParametri"
+      parameters:
+      - name: "modulo"
+        in: "query"
+        description: "modulo di appartenenza del parametro di configurazione"
+        required: false
+        type: "string"
+      - name: "prodotto"
+        in: "query"
+        description: "prodotto di appartenenza del parametro di configurazione"
+        required: false
+        type: "string"
+      - name: "des"
+        in: "query"
+        description: "descrizione del parametro di configurazione  (se viene utilizzato\
+          \ il carattere * viene applicato il like)"
+        required: false
+        type: "string"
+      - name: "nota"
+        in: "query"
+        description: "nota associata al parametro di configurazione  (se viene utilizzato\
+          \ il carattere * viene applicato il like)"
+        required: false
+        type: "string"
+      - name: "start"
+        in: "query"
+        description: "utilizzato insieme a `limit` per indicare la paginazione sui\
+          \ record; `start` indica il numero del primo record da caricare (se non\
+          \ indicato viene utilizzato 0)\n"
+        required: false
+        type: "integer"
+        format: "int32"
+      - name: "limit"
+        in: "query"
+        description: "utilizzato insieme a `start` per indicare la paginazione sui\
+          \ record, `limit` indica il numero di record da recuperare (a partire da\
+          \ `start`); \nse non indicato viene utilizzato 50, i valori consentiti vanno\
+          \ da 0 a 100\n"
+        required: false
+        type: "integer"
+        format: "int32"
+      - name: "order"
+        in: "query"
+        description: "consente di specificare un ordine per il recupero dei record.\
+          \ La sintassi è la seguente\n * +/- : specifica l'ordinamento (+ = ASC,\
+          \ - = DESC); se omesso viene utilizzato +\n * field : nome del campo da\
+          \ ordinare\n \n E' possibile indicare più campi separandoli da virgola (Es:\
+          \ +annoCorso,+adCod) \n"
+        required: false
+        type: "string"
+      responses:
+        "200":
+          description: "successful operation"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/ParametroDiConfigurazione"
+      x-enabled-profiles:
+      - user-tecnico-massive-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UserTecnicoMassivo"
+              description: "funzione massiva riservata ad utenti tecnici autorizzati"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkMassiveGET"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+      - docente-permissions:
+          kind: "DOCENTE"
+          profiles:
+          - profile:
+              name: "DOCENTE"
+              description: "funzione accessibile alle utenze di tipo docente"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkDocente"
+                  description: "controlla che l'utente sia un docente"
+      - common-soggetto-esterno-permissions:
+          kind: "SOGG_EST"
+          profiles:
+          - profile:
+              name: "SOGG_EST"
+              description: "Permette la visualizzazione delle informazioni collegate\
+                \ ad una anagrafica soggetto esterno"
+              checks:
+              - checkAdmin:
+                  className: "Security"
+                  functionName: "checkSoggettoEsterno"
+                  description: "controlla che l'utente sia un soggetto esterno"
+  /par-conf/{parCod}/:
+    get:
+      tags:
+      - "servizi"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>Recupera le informazioni di un parametro di\
+        \ configurazione legato al batch input. I parametri opzionali filtrano una\
+        \ UD qualsiasi dell'offerta.\n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n\
+        -|-|-\nx-cache-type|configuration|Risorsa di configurazione, la variazione\
+        \ è molto lenta, cache Http abilitata, cache server abilitata. Maggiori dettagli\
+        \ [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: USER_TECNICO**\n\nProfilo|Controllo| Funzione\n-|-|-\nUserTecnicoMassivo|funzione\
+        \ massiva riservata ad utenti tecnici autorizzati|Security.checkMassiveGET()\n\
+        \n**Utente: DOCENTE**\n\nProfilo|Controllo| Funzione\n-|-|-\nDOCENTE|funzione\
+        \ accessibile alle utenze di tipo docente|Security.checkDocente()\n\n**Utente:\
+        \ SOGG_EST**\n\nProfilo|Controllo| Funzione\n-|-|-\nSOGG_EST|Permette la visualizzazione\
+        \ delle informazioni collegate ad una anagrafica soggetto esterno|Security.checkSoggettoEsterno()\n\
+        \n\nClasse di modello : ParametroDiConfigurazione\n======\n\nEstensioni sulle\
+        \ proprietà\n----\nProprietà | x-field-type\n-|-|\nparCod|primaryKey\n"
+      operationId: "getParametro"
+      parameters:
+      - name: "parCod"
+        in: "path"
+        description: "codice univoco che consente di individuare il parametro di configurazione"
+        required: true
+        type: "string"
+      responses:
+        "200":
+          description: "Successful response"
+          schema:
+            $ref: "#/definitions/ParametroDiConfigurazione"
+      x-enabled-profiles:
+      - user-tecnico-massive-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UserTecnicoMassivo"
+              description: "funzione massiva riservata ad utenti tecnici autorizzati"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkMassiveGET"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+      - docente-permissions:
+          kind: "DOCENTE"
+          profiles:
+          - profile:
+              name: "DOCENTE"
+              description: "funzione accessibile alle utenze di tipo docente"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkDocente"
+                  description: "controlla che l'utente sia un docente"
+      - common-soggetto-esterno-permissions:
+          kind: "SOGG_EST"
+          profiles:
+          - profile:
+              name: "SOGG_EST"
+              description: "Permette la visualizzazione delle informazioni collegate\
+                \ ad una anagrafica soggetto esterno"
+              checks:
+              - checkAdmin:
+                  className: "Security"
+                  functionName: "checkSoggettoEsterno"
+                  description: "controlla che l'utente sia un soggetto esterno"
+  /tipologie/docIdent:
+    get:
+      tags:
+      - "tipologie"
+      summary: "Recupera le tipologie dei documenti di identità"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>\"Recupera le tipologie dei documenti di identità\
+        . Se il parametro iso6392Cod è  nullo, verrà impostato di default a ita.\"\
+        \n\n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n-|-|-\nx-cache-type|configuration|Risorsa\
+        \ di configurazione, la variazione è molto lenta, cache Http abilitata, cache\
+        \ server abilitata. Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: ALL**\n\nProfilo|Controllo| Funzione\n-|-|-\nALL|Funzione Pubblica|Security.checkDummy()\n\
+        \n\nClasse di modello : DettaglioErroreAggiuntivo\n======\n\nEstensioni sulle\
+        \ proprietà\n----\nProprietà | x-field-type\n-|-|\nrawValue|rawJson\n"
+      operationId: "getTipiDocident"
+      parameters:
+      - name: "iso6392Cod"
+        in: "query"
+        description: "Codice ISO lingua"
+        required: false
+        type: "string"
+      responses:
+        "200":
+          description: "successful operation"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/TipoDocIdent"
+        "422":
+          description: "parametri errati"
+          schema:
+            $ref: "#/definitions/DettaglioErrore"
+      x-enabled-profiles:
+      - common-public-permissions:
+          kind: "ALL"
+          profiles:
+          - profile:
+              name: "ALL"
+              description: "Funzione Pubblica"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkDummy"
+                  description: "funzione che ritorna sempre true"
+  /tipologie/indirizzi:
+    get:
+      tags:
+      - "tipologie"
+      summary: "Recupera le tipologie di indirizzo"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>\"Recupera le tipologie di indirizzo. Se il\
+        \ parametro iso6392Cod è  nullo, verrà impostato di default a ita.\"\n\n\n\
+        **Estensioni:**\n\nCodice Estensione|Valore|Nota\n-|-|-\nx-cache-type|configuration|Risorsa\
+        \ di configurazione, la variazione è molto lenta, cache Http abilitata, cache\
+        \ server abilitata. Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: ALL**\n\nProfilo|Controllo| Funzione\n-|-|-\nALL|Funzione Pubblica|Security.checkDummy()\n\
+        \n\nClasse di modello : DettaglioErroreAggiuntivo\n======\n\nEstensioni sulle\
+        \ proprietà\n----\nProprietà | x-field-type\n-|-|\nrawValue|rawJson\n"
+      operationId: "getTipiIndirizzi"
+      parameters: []
+      responses:
+        "200":
+          description: "successful operation"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/TipoIndirizzo"
+        "422":
+          description: "parametri errati"
+          schema:
+            $ref: "#/definitions/DettaglioErrore"
+      x-enabled-profiles:
+      - common-public-permissions:
+          kind: "ALL"
+          profiles:
+          - profile:
+              name: "ALL"
+              description: "Funzione Pubblica"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkDummy"
+                  description: "funzione che ritorna sempre true"
+  /tipologie/riconoscimento-ad:
+    get:
+      tags:
+      - "tipologie"
+      summary: "Recupera le tipologie di riconoscimento delle attività didattiche"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>Recupera le tipologie di riconoscimento delle\
+        \ attività didattiche.\n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n\
+        -|-|-\nx-cache-type|configuration|Risorsa di configurazione, la variazione\
+        \ è molto lenta, cache Http abilitata, cache server abilitata. Maggiori dettagli\
+        \ [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: USER_TECNICO**\n\nProfilo|Controllo| Funzione\n-|-|-\nUTENTE_TECNICO|funzione\
+        \ accessibile alle utenze tecniche per accessi ai servizi REST|Security.checkUserTecnico()\n\
+        \n\nClasse di modello : DettaglioErroreAggiuntivo\n======\n\nEstensioni sulle\
+        \ proprietà\n----\nProprietà | x-field-type\n-|-|\nrawValue|rawJson\n"
+      operationId: "getTipiRic"
+      parameters: []
+      responses:
+        "200":
+          description: "successful operation"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/TipoRic"
+        "422":
+          description: "parametri errati"
+          schema:
+            $ref: "#/definitions/DettaglioErrore"
+      x-enabled-profiles:
+      - user-tecnico-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UTENTE_TECNICO"
+              description: "funzione accessibile alle utenze tecniche per accessi\
+                \ ai servizi REST"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkUserTecnico"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+  /tipologie/rimborsi:
+    get:
+      tags:
+      - "tipologie"
+      summary: "Recupera le tipologie dei rimborsi di pagamento"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>\"Recupera le tipologie dei rimborsi di pagamento.\
+        \ Se il parametro iso6392Cod è  nullo, verrà impostato di default a ita.\"\
+        \n\n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n-|-|-\nx-cache-type|configuration|Risorsa\
+        \ di configurazione, la variazione è molto lenta, cache Http abilitata, cache\
+        \ server abilitata. Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: ALL**\n\nProfilo|Controllo| Funzione\n-|-|-\nALL|Funzione Pubblica|Security.checkDummy()\n\
+        \n\nClasse di modello : DettaglioErroreAggiuntivo\n======\n\nEstensioni sulle\
+        \ proprietà\n----\nProprietà | x-field-type\n-|-|\nrawValue|rawJson\n"
+      operationId: "getTipiRimbPag"
+      parameters:
+      - name: "iso6392Cod"
+        in: "query"
+        description: "Codice ISO lingua"
+        required: false
+        type: "string"
+      responses:
+        "200":
+          description: "successful operation"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/TipoRimbPag"
+        "422":
+          description: "parametri errati"
+          schema:
+            $ref: "#/definitions/DettaglioErrore"
+      x-enabled-profiles:
+      - common-public-permissions:
+          kind: "ALL"
+          profiles:
+          - profile:
+              name: "ALL"
+              description: "Funzione Pubblica"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkDummy"
+                  description: "funzione che ritorna sempre true"
+  /tipologie/statiCivili:
+    get:
+      tags:
+      - "tipologie"
+      summary: "Recupera le tipologie di stato civile"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>\"Recupera le tipologie di stato civile. Se\
+        \ il parametro iso6392Cod è  nullo, verrà impostato di default a ita.\"\n\n\
+        \n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n-|-|-\nx-cache-type|configuration|Risorsa\
+        \ di configurazione, la variazione è molto lenta, cache Http abilitata, cache\
+        \ server abilitata. Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: ALL**\n\nProfilo|Controllo| Funzione\n-|-|-\nALL|Funzione Pubblica|Security.checkDummy()\n\
+        \n\nClasse di modello : DettaglioErroreAggiuntivo\n======\n\nEstensioni sulle\
+        \ proprietà\n----\nProprietà | x-field-type\n-|-|\nrawValue|rawJson\n"
+      operationId: "getTipiStatiCivili"
+      parameters:
+      - name: "iso6392Cod"
+        in: "query"
+        description: "Codice ISO lingua"
+        required: false
+        type: "string"
+      responses:
+        "200":
+          description: "successful operation"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/TipoStatoCivile"
+        "422":
+          description: "parametri errati"
+          schema:
+            $ref: "#/definitions/DettaglioErrore"
+      x-enabled-profiles:
+      - common-public-permissions:
+          kind: "ALL"
+          profiles:
+          - profile:
+              name: "ALL"
+              description: "Funzione Pubblica"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkDummy"
+                  description: "funzione che ritorna sempre true"
+  /translator/cod-to-id:
+    put:
+      tags:
+      - "translator"
+      summary: "fornisce l'id relativo ad un determinato codice"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>Sono supportati i seguenti tipi di dato da\
+        \ tradurre\n\nTipo (in)      | valore del codice (in)        | valore del\
+        \ campo Id (out)  | Chiave Composta | lista Codci aggiuntivi (in)        \
+        \                      | Lista Id (out)\n-              | -              \
+        \               | -                          | -               | -       \
+        \                                                 | -\nAD             | p09_ad_gen.cod\
+        \                | p09_ad_gen.ad_id           | No              |        \
+        \                                                  |\nCDS            | p06_cds.cod\
+        \                   | p06_cds.cds_id             | No              |     \
+        \                                                     |\nPDS            |\
+        \ p06_pdsord.cod                | p06_pdsord.pds_id          | Si        \
+        \      |  p06_cds.cod, p06_pdsord.aa_ord_id, p06_pdsord.pds_id    |  cds_id,\
+        \ aa_ord_id, pds_id\nPDSORD         | p06_pdsord.cod                | p06_pdsord.pdsord_id\
+        \       | No              |  p06_cds.cod, p06_pdsord.aa_ord_id, p06_pdsord.pds_id\
+        \    | \n\n\nIl servizio prende in ingresso un json di id da tradurre e risponde\
+        \ con i relativi codici tradotti, nel caso di chiavi composte \nviene valorizzato\
+        \ l'insieme chiave composta che contiene la lista degli ID relativi al campo\
+        \ richiesto, va comunque valorizzato il campo cod principale\n\n\n**Estensioni:**\n\
+        \nCodice Estensione|Valore|Nota\n-|-|-\nx-cache-type|configuration|Risorsa\
+        \ di configurazione, la variazione è molto lenta, cache Http abilitata, cache\
+        \ server abilitata. Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: USER_TECNICO**\n\nProfilo|Controllo| Funzione\n-|-|-\nUserTecnicoMassivo|funzione\
+        \ massiva riservata ad utenti tecnici autorizzati|Security.checkMassiveGET()\n"
+      operationId: "getCodFromId"
+      parameters:
+      - in: "body"
+        name: "body"
+        description: "Oggetto che contiene i codici da tradurre"
+        required: true
+        schema:
+          $ref: "#/definitions/CodToIdTranslatorRequest"
+      responses:
+        "200":
+          description: "successful operation"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/CodToIdTranslatorResponseObject"
+        "422":
+          description: "parametri errati"
+      x-enabled-profiles:
+      - user-tecnico-massive-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UserTecnicoMassivo"
+              description: "funzione massiva riservata ad utenti tecnici autorizzati"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkMassiveGET"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+      x-custom-operation: "single"
+      x-cache-endpoint-relations:
+        canonicalEndpointsAction: "none"
+  /utente-info/{userId}:
+    get:
+      tags:
+      - "servizi"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>Servizio REST che provvede all’estrazione dei\
+        \ dati di un’utenza attraverso lo userId.\n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n\
+        -|-|-\nx-cache-type|configuration|Risorsa di configurazione, la variazione\
+        \ è molto lenta, cache Http abilitata, cache server abilitata. Maggiori dettagli\
+        \ [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: USER_TECNICO**\n\nProfilo|Controllo| Funzione\n-|-|-\nUserTecnicoMassivo|funzione\
+        \ massiva riservata ad utenti tecnici autorizzati|Security.checkMassiveGET()\n"
+      operationId: "getUtente"
+      parameters:
+      - name: "userId"
+        in: "path"
+        description: "identificativo univoco che permette di estrarre i dati di utenza\
+          \ dalla tabella P18_USER"
+        required: true
+        type: "string"
+      - name: "abilRecuperoAlias"
+        in: "query"
+        description: "Indica che l’utente indicato sarà ricercato sia tra gli utenti\
+          \ che tra gli alias validi. 0-la ricerca sarà per il solo utente. 1-la ricerca\
+          \ sarà per utente e alias"
+        required: false
+        type: "integer"
+        maximum: 1.0
+        minimum: 0.0
+        format: "int32"
+      responses:
+        "200":
+          description: "Successful response"
+          schema:
+            $ref: "#/definitions/Utenti"
+      x-enabled-profiles:
+      - user-tecnico-massive-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UserTecnicoMassivo"
+              description: "funzione massiva riservata ad utenti tecnici autorizzati"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkMassiveGET"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+  /version-info:
+    get:
+      tags:
+      - "admin"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>recupera le informazioni di sistema\n\n\n**Estensioni:**\n\
+        \nCodice Estensione|Valore|Nota\n-|-|-\nx-cache-type|configuration|Risorsa\
+        \ di configurazione, la variazione è molto lenta, cache Http abilitata, cache\
+        \ server abilitata. Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: ALL**\n\nProfilo|Controllo| Funzione\n-|-|-\nALL|Funzione Pubblica|Security.checkDummy()\n"
+      operationId: "getVersionInfo"
+      parameters: []
+      responses:
+        "200":
+          description: "Successful response"
+          schema:
+            $ref: "#/definitions/VersionInfo"
+        "401":
+          description: "login failed"
+      x-enabled-profiles:
+      - common-public-permissions:
+          kind: "ALL"
+          profiles:
+          - profile:
+              name: "ALL"
+              description: "Funzione Pubblica"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkDummy"
+                  description: "funzione che ritorna sempre true"
+      x-custom-operation: "single"
+securityDefinitions:
+  basicAuth:
+    description: "Autenticazione tramite BASIC authentication. Questa modalità è disponibile\
+      \ se l'autenticazione su esse3 non usa shibboleth per il gruppo dell'utente"
+    type: "basic"
+  jwt:
+    description: "Autenticazione tramite OAUTH2, occorre configurare il parametro\
+      \ di configurazione di ESSE3 che indica il server OAUTH2 da utilizzare"
+    type: "oauth2"
+    authorizationUrl: "https://idp-idm.unimib.it/idp/profile/oidc/authorize"
+    flow: "implicit"
+    scopes:
+      openid: "informazioni sull'utente"
+definitions:
+  TipoDocIdent:
+    type: "object"
+    properties:
+      docIdentTipoCod:
+        type: "string"
+        example: "PAT"
+        description: "Codice tipo di documento di identità."
+      des:
+        type: "string"
+        example: "Patente"
+        description: "Descrizione tipo documento di identità"
+    x-model-sub-package: "frk.v1"
+    x-model-sub-path: "frk/v1"
+  TipoIndirizzo:
+    type: "object"
+    properties:
+      tipoIndirizCod:
+        type: "string"
+        example: "N"
+        description: "Indica la tipologia di indirizzo riportata nell entità indirizzo:\
+          \ 1 Residenza 2 Domicilio"
+      des:
+        type: "string"
+        example: "Nascita"
+        description: "Descrizione tipologia di indirizzo"
+    x-model-sub-package: "frk.v1"
+    x-model-sub-path: "frk/v1"
+  TipoRimbPag:
+    type: "object"
+    properties:
+      tipoRimbPagCod:
+        type: "string"
+        example: "PF"
+        description: "Codice del tipo di rimborso e pagamento"
+      des:
+        type: "string"
+        example: "Posta file"
+        description: "Descrizione tipo documento di identità"
+      rimbPag:
+        type: "integer"
+        format: "int32"
+        example: 2
+        description: "0 --> Rimborso e pagamento, 1 --> Rimborso, 2 --> Pagamento"
+      sysFlg:
+        type: "integer"
+        format: "int32"
+        example: 1
+        description: "Indica se il record è di sistema"
+      visEmissFlg:
+        type: "integer"
+        format: "int32"
+        example: 0
+        description: "Controlla la visibilità del tipo di pagamento in fase di emissione\
+          \ delle fatture"
+      visAcqPagFlg:
+        type: "integer"
+        format: "int32"
+        example: 1
+        description: "Controlla la visibilità del tipo di pagamento in fase di acquisizione\
+          \ dei pagamenti manuali"
+      tipoRimbPagCodAte:
+        type: "string"
+        example: "AT"
+        description: "Codifica di ateneo"
+      stampabileFlg:
+        type: "integer"
+        format: "int32"
+        example: 0
+        description: "Indica se è prevista la stampa per il tipo di pagamento in oggetto"
+      stampabileDaWebFlg:
+        type: "integer"
+        format: "int32"
+        example: 1
+        description: "Indica se è prevista la stampa da WEB per il tipo di pagamento\
+          \ in oggetto"
+      numBollModifFlg:
+        type: "integer"
+        format: "int32"
+        example: 1
+        description: "Indica se il numero bollettino è modificabile dall'utente da\
+          \ inserimento pagamento manuale"
+      elabEmissFlg:
+        type: "integer"
+        format: "int32"
+        example: 1
+        description: "Indica se la fattura, di questa tipologia, è immediatamente\
+          \ da emettere (elaborare) in fase di creazione, senza attendere elaborazioni\
+          \ successive (file MAV, file attesi, ecc.)"
+      baseNumeroLottoMav:
+        type: "string"
+        example: "111"
+        description: "E' la base per la costruzione del numero identificativo relativo\
+          \ alle fatture di tipo MAV"
+      maxProgrLottoMav:
+        type: "integer"
+        format: "int64"
+        example: 1234
+        description: "E' il progressivo massimo per la costruzione del numero identificativo\
+          \ relativo alle fatture di tipo MAV, in base al lotto messo a disposizione\
+          \ dalla banca"
+      webFlg:
+        type: "integer"
+        format: "int32"
+        example: 1
+        description: "Indica che il tipo di pagamento / rimborso è selezinabile dalla\
+          \ funzione web di inserimento dati bancari."
+      abilInsDettBancaWeb:
+        type: "integer"
+        format: "int32"
+        example: 0
+        description: "Indica che il tipo di pagamento / rimborso abilita l`inserimento\
+          \ dei dettagli relativi al contro corrente bancario da inserimento dati\
+          \ bancari web."
+      ugovCdModPag:
+        type: "string"
+        example: "CT"
+        description: "Codice modalità di pagamento da utilizzare nella replica dell'anagrafica\
+          \ verso UGov"
+      defElabFlgPagMan:
+        type: "integer"
+        format: "int32"
+        example: 1
+        description: "Default da utilizzare sull'ELAB_FLG della P05_FATT all'atto\
+          \ dell'inserimento di un pagamento manuale: 0 = ELAB_FLG non viene modificato,\
+          \ 1 = ELAB_FLG viene alzato"
+      abilInsDettBanca:
+        type: "integer"
+        format: "int32"
+        example: 0
+        description: "Indica che il tipo di pagamento / rimborso prevede l`inserimento\
+          \ dei dettagli relativi al contro corrente bancario."
+      tipologiaLottoMav:
+        type: "string"
+        example: "N"
+        description: "Indica la tipologia di numerazione fornita dalla Banca: N =\
+          \ Assente (lotto non configurato). A = Assoluta. La base del lotto viene\
+          \ utilizzata indipendentemente dall'anno di emissione del numero MAv. Y\
+          \ = Annuale. La base del lotto è riferita all'anno solare di emissione del\
+          \ numero MAv."
+      pagNodoFlg:
+        type: "integer"
+        format: "int32"
+        example: 0
+        description: "Indica se la modalità di pagamento è compatibile con l'utlizzo\
+          \ del Nodo dei pagamenti"
+      pagEnteEstFlg:
+        type: "integer"
+        format: "int32"
+        example: 1
+        description: "Flag che indica se il pagamento sarà effettuato da enti esterni"
+      cartaDocFlg:
+        type: "integer"
+        format: "int32"
+        example: 0
+        description: "Flag che indica se il pagamento sarà effettuato con il bonus\
+          \ docenti"
+      esclEntratelFlg:
+        type: "integer"
+        format: "int32"
+        example: 0
+        description: "Flag che indica se il pagamento deve essere escluso dalla rendicontazione\
+          \ ENTRATEL"
+      codServizio:
+        type: "string"
+        example: "123"
+        description: "Codice servizio da utilizzare per il tipo pagamento"
+      codSottoservizio:
+        type: "string"
+        example: "456"
+        description: "Codice sottoservizio da utilizzare per il tipo pagamento"
+      paCcId:
+        type: "integer"
+        format: "int64"
+        example: 10
+        description: "Conto corrente ID di riferimento per le modalita' di pagmanento\
+          \ diverse da PA con gestione IUV abilitata"
+      abilPagRest:
+        type: "integer"
+        format: "int32"
+        example: 0
+        description: "Indica se la modalità di pagamento è abilitata all'inserimento\
+          \ degli incassi da API rest"
+    x-model-sub-package: "frk.v1"
+    x-model-sub-path: "frk/v1"
+  CodToIdTranslatorRequestObject:
+    type: "object"
+    required:
+    - "cod"
+    - "type"
+    discriminator: "codToIdTranslatorRequestType"
+    properties:
+      type:
+        type: "string"
+        example: "AD"
+        description: "tipo di codice da tradurre"
+        pattern: "AD|CDS|PDS|PDSORD"
+      cod:
+        type: "string"
+        example: "AD_COD"
+        description: "valore del codice da tradurre"
+      cods:
+        type: "array"
+        description: "nel caso di chiavi composte nell'array sono presenti i codici\
+          \ che definiscono la chiave composta"
+        items:
+          type: "string"
+    x-model-sub-package: "frk.v1"
+    x-model-sub-path: "frk/v1"
+  ParametroDiConfigurazione:
+    type: "object"
+    required:
+    - "parCod"
+    properties:
+      parCod:
+        type: "string"
+        example: "BI_SYLLABUS"
+        description: "codice del parametro di configurazione"
+        x-field-type: "primaryKey"
+      modulo:
+        type: "string"
+        example: "2"
+        description: "modulo del parametro di configurazione"
+      prodotto:
+        type: "string"
+        example: "ESSE3"
+        description: "prodotto del parametro di configurazione"
+      descrizione:
+        type: "string"
+        example: "Descrizione di BI_SYLLABUS"
+        description: "descrizione del parametro di configurazione"
+        x-internal-name: "des"
+      nota:
+        type: "string"
+        example: "nota di BI_SYLLABUS"
+        description: "nota del parametro di configurazione"
+      valNum:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "Valore numerico del parametro di configurazione"
+      valAlfa:
+        type: "string"
+        example: "CDS"
+        description: "Valore numerico del parametro di configurazione"
+    x-layout-name: "PARCONF_REST"
+    x-winsession-name: "p18/n_si_18_007_par_config"
+    x-model-sub-package: "frk.v1"
+    x-model-sub-path: "frk/v1"
+  TipoStatoCivile:
+    type: "object"
+    properties:
+      statoCivileCod:
+        type: "string"
+        example: "N"
+        description: "Codice stato civile."
+      des:
+        type: "string"
+        example: "Nubile"
+        description: "Descrizione stato civile."
+    x-model-sub-package: "frk.v1"
+    x-model-sub-path: "frk/v1"
+  Utenti:
+    type: "object"
+    properties:
+      userId:
+        type: "string"
+        example: "a1234!"
+        description: "Identificativo dell'utente"
+      alias:
+        type: "string"
+        example: "a.bianco"
+        description: "Alias"
+      grpName:
+        type: "string"
+        example: "Studenti"
+        description: "Nome del gruppo"
+      disableFlg:
+        type: "integer"
+        format: "int32"
+        example: 0
+        description: "Flag che indica se l'utenza è disabilitata o meno"
+      userName:
+        type: "string"
+        example: "Example username"
+        description: "user name"
+    x-model-sub-package: "frk.v1"
+    x-model-sub-path: "frk/v1"
+  RitornoAlias:
+    type: "object"
+    properties:
+      codiceRitorno:
+        type: "integer"
+        format: "int32"
+        example: 1
+        description: "codice di ritorno"
+    x-model-sub-package: "frk.v1"
+    x-model-sub-path: "frk/v1"
+  CodToIdTranslatorIdAggiuntivo:
+    type: "object"
+    properties:
+      id:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "id aggiuntivo rispetto a quello principale (nel caso di chiave\
+          \ composta)"
+      name:
+        type: "string"
+        example: "cds_id"
+        description: "nome del campo della chiave composta"
+    x-model-sub-package: "frk.v1"
+    x-model-sub-path: "frk/v1"
+  CodToIdTranslatorRequest:
+    type: "object"
+    properties:
+      objs:
+        type: "array"
+        items:
+          $ref: "#/definitions/CodToIdTranslatorRequestObject"
+    x-model-sub-package: "frk.v1"
+    x-model-sub-path: "frk/v1"
+  DettaglioErrore:
+    type: "object"
+    properties:
+      statusCode:
+        type: "integer"
+        format: "int32"
+        example: 200
+        description: "Http Status Code"
+      retCode:
+        type: "integer"
+        format: "int32"
+        example: -1
+        description: "codice di errore"
+      retErrMsg:
+        type: "string"
+        example: "Parametri non corretti"
+        description: "descrizione dell'errore"
+      errDetails:
+        type: "array"
+        items:
+          $ref: "#/definitions/DettaglioErroreAggiuntivo"
+    x-model-sub-package: "frk.v1"
+    x-model-sub-path: "frk/v1"
+  Lingue:
+    type: "object"
+    properties:
+      linguaId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "identificativo della lingua"
+      des:
+        type: "string"
+        example: "Inglese"
+        description: "descrizione della lingua"
+      dsFlg:
+        type: "integer"
+        format: "int32"
+        example: 1
+        description: "flag per l'utilizzo della lingua per il Diploma Supplement"
+      sysFlg:
+        type: "integer"
+        format: "int32"
+        example: 1
+        description: "indica se il record è di sistema oppure no"
+      iso6392Codice:
+        type: "string"
+        example: "eng"
+        description: "codice lingua ISO 639-2"
+      mobilFlg:
+        type: "integer"
+        format: "int32"
+        example: 1
+        description: "indica se la lingua deve essere visualizzata nei bandi di Mobilità\
+          \ internazionale"
+      webMlFlg:
+        type: "integer"
+        format: "int32"
+        example: 1
+        description: "indica se la lingua è gestita dal modulo multilingua"
+      mobildes:
+        type: "string"
+        example: "eng"
+        description: "descrizione della lingua nei bandi di Mobilità internazionale"
+      madrelinguaFlg:
+        type: "integer"
+        format: "int32"
+        example: 1
+        description: "indica che la lingua è selezionabile tra le lingue disponibili\
+          \ come madrelinguai"
+      certFlg:
+        type: "integer"
+        format: "int32"
+        example: 1
+        description: "flag per l'utilizzo della lingua per la Stampa dei Certificati"
+      iso6391Codice:
+        type: "string"
+        example: "en"
+        description: "codice lingua ISO 639-1"
+    x-layout-name: "LINGUE"
+    x-winsession-name: "p00/n_di_00_058_lingue"
+    x-model-sub-package: "frk.v1"
+    x-model-sub-path: "frk/v1"
+  GruppoUtente:
+    type: "object"
+    properties:
+      grpId:
+        type: "integer"
+        format: "int32"
+        example: 6
+        description: "id del gruppo"
+      utenteTecnicoFlg:
+        type: "boolean"
+        example: false
+        description: "flag che indica se il gruppo rappresenta degli utenti tecnici"
+      name:
+        type: "string"
+        example: "studenti"
+        description: "nome del gruppo"
+      tabAna:
+        type: "string"
+        example: "p01_anaper"
+        description: "tabella di anagrafica di esse3 collegata al gruppo"
+      fieldAna:
+        type: "string"
+        example: "pers_id"
+        description: "nome della colonna della chiave primaria della tabella di anagrafica"
+      httpSessionTimeout:
+        type: "integer"
+        format: "int32"
+        example: 60
+        description: "lunghezza di durata della sessione in minuti"
+      requestWindowLimit:
+        type: "integer"
+        format: "int32"
+        example: 60
+        description: "lunghezza della finestra per il calcolo del throtteling in secondi,\
+          \ se null vale il valore generale del par_conf"
+      maxRequestWindow:
+        type: "integer"
+        format: "int32"
+        example: 60
+        description: "numero massimo di richieste nella finestra, se null vale il\
+          \ valore generale del par_conf"
+    x-model-sub-package: "frk.v1"
+    x-model-sub-path: "frk/v1"
+  TipoRic:
+    type: "object"
+    properties:
+      tipoRicCod:
+        type: "string"
+        example: "T"
+        description: "Indica se la attività è stata acquisita direttamente o se è\
+          \ stata riconosciuta in seguito ad attività svolte dallo studente in una\
+          \ carriera pregressa o esternamente alla offerta didattica del corso. Codici\
+          \ predefiniti: NULL = Attività acquisita direttamente; T = Riconoscimento\
+          \ in seguito a trasferimento; P = Ric. per passaggio, opzione o abbreviazione\
+          \ di carriera; M = Ricon. per progetto di mobilità; S = Ricon. per tirocinio\
+          \ o stage"
+      des:
+        type: "string"
+        example: "Riconoscimento per trasferimento"
+        description: "Descrizione tipo riconoscimento AD."
+      sysFlg:
+        type: "integer"
+        format: "int32"
+        example: 0
+        description: "Indica se il record è di sistema oppure no."
+      straFlg:
+        type: "integer"
+        format: "int32"
+        example: 0
+        description: "Flag che individua una tipologia di riconoscimento per attività\
+          \ svolte all´Estero (non in Italia)."
+      abbrFlg:
+        type: "integer"
+        format: "int32"
+        example: 0
+        description: "Il flag deve essere valorizzato ad 1 in corrispondenza delle\
+          \ tipologie utilizzate per gestire riconoscimenti di attivita per abbreviazione\
+          \ di carriera."
+      ingrFlg:
+        type: "integer"
+        format: "int32"
+        example: 1
+        description: "Il flag deve essere valorizzato ad 1 in corrispondenza delle\
+          \ tipologie utilizzate per gestire riconoscimenti di attivita al momento\
+          \ della immatricolazione dello studente per poterli distinguere da eventuali\
+          \ riconoscimenti effettuati in tempi successivi."
+      ansTipoRicCod:
+        type: "string"
+        example: "INGRESSO*"
+        description: "tipo riconoscimento AD ans"
+      nota:
+        type: "string"
+        example: "questa è una nota"
+        description: "note"
+      notaCertFlg:
+        type: "integer"
+        format: "int32"
+        example: 1
+        description: "visualizza la nota nel cerificato"
+      bonusLaurea:
+        type: "number"
+        format: "double"
+        example: 1.0
+        description: "bonus di laurea da applicare al riconoscimento"
+      dsTipoRicCod:
+        type: "string"
+        example: "AA"
+        description: "tipo riconoscimento AD ds"
+      interateFlg:
+        type: "integer"
+        format: "int32"
+        example: 0
+        description: "tipo di riconoscimento utilizzato per riconoscere le attività\
+          \ interateneo sulla sede amministrativa. Utilizzato nei riconoscimenti automatici\
+          \ quando nella sede operativa viene superata una prova"
+    x-layout-name: "TIPI_RIC_REST"
+    x-winsession-name: "p00/n_di_00_066_tipi_ric"
+    x-model-sub-package: "frk.v1"
+    x-model-sub-path: "frk/v1"
+  VersionInfo:
+    type: "object"
+    discriminator: "versionInfoType"
+    properties:
+      remoteAddress:
+        type: "string"
+        example: "192.168.1.1"
+        description: "ip remoto da dove viene effettuata la connessione"
+      encoding:
+        type: "string"
+        example: "UTF-8"
+        description: "encoding utilizzato"
+      univName:
+        type: "string"
+        example: "CINECA"
+        description: "nome dell'università"
+      ambienteType:
+        type: "string"
+        description: "tipo di ambiente"
+        enum:
+        - "LOCAL"
+        - "CR"
+        - "DEV1"
+        - "DEV2"
+        - "PREPROD"
+        - "PROD"
+        - "UNKNOWN"
+      buildId:
+        type: "string"
+        example: "1355 10/10/2019 12:00:00"
+        description: "id univoco contentente i dettagli della build"
+      buildTag:
+        type: "string"
+        example: "jenkins-build_esse4REST_HEAD-1357 (prouniv1 [Linux 3.10.0-514.6.2.el7.x86_64\
+          \ amd64])"
+        description: "tag univoco contentente i dettagli della build"
+      buildVersion:
+        type: "string"
+        example: "19.03.03.00"
+        description: "versione di build di e3rest"
+      ate:
+        type: "integer"
+        format: "int32"
+        example: 1
+        description: "ate_id dell'ateneo"
+      servletcontainerInfo:
+        type: "string"
+        example: "Tomcat"
+        description: "informazioni sul tipo di container"
+      webappStartTime:
+        type: "string"
+        example: "10/10/2015 09:00:00"
+        description: "data ora di deploy dell'app"
+      jmvStartTime:
+        type: "string"
+        example: "10/10/2015 09:00:00"
+        description: "data ora startup della jvm"
+      versione:
+        type: "string"
+        example: "17.10.00.00"
+        description: "contiene la versione di e3rest"
+    x-model-sub-package: "frk.v1"
+    x-model-sub-path: "frk/v1"
+  DettaglioErroreAggiuntivo:
+    type: "object"
+    properties:
+      errorType:
+        type: "string"
+        example: "stackTrace"
+        description: "descrizione del tipo di errore aggiuntivo"
+      value:
+        type: "string"
+        example: "SocketTimeoutException...."
+        description: "descrizione dell'errore"
+      rawValue:
+        type: "string"
+        example: "SocketTimeoutException...."
+        description: "descrizione dell'errore"
+        x-field-type: "rawJson"
+    x-model-sub-package: "frk.v1"
+    x-model-sub-path: "frk/v1"
+  ElenchiElaborati:
+    type: "object"
+    properties:
+      codice:
+        type: "string"
+        example: "1234"
+        description: "Codice testata elenco"
+      des:
+        type: "string"
+        example: "esempio descrizione"
+        description: "Descrizione testata elenco"
+      aaId:
+        type: "integer"
+        format: "int64"
+        example: 2019
+        description: "anno accademico di generazione"
+      tipoElencoCod:
+        type: "string"
+        example: "5678"
+        description: "Codice tipologia elenco"
+      dataGeneraz:
+        type: "string"
+        example: "01/01/2019"
+        description: "Data di generazione dell'elenco"
+      statoElenco:
+        type: "string"
+        example: "C"
+        description: "Codice stato elenco"
+      stuId:
+        type: "integer"
+        format: "int64"
+        example: 78901
+        description: "Identificativo dello studente"
+      persId:
+        type: "string"
+        example: "10987"
+        description: "Identificativo della persona"
+      elimFlg:
+        type: "integer"
+        format: "int32"
+        example: 0
+        description: "Indica se lo studente è eliminato dall'elenco"
+      stampaFlg:
+        type: "integer"
+        format: "int32"
+        example: 0
+        description: "Indica, per lo studente, se è stato stampato un documento collegato\
+          \ all'elenco"
+    x-layout-name: "P04_ELENCO_TST_REST"
+    x-winsession-name: "p04/n_am_p04_winsession_rest"
+    x-model-sub-package: "frk.v1"
+    x-model-sub-path: "frk/v1"
+  Alias:
+    type: "object"
+    properties:
+      userId:
+        type: "string"
+        example: "un.utente"
+        description: "Identificativo dell'utente"
+      alias:
+        type: "string"
+        example: "RMBDNL67R11A944T"
+        description: "l alias"
+      dataScadenza:
+        type: "string"
+        example: "10/10/2007"
+        description: "Data di scadenza dell'alias"
+        maxLength: 10
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+    x-layout-name: "ALIAS_INFO_REST"
+    x-winsession-name: "p18/n_si_18_021_gestione_utente"
+    x-model-sub-package: "frk.v1"
+    x-model-sub-path: "frk/v1"
+  AnnoDiRiferimento:
+    type: "object"
+    required:
+    - "tipoDataRifCod"
+    properties:
+      tipoDataRifCod:
+        type: "string"
+        example: "DR_OFF, DR_SUA, DR_ISCR"
+        description: "codice del tipo data di riferimento"
+        x-field-type: "primaryKey"
+      tipoCorsoCod:
+        type: "string"
+        example: "L1, L2, LS, LM"
+        description: "codice del tipo di corso di studio"
+      aaId:
+        type: "integer"
+        format: "int32"
+        example: 2019
+        description: "Anno accademico di output della funzione"
+      dataRif:
+        type: "string"
+        example: "15/10/2015"
+        description: "data di riferimento"
+    x-model-sub-package: "frk.v1"
+    x-model-sub-path: "frk/v1"
+  CodToIdTranslatorResponseObject:
+    allOf:
+    - $ref: "#/definitions/CodToIdTranslatorRequestObject"
+    - type: "object"
+      properties:
+        id:
+          type: "integer"
+          format: "int64"
+          example: 100
+          description: "id corrispondente al cod richiesto"
+        chiaveComposta:
+          type: "array"
+          items:
+            $ref: "#/definitions/CodToIdTranslatorIdAggiuntivo"
+        err:
+          type: "string"
+          example: "codice non trovato"
+          description: "eventuale descrizione dell'errore se la traduzione non è possibile"
+    x-layout-name: "COD_TO_ID"
+    x-winsession-name: "p18/dummy"
+    x-model-sub-package: "frk.v1"
+    x-model-sub-path: "frk/v1"
+parameters:
+  grpId:
+    name: "grpId"
+    in: "path"
+    description: "identificativo univoco che permette di estrarre i dati del gruppo\
+      \ di un utente"
+    required: true
+    type: "integer"
+    format: "int32"
+  dataRif:
+    name: "dataRif"
+    in: "query"
+    description: "data di riferimento"
+    required: false
+    type: "string"
+  tipoCorsoCod:
+    name: "tipoCorsoCod"
+    in: "query"
+    description: "codice del tipo di corso di studio"
+    required: false
+    type: "string"
+  abilRecuperoAlias:
+    name: "abilRecuperoAlias"
+    in: "query"
+    description: "Indica che l’utente indicato sarà ricercato sia tra gli utenti che\
+      \ tra gli alias validi. 0-la ricerca sarà per il solo utente. 1-la ricerca sarà\
+      \ per utente e alias"
+    required: false
+    type: "integer"
+    maximum: 1.0
+    minimum: 0.0
+    format: "int32"
+  tstId:
+    name: "tstId"
+    in: "path"
+    description: "identificativo univoco che permette di estrarre i dati dalle tabelle\
+      \ P04_ELENCO_TST e P04_ELENCO_DETT"
+    required: true
+    type: "integer"
+    format: "int64"
+  userId:
+    name: "userId"
+    in: "path"
+    description: "identificativo univoco che permette di estrarre i dati di utenza\
+      \ dalla tabella P18_USER"
+    required: true
+    type: "string"
+  dataScadenza:
+    name: "dataScadenza"
+    in: "query"
+    description: "data di scadenza"
+    required: false
+    type: "string"
+  iso6392Cod:
+    name: "iso6392Cod"
+    in: "query"
+    description: "Codice ISO lingua"
+    required: false
+    type: "string"
+  descrizione:
+    name: "des"
+    in: "query"
+    description: "descrizione del parametro di configurazione  (se viene utilizzato\
+      \ il carattere * viene applicato il like)"
+    required: false
+    type: "string"
+  alias:
+    name: "alias"
+    in: "query"
+    description: "alias dell utente"
+    required: true
+    type: "string"
+  parCod:
+    name: "parCod"
+    in: "path"
+    description: "codice univoco che consente di individuare il parametro di configurazione"
+    required: true
+    type: "string"
+  modulo:
+    name: "modulo"
+    in: "query"
+    description: "modulo di appartenenza del parametro di configurazione"
+    required: false
+    type: "string"
+  nota:
+    name: "nota"
+    in: "query"
+    description: "nota associata al parametro di configurazione  (se viene utilizzato\
+      \ il carattere * viene applicato il like)"
+    required: false
+    type: "string"
+  prodotto:
+    name: "prodotto"
+    in: "query"
+    description: "prodotto di appartenenza del parametro di configurazione"
+    required: false
+    type: "string"
+  tipoDataRifCod:
+    name: "tipoDataRifCod"
+    in: "path"
+    description: "codice del tipo data di riferimento"
+    required: true
+    type: "string"
+externalDocs:
+  description: "Documentazione Geneale sui servizi REST"
+  url: "https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3"
+x-file-status: "PROD"
+x-file-name: "p18-serviziApiV1.yaml"
+x-api-status: "PROD"
+x-func-cod: "RST_SERV1"
+x-cache-type: "configuration"

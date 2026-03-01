@@ -1,0 +1,764 @@
+---
+swagger: "2.0"
+info:
+  description: "API REST di ESSE3 che permette di accedere alle informazioni delle\
+    \ nazioni, delle regioni, dei comuni, delle province e dei cap.\n\nVersione  \
+    \     | Versione di Esse3 di rilascio | Interventi \n-              | -      \
+    \                       | -\n1.0.0          | 23.06.00.00                   |\
+    \ creazione API\n"
+  version: "1.0.0"
+  title: "ESSE3 Nazioni API"
+basePath: "/nazioni-service-v1"
+schemes:
+- "https"
+- "http"
+consumes:
+- "application/json"
+produces:
+- "application/json"
+security:
+- basicAuth: []
+- jwt:
+  - "openid"
+paths:
+  /nazioni:
+    get:
+      tags:
+      - "nazioni"
+      summary: "recupero delle nazioni"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>Consente di recuperare le nazioni. Nel caso\
+        \ il parametro iso6392Cod sia nullo, di default verrà impostato a ita. \n\n\
+        \n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n-|-|-\nx-cache-type|lowRefreshRateUserIndependent|Risorsa\
+        \ che varia con frequenza bassa, cache Http abilitata, cache server abilitata.\
+        \ Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: common-public-permissions**\n\nProfilo|Controllo| Funzione\n-|-|-\n\
+        ALL|Funzione Pubblica|Security.checkDummy()\n\n\nClasse di modello : DettaglioErroreAggiuntivo\n\
+        ======\n\nEstensioni sulle proprietà\n----\nProprietà | x-field-type\n-|-|\n\
+        rawValue|rawJson\n"
+      operationId: "getNazioni"
+      parameters:
+      - name: "iso6392Cod"
+        in: "query"
+        description: "Codice ISO lingua"
+        required: false
+        type: "string"
+      responses:
+        "200":
+          description: "Successful response"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/Nazione"
+        "422":
+          description: "parametri Errati"
+          schema:
+            $ref: "#/definitions/DettaglioErrore"
+      x-enabled-profiles:
+      - common-public-permissions:
+          kind: "ALL"
+          profiles:
+          - profile:
+              name: "ALL"
+              description: "Funzione Pubblica"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkDummy"
+                  description: "funzione che ritorna sempre true"
+  /nazioni/{nazioneId}/cap:
+    get:
+      tags:
+      - "cap"
+      summary: "recupero dei CAP"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>Consente di recuperare i CAP. \n\n\n**Estensioni:**\n\
+        \nCodice Estensione|Valore|Nota\n-|-|-\nx-cache-type|lowRefreshRateUserIndependent|Risorsa\
+        \ che varia con frequenza bassa, cache Http abilitata, cache server abilitata.\
+        \ Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: ALL**\n\nProfilo|Controllo| Funzione\n-|-|-\nALL|Funzione Pubblica|Security.checkDummy()\n\
+        \n\nClasse di modello : DettaglioErroreAggiuntivo\n======\n\nEstensioni sulle\
+        \ proprietà\n----\nProprietà | x-field-type\n-|-|\nrawValue|rawJson\n"
+      operationId: "getCAP"
+      parameters:
+      - name: "nazioneId"
+        in: "path"
+        description: "identificativo della nazione"
+        required: true
+        type: "integer"
+        format: "int64"
+      - name: "nazioneCodFisc"
+        in: "query"
+        description: "Codice fiscale della nazione"
+        required: false
+        type: "string"
+      - name: "regioneCod"
+        in: "query"
+        description: "Codice regione"
+        required: false
+        type: "string"
+      - name: "sigla"
+        in: "query"
+        description: "Sigla della provincia"
+        required: false
+        type: "string"
+      - name: "comuneId"
+        in: "query"
+        description: "id univoco comune"
+        required: false
+        type: "integer"
+        format: "int64"
+      - name: "comuneCod"
+        in: "query"
+        description: "Codice di 4 cifre (Lettera + 3 numeri) che è utilizzato nel\
+          \ codice fiscale per indicare il comune di nascita."
+        required: false
+        type: "string"
+      responses:
+        "200":
+          description: "Successful response"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/CAP"
+        "422":
+          description: "parametri Errati"
+          schema:
+            $ref: "#/definitions/DettaglioErrore"
+      x-enabled-profiles:
+      - common-public-permissions:
+          kind: "ALL"
+          profiles:
+          - profile:
+              name: "ALL"
+              description: "Funzione Pubblica"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkDummy"
+                  description: "funzione che ritorna sempre true"
+  /nazioni/{nazioneId}/comuni:
+    get:
+      tags:
+      - "comuni"
+      summary: "recupero dei comuni"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>Consente di recuperare i comuni. \n\n\n**Estensioni:**\n\
+        \nCodice Estensione|Valore|Nota\n-|-|-\nx-cache-type|lowRefreshRateUserIndependent|Risorsa\
+        \ che varia con frequenza bassa, cache Http abilitata, cache server abilitata.\
+        \ Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: ALL**\n\nProfilo|Controllo| Funzione\n-|-|-\nALL|Funzione Pubblica|Security.checkDummy()\n\
+        \n\nClasse di modello : DettaglioErroreAggiuntivo\n======\n\nEstensioni sulle\
+        \ proprietà\n----\nProprietà | x-field-type\n-|-|\nrawValue|rawJson\n"
+      operationId: "getComuni"
+      parameters:
+      - name: "nazioneId"
+        in: "path"
+        description: "identificativo della nazione"
+        required: true
+        type: "integer"
+        format: "int64"
+      - name: "iso6392Cod"
+        in: "query"
+        description: "Codice ISO lingua"
+        required: false
+        type: "string"
+      - name: "nazioneCodFisc"
+        in: "query"
+        description: "Codice fiscale della nazione"
+        required: false
+        type: "string"
+      - name: "regioneCod"
+        in: "query"
+        description: "Codice regione"
+        required: false
+        type: "string"
+      - name: "sigla"
+        in: "query"
+        description: "Sigla della provincia"
+        required: false
+        type: "string"
+      - name: "comuneCod"
+        in: "query"
+        description: "Codice di 4 cifre (Lettera + 3 numeri) che è utilizzato nel\
+          \ codice fiscale per indicare il comune di nascita."
+        required: false
+        type: "string"
+      - name: "start"
+        in: "query"
+        description: "utilizzato insieme a `limit` per indicare la paginazione sui\
+          \ record; `start` indica il numero del primo record da caricare (se non\
+          \ indicato viene utilizzato 0)\n"
+        required: false
+        type: "integer"
+        format: "int32"
+      - name: "limit"
+        in: "query"
+        description: "utilizzato insieme a `start` per indicare la paginazione sui\
+          \ record, `limit` indica il numero di record da recuperare (a partire da\
+          \ `start`); \nse non indicato viene utilizzato 50, i valori consentiti vanno\
+          \ da 0 a 100\n"
+        required: false
+        type: "integer"
+        format: "int32"
+      - name: "order"
+        in: "query"
+        description: "consente di specificare un ordine per il recupero dei record.\
+          \ La sintassi è la seguente\n * +/- : specifica l'ordinamento (+ = ASC,\
+          \ - = DESC); se omesso viene utilizzato +\n * field : nome del campo da\
+          \ ordinare\n \n E' possibile indicare più campi separandoli da virgola (Es:\
+          \ +annoCorso,+adCod) \n"
+        required: false
+        type: "string"
+      responses:
+        "200":
+          description: "Successful response"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/Comune"
+        "422":
+          description: "parametri Errati"
+          schema:
+            $ref: "#/definitions/DettaglioErrore"
+      x-enabled-profiles:
+      - common-public-permissions:
+          kind: "ALL"
+          profiles:
+          - profile:
+              name: "ALL"
+              description: "Funzione Pubblica"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkDummy"
+                  description: "funzione che ritorna sempre true"
+  /nazioni/{nazioneId}/province:
+    get:
+      tags:
+      - "province"
+      summary: "recupero delle province"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>Consente di recuperare le province. \n\n\n\
+        **Estensioni:**\n\nCodice Estensione|Valore|Nota\n-|-|-\nx-cache-type|lowRefreshRateUserIndependent|Risorsa\
+        \ che varia con frequenza bassa, cache Http abilitata, cache server abilitata.\
+        \ Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: ALL**\n\nProfilo|Controllo| Funzione\n-|-|-\nALL|Funzione Pubblica|Security.checkDummy()\n\
+        \n\nClasse di modello : DettaglioErroreAggiuntivo\n======\n\nEstensioni sulle\
+        \ proprietà\n----\nProprietà | x-field-type\n-|-|\nrawValue|rawJson\n"
+      operationId: "getProvince"
+      parameters:
+      - name: "nazioneId"
+        in: "path"
+        description: "identificativo della nazione"
+        required: true
+        type: "integer"
+        format: "int64"
+      - name: "nazioneCodFisc"
+        in: "query"
+        description: "Codice fiscale della nazione"
+        required: false
+        type: "string"
+      responses:
+        "200":
+          description: "Successful response"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/Provincia"
+        "422":
+          description: "parametri Errati"
+          schema:
+            $ref: "#/definitions/DettaglioErrore"
+      x-enabled-profiles:
+      - common-public-permissions:
+          kind: "ALL"
+          profiles:
+          - profile:
+              name: "ALL"
+              description: "Funzione Pubblica"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkDummy"
+                  description: "funzione che ritorna sempre true"
+securityDefinitions:
+  basicAuth:
+    description: "Autenticazione tramite BASIC authentication. Questa modalità è disponibile\
+      \ se l'autenticazione su esse3 non usa shibboleth per il gruppo dell'utente"
+    type: "basic"
+  jwt:
+    description: "Autenticazione tramite OAUTH2, occorre configurare il parametro\
+      \ di configurazione di ESSE3 che indica il server OAUTH2 da utilizzare"
+    type: "oauth2"
+    authorizationUrl: "https://idp-idm.unimib.it/idp/profile/oidc/authorize"
+    flow: "implicit"
+    scopes:
+      openid: "informazioni sull'utente"
+definitions:
+  Nazione:
+    type: "object"
+    properties:
+      nazioneId:
+        type: "integer"
+        format: "int64"
+        example: 245
+        description: "ID numerico univoco della nazione"
+      codFisc:
+        type: "string"
+        example: "Z704"
+        description: "Codice di 4 cifre Lettera + 3 numeri: Znnn - la laettera è sempre\
+          \ una Z. Nel caso dell´Italia questo attributo non è istanziato."
+      cod:
+        type: "string"
+        example: "X1"
+        description: "Codice di tre cifre - 3 numeri, utilizzato per descrivere la\
+          \ nazione. Italia 200 Albania 201 ..."
+      des:
+        type: "string"
+        example: "ISOLE VITI"
+        description: "descrizione"
+      dataInizioVal:
+        type: "string"
+        example: "31-DIC-75"
+        description: "Se anno inizio validità è non nullo deve essere istanziato anche\
+          \ l attributo Codifica_Precedente, che contiene l indicazione dello stato\
+          \ da cui ha avuto origine la nazione codificata. Ad esempio dalla iugoslavia\
+          \ hanno avuto origine   la SLOVENIA, la CROAZIA, la SERBIA-MONTENEGRO. Le\
+          \ n uove codifiche presenteranno indicazione della codifica della nazione\
+          \ da cui hanno avuto origine. Se la nazione di origine non ha più validità\
+          \ viene indicato anche l anno di fine validità."
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+      dataFineVal:
+        type: "string"
+        example: "31-DIC-75"
+        description: "Data fine validità nazione."
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+      codificaPrec:
+        type: "integer"
+        format: "int64"
+        example: 200
+        description: "Codifica nazione precedente, nel caso di nazione che sostituisce\
+          \ una nazione non più valida."
+      comuCodifFlg:
+        type: "integer"
+        format: "int32"
+        example: 1
+        description: "Indica se la nazione viene gestita a livello di comuni e province\
+          \ codifcate."
+      nazioneCod:
+        type: "string"
+        example: "CX"
+        description: "ID codice MIUR"
+      csaCod:
+        type: "string"
+        example: "CX"
+        description: "Codice CSA, utilizzato per mappare le nazioni durante l´allineamento\
+          \ docenti dal sistema CSA."
+      territorioCedutoFlg:
+        type: "integer"
+        format: "int32"
+        example: 0
+        description: "Indica che è un territorio ceduto."
+      strIban:
+        type: "string"
+        example: "DOkkBBBBBCCCCCCCCCCCCCCCCCCCC"
+        description: "Struttura codice IBAN."
+      prefixInternazionale:
+        type: "string"
+        example: "39"
+        description: "Prefisso internazionale."
+      equipCorsoBancaItaFlg:
+        type: "integer"
+        format: "int32"
+        example: 1
+        description: "La gestione delle coordinate bancarie è equiparata a quella\
+          \ italiana."
+      codIso31661:
+        type: "string"
+        example: "304"
+        description: "Codifica ISO 3166 numerica a tre cifre"
+    x-layout-name: "fake_layout"
+    x-winsession-name: "fake_winsession"
+    x-model-sub-package: "anagrafica.v1"
+    x-model-sub-path: "anagrafica/v1"
+  DettaglioErroreAggiuntivo:
+    type: "object"
+    properties:
+      errorType:
+        type: "string"
+        example: "stackTrace"
+        description: "descrizione del tipo di errore aggiuntivo"
+      value:
+        type: "string"
+        example: "SocketTimeoutException...."
+        description: "descrizione dell'errore"
+      rawValue:
+        type: "string"
+        example: "SocketTimeoutException...."
+        description: "descrizione dell'errore"
+        x-field-type: "rawJson"
+    x-model-sub-package: "frk.v1"
+    x-model-sub-path: "frk/v1"
+  CAP:
+    type: "object"
+    properties:
+      nazioneId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "ID numerico univoco della nazione"
+      nazioneCodFisc:
+        type: "string"
+        example: "Z704"
+        description: "Codice di 4 cifre Lettera + 3 numeri: Znnn - la laettera è sempre\
+          \ una Z. Nel caso dell´Italia questo attributo non è istanziato."
+      regioneId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "ID numerico della regione"
+      regioneCod:
+        type: "string"
+        example: "1"
+        description: "ID numerico univoco della nazione"
+      regioneDes:
+        type: "string"
+        example: "Piemonte"
+        description: "Descrizione regione"
+      sigla:
+        type: "string"
+        example: "TO"
+        description: "Sigla automobilistica della provincia"
+      provinciaCod:
+        type: "string"
+        description: "Codice ISTAT di 3 cifre utilizzato per indicare la provincia.\
+          \ Esempio 084 Agrigento"
+      provinciaDes:
+        type: "string"
+        example: "Torino"
+        description: "descrizione provincia"
+      comuneId:
+        type: "integer"
+        format: "int64"
+        example: 7839
+        description: "ID numerico unico del comune"
+      comuneCod:
+        type: "string"
+        example: "L219"
+        description: "Codice di 4 cifre (Lettera + 3 numeri) che è utilizzato nel\
+          \ codice fiscale per indicare il comune di nascita."
+      comuneDes:
+        type: "string"
+        example: "Torino"
+        description: "descrizione comune"
+      comuCap:
+        type: "string"
+        example: "10024"
+        description: "Codice di 5 cifre - OBSOLETO."
+      capId:
+        type: "integer"
+        format: "int64"
+        example: 10024
+        description: "Identificativo CAP"
+      cap:
+        type: "string"
+        example: "10024"
+        description: "Codice Avviamento postale del comune/località"
+      capDes:
+        type: "string"
+        example: "10024"
+        description: "Descizione della zona del cap"
+    x-layout-name: "CAP_REST"
+    x-winsession-name: "p01/n_am_p01_winsession_rest"
+    x-model-sub-package: "anagrafica.v1"
+    x-model-sub-path: "anagrafica/v1"
+  DettaglioErrore:
+    type: "object"
+    properties:
+      statusCode:
+        type: "integer"
+        format: "int32"
+        example: 200
+        description: "Http Status Code"
+      retCode:
+        type: "integer"
+        format: "int32"
+        example: -1
+        description: "codice di errore"
+      retErrMsg:
+        type: "string"
+        example: "Parametri non corretti"
+        description: "descrizione dell'errore"
+      errDetails:
+        type: "array"
+        items:
+          $ref: "#/definitions/DettaglioErroreAggiuntivo"
+    x-model-sub-package: "frk.v1"
+    x-model-sub-path: "frk/v1"
+  Provincia:
+    type: "object"
+    properties:
+      nazioneId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "ID numerico univoco della nazione"
+      nazioneCodFisc:
+        type: "string"
+        example: "Z704"
+        description: "Codice di 4 cifre Lettera + 3 numeri: Znnn - la laettera è sempre\
+          \ una Z. Nel caso dell´Italia questo attributo non è istanziato."
+      regioneId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "ID numerico della regione"
+      regioneCod:
+        type: "string"
+        example: "1"
+        description: "Codice di due cifre utilizzato dall´Istat per indicare la regione:\
+          \ 19 Sicilia 01 Piemonte"
+      regioneDes:
+        type: "string"
+        example: "Piemonte"
+        description: "Descrizione"
+      codRegioVulc:
+        type: "string"
+        example: "1"
+        description: "ID numerico univoco della nazione"
+      sigla:
+        type: "string"
+        example: "TO"
+        description: "Sigla automobilistica della provincia"
+      provinciaCod:
+        type: "string"
+        example: "1"
+        description: "Codice ISTAT di 3 cifre utilizzato per indicare la provincia.\
+          \ Esempio 084 Agrigento"
+      provinciaDes:
+        type: "string"
+        example: "Torino"
+        description: "Descrizione provincia"
+      annoDefinizione:
+        type: "integer"
+        format: "int64"
+        example: 1960
+        description: "Anno di definizione della provincia."
+      provinciaPrecedente:
+        type: "string"
+        example: "VC"
+        description: "Valorizzato nel caso di separazioni di province, ad esempio:\
+          \ Prato e Firenze Rimini e Forlì ... L attributo è valorizzato nel caso\
+          \ IN cui sia introdotto un anno di definizione (Anno_Definizione) - Esempio\
+          \ di Rimini: - RN Emilia-Romagna Rimini 099 1993 FO"
+      annoFineValidita:
+        type: "integer"
+        format: "int64"
+        example: 2000
+        description: "Anno di fine validità della provincia."
+      attivoId:
+        type: "integer"
+        format: "int32"
+        example: 0
+        description: "Indica l'attivazione o meno della provincia 0) è attiva; 1)\
+          \ è obsoleta; 2) non esiste più perché è stata accorpata da un altra  provincia."
+    x-layout-name: "PROVINCE_REST"
+    x-winsession-name: "p01/n_am_p01_winsession_rest"
+    x-model-sub-package: "anagrafica.v1"
+    x-model-sub-path: "anagrafica/v1"
+  Comune:
+    type: "object"
+    properties:
+      nazioneId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "ID numerico univoco della nazione"
+      nazioneCodFisc:
+        type: "string"
+        example: "Z704"
+        description: "Codice di 4 cifre Lettera + 3 numeri: Znnn - la laettera è sempre\
+          \ una Z. Nel caso dell´Italia questo attributo non è istanziato."
+      regioneId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "ID numerico della regione"
+      regioneCod:
+        type: "string"
+        example: "1"
+        description: "ID numerico univoco della nazione"
+      regioneDes:
+        type: "string"
+        example: "Piemonte"
+        description: "Descrizione regione"
+      sigla:
+        type: "string"
+        example: "TO"
+        description: "Sigla automobilistica della provincia"
+      provinciaCod:
+        type: "string"
+        example: "1"
+        description: "Codice ISTAT di 3 cifre utilizzato per indicare la provincia.\
+          \ Esempio 084 Agrigento"
+      provinciaDes:
+        type: "string"
+        example: "Torino"
+        description: "descrizione provincia"
+      comuneId:
+        type: "integer"
+        format: "int64"
+        example: 7839
+        description: "ID numerico unico del comune"
+      idComune:
+        type: "integer"
+        format: "int64"
+        example: 6395
+        description: "Id comune per tabelle MIUR"
+      comuneCod:
+        type: "string"
+        example: "L219"
+        description: "Codice di 4 cifre (Lettera + 3 numeri) che è utilizzato nel\
+          \ codice fiscale per indicare il comune di nascita."
+      codIstat:
+        type: "string"
+        example: "698"
+        description: "Codice di 6 cifre utilizzato dall´ISTAT per indicare il comune"
+      cap:
+        type: "string"
+        example: "10024"
+        description: "Codice di 5 cifre - OBSOLETO."
+      comuneDes:
+        type: "string"
+        example: "Torino"
+        description: "descrizione comune"
+      codIstatMiur:
+        type: "string"
+        example: "698"
+        description: "Mappatura verso la tabella ministeriale dei Comuni"
+      distanzaKm:
+        type: "integer"
+        format: "int64"
+        example: 10
+        description: "Distanza in Km del comune dall´ateneo. Serve per il calcolo\
+          \ delle tasse Dal bando del 2000/01 Studenti IN sede: l importo massimo\
+          \ della borsa di studio per gli studenti residenti nel comune di Trento\
+          \ o nei comuni limitrofi, è di lire 4.500.000. Per gli studenti residenti\
+          \ IN luoghi che permettono di raggiungere quotidianamente la sede del Corso\
+          \ di studi prescelto, l entità della singola borsa sarà determinata anche\
+          \ IN base alla distanza fino ad un limite di 5.100.000 di lire;"
+      var:
+        type: "string"
+        example: "ORA"
+        description: "Variazioni collegate al comune (ORA: Cambio denominazione, AGG:\
+          \ aggregato, AGP: aggregato in parte, AGT: aggregato temporaneamente, VED:\
+          \ Soggetti ad ulteriori cambiamenti)"
+      varCod:
+        type: "string"
+        example: "L219"
+        description: "Variazione di codice."
+      varSigla:
+        type: "string"
+        example: "TO"
+        description: "Variazione di sigla."
+      varDes:
+        type: "string"
+        example: "Torino"
+        description: "Variazione di descrizione."
+      dataCostit:
+        type: "string"
+        example: "01/01/1920"
+        description: "Data costituzione comune"
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+      newComuneId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "ID numerico unico del comune"
+      attivoId:
+        type: "integer"
+        format: "int32"
+        example: 1
+        description: "Indica l'attivazione o meno del comune. 0) il comune è attivo;\
+          \ 1) il comune è obsoleto, ad esempio per la nascita di una nuova provincia;\
+          \ 2) Il comune non esiste più perché è stato accorpato da un altro comune;\
+          \ si tenga presente che il suo codice fiscale è quello valido nella composizione\
+          \ del C.F. di un cittadino nato nel comune quand'era attivo."
+    x-layout-name: "COMUNI_REST"
+    x-winsession-name: "p01/n_am_p01_winsession_rest"
+    x-model-sub-package: "anagrafica.v1"
+    x-model-sub-path: "anagrafica/v1"
+parameters:
+  nazioneId:
+    name: "nazioneId"
+    in: "path"
+    description: "identificativo della nazione"
+    required: true
+    type: "integer"
+    format: "int64"
+  sigla:
+    name: "sigla"
+    in: "query"
+    description: "Sigla della provincia"
+    required: false
+    type: "string"
+  regioneCod:
+    name: "regioneCod"
+    in: "query"
+    description: "Codice regione"
+    required: false
+    type: "string"
+  comuneCod:
+    name: "comuneCod"
+    in: "query"
+    description: "Codice di 4 cifre (Lettera + 3 numeri) che è utilizzato nel codice\
+      \ fiscale per indicare il comune di nascita."
+    required: false
+    type: "string"
+  comuneId:
+    name: "comuneId"
+    in: "query"
+    description: "id univoco comune"
+    required: false
+    type: "integer"
+    format: "int64"
+  nazioneCodFisc:
+    name: "nazioneCodFisc"
+    in: "query"
+    description: "Codice fiscale della nazione"
+    required: false
+    type: "string"
+  iso6392Cod:
+    name: "iso6392Cod"
+    in: "query"
+    description: "Codice ISO lingua"
+    required: false
+    type: "string"
+  nazioneOrdCodFisc:
+    name: "nazioneOrdCodFisc"
+    in: "query"
+    description: "Codice fiscale della nazione di ordinamento"
+    required: false
+    type: "string"
+    maxLength: 4
+externalDocs:
+  description: "Documentazione Geneale sui servizi REST"
+  url: "https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3"
+x-file-status: "PROD"
+x-file-name: "p01-nazioniApiV1.yaml"
+x-api-status: "PROD"
+x-func-cod: "RST_NAZIV1"
+x-anchor-definitions:
+  common-produces-mediaType:
+    produces:
+    - "application/octet-stream"
+x-cache-type: "lowRefreshRateUserIndependent"

@@ -2,12 +2,10 @@ package it.attendance100.mybicocca.data.api.elearning
 
 import io.ktor.client.*
 import io.ktor.client.request.*
-import io.ktor.client.statement.*
-import io.ktor.utils.io.jvm.javaio.*
-import it.attendance100.mybicocca.data.api.extractQueryParamAsInt
+import it.attendance100.mybicocca.data.common.util.extractQueryParamAsInt
+import it.attendance100.mybicocca.data.common.util.toHtml
 import it.attendance100.mybicocca.data.dto.elearning.*
 import kotlinx.serialization.json.Json
-import org.jsoup.Jsoup
 
 /**
  * API for course-related operations.
@@ -27,7 +25,7 @@ class ElearningCourseApi(
      * @param userId The user ID to get courses for (from site info)
      * @return List of enrolled courses wrapped in [ElearningGetUserCoursesResponse]
      * @throws IllegalArgumentException If the token is invalid
-     * @throws IllegalStateException If the request fails
+     * @throws ElearningException If the request fails
      */
     suspend fun getUserCourses(wsToken: String, userId: Int): ElearningGetUserCoursesResponse {
         return executeAuthenticatedRequest(wsToken, ElearningGetUserCoursesRequest(userId))
@@ -40,7 +38,7 @@ class ElearningCourseApi(
      * @param course The course to get contents for
      * @return Course contents with sections and modules wrapped in [ElearningGetCourseContentsResponse]
      * @throws IllegalArgumentException If the token is invalid
-     * @throws IllegalStateException If the request fails
+     * @throws ElearningException If the request fails
      */
     suspend fun getCourseContents(wsToken: String, course: ElearningCourse): ElearningGetCourseContentsResponse {
         return getCourseContents(wsToken, course.id)
@@ -53,7 +51,7 @@ class ElearningCourseApi(
      * @param courseId The course ID to get contents for
      * @return Course contents with sections and modules wrapped in [ElearningGetCourseContentsResponse]
      * @throws IllegalArgumentException If the token is invalid
-     * @throws IllegalStateException If the request fails
+     * @throws ElearningException If the request fails
      */
     suspend fun getCourseContents(wsToken: String, courseId: Int): ElearningGetCourseContentsResponse {
         return executeAuthenticatedRequest(wsToken, ElearningGetCourseContentsRequest(courseId))
@@ -65,8 +63,10 @@ class ElearningCourseApi(
      * @return List of course sections, each containing categories.
      */
     suspend fun getCoursesAreas(): List<ElearningCourseArea> {
-        val response = client.get(BASE_URL)
-        val doc = Jsoup.parse(response.bodyAsChannel().toInputStream(), null, BASE_URL)
+        val response = client.get(BASE_URL) {
+            attributes.put(ElearningAttributes.SkipCookies, Unit)
+        }
+        val doc = response.toHtml()
         return doc.select("div.frontpage-box").map { sectionElement ->
             val sectionName = sectionElement.selectFirst("h2.navigation-title")?.text()?.trim() ?: "Unknown Section"
             val categories = sectionElement.select("div.card .navigation-block").mapNotNull { item ->
@@ -92,7 +92,7 @@ class ElearningCourseApi(
     suspend fun getCourseCategoryContents(category: ElearningCourseCategory): ElearningCourseCategoryContents {
         val url = category.url
         val response = client.get(url)
-        val doc = Jsoup.parse(response.bodyAsChannel().toInputStream(), null, BASE_URL)
+        val doc = response.toHtml()
 
         val name = doc.selectFirst("h1")?.text()?.trim() ?: "Unknown Category"
 
@@ -142,7 +142,7 @@ class ElearningCourseApi(
      * @param instanceId The self-enrollment instance ID, if multiple enrollment methods exist
      * @return Enrollment result wrapped in [ElearningEnrollIntoCourseResponse]
      * @throws IllegalArgumentException If the token is invalid
-     * @throws IllegalStateException If the request fails or enrollment is not allowed
+     * @throws ElearningException If the request fails or enrollment is not allowed
      */
     suspend fun enrollIntoCourse(
         wsToken: String,
@@ -162,7 +162,7 @@ class ElearningCourseApi(
      * @param instanceId The self-enrollment instance ID, if multiple enrollment methods exist
      * @return Enrollment result wrapped in [ElearningEnrollIntoCourseResponse]
      * @throws IllegalArgumentException If the token is invalid
-     * @throws IllegalStateException If the request fails or enrollment is not allowed
+     * @throws ElearningException If the request fails or enrollment is not allowed
      */
     suspend fun enrollIntoCourse(
         wsToken: String,

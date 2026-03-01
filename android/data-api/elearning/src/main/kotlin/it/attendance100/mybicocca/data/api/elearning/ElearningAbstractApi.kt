@@ -2,13 +2,17 @@ package it.attendance100.mybicocca.data.api.elearning
 
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
+import io.ktor.client.request.HttpRequestBuilder
 import io.ktor.client.request.accept
 import io.ktor.client.request.forms.FormDataContent
+import io.ktor.client.request.get
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
+import io.ktor.client.statement.HttpResponse
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.ParametersBuilder
+import it.attendance100.mybicocca.data.common.util.buildUrl
 import it.attendance100.mybicocca.data.dto.elearning.ElearningRequest
 import it.attendance100.mybicocca.data.dto.elearning.ElearningResponse
 import it.attendance100.mybicocca.data.exception.ElearningException
@@ -123,5 +127,35 @@ abstract class ElearningAbstractApi(
 
             else -> throw ElearningException(null, "Invalid response type: $element")
         }
+    }
+
+    /**
+     * Executes a GET request to the specified endpoint.
+     *
+     * @param endpoint The API endpoint (relative to BASE_URL, should start with /)
+     * @param block Optional configuration block for the request
+     * @return the HTTP response
+     * @throws ElearningException If the response status is not successful
+     */
+    protected suspend inline fun executeGet(
+        endpoint: String,
+        block: HttpRequestBuilder.() -> Unit = {}
+    ): HttpResponse {
+        return client.get(buildUrl(BASE_URL, endpoint), block)
+    }
+
+    /**
+     * Executes a POST request without expecting a response body.
+     *
+     * @param endpoint The API endpoint (relative to BASE_URL, should start with /)
+     * @param block Optional configuration block for the request
+     * @return the HTTP response
+     * @throws ElearningException If the response status is not successful
+     */
+    protected suspend inline fun executePost(
+        endpoint: String,
+        block: HttpRequestBuilder.() -> Unit = {}
+    ): HttpResponse {
+        return client.post(buildUrl(BASE_URL, endpoint), block)
     }
 }

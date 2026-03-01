@@ -4,7 +4,7 @@ import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
-class ElearningSiteApiTest : ElearningTestBase() {
+class ElearningSiteApiTest : ElearningTestApiBase() {
 
     @Test
     suspend fun getSiteInfo() {
@@ -12,13 +12,5 @@ class ElearningSiteApiTest : ElearningTestBase() {
         assertNotNull(siteInfo)
         assertNotNull(siteInfo.siteName)
         assertTrue(siteInfo.userId > 0)
-    }
-
-    @Test
-    suspend fun getAuthUrl() {
-        val authUrl = api.site.getAuthUrl()
-        assertNotNull(authUrl)
-        assertTrue(authUrl.startsWith("https://"))
-        assertTrue(authUrl.contains("passport="))
     }
 }

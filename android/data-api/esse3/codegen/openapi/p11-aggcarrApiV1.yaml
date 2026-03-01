@@ -1,0 +1,1822 @@
+---
+swagger: "2.0"
+info:
+  description: "### Procedure ###\nSono disponibili le procedure seguenti (montate\
+    \ sugli endpoint `/aggcarr/{nomeProc}` e `/aggcarr/{nomeProc}/{matId}`): \n\n\
+    \ Procedura         | Descrizione\n -                 | - \n **AGG_AD_OFF**  \
+    \  | Aggiornamento attiributi attività didattica dall'offerta di riferimento\n\
+    \ **FREQ**          | Assegnazione della frequenza\n **RIMUOVI_FREQ**  | Rimozione\
+    \ della frequenza\n **SEG**           | Aggionnamento segmenti delle attività\
+    \ a libretto a partire dall'offerta di riferimento\n **SOST**          | Sostituzione\
+    \ di una attività didattica con un'altra attività\n \n **N.B.**\n L'enpoint con\
+    \ il `{matId}` è utilizzato per invocare il motore aggiorna carriere su una specifica\
+    \ matricola\n \n ### Filtri Comuni: ###\n \n Tutti i processi contengono dei filtri\
+    \ comuni che permettono di selezionare le matricole `{matId}` su cui operare,\n\
+    \ i filtri sono contenuti sulla sezione `filtriComuni` dei parametri in ingresso\
+    \ alla singola procedura\n \n * *facId / facCod*   : id / codice del dipartimento/facoltà\
+    \ (in alternativa)\n * *cdsId / cdsCod*   : id / codice del corso di studio (in\
+    \ alternativa)\n * *aaOrdId*          : anno di ordinamento (valido solo se presente\
+    \ il cdsId / cdsCod)\n * *pdsId / pdsCod*   : id  /codice del pds relativo al\
+    \ cdsId/cdsCod e aaOrdId (in alternativa)\n * *aaRegId*          : anno di coorte\n\
+    \ \n \n **N.B.**\n Per le invocazioni massive, vanno valorizzati obbligatoriamente\
+    \ facId o cdsId, per le invocazioni puntuali è sufficiente il matId e non è necessario\
+    \ valorizzare i filtri comuni\n\n### Esempio di invocazione ##\n\n#### Invocazione\
+    \ Massiva ####\n\n1. invocare la procedura desiderata in uno degli endpoint `/aggcarr/{nome_proc}`\n\
+    2. l'enpoint restituisce l'header link con l'URL della preview con le righe da\
+    \ elaborare\n3. è possibile consultare la preview tramite `/aggcarr/{aggcarrId}`\
+    \ e `/aggcarr/{aggcarrId}/dettagli`\n4. se necessario è possibile segnare le righe\
+    \ da scartare `/aggcarr/{aggcarrId}/{aggcarrdettId}/elabora`\n5. l'elaborazione\
+    \ viene lanciata tramite `/aggcarr/{aggcarrId}/{aggcarrdettId}/esegui`\n6. i risultati\
+    \ sono forniti come log (recuperabile anche `/aggcarr/{aggcarrId}/log`) \n7. L'enpoint\
+    \ `/aggcarr/{aggcarrId}/dettagli` riporta i dettagli con la situazione aggiornata\n\
+    8. Una volta conclusa la consultazione è necessario cancellare l'elaborazione\
+    \ tramite la delete sulla risorsa\n\n#### Invocazione Singola ####\n\n 1. Invocare\
+    \ la procedura desiderata (presente in uno degli endpoint `/aggcarr/{nome_proc}/{matId}`\n\
+    \ 2. Il motore viene lanciato in modo contestuale e viene fornito il log di elaborazione\n\
+    \ 3. L'enpoint `/aggcarr/{aggcarrId}//dettagli` riporta i dettagli con la situazione\
+    \ aggiornata\n 4. Una volta conclusa la consultazione è necessario cancellare\
+    \ l'elaborazione tramite la delete sulla risorsa\n"
+  version: "1.0.0"
+  title: "AGGIORNA CARRIERE API"
+basePath: "/aggcarr-service-v1"
+schemes:
+- "https"
+- "http"
+consumes:
+- "application/json"
+produces:
+- "application/json"
+security:
+- basicAuth: []
+- jwt:
+  - "openid"
+paths:
+  /aggcarr:
+    get:
+      tags:
+      - "aggiorna carriere"
+      summary: "lista preview aggiorna carriera"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>\n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n\
+        -|-|-\nx-cache-type|noCache|Nessuna cache impostata Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: user-tecnico-permissions**\n\nProfilo|Controllo| Funzione\n-|-|-\n\
+        UTENTE_TECNICO|funzione accessibile alle utenze tecniche per accessi ai servizi\
+        \ REST|Security.checkUserTecnico()\n\n\nClasse di modello : TestataAggiornaCarriera\n\
+        ======\n\nEstensioni sulle proprietà\n----\nProprietà | x-field-type\n-|-|\n\
+        aggcarrId|primaryKey\n\n\nClasse di modello : ParametroTestataAggiornaCarriera\n\
+        ======\n\nEstensioni sulle proprietà\n----\nProprietà | x-field-type\n-|-|\n\
+        aggcarrId|primaryKey\nparamCod|primaryKey\n"
+      operationId: "getTestateAggCarr"
+      parameters: []
+      responses:
+        "200":
+          description: "Inserimento riuscito"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/TestataAggiornaCarriera"
+      x-enabled-profiles:
+      - user-tecnico-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UTENTE_TECNICO"
+              description: "funzione accessibile alle utenze tecniche per accessi\
+                \ ai servizi REST"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkUserTecnico"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+  /aggcarr/AGG_AD_OFF/:
+    post:
+      tags:
+      - "lancio procedure"
+      summary: "invocazione massiva AGG_AD_OFF"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>test\n\n\n\nla procedura consente di aggiornare\
+        \ le informazioni collegate all'offerta (segmenti esclusi).\n\nI parametri\
+        \ sono i seguenti:\n  \nParametro         | Tipo      | Descrizione\n-   \
+        \              | -         | -\nforzaADLibereFlg  | boolean   | indica se\
+        \ includere anche le attività libere nell'aggiornamento\nadIdDaAggionare \
+        \  | long      | id **(*)** dell'attività da aggiornare, se null vengono aggiornate\
+        \ tutte le righe del libretto\nadCodDaAggiornare | string    | codice **(*)**\
+        \ dell'attività da aggiornare, se null vengono aggiornate tutte le righe del\
+        \ libretto  \n\n**N-B.**: \n\nper la documentazione di `filtriComuni` vedere\
+        \ la documentazione generale\n\n_**(*)** : i valori si intendono in alternativa_\n\
+        \n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n-|-|-\nx-cache-type|noCache|Nessuna\
+        \ cache impostata Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: USER_TECNICO**\n\nProfilo|Controllo| Funzione\n-|-|-\nUTENTE_TECNICO|funzione\
+        \ accessibile alle utenze tecniche per accessi ai servizi REST|Security.checkUserTecnico()\n\
+        \n\nClasse di modello : DettaglioErroreAggiuntivo\n======\n\nEstensioni sulle\
+        \ proprietà\n----\nProprietà | x-field-type\n-|-|\nrawValue|rawJson\n"
+      operationId: "postAGG_AD_OFF"
+      parameters:
+      - in: "body"
+        name: "body"
+        description: "Parametri per la procedura AGG_AD_OFF"
+        required: true
+        schema:
+          $ref: "#/definitions/ParametriProceduraAGG_AD_OFF"
+      responses:
+        "201":
+          description: "Inserimento riuscito"
+        "422":
+          description: "Inserimento non riuscito"
+          schema:
+            $ref: "#/definitions/DettaglioErrore"
+      x-enabled-profiles:
+      - user-tecnico-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UTENTE_TECNICO"
+              description: "funzione accessibile alle utenze tecniche per accessi\
+                \ ai servizi REST"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkUserTecnico"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+  /aggcarr/AGG_AD_OFF/{matId}:
+    put:
+      tags:
+      - "lancio procedure"
+      summary: "invocazione puntuale AGG_AD_OFF"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>i parametri sono i medesimi della procedura\
+        \ massiva, i filtri comuni non sono necessari.\n\n**Estensioni:**\n\nCodice\
+        \ Estensione|Valore|Nota\n-|-|-\nx-cache-type|noCache|Nessuna cache impostata\
+        \ Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: USER_TECNICO**\n\nProfilo|Controllo| Funzione\n-|-|-\nUTENTE_TECNICO|funzione\
+        \ accessibile alle utenze tecniche per accessi ai servizi REST|Security.checkUserTecnico()\n\
+        \n\nClasse di modello : DettaglioErroreAggiuntivo\n======\n\nEstensioni sulle\
+        \ proprietà\n----\nProprietà | x-field-type\n-|-|\nrawValue|rawJson\n"
+      operationId: "putAGG_AD_OFFxStudente"
+      parameters:
+      - name: "matId"
+        in: "path"
+        description: "id del tratto di carriera per cui recuperare il libretto"
+        required: true
+        type: "integer"
+        format: "int64"
+      - in: "body"
+        name: "body"
+        description: "Parametri per la procedura AGG_AD_OFF"
+        required: true
+        schema:
+          $ref: "#/definitions/ParametriProceduraAGG_AD_OFF"
+      responses:
+        "200":
+          description: "Aggiornamento riuscito"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/LogAggiornaCarriera"
+        "422":
+          description: "modifica non riuscita"
+          schema:
+            $ref: "#/definitions/DettaglioErrore"
+      x-enabled-profiles:
+      - user-tecnico-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UTENTE_TECNICO"
+              description: "funzione accessibile alle utenze tecniche per accessi\
+                \ ai servizi REST"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkUserTecnico"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+  /aggcarr/FREQ/:
+    post:
+      tags:
+      - "lancio procedure"
+      summary: "invocazione massiva FREQ"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>la procedura consente di assegnare la frequenza\
+        \ alle attività del libretto con frequenza di ufficio\n\nI parametri sono\
+        \ i seguenti:\n  \nParametro              | Tipo      | Descrizione\n-   \
+        \                   | -         | -\nforzaNonPreviste       | boolean   |\
+        \ indica se assegnare la frequenza anche alle attività che non hanno frequenza\
+        \ di ufficio in offerta/ordinamento\nforzaStatoF            | boolean   |\
+        \ ricalcola la frequenza anche se l'attività risulta già frequentata\nforzaDataFreq\
+        \          | boolean   | assegna anche la data di frequenza se non prevista\
+        \ in offerta/ordinamento\nforzaStudentiX         | boolean   | include anche\
+        \ gli studenti con carriera cessata\nadId                   | long      |\
+        \ id **(*)** dell'attività da aggiornare, se null vengono aggiornate tutte\
+        \ le righe del libretto\nadCod                  | string    | codice **(*)**\
+        \ dell'attività da aggiornare, se null vengono aggiornate tutte le righe del\
+        \ libretto\nfatPartCod, DomPartCod | string    | fattore e dominio di partizione\
+        \ con cui filtrare le righe del libretto, se nulla non viene applicato il\
+        \ filtro\npartCod                | string    | semestre con cui filtrare le\
+        \ le righe del libretto, se nulla non viene applicato il filtro\n\n**N-B.**:\n\
+        \nper la documentazione di `filtriComuni` vedere la documentazione generale\n\
+        \n_**(*)** : i valori si intendono in alternativa_\n\n\n**Estensioni:**\n\n\
+        Codice Estensione|Valore|Nota\n-|-|-\nx-cache-type|noCache|Nessuna cache impostata\
+        \ Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: USER_TECNICO**\n\nProfilo|Controllo| Funzione\n-|-|-\nUTENTE_TECNICO|funzione\
+        \ accessibile alle utenze tecniche per accessi ai servizi REST|Security.checkUserTecnico()\n\
+        \n\nClasse di modello : DettaglioErroreAggiuntivo\n======\n\nEstensioni sulle\
+        \ proprietà\n----\nProprietà | x-field-type\n-|-|\nrawValue|rawJson\n"
+      operationId: "postFREQ"
+      parameters:
+      - in: "body"
+        name: "body"
+        description: "Parametri per la procedura FREQ"
+        required: true
+        schema:
+          $ref: "#/definitions/ParametriProceduraFREQ"
+      responses:
+        "201":
+          description: "Inserimento riuscito"
+        "422":
+          description: "Inserimento non riuscito"
+          schema:
+            $ref: "#/definitions/DettaglioErrore"
+      x-enabled-profiles:
+      - user-tecnico-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UTENTE_TECNICO"
+              description: "funzione accessibile alle utenze tecniche per accessi\
+                \ ai servizi REST"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkUserTecnico"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+  /aggcarr/FREQ/{matId}:
+    put:
+      tags:
+      - "lancio procedure"
+      summary: "invocazione puntuale FREQ"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>i parametri sono i medesimi della procedura\
+        \ massiva, i filtri comuni non sono necessari.\n\n**Estensioni:**\n\nCodice\
+        \ Estensione|Valore|Nota\n-|-|-\nx-cache-type|noCache|Nessuna cache impostata\
+        \ Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: USER_TECNICO**\n\nProfilo|Controllo| Funzione\n-|-|-\nUTENTE_TECNICO|funzione\
+        \ accessibile alle utenze tecniche per accessi ai servizi REST|Security.checkUserTecnico()\n\
+        \n\nClasse di modello : DettaglioErroreAggiuntivo\n======\n\nEstensioni sulle\
+        \ proprietà\n----\nProprietà | x-field-type\n-|-|\nrawValue|rawJson\n"
+      operationId: "putFREQxStudente"
+      parameters:
+      - name: "matId"
+        in: "path"
+        description: "id del tratto di carriera per cui recuperare il libretto"
+        required: true
+        type: "integer"
+        format: "int64"
+      - in: "body"
+        name: "body"
+        description: "Parametri per la procedura FREQ"
+        required: true
+        schema:
+          $ref: "#/definitions/ParametriProceduraFREQ"
+      responses:
+        "200":
+          description: "Aggiornamento riuscito"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/LogAggiornaCarriera"
+        "422":
+          description: "modifica non riuscita"
+          schema:
+            $ref: "#/definitions/DettaglioErrore"
+      x-enabled-profiles:
+      - user-tecnico-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UTENTE_TECNICO"
+              description: "funzione accessibile alle utenze tecniche per accessi\
+                \ ai servizi REST"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkUserTecnico"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+  /aggcarr/RIMUOVI_FREQ/:
+    post:
+      tags:
+      - "lancio procedure"
+      summary: "invocazione massiva RIMUOVI_FREQ"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>la procedura consente di rimuovere la frequenza\
+        \ alle attività del libretto\n\nI parametri sono i seguenti:\n  \nParametro\
+        \              | Tipo      | Descrizione\n-                      | -     \
+        \    | -\nforzaStudentiX         | boolean   | include anche gli studenti\
+        \ con carriera cessata\nadId                   | long      | id **(*)** dell'attività\
+        \ da aggiornare, se null vengono aggiornate tutte le righe del libretto\n\
+        adCod                  | string    | codice **(*)** dell'attività da aggiornare,\
+        \ se null vengono aggiornate tutte le righe del libretto\nfatPartCod, DomPartCod\
+        \ | string    | fattore e dominio di partizione con cui filtrare le righe\
+        \ del libretto, se nulla non viene applicato il filtro\npartCod          \
+        \      | string    | semestre con cui filtrare le le righe del libretto, se\
+        \ nulla non viene applicato il filtro\n\n**N-B.**:\n\nper la documentazione\
+        \ di `filtriComuni` vedere la documentazione generale\n\n_**(*)** : i valori\
+        \ si intendono in alternativa_\n\n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n\
+        -|-|-\nx-cache-type|noCache|Nessuna cache impostata Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: USER_TECNICO**\n\nProfilo|Controllo| Funzione\n-|-|-\nUTENTE_TECNICO|funzione\
+        \ accessibile alle utenze tecniche per accessi ai servizi REST|Security.checkUserTecnico()\n\
+        \n\nClasse di modello : DettaglioErroreAggiuntivo\n======\n\nEstensioni sulle\
+        \ proprietà\n----\nProprietà | x-field-type\n-|-|\nrawValue|rawJson\n"
+      operationId: "postRIMUOVI_FREQ"
+      parameters:
+      - in: "body"
+        name: "body"
+        description: "Parametri per la procedura RIMUOVI_FREQ"
+        required: true
+        schema:
+          $ref: "#/definitions/ParametriProceduraRIMUOVI_FREQ"
+      responses:
+        "201":
+          description: "Inserimento riuscito"
+        "422":
+          description: "Inserimento non riuscito"
+          schema:
+            $ref: "#/definitions/DettaglioErrore"
+      x-enabled-profiles:
+      - user-tecnico-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UTENTE_TECNICO"
+              description: "funzione accessibile alle utenze tecniche per accessi\
+                \ ai servizi REST"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkUserTecnico"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+  /aggcarr/RIMUOVI_FREQ/{matId}:
+    put:
+      tags:
+      - "lancio procedure"
+      summary: "invocazione puntuale RIMUOVI_FREQ"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>i parametri sono i medesimi della procedura\
+        \ massiva, i filtri comuni non sono necessari.\n\n**Estensioni:**\n\nCodice\
+        \ Estensione|Valore|Nota\n-|-|-\nx-cache-type|noCache|Nessuna cache impostata\
+        \ Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: USER_TECNICO**\n\nProfilo|Controllo| Funzione\n-|-|-\nUTENTE_TECNICO|funzione\
+        \ accessibile alle utenze tecniche per accessi ai servizi REST|Security.checkUserTecnico()\n\
+        \n\nClasse di modello : DettaglioErroreAggiuntivo\n======\n\nEstensioni sulle\
+        \ proprietà\n----\nProprietà | x-field-type\n-|-|\nrawValue|rawJson\n"
+      operationId: "putRIMUOVI_FREQxStudente"
+      parameters:
+      - name: "matId"
+        in: "path"
+        description: "id del tratto di carriera per cui recuperare il libretto"
+        required: true
+        type: "integer"
+        format: "int64"
+      - in: "body"
+        name: "body"
+        description: "Parametri per la procedura RIMUOVI_FREQ"
+        required: true
+        schema:
+          $ref: "#/definitions/ParametriProceduraRIMUOVI_FREQ"
+      responses:
+        "200":
+          description: "Aggiornamento riuscito"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/LogAggiornaCarriera"
+        "422":
+          description: "modifica non riuscita"
+          schema:
+            $ref: "#/definitions/DettaglioErrore"
+      x-enabled-profiles:
+      - user-tecnico-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UTENTE_TECNICO"
+              description: "funzione accessibile alle utenze tecniche per accessi\
+                \ ai servizi REST"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkUserTecnico"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+  /aggcarr/SEG/:
+    post:
+      tags:
+      - "lancio procedure"
+      summary: "invocazione massiva SEG"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>la procedura consente di aggiornare i segmenti\
+        \ delle righe del libretto\n\nI parametri sono i seguenti:\n  \nParametro\
+        \        | Tipo      | Descrizione\n-                | -         | -\nforzaADLibereFlg\
+        \ | boolean   | ricalcola i segmenti anche per le attività libere\nforzaStatoFS\
+        \     | boolean   | ricalcola i segmenti anche se l'attività risulta già frequentata/superata\n\
+        forzaStudentiX   | boolean   | include anche gli studenti con carriera cessata\n\
+        adId             | long      | id **(*)** dell'attività per la quale aggiornare\
+        \ i segmenti, se null vengono recuperate tutte le righe del libretto\nadCod\
+        \            | string    | codice **(*)** dell'attività per la quale aggiornare\
+        \ i segmenti, se null vengono recuperate tutte le righe del libretto\naaOffId\
+        \          | long     | anno di offerta con cui filtrare le attività del libretto\
+        \ se null vengono recuperate tutte le righe del libretto\n\n**N-B.**:\n\n\
+        per la documentazione di `filtriComuni` vedere la documentazione generale\n\
+        \n_**(*)** : i valori si intendono in alternativa_\n\n\n**Estensioni:**\n\n\
+        Codice Estensione|Valore|Nota\n-|-|-\nx-cache-type|noCache|Nessuna cache impostata\
+        \ Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: USER_TECNICO**\n\nProfilo|Controllo| Funzione\n-|-|-\nUTENTE_TECNICO|funzione\
+        \ accessibile alle utenze tecniche per accessi ai servizi REST|Security.checkUserTecnico()\n\
+        \n\nClasse di modello : DettaglioErroreAggiuntivo\n======\n\nEstensioni sulle\
+        \ proprietà\n----\nProprietà | x-field-type\n-|-|\nrawValue|rawJson\n"
+      operationId: "postSEG"
+      parameters:
+      - in: "body"
+        name: "body"
+        description: "Parametri per la procedura SEG"
+        required: true
+        schema:
+          $ref: "#/definitions/ParametriProceduraSEG"
+      responses:
+        "201":
+          description: "Inserimento riuscito"
+        "422":
+          description: "Inserimento non riuscito"
+          schema:
+            $ref: "#/definitions/DettaglioErrore"
+      x-enabled-profiles:
+      - user-tecnico-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UTENTE_TECNICO"
+              description: "funzione accessibile alle utenze tecniche per accessi\
+                \ ai servizi REST"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkUserTecnico"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+  /aggcarr/SEG/{matId}:
+    put:
+      tags:
+      - "lancio procedure"
+      summary: "invocazione puntuale SEG"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>\n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n\
+        -|-|-\nx-cache-type|noCache|Nessuna cache impostata Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: USER_TECNICO**\n\nProfilo|Controllo| Funzione\n-|-|-\nUTENTE_TECNICO|funzione\
+        \ accessibile alle utenze tecniche per accessi ai servizi REST|Security.checkUserTecnico()\n\
+        \n\nClasse di modello : DettaglioErroreAggiuntivo\n======\n\nEstensioni sulle\
+        \ proprietà\n----\nProprietà | x-field-type\n-|-|\nrawValue|rawJson\n"
+      operationId: "putSEGxStudente"
+      parameters:
+      - name: "matId"
+        in: "path"
+        description: "id del tratto di carriera per cui recuperare il libretto"
+        required: true
+        type: "integer"
+        format: "int64"
+      - in: "body"
+        name: "body"
+        description: "Parametri per la procedura SEG"
+        required: true
+        schema:
+          $ref: "#/definitions/ParametriProceduraSEG"
+      responses:
+        "200":
+          description: "Aggiornamento riuscito"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/LogAggiornaCarriera"
+        "422":
+          description: "modifica non riuscita"
+          schema:
+            $ref: "#/definitions/DettaglioErrore"
+      x-enabled-profiles:
+      - user-tecnico-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UTENTE_TECNICO"
+              description: "funzione accessibile alle utenze tecniche per accessi\
+                \ ai servizi REST"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkUserTecnico"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+  /aggcarr/SOST/:
+    post:
+      tags:
+      - "lancio procedure"
+      summary: "invocazione massiva SOST"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>la procedura consente di sostituire/aggiungere\
+        \ un codice AD dal libretto\n\nI parametri sono i seguenti:\n  \nParametro\
+        \              | Tipo      | Descrizione\n-                      | -     \
+        \    | -\nforzaStatoS            | boolean   | include nella sostituzione\
+        \ anche le attività già superate\nadIdDaSostituire       | long      | id\
+        \ **(*)** dell'attività da sostituire, se null non viene sostituita l'attività\
+        \ ma viene ne viene inserita una nuova\nadCodDaSostituire      | string  \
+        \  | codice **(*)** dell'attività da sostituire, se null non viene sostituita\
+        \ l'attività ma viene ne viene inserita una nuova\nchiaveADdaInserire    \
+        \ | struttura | occorre valorizzare i campi cdsOffId,aaOrdId,pdsId,aaOffId,adId\
+        \ con la chiave dell'attività da inserire oppure in alternativa i corrispettivi\
+        \ campi con i codici cdsCod,aaOrdId,pdsCod,aaOffId,adCod\nudId           \
+        \        | long    | nel caso debba essere inserito un particolare modulo\
+        \ è possibile valorizare il valore\n\n**N-B.**:\n\nper la documentazione di\
+        \ `filtriComuni` vedere la documentazione generale\n\n_**(*)** : i valori\
+        \ si intendono in alternativa_\n\n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n\
+        -|-|-\nx-cache-type|noCache|Nessuna cache impostata Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: USER_TECNICO**\n\nProfilo|Controllo| Funzione\n-|-|-\nUTENTE_TECNICO|funzione\
+        \ accessibile alle utenze tecniche per accessi ai servizi REST|Security.checkUserTecnico()\n\
+        \n\nClasse di modello : DettaglioErroreAggiuntivo\n======\n\nEstensioni sulle\
+        \ proprietà\n----\nProprietà | x-field-type\n-|-|\nrawValue|rawJson\n"
+      operationId: "postSOST"
+      parameters:
+      - in: "body"
+        name: "body"
+        description: "Parametri per la procedura SOST"
+        required: true
+        schema:
+          $ref: "#/definitions/ParametriProceduraSOST"
+      responses:
+        "201":
+          description: "Inserimento riuscito"
+        "422":
+          description: "Inserimento non riuscito"
+          schema:
+            $ref: "#/definitions/DettaglioErrore"
+      x-enabled-profiles:
+      - user-tecnico-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UTENTE_TECNICO"
+              description: "funzione accessibile alle utenze tecniche per accessi\
+                \ ai servizi REST"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkUserTecnico"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+  /aggcarr/SOST/{matId}:
+    put:
+      tags:
+      - "lancio procedure"
+      summary: "invocazione puntuale SOST"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>i parametri sono i medesimi della procedura\
+        \ massiva, i filtri comuni non sono necessari.\n\n**Estensioni:**\n\nCodice\
+        \ Estensione|Valore|Nota\n-|-|-\nx-cache-type|noCache|Nessuna cache impostata\
+        \ Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: USER_TECNICO**\n\nProfilo|Controllo| Funzione\n-|-|-\nUTENTE_TECNICO|funzione\
+        \ accessibile alle utenze tecniche per accessi ai servizi REST|Security.checkUserTecnico()\n\
+        \n\nClasse di modello : DettaglioErroreAggiuntivo\n======\n\nEstensioni sulle\
+        \ proprietà\n----\nProprietà | x-field-type\n-|-|\nrawValue|rawJson\n"
+      operationId: "putSOSTxStudente"
+      parameters:
+      - name: "matId"
+        in: "path"
+        description: "id del tratto di carriera per cui recuperare il libretto"
+        required: true
+        type: "integer"
+        format: "int64"
+      - in: "body"
+        name: "body"
+        description: "Parametri per la procedura FREQ"
+        required: true
+        schema:
+          $ref: "#/definitions/ParametriProceduraSOST"
+      responses:
+        "200":
+          description: "Aggiornamento riuscito"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/LogAggiornaCarriera"
+        "422":
+          description: "modifica non riuscita"
+          schema:
+            $ref: "#/definitions/DettaglioErrore"
+      x-enabled-profiles:
+      - user-tecnico-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UTENTE_TECNICO"
+              description: "funzione accessibile alle utenze tecniche per accessi\
+                \ ai servizi REST"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkUserTecnico"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+  /aggcarr/{aggcarrId}/:
+    get:
+      tags:
+      - "aggiorna carriere"
+      summary: "informazioni di testata preview"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>\n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n\
+        -|-|-\nx-cache-type|noCache|Nessuna cache impostata Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: USER_TECNICO**\n\nProfilo|Controllo| Funzione\n-|-|-\nUTENTE_TECNICO|funzione\
+        \ accessibile alle utenze tecniche per accessi ai servizi REST|Security.checkUserTecnico()\n\
+        \n\nClasse di modello : TestataAggiornaCarriera\n======\n\nEstensioni sulle\
+        \ proprietà\n----\nProprietà | x-field-type\n-|-|\naggcarrId|primaryKey\n\n\
+        \nClasse di modello : ParametroTestataAggiornaCarriera\n======\n\nEstensioni\
+        \ sulle proprietà\n----\nProprietà | x-field-type\n-|-|\naggcarrId|primaryKey\n\
+        paramCod|primaryKey\n"
+      operationId: "getTestataAggCarr"
+      parameters:
+      - name: "aggcarrId"
+        in: "path"
+        description: "id generato da una delle procedure di setup che defisce la lista\
+          \ di entità da  processare"
+        required: true
+        type: "integer"
+        format: "int64"
+      responses:
+        "200":
+          description: "Inserimento riuscito"
+          schema:
+            $ref: "#/definitions/TestataAggiornaCarriera"
+      x-enabled-profiles:
+      - user-tecnico-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UTENTE_TECNICO"
+              description: "funzione accessibile alle utenze tecniche per accessi\
+                \ ai servizi REST"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkUserTecnico"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+    delete:
+      tags:
+      - "aggiorna carriere"
+      summary: "cancella la preview"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>la cancellazione della preview è necessaria\
+        \ una volta che è stato lanciato il motore e si sono consultati i risultati\n\
+        \n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n-|-|-\nx-cache-type|noCache|Nessuna\
+        \ cache impostata Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: USER_TECNICO**\n\nProfilo|Controllo| Funzione\n-|-|-\nUTENTE_TECNICO|funzione\
+        \ accessibile alle utenze tecniche per accessi ai servizi REST|Security.checkUserTecnico()\n"
+      operationId: "deletePreview"
+      parameters:
+      - name: "aggcarrId"
+        in: "path"
+        description: "id generato da una delle procedure di setup che defisce la lista\
+          \ di entità da  processare"
+        required: true
+        type: "integer"
+        format: "int64"
+      responses:
+        "204":
+          description: "Cancellazione riuscita"
+      x-enabled-profiles:
+      - user-tecnico-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UTENTE_TECNICO"
+              description: "funzione accessibile alle utenze tecniche per accessi\
+                \ ai servizi REST"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkUserTecnico"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+  /aggcarr/{aggcarrId}/dettagli:
+    get:
+      tags:
+      - "aggiorna carriere"
+      summary: "lista righe della preview"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>\n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n\
+        -|-|-\nx-cache-type|noCache|Nessuna cache impostata Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: USER_TECNICO**\n\nProfilo|Controllo| Funzione\n-|-|-\nUTENTE_TECNICO|funzione\
+        \ accessibile alle utenze tecniche per accessi ai servizi REST|Security.checkUserTecnico()\n\
+        \n\nClasse di modello : RigaAggiornaCarriera\n======\n\nEstensioni sulle proprietà\
+        \n----\nProprietà | x-field-type\n-|-|\nadCod|optional\nadDes|optional\naaFreqId|optional\n\
+        dataFreq|optional\ndataSup|optional\nprofCod|optional\n"
+      operationId: "getPreviewDettaglio"
+      parameters:
+      - name: "aggcarrId"
+        in: "path"
+        description: "id generato da una delle procedure di setup che defisce la lista\
+          \ di entità da  processare"
+        required: true
+        type: "integer"
+        format: "int64"
+      - name: "fields"
+        in: "query"
+        description: "specifica la lista dei campi opzionali (che non vengono recupeati\
+          \ di default);\nimpostando il valore `ALL` vengono mostrati tutti i campi.\
+          \ \n\nPer gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns*\
+          \  \nI dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello)\n\
+          \nEsempi\n* per il campo childObj con la poprietà childProp utilizzare la\
+          \ notazione `childProp.prop1`\n* Per visualizzare tutte le proprietà di\
+          \ childObj utilizzare la notazione `childProp.*`\n* Per visualizzare tutte\
+          \ le proprietà di childObj e di tutti i discendenti utilizzare la notazione\
+          \ `childProp.**`\n"
+        required: false
+        type: "string"
+      - name: "optionalFields"
+        in: "query"
+        description: "specifica la lista dei campi opzionali (che non vengono recupeati\
+          \ di default);\nimpostando il valore `ALL` vengono mostrati tutti i campi.\
+          \ \n\nPer gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns*\
+          \  \nI dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello)\n\
+          \nEsempi\n* per il campo childObj con la poprietà childProp utilizzare la\
+          \ notazione `childProp.prop1`\n* Per visualizzare tutte le proprietà di\
+          \ childObj utilizzare la notazione `childProp.*`\n* Per visualizzare tutte\
+          \ le proprietà di childObj e di tutti i discendenti utilizzare la notazione\
+          \ `childProp.**`\n"
+        required: false
+        type: "string"
+      - name: "start"
+        in: "query"
+        description: "utilizzato insieme a `limit` per indicare la paginazione sui\
+          \ record; `start` indica il numero del primo record da caricare (se non\
+          \ indicato viene utilizzato 0)\n"
+        required: false
+        type: "integer"
+        format: "int32"
+      - name: "limit"
+        in: "query"
+        description: "utilizzato insieme a `start` per indicare la paginazione sui\
+          \ record, `limit` indica il numero di record da recuperare (a partire da\
+          \ `start`); \nse non indicato viene utilizzato 50, i valori consentiti vanno\
+          \ da 0 a 100\n"
+        required: false
+        type: "integer"
+        format: "int32"
+      responses:
+        "200":
+          description: "Inserimento riuscito"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/RigaAggiornaCarriera"
+      x-enabled-profiles:
+      - user-tecnico-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UTENTE_TECNICO"
+              description: "funzione accessibile alle utenze tecniche per accessi\
+                \ ai servizi REST"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkUserTecnico"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+  /aggcarr/{aggcarrId}/dettagli/{aggcarrDettId}:
+    get:
+      tags:
+      - "aggiorna carriere"
+      summary: "singola riga della preview"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>\n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n\
+        -|-|-\nx-cache-type|noCache|Nessuna cache impostata Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: USER_TECNICO**\n\nProfilo|Controllo| Funzione\n-|-|-\nUTENTE_TECNICO|funzione\
+        \ accessibile alle utenze tecniche per accessi ai servizi REST|Security.checkUserTecnico()\n\
+        \n\nClasse di modello : RigaAggiornaCarriera\n======\n\nEstensioni sulle proprietà\
+        \n----\nProprietà | x-field-type\n-|-|\nadCod|optional\nadDes|optional\naaFreqId|optional\n\
+        dataFreq|optional\ndataSup|optional\nprofCod|optional\n"
+      operationId: "getPreviewDett"
+      parameters:
+      - name: "aggcarrId"
+        in: "path"
+        description: "id generato da una delle procedure di setup che defisce la lista\
+          \ di entità da  processare"
+        required: true
+        type: "integer"
+        format: "int64"
+      - name: "aggcarrDettId"
+        in: "path"
+        description: "id della singola riga della preview"
+        required: true
+        type: "integer"
+        format: "int64"
+      - name: "fields"
+        in: "query"
+        description: "specifica la lista dei campi opzionali (che non vengono recupeati\
+          \ di default);\nimpostando il valore `ALL` vengono mostrati tutti i campi.\
+          \ \n\nPer gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns*\
+          \  \nI dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello)\n\
+          \nEsempi\n* per il campo childObj con la poprietà childProp utilizzare la\
+          \ notazione `childProp.prop1`\n* Per visualizzare tutte le proprietà di\
+          \ childObj utilizzare la notazione `childProp.*`\n* Per visualizzare tutte\
+          \ le proprietà di childObj e di tutti i discendenti utilizzare la notazione\
+          \ `childProp.**`\n"
+        required: false
+        type: "string"
+      - name: "optionalFields"
+        in: "query"
+        description: "specifica la lista dei campi opzionali (che non vengono recupeati\
+          \ di default);\nimpostando il valore `ALL` vengono mostrati tutti i campi.\
+          \ \n\nPer gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns*\
+          \  \nI dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello)\n\
+          \nEsempi\n* per il campo childObj con la poprietà childProp utilizzare la\
+          \ notazione `childProp.prop1`\n* Per visualizzare tutte le proprietà di\
+          \ childObj utilizzare la notazione `childProp.*`\n* Per visualizzare tutte\
+          \ le proprietà di childObj e di tutti i discendenti utilizzare la notazione\
+          \ `childProp.**`\n"
+        required: false
+        type: "string"
+      responses:
+        "200":
+          description: "Operazione riuscita"
+          schema:
+            $ref: "#/definitions/RigaAggiornaCarriera"
+      x-enabled-profiles:
+      - user-tecnico-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UTENTE_TECNICO"
+              description: "funzione accessibile alle utenze tecniche per accessi\
+                \ ai servizi REST"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkUserTecnico"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+  /aggcarr/{aggcarrId}/dettagli/{aggcarrDettId}/elabora:
+    put:
+      tags:
+      - "aggiorna carriere"
+      summary: "imposta il flag elabora su una riga"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>\n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n\
+        -|-|-\nx-cache-type|noCache|Nessuna cache impostata Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: USER_TECNICO**\n\nProfilo|Controllo| Funzione\n-|-|-\nUTENTE_TECNICO|funzione\
+        \ accessibile alle utenze tecniche per accessi ai servizi REST|Security.checkUserTecnico()\n\
+        \n\nClasse di modello : RigaAggiornaCarriera\n======\n\nEstensioni sulle proprietà\
+        \n----\nProprietà | x-field-type\n-|-|\nadCod|optional\nadDes|optional\naaFreqId|optional\n\
+        dataFreq|optional\ndataSup|optional\nprofCod|optional\n\n\nClasse di modello\
+        \ : DettaglioErroreAggiuntivo\n======\n\nEstensioni sulle proprietà\n----\n\
+        Proprietà | x-field-type\n-|-|\nrawValue|rawJson\n"
+      operationId: "setElaboraFlgDett"
+      consumes:
+      - "application/x-www-form-urlencoded"
+      parameters:
+      - name: "aggcarrId"
+        in: "path"
+        description: "id generato da una delle procedure di setup che defisce la lista\
+          \ di entità da  processare"
+        required: true
+        type: "integer"
+        format: "int64"
+      - name: "aggcarrDettId"
+        in: "path"
+        description: "id della singola riga della preview"
+        required: true
+        type: "integer"
+        format: "int64"
+      - name: "fields"
+        in: "query"
+        description: "specifica la lista dei campi opzionali (che non vengono recupeati\
+          \ di default);\nimpostando il valore `ALL` vengono mostrati tutti i campi.\
+          \ \n\nPer gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns*\
+          \  \nI dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello)\n\
+          \nEsempi\n* per il campo childObj con la poprietà childProp utilizzare la\
+          \ notazione `childProp.prop1`\n* Per visualizzare tutte le proprietà di\
+          \ childObj utilizzare la notazione `childProp.*`\n* Per visualizzare tutte\
+          \ le proprietà di childObj e di tutti i discendenti utilizzare la notazione\
+          \ `childProp.**`\n"
+        required: false
+        type: "string"
+      - name: "optionalFields"
+        in: "query"
+        description: "specifica la lista dei campi opzionali (che non vengono recupeati\
+          \ di default);\nimpostando il valore `ALL` vengono mostrati tutti i campi.\
+          \ \n\nPer gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns*\
+          \  \nI dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello)\n\
+          \nEsempi\n* per il campo childObj con la poprietà childProp utilizzare la\
+          \ notazione `childProp.prop1`\n* Per visualizzare tutte le proprietà di\
+          \ childObj utilizzare la notazione `childProp.*`\n* Per visualizzare tutte\
+          \ le proprietà di childObj e di tutti i discendenti utilizzare la notazione\
+          \ `childProp.**`\n"
+        required: false
+        type: "string"
+      - name: "elabora"
+        in: "formData"
+        description: "elaborazione della riga da parte del motore"
+        required: true
+        type: "boolean"
+      responses:
+        "200":
+          description: "Cancellazione riuscita"
+          schema:
+            $ref: "#/definitions/RigaAggiornaCarriera"
+        "422":
+          description: "Cancellazione  non riuscita"
+          schema:
+            $ref: "#/definitions/DettaglioErrore"
+      x-enabled-profiles:
+      - user-tecnico-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UTENTE_TECNICO"
+              description: "funzione accessibile alle utenze tecniche per accessi\
+                \ ai servizi REST"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkUserTecnico"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+  /aggcarr/{aggcarrId}/esegui:
+    put:
+      tags:
+      - "aggiorna carriere"
+      summary: "esecuzione aggiorna carriere sulla preview"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>Effettua il lancio della procedura con i parametri\
+        \ impostati, verranno elaborate solo le righe con elaboraFlg=1 \n\nLa procedura\
+        \ ritorna un log di elaborazione con il dettaglio delle operazioni effettuate,\
+        \ è anche presente una campo errMsg nella singola riga elaborata nel caso\
+        \ di errore\n\n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n-|-|-\n\
+        x-cache-type|noCache|Nessuna cache impostata Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: USER_TECNICO**\n\nProfilo|Controllo| Funzione\n-|-|-\nUTENTE_TECNICO|funzione\
+        \ accessibile alle utenze tecniche per accessi ai servizi REST|Security.checkUserTecnico()\n\
+        \n\nClasse di modello : DettaglioErroreAggiuntivo\n======\n\nEstensioni sulle\
+        \ proprietà\n----\nProprietà | x-field-type\n-|-|\nrawValue|rawJson\n"
+      operationId: "executeAggiornaCarriere"
+      parameters:
+      - name: "aggcarrId"
+        in: "path"
+        description: "id generato da una delle procedure di setup che defisce la lista\
+          \ di entità da  processare"
+        required: true
+        type: "integer"
+        format: "int64"
+      responses:
+        "200":
+          description: "esecuzione corretta"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/LogAggiornaCarriera"
+        "422":
+          description: "Cancellazione  non riuscita"
+          schema:
+            $ref: "#/definitions/DettaglioErrore"
+      x-enabled-profiles:
+      - user-tecnico-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UTENTE_TECNICO"
+              description: "funzione accessibile alle utenze tecniche per accessi\
+                \ ai servizi REST"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkUserTecnico"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+  /aggcarr/{aggcarrId}/log:
+    get:
+      tags:
+      - "aggiorna carriere"
+      summary: "log esecuzione aggiorna carriere"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>\n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n\
+        -|-|-\nx-cache-type|noCache|Nessuna cache impostata Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: USER_TECNICO**\n\nProfilo|Controllo| Funzione\n-|-|-\nUTENTE_TECNICO|funzione\
+        \ accessibile alle utenze tecniche per accessi ai servizi REST|Security.checkUserTecnico()\n"
+      operationId: "getLogAggiornaCarriere"
+      parameters:
+      - name: "aggcarrId"
+        in: "path"
+        description: "id generato da una delle procedure di setup che defisce la lista\
+          \ di entità da  processare"
+        required: true
+        type: "integer"
+        format: "int64"
+      responses:
+        "200":
+          description: "esecuzione corretta"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/LogAggiornaCarriera"
+      x-enabled-profiles:
+      - user-tecnico-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UTENTE_TECNICO"
+              description: "funzione accessibile alle utenze tecniche per accessi\
+                \ ai servizi REST"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkUserTecnico"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+securityDefinitions:
+  basicAuth:
+    description: "Autenticazione tramite BASIC authentication. Questa modalità è disponibile\
+      \ se l'autenticazione su esse3 non usa shibboleth per il gruppo dell'utente"
+    type: "basic"
+  jwt:
+    description: "Autenticazione tramite OAUTH2, occorre configurare il parametro\
+      \ di configurazione di ESSE3 che indica il server OAUTH2 da utilizzare"
+    type: "oauth2"
+    authorizationUrl: "https://idp-idm.unimib.it/idp/profile/oidc/authorize"
+    flow: "implicit"
+    scopes:
+      openid: "informazioni sull'utente"
+definitions:
+  ParametriProceduraFREQ:
+    type: "object"
+    required:
+    - "forzaDataFreq"
+    - "forzaNonPreviste"
+    - "forzaStatoF"
+    - "forzaStudentiX"
+    properties:
+      forzaStudentiX:
+        type: "boolean"
+        example: false
+        description: "flag che indica se assegnare la frequenza anche per studenti\
+          \ cessati"
+      forzaDataFreq:
+        type: "boolean"
+        example: false
+        description: "flag che indica se assegnare la data di frequenza"
+      forzaStatoF:
+        type: "boolean"
+        example: false
+        description: "flag che indica se assegnare la frequenza anche alle AD già\
+          \ frequentate"
+        x-internal-name: "forza_ricalc_flg"
+      forzaNonPreviste:
+        type: "boolean"
+        example: false
+        description: "flag che indica se assegnare la frequenza anche se non previsto\
+          \ dalla frequenza automatica"
+      partCod:
+        type: "string"
+        example: "S1"
+        description: "partizione dell'anno accademico (semestre)"
+      domPartCod:
+        type: "string"
+        example: "AK"
+        description: "dominio di partizione da filtrare (domPartCod e fatPartCod devono\
+          \ essere entrambi valorizzati)"
+      fatPartCod:
+        type: "string"
+        example: "ALF"
+        description: "fattore di partizione da filtrare (domPartCod e fatPartCod devono\
+          \ essere entrambi valorizzati)"
+      adCod:
+        type: "string"
+        example: "adCod"
+        description: "codice dell'attività didattica su cui applicare la frequenza,\
+          \ in alternativa al parametro adId"
+      adId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "id dell'attività didattica su cui applicare la frequenza, in\
+          \ alternativa al parametro adCod"
+        x-internal-name: "old_ad_id"
+      filtriComuni:
+        $ref: "#/definitions/ParametriFiltro"
+    x-model-sub-package: "libretto.v1"
+    x-model-sub-path: "libretto/v1"
+  ParametriProceduraSOST:
+    type: "object"
+    required:
+    - "forzaStatoS"
+    properties:
+      filtriComuni:
+        $ref: "#/definitions/ParametriFiltro"
+      adIdDaSostituire:
+        type: "integer"
+        format: "int64"
+        example: 100
+        description: "id dell'attività didattica da sostituire, da utilizzare in alternativa\
+          \ ad adCodDaSostituire"
+      adCodDaSostituire:
+        type: "string"
+        example: "adCod"
+        description: "codice attività didattica da sostituire, da utilizzare in alternativa\
+          \ ad adIdDaSostituire"
+      forzaStatoS:
+        type: "boolean"
+        example: false
+        description: "flag che indica se sostituire l'attività didattica anche se\
+          \ superata"
+      chiaveADdaInserire:
+        $ref: "#/definitions/ChiaveADContestualizzata"
+      udId:
+        type: "integer"
+        format: "int64"
+        example: 100
+        description: "id dell'unità didattica da sostituire, valido solo se valorizzata\
+          \ la chiave dell'AD"
+    x-model-sub-package: "libretto.v1"
+    x-model-sub-path: "libretto/v1"
+  RigaAggiornaCarriera:
+    type: "object"
+    properties:
+      aggcarrId:
+        type: "integer"
+        format: "int64"
+        example: 123
+        description: "id della testata della lista da processare"
+      aggcarrdettId:
+        type: "integer"
+        format: "int64"
+        example: 123
+        description: "id del dettaglio della lista da processare"
+      stuId:
+        type: "integer"
+        format: "int64"
+        example: 123
+        description: "id della carriera dello studente"
+      matId:
+        type: "integer"
+        format: "int64"
+        example: 123
+        description: "id del tratto di carriera dello studente"
+      adsceId:
+        type: "integer"
+        format: "int64"
+        example: 1233
+        description: "id della riga di libretto dello studente"
+      adregId:
+        type: "integer"
+        format: "int64"
+        example: 1233
+        description: "id della prova di una riga di libretto dello studente"
+      matricola:
+        type: "string"
+        example: "matcod"
+        description: "matricola dello studente"
+      nome:
+        type: "string"
+        example: "nome"
+        description: "nome dello studente"
+      cognome:
+        type: "string"
+        example: "matcod"
+        description: "cognome dello studente"
+      coorte:
+        type: "integer"
+        format: "int32"
+        example: 2012
+        description: "coorte dello studente"
+      cdsStuId:
+        type: "integer"
+        format: "int64"
+        example: 12345
+        description: "id del corso di studio di iscrizone dello studente"
+        x-internal-name: "cds_id"
+      cdsStuCod:
+        type: "string"
+        example: "adCod"
+        description: "codice del corso di studio di iscrizone dello studente"
+      cdsStuDes:
+        type: "string"
+        example: "cdsStu"
+        description: "descrizione del corso di studio di iscrizone dello studente"
+        x-internal-name: "cds_stu"
+      aaOrdStuId:
+        type: "integer"
+        format: "int32"
+        example: 12345
+        description: "id dell'anno di ordinamento di studio di iscrizone dello studente"
+        x-internal-name: "aa_ord_id"
+      pdsStuId:
+        type: "integer"
+        format: "int64"
+        example: 12345
+        description: "id del percorso di studio di iscrizone dello studente"
+        x-internal-name: "pds_id"
+      pdsStuCod:
+        type: "string"
+        example: "pdsStuCod"
+        description: "codice del percorso di studio di iscrizone dello studente"
+      pdsStuDes:
+        type: "string"
+        example: "pdsStuDes"
+        description: "descrizione del percorso di studio di iscrizone dello studente"
+        x-internal-name: "pds_stu"
+      adId:
+        type: "integer"
+        format: "int32"
+        example: 12345
+        description: "coorte dello studente"
+      adCod:
+        type: "string"
+        example: "adCod"
+        description: "codice attività didattica del libretto"
+        x-field-type: "optional"
+        x-internal-name: "ad_cod"
+      adDes:
+        type: "string"
+        example: "adDes"
+        description: "descrizione attività didattica del libretto"
+        x-field-type: "optional"
+        x-internal-name: "ad"
+      aaFreqId:
+        type: "integer"
+        format: "int32"
+        example: 2016
+        description: "anno di frequenza"
+        x-field-type: "optional"
+      dataFreq:
+        type: "string"
+        example: "10/10/2016"
+        description: "data di acquisizione della frequenza"
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+        x-field-type: "optional"
+      dataSup:
+        type: "string"
+        example: "10/10/2016"
+        description: "data di superamento dell'attività"
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+        x-field-type: "optional"
+      esito:
+        $ref: "#/definitions/Esito"
+      profCod:
+        type: "string"
+        example: "profCod"
+        description: "codice profilo studente"
+        x-field-type: "optional"
+      elaboraFlg:
+        type: "integer"
+        format: "int32"
+        example: 0
+        description: "flag che indica se l'attività risulta da elaborare oppure no"
+        minimum: 0.0
+        maximum: 1.0
+      errMsg:
+        type: "string"
+        example: "descrizione errore"
+        description: "descrizione dell'errore nel caso l'elaborazione della riga risulta\
+          \ fallita"
+    x-layout-name: "AGG_CARR_PREVIEW_DETT"
+    x-winsession-name: "p11/n_di_11_022_aggiorna_carriere_batch"
+    x-model-sub-package: "libretto.v1"
+    x-mapping-fields:
+      esito:
+        dataEsa: "data_sup"
+    x-model-sub-path: "libretto/v1"
+  ParametriProceduraSEG:
+    type: "object"
+    required:
+    - "forzaADLibereFlg"
+    - "forzaStatoFS"
+    - "forzaStudentiX"
+    properties:
+      forzaStatoFS:
+        type: "boolean"
+        example: false
+        description: "flag che indica se ricalcolare i segmenti anche per le attività\
+          \ didattiche in stato Frequentato o superato"
+        x-internal-name: "forza_ricalc_flg"
+      forzaStudentiX:
+        type: "boolean"
+        example: false
+        description: "flag che indica ricalcolare i segmenti anche per studenti cessati"
+      forzaADLibereFlg:
+        type: "boolean"
+        example: false
+        description: "flag che indica se calcolare i segmenti anche per attività didattiche\
+          \ libere"
+        x-internal-name: "forza_ricalc_flg"
+      aaOffId:
+        type: "integer"
+        format: "int64"
+        example: 2017
+        description: "anno di offerta di erogazione dell'attività didatta del libretto"
+      adId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "id dell'attività didattica, in alternativa al parametro adCod"
+        x-internal-name: "old_ad_id"
+      adCod:
+        type: "string"
+        example: "adCod"
+        description: "codice dell'attività didattica, in alternativa al parametro\
+          \ adId"
+      filtriComuni:
+        $ref: "#/definitions/ParametriFiltro"
+    x-model-sub-package: "libretto.v1"
+    x-model-sub-path: "libretto/v1"
+  ChiaveADContestualizzata:
+    type: "object"
+    required:
+    - "aaOffId"
+    - "aaOrdId"
+    - "adId"
+    - "cdsId"
+    - "pdsId"
+    properties:
+      cdsId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "chiave del corso di studio di erogazione dell'attività didattica"
+      cdsCod:
+        type: "string"
+        example: "CDS_AD_1"
+        description: "codice del corso di studio di erogazione dell'attività didattica"
+      cdsDes:
+        type: "string"
+        example: "Esempio di CDS AD"
+        description: "descrizione del corso di erogazione dell'attività didattica"
+      aaOrdId:
+        type: "integer"
+        format: "int32"
+        example: 2016
+        description: "anno di ordinamento del corso di studio di erogazione dell'attività\
+          \ didattica"
+      aaOrdCod:
+        type: "string"
+        example: "CDS_AD_1"
+        description: "codice dell''ordinamento di erogazione dell'attività didattica"
+      aaOrdDes:
+        type: "string"
+        example: "Esempio di CDS AD"
+        description: "descrizione dell''ordinamento di erogazione dell'attività didattica"
+      pdsId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "chiave del percorso di studio di erogazione dell'attività didattica"
+      pdsCod:
+        type: "string"
+        example: "PDS_AD_1"
+        description: "codice del percorso di erogazione dell'attività didattica"
+      pdsDes:
+        type: "string"
+        example: "Esempio di PDS AD"
+        description: "descrizione del percorso di erogazione dell'attività didattica"
+      aaOffId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "anno di offerta di erogazione dell'attività didattica"
+      adId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "chiave dell'attività didattica"
+      adCod:
+        type: "string"
+        example: "PDS_AD_1"
+        description: "codice dell''attività didattica"
+      adDes:
+        type: "string"
+        example: "Esempio di PDS AD"
+        description: "descrizione dell''attività didattica"
+      afId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "id della afId proveniente da U-Gov Didattica"
+    x-model-sub-package: "offerta.v1"
+    x-model-sub-path: "offerta/v1"
+  ParametroTestataAggiornaCarriera:
+    type: "object"
+    properties:
+      aggcarrId:
+        type: "integer"
+        format: "int64"
+        example: 123
+        description: "id della testata della lista da processare"
+        x-field-type: "primaryKey"
+      paramCod:
+        type: "string"
+        example: "part_cod"
+        description: "codice del parametro"
+        x-field-type: "primaryKey"
+      paramDes:
+        type: "string"
+        example: "primo semestre"
+        description: "descrizione del parametro"
+      valAlfa:
+        type: "string"
+        example: "S1"
+        description: "valore alfanumerico del parametro (se previsto)"
+      valNum:
+        type: "number"
+        format: "float"
+        example: 1.0
+        description: "valore numerico del parametro (se previsto)"
+    x-layout-name: "AGG_CARR_PREVIEW_PARAM"
+    x-winsession-name: "p11/n_di_11_022_aggiorna_carriere_batch"
+    x-model-sub-package: "libretto.v1"
+    x-model-sub-path: "libretto/v1"
+  ParametriProceduraAGG_AD_OFF:
+    type: "object"
+    required:
+    - "adIdDaAggiornare"
+    - "forzaADLibereFlg"
+    properties:
+      filtriComuni:
+        $ref: "#/definitions/ParametriFiltro"
+      forzaADLibereFlg:
+        type: "boolean"
+        example: false
+        description: "flag che indica se calcolare i segmenti anche per attività didattiche\
+          \ libere"
+        x-internal-name: "forza_ricalc_flg"
+      adIdDaAggiornare:
+        type: "integer"
+        format: "int64"
+        example: 100
+        description: "id attività didattica da aggiornare, da utilizzare in alternativa\
+          \ ad adCodDaAggiornare"
+      adCodDaAggiornare:
+        type: "string"
+        example: "adCod"
+        description: "codice attività didattica da aggiornare, da utilizzare in alternativa\
+          \ ad adIdDaAggiornare"
+    x-model-sub-package: "libretto.v1"
+    x-model-sub-path: "libretto/v1"
+  DettaglioErrore:
+    type: "object"
+    properties:
+      statusCode:
+        type: "integer"
+        format: "int32"
+        example: 200
+        description: "Http Status Code"
+      retCode:
+        type: "integer"
+        format: "int32"
+        example: -1
+        description: "codice di errore"
+      retErrMsg:
+        type: "string"
+        example: "Parametri non corretti"
+        description: "descrizione dell'errore"
+      errDetails:
+        type: "array"
+        items:
+          $ref: "#/definitions/DettaglioErroreAggiuntivo"
+    x-model-sub-package: "frk.v1"
+    x-model-sub-path: "frk/v1"
+  TestataAggiornaCarriera:
+    type: "object"
+    properties:
+      aggcarrId:
+        type: "integer"
+        format: "int64"
+        example: 123
+        description: "id della testata della lista da processare"
+        x-field-type: "primaryKey"
+      procCod:
+        type: "string"
+        description: "procedura associata"
+      stato:
+        type: "integer"
+        format: "int32"
+        example: 0
+        description: "stato della preview 0 - preview, 1 - elaborazione già effettuata"
+      facId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "id della facoltà/dipartimento su cui è stato lanciato il motore"
+      facCod:
+        type: "string"
+        example: "fac_cod"
+        description: "codice della facoltà/dipartimento su cui è stato lanciato il\
+          \ motore"
+      facDes:
+        type: "string"
+        example: "fac_des"
+        description: "descrizione della facoltà/dipartimento su cui è stato lanciato\
+          \ il motore"
+      cdsId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "id del corso di studio su cui è stato lanciato il motore"
+      cdsCod:
+        type: "string"
+        example: "cds_cod"
+        description: "codice del corso di studio su cui è stato lanciato il motore"
+      cdsDes:
+        type: "string"
+        example: "cds_des"
+        description: "descrizione del corso di studio su cui è stato lanciato il motore"
+      aaOrdId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "anno di ordinamento su cui è stato lanciato il motore"
+      pdsId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "id del percorso di studio su cui è stato lanciato il motore"
+      pdsCod:
+        type: "string"
+        example: "pds_cod"
+        description: "codice del percorso di studio su cui è stato lanciato il motore"
+      pdsDes:
+        type: "string"
+        example: "pds_des"
+        description: "descrizione del percorso di studio su cui è stato lanciato il\
+          \ motore"
+      aaRegId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "anno di coorte su cui è stato lanciato il motore"
+      parametri:
+        type: "array"
+        items:
+          $ref: "#/definitions/ParametroTestataAggiornaCarriera"
+    x-layout-name: "AGG_CARR_PREVIEW"
+    x-winsession-name: "p11/n_di_11_022_aggiorna_carriere_batch"
+    x-model-sub-package: "libretto.v1"
+    x-model-sub-path: "libretto/v1"
+  DettaglioErroreAggiuntivo:
+    type: "object"
+    properties:
+      errorType:
+        type: "string"
+        example: "stackTrace"
+        description: "descrizione del tipo di errore aggiuntivo"
+      value:
+        type: "string"
+        example: "SocketTimeoutException...."
+        description: "descrizione dell'errore"
+      rawValue:
+        type: "string"
+        example: "SocketTimeoutException...."
+        description: "descrizione dell'errore"
+        x-field-type: "rawJson"
+    x-model-sub-package: "frk.v1"
+    x-model-sub-path: "frk/v1"
+  LogAggiornaCarriera:
+    type: "object"
+    properties:
+      aggcarrId:
+        type: "integer"
+        format: "int64"
+        example: 123
+        description: "id della testata della lista da processare"
+      logTId:
+        type: "integer"
+        format: "int64"
+        example: 123
+        description: "id della testata del log"
+      logDes:
+        type: "string"
+        description: "log"
+    x-layout-name: "AGG_CARR_PREVIEW_LOG"
+    x-winsession-name: "p11/n_di_11_022_aggiorna_carriere_batch"
+    x-model-sub-package: "libretto.v1"
+    x-model-sub-path: "libretto/v1"
+  Esito:
+    type: "object"
+    required:
+    - "modValCod"
+    - "supEsaFlg"
+    properties:
+      modValCod:
+        type: "string"
+        example: "V"
+        description: "Tipo di modalità con cui viene valutato l'esame. \nPuò assumere\
+          \ i valori V,G,N se il valore è V allora al momento del superamento viene\
+          \ valorizzato il campo voto, \naltrimenti se il valore è G viene valorizzato\
+          \ il campo tipo_giud_cod\n"
+        enum:
+        - "V"
+        - "G"
+        - "N"
+      supEsaFlg:
+        type: "integer"
+        format: "int32"
+        example: 1
+        description: "flag che indica se l''esito è positivo"
+        minimum: 0.0
+        maximum: 1.0
+      voto:
+        type: "number"
+        format: "float"
+        description: "voto, valorizzato se modValCod è V. \nGli esiti delle prove\
+          \ finali (cioè quelle che prevedono il caricamento nella riga di libretto)\
+          \ sono INTERI, \ngli esti di prove parziali invece possono avere 2 cifre\
+          \ decimali \n"
+      lodeFlg:
+        type: "integer"
+        format: "int32"
+        description: "flag che indica la lode, impostato a 1 solo per modValCod è\
+          \ V e la lode deve essere impostata"
+        minimum: 0.0
+        maximum: 1.0
+      tipoGiudCod:
+        type: "string"
+        example: "IDO"
+        description: "codice che indica il tipo di giudizio utilizzato, valorizzato\
+          \ solo se modValCod è G"
+      tipoGiudDes:
+        type: "string"
+        example: "Idoneo"
+        description: "descrizione che indica il tipo di giudizio utilizzato, valorizzato\
+          \ solo se modValCod è G"
+      dataEsa:
+        type: "string"
+        example: "15/10/2015"
+        description: "data della prova, il formato con cui deve essere definita la\
+          \ data è DD/MM/YYYY"
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+      aaSupId:
+        type: "integer"
+        format: "int32"
+        example: 2016
+        description: "anno di superamento della prova"
+    x-model-sub-package: "libretto.v1"
+    x-model-sub-path: "libretto/v1"
+  ParametriFiltro:
+    type: "object"
+    properties:
+      facId:
+        type: "integer"
+        format: "int64"
+        example: 10
+        description: "id della facoltà/dipartimento di iscrizione dello studente (facId\
+          \ e cdsId sono mutuamente esclusivi)\n"
+      facCod:
+        type: "string"
+        example: "facCod"
+        description: "codice della facoltà/dipartimento di iscrizione dello studente\
+          \ da utilizzare in alternativa all'id (facCod e cdsCod sono mutuamente esclusivi)\n"
+      cdsId:
+        type: "integer"
+        format: "int64"
+        example: 10
+        description: "id del corso di studio di iscrizione dello studente (facId e\
+          \ cdsId sono mutuamente esclusivi)\n"
+      cdsCod:
+        type: "string"
+        example: "cdsCod"
+        description: "codice del corso di studio di iscrizione dello studente da utilizzare\
+          \ in alternativa all'id (facCod e cdsCod sono mutuamente esclusivi)\n"
+      aaOrdId:
+        type: "integer"
+        format: "int64"
+        example: 2010
+        description: "anno di ordinamento di iscrizione dello studente (valido assieme\
+          \ a cdsId o cdsCod)\n"
+      pdsId:
+        type: "integer"
+        format: "int64"
+        example: 9999
+        description: "id del percorso di studio di iscrizione dello studente, vanno\
+          \ valorizzati anche cdsId e aaOrdId\n"
+      pdsCod:
+        type: "string"
+        example: "cdsCod"
+        description: "codice del percorso di studio di iscrizione dello studente da\
+          \ utilizzare in alternativa all'id, vanno valorizzati anche cdsCod e aaOrdId\n"
+      aaRegId:
+        type: "integer"
+        format: "int64"
+        example: 10
+        description: "anno di coorte dello studente"
+    x-model-sub-package: "libretto.v1"
+    x-model-sub-path: "libretto/v1"
+  ParametriProceduraRIMUOVI_FREQ:
+    type: "object"
+    required:
+    - "forzaStudentiX"
+    properties:
+      forzaStudentiX:
+        type: "boolean"
+        example: false
+        description: "flag che indica se rimuovere la frequenza anche per studenti\
+          \ cessati"
+      adId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "id dell'attività didattica su cui applicare la frequenza, in\
+          \ alternativa al parametro adCod"
+        x-internal-name: "old_ad_id"
+      adCod:
+        type: "string"
+        example: "adCod"
+        description: "codice dell'attività didattica su cui applicare la frequenza,\
+          \ in alternativa al parametro adId"
+      fatPartCod:
+        type: "string"
+        example: "ALF"
+        description: "fattore di partizione da filtrare (domPartCod e fatPartCod devono\
+          \ essere entrambi valorizzati)"
+      domPartCod:
+        type: "string"
+        example: "AK"
+        description: "dominio di partizione da filtrare (domPartCod e fatPartCod devono\
+          \ essere entrambi valorizzati)"
+      partCod:
+        type: "string"
+        example: "S1"
+        description: "partizione dell'anno accademico (semestre)"
+      filtriComuni:
+        $ref: "#/definitions/ParametriFiltro"
+    x-model-sub-package: "libretto.v1"
+    x-model-sub-path: "libretto/v1"
+parameters:
+  aggcarrDettId:
+    name: "aggcarrDettId"
+    in: "path"
+    description: "id della singola riga della preview"
+    required: true
+    type: "integer"
+    format: "int64"
+  aggcarrId:
+    name: "aggcarrId"
+    in: "path"
+    description: "id generato da una delle procedure di setup che defisce la lista\
+      \ di entità da  processare"
+    required: true
+    type: "integer"
+    format: "int64"
+externalDocs:
+  description: "Documentazione Geneale sui servizi REST"
+  url: "https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3"
+x-file-status: "PROD"
+x-file-name: "p11-aggcarrApiV1.yaml"
+x-api-status: "PROD"
+x-func-cod: "RST_AGGCV1"
+x-cache-type: "noCache"
+x-cache-endpoint-relations:
+  canonicalEndpointsAction: "none"

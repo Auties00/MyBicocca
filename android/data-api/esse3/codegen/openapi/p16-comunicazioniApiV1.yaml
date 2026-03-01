@@ -1,0 +1,723 @@
+---
+swagger: "2.0"
+info:
+  description: "API REST di ESSE3 per la gestione delle comunicazioni\n\n## ChangeLog\n\
+    \nVersione       | Versione di Esse3 di rilascio | Interventi \n-            \
+    \  | -                             | -\n1.0.0          | 22.02.00.00         \
+    \          | prima release  \n1.1.0          | 23.09.02.00                   |\
+    \ aggiunto l'endpoint /comunicazioni/{comId}/destinatari per il recupero dati\
+    \ paginato dei destinatari\n"
+  version: "1.1.0"
+  title: "ESSE3 Comunicazioni API"
+basePath: "/comunicazioni-service-v1"
+schemes:
+- "https"
+- "http"
+consumes:
+- "application/json"
+produces:
+- "application/json"
+security:
+- basicAuth: []
+- jwt:
+  - "openid"
+paths:
+  /comunicazioni:
+    post:
+      tags:
+      - "comunicazione"
+      summary: "inserisce una nuova comunicazione"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>Consente di inserire una nuova comunicazione\
+        \ da inviare ad un elenco di destinatari.\nSe l'inserimento va a buon fine\
+        \ in risposta, nell'header location, viene restituito l'endpoint della comunicazione\
+        \ creata (per una eventuale successiva interrogazione).\n\n##### Dati in ingresso\n\
+        Campo       | Campi obbligatori                    | Note \n-           |\
+        \ -                                    | - \n/           | deviceCod, titolo,\
+        \ testo             | tipoComCod e deviceCod devono essere valorizzati con\
+        \ codici censiti a sistema, rispettivamente di tipo e device di comunicazione\n\
+        destinatari | origineDato, idAnagrafica/recapito   | se origineDato=EXTERNAL\
+        \ valorizzare recapito (indirizzo email o numero di cellulare), altrimenti\
+        \ valorizzare idAnagrafica\n\nSolo nel caso di App Mobile consortile (device\
+        \ APP) e' possibile indicare anche \"destinatari virtuali\", tramite origineDato=EXTERNAL\
+        \ e recapito valorizzato come segue:\n- STU, ad indicare tutti gli studenti\n\
+        - DOC, ad indicare tutti i docenti\n- PTA, ad indicare tutto il personale\n\
+        \n##### Codici di errore restituiti\nCodice di Ritorno | Descrizione\n-  \
+        \               | -\n 0                | Errore generico\n-1             \
+        \   | Tipo comunicazione non riconosciuto\n-2                | Device non\
+        \ riconosciuto\n-3                | Uno o piu' destinatari non trovati in\
+        \ anagrafica\n-4                | Altri errori nell'inserimento dei destinatari\n\
+        \n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n-|-|-\nx-cache-type|midRefreshRateUserIndependent|Risorsa\
+        \ che varia con frequenza media, cache Http abilitata, cache server abilitata.\
+        \ Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: user-tecnico-permissions**\n\nProfilo|Controllo| Funzione\n-|-|-\n\
+        UTENTE_TECNICO|funzione accessibile alle utenze tecniche per accessi ai servizi\
+        \ REST|Security.checkUserTecnico()\n\n\nClasse di modello : DettaglioErroreAggiuntivo\n\
+        ======\n\nEstensioni sulle proprietà\n----\nProprietà | x-field-type\n-|-|\n\
+        rawValue|rawJson\n"
+      operationId: "postComunicazione"
+      parameters:
+      - in: "body"
+        name: "body"
+        description: "Oggetto che contiene i dati della comunicazione e relativi destinatari"
+        required: true
+        schema:
+          $ref: "#/definitions/InserimentoComunicazione"
+      responses:
+        "201":
+          description: "Inserimento riuscito"
+        "422":
+          description: "Inserimento non riuscito"
+          schema:
+            $ref: "#/definitions/DettaglioErrore"
+      x-enabled-profiles:
+      - user-tecnico-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UTENTE_TECNICO"
+              description: "funzione accessibile alle utenze tecniche per accessi\
+                \ ai servizi REST"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkUserTecnico"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+  /comunicazioni/{comId}:
+    get:
+      tags:
+      - "comunicazione"
+      summary: "recupera i dati di una specifica comunicazione"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>Recupera i dati di una comunicazione, dato\
+        \ il suo ID univoco, inclusi i destinatari e l'eventuale esito dell'invio.\n\
+        \n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n-|-|-\nx-cache-type|noCache|Nessuna\
+        \ cache impostata Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: USER_TECNICO**\n\nProfilo|Controllo| Funzione\n-|-|-\nUTENTE_TECNICO|funzione\
+        \ accessibile alle utenze tecniche per accessi ai servizi REST|Security.checkUserTecnico()\n\
+        \n\nClasse di modello : Comunicazione\n======\n\nEstensioni sulle proprietà\
+        \n----\nProprietà | x-field-type\n-|-|\ncomId|primaryKey\n\n\nClasse di modello\
+        \ : Destinatario\n======\n\nEstensioni sulle proprietà\n----\nProprietà |\
+        \ x-field-type\n-|-|\nidUser|optional\ndestId|optional\ncomId|optional\ncomDestId|primaryKey\n\
+        \n\nClasse di modello : DettaglioErroreAggiuntivo\n======\n\nEstensioni sulle\
+        \ proprietà\n----\nProprietà | x-field-type\n-|-|\nrawValue|rawJson\n"
+      operationId: "getComunicazione"
+      parameters:
+      - name: "comId"
+        in: "path"
+        description: "ID univoco della comunicazione"
+        required: true
+        type: "integer"
+        format: "int64"
+      - name: "fields"
+        in: "query"
+        description: "specifica la lista dei campi opzionali (che non vengono recupeati\
+          \ di default);\nimpostando il valore `ALL` vengono mostrati tutti i campi.\
+          \ \n\nPer gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns*\
+          \  \nI dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello)\n\
+          \nEsempi\n* per il campo childObj con la poprietà childProp utilizzare la\
+          \ notazione `childProp.prop1`\n* Per visualizzare tutte le proprietà di\
+          \ childObj utilizzare la notazione `childProp.*`\n* Per visualizzare tutte\
+          \ le proprietà di childObj e di tutti i discendenti utilizzare la notazione\
+          \ `childProp.**`\n"
+        required: false
+        type: "string"
+      - name: "optionalFields"
+        in: "query"
+        description: "specifica la lista dei campi opzionali (che non vengono recupeati\
+          \ di default);\nimpostando il valore `ALL` vengono mostrati tutti i campi.\
+          \ \n\nPer gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns*\
+          \  \nI dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello)\n\
+          \nEsempi\n* per il campo childObj con la poprietà childProp utilizzare la\
+          \ notazione `childProp.prop1`\n* Per visualizzare tutte le proprietà di\
+          \ childObj utilizzare la notazione `childProp.*`\n* Per visualizzare tutte\
+          \ le proprietà di childObj e di tutti i discendenti utilizzare la notazione\
+          \ `childProp.**`\n"
+        required: false
+        type: "string"
+      responses:
+        "200":
+          description: "Esecuzione Corretta"
+          schema:
+            $ref: "#/definitions/ComunicazioneConDestinatari"
+        "422":
+          description: "Parametri Errati"
+          schema:
+            $ref: "#/definitions/DettaglioErrore"
+      x-enabled-profiles:
+      - user-tecnico-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UTENTE_TECNICO"
+              description: "funzione accessibile alle utenze tecniche per accessi\
+                \ ai servizi REST"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkUserTecnico"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+      x-cache-type: "noCache"
+  /comunicazioni/{comId}/destinatari:
+    get:
+      tags:
+      - "comunicazione"
+      summary: "recupera i dati dei destinatari di una specifica comunicazione"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>Recupera i dati dei destinatari di una comunicazione,\
+        \ dato l'ID univoco di quest'ultima, incluso l'eventuale esito dell'invio.\n\
+        E' possibile filtrare i destinatari per `origineDato`, `idAnagrafica`, `recapito`\
+        \ e `esitoCod`.\nI parametri opzionali **start** e **limit** consentono di\
+        \ paginare i risultati.\n\n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n\
+        -|-|-\nx-cache-type|noCache|Nessuna cache impostata Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: USER_TECNICO**\n\nProfilo|Controllo| Funzione\n-|-|-\nUTENTE_TECNICO|funzione\
+        \ accessibile alle utenze tecniche per accessi ai servizi REST|Security.checkUserTecnico()\n\
+        \n\nClasse di modello : Destinatario\n======\n\nEstensioni sulle proprietà\
+        \n----\nProprietà | x-field-type\n-|-|\nidUser|optional\ndestId|optional\n\
+        comId|optional\ncomDestId|primaryKey\n\n\nClasse di modello : DettaglioErroreAggiuntivo\n\
+        ======\n\nEstensioni sulle proprietà\n----\nProprietà | x-field-type\n-|-|\n\
+        rawValue|rawJson\n"
+      operationId: "getDestinatariCom"
+      parameters:
+      - name: "comId"
+        in: "path"
+        description: "ID univoco della comunicazione"
+        required: true
+        type: "integer"
+        format: "int64"
+      - name: "origineDato"
+        in: "query"
+        description: "tipologia di destinatario\n(PERSONE=studente/registrato, DOCENTI=docente,\
+          \ SOGG_EST=soggetto esterno, EXTERNAL=recapito email/cellulare)\n"
+        required: false
+        type: "string"
+        pattern: "PERSONE|DOCENTI|SOGG_EST|EXTERNAL"
+      - name: "idAnagrafica"
+        in: "query"
+        description: "ID univoco di anagrafica, per la tipologia di destinatario (se\
+          \ origineDato vale PERSONE, DOCENTI o SOGG_EST)"
+        required: false
+        type: "integer"
+        format: "int64"
+      - name: "recapito"
+        in: "query"
+        description: "indirizzo email o numero di cellulare del destinatario"
+        required: false
+        type: "string"
+      - name: "esitoCod"
+        in: "query"
+        description: "esito di invio comunicazione per il destinatario\n(SENT=inviata,\
+          \ FAIL=errore nell'invio, CANC=invio annullato, DRAFT=comunicazione ancora\
+          \ in bozza, ACTIVE=da inviare, WAIT=invio in corso)\n"
+        required: false
+        type: "string"
+        pattern: "SENT|FAIL|CANC|DRAFT|ACTIVE|WAIT"
+      - name: "fields"
+        in: "query"
+        description: "specifica la lista dei campi opzionali (che non vengono recupeati\
+          \ di default);\nimpostando il valore `ALL` vengono mostrati tutti i campi.\
+          \ \n\nPer gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns*\
+          \  \nI dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello)\n\
+          \nEsempi\n* per il campo childObj con la poprietà childProp utilizzare la\
+          \ notazione `childProp.prop1`\n* Per visualizzare tutte le proprietà di\
+          \ childObj utilizzare la notazione `childProp.*`\n* Per visualizzare tutte\
+          \ le proprietà di childObj e di tutti i discendenti utilizzare la notazione\
+          \ `childProp.**`\n"
+        required: false
+        type: "string"
+      - name: "optionalFields"
+        in: "query"
+        description: "specifica la lista dei campi opzionali (che non vengono recupeati\
+          \ di default);\nimpostando il valore `ALL` vengono mostrati tutti i campi.\
+          \ \n\nPer gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns*\
+          \  \nI dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello)\n\
+          \nEsempi\n* per il campo childObj con la poprietà childProp utilizzare la\
+          \ notazione `childProp.prop1`\n* Per visualizzare tutte le proprietà di\
+          \ childObj utilizzare la notazione `childProp.*`\n* Per visualizzare tutte\
+          \ le proprietà di childObj e di tutti i discendenti utilizzare la notazione\
+          \ `childProp.**`\n"
+        required: false
+        type: "string"
+      - name: "start"
+        in: "query"
+        description: "utilizzato insieme a `limit` per indicare la paginazione sui\
+          \ record; `start` indica il numero del primo record da caricare (se non\
+          \ indicato viene utilizzato 0)\n"
+        required: false
+        type: "integer"
+        format: "int32"
+      - name: "limit"
+        in: "query"
+        description: "utilizzato insieme a `start` per indicare la paginazione sui\
+          \ record, `limit` indica il numero di record da recuperare (a partire da\
+          \ `start`); \nse non indicato viene utilizzato 50, i valori consentiti vanno\
+          \ da 0 a 100\n"
+        required: false
+        type: "integer"
+        format: "int32"
+      responses:
+        "200":
+          description: "Esecuzione Corretta"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/Destinatario"
+        "422":
+          description: "Parametri Errati"
+          schema:
+            $ref: "#/definitions/DettaglioErrore"
+      x-enabled-profiles:
+      - user-tecnico-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UTENTE_TECNICO"
+              description: "funzione accessibile alle utenze tecniche per accessi\
+                \ ai servizi REST"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkUserTecnico"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+      x-cache-type: "noCache"
+securityDefinitions:
+  basicAuth:
+    description: "Autenticazione tramite BASIC authentication. Questa modalità è disponibile\
+      \ se l'autenticazione su esse3 non usa shibboleth per il gruppo dell'utente"
+    type: "basic"
+  jwt:
+    description: "Autenticazione tramite OAUTH2, occorre configurare il parametro\
+      \ di configurazione di ESSE3 che indica il server OAUTH2 da utilizzare"
+    type: "oauth2"
+    authorizationUrl: "https://idp-idm.unimib.it/idp/profile/oidc/authorize"
+    flow: "implicit"
+    scopes:
+      openid: "informazioni sull'utente"
+definitions:
+  DettaglioErroreAggiuntivo:
+    type: "object"
+    properties:
+      errorType:
+        type: "string"
+        example: "stackTrace"
+        description: "descrizione del tipo di errore aggiuntivo"
+      value:
+        type: "string"
+        example: "SocketTimeoutException...."
+        description: "descrizione dell'errore"
+      rawValue:
+        type: "string"
+        example: "SocketTimeoutException...."
+        description: "descrizione dell'errore"
+        x-field-type: "rawJson"
+    x-model-sub-package: "frk.v1"
+    x-model-sub-path: "frk/v1"
+  InserimentoComunicazione:
+    type: "object"
+    required:
+    - "destinatari"
+    - "deviceCod"
+    - "testo"
+    - "titolo"
+    properties:
+      destinatari:
+        type: "array"
+        items:
+          $ref: "#/definitions/InserimentoDestinatario"
+      tipoComCod:
+        type: "string"
+        example: "INFO"
+        description: "codice tipologia di comunicazione"
+        maxLength: 10
+      deviceCod:
+        type: "string"
+        example: "E-MAIL"
+        description: "codice device di comunicazione"
+        maxLength: 10
+      mittente:
+        type: "string"
+        example: "Segreteria Studenti"
+        description: "descrizione mittente"
+        maxLength: 80
+      da:
+        type: "string"
+        example: "info@ateneo.it"
+        description: "recapito mittente (indirizzo email o numero cellulare)"
+        maxLength: 80
+      titolo:
+        type: "string"
+        example: "Presentazione Tesi"
+        description: "titolo"
+        maxLength: 1000
+      testo:
+        type: "string"
+        example: "Comunicazione relativa alla presentazione della tesi"
+        description: "titolo"
+        maxLength: 16000
+      htmlFlg:
+        type: "integer"
+        format: "int32"
+        example: 0
+        description: "indica se il testo e' in formato HTML\n(0=no, 1=si)\n"
+      bachecaFlg:
+        type: "integer"
+        format: "int32"
+        example: 0
+        description: "indica se la comunicazione e' da pubblicare in bacheca privata\
+          \ studente\n(0=no, 1=si)\n"
+      notifPushFlg:
+        type: "integer"
+        format: "int32"
+        example: 0
+        description: "indica se la comunicazione e' da inviare anche come notifica\
+          \ push sulla App Mobile\n(0=no, 1=si)\n"
+      dataValIni:
+        type: "string"
+        example: "01/07/2021"
+        description: "data di inizio validita'"
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+      dataValFin:
+        type: "string"
+        example: "31/08/2021"
+        description: "data di fine validita'"
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+    x-model-sub-package: "comunicazioni.v1"
+    x-model-sub-path: "comunicazioni/v1"
+  InserimentoDestinatario:
+    type: "object"
+    required:
+    - "origineDato"
+    properties:
+      origineDato:
+        type: "string"
+        example: "PERSONE"
+        description: "tipologia di destinatario\n(PERSONE=studente/registrato, DOCENTI=docente,\
+          \ SOGG_EST=soggetto esterno, EXTERNAL=recapito email/cellulare)\n"
+        pattern: "PERSONE|DOCENTI|SOGG_EST|EXTERNAL"
+      idAnagrafica:
+        type: "integer"
+        format: "int64"
+        example: 12345
+        description: "ID univoco di anagrafica, per la tipologia di destinatario (se\
+          \ origineDato vale PERSONE, DOCENTI o SOGG_EST)"
+      recapito:
+        type: "string"
+        example: "user@gmail.com"
+        description: "indirizzo email o numero di cellulare del destinatario"
+      ccFlg:
+        type: "integer"
+        format: "int32"
+        example: 0
+        description: "indica se il destinatario e' in CC (copia)\n(0=no, 1=si)\n"
+      ccnFlg:
+        type: "integer"
+        format: "int32"
+        example: 0
+        description: "indica se il destinatario e' in CCN (copia nascosta)\n(0=no,\
+          \ 1=si)\n"
+    x-model-sub-package: "comunicazioni.v1"
+    x-model-sub-path: "comunicazioni/v1"
+  Comunicazione:
+    type: "object"
+    discriminator: "communicationType"
+    properties:
+      dataInvio:
+        type: "string"
+        example: "11/10/2021 14:28:00"
+        description: "data/ora di invio della comunicazione"
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})\
+          \ ([01][0-9]|2[0-4]):[0-5][0-9]:[0-5][0-9]"
+      dataIns:
+        type: "string"
+        example: "11/10/2021 14:24:00"
+        description: "data/ora di creazione della comunicazione"
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})\
+          \ ([01][0-9]|2[0-4]):[0-5][0-9]:[0-5][0-9]"
+      errDes:
+        type: "string"
+        example: "Timeout nel collegamento con il server"
+        description: "eventuale errore verificatosi sull'invio della comunicazione\
+          \ (descrizione)"
+      errId:
+        type: "integer"
+        format: "int32"
+        example: 27
+        description: "eventuale errore verificatosi sull'invio della comunicazione\
+          \ (ID univoco)\nValore | Descrizione\n-      | -\n0  | Nessun errore\n1\
+          \  | Connessione o login al server di posta fallita\n4  | Lista dei destinatari\
+          \ vuota\n5  | Inviata non a tutti i destinatari\n26 | Annullata durante\
+          \ il processo di spedizione\n27 | Timeout nel collegamento con il server\n"
+      statoComDes:
+        type: "string"
+        example: "Inviata"
+        description: "stato in cui si trova la comunicazione (descrizione)"
+      statoComId:
+        type: "integer"
+        format: "int32"
+        example: 4
+        description: "stato in cui si trova la comunicazione (ID univoco)\n(1=in bozza,\
+          \ 2=accodata per l'invio, 3=invio in corso, 4=invio effettuato, 5=annullata)\n\
+          Valore | Descrizione\n-      | -\n1 | in bozza\n2 | accodata per l'invio\n\
+          3 | invio in corso\n4 | invio effettuato\n5 | annullata\n"
+      tipoDevCod:
+        type: "string"
+        example: "E-MAIL"
+        description: "codice tipologia di device di comunicazione"
+      eventoDes:
+        type: "string"
+        example: "Presentazione Tesi"
+        description: "descrizione evento applicativo"
+      eventoCod:
+        type: "string"
+        example: "LAU_PRES_TESI"
+        description: "codice evento applicativo"
+      deviceDes:
+        type: "string"
+        example: "E-MAIL standard"
+        description: "descrizione device di comunicazione"
+      tipoComDes:
+        type: "string"
+        example: "Generica comunicazione"
+        description: "descrizione tipologia di comunicazione"
+      dataValFin:
+        type: "string"
+        example: "31/08/2021"
+        description: "data di fine validita'"
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+      dataValIni:
+        type: "string"
+        example: "01/07/2021"
+        description: "data di inizio validita'"
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+      notifPushFlg:
+        type: "integer"
+        format: "int32"
+        example: 0
+        description: "indica se la comunicazione e' da inviare anche come notifica\
+          \ push sulla App Mobile\n(0=no, 1=si)\n"
+      bachecaFlg:
+        type: "integer"
+        format: "int32"
+        example: 0
+        description: "indica se la comunicazione e' da pubblicare in bacheca privata\
+          \ studente\n(0=no, 1=si)\n"
+      htmlFlg:
+        type: "integer"
+        format: "int32"
+        example: 0
+        description: "indica se il testo e' in formato HTML\n(0=no, 1=si)\n"
+      testo:
+        type: "string"
+        example: "Comunicazione relativa alla presentazione della tesi"
+        description: "titolo"
+        maxLength: 16000
+      titolo:
+        type: "string"
+        example: "Presentazione Tesi"
+        description: "titolo"
+        maxLength: 1000
+      da:
+        type: "string"
+        example: "info@ateneo.it"
+        description: "recapito mittente (indirizzo email o numero cellulare)"
+        maxLength: 80
+      mittente:
+        type: "string"
+        example: "Segreteria Studenti"
+        description: "descrizione mittente"
+        maxLength: 80
+      deviceCod:
+        type: "string"
+        example: "E-MAIL"
+        description: "codice device di comunicazione"
+        maxLength: 10
+      tipoComCod:
+        type: "string"
+        example: "INFO"
+        description: "codice tipologia di comunicazione"
+        maxLength: 10
+      comId:
+        type: "integer"
+        format: "int64"
+        example: 12345
+        description: "ID univoco della comunicazione"
+        x-field-type: "primaryKey"
+    x-layout-name: "COM_REST"
+    x-winsession-name: "p16/n_co_16_001_gestione_comunicazioni"
+    x-model-sub-package: "comunicazioni.v1"
+    x-model-sub-path: "comunicazioni/v1"
+  Destinatario:
+    type: "object"
+    properties:
+      esitoDes:
+        type: "string"
+        example: "Nessun Errore"
+        description: "descrizione esito invio comunicazione per il destinatario"
+      esitoCod:
+        type: "string"
+        example: "SENT"
+        description: "esito di invio comunicazione per il destinatario\n(SENT=inviata,\
+          \ FAIL=errore nell'invio, CANC=invio annullato, DRAFT=comunicazione ancora\
+          \ in bozza, ACTIVE=da inviare, WAIT=invio in corso)\n"
+        pattern: "SENT|FAIL|CANC|DRAFT|ACTIVE|WAIT"
+      dataSped:
+        type: "string"
+        example: "11/10/2021 14:24:00"
+        description: "data/ora in cui la comunicazione e' stata spedita al destinatario"
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})\
+          \ ([01][0-9]|2[0-4]):[0-5][0-9]:[0-5][0-9]"
+      spedFlg:
+        type: "integer"
+        format: "int32"
+        example: 1
+        description: "indica la comunicazione e' stata spedita al destinatario\n(0=no,\
+          \ 1=si, -1=errore, -2=spedizione annullata)\n"
+      idUser:
+        type: "integer"
+        format: "int64"
+        example: 12345
+        description: "ID univoco dell'utente, se valorizzato come destinatario"
+        x-field-type: "optional"
+      nominativo:
+        type: "string"
+        example: "Mario Rossi"
+        description: "nominativo del destinatario"
+      ccnFlg:
+        type: "integer"
+        format: "int32"
+        example: 0
+        description: "indica se il destinatario e' in CCN (copia nascosta)\n(0=no,\
+          \ 1=si)\n"
+      ccFlg:
+        type: "integer"
+        format: "int32"
+        example: 0
+        description: "indica se il destinatario e' in CC (copia)\n(0=no, 1=si)\n"
+      recapito:
+        type: "string"
+        example: "user@gmail.com"
+        description: "indirizzo email o numero di cellulare del destinatario"
+      idAnagrafica:
+        type: "integer"
+        format: "int64"
+        example: 12345
+        description: "ID univoco di anagrafica, per la tipologia di destinatario (se\
+          \ origineDato vale PERSONE, DOCENTI o SOGG_EST)"
+      origineDato:
+        type: "string"
+        example: "PERSONE"
+        description: "tipologia di destinatario\n(PERSONE=studente/registrato, DOCENTI=docente,\
+          \ SOGG_EST=soggetto esterno, EXTERNAL=recapito email/cellulare)\n"
+        pattern: "PERSONE|DOCENTI|SOGG_EST|EXTERNAL"
+      destId:
+        type: "integer"
+        format: "int64"
+        example: 12345
+        description: "ID univoco di anagrafica destinatari"
+        x-field-type: "optional"
+      comId:
+        type: "integer"
+        format: "int64"
+        example: 12345
+        description: "ID univoco della comunicazione"
+        x-field-type: "optional"
+      comDestId:
+        type: "integer"
+        format: "int64"
+        example: 12345
+        description: "ID univoco del destinatario di una comunicazione"
+        x-field-type: "primaryKey"
+    x-layout-name: "COM_DEST_REST"
+    x-winsession-name: "p16/n_co_16_001_gestione_comunicazioni"
+    x-model-sub-package: "comunicazioni.v1"
+    x-model-sub-path: "comunicazioni/v1"
+  DettaglioErrore:
+    type: "object"
+    properties:
+      statusCode:
+        type: "integer"
+        format: "int32"
+        example: 200
+        description: "Http Status Code"
+      retCode:
+        type: "integer"
+        format: "int32"
+        example: -1
+        description: "codice di errore"
+      retErrMsg:
+        type: "string"
+        example: "Parametri non corretti"
+        description: "descrizione dell'errore"
+      errDetails:
+        type: "array"
+        items:
+          $ref: "#/definitions/DettaglioErroreAggiuntivo"
+    x-model-sub-package: "frk.v1"
+    x-model-sub-path: "frk/v1"
+  ComunicazioneConDestinatari:
+    allOf:
+    - $ref: "#/definitions/Comunicazione"
+    - type: "object"
+      properties:
+        destinatari:
+          type: "array"
+          items:
+            $ref: "#/definitions/Destinatario"
+    x-model-sub-package: "comunicazioni.v1"
+    x-model-sub-path: "comunicazioni/v1"
+parameters:
+  recapito:
+    name: "recapito"
+    in: "query"
+    description: "indirizzo email o numero di cellulare del destinatario"
+    required: false
+    type: "string"
+  esitoCod:
+    name: "esitoCod"
+    in: "query"
+    description: "esito di invio comunicazione per il destinatario\n(SENT=inviata,\
+      \ FAIL=errore nell'invio, CANC=invio annullato, DRAFT=comunicazione ancora in\
+      \ bozza, ACTIVE=da inviare, WAIT=invio in corso)\n"
+    required: false
+    type: "string"
+    pattern: "SENT|FAIL|CANC|DRAFT|ACTIVE|WAIT"
+  comId:
+    name: "comId"
+    in: "path"
+    description: "ID univoco della comunicazione"
+    required: true
+    type: "integer"
+    format: "int64"
+  origineDato:
+    name: "origineDato"
+    in: "query"
+    description: "tipologia di destinatario\n(PERSONE=studente/registrato, DOCENTI=docente,\
+      \ SOGG_EST=soggetto esterno, EXTERNAL=recapito email/cellulare)\n"
+    required: false
+    type: "string"
+    pattern: "PERSONE|DOCENTI|SOGG_EST|EXTERNAL"
+  idAnagrafica:
+    name: "idAnagrafica"
+    in: "query"
+    description: "ID univoco di anagrafica, per la tipologia di destinatario (se origineDato\
+      \ vale PERSONE, DOCENTI o SOGG_EST)"
+    required: false
+    type: "integer"
+    format: "int64"
+externalDocs:
+  description: "Documentazione Geneale sui servizi REST"
+  url: "https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3"
+x-file-status: "PROD"
+x-file-name: "p16-comunicazioniApiV1.yaml"
+x-api-status: "PROD"
+x-func-cod: "RST_COMUV1"
+x-cache-type: "midRefreshRateUserIndependent"

@@ -1,0 +1,1367 @@
+---
+swagger: "2.0"
+info:
+  description: "Il servizio consente di effettuare l'upload e il download degli allegati\n\
+    \n\n## Tipologie Allegati\nGli allegati attualmente supportati sono i seguenti\n\
+    \nTiplogia Allegato| Descrizione                        | chiavi collegamento\
+    \ | Upload      | Downoload \n-                | -                           \
+    \       | -                   | -           | -\nDOM_TIRO         | Allegati alle\
+    \ domande di tirocinio | domTiroId           | Si          | Si\n\nLe tipologie\
+    \ disponibili sono visibili attraverso l'endpoint `/allegati`\n\n## Processo di\
+    \ upload\nIl processo di upload si divide in due step\n* _la prima fase consiste\
+    \ nel caricare i metadati collegati all'allegato stesso._  \n  Per questa operazione\
+    \ è possibile utilizzare un enpoint specifico (fornito da un servizio applicativo\
+    \ specifico) oppure utilizzare l'endpoint generico `/allegati/{tipoAllegato}'\
+    \ con il metodo POST  \n  In risposta il metodo fornisce un HEADER Location con\
+    \ l'url dove effettuare l'upload del blob    \n* _la secoda fase consiste nell'effettuare\
+    \ l'upload del BLOB_  \n  Il passo precedente fornisce (nell'header location)\
+    \ l'url dove deve essere effettuata la PUT (`/upload/{uploadId}/blob`)\n  \n**NB**:\
+    \  \nIl processo di Upload si conclude al secondo passo : cioè l'inserimento dei\
+    \ metadati NON provoca il salvataggio di nessuna informazione nellte tabelle applicative\n\
+    \    \n## Processo di Download\nIl processo di download divide i metadati dal\
+    \ blob\n* i metadati sono disponibili su `/allegati/{tipoAllegato}/{allegatoId}`\n\
+    * il blob è disponibile su `/allegati/{tipoAllegato}/{allegatoId}/blob`\n"
+  version: "1.0.0"
+  title: "Allegati API"
+basePath: "/allegati-service-v1"
+tags:
+- name: "allegati"
+  description: "Informazioni sul download degli allegati e sui relativi metadati"
+- name: "upload"
+  description: "Informazioni sul processo di upload dei blob"
+schemes:
+- "https"
+- "http"
+consumes:
+- "application/json"
+produces:
+- "application/json"
+security:
+- basicAuth: []
+- jwt:
+  - "openid"
+paths:
+  /allegati:
+    get:
+      tags:
+      - "allegati"
+      summary: "tipologie di allegato"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>Fornisce le tipologie di allegato abilitate\
+        \ alle operazioni tramite i servizi REST.   \nPer ogni tipologia è indicato\
+        \ se è disonibile la funzionalità di upload e/o downoload  \n\n\n**Estensioni:**\n\
+        \nCodice Estensione|Valore|Nota\n-|-|-\nx-cache-type|noCache|Nessuna cache\
+        \ impostata Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: USER_TECNICO**\n\nProfilo|Controllo| Funzione\n-|-|-\nUTENTE_TECNICO|funzione\
+        \ accessibile alle utenze tecniche per accessi ai servizi REST|Security.checkUserTecnico()\n"
+      operationId: "getTipologieAllegato"
+      parameters: []
+      responses:
+        "200":
+          description: "Successful response"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/TipologiaAllegato"
+      x-enabled-profiles:
+      - user-tecnico-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UTENTE_TECNICO"
+              description: "funzione accessibile alle utenze tecniche per accessi\
+                \ ai servizi REST"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkUserTecnico"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+      x-custom-operation: "single"
+  /allegati/codiceTipologiaAllegato/:
+    get:
+      tags:
+      - "allegati"
+      summary: "Recupera le tipologie di allegato ed i relativi codici gestiti da\
+        \ Esse3"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>\n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n\
+        -|-|-\nx-cache-type|noCache|Nessuna cache impostata Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: USER_TECNICO**\n\nProfilo|Controllo| Funzione\n-|-|-\nUTENTE_TECNICO|funzione\
+        \ accessibile alle utenze tecniche per accessi ai servizi REST|Security.checkUserTecnico()\n\
+        \n**Utente: DOCENTE**\n\nProfilo|Controllo| Funzione\n-|-|-\nDOCENTE|funzione\
+        \ accessibile alle utenze di tipo docente|Security.checkDocente()\n\n**Utente:\
+        \ SOGG_EST**\n\nProfilo|Controllo| Funzione\n-|-|-\nSOGG_EST|Permette la visualizzazione\
+        \ delle informazioni collegate ad una anagrafica soggetto esterno|Security.checkSoggettoEsterno()\n"
+      operationId: "getCodiceTipologieAllegati"
+      parameters:
+      - name: "sessionLinguaCod"
+        in: "query"
+        description: "codice ISO_6392 della lingua con la quale recuperare le descrizioni,\
+          \ nel caso non sia passato in ingresso viene utilizzata la lingua di default\
+          \ del sistema, e nel caso la lingua richiesta non sia disponibile, viene\
+          \ restituita la descrizione nella lingua di default"
+        required: false
+        type: "string"
+      - name: "start"
+        in: "query"
+        description: "utilizzato insieme a `limit` per indicare la paginazione sui\
+          \ record; `start` indica il numero del primo record da caricare (se non\
+          \ indicato viene utilizzato 0)\n"
+        required: false
+        type: "integer"
+        format: "int32"
+      - name: "limit"
+        in: "query"
+        description: "utilizzato insieme a `start` per indicare la paginazione sui\
+          \ record, `limit` indica il numero di record da recuperare (a partire da\
+          \ `start`); \nse non indicato viene utilizzato 50, i valori consentiti vanno\
+          \ da 0 a 100\n"
+        required: false
+        type: "integer"
+        format: "int32"
+      responses:
+        "200":
+          description: "Successful response"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/CodiceTipologiaAllegato"
+      x-enabled-profiles:
+      - user-tecnico-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UTENTE_TECNICO"
+              description: "funzione accessibile alle utenze tecniche per accessi\
+                \ ai servizi REST"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkUserTecnico"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+      - docente-permissions:
+          kind: "DOCENTE"
+          profiles:
+          - profile:
+              name: "DOCENTE"
+              description: "funzione accessibile alle utenze di tipo docente"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkDocente"
+                  description: "controlla che l'utente sia un docente"
+      - common-soggetto-esterno-permissions:
+          kind: "SOGG_EST"
+          profiles:
+          - profile:
+              name: "SOGG_EST"
+              description: "Permette la visualizzazione delle informazioni collegate\
+                \ ad una anagrafica soggetto esterno"
+              checks:
+              - checkAdmin:
+                  className: "Security"
+                  functionName: "checkSoggettoEsterno"
+                  description: "controlla che l'utente sia un soggetto esterno"
+  /allegati/estensioneAllegato:
+    get:
+      tags:
+      - "allegati"
+      summary: "Recupera le estensioni degli allegati ed i relativi codici gestiti\
+        \ da Esse3"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>\n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n\
+        -|-|-\nx-cache-type|noCache|Nessuna cache impostata Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: USER_TECNICO**\n\nProfilo|Controllo| Funzione\n-|-|-\nUTENTE_TECNICO|funzione\
+        \ accessibile alle utenze tecniche per accessi ai servizi REST|Security.checkUserTecnico()\n\
+        \n**Utente: DOCENTE**\n\nProfilo|Controllo| Funzione\n-|-|-\nDOCENTE|funzione\
+        \ accessibile alle utenze di tipo docente|Security.checkDocente()\n\n**Utente:\
+        \ SOGG_EST**\n\nProfilo|Controllo| Funzione\n-|-|-\nSOGG_EST|Permette la visualizzazione\
+        \ delle informazioni collegate ad una anagrafica soggetto esterno|Security.checkSoggettoEsterno()\n"
+      operationId: "getEstensioneAllegato"
+      parameters:
+      - name: "start"
+        in: "query"
+        description: "utilizzato insieme a `limit` per indicare la paginazione sui\
+          \ record; `start` indica il numero del primo record da caricare (se non\
+          \ indicato viene utilizzato 0)\n"
+        required: false
+        type: "integer"
+        format: "int32"
+      - name: "limit"
+        in: "query"
+        description: "utilizzato insieme a `start` per indicare la paginazione sui\
+          \ record, `limit` indica il numero di record da recuperare (a partire da\
+          \ `start`); \nse non indicato viene utilizzato 50, i valori consentiti vanno\
+          \ da 0 a 100\n"
+        required: false
+        type: "integer"
+        format: "int32"
+      responses:
+        "200":
+          description: "Successful response"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/EstensioneAllegato"
+      x-enabled-profiles:
+      - user-tecnico-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UTENTE_TECNICO"
+              description: "funzione accessibile alle utenze tecniche per accessi\
+                \ ai servizi REST"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkUserTecnico"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+      - docente-permissions:
+          kind: "DOCENTE"
+          profiles:
+          - profile:
+              name: "DOCENTE"
+              description: "funzione accessibile alle utenze di tipo docente"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkDocente"
+                  description: "controlla che l'utente sia un docente"
+      - common-soggetto-esterno-permissions:
+          kind: "SOGG_EST"
+          profiles:
+          - profile:
+              name: "SOGG_EST"
+              description: "Permette la visualizzazione delle informazioni collegate\
+                \ ad una anagrafica soggetto esterno"
+              checks:
+              - checkAdmin:
+                  className: "Security"
+                  functionName: "checkSoggettoEsterno"
+                  description: "controlla che l'utente sia un soggetto esterno"
+  /allegati/{tipoAllegato}/:
+    get:
+      tags:
+      - "allegati"
+      summary: "lista degli allegati di una determinata tipologia"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>\n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n\
+        -|-|-\nx-cache-type|noCache|Nessuna cache impostata Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: USER_TECNICO**\n\nProfilo|Controllo| Funzione\n-|-|-\nUTENTE_TECNICO|la\
+        \ visualizzazione degli allegati è possibile agli utenti tecnici per le sole\
+        \ tipologie abilitate ai servizi REST|Security.checkTipologiaAllegato(tipoAllegato),\
+        \ Security.checkUserTecnico()\n\n\nClasse di modello : AllegatoMetadata\n\
+        ======\n\nEstensioni sulle proprietà\n----\nProprietà | x-field-type\n-|-|\n\
+        allegatoId|primaryKey\n"
+      operationId: "getAllegatiByType"
+      parameters:
+      - name: "tipoAllegato"
+        in: "path"
+        description: "codice del tipo allegato da recuperare"
+        required: true
+        type: "string"
+      - name: "start"
+        in: "query"
+        description: "utilizzato insieme a `limit` per indicare la paginazione sui\
+          \ record; `start` indica il numero del primo record da caricare (se non\
+          \ indicato viene utilizzato 0)\n"
+        required: false
+        type: "integer"
+        format: "int32"
+      - name: "limit"
+        in: "query"
+        description: "utilizzato insieme a `start` per indicare la paginazione sui\
+          \ record, `limit` indica il numero di record da recuperare (a partire da\
+          \ `start`); \nse non indicato viene utilizzato 50, i valori consentiti vanno\
+          \ da 0 a 100\n"
+        required: false
+        type: "integer"
+        format: "int32"
+      responses:
+        "200":
+          description: "Successful response"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/AllegatoMetadata"
+      x-enabled-profiles:
+      - allegato-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UTENTE_TECNICO"
+              description: "la visualizzazione degli allegati è possibile agli utenti\
+                \ tecnici per le sole tipologie abilitate ai servizi REST"
+              checks:
+              - checkTipologiaAllegato:
+                  className: "Security"
+                  functionName: "checkTipologiaAllegato"
+                  description: "la funzione controlla che il tipo di allegato sia\
+                    \ utilizzabile con i servizi REST"
+                  parameters:
+                  - tipoAllegato: "{\"name\":\"tipoAllegato\",\"in\":\"path\",\"description\"\
+                      :\"codice del tipo allegato da recuperare\",\"required\":true,\"\
+                      type\":\"string\",\"items\":null,\"collectionFormat\":null,\"\
+                      default\":null,\"maximum\":null,\"exclusiveMaximum\":null,\"\
+                      minimum\":null,\"exclusiveMinimum\":null,\"maxLength\":null,\"\
+                      minLength\":null,\"pattern\":null,\"maxItems\":null,\"minItems\"\
+                      :null,\"uniqueItems\":null,\"multipleOf\":null,\"format\":null,\"\
+                      x-example\":null,\"enum\":null}"
+              - checkUserTecnico:
+                  className: "Security"
+                  functionName: "checkUserTecnico"
+                  description: "la funzione controlla che l'utente loggato sia di\
+                    \ tipologia utente tecnico"
+    post:
+      tags:
+      - "allegati"
+      summary: "inserimento metadati allegato"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>consente di effettuare l'inserimento dei metadati\
+        \ di un nuovo allegato, sulla risposta è presente l'header location che consente\
+        \ di effettuare l'upload del blob collegato ai metadati\n\n**Estensioni:**\n\
+        \nCodice Estensione|Valore|Nota\n-|-|-\nx-cache-type|noCache|Nessuna cache\
+        \ impostata Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: USER_TECNICO**\n\nProfilo|Controllo| Funzione\n-|-|-\nUTENTE_TECNICO|la\
+        \ visualizzazione degli allegati è possibile agli utenti tecnici per le sole\
+        \ tipologie abilitate ai servizi REST|Security.checkTipologiaAllegato(tipoAllegato),\
+        \ Security.checkUserTecnico()\n\n\nClasse di modello : DettaglioErroreAggiuntivo\n\
+        ======\n\nEstensioni sulle proprietà\n----\nProprietà | x-field-type\n-|-|\n\
+        rawValue|rawJson\n"
+      operationId: "postMetataAllegatoGenerico"
+      parameters:
+      - name: "tipoAllegato"
+        in: "path"
+        description: "codice del tipo allegato da recuperare"
+        required: true
+        type: "string"
+      - in: "body"
+        name: "body"
+        description: "Oggetto che contiene i metadati dell'allegato da inserire"
+        required: true
+        schema:
+          $ref: "#/definitions/InserimentoAllegatoGenericoMetadata"
+      responses:
+        "201":
+          description: "Successful response"
+        "422":
+          description: "Aggiornamento non riuscito"
+          schema:
+            $ref: "#/definitions/DettaglioErrore"
+      x-enabled-profiles:
+      - allegato-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UTENTE_TECNICO"
+              description: "la visualizzazione degli allegati è possibile agli utenti\
+                \ tecnici per le sole tipologie abilitate ai servizi REST"
+              checks:
+              - checkTipologiaAllegato:
+                  className: "Security"
+                  functionName: "checkTipologiaAllegato"
+                  description: "la funzione controlla che il tipo di allegato sia\
+                    \ utilizzabile con i servizi REST"
+                  parameters:
+                  - tipoAllegato: "{\"name\":\"tipoAllegato\",\"in\":\"path\",\"description\"\
+                      :\"codice del tipo allegato da recuperare\",\"required\":true,\"\
+                      type\":\"string\",\"items\":null,\"collectionFormat\":null,\"\
+                      default\":null,\"maximum\":null,\"exclusiveMaximum\":null,\"\
+                      minimum\":null,\"exclusiveMinimum\":null,\"maxLength\":null,\"\
+                      minLength\":null,\"pattern\":null,\"maxItems\":null,\"minItems\"\
+                      :null,\"uniqueItems\":null,\"multipleOf\":null,\"format\":null,\"\
+                      x-example\":null,\"enum\":null}"
+              - checkUserTecnico:
+                  className: "Security"
+                  functionName: "checkUserTecnico"
+                  description: "la funzione controlla che l'utente loggato sia di\
+                    \ tipologia utente tecnico"
+      x-cache-endpoint-relations:
+        canonicalEndpointsAction: "none"
+  /allegati/{tipoAllegato}/{allegatoId}:
+    get:
+      tags:
+      - "allegati"
+      summary: "metadati di uno specifico allegato"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>\n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n\
+        -|-|-\nx-cache-type|noCache|Nessuna cache impostata Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: USER_TECNICO**\n\nProfilo|Controllo| Funzione\n-|-|-\nUTENTE_TECNICO|la\
+        \ visualizzazione degli allegati è possibile agli utenti tecnici per le sole\
+        \ tipologie abilitate ai servizi REST|Security.checkTipologiaAllegato(tipoAllegato),\
+        \ Security.checkUserTecnico()\n\n\nClasse di modello : AllegatoMetadata\n\
+        ======\n\nEstensioni sulle proprietà\n----\nProprietà | x-field-type\n-|-|\n\
+        allegatoId|primaryKey\n"
+      operationId: "getAllegatoMetadata"
+      parameters:
+      - name: "tipoAllegato"
+        in: "path"
+        description: "codice del tipo allegato da recuperare"
+        required: true
+        type: "string"
+      - name: "allegatoId"
+        in: "path"
+        description: "id di upload per caricare un allegato"
+        required: true
+        type: "integer"
+        format: "int64"
+      responses:
+        "200":
+          description: "Successful response"
+          schema:
+            $ref: "#/definitions/AllegatoMetadata"
+      x-enabled-profiles:
+      - allegato-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UTENTE_TECNICO"
+              description: "la visualizzazione degli allegati è possibile agli utenti\
+                \ tecnici per le sole tipologie abilitate ai servizi REST"
+              checks:
+              - checkTipologiaAllegato:
+                  className: "Security"
+                  functionName: "checkTipologiaAllegato"
+                  description: "la funzione controlla che il tipo di allegato sia\
+                    \ utilizzabile con i servizi REST"
+                  parameters:
+                  - tipoAllegato: "{\"name\":\"tipoAllegato\",\"in\":\"path\",\"description\"\
+                      :\"codice del tipo allegato da recuperare\",\"required\":true,\"\
+                      type\":\"string\",\"items\":null,\"collectionFormat\":null,\"\
+                      default\":null,\"maximum\":null,\"exclusiveMaximum\":null,\"\
+                      minimum\":null,\"exclusiveMinimum\":null,\"maxLength\":null,\"\
+                      minLength\":null,\"pattern\":null,\"maxItems\":null,\"minItems\"\
+                      :null,\"uniqueItems\":null,\"multipleOf\":null,\"format\":null,\"\
+                      x-example\":null,\"enum\":null}"
+              - checkUserTecnico:
+                  className: "Security"
+                  functionName: "checkUserTecnico"
+                  description: "la funzione controlla che l'utente loggato sia di\
+                    \ tipologia utente tecnico"
+    patch:
+      tags:
+      - "allegati"
+      summary: "modifica metadati di un allegato"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>Il servizio consente di effettuare delle modifiche\
+        \ ai metadati di un allegato.\nTramite il body in ingresso è possibile indicare\
+        \ quali operazioni effettuare \n*  validoFlg: effettua la validazione di un\
+        \ allegato. E' possibile impostare la validazione a 1, nel caso l'operazione\
+        \ non sia possibile viene restituito uno statusCode 422\n\n\n**Estensioni:**\n\
+        \nCodice Estensione|Valore|Nota\n-|-|-\nx-cache-type|noCache|Nessuna cache\
+        \ impostata Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: USER_TECNICO**\n\nProfilo|Controllo| Funzione\n-|-|-\nUTENTE_TECNICO|funzione\
+        \ accessibile alle utenze tecniche per accessi ai servizi REST|Security.checkUserTecnico()\n\
+        \n\nClasse di modello : AllegatoMetadata\n======\n\nEstensioni sulle proprietà\
+        \n----\nProprietà | x-field-type\n-|-|\nallegatoId|primaryKey\n\n\nClasse\
+        \ di modello : DettaglioErroreAggiuntivo\n======\n\nEstensioni sulle proprietà\
+        \n----\nProprietà | x-field-type\n-|-|\nrawValue|rawJson\n"
+      operationId: "validaAllegato"
+      consumes:
+      - "application/json"
+      parameters:
+      - name: "tipoAllegato"
+        in: "path"
+        description: "codice del tipo allegato da recuperare"
+        required: true
+        type: "string"
+      - name: "allegatoId"
+        in: "path"
+        description: "id di upload per caricare un allegato"
+        required: true
+        type: "integer"
+        format: "int64"
+      - in: "body"
+        name: "body"
+        description: "Proprietà modificabili dell'allegato"
+        required: true
+        schema:
+          $ref: "#/definitions/PatchAllegatoMetadata"
+      responses:
+        "200":
+          description: "Successful response"
+          schema:
+            $ref: "#/definitions/AllegatoMetadata"
+        "422":
+          description: "aggiornamento non riuscito"
+          schema:
+            $ref: "#/definitions/DettaglioErrore"
+      x-enabled-profiles:
+      - user-tecnico-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UTENTE_TECNICO"
+              description: "funzione accessibile alle utenze tecniche per accessi\
+                \ ai servizi REST"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkUserTecnico"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+      x-cache-endpoint-relations:
+        canonicalEndpointsAction: "none"
+  /allegati/{tipoAllegato}/{allegatoId}/blob:
+    get:
+      tags:
+      - "allegati"
+      summary: "download dell'allegato collegato ai metadati"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>\n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n\
+        -|-|-\nx-cache-type|noCache|Nessuna cache impostata Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: USER_TECNICO**\n\nProfilo|Controllo| Funzione\n-|-|-\nUTENTE_TECNICO|la\
+        \ visualizzazione degli allegati è possibile agli utenti tecnici per le sole\
+        \ tipologie abilitate ai servizi REST|Security.checkTipologiaAllegato(tipoAllegato),\
+        \ Security.checkUserTecnico()\n\n\nClasse di modello : DettaglioErroreAggiuntivo\n\
+        ======\n\nEstensioni sulle proprietà\n----\nProprietà | x-field-type\n-|-|\n\
+        rawValue|rawJson\n"
+      operationId: "getAllegatoContent"
+      produces:
+      - "application/octet-stream"
+      parameters:
+      - name: "tipoAllegato"
+        in: "path"
+        description: "codice del tipo allegato da recuperare"
+        required: true
+        type: "string"
+      - name: "allegatoId"
+        in: "path"
+        description: "id di upload per caricare un allegato"
+        required: true
+        type: "integer"
+        format: "int64"
+      responses:
+        "200":
+          description: "Successful response"
+          schema:
+            type: "file"
+        "422":
+          description: "Parametri Errati"
+          schema:
+            $ref: "#/definitions/DettaglioErrore"
+      x-enabled-profiles:
+      - allegato-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UTENTE_TECNICO"
+              description: "la visualizzazione degli allegati è possibile agli utenti\
+                \ tecnici per le sole tipologie abilitate ai servizi REST"
+              checks:
+              - checkTipologiaAllegato:
+                  className: "Security"
+                  functionName: "checkTipologiaAllegato"
+                  description: "la funzione controlla che il tipo di allegato sia\
+                    \ utilizzabile con i servizi REST"
+                  parameters:
+                  - tipoAllegato: "{\"name\":\"tipoAllegato\",\"in\":\"path\",\"description\"\
+                      :\"codice del tipo allegato da recuperare\",\"required\":true,\"\
+                      type\":\"string\",\"items\":null,\"collectionFormat\":null,\"\
+                      default\":null,\"maximum\":null,\"exclusiveMaximum\":null,\"\
+                      minimum\":null,\"exclusiveMinimum\":null,\"maxLength\":null,\"\
+                      minLength\":null,\"pattern\":null,\"maxItems\":null,\"minItems\"\
+                      :null,\"uniqueItems\":null,\"multipleOf\":null,\"format\":null,\"\
+                      x-example\":null,\"enum\":null}"
+              - checkUserTecnico:
+                  className: "Security"
+                  functionName: "checkUserTecnico"
+                  description: "la funzione controlla che l'utente loggato sia di\
+                    \ tipologia utente tecnico"
+  /upload/{uploadId}:
+    get:
+      tags:
+      - "upload"
+      summary: "metadati di upload dell'allegato"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>\n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n\
+        -|-|-\nx-cache-type|noCache|Nessuna cache impostata Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: ALL**\n\nProfilo|Controllo| Funzione\n-|-|-\nALL|L'accesso alle\
+        \ funzionalità di upload è ristretto ai soli utenti che hanno richiesto l'upload\
+        \ tramite le apposite funzioni|Security.checkUploadAllegato(uploadId)\n\n\
+        **Utente: USER_TECNICO**\n\nProfilo|Controllo| Funzione\n-|-|-\nUTENTE_TECNICO|funzione\
+        \ accessibile alle utenze tecniche per accessi ai servizi REST|Security.checkUserTecnico()\n\
+        \n\nClasse di modello : UploadMetadata\n======\n\nEstensioni sulle proprietà\
+        \n----\nProprietà | x-field-type\n-|-|\nuploadId|primaryKey\n\n\nClasse di\
+        \ modello : ProprietaAggiuntivaUpload\n======\n\nEstensioni sulle proprietà\
+        \n----\nProprietà | x-field-type\n-|-|\nuploadId|primaryKey\ndettId|primaryKey\n"
+      operationId: "getMetadataUploadAllegato"
+      parameters:
+      - name: "uploadId"
+        in: "path"
+        description: "id di upload per caricare un allegato"
+        required: true
+        type: "integer"
+        format: "int64"
+      responses:
+        "102":
+          description: "Processing"
+        "200":
+          description: "Operation Succeded"
+          schema:
+            $ref: "#/definitions/UploadMetadata"
+      x-enabled-profiles:
+      - upload-permissions:
+          kind: "ALL"
+          profiles:
+          - profile:
+              name: "ALL"
+              description: "L'accesso alle funzionalità di upload è ristretto ai soli\
+                \ utenti che hanno richiesto l'upload tramite le apposite funzioni"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkUploadAllegato"
+                  description: "la funzione controlla che l'uploadId sia stato rilasciato\
+                    \ all'utente che ha richiesto l'inserimento"
+                  parameters:
+                  - uploadId:
+                      name: "uploadId"
+                      in: "path"
+                      description: "id di upload per caricare un allegato"
+                      required: true
+                      type: "integer"
+                      format: "int64"
+      - user-tecnico-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UTENTE_TECNICO"
+              description: "funzione accessibile alle utenze tecniche per accessi\
+                \ ai servizi REST"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkUserTecnico"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+      x-custom-operation: "multiple"
+    delete:
+      tags:
+      - "upload"
+      summary: "cancellazione dei metadati di upload"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>è possibile cancellare i metadati di upload\
+        \ quando il processo si è concluso con successo oppure per abortire una operazione\
+        \ di upload non più necessaria\n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n\
+        -|-|-\nx-cache-type|noCache|Nessuna cache impostata Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: ALL**\n\nProfilo|Controllo| Funzione\n-|-|-\nALL|L'accesso alle\
+        \ funzionalità di upload è ristretto ai soli utenti che hanno richiesto l'upload\
+        \ tramite le apposite funzioni|Security.checkUploadAllegato(uploadId)\n\n\
+        **Utente: USER_TECNICO**\n\nProfilo|Controllo| Funzione\n-|-|-\nUTENTE_TECNICO|funzione\
+        \ accessibile alle utenze tecniche per accessi ai servizi REST|Security.checkUserTecnico()\n\
+        \n\nClasse di modello : DettaglioErroreAggiuntivo\n======\n\nEstensioni sulle\
+        \ proprietà\n----\nProprietà | x-field-type\n-|-|\nrawValue|rawJson\n"
+      operationId: "deleteUploadAllegato"
+      parameters:
+      - name: "uploadId"
+        in: "path"
+        description: "id di upload per caricare un allegato"
+        required: true
+        type: "integer"
+        format: "int64"
+      responses:
+        "204":
+          description: "delete Succeded"
+        "422":
+          description: "Parametri Errati"
+          schema:
+            $ref: "#/definitions/DettaglioErrore"
+      x-enabled-profiles:
+      - upload-permissions:
+          kind: "ALL"
+          profiles:
+          - profile:
+              name: "ALL"
+              description: "L'accesso alle funzionalità di upload è ristretto ai soli\
+                \ utenti che hanno richiesto l'upload tramite le apposite funzioni"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkUploadAllegato"
+                  description: "la funzione controlla che l'uploadId sia stato rilasciato\
+                    \ all'utente che ha richiesto l'inserimento"
+                  parameters:
+                  - uploadId:
+                      name: "uploadId"
+                      in: "path"
+                      description: "id di upload per caricare un allegato"
+                      required: true
+                      type: "integer"
+                      format: "int64"
+      - user-tecnico-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UTENTE_TECNICO"
+              description: "funzione accessibile alle utenze tecniche per accessi\
+                \ ai servizi REST"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkUserTecnico"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+      x-cache-endpoint-relations:
+        canonicalEndpointsAction: "none"
+  /upload/{uploadId}/blob:
+    get:
+      tags:
+      - "upload"
+      summary: "monitora lo stato di upload dell'allegato"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>il servizio risponde con 200 se il processo\
+        \ di upload si è concluso, altrimenti con 102 (processing) se invece è ancora\
+        \ in corso oppure si è interrotto in modo anomalo\n\n**Estensioni:**\n\nCodice\
+        \ Estensione|Valore|Nota\n-|-|-\nx-cache-type|noCache|Nessuna cache impostata\
+        \ Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: ALL**\n\nProfilo|Controllo| Funzione\n-|-|-\nALL|L'accesso alle\
+        \ funzionalità di upload è ristretto ai soli utenti che hanno richiesto l'upload\
+        \ tramite le apposite funzioni|Security.checkUploadAllegato(uploadId)\n\n\
+        **Utente: USER_TECNICO**\n\nProfilo|Controllo| Funzione\n-|-|-\nUTENTE_TECNICO|funzione\
+        \ accessibile alle utenze tecniche per accessi ai servizi REST|Security.checkUserTecnico()\n"
+      operationId: "getStatoUploadAllegato"
+      parameters:
+      - name: "uploadId"
+        in: "path"
+        description: "id di upload per caricare un allegato"
+        required: true
+        type: "integer"
+        format: "int64"
+      responses:
+        "102":
+          description: "Processing"
+        "200":
+          description: "Insert Succeded"
+      x-enabled-profiles:
+      - upload-permissions:
+          kind: "ALL"
+          profiles:
+          - profile:
+              name: "ALL"
+              description: "L'accesso alle funzionalità di upload è ristretto ai soli\
+                \ utenti che hanno richiesto l'upload tramite le apposite funzioni"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkUploadAllegato"
+                  description: "la funzione controlla che l'uploadId sia stato rilasciato\
+                    \ all'utente che ha richiesto l'inserimento"
+                  parameters:
+                  - uploadId:
+                      name: "uploadId"
+                      in: "path"
+                      description: "id di upload per caricare un allegato"
+                      required: true
+                      type: "integer"
+                      format: "int64"
+      - user-tecnico-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UTENTE_TECNICO"
+              description: "funzione accessibile alle utenze tecniche per accessi\
+                \ ai servizi REST"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkUserTecnico"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+    put:
+      tags:
+      - "upload"
+      summary: "operazione di upload dell'allegato"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>effettua l'upload del blob dell'allegato indicato\n\
+        \n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n-|-|-\nx-cache-type|noCache|Nessuna\
+        \ cache impostata Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: ALL**\n\nProfilo|Controllo| Funzione\n-|-|-\nALL|L'accesso alle\
+        \ funzionalità di upload è ristretto ai soli utenti che hanno richiesto l'upload\
+        \ tramite le apposite funzioni|Security.checkUploadAllegato(uploadId)\n\n\
+        **Utente: USER_TECNICO**\n\nProfilo|Controllo| Funzione\n-|-|-\nUTENTE_TECNICO|funzione\
+        \ accessibile alle utenze tecniche per accessi ai servizi REST|Security.checkUserTecnico()\n\
+        \n\nClasse di modello : DettaglioErroreAggiuntivo\n======\n\nEstensioni sulle\
+        \ proprietà\n----\nProprietà | x-field-type\n-|-|\nrawValue|rawJson\n"
+      operationId: "uploadAllegato"
+      consumes:
+      - "multipart/form-data"
+      parameters:
+      - name: "uploadId"
+        in: "path"
+        description: "id di upload per caricare un allegato"
+        required: true
+        type: "integer"
+        format: "int64"
+      - name: "uploadFile"
+        in: "formData"
+        description: "allegato da inserire"
+        required: false
+        type: "file"
+      responses:
+        "200":
+          description: "Upload Succeded"
+        "422":
+          description: "Parametri Errati"
+          schema:
+            $ref: "#/definitions/DettaglioErrore"
+      x-enabled-profiles:
+      - upload-permissions:
+          kind: "ALL"
+          profiles:
+          - profile:
+              name: "ALL"
+              description: "L'accesso alle funzionalità di upload è ristretto ai soli\
+                \ utenti che hanno richiesto l'upload tramite le apposite funzioni"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkUploadAllegato"
+                  description: "la funzione controlla che l'uploadId sia stato rilasciato\
+                    \ all'utente che ha richiesto l'inserimento"
+                  parameters:
+                  - uploadId:
+                      name: "uploadId"
+                      in: "path"
+                      description: "id di upload per caricare un allegato"
+                      required: true
+                      type: "integer"
+                      format: "int64"
+      - user-tecnico-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UTENTE_TECNICO"
+              description: "funzione accessibile alle utenze tecniche per accessi\
+                \ ai servizi REST"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkUserTecnico"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+      x-custom-operation: "single"
+      x-cache-endpoint-relations:
+        canonicalEndpointsAction: "none"
+securityDefinitions:
+  basicAuth:
+    description: "Autenticazione tramite BASIC authentication. Questa modalità è disponibile\
+      \ se l'autenticazione su esse3 non usa shibboleth per il gruppo dell'utente"
+    type: "basic"
+  jwt:
+    description: "Autenticazione tramite OAUTH2, occorre configurare il parametro\
+      \ di configurazione di ESSE3 che indica il server OAUTH2 da utilizzare"
+    type: "oauth2"
+    authorizationUrl: "https://idp-idm.unimib.it/idp/profile/oidc/authorize"
+    flow: "implicit"
+    scopes:
+      openid: "informazioni sull'utente"
+definitions:
+  TipologiaAllegato:
+    type: "object"
+    properties:
+      typeId:
+        type: "integer"
+        format: "int32"
+        example: 1
+        description: "tipologia dell'allegato"
+      typeCod:
+        type: "string"
+        example: "P"
+        description: "codice della tipologia dell'allegato"
+      downloadSupported:
+        type: "integer"
+        format: "int32"
+        example: 1
+        description: "indica se l'allegato supporta il download"
+        minimum: 0.0
+        maximum: 1.0
+      uploadSupported:
+        type: "integer"
+        format: "int32"
+        example: 1
+        description: "indica se l'allegato supporta l'upload"
+        minimum: 0.0
+        maximum: 1.0
+    x-model-sub-package: "frk.v1"
+    x-model-sub-path: "frk/v1"
+  AllegatoMetadata:
+    type: "object"
+    discriminator: "tipoAllegato"
+    properties:
+      filename:
+        type: "string"
+        example: "readme.txt"
+        description: "nome del file"
+      autore:
+        type: "string"
+        example: "mario rossi"
+        description: "autore del file"
+      titolo:
+        type: "string"
+        example: "tesi di laurea"
+        description: "titolo del file"
+      descrizione:
+        type: "string"
+        example: "descrizione libera"
+        description: "descrizione libera"
+      tipologiaAllegato:
+        type: "string"
+        example: "ACC_RIS"
+        description: "tipologia dell'allegato relativo all'entità p17_tipologia_allegati"
+      validoFlg:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "indica se l'allegato è valido (1) oppure no (0)"
+        minimum: 0.0
+        maximum: 1.0
+      tipoAllegato:
+        type: "string"
+        example: "mario rossi"
+        description: "codice del tipo di allegato"
+      allegatoId:
+        type: "integer"
+        format: "int64"
+        example: 1111
+        description: "id dell'allegato"
+        x-field-type: "primaryKey"
+    x-layout-name: "ALLEGATO_REST"
+    x-winsession-name: "p17/n_di_17_001_tipologia_allegati"
+    x-model-sub-package: "frk.v1"
+    x-model-sub-path: "frk/v1"
+  DettaglioErroreAggiuntivo:
+    type: "object"
+    properties:
+      errorType:
+        type: "string"
+        example: "stackTrace"
+        description: "descrizione del tipo di errore aggiuntivo"
+      value:
+        type: "string"
+        example: "SocketTimeoutException...."
+        description: "descrizione dell'errore"
+      rawValue:
+        type: "string"
+        example: "SocketTimeoutException...."
+        description: "descrizione dell'errore"
+        x-field-type: "rawJson"
+    x-model-sub-package: "frk.v1"
+    x-model-sub-path: "frk/v1"
+  CodiceTipologiaAllegato:
+    type: "object"
+    properties:
+      linguaId:
+        type: "integer"
+        format: "int64"
+        example: 5
+        description: "id della lingua"
+      linguaCod:
+        type: "string"
+        example: "ita"
+        description: "codice ISO6392 della lingua"
+      tipoAllegatoCod:
+        type: "string"
+        example: "ISEE"
+        description: "codice della tipologia di allegato"
+      des:
+        type: "string"
+        example: "Attestazione ISEE"
+        description: "descrizione della tipologia di allegato"
+      maxUploadFileSize:
+        type: "integer"
+        format: "int64"
+        example: 5
+        description: "massima dimensione in MB dei file in upload"
+      abilVisNoReg:
+        type: "integer"
+        format: "int32"
+        example: 0
+        description: "abilita la visibilità degli allegati della tipologia anche se\
+          \ all'atto del caricamento non erano associati alla regola che li mostra"
+      abilStampaAllegatiFlg:
+        type: "integer"
+        format: "int32"
+        example: 1
+        description: "abilita la stampa dell'allegato della tipologia nella stampa\
+          \ generica degli allegati."
+    x-layout-name: "TIPOLOGIA_ALLEGATI_REST"
+    x-winsession-name: "p17/n_di_17_001_tipologia_allegati"
+    x-model-sub-package: "frk.v1"
+    x-model-sub-path: "frk/v1"
+  EstensioneAllegato:
+    type: "object"
+    properties:
+      estensioneId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "id estensione"
+      estensione:
+        type: "string"
+        example: "pdf"
+        description: "codice estensione"
+      estensioneDes:
+        type: "string"
+        example: "PDF"
+        description: "descrizione estensione"
+        x-internal-name: "des"
+    x-layout-name: "P17_ESTENSIONI_ALLEGATI_LOOKUP"
+    x-winsession-name: "p17/n_di_17_winsession_rest"
+    x-model-sub-package: "frk.v1"
+    x-model-sub-path: "frk/v1"
+  InserimentoAllegatoGenericoMetadata:
+    type: "object"
+    properties:
+      proprietaAggiuntive:
+        type: "array"
+        items:
+          $ref: "#/definitions/ProprietaAggiuntiva"
+      chiaviCollegamento:
+        type: "array"
+        items:
+          $ref: "#/definitions/ChiaveCollegamento"
+      filename:
+        type: "string"
+        example: "readme.txt"
+        description: "nome del file"
+      autore:
+        type: "string"
+        example: "mario rossi"
+        description: "autore del file"
+      titolo:
+        type: "string"
+        example: "tesi di laurea"
+        description: "titolo del file"
+      descrizione:
+        type: "string"
+        example: "descrizione libera"
+        description: "descrizione libera"
+      tipologiaAllegato:
+        type: "string"
+        example: "ACC_RIS"
+        description: "tipologia dell'allegato relativo all'entità p17_tipologia_allegati"
+      validoFlg:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "indica se l'allegato è valido (1) oppure no (0)"
+        minimum: 0.0
+        maximum: 1.0
+    x-model-sub-package: "frk.v1"
+    x-model-sub-path: "frk/v1"
+  PatchAllegatoMetadata:
+    type: "object"
+    properties:
+      validoFlg:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "indica se l'allegato è valido (1) oppure no (0)"
+        minimum: 0.0
+        maximum: 1.0
+    x-model-sub-package: "frk.v1"
+    x-model-sub-path: "frk/v1"
+  UploadMetadata:
+    type: "object"
+    properties:
+      statoUpload:
+        type: "string"
+        example: "WAITING"
+        description: "stato di upload dell'allegato (WAITING,PROCESSING,DONE)"
+        x-internal-name: "stato"
+      chiaviCollegamento:
+        type: "array"
+        items:
+          $ref: "#/definitions/ChiaveCollegamento"
+      proprietaAggiuntive:
+        type: "array"
+        items:
+          $ref: "#/definitions/ProprietaAggiuntivaUpload"
+      validoFlg:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "indica se l'allegato è valido (1) oppure no (0)"
+        minimum: 0.0
+        maximum: 1.0
+      tipologiaAllegato:
+        type: "string"
+        example: "ACC_RIS"
+        description: "tipologia dell'allegato relativo all'entità p17_tipologia_allegati"
+      descrizione:
+        type: "string"
+        example: "descrizione libera"
+        description: "descrizione libera"
+      titolo:
+        type: "string"
+        example: "tesi di laurea"
+        description: "titolo del file"
+      autore:
+        type: "string"
+        example: "mario rossi"
+        description: "autore del file"
+      filename:
+        type: "string"
+        example: "readme.txt"
+        description: "nome del file"
+      tipoAllegato:
+        type: "string"
+        example: "DOM_TIRO"
+        description: "codice del tipo di allegato nel caso l'upload si riferisca ad\
+          \ un dato gestito negli allegati"
+      allegatoId:
+        type: "integer"
+        format: "int64"
+        example: 1111
+        description: "id dell'allegato nel caso l'upload sia terminato e l'upload\
+          \ si riferisca ad un dato gestito negli allegati"
+      uploadId:
+        type: "integer"
+        format: "int64"
+        example: 1111
+        description: "id dell'upload"
+        x-field-type: "primaryKey"
+    x-layout-name: "UPLOAD_METADATA"
+    x-winsession-name: "DUMMY"
+    x-model-sub-package: "frk.v1"
+    x-model-sub-path: "frk/v1"
+  ProprietaAggiuntiva:
+    type: "object"
+    required:
+    - "nome"
+    discriminator: "propAggiuntivaType"
+    properties:
+      nome:
+        type: "string"
+        example: "nome"
+        description: "nome della proprietà aggiuntiva"
+      valAlfa:
+        type: "string"
+        example: "val_alfa"
+        description: "valore della proprietà nel caso di stringa"
+      valNum:
+        type: "number"
+        format: "float"
+        example: 1.0
+        description: "valore della proprietà nel caso di numero"
+      valDate:
+        type: "string"
+        description: "valore della proprietà nel caso di date time"
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})\
+          \ ([01][0-9]|2[0-4]):[0-5][0-9]:[0-5][0-9]"
+    x-model-sub-package: "frk.v1"
+    x-model-sub-path: "frk/v1"
+  DettaglioErrore:
+    type: "object"
+    properties:
+      statusCode:
+        type: "integer"
+        format: "int32"
+        example: 200
+        description: "Http Status Code"
+      retCode:
+        type: "integer"
+        format: "int32"
+        example: -1
+        description: "codice di errore"
+      retErrMsg:
+        type: "string"
+        example: "Parametri non corretti"
+        description: "descrizione dell'errore"
+      errDetails:
+        type: "array"
+        items:
+          $ref: "#/definitions/DettaglioErroreAggiuntivo"
+    x-model-sub-package: "frk.v1"
+    x-model-sub-path: "frk/v1"
+  ChiaveCollegamento:
+    type: "object"
+    properties:
+      nome:
+        type: "string"
+        example: "domTiroId"
+        description: "contiene la chiave che mette in relazione l'allegato con le\
+          \ altre entità di esse3"
+      valore:
+        type: "integer"
+        format: "int64"
+        example: 123
+        description: "contiene il valore dell'id"
+    x-layout-name: "UPLOAD_PROPS"
+    x-winsession-name: "DUMMY"
+    x-model-sub-package: "frk.v1"
+    x-model-sub-path: "frk/v1"
+  ProprietaAggiuntivaUpload:
+    allOf:
+    - $ref: "#/definitions/ProprietaAggiuntiva"
+    - type: "object"
+      properties:
+        uploadId:
+          type: "integer"
+          format: "int64"
+          example: 1111
+          description: "id dell'upload"
+          x-field-type: "primaryKey"
+        dettId:
+          type: "integer"
+          format: "int64"
+          example: 1111
+          description: "id della proprietà aggiuntiva dell' upload"
+          x-field-type: "primaryKey"
+    x-layout-name: "UPLOAD_ADD_PROPS"
+    x-winsession-name: "DUMMY"
+    x-model-sub-package: "frk.v1"
+    x-model-sub-path: "frk/v1"
+parameters:
+  chiaviAllegato:
+    name: "chiaviAllegato"
+    in: "query"
+    description: "json contenente la lista delle chiavi con i valori di filtro per\
+      \ recuperare la lista degli allegati\nEsempio\n  [{\n      \"nome\": \"domTiroId\"\
+      ,\n      \"valore\": \"10\"\n   }]\n  \n    \n"
+    required: false
+    type: "string"
+  allegatoId:
+    name: "allegatoId"
+    in: "path"
+    description: "id di upload per caricare un allegato"
+    required: true
+    type: "integer"
+    format: "int64"
+  uploadId:
+    name: "uploadId"
+    in: "path"
+    description: "id di upload per caricare un allegato"
+    required: true
+    type: "integer"
+    format: "int64"
+  tipoAllegato:
+    name: "tipoAllegato"
+    in: "path"
+    description: "codice del tipo allegato da recuperare"
+    required: true
+    type: "string"
+externalDocs:
+  description: "Documentazione Geneale sui servizi REST"
+  url: "https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3"
+x-file-status: "PROD"
+x-file-name: "frk-allegatiApiV1.yaml"
+x-api-status: "PROD"
+x-func-cod: "RST_ALLV1"
+x-anchor-definitions:
+  common-produces-mediaType:
+    produces:
+    - "application/octet-stream"
+x-security-definitions:
+  allegato-permissions:
+    kind: "USER_TECNICO"
+    profiles:
+    - profile:
+        name: "UTENTE_TECNICO"
+        description: "la visualizzazione degli allegati è possibile agli utenti tecnici\
+          \ per le sole tipologie abilitate ai servizi REST"
+        checks:
+        - checkTipologiaAllegato:
+            className: "Security"
+            functionName: "checkTipologiaAllegato"
+            description: "la funzione controlla che il tipo di allegato sia utilizzabile\
+              \ con i servizi REST"
+            parameters:
+            - tipoAllegato: "{\"name\":\"tipoAllegato\",\"in\":\"path\",\"description\"\
+                :\"codice del tipo allegato da recuperare\",\"required\":true,\"type\"\
+                :\"string\",\"items\":null,\"collectionFormat\":null,\"default\":null,\"\
+                maximum\":null,\"exclusiveMaximum\":null,\"minimum\":null,\"exclusiveMinimum\"\
+                :null,\"maxLength\":null,\"minLength\":null,\"pattern\":null,\"maxItems\"\
+                :null,\"minItems\":null,\"uniqueItems\":null,\"multipleOf\":null,\"\
+                format\":null,\"x-example\":null,\"enum\":null}"
+        - checkUserTecnico:
+            className: "Security"
+            functionName: "checkUserTecnico"
+            description: "la funzione controlla che l'utente loggato sia di tipologia\
+              \ utente tecnico"
+  user-tecnico-permissions:
+    kind: "USER_TECNICO"
+    profiles:
+    - profile:
+        name: "UTENTE_TECNICO"
+        description: "funzione accessibile alle utenze tecniche per accessi ai servizi\
+          \ REST"
+        checks:
+        - checkDummy:
+            className: "Security"
+            functionName: "checkUserTecnico"
+            description: "controlla che l'utente abbia gli accessi per i corsi a lui\
+              \ abilitati"
+  docente-permissions:
+    kind: "DOCENTE"
+    profiles:
+    - profile:
+        name: "DOCENTE"
+        description: "funzione accessibile alle utenze di tipo docente"
+        checks:
+        - checkDummy:
+            className: "Security"
+            functionName: "checkDocente"
+            description: "controlla che l'utente sia un docente"
+  common-soggetto-esterno-permissions:
+    kind: "SOGG_EST"
+    profiles:
+    - profile:
+        name: "SOGG_EST"
+        description: "Permette la visualizzazione delle informazioni collegate ad\
+          \ una anagrafica soggetto esterno"
+        checks:
+        - checkAdmin:
+            className: "Security"
+            functionName: "checkSoggettoEsterno"
+            description: "controlla che l'utente sia un soggetto esterno"
+  upload-permissions:
+    kind: "ALL"
+    profiles:
+    - profile:
+        name: "ALL"
+        description: "L'accesso alle funzionalità di upload è ristretto ai soli utenti\
+          \ che hanno richiesto l'upload tramite le apposite funzioni"
+        checks:
+        - checkDummy:
+            className: "Security"
+            functionName: "checkUploadAllegato"
+            description: "la funzione controlla che l'uploadId sia stato rilasciato\
+              \ all'utente che ha richiesto l'inserimento"
+            parameters:
+            - uploadId:
+                name: "uploadId"
+                in: "path"
+                description: "id di upload per caricare un allegato"
+                required: true
+                type: "integer"
+                format: "int64"
+x-cache-type: "noCache"

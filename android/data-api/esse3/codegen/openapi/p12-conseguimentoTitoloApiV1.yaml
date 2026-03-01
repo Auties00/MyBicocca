@@ -1,0 +1,4301 @@
+---
+swagger: "2.0"
+info:
+  description: "i servizi presenti permettono di recuperare informazioni sul processo\
+    \ di conseguimeno titolo del sistema Esse3, tra cui\n- le date degli appelli di\
+    \ laurea e le informazioni relative,    \n- l'elenco dei docenti che è possibile\
+    \ selezionare come relatore di Tesi \n- l'elenco dei soggetti esterni che è possibile\
+    \ selezionare come relatore di Tesi \n- il riepilogo di tutti i dati inseriti\
+    \ e le opzioni scelte in fase di presentazione della domanda conseguimento titolo\n\
+    - le tipologie di tesi configurate in base alle regole di conseguimento titolo\
+    \ relative allo studente\n- i dati della tesi di laurea e le informazioni relative\
+    \ ad appello, seduta  \n\n## ChangeLog\n\nVersione       | Versione di Esse3 di\
+    \ rilascio | Interventi \n-              | -                             | -\n\
+    \    1.0.0      | 18.01.02.00                   | creazione\n    1.1.0      |\
+    \ 18.03.00.00                   | aggiunto path infoProc e parameter stuId\n \
+    \   1.2.0      | 19.08.03.00                   | aggiunto path /domandeCt/annullaDomandaCt/\n\
+    \n  \n"
+  version: "1.2.0"
+  title: "ESSE3 Conseguimento titolo API"
+basePath: "/consTit-service-v1"
+schemes:
+- "https"
+- "http"
+consumes:
+- "application/json"
+produces:
+- "application/json"
+security:
+- basicAuth: []
+- jwt:
+  - "openid"
+paths:
+  /allegati/tesi/:
+    post:
+      tags:
+      - "allegati di tesi"
+      summary: "inserimento metadati allegato"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>consente di effettuare l'inserimento dei metadati\
+        \ di un nuovo allegato di tesi, sulla risposta è presente l'header location\
+        \ che consente di effettuare l'upload del blob collegato ai metadati\n   \
+        \      tramite uploadId. Se la tesi ancora non è stata inserita è possibile\
+        \ aggiungerla tramire l'API /domandeCt/tesi.\n\nEsempio di body:\n\n'{\n \
+        \  \"chiaviCollegamento\":[\n      {\n         \"nome\":\"tesiId\",\n    \
+        \     \"valore\":86084\n      }\n   ],\n   \"proprietaAggiuntive\":[\n   \
+        \   {\n         \"nome\":\"def_flg\",\n         \"valNum\":1\n      },\n \
+        \     {\n         \"nome\":\"stato_all_tesi_cod\",\n         \"valAlfa\":\"\
+        A\"\n      },\n      {\n         \"nome\":\"motivazione\",\n         \"valAlfa\"\
+        :\"test motivazione\"\n      },\n      {\n         \"nome\":\"data_app_rif\"\
+        ,\n         \"valDate\":\"01/01/2023 20:51:20\"\n      }\n   ],\n   \"filename\"\
+        :\"readme.txt\",\n   \"autore\":\"mario rossi\",\n   \"titolo\":\"tesi di\
+        \ laurea\",\n   \"descrizione\":\"descrizione libera\",\n   \"tipologiaAllegato\"\
+        :\"TESI\"\n}'\n         \n         \n\n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n\
+        -|-|-\nx-cache-type|noCache|Nessuna cache impostata Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: USER_TECNICO**\n\nProfilo|Controllo| Funzione\n-|-|-\nUTENTE_TECNICO|funzione\
+        \ accessibile alle utenze tecniche per accessi ai servizi REST|Security.checkUserTecnico()\n\
+        \n\nClasse di modello : DettaglioErroreAggiuntivo\n======\n\nEstensioni sulle\
+        \ proprietà\n----\nProprietà | x-field-type\n-|-|\nrawValue|rawJson\n"
+      operationId: "postMetataAllegatoTesi"
+      parameters:
+      - in: "body"
+        name: "body"
+        description: "Oggetto che contiene i metadati dell'allegato da inserire"
+        required: true
+        schema:
+          $ref: "#/definitions/InserimentoAllegatoTesiMetadata"
+      responses:
+        "201":
+          description: "Successful response"
+        "422":
+          description: "Aggiornamento non riuscito"
+          schema:
+            $ref: "#/definitions/DettaglioErrore"
+      x-enabled-profiles:
+      - user-tecnico-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UTENTE_TECNICO"
+              description: "funzione accessibile alle utenze tecniche per accessi\
+                \ ai servizi REST"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkUserTecnico"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+      x-cache-type: "noCache"
+      x-cache-endpoint-relations:
+        canonicalEndpointsAction: "none"
+  /allegati/tesi/antiplagio:
+    put:
+      tags:
+      - "allegati di tesi"
+      summary: "Inserimento dati antiplagio per gli allegati di tesi."
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>Effettua l'inserimento dati antiplagio per\
+        \ gli allegati di tesi ed aventualemnte l'approvazione dell'allegato definitvo\
+        \ di tesi con conseguente approvazione anche della tesi.\n\n**Estensioni:**\n\
+        \nCodice Estensione|Valore|Nota\n-|-|-\nx-cache-type|configuration|Risorsa\
+        \ di configurazione, la variazione è molto lenta, cache Http abilitata, cache\
+        \ server abilitata. Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: USER_TECNICO**\n\nProfilo|Controllo| Funzione\n-|-|-\nUTENTE_TECNICO|funzione\
+        \ accessibile alle utenze tecniche per accessi ai servizi REST|Security.checkUserTecnico()\n\
+        \n\nClasse di modello : DettaglioErroreAggiuntivo\n======\n\nEstensioni sulle\
+        \ proprietà\n----\nProprietà | x-field-type\n-|-|\nrawValue|rawJson\n"
+      operationId: "putDatiAntiplagio"
+      parameters:
+      - name: "allegatoId"
+        in: "query"
+        description: "identificativo allegato"
+        required: false
+        type: "integer"
+        format: "int64"
+      - name: "indxAntiplagio"
+        in: "query"
+        description: "riferimento antiplagio"
+        required: false
+        type: "string"
+      - name: "linkAntiplagio"
+        in: "query"
+        description: "link antiplagio"
+        required: false
+        type: "string"
+      - name: "notaAntiplagio"
+        in: "query"
+        description: "nota antiplagio"
+        required: false
+        type: "string"
+      - name: "approvazioneAllegFlg"
+        in: "query"
+        description: "Flag che indica se approvare l'allegato definitivo e quindi\
+          \ anche la tesi"
+        required: false
+        type: "integer"
+        format: "int64"
+      responses:
+        "200":
+          description: "Successful response"
+          schema:
+            $ref: "#/definitions/InserimentoDatiAntiplagio"
+        "422":
+          description: "parametri Errati"
+          schema:
+            $ref: "#/definitions/DettaglioErrore"
+      x-enabled-profiles:
+      - user-tecnico-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UTENTE_TECNICO"
+              description: "funzione accessibile alle utenze tecniche per accessi\
+                \ ai servizi REST"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkUserTecnico"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+      x-cache-type: "configuration"
+      x-cache-endpoint-relations:
+        canonicalEndpointsAction: "none"
+  /appelliCt:
+    get:
+      tags:
+      - "appelli laurea"
+      summary: "recupera la lista degli appelli"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>\n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n\
+        -|-|-\nx-cache-type|lowRefreshRateUserDependent|Risorsa che varia con frequenza\
+        \ bassa, cache Http abilitata, cache server disabilitata. Maggiori dettagli\
+        \ [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: USER_TECNICO**\n\nProfilo|Controllo| Funzione\n-|-|-\nUTENTE_TECNICO|funzione\
+        \ accessibile alle utenze tecniche per accessi ai servizi REST|Security.checkUserTecnico()\n\
+        \n**Utente: STUDENTE**\n\nProfilo|Controllo| Funzione\n-|-|-\nSTUDENTE|to\
+        \ do|SecurityConsTit.filterAppelliCtStu(tipoCorsoCod, cdsCod)\n\n\nClasse\
+        \ di modello : Appello\n======\n\nEstensioni sulle proprietà\n----\nProprietà\
+        \ | x-field-type\n-|-|\nappCtId|primaryKey\n\n\nClasse di modello : ScadenzeAppello\n\
+        ======\n\nEstensioni sulle proprietà\n----\nProprietà | x-field-type\n-|-|\n\
+        appCtId|primaryKey\n\n\nClasse di modello : DettaglioErroreAggiuntivo\n======\n\
+        \nEstensioni sulle proprietà\n----\nProprietà | x-field-type\n-|-|\nrawValue|rawJson\n"
+      operationId: "getAppelli"
+      parameters:
+      - name: "tipoCorsoCod"
+        in: "query"
+        description: "codice dela Tipologia del Corso di studio"
+        required: false
+        type: "string"
+      - name: "cdsCod"
+        in: "query"
+        description: "codice del Corso di studio"
+        required: false
+        type: "string"
+      - name: "start"
+        in: "query"
+        description: "utilizzato insieme a `limit` per indicare la paginazione sui\
+          \ record; `start` indica il numero del primo record da caricare (se non\
+          \ indicato viene utilizzato 0)\n"
+        required: false
+        type: "integer"
+        format: "int32"
+      - name: "limit"
+        in: "query"
+        description: "utilizzato insieme a `start` per indicare la paginazione sui\
+          \ record, `limit` indica il numero di record da recuperare (a partire da\
+          \ `start`); \nse non indicato viene utilizzato 50, i valori consentiti vanno\
+          \ da 0 a 100\n"
+        required: false
+        type: "integer"
+        format: "int32"
+      - name: "order"
+        in: "query"
+        description: "consente di specificare un ordine per il recupero dei record.\
+          \ La sintassi è la seguente\n * +/- : specifica l'ordinamento (+ = ASC,\
+          \ - = DESC); se omesso viene utilizzato +\n * field : nome del campo da\
+          \ ordinare\n \n E' possibile indicare più campi separandoli da virgola (Es:\
+          \ +annoCorso,+adCod) \n"
+        required: false
+        type: "string"
+      responses:
+        "200":
+          description: "Successful response"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/Appello"
+        "422":
+          description: "parametri Errati"
+          schema:
+            $ref: "#/definitions/DettaglioErrore"
+      x-enabled-profiles:
+      - appelliCt-filter-student-permissions:
+          kind: "STUDENTE"
+          profiles:
+          - profile:
+              name: "STUDENTE"
+              description: "to do"
+              checks:
+              - filterAppelliCTStu:
+                  className: "SecurityConsTit"
+                  functionName: "filterAppelliCtStu"
+                  description: "to do"
+                  parameters:
+                  - tipoCorsoCod: "{\"name\":\"tipoCorsoCod\",\"in\":\"query\",\"\
+                      description\":\"codice dela Tipologia del Corso di studio\"\
+                      ,\"required\":false,\"type\":\"string\",\"items\":null,\"collectionFormat\"\
+                      :null,\"default\":null,\"maximum\":null,\"exclusiveMaximum\"\
+                      :null,\"minimum\":null,\"exclusiveMinimum\":null,\"maxLength\"\
+                      :null,\"minLength\":null,\"pattern\":null,\"maxItems\":null,\"\
+                      minItems\":null,\"uniqueItems\":null,\"multipleOf\":null,\"\
+                      format\":null,\"x-example\":null,\"enum\":null}"
+                  - cdsCod: "{\"name\":\"cdsCod\",\"in\":\"query\",\"description\"\
+                      :\"codice del Corso di studio\",\"required\":false,\"type\"\
+                      :\"string\",\"items\":null,\"collectionFormat\":null,\"default\"\
+                      :null,\"maximum\":null,\"exclusiveMaximum\":null,\"minimum\"\
+                      :null,\"exclusiveMinimum\":null,\"maxLength\":null,\"minLength\"\
+                      :null,\"pattern\":null,\"maxItems\":null,\"minItems\":null,\"\
+                      uniqueItems\":null,\"multipleOf\":null,\"format\":null,\"x-example\"\
+                      :null,\"enum\":null}"
+      - user-tecnico-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UTENTE_TECNICO"
+              description: "funzione accessibile alle utenze tecniche per accessi\
+                \ ai servizi REST"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkUserTecnico"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+      x-cache-type: "lowRefreshRateUserDependent"
+  /appelliCt/{appCtId}:
+    get:
+      tags:
+      - "appello di laurea"
+      summary: "recupera le informazioni sull'appello di laurea"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>Recupera la lista degli oggetti  `Appello di\
+        \ laurea\n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n-|-|-\nx-cache-type|lowRefreshRateUserIndependent|Risorsa\
+        \ che varia con frequenza bassa, cache Http abilitata, cache server abilitata.\
+        \ Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: USER_TECNICO**\n\nProfilo|Controllo| Funzione\n-|-|-\nUTENTE_TECNICO|funzione\
+        \ accessibile alle utenze tecniche per accessi ai servizi REST|Security.checkUserTecnico()\n\
+        \n**Utente: STUDENTE**\n\nProfilo|Controllo| Funzione\n-|-|-\nSTUDENTE|to\
+        \ do|SecurityConsTit.checkAppelliCtStu(appCtId)\n\n\nClasse di modello : Appello\n\
+        ======\n\nEstensioni sulle proprietà\n----\nProprietà | x-field-type\n-|-|\n\
+        appCtId|primaryKey\n\n\nClasse di modello : ScadenzeAppello\n======\n\nEstensioni\
+        \ sulle proprietà\n----\nProprietà | x-field-type\n-|-|\nappCtId|primaryKey\n"
+      operationId: "getAppCt"
+      parameters:
+      - name: "appCtId"
+        in: "path"
+        description: "id dell'appello di laurea"
+        required: true
+        type: "integer"
+        format: "int64"
+      responses:
+        "200":
+          description: "Successful response"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/Appello"
+      x-enabled-profiles:
+      - appelliCt-student-permissions:
+          kind: "STUDENTE"
+          profiles:
+          - profile:
+              name: "STUDENTE"
+              description: "to do"
+              checks:
+              - filterAppelliCTStu:
+                  className: "SecurityConsTit"
+                  functionName: "checkAppelliCtStu"
+                  description: "to do"
+                  parameters:
+                  - appCtId: "{\"name\":\"appCtId\",\"in\":\"path\",\"description\"\
+                      :\"id dell'appello di laurea\",\"required\":true,\"type\":\"\
+                      integer\",\"items\":null,\"collectionFormat\":null,\"default\"\
+                      :null,\"maximum\":null,\"exclusiveMaximum\":null,\"minimum\"\
+                      :null,\"exclusiveMinimum\":null,\"maxLength\":null,\"minLength\"\
+                      :null,\"pattern\":null,\"maxItems\":null,\"minItems\":null,\"\
+                      uniqueItems\":null,\"multipleOf\":null,\"format\":\"int64\"\
+                      ,\"x-example\":null,\"enum\":null}"
+      - user-tecnico-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UTENTE_TECNICO"
+              description: "funzione accessibile alle utenze tecniche per accessi\
+                \ ai servizi REST"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkUserTecnico"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+      x-cache-type: "lowRefreshRateUserIndependent"
+  /domandeCt:
+    post:
+      tags:
+      - "domanda di laurea"
+      summary: "effettua l'inserimento della domanda di laurea in base ai dati inseriti\
+        \ nelle varie azioni del processo"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>Consente di inserire di inserire la domanda\
+        \ di laurea e la tesi relativa\n\n##### Parametri in ingresso\nCampo     \
+        \    | Campi obbligatori                 | Note \n-             | -      \
+        \                           | - \nstudente      |  stu_id                \
+        \           | id dello studente\nappello       |  app_ct_id              \
+        \          | id appello di laurea, può essere recuperato dalla GET appelliCT\n\
+        sessione      |  ses_ct_id                        | id della sessione di laurea\
+        \ può essere recuperato dalla GET appelliCT\nanno domanda  |  aa_id      \
+        \                      | id che identifica anno di ultima iscrizione studente\n\
+        \n\n##### Codici di ritorno della funzione\nCodice di Ritorno | Descrizione\n\
+        -                 | -\n  1  |  OK\n -1  |  L'oggetto strDomCTitRest che contiene\
+        \ tutti i dati necessari per l'elaborazione è nullo\n -2  |  L'oggetto strPreDomCt\
+        \ che contiene i dati della domanda è nullo\n -3  |  L'oggetto strPreTesi\
+        \ che contiene i dati della tesi è nullo\n -4  |  L'oggetto strPreRelTesi\
+        \ che contiene i dati dei relatori di tesi è nullo\n -5  |  L'identificativo\
+        \ dello studente è nullo\n -6  |  L'identificativo dell'anno è nullo\n -7\
+        \  |  L'identificativo dello studente presente nella domanda non coincide\
+        \ con quello presente nella tesi\n -8  |  L'oggetto strPreRelTesi che contiene\
+        \ i dati dei relatori di tesi non ha elementi\n -9  |  Nell'oggetto strPreRelTesi\
+        \ che contiene i dati dei relatori di tesi la tipologia di relatore non è\
+        \ definita\n-10  |  Nell'oggetto strPreRelTesi che contiene i dati dei relatori\
+        \ di tesi non è definito nè il docente nè il soggetto esterno\n-11  |  Nell'oggetto\
+        \ strPreRelTesi che contiene i dati dei relatori di tesi nessun dato è accettabile\n\
+        -12  |  Errore in fase di popolamento della tabella P12_PRE_DOM_CT a partire\
+        \ dalla struttura strPreDomCt\n-13  |  Errore in fase di popolamento della\
+        \ tabella P12_PRE_TESI a partire dalla struttura strPreTesi\n-14  |  Errore\
+        \ in fase di popolamento della tabella P12_PRE_REL_TESI a partire dalla struttura\
+        \ strPreRelTesi\n-15  |  Errore in fase di registrazione completa della domanda\
+        \ conseguimento titolo e tesi  |  parametri obbligatori non valorizzati\n\
+        -16  |  Errore in fase di registrazione completa della domanda conseguimento\
+        \ titolo e tesi  |  tesi non trovata\n-17  |  Errore generico in fase di registrazione\
+        \ completa della domanda conseguimento titolo e tesi\n\n\n**Estensioni:**\n\
+        \nCodice Estensione|Valore|Nota\n-|-|-\nx-cache-type|noCache|Nessuna cache\
+        \ impostata Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: USER_TECNICO**\n\nProfilo|Controllo| Funzione\n-|-|-\nUTENTE_TECNICO|funzione\
+        \ accessibile alle utenze tecniche per accessi ai servizi REST|Security.checkUserTecnico()\n\
+        \n**Utente: STUDENTE**\n\nProfilo|Controllo| Funzione\n-|-|-\nSTUDENTE|funzione\
+        \ accessibile alle utenze di tipo STUDENTE|Security.checkStudente()\n\n\n\
+        Classe di modello : DettaglioErroreAggiuntivo\n======\n\nEstensioni sulle\
+        \ proprietà\n----\nProprietà | x-field-type\n-|-|\nrawValue|rawJson\n"
+      operationId: "postDomCt"
+      parameters:
+      - in: "body"
+        name: "body"
+        description: "Oggetto che contiene la riga da inserire"
+        required: true
+        schema:
+          $ref: "#/definitions/InserimentoDomCt"
+      responses:
+        "201":
+          description: "Insert succeded"
+        "412":
+          description: "Inserimento non riuscito"
+          schema:
+            $ref: "#/definitions/DettaglioErrore"
+      x-enabled-profiles:
+      - common-student-permissions:
+          kind: "STUDENTE"
+          profiles:
+          - profile:
+              name: "STUDENTE"
+              description: "funzione accessibile alle utenze di tipo STUDENTE"
+              checks:
+              - checkMatId:
+                  className: "Security"
+                  functionName: "checkStudente"
+                  description: "controlla che l'utente sia uno studente"
+      - user-tecnico-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UTENTE_TECNICO"
+              description: "funzione accessibile alle utenze tecniche per accessi\
+                \ ai servizi REST"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkUserTecnico"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+      x-cache-type: "noCache"
+      x-cache-endpoint-relations:
+        canonicalEndpointsAction: "invalidate"
+        customEndpoints:
+        - operationId: "getTesiByAppCtId"
+          action: "invalidate"
+        - operationId: "getDomCtByMatId"
+          action: "invalidate"
+        - operationId: "getDomCtByStuId"
+          action: "invalidate"
+        - operationId: "getDomCt"
+          action: "invalidate"
+        - operationId: "getTesi"
+          action: "invalidate"
+        - operationId: "getTesiByTesiId"
+          action: "invalidate"
+        - operationId: "getReportTesiRelatori"
+          action: "invalidate"
+        - operationId: "getTipiRelTesi"
+          action: "invalidate"
+  /domandeCt/annullaDomandaCt:
+    put:
+      tags:
+      - "domanda di laurea"
+      summary: "effettua l'annullamento della domanda di laurea in base ai dati inseriti\
+        \ nelle varie azioni del processo"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>Annullamento domanda conseguimento titolo\n\
+        \n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n-|-|-\nx-cache-type|configuration|Risorsa\
+        \ di configurazione, la variazione è molto lenta, cache Http abilitata, cache\
+        \ server abilitata. Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: USER_TECNICO**\n\nProfilo|Controllo| Funzione\n-|-|-\nUTENTE_TECNICO|funzione\
+        \ accessibile alle utenze tecniche per accessi ai servizi REST|Security.checkUserTecnico()\n\
+        \n**Utente: STUDENTE**\n\nProfilo|Controllo| Funzione\n-|-|-\nSTUDENTE|funzione\
+        \ accessibile alle utenze di tipo STUDENTE|SecurityConsTit.filterDomCtStu(domConsTitId)\n\
+        \n\nClasse di modello : DettaglioErroreAggiuntivo\n======\n\nEstensioni sulle\
+        \ proprietà\n----\nProprietà | x-field-type\n-|-|\nrawValue|rawJson\n"
+      operationId: "putAnnDomCt"
+      parameters:
+      - name: "domConsTitId"
+        in: "query"
+        description: "id della domanda di conseguimento titolo"
+        required: false
+        type: "integer"
+        format: "int64"
+      - name: "studId"
+        in: "query"
+        description: "id dello studente"
+        required: false
+        type: "integer"
+        format: "int64"
+      - name: "checkScadenze"
+        in: "query"
+        description: "indica se controllare le scadenze. True per effettuare il controllo\
+          \ altrimenti false"
+        required: false
+        type: "boolean"
+      responses:
+        "200":
+          description: "Successful response"
+          schema:
+            $ref: "#/definitions/AnnullamentoDomCt"
+        "422":
+          description: "parametri Errati"
+          schema:
+            $ref: "#/definitions/DettaglioErrore"
+      x-enabled-profiles:
+      - annDomCt-student-permissions:
+          kind: "STUDENTE"
+          profiles:
+          - profile:
+              name: "STUDENTE"
+              description: "funzione accessibile alle utenze di tipo STUDENTE"
+              checks:
+              - filterDomCTStu:
+                  className: "SecurityConsTit"
+                  functionName: "filterDomCtStu"
+                  description: "to do"
+                  parameters:
+                  - domConsTitId: "{\"name\":\"domConsTitId\",\"in\":\"query\",\"\
+                      description\":\"id della domanda di conseguimento titolo\",\"\
+                      required\":false,\"type\":\"integer\",\"items\":null,\"collectionFormat\"\
+                      :null,\"default\":null,\"maximum\":null,\"exclusiveMaximum\"\
+                      :null,\"minimum\":null,\"exclusiveMinimum\":null,\"maxLength\"\
+                      :null,\"minLength\":null,\"pattern\":null,\"maxItems\":null,\"\
+                      minItems\":null,\"uniqueItems\":null,\"multipleOf\":null,\"\
+                      format\":\"int64\",\"x-example\":null,\"enum\":null}"
+      - user-tecnico-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UTENTE_TECNICO"
+              description: "funzione accessibile alle utenze tecniche per accessi\
+                \ ai servizi REST"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkUserTecnico"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+      x-cache-type: "configuration"
+      x-cache-endpoint-relations:
+        canonicalEndpointsAction: "invalidate"
+        customEndpoints:
+        - operationId: "getDomCtByMatId"
+          action: "invalidate"
+        - operationId: "getDomCtByStuId"
+          action: "invalidate"
+        - operationId: "getDomCt"
+          action: "invalidate"
+  /domandeCt/appCtId/{appCtId}/tesi:
+    get:
+      tags:
+      - "domanda di laurea"
+      summary: "recupera i dati delle tesi di laurea legate alle domande legate ad\
+        \ un particolare appello"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>\n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n\
+        -|-|-\nx-cache-type|lowRefreshRateUserDependent|Risorsa che varia con frequenza\
+        \ bassa, cache Http abilitata, cache server disabilitata. Maggiori dettagli\
+        \ [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: USER_TECNICO**\n\nProfilo|Controllo| Funzione\n-|-|-\nUTENTE_TECNICO|funzione\
+        \ accessibile alle utenze tecniche per accessi ai servizi REST|Security.checkUserTecnico()\n\
+        \n\nClasse di modello : RiepilogoTesiDomCt\n======\n\nEstensioni sulle proprietà\
+        \n----\nProprietà | x-field-type\n-|-|\ntesiId|primaryKey\n\n\nClasse di modello\
+        \ : RelatoriTesiDomCt\n======\n\nEstensioni sulle proprietà\n----\nProprietà\
+        \ | x-field-type\n-|-|\ntesiId|primaryKey\n\n\nClasse di modello : DettaglioErroreAggiuntivo\n\
+        ======\n\nEstensioni sulle proprietà\n----\nProprietà | x-field-type\n-|-|\n\
+        rawValue|rawJson\n"
+      operationId: "getTesiByAppCtId"
+      parameters:
+      - name: "appCtId"
+        in: "path"
+        description: "id dell'appello di laurea"
+        required: true
+        type: "integer"
+        format: "int64"
+      - name: "start"
+        in: "query"
+        description: "utilizzato insieme a `limit` per indicare la paginazione sui\
+          \ record; `start` indica il numero del primo record da caricare (se non\
+          \ indicato viene utilizzato 0)\n"
+        required: false
+        type: "integer"
+        format: "int32"
+      - name: "limit"
+        in: "query"
+        description: "utilizzato insieme a `start` per indicare la paginazione sui\
+          \ record, `limit` indica il numero di record da recuperare (a partire da\
+          \ `start`); \nse non indicato viene utilizzato 50, i valori consentiti vanno\
+          \ da 0 a 100\n"
+        required: false
+        type: "integer"
+        format: "int32"
+      responses:
+        "200":
+          description: "Successful response"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/RiepilogoTesiDomCt"
+        "422":
+          description: "parametri Errati"
+          schema:
+            $ref: "#/definitions/DettaglioErrore"
+      x-enabled-profiles:
+      - user-tecnico-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UTENTE_TECNICO"
+              description: "funzione accessibile alle utenze tecniche per accessi\
+                \ ai servizi REST"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkUserTecnico"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+      x-cache-type: "lowRefreshRateUserDependent"
+  /domandeCt/matId/{matId}:
+    get:
+      tags:
+      - "domanda di laurea"
+      summary: "recupera i dati della domanda conseguimento titolo"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>\n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n\
+        -|-|-\nx-cache-type|lowRefreshRateUserDependent|Risorsa che varia con frequenza\
+        \ bassa, cache Http abilitata, cache server disabilitata. Maggiori dettagli\
+        \ [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: USER_TECNICO**\n\nProfilo|Controllo| Funzione\n-|-|-\nUTENTE_TECNICO|funzione\
+        \ accessibile alle utenze tecniche per accessi ai servizi REST|Security.checkUserTecnico()\n\
+        \n**Utente: STUDENTE**\n\nProfilo|Controllo| Funzione\n-|-|-\nSTUDENTE|Permette\
+        \ la visualizzazone delle informazioni del tratto della carriea dello studente|Security.checkMatId(matId)\n\
+        \n\nClasse di modello : RiepilogoDomCt\n======\n\nEstensioni sulle proprietà\
+        \n----\nProprietà | x-field-type\n-|-|\ndomCtId|primaryKey\n\n\nClasse di\
+        \ modello : DettaglioErroreAggiuntivo\n======\n\nEstensioni sulle proprietà\
+        \n----\nProprietà | x-field-type\n-|-|\nrawValue|rawJson\n"
+      operationId: "getDomCtByMatId"
+      parameters:
+      - name: "matId"
+        in: "path"
+        description: "id della matricola"
+        required: true
+        type: "integer"
+        format: "int64"
+      responses:
+        "200":
+          description: "Successful response"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/RiepilogoDomCt"
+        "422":
+          description: "parametri Errati"
+          schema:
+            $ref: "#/definitions/DettaglioErrore"
+      x-enabled-profiles:
+      - common-student-tratto-permissions:
+          kind: "STUDENTE"
+          profiles:
+          - profile:
+              name: "STUDENTE"
+              description: "Permette la visualizzazone delle informazioni del tratto\
+                \ della carriea dello studente"
+              checks:
+              - checkMatId:
+                  className: "Security"
+                  functionName: "checkMatId"
+                  description: "controlla che il matId appartenga ad uno dei tratti\
+                    \ di carriera dello studente"
+                  parameters:
+                  - matId:
+                      name: "matId"
+                      in: "path"
+                      description: "id del tratto di carriera dello studente"
+                      required: true
+                      type: "integer"
+                      format: "int64"
+      - user-tecnico-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UTENTE_TECNICO"
+              description: "funzione accessibile alle utenze tecniche per accessi\
+                \ ai servizi REST"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkUserTecnico"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+      x-cache-type: "lowRefreshRateUserDependent"
+  /domandeCt/stuId/{stuId}:
+    get:
+      tags:
+      - "domanda di laurea"
+      summary: "recupera i dati della domanda conseguimento titolo"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>\n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n\
+        -|-|-\nx-cache-type|lowRefreshRateUserDependent|Risorsa che varia con frequenza\
+        \ bassa, cache Http abilitata, cache server disabilitata. Maggiori dettagli\
+        \ [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: USER_TECNICO**\n\nProfilo|Controllo| Funzione\n-|-|-\nUTENTE_TECNICO|funzione\
+        \ accessibile alle utenze tecniche per accessi ai servizi REST|Security.checkUserTecnico()\n\
+        \n**Utente: STUDENTE**\n\nProfilo|Controllo| Funzione\n-|-|-\nSTUDENTE|Permette\
+        \ la visualizzazione delle informazioni della carriea dello studente|Security.checkStuId(stuId)\n\
+        \n\nClasse di modello : RiepilogoDomCt\n======\n\nEstensioni sulle proprietà\
+        \n----\nProprietà | x-field-type\n-|-|\ndomCtId|primaryKey\n\n\nClasse di\
+        \ modello : DettaglioErroreAggiuntivo\n======\n\nEstensioni sulle proprietà\
+        \n----\nProprietà | x-field-type\n-|-|\nrawValue|rawJson\n"
+      operationId: "getDomCtByStuId"
+      parameters:
+      - name: "stuId"
+        in: "path"
+        description: "id dello studente"
+        required: true
+        type: "integer"
+        format: "int64"
+      responses:
+        "200":
+          description: "Successful response"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/RiepilogoDomCt"
+        "422":
+          description: "parametri Errati"
+          schema:
+            $ref: "#/definitions/DettaglioErrore"
+      x-enabled-profiles:
+      - common-student-carriera-permissions:
+          kind: "STUDENTE"
+          profiles:
+          - profile:
+              name: "STUDENTE"
+              description: "Permette la visualizzazione delle informazioni della carriea\
+                \ dello studente"
+              checks:
+              - checkStuId:
+                  className: "Security"
+                  functionName: "checkStuId"
+                  description: "controlla che lo stuId appartenga ad una delle carriere\
+                    \ dello studente"
+                  parameters:
+                  - stuId:
+                      name: "stuId"
+                      in: "path"
+                      description: "id della carriera studente"
+                      required: true
+                      type: "integer"
+                      format: "int64"
+      - user-tecnico-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UTENTE_TECNICO"
+              description: "funzione accessibile alle utenze tecniche per accessi\
+                \ ai servizi REST"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkUserTecnico"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+      x-cache-type: "lowRefreshRateUserDependent"
+  /domandeCt/tesi:
+    post:
+      tags:
+      - "domanda di laurea"
+      summary: "effettua l'inserimento di una nuova tesi"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>Consente di inserire di inserire la tesi per\
+        \ uno studente. Se lo studente ha già una domanda conseguimento è possibile\
+        \ recuperare il dom_ct_id tramite l'API /domandeCt/stuId/{stuId} specificando\
+        \ lo stu_id.\nUna volta ottenuto il dom_ct_id viene inserito nel body e così\
+        \ facendo la tesi viene associata alla domanda. \nSe lo studente non ha ancora\
+        \ una domanda è possibile omettere il dom_ct_id.\n\n\n**Estensioni:**\n\n\
+        Codice Estensione|Valore|Nota\n-|-|-\nx-cache-type|noCache|Nessuna cache impostata\
+        \ Maggiori dettagli [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: USER_TECNICO**\n\nProfilo|Controllo| Funzione\n-|-|-\nUTENTE_TECNICO|funzione\
+        \ accessibile alle utenze tecniche per accessi ai servizi REST|Security.checkUserTecnico()\n\
+        \n**Utente: STUDENTE**\n\nProfilo|Controllo| Funzione\n-|-|-\nSTUDENTE|funzione\
+        \ accessibile alle utenze di tipo STUDENTE|Security.checkStudente()\n\n\n\
+        Classe di modello : DettaglioErroreAggiuntivo\n======\n\nEstensioni sulle\
+        \ proprietà\n----\nProprietà | x-field-type\n-|-|\nrawValue|rawJson\n"
+      operationId: "postTesiIntoDomCt"
+      parameters:
+      - in: "body"
+        name: "body"
+        description: "Oggetto che contiene la riga da inserire"
+        required: true
+        schema:
+          $ref: "#/definitions/InserimentoTesiIntoDomCt"
+      responses:
+        "201":
+          description: "Insert succeded"
+        "412":
+          description: "Inserimento non riuscito"
+          schema:
+            $ref: "#/definitions/DettaglioErrore"
+      x-enabled-profiles:
+      - common-student-permissions:
+          kind: "STUDENTE"
+          profiles:
+          - profile:
+              name: "STUDENTE"
+              description: "funzione accessibile alle utenze di tipo STUDENTE"
+              checks:
+              - checkMatId:
+                  className: "Security"
+                  functionName: "checkStudente"
+                  description: "controlla che l'utente sia uno studente"
+      - user-tecnico-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UTENTE_TECNICO"
+              description: "funzione accessibile alle utenze tecniche per accessi\
+                \ ai servizi REST"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkUserTecnico"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+      x-cache-type: "noCache"
+      x-cache-endpoint-relations:
+        canonicalEndpointsAction: "invalidate"
+        customEndpoints:
+        - operationId: "getTesi"
+          action: "invalidate"
+        - operationId: "getReportTesiRelatori"
+          action: "invalidate"
+  /domandeCt/{domCtId}:
+    get:
+      tags:
+      - "domanda di laurea"
+      summary: "recupera i dati della domanda conseguimento titolo"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>\n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n\
+        -|-|-\nx-cache-type|lowRefreshRateUserDependent|Risorsa che varia con frequenza\
+        \ bassa, cache Http abilitata, cache server disabilitata. Maggiori dettagli\
+        \ [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: USER_TECNICO**\n\nProfilo|Controllo| Funzione\n-|-|-\nUTENTE_TECNICO|funzione\
+        \ accessibile alle utenze tecniche per accessi ai servizi REST|Security.checkUserTecnico()\n\
+        \n**Utente: STUDENTE**\n\nProfilo|Controllo| Funzione\n-|-|-\nSTUDENTE|to\
+        \ do|SecurityConsTit.filterDomCtStu(domCtId)\n\n\nClasse di modello : RiepilogoDomCt\n\
+        ======\n\nEstensioni sulle proprietà\n----\nProprietà | x-field-type\n-|-|\n\
+        domCtId|primaryKey\n\n\nClasse di modello : DettaglioErroreAggiuntivo\n======\n\
+        \nEstensioni sulle proprietà\n----\nProprietà | x-field-type\n-|-|\nrawValue|rawJson\n"
+      operationId: "getDomCt"
+      parameters:
+      - name: "domCtId"
+        in: "path"
+        description: "id della domanda di conseguimento titolo"
+        required: true
+        type: "integer"
+        format: "int64"
+      responses:
+        "200":
+          description: "Successful response"
+          schema:
+            $ref: "#/definitions/RiepilogoDomCt"
+        "422":
+          description: "parametri Errati"
+          schema:
+            $ref: "#/definitions/DettaglioErrore"
+      x-enabled-profiles:
+      - domCt-student-permissions:
+          kind: "STUDENTE"
+          profiles:
+          - profile:
+              name: "STUDENTE"
+              description: "to do"
+              checks:
+              - filterDomCTStu:
+                  className: "SecurityConsTit"
+                  functionName: "filterDomCtStu"
+                  description: "to do"
+                  parameters:
+                  - domCtId: "{\"name\":\"domCtId\",\"in\":\"path\",\"description\"\
+                      :\"id della domanda di conseguimento titolo\",\"required\":true,\"\
+                      type\":\"integer\",\"items\":null,\"collectionFormat\":null,\"\
+                      default\":null,\"maximum\":null,\"exclusiveMaximum\":null,\"\
+                      minimum\":null,\"exclusiveMinimum\":null,\"maxLength\":null,\"\
+                      minLength\":null,\"pattern\":null,\"maxItems\":null,\"minItems\"\
+                      :null,\"uniqueItems\":null,\"multipleOf\":null,\"format\":\"\
+                      int64\",\"x-example\":null,\"enum\":null}"
+      - user-tecnico-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UTENTE_TECNICO"
+              description: "funzione accessibile alle utenze tecniche per accessi\
+                \ ai servizi REST"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkUserTecnico"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+      x-cache-type: "lowRefreshRateUserDependent"
+  /domandeCt/{domCtId}/tesi:
+    get:
+      tags:
+      - "domanda di laurea"
+      summary: "recupera i dati della tesi di laurea leagata alla domanda conseguimento\
+        \ titolo dello studente"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>\n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n\
+        -|-|-\nx-cache-type|lowRefreshRateUserDependent|Risorsa che varia con frequenza\
+        \ bassa, cache Http abilitata, cache server disabilitata. Maggiori dettagli\
+        \ [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: USER_TECNICO**\n\nProfilo|Controllo| Funzione\n-|-|-\nUTENTE_TECNICO|funzione\
+        \ accessibile alle utenze tecniche per accessi ai servizi REST|Security.checkUserTecnico()\n\
+        \n**Utente: STUDENTE**\n\nProfilo|Controllo| Funzione\n-|-|-\nSTUDENTE|to\
+        \ do|SecurityConsTit.filterTesiStu(domCtId)\n\n\nClasse di modello : RiepilogoTesiDomCt\n\
+        ======\n\nEstensioni sulle proprietà\n----\nProprietà | x-field-type\n-|-|\n\
+        tesiId|primaryKey\n\n\nClasse di modello : RelatoriTesiDomCt\n======\n\nEstensioni\
+        \ sulle proprietà\n----\nProprietà | x-field-type\n-|-|\ntesiId|primaryKey\n\
+        \n\nClasse di modello : DettaglioErroreAggiuntivo\n======\n\nEstensioni sulle\
+        \ proprietà\n----\nProprietà | x-field-type\n-|-|\nrawValue|rawJson\n"
+      operationId: "getTesi"
+      parameters:
+      - name: "domCtId"
+        in: "path"
+        description: "id della domanda di conseguimento titolo"
+        required: true
+        type: "integer"
+        format: "int64"
+      responses:
+        "200":
+          description: "Successful response"
+          schema:
+            $ref: "#/definitions/RiepilogoTesiDomCt"
+        "422":
+          description: "parametri Errati"
+          schema:
+            $ref: "#/definitions/DettaglioErrore"
+      x-enabled-profiles:
+      - tesi-student-permissions:
+          kind: "STUDENTE"
+          profiles:
+          - profile:
+              name: "STUDENTE"
+              description: "to do"
+              checks:
+              - filterDomCTStu:
+                  className: "SecurityConsTit"
+                  functionName: "filterTesiStu"
+                  description: "to do"
+                  parameters:
+                  - domCtId: "{\"name\":\"domCtId\",\"in\":\"path\",\"description\"\
+                      :\"id della domanda di conseguimento titolo\",\"required\":true,\"\
+                      type\":\"integer\",\"items\":null,\"collectionFormat\":null,\"\
+                      default\":null,\"maximum\":null,\"exclusiveMaximum\":null,\"\
+                      minimum\":null,\"exclusiveMinimum\":null,\"maxLength\":null,\"\
+                      minLength\":null,\"pattern\":null,\"maxItems\":null,\"minItems\"\
+                      :null,\"uniqueItems\":null,\"multipleOf\":null,\"format\":\"\
+                      int64\",\"x-example\":null,\"enum\":null}"
+      - user-tecnico-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UTENTE_TECNICO"
+              description: "funzione accessibile alle utenze tecniche per accessi\
+                \ ai servizi REST"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkUserTecnico"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+      x-cache-type: "lowRefreshRateUserDependent"
+  /modConsTesi:
+    get:
+      tags:
+      - "modalità di consultazione tesi"
+      summary: "recupera la lista delle modalità di consultazione tesi"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>\n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n\
+        -|-|-\nx-cache-type|lowRefreshRateUserDependent|Risorsa che varia con frequenza\
+        \ bassa, cache Http abilitata, cache server disabilitata. Maggiori dettagli\
+        \ [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: USER_TECNICO**\n\nProfilo|Controllo| Funzione\n-|-|-\nUTENTE_TECNICO|funzione\
+        \ accessibile alle utenze tecniche per accessi ai servizi REST|Security.checkUserTecnico()\n\
+        \n\nClasse di modello : DettaglioErroreAggiuntivo\n======\n\nEstensioni sulle\
+        \ proprietà\n----\nProprietà | x-field-type\n-|-|\nrawValue|rawJson\n"
+      operationId: "getModConsTesi"
+      parameters:
+      - name: "abilFlg"
+        in: "query"
+        description: "flag che indica se la modalità di consultazione tesi è abilitata\
+          \ oppure no"
+        required: false
+        type: "integer"
+        format: "int64"
+      responses:
+        "200":
+          description: "Successful response"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/ModalitaConsultazioneTesi"
+        "422":
+          description: "parametri Errati"
+          schema:
+            $ref: "#/definitions/DettaglioErrore"
+      x-enabled-profiles:
+      - user-tecnico-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UTENTE_TECNICO"
+              description: "funzione accessibile alle utenze tecniche per accessi\
+                \ ai servizi REST"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkUserTecnico"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+      x-cache-type: "lowRefreshRateUserDependent"
+  /relatori/docenti:
+    get:
+      tags:
+      - "docenti relatori di tesi"
+      summary: "recupera elenco dei docenti relatori di tesi disponibili per lo studente"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>\n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n\
+        -|-|-\nx-cache-type|lowRefreshRateUserDependent|Risorsa che varia con frequenza\
+        \ bassa, cache Http abilitata, cache server disabilitata. Maggiori dettagli\
+        \ [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: USER_TECNICO**\n\nProfilo|Controllo| Funzione\n-|-|-\nUTENTE_TECNICO|funzione\
+        \ accessibile alle utenze tecniche per accessi ai servizi REST|Security.checkUserTecnico()\n\
+        \n**Utente: STUDENTE**\n\nProfilo|Controllo| Funzione\n-|-|-\nSTUDENTE|to\
+        \ do|SecurityConsTit.filterDocRelTesiStu(cognome)\n\n\nClasse di modello :\
+        \ DocenteRelatore\n======\n\nEstensioni sulle proprietà\n----\nProprietà |\
+        \ x-field-type\n-|-|\ndocenteId|primaryKey\n\n\nClasse di modello : DettaglioErroreAggiuntivo\n\
+        ======\n\nEstensioni sulle proprietà\n----\nProprietà | x-field-type\n-|-|\n\
+        rawValue|rawJson\n"
+      operationId: "getDocRelTesi"
+      parameters:
+      - name: "cognome"
+        in: "query"
+        description: "cognome del relatore, la ricerca avviene in like nel formato\
+          \ COGNOME%"
+        required: false
+        type: "string"
+      - name: "start"
+        in: "query"
+        description: "utilizzato insieme a `limit` per indicare la paginazione sui\
+          \ record; `start` indica il numero del primo record da caricare (se non\
+          \ indicato viene utilizzato 0)\n"
+        required: false
+        type: "integer"
+        format: "int32"
+      - name: "limit"
+        in: "query"
+        description: "utilizzato insieme a `start` per indicare la paginazione sui\
+          \ record, `limit` indica il numero di record da recuperare (a partire da\
+          \ `start`); \nse non indicato viene utilizzato 50, i valori consentiti vanno\
+          \ da 0 a 100\n"
+        required: false
+        type: "integer"
+        format: "int32"
+      - name: "order"
+        in: "query"
+        description: "consente di specificare un ordine per il recupero dei record.\
+          \ La sintassi è la seguente\n * +/- : specifica l'ordinamento (+ = ASC,\
+          \ - = DESC); se omesso viene utilizzato +\n * field : nome del campo da\
+          \ ordinare\n \n E' possibile indicare più campi separandoli da virgola (Es:\
+          \ +annoCorso,+adCod) \n"
+        required: false
+        type: "string"
+      responses:
+        "200":
+          description: "Successful response"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/DocenteRelatore"
+        "422":
+          description: "parametri Errati"
+          schema:
+            $ref: "#/definitions/DettaglioErrore"
+      x-enabled-profiles:
+      - docRelTesi-filter-student-permissions:
+          kind: "STUDENTE"
+          profiles:
+          - profile:
+              name: "STUDENTE"
+              description: "to do"
+              checks:
+              - filterAppelliCTStu:
+                  className: "SecurityConsTit"
+                  functionName: "filterDocRelTesiStu"
+                  description: "to do"
+                  parameters:
+                  - cognome: "{\"name\":\"cognome\",\"in\":\"query\",\"description\"\
+                      :\"cognome del relatore, la ricerca avviene in like nel formato\
+                      \ COGNOME%\",\"required\":false,\"type\":\"string\",\"items\"\
+                      :null,\"collectionFormat\":null,\"default\":null,\"maximum\"\
+                      :null,\"exclusiveMaximum\":null,\"minimum\":null,\"exclusiveMinimum\"\
+                      :null,\"maxLength\":null,\"minLength\":null,\"pattern\":null,\"\
+                      maxItems\":null,\"minItems\":null,\"uniqueItems\":null,\"multipleOf\"\
+                      :null,\"format\":null,\"x-example\":null,\"enum\":null}"
+      - user-tecnico-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UTENTE_TECNICO"
+              description: "funzione accessibile alle utenze tecniche per accessi\
+                \ ai servizi REST"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkUserTecnico"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+      x-cache-type: "lowRefreshRateUserDependent"
+  /relatori/soggEst/:
+    get:
+      tags:
+      - "soggetto esterno relatore di tesi"
+      summary: "recupera elenco dei soggetti esterni disponibili per lo studente"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>\n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n\
+        -|-|-\nx-cache-type|lowRefreshRateUserDependent|Risorsa che varia con frequenza\
+        \ bassa, cache Http abilitata, cache server disabilitata. Maggiori dettagli\
+        \ [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: STUDENTE**\n\nProfilo|Controllo| Funzione\n-|-|-\nSTUDENTE|to do|SecurityConsTit.filterSoggEstStu(cognome)\n\
+        \n\nClasse di modello : SoggettoEsterno\n======\n\nEstensioni sulle proprietà\
+        \n----\nProprietà | x-field-type\n-|-|\nsoggEstId|primaryKey\n\n\nClasse di\
+        \ modello : DettaglioErroreAggiuntivo\n======\n\nEstensioni sulle proprietà\
+        \n----\nProprietà | x-field-type\n-|-|\nrawValue|rawJson\n"
+      operationId: "getSoggEst"
+      parameters:
+      - name: "cognome"
+        in: "query"
+        description: "cognome del relatore, la ricerca avviene in like nel formato\
+          \ COGNOME%"
+        required: false
+        type: "string"
+      - name: "start"
+        in: "query"
+        description: "utilizzato insieme a `limit` per indicare la paginazione sui\
+          \ record; `start` indica il numero del primo record da caricare (se non\
+          \ indicato viene utilizzato 0)\n"
+        required: false
+        type: "integer"
+        format: "int32"
+      - name: "limit"
+        in: "query"
+        description: "utilizzato insieme a `start` per indicare la paginazione sui\
+          \ record, `limit` indica il numero di record da recuperare (a partire da\
+          \ `start`); \nse non indicato viene utilizzato 50, i valori consentiti vanno\
+          \ da 0 a 100\n"
+        required: false
+        type: "integer"
+        format: "int32"
+      - name: "order"
+        in: "query"
+        description: "consente di specificare un ordine per il recupero dei record.\
+          \ La sintassi è la seguente\n * +/- : specifica l'ordinamento (+ = ASC,\
+          \ - = DESC); se omesso viene utilizzato +\n * field : nome del campo da\
+          \ ordinare\n \n E' possibile indicare più campi separandoli da virgola (Es:\
+          \ +annoCorso,+adCod) \n"
+        required: false
+        type: "string"
+      responses:
+        "200":
+          description: "Successful response"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/SoggettoEsterno"
+        "422":
+          description: "parametri Errati"
+          schema:
+            $ref: "#/definitions/DettaglioErrore"
+      x-enabled-profiles:
+      - soggEstStu-filter-student-permissions:
+          kind: "STUDENTE"
+          profiles:
+          - profile:
+              name: "STUDENTE"
+              description: "to do"
+              checks:
+              - filterAppelliCTStu:
+                  className: "SecurityConsTit"
+                  functionName: "filterSoggEstStu"
+                  description: "to do"
+                  parameters:
+                  - cognome: "{\"name\":\"cognome\",\"in\":\"query\",\"description\"\
+                      :\"cognome del relatore, la ricerca avviene in like nel formato\
+                      \ COGNOME%\",\"required\":false,\"type\":\"string\",\"items\"\
+                      :null,\"collectionFormat\":null,\"default\":null,\"maximum\"\
+                      :null,\"exclusiveMaximum\":null,\"minimum\":null,\"exclusiveMinimum\"\
+                      :null,\"maxLength\":null,\"minLength\":null,\"pattern\":null,\"\
+                      maxItems\":null,\"minItems\":null,\"uniqueItems\":null,\"multipleOf\"\
+                      :null,\"format\":null,\"x-example\":null,\"enum\":null}"
+      x-cache-type: "lowRefreshRateUserDependent"
+  /report/tesi/relatori/{dipCod}:
+    get:
+      tags:
+      - "report tesi relatori"
+      summary: "recuperare le statistiche sui relatori di tesi"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>\n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n\
+        -|-|-\nx-cache-type|lowRefreshRateUserDependent|Risorsa che varia con frequenza\
+        \ bassa, cache Http abilitata, cache server disabilitata. Maggiori dettagli\
+        \ [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: USER_TECNICO**\n\nProfilo|Controllo| Funzione\n-|-|-\nUTENTE_TECNICO|funzione\
+        \ accessibile alle utenze tecniche per accessi ai servizi REST|Security.checkUserTecnico()\n\
+        \n\nClasse di modello : DipartimentiRelatoriTesi\n======\n\nEstensioni sulle\
+        \ proprietà\n----\nProprietà | x-field-type\n-|-|\ndipartimentoCod|primaryKey\n\
+        \n\nClasse di modello : RiepilogoStatisticheRelatori\n======\n\nEstensioni\
+        \ sulle proprietà\n----\nProprietà | x-field-type\n-|-|\ndocenteId|primaryKey\n\
+        soggEstId|primaryKey\n\n\nClasse di modello : StatisticheRelatori\n======\n\
+        \nEstensioni sulle proprietà\n----\nProprietà | x-field-type\n-|-|\ndocenteId|primaryKey\n\
+        soggEstId|primaryKey\n\n\nClasse di modello : DettaglioErroreAggiuntivo\n\
+        ======\n\nEstensioni sulle proprietà\n----\nProprietà | x-field-type\n-|-|\n\
+        rawValue|rawJson\n"
+      operationId: "getReportTesiRelatori"
+      parameters:
+      - name: "dipCod"
+        in: "path"
+        description: "codice dipartimento"
+        required: true
+        type: "string"
+      - name: "dataIni"
+        in: "query"
+        description: "data inizio, formato data DD/MM/YYYY"
+        required: true
+        type: "string"
+      - name: "dataFine"
+        in: "query"
+        description: "data fine, formato data DD/MM/YYYY"
+        required: true
+        type: "string"
+      - name: "docenteId"
+        in: "query"
+        description: "identificativo del docente"
+        required: false
+        type: "integer"
+        format: "int64"
+      - name: "soggEstId"
+        in: "query"
+        description: "identificativo del docente"
+        required: false
+        type: "integer"
+        format: "int64"
+      - name: "tipoRelCod"
+        in: "query"
+        description: "codice tipo relatore"
+        required: false
+        type: "string"
+      responses:
+        "200":
+          description: "Successful response"
+          schema:
+            $ref: "#/definitions/DipartimentiRelatoriTesi"
+        "422":
+          description: "parametri Errati"
+          schema:
+            $ref: "#/definitions/DettaglioErrore"
+      x-enabled-profiles:
+      - user-tecnico-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UTENTE_TECNICO"
+              description: "funzione accessibile alle utenze tecniche per accessi\
+                \ ai servizi REST"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkUserTecnico"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+      x-cache-type: "lowRefreshRateUserDependent"
+  /sedAppCt:
+    get:
+      tags:
+      - "sedute e commissioni di laurea"
+      summary: "recupera le informazioni sulle sedute e le rispettive commisioni di\
+        \ Laurea"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>recupera le informazioni sulle sedute e le\
+        \ rispettive commisioni di Laurea\n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n\
+        -|-|-\nx-cache-type|lowRefreshRateUserDependent|Risorsa che varia con frequenza\
+        \ bassa, cache Http abilitata, cache server disabilitata. Maggiori dettagli\
+        \ [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: USER_TECNICO**\n\nProfilo|Controllo| Funzione\n-|-|-\nUTENTE_TECNICO|funzione\
+        \ accessibile alle utenze tecniche per accessi ai servizi REST|Security.checkUserTecnico()\n\
+        \n\nClasse di modello : SedAppCt\n======\n\nEstensioni sulle proprietà\n----\n\
+        Proprietà | x-field-type\n-|-|\ncommCtId|primaryKey\n\n\nClasse di modello\
+        \ : CommCt\n======\n\nEstensioni sulle proprietà\n----\nProprietà | x-field-type\n\
+        -|-|\ncommCtId|primaryKey\n\n\nClasse di modello : DettaglioErroreAggiuntivo\n\
+        ======\n\nEstensioni sulle proprietà\n----\nProprietà | x-field-type\n-|-|\n\
+        rawValue|rawJson\n"
+      operationId: "getSedAppCt"
+      parameters:
+      - name: "aaId"
+        in: "query"
+        description: "identificativo dell'anno di conseguimento titolo"
+        required: false
+        type: "integer"
+        format: "int64"
+      - name: "dipartimento"
+        in: "query"
+        description: "codice dipartimento"
+        required: false
+        type: "string"
+      responses:
+        "200":
+          description: "Successful response"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/SedAppCt"
+        "422":
+          description: "parametri Errati"
+          schema:
+            $ref: "#/definitions/DettaglioErrore"
+      x-enabled-profiles:
+      - user-tecnico-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UTENTE_TECNICO"
+              description: "funzione accessibile alle utenze tecniche per accessi\
+                \ ai servizi REST"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkUserTecnico"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+      x-cache-type: "lowRefreshRateUserDependent"
+  /tesi/{tesiId}:
+    get:
+      tags:
+      - "tesi di laurea"
+      summary: "recupera i dati della tesi di laurea specificata dal tesId"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>\n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n\
+        -|-|-\nx-cache-type|lowRefreshRateUserDependent|Risorsa che varia con frequenza\
+        \ bassa, cache Http abilitata, cache server disabilitata. Maggiori dettagli\
+        \ [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: USER_TECNICO**\n\nProfilo|Controllo| Funzione\n-|-|-\nUTENTE_TECNICO|funzione\
+        \ accessibile alle utenze tecniche per accessi ai servizi REST|Security.checkUserTecnico()\n\
+        \n\nClasse di modello : RiepilogoTesi\n======\n\nEstensioni sulle proprietà\
+        \n----\nProprietà | x-field-type\n-|-|\ntesiId|primaryKey\n\n\nClasse di modello\
+        \ : RelatoriTesi\n======\n\nEstensioni sulle proprietà\n----\nProprietà |\
+        \ x-field-type\n-|-|\ntesiId|primaryKey\n\n\nClasse di modello : DettaglioErroreAggiuntivo\n\
+        ======\n\nEstensioni sulle proprietà\n----\nProprietà | x-field-type\n-|-|\n\
+        rawValue|rawJson\n"
+      operationId: "getTesiByTesiId"
+      parameters:
+      - name: "tesiId"
+        in: "path"
+        description: "id della tesi"
+        required: true
+        type: "integer"
+        format: "int64"
+      responses:
+        "200":
+          description: "Successful response"
+          schema:
+            $ref: "#/definitions/RiepilogoTesi"
+        "422":
+          description: "parametri Errati"
+          schema:
+            $ref: "#/definitions/DettaglioErrore"
+      x-enabled-profiles:
+      - user-tecnico-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UTENTE_TECNICO"
+              description: "funzione accessibile alle utenze tecniche per accessi\
+                \ ai servizi REST"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkUserTecnico"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+      x-cache-type: "lowRefreshRateUserDependent"
+  /tesi/{tesiId}/modConsTesi:
+    put:
+      tags:
+      - "modalità di consultazione tesi"
+      summary: "effettua l'aggiornamento del codice dalla modalità di consultazione\
+        \ tesi"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>Aggiornamento del codice dalla modalità di\
+        \ consultazione tesi\n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n\
+        -|-|-\nx-cache-type|lowRefreshRateUserDependent|Risorsa che varia con frequenza\
+        \ bassa, cache Http abilitata, cache server disabilitata. Maggiori dettagli\
+        \ [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: USER_TECNICO**\n\nProfilo|Controllo| Funzione\n-|-|-\nUTENTE_TECNICO|funzione\
+        \ accessibile alle utenze tecniche per accessi ai servizi REST|Security.checkUserTecnico()\n\
+        \n\nClasse di modello : DettaglioErroreAggiuntivo\n======\n\nEstensioni sulle\
+        \ proprietà\n----\nProprietà | x-field-type\n-|-|\nrawValue|rawJson\n"
+      operationId: "putModConsTesi"
+      parameters:
+      - name: "tesiId"
+        in: "path"
+        description: "id della tesi"
+        required: true
+        type: "integer"
+        format: "int64"
+      - name: "modConsTesiCod"
+        in: "query"
+        description: "codice della modalità di consultazione tesi"
+        required: true
+        type: "string"
+      responses:
+        "200":
+          description: "Successful response"
+          schema:
+            $ref: "#/definitions/InserimentoModConsTesiCod"
+        "422":
+          description: "parametri Errati"
+          schema:
+            $ref: "#/definitions/DettaglioErrore"
+      x-enabled-profiles:
+      - user-tecnico-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UTENTE_TECNICO"
+              description: "funzione accessibile alle utenze tecniche per accessi\
+                \ ai servizi REST"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkUserTecnico"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+      x-cache-type: "lowRefreshRateUserDependent"
+      x-cache-endpoint-relations:
+        canonicalEndpointsAction: "invalidate"
+        customEndpoints:
+        - operationId: "getModConsTesi"
+          action: "invalidate"
+        - operationId: "getTesi"
+          action: "invalidate"
+        - operationId: "getTesiByAppCtId"
+          action: "invalidate"
+        - operationId: "getTesiByTesiId"
+          action: "invalidate"
+  /tesi/{tesiId}/relatori:
+    put:
+      tags:
+      - "inserimento relatori di tesi"
+      summary: "effettua l'inserimento di un relatore per una tesi"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>Aggiornamento del codice dalla modalità di\
+        \ consultazione tesi\n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n\
+        -|-|-\nx-cache-type|lowRefreshRateUserDependent|Risorsa che varia con frequenza\
+        \ bassa, cache Http abilitata, cache server disabilitata. Maggiori dettagli\
+        \ [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: USER_TECNICO**\n\nProfilo|Controllo| Funzione\n-|-|-\nUTENTE_TECNICO|funzione\
+        \ accessibile alle utenze tecniche per accessi ai servizi REST|Security.checkUserTecnico()\n\
+        \n\nClasse di modello : DettaglioErroreAggiuntivo\n======\n\nEstensioni sulle\
+        \ proprietà\n----\nProprietà | x-field-type\n-|-|\nrawValue|rawJson\n"
+      operationId: "putRelTesi"
+      parameters:
+      - name: "tesiId"
+        in: "path"
+        description: "id della tesi"
+        required: true
+        type: "integer"
+        format: "int64"
+      - in: "body"
+        name: "body"
+        description: "Oggetto che contiene la riga da inserire"
+        required: true
+        schema:
+          type: "array"
+          items:
+            $ref: "#/definitions/InserimentoRelatori"
+      responses:
+        "200":
+          description: "Successful response"
+          schema:
+            $ref: "#/definitions/ImportResponseInsRelat"
+        "422":
+          description: "parametri Errati"
+          schema:
+            $ref: "#/definitions/DettaglioErrore"
+      x-enabled-profiles:
+      - user-tecnico-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UTENTE_TECNICO"
+              description: "funzione accessibile alle utenze tecniche per accessi\
+                \ ai servizi REST"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkUserTecnico"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+      x-custom-operation: "multiple"
+      x-cache-type: "lowRefreshRateUserDependent"
+      x-cache-endpoint-relations:
+        canonicalEndpointsAction: "invalidate"
+        customEndpoints:
+        - operationId: "getTesi"
+          action: "invalidate"
+        - operationId: "getTesiByTesiId"
+          action: "invalidate"
+        - operationId: "getTesiByAppCtId"
+          action: "invalidate"
+        - operationId: "getReportTesiRelatori"
+          action: "invalidate"
+        - operationId: "getTipiRelTesi"
+          action: "invalidate"
+  /tipiRelTesi/{stuId}:
+    get:
+      tags:
+      - "tipologie relatori tesi"
+      summary: "recupera la lista delle modalità di consultazione tesi"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>\n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n\
+        -|-|-\nx-cache-type|lowRefreshRateUserDependent|Risorsa che varia con frequenza\
+        \ bassa, cache Http abilitata, cache server disabilitata. Maggiori dettagli\
+        \ [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: USER_TECNICO**\n\nProfilo|Controllo| Funzione\n-|-|-\nUTENTE_TECNICO|funzione\
+        \ accessibile alle utenze tecniche per accessi ai servizi REST|Security.checkUserTecnico()\n\
+        \n\nClasse di modello : DettaglioErroreAggiuntivo\n======\n\nEstensioni sulle\
+        \ proprietà\n----\nProprietà | x-field-type\n-|-|\nrawValue|rawJson\n"
+      operationId: "getTipiRelTesi"
+      parameters:
+      - name: "stuId"
+        in: "path"
+        description: "id dello studente"
+        required: true
+        type: "integer"
+        format: "int64"
+      responses:
+        "200":
+          description: "Successful response"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/RegTipoRel"
+        "422":
+          description: "parametri Errati"
+          schema:
+            $ref: "#/definitions/DettaglioErrore"
+      x-enabled-profiles:
+      - user-tecnico-permissions:
+          kind: "USER_TECNICO"
+          profiles:
+          - profile:
+              name: "UTENTE_TECNICO"
+              description: "funzione accessibile alle utenze tecniche per accessi\
+                \ ai servizi REST"
+              checks:
+              - checkDummy:
+                  className: "Security"
+                  functionName: "checkUserTecnico"
+                  description: "controlla che l'utente abbia gli accessi per i corsi\
+                    \ a lui abilitati"
+      x-cache-type: "lowRefreshRateUserDependent"
+  /tipiTesiStu:
+    get:
+      tags:
+      - "tipi tesi di laurea"
+      summary: "recupera la lista delle tipologie di tesi"
+      description: "<span class=\"e3rest-operation-auth-img-list\"><img src=\"basic.png\"\
+        /><img src=\"jwt.png\"/></span>\n\n**Estensioni:**\n\nCodice Estensione|Valore|Nota\n\
+        -|-|-\nx-cache-type|lowRefreshRateUserDependent|Risorsa che varia con frequenza\
+        \ bassa, cache Http abilitata, cache server disabilitata. Maggiori dettagli\
+        \ [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Cachingdellerichieste)\
+        \ \n\n\n**Controlli di sicurezza:**\n======\n_Nota: Il controllo per utente\
+        \ è verificato quando viene passato almeno uno dei controlli previsti_\n\n\
+        **Utente: STUDENTE**\n\nProfilo|Controllo| Funzione\n-|-|-\nSTUDENTE|to do|SecurityConsTit.filterTipiTesiStu(regCtId)\n\
+        \n\nClasse di modello : TipiTesi\n======\n\nEstensioni sulle proprietà\n----\n\
+        Proprietà | x-field-type\n-|-|\ntipoTesiCod|primaryKey\n\n\nClasse di modello\
+        \ : DettaglioErroreAggiuntivo\n======\n\nEstensioni sulle proprietà\n----\n\
+        Proprietà | x-field-type\n-|-|\nrawValue|rawJson\n"
+      operationId: "getTipoTesi"
+      parameters:
+      - name: "regCtId"
+        in: "query"
+        description: "id delle regole di conseguimento titolo"
+        required: false
+        type: "integer"
+        format: "int64"
+      - name: "start"
+        in: "query"
+        description: "utilizzato insieme a `limit` per indicare la paginazione sui\
+          \ record; `start` indica il numero del primo record da caricare (se non\
+          \ indicato viene utilizzato 0)\n"
+        required: false
+        type: "integer"
+        format: "int32"
+      - name: "limit"
+        in: "query"
+        description: "utilizzato insieme a `start` per indicare la paginazione sui\
+          \ record, `limit` indica il numero di record da recuperare (a partire da\
+          \ `start`); \nse non indicato viene utilizzato 50, i valori consentiti vanno\
+          \ da 0 a 100\n"
+        required: false
+        type: "integer"
+        format: "int32"
+      - name: "order"
+        in: "query"
+        description: "consente di specificare un ordine per il recupero dei record.\
+          \ La sintassi è la seguente\n * +/- : specifica l'ordinamento (+ = ASC,\
+          \ - = DESC); se omesso viene utilizzato +\n * field : nome del campo da\
+          \ ordinare\n \n E' possibile indicare più campi separandoli da virgola (Es:\
+          \ +annoCorso,+adCod) \n"
+        required: false
+        type: "string"
+      responses:
+        "200":
+          description: "Successful response"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/TipiTesi"
+        "422":
+          description: "parametri Errati"
+          schema:
+            $ref: "#/definitions/DettaglioErrore"
+      x-enabled-profiles:
+      - tipiTesi-filter-student-permissions:
+          kind: "STUDENTE"
+          profiles:
+          - profile:
+              name: "STUDENTE"
+              description: "to do"
+              checks:
+              - filterDomCTStu:
+                  className: "SecurityConsTit"
+                  functionName: "filterTipiTesiStu"
+                  description: "to do"
+                  parameters:
+                  - regCtId: "{\"name\":\"regCtId\",\"in\":\"query\",\"description\"\
+                      :\"id delle regole di conseguimento titolo\",\"required\":false,\"\
+                      type\":\"integer\",\"items\":null,\"collectionFormat\":null,\"\
+                      default\":null,\"maximum\":null,\"exclusiveMaximum\":null,\"\
+                      minimum\":null,\"exclusiveMinimum\":null,\"maxLength\":null,\"\
+                      minLength\":null,\"pattern\":null,\"maxItems\":null,\"minItems\"\
+                      :null,\"uniqueItems\":null,\"multipleOf\":null,\"format\":\"\
+                      int64\",\"x-example\":null,\"enum\":null}"
+      x-cache-type: "lowRefreshRateUserDependent"
+securityDefinitions:
+  basicAuth:
+    description: "Autenticazione tramite BASIC authentication. Questa modalità è disponibile\
+      \ se l'autenticazione su esse3 non usa shibboleth per il gruppo dell'utente"
+    type: "basic"
+  jwt:
+    description: "Autenticazione tramite OAUTH2, occorre configurare il parametro\
+      \ di configurazione di ESSE3 che indica il server OAUTH2 da utilizzare"
+    type: "oauth2"
+    authorizationUrl: "https://idp-idm.unimib.it/idp/profile/oidc/authorize"
+    flow: "implicit"
+    scopes:
+      openid: "informazioni sull'utente"
+definitions:
+  RiepilogoStatisticheRelatori:
+    type: "object"
+    properties:
+      docenteId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "identificativo del docente"
+        x-field-type: "primaryKey"
+      soggEstId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "identificativo del soggetto esterno"
+        x-field-type: "primaryKey"
+      totals:
+        type: "array"
+        items:
+          $ref: "#/definitions/StatisticheRelatori"
+    x-layout-name: "fake_layout"
+    x-winsession-name: "fake_winsession"
+    x-model-sub-package: "consTitolo.v1"
+    x-model-sub-path: "consTitolo/v1"
+  InserimentoDomCt:
+    type: "object"
+    properties:
+      domanda:
+        $ref: "#/definitions/InserimentoDatiDomanda"
+      tesi:
+        $ref: "#/definitions/InserimentoDatiTesi"
+    x-model-sub-package: "consTitolo.v1"
+    x-model-sub-path: "consTitolo/v1"
+  ModalitaConsultazioneTesi:
+    type: "object"
+    properties:
+      modConsTesiCod:
+        type: "string"
+        example: "AUTH"
+        description: "codice modalità consultazione tesi"
+      des:
+        type: "string"
+        example: "Tesi accessibile via web"
+        description: "cdescrizione modalità consultazione tesi"
+      abilFlg:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "abil flg"
+        minimum: 0.0
+        maximum: 1.0
+      modAutAccTesiCod:
+        type: "string"
+        example: "PUB"
+        description: "codice modalità consultazione tesi"
+      giorniEmbargo:
+        type: "integer"
+        format: "int32"
+        example: 1
+        description: "giorni di embargo della tesi"
+      autAccessoTesi:
+        type: "string"
+        example: "embargo"
+        description: "autorizzazione accesso tesi"
+    x-layout-name: "V12_MOD_CONS_TESI"
+    x-winsession-name: "p12/n_di_12_013_domanda_cons_tit"
+    x-model-sub-package: "consTitolo.v1"
+    x-model-sub-path: "consTitolo/v1"
+  RegTipoRel:
+    type: "object"
+    properties:
+      regCtId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "identificativo del docente"
+      tipoRelCod:
+        type: "string"
+        example: "R1"
+        description: "tipologia di relatore"
+      tipoRelDes:
+        type: "string"
+        description: "descrizione tipologia del relatore"
+      numMin:
+        type: "integer"
+        format: "int32"
+        example: 1
+        description: "numero minimo"
+      numMax:
+        type: "integer"
+        format: "int32"
+        example: 1
+        description: "numero massimo"
+      docenti:
+        type: "integer"
+        format: "int32"
+        example: 1
+        description: "identificativo del docente"
+      soggEst:
+        type: "integer"
+        format: "int32"
+        example: 1
+        description: "identificativo del soggetto esterno"
+    x-layout-name: "REG_TIPI_REL_REST"
+    x-winsession-name: "p12/n_di_12_013_domanda_cons_tit"
+    x-model-sub-package: "consTitolo.v1"
+    x-model-sub-path: "consTitolo/v1"
+  Appello:
+    type: "object"
+    properties:
+      appCtId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "id dell'appello di laurea"
+        x-field-type: "primaryKey"
+        x-internal-name: "app_ct_id"
+      sesCtId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "id della sessione di Laurea"
+        x-internal-name: "ses_ct_id"
+      aaId:
+        type: "integer"
+        format: "int64"
+        example: 2017
+        description: "Anno a cui è associata la sessione dell'appello"
+        x-internal-name: "aa_id"
+      sesCtDes:
+        type: "string"
+        example: "Sessione Estiva"
+        description: "descrizione della sessione"
+        x-internal-name: "ses_ct_des"
+      appCtDes:
+        type: "string"
+        example: "Appello di Giugno"
+        description: "descrizione dell'appello"
+        x-internal-name: "app_ct_des"
+      dataAppCt:
+        type: "string"
+        example: "18/12/2017"
+        description: "data appello di laurea"
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+        x-internal-name: "data_app"
+      dataIniSesCt:
+        type: "string"
+        example: "18/12/2017"
+        description: "data inizio della sessione in cui è presente l'appello di laurea"
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+        x-internal-name: "data_ini"
+      dataFinSesCt:
+        type: "string"
+        example: "18/12/2017"
+        description: "data fine della sessione in cui è presente l'appello di laurea"
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+        x-internal-name: "data_fin"
+      appCtNota:
+        type: "string"
+        example: "Appello di Giugno per gli studenti del corso di laurea in Medicina"
+        description: "descrizione della sessione"
+        x-internal-name: "app_ct_nota"
+      cdsId:
+        type: "integer"
+        example: 1
+        description: "identificativo del corso di studio"
+        x-internal-name: "cds_id"
+      aaOrdId:
+        type: "integer"
+        example: 2001
+        description: "identificativo dell'ordinamento"
+        x-internal-name: "aa_ord_id"
+      pdsId:
+        type: "integer"
+        example: 1
+        description: "identificativo del percorso di studio"
+        x-internal-name: "pds_id"
+      linguaId:
+        type: "integer"
+        example: 1
+        description: "identificativo lingua"
+        x-internal-name: "lingua_id"
+      linguaIso6392Cod:
+        type: "string"
+        example: "ita"
+        description: "codice identificativo lingua"
+        x-internal-name: "iso6392_cod"
+      cdsCod:
+        type: "string"
+        example: "MED12"
+        description: "codice identificativo del corso del studio"
+        x-internal-name: "cod"
+      cdsDes:
+        type: "string"
+        example: "Corso di laurea a ciclo unico in Medicina e Chirurgia"
+        description: "descrizione del corso di studio"
+        x-internal-name: "cds_des"
+      tipoCorsoCod:
+        type: "string"
+        example: "LM"
+        description: "codice identificativo del tipo di corso di studio"
+        x-internal-name: "tipo_corso_cod"
+      scadenze:
+        type: "array"
+        items:
+          $ref: "#/definitions/ScadenzeAppello"
+    x-layout-name: "SES_APP_CT_REST"
+    x-winsession-name: "p12/n_di_12_013_domanda_cons_tit"
+    x-model-sub-package: "consTitolo.v1"
+    x-model-sub-path: "consTitolo/v1"
+  AnnullamentoDomCt:
+    type: "object"
+    required:
+    - "checkScadenze"
+    - "domCtId"
+    - "stuId"
+    properties:
+      domCtId:
+        type: "integer"
+        format: "int64"
+        example: 1234
+        description: "identificativo della domanda conseguimento titolo"
+      stuId:
+        type: "integer"
+        format: "int64"
+        example: 4321
+        description: "identificativo dello studente"
+      checkScadenze:
+        type: "boolean"
+        example: true
+        description: "boolean che gestisce il controllo delle scadenze. True il controllo\
+          \ è stato effettuato altrimenti false."
+      statoDomanda:
+        type: "string"
+        example: "ANN"
+        description: "stato della domanda."
+    x-model-sub-package: "consTitolo.v1"
+    x-model-sub-path: "consTitolo/v1"
+  CheckAnnDomCt:
+    type: "object"
+    properties:
+      domCtId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "identificativo domanda"
+      aaId:
+        type: "integer"
+        format: "int64"
+        example: 2024
+        description: "identificativo anno concorso"
+        x-internal-name: "p03_concorsi_aa_id"
+      testId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "identificativo concorso"
+        x-internal-name: "p03_concorsi_test_id"
+      concorsoDes:
+        type: "string"
+        example: "Concorso di Ammissione Biologia"
+        description: "descrizione concorso"
+        x-internal-name: "p03_concorsi_des"
+      cdsCod:
+        type: "string"
+        example: "BIO-06"
+        description: "codice corso di studio"
+        x-internal-name: "p06_cds_cod"
+      cdsDes:
+        type: "string"
+        example: "BIO-06"
+        description: "codice corso di studio"
+        x-internal-name: "p06_cds_des"
+      aaIscrId:
+        type: "integer"
+        format: "int64"
+        example: 2024
+        description: "anno iscrizione"
+        x-internal-name: "p04_mat_aa_iscr_id"
+      titAccAmmId:
+        type: "integer"
+        format: "int64"
+        example: 2024
+        description: "anno iscrizione"
+    x-layout-name: "CHECK_ANN_DOM_CT_ID"
+    x-winsession-name: "p12/n_di_12_013_domanda_cons_tit"
+    x-model-sub-package: "consTitolo.v1"
+    x-model-sub-path: "consTitolo/v1"
+  InserimentoAllegatoTesiMetadata:
+    type: "object"
+    properties:
+      chiaviCollegamento:
+        type: "array"
+        items:
+          $ref: "#/definitions/ChiaveCollegamento"
+      proprietaAggiuntive:
+        type: "array"
+        items:
+          $ref: "#/definitions/ProprietaAggiuntiva"
+      filename:
+        type: "string"
+        example: "readme.txt"
+        description: "nome del file"
+      autore:
+        type: "string"
+        example: "mario rossi"
+        description: "autore del file"
+      titolo:
+        type: "string"
+        example: "tesi di laurea"
+        description: "titolo del file"
+      descrizione:
+        type: "string"
+        example: "descrizione libera"
+        description: "descrizione libera"
+      tipologiaAllegato:
+        type: "string"
+        example: "ACC_RIS"
+        description: "tipologia dell'allegato relativo all'entità p17_tipologia_allegati"
+    x-model-sub-package: "frk.v1"
+    x-model-sub-path: "frk/v1"
+  DettaglioErrore:
+    type: "object"
+    properties:
+      statusCode:
+        type: "integer"
+        format: "int32"
+        example: 200
+        description: "Http Status Code"
+      retCode:
+        type: "integer"
+        format: "int32"
+        example: -1
+        description: "codice di errore"
+      retErrMsg:
+        type: "string"
+        example: "Parametri non corretti"
+        description: "descrizione dell'errore"
+      errDetails:
+        type: "array"
+        items:
+          $ref: "#/definitions/DettaglioErroreAggiuntivo"
+    x-model-sub-package: "frk.v1"
+    x-model-sub-path: "frk/v1"
+  SoggettoEsterno:
+    type: "object"
+    properties:
+      soggEstId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "id anagrafica del soggetto esterno"
+        x-field-type: "primaryKey"
+        x-internal-name: "sogg_est_id"
+      Cognome:
+        type: "string"
+        example: "descrizione"
+        description: "Cognome del soggetto esterno"
+        x-internal-name: "cognome"
+      Nome:
+        type: "string"
+        example: "descrizione"
+        description: "Nome del soggetto esterno"
+        x-internal-name: "nome"
+      CodiceFiscale:
+        type: "string"
+        example: "RSSMAR76L07L219C"
+        description: "codice fiscale del soggetto esterno"
+        x-internal-name: "cod_fis"
+      dataNascita:
+        type: "string"
+        example: "10/10/2016"
+        description: "data di nascita del soggetto esterno (DD/MM/YYYY)"
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+      Appellativo:
+        type: "string"
+        example: "dott."
+        description: "appellativo del soggetto esterno"
+        x-internal-name: "appellativo"
+      Email:
+        type: "string"
+        example: "nome@indirizzo.it"
+        description: "Indirizzo di posta elettronica del soggetto esterno, ossia visulizzato\
+          \ nel web e stampato nei vari documenti (es. Guida studente)"
+        x-internal-name: "email"
+      tipoSoggettoEsterno:
+        type: "string"
+        example: "descrizione"
+        description: "tipologia del soggetto esterno"
+        x-internal-name: "tipi_sogg_est"
+      contattoAziendale:
+        type: "string"
+        example: "descrizione"
+        description: "tipologia del soggetto esterno"
+        x-internal-name: "contatto_aziendale"
+    x-layout-name: "SOGG_EST_REST"
+    x-winsession-name: "p12/n_di_12_013_domanda_cons_tit"
+    x-model-sub-package: "consTitolo.v1"
+    x-model-sub-path: "consTitolo/v1"
+  ChiaveCollegamento:
+    type: "object"
+    properties:
+      nome:
+        type: "string"
+        example: "domTiroId"
+        description: "contiene la chiave che mette in relazione l'allegato con le\
+          \ altre entità di esse3"
+      valore:
+        type: "integer"
+        format: "int64"
+        example: 123
+        description: "contiene il valore dell'id"
+    x-layout-name: "UPLOAD_PROPS"
+    x-winsession-name: "DUMMY"
+    x-model-sub-package: "frk.v1"
+    x-model-sub-path: "frk/v1"
+  InserimentoRelatori:
+    type: "object"
+    required:
+    - "ricEccellenzaFlg"
+    properties:
+      tipoRelCod:
+        type: "string"
+        example: "R1"
+        description: "identificativo del relatore di tesi"
+      docenteId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "identificativo del docente"
+      soggEstId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "identificativo del soggetto esterno"
+      notaTesi:
+        type: "string"
+        example: "nota di tesi"
+        description: "nota della tesi"
+      ricEccellenzaFlg:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "richiesta eccellenza flag"
+      dataRicEccellenza:
+        type: "string"
+        example: "18/12/2017"
+        description: "data richiesta eccellenza"
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+      puntiProp:
+        type: "integer"
+        format: "int32"
+        example: 4
+        description: "punti proposti"
+      motPuntiProp:
+        type: "string"
+        example: "motivazione punti"
+        description: "motivazione proposta punti"
+    x-model-sub-package: "consTitolo.v1"
+    x-model-sub-path: "consTitolo/v1"
+  DettaglioErroreAggiuntivo:
+    type: "object"
+    properties:
+      errorType:
+        type: "string"
+        example: "stackTrace"
+        description: "descrizione del tipo di errore aggiuntivo"
+      value:
+        type: "string"
+        example: "SocketTimeoutException...."
+        description: "descrizione dell'errore"
+      rawValue:
+        type: "string"
+        example: "SocketTimeoutException...."
+        description: "descrizione dell'errore"
+        x-field-type: "rawJson"
+    x-model-sub-package: "frk.v1"
+    x-model-sub-path: "frk/v1"
+  StatisticheRelatori:
+    type: "object"
+    properties:
+      docenteId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "identificativo del docente"
+        x-field-type: "primaryKey"
+      soggEstId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "identificativo del soggetto esterno"
+        x-field-type: "primaryKey"
+      tipoRelCod:
+        type: "string"
+        example: "R1"
+        description: "codice tipo relatore"
+      numTesi:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "numero di tesi associate al relatore"
+    x-layout-name: "fake_layout"
+    x-winsession-name: "fake_winsession"
+    x-model-sub-package: "consTitolo.v1"
+    x-model-sub-path: "consTitolo/v1"
+  CommCt:
+    type: "object"
+    properties:
+      docSedCtId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "identificativo docente commissione conseguimento titolo"
+      commCtId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "idetificativo della commissione"
+        x-field-type: "primaryKey"
+      appellativo:
+        type: "string"
+        example: "Professore"
+        description: "appellativo docente"
+      nome:
+        type: "string"
+        example: "Claudio"
+        description: "nome del docente"
+      cognome:
+        type: "string"
+        example: "Rossi"
+        description: "cognome del docente"
+      ruoloCod:
+        type: "string"
+        example: "P"
+        description: "codice del ruolo docente"
+      ruoloDes:
+        type: "string"
+        example: "Presidente"
+        description: "descrizione del ruolo docente"
+      idAb:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "idetificativo AB"
+      codFis:
+        type: "string"
+        example: "MRYWLM80A01H501H"
+        description: "codice fiscale docente"
+      docenteId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "idetificativo docente"
+      soggEstId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "idetificativo soggetto esterno"
+    x-layout-name: "COMM_SED_CT_REST"
+    x-winsession-name: "p12/n_di_12_winsession_rest"
+    x-model-sub-package: "consTitolo.v1"
+    x-model-sub-path: "consTitolo/v1"
+  InserimentoDatiRelatori:
+    type: "object"
+    properties:
+      preTesiId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "Identificativo della tesi (pre)"
+      docenteId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "Identificativo del docente relatore"
+      soggEstId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "Identificativo del soggetto esterno relatore"
+      tipoRelCod:
+        type: "string"
+        example: "R1"
+        description: "Indica il codice che identifica la tipologia di relatore"
+      dipId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "Identificativo del dipartimento di afferenza del relatore. Valorizzato\
+          \ in automatico in fase di scelta del docente."
+      notaTesi:
+        type: "string"
+        example: "Tesi di Laurea di"
+        description: "vengono riportate le annotazioni del relatore sulla tesi"
+    x-model-sub-package: "consTitolo.v1"
+    x-model-sub-path: "consTitolo/v1"
+  AllegatoTesi:
+    type: "object"
+    properties:
+      allegatoTypeCod:
+        type: "string"
+        example: "DOM_CT"
+        description: "valore dell'ENUM ALLEGATI_TYPE collegata al tipo di allegato"
+      allegatoId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "id dell'allegato"
+      domCtId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "identificativo della della domanda associata alla tesi"
+      appCtId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "identificativo della della domanda associata alla tesi"
+      titolo:
+        type: "string"
+        example: "Tesi sulla creazione di un sistema in cloud tramite Docker."
+        description: "titolo dell'allegato"
+      allegatoDes:
+        type: "string"
+        example: "Tesi sulla creazione di un sistema in cloud tramite Docker."
+        description: "descrizione dell'allegato"
+      filename:
+        type: "string"
+        example: "tesi.pdf"
+        description: "nome del file allegato"
+      estensione:
+        type: "string"
+        example: "pdf"
+        description: "estensione del file allegato"
+      defFlg:
+        type: "integer"
+        format: "int32"
+        example: 1
+        description: "flg che indica se l'allegato è definitivo o meno"
+      usrInsId:
+        type: "string"
+        example: "1"
+        description: "id dell'utente che ha inserito l'allegato"
+      dataMod:
+        type: "string"
+        example: "18/12/2017"
+        description: "data modifica dati allegato"
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+      statoAllTesiCod:
+        type: "string"
+        example: "A"
+        description: "stato dell'allegato di tesi - A (approvato), R (rifiutato),\
+          \ I (inserito)"
+      motivazione:
+        type: "string"
+        example: "Allegato approvato"
+        description: "motivazione relativa allo stato dell'allegato"
+      dataAppRif:
+        type: "string"
+        example: "18/12/2017"
+        description: "data di approvazione o rfiuto dell'allegato"
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+      statoAllTesiDes:
+        type: "string"
+        example: "Approvato"
+        description: "descrizione dello stato dell'allegato di tesi - A (approvato),\
+          \ R (rifiutato), I (inserito)"
+      tipoAllegatoCod:
+        type: "string"
+        example: "TESI"
+        description: "codice tipologia allegato"
+      tipologiaDes:
+        type: "string"
+        example: "TESI"
+        description: "codice tipologia allegato"
+      autUsoAll:
+        type: "integer"
+        format: "int32"
+        example: 1
+        description: "des des"
+      dataAutUsoAll:
+        type: "string"
+        example: "18/12/2017"
+        description: "des des"
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+      indxAntiplagio:
+        type: "string"
+        example: "ref antiP"
+        description: "riferimento antiplagio"
+      linkAntiplagio:
+        type: "string"
+        example: "link antiP"
+        description: "link antiplagio"
+      notaAntiplagio:
+        type: "string"
+        example: "nota antiplagio"
+        description: "nota antiplagio"
+      modConsTesi:
+        type: "string"
+        example: "AUTH"
+        description: "modalità consltazione tesi"
+      autAccessoTesi:
+        type: "string"
+        example: "embargo"
+        description: "autorizzazione accesso tesi"
+      giorniEmbargo:
+        type: "integer"
+        format: "int32"
+        example: 1
+        description: "giorni embargo"
+      dataFineEmbargo:
+        type: "string"
+        example: "18/12/2017"
+        description: "data fine embargo"
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+    x-layout-name: "ALL_TESI_REST"
+    x-winsession-name: "p12/n_di_12_013_domanda_cons_tit"
+    x-model-sub-package: "consTitolo.v1"
+    x-model-sub-path: "consTitolo/v1"
+  InserimentoTesiIntoDomCt:
+    type: "object"
+    properties:
+      domCtId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "idetificativo della domanda conseguimento titolo"
+      tesi:
+        $ref: "#/definitions/InserimentoDatiTesi"
+    x-model-sub-package: "consTitolo.v1"
+    x-model-sub-path: "consTitolo/v1"
+  InserimentoModConsTesiCod:
+    type: "object"
+    required:
+    - "tesiId"
+    properties:
+      tesiId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "identificativo della tesi"
+      modConsTesiCod:
+        type: "string"
+        example: "PUB"
+        description: "codice modalità consultazione tesi"
+    x-model-sub-package: "consTitolo.v1"
+    x-model-sub-path: "consTitolo/v1"
+  SedAppCt:
+    type: "object"
+    properties:
+      sesCtId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "identificativo della sessione"
+      appCtId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "identificativo dell'appello"
+      sedCtPrg:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "progressivo della seduta"
+      aulaId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "identificativo dell'aula"
+      aulaDes:
+        type: "string"
+        example: "Aula 1"
+        description: "descrizione dell'aula"
+      commCtId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "identificativo della commissione"
+        x-field-type: "primaryKey"
+      sedutaCod:
+        type: "string"
+        example: "22530-1"
+        description: "codice della seduta"
+      orarioSeduta:
+        type: "string"
+        example: "600"
+        description: "orario della seduta di laurea (HH24:MI)"
+        minLength: 16
+        maxLength: 16
+      dataSeduta:
+        type: "string"
+        example: "18/12/2017"
+        description: "data della seduta"
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+      aaId:
+        type: "integer"
+        format: "int64"
+        example: 2020
+        description: "identificativo dell' anno"
+      desAppello:
+        type: "string"
+        example: "SECONDO APPELLO"
+        description: "descrizione appello"
+      desSessione:
+        type: "string"
+        example: "Sessione Estiva"
+        description: "descrizione sessione"
+      dipartimento:
+        type: "string"
+        example: "D04"
+        description: "dipartimento"
+      desDipartimento:
+        type: "string"
+        example: "Dipartimento di Ingegneria e Architettura"
+        description: "descrizione dipartimento"
+      membriCommissione:
+        type: "array"
+        items:
+          $ref: "#/definitions/CommCt"
+    x-layout-name: "SED_APP_CT_DIP_REST"
+    x-winsession-name: "p12/n_di_12_winsession_rest"
+    x-model-sub-package: "consTitolo.v1"
+    x-model-sub-path: "consTitolo/v1"
+  RiepilogoTesi:
+    type: "object"
+    properties:
+      tesiId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "identificativo della tesi di laurea"
+        x-field-type: "primaryKey"
+      stuId:
+        type: "integer"
+        example: 1
+        description: "identificativo dello studente"
+        x-internal-name: "stu_id"
+      appCtId:
+        type: "integer"
+        example: 1
+        description: "identificativo dell'appello a cui è legata la domanda"
+      titoloTesiIta:
+        type: "string"
+        example: "Applicazione di teorie di fisica quantistica al mondo reale"
+        description: "titolo della tesi di laurea"
+        x-internal-name: "TITOLO_TESI_ITA"
+      abstractTesiIta:
+        type: "string"
+        example: "testo abstract Applicazione di teorie di fisica quantistica al mondo\
+          \ reale"
+        description: "Abstract del titolo della tesi di laurea"
+        x-internal-name: "ABSTRACT_TESI_ITA"
+      titoloTesiEng:
+        type: "string"
+        example: "Applicazione di teorie di fisica quantistica al mondo reale"
+        description: "titolo della tesi di laurea in inglese"
+        x-internal-name: "TITOLO_TESI_ENG"
+      abstractTesiEng:
+        type: "string"
+        example: "testo abstract Applicazione di teorie di fisica quantistica al mondo\
+          \ reale"
+        description: "Abstract del titolo della tesi di laurea in inglese"
+        x-internal-name: "ABSTRACT_TESI_ENG"
+      TipoTesiDes:
+        type: "string"
+        example: "Tesi Sperimentale"
+        description: "descrizione del tipo della tesi di laurea"
+        x-internal-name: "des"
+      AdGenDes:
+        type: "string"
+        example: "Ingegneria del Software"
+        description: "descrizione dell'attività didattica di tesi di laurea"
+        x-internal-name: "ad_gen_des"
+      AdTesiDes:
+        type: "string"
+        example: "Ingegneria del Software"
+        description: "descrizione dell'attività didattica di tesi di laurea cablata"
+        x-internal-name: "ad_tesi_des"
+      TesiDiGruppo:
+        type: "integer"
+        example: 1
+        description: "indica se si tratta di una tesi di gruppo"
+        x-internal-name: "tesi_di_gruppo_flg"
+      dataDepositoTesi:
+        type: "string"
+        example: "18/12/2017"
+        description: "data deposito della tesi"
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+        x-internal-name: "data_dt"
+      StatoTesi:
+        type: "string"
+        example: "Presentata"
+        description: "descrizione dello stato della tesi di laurea"
+        x-internal-name: "stati_tesi_des"
+      DomCtId:
+        type: "integer"
+        example: 1
+        description: "identificativo della della domanda associata alla tesi"
+      linguaTesi:
+        type: "string"
+        example: "italiano"
+        description: "descrizione lingua della tesi"
+        x-internal-name: "lingua_tesi_des"
+      linguaDiscussioneTesi:
+        type: "string"
+        example: "italiano"
+        description: "descrizione della lingua di discussione della tesi"
+        x-internal-name: "lingua_disc_tesi_id"
+      linguaId:
+        type: "integer"
+        example: 1
+        description: "identificativo lingua"
+        x-internal-name: "lingua_id"
+      linguaIso6392Cod:
+        type: "string"
+        example: "ita"
+        description: "codice identificativo lingua"
+        x-internal-name: "iso6392_cod"
+      modConsTesiCod:
+        type: "string"
+        example: "PUB"
+        description: "codice modalità consultazione tesi"
+      allegatiTesi:
+        type: "array"
+        items:
+          $ref: "#/definitions/AllegatoTesi"
+      relatori:
+        type: "array"
+        items:
+          $ref: "#/definitions/RelatoriTesi"
+    x-layout-name: "TESI_REST"
+    x-winsession-name: "p12/n_di_12_013_domanda_cons_tit"
+    x-model-sub-package: "consTitolo.v1"
+    x-model-sub-path: "consTitolo/v1"
+  DocenteRelatore:
+    type: "object"
+    properties:
+      docenteId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "id anagrafica del docente"
+        x-field-type: "primaryKey"
+        x-internal-name: "docente_id"
+      settCod:
+        type: "string"
+        example: "MED/01"
+        description: "Codice settore scientifico disciplinare"
+        x-internal-name: "sett_cod"
+      matricola:
+        type: "string"
+        example: "12345"
+        description: "matricola del docente"
+        x-internal-name: "matricola"
+      cognome:
+        type: "string"
+        example: "Rossi"
+        description: "Cognome del docente"
+        x-internal-name: "cognome"
+      nome:
+        type: "string"
+        example: "Mario"
+        description: "Nome del docente"
+        x-internal-name: "nome"
+      badge:
+        type: "string"
+        example: "1212aa"
+        description: "Numero badge docente"
+        x-internal-name: "badge"
+      email:
+        type: "string"
+        example: "nome@indirizzo.it"
+        description: "Indirizzo di posta elettronica pubblica, ossia visualizzato\
+          \ nel web e stampato nei vari documenti (es. Guida studente)"
+        x-internal-name: "e_mail"
+      dipartimentoCod:
+        type: "string"
+        example: "M01"
+        description: "Codice del dipartimento di afferenza del Docente"
+        x-internal-name: "dipartimento_cod"
+      dipartimentoDes:
+        type: "string"
+        example: "Dipartimento di Medicina"
+        description: "Descrizione del dipartimento di afferenza del Docente"
+        x-internal-name: "dipartimento_des"
+      facoltaCod:
+        type: "string"
+        example: "F01"
+        description: "Codice della Facoltà di afferenza del Docente"
+        x-internal-name: "facolta_cod"
+      facoltaDes:
+        type: "string"
+        example: "Facoltà di Medicina"
+        description: "Descrizione della Facoltà di afferenza del Docente"
+        x-internal-name: "facolta_des"
+      ruoloDocCod:
+        type: "string"
+        example: "A"
+        description: "Codice ruolo del docente"
+        x-internal-name: "ruolo_doc_cod"
+      ruoloDocDes:
+        type: "string"
+        example: "Professore Associato"
+        description: "Descrizione ruolo del docente"
+        x-internal-name: "ruolo_doc_des"
+      dipId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "id dipartimento"
+        x-internal-name: "dip_id"
+      dataFinAtt:
+        type: "string"
+        example: "18/12/2017"
+        description: "Data di fine attivazione del docente. Se non valorizzato si\
+          \ considera il docente ancora attivo."
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+        x-internal-name: "data_fin_att"
+      linguaId:
+        type: "integer"
+        example: 1
+        description: "identificativo lingua"
+        x-internal-name: "lingua_id"
+    x-layout-name: "DOC_REL_REST"
+    x-winsession-name: "p12/n_di_12_013_domanda_cons_tit"
+    x-model-sub-package: "consTitolo.v1"
+    x-model-sub-path: "consTitolo/v1"
+  ProprietaAggiuntiva:
+    type: "object"
+    required:
+    - "nome"
+    discriminator: "propAggiuntivaType"
+    properties:
+      nome:
+        type: "string"
+        example: "nome"
+        description: "nome della proprietà aggiuntiva"
+      valAlfa:
+        type: "string"
+        example: "val_alfa"
+        description: "valore della proprietà nel caso di stringa"
+      valNum:
+        type: "number"
+        format: "float"
+        example: 1.0
+        description: "valore della proprietà nel caso di numero"
+      valDate:
+        type: "string"
+        description: "valore della proprietà nel caso di date time"
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})\
+          \ ([01][0-9]|2[0-4]):[0-5][0-9]:[0-5][0-9]"
+    x-model-sub-package: "frk.v1"
+    x-model-sub-path: "frk/v1"
+  RiepilogoDomCt:
+    type: "object"
+    properties:
+      domCtId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "id della domanda di laurea"
+        x-field-type: "primaryKey"
+        x-internal-name: "dom_ct_id"
+      stuId:
+        type: "integer"
+        example: 1
+        description: "identificativo dello studente"
+        x-internal-name: "stu_id"
+      matId:
+        type: "integer"
+        example: 1
+        description: "identificativo dello studente"
+        x-internal-name: "mat_id"
+      dataDomandaCt:
+        type: "string"
+        example: "18/12/2017"
+        description: "data domanda di laurea"
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+        x-internal-name: "data_dom_ct"
+      aaId:
+        type: "integer"
+        example: 1
+        description: "id anno accademico della domanda"
+        x-internal-name: "aa_id"
+      stato:
+        type: "string"
+        example: "ita"
+        description: "stato della domanda conseguimento titolo"
+        x-internal-name: "stato"
+      sessioneCtDes:
+        type: "string"
+        example: "Sessione Invernale 2018"
+        description: "sessione dell'appello scelto"
+        x-internal-name: "ses_ct_des"
+      dataInizioSessioneCt:
+        type: "string"
+        example: "18/12/2017"
+        description: "data inizio della sessione di laurea scelta per la domanda"
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+        x-internal-name: "data_ini"
+      dataFineSessioneCt:
+        type: "string"
+        example: "18/12/2017"
+        description: "data inizio della sessione di laurea scelta per la domanda"
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+        x-internal-name: "data_fin"
+      appelloCtDes:
+        type: "string"
+        example: "Appello di Laurea Ottobe"
+        description: "appello selezionato in fase di presentazione della domanda conseguimento\
+          \ titolo"
+        x-internal-name: "des_appello"
+      dataAppelloCt:
+        type: "string"
+        example: "18/12/2017"
+        description: "data appello selezionato in fase di presentazione della domanda\
+          \ conseguimento titolo"
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+        x-internal-name: "data_app"
+      dataSedutaCt:
+        type: "string"
+        example: "18/12/2017"
+        description: "data seduta di laurea scelta per la domanda"
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+        x-internal-name: "data"
+      orarioSedutaCt:
+        type: "string"
+        example: "600"
+        description: "orario della seduta di laurea (HH24:MI)"
+        minLength: 16
+        maxLength: 16
+        x-internal-name: "ora_inizio"
+      EdificioDes:
+        type: "string"
+        example: "Edificio della facoltà di Matematica"
+        description: "descrizione"
+        x-internal-name: "edifici_des"
+      AulaDes:
+        type: "string"
+        example: "Aula Magna"
+        description: "descrizione"
+        x-internal-name: "aule_des"
+      tesiId:
+        type: "integer"
+        example: 1
+        description: "identificativo della tesi di laurea associata alla domanda"
+        x-internal-name: "tesi_id"
+      titoloTesi:
+        type: "string"
+        example: "Applicazione di teorie di fisica quantistica al mondo reale"
+        description: "titolo della tesi di laurea"
+        x-internal-name: "titolo_tesi"
+      abstractTesi:
+        type: "string"
+        example: "testo abstract Applicazione di teorie di fisica quantistica al mondo\
+          \ reale"
+        description: "Abstract del titolo della tesi di laurea"
+        x-internal-name: "abstract_tesi"
+      dataDepositoTesi:
+        type: "string"
+        example: "18/12/2017"
+        description: "data deposito della tesi"
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+        x-internal-name: "data_dt"
+      TipoTesiDes:
+        type: "string"
+        example: "Tesi Sperimentale"
+        description: "descrizione del tipo della tesi di laurea"
+        x-internal-name: "tipi_tesi_des"
+      AdGenDes:
+        type: "string"
+        example: "Ingegneria del Software"
+        description: "descrizione dell'attività didattica di tesi di laurea"
+        x-internal-name: "ad_gen_des"
+      AdTesiDes:
+        type: "string"
+        example: "Ingegneria del Software"
+        description: "descrizione dell'attività didattica di tesi di laurea libero"
+        x-internal-name: "ad_tesi_des"
+      TesiDiGruppo:
+        type: "integer"
+        example: 1
+        description: "flag che indica se la tesi associata alla domanda è di Gruppo"
+        x-internal-name: "tesi_di_gruppo_flg"
+      KeywordAlma1:
+        type: "string"
+        example: "parola"
+        description: "1a parola chiave di almalaurea"
+        x-internal-name: "keywrd1"
+      KeywordAlma2:
+        type: "string"
+        example: "parola"
+        description: "2a parola chiave di almalaurea"
+        x-internal-name: "keywrd2"
+      KeywordAlma3:
+        type: "string"
+        example: "parola"
+        description: "3a parola chiave di almalaurea"
+        x-internal-name: "keywrd3"
+      KeywordAlma4:
+        type: "string"
+        example: "parola"
+        description: "4a parola chiave di almalaurea"
+        x-internal-name: "keywrd4"
+      KeywordAlma5:
+        type: "string"
+        example: "parola"
+        description: "5a parola chiave di almalaurea"
+        x-internal-name: "keywrd5"
+      StatoTesiCod:
+        type: "string"
+        example: "CON"
+        description: "codice identificativo dello stato della tesi di laurea"
+        x-internal-name: "stato_tesi_cod"
+      dataCt:
+        type: "string"
+        example: "18/12/2017"
+        description: "data conseguimento titolo"
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+        x-internal-name: "data_ct"
+      tesiElettronica:
+        type: "integer"
+        example: 1
+        description: "flag che Indica se la tesi è stata consegnata in formato elettronico"
+        x-internal-name: "tesi_elettr_flg"
+      numeroMavCtit:
+        type: "string"
+        example: "12345"
+        description: "numero del MAV di pagamento relativo alle tasse del processo\
+          \ CTIT"
+        x-internal-name: "numero_mav_CTIT"
+      dataPagamentoCtit:
+        type: "string"
+        example: "18/12/2017"
+        description: "data di pagamento del mav relativo alle tasse del processo CTIT"
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+        x-internal-name: "data_pagamento_CTIT"
+      numeroMavPerga:
+        type: "string"
+        example: "12345"
+        description: "numero del MAV di pagamento relativo alle tasse del processo\
+          \ PERGA"
+        x-internal-name: "numero_mav_PERGA"
+      dataPagamentoPerga:
+        type: "string"
+        example: "18/12/2017"
+        description: "data di pagamento del mav relativo alle tasse del processo CTIT"
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+        x-internal-name: "data_pagamento_PERGA"
+      linguaId:
+        type: "integer"
+        example: 1
+        description: "identificativo lingua"
+        x-internal-name: "lingua_id"
+      linguaIso6392Cod:
+        type: "string"
+        example: "ita"
+        description: "codice identificativo lingua"
+        x-internal-name: "iso6392_cod"
+      votoFinale:
+        type: "integer"
+        format: "int64"
+        example: 28
+        description: "voto finale"
+      lodeFlg:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "lode flg"
+      puntiAgg:
+        type: "number"
+        format: "double"
+        example: 1.0
+        description: "punti aggiuntivi"
+      tipiGiudProFinDes:
+        type: "string"
+        example: "ita"
+        description: "descrizione giudizio"
+      menzioneFlg:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "lode flg"
+      encomioFlg:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "lode flg"
+      cfuFinali:
+        type: "number"
+        format: "double"
+        example: 100.0
+        description: "cfu finali"
+    x-layout-name: "DOM_CT_REST"
+    x-winsession-name: "p12/n_di_12_013_domanda_cons_tit"
+    x-model-sub-package: "consTitolo.v1"
+    x-model-sub-path: "consTitolo/v1"
+  TipiTesi:
+    type: "object"
+    properties:
+      tipoTesiCod:
+        type: "string"
+        example: "descrizione"
+        description: "codice rappresentante la tipologia di tesi"
+        x-field-type: "primaryKey"
+        x-internal-name: "tipo_tesi_cod"
+      des:
+        type: "string"
+        example: "descrizione"
+        description: "descrizione della tipologia di tesi"
+        x-internal-name: "des"
+      miurTipoTesiCod:
+        type: "string"
+        example: "descrizione"
+        description: "descrizione della sessione"
+        x-internal-name: "miur_tipo_tesi_cod"
+      regCtId:
+        type: "integer"
+        example: 1
+        description: "identificativo delle regole di conseguimento titolo"
+        x-internal-name: "reg_ct_id"
+    x-layout-name: "TIPI_TESI_REST"
+    x-winsession-name: "p12/n_di_12_013_domanda_cons_tit"
+    x-model-sub-package: "consTitolo.v1"
+    x-model-sub-path: "consTitolo/v1"
+  DipartimentiRelatoriTesi:
+    type: "object"
+    properties:
+      dipartimentoCod:
+        type: "string"
+        example: "300716"
+        description: "codice dipartimento"
+        x-field-type: "primaryKey"
+      dipartimentoDes:
+        type: "string"
+        example: "Dipartimento di Medicina"
+        description: "descrizione dipartimento"
+      dataInizio:
+        type: "string"
+        example: "15/10/2015"
+        description: "Data inizio. Il formato con cui deve essere definita la data\
+          \ DD/MM/YYYY"
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+      dataFine:
+        type: "string"
+        example: "15/10/2015"
+        description: "Data fine. Il formato con cui deve essere definita la data DD/MM/YYYY"
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+      relatori:
+        type: "array"
+        items:
+          $ref: "#/definitions/RiepilogoStatisticheRelatori"
+    x-model-sub-package: "consTitolo.v1"
+    x-model-sub-path: "consTitolo/v1"
+  InserimentoDatiDomanda:
+    type: "object"
+    required:
+    - "stuId"
+    properties:
+      stuId:
+        type: "integer"
+        example: 1
+        description: "identificativo dello studente"
+      aaId:
+        type: "integer"
+        format: "int64"
+        example: 2017
+        description: "Anno a cui è associata la sessione dell'appello"
+      dataDomCt:
+        type: "string"
+        example: "18/12/2017"
+        description: "data presentazione della domanda di conseguimento titolo"
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+      appCtId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "id dell'appello di laurea"
+      sesCtId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "id della sessione di laurea"
+      quesAlma:
+        type: "string"
+        example: "S"
+        description: "stato del questionario almalaurea"
+      tipoDomCt:
+        type: "string"
+        example: "NOR"
+        description: "tipologia della domanda di conseguimento titolo"
+      stage:
+        type: "string"
+        example: "Stage presso CINECA"
+        description: "stage dello studente"
+      stageEng:
+        type: "string"
+        example: "Stage in CINECA"
+        description: "stage dello studente in lingua inglese"
+      projectWork:
+        type: "string"
+        example: "Progetto di tesi presso CINECA"
+        description: "Descrizione dell´eventuale project work effettuato ai fini del\
+          \ conseguimento titolo."
+      projectWorkEng:
+        type: "string"
+        example: "Project study in CINECA"
+        description: "Descrizione dell´eventuale project work effettuato ai fini del\
+          \ conseguimento titolo in lingua inglese"
+      cdsDicId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "id del Corso di Studio"
+      aaOrdDicId:
+        type: "integer"
+        format: "int64"
+        example: 2001
+        description: "id dell'anno di ordinamento"
+      pdsDicId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "id del percorso di studio"
+      prosSpecFlg:
+        type: "integer"
+        format: "int32"
+        example: 1
+        description: "indica se lo studente laureando in una laurea triennale proseguirà\
+          \ con una laurea specialistica"
+      regAzionistuId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "identificativo dello studente sulla tabella p18_reg_azioni_stu"
+      cdsProsId:
+        type: "integer"
+        format: "int64"
+        example: 101
+        description: "id del Corso di Studio relativo all'iscrizione alla specialistica"
+      aaOrdProsId:
+        type: "integer"
+        format: "int64"
+        example: 2012
+        description: "id dell'anno di ordinamento relativo all'iscrizione alla specialistica"
+      pdsProsId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "id del percorso di studio relativo all'iscrizione alla specialistica"
+      linguaQuadId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "id del Identificativo della lingua quadriennale seguita dallo\
+          \ studente."
+      nota:
+        type: "string"
+        example: "testo della nota"
+        description: "Annotazioni"
+      numTel:
+        type: "string"
+        example: "+39 349 12345633"
+        description: "indica il numero di telefono dello studente nel periodo di tesi"
+      domCtId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "identificativo della domanda di conseguimento titolo"
+      mesiProrogaCt:
+        type: "integer"
+        format: "int32"
+        example: 12
+        description: "indica il numero di mesi di proroga per il conseguimento titolo\
+          \ di un dottorato"
+      regCtId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "identificativo della regola di conseguimento titolo relativa\
+          \ alla domanda di conseguimento titolo"
+      consVulcanoFlg:
+        type: "integer"
+        format: "int32"
+        example: 1
+        description: "flag che indica l'eventuale trasmissione dei dati della domanda\
+          \ di conseguimento titolo tramite la procedura Vulcano"
+      esaSostFlg:
+        type: "integer"
+        format: "int32"
+        example: 1
+        description: "flag che indica che lo studente che presenta la domanda di conseguimento\
+          \ titolo ha sostenuto tutti gli esami previsti dal suo piano di studio"
+      autWebFlg:
+        type: "integer"
+        format: "int32"
+        example: 1
+        description: "flag di autorizzazione della pubblicazione su web dei dati relativi\
+          \ al conseguimento titolo"
+      tipoEsactCod:
+        type: "string"
+        example: "DP"
+        description: "indica il codice relativo al tipo esame conseguimento titolo"
+      tesiDiGruppoFlg:
+        type: "integer"
+        format: "int32"
+        example: 1
+        description: "Flag che indica se la tesi è di gruppo"
+      confEsplicitaFlg:
+        type: "integer"
+        format: "int32"
+        example: 1
+        description: "Conferma espicita dello studente. La conferma esplicita è una\
+          \ fase che può essere richiesta allo studente prima che la sua domanda sia\
+          \ effettivamente confermata dalla segreteria"
+      ricPergaFlg:
+        type: "integer"
+        format: "int32"
+        example: 1
+        description: "Flag che Indica se lo studente ha fatto richiesta della pergamena\
+          \ di laurea in fase di conseguimento titolo"
+      motCtrlRifreg:
+        type: "integer"
+        format: "int32"
+        example: 1
+        description: "Regole di riferimento da utilizzare nel motore controllo REGOLE\
+          \ e Piani per lo studente (0 Utilizzo delle regole di percorso (OFFF), 1\
+          \ Utilizzo del RAD)"
+      regAlmaFlg:
+        type: "integer"
+        format: "int32"
+        example: 1
+        description: "Flag che indica se lo studente ha già effettuato la registrazione\
+          \ sul sito di AlmaLaurea"
+      pergaNumRaggr:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "Identificativo del raggruppamento per stampa delle pergamene/minute"
+    x-model-sub-package: "consTitolo.v1"
+    x-model-sub-path: "consTitolo/v1"
+  InserimentoDatiTesi:
+    type: "object"
+    properties:
+      stuId:
+        type: "integer"
+        example: 1
+        description: "identificativo dello studente"
+      regCtId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "identificativo della regola di conseguimento titolo relativa\
+          \ alla domanda di conseguimento titolo"
+      tipoTesiCod:
+        type: "string"
+        example: "T0"
+        description: "codice della tipologia della tesi"
+      dataDepositoTesi:
+        type: "string"
+        example: "18/12/2017"
+        description: "data deposito della tesi"
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+      titoloTesiIta:
+        type: "string"
+        example: "Applicazione di teorie di fisica quantistica al mondo reale"
+        description: "titolo della tesi di laurea"
+      abstractTesiIta:
+        type: "string"
+        example: "testo abstract Applicazione di teorie di fisica quantistica al mondo\
+          \ reale"
+        description: "Abstract del titolo della tesi di laurea"
+      titoloTesiEng:
+        type: "string"
+        example: "Application of quantum physics theories into the real world"
+        description: "titolo della tesi di laurea in inglese"
+      abstractTesiEng:
+        type: "string"
+        example: "Application of quantum physics theories into the real worl, abstract"
+        description: "Abstract del titolo della tesi di laurea in inglese"
+      TipoTesiDes:
+        type: "string"
+        example: "Tesi Sperimentale"
+        description: "descrizione del tipo della tesi di laurea"
+      settCod:
+        type: "string"
+        example: "PROFIN_S"
+        description: "codice del settore dell'ad di tesi"
+      settDiscCod:
+        type: "string"
+        example: "SSN"
+        description: "Codice identificativo del settore scientifico disciplinare di\
+          \ riferimento"
+      discCod:
+        type: "string"
+        example: "SSN"
+        description: "Codice identificativo della disciplina (all´interno del settore\
+          \ scientifico disciplinare)"
+      adId:
+        type: "integer"
+        format: "int64"
+        example: 2018
+        description: "ID dell´attività didattica di tesi"
+      udAdId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "ID dell´attività didattica."
+      cdsId:
+        type: "integer"
+        format: "int64"
+        example: 177
+        description: "id del Corso di Studio"
+      aaOffId:
+        type: "integer"
+        format: "int64"
+        example: 2001
+        description: "id dell'anno accademico di offerta didattica"
+      udId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "id unità didattica"
+      adTesiDes:
+        type: "string"
+        example: "Ingegneria del Software"
+        description: "descrizione dell'attività didattica di tesi di laurea"
+      linguaTesi:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "identificativo della lingua della tesi"
+      linguaDiscussioneTesi:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "identificativo della  lingua di discussione della tesi"
+      keywordAlma1:
+        type: "string"
+        example: "ingegneria"
+        description: "1a parola chiave di almalaurea"
+      keywordAlma2:
+        type: "string"
+        example: "del software"
+        description: "2a parola chiave di almalaurea"
+      keywordAlma3:
+        type: "string"
+        example: "metriche"
+        description: "3a parola chiave di almalaurea"
+      keywordAlma4:
+        type: "string"
+        example: "effort"
+        description: "4a parola chiave di almalaurea"
+      keywordAlma5:
+        type: "string"
+        example: "ore lavoro"
+        description: "5a parola chiave di almalaurea"
+      nota:
+        type: "string"
+        example: "lo studente ha effettuato la tesi con un'esperienza all'estero"
+        description: "nota definita sulla tesi di laurea"
+      tesiElettrFlg:
+        type: "integer"
+        format: "int32"
+        example: 1
+        description: "Flag che ndica se la tesi è stata consegnata in formato elettronico"
+      modConsTesiCod:
+        type: "string"
+        example: "PUB"
+        description: "Codice della modalità di consenso alla consultazione della propria\
+          \ tesi"
+      modRiprTesiCod:
+        type: "string"
+        example: "IMM"
+        description: "Codice della modalità di riproduzione della tesi"
+      tesinaFlg:
+        type: "integer"
+        format: "int32"
+        example: 0
+        description: "Flag che indica se si tratta di una tesina"
+      esteroFlg:
+        type: "integer"
+        format: "int32"
+        example: 1
+        description: "Flag che Indica se la preparazione della tesi è avvenuta all´\
+          estero"
+      tipoRecapitoCod:
+        type: "string"
+        example: "CASA"
+        description: "Tipologia di recapito della tesi"
+      altroRecapitoTesi:
+        type: "string"
+        example: "Via Magnanelli, 2 Casalecchio di Reno (BO)"
+        description: "Recapito della tesi libero, utilizzabile nel caso in cui sia\
+          \ indicato ALTRO come tipologia di recapito tesi"
+      tipoRecapitoPergaCod:
+        type: "string"
+        example: "codice"
+        description: "Tipologia di recapito della pergamena"
+      altroRecapitoPerga:
+        type: "string"
+        example: "Via Magnanelli, 2 Casalecchio di Reno (BO)"
+        description: "Recapito della pergamena libero, utilizzabile nel caso in cui\
+          \ sia indicato ALTRO come tipologia di recapito pergamena."
+      dataMinSesCt:
+        type: "string"
+        example: "18/12/2017"
+        description: "Data minima della sessione di conseguimento titolo che potrà\
+          \ essere scelta dallo studente"
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+      regAzionistuId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "identificativo dello studente sulla tabella p18_reg_azioni_stu"
+      tesiId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "identificativo della tesi dello studente"
+      keywordAlmaEng1:
+        type: "string"
+        example: "word"
+        description: "1a parola chiave di almalaurea in inglese"
+      keywordAlmaEng2:
+        type: "string"
+        example: "key"
+        description: "2a parola chiave di almalaurea in inglese"
+      keywordAlmaEng3:
+        type: "string"
+        example: "software"
+        description: "3a parola chiave di almalaurea in inglese"
+      keywordAlmaEng4:
+        type: "string"
+        example: "metrics"
+        description: "4a parola chiave di almalaurea in inglese"
+      keywordAlmaEng5:
+        type: "string"
+        example: "test"
+        description: "5a parola chiave di almalaurea in inglese"
+      confTesiDefFlg:
+        type: "integer"
+        format: "int32"
+        example: 0
+        description: "Indica se lo studente ha confermato esplicitamente di aver caricato\
+          \ la tesi definitiva a sistema."
+      complTesi:
+        type: "integer"
+        format: "int32"
+        example: 0
+        description: "Indica se l`attività di completamento tesi è stata effettuata\
+          \ almeno una volta da web"
+      mesiEmbargo:
+        type: "integer"
+        format: "int32"
+        example: 6
+        description: "Mesi di embargo della tesi."
+      tipoAutVerifTesiCod:
+        type: "string"
+        example: "AUT"
+        description: "Codice della tipologia di autorizzazione per la verifica dell'autenticità\
+          \ della tesi"
+      recPergaNazioneId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "Indica la Nazione del recapito della pergamena libero"
+      recPergaComuneId:
+        type: "integer"
+        format: "int64"
+        example: 111
+        description: "Indica il comune del recapito della pergamena libero"
+      recPergaVia:
+        type: "string"
+        example: "via Roma"
+        description: "Indica l'Indirizzo del recapito della pergamena libero"
+      recPergaNumCiv:
+        type: "string"
+        example: "12"
+        description: "Indica il numero civico del recapito della pergamena libero"
+      recPergaCap:
+        type: "string"
+        example: "12"
+        description: "Indica il CAP del recapito della pergamena libero"
+      recPergaCitstra:
+        type: "string"
+        example: "12"
+        description: "Indica il CAP del recapito della pergamena libero"
+      TesiDiGruppo:
+        type: "integer"
+        example: 1
+        description: "indica se si tratta di una tesi di gruppo"
+      relatori:
+        type: "array"
+        items:
+          $ref: "#/definitions/InserimentoDatiRelatori"
+    x-model-sub-package: "consTitolo.v1"
+    x-model-sub-path: "consTitolo/v1"
+  RelatoriTesiDomCt:
+    type: "object"
+    properties:
+      tesiId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "id della tesi a cui è legato il relatore"
+        x-field-type:
+        - "primaryKey"
+      tipoRelCod:
+        type: "string"
+        example: "R1"
+        description: "tipologia di relatore"
+      tipoRelDes:
+        type: "string"
+        description: "descrizione tipologia del relatore"
+      docenteId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "identificativo del docente"
+      domCtId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "identificativo della domanda"
+      appCtId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "identificativo dell'appello"
+      soggEstId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "identificativo del soggetto esterno"
+      notaTesi:
+        type: "string"
+        example: "nota della tesi"
+        description: "nota della tesi"
+      ricEccellenzaFlg:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "identificativo del soggetto esterno"
+      dataRicEccellenza:
+        type: "string"
+        example: "18/12/2017"
+        description: "data richiesta eccellenza"
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+      puntiProp:
+        type: "integer"
+        format: "int32"
+        example: 1
+        description: "identificativo del docente"
+      motPuntiProp:
+        type: "string"
+        example: "motivazione punteggio proposto"
+        description: "motivazione punteggio proposto"
+    x-layout-name: "REL_REST_DOM_CT"
+    x-winsession-name: "p12/n_di_12_013_domanda_cons_tit"
+    x-model-sub-package: "consTitolo.v1"
+    x-model-sub-path: "consTitolo/v1"
+  RiepilogoTesiDomCt:
+    type: "object"
+    properties:
+      tesiId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "identificativo della tesi di laurea"
+        x-field-type: "primaryKey"
+      stuId:
+        type: "integer"
+        example: 1
+        description: "identificativo dello studente"
+        x-internal-name: "stu_id"
+      appCtId:
+        type: "integer"
+        example: 1
+        description: "identificativo dell'appello a cui è legata la domanda"
+      titoloTesiIta:
+        type: "string"
+        example: "Applicazione di teorie di fisica quantistica al mondo reale"
+        description: "titolo della tesi di laurea"
+        x-internal-name: "TITOLO_TESI_ITA"
+      abstractTesiIta:
+        type: "string"
+        example: "testo abstract Applicazione di teorie di fisica quantistica al mondo\
+          \ reale"
+        description: "Abstract del titolo della tesi di laurea"
+        x-internal-name: "ABSTRACT_TESI_ITA"
+      titoloTesiEng:
+        type: "string"
+        example: "Applicazione di teorie di fisica quantistica al mondo reale"
+        description: "titolo della tesi di laurea in inglese"
+        x-internal-name: "TITOLO_TESI_ENG"
+      abstractTesiEng:
+        type: "string"
+        example: "testo abstract Applicazione di teorie di fisica quantistica al mondo\
+          \ reale"
+        description: "Abstract del titolo della tesi di laurea in inglese"
+        x-internal-name: "ABSTRACT_TESI_ENG"
+      TipoTesiDes:
+        type: "string"
+        example: "Tesi Sperimentale"
+        description: "descrizione del tipo della tesi di laurea"
+        x-internal-name: "des"
+      AdGenDes:
+        type: "string"
+        example: "Ingegneria del Software"
+        description: "descrizione dell'attività didattica di tesi di laurea"
+        x-internal-name: "ad_gen_des"
+      AdTesiDes:
+        type: "string"
+        example: "Ingegneria del Software"
+        description: "descrizione dell'attività didattica di tesi di laurea cablata"
+        x-internal-name: "ad_tesi_des"
+      TesiDiGruppo:
+        type: "integer"
+        example: 1
+        description: "indica se si tratta di una tesi di gruppo"
+        x-internal-name: "tesi_di_gruppo_flg"
+      dataDepositoTesi:
+        type: "string"
+        example: "18/12/2017"
+        description: "data deposito della tesi"
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+        x-internal-name: "data_dt"
+      StatoTesi:
+        type: "string"
+        example: "Presentata"
+        description: "descrizione dello stato della tesi di laurea"
+        x-internal-name: "stati_tesi_des"
+      DomCtId:
+        type: "integer"
+        example: 1
+        description: "identificativo della della domanda associata alla tesi"
+      linguaTesi:
+        type: "string"
+        example: "italiano"
+        description: "descrizione lingua della tesi"
+        x-internal-name: "lingua_tesi_des"
+      linguaDiscussioneTesi:
+        type: "string"
+        example: "italiano"
+        description: "descrizione della lingua di discussione della tesi"
+        x-internal-name: "lingua_disc_tesi_id"
+      linguaId:
+        type: "integer"
+        example: 1
+        description: "identificativo lingua"
+        x-internal-name: "lingua_id"
+      linguaIso6392Cod:
+        type: "string"
+        example: "ita"
+        description: "codice identificativo lingua"
+        x-internal-name: "iso6392_cod"
+      modConsTesiCod:
+        type: "string"
+        example: "PUB"
+        description: "codice modalità consultazione tesi"
+      allegatiTesi:
+        type: "array"
+        items:
+          $ref: "#/definitions/AllegatoTesi"
+      relatori:
+        type: "array"
+        items:
+          $ref: "#/definitions/RelatoriTesiDomCt"
+    x-layout-name: "TESI_REST"
+    x-winsession-name: "p12/n_di_12_013_domanda_cons_tit"
+    x-model-sub-package: "consTitolo.v1"
+    x-model-sub-path: "consTitolo/v1"
+  InserimentoDatiAntiplagio:
+    type: "object"
+    required:
+    - "allegatoId"
+    properties:
+      allegatoId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "identificativo allegato"
+      indxAntiplagio:
+        type: "string"
+        example: "indx antiP"
+        description: "riferimento antiplagio"
+      linkAntiplagio:
+        type: "string"
+        example: "link antiP"
+        description: "link antiplagio"
+      notaAntiplagio:
+        type: "string"
+        example: "nota antiP"
+        description: "nota antiplagio"
+      approvazioneAllegFlg:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "flag di approvazione allegato definitivo e quindi approvazione"
+    x-model-sub-package: "consTitolo.v1"
+    x-model-sub-path: "consTitolo/v1"
+  ScadenzeAppello:
+    type: "object"
+    properties:
+      appCtId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "id dell'appello di laurea"
+        x-field-type: "primaryKey"
+        x-internal-name: "app_ct_id"
+      tipoScadenzaCod:
+        type: "string"
+        example: "DAW"
+        description: "tipo di scadenza"
+        x-internal-name: "tipo_sca_ct_cod"
+      tipoScadenzaDes:
+        type: "string"
+        example: "Scadenza Domanda Ammissione Web"
+        description: "tipo di scadenza"
+        x-internal-name: "tipi_sca_ct_des"
+      dataScaIni:
+        type: "string"
+        example: "18/12/2017"
+        description: "data inizio dell'intervallo di date della tipologia di scadenza\
+          \ configurata sull'appello di laurea"
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+        x-internal-name: "data_sca_ini"
+      dataScaFin:
+        type: "string"
+        example: "18/12/2017"
+        description: "data fine dell'intervallo di date della tipologia di scadenza\
+          \ configurata sull'appello di laurea"
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+        x-internal-name: "data_sca_fin"
+      linguaId:
+        type: "integer"
+        example: 1
+        description: "identificativo lingua"
+        x-internal-name: "lingua_id"
+      linguaIso6392Cod:
+        type: "string"
+        example: "ita"
+        description: "codice identificativo lingua"
+        x-internal-name: "iso6392_cod"
+    x-layout-name: "SCA_APP_CT_TIPI_SCAD_REST"
+    x-winsession-name: "p12/n_di_12_013_domanda_cons_tit"
+    x-model-sub-package: "consTitolo.v1"
+    x-model-sub-path: "consTitolo/v1"
+  ReplicaTesi:
+    type: "object"
+    properties:
+      tesiId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "identificativo della tesi"
+      modConsTesiCod:
+        type: "string"
+        example: "PUB"
+        description: "codice modalità consultazione tesi"
+      modConsTesiDes:
+        type: "string"
+        example: "PUB"
+        description: "codice modalità consultazione tesi"
+      autAccessoTesi:
+        type: "string"
+        example: "embargo"
+        description: "autorizzazione accesso tesi"
+      giorniEmbargo:
+        type: "integer"
+        format: "int32"
+        example: 1
+        description: "giorni embargo"
+      dataFineEmbargo:
+        type: "string"
+        example: "18/12/2017"
+        description: "data fine embargo"
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+      idDocumento:
+        type: "string"
+        example: "1"
+        description: "identificativo del documento"
+      dataDocumento:
+        type: "string"
+        example: "18/12/2017"
+        description: "data documento"
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+      titulusId:
+        type: "string"
+        example: "1"
+        description: "identificativo Titulus"
+      irisId:
+        type: "string"
+        example: "1"
+        description: "identificativo Iris"
+      unitesiId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "identificativo Unitesi"
+    x-layout-name: "V_EPI_REPLICA_TESI_REST"
+    x-winsession-name: "p12/n_di_12_058_gestione_tesi"
+    x-model-sub-package: "consTitolo.v1"
+    x-model-sub-path: "consTitolo/v1"
+  RelatoriTesi:
+    type: "object"
+    properties:
+      tesiId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "id della tesi a cui è legato il relatore"
+        x-field-type:
+        - "primaryKey"
+      tipoRelCod:
+        type: "string"
+        example: "R1"
+        description: "tipologia di relatore"
+      tipoRelDes:
+        type: "string"
+        description: "descrizione tipologia del relatore"
+      docenteId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "identificativo del docente"
+      domCtId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "identificativo della domanda"
+      soggEstId:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "identificativo del soggetto esterno"
+      notaTesi:
+        type: "string"
+        example: "nota della tesi"
+        description: "nota della tesi"
+      ricEccellenzaFlg:
+        type: "integer"
+        format: "int64"
+        example: 1
+        description: "identificativo del soggetto esterno"
+      dataRicEccellenza:
+        type: "string"
+        example: "18/12/2017"
+        description: "data richiesta eccellenza"
+        pattern: "([0][1-9]|[12][0-9]|[3][01])/([0][1-9]|[1][012])/(19|20)([0-9]{2})"
+      puntiProp:
+        type: "integer"
+        format: "int32"
+        example: 1
+        description: "identificativo del docente"
+      motPuntiProp:
+        type: "string"
+        example: "motivazione punteggio proposto"
+        description: "motivazione punteggio proposto"
+    x-layout-name: "REL_REST"
+    x-winsession-name: "p12/n_di_12_013_domanda_cons_tit"
+    x-model-sub-package: "consTitolo.v1"
+    x-model-sub-path: "consTitolo/v1"
+  ImportResponseInsRelat:
+    type: "object"
+    properties:
+      esitoElaborazione:
+        type: "string"
+        description: "eseguita con successo o fallita"
+      elencoErrori:
+        type: "array"
+        items:
+          type: "object"
+          properties:
+            descrizioneErrore:
+              type: "string"
+              description: "descrizione dell'errore"
+    x-model-sub-package: "consTitolo.v1"
+    x-model-sub-path: "consTitolo/v1"
+parameters:
+  cdsCod:
+    name: "cdsCod"
+    in: "query"
+    description: "codice del Corso di studio"
+    required: false
+    type: "string"
+  cognome:
+    name: "cognome"
+    in: "query"
+    description: "cognome del relatore, la ricerca avviene in like nel formato COGNOME%"
+    required: false
+    type: "string"
+  appCtId:
+    name: "appCtId"
+    in: "path"
+    description: "id dell'appello di laurea"
+    required: true
+    type: "integer"
+    format: "int64"
+  docenteId:
+    name: "docenteId"
+    in: "query"
+    description: "identificativo del docente"
+    required: false
+    type: "integer"
+    format: "int64"
+  regCtId:
+    name: "regCtId"
+    in: "query"
+    description: "id delle regole di conseguimento titolo"
+    required: false
+    type: "integer"
+    format: "int64"
+  abilFlg:
+    name: "abilFlg"
+    in: "query"
+    description: "flag che indica se la modalità di consultazione tesi è abilitata\
+      \ oppure no"
+    required: false
+    type: "integer"
+    format: "int64"
+  dipCod:
+    name: "dipCod"
+    in: "path"
+    description: "codice dipartimento"
+    required: true
+    type: "string"
+  modConsTesiCod:
+    name: "modConsTesiCod"
+    in: "query"
+    description: "codice della modalità di consultazione tesi"
+    required: true
+    type: "string"
+  dataFine:
+    name: "dataFine"
+    in: "query"
+    description: "data fine, formato data DD/MM/YYYY"
+    required: true
+    type: "string"
+  indxAntiplagio:
+    name: "indxAntiplagio"
+    in: "query"
+    description: "riferimento antiplagio"
+    required: false
+    type: "string"
+  domConsTitId:
+    name: "domConsTitId"
+    in: "query"
+    description: "id della domanda di conseguimento titolo"
+    required: false
+    type: "integer"
+    format: "int64"
+  dataIni:
+    name: "dataIni"
+    in: "query"
+    description: "data inizio, formato data DD/MM/YYYY"
+    required: true
+    type: "string"
+  soggEstId:
+    name: "soggEstId"
+    in: "query"
+    description: "identificativo del docente"
+    required: false
+    type: "integer"
+    format: "int64"
+  allegatoId:
+    name: "allegatoId"
+    in: "query"
+    description: "identificativo allegato"
+    required: false
+    type: "integer"
+    format: "int64"
+  stuId:
+    name: "stuId"
+    in: "path"
+    description: "id dello studente"
+    required: true
+    type: "integer"
+    format: "int64"
+  tipoCorsoCod:
+    name: "tipoCorsoCod"
+    in: "query"
+    description: "codice dela Tipologia del Corso di studio"
+    required: false
+    type: "string"
+  tipoRelCod:
+    name: "tipoRelCod"
+    in: "query"
+    description: "codice tipo relatore"
+    required: false
+    type: "string"
+  approvazioneAllegFlg:
+    name: "approvazioneAllegFlg"
+    in: "query"
+    description: "Flag che indica se approvare l'allegato definitivo e quindi anche\
+      \ la tesi"
+    required: false
+    type: "integer"
+    format: "int64"
+  tesiId:
+    name: "tesiId"
+    in: "path"
+    description: "id della tesi"
+    required: true
+    type: "integer"
+    format: "int64"
+  matId:
+    name: "matId"
+    in: "path"
+    description: "id della matricola"
+    required: true
+    type: "integer"
+    format: "int64"
+  aaId:
+    name: "aaId"
+    in: "query"
+    description: "identificativo dell'anno di conseguimento titolo"
+    required: false
+    type: "integer"
+    format: "int64"
+  dipartimento:
+    name: "dipartimento"
+    in: "query"
+    description: "codice dipartimento"
+    required: false
+    type: "string"
+  domCtId:
+    name: "domCtId"
+    in: "path"
+    description: "id della domanda di conseguimento titolo"
+    required: true
+    type: "integer"
+    format: "int64"
+  linkAntiplagio:
+    name: "linkAntiplagio"
+    in: "query"
+    description: "link antiplagio"
+    required: false
+    type: "string"
+  checkScadenze:
+    name: "checkScadenze"
+    in: "query"
+    description: "indica se controllare le scadenze. True per effettuare il controllo\
+      \ altrimenti false"
+    required: false
+    type: "boolean"
+  studId:
+    name: "studId"
+    in: "query"
+    description: "id dello studente"
+    required: false
+    type: "integer"
+    format: "int64"
+  notaAntiplagio:
+    name: "notaAntiplagio"
+    in: "query"
+    description: "nota antiplagio"
+    required: false
+    type: "string"
+externalDocs:
+  description: "Documentazione Geneale sui servizi REST"
+  url: "https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3"
+x-file-status: "PROD"
+x-file-name: "p12-conseguimentoTitoloApiV1.yaml"
+x-api-status: "PROD"
+x-func-cod: "RST_CTITV1"
+x-security-definitions:
+  docRelTesi-filter-student-permissions:
+    kind: "STUDENTE"
+    profiles:
+    - profile:
+        name: "STUDENTE"
+        description: "to do"
+        checks:
+        - filterAppelliCTStu:
+            className: "SecurityConsTit"
+            functionName: "filterDocRelTesiStu"
+            description: "to do"
+            parameters:
+            - cognome: "{\"name\":\"cognome\",\"in\":\"query\",\"description\":\"\
+                cognome del relatore, la ricerca avviene in like nel formato COGNOME%\"\
+                ,\"required\":false,\"type\":\"string\",\"items\":null,\"collectionFormat\"\
+                :null,\"default\":null,\"maximum\":null,\"exclusiveMaximum\":null,\"\
+                minimum\":null,\"exclusiveMinimum\":null,\"maxLength\":null,\"minLength\"\
+                :null,\"pattern\":null,\"maxItems\":null,\"minItems\":null,\"uniqueItems\"\
+                :null,\"multipleOf\":null,\"format\":null,\"x-example\":null,\"enum\"\
+                :null}"
+  appelliCt-filter-student-permissions:
+    kind: "STUDENTE"
+    profiles:
+    - profile:
+        name: "STUDENTE"
+        description: "to do"
+        checks:
+        - filterAppelliCTStu:
+            className: "SecurityConsTit"
+            functionName: "filterAppelliCtStu"
+            description: "to do"
+            parameters:
+            - tipoCorsoCod: "{\"name\":\"tipoCorsoCod\",\"in\":\"query\",\"description\"\
+                :\"codice dela Tipologia del Corso di studio\",\"required\":false,\"\
+                type\":\"string\",\"items\":null,\"collectionFormat\":null,\"default\"\
+                :null,\"maximum\":null,\"exclusiveMaximum\":null,\"minimum\":null,\"\
+                exclusiveMinimum\":null,\"maxLength\":null,\"minLength\":null,\"pattern\"\
+                :null,\"maxItems\":null,\"minItems\":null,\"uniqueItems\":null,\"\
+                multipleOf\":null,\"format\":null,\"x-example\":null,\"enum\":null}"
+            - cdsCod: "{\"name\":\"cdsCod\",\"in\":\"query\",\"description\":\"codice\
+                \ del Corso di studio\",\"required\":false,\"type\":\"string\",\"\
+                items\":null,\"collectionFormat\":null,\"default\":null,\"maximum\"\
+                :null,\"exclusiveMaximum\":null,\"minimum\":null,\"exclusiveMinimum\"\
+                :null,\"maxLength\":null,\"minLength\":null,\"pattern\":null,\"maxItems\"\
+                :null,\"minItems\":null,\"uniqueItems\":null,\"multipleOf\":null,\"\
+                format\":null,\"x-example\":null,\"enum\":null}"
+  appelliCt-student-permissions:
+    kind: "STUDENTE"
+    profiles:
+    - profile:
+        name: "STUDENTE"
+        description: "to do"
+        checks:
+        - filterAppelliCTStu:
+            className: "SecurityConsTit"
+            functionName: "checkAppelliCtStu"
+            description: "to do"
+            parameters:
+            - appCtId: "{\"name\":\"appCtId\",\"in\":\"path\",\"description\":\"id\
+                \ dell'appello di laurea\",\"required\":true,\"type\":\"integer\"\
+                ,\"items\":null,\"collectionFormat\":null,\"default\":null,\"maximum\"\
+                :null,\"exclusiveMaximum\":null,\"minimum\":null,\"exclusiveMinimum\"\
+                :null,\"maxLength\":null,\"minLength\":null,\"pattern\":null,\"maxItems\"\
+                :null,\"minItems\":null,\"uniqueItems\":null,\"multipleOf\":null,\"\
+                format\":\"int64\",\"x-example\":null,\"enum\":null}"
+  domCt-student-permissions:
+    kind: "STUDENTE"
+    profiles:
+    - profile:
+        name: "STUDENTE"
+        description: "to do"
+        checks:
+        - filterDomCTStu:
+            className: "SecurityConsTit"
+            functionName: "filterDomCtStu"
+            description: "to do"
+            parameters:
+            - domCtId: "{\"name\":\"domCtId\",\"in\":\"path\",\"description\":\"id\
+                \ della domanda di conseguimento titolo\",\"required\":true,\"type\"\
+                :\"integer\",\"items\":null,\"collectionFormat\":null,\"default\"\
+                :null,\"maximum\":null,\"exclusiveMaximum\":null,\"minimum\":null,\"\
+                exclusiveMinimum\":null,\"maxLength\":null,\"minLength\":null,\"pattern\"\
+                :null,\"maxItems\":null,\"minItems\":null,\"uniqueItems\":null,\"\
+                multipleOf\":null,\"format\":\"int64\",\"x-example\":null,\"enum\"\
+                :null}"
+  annDomCt-student-permissions:
+    kind: "STUDENTE"
+    profiles:
+    - profile:
+        name: "STUDENTE"
+        description: "funzione accessibile alle utenze di tipo STUDENTE"
+        checks:
+        - filterDomCTStu:
+            className: "SecurityConsTit"
+            functionName: "filterDomCtStu"
+            description: "to do"
+            parameters:
+            - domConsTitId: "{\"name\":\"domConsTitId\",\"in\":\"query\",\"description\"\
+                :\"id della domanda di conseguimento titolo\",\"required\":false,\"\
+                type\":\"integer\",\"items\":null,\"collectionFormat\":null,\"default\"\
+                :null,\"maximum\":null,\"exclusiveMaximum\":null,\"minimum\":null,\"\
+                exclusiveMinimum\":null,\"maxLength\":null,\"minLength\":null,\"pattern\"\
+                :null,\"maxItems\":null,\"minItems\":null,\"uniqueItems\":null,\"\
+                multipleOf\":null,\"format\":\"int64\",\"x-example\":null,\"enum\"\
+                :null}"
+  soggEstStu-filter-student-permissions:
+    kind: "STUDENTE"
+    profiles:
+    - profile:
+        name: "STUDENTE"
+        description: "to do"
+        checks:
+        - filterAppelliCTStu:
+            className: "SecurityConsTit"
+            functionName: "filterSoggEstStu"
+            description: "to do"
+            parameters:
+            - cognome: "{\"name\":\"cognome\",\"in\":\"query\",\"description\":\"\
+                cognome del relatore, la ricerca avviene in like nel formato COGNOME%\"\
+                ,\"required\":false,\"type\":\"string\",\"items\":null,\"collectionFormat\"\
+                :null,\"default\":null,\"maximum\":null,\"exclusiveMaximum\":null,\"\
+                minimum\":null,\"exclusiveMinimum\":null,\"maxLength\":null,\"minLength\"\
+                :null,\"pattern\":null,\"maxItems\":null,\"minItems\":null,\"uniqueItems\"\
+                :null,\"multipleOf\":null,\"format\":null,\"x-example\":null,\"enum\"\
+                :null}"
+  tesi-student-permissions:
+    kind: "STUDENTE"
+    profiles:
+    - profile:
+        name: "STUDENTE"
+        description: "to do"
+        checks:
+        - filterDomCTStu:
+            className: "SecurityConsTit"
+            functionName: "filterTesiStu"
+            description: "to do"
+            parameters:
+            - domCtId: "{\"name\":\"domCtId\",\"in\":\"path\",\"description\":\"id\
+                \ della domanda di conseguimento titolo\",\"required\":true,\"type\"\
+                :\"integer\",\"items\":null,\"collectionFormat\":null,\"default\"\
+                :null,\"maximum\":null,\"exclusiveMaximum\":null,\"minimum\":null,\"\
+                exclusiveMinimum\":null,\"maxLength\":null,\"minLength\":null,\"pattern\"\
+                :null,\"maxItems\":null,\"minItems\":null,\"uniqueItems\":null,\"\
+                multipleOf\":null,\"format\":\"int64\",\"x-example\":null,\"enum\"\
+                :null}"
+  tipiTesi-filter-student-permissions:
+    kind: "STUDENTE"
+    profiles:
+    - profile:
+        name: "STUDENTE"
+        description: "to do"
+        checks:
+        - filterDomCTStu:
+            className: "SecurityConsTit"
+            functionName: "filterTipiTesiStu"
+            description: "to do"
+            parameters:
+            - regCtId: "{\"name\":\"regCtId\",\"in\":\"query\",\"description\":\"\
+                id delle regole di conseguimento titolo\",\"required\":false,\"type\"\
+                :\"integer\",\"items\":null,\"collectionFormat\":null,\"default\"\
+                :null,\"maximum\":null,\"exclusiveMaximum\":null,\"minimum\":null,\"\
+                exclusiveMinimum\":null,\"maxLength\":null,\"minLength\":null,\"pattern\"\
+                :null,\"maxItems\":null,\"minItems\":null,\"uniqueItems\":null,\"\
+                multipleOf\":null,\"format\":\"int64\",\"x-example\":null,\"enum\"\
+                :null}"
+  user-tecnico-permissions:
+    kind: "USER_TECNICO"
+    profiles:
+    - profile:
+        name: "UTENTE_TECNICO"
+        description: "funzione accessibile alle utenze tecniche per accessi ai servizi\
+          \ REST"
+        checks:
+        - checkDummy:
+            className: "Security"
+            functionName: "checkUserTecnico"
+            description: "controlla che l'utente abbia gli accessi per i corsi a lui\
+              \ abilitati"
+  common-student-permissions:
+    kind: "STUDENTE"
+    profiles:
+    - profile:
+        name: "STUDENTE"
+        description: "funzione accessibile alle utenze di tipo STUDENTE"
+        checks:
+        - checkMatId:
+            className: "Security"
+            functionName: "checkStudente"
+            description: "controlla che l'utente sia uno studente"
+  common-student-tratto-permissions:
+    kind: "STUDENTE"
+    profiles:
+    - profile:
+        name: "STUDENTE"
+        description: "Permette la visualizzazone delle informazioni del tratto della\
+          \ carriea dello studente"
+        checks:
+        - checkMatId:
+            className: "Security"
+            functionName: "checkMatId"
+            description: "controlla che il matId appartenga ad uno dei tratti di carriera\
+              \ dello studente"
+            parameters:
+            - matId:
+                name: "matId"
+                in: "path"
+                description: "id del tratto di carriera dello studente"
+                required: true
+                type: "integer"
+                format: "int64"
+  common-student-carriera-permissions:
+    kind: "STUDENTE"
+    profiles:
+    - profile:
+        name: "STUDENTE"
+        description: "Permette la visualizzazione delle informazioni della carriea\
+          \ dello studente"
+        checks:
+        - checkStuId:
+            className: "Security"
+            functionName: "checkStuId"
+            description: "controlla che lo stuId appartenga ad una delle carriere\
+              \ dello studente"
+            parameters:
+            - stuId:
+                name: "stuId"
+                in: "path"
+                description: "id della carriera studente"
+                required: true
+                type: "integer"
+                format: "int64"
