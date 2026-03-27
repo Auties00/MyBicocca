@@ -15,7 +15,6 @@ data class ParsedOperation(
     val queryParams: List<ParsedParameter>,
     val bodyParam: ParsedParameter?,
     val responseType: ResolvedType?,
-    val isListResponse: Boolean,
     val permissions: List<String>
 )
 

@@ -5,6 +5,7 @@ import io.ktor.client.request.parameter
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
+import io.ktor.utils.io.ByteReadChannel
 import it.attendance100.mybicocca.data.dto.esse3.Esse3CareerPortion
 import it.attendance100.mybicocca.data.dto.esse3.Esse3CompanyAgreementsData
 import it.attendance100.mybicocca.data.dto.esse3.Esse3CompanyContactData
@@ -271,8 +272,8 @@ class Esse3InternshipsApi(
     suspend fun getAttachmentContent(
         studentId: Long,
         attachmentId: Long
-    ): String {
-        return executeJsonGet<String>("/tirocini/${studentId}/allegati/${attachmentId}/blob", setOf(Esse3PermissionLevel.TECHNICAL_USER))
+    ): ByteReadChannel {
+        return executeStreamGet("/tirocini/${studentId}/allegati/${attachmentId}/blob", setOf(Esse3PermissionLevel.TECHNICAL_USER))
     }
 
     suspend fun getStudentInternshipApplicationHeaders(

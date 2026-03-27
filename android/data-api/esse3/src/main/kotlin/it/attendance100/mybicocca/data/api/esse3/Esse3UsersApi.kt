@@ -50,7 +50,7 @@ class Esse3UsersApi(
     suspend fun postUserSignatureData(
         body: Esse3SignatureImportData
     ): List<Esse3SignatureResponse> {
-        return executeJsonGetList<Esse3SignatureResponse>("/utenti/datiFirma", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return executeJsonPostList<Esse3SignatureResponse>("/utenti/datiFirma", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
         }

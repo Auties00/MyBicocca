@@ -71,7 +71,6 @@ object Esse3GlobalApiData : BeforeAllCallback, AutoCloseable {
         val careers = api.careers.getCareers()
         val career = careers.firstOrNull()
             ?: throw IllegalStateException("No careers found for user")
-
         return Esse3StudentProfile(
             personId = career.personId ?: throw IllegalStateException("No personId in career"),
             studentId = career.studentId ?: throw IllegalStateException("No studentId in career"),

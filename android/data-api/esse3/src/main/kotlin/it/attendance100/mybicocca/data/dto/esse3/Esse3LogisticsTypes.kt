@@ -542,9 +542,8 @@ data class Esse3Classroom(
     @SerialName("capienza")
     val capacity: Int? = null,
 
-    @Serializable(with = Esse3NullableEnumValueSerializer::class)
     @SerialName("abilCbt")
-    val computerBasedTestAuthorization: String? = null,
+    val computerBasedTestAuthorization: Esse3ComputerBasedTestAuthorization? = null,
 
     @SerialName("abilFlg")
     val authorizationFlag: Int? = null,
@@ -633,9 +632,8 @@ data class Esse3LogisticsWithDetails(
 
 @Serializable
 data class Esse3SyllabusActivityPatchField(
-    @Serializable(with = Esse3NullableEnumValueSerializer::class)
     @SerialName("nomeCampo")
-    val fieldName: String? = null,
+    val fieldName: Esse3FieldName? = null,
 
     @SerialName("valore")
     val value: String? = null,
@@ -712,9 +710,8 @@ data class Esse3EasystaffCourseOrderWithDetails(
 
 @Serializable
 data class Esse3SystemLogImportResult(
-    @Serializable(with = Esse3NullableEnumValueSerializer::class)
     @SerialName("sistLog")
-    val systemLog: String? = null,
+    val systemLog: Esse3SystemLog? = null,
 
     @SerialName("ret")
     val ret: Int? = null,
@@ -1196,9 +1193,8 @@ data class Esse3TeachingUnitLogWithDetails(
 
 @Serializable
 data class Esse3SystemLogImportMessage(
-    @Serializable(with = Esse3NullableEnumValueSerializer::class)
     @SerialName("level")
-    val level: String? = null,
+    val level: Esse3Level? = null,
 
     @SerialName("msg")
     val message: String? = null

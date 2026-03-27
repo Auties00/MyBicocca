@@ -1,7 +1,6 @@
 package it.attendance100.mybicocca.codegen.esse3.gen
 
-import it.attendance100.mybicocca.codegen.esse3.Dictionary
-import it.attendance100.mybicocca.codegen.esse3.EnumValueFields
+import it.attendance100.mybicocca.codegen.esse3.Glossary
 import it.attendance100.mybicocca.codegen.esse3.RequiredOverrides
 import it.attendance100.mybicocca.codegen.esse3.escapeKotlinKeyword
 import it.attendance100.mybicocca.codegen.esse3.renderTranslated
@@ -13,21 +12,21 @@ import java.io.File
 
 object DtoGenerator {
 
-    private const val DTO_PACKAGE = "it.attendance100.mybicocca.data.dto.esse3"
     private const val PREFIX = "Esse3"
 
-    fun generate(spec: ParsedSpec, outputDir: File, dictionary: Dictionary, enumValueFields: EnumValueFields, requiredOverrides: RequiredOverrides) {
+    fun generate(spec: ParsedSpec, outputDir: File, glossary: Glossary, enumTypeMap: Map<String, String>, requiredOverrides: RequiredOverrides, basePackage: String) {
         if (spec.definitions.isEmpty()) return
 
+        val dtoPackage = "$basePackage.dto.esse3"
         val originalFileName = "${PREFIX}${spec.specName}Types.kt"
-        val fileName = dictionary.translate(originalFileName)
+        val fileName = glossary.translate(originalFileName)
         val file = File(outputDir, fileName)
 
         val sb = StringBuilder()
-        sb.appendLine("package $DTO_PACKAGE")
+        sb.appendLine("package $dtoPackage")
         sb.appendLine()
 
-        val imports = collectImports(spec.definitions, dictionary)
+        val imports = collectImports(spec.definitions, glossary)
         for (imp in imports.sorted()) {
             sb.appendLine("import $imp")
         }
@@ -35,14 +34,14 @@ object DtoGenerator {
 
         for ((index, definition) in spec.definitions.withIndex()) {
             if (index > 0) sb.appendLine()
-            generateDataClass(sb, definition, dictionary, enumValueFields, requiredOverrides)
+            generateDataClass(sb, definition, glossary, enumTypeMap, requiredOverrides)
         }
 
         file.parentFile.mkdirs()
         file.writeText(sb.toString())
     }
 
-    private fun collectImports(definitions: List<ParsedDefinition>, dictionary: Dictionary): Set<String> {
+    private fun collectImports(definitions: List<ParsedDefinition>, glossary: Glossary): Set<String> {
         val imports = mutableSetOf<String>()
         imports.add("kotlinx.serialization.SerialName")
         imports.add("kotlinx.serialization.Serializable")
@@ -50,7 +49,7 @@ object DtoGenerator {
         for (def in definitions) {
             for (prop in def.properties) {
                 val resolved = TypeMapping.resolvePropertyType(prop)
-                val rendered = resolved.renderTranslated(dictionary, PREFIX)
+                val rendered = resolved.renderTranslated(glossary, PREFIX)
 
                 if ("LocalDate?" in rendered && "LocalDateTime?" !in rendered) {
                     imports.add("java.time.LocalDate")
@@ -64,8 +63,8 @@ object DtoGenerator {
         return imports
     }
 
-    private fun generateDataClass(sb: StringBuilder, definition: ParsedDefinition, dictionary: Dictionary, enumValueFields: EnumValueFields, requiredOverrides: RequiredOverrides) {
-        val className = dictionary.translate("$PREFIX${definition.name}")
+    private fun generateDataClass(sb: StringBuilder, definition: ParsedDefinition, glossary: Glossary, enumTypeMap: Map<String, String>, requiredOverrides: RequiredOverrides) {
+        val className = glossary.translate("$PREFIX${definition.name}")
 
         sb.appendLine("@Serializable")
         sb.appendLine("data class $className(")
@@ -74,19 +73,21 @@ object DtoGenerator {
             val isRequired = requiredOverrides.isRequired(definition.name, prop.wireName)
                 ?: (prop.wireName in definition.requiredFields)
             val resolved = TypeMapping.resolvePropertyType(prop)
-            val kotlinType = resolved.renderTranslated(dictionary, PREFIX)
-            val serializer = when {
-                enumValueFields.needsSerializer(definition.name, prop.wireName) -> {
-                    if (isRequired) "Esse3EnumValueSerializer" else "Esse3NullableEnumValueSerializer"
-                }
-                else -> TypeMapping.needsSerializer(prop.type, prop.format)
+
+            val enumClassName = enumTypeMap["${definition.name}.${prop.wireName}"]
+            val kotlinType = enumClassName ?: resolved.renderTranslated(glossary, PREFIX)
+
+            val serializer = if (enumClassName != null) {
+                null
+            } else {
+                TypeMapping.needsSerializer(prop.type, prop.format)
             }
 
             if (serializer != null) {
                 sb.appendLine("    @Serializable(with = ${serializer}::class)")
             }
 
-            val rawFieldName = dictionary.translate(prop.wireName)
+            val rawFieldName = glossary.translate(prop.wireName)
             val fieldName = if (rawFieldName != prop.wireName) rawFieldName.replaceFirstChar { it.lowercaseChar() } else rawFieldName
             sb.appendLine("    @SerialName(\"${prop.wireName}\")")
 

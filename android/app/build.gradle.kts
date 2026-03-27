@@ -6,6 +6,7 @@ plugins {
     id("com.google.android.gms.oss-licenses-plugin")
     id("com.google.devtools.ksp")
     id("com.google.dagger.hilt.android")
+    id("org.jetbrains.kotlin.plugin.serialization")
 }
 
 // Android config
@@ -54,6 +55,12 @@ android {
     }
 }
 
+kotlin {
+    compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+    }
+}
+
 ksp {
     arg("correctErrorTypes", "true")
 }
@@ -61,9 +68,9 @@ ksp {
 // Dependencies
 dependencies {
     // Data API modules
-    implementation("it.attendance100.mybicocca.data.api:bicoccapp:1.0")
-    implementation("it.attendance100.mybicocca.data.api:elearning:1.0")
     implementation("it.attendance100.mybicocca.data.api:esse3:1.0")
+    implementation("it.attendance100.mybicocca.data.api:easystaff:1.0")
+    implementation("it.attendance100.mybicocca.data.api:elearning:1.0")
 
     // Android
     implementation("androidx.core:core-ktx:1.17.0")
@@ -94,10 +101,15 @@ dependencies {
     implementation("androidx.room:room-ktx:2.8.4")
     ksp("androidx.room:room-compiler:2.8.4")
 
-    // ViewModel and LiveData
+    // ViewModel + Lifecycle
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.10.0")
-    implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.10.0")
-    implementation("androidx.compose.runtime:runtime-livedata:1.10.0")
+    implementation("androidx.lifecycle:lifecycle-runtime-compose:2.10.0")
+
+    // DataStore
+    implementation("androidx.datastore:datastore-preferences:1.1.4")
+
+    // Encrypted SharedPreferences
+    implementation("androidx.security:security-crypto:1.1.0-alpha06")
 
     // Android Test dependencies
     androidTestImplementation("androidx.test.ext:junit:1.3.0")
@@ -122,13 +134,16 @@ dependencies {
     implementation("dev.chrisbanes.haze:haze:1.7.1")
     implementation("dev.chrisbanes.haze:haze-materials:1.7.1")
 
-    // Gson
-    implementation("com.google.code.gson:gson:2.13.2")
+    // Kotlinx Serialization (for Room type converters)
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.1")
+
+    // Ktor
+    implementation("io.ktor:ktor-io:3.3.3")
+    implementation("io.ktor:ktor-client-core:3.3.3")
 
     // Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
 
-    // OkHttp (Retrofit dependency)
-    implementation("com.squareup.okhttp3:okhttp:5.3.2")
-    implementation("com.squareup.okhttp3:logging-interceptor:5.3.2")
+    // Shimmer effect for loading screens
+    implementation("com.valentinilk.shimmer:compose-shimmer:1.3.3")
 }

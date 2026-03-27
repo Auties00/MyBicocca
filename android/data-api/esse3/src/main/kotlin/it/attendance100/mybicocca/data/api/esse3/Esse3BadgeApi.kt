@@ -5,6 +5,7 @@ import io.ktor.client.request.parameter
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
+import io.ktor.utils.io.ByteReadChannel
 import it.attendance100.mybicocca.data.dto.esse3.Esse3BadgeData
 import it.attendance100.mybicocca.data.dto.esse3.Esse3PermissionLevel
 import kotlinx.serialization.json.Json
@@ -42,13 +43,13 @@ class Esse3BadgeApi(
 
     suspend fun getBadgeBlobFrontPage(
         badgeBlobId: Long
-    ): String {
-        return executeJsonGet<String>("/badges/blobs/${badgeBlobId}/front", setOf(Esse3PermissionLevel.TECHNICAL_USER, Esse3PermissionLevel.STUDENT))
+    ): ByteReadChannel {
+        return executeStreamGet("/badges/blobs/${badgeBlobId}/front", setOf(Esse3PermissionLevel.TECHNICAL_USER, Esse3PermissionLevel.STUDENT))
     }
 
     suspend fun getBadgeBlobRearPage(
         badgeBlobId: Long
-    ): String {
-        return executeJsonGet<String>("/badges/blobs/${badgeBlobId}/rear", setOf(Esse3PermissionLevel.TECHNICAL_USER, Esse3PermissionLevel.STUDENT))
+    ): ByteReadChannel {
+        return executeStreamGet("/badges/blobs/${badgeBlobId}/rear", setOf(Esse3PermissionLevel.TECHNICAL_USER, Esse3PermissionLevel.STUDENT))
     }
 }

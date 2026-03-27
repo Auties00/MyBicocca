@@ -26,11 +26,11 @@ fun sanitizeParamName(name: String): String {
     return escapeKotlinKeyword(sanitized.ifEmpty { "param" })
 }
 
-fun ResolvedType.renderTranslated(dictionary: Dictionary, prefix: String = "Esse3"): String = when (this) {
+fun ResolvedType.renderTranslated(glossary: Glossary, prefix: String = "Esse3"): String = when (this) {
     is ResolvedType.Simple -> kotlinType
     is ResolvedType.Reference -> {
         val fullName = "$prefix$definitionName"
-        dictionary.translate(fullName)
+        glossary.translate(fullName)
     }
-    is ResolvedType.ListOf -> "List<${inner.renderTranslated(dictionary, prefix)}>"
+    is ResolvedType.ListOf -> "List<${inner.renderTranslated(glossary, prefix)}>"
 }

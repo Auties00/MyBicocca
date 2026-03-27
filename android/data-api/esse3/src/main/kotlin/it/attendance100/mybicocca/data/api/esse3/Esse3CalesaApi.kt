@@ -5,6 +5,7 @@ import io.ktor.client.request.parameter
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
+import io.ktor.utils.io.ByteReadChannel
 import it.attendance100.mybicocca.data.dto.esse3.Esse3ActivitiesPerExamSession
 import it.attendance100.mybicocca.data.dto.esse3.Esse3BookingModificationParameters
 import it.attendance100.mybicocca.data.dto.esse3.Esse3EnrollmentTag
@@ -401,8 +402,8 @@ class Esse3CalesaApi(
         activityId: Long,
         callId: Long,
         studentId: Long
-    ): String {
-        return executeJsonGet<String>("/appelli/${courseOfStudyId}/${activityId}/${callId}/iscritti/${studentId}/attestato-di-presenza", setOf(Esse3PermissionLevel.STUDENT))
+    ): ByteReadChannel {
+        return executeStreamGet("/appelli/${courseOfStudyId}/${activityId}/${callId}/iscritti/${studentId}/attestato-di-presenza", setOf(Esse3PermissionLevel.STUDENT))
     }
 
     suspend fun putApplicationListOutcome(
@@ -444,8 +445,8 @@ class Esse3CalesaApi(
         activityId: Long,
         callId: Long,
         studentId: Long
-    ): String {
-        return executeJsonGet<String>("/appelli/${courseOfStudyId}/${activityId}/${callId}/iscritti/${studentId}/statino-prenotazione", setOf(Esse3PermissionLevel.STUDENT))
+    ): ByteReadChannel {
+        return executeStreamGet("/appelli/${courseOfStudyId}/${activityId}/${callId}/iscritti/${studentId}/statino-prenotazione", setOf(Esse3PermissionLevel.STUDENT))
     }
 
     suspend fun putExamCallPublication(

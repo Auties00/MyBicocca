@@ -20,9 +20,8 @@ data class Esse3CompiledQuestionnaires(
     @SerialName("questionarioDes")
     val questionnaireDescription: String? = null,
 
-    @Serializable(with = Esse3NullableEnumValueSerializer::class)
     @SerialName("statoQuestCod")
-    val questionStateCode: String? = null,
+    val questionStateCode: Esse3QuestionStateCode? = null,
 
     @SerialName("questionarioNote")
     val questionnaireNote: String? = null,
@@ -318,9 +317,8 @@ data class Esse3WebSummaryTags(
 
 @Serializable
 data class Esse3Result(
-    @Serializable(with = Esse3EnumValueSerializer::class)
     @SerialName("modValCod")
-    val evaluationModeCode: String,
+    val evaluationModeCode: Esse3EvaluationModeCode,
 
     @SerialName("supEsaFlg")
     val supGraduationFlag: Int,
@@ -1090,9 +1088,8 @@ data class Esse3TranscriptRow(
     @SerialName("ragId")
     val groupId: Long? = null,
 
-    @Serializable(with = Esse3NullableEnumValueSerializer::class)
     @SerialName("raggEsaTipo")
-    val graduationGroupType: String? = null,
+    val graduationGroupType: Esse3GraduationGroupType? = null,
 
     @SerialName("adCod")
     val activityCode: String? = null,
@@ -1103,9 +1100,8 @@ data class Esse3TranscriptRow(
     @SerialName("annoCorso")
     val courseYear: Int,
 
-    @Serializable(with = Esse3EnumValueSerializer::class)
     @SerialName("stato")
-    val state: String,
+    val state: Esse3State,
 
     @SerialName("statoDes")
     val stateDescription: String,
@@ -1692,9 +1688,8 @@ data class Esse3TranscriptRowWithQuestionnaireStatus(
     @SerialName("ragId")
     val groupId: Long? = null,
 
-    @Serializable(with = Esse3NullableEnumValueSerializer::class)
     @SerialName("raggEsaTipo")
-    val graduationGroupType: String? = null,
+    val graduationGroupType: Esse3GraduationGroupType? = null,
 
     @SerialName("adCod")
     val activityCode: String? = null,
@@ -1705,9 +1700,8 @@ data class Esse3TranscriptRowWithQuestionnaireStatus(
     @SerialName("annoCorso")
     val courseYear: Int,
 
-    @Serializable(with = Esse3EnumValueSerializer::class)
     @SerialName("stato")
-    val state: String,
+    val state: Esse3State,
 
     @SerialName("statoDes")
     val stateDescription: String,

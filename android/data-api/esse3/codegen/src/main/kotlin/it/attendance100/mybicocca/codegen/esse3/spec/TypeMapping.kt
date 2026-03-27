@@ -22,6 +22,7 @@ object TypeMapping {
                 "string" -> when (format) {
                     "date" -> "LocalDate?"
                     "date-time" -> "LocalDateTime?"
+                    "binary" -> "ByteReadChannel"
                     else -> "String"
                 }
                 "integer" -> when (format) {
@@ -59,7 +60,7 @@ object TypeMapping {
             "DOCENTE" -> "TEACHER"
             "USER_TECNICO" -> "TECHNICAL_USER"
             "SEGRETERIA" -> "ADMIN_OFFICE"
-            "SOGG_ESTERNO" -> "EXTERNAL_SUBJECT"
+            "SOGG_EST" -> "EXTERNAL_SUBJECT"
             "IMMATRICOLATI_IN_IPOTESI" -> "PROVISIONAL_ENROLLED_STUDENT"
             "REGISTRATO" -> "REGISTERED_USER"
             else -> "UNKNOWN"

@@ -5,6 +5,7 @@ import io.ktor.client.call.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
+import io.ktor.utils.io.*
 import it.attendance100.mybicocca.data.common.util.buildUrl
 import it.attendance100.mybicocca.data.common.util.isRedirect
 import it.attendance100.mybicocca.data.dto.esse3.Esse3ErrorResponse
@@ -97,6 +98,66 @@ abstract class Esse3AbstractApi(
         block: HttpRequestBuilder.() -> Unit = {}
     ): List<T> {
         val response = client.get(buildServiceUrl(endpoint), block)
+        if (response.status == HttpStatusCode.NotFound) return emptyList()
+        ensureSuccess(response, expectedPermissionLevels)
+        return response.body<List<T>>()
+    }
+
+    /**
+     * Executes a POST request and deserializes the JSON response as a list,
+     * returning an empty list if the server responds with HTTP 404.
+     */
+    protected suspend inline fun <reified T> executeJsonPostList(
+        endpoint: String,
+        expectedPermissionLevels: Set<Esse3PermissionLevel> = emptySet(),
+        block: HttpRequestBuilder.() -> Unit = {}
+    ): List<T> {
+        val response = client.post(buildServiceUrl(endpoint), block)
+        if (response.status == HttpStatusCode.NotFound) return emptyList()
+        ensureSuccess(response, expectedPermissionLevels)
+        return response.body<List<T>>()
+    }
+
+    /**
+     * Executes a PUT request and deserializes the JSON response as a list,
+     * returning an empty list if the server responds with HTTP 404.
+     */
+    protected suspend inline fun <reified T> executeJsonPutList(
+        endpoint: String,
+        expectedPermissionLevels: Set<Esse3PermissionLevel> = emptySet(),
+        block: HttpRequestBuilder.() -> Unit = {}
+    ): List<T> {
+        val response = client.put(buildServiceUrl(endpoint), block)
+        if (response.status == HttpStatusCode.NotFound) return emptyList()
+        ensureSuccess(response, expectedPermissionLevels)
+        return response.body<List<T>>()
+    }
+
+    /**
+     * Executes a DELETE request and deserializes the JSON response as a list,
+     * returning an empty list if the server responds with HTTP 404.
+     */
+    protected suspend inline fun <reified T> executeJsonDeleteList(
+        endpoint: String,
+        expectedPermissionLevels: Set<Esse3PermissionLevel> = emptySet(),
+        block: HttpRequestBuilder.() -> Unit = {}
+    ): List<T> {
+        val response = client.delete(buildServiceUrl(endpoint), block)
+        if (response.status == HttpStatusCode.NotFound) return emptyList()
+        ensureSuccess(response, expectedPermissionLevels)
+        return response.body<List<T>>()
+    }
+
+    /**
+     * Executes a PATCH request and deserializes the JSON response as a list,
+     * returning an empty list if the server responds with HTTP 404.
+     */
+    protected suspend inline fun <reified T> executeJsonPatchList(
+        endpoint: String,
+        expectedPermissionLevels: Set<Esse3PermissionLevel> = emptySet(),
+        block: HttpRequestBuilder.() -> Unit = {}
+    ): List<T> {
+        val response = client.patch(buildServiceUrl(endpoint), block)
         if (response.status == HttpStatusCode.NotFound) return emptyList()
         ensureSuccess(response, expectedPermissionLevels)
         return response.body<List<T>>()
@@ -223,6 +284,91 @@ abstract class Esse3AbstractApi(
         val response = client.patch(buildServiceUrl(endpoint), block)
         ensureSuccess(response, expectedPermissionLevels)
         return response.body<T>()
+    }
+
+    /**
+     * Executes a GET request and returns the response body as a [ByteReadChannel]
+     * for streaming consumption.
+     */
+    protected suspend inline fun executeStreamGet(
+        endpoint: String,
+        expectedPermissionLevels: Set<Esse3PermissionLevel> = emptySet(),
+        block: HttpRequestBuilder.() -> Unit = {}
+    ): ByteReadChannel {
+        val response = client.get(buildServiceUrl(endpoint)) {
+            accept(ContentType.Application.OctetStream)
+            block()
+        }
+        ensureSuccess(response, expectedPermissionLevels)
+        return response.bodyAsChannel()
+    }
+
+    /**
+     * Executes a POST request and returns the response body as a [ByteReadChannel]
+     * for streaming consumption.
+     */
+    protected suspend inline fun executeStreamPost(
+        endpoint: String,
+        expectedPermissionLevels: Set<Esse3PermissionLevel> = emptySet(),
+        block: HttpRequestBuilder.() -> Unit = {}
+    ): ByteReadChannel {
+        val response = client.post(buildServiceUrl(endpoint)) {
+            accept(ContentType.Application.OctetStream)
+            block()
+        }
+        ensureSuccess(response, expectedPermissionLevels)
+        return response.bodyAsChannel()
+    }
+
+    /**
+     * Executes a PUT request and returns the response body as a [ByteReadChannel]
+     * for streaming consumption.
+     */
+    protected suspend inline fun executeStreamPut(
+        endpoint: String,
+        expectedPermissionLevels: Set<Esse3PermissionLevel> = emptySet(),
+        block: HttpRequestBuilder.() -> Unit = {}
+    ): ByteReadChannel {
+        val response = client.put(buildServiceUrl(endpoint)) {
+            accept(ContentType.Application.OctetStream)
+            block()
+        }
+        ensureSuccess(response, expectedPermissionLevels)
+        return response.bodyAsChannel()
+    }
+
+    /**
+     * Executes a DELETE request and returns the response body as a [ByteReadChannel]
+     * for streaming consumption.
+     */
+    protected suspend inline fun executeStreamDelete(
+        endpoint: String,
+        expectedPermissionLevels: Set<Esse3PermissionLevel> = emptySet(),
+        block: HttpRequestBuilder.() -> Unit = {}
+    ): ByteReadChannel {
+        val response = client.delete(buildServiceUrl(endpoint)) {
+            accept(ContentType.Application.OctetStream)
+            block()
+        }
+        ensureSuccess(response, expectedPermissionLevels)
+        return response.bodyAsChannel()
+    }
+
+    /**
+     * Executes a PATCH request and returns the response body as a [ByteReadChannel]
+     * for streaming consumption.
+     */
+    protected suspend inline fun executeStreamPatch(
+        endpoint: String,
+        expectedPermissionLevels: Set<Esse3PermissionLevel> = emptySet(),
+        block: HttpRequestBuilder.() -> Unit = {}
+    ): ByteReadChannel {
+        val response = client.patch(buildServiceUrl(endpoint)) {
+            accept(ContentType.Application.OctetStream)
+            block()
+        }
+        ensureSuccess(response, expectedPermissionLevels)
+        return response.bodyAsChannel()
     }
 
     /**

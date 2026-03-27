@@ -1217,9 +1217,8 @@ data class Esse3StudyPlan(
     @SerialName("finregsceId")
     val finalRegulationChoiceId: Long? = null,
 
-    @Serializable(with = Esse3NullableEnumValueSerializer::class)
     @SerialName("stato")
-    val state: String? = null,
+    val state: Esse3State3? = null,
 
     @SerialName("statoDes")
     val stateDescription: String? = null,
@@ -1227,9 +1226,8 @@ data class Esse3StudyPlan(
     @SerialName("dataUltimaVarStato")
     val lastStateChangeDate: String? = null,
 
-    @Serializable(with = Esse3NullableEnumValueSerializer::class)
     @SerialName("tipoPiano")
-    val planType: String? = null,
+    val planType: Esse3PlanType? = null,
 
     @SerialName("statutarioFlg")
     val statutoryFlag: Int? = null,
@@ -1555,16 +1553,14 @@ data class Esse3StudyPlanChoice(
     @SerialName("annoCorsoAnticipo")
     val anticipatedCourseYear: Int? = null,
 
-    @Serializable(with = Esse3NullableEnumValueSerializer::class)
     @SerialName("tipSce")
-    val choiceType: String? = null,
+    val choiceType: Esse3ChoiceType2? = null,
 
     @SerialName("tipSceDes")
     val choiceTypeDescription: String? = null,
 
-    @Serializable(with = Esse3NullableEnumValueSerializer::class)
     @SerialName("tipUnt")
-    val teachingUnitType: String? = null,
+    val teachingUnitType: Esse3TeachingUnitType? = null,
 
     @SerialName("minUnt")
     val minTeachingUnit: Float? = null,
@@ -1572,9 +1568,8 @@ data class Esse3StudyPlanChoice(
     @SerialName("maxUnt")
     val maxTeachingUnit: Float? = null,
 
-    @Serializable(with = Esse3NullableEnumValueSerializer::class)
     @SerialName("modTAF")
-    val tafMode: String? = null,
+    val tafMode: Esse3TafMode? = null,
 
     @SerialName("opzFlg")
     val optionalFlag: Int? = null,

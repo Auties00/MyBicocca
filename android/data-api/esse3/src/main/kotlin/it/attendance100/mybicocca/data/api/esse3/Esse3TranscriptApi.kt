@@ -5,6 +5,7 @@ import io.ktor.client.request.parameter
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
+import io.ktor.utils.io.ByteReadChannel
 import it.attendance100.mybicocca.data.dto.esse3.Esse3ActivitiesToInsert
 import it.attendance100.mybicocca.data.dto.esse3.Esse3AttendanceReleaseDetail
 import it.attendance100.mybicocca.data.dto.esse3.Esse3BulkAttendanceParameters
@@ -421,16 +422,16 @@ class Esse3TranscriptApi(
         matId: Long,
         activityChoiceId: Long,
         applicationListId: Long
-    ): String {
-        return executeJsonGet<String>("/libretti/${matId}/righe/${activityChoiceId}/prenotazioni/${applicationListId}/attestato-di-presenza", setOf(Esse3PermissionLevel.STUDENT))
+    ): ByteReadChannel {
+        return executeStreamGet("/libretti/${matId}/righe/${activityChoiceId}/prenotazioni/${applicationListId}/attestato-di-presenza", setOf(Esse3PermissionLevel.STUDENT))
     }
 
     suspend fun getBookingStatinoByApplicationListId(
         matId: Long,
         activityChoiceId: Long,
         applicationListId: Long
-    ): String {
-        return executeJsonGet<String>("/libretti/${matId}/righe/${activityChoiceId}/prenotazioni/${applicationListId}/statino-prenotazione", setOf(Esse3PermissionLevel.STUDENT))
+    ): ByteReadChannel {
+        return executeStreamGet("/libretti/${matId}/righe/${activityChoiceId}/prenotazioni/${applicationListId}/statino-prenotazione", setOf(Esse3PermissionLevel.STUDENT))
     }
 
     suspend fun getCheckProposalRecordBookRow(

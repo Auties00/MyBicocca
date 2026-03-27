@@ -401,9 +401,8 @@ data class Esse3InternshipApplicationHeader(
     @SerialName("desEstesa")
     val extendedDescription: String? = null,
 
-    @Serializable(with = Esse3NullableEnumValueSerializer::class)
     @SerialName("statoDomTiroCod")
-    val internshipApplicationStateCode: String? = null,
+    val internshipApplicationStateCode: Esse3InternshipApplicationStateCode? = null,
 
     @SerialName("statoDomTiroDes")
     val internshipApplicationStateDescription: String? = null,

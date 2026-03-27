@@ -153,7 +153,7 @@ data class Esse3CareerMinimalDataGDPR(
     val email: String? = null,
 
     @SerialName("emailAte")
-    val ateEmail: String? = null,
+    val universityEmail: String? = null,
 
     @SerialName("stuId")
     val studentId: Long? = null,

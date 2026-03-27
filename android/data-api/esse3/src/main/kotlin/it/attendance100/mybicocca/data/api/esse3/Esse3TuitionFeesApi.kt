@@ -5,6 +5,7 @@ import io.ktor.client.request.parameter
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
+import io.ktor.utils.io.ByteReadChannel
 import it.attendance100.mybicocca.data.dto.esse3.Esse3CancelInvoiceResponse
 import it.attendance100.mybicocca.data.dto.esse3.Esse3CollectionData
 import it.attendance100.mybicocca.data.dto.esse3.Esse3EnrollmentForTuition
@@ -45,7 +46,7 @@ class Esse3TuitionFeesApi(
     suspend fun postAcquireScholarshipOutcomeApplications(
         body: Esse3ScholarshipOutcomeData
     ): List<Esse3ScholarshipOutcomeResponse> {
-        return executeJsonGetList<Esse3ScholarshipOutcomeResponse>("/acqDomandeEsitiBorse", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return executeJsonPostList<Esse3ScholarshipOutcomeResponse>("/acqDomandeEsitiBorse", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
         }
@@ -54,7 +55,7 @@ class Esse3TuitionFeesApi(
     suspend fun postAcquireExemptions(
         body: List<Esse3ExemptionData>
     ): List<Esse3ExemptionResponse> {
-        return executeJsonGetList<Esse3ExemptionResponse>("/acqEsoneri", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return executeJsonPostList<Esse3ExemptionResponse>("/acqEsoneri", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
         }
@@ -285,8 +286,8 @@ class Esse3TuitionFeesApi(
 
     suspend fun putPrintPagoPANotice(
         invoiceId: Long
-    ): String {
-        return executeJsonPut<String>("/pagopa/avviso/${invoiceId}", setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.PROVISIONAL_ENROLLED_STUDENT, Esse3PermissionLevel.REGISTERED_USER, Esse3PermissionLevel.TECHNICAL_USER))
+    ): ByteReadChannel {
+        return executeStreamPut("/pagopa/avviso/${invoiceId}", setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.PROVISIONAL_ENROLLED_STUDENT, Esse3PermissionLevel.REGISTERED_USER, Esse3PermissionLevel.TECHNICAL_USER))
     }
 
     suspend fun putRequestPaymentStatus(
@@ -298,8 +299,8 @@ class Esse3TuitionFeesApi(
     suspend fun getPagoPAReceipt(
         invoiceId: Long,
         language: String
-    ): String {
-        return executeJsonGet<String>("/pagopa/quietanza/${invoiceId}/lingua/${language}", setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.PROVISIONAL_ENROLLED_STUDENT, Esse3PermissionLevel.REGISTERED_USER, Esse3PermissionLevel.TECHNICAL_USER))
+    ): ByteReadChannel {
+        return executeStreamGet("/pagopa/quietanza/${invoiceId}/lingua/${language}", setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.PROVISIONAL_ENROLLED_STUDENT, Esse3PermissionLevel.REGISTERED_USER, Esse3PermissionLevel.TECHNICAL_USER))
     }
 
     suspend fun postInitPagoPaTransaction(

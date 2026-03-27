@@ -5,6 +5,7 @@ import io.ktor.client.request.parameter
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
+import io.ktor.utils.io.ByteReadChannel
 import it.attendance100.mybicocca.data.dto.esse3.Esse3CareerPortion
 import it.attendance100.mybicocca.data.dto.esse3.Esse3PermissionLevel
 import it.attendance100.mybicocca.data.dto.esse3.Esse3PostPlanBody
@@ -111,7 +112,7 @@ class Esse3PlansApi(
     suspend fun getPlanPrint(
         studentId: Long,
         planId: Long
-    ): String {
-        return executeJsonGet<String>("/piani/${studentId}/${planId}/stampa", setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.TECHNICAL_USER))
+    ): ByteReadChannel {
+        return executeStreamGet("/piani/${studentId}/${planId}/stampa", setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.TECHNICAL_USER))
     }
 }

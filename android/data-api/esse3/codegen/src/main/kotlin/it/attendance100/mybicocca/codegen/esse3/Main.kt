@@ -2,6 +2,7 @@ package it.attendance100.mybicocca.codegen.esse3
 
 import it.attendance100.mybicocca.codegen.esse3.gen.ApiGenerator
 import it.attendance100.mybicocca.codegen.esse3.gen.DtoGenerator
+import it.attendance100.mybicocca.codegen.esse3.gen.EnumTypeGenerator
 import it.attendance100.mybicocca.codegen.esse3.gen.FacadeGenerator
 import it.attendance100.mybicocca.codegen.esse3.spec.ParsedSpec
 import it.attendance100.mybicocca.codegen.esse3.spec.SpecParser
@@ -13,17 +14,18 @@ import java.io.File
 fun main(args: Array<String>) {
     val specDir = File(args.getOrElse(0) { "./openapi" }).canonicalFile
     val outputDir = File(args.getOrElse(1) { "../src/main/kotlin/it/attendance100/mybicocca/data" }).canonicalFile
+    val basePackage = args.getOrElse(2) { "it.attendance100.mybicocca.data" }
 
     val dtoOutputDir = File(outputDir, "dto/esse3")
     val apiOutputDir = File(outputDir, "api/esse3")
     dtoOutputDir.mkdirs()
     apiOutputDir.mkdirs()
 
-    val dictionaryFile = File("dictionary.json")
-    val dictionary = Dictionary.load(dictionaryFile)
+    val glossaryFile = File("glossary.json")
+    val glossary = Glossary.load(glossaryFile)
 
-    val enumValuesFile = File("enum-values.json")
-    val enumValueFields = EnumValueFields.load(enumValuesFile)
+    val enumMappingsFile = File("enum-mappings.json")
+    val enumMappings = EnumMappings.load(enumMappingsFile)
 
     val requiredOverridesFile = File("required-overrides.json")
     val requiredOverrides = RequiredOverrides.load(requiredOverridesFile)
@@ -72,29 +74,32 @@ fun main(args: Array<String>) {
 
     val preservedFiles = setOf(
         "Esse3AbstractApi.kt",
-        "Esse3CommonTypes.kt", "Esse3TypeConverters.kt"
+        "Esse3ErrorTypes.kt", "Esse3PermissionTypes.kt", "Esse3TypeConverters.kt"
     )
     for (dir in listOf(dtoOutputDir, apiOutputDir)) {
         dir.listFiles { f -> f.name.startsWith("Esse3") && f.extension == "kt" && f.name !in preservedFiles }
             ?.forEach { it.delete() }
     }
 
-    val generatedFiles = mutableListOf<String>()
+    val enumTypeMap = EnumTypeGenerator.generate(dedupedSpecs, dtoOutputDir, glossary, enumMappings, basePackage)
+    println("Generated ${enumTypeMap.values.toSet().size} sealed enum types")
+
+    val generatedFiles = mutableListOf("dto/esse3/Esse3EnumTypes.kt")
     for (spec in dedupedSpecs) {
         if (spec.definitions.isNotEmpty()) {
-            DtoGenerator.generate(spec, dtoOutputDir, dictionary, enumValueFields, requiredOverrides)
-            val fileName = dictionary.translate("Esse3${spec.specName}Types.kt")
+            DtoGenerator.generate(spec, dtoOutputDir, glossary, enumTypeMap, requiredOverrides, basePackage)
+            val fileName = glossary.translate("Esse3${spec.specName}Types.kt")
             generatedFiles.add("dto/esse3/$fileName")
         }
 
         if (spec.operations.isNotEmpty()) {
-            ApiGenerator.generate(spec, apiOutputDir, dictionary)
-            val className = dictionary.translate("Esse3${spec.specName}Api")
+            ApiGenerator.generate(spec, apiOutputDir, glossary, basePackage)
+            val className = glossary.translate("Esse3${spec.specName}Api")
             generatedFiles.add("api/esse3/$className.kt")
         }
     }
 
-    FacadeGenerator.generate(dedupedSpecs, apiOutputDir, dictionary)
+    FacadeGenerator.generate(dedupedSpecs, apiOutputDir, glossary, basePackage)
     generatedFiles.add("api/esse3/Esse3Api.kt")
 
     println("Summary: ${generatedFiles.size} files generated")
@@ -137,47 +142,45 @@ fun main(args: Array<String>) {
         }
     }
 
-    val dictionaryMap = linkedMapOf<String, String>()
-    for (key in dictionary.keys) {
+    val glossaryMap = linkedMapOf<String, String>()
+    for (key in glossary.keys) {
         if (key in names) {
-            dictionaryMap[key] = dictionary.existingValueOrEmpty(key)
+            glossaryMap[key] = glossary.existingValueOrEmpty(key)
         }
     }
-    val newKeys = names.filter { it !in dictionary.keys }.sorted()
+    val newKeys = names.filter { it !in glossary.keys }.sorted()
     for (key in newKeys) {
-        dictionaryMap[key] = ""
+        glossaryMap[key] = ""
     }
     val json = Json { prettyPrint = true }
-    val jsonObject = JsonObject(dictionaryMap.mapValues { JsonPrimitive(it.value) })
-    dictionaryFile.writeText(json.encodeToString(JsonObject.serializer(), jsonObject))
+    val jsonObject = JsonObject(glossaryMap.mapValues { JsonPrimitive(it.value) })
+    glossaryFile.writeText(json.encodeToString(JsonObject.serializer(), jsonObject))
     println()
-    println("Updated ${dictionaryFile.absolutePath} with ${dictionaryMap.size} entries")
+    println("Updated ${glossaryFile.absolutePath} with ${glossaryMap.size} entries")
 
-    val enumFieldKeys = mutableSetOf<String>()
+    val enumMappingsMap = linkedMapOf<String, LinkedHashMap<String, String>>()
     for (spec in dedupedSpecs) {
         for (definition in spec.definitions) {
             for (prop in definition.properties) {
                 if (!prop.enumValues.isNullOrEmpty()) {
-                    enumFieldKeys.add("${definition.name}.${prop.wireName}")
+                    val key = "${definition.name}.${prop.wireName}"
+                    val existing = enumMappings.existingMappingOrNull(key)
+                    val valueMap = linkedMapOf<String, String>()
+                    for (enumValue in prop.enumValues) {
+                        valueMap[enumValue] = existing?.get(enumValue) ?: ""
+                    }
+                    enumMappingsMap[key] = valueMap
                 }
             }
         }
     }
-
-    val enumValuesMap = linkedMapOf<String, Boolean>()
-    for (key in enumValueFields.keys) {
-        if (key in enumFieldKeys) {
-            enumValuesMap[key] = enumValueFields.existingValueOrNull(key) ?: false
-        }
-    }
-    for (key in enumFieldKeys.sorted()) {
-        if (key !in enumValuesMap) {
-            enumValuesMap[key] = false
-        }
-    }
-    val enumJsonObject = JsonObject(enumValuesMap.mapValues { JsonPrimitive(it.value) })
-    enumValuesFile.writeText(json.encodeToString(JsonObject.serializer(), enumJsonObject))
-    println("Updated ${enumValuesFile.absolutePath} with ${enumValuesMap.size} entries (${enumValuesMap.count { it.value }} enabled)")
+    val sortedEnumMappingsMap = enumMappingsMap.entries.sortedBy { it.key }
+        .associateTo(linkedMapOf()) { it.key to it.value }
+    val enumJsonObject = JsonObject(sortedEnumMappingsMap.mapValues { (_, inner) ->
+        JsonObject(inner.mapValues { JsonPrimitive(it.value) })
+    })
+    enumMappingsFile.writeText(json.encodeToString(JsonObject.serializer(), enumJsonObject))
+    println("Updated ${enumMappingsFile.absolutePath} with ${enumMappingsMap.size} entries")
 
     val requiredFieldKeys = mutableSetOf<String>()
     for (spec in dedupedSpecs) {

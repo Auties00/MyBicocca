@@ -98,7 +98,7 @@ class Esse3TeachersApi(
         body: Esse3TeacherParameters,
         optionalFields: String? = null
     ): List<Esse3NewTeachers> {
-        return executeJsonGetList<Esse3NewTeachers>("/docenti/${lecturerId}", setOf(Esse3PermissionLevel.TECHNICAL_USER, Esse3PermissionLevel.TEACHER)) {
+        return executeJsonPatchList<Esse3NewTeachers>("/docenti/${lecturerId}", setOf(Esse3PermissionLevel.TECHNICAL_USER, Esse3PermissionLevel.TEACHER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
             optionalFields?.let { parameter("optionalFields", it) }
@@ -134,7 +134,7 @@ class Esse3TeachersApi(
         lecturerId: Long,
         body: List<Esse3PostTeacherSchedule>
     ): List<Esse3TeachersTimetable> {
-        return executeJsonGetList<Esse3TeachersTimetable>("/docenti/${lecturerId}/orario", setOf(Esse3PermissionLevel.TECHNICAL_USER, Esse3PermissionLevel.TEACHER)) {
+        return executeJsonPostList<Esse3TeachersTimetable>("/docenti/${lecturerId}/orario", setOf(Esse3PermissionLevel.TECHNICAL_USER, Esse3PermissionLevel.TEACHER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
         }
@@ -148,7 +148,7 @@ class Esse3TeachersApi(
         startTime: String? = null,
         endTime: String? = null
     ): List<Esse3TeachersTimetable> {
-        return executeJsonGetList<Esse3TeachersTimetable>("/docenti/${lecturerId}/orario", setOf(Esse3PermissionLevel.TECHNICAL_USER, Esse3PermissionLevel.TEACHER)) {
+        return executeJsonPutList<Esse3TeachersTimetable>("/docenti/${lecturerId}/orario", setOf(Esse3PermissionLevel.TECHNICAL_USER, Esse3PermissionLevel.TEACHER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
             day?.let { parameter("giorno", it) }

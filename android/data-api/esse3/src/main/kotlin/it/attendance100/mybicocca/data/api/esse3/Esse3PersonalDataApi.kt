@@ -5,6 +5,7 @@ import io.ktor.client.request.parameter
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
+import io.ktor.utils.io.ByteReadChannel
 import it.attendance100.mybicocca.data.dto.esse3.Esse3AnnualEnrollment
 import it.attendance100.mybicocca.data.dto.esse3.Esse3AuthorizationAttachmentMetadata
 import it.attendance100.mybicocca.data.dto.esse3.Esse3AuthorizedPerson
@@ -826,9 +827,9 @@ class Esse3PersonalDataApi(
     }
 
     suspend fun dismissEmailByAteEmail(
-        ateEmail: String
+        universityEmail: String
     ): Esse3Person {
-        return executeJsonPatch<Esse3Person>("/persone/${ateEmail}/dismetti", setOf(Esse3PermissionLevel.TECHNICAL_USER))
+        return executeJsonPatch<Esse3Person>("/persone/${universityEmail}/dismetti", setOf(Esse3PermissionLevel.TECHNICAL_USER))
     }
 
     suspend fun getPerson(
@@ -845,7 +846,7 @@ class Esse3PersonalDataApi(
         handicapType: String? = null,
         compensatoryMeasureCode: String? = null
     ): List<Esse3PersonCompensatoryMeasures> {
-        return executeJsonGetList<Esse3PersonCompensatoryMeasures>("/persone/${personId}/agg-dicHandMisComp", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return executeJsonPutList<Esse3PersonCompensatoryMeasures>("/persone/${personId}/agg-dicHandMisComp", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
             parameter("dicHandId", handicapDeclarationId)
@@ -906,7 +907,7 @@ class Esse3PersonalDataApi(
         studentId: Long? = null,
         academicYearId: Long? = null
     ): List<Esse3StudentsConsents> {
-        return executeJsonGetList<Esse3StudentsConsents>("/persone/${personId}/consensi", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return executeJsonPutList<Esse3StudentsConsents>("/persone/${personId}/consensi", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
             parameter("procWebCod", webProcedureCode)
@@ -927,7 +928,7 @@ class Esse3PersonalDataApi(
             setBody(body)
             handicapType?.let { parameter("tipoHandicap", it) }
         }
-        ensureSuccess(response, setOf(Esse3PermissionLevel.TECHNICAL_USER, Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.UNKNOWN))
+        ensureSuccess(response, setOf(Esse3PermissionLevel.TECHNICAL_USER, Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.EXTERNAL_SUBJECT))
     }
 
     suspend fun updatePersonCompensatoryMeasuresHandicapDeclaration(
@@ -938,7 +939,7 @@ class Esse3PersonalDataApi(
         handicapType: String? = null,
         compensatoryMeasureCode: String? = null
     ): List<Esse3PersonCompensatoryMeasures> {
-        return executeJsonGetList<Esse3PersonCompensatoryMeasures>("/persone/${personId}/dic-hand/${handicapDeclarationId}/misure-compensative-dicHand/${handicapDeclarationMeasuresId}", setOf(Esse3PermissionLevel.TECHNICAL_USER, Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.UNKNOWN)) {
+        return executeJsonPutList<Esse3PersonCompensatoryMeasures>("/persone/${personId}/dic-hand/${handicapDeclarationId}/misure-compensative-dicHand/${handicapDeclarationMeasuresId}", setOf(Esse3PermissionLevel.TECHNICAL_USER, Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.EXTERNAL_SUBJECT)) {
             contentType(ContentType.Application.Json)
             setBody(body)
             handicapType?.let { parameter("tipoHandicap", it) }
@@ -961,7 +962,7 @@ class Esse3PersonalDataApi(
         handicapDeclarationId: Long? = null,
         handicapType: String? = null
     ): List<Esse3HandicapDeclaration> {
-        return executeJsonGetList<Esse3HandicapDeclaration>("/persone/${personId}/dicHand", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return executeJsonPutList<Esse3HandicapDeclaration>("/persone/${personId}/dicHand", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
             handicapDeclarationId?.let { parameter("dicHandId", it) }
@@ -973,7 +974,7 @@ class Esse3PersonalDataApi(
         personId: Long,
         handicapDeclarationId: Long
     ): Esse3HandicapDeclaration {
-        return executeJsonGet<Esse3HandicapDeclaration>("/persone/${personId}/dicHand/${handicapDeclarationId}", setOf(Esse3PermissionLevel.TECHNICAL_USER, Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.UNKNOWN))
+        return executeJsonGet<Esse3HandicapDeclaration>("/persone/${personId}/dicHand/${handicapDeclarationId}", setOf(Esse3PermissionLevel.TECHNICAL_USER, Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.EXTERNAL_SUBJECT))
     }
 
     suspend fun putHandicapDeclarationById(
@@ -981,7 +982,7 @@ class Esse3PersonalDataApi(
         handicapDeclarationId: Long,
         body: Esse3HandicapDeclarationPut
     ): Esse3HandicapDeclaration {
-        return executeJsonPut<Esse3HandicapDeclaration>("/persone/${personId}/dicHand/${handicapDeclarationId}", setOf(Esse3PermissionLevel.TECHNICAL_USER, Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.UNKNOWN)) {
+        return executeJsonPut<Esse3HandicapDeclaration>("/persone/${personId}/dicHand/${handicapDeclarationId}", setOf(Esse3PermissionLevel.TECHNICAL_USER, Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.EXTERNAL_SUBJECT)) {
             contentType(ContentType.Application.Json)
             setBody(body)
         }
@@ -992,18 +993,18 @@ class Esse3PersonalDataApi(
         handicapDeclarationId: Long,
         attachmentId: Long,
         userId: String? = null
-    ): String {
-        return executeJsonGet<String>("/persone/${personId}/dicHand/${handicapDeclarationId}/allegatiDicHand/${attachmentId}/blob", setOf(Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.TECHNICAL_USER, Esse3PermissionLevel.UNKNOWN)) {
+    ): ByteReadChannel {
+        return executeStreamGet("/persone/${personId}/dicHand/${handicapDeclarationId}/allegatiDicHand/${attachmentId}/blob", setOf(Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.TECHNICAL_USER, Esse3PermissionLevel.EXTERNAL_SUBJECT)) {
             userId?.let { parameter("userId", it) }
         }
     }
 
     suspend fun dismissEmail(
         personId: Long,
-        ateEmail: String? = null
+        universityEmail: String? = null
     ): Esse3Person {
         return executeJsonPatch<Esse3Person>("/persone/${personId}/dismettiEmail", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
-            ateEmail?.let { parameter("emailAte", it) }
+            universityEmail?.let { parameter("emailAte", it) }
         }
     }
 
@@ -1018,17 +1019,17 @@ class Esse3PersonalDataApi(
 
     suspend fun putStudentAteEmail(
         personId: Long,
-        ateEmail: String
+        universityEmail: String
     ): Esse3Person {
         return executeJsonPut<Esse3Person>("/persone/${personId}/emailAte", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
-            parameter("emailAte", ateEmail)
+            parameter("emailAte", universityEmail)
         }
     }
 
     suspend fun getPersonPhoto(
         personId: Long
-    ): String {
-        return executeJsonGet<String>("/persone/${personId}/foto", setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TECHNICAL_USER))
+    ): ByteReadChannel {
+        return executeStreamGet("/persone/${personId}/foto", setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TECHNICAL_USER))
     }
 
     suspend fun postCompensatoryMeasuresHandicapDeclaration(
@@ -1142,7 +1143,7 @@ class Esse3PersonalDataApi(
     suspend fun putExternalSubject(
         body: Esse3PutExternalSubject
     ): List<Esse3ExternalSubject> {
-        return executeJsonGetList<Esse3ExternalSubject>("/soggettiEsterni", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return executeJsonPutList<Esse3ExternalSubject>("/soggettiEsterni", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
         }
@@ -1172,7 +1173,7 @@ class Esse3PersonalDataApi(
         webProcedureCode: String,
         iso6392Code: String? = null
     ): List<Esse3ExternalSubjectsConsents> {
-        return executeJsonGetList<Esse3ExternalSubjectsConsents>("/soggettiEsterni/${externalSubjectId}/consensi", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return executeJsonPutList<Esse3ExternalSubjectsConsents>("/soggettiEsterni/${externalSubjectId}/consensi", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
             parameter("procWebCod", webProcedureCode)

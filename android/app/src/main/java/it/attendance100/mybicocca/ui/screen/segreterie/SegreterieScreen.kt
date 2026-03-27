@@ -1,0 +1,488 @@
+package it.attendance100.mybicocca.ui.screen.segreterie
+
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.VectorConverter
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.filled.AutoStories
+import androidx.compose.material.icons.filled.Book
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Event
+import androidx.compose.material.icons.filled.EventAvailable
+import androidx.compose.material.icons.filled.Print
+import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material.icons.filled.WorkHistory
+import androidx.compose.material.icons.outlined.AccountBalance
+import androidx.compose.material.icons.outlined.Description
+import androidx.compose.material.icons.outlined.Euro
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.vectorResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import it.attendance100.mybicocca.R
+import it.attendance100.mybicocca.ui.component.AutoScrollingFilterRow
+import it.attendance100.mybicocca.ui.component.DualActionBottomBar
+import it.attendance100.mybicocca.ui.component.card.SimpleCard
+import it.attendance100.mybicocca.ui.component.SingleActionBottomBar
+import it.attendance100.mybicocca.util.rememberHapticManager
+import kotlinx.coroutines.delay
+import kotlin.random.Random
+
+sealed interface DashboardItem {
+    val id: String
+    val title: String
+}
+
+enum class DashboardTileStatus {
+    Normal,
+    Warning,
+    Important,
+}
+
+enum class DashboardCategory {
+    Tutti,
+    Esami,
+    Didattica,
+    Amministrazione,
+    Agenda,
+    Stage,
+}
+
+@Composable
+fun DashboardCategory.label(): String {
+    return when (this) {
+        DashboardCategory.Tutti -> stringResource(R.string.segreterie_filter_all)
+        DashboardCategory.Esami -> stringResource(R.string.segreterie_filter_exams)
+        DashboardCategory.Didattica -> stringResource(R.string.segreterie_filter_didattica)
+        DashboardCategory.Amministrazione -> stringResource(R.string.segreterie_filter_financial)
+        DashboardCategory.Agenda -> stringResource(R.string.segreterie_filter_agenda)
+        DashboardCategory.Stage -> stringResource(R.string.segreterie_filter_stage)
+    }
+}
+
+data class DashboardHeader(
+    override val id: String,
+    override val title: String,
+) : DashboardItem
+
+data class DashboardTile(
+    override val id: String,
+    override val title: String,
+    val subtitle: String? = null,
+    val status: DashboardTileStatus = DashboardTileStatus.Normal,
+    val icon: ImageVector,
+    val action: () -> Unit,
+    val heightDp: Dp = if (subtitle != null) 95.dp else 70.dp,
+    val category: DashboardCategory = DashboardCategory.Tutti,
+) : DashboardItem
+
+private object SegreterieAnimationState {
+    var shown = false
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+fun SegreterieScreen(
+    onNavigateToBooking: () -> Unit = {},
+    onNavigateToBooked: () -> Unit = {},
+    onNavigateToTaxes: () -> Unit = {},
+    onNavigateToIsee: () -> Unit = {},
+    onNavigateToSelfCertificates: () -> Unit = {},
+    onNavigateToExamResults: () -> Unit = {},
+    onNavigateToPianoCarriera: () -> Unit = {},
+    onNavigateToQuestionnaires: () -> Unit = {},
+    onNavigateToReservations: () -> Unit = {},
+    onNavigateToAttendance: () -> Unit = {},
+    onNavigateToStage: () -> Unit = {},
+    viewModel: SegreterieViewModel = hiltViewModel(),
+) {
+    val primaryColor = MaterialTheme.colorScheme.primary
+    val haptic = rememberHapticManager()
+    val unpaidTaxCount by viewModel.unpaidTaxCount.collectAsStateWithLifecycle()
+    val bookedExamCount by viewModel.bookedExamCount.collectAsStateWithLifecycle()
+
+    val shouldAnimate = remember { !SegreterieAnimationState.shown }
+    LaunchedEffect(Unit) {
+        SegreterieAnimationState.shown = true
+    }
+
+    val gridItems: List<DashboardItem> = listOf(
+        DashboardHeader(
+            id = "exam_title",
+            title = stringResource(R.string.segreterie_exams_booking),
+        ),
+        DashboardTile(
+            id = "booked_booking",
+            title = stringResource(R.string.segreterie_booking),
+            subtitle = stringResource(R.string.segreterie_booking_available, 2),
+            icon = Icons.Filled.Event,
+            category = DashboardCategory.Esami,
+            action = onNavigateToBooking,
+        ),
+        DashboardTile(
+            id = "booked_booked",
+            title = stringResource(R.string.segreterie_booked),
+            subtitle = if (bookedExamCount > 0) stringResource(
+                R.string.segreterie_booked_number,
+                bookedExamCount.toString()
+            ) else null,
+            icon = Icons.Filled.EventAvailable,
+            status = if (bookedExamCount > 0) DashboardTileStatus.Important else DashboardTileStatus.Normal,
+            category = DashboardCategory.Esami,
+            action = onNavigateToBooked,
+        ),
+        DashboardHeader(
+            id = "financial",
+            title = stringResource(R.string.segreterie_services),
+        ),
+        DashboardTile(
+            id = "taxes",
+            title = stringResource(R.string.segreterie_taxes),
+            subtitle = if (unpaidTaxCount > 0) stringResource(R.string.segreterie_taxes_desc_bad)
+            else stringResource(R.string.segreterie_taxes_desc_good),
+            icon = Icons.Outlined.Euro,
+            status = if (unpaidTaxCount > 0) DashboardTileStatus.Warning else DashboardTileStatus.Normal,
+            category = DashboardCategory.Amministrazione,
+            action = onNavigateToTaxes,
+        ),
+        DashboardTile(
+            id = "isee",
+            title = stringResource(R.string.segreterie_isee),
+            icon = Icons.Outlined.AccountBalance,
+            category = DashboardCategory.Amministrazione,
+            action = onNavigateToIsee,
+        ),
+        DashboardTile(
+            id = "scholarship",
+            title = stringResource(R.string.segreterie_self_certificates),
+            icon = Icons.Outlined.Description,
+            category = DashboardCategory.Amministrazione,
+            action = onNavigateToSelfCertificates,
+        ),
+        DashboardTile(
+            id = "exam_results",
+            title = "Bacheca Esami",
+            subtitle = "3 voti pubblicati",
+            icon = ImageVector.vectorResource(R.drawable.clarify),
+            category = DashboardCategory.Esami,
+            action = onNavigateToExamResults,
+        ),
+        DashboardTile(
+            id = "plan",
+            title = "Piano Studi",
+            subtitle = "Approvato",
+            icon = Icons.Filled.Book,
+            category = DashboardCategory.Didattica,
+            action = onNavigateToPianoCarriera,
+        ),
+        DashboardTile(
+            id = "questionnaires",
+            title = "Questionari",
+            subtitle = "2 da compilare",
+            icon = ImageVector.vectorResource(R.drawable.stylus_note),
+            category = DashboardCategory.Didattica,
+            action = onNavigateToQuestionnaires,
+        ),
+        DashboardTile(
+            id = "reservations",
+            title = "Prenotazioni",
+            subtitle = null,
+            icon = Icons.Filled.AutoStories,
+            category = DashboardCategory.Agenda,
+            action = onNavigateToReservations,
+        ),
+        DashboardTile(
+            id = "attendance",
+            title = "Presenze",
+            subtitle = null,
+            icon = ImageVector.vectorResource(R.drawable.concierge),
+            category = DashboardCategory.Agenda,
+            action = onNavigateToAttendance,
+        ),
+        DashboardTile(
+            id = "stage",
+            title = "Stage",
+            subtitle = null,
+            icon = Icons.Filled.WorkHistory,
+            category = DashboardCategory.Stage,
+            action = onNavigateToStage,
+        ),
+    )
+
+    var selectedCategory by remember { mutableStateOf(DashboardCategory.Tutti) }
+
+    val allTiles = remember(gridItems) { gridItems.filterIsInstance<DashboardTile>() }
+
+    val displayedCategories = remember(selectedCategory) {
+        if (selectedCategory == DashboardCategory.Tutti) DashboardCategory.entries
+        else listOf(selectedCategory)
+    }
+
+    val groupedTiles = remember(selectedCategory, allTiles) {
+        val tiles = if (selectedCategory == DashboardCategory.Tutti) allTiles
+        else allTiles.filter { it.category == selectedCategory }
+        tiles.groupBy { it.category }
+    }
+
+    val delays = remember(groupedTiles) {
+        val map = mutableMapOf<String, Int>()
+        val heights = floatArrayOf(0f, 0f)
+
+        displayedCategories.forEach { category ->
+            groupedTiles[category]?.forEach { item ->
+                val maxH = heights.maxOrNull() ?: 0f
+                heights[0] = maxH
+                heights[1] = maxH
+            }
+        }
+        map
+    }
+
+    Box(
+        modifier = Modifier.fillMaxSize()
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background),
+        ) {
+            // Filter Chips
+            AutoScrollingFilterRow(
+                contentPadding = PaddingValues(bottom = 4.dp),
+                items = DashboardCategory.entries,
+                selectedItem = selectedCategory,
+                onSelectionChanged = { selectedCategory = it },
+                labelProvider = { it.label() },
+            )
+
+            // Dashboard List
+            LazyColumn(
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                contentPadding = PaddingValues(horizontal = 16.dp),
+                modifier = Modifier.fillMaxSize(),
+            ) {
+                displayedCategories.forEach { category ->
+                    val tiles = groupedTiles[category]
+                    if (!tiles.isNullOrEmpty()) {
+                        stickyHeader(key = "header_${category.name}") {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .background(MaterialTheme.colorScheme.background)
+                                    .padding(vertical = 8.dp),
+                            ) {
+                                Text(
+                                    text = category.label(),
+                                    color = primaryColor,
+                                    fontSize = 18.sp,
+                                    fontWeight = FontWeight.Bold,
+                                )
+                            }
+                        }
+
+                        items(
+                            items = tiles,
+                            key = { it.id },
+                        ) { dashItem ->
+                            val delay = delays[dashItem.id] ?: 0
+                            LongTile(dashItem, delay = delay, shouldAnimate = shouldAnimate)
+                        }
+                    }
+                }
+
+                // Bottom Spacer
+                item { Spacer(modifier = Modifier.height(80.dp)) }
+            }
+        }
+
+        // Bottom bars (offscreen, available for shared transitions)
+        DualActionBottomBar(
+            mainActionText = stringResource(R.string.career_plan_edit),
+            mainActionIcon = Icons.Default.Edit,
+            onMainActionClick = { /* nothing */ },
+            secondaryActionIcon = Icons.Default.Print,
+            onSecondaryActionClick = { /* nothing */ },
+            footerText = stringResource(R.string.career_plan_last_modified, "xx/xx/20xx"),
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .offset(y = 230.dp)
+        )
+
+        SingleActionBottomBar(
+            text = "Stampa importo Tasse dovute",
+            icon = Icons.Default.Print,
+            onClick = {
+                haptic.tap()
+                // TODO: implement pdf opening
+            },
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .offset(y = 230.dp)
+        )
+    }
+}
+
+
+@Composable
+fun LongTile(
+    item: DashboardTile,
+    delay: Int = 0,
+    shouldAnimate: Boolean = true,
+) {
+    val titleColor = when (item.status) {
+        DashboardTileStatus.Warning -> MaterialTheme.colorScheme.tertiaryContainer
+        DashboardTileStatus.Important -> MaterialTheme.colorScheme.onBackground
+        else -> MaterialTheme.colorScheme.onPrimary
+    }
+    val subtitleColor = MaterialTheme.colorScheme.onBackground
+    val haptic = rememberHapticManager()
+
+    val randomX = remember { Random.nextInt(-10, 5).dp }
+    val randomRotation = remember { Random.nextInt(-5, 5).toFloat() }
+
+    val heightAnim = remember { Animatable(item.heightDp, Dp.VectorConverter) }
+
+    LaunchedEffect(Unit) {
+        if (shouldAnimate) {
+            delay(delay.toLong())
+            heightAnim.animateTo(
+                targetValue = item.heightDp * 1.05f,
+                animationSpec = tween(durationMillis = 200, easing = FastOutSlowInEasing),
+            )
+            heightAnim.animateTo(
+                targetValue = item.heightDp,
+                animationSpec = spring(
+                    dampingRatio = Spring.DampingRatioLowBouncy,
+                    stiffness = Spring.StiffnessLow,
+                ),
+            )
+        }
+    }
+
+    SimpleCard(
+        modifier = Modifier.height(heightAnim.value),
+        backgroundColor = when (item.status) {
+            DashboardTileStatus.Warning -> MaterialTheme.colorScheme.onTertiaryContainer
+            DashboardTileStatus.Important -> MaterialTheme.colorScheme.surfaceContainerHigh
+            else -> MaterialTheme.colorScheme.surfaceContainerLowest
+        },
+        onClick = {
+            haptic.tap()
+            item.action()
+        },
+        background = {
+            Icon(
+                imageVector = item.icon,
+                contentDescription = null,
+                tint = titleColor,
+                modifier = Modifier
+                    .size(75.dp - (if (item.subtitle == null) 15 else 0).dp)
+                    .align(Alignment.CenterEnd)
+                    .offset(x = (-45).dp + randomX)
+                    .rotate(randomRotation)
+                    .alpha(0.2f),
+            )
+        },
+        leading = {
+            val borderColor = when (item.status) {
+                DashboardTileStatus.Warning -> MaterialTheme.colorScheme.tertiaryContainer
+                DashboardTileStatus.Important -> MaterialTheme.colorScheme.onPrimary
+                else -> MaterialTheme.colorScheme.primary
+            }
+
+            Box(
+                modifier = Modifier
+                    .width(7.dp)
+                    .fillMaxHeight()
+                    .background(borderColor),
+            )
+        },
+    ) {
+        Box(modifier = Modifier.fillMaxSize()) {
+            Column(
+                modifier = Modifier
+                    .padding(start = 14.dp, top = 12.dp, end = 14.dp, bottom = 10.dp)
+                    .align(Alignment.TopStart),
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = item.title,
+                        style = MaterialTheme.typography.titleLarge.copy(fontSize = 20.sp),
+                        color = titleColor.copy(alpha = 0.9f),
+                        fontWeight = FontWeight.Bold,
+                    )
+
+                    if (item.status == DashboardTileStatus.Warning) {
+                        val borderColor = MaterialTheme.colorScheme.tertiaryContainer
+
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Icon(
+                            imageVector = Icons.Default.Warning,
+                            tint = borderColor,
+                            contentDescription = null,
+                            modifier = Modifier.size(20.dp),
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(2.dp))
+
+                if (item.subtitle != null) Text(
+                    text = item.subtitle,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = subtitleColor,
+                )
+            }
+
+            // "Open" Arrow
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                contentDescription = null,
+                tint = titleColor,
+                modifier = Modifier
+                    .align(Alignment.CenterEnd)
+                    .offset(x = 5.dp),
+            )
+        }
+    }
+}

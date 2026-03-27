@@ -5,6 +5,7 @@ import io.ktor.client.request.parameter
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
+import io.ktor.utils.io.ByteReadChannel
 import it.attendance100.mybicocca.data.dto.esse3.Esse3AttachmentExtension
 import it.attendance100.mybicocca.data.dto.esse3.Esse3AttachmentMetadata
 import it.attendance100.mybicocca.data.dto.esse3.Esse3AttachmentType
@@ -29,7 +30,7 @@ class Esse3AttachmentsApi(
         start: Int? = null,
         limit: Int? = null
     ): List<Esse3AttachmentTypeCode> {
-        return executeJsonGetList<Esse3AttachmentTypeCode>("/allegati/codiceTipologiaAllegato/", setOf(Esse3PermissionLevel.TECHNICAL_USER, Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.UNKNOWN)) {
+        return executeJsonGetList<Esse3AttachmentTypeCode>("/allegati/codiceTipologiaAllegato/", setOf(Esse3PermissionLevel.TECHNICAL_USER, Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.EXTERNAL_SUBJECT)) {
             sessionLanguageCode?.let { parameter("sessionLinguaCod", it) }
             start?.let { parameter("start", it) }
             limit?.let { parameter("limit", it) }
@@ -40,7 +41,7 @@ class Esse3AttachmentsApi(
         start: Int? = null,
         limit: Int? = null
     ): List<Esse3AttachmentExtension> {
-        return executeJsonGetList<Esse3AttachmentExtension>("/allegati/estensioneAllegato", setOf(Esse3PermissionLevel.TECHNICAL_USER, Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.UNKNOWN)) {
+        return executeJsonGetList<Esse3AttachmentExtension>("/allegati/estensioneAllegato", setOf(Esse3PermissionLevel.TECHNICAL_USER, Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.EXTERNAL_SUBJECT)) {
             start?.let { parameter("start", it) }
             limit?.let { parameter("limit", it) }
         }
@@ -89,8 +90,8 @@ class Esse3AttachmentsApi(
     suspend fun getAttachmentContent(
         attachmentType: String,
         attachmentId: Long
-    ): String {
-        return executeJsonGet<String>("/allegati/${attachmentType}/${attachmentId}/blob", setOf(Esse3PermissionLevel.TECHNICAL_USER))
+    ): ByteReadChannel {
+        return executeStreamGet("/allegati/${attachmentType}/${attachmentId}/blob", setOf(Esse3PermissionLevel.TECHNICAL_USER))
     }
 
     suspend fun getUploadedAttachmentMetadata(

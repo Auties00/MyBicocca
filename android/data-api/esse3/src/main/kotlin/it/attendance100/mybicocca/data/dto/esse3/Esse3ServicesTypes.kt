@@ -302,9 +302,8 @@ data class Esse3VersionInfo(
     @SerialName("univName")
     val universityName: String? = null,
 
-    @Serializable(with = Esse3NullableEnumValueSerializer::class)
     @SerialName("ambienteType")
-    val environmentType: String? = null,
+    val environmentType: Esse3EnvironmentType? = null,
 
     @SerialName("buildId")
     val buildId: String? = null,
