@@ -309,7 +309,7 @@ data class Esse3PersonCommonRegistry(
     val email: String? = null,
 
     @SerialName("emailAte")
-    val ateEmail: String? = null,
+    val universityEmail: String? = null,
 
     @SerialName("dataIns")
     val insertionDate: String? = null,
@@ -813,7 +813,7 @@ data class Esse3ExtendedPerson(
     val email: String? = null,
 
     @SerialName("emailAte")
-    val ateEmail: String? = null,
+    val universityEmail: String? = null,
 
     @SerialName("cellulare")
     val mobilePhone: String? = null,
@@ -2343,7 +2343,7 @@ data class Esse3Person(
     val email: String? = null,
 
     @SerialName("emailAte")
-    val ateEmail: String? = null,
+    val universityEmail: String? = null,
 
     @SerialName("dataIns")
     val insertionDate: String? = null,
@@ -2766,7 +2766,7 @@ data class Esse3CareerGDPR(
     val email: String? = null,
 
     @SerialName("emailAte")
-    val ateEmail: String? = null,
+    val universityEmail: String? = null,
 
     @SerialName("staStuCod")
     val studentStatusCode: String? = null,
@@ -3399,7 +3399,7 @@ data class Esse3PersonGDPR(
     val email: String? = null,
 
     @SerialName("emailAte")
-    val ateEmail: String? = null,
+    val universityEmail: String? = null,
 
     @SerialName("dataIns")
     val insertionDate: String? = null,
@@ -5451,7 +5451,7 @@ data class Esse3Career(
     val email: String? = null,
 
     @SerialName("emailAte")
-    val ateEmail: String? = null,
+    val universityEmail: String? = null,
 
     @SerialName("staStuCod")
     val studentStatusCode: String? = null,
@@ -5733,7 +5733,7 @@ data class Esse3NewTeachers(
     val email: String? = null,
 
     @SerialName("emailAte")
-    val ateEmail: String? = null,
+    val universityEmail: String? = null,
 
     @SerialName("emailDocenteLa")
     val lecturerLaEmail: String? = null,
@@ -6654,7 +6654,7 @@ data class Esse3CareerMinimalData(
     val email: String? = null,
 
     @SerialName("emailAte")
-    val ateEmail: String? = null,
+    val universityEmail: String? = null,
 
     @SerialName("stuId")
     val studentId: Long? = null,
@@ -8118,7 +8118,7 @@ data class Esse3PhDCareer(
     val email: String? = null,
 
     @SerialName("emailAte")
-    val ateEmail: String? = null,
+    val universityEmail: String? = null,
 
     @SerialName("aaOrdId")
     val academicYearOrderId: Long? = null,
@@ -8442,7 +8442,7 @@ data class Esse3PhDProgramCareer(
     val email: String? = null,
 
     @SerialName("emailAte")
-    val ateEmail: String? = null,
+    val universityEmail: String? = null,
 
     @SerialName("aaOrdId")
     val academicYearOrderId: Long? = null,

@@ -30,9 +30,9 @@ Esse3 uses a mix of Italian and English names, along with cryptic internal acron
 For example, `aggcarr` stands for *aggiornamento carriera* (career update), `regsceApi` is *regole di scelta* (choice rules), and `AD` is short for *Attività Didattica* (teaching activity).
 We didn't want any of that in our codebase.
 
-The codegen collects every name it encounters — class names, field names, method names, file names — and writes them as keys in [dictionary.json](./dictionary.json).
+The codegen collects every name it encounters — class names, field names, method names, file names — and writes them as keys in [glossary.json](./glossary.json).
 New entries are added with an empty value; existing translations are preserved.
 An LLM is then used to translate these entries, given the appropriate context about Esse3 and the university domain so that even the most obscure acronyms can be deciphered.
-At generation time, every name is looked up in the dictionary: if a translation exists, it's used; otherwise, the original name is kept as-is.
+At generation time, every name is looked up in the glossary: if a translation exists, it's used; otherwise, the original name is kept as-is.
 
 This fixes the issue without us having to manually rename thousands of identifiers.

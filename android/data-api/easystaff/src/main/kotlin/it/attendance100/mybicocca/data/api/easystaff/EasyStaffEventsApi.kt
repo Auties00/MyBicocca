@@ -34,7 +34,7 @@ class EasyStaffEventsApi(
      * @return The available event types
      */
     suspend fun getEventTypes(
-        language: EasyStaffLanguage,
+        language: EasyStaffLanguage = EasyStaffLanguage.ITALIAN,
     ): List<EasyStaffEventType> {
         val response = executeGetText(
             COMBO_ENDPOINT,

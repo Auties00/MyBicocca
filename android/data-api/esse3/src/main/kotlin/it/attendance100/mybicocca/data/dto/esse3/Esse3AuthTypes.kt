@@ -188,13 +188,11 @@ data class Esse3SessionLanguage(
 
 @Serializable
 data class Esse3AuthenticationCredentials(
-    @Serializable(with = Esse3EnumValueSerializer::class)
     @SerialName("kind")
-    val kind: String,
+    val kind: Esse3Kind,
 
-    @Serializable(with = Esse3NullableEnumValueSerializer::class)
     @SerialName("profile")
-    val profile: String? = null,
+    val profile: Esse3Profile? = null,
 
     @SerialName("jwtKeyId")
     val jwtKeyId: String? = null,

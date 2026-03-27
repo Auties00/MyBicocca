@@ -1,0 +1,340 @@
+package it.attendance100.mybicocca.ui.screen.calendar
+
+import androidx.compose.animation.*
+import androidx.compose.foundation.*
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.pager.*
+import androidx.compose.material3.*
+import androidx.compose.material3.pulltorefresh.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.hilt.navigation.compose.hiltViewModel
+import it.attendance100.mybicocca.data.model.calendar.CalendarEvent
+import it.attendance100.mybicocca.ui.component.calendar.dialog.DatePickerDialog
+import it.attendance100.mybicocca.ui.component.calendar.dialog.EventDetailDialog
+import it.attendance100.mybicocca.ui.component.calendar.search.GlobalSearchBottomSheet
+import it.attendance100.mybicocca.ui.component.calendar.filter.CalendarFilterModal
+import it.attendance100.mybicocca.ui.component.calendar.header.CalendarTopBar
+import it.attendance100.mybicocca.ui.component.calendar.header.HorizontalDaySelector
+import it.attendance100.mybicocca.ui.component.calendar.view.DayTimelineView
+import it.attendance100.mybicocca.ui.component.calendar.view.MonthGridView
+import it.attendance100.mybicocca.ui.component.calendar.view.WeekGridView
+import it.attendance100.mybicocca.ui.component.calendar.CalendarConfig
+import it.attendance100.mybicocca.ui.component.calendar.CalendarUtils
+import it.attendance100.mybicocca.ui.theme.*
+import kotlinx.coroutines.launch
+import java.time.DayOfWeek
+import java.time.LocalDate
+
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
+@Composable
+fun CalendarRoute(
+    viewModel: CalendarViewModel = hiltViewModel()
+) {
+    // Collect all state
+    val selectedDate by viewModel.selectedDate.collectAsState()
+    val currentMonth by viewModel.currentMonth.collectAsState()
+    val viewMode by viewModel.viewMode.collectAsState()
+    val displayedWeekStart by viewModel.displayedWeekStart.collectAsState()
+    val eventsForMonth by viewModel.eventsForMonth.collectAsState()
+    val futureEvents by viewModel.futureEvents.collectAsState()
+    val isRefreshing by viewModel.isRefreshing.collectAsState()
+    val activeFilters by viewModel.activeFilters.collectAsState()
+    val timeRange by viewModel.timeRange.collectAsState()
+    val locationFilter by viewModel.locationFilter.collectAsState()
+    val selectedEvent by viewModel.selectedEvent.collectAsState()
+    val showDatePicker by viewModel.showDatePicker.collectAsState()
+    val showFilters by viewModel.showFilters.collectAsState()
+    val showGlobalSearch by viewModel.showGlobalSearch.collectAsState()
+
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(Unit) {
+        viewModel.snackbarEvent.collect { snackbarHostState.showSnackbar(it) }
+    }
+
+    // Derived state
+    val filteredEvents = remember(eventsForMonth, activeFilters, timeRange, locationFilter) {
+        CalendarUtils.filterEvents(eventsForMonth, activeFilters, timeRange, locationFilter)
+    }
+    val buildingsWithRooms = remember(eventsForMonth) {
+        CalendarUtils.extractBuildingsWithRooms(eventsForMonth)
+    }
+    val hasActiveFilters = remember(activeFilters, timeRange, locationFilter) {
+        viewModel.hasActiveFilters
+    }
+
+    // Colors
+    val backgroundColor = MaterialTheme.colorScheme.background
+    val textColor = MaterialTheme.colorScheme.onBackground
+    val primaryColor = MaterialTheme.colorScheme.primary
+    val grayColor = if (backgroundColor == BackgroundColor) GrayColorDark else GrayColorLight
+
+    // Pager state
+    val sharedScrollState = rememberScrollState()
+    val pullToRefreshState = rememberPullToRefreshState()
+    val scope = rememberCoroutineScope()
+    val referenceDate = remember { LocalDate.now() }
+    val pagerState = rememberPagerState(
+        initialPage = CalendarConfig.Pager.calculateWeekPage(referenceDate, selectedDate),
+        pageCount = { CalendarConfig.Pager.PAGE_COUNT }
+    )
+    val dayPagerState = rememberPagerState(
+        initialPage = CalendarConfig.Pager.calculateDayPage(referenceDate, selectedDate),
+        pageCount = { CalendarConfig.Pager.PAGE_COUNT }
+    )
+
+    // Pager sync
+    LaunchedEffect(selectedDate) {
+        viewModel.setDisplayedWeekStart(selectedDate.with(DayOfWeek.MONDAY))
+        val targetDay = CalendarConfig.Pager.calculateDayPage(referenceDate, selectedDate)
+        if (dayPagerState.currentPage != targetDay) dayPagerState.scrollToPage(targetDay)
+        val targetWeek = CalendarConfig.Pager.calculateWeekPage(referenceDate, selectedDate)
+        if (pagerState.currentPage != targetWeek) pagerState.scrollToPage(targetWeek)
+    }
+    LaunchedEffect(dayPagerState.currentPage) {
+        if (viewMode == CalendarViewMode.LIST) {
+            val offset = dayPagerState.currentPage - CalendarConfig.Pager.INITIAL_PAGE_OFFSET
+            val newDate = referenceDate.plusDays(offset.toLong())
+            if (newDate != selectedDate) viewModel.selectDate(newDate)
+        }
+    }
+    LaunchedEffect(pagerState.currentPage) {
+        val offset = pagerState.currentPage - CalendarConfig.Pager.INITIAL_PAGE_OFFSET
+        val weekStart = referenceDate.with(DayOfWeek.MONDAY).plusWeeks(offset.toLong())
+        viewModel.setDisplayedWeekStart(weekStart)
+        if (viewMode == CalendarViewMode.WEEK) {
+            val inWeek = selectedDate >= weekStart && selectedDate < weekStart.plusWeeks(1)
+            if (!inWeek) viewModel.selectDate(weekStart)
+        }
+    }
+
+    Scaffold(
+        topBar = {
+            CalendarTopBar(
+                currentMonth = currentMonth,
+                viewMode = viewMode,
+                onViewModeChange = viewModel::setViewMode,
+                onPreviousMonth = viewModel::previousMonth,
+                onNextMonth = viewModel::nextMonth,
+                onToday = viewModel::goToToday,
+                onLongPressMonth = { viewModel.setShowDatePicker(true) },
+                onFilterToggle = viewModel::toggleFiltersVisibility,
+                onSearchClick = { viewModel.setShowGlobalSearch(true) },
+                showFilterActive = showFilters || hasActiveFilters,
+                primaryColor = primaryColor
+            )
+        },
+        snackbarHost = { SnackbarHost(snackbarHostState) },
+        containerColor = backgroundColor,
+        contentWindowInsets = WindowInsets(0)
+    ) { paddingValues ->
+        PullToRefreshBox(
+            isRefreshing = isRefreshing,
+            onRefresh = viewModel::refresh,
+            state = pullToRefreshState,
+            modifier = Modifier.fillMaxSize()
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+            ) {
+                AnimatedVisibility(
+                    visible = viewMode != CalendarViewMode.MONTH,
+                    enter = expandVertically() + fadeIn(),
+                    exit = shrinkVertically() + fadeOut()
+                ) {
+                    HorizontalDaySelector(
+                        pagerState = pagerState,
+                        selectedDate = selectedDate,
+                        referenceDate = referenceDate,
+                        viewMode = viewMode,
+                        onDateSelected = { date ->
+                            viewModel.selectDate(date)
+                            if (viewMode == CalendarViewMode.WEEK) viewModel.setViewMode(CalendarViewMode.LIST)
+                        },
+                        textColor = textColor,
+                        grayColor = grayColor,
+                        primaryColor = primaryColor
+                    )
+                }
+
+                HorizontalDivider(color = grayColor.copy(alpha = 0.2f))
+
+                CalendarViewContent(
+                    viewMode = viewMode,
+                    eventsForMonth = eventsForMonth,
+                    filteredEvents = filteredEvents,
+                    selectedDate = selectedDate,
+                    currentMonth = currentMonth,
+                    displayedWeekStart = displayedWeekStart,
+                    activeFilters = activeFilters,
+                    timeRange = timeRange,
+                    locationFilter = locationFilter,
+                    isLoading = false,
+                    hasActiveFilters = hasActiveFilters,
+                    dayPagerState = dayPagerState,
+                    referenceDate = referenceDate,
+                    onEventSelected = viewModel::selectEvent,
+                    onDateSelected = viewModel::selectDate,
+                    onMonthChange = viewModel::setCurrentMonth,
+                    onViewModeChange = viewModel::setViewMode,
+                    onSwipeWeek = { direction ->
+                        scope.launch { pagerState.animateScrollToPage(pagerState.currentPage - direction) }
+                    },
+                    scrollState = sharedScrollState,
+                    textColor = textColor,
+                    grayColor = grayColor,
+                    primaryColor = primaryColor
+                )
+            }
+        }
+    }
+
+    // Dialogs / Modals
+
+    if (showFilters) {
+        CalendarFilterModal(
+            onDismiss = viewModel::toggleFiltersVisibility,
+            activeFilters = activeFilters,
+            onFilterToggle = viewModel::toggleFilter,
+            timeRange = timeRange,
+            onTimeRangeChange = viewModel::setTimeRange,
+            locationFilter = locationFilter,
+            onLocationFilterChange = viewModel::setLocationFilter,
+            buildings = buildingsWithRooms,
+            onClearAll = viewModel::clearFilters,
+            onJumpToNextExam = viewModel::jumpToNextExam,
+            onJumpToNextLesson = viewModel::jumpToNextLesson
+        )
+    }
+
+    if (showDatePicker) {
+        DatePickerDialog(
+            onDismiss = { viewModel.setShowDatePicker(false) },
+            onDateSelected = { date ->
+                viewModel.jumpToDate(date)
+                viewModel.setShowDatePicker(false)
+            },
+            initialDate = selectedDate,
+            primaryColor = primaryColor
+        )
+    }
+
+    selectedEvent?.let { event ->
+        EventDetailDialog(
+            event = event,
+            onDismiss = { viewModel.selectEvent(null) },
+            textColor = textColor,
+            grayColor = grayColor,
+            primaryColor = primaryColor,
+            backgroundColor = backgroundColor
+        )
+    }
+
+    if (showGlobalSearch) {
+        GlobalSearchBottomSheet(
+            allEvents = futureEvents,
+            onDismiss = { viewModel.setShowGlobalSearch(false) },
+            onEventClick = viewModel::selectEvent,
+            onDateClick = { date ->
+                viewModel.selectDate(date)
+                viewModel.setViewMode(CalendarViewMode.LIST)
+            },
+            primaryColor = primaryColor,
+            textColor = textColor,
+            grayColor = grayColor
+        )
+    }
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun CalendarViewContent(
+    viewMode: CalendarViewMode,
+    eventsForMonth: List<CalendarEvent>,
+    filteredEvents: List<CalendarEvent>,
+    selectedDate: LocalDate,
+    currentMonth: java.time.YearMonth,
+    displayedWeekStart: LocalDate,
+    activeFilters: Set<it.attendance100.mybicocca.data.model.calendar.EventType>,
+    timeRange: TimeRange?,
+    locationFilter: LocationFilter,
+    isLoading: Boolean,
+    hasActiveFilters: Boolean,
+    dayPagerState: PagerState,
+    referenceDate: LocalDate,
+    onEventSelected: (CalendarEvent) -> Unit,
+    onDateSelected: (LocalDate) -> Unit,
+    onMonthChange: (java.time.YearMonth) -> Unit,
+    onViewModeChange: (CalendarViewMode) -> Unit,
+    onSwipeWeek: (Int) -> Unit,
+    scrollState: ScrollState,
+    textColor: Color,
+    grayColor: Color,
+    primaryColor: Color
+) {
+    AnimatedContent(
+        targetState = viewMode,
+        transitionSpec = {
+            when {
+                initialState == CalendarViewMode.LIST && targetState == CalendarViewMode.WEEK ->
+                    (slideInHorizontally { it / 3 } + fadeIn()).togetherWith(slideOutHorizontally { -it / 3 } + fadeOut())
+                initialState == CalendarViewMode.WEEK && targetState == CalendarViewMode.LIST ->
+                    (slideInHorizontally { -it / 3 } + fadeIn()).togetherWith(slideOutHorizontally { it / 3 } + fadeOut())
+                targetState == CalendarViewMode.MONTH ->
+                    (slideInVertically { it / 4 } + fadeIn()).togetherWith(slideOutVertically { -it / 4 } + fadeOut())
+                else ->
+                    (slideInVertically { -it / 4 } + fadeIn()).togetherWith(slideOutVertically { it / 4 } + fadeOut())
+            }.using(SizeTransform(clip = false))
+        },
+        label = "ViewModeTransition"
+    ) { mode ->
+        when (mode) {
+            CalendarViewMode.LIST -> DayTimelineView(
+                dayPagerState = dayPagerState,
+                referenceDate = referenceDate,
+                eventsForCurrentMonth = eventsForMonth,
+                searchQuery = "",
+                activeFilters = activeFilters,
+                timeRange = timeRange,
+                locationFilter = locationFilter,
+                isLoading = isLoading,
+                hasActiveFilters = hasActiveFilters,
+                onEventClick = onEventSelected,
+                scrollState = scrollState
+            )
+            CalendarViewMode.WEEK -> WeekGridView(
+                displayedWeekStart = displayedWeekStart,
+                events = filteredEvents,
+                isLoading = isLoading,
+                hasActiveFilters = hasActiveFilters,
+                searchQuery = "",
+                onEventClick = onEventSelected,
+                scrollState = scrollState,
+                onSwipeWeek = onSwipeWeek,
+                onDayZoom = { date ->
+                    onDateSelected(date)
+                    onViewModeChange(CalendarViewMode.LIST)
+                },
+                grayColor = grayColor,
+                primaryColor = primaryColor
+            )
+            CalendarViewMode.MONTH -> MonthGridView(
+                currentMonth = currentMonth,
+                selectedDate = selectedDate,
+                events = filteredEvents,
+                isLoading = isLoading,
+                onDateSelected = onDateSelected,
+                onMonthChange = onMonthChange,
+                onEventSelected = onEventSelected,
+                onShowAllEvents = { onViewModeChange(CalendarViewMode.LIST) },
+                textColor = textColor,
+                grayColor = grayColor,
+                primaryColor = primaryColor
+            )
+        }
+    }
+}

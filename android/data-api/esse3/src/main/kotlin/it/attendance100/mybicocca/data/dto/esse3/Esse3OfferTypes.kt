@@ -249,7 +249,7 @@ data class Esse3Teachers(
     val lecturerLaEmail: String? = null,
 
     @SerialName("emailAte")
-    val ateEmail: String? = null,
+    val universityEmail: String? = null,
 
     @SerialName("eMail")
     val email: String? = null,
@@ -359,9 +359,8 @@ data class Esse3OfferWithDetails(
     @SerialName("cdsDes")
     val courseOfStudyDescription: String? = null,
 
-    @Serializable(with = Esse3NullableEnumValueSerializer::class)
     @SerialName("statoAttCod")
-    val activityStateCode: String? = null,
+    val activityStateCode: Esse3QuestionStateCode? = null,
 
     @SerialName("tipoCorsoCod")
     val courseTypeCode: String? = null,
@@ -426,9 +425,8 @@ data class Esse3Offer(
     @SerialName("cdsDes")
     val courseOfStudyDescription: String? = null,
 
-    @Serializable(with = Esse3NullableEnumValueSerializer::class)
     @SerialName("statoAttCod")
-    val activityStateCode: String? = null,
+    val activityStateCode: Esse3QuestionStateCode? = null,
 
     @SerialName("tipoCorsoCod")
     val courseTypeCode: String? = null,
@@ -593,7 +591,7 @@ data class Esse3TeachersWithDetails(
     val lecturerLaEmail: String? = null,
 
     @SerialName("emailAte")
-    val ateEmail: String? = null,
+    val universityEmail: String? = null,
 
     @SerialName("eMail")
     val email: String? = null,
@@ -748,9 +746,8 @@ data class Esse3ContextualizedSegment(
     @SerialName("nota")
     val note: String? = null,
 
-    @Serializable(with = Esse3NullableEnumValueSerializer::class)
     @SerialName("tipoAfCod")
-    val teachingActivityTypeCode: String? = null,
+    val teachingActivityTypeCode: Esse3TafMode? = null,
 
     @SerialName("tipoAfDes")
     val teachingActivityTypeDescription: String? = null,
@@ -776,9 +773,8 @@ data class Esse3ContextualizedSegment(
     @SerialName("ambDesEng")
     val environmentDescriptionEnglish: String? = null,
 
-    @Serializable(with = Esse3NullableEnumValueSerializer::class)
     @SerialName("tipoAfReitCod")
-    val repeatTeachingActivityTypeCode: String? = null,
+    val repeatTeachingActivityTypeCode: Esse3TafMode? = null,
 
     @SerialName("tipoAfReitDes")
     val repeatTeachingActivityTypeDescription: String? = null,
@@ -792,9 +788,8 @@ data class Esse3ContextualizedSegment(
     @SerialName("aaRegFin")
     val academicYearFinalRegulation: Int? = null,
 
-    @Serializable(with = Esse3NullableEnumValueSerializer::class)
     @SerialName("interclaTipoAfCod")
-    val interclassTeachingActivityTypeCode: String? = null,
+    val interclassTeachingActivityTypeCode: Esse3TafMode? = null,
 
     @SerialName("interclaTipoAfDes")
     val interclassTeachingActivityTypeDescription: String? = null,

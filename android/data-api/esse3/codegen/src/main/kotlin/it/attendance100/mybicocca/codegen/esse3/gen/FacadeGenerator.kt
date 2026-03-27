@@ -1,21 +1,20 @@
 package it.attendance100.mybicocca.codegen.esse3.gen
 
-import it.attendance100.mybicocca.codegen.esse3.Dictionary
+import it.attendance100.mybicocca.codegen.esse3.Glossary
 import it.attendance100.mybicocca.codegen.esse3.spec.ParsedSpec
 import java.io.File
 
 object FacadeGenerator {
 
-    private const val API_PACKAGE = "it.attendance100.mybicocca.data.api.esse3"
-
-    fun generate(specs: List<ParsedSpec>, outputDir: File, dictionary: Dictionary) {
+    fun generate(specs: List<ParsedSpec>, outputDir: File, glossary: Glossary, basePackage: String) {
+        val apiPackage = "$basePackage.api.esse3"
         val apiSpecs = specs.filter { it.operations.isNotEmpty() }
         if (apiSpecs.isEmpty()) return
 
         val file = File(outputDir, "Esse3Api.kt")
         val sb = StringBuilder()
 
-        sb.appendLine("package $API_PACKAGE")
+        sb.appendLine("package $apiPackage")
         sb.appendLine()
         sb.appendLine("import io.ktor.client.HttpClient")
         sb.appendLine("import io.ktor.client.HttpClientConfig")
@@ -51,7 +50,7 @@ object FacadeGenerator {
         sb.appendLine()
 
         for (spec in apiSpecs) {
-            val className = dictionary.translate("Esse3${spec.specName}Api")
+            val className = glossary.translate("Esse3${spec.specName}Api")
             val fieldName = className.removePrefix("Esse3").removeSuffix("Api").replaceFirstChar { it.lowercaseChar() }
             sb.appendLine("    val $fieldName = $className(client, json)")
         }

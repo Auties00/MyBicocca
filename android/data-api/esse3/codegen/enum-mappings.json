@@ -1,0 +1,606 @@
+{
+    "AggiornamentoEsito.presaVisione": {
+        "N": "NotViewed",
+        "V": "Viewed",
+        "A": "Accepted",
+        "R": "Rejected"
+    },
+    "AggiornamentoRegolamentoDiScelta.stato": {
+        "A": "Active",
+        "B": "Draft"
+    },
+    "Appello.statoInsEsiti": {
+        "C": "Closed",
+        "A": "Open",
+        "F": "Finalized"
+    },
+    "Appello.statoPubblEsiti": {
+        "C": "NotPublished",
+        "A": "Published",
+        "F": "Definitive"
+    },
+    "Appello.statoVerb": {
+        "C": "ToBeProcessed",
+        "A": "InProgress",
+        "F": "Completed"
+    },
+    "Appello.tipoEsaCod": {
+        "S": "Written",
+        "O": "Oral",
+        "SOC": "WrittenOralConsecutive",
+        "SOS": "WrittenOralSimultaneous"
+    },
+    "Appello.tipoIscrCod": {
+        "S": "Written",
+        "O": "Oral",
+        "SO": "WrittenAndOral"
+    },
+    "AppelloAbildoc.statoInsEsiti": {
+        "C": "Closed",
+        "A": "Open",
+        "F": "Finalized"
+    },
+    "AppelloAbildoc.statoPubblEsiti": {
+        "C": "NotPublished",
+        "A": "Published",
+        "F": "Definitive"
+    },
+    "AppelloAbildoc.statoVerb": {
+        "C": "ToBeProcessed",
+        "A": "InProgress",
+        "F": "Completed"
+    },
+    "AppelloAbildoc.tipoEsaCod": {
+        "S": "Written",
+        "O": "Oral",
+        "SOC": "WrittenOralConsecutive",
+        "SOS": "WrittenOralSimultaneous"
+    },
+    "AppelloAbildoc.tipoIscrCod": {
+        "S": "Written",
+        "O": "Oral",
+        "SO": "WrittenAndOral"
+    },
+    "AppelloCollegatoApplista.opType": {
+        "INSERT": "Insert",
+        "UPDATE": "Update",
+        "DELETE": "Delete"
+    },
+    "AppelloConDettagli.statoInsEsiti": {
+        "C": "Closed",
+        "A": "Open",
+        "F": "Finalized"
+    },
+    "AppelloConDettagli.statoPubblEsiti": {
+        "C": "NotPublished",
+        "A": "Published",
+        "F": "Definitive"
+    },
+    "AppelloConDettagli.statoVerb": {
+        "C": "ToBeProcessed",
+        "A": "InProgress",
+        "F": "Completed"
+    },
+    "AppelloConDettagli.tipoEsaCod": {
+        "S": "Written",
+        "O": "Oral",
+        "SOC": "WrittenOralConsecutive",
+        "SOS": "WrittenOralSimultaneous"
+    },
+    "AppelloConDettagli.tipoIscrCod": {
+        "S": "Written",
+        "O": "Oral",
+        "SO": "WrittenAndOral"
+    },
+    "AppelloLibretto.statoInsEsiti": {
+        "C": "Closed",
+        "A": "Open",
+        "F": "Finalized"
+    },
+    "AppelloLibretto.statoPubblEsiti": {
+        "C": "NotPublished",
+        "A": "Published",
+        "F": "Definitive"
+    },
+    "AppelloLibretto.statoVerb": {
+        "C": "ToBeProcessed",
+        "A": "InProgress",
+        "F": "Completed"
+    },
+    "AppelloLibretto.tipoEsaCod": {
+        "S": "Written",
+        "O": "Oral",
+        "SOC": "WrittenOralConsecutive",
+        "SOS": "WrittenOralSimultaneous"
+    },
+    "AppelloLibretto.tipoIscrCod": {
+        "S": "Written",
+        "O": "Oral",
+        "SO": "WrittenAndOral"
+    },
+    "AppelloLibrettoFast.statoInsEsiti": {
+        "C": "Closed",
+        "A": "Open",
+        "F": "Finalized"
+    },
+    "AppelloLibrettoFast.statoPubblEsiti": {
+        "C": "NotPublished",
+        "A": "Published",
+        "F": "Definitive"
+    },
+    "AppelloLibrettoFast.statoVerb": {
+        "C": "ToBeProcessed",
+        "A": "InProgress",
+        "F": "Completed"
+    },
+    "AppelloLibrettoFast.tipoEsaCod": {
+        "S": "Written",
+        "O": "Oral",
+        "SOC": "WrittenOralConsecutive",
+        "SOS": "WrittenOralSimultaneous"
+    },
+    "AppelloLibrettoFast.tipoIscrCod": {
+        "S": "Written",
+        "O": "Oral",
+        "SO": "WrittenAndOral"
+    },
+    "Aula.abilCbt": {
+        "N": "None",
+        "C": "ComputerBasedTest",
+        "T": "Tablet"
+    },
+    "CondizioneBloccoRegolaDiScelta.tipoCondCod": {
+        "A": "YearOfCourse",
+        "B": "RequiredCredits",
+        "P": "PassedExams",
+        "R": "EducationalRules",
+        "S": "BlockingStatus"
+    },
+    "CondizioneDiScelta.tipoCondCod": {
+        "A": "YearOfCourse",
+        "B": "RequiredCredits",
+        "P": "PassedExams",
+        "R": "EducationalRules",
+        "S": "BlockingStatus"
+    },
+    "CondizioneRegolaDiScelta.tipoCondCod": {
+        "A": "YearOfCourse",
+        "B": "RequiredCredits",
+        "P": "PassedExams",
+        "R": "EducationalRules",
+        "S": "BlockingStatus"
+    },
+    "CredenzialiAutenticazione.kind": {
+        "BASIC": "Basic",
+        "BEARER": "Bearer"
+    },
+    "CredenzialiAutenticazione.profile": {
+        "GUEST": "Guest",
+        "STUDENTE": "Student",
+        "DOCENTE": "Professor",
+        "USER_TECNICO": "TechnicalUser",
+        "IMMATRICOLATI_IN_IPOTESI": "ProvisionalEnrollment",
+        "REGISTRATO": "RegisteredUser"
+    },
+    "Esito.modValCod": {
+        "V": "GradeThirtieths",
+        "G": "JudgmentPassFail",
+        "N": "NotEvaluated"
+    },
+    "ImportSistLogResult.sistLog": {
+        "UP_1": "Up1",
+        "UP_2": "Up2",
+        "NONE": "None"
+    },
+    "IscrizioneAppello.presaVisione": {
+        "N": "NotViewed",
+        "V": "Viewed",
+        "A": "Accepted",
+        "R": "Rejected"
+    },
+    "IscrizioneAppello.sessoStudente": {
+        "M": "Male",
+        "F": "Female"
+    },
+    "IscrizioneAppello.statoAdsce": {
+        "P": "Planned",
+        "F": "Frequented",
+        "S": "Exempted"
+    },
+    "MediaLibretto.definizioneBase": {
+        "CDS": "DegreeCourse",
+        "CDSORD": "DegreeCourseRegulations"
+    },
+    "MediaLibretto.tipoMediaCod": {
+        "A": "Arithmetic",
+        "P": "Weighted"
+    },
+    "MsgImportSistLog.level": {
+        "INFO": "Info",
+        "WARN": "Warning",
+        "ERROR": "Error"
+    },
+    "Offerta.statoAttCod": {
+        "A": "Active",
+        "B": "Draft"
+    },
+    "OffertaConDettagli.statoAttCod": {
+        "A": "Active",
+        "B": "Draft"
+    },
+    "Ordinamento.statoCod": {
+        "A": "Active",
+        "B": "Draft",
+        "C": "Closed",
+        "D": "Deprecated",
+        "E": "Expired"
+    },
+    "OrdinamentoConPercorsi.statoCod": {
+        "A": "Active",
+        "B": "Draft",
+        "C": "Closed",
+        "D": "Deprecated",
+        "E": "Expired"
+    },
+    "OrdinamentoConSettoriDottorato.statoCod": {
+        "A": "Active",
+        "B": "Draft",
+        "C": "Closed",
+        "D": "Deprecated",
+        "E": "Expired"
+    },
+    "PercorsoDiStudio.statoCod": {
+        "A": "Active",
+        "B": "Draft",
+        "C": "Closed",
+        "D": "Deprecated",
+        "E": "Expired"
+    },
+    "PianoDiStudio.stato": {
+        "B": "Draft",
+        "P": "Proposed",
+        "V": "Validated",
+        "A": "Approved",
+        "R": "Rejected",
+        "X": "Cancelled"
+    },
+    "PianoDiStudio.tipoPiano": {
+        "S": "Standard",
+        "I": "Individual"
+    },
+    "ProvaLibretto.staRegCod": {
+        "P": "Planned",
+        "C": "Frequented",
+        "V": "Validated",
+        "L": "Passed",
+        "X": "Cancelled"
+    },
+    "ProvaLibretto.tipoAppCod": {
+        "PF": "FinalExam",
+        "PP": "PartialExam"
+    },
+    "QuestionariCompilati.statoQuestCod": {
+        "A": "Active",
+        "B": "Draft"
+    },
+    "RegUDRegolaDiScelta.um1": {
+        "CFU": "EctsCredits",
+        "UD": "DidacticUnit"
+    },
+    "RegUDRegolaDiScelta.um2": {
+        "CFU": "EctsCredits",
+        "UD": "DidacticUnit"
+    },
+    "RegUDRegolaDiScelta.um3": {
+        "CFU": "EctsCredits",
+        "UD": "DidacticUnit"
+    },
+    "RegolaDiScelta.modTAF": {
+        "A": "CoreActivities",
+        "B": "CharacterizingActivities",
+        "C": "RelatedIntegrativeActivities",
+        "D": "ElectiveActivities",
+        "E": "FinalExamination",
+        "F": "OtherSkills",
+        "G": "PlacementTraining",
+        "S": "RequisiteActivities"
+    },
+    "RegolaDiScelta.tipSce": {
+        "O": "Obligatory",
+        "F": "FreeChoice",
+        "T": "TableBased",
+        "G": "GroupChoice",
+        "W": "WebChoice",
+        "S": "Substitutive",
+        "V": "Optional",
+        "D": "Restricted"
+    },
+    "RegolaDiScelta.tipUnt": {
+        "BLK": "Block",
+        "CFU": "EctsCredits",
+        "ANN": "Year"
+    },
+    "RegolaDiSceltaConDettagli.modTAF": {
+        "A": "CoreActivities",
+        "B": "CharacterizingActivities",
+        "C": "RelatedIntegrativeActivities",
+        "D": "ElectiveActivities",
+        "E": "FinalExamination",
+        "F": "OtherSkills",
+        "G": "PlacementTraining",
+        "S": "RequisiteActivities"
+    },
+    "RegolaDiSceltaConDettagli.tipSce": {
+        "O": "Obligatory",
+        "F": "FreeChoice",
+        "T": "TableBased",
+        "G": "GroupChoice",
+        "W": "WebChoice",
+        "S": "Substitutive",
+        "V": "Optional",
+        "D": "Restricted"
+    },
+    "RegolaDiSceltaConDettagli.tipUnt": {
+        "BLK": "Block",
+        "CFU": "EctsCredits",
+        "ANN": "Year"
+    },
+    "RegolaDiSceltaConSchemi.modTAF": {
+        "A": "CoreActivities",
+        "B": "CharacterizingActivities",
+        "C": "RelatedIntegrativeActivities",
+        "D": "ElectiveActivities",
+        "E": "FinalExamination",
+        "F": "OtherSkills",
+        "G": "PlacementTraining",
+        "S": "RequisiteActivities"
+    },
+    "RegolaDiSceltaConSchemi.tipSce": {
+        "O": "Obligatory",
+        "F": "FreeChoice",
+        "T": "TableBased",
+        "G": "GroupChoice",
+        "W": "WebChoice",
+        "S": "Substitutive",
+        "V": "Optional",
+        "D": "Restricted"
+    },
+    "RegolaDiSceltaConSchemi.tipUnt": {
+        "BLK": "Block",
+        "CFU": "EctsCredits",
+        "ANN": "Year"
+    },
+    "RegolaDiSceltaSchemaConDettagli.modTAF": {
+        "A": "CoreActivities",
+        "B": "CharacterizingActivities",
+        "C": "RelatedIntegrativeActivities",
+        "D": "ElectiveActivities",
+        "E": "FinalExamination",
+        "F": "OtherSkills",
+        "G": "PlacementTraining",
+        "S": "RequisiteActivities"
+    },
+    "RegolaDiSceltaSchemaConDettagli.tipSce": {
+        "O": "Obligatory",
+        "F": "FreeChoice",
+        "T": "TableBased",
+        "G": "GroupChoice",
+        "W": "WebChoice",
+        "S": "Substitutive",
+        "V": "Optional",
+        "D": "Restricted"
+    },
+    "RegolaDiSceltaSchemaConDettagli.tipUnt": {
+        "BLK": "Block",
+        "CFU": "EctsCredits",
+        "ANN": "Year"
+    },
+    "RegolaPropAND.tipoVincoloRegola": {
+        "NUM_AD": "NumberOfActivities",
+        "TUTTE_AD": "AllActivities",
+        "PESO": "WeightCredits"
+    },
+    "RegolaPropFiglio.tipoElemento": {
+        "AC": "ActivityCourse",
+        "AD": "DidacticActivity",
+        "SET": "ScientificSector"
+    },
+    "RegolamentoDiPropedeuticitaConVincoli.stato": {
+        "A": "Active",
+        "B": "Draft",
+        "X": "Deleted"
+    },
+    "RegolamentoDiPropepeduticita.stato": {
+        "A": "Active",
+        "B": "Draft",
+        "X": "Deleted"
+    },
+    "RegolamentoDiScelta.stato": {
+        "A": "Active",
+        "B": "Draft",
+        "X": "Deleted"
+    },
+    "RegolamentoDiSceltaConConteggi.stato": {
+        "A": "Active",
+        "B": "Draft",
+        "X": "Deleted"
+    },
+    "RegolamentoDiSceltaConDettagli.stato": {
+        "A": "Active",
+        "B": "Draft",
+        "X": "Deleted"
+    },
+    "RegolamentoDiSceltaConSchemi.stato": {
+        "A": "Active",
+        "B": "Draft",
+        "X": "Deleted"
+    },
+    "RigaLibretto.raggEsaTipo": {
+        "ESA": "Examination",
+        "FREQ": "Attendance"
+    },
+    "RigaLibretto.stato": {
+        "P": "Planned",
+        "F": "Frequented",
+        "S": "Exempted"
+    },
+    "RigaLibrettoConStatoQuestionario.raggEsaTipo": {
+        "ESA": "Examination",
+        "FREQ": "Attendance"
+    },
+    "RigaLibrettoConStatoQuestionario.stato": {
+        "P": "Planned",
+        "F": "Frequented",
+        "S": "Exempted"
+    },
+    "SEGContestualizzato.interclaTipoAfCod": {
+        "A": "CoreActivities",
+        "B": "CharacterizingActivities",
+        "C": "RelatedIntegrativeActivities",
+        "D": "ElectiveActivities",
+        "E": "FinalExamination",
+        "F": "OtherSkills",
+        "G": "PlacementTraining",
+        "S": "RequisiteActivities"
+    },
+    "SEGContestualizzato.tipoAfCod": {
+        "A": "CoreActivities",
+        "B": "CharacterizingActivities",
+        "C": "RelatedIntegrativeActivities",
+        "D": "ElectiveActivities",
+        "E": "FinalExamination",
+        "F": "OtherSkills",
+        "G": "PlacementTraining",
+        "S": "RequisiteActivities"
+    },
+    "SEGContestualizzato.tipoAfReitCod": {
+        "A": "CoreActivities",
+        "B": "CharacterizingActivities",
+        "C": "RelatedIntegrativeActivities",
+        "D": "ElectiveActivities",
+        "E": "FinalExamination",
+        "F": "OtherSkills",
+        "G": "PlacementTraining",
+        "S": "RequisiteActivities"
+    },
+    "ScePianoDiStudio.modTAF": {
+        "A": "CoreActivities",
+        "B": "CharacterizingActivities",
+        "C": "RelatedIntegrativeActivities",
+        "D": "ElectiveActivities",
+        "E": "FinalExamination",
+        "F": "OtherSkills",
+        "G": "PlacementTraining",
+        "S": "RequisiteActivities"
+    },
+    "ScePianoDiStudio.tipSce": {
+        "O": "Obligatory",
+        "F": "FreeChoice",
+        "T": "TableBased",
+        "G": "GroupChoice",
+        "W": "WebChoice",
+        "S": "Substitutive",
+        "V": "Optional",
+        "D": "Restricted",
+        "E": "ExtraCurricular",
+        "I": "Individual",
+        "R": "Requisite"
+    },
+    "ScePianoDiStudio.tipUnt": {
+        "BLK": "Block",
+        "CFU": "EctsCredits",
+        "ANN": "Year"
+    },
+    "Sessione.tipoValSes": {
+        "PF": "FinalExam",
+        "PP": "PartialExam"
+    },
+    "Sessione.umCod": {
+        "AD": "DidacticActivity",
+        "CFU": "EctsCredits"
+    },
+    "SyllabusADPatchField.nomeCampo": {
+        "CONTENUTI": "Contents",
+        "OBIETTIVI_FORMATIVI": "LearningObjectives",
+        "PREREQUISITI": "Prerequisites",
+        "METODI_DIDATTICI": "TeachingMethods",
+        "MODALITA_VERIFICA_APPRENDIMENTO": "AssessmentMethods",
+        "ALTRE_INFO": "OtherInformation",
+        "TESTI_RIFERIMENTO": "ReferenceTexts",
+        "SYLLABUS_OPT_1": "SyllabusOption1",
+        "SYLLABUS_OPT_2": "SyllabusOption2",
+        "SYLLABUS_OPT_3": "SyllabusOption3",
+        "OBIETTIVI_SVIL_SOSTENIBILE_DES": "SustainableDevelopmentGoalsDescription"
+    },
+    "TestataDomandaDiTirocinio.statoDomTiroCod": {
+        "PRE": "PreEnrolled",
+        "CHI": "Closed",
+        "ANN": "Cancelled",
+        "CON": "Confirmed",
+        "RIF": "Rejected",
+        "AVV": "Started",
+        "NAS": "NotAssigned"
+    },
+    "TestataPianoDiStudio.stato": {
+        "B": "Draft",
+        "P": "Proposed",
+        "V": "Validated",
+        "A": "Approved",
+        "R": "Rejected",
+        "X": "Cancelled"
+    },
+    "TestataPianoDiStudio.tipoPiano": {
+        "S": "Standard",
+        "I": "Individual"
+    },
+    "TestataPianoDiStudioPerAD.stato": {
+        "B": "Draft",
+        "P": "Proposed",
+        "V": "Validated",
+        "A": "Approved",
+        "R": "Rejected",
+        "X": "Cancelled"
+    },
+    "TestataPianoDiStudioPerAD.tipoPiano": {
+        "S": "Standard",
+        "I": "Individual"
+    },
+    "TestataPianoDiStudioPerRegola.stato": {
+        "B": "Draft",
+        "P": "Proposed",
+        "V": "Validated",
+        "A": "Approved",
+        "R": "Rejected",
+        "X": "Cancelled"
+    },
+    "TestataPianoDiStudioPerRegola.tipoPiano": {
+        "S": "Standard",
+        "I": "Individual"
+    },
+    "TitoliDiAccesso.tipologiaCod": {
+        "AMM": "AdmissionTitle",
+        "IMM": "EnrollmentTitle",
+        "ABBR": "AbbreviationTitle",
+        "EQUI": "EquivalentTitle"
+    },
+    "TitoliDiAccessoConCodice.tipologiaCod": {
+        "AMM": "AdmissionTitle",
+        "IMM": "EnrollmentTitle",
+        "ABBR": "AbbreviationTitle",
+        "EQUI": "EquivalentTitle"
+    },
+    "VersionInfo.ambienteType": {
+        "LOCAL": "Local",
+        "CR": "Certification",
+        "DEV1": "Development1",
+        "DEV2": "Development2",
+        "PREPROD": "PreProduction",
+        "PROD": "Production",
+        "UNKNOWN": "Unknown"
+    },
+    "VincoloDiPropedeuticita.tipoVincolo": {
+        "AC": "ActivityCourse",
+        "AD": "DidacticActivity",
+        "SET": "ScientificSector"
+    }
+}

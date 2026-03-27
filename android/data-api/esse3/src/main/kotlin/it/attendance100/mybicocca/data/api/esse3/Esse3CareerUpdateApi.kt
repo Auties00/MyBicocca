@@ -39,7 +39,7 @@ class Esse3CareerUpdateApi(
         matId: Long,
         body: Esse3ProcedureUpdateActivityOfferParameters
     ): List<Esse3CareerUpdateLog> {
-        return executeJsonGetList<Esse3CareerUpdateLog>("/aggcarr/AGG_AD_OFF/${matId}", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return executeJsonPutList<Esse3CareerUpdateLog>("/aggcarr/AGG_AD_OFF/${matId}", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
         }
@@ -59,7 +59,7 @@ class Esse3CareerUpdateApi(
         matId: Long,
         body: Esse3AttendanceProcedureParameters
     ): List<Esse3CareerUpdateLog> {
-        return executeJsonGetList<Esse3CareerUpdateLog>("/aggcarr/FREQ/${matId}", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return executeJsonPutList<Esse3CareerUpdateLog>("/aggcarr/FREQ/${matId}", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
         }
@@ -79,7 +79,7 @@ class Esse3CareerUpdateApi(
         matId: Long,
         body: Esse3RemoveAttendanceProcedureParameters
     ): List<Esse3CareerUpdateLog> {
-        return executeJsonGetList<Esse3CareerUpdateLog>("/aggcarr/RIMUOVI_FREQ/${matId}", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return executeJsonPutList<Esse3CareerUpdateLog>("/aggcarr/RIMUOVI_FREQ/${matId}", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
         }
@@ -99,7 +99,7 @@ class Esse3CareerUpdateApi(
         matId: Long,
         body: Esse3SegmentProcedureParameters
     ): List<Esse3CareerUpdateLog> {
-        return executeJsonGetList<Esse3CareerUpdateLog>("/aggcarr/SEG/${matId}", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return executeJsonPutList<Esse3CareerUpdateLog>("/aggcarr/SEG/${matId}", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
         }
@@ -119,7 +119,7 @@ class Esse3CareerUpdateApi(
         matId: Long,
         body: Esse3SubstitutionProcedureParameters
     ): List<Esse3CareerUpdateLog> {
-        return executeJsonGetList<Esse3CareerUpdateLog>("/aggcarr/SOST/${matId}", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return executeJsonPutList<Esse3CareerUpdateLog>("/aggcarr/SOST/${matId}", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
         }
@@ -183,7 +183,7 @@ class Esse3CareerUpdateApi(
     suspend fun executeUpdateCareers(
         careerUpdateId: Long
     ): List<Esse3CareerUpdateLog> {
-        return executeJsonGetList<Esse3CareerUpdateLog>("/aggcarr/${careerUpdateId}/esegui", setOf(Esse3PermissionLevel.TECHNICAL_USER))
+        return executeJsonPutList<Esse3CareerUpdateLog>("/aggcarr/${careerUpdateId}/esegui", setOf(Esse3PermissionLevel.TECHNICAL_USER))
     }
 
     suspend fun getUpdateCareersLog(

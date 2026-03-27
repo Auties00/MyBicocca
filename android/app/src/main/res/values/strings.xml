@@ -1,236 +1,346 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- App Name -->
     <string name="app_name" translatable="false">MyBicocca</string>
-    <string name="bicoccapp" translatable="false">BicoccApp</string>
+    <string name="bottom_navbar_home">Home</string>
+    <string name="bottom_navbar_calendario">Calendar</string>
+    <string name="bottom_navbar_elearning">Elearning</string>
+    <string name="bottom_navbar_mappa">Places</string>
+    <string name="bottom_navbar_segreterie">Secretariat</string>
+    <string name="bottom_navbar_carriera">Career</string>
+    <string name="homescreen_profile">Profile</string>
+    <string name="profile_screen">Profile</string>
+    <string name="error_loading_image">Error loading image</string>
     <string name="homescreen_app_prefix" translatable="false">My</string>
     <string name="homescreen_app_suffix" translatable="false">Bicocca</string>
-    <string name="app_logo">Logo App</string>
-    <string name="copyright" translatable="false">© 2025-2025 100%% Attendance</string>
+    <string name="search">Search</string>
+    <string name="settings_appearance">Theme</string>
+    <string name="settings_appearance_theme">Theme</string>
+    <string name="settings_theme">Theme</string>
+    <string name="settings_appearance_theme_desc">System Default</string>
+    <string name="settings_theme_desc">System Default</string>
+    <string name="settings_appearance_theme_system_default">System Default</string>
+    <string name="theme_system_default">System Default</string>
+    <string name="settings_appearance_theme_light">Light</string>
+    <string name="theme_light">Light</string>
+    <string name="settings_appearance_theme_dark">Dark</string>
+    <string name="theme_dark">Dark</string>
+    <string name="settings_appearance_dark_mode">Dark Mode</string>
+    <string name="settings_dark_mode">Dark Mode</string>
+    <string name="settings_appearance_dark_mode_enabled">Dark Mode is active</string>
+    <string name="settings_dark_mode_enabled">Dark Mode is active</string>
+    <string name="settings_appearance_dark_mode_disabled">Light Mode is active</string>
+    <string name="settings_dark_mode_disabled">Light Mode is active</string>
+    <string name="settings_general_language_desc">Select the app\'s Language</string>
+    <string name="settings_language_desc">Select the app\'s Language</string>
+    <string name="settings_general">General</string>
+    <string name="language_italian" translatable="false">Italiano</string>
+    <string name="language_italiano" translatable="false">Italiano</string>
+    <string name="language_english" translatable="false">English</string>
+    <string name="language_system_default">System Default</string>
+    <string name="settings_general_language">Language</string>
+    <string name="settings_language">Language</string>
+    <string name="settings">Settings</string>
+    <string name="login_manager">Login Manager</string>
+    <string name="app_info">App Info</string>
+    <string name="arrow_back">Back</string>
+    <string name="login_manager_desc">Manage your account credentials</string>
+    <string name="ok">Ok</string>
+    <string name="licenses">Licenses</string>
+    <string name="copyright" translatable="false">© 2025-2025 100% Attendance</string>
+    <string name="app_logo">App Logo</string>
+    <string name="settings_security_fingerprint_login">Fingerprint Login</string>
+    <string name="fingerprint_login">Fingerprint Login</string>
+    <string name="settings_security_fingerprint_login_desc">Log in with your fingerprint instead of entering your credentials each time</string>
+    <string name="fingerprint_login_desc">Log in with your fingerprint instead of entering your credentials each time</string>
+    <string name="security">Security</string>
+    <string name="logins_list">Logins List</string>
+    <string name="settings_material_you" translatable="false">Material You</string>
+    <string name="settings_material_you_enabled">Material You design is active</string>
+    <string name="settings_material_you_disabled">Use Material You design</string>
 
-    <!-- Bottom Navigation -->
-    <string name="bottom_navbar_home">Home</string>
-    <string name="bottom_navbar_calendario">Calendario</string>
-    <string name="bottom_navbar_elearning">Elearning</string>
-    <string name="bottom_navbar_mappa">Luoghi</string>
-    <string name="bottom_navbar_segreterie">Segreterie</string>
-    <string name="bottom_navbar_carriera">Carriera</string>
+    <!-- Career Page -->
+    <string name="career_tab_profilo">Profile</string>
+    <string name="career_tab_piano">Plan</string>
+    <string name="career_tab_esami">Exams</string>
+    <string name="career_tab_luoghi">Places</string>
+    <string name="career_tab_segreterie">Secretariat</string>
+    <string name="profile_piano_studi">Plan</string>
+    <string name="profile_dati_personali">Personal Data</string>
+    <string name="career_dati">Personal Data</string>
+    <string name="profile_statistiche">Statistics</string>
+    <string name="career_statistiche">Statistics</string>
+    <string name="profile_nome">Name</string>
+    <string name="career_name">Name</string>
+    <string name="profile_cognome">Surname</string>
+    <string name="career_surname">Surname</string>
+    <string name="profile_matricola">Student ID</string>
+    <string name="career_matricola">Student ID</string>
+    <string name="profile_piano_studi_corso">Degree Program</string>
+    <string name="career_corso">Degree Program</string>
+    <string name="expand">Expand</string>
+    <string name="collapse">Collapse</string>
+    <string name="close">Close</string>
+    <string name="profile_piano_studi_anno">Year of Study</string>
+    <string name="career_anno">Year of Study</string>
+    <string name="profile_email">Institutional Email</string>
+    <string name="career_email">Institutional Email</string>
+    <string name="profile_media_aritmetica">Arithmetic Average</string>
+    <string name="career_media_aritmetica">Arithmetic Average</string>
+    <string name="profile_media_ponderata">Weighted Average</string>
+    <string name="career_media_ponderata">Weighted Average</string>
+    <string name="profile_libretto_esami_sostenuti">Exams Taken</string>
+    <string name="career_esami_sostenuti">Exams Taken</string>
+    <string name="profile_cfu_acquisiti">Credits Earned</string>
+    <string name="career_cfu_acquisiti">Credits Earned</string>
+    <string name="profile_calcola_media">Calculate hypothetical average</string>
+    <string name="career_calcola_media">Calculate hypothetical average</string>
+    <string name="profile_dialog_title">Calculate Hypothetical Average</string>
+    <string name="career_dialog_title">Calculate Hypothetical Average</string>
+    <string name="profile_dialog_voto">Grade</string>
+    <string name="career_dialog_voto">Grade</string>
+    <string name="profile_dialog_cfu">Credits</string>
+    <string name="career_dialog_cfu">Credits</string>
+    <string name="profile_dialog_calcola">Calculate</string>
+    <string name="career_dialog_calcola">Calculate</string>
+    <string name="profile_dialog_annulla">Cancel</string>
+    <string name="career_dialog_annulla">Cancel</string>
+    <string name="profile_dialog_chiudi">Close</string>
+    <string name="profile_dialog_current_averages">Current averages</string>
+    <string name="profile_dialog_new_grade">New grade</string>
+    <string name="profile_dialog_new_averages">New averages</string>
+    <string name="profile_dialog_voto_error">Invalid grade (&gt;17)</string>
+    <string name="profile_dialog_voto_warning">Inserted grade is too high!</string>
+    <string name="profile_dialog_cfu_optional">Optional</string>
+    <string name="profile_dialog_cfu_error">Invalid CFU</string>
+    <string name="profile_dialog_add_cfu">Add credits</string>
+    <string name="profile_dialog_voto_placeholder" translatable="false">&gt;17</string>
+    <string name="profile_dialog_arrow_symbol" translatable="false">→</string>
+    <!-- Intentional meme/easter egg label shown in the voto warning dialog -->
+    <string name="profile_dialog_voto_warning_meme" translatable="false">fr?</string>
+    <string name="profile_libretto_grafico_voti">Grades Chart</string>
+    <string name="career_grafico_voti">Grades Chart</string>
+    <string name="career_coming_soon_format">%1$s - Coming soon</string>
 
-    <!-- Home Screen -->
-    <string name="homescreen_profile">Profilo</string>
-    <string name="profile_screen">Profilo</string>
-    <string name="search">Cerca</string>
-    <string name="homescreen_shortcuts">Shortcuts</string>
-    <string name="homescreen_edit_shortcuts">Modifica le Shortcuts</string>
-    <string name="homescreen_my_courses">I miei Corsi</string>
-    <string name="homepage_unread_notifications">Notifiche non Lette</string>
-    <string name="homepage_see_all_notifications">Vedi tutte le notifiche</string>
+    <!-- Calendar Page -->
+    <string name="calendar_overview">Overview</string>
+    <string name="calendar_today">Today</string>
+    <string name="calendar_previous_month">Previous Month</string>
+    <string name="calendar_next_month">Next Month</string>
+    <string name="calendar_events">Events</string>
+    <string name="calendar_no_events">No events for this day</string>
+    <string name="calendar_list_view">List View</string>
+    <string name="calendar_week_view">Week View</string>
+    <string name="calendar_month_view">Month View</string>
+    <string name="calendar_view_mode">View Mode</string>
+    <string name="calendar_overlapping_events">%d overlapping events</string>
+    <string name="calendar_collapse">Collapse</string>
+    <string name="event_type_lecture">Lecture</string>
+    <string name="event_type_lab">Lab</string>
+    <string name="event_type_exam">Exam</string>
+    <string name="event_type_office_hours">Office Hours</string>
+    <string name="event_type_other">Other</string>
+    <string name="event_detail_date_time">Date and Time</string>
+    <string name="event_detail_time">Time</string>
+    <string name="event_detail_start">Start</string>
+    <string name="event_detail_end">End</string>
+    <string name="event_detail_professor">Professor</string>
+    <string name="event_detail_location">Location</string>
+    <string name="event_detail_notes">Notes</string>
+    <string name="event_detail_close">Close</string>
+    <string name="event_detail_actions">ACTIONS</string>
+    <string name="overlapping_events_title">Overlapping Events</string>
+    <string name="overlapping_events_count">%1$d events at the same time</string>
+    <string name="overlapping_events_badge">+%1$d</string>
+    <string name="overlapping_events_hint">Tap an event for details</string>
+    <string name="event_duration">Duration</string>
+    <string name="event_location">Location</string>
+    <string name="event_professor">Professor</string>
+    <string name="event_cancelled">Event Cancelled</string>
+    <string name="event_status_cancelled">Cancelled</string>
+    <string name="event_status_ended">Ended</string>
+    <string name="event_status_ended_mins">Ended %1$d min ago</string>
+    <string name="event_status_ended_hours">Ended %1$d hours ago</string>
+    <string name="event_status_ended_days">Ended %1$d days ago</string>
+    <string name="event_status_in_progress_hours">Started %1$dh %2$dmin ago</string>
+    <string name="event_status_in_progress_mins">Started %1$d min ago</string>
+    <string name="event_status_starts_mins">In %1$d minutes</string>
+    <string name="event_status_starts_hours">In %1$d hours</string>
+    <string name="event_status_starts_days">In %1$d days</string>
+    <string name="event_action_elearning">E-Learning Page</string>
+
+    <!-- Calendar Improvements -->
+    <string name="calendar_pull_to_refresh">Pull to refresh</string>
+    <string name="calendar_refreshing">Refreshing…</string>
+    <string name="calendar_jump_to_date">Jump to date</string>
+    <string name="calendar_select_date">Select a date</string>
+    <string name="calendar_cancel">Cancel</string>
+    <string name="calendar_confirm">Confirm</string>
+    <string name="calendar_search">Search events…</string>
+    <string name="calendar_search_hint">Course name, professor, room…</string>
+    <string name="calendar_filter">Filter</string>
+    <string name="calendar_header_filter">Filters</string>
+    <string name="calendar_filter_all">All</string>
+    <string name="calendar_filter_lectures">Lectures</string>
+    <string name="calendar_filter_labs">Labs</string>
+    <string name="calendar_filter_exams">Exams</string>
+    <string name="calendar_filter_morning">Morning</string>
+    <string name="calendar_filter_afternoon">Afternoon</string>
+    <string name="calendar_filter_evening">Evening</string>
+    <string name="calendar_filter_time">Time</string>
+    <string name="calendar_filter_location">Location</string>
+    <string name="calendar_filter_advanced">Advanced filters</string>
+    <string name="calendar_filter_time_and_location">Time and location active</string>
+    <string name="calendar_filter_time_only">Time active</string>
+    <string name="calendar_filter_location_only">Location active</string>
+    <string name="calendar_filter_none_active">No active filters</string>
+    <string name="calendar_filter_reset">Reset</string>
+    <string name="calendar_filter_selected">selected</string>
+    <string name="calendar_filter_event_type">Event type</string>
+    <string name="calendar_filter_no_locations">No locations available</string>
+    <string name="calendar_location_search_hint">Search building or room…</string>
+    <string name="calendar_no_results">No results</string>
+    <string name="calendar_no_results_desc">Try changing the filters or search term</string>
+    <string name="calendar_empty_day">Day off!</string>
+    <string name="calendar_empty_day_desc">You have no events scheduled for today</string>
+    <string name="calendar_empty_week">Quiet week</string>
+    <string name="calendar_empty_week_desc">No events this week</string>
+    <string name="calendar_empty_month">Empty month</string>
+    <string name="calendar_empty_month_desc">No events scheduled for this month</string>
+    <string name="calendar_swipe_hint">Swipe to change day</string>
+    <string name="calendar_global_search_title">Search Events</string>
+    <string name="calendar_global_search_hint">Course, professor, room…</string>
+    <string name="calendar_search_results">Results</string>
+    <string name="calendar_search_no_upcoming">No upcoming events found</string>
+    <string name="calendar_search_upcoming_events">Upcoming events</string>
+    <string name="calendar_no_events_short">No events</string>
+    <string name="calendar_events_count">%1$d events</string>
+    <string name="calendar_see_all">See all (%1$d)</string>
+    <string name="calendar_upcoming_exams">Upcoming exams</string>
+    <string name="calendar_tomorrow">Tomorrow</string>
+    <string name="calendar_in_days">In %1$d days</string>
+    <string name="calendar_room_tbd">Room TBD</string>
+
+    <!-- Filter Modal Redesign -->
+    <string name="filter_quick_presets">Quick filters</string>
+    <string name="filter_preset_morning">Morning</string>
+    <string name="filter_preset_afternoon">Afternoon</string>
+    <string name="filter_preset_all_day">All day</string>
+    <string name="filter_preset_next_exam">Next Exam</string>
+    <string name="filter_no_upcoming_exams">No upcoming exams</string>
+    <string name="filter_desc_lectures">Classroom lessons</string>
+    <string name="filter_desc_labs">Practical activities</string>
+    <string name="filter_desc_exams">Tests and exams</string>
+    <string name="filter_desc_other">Other events</string>
+    <string name="filter_select_buildings">Buildings and Rooms</string>
+    <string name="filter_tap_to_select">Tap to select</string>
+    <string name="filter_active_count">active filters</string>
+    <string name="filter_no_active">No active filters</string>
+    <string name="filter_apply">Apply</string>
+    <string name="filter_rooms">rooms</string>
+    <string name="filter_select_all_rooms">Select all rooms in building</string>
+    <string name="filter_select_time">Select time</string>
+    <string name="filter_quick_title">Quick filters</string>
+    <string name="filter_advanced_title">Advanced filters</string>
+    <string name="filter_tap_to_expand">Tap to expand</string>
+    <string name="filter_time_label">Time</string>
+    <string name="filter_type_label">Event type</string>
+    <string name="filter_title_rapid">Quick</string>
+    <string name="filter_preset_next_lesson">Next Lesson</string>
+    <string name="filter_advanced_label">Advanced</string>
+
+    <!-- Homepage -->
     <string name="badge_university_full" translatable="false">Università degli Studi</string>
-    <string name="matricola_short">Mat.</string>
-    <string name="error_loading_image">Errore caricando l\'immagine</string>
+    <string name="matricola_short">ID</string>
+    <string name="homepage_unread_notifications">Unread Notifications</string>
+    <string name="homepage_see_all_notifications">See all Notifications</string>
+    <string name="homescreen_shortcuts">Shortcuts</string>
+    <string name="homescreen_edit_shortcuts">Edit Shortcuts</string>
+    <string name="homescreen_my_courses">My Courses</string>
+    <string name="bicoccapp" translatable="false">BicoccApp</string>
 
     <!-- Settings -->
-    <string name="settings">Impostazioni</string>
-    <string name="settings_general">Generale</string>
-    <string name="settings_general_subtitle">Lingua • Accessibilità</string>
-
-    <!-- Settings - Appearance -->
-    <string name="settings_appearance">Tema</string>
-    <string name="settings_appearance_subtitle">Tema</string>
-    <string name="settings_appearance_theme">Tema</string>
-    <string name="settings_theme">Tema</string>
-    <string name="settings_appearance_theme_desc">Predefinito di Sistema</string>
-    <string name="settings_theme_desc">Predefinito di Sistema</string>
-    <string name="settings_appearance_theme_system_default">Predefinito di Sistema</string>
-    <string name="theme_system_default">Predefinito di Sistema</string>
-    <string name="settings_appearance_theme_light">Chiaro</string>
-    <string name="theme_light">Chiaro</string>
-    <string name="settings_appearance_theme_dark">Scuro</string>
-    <string name="theme_dark">Scuro</string>
-    <string name="settings_appearance_dark_mode">Modalità Scura</string>
-    <string name="settings_dark_mode">Modalità Scura</string>
-    <string name="settings_appearance_dark_mode_enabled">Il tema Scuro è attivo</string>
-    <string name="settings_dark_mode_enabled">Il tema Scuro è attivo</string>
-    <string name="settings_appearance_dark_mode_disabled">Il tema Chiaro è attivo</string>
-    <string name="settings_dark_mode_disabled">Il tema Chiaro è attivo</string>
-    <string name="settings_material_you" translatable="false">Material You</string>
-    <string name="settings_material_you_enabled">Il design Material You è attivo</string>
-    <string name="settings_material_you_disabled">Usa il design Material You</string>
-
-    <!-- Settings - Language -->
-    <string name="settings_general_language">Lingua</string>
-    <string name="settings_language">Lingua</string>
-    <string name="settings_general_language_desc">Seleziona la lingua dell\'app</string>
-    <string name="settings_language_desc">Seleziona la lingua dell\'app</string>
-    <string name="settings_general_language_italian" translatable="false">Italiano</string>
-    <string name="language_italian" translatable="false">Italiano</string>
-    <string name="settings_general_language_english" translatable="false">English</string>
-    <string name="language_english" translatable="false">English</string>
-    <string name="language_system_default">Predefinito di Sistema</string>
-
-    <!-- Settings - Behaviour -->
-    <string name="settings_behaviour">Comportamento</string>
-    <string name="settings_behaviour_subtitle">Intervallo Aggiornamento • Notifiche</string>
-
-    <!-- Settings - Security -->
-    <string name="settings_security">Sicurezza</string>
-    <string name="security">Sicurezza</string>
-    <string name="settings_security_subtitle">Login • Sessione</string>
-    <string name="settings_security_fingerprint_login">Login con Impronta</string>
-    <string name="fingerprint_login">Login con Impronta</string>
-    <string name="settings_security_fingerprint_login_desc">Accedi con la tua impronta digitale invece di inserire le credenziali ogni volta</string>
-    <string name="fingerprint_login_desc">Accedi con la tua impronta digitale invece di inserire le credenziali ogni volta</string>
-    <string name="settings_security_keep_logged_in">Resta connesso</string>
-    <string name="settings_security_keep_logged_in_desc_true">Resta connesso per una durata specifica</string>
-    <string name="settings_security_keep_logged_in_desc_false">Dovrai effettuare il login ogni volta che apri l\'app</string>
-    <string name="settings_security_session_duration">Durata Sessione</string>
-    <string name="settings_security_select_duration">Seleziona Durata</string>
-
-    <!-- Session Duration Options -->
-    <string name="duration_30_min">30 Minuti</string>
-    <string name="duration_1_hour">1 Ora</string>
-    <string name="duration_2_hours">2 Ore</string>
-    <string name="duration_6_hours">6 Ore</string>
-    <string name="duration_12_hours">12 Ore</string>
-    <string name="duration_24_hours">24 Ore</string>
-    <string name="duration_7_days">7 Giorni</string>
-    <string name="duration_forever">Il più a lungo possibile</string>
-
-    <!-- Settings - Developer -->
-    <string name="settings_developer" translatable="false">Developer</string>
-    <string name="settings_developer_subtitle">Badge • Test API</string>
+    <string name="settings_security">Security</string>
+    <string name="settings_behaviour">Behaviour</string>
+    <string name="cancel">Cancel</string>
+    <string name="settings_appearance_subtitle">Theme</string>
+    <string name="settings_general_subtitle">Language • Accessibility</string>
+    <string name="settings_behaviour_subtitle">Refresh Interval • Notifications</string>
+    <string name="settings_security_subtitle">Login • Session</string>
+    <string name="settings_developer_subtitle">Badge • API Test</string>
     <string name="settings_developer_badge_parallax" translatable="false">Badge Parallax</string>
+    <string name="settings_developer" translatable="false">Developer</string>
     <string name="settings_developer_badge_white" translatable="false">White Badge</string>
+
+    <!-- Security Options -->
+    <string name="settings_security_keep_logged_in">Keep me logged in</string>
+    <string name="settings_security_keep_logged_in_desc_true">Stay logged in for a specified duration</string>
+    <string name="settings_security_keep_logged_in_desc_false">You will have to log in every time you open the app</string>
+    <string name="settings_security_session_duration">Session Duration</string>
+    <string name="settings_security_select_duration">Select Duration</string>
+    <string name="duration_30_min">30 Minutes</string>
+    <string name="duration_1_hour">1 Hour</string>
+    <string name="duration_2_hours">2 Hours</string>
+    <string name="duration_6_hours">6 Hours</string>
+    <string name="duration_12_hours">12 Hours</string>
+    <string name="duration_24_hours">24 Hours</string>
+    <string name="duration_7_days">7 Days</string>
+    <string name="duration_forever">As long as possible</string>
+
+    <!-- Status & Misc -->
+    <string name="unknown">Unknown</string>
+    <string name="no_data">No Available Data</string>
+    <string name="profile_exam_status_passed">Passed</string>
+    <string name="profile_exam_status_pending">Pending</string>
+    <string name="profile_exam_cfu_format">%1$s CFU</string>
+    <string name="status_session_expired">Session Expired</string>
+    <string name="status_offline">You\'re currently Offline</string>
     <string name="settings_developer_api">API</string>
     <string name="settings_developer_badge">Badge</string>
-
-    <!-- Login -->
+    <string name="profile_esami">Exams Booklet</string>
+    <string name="profile_esami_pending">Pending Exams</string>
+    <string name="profile_esami_passed">Passed Exams</string>
     <string name="login">Login</string>
-    <string name="login_manager">Manager Login</string>
-    <string name="login_manager_desc">Gestisci le credenziali del tuo account</string>
-    <string name="logins_list">Lista Login</string>
 
-    <!-- App Info -->
-    <string name="app_info">Info App</string>
-    <string name="licenses">Licenze</string>
+    <!-- Career Plan -->
+    <string name="career_plan_last_modified">Last modified on: %1$s</string>
+    <string name="career_plan_type_label">Plan Type</string>
+    <string name="career_plan_type_value">Standard Plan</string>
+    <string name="career_plan_status_label">Status</string>
+    <string name="career_plan_status_value">Approved</string>
+    <string name="career_plan_edit">Edit Study Plan</string>
+    <string name="options_menu">Options</string>
+    <string name="career_plan_title">Study Plan</string>
+    <string name="career_plan_year_prefix">Learning Activities - Year</string>
+    <string name="career_plan_print">Print Plan</string>
+    <string name="profile_prenotazioni">Exam Booking</string>
+    <string name="profile_corsi">Courses</string>
 
-    <!-- Career Page - Tabs -->
-    <string name="career_tab_profilo">Profilo</string>
-    <string name="career_tab_piano">Piano</string>
-    <string name="career_tab_esami">Esami</string>
-    <string name="career_tab_segreterie">Segreterie</string>
-    <string name="career_tab_luoghi">Luoghi</string>
-
-    <!-- Career Page - Personal Data -->
-    <string name="career_dati">Dati Personali</string>
-    <string name="career_name">Nome</string>
-    <string name="career_surname">Cognome</string>
-    <string name="career_matricola">Matricola</string>
-    <string name="career_corso">Corso di Laurea</string>
-    <string name="career_anno">Anno di Corso</string>
-    <string name="career_email">Email Istituzionale</string>
-
-    <!-- Career Page - Statistics -->
-    <string name="career_statistiche">Statistiche</string>
-    <string name="career_media_aritmetica">Media Aritmetica</string>
-    <string name="career_media_ponderata">Media Ponderata</string>
-    <string name="career_esami_sostenuti">Esami Sostenuti</string>
-    <string name="career_cfu_acquisiti">CFU Acquisiti</string>
-    <string name="career_grafico_voti">Grafico Voti</string>
-    <string name="career_no_data_available">Nessun dato disponibile</string>
-
-    <!-- Career Page - Hypothetical Average Dialog -->
-    <string name="career_calcola_media">Calcola media ipotetica</string>
-    <string name="career_dialog_title">Calcola Media Ipotetica</string>
-    <string name="career_dialog_voto">Voto</string>
-    <string name="career_dialog_cfu">CFU</string>
-    <string name="career_dialog_calcola">Calcola</string>
-    <string name="career_dialog_annulla">Annulla</string>
-    <string name="career_dialog_chiudi">Chiudi</string>
-    <string name="career_dialog_current_averages">Medie attuali</string>
-    <string name="career_dialog_new_grade">Nuovo voto</string>
-    <string name="career_dialog_new_averages">Nuove medie</string>
-    <string name="career_dialog_voto_error">Voto non valido (>17)</string>
-    <string name="career_dialog_cfu_optional">Opzionale</string>
-    <string name="career_dialog_add_cfu">Aggiungi CFU</string>
-    <string name="career_dialog_voto_placeholder" translatable="false">&gt;17</string>
-    <string name="career_arrow_symbol" translatable="false">→</string>
-    <string name="career_coming_soon_format" translatable="false">%1$s - Coming soon</string>
-
-    <!-- Exam Status -->
-    <string name="exam_status_passed">Superato</string>
-    <string name="exam_status_pending">Da sostenere</string>
-    <string name="exam_cfu_format">%1$s CFU</string>
-    <string name="profile_esami">Libretto</string>
-    <string name="profile_esami_pending">Esami da dare</string>
-    <string name="profile_esami_passed">Esami Superati</string>
-
-    <!-- Calendar Page - Navigation -->
-    <string name="calendar_overview">Panoramica</string>
-    <string name="calendar_today">Oggi</string>
-    <string name="calendar_previous_month">Mese Precedente</string>
-    <string name="calendar_next_month">Mese Successivo</string>
-
-    <!-- Calendar Page - Views -->
-    <string name="calendar_events">Eventi</string>
-    <string name="calendar_no_events">Nessun evento per questo giorno</string>
-    <string name="calendar_list_view">Vista Lista</string>
-    <string name="calendar_week_view">Vista Settimanale</string>
-    <string name="calendar_month_view">Vista Mensile</string>
-    <string name="calendar_view_mode">Modalità Visualizzazione</string>
-    <string name="calendar_overlapping_events">%d eventi sovrapposti</string>
-    <string name="calendar_collapse">Comprimi</string>
-
-    <!-- Event Types -->
-    <string name="event_type_lecture">Lezione</string>
-    <string name="event_type_lab">Laboratorio</string>
-    <string name="event_type_exam">Esame</string>
-    <string name="event_type_office_hours">Ricevimento</string>
-    <string name="event_type_other">Altro</string>
-
-    <!-- Event Details -->
-    <string name="event_detail_date_time">Data e Orario</string>
-    <string name="event_detail_time">Orario</string>
-    <string name="event_detail_start">Inizio</string>
-    <string name="event_detail_end">Fine</string>
-    <string name="event_detail_professor">Docente</string>
-    <string name="event_detail_location">Luogo</string>
-    <string name="event_detail_notes">Note</string>
-    <string name="event_detail_close">Chiudi</string>
-    <string name="event_detail_actions">AZIONI</string>
-    <string name="event_duration">Durata</string>
-    <string name="event_location">Luogo</string>
-    <string name="event_professor">Docente</string>
-    <string name="event_action_elearning">Pagina E-Learning</string>
-
-    <!-- Event Status -->
-    <string name="event_cancelled">Evento Annullato</string>
-    <string name="event_status_cancelled">Annullato</string>
-    <string name="event_status_ended">Terminato</string>
-    <string name="event_status_ended_mins">Terminato da %1$d min</string>
-    <string name="event_status_ended_hours">Terminato da %1$d ore</string>
-    <string name="event_status_ended_days">Terminato da %1$d giorni</string>
-    <string name="event_status_in_progress_hours">Iniziato da %1$dh %2$dmin</string>
-    <string name="event_status_in_progress_mins">Iniziato da %1$d min</string>
-    <string name="event_status_starts_mins">Tra %1$d minuti</string>
-    <string name="event_status_starts_hours">Tra %1$d ore</string>
-    <string name="event_status_starts_days">Tra %1$d giorni</string>
-
-    <!-- Overlapping Events -->
-    <string name="overlapping_events_title">Eventi Sovrapposti</string>
-    <string name="overlapping_events_count">%1$d eventi nello stesso orario</string>
-    <string name="overlapping_events_badge">+%1$d</string>
-
-    <!-- Status Messages -->
-    <string name="status_session_expired">Sessione Scaduta</string>
-    <string name="status_offline">Sei Offline</string>
-
-    <!-- Common Actions & Labels -->
-    <string name="ok">Ok</string>
-    <string name="cancel">Annulla</string>
-    <string name="close">Chiudi</string>
-    <string name="expand">Espandi</string>
-    <string name="collapse">Comprimi</string>
-    <string name="arrow_back">Indietro</string>
-    <string name="unknown">Sconosciuto</string>
+    <!-- Secretariat / Registry -->
+    <string name="segreterie_services">Services</string>
+    <string name="segreterie_exams_booking">Exam Booking</string>
+    <string name="segreterie_taxes">Tuition fee</string>
+    <string name="segreterie_taxes_desc_good">All good</string>
+    <string name="segreterie_taxes_desc_bad">Missing payments</string>
+    <string name="segreterie_plan_approved">Approved</string>
+    <string name="segreterie_plan">Study Plan</string>
+    <string name="filter">Exams registration</string>
+    <string name="segreterie_booked">Booked Exams</string>
+    <string name="segreterie_booking">Available exams</string>
+    <string name="segreterie_booking_available">%1$s Available dates</string>
+    <string name="segreterie_booked_number">%1$s Booked exams</string>
+    <string name="segreterie_isee">ISEE</string>
+    <string name="segreterie_filter_all">All</string>
+    <string name="segreterie_filter_exams">Exams</string>
+    <string name="segreterie_filter_didattica">Education</string>
+    <string name="segreterie_filter_financial">Financial</string>
+    <string name="segreterie_filter_agenda">Agenda</string>
+    <string name="segreterie_filter_stage">Internship</string>
+    <string name="segreterie_self_certificates">Self-Certifications</string>
+    <string name="segreterie_self_certificates_filter_all">All</string>
+    <string name="segreterie_self_certificates_filter_italian">Italian</string>
+    <string name="segreterie_self_certificates_filter_english">English</string>
+    <string name="segreterie_self_certificates_filter_unknown">Unknown</string>
+    <string name="segreterie_taxes_status_paid">Payed</string>
+    <string name="segreterie_taxes_status_unpaid">Unpaid</string>
+    <string name="segreterie_taxes_status_waiting">Waiting</string>
 </resources>

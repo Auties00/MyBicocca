@@ -651,7 +651,7 @@ data class Esse3StudentDebit(
     val paPaymentDate: String? = null,
 
     @SerialName("emailAte")
-    val ateEmail: String? = null,
+    val universityEmail: String? = null,
 
     @SerialName("numeroMav")
     val mavNumber: String? = null,

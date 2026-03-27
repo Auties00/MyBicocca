@@ -158,17 +158,14 @@ data class Esse3ExamSession(
     @SerialName("statoAperturaApp")
     val callOpeningState: String? = null,
 
-    @Serializable(with = Esse3NullableEnumValueSerializer::class)
     @SerialName("statoVerb")
-    val minutesState: String? = null,
+    val minutesState: Esse3MinutesState? = null,
 
-    @Serializable(with = Esse3NullableEnumValueSerializer::class)
     @SerialName("statoPubblEsiti")
-    val outcomesPublicationState: String? = null,
+    val outcomesPublicationState: Esse3OutcomesPublicationState? = null,
 
-    @Serializable(with = Esse3NullableEnumValueSerializer::class)
     @SerialName("statoInsEsiti")
-    val outcomesInsertionState: String? = null,
+    val outcomesInsertionState: Esse3OutcomesInsertionState? = null,
 
     @SerialName("statoDes")
     val stateDescription: String? = null,
@@ -206,13 +203,11 @@ data class Esse3ExamSession(
     @SerialName("cdsCod")
     val courseOfStudyCode: String? = null,
 
-    @Serializable(with = Esse3NullableEnumValueSerializer::class)
     @SerialName("tipoEsaCod")
-    val graduationTypeCode: String? = null,
+    val graduationTypeCode: Esse3GraduationTypeCode? = null,
 
-    @Serializable(with = Esse3NullableEnumValueSerializer::class)
     @SerialName("tipoIscrCod")
-    val enrollmentTypeCode: String? = null,
+    val enrollmentTypeCode: Esse3EnrollmentTypeCode? = null,
 
     @SerialName("tipoAppCod")
     val callTypeCode: String? = null,
@@ -1054,9 +1049,8 @@ data class Esse3UpdateResult(
     @SerialName("notaPubbl")
     val publicNote: String? = null,
 
-    @Serializable(with = Esse3NullableEnumValueSerializer::class)
     @SerialName("presaVisione")
-    val acknowledgmentOfReceipt: String? = null,
+    val acknowledgmentOfReceipt: Esse3AcknowledgmentOfReceipt? = null,
 
     @SerialName("appCollegato")
     val linkedCall: Esse3ExamSessionLinkedToList? = null,
@@ -1115,9 +1109,8 @@ data class Esse3Session(
     @SerialName("tipoSesDes")
     val sessionTypeDescription: String? = null,
 
-    @Serializable(with = Esse3NullableEnumValueSerializer::class)
     @SerialName("umCod")
-    val measurementUnitCode: String? = null,
+    val measurementUnitCode: Esse3MeasurementUnitCode? = null,
 
     @SerialName("maxNormali")
     val maxNormal: Int? = null,
@@ -1128,9 +1121,8 @@ data class Esse3Session(
     @SerialName("vincFlg")
     val winnerFlag: Int? = null,
 
-    @Serializable(with = Esse3NullableEnumValueSerializer::class)
     @SerialName("tipoValSes")
-    val sessionEvaluationType: String? = null,
+    val sessionEvaluationType: Esse3SessionEvaluationType? = null,
 
     @SerialName("numGgIniIscr")
     val enrollmentStartDaysNumber: Int? = null,
@@ -1414,17 +1406,14 @@ data class Esse3ExamSessionWithDetails(
     @SerialName("statoAperturaApp")
     val callOpeningState: String? = null,
 
-    @Serializable(with = Esse3NullableEnumValueSerializer::class)
     @SerialName("statoVerb")
-    val minutesState: String? = null,
+    val minutesState: Esse3MinutesState? = null,
 
-    @Serializable(with = Esse3NullableEnumValueSerializer::class)
     @SerialName("statoPubblEsiti")
-    val outcomesPublicationState: String? = null,
+    val outcomesPublicationState: Esse3OutcomesPublicationState? = null,
 
-    @Serializable(with = Esse3NullableEnumValueSerializer::class)
     @SerialName("statoInsEsiti")
-    val outcomesInsertionState: String? = null,
+    val outcomesInsertionState: Esse3OutcomesInsertionState? = null,
 
     @SerialName("statoDes")
     val stateDescription: String? = null,
@@ -1462,13 +1451,11 @@ data class Esse3ExamSessionWithDetails(
     @SerialName("cdsCod")
     val courseOfStudyCode: String? = null,
 
-    @Serializable(with = Esse3NullableEnumValueSerializer::class)
     @SerialName("tipoEsaCod")
-    val graduationTypeCode: String? = null,
+    val graduationTypeCode: Esse3GraduationTypeCode? = null,
 
-    @Serializable(with = Esse3NullableEnumValueSerializer::class)
     @SerialName("tipoIscrCod")
-    val enrollmentTypeCode: String? = null,
+    val enrollmentTypeCode: Esse3EnrollmentTypeCode? = null,
 
     @SerialName("tipoAppCod")
     val callTypeCode: String? = null,
@@ -1629,9 +1616,8 @@ data class Esse3ExamSessionEnrollment(
     @SerialName("aaFreqId")
     val academicYearAttendanceId: Int? = null,
 
-    @Serializable(with = Esse3NullableEnumValueSerializer::class)
     @SerialName("statoAdsce")
-    val teachingActivityChoiceState: String? = null,
+    val teachingActivityChoiceState: Esse3State? = null,
 
     @SerialName("pesoAd")
     val teachingActivityWeight: Float? = null,
@@ -1657,9 +1643,8 @@ data class Esse3ExamSessionEnrollment(
     @SerialName("dataNascitaStudente")
     val studentBirthDate: String? = null,
 
-    @Serializable(with = Esse3NullableEnumValueSerializer::class)
     @SerialName("sessoStudente")
-    val studentGender: String? = null,
+    val studentGender: Esse3StudentGender? = null,
 
     @SerialName("comuNascCodIstat")
     val birthMunicipalityIstatCode: String? = null,
@@ -1694,9 +1679,8 @@ data class Esse3ExamSessionEnrollment(
     @SerialName("pubblId")
     val publicationId: Long? = null,
 
-    @Serializable(with = Esse3NullableEnumValueSerializer::class)
     @SerialName("presaVisione")
-    val acknowledgmentOfReceipt: String? = null,
+    val acknowledgmentOfReceipt: Esse3AcknowledgmentOfReceipt? = null,
 
     @SerialName("userIdPresaVisione")
     val userAcknowledgmentId: String? = null,
@@ -2001,9 +1985,8 @@ data class Esse3ExamSessionTgaConfigDetails(
 
 @Serializable
 data class Esse3ExamSessionLinkedToList(
-    @Serializable(with = Esse3EnumValueSerializer::class)
     @SerialName("opType")
-    val operationType: String,
+    val operationType: Esse3OperationType,
 
     @SerialName("cdsId")
     val courseOfStudyId: Long? = null,
@@ -2221,17 +2204,14 @@ data class Esse3ExamSessionTeacherAuthorization(
     @SerialName("statoAperturaApp")
     val callOpeningState: String? = null,
 
-    @Serializable(with = Esse3NullableEnumValueSerializer::class)
     @SerialName("statoVerb")
-    val minutesState: String? = null,
+    val minutesState: Esse3MinutesState? = null,
 
-    @Serializable(with = Esse3NullableEnumValueSerializer::class)
     @SerialName("statoPubblEsiti")
-    val outcomesPublicationState: String? = null,
+    val outcomesPublicationState: Esse3OutcomesPublicationState? = null,
 
-    @Serializable(with = Esse3NullableEnumValueSerializer::class)
     @SerialName("statoInsEsiti")
-    val outcomesInsertionState: String? = null,
+    val outcomesInsertionState: Esse3OutcomesInsertionState? = null,
 
     @SerialName("statoDes")
     val stateDescription: String? = null,
@@ -2269,13 +2249,11 @@ data class Esse3ExamSessionTeacherAuthorization(
     @SerialName("cdsCod")
     val courseOfStudyCode: String? = null,
 
-    @Serializable(with = Esse3NullableEnumValueSerializer::class)
     @SerialName("tipoEsaCod")
-    val graduationTypeCode: String? = null,
+    val graduationTypeCode: Esse3GraduationTypeCode? = null,
 
-    @Serializable(with = Esse3NullableEnumValueSerializer::class)
     @SerialName("tipoIscrCod")
-    val enrollmentTypeCode: String? = null,
+    val enrollmentTypeCode: Esse3EnrollmentTypeCode? = null,
 
     @SerialName("tipoAppCod")
     val callTypeCode: String? = null,

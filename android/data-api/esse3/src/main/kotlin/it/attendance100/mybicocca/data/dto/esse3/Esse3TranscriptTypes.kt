@@ -26,13 +26,11 @@ data class Esse3AttendanceParameters(
 
 @Serializable
 data class Esse3TranscriptAverage(
-    @Serializable(with = Esse3EnumValueSerializer::class)
     @SerialName("definizioneBase")
-    val baseDefinition: String,
+    val baseDefinition: Esse3BaseDefinition,
 
-    @Serializable(with = Esse3EnumValueSerializer::class)
     @SerialName("tipoMediaCod")
-    val averageTypeCode: String,
+    val averageTypeCode: Esse3AverageTypeCode,
 
     @SerialName("base")
     val base: Int,
@@ -271,17 +269,14 @@ data class Esse3ExamSessionTranscriptFast(
     @SerialName("statoAperturaApp")
     val callOpeningState: String? = null,
 
-    @Serializable(with = Esse3NullableEnumValueSerializer::class)
     @SerialName("statoVerb")
-    val minutesState: String? = null,
+    val minutesState: Esse3MinutesState? = null,
 
-    @Serializable(with = Esse3NullableEnumValueSerializer::class)
     @SerialName("statoPubblEsiti")
-    val outcomesPublicationState: String? = null,
+    val outcomesPublicationState: Esse3OutcomesPublicationState? = null,
 
-    @Serializable(with = Esse3NullableEnumValueSerializer::class)
     @SerialName("statoInsEsiti")
-    val outcomesInsertionState: String? = null,
+    val outcomesInsertionState: Esse3OutcomesInsertionState? = null,
 
     @SerialName("statoDes")
     val stateDescription: String? = null,
@@ -319,13 +314,11 @@ data class Esse3ExamSessionTranscriptFast(
     @SerialName("cdsCod")
     val courseOfStudyCode: String? = null,
 
-    @Serializable(with = Esse3NullableEnumValueSerializer::class)
     @SerialName("tipoEsaCod")
-    val graduationTypeCode: String? = null,
+    val graduationTypeCode: Esse3GraduationTypeCode? = null,
 
-    @Serializable(with = Esse3NullableEnumValueSerializer::class)
     @SerialName("tipoIscrCod")
-    val enrollmentTypeCode: String? = null,
+    val enrollmentTypeCode: Esse3EnrollmentTypeCode? = null,
 
     @SerialName("tipoAppCod")
     val callTypeCode: String? = null,
@@ -696,17 +689,14 @@ data class Esse3ExamSessionTranscript(
     @SerialName("statoAperturaApp")
     val callOpeningState: String? = null,
 
-    @Serializable(with = Esse3NullableEnumValueSerializer::class)
     @SerialName("statoVerb")
-    val minutesState: String? = null,
+    val minutesState: Esse3MinutesState? = null,
 
-    @Serializable(with = Esse3NullableEnumValueSerializer::class)
     @SerialName("statoPubblEsiti")
-    val outcomesPublicationState: String? = null,
+    val outcomesPublicationState: Esse3OutcomesPublicationState? = null,
 
-    @Serializable(with = Esse3NullableEnumValueSerializer::class)
     @SerialName("statoInsEsiti")
-    val outcomesInsertionState: String? = null,
+    val outcomesInsertionState: Esse3OutcomesInsertionState? = null,
 
     @SerialName("statoDes")
     val stateDescription: String? = null,
@@ -744,13 +734,11 @@ data class Esse3ExamSessionTranscript(
     @SerialName("cdsCod")
     val courseOfStudyCode: String? = null,
 
-    @Serializable(with = Esse3NullableEnumValueSerializer::class)
     @SerialName("tipoEsaCod")
-    val graduationTypeCode: String? = null,
+    val graduationTypeCode: Esse3GraduationTypeCode? = null,
 
-    @Serializable(with = Esse3NullableEnumValueSerializer::class)
     @SerialName("tipoIscrCod")
-    val enrollmentTypeCode: String? = null,
+    val enrollmentTypeCode: Esse3EnrollmentTypeCode? = null,
 
     @SerialName("tipoAppCod")
     val callTypeCode: String? = null,
@@ -1035,7 +1023,7 @@ data class Esse3TranscriptRowPerActivityLog(
     val email: String? = null,
 
     @SerialName("emailAte")
-    val ateEmail: String? = null,
+    val universityEmail: String? = null,
 
     @SerialName("stuId")
     val studentId: Long? = null,
@@ -1307,9 +1295,8 @@ data class Esse3TranscriptTest(
     @SerialName("matId")
     val matId: Long,
 
-    @Serializable(with = Esse3NullableEnumValueSerializer::class)
     @SerialName("staRegCod")
-    val regulationStatusCode: String? = null,
+    val regulationStatusCode: Esse3RegulationStatusCode? = null,
 
     @SerialName("staRegDes")
     val regulationStatusDescription: String? = null,
@@ -1317,9 +1304,8 @@ data class Esse3TranscriptTest(
     @SerialName("applistaId")
     val applicationListId: Long? = null,
 
-    @Serializable(with = Esse3NullableEnumValueSerializer::class)
     @SerialName("tipoAppCod")
-    val callTypeCode: String? = null,
+    val callTypeCode: Esse3SessionEvaluationType? = null,
 
     @SerialName("cdsEsaId")
     val courseOfStudyGraduationId: Long? = null,

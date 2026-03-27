@@ -102,7 +102,7 @@ class Esse3ServicesApi(
         limit: Int? = null,
         order: String? = null
     ): List<Esse3ConfigurationParameter> {
-        return executeJsonGetList<Esse3ConfigurationParameter>("/par-conf", setOf(Esse3PermissionLevel.TECHNICAL_USER, Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.UNKNOWN)) {
+        return executeJsonGetList<Esse3ConfigurationParameter>("/par-conf", setOf(Esse3PermissionLevel.TECHNICAL_USER, Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.EXTERNAL_SUBJECT)) {
             module?.let { parameter("modulo", it) }
             product?.let { parameter("prodotto", it) }
             description?.let { parameter("des", it) }
@@ -116,7 +116,7 @@ class Esse3ServicesApi(
     suspend fun getParameter(
         parameterCode: String
     ): Esse3ConfigurationParameter {
-        return executeJsonGet<Esse3ConfigurationParameter>("/par-conf/${parameterCode}/", setOf(Esse3PermissionLevel.TECHNICAL_USER, Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.UNKNOWN))
+        return executeJsonGet<Esse3ConfigurationParameter>("/par-conf/${parameterCode}/", setOf(Esse3PermissionLevel.TECHNICAL_USER, Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.EXTERNAL_SUBJECT))
     }
 
     suspend fun getIdentityDocumentTypes(
@@ -154,7 +154,7 @@ class Esse3ServicesApi(
     suspend fun getCodeFromId(
         body: Esse3CodeToIdTranslatorRequest
     ): List<Esse3CodeToIdTranslatorResponseObject> {
-        return executeJsonGetList<Esse3CodeToIdTranslatorResponseObject>("/translator/cod-to-id", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return executeJsonPutList<Esse3CodeToIdTranslatorResponseObject>("/translator/cod-to-id", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
         }

@@ -11,9 +11,8 @@ data class Esse3ChoiceCondition(
     @SerialName("regsceId")
     val choiceRegulationId: Long? = null,
 
-    @Serializable(with = Esse3NullableEnumValueSerializer::class)
     @SerialName("tipoCondCod")
-    val conditionTypeCode: String? = null,
+    val conditionTypeCode: Esse3ConditionTypeCode? = null,
 
     @SerialName("valSelId")
     val selectedValueId: Long? = null,
@@ -45,9 +44,8 @@ data class Esse3RulePropertyAND(
     @SerialName("regpropId")
     val proposalRuleId: Long? = null,
 
-    @Serializable(with = Esse3NullableEnumValueSerializer::class)
     @SerialName("tipoVincoloRegola")
-    val ruleConstraintType: String? = null,
+    val ruleConstraintType: Esse3RuleConstraintType? = null,
 
     @SerialName("numAd")
     val teachingActivityNumber: Int? = null,
@@ -70,9 +68,8 @@ data class Esse3RulePropertyChild(
     @SerialName("regpropAndId")
     val andProposalRuleId: Long? = null,
 
-    @Serializable(with = Esse3NullableEnumValueSerializer::class)
     @SerialName("tipoElemento")
-    val elementType: String? = null,
+    val elementType: Esse3ElementType? = null,
 
     @SerialName("chiaveADContestualizzata")
     val contextualizedTeachingActivityKey: Esse3ContextualizedActivityKey? = null,
@@ -92,9 +89,8 @@ data class Esse3ChoiceRuleBlockCondition(
     @SerialName("regsceId")
     val choiceRegulationId: Long? = null,
 
-    @Serializable(with = Esse3NullableEnumValueSerializer::class)
     @SerialName("tipoCondCod")
-    val conditionTypeCode: String? = null,
+    val conditionTypeCode: Esse3ConditionTypeCode? = null,
 
     @SerialName("valSelId")
     val selectedValueId: Long? = null,
@@ -159,16 +155,14 @@ data class Esse3ChoiceRuleWithSchemas(
     @SerialName("annoCorsoAnticipo")
     val anticipatedCourseYear: Int? = null,
 
-    @Serializable(with = Esse3NullableEnumValueSerializer::class)
     @SerialName("tipSce")
-    val choiceType: String? = null,
+    val choiceType: Esse3ChoiceType? = null,
 
     @SerialName("tipSceDes")
     val choiceTypeDescription: String? = null,
 
-    @Serializable(with = Esse3NullableEnumValueSerializer::class)
     @SerialName("tipUnt")
-    val teachingUnitType: String? = null,
+    val teachingUnitType: Esse3TeachingUnitType? = null,
 
     @SerialName("minUnt")
     val minTeachingUnit: Float? = null,
@@ -182,9 +176,8 @@ data class Esse3ChoiceRuleWithSchemas(
     @SerialName("livello")
     val level: Int? = null,
 
-    @Serializable(with = Esse3NullableEnumValueSerializer::class)
     @SerialName("modTAF")
-    val tafMode: String? = null,
+    val tafMode: Esse3TafMode? = null,
 
     @SerialName("abilFlg")
     val authorizationFlag: Int? = null,
@@ -312,9 +305,8 @@ data class Esse3PrerequisitesRegulationWithConstraints(
     @SerialName("aaRevisioneId")
     val academicYearRevisionId: Int? = null,
 
-    @Serializable(with = Esse3NullableEnumValueSerializer::class)
     @SerialName("stato")
-    val state: String? = null,
+    val state: Esse3State2? = null,
 
     @SerialName("extId")
     val externalId: Long? = null,
@@ -355,9 +347,8 @@ data class Esse3StudyPlanHeader(
     @SerialName("finregsceId")
     val finalRegulationChoiceId: Long? = null,
 
-    @Serializable(with = Esse3NullableEnumValueSerializer::class)
     @SerialName("stato")
-    val state: String? = null,
+    val state: Esse3State3? = null,
 
     @SerialName("statoDes")
     val stateDescription: String? = null,
@@ -365,9 +356,8 @@ data class Esse3StudyPlanHeader(
     @SerialName("dataUltimaVarStato")
     val lastStateChangeDate: String? = null,
 
-    @Serializable(with = Esse3NullableEnumValueSerializer::class)
     @SerialName("tipoPiano")
-    val planType: String? = null,
+    val planType: Esse3PlanType? = null,
 
     @SerialName("statutarioFlg")
     val statutoryFlag: Int? = null,
@@ -456,9 +446,8 @@ data class Esse3ChoiceRuleCondition(
     @SerialName("regsceId")
     val choiceRegulationId: Long? = null,
 
-    @Serializable(with = Esse3NullableEnumValueSerializer::class)
     @SerialName("tipoCondCod")
-    val conditionTypeCode: String? = null,
+    val conditionTypeCode: Esse3ConditionTypeCode? = null,
 
     @SerialName("valSelId")
     val selectedValueId: Long? = null,
@@ -517,16 +506,14 @@ data class Esse3ChoiceRule(
     @SerialName("annoCorsoAnticipo")
     val anticipatedCourseYear: Int? = null,
 
-    @Serializable(with = Esse3NullableEnumValueSerializer::class)
     @SerialName("tipSce")
-    val choiceType: String? = null,
+    val choiceType: Esse3ChoiceType? = null,
 
     @SerialName("tipSceDes")
     val choiceTypeDescription: String? = null,
 
-    @Serializable(with = Esse3NullableEnumValueSerializer::class)
     @SerialName("tipUnt")
-    val teachingUnitType: String? = null,
+    val teachingUnitType: Esse3TeachingUnitType? = null,
 
     @SerialName("minUnt")
     val minTeachingUnit: Float? = null,
@@ -540,9 +527,8 @@ data class Esse3ChoiceRule(
     @SerialName("livello")
     val level: Int? = null,
 
-    @Serializable(with = Esse3NullableEnumValueSerializer::class)
     @SerialName("modTAF")
-    val tafMode: String? = null,
+    val tafMode: Esse3TafMode? = null,
 
     @SerialName("abilFlg")
     val authorizationFlag: Int? = null,
@@ -628,9 +614,8 @@ data class Esse3StudyPlanHeaderPerActivity(
     @SerialName("finregsceId")
     val finalRegulationChoiceId: Long? = null,
 
-    @Serializable(with = Esse3NullableEnumValueSerializer::class)
     @SerialName("stato")
-    val state: String? = null,
+    val state: Esse3State3? = null,
 
     @SerialName("statoDes")
     val stateDescription: String? = null,
@@ -638,9 +623,8 @@ data class Esse3StudyPlanHeaderPerActivity(
     @SerialName("dataUltimaVarStato")
     val lastStateChangeDate: String? = null,
 
-    @Serializable(with = Esse3NullableEnumValueSerializer::class)
     @SerialName("tipoPiano")
-    val planType: String? = null,
+    val planType: Esse3PlanType? = null,
 
     @SerialName("statutarioFlg")
     val statutoryFlag: Int? = null,
@@ -765,16 +749,14 @@ data class Esse3ChoiceRuleSchemaWithDetails(
     @SerialName("annoCorsoAnticipo")
     val anticipatedCourseYear: Int? = null,
 
-    @Serializable(with = Esse3NullableEnumValueSerializer::class)
     @SerialName("tipSce")
-    val choiceType: String? = null,
+    val choiceType: Esse3ChoiceType? = null,
 
     @SerialName("tipSceDes")
     val choiceTypeDescription: String? = null,
 
-    @Serializable(with = Esse3NullableEnumValueSerializer::class)
     @SerialName("tipUnt")
-    val teachingUnitType: String? = null,
+    val teachingUnitType: Esse3TeachingUnitType? = null,
 
     @SerialName("minUnt")
     val minTeachingUnit: Float? = null,
@@ -788,9 +770,8 @@ data class Esse3ChoiceRuleSchemaWithDetails(
     @SerialName("livello")
     val level: Int? = null,
 
-    @Serializable(with = Esse3NullableEnumValueSerializer::class)
     @SerialName("modTAF")
-    val tafMode: String? = null,
+    val tafMode: Esse3TafMode? = null,
 
     @SerialName("abilFlg")
     val authorizationFlag: Int? = null,
@@ -951,9 +932,8 @@ data class Esse3StudyPlanHeaderPerRule(
     @SerialName("finregsceId")
     val finalRegulationChoiceId: Long? = null,
 
-    @Serializable(with = Esse3NullableEnumValueSerializer::class)
     @SerialName("stato")
-    val state: String? = null,
+    val state: Esse3State3? = null,
 
     @SerialName("statoDes")
     val stateDescription: String? = null,
@@ -961,9 +941,8 @@ data class Esse3StudyPlanHeaderPerRule(
     @SerialName("dataUltimaVarStato")
     val lastStateChangeDate: String? = null,
 
-    @Serializable(with = Esse3NullableEnumValueSerializer::class)
     @SerialName("tipoPiano")
-    val planType: String? = null,
+    val planType: Esse3PlanType? = null,
 
     @SerialName("statutarioFlg")
     val statutoryFlag: Int? = null,
@@ -1079,9 +1058,8 @@ data class Esse3PrerequisitesRegulation(
     @SerialName("aaRevisioneId")
     val academicYearRevisionId: Int? = null,
 
-    @Serializable(with = Esse3NullableEnumValueSerializer::class)
     @SerialName("stato")
-    val state: String? = null,
+    val state: Esse3State2? = null,
 
     @SerialName("extId")
     val externalId: Long? = null
@@ -1170,9 +1148,8 @@ data class Esse3TeachingUnitChoiceRuleRegulation(
     @SerialName("tipo1")
     val type1: String? = null,
 
-    @Serializable(with = Esse3NullableEnumValueSerializer::class)
     @SerialName("um1")
-    val measurementUnit1: String? = null,
+    val measurementUnit1: Esse3MeasurementUnit1? = null,
 
     @SerialName("qta1")
     val quantity1: Int? = null,
@@ -1180,9 +1157,8 @@ data class Esse3TeachingUnitChoiceRuleRegulation(
     @SerialName("tipo2")
     val type2: String? = null,
 
-    @Serializable(with = Esse3NullableEnumValueSerializer::class)
     @SerialName("um2")
-    val measurementUnit2: String? = null,
+    val measurementUnit2: Esse3MeasurementUnit1? = null,
 
     @SerialName("qta2")
     val quantity2: Int? = null,
@@ -1190,9 +1166,8 @@ data class Esse3TeachingUnitChoiceRuleRegulation(
     @SerialName("tipo3")
     val type3: String? = null,
 
-    @Serializable(with = Esse3NullableEnumValueSerializer::class)
     @SerialName("um3")
-    val measurementUnit3: String? = null,
+    val measurementUnit3: Esse3MeasurementUnit1? = null,
 
     @SerialName("qta3")
     val quantity3: Int? = null,
@@ -1233,9 +1208,8 @@ data class Esse3ChoiceRegulationWithSchemas(
     @SerialName("aaRevisioneId")
     val academicYearRevisionId: Int? = null,
 
-    @Serializable(with = Esse3NullableEnumValueSerializer::class)
     @SerialName("stato")
-    val state: String? = null,
+    val state: Esse3State2? = null,
 
     @SerialName("dataUltimaModifica")
     val lastModificationDate: String? = null,
@@ -1312,9 +1286,8 @@ data class Esse3ChoiceRegulation(
     @SerialName("aaRevisioneId")
     val academicYearRevisionId: Int? = null,
 
-    @Serializable(with = Esse3NullableEnumValueSerializer::class)
     @SerialName("stato")
-    val state: String? = null,
+    val state: Esse3State2? = null,
 
     @SerialName("dataUltimaModifica")
     val lastModificationDate: String? = null,
@@ -1386,7 +1359,7 @@ data class Esse3PrerequisiteConstraint(
     val proposalRuleId: Long? = null,
 
     @SerialName("tipoVincolo")
-    val constraintType: String? = null,
+    val constraintType: Esse3ElementType? = null,
 
     @SerialName("chiaveADContestualizzata")
     val contextualizedTeachingActivityKey: Esse3ContextualizedActivityKey? = null,
@@ -1538,9 +1511,8 @@ data class Esse3ChoiceRegulationWithCounts(
     @SerialName("aaRevisioneId")
     val academicYearRevisionId: Int? = null,
 
-    @Serializable(with = Esse3NullableEnumValueSerializer::class)
     @SerialName("stato")
-    val state: String? = null,
+    val state: Esse3State2? = null,
 
     @SerialName("dataUltimaModifica")
     val lastModificationDate: String? = null,
@@ -1599,16 +1571,14 @@ data class Esse3ChoiceRuleWithDetails(
     @SerialName("annoCorsoAnticipo")
     val anticipatedCourseYear: Int? = null,
 
-    @Serializable(with = Esse3NullableEnumValueSerializer::class)
     @SerialName("tipSce")
-    val choiceType: String? = null,
+    val choiceType: Esse3ChoiceType? = null,
 
     @SerialName("tipSceDes")
     val choiceTypeDescription: String? = null,
 
-    @Serializable(with = Esse3NullableEnumValueSerializer::class)
     @SerialName("tipUnt")
-    val teachingUnitType: String? = null,
+    val teachingUnitType: Esse3TeachingUnitType? = null,
 
     @SerialName("minUnt")
     val minTeachingUnit: Float? = null,
@@ -1622,9 +1592,8 @@ data class Esse3ChoiceRuleWithDetails(
     @SerialName("livello")
     val level: Int? = null,
 
-    @Serializable(with = Esse3NullableEnumValueSerializer::class)
     @SerialName("modTAF")
-    val tafMode: String? = null,
+    val tafMode: Esse3TafMode? = null,
 
     @SerialName("abilFlg")
     val authorizationFlag: Int? = null,
@@ -1890,9 +1859,8 @@ data class Esse3PlanSchemaChoiceRule(
 
 @Serializable
 data class Esse3UpdateChoiceRegulation(
-    @Serializable(with = Esse3NullableEnumValueSerializer::class)
     @SerialName("stato")
-    val state: String? = null
+    val state: Esse3QuestionStateCode? = null
 )
 
 @Serializable
@@ -1927,9 +1895,8 @@ data class Esse3ChoiceRegulationWithDetails(
     @SerialName("aaRevisioneId")
     val academicYearRevisionId: Int? = null,
 
-    @Serializable(with = Esse3NullableEnumValueSerializer::class)
     @SerialName("stato")
-    val state: String? = null,
+    val state: Esse3State2? = null,
 
     @SerialName("dataUltimaModifica")
     val lastModificationDate: String? = null,

@@ -2,11 +2,13 @@ package it.attendance100.mybicocca.ui.theme
 
 import android.app.Activity
 import android.os.Build
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
@@ -15,34 +17,34 @@ val MyBicoccaDarkColorScheme = darkColorScheme(
     primary = PrimaryColor,
     onPrimary = OnPrimaryColor,
     secondary = SecondaryColor,
-    onSecondary = onSecondaryColor,
+    onSecondary = OnSecondaryColor,
     tertiary = TertiaryColor,
-    onTertiary = onTertiaryColor,
+    onTertiary = OnTertiaryColor,
     error = ErrorColor,
-    onError = onErrorColor,
-    primaryContainer = primaryContainerColor,
-    onPrimaryContainer = onPrimaryContainerColor,
-    secondaryContainer = secondaryContainerColor,
-    onSecondaryContainer = onSecondaryContainerColor,
-    tertiaryContainer = tertiaryContainerColor,
-    onTertiaryContainer = onTertiaryContainerColor,
-    errorContainer = errorContainerColor,
-    onErrorContainer = onErrorContainerColor,
-    surfaceDim = surfaceDimColor,
-    surface = surfaceColor,
-    surfaceBright = surfaceBrightColor,
-    surfaceContainerLowest = surfaceContainerLowestColor,
-    surfaceContainerLow = surfaceContainerLowColor,
-    surfaceContainer = surfaceContainerColor,
-    surfaceContainerHigh = surfaceContainerHighColor,
-    surfaceContainerHighest = surfaceContainerHighestColor,
-    onSurfaceVariant = onSurfaceColor,
-    surfaceVariant = onSurfaceVarColor,
-    outline = outlineColor,
-    outlineVariant = outlineVariantColor,
-    inverseOnSurface = inverseOnSurfaceColor,
-    inverseSurface = inverseSurfaceColor,
-    inversePrimary = inversePrimaryColor,
+    onError = OnErrorColor,
+    primaryContainer = PrimaryContainerColor,
+    onPrimaryContainer = OnPrimaryContainerColor,
+    secondaryContainer = SecondaryContainerColor,
+    onSecondaryContainer = OnSecondaryContainerColor,
+    tertiaryContainer = TertiaryContainerColor,
+    onTertiaryContainer = OnTertiaryContainerColor,
+    errorContainer = ErrorContainerColor,
+    onErrorContainer = OnErrorContainerColor,
+    surfaceDim = SurfaceDimColor,
+    surface = BackgroundColor,
+    surfaceBright = SurfaceBrightColor,
+    surfaceContainerLowest = SurfaceContainerLowestColor,
+    surfaceContainerLow = SurfaceContainerLowColor,
+    surfaceContainer = SurfaceContainerColor,
+    surfaceContainerHigh = SurfaceContainerHighColor,
+    surfaceContainerHighest = SurfaceContainerHighestColor,
+    onSurfaceVariant = OnSurfaceColor,
+    surfaceVariant = OnSurfaceVariantColor,
+    outline = OutlineColor,
+    outlineVariant = OutlineVariantColor,
+    inverseSurface = InverseSurfaceColor,
+    inverseOnSurface = InverseOnSurfaceColor,
+    inversePrimary = InversePrimaryColor,
     background = BackgroundColor,
     onBackground = OnBackgroundColor,
 )
@@ -51,41 +53,53 @@ val MyBicoccaLightColorScheme = lightColorScheme(
     primary = PrimaryColorLight,
     onPrimary = OnPrimaryColorLight,
     secondary = SecondaryColorLight,
-    onSecondary = onSecondaryColorLight,
+    onSecondary = OnSecondaryColorLight,
     tertiary = TertiaryColorLight,
-    onTertiary = onTertiaryColorLight,
+    onTertiary = OnTertiaryColorLight,
     error = ErrorColorLight,
-    onError = onErrorColorLight,
-    primaryContainer = primaryContainerColorLight,
-    onPrimaryContainer = onPrimaryContainerColorLight,
-    secondaryContainer = secondaryContainerColorLight,
-    onSecondaryContainer = onSecondaryContainerColorLight,
-    tertiaryContainer = tertiaryContainerColorLight,
-    onTertiaryContainer = onTertiaryContainerColorLight,
-    errorContainer = errorContainerColorLight,
-    onErrorContainer = onErrorContainerColorLight,
-    surfaceDim = surfaceDimColorLight,
-    surface = surfaceColorLight,
-    surfaceBright = surfaceBrightColorLight,
-    surfaceContainerLowest = surfaceContainerLowestColorLight,
-    surfaceContainerLow = surfaceContainerLowColorLight,
-    surfaceContainer = surfaceContainerColorLight,
-    surfaceContainerHigh = surfaceContainerHighColorLight,
-    surfaceContainerHighest = surfaceContainerHighestColorLight,
-    onSurfaceVariant = onSurfaceColorLight,
-    surfaceVariant = onSurfaceVarColorLight,
-    outline = outlineColorLight,
-    outlineVariant = outlineVariantColorLight,
-    inverseOnSurface = inverseOnSurfaceColorLight,
-    inverseSurface = inverseSurfaceColorLight,
-    inversePrimary = inversePrimaryColorLight,
+    onError = OnErrorColorLight,
+    primaryContainer = PrimaryContainerColorLight,
+    onPrimaryContainer = OnPrimaryContainerColorLight,
+    secondaryContainer = SecondaryContainerColorLight,
+    onSecondaryContainer = OnSecondaryContainerColorLight,
+    tertiaryContainer = TertiaryContainerColorLight,
+    onTertiaryContainer = OnTertiaryContainerColorLight,
+    errorContainer = ErrorContainerColorLight,
+    onErrorContainer = OnErrorContainerColorLight,
+    surfaceDim = SurfaceDimColorLight,
+    surface = SurfaceColorLight,
+    surfaceBright = SurfaceBrightColorLight,
+    surfaceContainerLowest = SurfaceContainerLowestColorLight,
+    surfaceContainerLow = SurfaceContainerLowColorLight,
+    surfaceContainer = SurfaceContainerColorLight,
+    surfaceContainerHigh = SurfaceContainerHighColorLight,
+    surfaceContainerHighest = SurfaceContainerHighestColorLight,
+    onSurfaceVariant = OnSurfaceColorLight,
+    surfaceVariant = OnSurfaceVariantColorLight,
+    outline = OutlineColorLight,
+    outlineVariant = OutlineVariantColorLight,
+    inverseSurface = InverseSurfaceColorLight,
+    inverseOnSurface = InverseOnSurfaceColorLight,
+    inversePrimary = InversePrimaryColorLight,
     background = BackgroundColorLight,
     onBackground = OnBackgroundColorLight,
 )
 
+// PagoPA brand colors
+val PagoPaColor = Color(0xFF006DCA)
+val PagoPaSecondaryColor = Color(0xFF61E7FF)
+private val PagoPaBackgroundDark = Color(0xFF0B1016)
+private val PagoPaBackgroundLight = Color(0xFFB4D7FF)
+
+@Composable
+fun pagoPaBackgroundColor(): Color {
+    val isDark = MaterialTheme.colorScheme.background == BackgroundColor
+    return if (isDark) PagoPaBackgroundDark else PagoPaBackgroundLight
+}
+
 @Composable
 fun MyBicoccaTheme(
-    darkTheme: Boolean = true,
+    darkTheme: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit,
 ) {
     val colorScheme = if (darkTheme) MyBicoccaDarkColorScheme else MyBicoccaLightColorScheme
@@ -94,28 +108,15 @@ fun MyBicoccaTheme(
     if (!view.isInEditMode) {
         SideEffect {
             val window = (view.context as Activity).window
-            val color = if (darkTheme) BackgroundColor.toArgb() else BackgroundColorLight.toArgb()
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM) { // Android 15+
-                window.decorView.setOnApplyWindowInsetsListener { view, insets ->
-                    // val statusBarInsets = insets.getInsets(WindowInsets.Type.statusBars())
-                    view.setBackgroundColor(color)
-
-                    // Adjust padding to avoid overlap
-                    view.setPadding(0, 0, 0, 0)
-                    insets
-                }
-            } else {
-                // For Android 14 and below
-                @Suppress("DEPRECATION")
-                window.statusBarColor = color
-            }
+            val statusBarColor = if (darkTheme) BackgroundColor.toArgb() else BackgroundColorLight.toArgb()
+            @Suppress("DEPRECATION")
+            window.statusBarColor = statusBarColor
             WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !darkTheme
         }
     }
 
     MaterialTheme(
         colorScheme = colorScheme,
-        typography = MyBicoccaTypography,
-        content = content
+        content = content,
     )
 }

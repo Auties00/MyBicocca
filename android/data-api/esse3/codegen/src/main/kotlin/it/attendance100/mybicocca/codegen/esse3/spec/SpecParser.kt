@@ -11,6 +11,8 @@ import io.swagger.v3.parser.core.models.ParseOptions
 import java.io.File
 
 object SpecParser {
+    private val FrkRegex = Regex("^(p\\d+-|frk-)")
+    private val ApiRegex = Regex("Api[Vv]\\d+$")
 
     fun parse(yamlFile: File): ParsedSpec {
         val options = ParseOptions().apply {
@@ -47,8 +49,8 @@ object SpecParser {
 
     fun deriveSpecName(filenameNoExt: String): String {
         var name = filenameNoExt
-        name = name.replace(Regex("^(p\\d+-|frk-)"), "")
-        name = name.replace(Regex("Api[Vv]\\d+$"), "")
+        name = name.replace(FrkRegex, "")
+        name = name.replace(ApiRegex, "")
         return name.replaceFirstChar { it.uppercaseChar() }
     }
 
@@ -115,7 +117,7 @@ object SpecParser {
                     }
                 }
 
-                val (responseType, isList) = resolveResponseType(operation)
+                val responseType = resolveResponseType(operation)
                 val permissions = extractPermissions(operation)
 
                 ops.add(
@@ -127,7 +129,6 @@ object SpecParser {
                         queryParams = queryParams,
                         bodyParam = bodyParam,
                         responseType = responseType,
-                        isListResponse = isList,
                         permissions = permissions
                     )
                 )
@@ -176,17 +177,15 @@ object SpecParser {
         return TypeMapping.resolveScalar(schema.type, schema.format)
     }
 
-    private fun resolveResponseType(operation: Operation): Pair<ResolvedType?, Boolean> {
-        val responses = operation.responses ?: return null to false
-        val successResponse = responses["200"] ?: responses["201"] ?: return null to false
+    private fun resolveResponseType(operation: Operation): ResolvedType? {
+        val responses = operation.responses ?: return null
+        val successResponse = responses["200"] ?: responses["201"] ?: return null
         val content = successResponse.content
         if (content != null) {
             val mediaType = content["application/json"] ?: content.values.firstOrNull()
             val schema = mediaType?.schema
             if (schema != null) {
-                val type = resolveSchemaType(schema)
-                val isList = type is ResolvedType.ListOf
-                return type to isList
+                return resolveSchemaType(schema)
             }
         }
         val extensions = successResponse.extensions
@@ -194,13 +193,13 @@ object SpecParser {
             @Suppress("UNCHECKED_CAST")
             val schemaExt = extensions["x-schema"] as? Map<String, Any?>
             if (schemaExt != null) {
-                val ref = schemaExt["\$ref"] as? String
+                val ref = schemaExt[$$"$ref"] as? String
                 if (ref != null) {
-                    return ResolvedType.Reference(extractRefName(ref)) to false
+                    return ResolvedType.Reference(extractRefName(ref))
                 }
             }
         }
-        return null to false
+        return null
     }
 
     @Suppress("UNCHECKED_CAST")

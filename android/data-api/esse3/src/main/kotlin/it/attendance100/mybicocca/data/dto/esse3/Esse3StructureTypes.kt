@@ -491,9 +491,8 @@ data class Esse3RegulationWithPaths(
     @SerialName("cdsOrdDesCertEng")
     val courseOfStudyOrderCertificateDescriptionEnglish: String? = null,
 
-    @Serializable(with = Esse3NullableEnumValueSerializer::class)
     @SerialName("statoCod")
-    val stateCode: String? = null,
+    val stateCode: Esse3StateCode? = null,
 
     @SerialName("aaOrdCessId")
     val academicYearOrderCessationId: Int? = null,
@@ -570,9 +569,8 @@ data class Esse3AdmissionTitlesWithCode(
     @SerialName("cdsId")
     val courseOfStudyId: Long? = null,
 
-    @Serializable(with = Esse3EnumValueSerializer::class)
     @SerialName("tipologiaCod")
-    val typologyCode: String,
+    val typologyCode: Esse3TypologyCode,
 
     @SerialName("tipologiaDes")
     val typologyDescription: String? = null,
@@ -607,9 +605,8 @@ data class Esse3RegulationWithPhDSectors(
     @SerialName("cdsOrdDesCertEng")
     val courseOfStudyOrderCertificateDescriptionEnglish: String? = null,
 
-    @Serializable(with = Esse3NullableEnumValueSerializer::class)
     @SerialName("statoCod")
-    val stateCode: String? = null,
+    val stateCode: Esse3StateCode? = null,
 
     @SerialName("aaOrdCessId")
     val academicYearOrderCessationId: Int? = null,
@@ -1919,9 +1916,8 @@ data class Esse3Regulation(
     @SerialName("cdsOrdDesCertEng")
     val courseOfStudyOrderCertificateDescriptionEnglish: String? = null,
 
-    @Serializable(with = Esse3NullableEnumValueSerializer::class)
     @SerialName("statoCod")
-    val stateCode: String? = null,
+    val stateCode: Esse3StateCode? = null,
 
     @SerialName("aaOrdCessId")
     val academicYearOrderCessationId: Int? = null,
@@ -2892,9 +2888,8 @@ data class Esse3StudyPath(
     @SerialName("pdsDesEng")
     val studyPlanDescriptionEnglish: String? = null,
 
-    @Serializable(with = Esse3NullableEnumValueSerializer::class)
     @SerialName("statoCod")
-    val stateCode: String? = null,
+    val stateCode: Esse3StateCode? = null,
 
     @SerialName("webViewFlg")
     val webViewFlag: Int? = null,
@@ -2926,9 +2921,8 @@ data class Esse3AdmissionTitles(
     @SerialName("tipologiaDes")
     val typologyDescription: String? = null,
 
-    @Serializable(with = Esse3EnumValueSerializer::class)
     @SerialName("tipologiaCod")
-    val typologyCode: String,
+    val typologyCode: Esse3TypologyCode,
 
     @SerialName("cdsId")
     val courseOfStudyId: Long

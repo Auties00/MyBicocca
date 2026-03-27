@@ -88,7 +88,7 @@ class Esse3CompetitionsApi(
         body: List<Esse3RankingImport>,
         fileTypology: String
     ): List<Esse3ImportResponse> {
-        return executeJsonGetList<Esse3ImportResponse>("/concorsi/${academicYearId}/${testId}/classifica/${competitionTestsId}", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return executeJsonPutList<Esse3ImportResponse>("/concorsi/${academicYearId}/${testId}/classifica/${competitionTestsId}", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
             parameter("tipologiaFile", fileTypology)
@@ -102,7 +102,7 @@ class Esse3CompetitionsApi(
         body: kotlinx.serialization.json.JsonObject,
         fileTypology: String
     ): List<Esse3ImportResponse> {
-        return executeJsonGetList<Esse3ImportResponse>("/concorsi/${academicYearId}/${testId}/classifica/${competitionTestsId}/file", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return executeJsonPutList<Esse3ImportResponse>("/concorsi/${academicYearId}/${testId}/classifica/${competitionTestsId}/file", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
             parameter("tipologiaFile", fileTypology)
@@ -130,7 +130,7 @@ class Esse3CompetitionsApi(
         testId: Long,
         body: kotlinx.serialization.json.JsonObject
     ): List<Esse3ImportResponse> {
-        return executeJsonGetList<Esse3ImportResponse>("/concorsi/${academicYearId}/${testId}/graduatorie/file", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return executeJsonPutList<Esse3ImportResponse>("/concorsi/${academicYearId}/${testId}/graduatorie/file", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
         }
@@ -142,7 +142,7 @@ class Esse3CompetitionsApi(
         testDetailId: Long,
         body: List<Esse3RankingListImport>
     ): List<Esse3ImportResponse> {
-        return executeJsonGetList<Esse3ImportResponse>("/concorsi/${academicYearId}/${testId}/graduatorie/${testDetailId}", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return executeJsonPutList<Esse3ImportResponse>("/concorsi/${academicYearId}/${testId}/graduatorie/${testDetailId}", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
         }
@@ -154,7 +154,7 @@ class Esse3CompetitionsApi(
         testDetailId: Long,
         body: kotlinx.serialization.json.JsonObject
     ): List<Esse3ImportResponse> {
-        return executeJsonGetList<Esse3ImportResponse>("/concorsi/${academicYearId}/${testId}/graduatorie/${testDetailId}/file", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return executeJsonPutList<Esse3ImportResponse>("/concorsi/${academicYearId}/${testId}/graduatorie/${testDetailId}/file", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
         }
@@ -180,7 +180,7 @@ class Esse3CompetitionsApi(
         personId: Long,
         body: Esse3CompetitionAdmissionInsert
     ): List<Esse3CompetitionEnrolledDetail> {
-        return executeJsonGetList<Esse3CompetitionEnrolledDetail>("/concorsi/${academicYearId}/${testId}/iscrizioni/${personId}", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return executeJsonPutList<Esse3CompetitionEnrolledDetail>("/concorsi/${academicYearId}/${testId}/iscrizioni/${personId}", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
         }

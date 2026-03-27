@@ -6,14 +6,6 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import java.io.File
 
-/**
- * Overrides for required fields in OpenAPI specs.
- *
- * Entries are keyed as `DefinitionName.wireName`. When set to `false`, the field
- * is forced to be optional (nullable with default null) even if the spec marks it
- * as required. This is useful when the server returns `null` for fields that the
- * spec incorrectly declares as required.
- */
 class RequiredOverrides(private val overrides: LinkedHashMap<String, Boolean>) {
     val keys: Set<String> get() = overrides.keys
 
