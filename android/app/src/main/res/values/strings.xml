@@ -209,6 +209,7 @@
     <string name="calendar_swipe_hint">Swipe to change day</string>
     <string name="calendar_global_search_title">Search Events</string>
     <string name="calendar_global_search_hint">Course, professor, room…</string>
+    <string name="map_search_hint">Building name or code…</string>
     <string name="calendar_search_results">Results</string>
     <string name="calendar_search_no_upcoming">No upcoming events found</string>
     <string name="calendar_search_upcoming_events">Upcoming events</string>

@@ -45,6 +45,12 @@ sealed interface AppRoutes {
     @Serializable data object Messaging : AppRoutes
     @Serializable data class ConversationDetail(val conversationId: Int) : AppRoutes
 
+    // Map sub-screens
+    @Serializable data class Room360View(val url: String, val roomName: String) : AppRoutes
+
+    // NavHost idle destination (tab root visible behind)
+    @Serializable data object TabRoot : AppRoutes
+
     // Detail screens
     @Serializable data class TeacherDetail(val teacherCode: String) : AppRoutes
     @Serializable data class EventDetail(val eventId: String) : AppRoutes

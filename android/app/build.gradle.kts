@@ -146,4 +146,7 @@ dependencies {
 
     // Shimmer effect for loading screens
     implementation("com.valentinilk.shimmer:compose-shimmer:1.3.3")
+
+    // MapLibre Compose for interactive maps
+    implementation("org.maplibre.compose:maplibre-compose:0.12.1")
 }

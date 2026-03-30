@@ -1,15 +1,13 @@
 package it.attendance100.mybicocca.ui.navigation
 
 import androidx.activity.compose.PredictiveBackHandler
-import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
-import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -22,11 +20,13 @@ import androidx.compose.material.icons.filled.Work
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -35,19 +35,25 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.lerp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.toRoute
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.ui.component.appbar.AppTopBar
+import it.attendance100.mybicocca.ui.theme.PrimaryColor
 import it.attendance100.mybicocca.ui.screen.calendar.CalendarRoute
 import it.attendance100.mybicocca.ui.screen.elearning.ElearningScreen
 import it.attendance100.mybicocca.ui.screen.login.LoginScreen
 import it.attendance100.mybicocca.ui.screen.map.MapScreen
+import it.attendance100.mybicocca.ui.screen.map.Room360Screen
 import it.attendance100.mybicocca.ui.screen.segreterie.SegreterieScreen
 import it.attendance100.mybicocca.ui.screen.segreterie.attendance.AttendanceScreen
 import it.attendance100.mybicocca.ui.screen.segreterie.certificates.SelfCertificatesScreen
@@ -71,6 +77,30 @@ private enum class Tab(val label: String, val icon: ImageVector) {
     Elearning("E-Learning", Icons.Default.School),
     Map("Luoghi", Icons.Default.Map),
     Segreterie("Segreterie", Icons.Default.Work),
+}
+
+private fun resolveSubPageTitle(
+    entry: androidx.navigation.NavBackStackEntry?,
+): String? {
+    val dest = entry?.destination ?: return null
+    return when {
+        dest.hasRoute<AppRoutes.Profile>() -> "Profilo"
+        dest.hasRoute<AppRoutes.Room360View>() -> entry.toRoute<AppRoutes.Room360View>().roomName
+        dest.hasRoute<AppRoutes.Booking>() -> "Prenotazione Esami"
+        dest.hasRoute<AppRoutes.BookingDetail>() -> "Dettaglio Appello"
+        dest.hasRoute<AppRoutes.Booked>() -> "Esami Prenotati"
+        dest.hasRoute<AppRoutes.Taxes>() -> "Tasse"
+        dest.hasRoute<AppRoutes.TaxDetail>() -> "Dettaglio Tassa"
+        dest.hasRoute<AppRoutes.StudyPlan>() -> "Piano di Studi"
+        dest.hasRoute<AppRoutes.Isee>() -> "ISEE"
+        dest.hasRoute<AppRoutes.SelfCertificates>() -> "Autocertificazioni"
+        dest.hasRoute<AppRoutes.ExamResults>() -> "Bacheca Esiti"
+        dest.hasRoute<AppRoutes.Attendance>() -> "Presenze"
+        dest.hasRoute<AppRoutes.Questionnaires>() -> "Questionari"
+        dest.hasRoute<AppRoutes.Reservations>() -> "Prenotazioni"
+        dest.hasRoute<AppRoutes.Internships>() -> "Stage"
+        else -> null
+    }
 }
 
 @Composable
@@ -115,69 +145,29 @@ fun MyBicoccaNavHost(viewModel: AppNavHostViewModel = hiltViewModel()) {
     }
 }
 
-private sealed interface SubPage {
-    val title: String
-
-    data object Booking : SubPage { override val title = "Prenotazione Esami" }
-    data class BookingDetail(val sessionId: Long) : SubPage { override val title = "Dettaglio Appello" }
-    data object Booked : SubPage { override val title = "Esami Prenotati" }
-    data object Taxes : SubPage { override val title = "Tasse" }
-    data class TaxDetail(val chargeId: Long) : SubPage { override val title = "Dettaglio Tassa" }
-    data object StudyPlan : SubPage { override val title = "Piano di Studi" }
-    data object Isee : SubPage { override val title = "ISEE" }
-    data object SelfCertificates : SubPage { override val title = "Autocertificazioni" }
-    data object ExamResults : SubPage { override val title = "Bacheca Esiti" }
-    data object Attendance : SubPage { override val title = "Presenze" }
-    data object Questionnaires : SubPage { override val title = "Questionari" }
-    data object Reservations : SubPage { override val title = "Prenotazioni" }
-    data object Stage : SubPage { override val title = "Stage" }
-
-    // Global (accessible from any tab)
-    data object Profile : SubPage { override val title = "Profile" }
-}
-
 @Composable
 private fun MainShell(profilePic: ByteArray?) {
     var selectedTab by rememberSaveable { mutableStateOf(Tab.Calendar) }
+    var searchActive by rememberSaveable { mutableStateOf(false) }
+    var searchQuery by rememberSaveable { mutableStateOf("") }
+    var filterToggle by remember { mutableStateOf<(() -> Unit)?>(null) }
+    var filterActive by remember { mutableStateOf(false) }
 
-    val tabStacks = remember {
-        Tab.entries.associateWith { mutableStateListOf<SubPage>() }
+    val searchPlaceholder = when (selectedTab) {
+        Tab.Calendar -> stringResource(R.string.calendar_global_search_hint)
+        Tab.Map -> stringResource(R.string.map_search_hint)
+        else -> stringResource(R.string.search)
     }
-    val currentStack = tabStacks[selectedTab]!!
-    val currentSubPage = currentStack.lastOrNull()
-    val canNavigateBack = currentStack.isNotEmpty()
-    val subPageTitle = currentSubPage?.title
+
+    val subNavController = rememberNavController()
+    val subEntry by subNavController.currentBackStackEntryAsState()
+    val isOnSubPage = subEntry?.destination?.hasRoute<AppRoutes.TabRoot>() == false
+    val subPageTitle = if (isOnSubPage) resolveSubPageTitle(subEntry) else null
 
     val topBarProgress = remember { Animatable(0f) }
 
-    fun navigate(subPage: SubPage) {
-        currentStack.add(subPage)
-    }
-
-    fun popBack() {
-        val size = currentStack.size
-        if (size != 0) currentStack.removeAt(size - 1)
-    }
-
-    PredictiveBackHandler(enabled = canNavigateBack) { backProgress ->
-        val returnsToRoot = currentStack.size <= 1
-        try {
-            if (returnsToRoot) {
-                backProgress.collect { event ->
-                    topBarProgress.snapTo(
-                        1f - (event.progress / 0.9f).coerceIn(0f, 1f)
-                    )
-                }
-                topBarProgress.animateTo(0f, spring(stiffness = Spring.StiffnessMediumLow))
-            } else {
-                backProgress.collect { }
-            }
-            popBack()
-        } catch (_: CancellationException) {
-            if (returnsToRoot) {
-                topBarProgress.animateTo(1f, spring(stiffness = Spring.StiffnessMediumLow))
-            }
-        }
+    fun navigate(route: AppRoutes) {
+        subNavController.navigate(route)
     }
 
     Scaffold(
@@ -185,11 +175,18 @@ private fun MainShell(profilePic: ByteArray?) {
         topBar = {
             AppTopBar(
                 profilePic = profilePic,
-                canNavigateBack = canNavigateBack,
+                canNavigateBack = isOnSubPage,
                 subPageTitle = subPageTitle,
+                searchQuery = searchQuery,
+                searchActive = searchActive,
+                searchPlaceholder = searchPlaceholder,
+                onSearchQueryChange = { searchQuery = it },
+                onSearchActiveChange = { searchActive = it },
+                onFilterToggle = filterToggle,
+                filterActive = filterActive,
                 externalProgress = topBarProgress,
-                onNavigateBack = { popBack() },
-                onProfileClick = { navigate(SubPage.Profile) },
+                onNavigateBack = { subNavController.popBackStack() },
+                onProfileClick = { navigate(AppRoutes.Profile) },
             )
         },
     ) { innerPadding ->
@@ -200,20 +197,110 @@ private fun MainShell(profilePic: ByteArray?) {
             .padding(bottom = bottomBarHeight)
 
         Box(modifier = Modifier.fillMaxSize()) {
-            // Tab content with sub-page overlay
+            // Tab root content (behind NavHost)
             Box(modifier = contentModifier.fillMaxSize()) {
-                if (currentSubPage is SubPage.Profile) {
-                    ProfileScreen()
-                } else {
-                    when (selectedTab) {
-                        Tab.Calendar -> CalendarRoute()
-                        Tab.Elearning -> ElearningScreen()
-                        Tab.Map -> MapScreen()
-                        Tab.Segreterie -> SegreterieTabContent(
-                            currentSubPage = currentSubPage,
-                            onNavigate = { navigate(it) },
+                when (selectedTab) {
+                    Tab.Calendar -> CalendarRoute(
+                        searchQuery = searchQuery,
+                        onProvideFilterToggle = { filterToggle = it },
+                        onFilterActiveChanged = { filterActive = it },
+                    )
+                    Tab.Elearning -> ElearningScreen()
+                    Tab.Map -> MapScreen(
+                        onNavigateTo360 = { url, name ->
+                            navigate(AppRoutes.Room360View(url, name))
+                        },
+                        searchQuery = searchQuery,
+                    )
+                    Tab.Segreterie -> SegreterieScreen(
+                        onNavigateToBooking = { navigate(AppRoutes.Booking) },
+                        onNavigateToBooked = { navigate(AppRoutes.Booked) },
+                        onNavigateToTaxes = { navigate(AppRoutes.Taxes) },
+                        onNavigateToIsee = { navigate(AppRoutes.Isee) },
+                        onNavigateToSelfCertificates = { navigate(AppRoutes.SelfCertificates) },
+                        onNavigateToExamResults = { navigate(AppRoutes.ExamResults) },
+                        onNavigateToPianoCarriera = { navigate(AppRoutes.StudyPlan) },
+                        onNavigateToQuestionnaires = { navigate(AppRoutes.Questionnaires) },
+                        onNavigateToReservations = { navigate(AppRoutes.Reservations) },
+                        onNavigateToAttendance = { navigate(AppRoutes.Attendance) },
+                        onNavigateToStage = { navigate(AppRoutes.Internships) },
+                    )
+                }
+            }
+
+            // Sub-page NavHost (on top, with fade transitions)
+            NavHost(
+                navController = subNavController,
+                startDestination = AppRoutes.TabRoot,
+                modifier = contentModifier.fillMaxSize(),
+                enterTransition = { fadeIn(spring(stiffness = Spring.StiffnessMediumLow)) },
+                exitTransition = { ExitTransition.None },
+                popEnterTransition = { EnterTransition.None },
+                popExitTransition = { fadeOut(spring(stiffness = Spring.StiffnessMediumLow)) },
+            ) {
+                composable<AppRoutes.TabRoot> {}
+
+                // First-level sub-pages (gesture drives top bar + bottom bar + content)
+                composable<AppRoutes.Profile> {
+                    FirstLevelSubPage(topBarProgress, subNavController) {
+                        ProfileScreen()
+                    }
+                }
+                composable<AppRoutes.Room360View> { entry ->
+                    val route = entry.toRoute<AppRoutes.Room360View>()
+                    FirstLevelSubPage(topBarProgress, subNavController) {
+                        Room360Screen(url = route.url)
+                    }
+                }
+                composable<AppRoutes.Booking> {
+                    FirstLevelSubPage(topBarProgress, subNavController) {
+                        BookingScreen(
+                            onNavigateToDetail = { id -> navigate(AppRoutes.BookingDetail(id)) },
                         )
                     }
+                }
+                composable<AppRoutes.Booked> {
+                    FirstLevelSubPage(topBarProgress, subNavController) { BookedScreen() }
+                }
+                composable<AppRoutes.Taxes> {
+                    FirstLevelSubPage(topBarProgress, subNavController) {
+                        TaxesScreen(
+                            onNavigateToDetail = { id -> navigate(AppRoutes.TaxDetail(id)) },
+                        )
+                    }
+                }
+                composable<AppRoutes.StudyPlan> {
+                    FirstLevelSubPage(topBarProgress, subNavController) { PianoCarrieraScreen() }
+                }
+                composable<AppRoutes.Isee> {
+                    FirstLevelSubPage(topBarProgress, subNavController) { IseeScreen() }
+                }
+                composable<AppRoutes.SelfCertificates> {
+                    FirstLevelSubPage(topBarProgress, subNavController) { SelfCertificatesScreen() }
+                }
+                composable<AppRoutes.ExamResults> {
+                    FirstLevelSubPage(topBarProgress, subNavController) { ExamResultsScreen() }
+                }
+                composable<AppRoutes.Attendance> {
+                    FirstLevelSubPage(topBarProgress, subNavController) { AttendanceScreen() }
+                }
+                composable<AppRoutes.Questionnaires> {
+                    FirstLevelSubPage(topBarProgress, subNavController) { QuestionnairesScreen() }
+                }
+                composable<AppRoutes.Reservations> {
+                    FirstLevelSubPage(topBarProgress, subNavController) { ReservationsScreen() }
+                }
+                composable<AppRoutes.Internships> {
+                    FirstLevelSubPage(topBarProgress, subNavController) { StageScreen() }
+                }
+
+                // Deeper sub-pages (NavHost handles back, bars stay in SUB_PAGE mode)
+                composable<AppRoutes.BookingDetail> { entry ->
+                    val route = entry.toRoute<AppRoutes.BookingDetail>()
+                    SubPageBackground { ExamSessionDetailScreen(sessionId = route.sessionId) }
+                }
+                composable<AppRoutes.TaxDetail> {
+                    SubPageBackground { TaxDetailScreen() }
                 }
             }
 
@@ -226,13 +313,28 @@ private fun MainShell(profilePic: ByteArray?) {
                     },
             ) {
                 NavigationBar {
+                    val navBarColors = NavigationBarItemDefaults.colors(
+                        selectedIconColor = PrimaryColor,
+                        selectedTextColor = PrimaryColor,
+                        indicatorColor = PrimaryColor.copy(alpha = 0.12f),
+                    )
                     Tab.entries.forEach { tab ->
                         NavigationBarItem(
                             selected = tab == selectedTab,
+                            colors = navBarColors,
                             onClick = {
                                 if (tab == selectedTab) {
-                                    currentStack.clear()
+                                    subNavController.popBackStack(
+                                        AppRoutes.TabRoot, inclusive = false,
+                                    )
                                 } else {
+                                    subNavController.popBackStack(
+                                        AppRoutes.TabRoot, inclusive = false,
+                                    )
+                                    searchActive = false
+                                    searchQuery = ""
+                                    filterToggle = null
+                                    filterActive = false
                                     selectedTab = tab
                                 }
                             },
@@ -247,55 +349,44 @@ private fun MainShell(profilePic: ByteArray?) {
 }
 
 @Composable
-private fun SegreterieTabContent(
-    currentSubPage: SubPage?,
-    onNavigate: (SubPage) -> Unit,
+private fun FirstLevelSubPage(
+    topBarProgress: Animatable<Float, *>,
+    navController: androidx.navigation.NavController,
+    content: @Composable () -> Unit,
 ) {
-    AnimatedContent(
-        targetState = currentSubPage,
-        transitionSpec = {
-            if (targetState != null) {
-                (slideInHorizontally { it } + fadeIn()) togetherWith
-                        (slideOutHorizontally { -it / 3 } + fadeOut())
-            } else {
-                (slideInHorizontally { -it / 3 } + fadeIn()) togetherWith
-                        (slideOutHorizontally { it } + fadeOut())
+    var gestureActive by remember { mutableStateOf(false) }
+
+    PredictiveBackHandler(enabled = true) { backProgress ->
+        gestureActive = true
+        try {
+            backProgress.collect { event ->
+                topBarProgress.snapTo(
+                    1f - (event.progress / 0.9f).coerceIn(0f, 1f)
+                )
             }
-        },
-        label = "segreterieContent",
-    ) { subPage ->
-        when (subPage) {
-            null -> SegreterieScreen(
-                onNavigateToBooking = { onNavigate(SubPage.Booking) },
-                onNavigateToBooked = { onNavigate(SubPage.Booked) },
-                onNavigateToTaxes = { onNavigate(SubPage.Taxes) },
-                onNavigateToIsee = { onNavigate(SubPage.Isee) },
-                onNavigateToSelfCertificates = { onNavigate(SubPage.SelfCertificates) },
-                onNavigateToExamResults = { onNavigate(SubPage.ExamResults) },
-                onNavigateToPianoCarriera = { onNavigate(SubPage.StudyPlan) },
-                onNavigateToQuestionnaires = { onNavigate(SubPage.Questionnaires) },
-                onNavigateToReservations = { onNavigate(SubPage.Reservations) },
-                onNavigateToAttendance = { onNavigate(SubPage.Attendance) },
-                onNavigateToStage = { onNavigate(SubPage.Stage) },
-            )
-            is SubPage.Booking -> BookingScreen(
-                onNavigateToDetail = { id -> onNavigate(SubPage.BookingDetail(id)) },
-            )
-            is SubPage.BookingDetail -> ExamSessionDetailScreen(sessionId = subPage.sessionId)
-            is SubPage.Booked -> BookedScreen()
-            is SubPage.Taxes -> TaxesScreen(
-                onNavigateToDetail = { id -> onNavigate(SubPage.TaxDetail(id)) },
-            )
-            is SubPage.TaxDetail -> TaxDetailScreen()
-            is SubPage.StudyPlan -> PianoCarrieraScreen()
-            is SubPage.Isee -> IseeScreen()
-            is SubPage.SelfCertificates -> SelfCertificatesScreen()
-            is SubPage.ExamResults -> ExamResultsScreen()
-            is SubPage.Attendance -> AttendanceScreen()
-            is SubPage.Questionnaires -> QuestionnairesScreen()
-            is SubPage.Reservations -> ReservationsScreen()
-            is SubPage.Stage -> StageScreen()
-            else -> throw InternalError("Unexpected page")
+            topBarProgress.animateTo(0f, spring(stiffness = Spring.StiffnessMediumLow))
+            navController.popBackStack()
+        } catch (_: CancellationException) {
+            topBarProgress.animateTo(1f, spring(stiffness = Spring.StiffnessMediumLow))
+            gestureActive = false
         }
+    }
+
+    val alpha = if (gestureActive) topBarProgress.value else 1f
+    Surface(
+        modifier = Modifier.fillMaxSize().graphicsLayer { this.alpha = alpha },
+        color = MaterialTheme.colorScheme.background,
+    ) {
+        content()
+    }
+}
+
+@Composable
+private fun SubPageBackground(content: @Composable () -> Unit) {
+    Surface(
+        modifier = Modifier.fillMaxSize(),
+        color = MaterialTheme.colorScheme.background,
+    ) {
+        content()
     }
 }

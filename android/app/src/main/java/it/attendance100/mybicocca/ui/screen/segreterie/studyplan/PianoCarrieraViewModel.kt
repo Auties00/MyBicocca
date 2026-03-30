@@ -5,24 +5,36 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import it.attendance100.mybicocca.data.model.studyplan.PlannedCourse
 import it.attendance100.mybicocca.data.model.studyplan.StudyPlanHeader
+import it.attendance100.mybicocca.data.repository.CareerRepository
 import it.attendance100.mybicocca.data.repository.StudyPlanRepository
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+@OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class PianoCarrieraViewModel @Inject constructor(
     private val studyPlanRepository: StudyPlanRepository,
+    private val careerRepository: CareerRepository,
 ) : ViewModel() {
 
-    val headers: StateFlow<List<StudyPlanHeader>> = studyPlanRepository.observeHeaders(0)
+    private val activeCareer = careerRepository.observeAll()
+        .map { it.firstOrNull() }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, null)
+
+    val headers: StateFlow<List<StudyPlanHeader>> = activeCareer
+        .flatMapLatest { career -> studyPlanRepository.observeHeaders(career?.studentId ?: 0) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
-    val courses: StateFlow<List<PlannedCourse>> = studyPlanRepository.observeCourses(0)
+    val courses: StateFlow<List<PlannedCourse>> = activeCareer
+        .flatMapLatest { career -> studyPlanRepository.observeCourses(career?.studentId ?: 0) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     private val _isRefreshing = MutableStateFlow(false)
@@ -35,7 +47,7 @@ class PianoCarrieraViewModel @Inject constructor(
     fun refresh() {
         viewModelScope.launch {
             _isRefreshing.value = true
-            studyPlanRepository.refreshHeaders(0)
+            studyPlanRepository.refreshHeaders(activeCareer.value?.studentId ?: 0L)
             _isRefreshing.value = false
         }
     }

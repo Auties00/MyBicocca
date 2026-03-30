@@ -11,11 +11,9 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
@@ -27,7 +25,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material.icons.outlined.FilterList
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -35,11 +33,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -66,13 +60,18 @@ fun AppTopBar(
     profilePic: ByteArray?,
     canNavigateBack: Boolean,
     subPageTitle: String?,
+    searchQuery: String,
+    searchActive: Boolean,
+    searchPlaceholder: String,
+    onSearchQueryChange: (String) -> Unit,
+    onSearchActiveChange: (Boolean) -> Unit,
+    onFilterToggle: (() -> Unit)? = null,
+    filterActive: Boolean = false,
     externalProgress: Animatable<Float, *>? = null,
     onNavigateBack: () -> Unit,
     onProfileClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    var searchActive by rememberSaveable { mutableStateOf(false) }
-    var query by rememberSaveable { mutableStateOf("") }
     val focusRequester = remember { FocusRequester() }
     val keyboardController = LocalSoftwareKeyboardController.current
     val focusManager = LocalFocusManager.current
@@ -86,8 +85,8 @@ fun AppTopBar(
     val expanded = mode != BarMode.PAGE
 
     fun closeSearch() {
-        searchActive = false
-        query = ""
+        onSearchActiveChange(false)
+        onSearchQueryChange("")
         keyboardController?.hide()
         focusManager.clearFocus()
     }
@@ -154,7 +153,7 @@ fun AppTopBar(
                             if (mode == BarMode.PAGE && p < 0.1f) Modifier.clickable(
                                 indication = null,
                                 interactionSource = remember { MutableInteractionSource() },
-                            ) { searchActive = true }
+                            ) { onSearchActiveChange(true) }
                             else Modifier
                         )
                         .padding(horizontal = 4.dp),
@@ -164,7 +163,7 @@ fun AppTopBar(
                     IconButton(
                         onClick = {
                             when (mode) {
-                                BarMode.PAGE -> searchActive = true
+                                BarMode.PAGE -> onSearchActiveChange(true)
                                 BarMode.SUB_PAGE -> onNavigateBack()
                                 BarMode.SEARCH -> closeSearch()
                             }
@@ -216,7 +215,7 @@ fun AppTopBar(
                                     Row(verticalAlignment = Alignment.CenterVertically) {
                                         Spacer(Modifier.width(4.dp))
                                         Text(
-                                            text = subPageTitle ?: "",
+                                            text = subPageTitle,
                                             style = MaterialTheme.typography.titleLarge,
                                             fontWeight = FontWeight.SemiBold,
                                             maxLines = 1,
@@ -225,8 +224,8 @@ fun AppTopBar(
                                     }
                                 } else if (searchActive) {
                                     BasicTextField(
-                                        value = query,
-                                        onValueChange = { query = it },
+                                        value = searchQuery,
+                                        onValueChange = onSearchQueryChange,
                                         modifier = Modifier
                                             .fillMaxWidth()
                                             .focusRequester(focusRequester)
@@ -237,12 +236,15 @@ fun AppTopBar(
                                         ),
                                         cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
                                         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-                                        keyboardActions = KeyboardActions(onSearch = { closeSearch() }),
+                                        keyboardActions = KeyboardActions(onSearch = {
+                                            keyboardController?.hide()
+                                            focusManager.clearFocus()
+                                        }),
                                         decorationBox = { innerTextField ->
                                             Box {
-                                                if (query.isEmpty()) {
+                                                if (searchQuery.isEmpty()) {
                                                     Text(
-                                                        text = stringResource(R.string.calendar_global_search_hint),
+                                                        text = searchPlaceholder,
                                                         style = MaterialTheme.typography.bodyLarge,
                                                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                                                     )
@@ -256,8 +258,9 @@ fun AppTopBar(
                         }
                     }
 
-                    // Trailing icon — avatar fades with p, clear button for search
+                    // Trailing icons
                     Box {
+                        // Avatar (visible in PAGE mode)
                         IconButton(
                             onClick = onProfileClick,
                             enabled = mode == BarMode.PAGE,
@@ -269,47 +272,34 @@ fun AppTopBar(
                                 size = 32.dp,
                             )
                         }
-                        if (mode == BarMode.SEARCH && query.isNotEmpty()) {
-                            IconButton(
-                                onClick = { query = "" },
-                                modifier = Modifier.graphicsLayer { alpha = p },
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Close,
-                                    contentDescription = stringResource(R.string.close),
-                                )
+                        // Search mode trailing icons
+                        if (mode == BarMode.SEARCH) {
+                            Row(modifier = Modifier.graphicsLayer { alpha = p }) {
+                                if (onFilterToggle != null) {
+                                    IconButton(onClick = onFilterToggle) {
+                                        Icon(
+                                            imageVector = Icons.Outlined.FilterList,
+                                            contentDescription = stringResource(R.string.calendar_filter),
+                                            tint = if (filterActive)
+                                                MaterialTheme.colorScheme.primary
+                                            else
+                                                MaterialTheme.colorScheme.onSurfaceVariant,
+                                        )
+                                    }
+                                }
+                                if (searchQuery.isNotEmpty()) {
+                                    IconButton(onClick = { onSearchQueryChange("") }) {
+                                        Icon(
+                                            imageVector = Icons.Default.Close,
+                                            contentDescription = stringResource(R.string.close),
+                                        )
+                                    }
+                                }
                             }
                         }
                     }
                 }
-
-                if (searchActive) {
-                    HorizontalDivider(
-                        color = MaterialTheme.colorScheme.outline.copy(alpha = p),
-                    )
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .fillMaxHeight(p.coerceIn(0.01f, 1f))
-                            .graphicsLayer { alpha = p }
-                            .imePadding(),
-                    ) {
-                        // TODO: search results
-                    }
-                }
             }
         }
-    }
-
-    if (searchActive && p > 0.5f) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .graphicsLayer { alpha = (p - 0.5f) * 2f }
-                .clickable(
-                    indication = null,
-                    interactionSource = remember { MutableInteractionSource() },
-                ) { closeSearch() },
-        )
     }
 }
