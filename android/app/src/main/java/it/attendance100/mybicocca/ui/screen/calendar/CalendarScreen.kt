@@ -13,7 +13,6 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import it.attendance100.mybicocca.data.model.calendar.CalendarEvent
 import it.attendance100.mybicocca.ui.component.calendar.dialog.DatePickerDialog
 import it.attendance100.mybicocca.ui.component.calendar.dialog.EventDetailDialog
-import it.attendance100.mybicocca.ui.component.calendar.search.GlobalSearchBottomSheet
 import it.attendance100.mybicocca.ui.component.calendar.filter.CalendarFilterModal
 import it.attendance100.mybicocca.ui.component.calendar.header.CalendarTopBar
 import it.attendance100.mybicocca.ui.component.calendar.header.HorizontalDaySelector
@@ -30,7 +29,10 @@ import java.time.LocalDate
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun CalendarRoute(
-    viewModel: CalendarViewModel = hiltViewModel()
+    searchQuery: String = "",
+    onProvideFilterToggle: ((() -> Unit)?) -> Unit = {},
+    onFilterActiveChanged: (Boolean) -> Unit = {},
+    viewModel: CalendarViewModel = hiltViewModel(),
 ) {
     // Collect all state
     val selectedDate by viewModel.selectedDate.collectAsState()
@@ -38,7 +40,6 @@ fun CalendarRoute(
     val viewMode by viewModel.viewMode.collectAsState()
     val displayedWeekStart by viewModel.displayedWeekStart.collectAsState()
     val eventsForMonth by viewModel.eventsForMonth.collectAsState()
-    val futureEvents by viewModel.futureEvents.collectAsState()
     val isRefreshing by viewModel.isRefreshing.collectAsState()
     val activeFilters by viewModel.activeFilters.collectAsState()
     val timeRange by viewModel.timeRange.collectAsState()
@@ -46,7 +47,15 @@ fun CalendarRoute(
     val selectedEvent by viewModel.selectedEvent.collectAsState()
     val showDatePicker by viewModel.showDatePicker.collectAsState()
     val showFilters by viewModel.showFilters.collectAsState()
-    val showGlobalSearch by viewModel.showGlobalSearch.collectAsState()
+
+    // Register filter callbacks with parent
+    DisposableEffect(viewModel) {
+        onProvideFilterToggle { viewModel.toggleFiltersVisibility() }
+        onDispose { onProvideFilterToggle(null) }
+    }
+    LaunchedEffect(showFilters, activeFilters, timeRange, locationFilter) {
+        onFilterActiveChanged(showFilters || viewModel.hasActiveFilters)
+    }
 
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -55,8 +64,16 @@ fun CalendarRoute(
     }
 
     // Derived state
-    val filteredEvents = remember(eventsForMonth, activeFilters, timeRange, locationFilter) {
+    val filteredEvents = remember(eventsForMonth, activeFilters, timeRange, locationFilter, searchQuery) {
         CalendarUtils.filterEvents(eventsForMonth, activeFilters, timeRange, locationFilter)
+            .filter { event ->
+                searchQuery.isBlank() || listOfNotNull(
+                    event.title,
+                    event.teacherName,
+                    event.location,
+                    event.buildingCode,
+                ).any { it.contains(searchQuery, ignoreCase = true) }
+            }
     }
     val buildingsWithRooms = remember(eventsForMonth) {
         CalendarUtils.extractBuildingsWithRooms(eventsForMonth)
@@ -119,10 +136,7 @@ fun CalendarRoute(
                 onPreviousMonth = viewModel::previousMonth,
                 onNextMonth = viewModel::nextMonth,
                 onToday = viewModel::goToToday,
-                onLongPressMonth = { viewModel.setShowDatePicker(true) },
-                onFilterToggle = viewModel::toggleFiltersVisibility,
-                onSearchClick = { viewModel.setShowGlobalSearch(true) },
-                showFilterActive = showFilters || hasActiveFilters,
+                onMonthClick = { viewModel.setShowDatePicker(true) },
                 primaryColor = primaryColor
             )
         },
@@ -234,20 +248,6 @@ fun CalendarRoute(
         )
     }
 
-    if (showGlobalSearch) {
-        GlobalSearchBottomSheet(
-            allEvents = futureEvents,
-            onDismiss = { viewModel.setShowGlobalSearch(false) },
-            onEventClick = viewModel::selectEvent,
-            onDateClick = { date ->
-                viewModel.selectDate(date)
-                viewModel.setViewMode(CalendarViewMode.LIST)
-            },
-            primaryColor = primaryColor,
-            textColor = textColor,
-            grayColor = grayColor
-        )
-    }
 }
 
 @OptIn(ExperimentalFoundationApi::class)

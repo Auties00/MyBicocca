@@ -5,11 +5,13 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import it.attendance100.mybicocca.data.model.exam.ExamCall
 import it.attendance100.mybicocca.data.model.exam.ExamBooking
+import it.attendance100.mybicocca.data.repository.CareerRepository
 import it.attendance100.mybicocca.data.repository.ExamRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.time.LocalDate
@@ -18,7 +20,12 @@ import javax.inject.Inject
 @HiltViewModel
 class BookingViewModel @Inject constructor(
     private val examRepository: ExamRepository,
+    private val careerRepository: CareerRepository,
 ) : ViewModel() {
+
+    private val activeCareer = careerRepository.observeAll()
+        .map { it.firstOrNull() }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
     val examCalls: StateFlow<List<ExamCall>> = examRepository.observeExamCalls()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
@@ -50,14 +57,15 @@ class BookingViewModel @Inject constructor(
             _isRefreshing.value = true
             _error.value = null
             try {
+                val career = activeCareer.value
                 val now = LocalDate.now()
                 examRepository.refreshExamCalls(
-                    careerId = 0,
-                    programCode = null,
+                    careerId = career?.studentId ?: 0L,
+                    programCode = career?.courseOfStudyCode,
                     startDate = now,
                     endDate = now.plusMonths(6),
                 )
-                examRepository.refreshBookings(0)
+                examRepository.refreshBookings(career?.studentId ?: 0L)
             } catch (e: Exception) {
                 _error.value = e.message ?: "Errore durante il caricamento"
             } finally {

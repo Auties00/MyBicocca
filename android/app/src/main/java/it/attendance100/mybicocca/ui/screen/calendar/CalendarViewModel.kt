@@ -55,6 +55,8 @@ class CalendarViewModel @Inject constructor(
     private val calendarRepository: CalendarRepository,
 ) : ViewModel() {
 
+    private companion object { const val STALE_THRESHOLD_MS = 5 * 60 * 1000L }
+
     // Navigation
     private val _selectedDate = MutableStateFlow(LocalDate.now())
     val selectedDate: StateFlow<LocalDate> = _selectedDate.asStateFlow()
@@ -82,6 +84,10 @@ class CalendarViewModel @Inject constructor(
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error.asStateFlow()
 
+    // Staleness tracking
+    private val fetchedMonths = mutableSetOf<YearMonth>()
+    private var lastRefreshMillis = 0L
+
     // Filters
     private val _activeFilters = MutableStateFlow<Set<EventType>>(emptySet())
     val activeFilters: StateFlow<Set<EventType>> = _activeFilters.asStateFlow()
@@ -102,9 +108,6 @@ class CalendarViewModel @Inject constructor(
     private val _showFilters = MutableStateFlow(false)
     val showFilters: StateFlow<Boolean> = _showFilters.asStateFlow()
 
-    private val _showGlobalSearch = MutableStateFlow(false)
-    val showGlobalSearch: StateFlow<Boolean> = _showGlobalSearch.asStateFlow()
-
     // One-shot events
     private val _scrollToDateEvent = MutableSharedFlow<LocalDate>()
     val scrollToDateEvent: SharedFlow<LocalDate> = _scrollToDateEvent.asSharedFlow()
@@ -113,7 +116,19 @@ class CalendarViewModel @Inject constructor(
     val snackbarEvent: SharedFlow<String> = _snackbarEvent.asSharedFlow()
 
     init {
-        refresh()
+        viewModelScope.launch {
+            _currentMonth.collect { month ->
+                if (fetchedMonths.add(month)) {
+                    _isRefreshing.value = true
+                    _error.value = null
+                    val range = month.atDay(1)..month.atEndOfMonth()
+                    val result = calendarRepository.refreshAll(range)
+                    _error.value = result.exceptionOrNull()?.message
+                    lastRefreshMillis = System.currentTimeMillis()
+                    _isRefreshing.value = false
+                }
+            }
+        }
     }
 
     // === Navigation ===
@@ -186,13 +201,22 @@ class CalendarViewModel @Inject constructor(
     // === Data ===
 
     fun refresh() {
+        val month = _currentMonth.value
         viewModelScope.launch {
             _isRefreshing.value = true
             _error.value = null
-            val range = _currentMonth.value.let { it.atDay(1)..it.atEndOfMonth() }
+            val range = month.let { it.atDay(1)..it.atEndOfMonth() }
             val result = calendarRepository.refreshAll(range)
             _error.value = result.exceptionOrNull()?.message
+            fetchedMonths.add(month)
+            lastRefreshMillis = System.currentTimeMillis()
             _isRefreshing.value = false
+        }
+    }
+
+    fun refreshIfStale() {
+        if (System.currentTimeMillis() - lastRefreshMillis > STALE_THRESHOLD_MS) {
+            refresh()
         }
     }
 
@@ -229,10 +253,6 @@ class CalendarViewModel @Inject constructor(
 
     fun toggleFiltersVisibility() {
         _showFilters.value = !_showFilters.value
-    }
-
-    fun setShowGlobalSearch(show: Boolean) {
-        _showGlobalSearch.value = show
     }
 
     fun clearError() {

@@ -3,7 +3,7 @@ package it.attendance100.mybicocca.ui.component.calendar.header
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ChevronLeft
@@ -15,8 +15,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -29,9 +27,6 @@ import java.time.LocalDate
 import java.time.YearMonth
 import java.util.*
 
-/**
- * TopAppBar  calendario
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CalendarTopBar(
@@ -41,15 +36,11 @@ fun CalendarTopBar(
     onPreviousMonth: () -> Unit,
     onNextMonth: () -> Unit,
     onToday: () -> Unit,
-    onLongPressMonth: () -> Unit,
-    onFilterToggle: () -> Unit,
-    onSearchClick: () -> Unit,
-    showFilterActive: Boolean,
+    onMonthClick: () -> Unit,
     primaryColor: Color
 ) {
     val locale = Locale.getDefault()
     val monthYearFormatter = CalendarUtils.monthYearFormatter(locale)
-    val hapticFeedback = LocalHapticFeedback.current
     val textColor = MaterialTheme.colorScheme.onSurface
 
     CenterAlignedTopAppBar(
@@ -59,39 +50,24 @@ fun CalendarTopBar(
                 monthYearFormatter = monthYearFormatter,
                 onPreviousMonth = onPreviousMonth,
                 onNextMonth = onNextMonth,
-                onLongPress = {
-                    hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
-                    onLongPressMonth()
-                },
+                onClick = onMonthClick,
                 textColor = textColor
             )
         },
         navigationIcon = {
-            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                TodayButton(
-                    onClick = onToday,
-                    primaryColor = primaryColor
-                )
-                FilterButton(
-                    onClick = onFilterToggle,
-                    isActive = showFilterActive,
-                    primaryColor = primaryColor
-                )
-            }
+            TodayButton(
+                onClick = onToday,
+                primaryColor = primaryColor
+            )
         },
         actions = {
-            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                SearchButton(
-                    onClick = onSearchClick,
-                    primaryColor = primaryColor
-                )
-                ViewModeToggle(
-                    currentMode = viewMode,
-                    onModeChange = onViewModeChange,
-                    primaryColor = primaryColor
-                )
-            }
+            ViewModeToggle(
+                currentMode = viewMode,
+                onModeChange = onViewModeChange,
+                primaryColor = primaryColor
+            )
         },
+        windowInsets = WindowInsets(0),
         colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
             containerColor = MaterialTheme.colorScheme.background
         )
@@ -129,39 +105,16 @@ private fun TodayButton(
 }
 
 @Composable
-private fun FilterButton(
-    onClick: () -> Unit,
-    isActive: Boolean,
-    primaryColor: Color
-) {
-    FilledTonalIconButton(
-        onClick = onClick,
-        colors = IconButtonDefaults.filledTonalIconButtonColors(
-            containerColor = if (isActive) primaryColor else primaryColor.copy(alpha = 0.12f),
-            contentColor = if (isActive) Color.White else primaryColor
-        )
-    ) {
-        Icon(
-            imageVector = Icons.Outlined.FilterList,
-            contentDescription = stringResource(R.string.calendar_filter)
-        )
-    }
-}
-
-@Composable
 private fun MonthNavigation(
     currentMonth: YearMonth,
     monthYearFormatter: java.time.format.DateTimeFormatter,
     onPreviousMonth: () -> Unit,
     onNextMonth: () -> Unit,
-    onLongPress: () -> Unit,
+    onClick: () -> Unit,
     textColor: Color
 ) {
     Row(
-        modifier = Modifier.combinedClickable(
-            onClick = { },
-            onLongClick = onLongPress
-        ),
+        modifier = Modifier.clickable(onClick = onClick),
         verticalAlignment = Alignment.CenterVertically
     ) {
         IconButton(onClick = onPreviousMonth) {
@@ -184,25 +137,6 @@ private fun MonthNavigation(
                 tint = textColor
             )
         }
-    }
-}
-
-@Composable
-private fun SearchButton(
-    onClick: () -> Unit,
-    primaryColor: Color
-) {
-    FilledTonalIconButton(
-        onClick = onClick,
-        colors = IconButtonDefaults.filledTonalIconButtonColors(
-            containerColor = primaryColor.copy(alpha = 0.12f),
-            contentColor = primaryColor
-        )
-    ) {
-        Icon(
-            imageVector = Icons.Outlined.Search,
-            contentDescription = stringResource(R.string.calendar_search)
-        )
     }
 }
 
@@ -235,8 +169,8 @@ fun ViewModeToggle(
             onModeChange(nextMode)
         },
         colors = IconButtonDefaults.filledTonalIconButtonColors(
-            containerColor = primaryColor,
-            contentColor = Color.White
+            containerColor = primaryColor.copy(alpha = 0.12f),
+            contentColor = primaryColor
         )
     ) {
         Icon(

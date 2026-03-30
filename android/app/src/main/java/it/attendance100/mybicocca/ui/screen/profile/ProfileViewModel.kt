@@ -13,18 +13,20 @@ import it.attendance100.mybicocca.data.repository.UserRepository
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class ProfileViewModel @Inject constructor(
-	userRepository: UserRepository,
-	careerRepository: CareerRepository,
-	transcriptRepository: TranscriptRepository,
+	private val userRepository: UserRepository,
+	private val careerRepository: CareerRepository,
+	private val transcriptRepository: TranscriptRepository,
 ) : ViewModel() {
 
 	val user: StateFlow<User?> = userRepository.observeUser()
@@ -45,4 +47,16 @@ class ProfileViewModel @Inject constructor(
 			career?.let { transcriptRepository.observeRows(it.studentId) } ?: flowOf(emptyList())
 		}
 		.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+	init {
+		viewModelScope.launch {
+			userRepository.refresh()
+			careerRepository.refresh()
+		}
+		viewModelScope.launch {
+			activeCareer.filterNotNull().collect { career ->
+				transcriptRepository.refresh(career.studentId)
+			}
+		}
+	}
 }
