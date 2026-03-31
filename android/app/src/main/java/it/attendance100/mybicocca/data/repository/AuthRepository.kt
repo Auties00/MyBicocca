@@ -10,8 +10,8 @@ class AuthRepository @Inject constructor(
     private val authDataSource: UnifiedAuthDataSource,
     private val userDao: UserDao,
 ) {
-    suspend fun login(username: String, password: String): Result<Unit> = runCatching {
-        authDataSource.login(username, password)
+    suspend fun login(email: String, password: String): Result<Unit> = runCatching {
+        authDataSource.login(email, password)
     }
 
     suspend fun logout(): Result<Unit> = runCatching {
