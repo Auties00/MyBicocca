@@ -1,5 +1,6 @@
 package it.attendance100.mybicocca.data.datasource.user
 
+import android.util.Log
 import it.attendance100.mybicocca.data.api.elearning.ElearningApi
 import it.attendance100.mybicocca.data.api.esse3.Esse3Api
 import it.attendance100.mybicocca.data.datastore.AuthTokenStore
@@ -18,9 +19,9 @@ class UnifiedAuthDataSource @Inject constructor(
     private val authTokenStore: AuthTokenStore,
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
 ) {
-    suspend fun login(username: String, password: String) = withContext(ioDispatcher) {
-        // 1. Esse3 login — store Basic auth credentials so the HttpClient includes them
-        val credentials = Base64.getEncoder().encodeToString("$username:$password".toByteArray())
+    suspend fun login(email: String, password: String) = withContext(ioDispatcher) {
+        // Esse3 login
+        val credentials = Base64.getEncoder().encodeToString("$email:$password".toByteArray())
         authTokenStore.esse3BasicAuth = credentials
 
         val esse3Session = try {
@@ -32,15 +33,16 @@ class UnifiedAuthDataSource @Inject constructor(
         authTokenStore.esse3PersonId = esse3Session.user.personId ?: -1L
         authTokenStore.esse3UserId = esse3Session.user.id
 
-        // 2. Elearning login
-        when (val elearningResult = elearningApi.auth.login(username, password)) {
+        // Elearning login
+        when (val elearningResult = elearningApi.auth.login(email, password)) {
             is ElearningLoginResponse.Success -> {
                 authTokenStore.elearningWsToken = elearningResult.wsToken
                 val siteInfo = elearningApi.site.getSiteInfo(elearningResult.wsToken)
                 authTokenStore.elearningUserId = siteInfo.userId
             }
             is ElearningLoginResponse.Error -> {
-                // Elearning login failed, but Esse3 succeeded — continue with partial auth
+                // Elearning login failed, but Esse3 succeeded -> continue with partial auth
+                Log.w("Auth Login", "Elearning login Failed! Continuing with partial auth...")
             }
         }
     }

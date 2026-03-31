@@ -149,4 +149,7 @@ dependencies {
 
     // MapLibre Compose for interactive maps
     implementation("org.maplibre.compose:maplibre-compose:0.12.1")
+
+    // Email validation
+    implementation(platform("androidx.compose:compose-bom:2026.03.01"))
 }

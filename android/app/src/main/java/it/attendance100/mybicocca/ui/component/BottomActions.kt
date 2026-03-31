@@ -44,6 +44,7 @@ fun SquircleAnimatedButton(
         containerColor = MaterialTheme.colorScheme.primary,
         contentColor = Color.White
     ),
+    contentPadding: PaddingValues = ButtonDefaults.ContentPadding, //PaddingValues(16.dp)
     content: @Composable RowScope.() -> Unit
 ) {
     val interactionSource = remember { MutableInteractionSource() }
@@ -60,7 +61,7 @@ fun SquircleAnimatedButton(
         shape = RoundedCornerShape(percent = cornerRadius),
         interactionSource = interactionSource,
         colors = colors,
-        contentPadding = PaddingValues(16.dp),
+        contentPadding = contentPadding,
         content = content
     )
 }
@@ -108,10 +109,10 @@ fun BaseBottomBarSurface(
 
 @Composable
 fun SingleActionBottomBar(
+    modifier: Modifier = Modifier,
     text: String,
     icon: ImageVector? = null,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier,
     footerText: String? = null,
     enabled: Boolean = true,
     isLoading: Boolean = false,
@@ -151,12 +152,12 @@ fun SingleActionBottomBar(
 
 @Composable
 fun DualActionBottomBar(
+    modifier: Modifier = Modifier,
     mainActionText: String,
     mainActionIcon: ImageVector? = null,
     onMainActionClick: () -> Unit,
     secondaryActionIcon: ImageVector,
     onSecondaryActionClick: () -> Unit,
-    modifier: Modifier = Modifier,
     footerText: String? = null,
     mainIsEnabled: Boolean = true,
     secondaryIsEnabled: Boolean = true,
