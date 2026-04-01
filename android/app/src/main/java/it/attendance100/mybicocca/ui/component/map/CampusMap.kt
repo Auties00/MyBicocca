@@ -21,6 +21,7 @@ import it.attendance100.mybicocca.util.U5
 import it.attendance100.mybicocca.util.U5Tall
 import it.attendance100.mybicocca.util.U6
 import it.attendance100.mybicocca.util.U7
+import it.attendance100.mybicocca.util.U9
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import org.maplibre.compose.camera.CameraPosition
@@ -77,6 +78,7 @@ fun CampusMap(
             editableBuilding("U5", U5.map { Pair(it.latitude, it.longitude) }),
             editableBuilding("U6", U6.map { Pair(it.latitude, it.longitude) }),
             editableBuilding("U7", U7.map { Pair(it.latitude, it.longitude) }),
+            editableBuilding("U9", U9.map { Pair(it.latitude, it.longitude) }),
         )
     }
 
