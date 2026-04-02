@@ -1,30 +1,33 @@
 package it.attendance100.mybicocca.ui.component.map
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.absoluteOffset
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.remember
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.layout.layout
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import it.attendance100.mybicocca.data.model.campus.Building
-import it.attendance100.mybicocca.ui.theme.PrimaryColor
-import it.attendance100.mybicocca.util.U1
-import it.attendance100.mybicocca.util.U1U4
-import it.attendance100.mybicocca.util.U2
-import it.attendance100.mybicocca.util.U2U3
-import it.attendance100.mybicocca.util.U3
-import it.attendance100.mybicocca.util.U4
-import it.attendance100.mybicocca.util.U5
-import it.attendance100.mybicocca.util.U5Tall
-import it.attendance100.mybicocca.util.U6
-import it.attendance100.mybicocca.util.U7
-import it.attendance100.mybicocca.util.U9
+import it.attendance100.mybicocca.util.OutlinedText
+import it.attendance100.mybicocca.util.campusBuildings
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import org.maplibre.compose.camera.CameraPosition
+import org.maplibre.compose.camera.CameraState
 import org.maplibre.compose.camera.rememberCameraState
 import org.maplibre.compose.expressions.dsl.const
 import org.maplibre.compose.expressions.dsl.format
@@ -37,7 +40,7 @@ import org.maplibre.compose.layers.SymbolLayer
 import org.maplibre.compose.map.MapOptions
 import org.maplibre.compose.map.MaplibreMap
 import org.maplibre.compose.map.OrnamentOptions
-import org.maplibre.compose.sources.GeoJsonData
+import org.maplibre.compose.sources.GeoJsonData.Features
 import org.maplibre.compose.sources.rememberGeoJsonSource
 import org.maplibre.compose.style.BaseStyle
 import org.maplibre.compose.util.ClickResult
@@ -50,7 +53,11 @@ import org.maplibre.spatialk.geojson.Position
 
 private const val CAMPUS_CENTER_LAT = 45.5170
 private const val CAMPUS_CENTER_LNG = 9.2115
+private const val LABEL_MIN_ZOOM = 15
 
+private data class ExtrusionStyle(val height: Float, val base: Float, val color: Color)
+
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun CampusMap(
     buildings: List<Building>,
@@ -68,64 +75,19 @@ fun CampusMap(
         ),
     )
 
-    // Editable building shapes
+    // Group campus buildings by their extrusion style to minimize layers
+    val buildingsByStyle = remember {
+        campusBuildings.groupBy { ExtrusionStyle(it.height, it.base, it.color) }
+    }
+
+    // Editable buildings for the coordinate editor
     val editableBuildings = remember {
-        listOf(
-            editableBuilding("U1", U1.map { Pair(it.latitude, it.longitude) }),
-            editableBuilding("U2", U2.map { Pair(it.latitude, it.longitude) }),
-            editableBuilding("U3", U3.map { Pair(it.latitude, it.longitude) }),
-            editableBuilding("U4", U4.map { Pair(it.latitude, it.longitude) }),
-            editableBuilding("U5", U5.map { Pair(it.latitude, it.longitude) }),
-            editableBuilding("U6", U6.map { Pair(it.latitude, it.longitude) }),
-            editableBuilding("U7", U7.map { Pair(it.latitude, it.longitude) }),
-            editableBuilding("U9", U9.map { Pair(it.latitude, it.longitude) }),
-        )
+        campusBuildings.map { b ->
+            editableBuilding(
+                b.label.ifEmpty { b.id },
+                b.points.map { Pair(it.latitude, it.longitude) })
+        }
     }
-
-    val highBuildings = remember {
-        listOf(
-            editableBuilding("U1 - U4 Bridge", U1U4.map { Pair(it.latitude, it.longitude) }),
-            editableBuilding("U2 - U3 Bridge", U2U3.map { Pair(it.latitude, it.longitude) }),
-        )
-    }
-
-    val tallBuildings = remember {
-        listOf(
-            editableBuilding("U5 Chimney", U5Tall.map { Pair(it.latitude, it.longitude) }),
-        )
-    }
-
-    // Convert editable buildings to GeoJSON features (recomputed on every state change)
-    val buildingShapeFeatures = editableBuildings.map { building ->
-        val positions =
-            building.points.map { (lat, lng) -> Position(longitude = lng, latitude = lat) }
-        val closed: List<Position> = positions + listOf(positions.first()) // close the ring
-        Feature(
-            geometry = Polygon(listOf(closed)),
-            properties = JsonObject(emptyMap()),
-        )
-    }
-    val highBuildingShapeFeatures = highBuildings.map { building ->
-        val positions =
-            building.points.map { (lat, lng) -> Position(longitude = lng, latitude = lat) }
-        val closed: List<Position> = positions + listOf(positions.first()) // close the ring
-
-        Feature(
-            geometry = Polygon(listOf(closed)),
-            properties = JsonObject(emptyMap()),
-        )
-    }
-    val tallBuildingShapeFeatures = tallBuildings.map { building ->
-        val positions =
-            building.points.map { (lat, lng) -> Position(longitude = lng, latitude = lat) }
-        val closed: List<Position> = positions + listOf(positions.first()) // close the ring
-
-        Feature(
-            geometry = Polygon(listOf(closed)),
-            properties = JsonObject(emptyMap()),
-        )
-    }
-
 
     val featureCollection = remember(buildings) {
         FeatureCollection(
@@ -149,8 +111,8 @@ fun CampusMap(
         )
     }
 
-    val primaryColor = MaterialTheme.colorScheme.primary
     val textColor = MaterialTheme.colorScheme.onBackground
+    val primaryColor = MaterialTheme.colorScheme.primary
 
     Box(modifier = modifier.fillMaxSize()) {
         MaplibreMap(
@@ -163,57 +125,32 @@ fun CampusMap(
             onMapClick = { _, _ -> ClickResult.Pass },
             options = MapOptions(ornamentOptions = OrnamentOptions.AllDisabled),
         ) {
-            // Building shape polygons
-            val shapesSource = rememberGeoJsonSource(
-                data = GeoJsonData.Features(FeatureCollection(buildingShapeFeatures))
-            )
-            FillExtrusionLayer(
-                id = "building-shapes-fill",
-                source = shapesSource,
-                color = const(PrimaryColor),
-                height = const(40f),
-                base = const(0f),
-                opacity = const(1f),
-                verticalGradient = const(true),
-            )
-            // Building high shape polygons
-            val highShapesSource = rememberGeoJsonSource(
-                data = GeoJsonData.Features(FeatureCollection(highBuildingShapeFeatures))
-            )
-            FillExtrusionLayer(
-                id = "building-high-shapes-fill",
-                source = highShapesSource,
-                color = const(PrimaryColor),
-                height = const(40f),
-                base = const(20f),
-                opacity = const(1f),
-                verticalGradient = const(true),
-            )
-            // Building tall shape polygons
-            val tallShapesSource = rememberGeoJsonSource(
-                data = GeoJsonData.Features(FeatureCollection(tallBuildingShapeFeatures))
-            )
-            FillExtrusionLayer(
-                id = "building-tall-shapes-fill",
-                source = tallShapesSource,
-                color = const(PrimaryColor),
-                height = const(60f),
-                base = const(0f),
-                opacity = const(1f),
-                verticalGradient = const(true),
-            )
-//            SymbolLayer(
-//                id = "building-shapes-label",
-//                source = shapesSource,
-//                textField = format(span(const("{label}"))),
-//                textSize = const(0.9f.em),
-//                textColor = const(textColor),
-//                textAllowOverlap = const(true),
-//            )
+            // Render one FillExtrusionLayer per unique (height, base, color) group
+            buildingsByStyle.entries.forEachIndexed { index, (style, group) ->
+                val features = group.map { building ->
+                    val closed = building.points + listOf(building.points.first())
+                    Feature(
+                        geometry = Polygon(listOf(closed)),
+                        properties = JsonObject(emptyMap()),
+                    )
+                }
+                val source = rememberGeoJsonSource(
+                    data = Features(FeatureCollection(features))
+                )
+                FillExtrusionLayer(
+                    id = "building-shapes-$index",
+                    source = source,
+                    color = const(style.color),
+                    height = const(style.height),
+                    base = const(style.base),
+                    opacity = const(1f),
+                    verticalGradient = const(true),
+                )
+            }
 
             // Building point markers
             if (featureCollection.isNotEmpty()) {
-                val source = rememberGeoJsonSource(data = GeoJsonData.Features(featureCollection))
+                val source = rememberGeoJsonSource(data = Features(featureCollection))
                 Anchor.Top {
                     CircleLayer(
                         id = "campus-buildings-circle",
@@ -245,10 +182,75 @@ fun CampusMap(
             }
         }
 
+        // Campus Building Labels
+        val showLabels = cameraState.position.zoom >= LABEL_MIN_ZOOM
+        campusBuildings.filter { it.label.isNotEmpty() }.forEach { building ->
+            CampusBuildingLabel(
+                cameraState = cameraState,
+                targetPosition = building.labelPosition,
+            ) {
+                AnimatedVisibility(
+                    visible = showLabels,
+//                    enter = fadeIn(),
+//                    exit = fadeOut(),
+                ) {
+                    OutlinedText(
+                        building.label,
+                        Modifier.padding(4.dp),
+                        fillColor = Color.White,
+                        outlineColor = Color(0xFF1a0e10),
+                        outlineDrawStyle = Stroke(width = 9f)
+                    )
+                }
+            }
+        }
+
         // Coordinate editor overlay
         CoordinateEditor(
-            buildings = editableBuildings + highBuildings + tallBuildings,
+            buildings = editableBuildings,
             modifier = Modifier.fillMaxSize(),
         )
+    }
+}
+
+// Helper functions to convert between Pixels and DP
+@Composable
+@ReadOnlyComposable
+internal fun Offset.toDpOffset(): DpOffset =
+    with(LocalDensity.current) { DpOffset(x.toDp(), y.toDp()) }
+
+@Composable
+@ReadOnlyComposable
+internal fun DpOffset.toOffset(): Offset = with(LocalDensity.current) { Offset(x.toPx(), y.toPx()) }
+
+@Composable
+fun CampusBuildingLabel(
+    cameraState: CameraState,
+    targetPosition: Position,
+    modifier: Modifier = Modifier,
+    content: @Composable (BoxScope.() -> Unit),
+) {
+    // Project the geographic position to screen pixels
+    val dpTarget = remember(targetPosition, cameraState.position) {
+        cameraState.projection?.screenLocationFromPosition(targetPosition)
+    }
+
+    val target = dpTarget?.toOffset() ?: return // don't render anything if not ready
+
+    // Position the content centered on the target point
+    Box(modifier = modifier.fillMaxSize()) {
+        val dpOffset = target.toDpOffset()
+        Box(
+            modifier = Modifier
+                .absoluteOffset(dpOffset.x, dpOffset.y)
+                .layout { measurable, constraints ->
+                    val placeable = measurable.measure(constraints)
+                    layout(placeable.width, placeable.height) {
+                        placeable.place(-placeable.width / 2, -placeable.height / 2)
+                    }
+                }
+        ) {
+            content()
+        }
     }
 }
