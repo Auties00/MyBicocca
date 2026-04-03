@@ -1,12 +1,15 @@
 package it.attendance100.mybicocca.util
 
-import android.content.*
-import androidx.appcompat.app.*
-import androidx.compose.runtime.*
-import androidx.compose.ui.platform.*
-import androidx.core.content.*
-import dagger.hilt.android.qualifiers.*
-import javax.inject.*
+import android.content.Context
+import android.content.SharedPreferences
+import androidx.appcompat.app.AppCompatDelegate
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalContext
+import androidx.core.content.edit
+import dagger.hilt.android.qualifiers.ApplicationContext
+import javax.inject.Inject
+import javax.inject.Singleton
 
 
 @Singleton
@@ -32,6 +35,7 @@ class PreferencesManager @Inject constructor(
 
     // Private Settings
     private const val KEY_IS_DEVELOPER_MODE = "developer_mode"
+    private const val KEY_MAP_EDITOR_ENABLED = "map_editor_enabled"
     private const val KEY_THEME_MODE = "theme_mode"
     private const val KEY_FINGERPRINT_LOGIN = "fingerprint_login"
     private const val KEY_KEEP_LOGGED_IN = "keep_logged_in"
@@ -65,6 +69,12 @@ class PreferencesManager @Inject constructor(
     get() = prefs.getBoolean(KEY_IS_DEVELOPER_MODE, false)
     set(value) {
       prefs.edit { putBoolean(KEY_IS_DEVELOPER_MODE, value) }
+    }
+
+  var mapEditorEnabled: Boolean
+    get() = prefs.getBoolean(KEY_MAP_EDITOR_ENABLED, false)
+    set(value) {
+      prefs.edit { putBoolean(KEY_MAP_EDITOR_ENABLED, value) }
     }
 
 
