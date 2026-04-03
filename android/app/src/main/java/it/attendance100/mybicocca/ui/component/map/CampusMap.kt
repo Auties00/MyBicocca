@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.em
 import it.attendance100.mybicocca.data.model.campus.Building
 import it.attendance100.mybicocca.util.OutlinedText
 import it.attendance100.mybicocca.util.campusBuildings
+import it.attendance100.mybicocca.util.rememberPreferencesManager
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import org.maplibre.compose.camera.CameraPosition
@@ -77,6 +78,8 @@ fun CampusMap(
             zoom = 14.5,
         ),
     )
+
+    val editorEnabled = rememberPreferencesManager().mapEditorEnabled
 
     // Flat list of all parts (aligned with editableBuildings by index)
     val allParts = remember { campusBuildings.flatMap { it.parts } }
@@ -134,94 +137,120 @@ fun CampusMap(
             onMapClick = { _, _ -> ClickResult.Pass },
             options = MapOptions(ornamentOptions = OrnamentOptions.AllDisabled),
         ) {
-            // Split parts into selected vs unselected, grouped by style
-            val selectedPart = allParts.getOrNull(selectedEditorIndex)
-            val unselectedParts = allParts.filterIndexed { i, _ -> i != selectedEditorIndex }
+            if (editorEnabled) {
+                // Editor mode: split into selected (opaque) vs unselected (semi-transparent)
+                val selectedPart = allParts.getOrNull(selectedEditorIndex)
+                val unselectedParts = allParts.filterIndexed { i, _ -> i != selectedEditorIndex }
 
-            // Unselected buildings (50% opacity)
-            unselectedParts
-                .groupBy { ExtrusionStyle(it.height, it.base, it.color) }
-                .entries.forEachIndexed { index, (style, group) ->
-                    val features = group.map { part ->
-                        val closed = part.points + listOf(part.points.first())
-                        Feature(
-                            geometry = Polygon(listOf(closed)),
-                            properties = JsonObject(emptyMap()),
+                // Unselected buildings (50% opacity)
+                unselectedParts
+                    .groupBy { ExtrusionStyle(it.height, it.base, it.color) }
+                    .entries.forEachIndexed { index, (style, group) ->
+                        val features = group.map { part ->
+                            val closed = part.points + listOf(part.points.first())
+                            Feature(
+                                geometry = Polygon(listOf(closed)),
+                                properties = JsonObject(emptyMap()),
+                            )
+                        }
+                        val source = rememberGeoJsonSource(
+                            data = Features(FeatureCollection(features))
+                        )
+                        FillExtrusionLayer(
+                            id = "building-unselected-$index",
+                            source = source,
+                            color = const(style.color),
+                            height = const(style.height),
+                            base = const(style.base),
+                            opacity = const(0.5f),
+                            verticalGradient = const(true),
                         )
                     }
+
+                // Selected building (full opacity) — read from editableBuildings for live updates
+                val currentEditable = editableBuildings.getOrNull(selectedEditorIndex)
+                if (selectedPart != null && currentEditable != null) {
+                    val positions = currentEditable.points.map { (lat, lng) ->
+                        Position(longitude = lng, latitude = lat)
+                    }
+                    val closed = positions + listOf(positions.first())
                     val source = rememberGeoJsonSource(
-                        data = Features(FeatureCollection(features))
+                        data = Features(
+                            FeatureCollection(
+                                listOf(
+                                    Feature(
+                                        geometry = Polygon(listOf(closed)),
+                                        properties = JsonObject(emptyMap()),
+                                    )
+                                )
+                            )
+                        )
                     )
                     FillExtrusionLayer(
-                        id = "building-unselected-$index",
+                        id = "building-selected",
                         source = source,
-                        color = const(style.color),
-                        height = const(style.height),
-                        base = const(style.base),
-                        opacity = const(0.5f),
+                        color = const(selectedPart.color),
+                        height = const(selectedPart.height),
+                        base = const(selectedPart.base),
+                        opacity = const(1f),
                         verticalGradient = const(true),
                     )
                 }
 
-            // Selected building (full opacity) — read from editableBuildings for live updates
-            val currentEditable = editableBuildings.getOrNull(selectedEditorIndex)
-            if (selectedPart != null && currentEditable != null) {
-                val positions = currentEditable.points.map { (lat, lng) ->
-                    Position(longitude = lng, latitude = lat)
+                // Selected point marker
+                val currentPoint = currentEditable?.points?.getOrNull(selectedPointIndex)
+                if (currentPoint != null) {
+                    val pointSource = rememberGeoJsonSource(
+                        data = Features(
+                            FeatureCollection(
+                                listOf(
+                                    Feature(
+                                        geometry = Point(
+                                            Position(
+                                                longitude = currentPoint.second,
+                                                latitude = currentPoint.first,
+                                            )
+                                        ),
+                                        properties = JsonObject(emptyMap()),
+                                    )
+                                )
+                            )
+                        )
+                    )
+                    CircleLayer(
+                        id = "selected-point-marker",
+                        source = pointSource,
+                        color = const(Color.White.copy(alpha = 0.05f)),
+                        radius = const(8.dp),
+                        strokeColor = const(Color.White.copy(alpha = 0.5f)),
+                        strokeWidth = const(2.dp),
+                    )
                 }
-                val closed = positions + listOf(positions.first())
-                val source = rememberGeoJsonSource(
-                    data = Features(
-                        FeatureCollection(
-                            listOf(
-                                Feature(
-                                    geometry = Polygon(listOf(closed)),
-                                    properties = JsonObject(emptyMap()),
-                                )
+            } else {
+                // Normal mode: all buildings fully opaque
+                allParts
+                    .groupBy { ExtrusionStyle(it.height, it.base, it.color) }
+                    .entries.forEachIndexed { index, (style, group) ->
+                        val features = group.map { part ->
+                            val closed = part.points + listOf(part.points.first())
+                            Feature(
+                                geometry = Polygon(listOf(closed)),
+                                properties = JsonObject(emptyMap()),
                             )
+                        }
+                        val source = rememberGeoJsonSource(
+                            data = Features(FeatureCollection(features))
                         )
-                    )
-                )
-                FillExtrusionLayer(
-                    id = "building-selected",
-                    source = source,
-                    color = const(selectedPart.color),
-                    height = const(selectedPart.height),
-                    base = const(selectedPart.base),
-                    opacity = const(1f),
-                    verticalGradient = const(true),
-                )
-            }
-
-            // Selected point marker
-            val currentEditableMarker = editableBuildings.getOrNull(selectedEditorIndex)
-            val currentPoint = currentEditableMarker?.points?.getOrNull(selectedPointIndex)
-            if (currentPoint != null) {
-                val pointSource = rememberGeoJsonSource(
-                    data = Features(
-                        FeatureCollection(
-                            listOf(
-                                Feature(
-                                    geometry = Point(
-                                        Position(
-                                            longitude = currentPoint.second,
-                                            latitude = currentPoint.first,
-                                        )
-                                    ),
-                                    properties = JsonObject(emptyMap()),
-                                )
-                            )
+                        FillExtrusionLayer(
+                            id = "building-shapes-$index",
+                            source = source,
+                            color = const(style.color),
+                            height = const(style.height),
+                            base = const(style.base),
+                            opacity = const(1f),
+                            verticalGradient = const(true),
                         )
-                    )
-                )
-                CircleLayer(
-                    id = "selected-point-marker",
-                    source = pointSource,
-                    color = const(Color.White.copy(alpha = 0.05f)),
-                    radius = const(8.dp),
-                    strokeColor = const(Color.White.copy(alpha = 0.5f)),
-                    strokeWidth = const(2.dp),
-                )
+                    }
             }
 
             // Building point markers
@@ -282,14 +311,16 @@ fun CampusMap(
         }
 
         // Coordinate editor overlay
-        CoordinateEditor(
-            buildings = editableBuildings,
-            selectedBuildingIndex = selectedEditorIndex,
-            onBuildingIndexChange = { selectedEditorIndex = it },
-            selectedPointIndex = selectedPointIndex,
-            onPointIndexChange = { selectedPointIndex = it },
-            modifier = Modifier.fillMaxSize(),
-        )
+        if (editorEnabled) {
+            CoordinateEditor(
+                buildings = editableBuildings,
+                selectedBuildingIndex = selectedEditorIndex,
+                onBuildingIndexChange = { selectedEditorIndex = it },
+                selectedPointIndex = selectedPointIndex,
+                onPointIndexChange = { selectedPointIndex = it },
+                modifier = Modifier.fillMaxSize(),
+            )
+        }
     }
 }
 
