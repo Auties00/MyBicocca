@@ -35,7 +35,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -68,10 +67,12 @@ fun editableBuilding(label: String, points: List<Pair<Double, Double>>): Editabl
 @Composable
 fun CoordinateEditor(
     buildings: List<EditableBuilding>,
+    selectedBuildingIndex: Int,
+    onBuildingIndexChange: (Int) -> Unit,
+    selectedPointIndex: Int,
+    onPointIndexChange: (Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    var selectedBuildingIndex by remember { mutableIntStateOf(0) }
-    var selectedPointIndex by remember { mutableIntStateOf(0) }
     var stepExponent by remember { mutableFloatStateOf(-4f) } // 10^-4 = 0.0001 degrees ~11m
     var expanded by remember { mutableStateOf(true) }
 
@@ -81,7 +82,7 @@ fun CoordinateEditor(
 
     // Clamp point index when switching buildings
     if (selectedPointIndex >= currentBuilding.points.size) {
-        selectedPointIndex = 0
+        onPointIndexChange(0)
     }
 
     val currentPoint = currentBuilding.points.getOrNull(selectedPointIndex)
@@ -149,8 +150,8 @@ fun CoordinateEditor(
                     FilterChip(
                         selected = index == selectedBuildingIndex,
                         onClick = {
-                            selectedBuildingIndex = index
-                            selectedPointIndex = 0
+                            onBuildingIndexChange(index)
+                            onPointIndexChange(0)
                         },
                         label = { Text(building.label, fontSize = 12.sp) },
                     )
@@ -181,7 +182,7 @@ fun CoordinateEditor(
                                 if (isSelected) MaterialTheme.colorScheme.primaryContainer
                                 else MaterialTheme.colorScheme.surface
                             )
-                            .clickable { selectedPointIndex = index }
+                            .clickable { onPointIndexChange(index) }
                             .padding(horizontal = 8.dp, vertical = 4.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
