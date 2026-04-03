@@ -4,15 +4,29 @@ import androidx.compose.ui.graphics.Color
 import it.attendance100.mybicocca.ui.theme.PrimaryColor
 import org.maplibre.spatialk.geojson.Position
 
-data class CampusBuilding(
-    val id: String,
-    val label: String,
+data class BuildingModel(
     val points: List<Position>,
     val height: Float = 40f,
     val base: Float = 0f,
     val color: Color = PrimaryColor,
-    val labelPosition: Position = points.first(),
 )
+
+data class CampusBuilding(
+    val id: String,
+    val label: String,
+    val parts: List<BuildingModel>,
+    val labelPosition: Position = parts.first().points.first(),
+) {
+    constructor(
+        id: String,
+        label: String,
+        points: List<Position>,
+        height: Float = 40f,
+        base: Float = 0f,
+        color: Color = PrimaryColor,
+        labelPosition: Position = points.first(),
+    ) : this(id, label, listOf(BuildingModel(points, height, base, color)), labelPosition)
+}
 
 @Suppress("FunctionName")
 fun Point(latitude: Double, longitude: Double): Position {
@@ -176,68 +190,243 @@ private val U12base = listOf(
     Point(45.51567886363288, 9.212894691182559),
 )
 
+val U12base2 = listOf(
+    Point(45.51599310982493, 9.21238956315379),
+    Point(45.51579011757299, 9.212274887647023),
+    Point(45.51576228121635, 9.212371535912633),
+    Point(45.51574727703867, 9.21236017545003),
+    Point(45.5156631910685, 9.212652184806377),
+    Point(45.515680771960454, 9.21266028493072),
+    Point(45.51565394994474, 9.212753848012001),
+    Point(45.515855421289665, 9.212882901230735),
+)
+
+val U12TopR = listOf(
+    Point(45.515855421289665, 9.212882301230739),
+    Point(45.51589879269403, 9.21272731374869),
+    Point(45.515751146523094, 9.212642649136086),
+    Point(45.51570899229092, 9.21278928573949),
+)
+
+
+val U12TopL = listOf(
+    Point(45.51594974361, 9.212545404837718),
+    Point(45.515993367494495, 9.212388996999163),
+    Point(45.51584738110134, 9.21230711062216),
+    Point(45.51580309513714, 9.212461746477286),
+)
+
+val U12Bridge = listOf(
+    Point(45.515846667705055, 9.212697289263986),
+    Point(45.515899145951444, 9.212516708644193),
+    Point(45.51585688450434, 9.212492436445146),
+    Point(45.51580452624944, 9.212673371716456),
+)
+
+val U12Top = listOf(
+    Point(45.51589879269403, 9.21272731374869),
+    Point(45.515751146523094, 9.212642649136086),
+    Point(45.51580309513714, 9.212461746477286),
+    Point(45.51594974361, 9.212545404837718),
+)
+
+val U14 = listOf(
+    Point(45.52381103565391, 9.218871080367165),
+    Point(45.52336023191854, 9.220077457055394),
+    Point(45.52346173988637, 9.220155461988135),
+    Point(45.52391249090522, 9.218948594195414),
+)
+
+val U16 = listOf(
+    Point(45.52472843084494, 9.209716824624776),
+    Point(45.52479233269407, 9.209469171600547),
+    Point(45.52450913925035, 9.209311382749787),
+    Point(45.52452578496353, 9.209239147822379),
+
+    Point(45.52449168521061, 9.209219536675683),
+    Point(45.524473989949655, 9.209291207622632),
+    Point(45.52416091120383, 9.209120097882083),
+    Point(45.52409695403465, 9.209367685822325),
+    Point(45.52414152684946, 9.209394380960278),
+    Point(45.52413344903054, 9.209426070523296),
+    Point(45.524172049590234, 9.209447619262377),
+    Point(45.52417990012938, 9.20941692108682),
+    Point(45.52436920283039, 9.209520973018837),
+    Point(45.5243681956675, 9.20954307653417),
+    Point(45.5244373045316, 9.20958203283894),
+    Point(45.5244478523491, 9.209566646966547),
+    Point(45.524643221851974, 9.209674460539906),
+    Point(45.52463632039472, 9.209701995894385),
+    Point(45.5246751969012, 9.209720996152067),
+    Point(45.52468192768277, 9.209693121042111),
+)
+
+val U16small = listOf(
+    Point(45.524553582839005, 9.209255914159133),
+    Point(45.524628286083114, 9.208981330258876),
+    Point(45.524525015305514, 9.208923295813895),
+    Point(45.524449720554344, 9.20919677770958),
+)
+
+val U17square = listOf(
+    Point(45.51694093592401, 9.212797048133963),
+    Point(45.51665716794976, 9.212638358392502),
+    Point(45.51646288717514, 9.21332372388127),
+    Point(45.51674739965496, 9.213494611897191),
+)
+
+val U17Tower1 = listOf(
+    Point(45.5169259726379, 9.212850797612944),
+    Point(45.51694134189816, 9.212796953408327),
+    Point(45.516901800093, 9.212775470049294),
+    Point(45.51688670778359, 9.212830485711857),
+)
+
+val U17Tower2 = listOf(
+    Point(45.516723075677824, 9.213419779197134),
+    Point(45.51676168200759, 9.213443202201645),
+    Point(45.516747501135235, 9.21349447809646),
+    Point(45.51670839221059, 9.213471409551047),
+)
+
+val U19 = listOf(
+    Point(45.50974114473125, 9.209548535958643),
+    Point(45.50995206405329, 9.20966580202296),
+    Point(45.51014856955306, 9.208951187389856),
+    Point(45.509939685147735, 9.208834190987966),
+    Point(45.50988459336003, 9.209035193019977),
+    Point(45.50990112186664, 9.209044693569535),
+    Point(45.50981897437051, 9.209343332978976),
+    Point(45.50980041936092, 9.209333463740837),
+)
+
+val U24 = listOf(
+    Point(45.52397640536075, 9.221172285873179),
+    Point(45.52393473081364, 9.221284124518368),
+    Point(45.52355535552591, 9.220994991246156),
+    Point(45.523596944999646, 9.22088135010346),
+)
+
+
+val U24Patio = listOf(
+    Point(45.52397640536075, 9.221172285873179),
+    Point(45.52400459302437, 9.221098981462447),
+    Point(45.52377270694894, 9.220921303829966),
+    Point(45.52375420210425, 9.220970483886964),
+    Point(45.52369632346144, 9.220926088507177),
+    Point(45.52368698639372, 9.220950761962797),
+)
+
+
 val campusBuildings = listOf(
     CampusBuilding(
         id = "U1",
         label = "U1",
-        points = U1,
-        labelPosition = Point(45.51308979589486, 9.211606327955359)
+        parts = listOf(
+            BuildingModel(points = U1),
+            BuildingModel(points = U1U4, height = 40f, base = 20f), // Bridge to U4
+        ),
+        labelPosition = Point(45.51308979589486, 9.211606327955359),
     ),
     CampusBuilding(
         id = "U2",
         label = "U2",
-        points = U2,
-        labelPosition = Point(45.51335985816392, 9.21059564242477)
+        parts = listOf(
+            BuildingModel(points = U2),
+            BuildingModel(points = U2U3, height = 40f, base = 20f), // Bridge to U3
+        ),
+        labelPosition = Point(45.51335985816392, 9.21059564242477),
     ),
     CampusBuilding(
         id = "U3",
         label = "U3",
         points = U3,
-        labelPosition = Point(45.51395009858823, 9.212123150132518)
+        labelPosition = Point(45.51395009858823, 9.212123150132518),
     ),
     CampusBuilding(
         id = "U4",
         label = "U4",
         points = U4,
-        labelPosition = Point(45.51424371587326, 9.211039285418272)
+        labelPosition = Point(45.51424371587326, 9.211039285418272),
     ),
     CampusBuilding(
         id = "U5",
         label = "U5",
-        points = U5,
-        labelPosition = Point(45.512222121735796, 9.212213752073598)
+        parts = listOf(
+            BuildingModel(points = U5),
+            BuildingModel(points = U5Tall, height = 45f), // Chimney
+        ),
+        labelPosition = Point(45.512222121735796, 9.212213752073598),
     ),
     CampusBuilding(
         id = "U6",
         label = "U6",
         points = U6,
-        labelPosition = Point(45.51836256106223, 9.213476579964503)
+        labelPosition = Point(45.51836256106223, 9.213476579964503),
     ),
     CampusBuilding(
         id = "U7",
         label = "U7",
         points = U7,
-        labelPosition = Point(45.51713008575474, 9.213320854886287)
+        labelPosition = Point(45.51713008575474, 9.213320854886287),
     ),
     CampusBuilding(
         id = "U9",
         label = "U9",
         points = U9,
-        labelPosition = Point(45.51096690718429, 9.211746955648591)
+        labelPosition = Point(45.51096690718429, 9.211746955648591),
     ),
     CampusBuilding(
         id = "U12",
         label = "U12",
-        points = U12base,
-        labelPosition = Point(45.51585221236433, 9.212584983575434)
+        parts = listOf(
+            BuildingModel(points = U12base, height = 30f, base = 8f), // Base
+            BuildingModel(points = U12base2, height = 30f, base = 0f), // Base 2
+            BuildingModel(points = U12TopR, height = 65f, base = 30f), // Top right part
+            BuildingModel(points = U12TopL, height = 65f, base = 30f), // Top left part
+            BuildingModel(points = U12Bridge, height = 45f, base = 40f), // Bridge
+            BuildingModel(points = U12Top, height = 65f, base = 50f), // Bridge
+        ),
+        labelPosition = Point(45.51585221236433, 9.212584983575434),
     ),
-    CampusBuilding(id = "U1U4", label = "", points = U1U4, height = 40f, base = 20f), // Bridge
-    CampusBuilding(id = "U2U3", label = "", points = U2U3, height = 40f, base = 20f), // Bridge
     CampusBuilding(
-        id = "U5Chimney",
-        label = "",
-        points = U5Tall,
-        height = 60f,
-        base = 0f
-    ), // U5 Chimney
+        id = "U14",
+        label = "U14",
+        points = U14,
+        labelPosition = Point(45.52369757201274, 9.219398568890847),
+    ),
+    CampusBuilding(
+        id = "U16",
+        label = "U16",
+        parts = listOf(
+            BuildingModel(points = U16),
+            BuildingModel(points = U16small, height = 20f),
+        ),
+        labelPosition = Point(45.5244518087266, 9.209413467584893),
+    ),
+    CampusBuilding(
+        id = "U17",
+        label = "U17",
+        parts = listOf(
+            BuildingModel(points = U17square, base = 5f, height = 0f),
+            BuildingModel(points = U17Tower1, base = 0f, height = 10f),
+            BuildingModel(points = U17Tower2, base = 0f, height = 10f),
+        ),
+        labelPosition = Point(45.5244518087266, 9.209413467584893),
+    ),
+    CampusBuilding(
+        id = "U19",
+        label = "U19",
+        points = U19,
+        labelPosition = Point(45.50994511326528, 9.209244974907907),
+    ),
+    CampusBuilding(
+        id = "U24",
+        label = "U24",
+        parts = listOf(
+            BuildingModel(points = U24, base = 0f, height = 10f),
+            BuildingModel(points = U24Patio, base = 0f, height = 0.3f),
+        ),
+        labelPosition = Point(45.52375503202175, 9.221056362418318),
+    ),
 )
