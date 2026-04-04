@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -38,8 +39,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
@@ -57,7 +61,6 @@ private const val MAX_BACK_PROGRESS = 0.9f
 
 @Composable
 fun AppTopBar(
-    profilePic: ByteArray?,
     canNavigateBack: Boolean,
     subPageTitle: String?,
     searchQuery: String,
@@ -70,8 +73,9 @@ fun AppTopBar(
     externalProgress: Animatable<Float, *>? = null,
     onNavigateBack: () -> Unit,
     onProfileClick: () -> Unit,
-    avatarScale: Float = 1f,
+    onAvatarPositioned: (Offset) -> Unit = {},
     searchIconScale: Float = 1f,
+    popupProgress: Float = 0f,
     modifier: Modifier = Modifier,
 ) {
     val focusRequester = remember { FocusRequester() }
@@ -125,6 +129,7 @@ fun AppTopBar(
     val horizontalPadding = lerp(16.dp, 0.dp, p)
     val topPadding = lerp(8.dp, 0.dp, p)
     val avatarAlpha = 1f - p
+    val popupFade = 1f - popupProgress
 
     val statusBarHeight = with(LocalDensity.current) {
         WindowInsets.statusBars.getTop(this).toDp()
@@ -176,7 +181,7 @@ fun AppTopBar(
                                 imageVector = Icons.Default.Search,
                                 contentDescription = stringResource(R.string.search),
                                 modifier = Modifier.graphicsLayer {
-                                    alpha = avatarAlpha
+                                    alpha = avatarAlpha * popupFade
                                     scaleX = searchIconScale
                                     scaleY = searchIconScale
                                 },
@@ -200,7 +205,7 @@ fun AppTopBar(
                             modifier = Modifier
                                 .fillMaxSize()
                                 .graphicsLayer {
-                                    alpha = avatarAlpha
+                                    alpha = avatarAlpha * popupFade
                                     translationX = p * size.width * 0.15f
                                 },
                             contentAlignment = Alignment.Center,
@@ -268,20 +273,25 @@ fun AppTopBar(
 
                     // Trailing icons
                     Box {
-                        // Avatar (visible in PAGE mode)
+                        // Avatar placeholder — invisible, reports position for flying avatar
                         IconButton(
                             onClick = onProfileClick,
                             enabled = mode == BarMode.PAGE,
-                            modifier = Modifier.graphicsLayer {
-                                alpha = avatarAlpha
-                                scaleX = avatarScale
-                                scaleY = avatarScale
-                            },
+                            modifier = Modifier.graphicsLayer { alpha = 0f },
                         ) {
-                            ProfileAvatar(
-                                profilePic = profilePic,
-                                contentDescription = stringResource(R.string.homescreen_profile),
-                                size = 32.dp,
+                            Box(
+                                modifier = Modifier
+                                    .size(32.dp)
+                                    .onGloballyPositioned { coords ->
+                                        val pos = coords.positionInRoot()
+                                        val size = coords.size
+                                        onAvatarPositioned(
+                                            Offset(
+                                                pos.x + size.width / 2f,
+                                                pos.y + size.height / 2f,
+                                            ),
+                                        )
+                                    },
                             )
                         }
                         // Search mode trailing icons
