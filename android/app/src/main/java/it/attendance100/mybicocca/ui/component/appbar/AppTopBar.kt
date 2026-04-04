@@ -70,6 +70,8 @@ fun AppTopBar(
     externalProgress: Animatable<Float, *>? = null,
     onNavigateBack: () -> Unit,
     onProfileClick: () -> Unit,
+    avatarScale: Float = 1f,
+    searchIconScale: Float = 1f,
     modifier: Modifier = Modifier,
 ) {
     val focusRequester = remember { FocusRequester() }
@@ -173,7 +175,11 @@ fun AppTopBar(
                             Icon(
                                 imageVector = Icons.Default.Search,
                                 contentDescription = stringResource(R.string.search),
-                                modifier = Modifier.graphicsLayer { alpha = avatarAlpha },
+                                modifier = Modifier.graphicsLayer {
+                                    alpha = avatarAlpha
+                                    scaleX = searchIconScale
+                                    scaleY = searchIconScale
+                                },
                             )
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
@@ -185,7 +191,9 @@ fun AppTopBar(
 
                     // Center content — both rendered, crossfade + slide driven by p
                     Box(
-                        modifier = Modifier.weight(1f).height(56.dp),
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(56.dp),
                     ) {
                         // PAGE: centered logo
                         Box(
@@ -264,7 +272,11 @@ fun AppTopBar(
                         IconButton(
                             onClick = onProfileClick,
                             enabled = mode == BarMode.PAGE,
-                            modifier = Modifier.graphicsLayer { alpha = avatarAlpha },
+                            modifier = Modifier.graphicsLayer {
+                                alpha = avatarAlpha
+                                scaleX = avatarScale
+                                scaleY = avatarScale
+                            },
                         ) {
                             ProfileAvatar(
                                 profilePic = profilePic,

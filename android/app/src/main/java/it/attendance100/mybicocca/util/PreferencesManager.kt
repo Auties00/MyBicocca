@@ -44,6 +44,8 @@ class PreferencesManager @Inject constructor(
     private const val KEY_BADGE_PARALLAX = "badge_parallax"
     private const val KEY_BADGE_WHITE = "badge_white"
     private const val KEY_PROGRESS_BAR_TOGGLE = "progress_bar_toggle"
+    private const val KEY_SWIPE_PROFILE_ENABLED = "swipe_profile_enabled"
+    private const val KEY_SWIPE_SEARCH_ENABLED = "swipe_search_enabled"
 
 
     // Public Settings
@@ -117,6 +119,18 @@ class PreferencesManager @Inject constructor(
     get() = prefs.getBoolean(KEY_PROGRESS_BAR_TOGGLE, false)
     set(value) {
       prefs.edit { putBoolean(KEY_PROGRESS_BAR_TOGGLE, value) }
+    }
+
+  var swipeProfileEnabled: Boolean
+    get() = prefs.getBoolean(KEY_SWIPE_PROFILE_ENABLED, true)
+    set(value) {
+      prefs.edit { putBoolean(KEY_SWIPE_PROFILE_ENABLED, value) }
+    }
+
+  var swipeSearchEnabled: Boolean
+    get() = prefs.getBoolean(KEY_SWIPE_SEARCH_ENABLED, true)
+    set(value) {
+      prefs.edit { putBoolean(KEY_SWIPE_SEARCH_ENABLED, value) }
     }
 
   var fingerprintLogin: Boolean
