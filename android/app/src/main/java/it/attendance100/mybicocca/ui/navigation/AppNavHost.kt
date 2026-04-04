@@ -13,6 +13,7 @@ import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarMonth
@@ -34,15 +35,19 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.lerp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -54,7 +59,11 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import it.attendance100.mybicocca.R
+import it.attendance100.mybicocca.data.model.career.Career
+import it.attendance100.mybicocca.data.model.user.User
+import it.attendance100.mybicocca.ui.component.appbar.AccountSwitcherPopup
 import it.attendance100.mybicocca.ui.component.appbar.AppTopBar
+import it.attendance100.mybicocca.ui.component.appbar.ProfileAvatar
 import it.attendance100.mybicocca.ui.screen.calendar.CalendarRoute
 import it.attendance100.mybicocca.ui.screen.elearning.ElearningScreen
 import it.attendance100.mybicocca.ui.screen.login.LoginScreen
@@ -79,6 +88,7 @@ import it.attendance100.mybicocca.ui.screen.splash.SplashScreen
 import it.attendance100.mybicocca.ui.theme.PrimaryColor
 import it.attendance100.mybicocca.util.rememberHapticManager
 import it.attendance100.mybicocca.util.rememberPreferencesManager
+import kotlinx.coroutines.launch
 import java.time.LocalDateTime
 import kotlin.coroutines.cancellation.CancellationException
 
@@ -118,13 +128,15 @@ fun MyBicoccaNavHost(viewModel: AppNavHostViewModel = hiltViewModel()) {
     val rootNavController = rememberNavController()
     val rootEntry by rootNavController.currentBackStackEntryAsState()
     val profilePic by viewModel.profilePic.collectAsStateWithLifecycle(initialValue = null)
+    val user by viewModel.user.collectAsStateWithLifecycle(initialValue = null)
+    val activeCareer by viewModel.activeCareer.collectAsStateWithLifecycle(initialValue = null)
 
     val isInApp = rootEntry?.destination?.route?.let { route ->
         route != AppRoutes.Splash::class.qualifiedName && route != AppRoutes.Login::class.qualifiedName
     } ?: false
 
     if (isInApp) {
-        MainShell(profilePic = profilePic)
+        MainShell(profilePic = profilePic, user = user, activeCareer = activeCareer)
     } else {
         NavHost(navController = rootNavController, startDestination = AppRoutes.Splash) {
             composable<AppRoutes.Splash> {
@@ -156,8 +168,15 @@ fun MyBicoccaNavHost(viewModel: AppNavHostViewModel = hiltViewModel()) {
 }
 
 @Composable
-private fun MainShell(profilePic: ByteArray?) {
+private fun MainShell(
+    profilePic: ByteArray?,
+    user: User?,
+    activeCareer: Career?,
+) {
     var selectedTab by rememberSaveable { mutableStateOf(Tab.Calendar) }
+    var showAccountSwitcher by remember { mutableStateOf(false) }
+    val popupProgress = remember { Animatable(0f) }
+    val scope = rememberCoroutineScope()
     var searchActive by rememberSaveable { mutableStateOf(false) }
     var searchQuery by rememberSaveable { mutableStateOf("") }
     var filterToggle by remember { mutableStateOf<(() -> Unit)?>(null) }
@@ -192,6 +211,9 @@ private fun MainShell(profilePic: ByteArray?) {
     var searchTriggered by remember { mutableStateOf(false) }
     val searchBounce = remember { Animatable(1f) }
     var searchTriggerTime by remember { mutableStateOf<LocalDateTime?>(null) }
+
+    var avatarSourceCenter by remember { mutableStateOf(Offset.Zero) }
+    var avatarTargetCenter by remember { mutableStateOf(Offset.Zero) }
 
     LaunchedEffect(profileTriggered) {
         if (profileTriggered) {
@@ -259,15 +281,57 @@ private fun MainShell(profilePic: ByteArray?) {
         }
     }
 
+    // Account switcher popup animations
+    LaunchedEffect(showAccountSwitcher) {
+        if (showAccountSwitcher) {
+            popupProgress.snapTo(0f)
+            popupProgress.animateTo(
+                1f,
+                spring(
+                    dampingRatio = Spring.DampingRatioLowBouncy,
+                    stiffness = Spring.StiffnessMediumLow,
+                ),
+            )
+        }
+    }
+
+    PredictiveBackHandler(enabled = showAccountSwitcher) { backProgress ->
+        try {
+            backProgress.collect { event ->
+                popupProgress.snapTo(
+                    1f - (event.progress / 0.9f).coerceIn(0f, 1f),
+                )
+            }
+            popupProgress.animateTo(0f, spring(stiffness = Spring.StiffnessMediumLow))
+            showAccountSwitcher = false
+        } catch (_: CancellationException) {
+            popupProgress.animateTo(1f, spring(stiffness = Spring.StiffnessMediumLow))
+        }
+    }
+
     fun navigate(route: AppRoutes) {
         subNavController.navigate(route)
+    }
+
+    fun dismissPopupAndRun(action: () -> Unit = {}) {
+        scope.launch {
+            popupProgress.animateTo(0f, spring(stiffness = Spring.StiffnessMediumLow))
+            showAccountSwitcher = false
+            action()
+        }
     }
 
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .pointerInput(isOnSubPage, searchActive, swipeProfileEnabled, swipeSearchEnabled) {
-                if (isOnSubPage || searchActive) return@pointerInput
+            .pointerInput(
+                isOnSubPage,
+                searchActive,
+                showAccountSwitcher,
+                swipeProfileEnabled,
+                swipeSearchEnabled
+            ) {
+                if (isOnSubPage || searchActive || showAccountSwitcher) return@pointerInput
                 if (!swipeProfileEnabled && !swipeSearchEnabled) return@pointerInput
                 detectHorizontalDragGestures(
                     onDragStart = {
@@ -280,7 +344,7 @@ private fun MainShell(profilePic: ByteArray?) {
                         profileDragDist = 0f
                         searchDragDist = 0f
                         if (swipeProfileEnabled && profileTriggered) {
-                            subNavController.navigate(AppRoutes.Profile)
+                            showAccountSwitcher = true
                             profileTriggered = false
                             if (profileTriggerTime == null || LocalDateTime.now()
                                     .minusNanos(800_000).isAfter(profileTriggerTime)
@@ -342,7 +406,6 @@ private fun MainShell(profilePic: ByteArray?) {
             contentWindowInsets = WindowInsets(0),
             topBar = {
                 AppTopBar(
-                    profilePic = profilePic,
                     canNavigateBack = isOnSubPage,
                     subPageTitle = subPageTitle,
                     searchQuery = searchQuery,
@@ -354,9 +417,10 @@ private fun MainShell(profilePic: ByteArray?) {
                     filterActive = filterActive,
                     externalProgress = topBarProgress,
                     onNavigateBack = { subNavController.popBackStack() },
-                    onProfileClick = { navigate(AppRoutes.Profile) },
-                    avatarScale = currentAvatarScale,
+                    onProfileClick = { showAccountSwitcher = true },
+                    onAvatarPositioned = { avatarSourceCenter = it },
                     searchIconScale = currentSearchScale,
+                    popupProgress = popupProgress.value,
                 )
             },
         ) { innerPadding ->
@@ -527,7 +591,7 @@ private fun MainShell(profilePic: ByteArray?) {
                 }
             }
 
-            // Scrim overlay for swipe- gesture
+            // Scrim overlay for swipe gesture
             if (currentScrimAlpha > 0f) {
                 Box(
                     modifier = Modifier
@@ -535,7 +599,58 @@ private fun MainShell(profilePic: ByteArray?) {
                         .background(Color.Black.copy(alpha = currentScrimAlpha)),
                 )
             }
+
         }
+
+        // Account switcher popup overlay
+        AccountSwitcherPopup(
+            progress = popupProgress.value,
+            user = user,
+            career = activeCareer,
+            onAvatarTargetPositioned = { avatarTargetCenter = it },
+            onDismiss = { dismissPopupAndRun() },
+            onProfileClick = { dismissPopupAndRun { navigate(AppRoutes.Profile) } },
+            onAddAccount = { dismissPopupAndRun() },
+            onManageAccounts = { dismissPopupAndRun() },
+            onSettingsClick = { dismissPopupAndRun() },
+        )
+
+        // Flying avatar overlay
+        val density = LocalDensity.current
+        val p = popupProgress.value
+        val effectiveTarget =
+            if (avatarTargetCenter == Offset.Zero) avatarSourceCenter else avatarTargetCenter
+        val avatarSizeDp = lerp(32.dp, 72.dp, p)
+        val avatarSizePx = with(density) { avatarSizeDp.toPx() }
+        val avatarCenter = if (avatarSourceCenter != Offset.Zero) Offset(
+            x = avatarSourceCenter.x + (effectiveTarget.x - avatarSourceCenter.x) * p,
+            y = avatarSourceCenter.y + (effectiveTarget.y - avatarSourceCenter.y) * p,
+        ) else Offset.Zero
+        val flyingAvatarScale = if (p > 0f) 1f else currentAvatarScale
+        val flyingAvatarAlpha = when {
+            avatarSourceCenter == Offset.Zero -> 0f
+            p > 0f -> 1f
+            searchActive -> 0f
+            else -> 1f - topBarProgress.value
+        }
+
+        ProfileAvatar(
+            profilePic = profilePic,
+            contentDescription = null,
+            size = avatarSizeDp,
+            modifier = Modifier
+                .offset {
+                    IntOffset(
+                        (avatarCenter.x - avatarSizePx / 2f).toInt(),
+                        (avatarCenter.y - avatarSizePx / 2f).toInt(),
+                    )
+                }
+                .graphicsLayer {
+                    scaleX = flyingAvatarScale
+                    scaleY = flyingAvatarScale
+                    alpha = flyingAvatarAlpha
+                },
+        )
     }
 }
 
