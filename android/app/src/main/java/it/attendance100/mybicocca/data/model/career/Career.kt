@@ -12,4 +12,5 @@ data class Career(
     val statusDescription: String? = null,
     val statusCode: String? = null,
     val matricola: String? = null,
+    val matricolaId: Long? = null
 )

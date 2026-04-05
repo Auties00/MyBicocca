@@ -17,6 +17,11 @@ class Esse3CountriesApi(
     json: Json
 ) : Esse3AbstractApi(client, json, "/nazioni-service-v1") {
 
+    /**
+     * recupero delle nazioni
+     *
+     * @param iso6392Code Codice ISO lingua
+     */
     suspend fun getNations(
         iso6392Code: String? = null
     ): List<Esse3Country> {
@@ -25,6 +30,16 @@ class Esse3CountriesApi(
         }
     }
 
+    /**
+     * recupero dei CAP
+     *
+     * @param nationId identificativo della nazione
+     * @param nationFiscalCode Codice fiscale della nazione
+     * @param regionCode Codice regione
+     * @param abbreviation Sigla della provincia
+     * @param municipalityId id univoco comune
+     * @param municipalityCode Codice di 4 cifre (Lettera + 3 numeri) che è utilizzato nel codice fiscale per indicare il comune di nascita.
+     */
     suspend fun getPostalCode(
         nationId: Long,
         nationFiscalCode: String? = null,
@@ -42,6 +57,19 @@ class Esse3CountriesApi(
         }
     }
 
+    /**
+     * recupero dei comuni
+     *
+     * @param nationId identificativo della nazione
+     * @param iso6392Code Codice ISO lingua
+     * @param nationFiscalCode Codice fiscale della nazione
+     * @param regionCode Codice regione
+     * @param abbreviation Sigla della provincia
+     * @param municipalityCode Codice di 4 cifre (Lettera + 3 numeri) che è utilizzato nel codice fiscale per indicare il comune di nascita.
+     * @param start utilizzato insieme a `limit` per indicare la paginazione sui record; `start` indica il numero del primo record da caricare (se non indicato viene utilizzato 0)
+     * @param limit utilizzato insieme a `start` per indicare la paginazione sui record, `limit` indica il numero di record da recuperare (a partire da `start`); se non indicato viene utilizzato 50, i valori consentiti vanno da 0 a 100
+     * @param order consente di specificare un ordine per il recupero dei record. La sintassi è la seguente * +/- : specifica l'ordinamento (+ = ASC, - = DESC); se omesso viene utilizzato + * field : nome del campo da ordinare E' possibile indicare più campi separandoli da virgola (Es: +annoCorso,+adCod)
+     */
     suspend fun getMunicipalities(
         nationId: Long,
         iso6392Code: String? = null,
@@ -65,6 +93,12 @@ class Esse3CountriesApi(
         }
     }
 
+    /**
+     * recupero delle province
+     *
+     * @param nationId identificativo della nazione
+     * @param nationFiscalCode Codice fiscale della nazione
+     */
     suspend fun getProvinces(
         nationId: Long,
         nationFiscalCode: String? = null

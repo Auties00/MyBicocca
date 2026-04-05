@@ -30,6 +30,13 @@ class Esse3OfferApi(
     json: Json
 ) : Esse3AbstractApi(client, json, "/offerta-service-v1") {
 
+    /**
+     * Recupera i raggruppamenti delle AD.
+     *
+     * @param cohortYear anno coorte
+     * @param courseOfStudyCode codice del corso di studio
+     * @param activityCode codice dell'attivita didattica
+     */
     suspend fun getGroupedTeachingActivities(
         cohortYear: Int,
         courseOfStudyCode: String? = null,
@@ -42,6 +49,16 @@ class Esse3OfferApi(
         }
     }
 
+    /**
+     * Recupera le informazioni delle attivita didattiche generiche. I parametri opzionali filtrano una AD qualsiasi.
+     *
+     * @param activityId id dell'attivita didattica
+     * @param activityCode codice dell'attivita didattica
+     * @param activityDescription descrizione  dell'attivita didattica (se viene utilizzato il carattere * viene applicato il like)
+     * @param start utilizzato insieme a `limit` per indicare la paginazione sui record; `start` indica il numero del primo record da caricare (se non indicato viene utilizzato 0)
+     * @param limit utilizzato insieme a `start` per indicare la paginazione sui record, `limit` indica il numero di record da recuperare (a partire da `start`); se non indicato viene utilizzato 50, i valori consentiti vanno da 0 a 100
+     * @param order consente di specificare un ordine per il recupero dei record. La sintassi è la seguente * +/- : specifica l'ordinamento (+ = ASC, - = DESC); se omesso viene utilizzato + * field : nome del campo da ordinare E' possibile indicare più campi separandoli da virgola (Es: +annoCorso,+adCod)
+     */
     suspend fun getGenericTeachingActivities(
         activityId: Long? = null,
         activityCode: String? = null,
@@ -60,6 +77,15 @@ class Esse3OfferApi(
         }
     }
 
+    /**
+     * Recupera le informazioni dei domini di partizione. I parametri opzionali filtrano una AD qualsiasi.
+     *
+     * @param invoicePartialCode codice del fattore di partizione
+     * @param invoicePartialDescription descrizione del fattore di partizione (se viene utilizzato il carattere * viene applicato il like)
+     * @param start utilizzato insieme a `limit` per indicare la paginazione sui record; `start` indica il numero del primo record da caricare (se non indicato viene utilizzato 0)
+     * @param limit utilizzato insieme a `start` per indicare la paginazione sui record, `limit` indica il numero di record da recuperare (a partire da `start`); se non indicato viene utilizzato 50, i valori consentiti vanno da 0 a 100
+     * @param order consente di specificare un ordine per il recupero dei record. La sintassi è la seguente * +/- : specifica l'ordinamento (+ = ASC, - = DESC); se omesso viene utilizzato + * field : nome del campo da ordinare E' possibile indicare più campi separandoli da virgola (Es: +annoCorso,+adCod)
+     */
     suspend fun getPartialDomicile(
         invoicePartialCode: String? = null,
         invoicePartialDescription: String? = null,
@@ -76,6 +102,15 @@ class Esse3OfferApi(
         }
     }
 
+    /**
+     * Recupera le informazioni dei fattori di partizione. I parametri opzionali filtrano una AD qualsiasi.
+     *
+     * @param invoicePartialCode codice del fattore di partizione
+     * @param invoicePartialDescription descrizione del fattore di partizione (se viene utilizzato il carattere * viene applicato il like)
+     * @param start utilizzato insieme a `limit` per indicare la paginazione sui record; `start` indica il numero del primo record da caricare (se non indicato viene utilizzato 0)
+     * @param limit utilizzato insieme a `start` per indicare la paginazione sui record, `limit` indica il numero di record da recuperare (a partire da `start`); se non indicato viene utilizzato 50, i valori consentiti vanno da 0 a 100
+     * @param order consente di specificare un ordine per il recupero dei record. La sintassi è la seguente * +/- : specifica l'ordinamento (+ = ASC, - = DESC); se omesso viene utilizzato + * field : nome del campo da ordinare E' possibile indicare più campi separandoli da virgola (Es: +annoCorso,+adCod)
+     */
     suspend fun getInvoicePartial(
         invoicePartialCode: String? = null,
         invoicePartialDescription: String? = null,
@@ -92,6 +127,21 @@ class Esse3OfferApi(
         }
     }
 
+    /**
+     * Recupera le informazioni delle testate delle offerte didattiche. I parametri opzionali filtrano una UD qualsiasi dell'offerta.
+     *
+     * @param academicYearOfferId Id dell'anno di offerta
+     * @param courseOfStudyCode codice del corso di studio
+     * @param courseOfStudyDescription descrizione del corso di studio (se viene utilizzato il carattere * viene applicato il like)
+     * @param departmentCode codice del dipartimento di afferenza amministrativa del corso di studio
+     * @param departmentDescription descrizione del dipartimento di afferenza amministrativa del corso di studio (se viene utilizzato il carattere * viene applicato il like)
+     * @param activityStateCode stato del'offerta, se non valorizzato vengono recuperate tutte le offerte
+     * @param courseTypesCode codice del tipo di corso di studio
+     * @param odModificationDate data di ultima modifica dell'offerta didattica
+     * @param start utilizzato insieme a `limit` per indicare la paginazione sui record; `start` indica il numero del primo record da caricare (se non indicato viene utilizzato 0)
+     * @param limit utilizzato insieme a `start` per indicare la paginazione sui record, `limit` indica il numero di record da recuperare (a partire da `start`); se non indicato viene utilizzato 50, i valori consentiti vanno da 0 a 100
+     * @param order consente di specificare un ordine per il recupero dei record. La sintassi è la seguente * +/- : specifica l'ordinamento (+ = ASC, - = DESC); se omesso viene utilizzato + * field : nome del campo da ordinare E' possibile indicare più campi separandoli da virgola (Es: +annoCorso,+adCod)
+     */
     suspend fun getOffers(
         academicYearOfferId: Int? = null,
         courseOfStudyCode: String? = null,
@@ -120,6 +170,17 @@ class Esse3OfferApi(
         }
     }
 
+    /**
+     * Indica se una AD risulta cancellabile.
+     *
+     * @param activityFunctionId af_id di U-Gov
+     * @param academicYearOfferId identificativo dell'anno di offerta
+     * @param courseOfStudyCode codice del corso di studio
+     * @param academicYearOrderId Id dell'ordinamento
+     * @param studyPlanCode codice del percorso di studio
+     * @param activityCode codice dell'attivita didattica
+     * @param teachingUnitCode codice dell'unità didattica
+     */
     suspend fun getCancellableOfferTeachingActivity(
         activityFunctionId: Long? = null,
         academicYearOfferId: Int? = null,
@@ -140,6 +201,11 @@ class Esse3OfferApi(
         }
     }
 
+    /**
+     * informazioni sui conteggi piani collegati a una AD generica
+     *
+     * @param body Oggetto con i dati per gestione filtri AD
+     */
     suspend fun putActivityPlanCount(
         body: Esse3ActivitiesCountPlansFilters
     ): Esse3ActivitiesCountPlans {
@@ -149,6 +215,22 @@ class Esse3OfferApi(
         }
     }
 
+    /**
+     * Recupera le informazioni delle attività. I parametri opzionali filtrano una UD qualsiasi dell'offerta.
+     *
+     * @param academicYearOfferId Id dell'anno di offerta
+     * @param courseOfStudyOfferId id del corso di studio
+     * @param academicYearOrderId Id dell'ordinamento
+     * @param studyPlanId id del percorso di studio
+     * @param studyPlanCode codice del percorso di studio
+     * @param studyPlanDescription descrizione del percorso di studio (se viene utilizzato il carattere * viene applicato il like)
+     * @param activityId id dell'attivita didattica
+     * @param activityCode codice dell'attivita didattica
+     * @param activityDescription descrizione  dell'attivita didattica (se viene utilizzato il carattere * viene applicato il like)
+     * @param start utilizzato insieme a `limit` per indicare la paginazione sui record; `start` indica il numero del primo record da caricare (se non indicato viene utilizzato 0)
+     * @param limit utilizzato insieme a `start` per indicare la paginazione sui record, `limit` indica il numero di record da recuperare (a partire da `start`); se non indicato viene utilizzato 50, i valori consentiti vanno da 0 a 100
+     * @param order consente di specificare un ordine per il recupero dei record. La sintassi è la seguente * +/- : specifica l'ordinamento (+ = ASC, - = DESC); se omesso viene utilizzato + * field : nome del campo da ordinare E' possibile indicare più campi separandoli da virgola (Es: +annoCorso,+adCod)
+     */
     suspend fun getTeachingActivityOffers(
         academicYearOfferId: Int,
         courseOfStudyOfferId: Long,
@@ -177,6 +259,20 @@ class Esse3OfferApi(
         }
     }
 
+    /**
+     * Recupera un intero che indica se la AD è cancellabile o no.
+     *
+     * @param academicYearOfferId Id dell'anno di offerta
+     * @param courseOfStudyOfferId id del corso di studio
+     * @param academicYearOrderId Id dell'ordinamento
+     * @param studyPlanId id del percorso di studio
+     * @param studyPlanCode codice del percorso di studio
+     * @param activityId id dell'attivita didattica
+     * @param activityCode codice dell'attivita didattica
+     * @param start utilizzato insieme a `limit` per indicare la paginazione sui record; `start` indica il numero del primo record da caricare (se non indicato viene utilizzato 0)
+     * @param limit utilizzato insieme a `start` per indicare la paginazione sui record, `limit` indica il numero di record da recuperare (a partire da `start`); se non indicato viene utilizzato 50, i valori consentiti vanno da 0 a 100
+     * @param order consente di specificare un ordine per il recupero dei record. La sintassi è la seguente * +/- : specifica l'ordinamento (+ = ASC, - = DESC); se omesso viene utilizzato + * field : nome del campo da ordinare E' possibile indicare più campi separandoli da virgola (Es: +annoCorso,+adCod)
+     */
     suspend fun getCancellableTeachingActivity(
         academicYearOfferId: Int,
         courseOfStudyOfferId: Long,
@@ -201,6 +297,16 @@ class Esse3OfferApi(
         }
     }
 
+    /**
+     * Modifica una attività didattica contestualizzata
+     *
+     * @param academicYearOfferId Id dell'anno di offerta
+     * @param courseOfStudyOfferId id del corso di studio
+     * @param academicYearOrderOfferId id dell'ordinamento del corso di studio
+     * @param studyPlanOfferId id del percorso di studio
+     * @param activityOfferId id dell'attività didattica
+     * @param body Oggetto che contiene i parametri per la modifica dell'attività  didattica contestualizzata
+     */
     suspend fun patchContextualizedTeachingActivity(
         academicYearOfferId: Int,
         courseOfStudyOfferId: Long,
@@ -215,6 +321,24 @@ class Esse3OfferApi(
         }
     }
 
+    /**
+     * Recupera le informazioni dei docenti collegati alla UD. I parametri opzionali filtrano una UD qualsiasi dell'offerta.
+     *
+     * @param academicYearOfferId Id dell'anno di offerta
+     * @param courseOfStudyOfferId id del corso di studio
+     * @param academicYearOrderId Id dell'ordinamento
+     * @param studyPlanId id del percorso di studio
+     * @param studyPlanCode codice del percorso di studio
+     * @param studyPlanDescription descrizione del percorso di studio (se viene utilizzato il carattere * viene applicato il like)
+     * @param activityCode codice dell'attivita didattica
+     * @param activityDescription descrizione  dell'attivita didattica (se viene utilizzato il carattere * viene applicato il like)
+     * @param teachingUnitCode codice dell'unità didattica
+     * @param teachingUnitDescription descrizione dell'unità didattica (se viene utilizzato il carattere * viene applicato il like)
+     * @param lecturerMatricola matricola del docente
+     * @param lecturerSurname cognome del docente (se viene utilizzato il carattere * viene applicato il like)
+     * @param lecturerName nome del docente (se viene utilizzato il carattere * viene applicato il like)
+     * @param order consente di specificare un ordine per il recupero dei record. La sintassi è la seguente * +/- : specifica l'ordinamento (+ = ASC, - = DESC); se omesso viene utilizzato + * field : nome del campo da ordinare E' possibile indicare più campi separandoli da virgola (Es: +annoCorso,+adCod)
+     */
     suspend fun getLecturersByTeachingUnit(
         academicYearOfferId: Int,
         courseOfStudyOfferId: Long,
@@ -247,6 +371,22 @@ class Esse3OfferApi(
         }
     }
 
+    /**
+     * Recupera le informazioni dei moduli. I parametri opzionali filtrano una UD qualsiasi dell'offerta.
+     *
+     * @param academicYearOfferId Id dell'anno di offerta
+     * @param courseOfStudyOfferId id del corso di studio
+     * @param academicYearOrderId Id dell'ordinamento
+     * @param studyPlanId id del percorso di studio
+     * @param studyPlanCode codice del percorso di studio
+     * @param studyPlanDescription descrizione del percorso di studio (se viene utilizzato il carattere * viene applicato il like)
+     * @param activityId id dell'attivita didattica
+     * @param activityCode codice dell'attivita didattica
+     * @param activityDescription descrizione  dell'attivita didattica (se viene utilizzato il carattere * viene applicato il like)
+     * @param start utilizzato insieme a `limit` per indicare la paginazione sui record; `start` indica il numero del primo record da caricare (se non indicato viene utilizzato 0)
+     * @param limit utilizzato insieme a `start` per indicare la paginazione sui record, `limit` indica il numero di record da recuperare (a partire da `start`); se non indicato viene utilizzato 50, i valori consentiti vanno da 0 a 100
+     * @param order consente di specificare un ordine per il recupero dei record. La sintassi è la seguente * +/- : specifica l'ordinamento (+ = ASC, - = DESC); se omesso viene utilizzato + * field : nome del campo da ordinare E' possibile indicare più campi separandoli da virgola (Es: +annoCorso,+adCod)
+     */
     suspend fun getTeachingUnitOffers(
         academicYearOfferId: Int,
         courseOfStudyOfferId: Long,
@@ -275,6 +415,22 @@ class Esse3OfferApi(
         }
     }
 
+    /**
+     * Recupera un intero che indica se la AD è cancellabile o no.
+     *
+     * @param academicYearOfferId Id dell'anno di offerta
+     * @param courseOfStudyOfferId id del corso di studio
+     * @param academicYearOrderId Id dell'ordinamento
+     * @param studyPlanId id del percorso di studio
+     * @param studyPlanCode codice del percorso di studio
+     * @param activityId id dell'attivita didattica
+     * @param activityCode codice dell'attivita didattica
+     * @param teachingUnitId id dell'unità didattica
+     * @param teachingUnitCode codice dell'unità didattica
+     * @param start utilizzato insieme a `limit` per indicare la paginazione sui record; `start` indica il numero del primo record da caricare (se non indicato viene utilizzato 0)
+     * @param limit utilizzato insieme a `start` per indicare la paginazione sui record, `limit` indica il numero di record da recuperare (a partire da `start`); se non indicato viene utilizzato 50, i valori consentiti vanno da 0 a 100
+     * @param order consente di specificare un ordine per il recupero dei record. La sintassi è la seguente * +/- : specifica l'ordinamento (+ = ASC, - = DESC); se omesso viene utilizzato + * field : nome del campo da ordinare E' possibile indicare più campi separandoli da virgola (Es: +annoCorso,+adCod)
+     */
     suspend fun getCancellableTeachingUnit(
         academicYearOfferId: Int,
         courseOfStudyOfferId: Long,
@@ -303,6 +459,25 @@ class Esse3OfferApi(
         }
     }
 
+    /**
+     * Recupera le informazioni dei segmenti. I parametri opzionali filtrano una UD qualsiasi dell'offerta.
+     *
+     * @param academicYearOfferId Id dell'anno di offerta
+     * @param courseOfStudyOfferId id del corso di studio
+     * @param academicYearOrderId Id dell'ordinamento
+     * @param studyPlanId id del percorso di studio
+     * @param studyPlanCode codice del percorso di studio
+     * @param studyPlanDescription descrizione del percorso di studio (se viene utilizzato il carattere * viene applicato il like)
+     * @param activityId id dell'attivita didattica
+     * @param activityCode codice dell'attivita didattica
+     * @param activityDescription descrizione  dell'attivita didattica (se viene utilizzato il carattere * viene applicato il like)
+     * @param teachingUnitId id dell'unità didattica
+     * @param teachingUnitCode codice dell'unità didattica
+     * @param teachingUnitDescription descrizione dell'unità didattica (se viene utilizzato il carattere * viene applicato il like)
+     * @param start utilizzato insieme a `limit` per indicare la paginazione sui record; `start` indica il numero del primo record da caricare (se non indicato viene utilizzato 0)
+     * @param limit utilizzato insieme a `start` per indicare la paginazione sui record, `limit` indica il numero di record da recuperare (a partire da `start`); se non indicato viene utilizzato 50, i valori consentiti vanno da 0 a 100
+     * @param order consente di specificare un ordine per il recupero dei record. La sintassi è la seguente * +/- : specifica l'ordinamento (+ = ASC, - = DESC); se omesso viene utilizzato + * field : nome del campo da ordinare E' possibile indicare più campi separandoli da virgola (Es: +annoCorso,+adCod)
+     */
     suspend fun getOfferedSEG(
         academicYearOfferId: Int,
         courseOfStudyOfferId: Long,
@@ -337,6 +512,15 @@ class Esse3OfferApi(
         }
     }
 
+    /**
+     * Recupera le informazioni di una una attività didattica contestualizzata.
+     *
+     * @param academicYearOfferId Id dell'anno di offerta
+     * @param courseOfStudyOfferId id del corso di studio
+     * @param academicYearOrderOfferId id dell'ordinamento del corso di studio
+     * @param studyPlanOfferId id del percorso di studio
+     * @param activityOfferId id dell'attività didattica
+     */
     suspend fun getContextualizedTeachingActivity(
         academicYearOfferId: Int,
         courseOfStudyOfferId: Long,
@@ -347,6 +531,14 @@ class Esse3OfferApi(
         return executeJsonGet<Esse3ContextualizedActivity>("/offerte/${academicYearOfferId}/${courseOfStudyOfferId}/${academicYearOrderOfferId}/${studyPlanOfferId}/${activityOfferId}", setOf(Esse3PermissionLevel.ANY))
     }
 
+    /**
+     * Recupera le informazioni relative alle offerte eliminate con la eventuale data di eliminazione. I parametri opzionali filtrano una o più offerta eliminata.
+     *
+     * @param odModificationDate data di ultima modifica dell'offerta didattica
+     * @param start utilizzato insieme a `limit` per indicare la paginazione sui record; `start` indica il numero del primo record da caricare (se non indicato viene utilizzato 0)
+     * @param limit utilizzato insieme a `start` per indicare la paginazione sui record, `limit` indica il numero di record da recuperare (a partire da `start`); se non indicato viene utilizzato 50, i valori consentiti vanno da 0 a 100
+     * @param order consente di specificare un ordine per il recupero dei record. La sintassi è la seguente * +/- : specifica l'ordinamento (+ = ASC, - = DESC); se omesso viene utilizzato + * field : nome del campo da ordinare E' possibile indicare più campi separandoli da virgola (Es: +annoCorso,+adCod)
+     */
     suspend fun getDeletedOffers(
         odModificationDate: String? = null,
         start: Int? = null,
@@ -361,6 +553,21 @@ class Esse3OfferApi(
         }
     }
 
+    /**
+     * Recupera le informazioni delle offerte didattiche complete. I parametri opzionali filtrano una UD qualsiasi dell'offerta.
+     *
+     * @param academicYearOfferId Id dell'anno di offerta
+     * @param courseOfStudyOfferId id del corso di studio
+     * @param academicYearOrderId Id dell'ordinamento
+     * @param studyPlanId id del percorso di studio
+     * @param studyPlanCode codice del percorso di studio
+     * @param studyPlanDescription descrizione del percorso di studio (se viene utilizzato il carattere * viene applicato il like)
+     * @param activityId id dell'attivita didattica
+     * @param activityCode codice dell'attivita didattica
+     * @param activityDescription descrizione  dell'attivita didattica (se viene utilizzato il carattere * viene applicato il like)
+     * @param order consente di specificare un ordine per il recupero dei record. La sintassi è la seguente * +/- : specifica l'ordinamento (+ = ASC, - = DESC); se omesso viene utilizzato + * field : nome del campo da ordinare E' possibile indicare più campi separandoli da virgola (Es: +annoCorso,+adCod)
+     * @param fields specifica la lista dei campi opzionali (che non vengono recupeati di default); impostando il valore `ALL` vengono mostrati tutti i campi. Per gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns* I dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello) Esempi * per il campo childObj con la poprietà childProp utilizzare la notazione `childProp.prop1` * Per visualizzare tutte le proprietà di childObj utilizzare la notazione `childProp.*` * Per visualizzare tutte le proprietà di childObj e di tutti i discendenti utilizzare la notazione `childProp.**`
+     */
     suspend fun getFullOffers(
         academicYearOfferId: Int,
         courseOfStudyOfferId: Long,

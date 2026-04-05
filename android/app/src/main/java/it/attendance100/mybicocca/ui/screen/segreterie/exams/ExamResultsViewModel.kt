@@ -12,11 +12,13 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import kotlin.collections.isNotEmpty
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
@@ -56,7 +58,10 @@ class ExamResultsViewModel @Inject constructor(
             _isRefreshing.value = true
             _error.value = null
             try {
-                transcriptRepository.refresh(activeCareer.value?.studentId ?: 0L)
+                val career = careerRepository.observeAll()
+                    .first { it.isNotEmpty() }
+                    .first()
+                transcriptRepository.refresh(career.studentId)
             } catch (e: Exception) {
                 _error.value = e.message ?: "Errore durante il caricamento"
             } finally {

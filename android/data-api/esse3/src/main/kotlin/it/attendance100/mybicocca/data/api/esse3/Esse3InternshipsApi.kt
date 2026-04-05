@@ -30,6 +30,21 @@ class Esse3InternshipsApi(
     json: Json
 ) : Esse3AbstractApi(client, json, "/tirocini-service-v1") {
 
+    /**
+     * matricole per cui è possibile avere una domanda di tirocinio
+     *
+     * @param matricola codice della matricola dello studente
+     * @param courseOfStudyStudentId id del corso di studio di appartenenza dello studente
+     * @param courseOfStudyStudentCode codice del corso di studio di appartenenza dello studente
+     * @param academicYearOrderStudentId anno di ordinamento del regolamento del piano
+     * @param studyPlanStudentId id del percorso di studio di appartenenza dello studente
+     * @param studyPlanStudentCode codice del percorso di studio di appartenenza dello studente
+     * @param optionalFields specifica la lista dei campi opzionali (che non vengono recupeati di default); impostando il valore `ALL` vengono mostrati tutti i campi. Per gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns* I dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello) Esempi * per il campo childObj con la poprietà childProp utilizzare la notazione `childProp.prop1` * Per visualizzare tutte le proprietà di childObj utilizzare la notazione `childProp.*` * Per visualizzare tutte le proprietà di childObj e di tutti i discendenti utilizzare la notazione `childProp.**`
+     * @param start utilizzato insieme a `limit` per indicare la paginazione sui record; `start` indica il numero del primo record da caricare (se non indicato viene utilizzato 0)
+     * @param limit utilizzato insieme a `start` per indicare la paginazione sui record, `limit` indica il numero di record da recuperare (a partire da `start`); se non indicato viene utilizzato 50, i valori consentiti vanno da 0 a 100
+     * @param order consente di specificare un ordine per il recupero dei record. La sintassi è la seguente * +/- : specifica l'ordinamento (+ = ASC, - = DESC); se omesso viene utilizzato + * field : nome del campo da ordinare E' possibile indicare più campi separandoli da virgola (Es: +annoCorso,+adCod)
+     * @param fields specifica la lista dei campi opzionali (che non vengono recupeati di default); impostando il valore `ALL` vengono mostrati tutti i campi. Per gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns* I dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello) Esempi * per il campo childObj con la poprietà childProp utilizzare la notazione `childProp.prop1` * Per visualizzare tutte le proprietà di childObj utilizzare la notazione `childProp.*` * Per visualizzare tutte le proprietà di childObj e di tutti i discendenti utilizzare la notazione `childProp.**`
+     */
     suspend fun getCareerSegments(
         matricola: String? = null,
         courseOfStudyStudentId: Long? = null,
@@ -58,6 +73,11 @@ class Esse3InternshipsApi(
         }
     }
 
+    /**
+     * esegue l'inserimento dell'azienda e restituisce l'ID azienda e l'ID della struttura didattica
+     *
+     * @param body dati azienda
+     */
     suspend fun saveCompany(
         body: Esse3CompanyPostInput
     ): Esse3CompanyPostOutput {
@@ -67,6 +87,12 @@ class Esse3InternshipsApi(
         }
     }
 
+    /**
+     * esegue la modifica dell'azienda
+     *
+     * @param companyId Identificativo dell'azienda
+     * @param body dati azienda
+     */
     suspend fun updateCompany(
         companyId: Long,
         body: Esse3CompanyPutInput
@@ -78,6 +104,11 @@ class Esse3InternshipsApi(
         ensureSuccess(response, setOf(Esse3PermissionLevel.TECHNICAL_USER))
     }
 
+    /**
+     * esegue la eliminazione dell'azienda
+     *
+     * @param companyId Identificativo dell'azienda
+     */
     suspend fun deleteCompany(
         companyId: Long
     ) {
@@ -85,6 +116,16 @@ class Esse3InternshipsApi(
         ensureSuccess(response, setOf(Esse3PermissionLevel.TECHNICAL_USER))
     }
 
+    /**
+     * recupera la lista dei contatti per una data azienda
+     *
+     * @param companyId Identificativo dell'azienda
+     * @param surname cognome del contatto
+     * @param name nome del contatto
+     * @param matFiscalCode Matricola/Codice Fiscale del contatto.
+     * @param activeFlag Indica se il contatto è attivo.
+     * @param role Ruolo del contatto.
+     */
     suspend fun getCompanyContacts(
         companyId: Long,
         surname: String? = null,
@@ -102,6 +143,18 @@ class Esse3InternshipsApi(
         }
     }
 
+    /**
+     * recupera la lista delle convenzioni per una data azienda
+     *
+     * @param companyId Identificativo dell'azienda
+     * @param conventionSiteDescription Descrizione della convenzione.
+     * @param conventionStateCode codice dello stato della convenzione ('P-Proposta', 'I-istituita', 'X-Cessata', 'R-Rifiutata').
+     * @param startDate Data di inizio convenzione (dd/mm/yyyy).
+     * @param endDate Data di fine convenzione. E' possibile inserire anche l'ora (dd/mm/yyyy hh:mm:ss).
+     * @param durationYears Durata in anni della convenzione
+     * @param academicYearId Anno accademico di validità della convenzione.
+     * @param defaultFlag Dice se è la convenzione di default per una certa azienda (ente_est). Utilizzata per gestire le convenzioni fittizie legate a opportunità per le quali non serve la convenzione e per gestire i PF associati a convenzioni uninominali.
+     */
     suspend fun getCompanyConventions(
         companyId: Long,
         conventionSiteDescription: String? = null,
@@ -123,6 +176,16 @@ class Esse3InternshipsApi(
         }
     }
 
+    /**
+     * recupera la lista delle sedi per una data azienda
+     *
+     * @param companyId Identificativo dell'azienda
+     * @param companySiteDescription descrizione della sede.
+     * @param siteTypeCode codice del tipo di sede ('LEG-Sede Legale', 'OPE-Sede Operativa', 'PER-Periferica')
+     * @param city Citta della sede.
+     * @param nationId id della nazione
+     * @param deactivate Sede disattivata.
+     */
     suspend fun getCompanySites(
         companyId: Long,
         companySiteDescription: String? = null,
@@ -140,6 +203,20 @@ class Esse3InternshipsApi(
         }
     }
 
+    /**
+     * recupera la lista delle aziende utilizzabili per i tirocini
+     *
+     * @param companyCode codice dell'azienda
+     * @param company descrizione dell'azienda
+     * @param fiscalCode codice fiscale azienda
+     * @param vatNumber partita iva azienda
+     * @param groupVatNumber partita iva di gruppo
+     * @param companyTypeCode codice della tipologia dell'azienda
+     * @param companyStateCode codice dello stato azienda (A-Accreditato, B-Bozza, BL-Blacklist, C-Cessato, P-Proposta di accredito, R-Accredito rifiutato)
+     * @param duns codice duns di 9 cifre
+     * @param hasValidConvention Indica se l´azienda ha una convenzione attiva.
+     * @param hasValidOpportunity Indica se l´azienda ha una opportunità attiva.
+     */
     suspend fun getInternshipCompanies(
         companyCode: String? = null,
         company: String? = null,
@@ -166,6 +243,15 @@ class Esse3InternshipsApi(
         }
     }
 
+    /**
+     * Effettua il controllo che uno studente sia eligibile per il tipo di stage passato tramite matricola, codice fiscale ed altri parametri
+     *
+     * @param fiscalCode codice fiscale
+     * @param languageCode codice lingua
+     * @param matricola codice della matricola dello studente
+     * @param serviceType tipo del servizio per cui si richiede il controllo
+     * @param internshipStartDate data di inizio tirocinio
+     */
     suspend fun checkStudentInternshipEligibility(
         fiscalCode: String,
         languageCode: List<String>,
@@ -182,6 +268,11 @@ class Esse3InternshipsApi(
         }
     }
 
+    /**
+     * esegue l’inserimento del tirocinio; se non esiste viene creato, se esiste viene sostituito integralmente con cancellazione e reinserimento.
+     *
+     * @param body dati tirocinio
+     */
     suspend fun importInternship(
         body: Esse3TrainingProject
     ) {
@@ -192,6 +283,40 @@ class Esse3InternshipsApi(
         ensureSuccess(response, setOf(Esse3PermissionLevel.TECHNICAL_USER))
     }
 
+    /**
+     * recupera la lista delle opportunità disponibili in base al filtro applicato
+     *
+     * @param area codice della tipologia del tipo di settore
+     * @param disciplinaryAreaId id area di afferenza valida per una determinata convenzione
+     * @param geographicAreaCode codice dell'area geografica
+     * @param company descrizione dell'azienda
+     * @param campaignId id della campagna
+     * @param atecoCategoryId id dell'attività economica
+     * @param protectedCategoryFlag indica se filtrare per categorie protette o no
+     * @param enrollmentEndDateTo data di fine iscrizione a partire a
+     * @param enrollmentEndDateFrom data di fine iscrizione a partire da
+     * @param enrollmentStartDateTo data di inizio iscrizione a partire a
+     * @param enrollmentStartDateFrom data di inizio iscrizione a partire da
+     * @param description descrizione opportunità
+     * @param entityId id dell'ente esterno
+     * @param excludeOpportunityCampaign indica se filtrare le opportunità legate a campagne
+     * @param nation Italia=0 /Estero = 1/Tutte = 2
+     * @param nationId id della nazione
+     * @param provinceCode codice della provincia
+     * @param requiredCodeFlag indica se filtrare le opportunità con una condizione sql associata
+     * @param requiredObjective testo di un requisito da ricercare
+     * @param sectorDisciplinaryAreaId Identificativo del settore legato all'area
+     * @param atecoSectorId Identificativo del settore dell'attività economica
+     * @param sector id dell'attività economica dell'ente sterno
+     * @param text testo da ricercare nel titolo e descrizione dell'opportunità o ragione sociale dell'ente esterno
+     * @param internshipTypeCode codice della tipologia del tirocinio
+     * @param title testo da ricercare nel titolo dell'opportunità
+     * @param expiredOpportunitiesVisible indica se filtrare le opportunità scadute
+     * @param durationFrom durata in mesi a partire da
+     * @param durationTo durata in mesi fino a
+     * @param internshipStartDateFrom data di inizio tirocinio a partire da
+     * @param internshipStartDateTo data di inizio tirocinio fino a
+     */
     suspend fun getInternshipOpportunities(
         area: String? = null,
         disciplinaryAreaId: Long? = null,
@@ -258,6 +383,12 @@ class Esse3InternshipsApi(
         }
     }
 
+    /**
+     * inserimento metadati allegato
+     *
+     * @param studentId id della carriera dello studente
+     * @param body Oggetto che contiene i metadati dell'allegato da inserire
+     */
     suspend fun postInternshipApplicationAttachmentMetadata(
         studentId: Long,
         body: Esse3GenericAttachmentInsertMetadata
@@ -269,6 +400,12 @@ class Esse3InternshipsApi(
         ensureSuccess(response, setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TECHNICAL_USER))
     }
 
+    /**
+     * recupera il blob dell'allegato richiesto
+     *
+     * @param studentId id della carriera dello studente
+     * @param attachmentId id di upload per caricare un allegato
+     */
     suspend fun getAttachmentContent(
         studentId: Long,
         attachmentId: Long
@@ -276,6 +413,14 @@ class Esse3InternshipsApi(
         return executeStreamGet("/tirocini/${studentId}/allegati/${attachmentId}/blob", setOf(Esse3PermissionLevel.TECHNICAL_USER))
     }
 
+    /**
+     * recupera le testate della domanda di tirocinio di uno studente
+     *
+     * @param studentId id della carriera dello studente
+     * @param internshipApplicationStateCode codice dello stato della domanda di tirocinio piano (PRE => Presentata, CHI => Chiusa, ANN => Annullata, CON => Confermata, RIF => Rifiutata, AVV => Avviato, NAS => Non assegnato). Se non viene passato vengono recuperate le domande in stato PRE, CON e AVV.
+     * @param order consente di specificare un ordine per il recupero dei record. La sintassi è la seguente * +/- : specifica l'ordinamento (+ = ASC, - = DESC); se omesso viene utilizzato + * field : nome del campo da ordinare E' possibile indicare più campi separandoli da virgola (Es: +annoCorso,+adCod)
+     * @param fields specifica la lista dei campi opzionali (che non vengono recupeati di default); impostando il valore `ALL` vengono mostrati tutti i campi. Per gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns* I dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello) Esempi * per il campo childObj con la poprietà childProp utilizzare la notazione `childProp.prop1` * Per visualizzare tutte le proprietà di childObj utilizzare la notazione `childProp.*` * Per visualizzare tutte le proprietà di childObj e di tutti i discendenti utilizzare la notazione `childProp.**`
+     */
     suspend fun getStudentInternshipApplicationHeaders(
         studentId: Long,
         internshipApplicationStateCode: List<String>? = null,
@@ -289,6 +434,13 @@ class Esse3InternshipsApi(
         }
     }
 
+    /**
+     * recupera il dettaglio della domanda di tirocinio di uno studente
+     *
+     * @param studentId id della carriera dello studente
+     * @param domicileInternshipId id della testata della domanda di tirocinio dello studente
+     * @param fields specifica la lista dei campi opzionali (che non vengono recupeati di default); impostando il valore `ALL` vengono mostrati tutti i campi. Per gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns* I dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello) Esempi * per il campo childObj con la poprietà childProp utilizzare la notazione `childProp.prop1` * Per visualizzare tutte le proprietà di childObj utilizzare la notazione `childProp.*` * Per visualizzare tutte le proprietà di childObj e di tutti i discendenti utilizzare la notazione `childProp.**`
+     */
     suspend fun getStudentInternshipApplication(
         studentId: Long,
         domicileInternshipId: Long,
@@ -299,6 +451,14 @@ class Esse3InternshipsApi(
         }
     }
 
+    /**
+     * recupera gli allegati associati alla domanda di tirocinio di uno studente
+     *
+     * @param studentId id della carriera dello studente
+     * @param domicileInternshipId id della testata della domanda di tirocinio dello studente
+     * @param fields specifica la lista dei campi opzionali (che non vengono recupeati di default); impostando il valore `ALL` vengono mostrati tutti i campi. Per gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns* I dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello) Esempi * per il campo childObj con la poprietà childProp utilizzare la notazione `childProp.prop1` * Per visualizzare tutte le proprietà di childObj utilizzare la notazione `childProp.*` * Per visualizzare tutte le proprietà di childObj e di tutti i discendenti utilizzare la notazione `childProp.**`
+     * @param filter il parametro consente di applicare dei filtri alla classe di modello utilizzando il linguaggio  [RSQL](https://github.com/jirutka/rsql-parser). La lista degli operatori utilizzabili è disponibile [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosullerigherecuperate) *NB* il filtro viene applicato DOPO aver recuperato i dati
+     */
     suspend fun getStudentInternshipApplicationAttachments(
         studentId: Long,
         domicileInternshipId: Long,
@@ -311,6 +471,14 @@ class Esse3InternshipsApi(
         }
     }
 
+    /**
+     * recupera il dettaglio della scheda di valutazione compilata da uno studente
+     *
+     * @param studentId id della carriera dello studente
+     * @param domicileInternshipId id della testata della domanda di tirocinio dello studente
+     * @param questionTypeCode codice del tipo di valutazione
+     * @param order consente di specificare un ordine per il recupero dei record. La sintassi è la seguente * +/- : specifica l'ordinamento (+ = ASC, - = DESC); se omesso viene utilizzato + * field : nome del campo da ordinare E' possibile indicare più campi separandoli da virgola (Es: +annoCorso,+adCod)
+     */
     suspend fun getStudentInternshipEvaluation(
         studentId: Long,
         domicileInternshipId: Long,

@@ -95,7 +95,8 @@ object SpecParser {
                             name = "body",
                             type = bodyType,
                             required = requestBody.required ?: true,
-                            location = ParameterLocation.BODY
+                            location = ParameterLocation.BODY,
+                            description = requestBody.description
                         )
                     }
                 }
@@ -110,7 +111,8 @@ object SpecParser {
                                     name = param.name ?: "body",
                                     type = bodyType,
                                     required = param.required ?: true,
-                                    location = ParameterLocation.BODY
+                                    location = ParameterLocation.BODY,
+                                    description = param.description
                                 )
                             }
                         }
@@ -129,7 +131,9 @@ object SpecParser {
                         queryParams = queryParams,
                         bodyParam = bodyParam,
                         responseType = responseType,
-                        permissions = permissions
+                        permissions = permissions,
+                        summary = operation.summary,
+                        description = operation.description
                     )
                 )
             }
@@ -149,7 +153,8 @@ object SpecParser {
             name = param.name,
             type = type,
             required = param.required ?: false,
-            location = location
+            location = location,
+            description = param.description
         )
     }
 
@@ -301,7 +306,8 @@ object SpecParser {
             itemRef = itemRef,
             itemType = itemType,
             itemFormat = itemFormat,
-            enumValues = enumValues
+            enumValues = enumValues,
+            description = schema.description
         )
     }
 

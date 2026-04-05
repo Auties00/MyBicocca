@@ -10,8 +10,7 @@ import it.attendance100.mybicocca.data.common.util.buildUrl
 import it.attendance100.mybicocca.data.common.util.isRedirect
 import it.attendance100.mybicocca.data.dto.esse3.Esse3ErrorResponse
 import it.attendance100.mybicocca.data.dto.esse3.Esse3PermissionLevel
-import it.attendance100.mybicocca.data.exception.esse3.Esse3NotAuthorizedException
-import it.attendance100.mybicocca.data.exception.esse3.Esse3ValidationException
+import it.attendance100.mybicocca.data.exception.esse3.Esse3Exception
 import kotlinx.serialization.json.Json
 
 /**
@@ -48,9 +47,9 @@ abstract class Esse3AbstractApi(
     /**
      * Checks a response for error status codes and throws appropriate exceptions.
      *
-     * @throws Esse3NotAuthorizedException for HTTP 403 (Forbidden)
-     * @throws Esse3ValidationException for HTTP 422 (Unprocessable Entity)
-     * @throws Esse3ValidationException for other non-success status codes
+     * @throws Esse3Exception for HTTP 403 (Forbidden)
+     * @throws Esse3Exception for HTTP 422 (Unprocessable Entity)
+     * @throws Esse3Exception for other non-success status codes
      */
     @PublishedApi
     internal suspend fun ensureSuccess(
@@ -58,19 +57,18 @@ abstract class Esse3AbstractApi(
         expectedPermissionLevels: Set<Esse3PermissionLevel> = emptySet()
     ) {
         if (response.status.isSuccess() || response.status.isRedirect()) return
-        val error = runCatching { response.body<Esse3ErrorResponse>() }.getOrNull()
-        if (response.status == HttpStatusCode.Forbidden) {
-            throw Esse3NotAuthorizedException(
-                expectedPermissionLevels = expectedPermissionLevels,
-                apiErrorMessage = error?.errorMessage
-            )
-        }
-        throw Esse3ValidationException(
-            error ?: Esse3ErrorResponse(
+        val error = runCatching {
+            response.body<Esse3ErrorResponse>()
+        }.getOrElse {
+            Esse3ErrorResponse(
                 statusCode = response.status.value,
                 returnCode = -1,
                 errorMessage = "Request failed with status: ${response.status}"
             )
+        }
+        throw Esse3Exception(
+            expectedPermissionLevels = expectedPermissionLevels,
+            errorResponse = error
         )
     }
 
@@ -170,7 +168,7 @@ abstract class Esse3AbstractApi(
      * @param endpoint The API endpoint (relative to service base path, should start with /)
      * @param block Optional configuration block for the request
      * @return The parsed response of type T
-     * @throws Esse3ValidationException If the response status is not successful
+     * @throws Esse3Exception If the response status is not successful
      */
     protected suspend inline fun <reified T> executeJsonGet(
         endpoint: String,
@@ -203,7 +201,7 @@ abstract class Esse3AbstractApi(
      * @param endpoint The API endpoint (relative to service base path, should start with /)
      * @param block Optional configuration block for the request
      * @return The parsed response of type T
-     * @throws Esse3ValidationException If the response status is not successful
+     * @throws Esse3Exception If the response status is not successful
      */
     protected suspend inline fun <reified T> executeJsonPost(
         endpoint: String,
@@ -222,7 +220,7 @@ abstract class Esse3AbstractApi(
      * @param endpoint The API endpoint (relative to service base path, should start with /)
      * @param block Optional configuration block for the request
      * @return The parsed response of type T
-     * @throws Esse3ValidationException If the response status is not successful
+     * @throws Esse3Exception If the response status is not successful
      */
     protected suspend inline fun <reified T> executeJsonPut(
         endpoint: String,
@@ -241,7 +239,7 @@ abstract class Esse3AbstractApi(
      * @param endpoint The API endpoint (relative to service base path, should start with /)
      * @param block Optional configuration block for the request
      * @return The parsed response of type T
-     * @throws Esse3ValidationException If the response status is not successful
+     * @throws Esse3Exception If the response status is not successful
      */
     protected suspend inline fun <reified T> executeJsonDelete(
         endpoint: String,
@@ -274,7 +272,7 @@ abstract class Esse3AbstractApi(
      * @param endpoint The API endpoint (relative to service base path, should start with /)
      * @param block Optional configuration block for the request
      * @return The parsed response of type T
-     * @throws Esse3ValidationException If the response status is not successful
+     * @throws Esse3Exception If the response status is not successful
      */
     protected suspend inline fun <reified T> executeJsonPatch(
         endpoint: String,

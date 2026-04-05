@@ -27,6 +27,14 @@ class Esse3LogisticsApi(
     json: Json
 ) : Esse3AbstractApi(client, json, "/logistica-service-v1") {
 
+    /**
+     * informazioni logistiche per easystaff.
+     *
+     * @param academicYearOfferId Id dell'anno di offerta
+     * @param departmentCode codice del dipartimento
+     * @param courseOfStudyList lista dei codici corso da estrarre separata da ,
+     * @param optionalFields specifica la lista dei campi opzionali (che non vengono recupeati di default); impostando il valore `ALL` vengono mostrati tutti i campi. Per gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns* I dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello) Esempi * per il campo childObj con la poprietà childProp utilizzare la notazione `childProp.prop1` * Per visualizzare tutte le proprietà di childObj utilizzare la notazione `childProp.*` * Per visualizzare tutte le proprietà di childObj e di tutti i discendenti utilizzare la notazione `childProp.**`
+     */
     suspend fun getEasystaffLogistics(
         academicYearOfferId: Int,
         departmentCode: String? = null,
@@ -40,6 +48,14 @@ class Esse3LogisticsApi(
         }
     }
 
+    /**
+     * informazioni di struttura per easystaff.
+     *
+     * @param academicYearOfferId Id dell'anno di offerta
+     * @param departmentCode codice del dipartimento
+     * @param courseOfStudyList lista dei codici corso da estrarre separata da ,
+     * @param optionalFields specifica la lista dei campi opzionali (che non vengono recupeati di default); impostando il valore `ALL` vengono mostrati tutti i campi. Per gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns* I dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello) Esempi * per il campo childObj con la poprietà childProp utilizzare la notazione `childProp.prop1` * Per visualizzare tutte le proprietà di childObj utilizzare la notazione `childProp.*` * Per visualizzare tutte le proprietà di childObj e di tutti i discendenti utilizzare la notazione `childProp.**`
+     */
     suspend fun getEasystaffStructure(
         academicYearOfferId: Int,
         departmentCode: String? = null,
@@ -53,6 +69,26 @@ class Esse3LogisticsApi(
         }
     }
 
+    /**
+     * Recupera la lista dei record della tabella di testata P09_AD_LOG, filtrati per i parametri opzionali. I parametri lavorano solo sulla AD FISICA della condivisione.
+     *
+     * @param academicYearOfferId Id dell'anno di offerta
+     * @param courseOfStudyCode codice del corso di studio
+     * @param courseOfStudyDescription descrizione del corso di studio (se viene utilizzato il carattere * viene applicato il like)
+     * @param academicYearOrderId Id dell'ordinamento
+     * @param studyPlanId id del percorso di studio
+     * @param studyPlanCode codice del percorso di studio
+     * @param studyPlanDescription descrizione del percorso di studio (se viene utilizzato il carattere * viene applicato il like)
+     * @param activityId id dell'attivita didattica
+     * @param activityCode codice dell'attivita didattica
+     * @param activityDescription descrizione  dell'attivita didattica (se viene utilizzato il carattere * viene applicato il like)
+     * @param teachingLanguageCode codice ISO6392 della lingua di erogazione della didattica
+     * @param siteDescription descrizione della sede (se viene utilizzato il carattere * viene applicato il like)
+     * @param logModificationDate data di ultima modifica della logistica
+     * @param start utilizzato insieme a `limit` per indicare la paginazione sui record; `start` indica il numero del primo record da caricare (se non indicato viene utilizzato 0)
+     * @param limit utilizzato insieme a `start` per indicare la paginazione sui record, `limit` indica il numero di record da recuperare (a partire da `start`); se non indicato viene utilizzato 50, i valori consentiti vanno da 0 a 100
+     * @param order consente di specificare un ordine per il recupero dei record. La sintassi è la seguente * +/- : specifica l'ordinamento (+ = ASC, - = DESC); se omesso viene utilizzato + * field : nome del campo da ordinare E' possibile indicare più campi separandoli da virgola (Es: +annoCorso,+adCod)
+     */
     suspend fun getLogistics(
         academicYearOfferId: Int? = null,
         courseOfStudyCode: String? = null,
@@ -91,6 +127,19 @@ class Esse3LogisticsApi(
         }
     }
 
+    /**
+     * Indica se una copertura risulta cancellabile.
+     *
+     * @param coverageId identificativo copertura
+     * @param matricola codice della matricola dello studente
+     * @param academicYearOfferId identificativo dell'anno di offerta
+     * @param courseOfStudyCode codice del corso di studio
+     * @param academicYearOrderId Id dell'ordinamento
+     * @param studyPlanCode codice del percorso di studio
+     * @param activityCode codice dell'attivita didattica
+     * @param teachingUnitCode codice dell'unità didattica
+     * @param domicilePartialCode Codice dominio di partizione degli studenti all'interno di un fattore di partizione
+     */
     suspend fun getCancellableCoverage(
         coverageId: Long? = null,
         matricola: String? = null,
@@ -115,6 +164,12 @@ class Esse3LogisticsApi(
         }
     }
 
+    /**
+     * Aggiorna le informazioni del syllabus associate alla logistica in chiave (completa o parziale). Se non specificati i codici di dominio e/o partizione, verranno utilizzate le informazioni fornite per identificare le entità da aggiornare. In caso di UTENTE_TECNICO, è necessario valorizzare il campo docenteMatricola.
+     *
+     * @param body Informazioni del syllabus da aggiornare. I campi opzionali non indicati non verranno considerati in fase di aggiornamento.
+     * @param lecturerMatricola matricola del docente
+     */
     suspend fun putSyllabusTeachingActivity(
         body: Esse3SyllabusActivityPatch,
         lecturerMatricola: String? = null
@@ -126,6 +181,22 @@ class Esse3LogisticsApi(
         }
     }
 
+    /**
+     * Recupera il syllabus  della logistica in chiave. I parametri opzionali filtrano una AD qualsiasi della condivisione.
+     *
+     * @param activityLogId id della logistica
+     * @param academicYearOfferId Id dell'anno di offerta
+     * @param courseOfStudyCode codice del corso di studio
+     * @param courseOfStudyDescription descrizione del corso di studio (se viene utilizzato il carattere * viene applicato il like)
+     * @param academicYearOrderId Id dell'ordinamento
+     * @param studyPlanId id del percorso di studio
+     * @param studyPlanCode codice del percorso di studio
+     * @param studyPlanDescription descrizione del percorso di studio (se viene utilizzato il carattere * viene applicato il like)
+     * @param activityCode codice dell'attivita didattica
+     * @param activityDescription descrizione  dell'attivita didattica (se viene utilizzato il carattere * viene applicato il like)
+     * @param order consente di specificare un ordine per il recupero dei record. La sintassi è la seguente * +/- : specifica l'ordinamento (+ = ASC, - = DESC); se omesso viene utilizzato + * field : nome del campo da ordinare E' possibile indicare più campi separandoli da virgola (Es: +annoCorso,+adCod)
+     * @param optionalFields specifica la lista dei campi opzionali (che non vengono recupeati di default); impostando il valore `ALL` vengono mostrati tutti i campi. Per gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns* I dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello) Esempi * per il campo childObj con la poprietà childProp utilizzare la notazione `childProp.prop1` * Per visualizzare tutte le proprietà di childObj utilizzare la notazione `childProp.*` * Per visualizzare tutte le proprietà di childObj e di tutti i discendenti utilizzare la notazione `childProp.**`
+     */
     suspend fun getTeachingActivityLogWithSyllabus(
         activityLogId: Long,
         academicYearOfferId: Int? = null,
@@ -155,6 +226,27 @@ class Esse3LogisticsApi(
         }
     }
 
+    /**
+     * Recupera i dettagli  delle UD della logistica in chiave, ossia il syllabus delle UD e il carico docenti. I parametri opzionali filtrano una UD qualsiasi della condivisione.
+     *
+     * @param activityLogId id della logistica
+     * @param academicYearOfferId Id dell'anno di offerta
+     * @param courseOfStudyCode codice del corso di studio
+     * @param courseOfStudyDescription descrizione del corso di studio (se viene utilizzato il carattere * viene applicato il like)
+     * @param academicYearOrderId Id dell'ordinamento
+     * @param studyPlanId id del percorso di studio
+     * @param studyPlanCode codice del percorso di studio
+     * @param studyPlanDescription descrizione del percorso di studio (se viene utilizzato il carattere * viene applicato il like)
+     * @param activityCode codice dell'attivita didattica
+     * @param activityDescription descrizione  dell'attivita didattica (se viene utilizzato il carattere * viene applicato il like)
+     * @param teachingUnitCode codice dell'unità didattica
+     * @param teachingUnitDescription descrizione dell'unit� didattica (se viene utilizzato il carattere * viene applicato il like)
+     * @param lecturerMatricola matricola del docente
+     * @param lecturerSurname cognome del docente
+     * @param lecturerName nome del docente
+     * @param order consente di specificare un ordine per il recupero dei record. La sintassi è la seguente * +/- : specifica l'ordinamento (+ = ASC, - = DESC); se omesso viene utilizzato + * field : nome del campo da ordinare E' possibile indicare più campi separandoli da virgola (Es: +annoCorso,+adCod)
+     * @param optionalFields specifica la lista dei campi opzionali (che non vengono recupeati di default); impostando il valore `ALL` vengono mostrati tutti i campi. Per gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns* I dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello) Esempi * per il campo childObj con la poprietà childProp utilizzare la notazione `childProp.prop1` * Per visualizzare tutte le proprietà di childObj utilizzare la notazione `childProp.*` * Per visualizzare tutte le proprietà di childObj e di tutti i discendenti utilizzare la notazione `childProp.**`
+     */
     suspend fun getTeachingUnitLogWithDetails(
         activityLogId: Long,
         academicYearOfferId: Int? = null,
@@ -194,6 +286,22 @@ class Esse3LogisticsApi(
         }
     }
 
+    /**
+     * Recupera tutte le informazioni della logistica in chiave. I parametri opzionali filtrano una AD qualsiasi della condivisione.
+     *
+     * @param activityLogId id della logistica
+     * @param academicYearOfferId Id dell'anno di offerta
+     * @param courseOfStudyCode codice del corso di studio
+     * @param courseOfStudyDescription descrizione del corso di studio (se viene utilizzato il carattere * viene applicato il like)
+     * @param academicYearOrderId Id dell'ordinamento
+     * @param studyPlanId id del percorso di studio
+     * @param studyPlanCode codice del percorso di studio
+     * @param studyPlanDescription descrizione del percorso di studio (se viene utilizzato il carattere * viene applicato il like)
+     * @param activityCode codice dell'attivita didattica
+     * @param activityDescription descrizione  dell'attivita didattica (se viene utilizzato il carattere * viene applicato il like)
+     * @param order consente di specificare un ordine per il recupero dei record. La sintassi è la seguente * +/- : specifica l'ordinamento (+ = ASC, - = DESC); se omesso viene utilizzato + * field : nome del campo da ordinare E' possibile indicare più campi separandoli da virgola (Es: +annoCorso,+adCod)
+     * @param optionalFields specifica la lista dei campi opzionali (che non vengono recupeati di default); impostando il valore `ALL` vengono mostrati tutti i campi. Per gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns* I dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello) Esempi * per il campo childObj con la poprietà childProp utilizzare la notazione `childProp.prop1` * Per visualizzare tutte le proprietà di childObj utilizzare la notazione `childProp.*` * Per visualizzare tutte le proprietà di childObj e di tutti i discendenti utilizzare la notazione `childProp.**`
+     */
     suspend fun getFullLogistics(
         activityLogId: Long,
         academicYearOfferId: Int? = null,
@@ -223,6 +331,24 @@ class Esse3LogisticsApi(
         }
     }
 
+    /**
+     * Recupero logistica per corso di studio.
+     *
+     * @param academicYearOfferId Id dell'anno di offerta
+     * @param courseOfStudyId identificativo del corso di studio
+     * @param courseOfStudyCode codice del corso di studio
+     * @param courseOfStudyDescription descrizione del corso di studio (se viene utilizzato il carattere * viene applicato il like)
+     * @param academicYearOrderId Id dell'ordinamento
+     * @param studyPlanId id del percorso di studio
+     * @param studyPlanCode codice del percorso di studio
+     * @param studyPlanDescription descrizione del percorso di studio (se viene utilizzato il carattere * viene applicato il like)
+     * @param activityCode codice dell'attivita didattica
+     * @param activityDescription descrizione  dell'attivita didattica (se viene utilizzato il carattere * viene applicato il like)
+     * @param logModificationDate data di ultima modifica della logistica
+     * @param teachingActivityPublicationFlag Flag che indica se le descrizioni delle attività didattiche sono pubblicabili
+     * @param order consente di specificare un ordine per il recupero dei record. La sintassi è la seguente * +/- : specifica l'ordinamento (+ = ASC, - = DESC); se omesso viene utilizzato + * field : nome del campo da ordinare E' possibile indicare più campi separandoli da virgola (Es: +annoCorso,+adCod)
+     * @param optionalFields specifica la lista dei campi opzionali (che non vengono recupeati di default); impostando il valore `ALL` vengono mostrati tutti i campi. Per gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns* I dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello) Esempi * per il campo childObj con la poprietà childProp utilizzare la notazione `childProp.prop1` * Per visualizzare tutte le proprietà di childObj utilizzare la notazione `childProp.*` * Per visualizzare tutte le proprietà di childObj e di tutti i discendenti utilizzare la notazione `childProp.**`
+     */
     suspend fun getFullLogisticsByTeachingActivity(
         academicYearOfferId: Int,
         courseOfStudyId: Long? = null,
@@ -256,6 +382,20 @@ class Esse3LogisticsApi(
         }
     }
 
+    /**
+     * Recupero logistica per docente.
+     *
+     * @param lecturerId id del docente
+     * @param lecturerMatricola matricola del docente
+     * @param lecturerSurname cognome del docente
+     * @param userId id univoco che consente di individuare l'account utente
+     * @param academicYearOfferId Id dell'anno di offerta
+     * @param activityLogId id della logistica
+     * @param tcDocumentModificationDate data di ultima modifica della logistica per docente (recupera le modifiche alla anagrafica oppure al carico docente)
+     * @param start utilizzato insieme a `limit` per indicare la paginazione sui record; `start` indica il numero del primo record da caricare (se non indicato viene utilizzato 0)
+     * @param limit utilizzato insieme a `start` per indicare la paginazione sui record, `limit` indica il numero di record da recuperare (a partire da `start`); se non indicato viene utilizzato 50, i valori consentiti vanno da 0 a 100
+     * @param order consente di specificare un ordine per il recupero dei record. La sintassi è la seguente * +/- : specifica l'ordinamento (+ = ASC, - = DESC); se omesso viene utilizzato + * field : nome del campo da ordinare E' possibile indicare più campi separandoli da virgola (Es: +annoCorso,+adCod)
+     */
     suspend fun getLogisticsByLecturer(
         lecturerId: Long? = null,
         lecturerMatricola: String? = null,
@@ -282,6 +422,22 @@ class Esse3LogisticsApi(
         }
     }
 
+    /**
+     * Recupero logistica per corso di studio. Versione con transfer-encoding.
+     *
+     * @param academicYearOfferId Id dell'anno di offerta
+     * @param courseOfStudyOfferId id del corso di studio
+     * @param courseOfStudyCode codice del corso di studio
+     * @param courseOfStudyDescription descrizione del corso di studio (se viene utilizzato il carattere * viene applicato il like)
+     * @param academicYearOrderId Id dell'ordinamento
+     * @param studyPlanId id del percorso di studio
+     * @param studyPlanCode codice del percorso di studio
+     * @param studyPlanDescription descrizione del percorso di studio (se viene utilizzato il carattere * viene applicato il like)
+     * @param activityCode codice dell'attivita didattica
+     * @param activityDescription descrizione  dell'attivita didattica (se viene utilizzato il carattere * viene applicato il like)
+     * @param order consente di specificare un ordine per il recupero dei record. La sintassi è la seguente * +/- : specifica l'ordinamento (+ = ASC, - = DESC); se omesso viene utilizzato + * field : nome del campo da ordinare E' possibile indicare più campi separandoli da virgola (Es: +annoCorso,+adCod)
+     * @param optionalFields specifica la lista dei campi opzionali (che non vengono recupeati di default); impostando il valore `ALL` vengono mostrati tutti i campi. Per gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns* I dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello) Esempi * per il campo childObj con la poprietà childProp utilizzare la notazione `childProp.prop1` * Per visualizzare tutte le proprietà di childObj utilizzare la notazione `childProp.*` * Per visualizzare tutte le proprietà di childObj e di tutti i discendenti utilizzare la notazione `childProp.**`
+     */
     suspend fun getFullLogisticsByOdStreamed(
         academicYearOfferId: Int,
         courseOfStudyOfferId: Long,
@@ -310,6 +466,22 @@ class Esse3LogisticsApi(
         }
     }
 
+    /**
+     * Recupero logistica per corso di studio.
+     *
+     * @param academicYearOfferId Id dell'anno di offerta
+     * @param courseOfStudyOfferId id del corso di studio
+     * @param courseOfStudyCode codice del corso di studio
+     * @param courseOfStudyDescription descrizione del corso di studio (se viene utilizzato il carattere * viene applicato il like)
+     * @param academicYearOrderId Id dell'ordinamento
+     * @param studyPlanId id del percorso di studio
+     * @param studyPlanCode codice del percorso di studio
+     * @param studyPlanDescription descrizione del percorso di studio (se viene utilizzato il carattere * viene applicato il like)
+     * @param activityCode codice dell'attivita didattica
+     * @param activityDescription descrizione  dell'attivita didattica (se viene utilizzato il carattere * viene applicato il like)
+     * @param order consente di specificare un ordine per il recupero dei record. La sintassi è la seguente * +/- : specifica l'ordinamento (+ = ASC, - = DESC); se omesso viene utilizzato + * field : nome del campo da ordinare E' possibile indicare più campi separandoli da virgola (Es: +annoCorso,+adCod)
+     * @param optionalFields specifica la lista dei campi opzionali (che non vengono recupeati di default); impostando il valore `ALL` vengono mostrati tutti i campi. Per gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns* I dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello) Esempi * per il campo childObj con la poprietà childProp utilizzare la notazione `childProp.prop1` * Per visualizzare tutte le proprietà di childObj utilizzare la notazione `childProp.*` * Per visualizzare tutte le proprietà di childObj e di tutti i discendenti utilizzare la notazione `childProp.**`
+     */
     suspend fun getFullLogisticsByOd(
         academicYearOfferId: Int,
         courseOfStudyOfferId: Long,
@@ -338,6 +510,12 @@ class Esse3LogisticsApi(
         }
     }
 
+    /**
+     * @param logModificationDate data di ultima modifica della logistica
+     * @param start utilizzato insieme a `limit` per indicare la paginazione sui record; `start` indica il numero del primo record da caricare (se non indicato viene utilizzato 0)
+     * @param limit utilizzato insieme a `start` per indicare la paginazione sui record, `limit` indica il numero di record da recuperare (a partire da `start`); se non indicato viene utilizzato 50, i valori consentiti vanno da 0 a 100
+     * @param order consente di specificare un ordine per il recupero dei record. La sintassi è la seguente * +/- : specifica l'ordinamento (+ = ASC, - = DESC); se omesso viene utilizzato + * field : nome del campo da ordinare E' possibile indicare più campi separandoli da virgola (Es: +annoCorso,+adCod)
+     */
     suspend fun getDeletedLogistics(
         logModificationDate: String? = null,
         start: Int? = null,
@@ -352,6 +530,15 @@ class Esse3LogisticsApi(
         }
     }
 
+    /**
+     * lista degli edifici
+     *
+     * @param classroomCode codice dell'aula (se viene utilizzato il carattere * viene applicato il like)
+     * @param externalClassroomCode codice dell'aula nel sistema esterno (se viene utilizzato il carattere * viene applicato il like)
+     * @param optionalFields specifica la lista dei campi opzionali (che non vengono recupeati di default); impostando il valore `ALL` vengono mostrati tutti i campi. Per gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns* I dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello) Esempi * per il campo childObj con la poprietà childProp utilizzare la notazione `childProp.prop1` * Per visualizzare tutte le proprietà di childObj utilizzare la notazione `childProp.*` * Per visualizzare tutte le proprietà di childObj e di tutti i discendenti utilizzare la notazione `childProp.**`
+     * @param fields specifica la lista dei campi opzionali (che non vengono recupeati di default); impostando il valore `ALL` vengono mostrati tutti i campi. Per gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns* I dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello) Esempi * per il campo childObj con la poprietà childProp utilizzare la notazione `childProp.prop1` * Per visualizzare tutte le proprietà di childObj utilizzare la notazione `childProp.*` * Per visualizzare tutte le proprietà di childObj e di tutti i discendenti utilizzare la notazione `childProp.**`
+     * @param order consente di specificare un ordine per il recupero dei record. La sintassi è la seguente * +/- : specifica l'ordinamento (+ = ASC, - = DESC); se omesso viene utilizzato + * field : nome del campo da ordinare E' possibile indicare più campi separandoli da virgola (Es: +annoCorso,+adCod)
+     */
     suspend fun getAllClassrooms(
         classroomCode: String? = null,
         externalClassroomCode: String? = null,
@@ -368,6 +555,14 @@ class Esse3LogisticsApi(
         }
     }
 
+    /**
+     * lista degli edifici
+     *
+     * @param filter il parametro consente di applicare dei filtri alla classe di modello utilizzando il linguaggio  [RSQL](https://github.com/jirutka/rsql-parser). La lista degli operatori utilizzabili è disponibile [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosullerigherecuperate) *NB* il filtro viene applicato DOPO aver recuperato i dati
+     * @param optionalFields specifica la lista dei campi opzionali (che non vengono recupeati di default); impostando il valore `ALL` vengono mostrati tutti i campi. Per gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns* I dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello) Esempi * per il campo childObj con la poprietà childProp utilizzare la notazione `childProp.prop1` * Per visualizzare tutte le proprietà di childObj utilizzare la notazione `childProp.*` * Per visualizzare tutte le proprietà di childObj e di tutti i discendenti utilizzare la notazione `childProp.**`
+     * @param fields specifica la lista dei campi opzionali (che non vengono recupeati di default); impostando il valore `ALL` vengono mostrati tutti i campi. Per gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns* I dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello) Esempi * per il campo childObj con la poprietà childProp utilizzare la notazione `childProp.prop1` * Per visualizzare tutte le proprietà di childObj utilizzare la notazione `childProp.*` * Per visualizzare tutte le proprietà di childObj e di tutti i discendenti utilizzare la notazione `childProp.**`
+     * @param order consente di specificare un ordine per il recupero dei record. La sintassi è la seguente * +/- : specifica l'ordinamento (+ = ASC, - = DESC); se omesso viene utilizzato + * field : nome del campo da ordinare E' possibile indicare più campi separandoli da virgola (Es: +annoCorso,+adCod)
+     */
     suspend fun getBuildings(
         filter: String? = null,
         optionalFields: String? = null,
@@ -382,6 +577,13 @@ class Esse3LogisticsApi(
         }
     }
 
+    /**
+     * dettaglio del singolo edificio
+     *
+     * @param buildingId id dell'edificio
+     * @param optionalFields specifica la lista dei campi opzionali (che non vengono recupeati di default); impostando il valore `ALL` vengono mostrati tutti i campi. Per gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns* I dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello) Esempi * per il campo childObj con la poprietà childProp utilizzare la notazione `childProp.prop1` * Per visualizzare tutte le proprietà di childObj utilizzare la notazione `childProp.*` * Per visualizzare tutte le proprietà di childObj e di tutti i discendenti utilizzare la notazione `childProp.**`
+     * @param fields specifica la lista dei campi opzionali (che non vengono recupeati di default); impostando il valore `ALL` vengono mostrati tutti i campi. Per gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns* I dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello) Esempi * per il campo childObj con la poprietà childProp utilizzare la notazione `childProp.prop1` * Per visualizzare tutte le proprietà di childObj utilizzare la notazione `childProp.*` * Per visualizzare tutte le proprietà di childObj e di tutti i discendenti utilizzare la notazione `childProp.**`
+     */
     suspend fun getBuilding(
         buildingId: Long,
         optionalFields: String? = null,
@@ -393,6 +595,15 @@ class Esse3LogisticsApi(
         }
     }
 
+    /**
+     * lista delle aule di un edificio
+     *
+     * @param buildingId id dell'edificio
+     * @param filter il parametro consente di applicare dei filtri alla classe di modello utilizzando il linguaggio  [RSQL](https://github.com/jirutka/rsql-parser). La lista degli operatori utilizzabili è disponibile [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosullerigherecuperate) *NB* il filtro viene applicato DOPO aver recuperato i dati
+     * @param optionalFields specifica la lista dei campi opzionali (che non vengono recupeati di default); impostando il valore `ALL` vengono mostrati tutti i campi. Per gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns* I dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello) Esempi * per il campo childObj con la poprietà childProp utilizzare la notazione `childProp.prop1` * Per visualizzare tutte le proprietà di childObj utilizzare la notazione `childProp.*` * Per visualizzare tutte le proprietà di childObj e di tutti i discendenti utilizzare la notazione `childProp.**`
+     * @param fields specifica la lista dei campi opzionali (che non vengono recupeati di default); impostando il valore `ALL` vengono mostrati tutti i campi. Per gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns* I dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello) Esempi * per il campo childObj con la poprietà childProp utilizzare la notazione `childProp.prop1` * Per visualizzare tutte le proprietà di childObj utilizzare la notazione `childProp.*` * Per visualizzare tutte le proprietà di childObj e di tutti i discendenti utilizzare la notazione `childProp.**`
+     * @param order consente di specificare un ordine per il recupero dei record. La sintassi è la seguente * +/- : specifica l'ordinamento (+ = ASC, - = DESC); se omesso viene utilizzato + * field : nome del campo da ordinare E' possibile indicare più campi separandoli da virgola (Es: +annoCorso,+adCod)
+     */
     suspend fun getClassrooms(
         buildingId: Long,
         filter: String? = null,
@@ -408,6 +619,14 @@ class Esse3LogisticsApi(
         }
     }
 
+    /**
+     * dettaglio della singola aula
+     *
+     * @param classroomId id dell'aula
+     * @param buildingId id dell'edificio
+     * @param optionalFields specifica la lista dei campi opzionali (che non vengono recupeati di default); impostando il valore `ALL` vengono mostrati tutti i campi. Per gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns* I dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello) Esempi * per il campo childObj con la poprietà childProp utilizzare la notazione `childProp.prop1` * Per visualizzare tutte le proprietà di childObj utilizzare la notazione `childProp.*` * Per visualizzare tutte le proprietà di childObj e di tutti i discendenti utilizzare la notazione `childProp.**`
+     * @param fields specifica la lista dei campi opzionali (che non vengono recupeati di default); impostando il valore `ALL` vengono mostrati tutti i campi. Per gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns* I dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello) Esempi * per il campo childObj con la poprietà childProp utilizzare la notazione `childProp.prop1` * Per visualizzare tutte le proprietà di childObj utilizzare la notazione `childProp.*` * Per visualizzare tutte le proprietà di childObj e di tutti i discendenti utilizzare la notazione `childProp.**`
+     */
     suspend fun getClassroom(
         classroomId: Long,
         buildingId: Long,
@@ -420,6 +639,9 @@ class Esse3LogisticsApi(
         }
     }
 
+    /**
+     * sincronizzazione con il sistema di logisitica esterno
+     */
     suspend fun syncSystemLog(): Esse3SystemLogImportResult {
         return executeJsonPut<Esse3SystemLogImportResult>("/risFisse/syncConSistLog", setOf(Esse3PermissionLevel.TECHNICAL_USER))
     }

@@ -81,12 +81,25 @@ class Esse3PersonalDataApi(
     json: Json
 ) : Esse3AbstractApi(client, json, "/anagrafica-service-v2") {
 
+    /**
+     * refresh della data di scadenza del token dreamapply e recupero dell’url di attivazione
+     *
+     * @param applicationId id esterno della carriera per dreamapply
+     */
     suspend fun refreshToken(
         applicationId: String
     ): Esse3RefreshedToken {
         return executeJsonPut<Esse3RefreshedToken>("/activation-url${applicationId}", setOf(Esse3PermissionLevel.TECHNICAL_USER))
     }
 
+    /**
+     * recupero metadati allegati relativi ad un autorizzato
+     *
+     * @param authorizedId id dell'autorizzato
+     * @param attachmentTypology tipologia dell'allegato relativo all'entità p17_tipologia_allegati
+     * @param validFlag flag che indica se l'allegato risulta validato o meno
+     * @param webVisibleFlag flag che indica se l'allegato risulta visibile da web o meno
+     */
     suspend fun getAuthorizedAttachmentMetadata(
         authorizedId: Long,
         attachmentTypology: String? = null,
@@ -100,6 +113,12 @@ class Esse3PersonalDataApi(
         }
     }
 
+    /**
+     * inserimento metadati allegato relativo ad un autorizzato
+     *
+     * @param authorizedId id dell'autorizzato
+     * @param body Oggetto che contiene i metadati dell'allegato da inserire
+     */
     suspend fun postAuthorizedAttachmentMetadata(
         authorizedId: Long,
         body: Esse3AuthorizationAttachmentMetadata
@@ -111,6 +130,16 @@ class Esse3PersonalDataApi(
         ensureSuccess(response, setOf(Esse3PermissionLevel.TECHNICAL_USER))
     }
 
+    /**
+     * recupero metadati allegati relativi ai documenti d'identità di un autorizzato
+     *
+     * @param authorizedId id dell'autorizzato
+     * @param identityDocumentTypeCode codice tipo di documento d'identità (CI - Carta Identità, PAT - Patente, PAS - Passaporto)
+     * @param personalDataDocAuthorizationId identificativo documento identità autorizzato
+     * @param attachmentTypology tipologia dell'allegato relativo all'entità p17_tipologia_allegati
+     * @param validFlag flag che indica se l'allegato risulta validato o meno
+     * @param webVisibleFlag flag che indica se l'allegato risulta visibile da web o meno
+     */
     suspend fun getAuthorizedPersonalDocumentAttachmentMetadata(
         authorizedId: Long,
         identityDocumentTypeCode: String,
@@ -128,6 +157,12 @@ class Esse3PersonalDataApi(
         }
     }
 
+    /**
+     * inserimento metadati allegato relativo ad un documento d'identità di un autorizzato
+     *
+     * @param authorizedId id dell'autorizzato
+     * @param body Oggetto che contiene i metadati dell'allegato da inserire
+     */
     suspend fun postAuthorizedPersonalDocumentAttachmentMetadata(
         authorizedId: Long,
         body: Esse3PersonalDocumentAuthorizationMetadata
@@ -139,6 +174,13 @@ class Esse3PersonalDataApi(
         ensureSuccess(response, setOf(Esse3PermissionLevel.TECHNICAL_USER))
     }
 
+    /**
+     * cancellazione allegato al tratto di carriera
+     *
+     * @param matId Identificativo tratto carriera studente
+     * @param attachmentId identificativo allegato
+     * @param attachmentTypology tipologia dell'allegato relativo all'entità p17_tipologia_allegati
+     */
     suspend fun deleteCareerAttachmentMetadata(
         matId: Long,
         attachmentId: Long,
@@ -151,6 +193,14 @@ class Esse3PersonalDataApi(
         ensureSuccess(response, setOf(Esse3PermissionLevel.TECHNICAL_USER))
     }
 
+    /**
+     * cancellazione allegato al documento di identità
+     *
+     * @param personalDocumentId identificativo documento identità
+     * @param attachmentId identificativo allegato
+     * @param personId identificativo della persona
+     * @param attachmentTypology tipologia dell'allegato relativo all'entità p17_tipologia_allegati
+     */
     suspend fun deletePersonalDocumentAttachmentMetadata(
         personalDocumentId: Long,
         attachmentId: Long,
@@ -165,6 +215,19 @@ class Esse3PersonalDataApi(
         ensureSuccess(response, setOf(Esse3PermissionLevel.TECHNICAL_USER))
     }
 
+    /**
+     * recupero metadati allegati dichiarazioni handicap
+     *
+     * @param personId identificativo della persona
+     * @param handicapType tipo di handicap
+     * @param declarationDate data della dichiarazione
+     * @param startDate data di inizio invalidità
+     * @param endDate data di fine invalidità
+     * @param handicapDeclarationId identificativo dichiarazione invalidità
+     * @param attachmentTypology tipologia dell'allegato relativo all'entità p17_tipologia_allegati
+     * @param validFlag flag che indica se l'allegato risulta validato o meno
+     * @param webVisibleFlag flag che indica se l'allegato risulta visibile da web o meno
+     */
     suspend fun getHandicapDeclarationAttachmentMetadata(
         personId: Long,
         handicapType: String,
@@ -188,6 +251,12 @@ class Esse3PersonalDataApi(
         }
     }
 
+    /**
+     * inserimento metadati allegato dichiarazione handicap
+     *
+     * @param personId identificativo della persona
+     * @param body Oggetto che contiene i metadati dell'allegato da inserire
+     */
     suspend fun postHandicapDeclarationAttachmentMetadata(
         personId: Long,
         body: Esse3HandicapDeclarationAttachmentMetadata
@@ -199,6 +268,16 @@ class Esse3PersonalDataApi(
         ensureSuccess(response, setOf(Esse3PermissionLevel.TECHNICAL_USER))
     }
 
+    /**
+     * recupero metadati allegati documento identità
+     *
+     * @param personId identificativo della persona
+     * @param identityDocumentTypeCode codice tipo di documento d'identità (CI - Carta Identità, PAT - Patente, PAS - Passaporto)
+     * @param personalDocumentId identificativo documento identità
+     * @param attachmentTypology tipologia dell'allegato relativo all'entità p17_tipologia_allegati
+     * @param validFlag flag che indica se l'allegato risulta validato o meno
+     * @param webVisibleFlag flag che indica se l'allegato risulta visibile da web o meno
+     */
     suspend fun getIdentityDocumentAttachmentMetadata(
         personId: Long,
         identityDocumentTypeCode: String,
@@ -216,6 +295,12 @@ class Esse3PersonalDataApi(
         }
     }
 
+    /**
+     * inserimento metadati allegato documento identità
+     *
+     * @param personId identificativo della persona
+     * @param body Oggetto che contiene i metadati dell'allegato da inserire
+     */
     suspend fun postIdentityDocumentAttachmentMetadata(
         personId: Long,
         body: Esse3IdentityDocumentAttachmentMetadata
@@ -227,6 +312,12 @@ class Esse3PersonalDataApi(
         ensureSuccess(response, setOf(Esse3PermissionLevel.TECHNICAL_USER))
     }
 
+    /**
+     * inserimento metadati allegato foto della persona
+     *
+     * @param personId identificativo della persona
+     * @param body Oggetto che contiene i metadati dell'allegato da inserire
+     */
     suspend fun postPersonPhotoAttachmentMetadata(
         personId: Long,
         body: Esse3PersonPhotoAttachmentMetadata
@@ -238,6 +329,17 @@ class Esse3PersonalDataApi(
         ensureSuccess(response, setOf(Esse3PermissionLevel.TECHNICAL_USER))
     }
 
+    /**
+     * recupero metadati allegati maturità
+     *
+     * @param personId identificativo della persona
+     * @param highSchoolGraduationYear anno di maturità, coincide con l'anno solare della data di conseguimento del diploma. Per esempio, anno scolastico 2019/2020, l'anno di diploma è 2020
+     * @param miurDiplomaId identificativo diploma MIUR
+     * @param highSchoolGraduationDate data di maturità
+     * @param highSchoolGraduationId identificativo della maturità
+     * @param attachmentTypology tipologia dell'allegato relativo all'entità p17_tipologia_allegati
+     * @param validFlag flag che indica se l'allegato risulta validato o meno
+     */
     suspend fun getHighSchoolGraduationAttachmentMetadata(
         personId: Long,
         highSchoolGraduationYear: Int,
@@ -257,6 +359,12 @@ class Esse3PersonalDataApi(
         }
     }
 
+    /**
+     * inserimento metadati allegato maturità
+     *
+     * @param personId identificativo della persona
+     * @param body Oggetto che contiene i metadati dell'allegato da inserire
+     */
     suspend fun postHighSchoolGraduationAttachmentMetadata(
         personId: Long,
         body: Esse3HighSchoolDiplomaAttachmentMetadata
@@ -268,6 +376,16 @@ class Esse3PersonalDataApi(
         ensureSuccess(response, setOf(Esse3PermissionLevel.TECHNICAL_USER))
     }
 
+    /**
+     * recupero metadati allegati titoli universitari italiani
+     *
+     * @param personId identificativo della persona
+     * @param titleCategoryCode codice tipo titolo italiano
+     * @param academicYearAwardedTitle Anno Accademico di conseguimento del titolo
+     * @param italianTitleId identificativo del titolo
+     * @param attachmentTypology tipologia dell'allegato relativo all'entità p17_tipologia_allegati
+     * @param validFlag flag che indica se l'allegato risulta validato o meno
+     */
     suspend fun getItalianTitleAttachmentMetadata(
         personId: Long,
         titleCategoryCode: String,
@@ -285,6 +403,12 @@ class Esse3PersonalDataApi(
         }
     }
 
+    /**
+     * inserimento metadati allegato titolo universitario italiano
+     *
+     * @param personId identificativo della persona
+     * @param body Oggetto che contiene i metadati dell'allegato da inserire
+     */
     suspend fun postItalianTitleAttachmentMetadata(
         personId: Long,
         body: Esse3ItalianTitleAttachmentMetadata
@@ -296,6 +420,16 @@ class Esse3PersonalDataApi(
         ensureSuccess(response, setOf(Esse3PermissionLevel.TECHNICAL_USER))
     }
 
+    /**
+     * recupero metadati allegati titoli universitari stranieri
+     *
+     * @param personId identificativo della persona
+     * @param academicYearAwardedTitle Anno Accademico di conseguimento del titolo
+     * @param titleStatusTypeCode codice tipo titolo straniero
+     * @param foreignTitleId identificativo del titolo straniero
+     * @param attachmentTypology tipologia dell'allegato relativo all'entità p17_tipologia_allegati
+     * @param validFlag flag che indica se l'allegato risulta validato o meno
+     */
     suspend fun getForeignTitleAttachmentMetadata(
         personId: Long,
         academicYearAwardedTitle: Int,
@@ -313,6 +447,12 @@ class Esse3PersonalDataApi(
         }
     }
 
+    /**
+     * inserimento metadati allegato titolo universitario straniero
+     *
+     * @param personId identificativo della persona
+     * @param body Oggetto che contiene i metadati dell'allegato da inserire
+     */
     suspend fun postForeignTitleAttachmentMetadata(
         personId: Long,
         body: Esse3ForeignTitleAttachmentMetadata
@@ -324,6 +464,14 @@ class Esse3PersonalDataApi(
         ensureSuccess(response, setOf(Esse3PermissionLevel.TECHNICAL_USER))
     }
 
+    /**
+     * recupero metadati allegati matricola
+     *
+     * @param studentId identificativo della carriera
+     * @param attachmentTypology tipologia dell'allegato relativo all'entità p17_tipologia_allegati
+     * @param validFlag flag che indica se l'allegato risulta validato o meno
+     * @param webVisibleFlag flag che indica se l'allegato risulta visibile da web o meno
+     */
     suspend fun getMatricolaAttachmentMetadata(
         studentId: Long,
         attachmentTypology: String? = null,
@@ -337,6 +485,12 @@ class Esse3PersonalDataApi(
         }
     }
 
+    /**
+     * inserimento metadati allegato matricola
+     *
+     * @param studentId identificativo della carriera
+     * @param body Oggetto che contiene i metadati dell'allegato da inserire
+     */
     suspend fun postMatricolaAttachmentMetadata(
         studentId: Long,
         body: Esse3EnrollmentNumberAttachmentMetadata
@@ -348,6 +502,17 @@ class Esse3PersonalDataApi(
         ensureSuccess(response, setOf(Esse3PermissionLevel.TECHNICAL_USER))
     }
 
+    /**
+     * Recupero atenei
+     *
+     * @param istatCode Codice ISTAT dell'ateneo
+     * @param universityId id univoco ateneo
+     * @param unifiedCode Codice università MIUR
+     * @param fields specifica la lista dei campi opzionali (che non vengono recupeati di default); impostando il valore `ALL` vengono mostrati tutti i campi. Per gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns* I dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello) Esempi * per il campo childObj con la poprietà childProp utilizzare la notazione `childProp.prop1` * Per visualizzare tutte le proprietà di childObj utilizzare la notazione `childProp.*` * Per visualizzare tutte le proprietà di childObj e di tutti i discendenti utilizzare la notazione `childProp.**`
+     * @param order consente di specificare un ordine per il recupero dei record. La sintassi è la seguente * +/- : specifica l'ordinamento (+ = ASC, - = DESC); se omesso viene utilizzato + * field : nome del campo da ordinare E' possibile indicare più campi separandoli da virgola (Es: +annoCorso,+adCod)
+     * @param start utilizzato insieme a `limit` per indicare la paginazione sui record; `start` indica il numero del primo record da caricare (se non indicato viene utilizzato 0)
+     * @param limit utilizzato insieme a `start` per indicare la paginazione sui record, `limit` indica il numero di record da recuperare (a partire da `start`); se non indicato viene utilizzato 50, i valori consentiti vanno da 0 a 100
+     */
     suspend fun getUniversities(
         istatCode: String? = null,
         universityId: Long? = null,
@@ -368,6 +533,20 @@ class Esse3PersonalDataApi(
         }
     }
 
+    /**
+     * Recupero corsi di studio di un ateneo
+     *
+     * @param erasmusCode Codice Erasmus ateneo
+     * @param universityId id univoco ateneo
+     * @param istatCode Codice ISTAT dell'ateneo
+     * @param unifiedCode Codice università MIUR
+     * @param courseTypeCode Codice tipo corso di studio.
+     * @param optionalFields specifica la lista dei campi opzionali (che non vengono recupeati di default); impostando il valore `ALL` vengono mostrati tutti i campi. Per gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns* I dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello) Esempi * per il campo childObj con la poprietà childProp utilizzare la notazione `childProp.prop1` * Per visualizzare tutte le proprietà di childObj utilizzare la notazione `childProp.*` * Per visualizzare tutte le proprietà di childObj e di tutti i discendenti utilizzare la notazione `childProp.**`
+     * @param fields specifica la lista dei campi opzionali (che non vengono recupeati di default); impostando il valore `ALL` vengono mostrati tutti i campi. Per gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns* I dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello) Esempi * per il campo childObj con la poprietà childProp utilizzare la notazione `childProp.prop1` * Per visualizzare tutte le proprietà di childObj utilizzare la notazione `childProp.*` * Per visualizzare tutte le proprietà di childObj e di tutti i discendenti utilizzare la notazione `childProp.**`
+     * @param order consente di specificare un ordine per il recupero dei record. La sintassi è la seguente * +/- : specifica l'ordinamento (+ = ASC, - = DESC); se omesso viene utilizzato + * field : nome del campo da ordinare E' possibile indicare più campi separandoli da virgola (Es: +annoCorso,+adCod)
+     * @param start utilizzato insieme a `limit` per indicare la paginazione sui record; `start` indica il numero del primo record da caricare (se non indicato viene utilizzato 0)
+     * @param limit utilizzato insieme a `start` per indicare la paginazione sui record, `limit` indica il numero di record da recuperare (a partire da `start`); se non indicato viene utilizzato 50, i valori consentiti vanno da 0 a 100
+     */
     suspend fun getUniversityCourses(
         erasmusCode: String? = null,
         universityId: Long? = null,
@@ -394,6 +573,18 @@ class Esse3PersonalDataApi(
         }
     }
 
+    /**
+     * Recupero atenei stranieri
+     *
+     * @param erasmusCode Codice Erasmus ateneo
+     * @param foreignUniversityId id univoco ateneo
+     * @param nationFiscalCode Codice fiscale della nazione
+     * @param orderNationFiscalCode Codice fiscale della nazione di ordinamento
+     * @param fields specifica la lista dei campi opzionali (che non vengono recupeati di default); impostando il valore `ALL` vengono mostrati tutti i campi. Per gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns* I dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello) Esempi * per il campo childObj con la poprietà childProp utilizzare la notazione `childProp.prop1` * Per visualizzare tutte le proprietà di childObj utilizzare la notazione `childProp.*` * Per visualizzare tutte le proprietà di childObj e di tutti i discendenti utilizzare la notazione `childProp.**`
+     * @param order consente di specificare un ordine per il recupero dei record. La sintassi è la seguente * +/- : specifica l'ordinamento (+ = ASC, - = DESC); se omesso viene utilizzato + * field : nome del campo da ordinare E' possibile indicare più campi separandoli da virgola (Es: +annoCorso,+adCod)
+     * @param start utilizzato insieme a `limit` per indicare la paginazione sui record; `start` indica il numero del primo record da caricare (se non indicato viene utilizzato 0)
+     * @param limit utilizzato insieme a `start` per indicare la paginazione sui record, `limit` indica il numero di record da recuperare (a partire da `start`); se non indicato viene utilizzato 50, i valori consentiti vanno da 0 a 100
+     */
     suspend fun getForeignUniversities(
         erasmusCode: String? = null,
         foreignUniversityId: Long? = null,
@@ -416,6 +607,32 @@ class Esse3PersonalDataApi(
         }
     }
 
+    /**
+     * Recupero delle carriere degli studenti
+     *
+     * @param userId id univoco che consente di individuare l'account utente
+     * @param surname cognome dell'utente (se viene utilizzato il carattere * viene applicato il like)
+     * @param name nome dell'utente (se viene utilizzato il carattere * viene applicato il like)
+     * @param fiscalCode codice fiscale dell'utente
+     * @param studentStatusCode codice dello stato della carriera
+     * @param academicYearId anno di immatricolazione
+     * @param govIdentifier identificativo di U-Gov che permette di ritirare le informazioni dei responsabili.
+     * @param studentMatricola matricola dello studente
+     * @param externalCareerCode codice esterno carriera
+     * @param onlyEnrolled se 1 recupero dei soli immatricolati, se 0 recupero anche dei non immatricolati
+     * @param fromModificationTime ora, minuti e secondi dell'ultima modifica (HH:MI:SS), verranno recuperati tutti i record inseriti con orario di ultima modifica successivo a questo orario in data daDataMod. Se i secondi verranno omessi saranno impostati automaticamente a 00.
+     * @param courseOfStudyId identificativo corso di studi
+     * @param courseOfStudyCode codice corso di studi
+     * @param courseTypeCode Codice tipo corso di studio.
+     * @param academicYearFromId anno di immatricolazione di partenza. Verranno recuperate tutte le carriere con aaId maggiore o uguale a quello specificato
+     * @param fromModificationDate data di ultima modifica, verranno recuperati tutti i record inseriti con data di ultima modifica successiva a questa data
+     * @param start utilizzato insieme a `limit` per indicare la paginazione sui record; `start` indica il numero del primo record da caricare (se non indicato viene utilizzato 0)
+     * @param limit utilizzato insieme a `start` per indicare la paginazione sui record, `limit` indica il numero di record da recuperare (a partire da `start`); se non indicato viene utilizzato 50, i valori consentiti vanno da 0 a 100
+     * @param order consente di specificare un ordine per il recupero dei record. La sintassi è la seguente * +/- : specifica l'ordinamento (+ = ASC, - = DESC); se omesso viene utilizzato + * field : nome del campo da ordinare E' possibile indicare più campi separandoli da virgola (Es: +annoCorso,+adCod)
+     * @param fields specifica la lista dei campi opzionali (che non vengono recupeati di default); impostando il valore `ALL` vengono mostrati tutti i campi. Per gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns* I dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello) Esempi * per il campo childObj con la poprietà childProp utilizzare la notazione `childProp.prop1` * Per visualizzare tutte le proprietà di childObj utilizzare la notazione `childProp.*` * Per visualizzare tutte le proprietà di childObj e di tutti i discendenti utilizzare la notazione `childProp.**`
+     * @param academicYearEnrollmentId anno di ultima iscrizione annuale
+     * @param onlyActive indica se recuperare solo carriere attive, in ipotesi o sospese (no trasferiti in uscita)
+     */
     suspend fun getCareers(
         userId: String? = null,
         surname: String? = null,
@@ -466,6 +683,12 @@ class Esse3PersonalDataApi(
         }
     }
 
+    /**
+     * Recupero della carriera degli studenti
+     *
+     * @param studentId identificativo della carriera
+     * @param optionalFields specifica la lista dei campi opzionali (che non vengono recupeati di default); impostando il valore `ALL` vengono mostrati tutti i campi. Per gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns* I dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello) Esempi * per il campo childObj con la poprietà childProp utilizzare la notazione `childProp.prop1` * Per visualizzare tutte le proprietà di childObj utilizzare la notazione `childProp.*` * Per visualizzare tutte le proprietà di childObj e di tutti i discendenti utilizzare la notazione `childProp.**`
+     */
     suspend fun getGdprCareerByStudent(
         studentId: Long,
         optionalFields: String? = null
@@ -475,6 +698,11 @@ class Esse3PersonalDataApi(
         }
     }
 
+    /**
+     * permette di aggiornare i dati relativi all'attesa di laurea dello studente
+     *
+     * @param body Oggetto con i parametri relativi all'attesa di laurea Per identificare lo studente occorre passare come parametro lo stuId o la matricola. Se attlauFlg vale 0, il parametro dataAttlau deve essere null. Se attlauFlg vale 1, il parametro dataAttlau non deve essere null.
+     */
     suspend fun putGraduationWaiting(
         body: Esse3GraduationWaitingParameters
     ): Esse3Career {
@@ -484,6 +712,34 @@ class Esse3PersonalDataApi(
         }
     }
 
+    /**
+     * Recupero delle carriere degli studenti
+     *
+     * @param userId id univoco che consente di individuare l'account utente
+     * @param govIdentifier identificativo di U-Gov che permette di ritirare le informazioni dei responsabili.
+     * @param studentId identificativo dello studente
+     * @param studentMatricola matricola dello studente
+     * @param externalCareerCode codice esterno carriera
+     * @param surname cognome dell'utente (se viene utilizzato il carattere * viene applicato il like)
+     * @param name nome dell'utente (se viene utilizzato il carattere * viene applicato il like)
+     * @param fiscalCode codice fiscale dell'utente
+     * @param studentStatusCode codice dello stato della carriera
+     * @param academicYearId anno di immatricolazione
+     * @param academicYearFromId anno di immatricolazione di partenza. Verranno recuperate tutte le carriere con aaId maggiore o uguale a quello specificato
+     * @param fromModificationDate data di ultima modifica, verranno recuperati tutti i record inseriti con data di ultima modifica successiva a questa data
+     * @param fromModificationTime ora, minuti e secondi dell'ultima modifica (HH:MI:SS), verranno recuperati tutti i record inseriti con orario di ultima modifica successivo a questo orario in data daDataMod. Se i secondi verranno omessi saranno impostati automaticamente a 00.
+     * @param onlyEnrolled se 1 recupero dei soli immatricolati, se 0 recupero anche dei non immatricolati
+     * @param courseOfStudyId identificativo corso di studi
+     * @param courseOfStudyCode codice corso di studi
+     * @param courseTypeCode Codice tipo corso di studio.
+     * @param academicYearEnrollmentId anno di ultima iscrizione annuale
+     * @param start utilizzato insieme a `limit` per indicare la paginazione sui record; `start` indica il numero del primo record da caricare (se non indicato viene utilizzato 0)
+     * @param limit utilizzato insieme a `start` per indicare la paginazione sui record, `limit` indica il numero di record da recuperare (a partire da `start`); se non indicato viene utilizzato 50, i valori consentiti vanno da 0 a 100
+     * @param order consente di specificare un ordine per il recupero dei record. La sintassi è la seguente * +/- : specifica l'ordinamento (+ = ASC, - = DESC); se omesso viene utilizzato + * field : nome del campo da ordinare E' possibile indicare più campi separandoli da virgola (Es: +annoCorso,+adCod)
+     * @param fields specifica la lista dei campi opzionali (che non vengono recupeati di default); impostando il valore `ALL` vengono mostrati tutti i campi. Per gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns* I dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello) Esempi * per il campo childObj con la poprietà childProp utilizzare la notazione `childProp.prop1` * Per visualizzare tutte le proprietà di childObj utilizzare la notazione `childProp.*` * Per visualizzare tutte le proprietà di childObj e di tutti i discendenti utilizzare la notazione `childProp.**`
+     * @param optionalFields specifica la lista dei campi opzionali (che non vengono recupeati di default); impostando il valore `ALL` vengono mostrati tutti i campi. Per gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns* I dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello) Esempi * per il campo childObj con la poprietà childProp utilizzare la notazione `childProp.prop1` * Per visualizzare tutte le proprietà di childObj utilizzare la notazione `childProp.*` * Per visualizzare tutte le proprietà di childObj e di tutti i discendenti utilizzare la notazione `childProp.**`
+     * @param onlyActive indica se recuperare solo carriere attive, in ipotesi o sospese (no trasferiti in uscita)
+     */
     suspend fun getPhdCareersData(
         userId: String? = null,
         govIdentifier: String? = null,
@@ -538,6 +794,32 @@ class Esse3PersonalDataApi(
         }
     }
 
+    /**
+     * Recupero dei dati minimi delle carriere degli studenti
+     *
+     * @param userId id univoco che consente di individuare l'account utente
+     * @param surname cognome dell'utente (se viene utilizzato il carattere * viene applicato il like)
+     * @param name nome dell'utente (se viene utilizzato il carattere * viene applicato il like)
+     * @param fiscalCode codice fiscale dell'utente
+     * @param studentStatusCode codice dello stato della carriera
+     * @param academicYearId anno di immatricolazione
+     * @param govIdentifier identificativo di U-Gov che permette di ritirare le informazioni dei responsabili.
+     * @param studentMatricola matricola dello studente
+     * @param externalCareerCode codice esterno carriera
+     * @param onlyEnrolled se 1 recupero dei soli immatricolati, se 0 recupero anche dei non immatricolati
+     * @param fromModificationTime ora, minuti e secondi dell'ultima modifica (HH:MI:SS), verranno recuperati tutti i record inseriti con orario di ultima modifica successivo a questo orario in data daDataMod. Se i secondi verranno omessi saranno impostati automaticamente a 00.
+     * @param courseOfStudyId identificativo corso di studi
+     * @param courseOfStudyCode codice corso di studi
+     * @param courseTypeCode Codice tipo corso di studio.
+     * @param academicYearFromId anno di immatricolazione di partenza. Verranno recuperate tutte le carriere con aaId maggiore o uguale a quello specificato
+     * @param fromModificationDate data di ultima modifica, verranno recuperati tutti i record inseriti con data di ultima modifica successiva a questa data
+     * @param start utilizzato insieme a `limit` per indicare la paginazione sui record; `start` indica il numero del primo record da caricare (se non indicato viene utilizzato 0)
+     * @param limit utilizzato insieme a `start` per indicare la paginazione sui record, `limit` indica il numero di record da recuperare (a partire da `start`); se non indicato viene utilizzato 50, i valori consentiti vanno da 0 a 100
+     * @param order consente di specificare un ordine per il recupero dei record. La sintassi è la seguente * +/- : specifica l'ordinamento (+ = ASC, - = DESC); se omesso viene utilizzato + * field : nome del campo da ordinare E' possibile indicare più campi separandoli da virgola (Es: +annoCorso,+adCod)
+     * @param fields specifica la lista dei campi opzionali (che non vengono recupeati di default); impostando il valore `ALL` vengono mostrati tutti i campi. Per gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns* I dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello) Esempi * per il campo childObj con la poprietà childProp utilizzare la notazione `childProp.prop1` * Per visualizzare tutte le proprietà di childObj utilizzare la notazione `childProp.*` * Per visualizzare tutte le proprietà di childObj e di tutti i discendenti utilizzare la notazione `childProp.**`
+     * @param academicYearEnrollmentId anno di ultima iscrizione annuale
+     * @param onlyActive indica se recuperare solo carriere attive, in ipotesi o sospese (no trasferiti in uscita)
+     */
     suspend fun getMinimalCareersData(
         userId: String? = null,
         surname: String? = null,
@@ -588,6 +870,13 @@ class Esse3PersonalDataApi(
         }
     }
 
+    /**
+     * aggiorna la data di iscrizione e il tipo esonero, effettuando il recupero per matricola
+     *
+     * @param matricola matricola dello studente
+     * @param body Oggetto con i parametri relativi alla data di iscrizione e alla tipologia esonero
+     * @param academicYear anno accademico dell'iscrizione che si vuole recuperare
+     */
     suspend fun putEnrollmentDateAndExemptionTypeByMatricola(
         matricola: String,
         body: Esse3ExemptionTypeParameters,
@@ -600,12 +889,23 @@ class Esse3PersonalDataApi(
         }
     }
 
+    /**
+     * Recupero della carriera degli studenti
+     *
+     * @param studentId identificativo della carriera
+     */
     suspend fun getCareerByStudent(
         studentId: Long
     ): Esse3Career {
         return executeJsonGet<Esse3Career>("/carriere/${studentId}", setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TECHNICAL_USER))
     }
 
+    /**
+     * effettua l'aggiornamento del numero di protocollo dello studente
+     *
+     * @param studentId identificativo della carriera
+     * @param body Oggetto con i campi da modificare
+     */
     suspend fun putCareerByStudent(
         studentId: Long,
         body: Esse3CareerParameters
@@ -616,6 +916,12 @@ class Esse3PersonalDataApi(
         }
     }
 
+    /**
+     * effettua la chiusura della carriera per un dato studente
+     *
+     * @param studentId identificativo della carriera
+     * @param body Oggetto con i parametri per la chiusura della carriera
+     */
     suspend fun careerClosure(
         studentId: Long,
         body: Esse3CareerClosureParameters
@@ -626,6 +932,17 @@ class Esse3PersonalDataApi(
         }
     }
 
+    /**
+     * Recupero delle iscrizione di uno studente
+     *
+     * @param studentId identificativo della carriera
+     * @param academicYear anno accademico dell'iscrizione che si vuole recuperare
+     * @param lastEnrollmentFlag 1 se si vuole recuperare SOLO l'ultima iscrizione, 0 altrimenti
+     * @param start utilizzato insieme a `limit` per indicare la paginazione sui record; `start` indica il numero del primo record da caricare (se non indicato viene utilizzato 0)
+     * @param limit utilizzato insieme a `start` per indicare la paginazione sui record, `limit` indica il numero di record da recuperare (a partire da `start`); se non indicato viene utilizzato 50, i valori consentiti vanno da 0 a 100
+     * @param order consente di specificare un ordine per il recupero dei record. La sintassi è la seguente * +/- : specifica l'ordinamento (+ = ASC, - = DESC); se omesso viene utilizzato + * field : nome del campo da ordinare E' possibile indicare più campi separandoli da virgola (Es: +annoCorso,+adCod)
+     * @param fields specifica la lista dei campi opzionali (che non vengono recupeati di default); impostando il valore `ALL` vengono mostrati tutti i campi. Per gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns* I dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello) Esempi * per il campo childObj con la poprietà childProp utilizzare la notazione `childProp.prop1` * Per visualizzare tutte le proprietà di childObj utilizzare la notazione `childProp.*` * Per visualizzare tutte le proprietà di childObj e di tutti i discendenti utilizzare la notazione `childProp.**`
+     */
     suspend fun getAnnualEnrollment(
         studentId: Long,
         academicYear: Long? = null,
@@ -645,6 +962,13 @@ class Esse3PersonalDataApi(
         }
     }
 
+    /**
+     * aggiorna la data di iscrizione e il tipo esonero
+     *
+     * @param studentId identificativo della carriera
+     * @param body Oggetto con i parametri relativi alla data di iscrizione e alla tipologia esonero
+     * @param academicYear anno accademico dell'iscrizione che si vuole recuperare
+     */
     suspend fun putEnrollmentDateAndExemptionTypeByStudentId(
         studentId: Long,
         body: Esse3ExemptionTypeParameters,
@@ -657,6 +981,13 @@ class Esse3PersonalDataApi(
         }
     }
 
+    /**
+     * aggiorna fascia mensa di uno studente
+     *
+     * @param studentId identificativo della carriera
+     * @param body Oggetto con i parametri relativi alla fascia mensa
+     * @param academicYear anno accademico dell'iscrizione che si vuole recuperare
+     */
     suspend fun putCanteenBand(
         studentId: Long,
         body: Esse3CanteenBandParameters,
@@ -669,6 +1000,13 @@ class Esse3PersonalDataApi(
         }
     }
 
+    /**
+     * aggiorna codice tipologia studente
+     *
+     * @param studentId identificativo della carriera
+     * @param body Oggetto con i parametri relativi alla tipologia studente
+     * @param academicYear anno accademico dell'iscrizione che si vuole recuperare
+     */
     suspend fun putStudentTypeCode(
         studentId: Long,
         body: Esse3StudentTypeParameters,
@@ -681,6 +1019,14 @@ class Esse3PersonalDataApi(
         }
     }
 
+    /**
+     * recupero dei dati bancari
+     *
+     * @param personId identificativo della persona
+     * @param start utilizzato insieme a `limit` per indicare la paginazione sui record; `start` indica il numero del primo record da caricare (se non indicato viene utilizzato 0)
+     * @param limit utilizzato insieme a `start` per indicare la paginazione sui record, `limit` indica il numero di record da recuperare (a partire da `start`); se non indicato viene utilizzato 50, i valori consentiti vanno da 0 a 100
+     * @param order consente di specificare un ordine per il recupero dei record. La sintassi è la seguente * +/- : specifica l'ordinamento (+ = ASC, - = DESC); se omesso viene utilizzato + * field : nome del campo da ordinare E' possibile indicare più campi separandoli da virgola (Es: +annoCorso,+adCod)
+     */
     suspend fun getBankDetails(
         personId: Long,
         start: Int? = null,
@@ -694,6 +1040,11 @@ class Esse3PersonalDataApi(
         }
     }
 
+    /**
+     * @param lecturerId id del docente
+     * @param fields specifica la lista dei campi opzionali (che non vengono recupeati di default); impostando il valore `ALL` vengono mostrati tutti i campi. Per gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns* I dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello) Esempi * per il campo childObj con la poprietà childProp utilizzare la notazione `childProp.prop1` * Per visualizzare tutte le proprietà di childObj utilizzare la notazione `childProp.*` * Per visualizzare tutte le proprietà di childObj e di tutti i discendenti utilizzare la notazione `childProp.**`
+     * @param optionalFields specifica la lista dei campi opzionali (che non vengono recupeati di default); impostando il valore `ALL` vengono mostrati tutti i campi. Per gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns* I dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello) Esempi * per il campo childObj con la poprietà childProp utilizzare la notazione `childProp.prop1` * Per visualizzare tutte le proprietà di childObj utilizzare la notazione `childProp.*` * Per visualizzare tutte le proprietà di childObj e di tutti i discendenti utilizzare la notazione `childProp.**`
+     */
     suspend fun getLecturer(
         lecturerId: Long,
         fields: String? = null,
@@ -705,6 +1056,23 @@ class Esse3PersonalDataApi(
         }
     }
 
+    /**
+     * Recupero delle carriere degli studenti per anno accademico.
+     *
+     * @param academicYearEnrollmentId id anno accademico delle iscrizioni che si vogliono recuperare
+     * @param includeSXH includi iscrizioni sospese per ipotesi.
+     * @param includeCondition includi iscrizioni condizionate.
+     * @param courseOfStudyId identificativo corso di studi
+     * @param courseOfStudyCode codice corso di studi
+     * @param courseTypeCode Codice tipo corso di studio.
+     * @param enrollmentTypeCode Codice tipo iscrizione.
+     * @param courseYear Anno di corso.
+     * @param enrollmentStatusCode codice stato iscrizione annuale.
+     * @param start utilizzato insieme a `limit` per indicare la paginazione sui record; `start` indica il numero del primo record da caricare (se non indicato viene utilizzato 0)
+     * @param limit utilizzato insieme a `start` per indicare la paginazione sui record, `limit` indica il numero di record da recuperare (a partire da `start`); se non indicato viene utilizzato 50, i valori consentiti vanno da 0 a 100
+     * @param order consente di specificare un ordine per il recupero dei record. La sintassi è la seguente * +/- : specifica l'ordinamento (+ = ASC, - = DESC); se omesso viene utilizzato + * field : nome del campo da ordinare E' possibile indicare più campi separandoli da virgola (Es: +annoCorso,+adCod)
+     * @param fields specifica la lista dei campi opzionali (che non vengono recupeati di default); impostando il valore `ALL` vengono mostrati tutti i campi. Per gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns* I dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello) Esempi * per il campo childObj con la poprietà childProp utilizzare la notazione `childProp.prop1` * Per visualizzare tutte le proprietà di childObj utilizzare la notazione `childProp.*` * Per visualizzare tutte le proprietà di childObj e di tutti i discendenti utilizzare la notazione `childProp.**`
+     */
     suspend fun getEnrollments(
         academicYearEnrollmentId: String,
         includeSXH: Long,
@@ -736,6 +1104,18 @@ class Esse3PersonalDataApi(
         }
     }
 
+    /**
+     * Recupero istituti
+     *
+     * @param schoolTypologyCode Codice della tipologia della scuola.
+     * @param miurSchoolCode Codice meccanografico della scuola.
+     * @param higherSchoolId Identificativo della scuola.
+     * @param miurSchoolId Identificativo scuola MIUR.
+     * @param fields specifica la lista dei campi opzionali (che non vengono recupeati di default); impostando il valore `ALL` vengono mostrati tutti i campi. Per gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns* I dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello) Esempi * per il campo childObj con la poprietà childProp utilizzare la notazione `childProp.prop1` * Per visualizzare tutte le proprietà di childObj utilizzare la notazione `childProp.*` * Per visualizzare tutte le proprietà di childObj e di tutti i discendenti utilizzare la notazione `childProp.**`
+     * @param order consente di specificare un ordine per il recupero dei record. La sintassi è la seguente * +/- : specifica l'ordinamento (+ = ASC, - = DESC); se omesso viene utilizzato + * field : nome del campo da ordinare E' possibile indicare più campi separandoli da virgola (Es: +annoCorso,+adCod)
+     * @param start utilizzato insieme a `limit` per indicare la paginazione sui record; `start` indica il numero del primo record da caricare (se non indicato viene utilizzato 0)
+     * @param limit utilizzato insieme a `start` per indicare la paginazione sui record, `limit` indica il numero di record da recuperare (a partire da `start`); se non indicato viene utilizzato 50, i valori consentiti vanno da 0 a 100
+     */
     suspend fun getInstitutions(
         schoolTypologyCode: String? = null,
         miurSchoolCode: String? = null,
@@ -758,6 +1138,11 @@ class Esse3PersonalDataApi(
         }
     }
 
+    /**
+     * Recupero misure compensative
+     *
+     * @param handicapType tipo di handicap
+     */
     suspend fun getCompensatoryMeasures(
         handicapType: String? = null
     ): List<Esse3CompensatoryMeasures> {
@@ -766,10 +1151,28 @@ class Esse3PersonalDataApi(
         }
     }
 
+    /**
+     * Recupero delle normative legate alle dichiarazioni di handicap
+     */
     suspend fun getHandicapRegulations(): List<Esse3HandicapRegulations> {
         return executeJsonGetList<Esse3HandicapRegulations>("/normativeHandicap", setOf(Esse3PermissionLevel.TECHNICAL_USER))
     }
 
+    /**
+     * Recupero delle anagrafiche presenti a sistema
+     *
+     * @param surname cognome dell'utente (se viene utilizzato il carattere * viene applicato il like)
+     * @param name nome dell'utente (se viene utilizzato il carattere * viene applicato il like)
+     * @param fiscalCode codice fiscale dell'utente
+     * @param fromModificationDate data di ultima modifica, verranno recuperati tutti i record inseriti con data di ultima modifica successiva a questa data
+     * @param fromModificationTime ora, minuti e secondi dell'ultima modifica (HH:MI:SS), verranno recuperati tutti i record inseriti con orario di ultima modifica successivo a questo orario in data daDataMod. Se i secondi verranno omessi saranno impostati automaticamente a 00.
+     * @param personId identificativo della persona
+     * @param govIdentifier identificativo di U-Gov che permette di ritirare le informazioni dei responsabili.
+     * @param start utilizzato insieme a `limit` per indicare la paginazione sui record; `start` indica il numero del primo record da caricare (se non indicato viene utilizzato 0)
+     * @param limit utilizzato insieme a `start` per indicare la paginazione sui record, `limit` indica il numero di record da recuperare (a partire da `start`); se non indicato viene utilizzato 50, i valori consentiti vanno da 0 a 100
+     * @param order consente di specificare un ordine per il recupero dei record. La sintassi è la seguente * +/- : specifica l'ordinamento (+ = ASC, - = DESC); se omesso viene utilizzato + * field : nome del campo da ordinare E' possibile indicare più campi separandoli da virgola (Es: +annoCorso,+adCod)
+     * @param optionalFields specifica la lista dei campi opzionali (che non vengono recupeati di default); impostando il valore `ALL` vengono mostrati tutti i campi. Per gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns* I dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello) Esempi * per il campo childObj con la poprietà childProp utilizzare la notazione `childProp.prop1` * Per visualizzare tutte le proprietà di childObj utilizzare la notazione `childProp.*` * Per visualizzare tutte le proprietà di childObj e di tutti i discendenti utilizzare la notazione `childProp.**`
+     */
     suspend fun getPersons(
         surname: String? = null,
         name: String? = null,
@@ -798,6 +1201,18 @@ class Esse3PersonalDataApi(
         }
     }
 
+    /**
+     * Recupero delle anagrafiche presenti a sistema
+     *
+     * @param surname cognome dell'utente (se viene utilizzato il carattere * viene applicato il like)
+     * @param name nome dell'utente (se viene utilizzato il carattere * viene applicato il like)
+     * @param fiscalCode codice fiscale dell'utente
+     * @param fromModificationDate data di ultima modifica, verranno recuperati tutti i record inseriti con data di ultima modifica successiva a questa data
+     * @param fromModificationTime ora, minuti e secondi dell'ultima modifica (HH:MI:SS), verranno recuperati tutti i record inseriti con orario di ultima modifica successivo a questo orario in data daDataMod. Se i secondi verranno omessi saranno impostati automaticamente a 00.
+     * @param start utilizzato insieme a `limit` per indicare la paginazione sui record; `start` indica il numero del primo record da caricare (se non indicato viene utilizzato 0)
+     * @param limit utilizzato insieme a `start` per indicare la paginazione sui record, `limit` indica il numero di record da recuperare (a partire da `start`); se non indicato viene utilizzato 50, i valori consentiti vanno da 0 a 100
+     * @param order consente di specificare un ordine per il recupero dei record. La sintassi è la seguente * +/- : specifica l'ordinamento (+ = ASC, - = DESC); se omesso viene utilizzato + * field : nome del campo da ordinare E' possibile indicare più campi separandoli da virgola (Es: +annoCorso,+adCod)
+     */
     suspend fun getGdprPersons(
         surname: String? = null,
         name: String? = null,
@@ -820,24 +1235,49 @@ class Esse3PersonalDataApi(
         }
     }
 
+    /**
+     * Recupero delle informazioni relative ad una singola persona presente a sistema ed identificata dal persid
+     *
+     * @param personId identificativo della persona
+     */
     suspend fun getGdprPerson(
         personId: Long
     ): Esse3PersonGDPR {
         return executeJsonGet<Esse3PersonGDPR>("/persone-gdpr/${personId}/", setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TECHNICAL_USER))
     }
 
+    /**
+     * Dismette un indirizzo email istituzionale
+     *
+     * @param universityEmail indirizzio email istituzionale da dismettere
+     */
     suspend fun dismissEmailByAteEmail(
         universityEmail: String
     ): Esse3Person {
         return executeJsonPatch<Esse3Person>("/persone/${universityEmail}/dismetti", setOf(Esse3PermissionLevel.TECHNICAL_USER))
     }
 
+    /**
+     * Recupero delle informazioni relative ad una singola persona presente a sistema ed identificata dal persid
+     *
+     * @param personId identificativo della persona
+     */
     suspend fun getPerson(
         personId: Long
     ): Esse3Person {
         return executeJsonGet<Esse3Person>("/persone/${personId}/", setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TECHNICAL_USER))
     }
 
+    /**
+     * effettua l'aggiornamento dei dettagli di una misura compensative associate alla dichiarazione di invalidità di una anagrafica.
+     *
+     * @param personId identificativo della persona
+     * @param body Oggetto con i campi da modificare
+     * @param handicapDeclarationId identificativo dichiarazione invalidità
+     * @param handicapDeclarationMeasuresId Identificativo associazione dichiarazione e misura compensativa.
+     * @param handicapType tipo di handicap
+     * @param compensatoryMeasureCode codice misura compensativa
+     */
     suspend fun putPersonCompensatoryMeasuresHandicapDeclaration(
         personId: Long,
         body: Esse3PutCompensatoryMeasuresHandicapDeclarationParameters,
@@ -856,6 +1296,13 @@ class Esse3PersonalDataApi(
         }
     }
 
+    /**
+     * recupero degli autorizzati legati ad una anagrafica
+     *
+     * @param personId identificativo della persona
+     * @param authorizedId identificativo dell'autorizzato
+     * @param optionalFields specifica la lista dei campi opzionali (che non vengono recupeati di default); impostando il valore `ALL` vengono mostrati tutti i campi. Per gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns* I dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello) Esempi * per il campo childObj con la poprietà childProp utilizzare la notazione `childProp.prop1` * Per visualizzare tutte le proprietà di childObj utilizzare la notazione `childProp.*` * Per visualizzare tutte le proprietà di childObj e di tutti i discendenti utilizzare la notazione `childProp.**`
+     */
     suspend fun getAuthorizedForPerson(
         personId: Long,
         authorizedId: Long? = null,
@@ -867,6 +1314,12 @@ class Esse3PersonalDataApi(
         }
     }
 
+    /**
+     * Recupero della carriera degli studenti
+     *
+     * @param personId identificativo della persona
+     * @param studentId identificativo della carriera
+     */
     suspend fun getCareerByStudentPerson(
         personId: Long,
         studentId: Long
@@ -874,6 +1327,12 @@ class Esse3PersonalDataApi(
         return executeJsonGet<Esse3Career>("/persone/${personId}/carriere/${studentId}", setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TECHNICAL_USER))
     }
 
+    /**
+     * aggiornamento cellulare
+     *
+     * @param personId identificativo della persona
+     * @param body Oggetto con i campi da modificare
+     */
     suspend fun putMobilePhone(
         personId: Long,
         body: Esse3MobileParameter
@@ -884,6 +1343,15 @@ class Esse3PersonalDataApi(
         }
     }
 
+    /**
+     * Recupera i consensi relativi ad uno studente
+     *
+     * @param personId identificativo della persona
+     * @param webProcedureCode Codice processo WEB
+     * @param iso6392Code Codice ISO lingua
+     * @param studentId identificativo della carriera
+     * @param academicYearId identificativo anno accademico
+     */
     suspend fun getStudentConsents(
         personId: Long,
         webProcedureCode: String,
@@ -899,6 +1367,16 @@ class Esse3PersonalDataApi(
         }
     }
 
+    /**
+     * Effettua l'aggiornamento dei consensi dello studente
+     *
+     * @param personId identificativo della persona
+     * @param body Array contenente i consensi che si vogliono aggiornare
+     * @param webProcedureCode Codice processo WEB
+     * @param iso6392Code Codice ISO lingua
+     * @param studentId identificativo della carriera
+     * @param academicYearId identificativo anno accademico
+     */
     suspend fun putStudentConsents(
         personId: Long,
         body: List<Esse3ConsentsParameters>,
@@ -917,6 +1395,14 @@ class Esse3PersonalDataApi(
         }
     }
 
+    /**
+     * Effettua l'inserimento dei titoli di studio relativi ad una persona
+     *
+     * @param personId identificativo della persona
+     * @param handicapDeclarationId identificativo dichiarazione invalidità
+     * @param body Array contenente i dati delle Misure Compensative legate ad una Dichiarazioni di invalidità da inserire
+     * @param handicapType tipo di handicap
+     */
     suspend fun insertCompensatoryMeasuresHandicapDeclaration(
         personId: Long,
         handicapDeclarationId: Long,
@@ -931,6 +1417,16 @@ class Esse3PersonalDataApi(
         ensureSuccess(response, setOf(Esse3PermissionLevel.TECHNICAL_USER, Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.EXTERNAL_SUBJECT))
     }
 
+    /**
+     * effettua l'aggiornamento dei dettagli di una misura compensative associate alla dichiarazione di invalidità di una anagrafica.
+     *
+     * @param personId identificativo della persona
+     * @param handicapDeclarationId identificativo dichiarazione invalidità
+     * @param handicapDeclarationMeasuresId Identificativo associazione dichiarazione e misura compensativa.
+     * @param body Oggetto con i campi da modificare
+     * @param handicapType tipo di handicap
+     * @param compensatoryMeasureCode codice misura compensativa
+     */
     suspend fun updatePersonCompensatoryMeasuresHandicapDeclaration(
         personId: Long,
         handicapDeclarationId: Long,
@@ -947,6 +1443,12 @@ class Esse3PersonalDataApi(
         }
     }
 
+    /**
+     * recupero delle dichiarazioni di handicap legate ad un'anagrafica
+     *
+     * @param personId identificativo della persona
+     * @param handicapDeclarationId identificativo dichiarazione invalidità
+     */
     suspend fun getHandicapDeclaration(
         personId: Long,
         handicapDeclarationId: Long? = null
@@ -956,6 +1458,14 @@ class Esse3PersonalDataApi(
         }
     }
 
+    /**
+     * Aggiornamento di una dichiarazioni di handicap legata ad un'anagrafica
+     *
+     * @param personId identificativo della persona
+     * @param body Oggetto che contiene i campi della dichiarazione da aggiornare
+     * @param handicapDeclarationId identificativo dichiarazione invalidità
+     * @param handicapType tipo di handicap
+     */
     suspend fun putHandicapDeclaration(
         personId: Long,
         body: Esse3HandicapDeclarationPut,
@@ -970,6 +1480,12 @@ class Esse3PersonalDataApi(
         }
     }
 
+    /**
+     * recupero di una dichiarazioni di handicap legata ad un'anagrafica
+     *
+     * @param personId identificativo della persona
+     * @param handicapDeclarationId identificativo dichiarazione invalidità
+     */
     suspend fun getHandicapDeclarationById(
         personId: Long,
         handicapDeclarationId: Long
@@ -977,6 +1493,13 @@ class Esse3PersonalDataApi(
         return executeJsonGet<Esse3HandicapDeclaration>("/persone/${personId}/dicHand/${handicapDeclarationId}", setOf(Esse3PermissionLevel.TECHNICAL_USER, Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.EXTERNAL_SUBJECT))
     }
 
+    /**
+     * Aggiornamento di una dichiarazioni di handicap legata ad un'anagrafica
+     *
+     * @param personId identificativo della persona
+     * @param handicapDeclarationId identificativo dichiarazione invalidità
+     * @param body Oggetto che contiene i campi della dichiarazione da aggiornare
+     */
     suspend fun putHandicapDeclarationById(
         personId: Long,
         handicapDeclarationId: Long,
@@ -988,6 +1511,14 @@ class Esse3PersonalDataApi(
         }
     }
 
+    /**
+     * Recupera il blob dell'allegato richiesto
+     *
+     * @param personId identificativo della persona
+     * @param handicapDeclarationId identificativo dichiarazione invalidità
+     * @param attachmentId identificativo allegato
+     * @param userId userId
+     */
     suspend fun getAttachmentContent(
         personId: Long,
         handicapDeclarationId: Long,
@@ -999,6 +1530,12 @@ class Esse3PersonalDataApi(
         }
     }
 
+    /**
+     * Dismette un indirizzo email istituzionale
+     *
+     * @param personId identificativo della persona
+     * @param universityEmail indirizzio email istituzionale da dismettere
+     */
     suspend fun dismissEmail(
         personId: Long,
         universityEmail: String? = null
@@ -1008,6 +1545,12 @@ class Esse3PersonalDataApi(
         }
     }
 
+    /**
+     * Effettua l'aggiornamento dell'email personale dello studente
+     *
+     * @param personId identificativo della persona
+     * @param email indirizzo email personale
+     */
     suspend fun putStudentEmail(
         personId: Long,
         email: String? = null
@@ -1017,6 +1560,12 @@ class Esse3PersonalDataApi(
         }
     }
 
+    /**
+     * Effettua l'aggiornamento dell'email istituzionale dello studente
+     *
+     * @param personId identificativo della persona
+     * @param universityEmail indirizzo email istituzionale
+     */
     suspend fun putStudentAteEmail(
         personId: Long,
         universityEmail: String
@@ -1026,12 +1575,23 @@ class Esse3PersonalDataApi(
         }
     }
 
+    /**
+     * @param personId identificativo della persona
+     */
     suspend fun getPersonPhoto(
         personId: Long
     ): ByteReadChannel {
         return executeStreamGet("/persone/${personId}/foto", setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TECHNICAL_USER))
     }
 
+    /**
+     * Effettua l'inserimento dei titoli di studio relativi ad una persona
+     *
+     * @param personId identificativo della persona
+     * @param body Array contenente i dati delle Misure Compensative legate ad una Dichiarazioni di invalidità da inserire
+     * @param handicapDeclarationId identificativo dichiarazione invalidità
+     * @param handicapType tipo di handicap
+     */
     suspend fun postCompensatoryMeasuresHandicapDeclaration(
         personId: Long,
         body: Esse3PostCompensatoryMeasuresHandicapDeclarationParameters,
@@ -1047,6 +1607,15 @@ class Esse3PersonalDataApi(
         ensureSuccess(response, setOf(Esse3PermissionLevel.TECHNICAL_USER))
     }
 
+    /**
+     * misure compensative per i bisogni speciali degli studeneti
+     *
+     * @param personId identificativo della persona
+     * @param callStartDate data inizio appello.
+     * @param q il parametro consente di filtrare i campi con delle particolari condizioni predefinite, consultare la documentazione del metodo per verificare i codici che è possibile utilizzare
+     * @param order consente di specificare un ordine per il recupero dei record. La sintassi è la seguente * +/- : specifica l'ordinamento (+ = ASC, - = DESC); se omesso viene utilizzato + * field : nome del campo da ordinare E' possibile indicare più campi separandoli da virgola (Es: +annoCorso,+adCod)
+     * @param fields specifica la lista dei campi opzionali (che non vengono recupeati di default); impostando il valore `ALL` vengono mostrati tutti i campi. Per gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns* I dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello) Esempi * per il campo childObj con la poprietà childProp utilizzare la notazione `childProp.prop1` * Per visualizzare tutte le proprietà di childObj utilizzare la notazione `childProp.*` * Per visualizzare tutte le proprietà di childObj e di tutti i discendenti utilizzare la notazione `childProp.**`
+     */
     suspend fun getPersonCompensatoryMeasures(
         personId: Long,
         callStartDate: String? = null,
@@ -1062,6 +1631,13 @@ class Esse3PersonalDataApi(
         }
     }
 
+    /**
+     * misure compensative per i bisogni speciali degli studeneti
+     *
+     * @param personId identificativo della persona
+     * @param handicapDeclarationId identificativo dichiarazione invalidità
+     * @param handicapType tipo di handicap
+     */
     suspend fun getPersonCompensatoryMeasuresHandicapDeclaration(
         personId: Long,
         handicapDeclarationId: Long? = null,
@@ -1073,6 +1649,12 @@ class Esse3PersonalDataApi(
         }
     }
 
+    /**
+     * aggiornamento telefono di domicilio
+     *
+     * @param personId identificativo della persona
+     * @param body Oggetto con i campi da modificare
+     */
     suspend fun putDomicilePhone(
         personId: Long,
         body: Esse3PhoneParameters
@@ -1083,6 +1665,12 @@ class Esse3PersonalDataApi(
         }
     }
 
+    /**
+     * aggiornamento telefono di residenza
+     *
+     * @param personId identificativo della persona
+     * @param body Oggetto con i campi da modificare
+     */
     suspend fun putResidencePhone(
         personId: Long,
         body: Esse3PhoneParameters
@@ -1093,6 +1681,12 @@ class Esse3PersonalDataApi(
         }
     }
 
+    /**
+     * recupero dei tutori legati ad una anagrafica
+     *
+     * @param personId identificativo della persona
+     * @param tutorsFilter 1: recupera tutti i tutori. 0 (o nullo): recupera solo i tutori validi.
+     */
     suspend fun getPersonTutors(
         personId: Long,
         tutorsFilter: Int? = null
@@ -1102,16 +1696,37 @@ class Esse3PersonalDataApi(
         }
     }
 
+    /**
+     * @param personId identificativo della persona
+     */
     suspend fun getPhotoValidationFlag(
         personId: Long
     ): Esse3ValidationFlag {
         return executeJsonGet<Esse3ValidationFlag>("/persone/${personId}/validaFoto", setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TECHNICAL_USER))
     }
 
+    /**
+     * Recupero range voti maturità
+     */
     suspend fun getHighSchoolGradeRange(): List<Esse3HighSchoolGradeRange> {
         return executeJsonGetList<Esse3HighSchoolGradeRange>("/rangeVotiMaturita", setOf(Esse3PermissionLevel.TECHNICAL_USER))
     }
 
+    /**
+     * Recupero dei soggetti esterni
+     *
+     * @param surname cognome dell'utente (se viene utilizzato il carattere * viene applicato il like)
+     * @param name nome dell'utente (se viene utilizzato il carattere * viene applicato il like)
+     * @param departmentId id dipartimento
+     * @param externalSubjectTypeCode codice tipo relatore
+     * @param abbreviatedId identificativo address book della persona in U-GOV
+     * @param fiscalCode codice fiscale dell'utente
+     * @param externalSubjectId Lista di identificativi di Soggetti Esterni
+     * @param fields specifica la lista dei campi opzionali (che non vengono recupeati di default); impostando il valore `ALL` vengono mostrati tutti i campi. Per gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns* I dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello) Esempi * per il campo childObj con la poprietà childProp utilizzare la notazione `childProp.prop1` * Per visualizzare tutte le proprietà di childObj utilizzare la notazione `childProp.*` * Per visualizzare tutte le proprietà di childObj e di tutti i discendenti utilizzare la notazione `childProp.**`
+     * @param order consente di specificare un ordine per il recupero dei record. La sintassi è la seguente * +/- : specifica l'ordinamento (+ = ASC, - = DESC); se omesso viene utilizzato + * field : nome del campo da ordinare E' possibile indicare più campi separandoli da virgola (Es: +annoCorso,+adCod)
+     * @param start utilizzato insieme a `limit` per indicare la paginazione sui record; `start` indica il numero del primo record da caricare (se non indicato viene utilizzato 0)
+     * @param limit utilizzato insieme a `start` per indicare la paginazione sui record, `limit` indica il numero di record da recuperare (a partire da `start`); se non indicato viene utilizzato 50, i valori consentiti vanno da 0 a 100
+     */
     suspend fun getExternalSubject(
         surname: String? = null,
         name: String? = null,
@@ -1140,6 +1755,11 @@ class Esse3PersonalDataApi(
         }
     }
 
+    /**
+     * Inserisce oppure aggiorna i dati di un soggetto esterno in esse3
+     *
+     * @param body Oggetto con i campi da modificare
+     */
     suspend fun putExternalSubject(
         body: Esse3PutExternalSubject
     ): List<Esse3ExternalSubject> {
@@ -1149,6 +1769,11 @@ class Esse3PersonalDataApi(
         }
     }
 
+    /**
+     * Elimina i dati di un soggetto esterno in esse3
+     *
+     * @param externalSubjectId Identificativo soggetto esterno
+     */
     suspend fun deleteExternalSubject(
         externalSubjectId: Int
     ) {
@@ -1156,6 +1781,13 @@ class Esse3PersonalDataApi(
         ensureSuccess(response, setOf(Esse3PermissionLevel.TECHNICAL_USER))
     }
 
+    /**
+     * Recupera i consensi relativi ad un soggetto esterno
+     *
+     * @param externalSubjectId Identificativo soggetto esterno
+     * @param webProcedureCode Codice processo WEB
+     * @param iso6392Code Codice ISO lingua
+     */
     suspend fun getExternalSubjectConsents(
         externalSubjectId: Int,
         webProcedureCode: String,
@@ -1167,6 +1799,14 @@ class Esse3PersonalDataApi(
         }
     }
 
+    /**
+     * Effettua l'aggiornamento dei consensi del soggetto esterno
+     *
+     * @param externalSubjectId Identificativo soggetto esterno
+     * @param body Array contenente i consensi che si vogliono aggiornare
+     * @param webProcedureCode Codice processo WEB
+     * @param iso6392Code Codice ISO lingua
+     */
     suspend fun putExternalSubjectConsents(
         externalSubjectId: Int,
         body: List<Esse3ConsentsParameters>,
@@ -1181,6 +1821,22 @@ class Esse3PersonalDataApi(
         }
     }
 
+    /**
+     * Recupero dei soggetti esterni
+     *
+     * @param externalSubjectId identificativo soggetto esterno
+     * @param surname cognome dell'utente (se viene utilizzato il carattere * viene applicato il like)
+     * @param name nome dell'utente (se viene utilizzato il carattere * viene applicato il like)
+     * @param departmentId id dipartimento
+     * @param externalSubjectTypeCode codice tipo relatore
+     * @param abbreviatedId identificativo address book della persona in U-GOV
+     * @param fiscalCode codice fiscale dell'utente
+     * @param fields specifica la lista dei campi opzionali (che non vengono recupeati di default); impostando il valore `ALL` vengono mostrati tutti i campi. Per gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns* I dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello) Esempi * per il campo childObj con la poprietà childProp utilizzare la notazione `childProp.prop1` * Per visualizzare tutte le proprietà di childObj utilizzare la notazione `childProp.*` * Per visualizzare tutte le proprietà di childObj e di tutti i discendenti utilizzare la notazione `childProp.**`
+     * @param optionalFields specifica la lista dei campi opzionali (che non vengono recupeati di default); impostando il valore `ALL` vengono mostrati tutti i campi. Per gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns* I dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello) Esempi * per il campo childObj con la poprietà childProp utilizzare la notazione `childProp.prop1` * Per visualizzare tutte le proprietà di childObj utilizzare la notazione `childProp.*` * Per visualizzare tutte le proprietà di childObj e di tutti i discendenti utilizzare la notazione `childProp.**`
+     * @param order consente di specificare un ordine per il recupero dei record. La sintassi è la seguente * +/- : specifica l'ordinamento (+ = ASC, - = DESC); se omesso viene utilizzato + * field : nome del campo da ordinare E' possibile indicare più campi separandoli da virgola (Es: +annoCorso,+adCod)
+     * @param start utilizzato insieme a `limit` per indicare la paginazione sui record; `start` indica il numero del primo record da caricare (se non indicato viene utilizzato 0)
+     * @param limit utilizzato insieme a `start` per indicare la paginazione sui record, `limit` indica il numero di record da recuperare (a partire da `start`); se non indicato viene utilizzato 50, i valori consentiti vanno da 0 a 100
+     */
     suspend fun getExternalSubjectsReplica(
         externalSubjectId: Long? = null,
         surname: String? = null,
@@ -1211,6 +1867,12 @@ class Esse3PersonalDataApi(
         }
     }
 
+    /**
+     * Recupero dei soggetti esterni
+     *
+     * @param externalSubjectId Identificativo soggetto esterno
+     * @param optionalFields specifica la lista dei campi opzionali (che non vengono recupeati di default); impostando il valore `ALL` vengono mostrati tutti i campi. Per gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns* I dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello) Esempi * per il campo childObj con la poprietà childProp utilizzare la notazione `childProp.prop1` * Per visualizzare tutte le proprietà di childObj utilizzare la notazione `childProp.*` * Per visualizzare tutte le proprietà di childObj e di tutti i discendenti utilizzare la notazione `childProp.**`
+     */
     suspend fun getExternalSubjectReplica(
         externalSubjectId: Int,
         optionalFields: String? = null
@@ -1220,10 +1882,23 @@ class Esse3PersonalDataApi(
         }
     }
 
+    /**
+     * Recupero tipi istituto superiore
+     */
     suspend fun getHigherInstitutionTypes(): List<Esse3HigherInstituteTypes> {
         return executeJsonGetList<Esse3HigherInstituteTypes>("/tipiIstituto", setOf(Esse3PermissionLevel.TECHNICAL_USER))
     }
 
+    /**
+     * Recupero tipi titoli scuola superiore
+     *
+     * @param titleTypologyCode Codice della tipologia del titolo superiore.
+     * @param titleTypeCode Codice MIUR del tipo di titolo superiore.
+     * @param fields specifica la lista dei campi opzionali (che non vengono recupeati di default); impostando il valore `ALL` vengono mostrati tutti i campi. Per gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns* I dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello) Esempi * per il campo childObj con la poprietà childProp utilizzare la notazione `childProp.prop1` * Per visualizzare tutte le proprietà di childObj utilizzare la notazione `childProp.*` * Per visualizzare tutte le proprietà di childObj e di tutti i discendenti utilizzare la notazione `childProp.**`
+     * @param order consente di specificare un ordine per il recupero dei record. La sintassi è la seguente * +/- : specifica l'ordinamento (+ = ASC, - = DESC); se omesso viene utilizzato + * field : nome del campo da ordinare E' possibile indicare più campi separandoli da virgola (Es: +annoCorso,+adCod)
+     * @param start utilizzato insieme a `limit` per indicare la paginazione sui record; `start` indica il numero del primo record da caricare (se non indicato viene utilizzato 0)
+     * @param limit utilizzato insieme a `start` per indicare la paginazione sui record, `limit` indica il numero di record da recuperare (a partire da `start`); se non indicato viene utilizzato 50, i valori consentiti vanno da 0 a 100
+     */
     suspend fun getHigherSchoolTitleTypes(
         titleTypologyCode: String? = null,
         titleTypeCode: String? = null,
@@ -1242,6 +1917,15 @@ class Esse3PersonalDataApi(
         }
     }
 
+    /**
+     * Recupero tipi titoli stranieri
+     *
+     * @param levelCode Indica se il titolo è di livello universitario (U) o di livello di scuola superiore (S).
+     * @param fields specifica la lista dei campi opzionali (che non vengono recupeati di default); impostando il valore `ALL` vengono mostrati tutti i campi. Per gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns* I dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello) Esempi * per il campo childObj con la poprietà childProp utilizzare la notazione `childProp.prop1` * Per visualizzare tutte le proprietà di childObj utilizzare la notazione `childProp.*` * Per visualizzare tutte le proprietà di childObj e di tutti i discendenti utilizzare la notazione `childProp.**`
+     * @param order consente di specificare un ordine per il recupero dei record. La sintassi è la seguente * +/- : specifica l'ordinamento (+ = ASC, - = DESC); se omesso viene utilizzato + * field : nome del campo da ordinare E' possibile indicare più campi separandoli da virgola (Es: +annoCorso,+adCod)
+     * @param start utilizzato insieme a `limit` per indicare la paginazione sui record; `start` indica il numero del primo record da caricare (se non indicato viene utilizzato 0)
+     * @param limit utilizzato insieme a `start` per indicare la paginazione sui record, `limit` indica il numero di record da recuperare (a partire da `start`); se non indicato viene utilizzato 50, i valori consentiti vanno da 0 a 100
+     */
     suspend fun getForeignTitleTypes(
         levelCode: String? = null,
         fields: String? = null,
@@ -1258,6 +1942,14 @@ class Esse3PersonalDataApi(
         }
     }
 
+    /**
+     * Recupero tipologie di dichiarazione dei titoli stranieri
+     *
+     * @param fields specifica la lista dei campi opzionali (che non vengono recupeati di default); impostando il valore `ALL` vengono mostrati tutti i campi. Per gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns* I dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello) Esempi * per il campo childObj con la poprietà childProp utilizzare la notazione `childProp.prop1` * Per visualizzare tutte le proprietà di childObj utilizzare la notazione `childProp.*` * Per visualizzare tutte le proprietà di childObj e di tutti i discendenti utilizzare la notazione `childProp.**`
+     * @param order consente di specificare un ordine per il recupero dei record. La sintassi è la seguente * +/- : specifica l'ordinamento (+ = ASC, - = DESC); se omesso viene utilizzato + * field : nome del campo da ordinare E' possibile indicare più campi separandoli da virgola (Es: +annoCorso,+adCod)
+     * @param start utilizzato insieme a `limit` per indicare la paginazione sui record; `start` indica il numero del primo record da caricare (se non indicato viene utilizzato 0)
+     * @param limit utilizzato insieme a `start` per indicare la paginazione sui record, `limit` indica il numero di record da recuperare (a partire da `start`); se non indicato viene utilizzato 50, i valori consentiti vanno da 0 a 100
+     */
     suspend fun getForeignTitleValueDeclarationTypologies(
         fields: String? = null,
         order: String? = null,
@@ -1272,6 +1964,11 @@ class Esse3PersonalDataApi(
         }
     }
 
+    /**
+     * Recupera le tipologie di handicap
+     *
+     * @param lecturerId id univoco che consente di individuare l'account utente
+     */
     suspend fun getHandicapTypologies(
         lecturerId: Long? = null
     ): List<Esse3HandicapTypesLookup> {
@@ -1280,6 +1977,11 @@ class Esse3PersonalDataApi(
         }
     }
 
+    /**
+     * Recupera le tipologie di handicap per cui sono presenti dichiarazioni da valutare.
+     *
+     * @param lecturerId id univoco che consente di individuare l'account utente
+     */
     suspend fun getHandicapTypologiesToEvaluate(
         lecturerId: Long? = null
     ): List<Esse3HandicapTypesLookup> {
@@ -1288,10 +1990,18 @@ class Esse3PersonalDataApi(
         }
     }
 
+    /**
+     * Recupera le tipologie di parentele
+     */
     suspend fun getRelationshipTypologies(): List<Esse3RelationshipTypes> {
         return executeJsonGetList<Esse3RelationshipTypes>("/tipologieParentele", setOf(Esse3PermissionLevel.TECHNICAL_USER))
     }
 
+    /**
+     * Effettua l'aggiornamento o l'inserimento dei titoli di studio relativi ad una persona
+     *
+     * @param body Array contenente i titoli e i parametri delle persone chew voglio aggiornare
+     */
     suspend fun putTitles(
         body: Esse3TitlesInsertion
     ): Esse3EnrollmentReturn {
@@ -1301,6 +2011,13 @@ class Esse3PersonalDataApi(
         }
     }
 
+    /**
+     * Recupera i titoli relativi ad una persona
+     *
+     * @param personId identificativo della persona
+     * @param studentId identificativo dello studente
+     * @param optionalFields specifica la lista dei campi opzionali (che non vengono recupeati di default); impostando il valore `ALL` vengono mostrati tutti i campi. Per gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns* I dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello) Esempi * per il campo childObj con la poprietà childProp utilizzare la notazione `childProp.prop1` * Per visualizzare tutte le proprietà di childObj utilizzare la notazione `childProp.*` * Per visualizzare tutte le proprietà di childObj e di tutti i discendenti utilizzare la notazione `childProp.**`
+     */
     suspend fun getTitles(
         personId: Long,
         studentId: Long? = null,
@@ -1312,6 +2029,14 @@ class Esse3PersonalDataApi(
         }
     }
 
+    /**
+     * Recupera i titoli relativi ad una persona
+     *
+     * @param personId identificativo della persona
+     * @param studentId identificativo dello studente
+     * @param fiscalCode codice fiscale dell'utente
+     * @param optionalFields specifica la lista dei campi opzionali (che non vengono recupeati di default); impostando il valore `ALL` vengono mostrati tutti i campi. Per gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns* I dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello) Esempi * per il campo childObj con la poprietà childProp utilizzare la notazione `childProp.prop1` * Per visualizzare tutte le proprietà di childObj utilizzare la notazione `childProp.*` * Per visualizzare tutte le proprietà di childObj e di tutti i discendenti utilizzare la notazione `childProp.**`
+     */
     suspend fun getPersonTitles(
         personId: Long? = null,
         studentId: Long? = null,
@@ -1326,6 +2051,9 @@ class Esse3PersonalDataApi(
         }
     }
 
+    /**
+     * recupero delle regole di richiesta tutori
+     */
     suspend fun getTutorRules(): List<Esse3TutorsRulesHeader> {
         return executeJsonGetList<Esse3TutorsRulesHeader>("/tutori/regoleRichiesta/", setOf(Esse3PermissionLevel.TECHNICAL_USER))
     }
