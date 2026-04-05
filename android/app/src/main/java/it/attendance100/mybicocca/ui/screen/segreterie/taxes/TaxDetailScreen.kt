@@ -47,8 +47,10 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.ViewModelStoreOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.data.model.tax.TaxCharge
 import it.attendance100.mybicocca.ui.component.ActionBottomBar
@@ -64,7 +66,13 @@ import java.time.format.DateTimeFormatter
 
 @Composable
 fun TaxDetailScreen(
-    viewModel: TaxDetailViewModel = hiltViewModel(),
+    viewModel: TaxDetailViewModel = hiltViewModel(
+        checkNotNull<ViewModelStoreOwner>(
+            LocalViewModelStoreOwner.current
+        ) {
+            "No ViewModelStoreOwner was provided via LocalViewModelStoreOwner"
+        }, null
+    ),
 ) {
     val charge by viewModel.charge.collectAsStateWithLifecycle()
     val isLoading by remember { mutableStateOf(false) }
@@ -81,7 +89,7 @@ fun TaxDetailScreen(
     var printButtonColor by remember { mutableStateOf(primary) }
     var printButtonBGColor by remember {
         mutableStateOf(
-            if (currentCharge == null || currentCharge.status == "NON_PAGATO")
+            if (currentCharge == null || currentCharge.status == "PENDING" || currentCharge.status == "EXPIRED")
                 bgPrimary
             else
                 bgPagoPa,
@@ -151,14 +159,14 @@ fun TaxDetailScreen(
                 .verticalScroll(scrollState)
                 .padding(
                     top = (64 + 32).dp,
-                    bottom = if (currentCharge == null || isPaid(currentCharge) || currentCharge.status == "IN_ATTESA") 106.dp else 166.dp
+                    bottom = if (currentCharge == null || isPaid(currentCharge) || currentCharge.status == "CANCELED") 106.dp else 166.dp
                 )
                 .padding(16.dp),
         ) {
             if (currentCharge != null) {
                 val invoiceData = currentCharge.toInvoiceData()
                 Invoice(invoiceData)
-                if (currentCharge.status == "PAGATO_CONFERMATO") {
+                if (currentCharge.status == "PAID") {
                     PagoPaInvoice()
                 }
             } else {
@@ -172,14 +180,14 @@ fun TaxDetailScreen(
 
             ActionBottomBar(
                 isBottomBarVisible = areBarsVisible || !isPaid(currentCharge),
-                color = if (currentCharge.status == "NON_PAGATO" || currentCharge.status == "IN_ATTESA")
+                color = if (currentCharge.status == "PENDING" || currentCharge.status == "EXPIRED")
                     bgPrimary
                 else
                     animatedPrintButtonBGColor,
                 modifier = surfaceModifier,
             ) {
                 // NON PAGATO - no PagoPA
-                if (currentCharge.status == "NON_PAGATO" && !currentCharge.isPagoPaEnabled) {
+                if ((currentCharge.status == "PENDING" || currentCharge.status == "EXPIRED") && !currentCharge.isPagoPaEnabled) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
@@ -196,7 +204,7 @@ fun TaxDetailScreen(
                 }
 
                 // IN ATTESA
-                if (currentCharge.status == "IN_ATTESA") {
+                if (currentCharge.status == "CANCELED") {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
@@ -212,7 +220,7 @@ fun TaxDetailScreen(
                 }
 
                 // NON PAGATO - with PagoPA
-                if (currentCharge.status == "NON_PAGATO") {
+                if (currentCharge.status == "PENDING" || currentCharge.status == "EXPIRED") {
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -352,7 +360,7 @@ fun TaxDetailScreen(
 }
 
 private fun isPaid(charge: TaxCharge): Boolean {
-    return charge.status == "PAGATO" || charge.status == "PAGATO_CONFERMATO"
+    return charge.status == "PAID"
 }
 
 private fun TaxCharge.toInvoiceData(): InvoiceData {

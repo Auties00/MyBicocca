@@ -29,7 +29,7 @@ class SegreterieViewModel @Inject constructor(
     val unpaidTaxCount: StateFlow<Int> = activeCareer
         .flatMapLatest { career ->
             taxRepository.observeCharges(career?.studentId ?: 0)
-                .map { charges -> charges.count { it.status != "PAGATO" } }
+                .map { charges -> charges.count { it.status != "PAID" && it.status != "CANCELED" } }
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0)
 

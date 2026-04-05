@@ -16,6 +16,16 @@ sealed interface AppRoutes {
     // Profile & Settings
     @Serializable data object Profile : AppRoutes
     @Serializable data object Settings : AppRoutes
+    @Serializable
+    data object SettingsAppearance : AppRoutes
+    @Serializable
+    data object SettingsGeneral : AppRoutes
+    @Serializable
+    data object SettingsBehaviour : AppRoutes
+    @Serializable
+    data object SettingsSecurity : AppRoutes
+    @Serializable
+    data object SettingsDeveloper : AppRoutes
     @Serializable data object AppInfo : AppRoutes
     @Serializable data object LoginManager : AppRoutes
 

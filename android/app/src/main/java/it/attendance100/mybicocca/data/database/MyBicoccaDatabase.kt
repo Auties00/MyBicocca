@@ -9,16 +9,16 @@ import it.attendance100.mybicocca.data.database.dao.AttendanceDao
 import it.attendance100.mybicocca.data.database.dao.BadgeDao
 import it.attendance100.mybicocca.data.database.dao.CalendarDao
 import it.attendance100.mybicocca.data.database.dao.CampusDao
+import it.attendance100.mybicocca.data.database.dao.CareerDao
 import it.attendance100.mybicocca.data.database.dao.CourseDao
 import it.attendance100.mybicocca.data.database.dao.DegreeAwardDao
 import it.attendance100.mybicocca.data.database.dao.EvaluationDao
 import it.attendance100.mybicocca.data.database.dao.ExamDao
 import it.attendance100.mybicocca.data.database.dao.ForumDao
 import it.attendance100.mybicocca.data.database.dao.InternshipDao
+import it.attendance100.mybicocca.data.database.dao.IseeDao
 import it.attendance100.mybicocca.data.database.dao.MessagingDao
 import it.attendance100.mybicocca.data.database.dao.QuizDao
-import it.attendance100.mybicocca.data.database.dao.CareerDao
-import it.attendance100.mybicocca.data.database.dao.IseeDao
 import it.attendance100.mybicocca.data.database.dao.ReferenceDao
 import it.attendance100.mybicocca.data.database.dao.StudyPlanDao
 import it.attendance100.mybicocca.data.database.dao.TaxDao
@@ -32,6 +32,7 @@ import it.attendance100.mybicocca.data.model.badge.Badge
 import it.attendance100.mybicocca.data.model.calendar.CalendarEvent
 import it.attendance100.mybicocca.data.model.campus.Building
 import it.attendance100.mybicocca.data.model.campus.Room
+import it.attendance100.mybicocca.data.model.career.Career
 import it.attendance100.mybicocca.data.model.course.Course
 import it.attendance100.mybicocca.data.model.course.CourseGrade
 import it.attendance100.mybicocca.data.model.degreeaward.CommitteeApplication
@@ -40,10 +41,9 @@ import it.attendance100.mybicocca.data.model.exam.ExamBooking
 import it.attendance100.mybicocca.data.model.exam.ExamCall
 import it.attendance100.mybicocca.data.model.forum.Forum
 import it.attendance100.mybicocca.data.model.internship.InternshipApplication
+import it.attendance100.mybicocca.data.model.isee.IseeDeclaration
 import it.attendance100.mybicocca.data.model.messaging.Conversation
 import it.attendance100.mybicocca.data.model.quiz.Quiz
-import it.attendance100.mybicocca.data.model.career.Career
-import it.attendance100.mybicocca.data.model.isee.IseeDeclaration
 import it.attendance100.mybicocca.data.model.reference.AcademicYear
 import it.attendance100.mybicocca.data.model.reference.CourseType
 import it.attendance100.mybicocca.data.model.reference.DidacticStructure
@@ -93,7 +93,7 @@ import it.attendance100.mybicocca.data.model.user.User
         DidacticStructure::class,
         IseeDeclaration::class,
     ],
-    version = 7,
+    version = 8,
     exportSchema = false,
 )
 @TypeConverters(MyBicoccaTypeConverters::class)

@@ -47,8 +47,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.ViewModelStoreOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.data.model.studyplan.PlannedCourse
 import it.attendance100.mybicocca.ui.component.DualActionBottomBar
@@ -56,7 +58,13 @@ import it.attendance100.mybicocca.util.rememberHapticManager
 
 @Composable
 fun PianoCarrieraScreen(
-    viewModel: PianoCarrieraViewModel = hiltViewModel(),
+    viewModel: PianoCarrieraViewModel = hiltViewModel(
+        checkNotNull<ViewModelStoreOwner>(
+            LocalViewModelStoreOwner.current
+        ) {
+            "No ViewModelStoreOwner was provided via LocalViewModelStoreOwner"
+        }, null
+    ),
 ) {
     val courses by viewModel.courses.collectAsStateWithLifecycle()
     val headers by viewModel.headers.collectAsStateWithLifecycle()

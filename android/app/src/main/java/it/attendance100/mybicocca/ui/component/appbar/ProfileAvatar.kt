@@ -23,7 +23,7 @@ fun ProfileAvatar(
     profilePic: ByteArray?,
     contentDescription: String?,
     modifier: Modifier = Modifier,
-    size: Dp = 32.dp,
+    size: Dp = 37.dp,
 ) {
     if (profilePic != null) {
         SubcomposeAsyncImage(

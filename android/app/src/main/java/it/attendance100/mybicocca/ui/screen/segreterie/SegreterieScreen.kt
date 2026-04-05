@@ -57,13 +57,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.ViewModelStoreOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.ui.component.AutoScrollingFilterRow
 import it.attendance100.mybicocca.ui.component.DualActionBottomBar
-import it.attendance100.mybicocca.ui.component.card.SimpleCard
 import it.attendance100.mybicocca.ui.component.SingleActionBottomBar
+import it.attendance100.mybicocca.ui.component.card.SimpleCard
 import it.attendance100.mybicocca.util.rememberHapticManager
 import kotlinx.coroutines.delay
 import kotlin.random.Random
@@ -134,7 +136,13 @@ fun SegreterieScreen(
     onNavigateToReservations: () -> Unit = {},
     onNavigateToAttendance: () -> Unit = {},
     onNavigateToStage: () -> Unit = {},
-    viewModel: SegreterieViewModel = hiltViewModel(),
+    viewModel: SegreterieViewModel = hiltViewModel(
+        checkNotNull<ViewModelStoreOwner>(
+            LocalViewModelStoreOwner.current
+        ) {
+            "No ViewModelStoreOwner was provided via LocalViewModelStoreOwner"
+        }, null
+    ),
 ) {
     val primaryColor = MaterialTheme.colorScheme.primary
     val haptic = rememberHapticManager()

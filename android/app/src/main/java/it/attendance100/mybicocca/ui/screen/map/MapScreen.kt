@@ -8,8 +8,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.ViewModelStoreOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import it.attendance100.mybicocca.ui.component.map.BuildingDetailSheet
 import it.attendance100.mybicocca.ui.component.map.CampusMap
 
@@ -18,7 +20,13 @@ import it.attendance100.mybicocca.ui.component.map.CampusMap
 fun MapScreen(
     onNavigateTo360: (url: String, roomName: String) -> Unit = { _, _ -> },
     searchQuery: String = "",
-    viewModel: MapViewModel = hiltViewModel(),
+    viewModel: MapViewModel = hiltViewModel(
+        checkNotNull<ViewModelStoreOwner>(
+            LocalViewModelStoreOwner.current
+        ) {
+            "No ViewModelStoreOwner was provided via LocalViewModelStoreOwner"
+        }, null
+    ),
 ) {
     val buildings by viewModel.buildings.collectAsStateWithLifecycle()
     val isRefreshing by viewModel.isRefreshing.collectAsStateWithLifecycle()
