@@ -54,7 +54,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.ViewModelStoreOwner
+import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.ui.component.DashboardTile
 import it.attendance100.mybicocca.ui.component.profile.CreditCard
@@ -70,7 +72,13 @@ import java.util.Locale
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileScreen(
-	viewModel: ProfileViewModel = hiltViewModel(),
+	viewModel: ProfileViewModel = hiltViewModel(
+		checkNotNull<ViewModelStoreOwner>(
+			LocalViewModelStoreOwner.current
+		) {
+			"No ViewModelStoreOwner was provided via LocalViewModelStoreOwner"
+		}, null
+	),
 ) {
 	val user by viewModel.user.collectAsState()
 	val career by viewModel.activeCareer.collectAsState()

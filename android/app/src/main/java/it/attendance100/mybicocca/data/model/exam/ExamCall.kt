@@ -9,6 +9,8 @@ import java.time.LocalTime
 data class ExamCall(
     @PrimaryKey val id: Long,
     val careerId: Long,
+    val courseOfStudyId: Long = 0,
+    val activityId: Long = 0,
     val activityName: String,
     val activityCode: String? = null,
     val date: LocalDate? = null,

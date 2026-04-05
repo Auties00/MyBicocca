@@ -3,6 +3,7 @@ package it.attendance100.mybicocca.ui.screen.segreterie.taxes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import it.attendance100.mybicocca.data.datastore.AuthTokenStore
 import it.attendance100.mybicocca.data.model.tax.TaxCharge
 import it.attendance100.mybicocca.data.repository.CareerRepository
 import it.attendance100.mybicocca.data.repository.TaxRepository
@@ -22,6 +23,7 @@ import javax.inject.Inject
 class TaxesViewModel @Inject constructor(
     private val taxRepository: TaxRepository,
     private val careerRepository: CareerRepository,
+    private val authTokenStore: AuthTokenStore,
 ) : ViewModel() {
 
     private val activeCareer = careerRepository.observeAll()
@@ -35,6 +37,9 @@ class TaxesViewModel @Inject constructor(
     private val _isRefreshing = MutableStateFlow(false)
     val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
 
+    private val _error = MutableStateFlow<String?>(null)
+    val error: StateFlow<String?> = _error.asStateFlow()
+
     init {
         refresh()
     }
@@ -42,9 +47,19 @@ class TaxesViewModel @Inject constructor(
     fun refresh() {
         viewModelScope.launch {
             _isRefreshing.value = true
-            val studentId = activeCareer.value?.studentId ?: 0L
-            taxRepository.refreshCharges(studentId, studentId)
-            _isRefreshing.value = false
+            _error.value = null
+            try {
+                val studentId = activeCareer.value?.studentId ?: 0L
+                val personId = authTokenStore.esse3PersonId
+                taxRepository.refreshCharges(studentId, studentId)
+                if (personId != -1L) {
+                    taxRepository.refreshInvoices(personId, studentId)
+                }
+            } catch (e: Exception) {
+                _error.value = e.message ?: "Errore durante il caricamento"
+            } finally {
+                _isRefreshing.value = false
+            }
         }
     }
 }

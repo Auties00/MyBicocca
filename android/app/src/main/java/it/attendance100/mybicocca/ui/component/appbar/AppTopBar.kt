@@ -57,6 +57,7 @@ import it.attendance100.mybicocca.R
 import kotlin.coroutines.cancellation.CancellationException
 
 private enum class BarMode { PAGE, SUB_PAGE, SEARCH }
+
 private const val MAX_BACK_PROGRESS = 0.9f
 
 @Composable
@@ -146,7 +147,7 @@ fun AppTopBar(
                 .fillMaxWidth()
                 .padding(horizontal = horizontalPadding),
             shape = RoundedCornerShape(cornerRadius),
-            color = MaterialTheme.colorScheme.surfaceContainerHigh,
+            color = MaterialTheme.colorScheme.surfaceContainer,
             tonalElevation = lerp(6.dp, 0.dp, p),
         ) {
             Column {
@@ -163,7 +164,7 @@ fun AppTopBar(
                             ) { onSearchActiveChange(true) }
                             else Modifier
                         )
-                        .padding(horizontal = 4.dp),
+                        .padding(horizontal = 10.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     // Leading icon — crossfade driven by p
@@ -175,6 +176,7 @@ fun AppTopBar(
                                 BarMode.SEARCH -> closeSearch()
                             }
                         },
+                        modifier = Modifier.size(37.dp)
                     ) {
                         Box {
                             Icon(
@@ -207,6 +209,7 @@ fun AppTopBar(
                                 .graphicsLayer {
                                     alpha = avatarAlpha * popupFade
                                     translationX = p * size.width * 0.15f
+                                    translationY = 5f
                                 },
                             contentAlignment = Alignment.Center,
                         ) {
@@ -281,7 +284,7 @@ fun AppTopBar(
                         ) {
                             Box(
                                 modifier = Modifier
-                                    .size(32.dp)
+                                    .size(37.dp)
                                     .onGloballyPositioned { coords ->
                                         val pos = coords.positionInRoot()
                                         val size = coords.size

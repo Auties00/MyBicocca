@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -33,8 +34,11 @@ class PianoCarrieraViewModel @Inject constructor(
         .flatMapLatest { career -> studyPlanRepository.observeHeaders(career?.studentId ?: 0) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
-    val courses: StateFlow<List<PlannedCourse>> = activeCareer
-        .flatMapLatest { career -> studyPlanRepository.observeCourses(career?.studentId ?: 0) }
+    val courses: StateFlow<List<PlannedCourse>> = headers
+        .flatMapLatest { hdrs ->
+            val planId = hdrs.firstOrNull()?.id ?: return@flatMapLatest flowOf(emptyList())
+            studyPlanRepository.observeCourses(planId)
+        }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     private val _isRefreshing = MutableStateFlow(false)
@@ -47,7 +51,13 @@ class PianoCarrieraViewModel @Inject constructor(
     fun refresh() {
         viewModelScope.launch {
             _isRefreshing.value = true
-            studyPlanRepository.refreshHeaders(activeCareer.value?.studentId ?: 0L)
+            val studentId = activeCareer.value?.studentId ?: 0L
+            studyPlanRepository.refreshHeaders(studentId)
+            // After headers are refreshed, load courses for the first plan
+            val planId = headers.value.firstOrNull()?.id
+            if (planId != null) {
+                studyPlanRepository.refreshCourses(studentId, planId)
+            }
             _isRefreshing.value = false
         }
     }

@@ -1,13 +1,24 @@
 package it.attendance100.mybicocca.ui.navigation
 
 import androidx.activity.compose.PredictiveBackHandler
+import androidx.compose.animation.AnimatedContentScope
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionLayout
+import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOut
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Box
@@ -29,10 +40,13 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -42,6 +56,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
@@ -50,8 +65,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.lerp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.ViewModelStoreOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -61,6 +78,7 @@ import androidx.navigation.toRoute
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.data.model.career.Career
 import it.attendance100.mybicocca.data.model.user.User
+import it.attendance100.mybicocca.ui.component.StatusIndicator
 import it.attendance100.mybicocca.ui.component.appbar.AccountSwitcherPopup
 import it.attendance100.mybicocca.ui.component.appbar.AppTopBar
 import it.attendance100.mybicocca.ui.component.appbar.ProfileAvatar
@@ -84,6 +102,13 @@ import it.attendance100.mybicocca.ui.screen.segreterie.reservations.Reservations
 import it.attendance100.mybicocca.ui.screen.segreterie.studyplan.PianoCarrieraScreen
 import it.attendance100.mybicocca.ui.screen.segreterie.taxes.TaxDetailScreen
 import it.attendance100.mybicocca.ui.screen.segreterie.taxes.TaxesScreen
+import it.attendance100.mybicocca.ui.screen.settings.AppInfoScreen
+import it.attendance100.mybicocca.ui.screen.settings.AppearanceSettingsScreen
+import it.attendance100.mybicocca.ui.screen.settings.BehaviourSettingsScreen
+import it.attendance100.mybicocca.ui.screen.settings.DeveloperSettingsScreen
+import it.attendance100.mybicocca.ui.screen.settings.GeneralSettingsScreen
+import it.attendance100.mybicocca.ui.screen.settings.SecuritySettingsScreen
+import it.attendance100.mybicocca.ui.screen.settings.SettingsScreen
 import it.attendance100.mybicocca.ui.screen.splash.SplashScreen
 import it.attendance100.mybicocca.ui.theme.PrimaryColor
 import it.attendance100.mybicocca.util.rememberHapticManager
@@ -98,6 +123,45 @@ private enum class Tab(val label: String, val icon: ImageVector) {
     Map("Luoghi", Icons.Default.Map),
     Segreterie("Segreterie", Icons.Default.Work),
 }
+
+// CompositionLocals for shared element transitions
+@OptIn(ExperimentalSharedTransitionApi::class)
+val LocalSharedTransitionScope = compositionLocalOf<SharedTransitionScope?> { null }
+val LocalAnimatedContentScope = compositionLocalOf<AnimatedContentScope> {
+    error("No AnimatedContentScope found")
+}
+
+// Navigation transition specs
+private val kNavEasing = CubicBezierEasing(0f, 1f, 0.57f, 0.93f)
+
+private val kDefaultPopExitTransition = scaleOut(
+    targetScale = 0.9f,
+    transformOrigin = TransformOrigin(0.5f, 0.5f),
+    animationSpec = tween(300, easing = kNavEasing),
+) + fadeOut(
+    targetAlpha = 0.1f,
+    animationSpec = tween(300, easing = kNavEasing),
+) + slideOutHorizontally(
+    targetOffsetX = { it / 4 },
+    animationSpec = tween(300, easing = kNavEasing),
+)
+
+private val kProfilePopExitTransition = scaleOut(
+    targetScale = 0.9f,
+    transformOrigin = TransformOrigin(0.5f, 0.5f),
+    animationSpec = tween(300, easing = kNavEasing),
+) + fadeOut(
+    targetAlpha = 0.01f,
+    animationSpec = tween(200, easing = CubicBezierEasing(0f, 1f, 0f, 1f)),
+) + slideOut(
+    targetOffset = { IntOffset(-(it.height) / 10, -(it.width) / 4) },
+    animationSpec = tween(300, easing = kNavEasing),
+)
+
+private val kDefaultPopEnterTransition = slideInHorizontally(
+    initialOffsetX = { -it / 2 },
+    animationSpec = tween(300, easing = kNavEasing),
+)
 
 private fun resolveSubPageTitle(
     entry: androidx.navigation.NavBackStackEntry?,
@@ -119,24 +183,46 @@ private fun resolveSubPageTitle(
         dest.hasRoute<AppRoutes.Questionnaires>() -> "Questionari"
         dest.hasRoute<AppRoutes.Reservations>() -> "Prenotazioni"
         dest.hasRoute<AppRoutes.Internships>() -> "Stage"
+        dest.hasRoute<AppRoutes.Settings>() -> "Impostazioni"
+        dest.hasRoute<AppRoutes.SettingsAppearance>() -> "Aspetto"
+        dest.hasRoute<AppRoutes.SettingsGeneral>() -> "Generale"
+        dest.hasRoute<AppRoutes.SettingsBehaviour>() -> "Comportamento"
+        dest.hasRoute<AppRoutes.SettingsSecurity>() -> "Sicurezza"
+        dest.hasRoute<AppRoutes.SettingsDeveloper>() -> "Sviluppatore"
+        dest.hasRoute<AppRoutes.AppInfo>() -> "Info App"
+        dest.hasRoute<AppRoutes.LoginManager>() -> "Login Manager"
         else -> null
     }
 }
 
 @Composable
-fun MyBicoccaNavHost(viewModel: AppNavHostViewModel = hiltViewModel()) {
+fun MyBicoccaNavHost(
+    viewModel: AppNavHostViewModel = hiltViewModel(
+        checkNotNull<ViewModelStoreOwner>(
+            LocalViewModelStoreOwner.current
+        ) {
+            "No ViewModelStoreOwner was provided via LocalViewModelStoreOwner"
+        }, null
+    )
+) {
     val rootNavController = rememberNavController()
     val rootEntry by rootNavController.currentBackStackEntryAsState()
     val profilePic by viewModel.profilePic.collectAsStateWithLifecycle(initialValue = null)
     val user by viewModel.user.collectAsStateWithLifecycle(initialValue = null)
     val activeCareer by viewModel.activeCareer.collectAsStateWithLifecycle(initialValue = null)
+    val isOnline by viewModel.isOnline.collectAsStateWithLifecycle()
 
     val isInApp = rootEntry?.destination?.route?.let { route ->
         route != AppRoutes.Splash::class.qualifiedName && route != AppRoutes.Login::class.qualifiedName
     } ?: false
 
     if (isInApp) {
-        MainShell(profilePic = profilePic, user = user, activeCareer = activeCareer)
+        MainShell(
+            profilePic = profilePic,
+            user = user,
+            activeCareer = activeCareer,
+            isOnline = isOnline
+        )
     } else {
         NavHost(navController = rootNavController, startDestination = AppRoutes.Splash) {
             composable<AppRoutes.Splash> {
@@ -167,11 +253,13 @@ fun MyBicoccaNavHost(viewModel: AppNavHostViewModel = hiltViewModel()) {
     }
 }
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 private fun MainShell(
     profilePic: ByteArray?,
     user: User?,
     activeCareer: Career?,
+    isOnline: Boolean = true,
 ) {
     var selectedTab by rememberSaveable { mutableStateOf(Tab.Calendar) }
     var showAccountSwitcher by remember { mutableStateOf(false) }
@@ -211,6 +299,10 @@ private fun MainShell(
     var searchTriggered by remember { mutableStateOf(false) }
     val searchBounce = remember { Animatable(1f) }
     var searchTriggerTime by remember { mutableStateOf<LocalDateTime?>(null) }
+
+    // Lock swipe direction once established to prevent cancel-drag triggering opposite gesture
+    // -1 = locked left (profile), 0 = undecided, 1 = locked right (search)
+    var swipeLock by remember { mutableIntStateOf(0) }
 
     var avatarSourceCenter by remember { mutableStateOf(Offset.Zero) }
     var avatarTargetCenter by remember { mutableStateOf(Offset.Zero) }
@@ -256,20 +348,21 @@ private fun MainShell(
             searchBounce.animateTo(1.0f)
         }
     }
-
+    val baseS = 50f
+    val baseS2 = baseS + 2f
     val currentAvatarScale by remember {
         derivedStateOf {
             val perc = profileDragDist.coerceAtMost(swipeThreshold) / 100f
-            val baseSize = 44f * (1f - perc) + 46f * perc
-            (baseSize / 44f) * profileBounce.value
+            val baseSize = baseS * (1f - perc) + baseS2 * perc
+            (baseSize / baseS) * profileBounce.value
         }
     }
 
     val currentSearchScale by remember {
         derivedStateOf {
             val perc = searchDragDist.coerceAtMost(swipeThreshold) / 100f
-            val baseSize = 44f * (1f - perc) + 46f * perc
-            (baseSize / 44f) * searchBounce.value
+            val baseSize = baseS * (1f - perc) + baseS2 * perc
+            (baseSize / baseS) * searchBounce.value
         }
     }
 
@@ -339,10 +432,12 @@ private fun MainShell(
                         searchDragDist = 0f
                         profileTriggered = false
                         searchTriggered = false
+                        swipeLock = 0
                     },
                     onDragEnd = {
                         profileDragDist = 0f
                         searchDragDist = 0f
+                        swipeLock = 0
                         if (swipeProfileEnabled && profileTriggered) {
                             showAccountSwitcher = true
                             profileTriggered = false
@@ -365,14 +460,20 @@ private fun MainShell(
                         searchDragDist = 0f
                         profileTriggered = false
                         searchTriggered = false
+                        swipeLock = 0
                     },
                     onHorizontalDrag = { change, dragAmount ->
                         if (change.isConsumed) return@detectHorizontalDragGestures
 
                         change.consume()
 
+                        // Lock direction on first meaningful drag
+                        if (swipeLock == 0 && kotlin.math.abs(dragAmount) > 1f) {
+                            swipeLock = if (dragAmount < 0) -1 else 1
+                        }
+
                         // Leftward swipe (negative dragAmount) → profile
-                        if (swipeProfileEnabled) {
+                        if (swipeProfileEnabled && swipeLock == -1) {
                             profileDragDist = (profileDragDist - dragAmount).coerceAtLeast(0f)
 
                             if (profileDragDist > swipeThreshold && !profileTriggered) {
@@ -386,7 +487,7 @@ private fun MainShell(
                         }
 
                         // Rightward swipe (positive dragAmount) → search
-                        if (swipeSearchEnabled) {
+                        if (swipeSearchEnabled && swipeLock == 1) {
                             searchDragDist = (searchDragDist + dragAmount).coerceAtLeast(0f)
 
                             if (searchDragDist > swipeThreshold && !searchTriggered) {
@@ -424,6 +525,12 @@ private fun MainShell(
                 )
             },
         ) { innerPadding ->
+            // Offline / session expired indicator
+            StatusIndicator(
+                isOffline = !isOnline,
+                isSessionExpired = false,
+            )
+
             val p = topBarProgress.value
             val bottomBarHeight = lerp(80.dp, 0.dp, p)
             val contentModifier = Modifier
@@ -464,88 +571,228 @@ private fun MainShell(
                     }
                 }
 
-                // Sub-page NavHost (on top, with fade transitions)
+                // Sub-page NavHost (on top, with shared element transitions)
+                SharedTransitionLayout {
+                    CompositionLocalProvider(LocalSharedTransitionScope provides this) {
                 NavHost(
                     navController = subNavController,
                     startDestination = AppRoutes.TabRoot,
                     modifier = contentModifier.fillMaxSize(),
                     enterTransition = { fadeIn(spring(stiffness = Spring.StiffnessMediumLow)) },
-                    exitTransition = { ExitTransition.None },
-                    popEnterTransition = { EnterTransition.None },
-                    popExitTransition = { fadeOut(spring(stiffness = Spring.StiffnessMediumLow)) },
+                    exitTransition = { fadeOut(tween(700)) },
+                    popEnterTransition = { kDefaultPopEnterTransition },
+                    popExitTransition = { kDefaultPopExitTransition },
                 ) {
-                    composable<AppRoutes.TabRoot> {}
+                    composable<AppRoutes.TabRoot> {
+                        CompositionLocalProvider(LocalAnimatedContentScope provides this) {}
+                    }
 
                     // First-level sub-pages (gesture drives top bar + bottom bar + content)
-                    composable<AppRoutes.Profile> {
-                        FirstLevelSubPage(topBarProgress, subNavController) {
-                            ProfileScreen()
+                    composable<AppRoutes.Profile>(
+                        enterTransition = {
+                            scaleIn(
+                                initialScale = 0.0f,
+                                transformOrigin = TransformOrigin(0.94f, 0.05f),
+                            ) + fadeIn(tween(300, easing = kNavEasing))
+                        },
+                        exitTransition = { ExitTransition.None },
+                        popExitTransition = { kProfilePopExitTransition },
+                        popEnterTransition = { EnterTransition.None },
+                    ) {
+                        CompositionLocalProvider(LocalAnimatedContentScope provides this) {
+                            FirstLevelSubPage(topBarProgress, subNavController) {
+                                ProfileScreen()
+                            }
                         }
                     }
                     composable<AppRoutes.Room360View> { entry ->
-                        val route = entry.toRoute<AppRoutes.Room360View>()
-                        FirstLevelSubPage(topBarProgress, subNavController) {
-                            Room360Screen(url = route.url)
+                        CompositionLocalProvider(LocalAnimatedContentScope provides this) {
+                            val route = entry.toRoute<AppRoutes.Room360View>()
+                            FirstLevelSubPage(topBarProgress, subNavController) {
+                                Room360Screen(url = route.url)
+                            }
                         }
                     }
-                    composable<AppRoutes.Booking> {
-                        FirstLevelSubPage(topBarProgress, subNavController) {
-                            BookingScreen(
-                                onNavigateToDetail = { id -> navigate(AppRoutes.BookingDetail(id)) },
-                            )
+                    composable<AppRoutes.Booking>(
+                        enterTransition = { kDefaultPopEnterTransition + fadeIn() },
+                    ) {
+                        CompositionLocalProvider(LocalAnimatedContentScope provides this) {
+                            FirstLevelSubPage(topBarProgress, subNavController) {
+                                BookingScreen(
+                                    onNavigateToDetail = { id -> navigate(AppRoutes.BookingDetail(id)) },
+                                )
+                            }
                         }
                     }
                     composable<AppRoutes.Booked> {
-                        FirstLevelSubPage(topBarProgress, subNavController) { BookedScreen() }
+                        CompositionLocalProvider(LocalAnimatedContentScope provides this) {
+                            FirstLevelSubPage(topBarProgress, subNavController) { BookedScreen() }
+                        }
                     }
-                    composable<AppRoutes.Taxes> {
-                        FirstLevelSubPage(topBarProgress, subNavController) {
-                            TaxesScreen(
-                                onNavigateToDetail = { id -> navigate(AppRoutes.TaxDetail(id)) },
-                            )
+                    composable<AppRoutes.Taxes>(
+                        enterTransition = { kDefaultPopEnterTransition + fadeIn() },
+                    ) {
+                        CompositionLocalProvider(LocalAnimatedContentScope provides this) {
+                            FirstLevelSubPage(topBarProgress, subNavController) {
+                                TaxesScreen(
+                                    onNavigateToDetail = { id -> navigate(AppRoutes.TaxDetail(id)) },
+                                )
+                            }
                         }
                     }
                     composable<AppRoutes.StudyPlan> {
-                        FirstLevelSubPage(
-                            topBarProgress,
-                            subNavController
-                        ) { PianoCarrieraScreen() }
+                        CompositionLocalProvider(LocalAnimatedContentScope provides this) {
+                            FirstLevelSubPage(topBarProgress, subNavController) {
+                                PianoCarrieraScreen()
+                            }
+                        }
                     }
                     composable<AppRoutes.Isee> {
-                        FirstLevelSubPage(topBarProgress, subNavController) { IseeScreen() }
+                        CompositionLocalProvider(LocalAnimatedContentScope provides this) {
+                            FirstLevelSubPage(topBarProgress, subNavController) { IseeScreen() }
+                        }
                     }
                     composable<AppRoutes.SelfCertificates> {
-                        FirstLevelSubPage(
-                            topBarProgress,
-                            subNavController
-                        ) { SelfCertificatesScreen() }
+                        CompositionLocalProvider(LocalAnimatedContentScope provides this) {
+                            FirstLevelSubPage(topBarProgress, subNavController) {
+                                SelfCertificatesScreen()
+                            }
+                        }
                     }
                     composable<AppRoutes.ExamResults> {
-                        FirstLevelSubPage(topBarProgress, subNavController) { ExamResultsScreen() }
+                        CompositionLocalProvider(LocalAnimatedContentScope provides this) {
+                            FirstLevelSubPage(topBarProgress, subNavController) {
+                                ExamResultsScreen()
+                            }
+                        }
                     }
                     composable<AppRoutes.Attendance> {
-                        FirstLevelSubPage(topBarProgress, subNavController) { AttendanceScreen() }
+                        CompositionLocalProvider(LocalAnimatedContentScope provides this) {
+                            FirstLevelSubPage(topBarProgress, subNavController) {
+                                AttendanceScreen()
+                            }
+                        }
                     }
                     composable<AppRoutes.Questionnaires> {
-                        FirstLevelSubPage(
-                            topBarProgress,
-                            subNavController
-                        ) { QuestionnairesScreen() }
+                        CompositionLocalProvider(LocalAnimatedContentScope provides this) {
+                            FirstLevelSubPage(topBarProgress, subNavController) {
+                                QuestionnairesScreen()
+                            }
+                        }
                     }
                     composable<AppRoutes.Reservations> {
-                        FirstLevelSubPage(topBarProgress, subNavController) { ReservationsScreen() }
+                        CompositionLocalProvider(LocalAnimatedContentScope provides this) {
+                            FirstLevelSubPage(topBarProgress, subNavController) {
+                                ReservationsScreen()
+                            }
+                        }
                     }
                     composable<AppRoutes.Internships> {
-                        FirstLevelSubPage(topBarProgress, subNavController) { StageScreen() }
+                        CompositionLocalProvider(LocalAnimatedContentScope provides this) {
+                            FirstLevelSubPage(topBarProgress, subNavController) { StageScreen() }
+                        }
                     }
 
-                    // Deeper sub-pages (NavHost handles back, bars stay in SUB_PAGE mode)
-                    composable<AppRoutes.BookingDetail> { entry ->
-                        val route = entry.toRoute<AppRoutes.BookingDetail>()
-                        SubPageBackground { ExamSessionDetailScreen(sessionId = route.sessionId) }
+                    // Deeper sub-pages (shared element transitions handle enter/exit)
+                    composable<AppRoutes.BookingDetail>(
+                        enterTransition = { EnterTransition.None },
+                        exitTransition = { ExitTransition.None },
+                    ) { entry ->
+                        CompositionLocalProvider(LocalAnimatedContentScope provides this) {
+                            val route = entry.toRoute<AppRoutes.BookingDetail>()
+                            SubPageBackground {
+                                ExamSessionDetailScreen(sessionId = route.sessionId)
+                            }
+                        }
                     }
-                    composable<AppRoutes.TaxDetail> {
-                        SubPageBackground { TaxDetailScreen() }
+                    composable<AppRoutes.TaxDetail>(
+                        enterTransition = { EnterTransition.None },
+                        exitTransition = { ExitTransition.None },
+                    ) {
+                        CompositionLocalProvider(LocalAnimatedContentScope provides this) {
+                            SubPageBackground { TaxDetailScreen() }
+                        }
+                    }
+
+                    // Settings screens
+                    composable<AppRoutes.Settings> {
+                        CompositionLocalProvider(LocalAnimatedContentScope provides this) {
+                            FirstLevelSubPage(topBarProgress, subNavController) {
+                                SettingsScreen(
+                                    onNavigateBack = { subNavController.popBackStack() },
+                                    onNavigateToAppearance = { navigate(AppRoutes.SettingsAppearance) },
+                                    onNavigateToGeneral = { navigate(AppRoutes.SettingsGeneral) },
+                                    onNavigateToBehaviour = { navigate(AppRoutes.SettingsBehaviour) },
+                                    onNavigateToSecurity = { navigate(AppRoutes.SettingsSecurity) },
+                                    onNavigateToDeveloper = { navigate(AppRoutes.SettingsDeveloper) },
+                                    onNavigateToLoginManager = { navigate(AppRoutes.LoginManager) },
+                                    onNavigateToAppInfo = { navigate(AppRoutes.AppInfo) },
+                                )
+                            }
+                        }
+                    }
+                    composable<AppRoutes.SettingsAppearance> {
+                        CompositionLocalProvider(LocalAnimatedContentScope provides this) {
+                            SubPageBackground {
+                                AppearanceSettingsScreen(
+                                    onNavigateBack = { subNavController.popBackStack() },
+                                )
+                            }
+                        }
+                    }
+                    composable<AppRoutes.SettingsGeneral> {
+                        CompositionLocalProvider(LocalAnimatedContentScope provides this) {
+                            SubPageBackground {
+                                GeneralSettingsScreen(
+                                    onNavigateBack = { subNavController.popBackStack() },
+                                )
+                            }
+                        }
+                    }
+                    composable<AppRoutes.SettingsBehaviour> {
+                        CompositionLocalProvider(LocalAnimatedContentScope provides this) {
+                            SubPageBackground {
+                                BehaviourSettingsScreen(
+                                    onNavigateBack = { subNavController.popBackStack() },
+                                )
+                            }
+                        }
+                    }
+                    composable<AppRoutes.SettingsSecurity> {
+                        CompositionLocalProvider(LocalAnimatedContentScope provides this) {
+                            SubPageBackground {
+                                SecuritySettingsScreen(
+                                    onNavigateBack = { subNavController.popBackStack() },
+                                )
+                            }
+                        }
+                    }
+                    composable<AppRoutes.SettingsDeveloper> {
+                        CompositionLocalProvider(LocalAnimatedContentScope provides this) {
+                            SubPageBackground {
+                                DeveloperSettingsScreen(
+                                    onNavigateBack = { subNavController.popBackStack() },
+                                )
+                            }
+                        }
+                    }
+                    composable<AppRoutes.AppInfo> {
+                        CompositionLocalProvider(LocalAnimatedContentScope provides this) {
+                            SubPageBackground {
+                                AppInfoScreen(
+                                    onNavigateBack = { subNavController.popBackStack() },
+                                )
+                            }
+                        }
+                    }
+                    composable<AppRoutes.LoginManager> {
+                        CompositionLocalProvider(LocalAnimatedContentScope provides this) {
+                            SubPageBackground {
+                                // TODO: LoginManagerScreen
+                            }
+                        }
+                    }
+                }
                     }
                 }
 
@@ -612,7 +859,7 @@ private fun MainShell(
             onProfileClick = { dismissPopupAndRun { navigate(AppRoutes.Profile) } },
             onAddAccount = { dismissPopupAndRun() },
             onManageAccounts = { dismissPopupAndRun() },
-            onSettingsClick = { dismissPopupAndRun() },
+            onSettingsClick = { dismissPopupAndRun { navigate(AppRoutes.Settings) } },
         )
 
         // Flying avatar overlay
@@ -620,7 +867,7 @@ private fun MainShell(
         val p = popupProgress.value
         val effectiveTarget =
             if (avatarTargetCenter == Offset.Zero) avatarSourceCenter else avatarTargetCenter
-        val avatarSizeDp = lerp(32.dp, 72.dp, p)
+        val avatarSizeDp = lerp(37.dp, 72.dp, p)
         val avatarSizePx = with(density) { avatarSizeDp.toPx() }
         val avatarCenter = if (avatarSourceCenter != Offset.Zero) Offset(
             x = avatarSourceCenter.x + (effectiveTarget.x - avatarSourceCenter.x) * p,
@@ -641,7 +888,7 @@ private fun MainShell(
             modifier = Modifier
                 .offset {
                     IntOffset(
-                        (avatarCenter.x - avatarSizePx / 2f).toInt(),
+                        (avatarCenter.x - avatarSizePx / 2f).toInt() + 10,
                         (avatarCenter.y - avatarSizePx / 2f).toInt(),
                     )
                 }

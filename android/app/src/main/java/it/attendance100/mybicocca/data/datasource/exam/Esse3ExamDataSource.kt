@@ -17,20 +17,25 @@ class Esse3ExamDataSource @Inject constructor(
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
 ) {
     suspend fun getExamCalls(careerId: Long): List<ExamCall> = withContext(ioDispatcher) {
-        // Fetch available activities with exam calls for the student
         val activities = esse3Api.calesa.getActivitiesForExamCalls()
         val results = mutableListOf<ExamCall>()
+        val today = java.time.LocalDate.now().toString()
 
         for (activity in activities) {
+            val cdsId = activity.courseOfStudyDefaultCallId
+            val adId = activity.activityExamDefinitionId.toLong()
             val sessions = esse3Api.calesa.getExamCalls(
-                courseOfStudyId = activity.courseOfStudyDefaultCallId,
-                activityId = activity.activityExamDefinitionId.toLong(),
+                courseOfStudyId = cdsId,
+                activityId = adId,
+                minCallDate = today,
             )
             sessions.forEach { session ->
                 results.add(
                     ExamCall(
                         id = session.examCallId ?: session.callId?.toLong() ?: return@forEach,
                         careerId = careerId,
+                        courseOfStudyId = cdsId,
+                        activityId = adId,
                         activityName = session.activityDescription ?: activity.activityDescription ?: "",
                         activityCode = session.activityCode ?: activity.activityCode,
                         date = session.callStartDate?.let { runCatching { java.time.LocalDate.parse(it) }.getOrNull() },
@@ -52,7 +57,47 @@ class Esse3ExamDataSource @Inject constructor(
     }
 
     suspend fun getBookings(careerId: Long): List<ExamBooking> = withContext(ioDispatcher) {
-        // TODO: Map from esse3Api - requires matching enrolled exam calls with student data
-        emptyList()
+        val activities = esse3Api.calesa.getActivitiesForExamCalls()
+        val studentId = careerId
+        val results = mutableListOf<ExamBooking>()
+        val today = java.time.LocalDate.now().toString()
+
+        for (activity in activities) {
+            val cdsId = activity.courseOfStudyDefaultCallId
+            val adId = activity.activityExamDefinitionId.toLong()
+            val sessions = esse3Api.calesa.getExamCalls(
+                courseOfStudyId = cdsId,
+                activityId = adId,
+                minCallDate = today,
+            )
+
+            for (session in sessions) {
+                val callId = session.examCallId ?: session.callId?.toLong() ?: continue
+                val enrollment = runCatching {
+                    esse3Api.calesa.getEnrolledExamCall(
+                        courseOfStudyId = cdsId,
+                        activityId = adId,
+                        callId = callId,
+                        studentId = studentId,
+                    )
+                }.getOrNull() ?: continue
+
+                results.add(
+                    ExamBooking(
+                        id = enrollment.applicationListId ?: callId,
+                        careerId = careerId,
+                        activityName = enrollment.studentActivityDescription
+                            ?: session.activityDescription
+                            ?: activity.activityDescription
+                            ?: "",
+                        examDate = enrollment.graduationDate ?: session.callStartDate,
+                        bookingDate = enrollment.insertionDate,
+                        position = enrollment.position,
+                    )
+                )
+            }
+        }
+
+        results
     }
 }

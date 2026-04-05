@@ -38,8 +38,8 @@ val MyBicoccaDarkColorScheme = darkColorScheme(
     surfaceContainer = SurfaceContainerColor,
     surfaceContainerHigh = SurfaceContainerHighColor,
     surfaceContainerHighest = SurfaceContainerHighestColor,
-    onSurfaceVariant = OnSurfaceColor,
-    surfaceVariant = OnSurfaceVariantColor,
+    onSurfaceVariant = OnSurfaceVariantColor,
+    surfaceVariant = SurfaceVariantColor,
     outline = OutlineColor,
     outlineVariant = OutlineVariantColor,
     inverseSurface = InverseSurfaceColor,
@@ -74,8 +74,8 @@ val MyBicoccaLightColorScheme = lightColorScheme(
     surfaceContainer = SurfaceContainerColorLight,
     surfaceContainerHigh = SurfaceContainerHighColorLight,
     surfaceContainerHighest = SurfaceContainerHighestColorLight,
-    onSurfaceVariant = OnSurfaceColorLight,
-    surfaceVariant = OnSurfaceVariantColorLight,
+    onSurfaceVariant = OnSurfaceVariantColorLight,
+    surfaceVariant = SurfaceVariantColorLight,
     outline = OutlineColorLight,
     outlineVariant = OutlineVariantColorLight,
     inverseSurface = InverseSurfaceColorLight,
@@ -108,15 +108,24 @@ fun MyBicoccaTheme(
     if (!view.isInEditMode) {
         SideEffect {
             val window = (view.context as Activity).window
-            val statusBarColor = if (darkTheme) BackgroundColor.toArgb() else BackgroundColorLight.toArgb()
-            @Suppress("DEPRECATION")
-            window.statusBarColor = statusBarColor
+            val color = if (darkTheme) BackgroundColor.toArgb() else BackgroundColorLight.toArgb()
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM) {
+                window.decorView.setOnApplyWindowInsetsListener { v, insets ->
+                    v.setBackgroundColor(color)
+                    v.setPadding(0, 0, 0, 0)
+                    insets
+                }
+            } else {
+                @Suppress("DEPRECATION")
+                window.statusBarColor = color
+            }
             WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !darkTheme
         }
     }
 
     MaterialTheme(
         colorScheme = colorScheme,
+        typography = MyBicoccaTypography,
         content = content,
     )
 }

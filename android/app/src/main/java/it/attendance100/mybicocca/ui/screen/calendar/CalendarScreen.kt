@@ -1,16 +1,49 @@
 package it.attendance100.mybicocca.ui.screen.calendar
 
-import androidx.compose.animation.*
-import androidx.compose.foundation.*
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.pager.*
-import androidx.compose.material3.*
-import androidx.compose.material3.pulltorefresh.*
-import androidx.compose.runtime.*
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.SizeTransform
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.ScrollState
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.pager.PagerState
+import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.ViewModelStoreOwner
+import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import it.attendance100.mybicocca.data.model.calendar.CalendarEvent
+import it.attendance100.mybicocca.ui.component.calendar.CalendarConfig
+import it.attendance100.mybicocca.ui.component.calendar.CalendarUtils
 import it.attendance100.mybicocca.ui.component.calendar.dialog.DatePickerDialog
 import it.attendance100.mybicocca.ui.component.calendar.dialog.EventDetailDialog
 import it.attendance100.mybicocca.ui.component.calendar.filter.CalendarFilterModal
@@ -19,9 +52,9 @@ import it.attendance100.mybicocca.ui.component.calendar.header.HorizontalDaySele
 import it.attendance100.mybicocca.ui.component.calendar.view.DayTimelineView
 import it.attendance100.mybicocca.ui.component.calendar.view.MonthGridView
 import it.attendance100.mybicocca.ui.component.calendar.view.WeekGridView
-import it.attendance100.mybicocca.ui.component.calendar.CalendarConfig
-import it.attendance100.mybicocca.ui.component.calendar.CalendarUtils
-import it.attendance100.mybicocca.ui.theme.*
+import it.attendance100.mybicocca.ui.theme.BackgroundColor
+import it.attendance100.mybicocca.ui.theme.GrayColorDark
+import it.attendance100.mybicocca.ui.theme.GrayColorLight
 import kotlinx.coroutines.launch
 import java.time.DayOfWeek
 import java.time.LocalDate
@@ -32,7 +65,13 @@ fun CalendarRoute(
     searchQuery: String = "",
     onProvideFilterToggle: ((() -> Unit)?) -> Unit = {},
     onFilterActiveChanged: (Boolean) -> Unit = {},
-    viewModel: CalendarViewModel = hiltViewModel(),
+    viewModel: CalendarViewModel = hiltViewModel(
+        checkNotNull<ViewModelStoreOwner>(
+            LocalViewModelStoreOwner.current
+        ) {
+            "No ViewModelStoreOwner was provided via LocalViewModelStoreOwner"
+        }, null
+    ),
 ) {
     // Collect all state
     val selectedDate by viewModel.selectedDate.collectAsState()

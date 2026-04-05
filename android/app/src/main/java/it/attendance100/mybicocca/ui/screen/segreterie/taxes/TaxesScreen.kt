@@ -35,8 +35,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.ViewModelStoreOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.data.model.tax.TaxCharge
 import it.attendance100.mybicocca.ui.component.ActionBottomBar
@@ -71,7 +73,13 @@ fun TaxStatusFilter.label(): String {
 @Composable
 fun TaxesScreen(
     onNavigateToDetail: (Long) -> Unit,
-    viewModel: TaxesViewModel = hiltViewModel(),
+    viewModel: TaxesViewModel = hiltViewModel(
+        checkNotNull<ViewModelStoreOwner>(
+            LocalViewModelStoreOwner.current
+        ) {
+            "No ViewModelStoreOwner was provided via LocalViewModelStoreOwner"
+        }, null
+    ),
 ) {
     var selectedStatus by remember { mutableStateOf(TaxStatusFilter.All) }
     val charges by viewModel.charges.collectAsStateWithLifecycle()
@@ -80,11 +88,12 @@ fun TaxesScreen(
     val shownCharges = remember(selectedStatus, charges) {
         when (selectedStatus) {
             TaxStatusFilter.All -> charges
-            TaxStatusFilter.Pagati -> charges.filter {
-                it.status == "PAGATO" || it.status == "PAGATO_CONFERMATO"
+            TaxStatusFilter.Pagati -> charges.filter { it.status == "PAID" }
+            TaxStatusFilter.NonPagati -> charges.filter {
+                it.status == "PENDING" || it.status == "EXPIRED"
             }
-            TaxStatusFilter.NonPagati -> charges.filter { it.status == "NON_PAGATO" }
-            TaxStatusFilter.InAttesa -> charges.filter { it.status == "IN_ATTESA" }
+
+            TaxStatusFilter.InAttesa -> charges.filter { it.status == "PENDING" }
         }
     }
 
@@ -269,7 +278,7 @@ fun TaxCard(
                         // Status
                         Text(
                             text = when (charge.status) {
-                                "PAGATO", "PAGATO_CONFERMATO" -> if (charge.paymentDate != null) {
+                                "PAID" -> if (charge.paymentDate != null) {
                                     val formattedDate = runCatching {
                                         UiFormatter.getFullDate(
                                             LocalDate.parse(charge.paymentDate, DateTimeFormatter.ISO_LOCAL_DATE),
@@ -277,16 +286,19 @@ fun TaxCard(
                                         )
                                     }.getOrDefault(charge.paymentDate)
                                     "Pagata il $formattedDate"
-                                } else "Non pagata"
-                                "IN_ATTESA" -> "IN ATTESA"
-                                "NON_PAGATO" -> "NON PAGATO"
+                                } else "Pagata"
+
+                                "PENDING" -> "Da pagare"
+                                "EXPIRED" -> "Scaduta"
+                                "CANCELED" -> "Annullata"
                                 else -> charge.status
                             },
                             style = MaterialTheme.typography.labelSmall,
                             fontWeight = FontWeight.Bold,
                             textAlign = TextAlign.End,
                             color = when (charge.status) {
-                                "PAGATO", "PAGATO_CONFERMATO" -> Color(0xFF4CAF50)
+                                "PAID" -> Color(0xFF4CAF50)
+                                "CANCELED" -> MaterialTheme.colorScheme.onSurfaceVariant
                                 else -> MaterialTheme.colorScheme.error
                             },
                         )
