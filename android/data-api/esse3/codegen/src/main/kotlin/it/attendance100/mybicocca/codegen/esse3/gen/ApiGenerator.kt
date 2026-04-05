@@ -3,6 +3,7 @@ package it.attendance100.mybicocca.codegen.esse3.gen
 import it.attendance100.mybicocca.codegen.esse3.Glossary
 import it.attendance100.mybicocca.codegen.esse3.renderTranslated
 import it.attendance100.mybicocca.codegen.esse3.sanitizeParamName
+import it.attendance100.mybicocca.codegen.esse3.spec.ParameterLocation
 import it.attendance100.mybicocca.codegen.esse3.spec.ParsedOperation
 import it.attendance100.mybicocca.codegen.esse3.spec.ParsedSpec
 import it.attendance100.mybicocca.codegen.esse3.spec.ResolvedType
@@ -111,6 +112,8 @@ object ApiGenerator {
 
         val params = buildParameterList(op, glossary)
 
+        generateKDoc(sb, op, glossary)
+
         sb.append("    suspend fun $functionName(")
         if (params.isNotEmpty()) {
             sb.appendLine()
@@ -148,6 +151,36 @@ object ApiGenerator {
 
         sb.append(methodCall)
         sb.appendLine("    }")
+    }
+
+    private fun generateKDoc(sb: StringBuilder, op: ParsedOperation, glossary: Glossary) {
+        val allParams = buildList {
+            addAll(op.pathParams)
+            if (op.bodyParam != null) add(op.bodyParam)
+            addAll(op.queryParams.filter { it.required })
+            addAll(op.queryParams.filter { !it.required })
+        }
+        val hasParamDocs = allParams.any { it.description != null }
+        if (op.summary == null && !hasParamDocs) return
+
+        sb.appendLine("    /**")
+        if (op.summary != null) {
+            sb.appendLine("     * ${singleLine(op.summary)}")
+        }
+        if (hasParamDocs) {
+            if (op.summary != null) sb.appendLine("     *")
+            for (param in allParams) {
+                val desc = param.description ?: continue
+                val paramName = resolveParamName(param.name, glossary)
+                val name = if (param.location == ParameterLocation.BODY) "body" else paramName
+                sb.appendLine("     * @param $name ${singleLine(desc)}")
+            }
+        }
+        sb.appendLine("     */")
+    }
+
+    private fun singleLine(text: String): String {
+        return text.replace(Regex("\\s*\\n\\s*"), " ").trim()
     }
 
     private fun resolveReturnType(op: ParsedOperation, glossary: Glossary): String? {

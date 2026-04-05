@@ -19,6 +19,21 @@ class Esse3UsersApi(
     json: Json
 ) : Esse3AbstractApi(client, json, "/utenti-service-v1") {
 
+    /**
+     * Recupero degli utenti abilitati presenti a sistema
+     *
+     * @param name nome dell'utente (se viene utilizzato il carattere * viene applicato il like)
+     * @param surname cognome dell'utente (se viene utilizzato il carattere * viene applicato il like)
+     * @param fiscalCode codice fiscale dell'utente
+     * @param groupId id univoco che consente di individuare il gruppo utente
+     * @param email indirizzo email (email personale o di ateneo)
+     * @param userId userId
+     * @param grants elenco nomi funzioni separati da virgola
+     * @param optionalFields specifica la lista dei campi opzionali (che non vengono recupeati di default); impostando il valore `ALL` vengono mostrati tutti i campi. Per gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns* I dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello) Esempi * per il campo childObj con la poprietà childProp utilizzare la notazione `childProp.prop1` * Per visualizzare tutte le proprietà di childObj utilizzare la notazione `childProp.*` * Per visualizzare tutte le proprietà di childObj e di tutti i discendenti utilizzare la notazione `childProp.**`
+     * @param start utilizzato insieme a `limit` per indicare la paginazione sui record; `start` indica il numero del primo record da caricare (se non indicato viene utilizzato 0)
+     * @param limit utilizzato insieme a `start` per indicare la paginazione sui record, `limit` indica il numero di record da recuperare (a partire da `start`); se non indicato viene utilizzato 50, i valori consentiti vanno da 0 a 100
+     * @param order consente di specificare un ordine per il recupero dei record. La sintassi è la seguente * +/- : specifica l'ordinamento (+ = ASC, - = DESC); se omesso viene utilizzato + * field : nome del campo da ordinare E' possibile indicare più campi separandoli da virgola (Es: +annoCorso,+adCod)
+     */
     suspend fun getUsers(
         name: String? = null,
         surname: String? = null,
@@ -47,6 +62,11 @@ class Esse3UsersApi(
         }
     }
 
+    /**
+     * Consente di aggiornare i dati degli utenti
+     *
+     * @param body file CSV che contiene i valori da importare
+     */
     suspend fun postUserSignatureData(
         body: Esse3SignatureImportData
     ): List<Esse3SignatureResponse> {
@@ -56,6 +76,12 @@ class Esse3UsersApi(
         }
     }
 
+    /**
+     * Consente di aggiornare i dati degli utenti
+     *
+     * @param body file CSV che contiene i valori da importare
+     * @param delimiter delimitatore del file CSV, se non valorizzato vale ","
+     */
     suspend fun postUserSignatureDataCsv(
         body: String,
         delimiter: String? = null
@@ -67,6 +93,15 @@ class Esse3UsersApi(
         }
     }
 
+    /**
+     * Recupero delle informazioni relative ad un singolo utente abilitato presente a sistema per identificativo
+     *
+     * @param userId id univoco che consente di individuare l'account utente
+     * @param caseSensitive 1: userId gestito in maniera case sensitive; 0: viene ignorato il case per lo userId. Default 1.
+     * @param grants elenco nomi funzioni separati da virgola
+     * @param aliasRecoveryAuthorization Indica che l’utente indicato sarà ricercato sia tra gli utenti che tra gli alias validi. 0-la ricerca sarà per il solo utente. 1-la ricerca sarà per utente e alias
+     * @param optionalFields specifica la lista dei campi opzionali (che non vengono recupeati di default); impostando il valore `ALL` vengono mostrati tutti i campi. Per gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns* I dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello) Esempi * per il campo childObj con la poprietà childProp utilizzare la notazione `childProp.prop1` * Per visualizzare tutte le proprietà di childObj utilizzare la notazione `childProp.*` * Per visualizzare tutte le proprietà di childObj e di tutti i discendenti utilizzare la notazione `childProp.**`
+     */
     suspend fun getUser(
         userId: String,
         caseSensitive: Int? = null,
@@ -82,6 +117,12 @@ class Esse3UsersApi(
         }
     }
 
+    /**
+     * Permette l'associazione delle credenziali CIE ad una utenza, nel caso questa associazione non esista già
+     *
+     * @param userId id univoco che consente di individuare l'account utente
+     * @param cieCode Identificativo credenziali CIE
+     */
     suspend fun putCieCode(
         userId: String,
         cieCode: String? = null
@@ -91,12 +132,23 @@ class Esse3UsersApi(
         }
     }
 
+    /**
+     * Recupera lo spid code e il cie code associati ad un'utenza
+     *
+     * @param userId id univoco che consente di individuare l'account utente
+     */
     suspend fun getDigitalIdentity(
         userId: String
     ): Esse3DigitalIdentities {
         return executeJsonGet<Esse3DigitalIdentities>("/utenti/${userId}/identitaDigitale", setOf(Esse3PermissionLevel.TECHNICAL_USER))
     }
 
+    /**
+     * Permette l'associazione delle credenziali SPID code ad una utenza, nel caso questa associazione non esista già
+     *
+     * @param userId id univoco che consente di individuare l'account utente
+     * @param spidCode Identificativo credenziali SPID
+     */
     suspend fun putSpidCode(
         userId: String,
         spidCode: String? = null
@@ -106,6 +158,18 @@ class Esse3UsersApi(
         }
     }
 
+    /**
+     * Recupero delle carriere degli studenti
+     *
+     * @param userId id univoco che consente di individuare l'account utente
+     * @param studentStatusCode codice dello stato della carriera
+     * @param statusReasonCode codice del motivo dello stato della carriera
+     * @param fiscalCode codice fiscale dell'utente
+     * @param govIdentifier identificativo di U-Gov che permette di ritirare le informazioni dei responsabili.
+     * @param studentMatricola matricola dello studente
+     * @param externalCareerCode codice esterno carriera
+     * @param order consente di specificare un ordine per il recupero dei record. La sintassi è la seguente * +/- : specifica l'ordinamento (+ = ASC, - = DESC); se omesso viene utilizzato + * field : nome del campo da ordinare E' possibile indicare più campi separandoli da virgola (Es: +annoCorso,+adCod)
+     */
     suspend fun getExtendedCareer(
         userId: String,
         studentStatusCode: String? = null,
@@ -127,6 +191,18 @@ class Esse3UsersApi(
         }
     }
 
+    /**
+     * Recupero dei tratti di carriera di uno studente
+     *
+     * @param userId id univoco che consente di individuare l'account utente
+     * @param studentStatusCode codice dello stato della carriera
+     * @param statusReasonCode codice del motivo dello stato della carriera
+     * @param fiscalCode codice fiscale dell'utente
+     * @param govIdentifier identificativo di U-Gov che permette di ritirare le informazioni dei responsabili.
+     * @param studentMatricola matricola dello studente
+     * @param externalCareerCode codice esterno carriera
+     * @param order consente di specificare un ordine per il recupero dei record. La sintassi è la seguente * +/- : specifica l'ordinamento (+ = ASC, - = DESC); se omesso viene utilizzato + * field : nome del campo da ordinare E' possibile indicare più campi separandoli da virgola (Es: +annoCorso,+adCod)
+     */
     suspend fun getCareerSegments(
         userId: String,
         studentStatusCode: String? = null,

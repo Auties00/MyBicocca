@@ -25,6 +25,12 @@ class Esse3CompetitionsApi(
     json: Json
 ) : Esse3AbstractApi(client, json, "/concorsi-service-v2") {
 
+    /**
+     * Configurazione concorsi
+     *
+     * @param academicYearId anno concorso
+     * @param filter il parametro consente di applicare dei filtri alla classe di modello utilizzando il linguaggio  [RSQL](https://github.com/jirutka/rsql-parser). La lista degli operatori utilizzabili è disponibile [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosullerigherecuperate) *NB* il filtro viene applicato DOPO aver recuperato i dati
+     */
     suspend fun getCompetitions(
         academicYearId: Long? = null,
         filter: String? = null
@@ -35,6 +41,15 @@ class Esse3CompetitionsApi(
         }
     }
 
+    /**
+     * Graduatoria di un concorso
+     *
+     * @param academicYearId anno concorso
+     * @param testId test id concorso
+     * @param personId indetificativo persona
+     * @param start utilizzato insieme a `limit` per indicare la paginazione sui record; `start` indica il numero del primo record da caricare (se non indicato viene utilizzato 0)
+     * @param limit utilizzato insieme a `start` per indicare la paginazione sui record, `limit` indica il numero di record da recuperare (a partire da `start`); se non indicato viene utilizzato 50, i valori consentiti vanno da 0 a 100
+     */
     suspend fun getCompetitionRanking(
         academicYearId: Long,
         testId: Long,
@@ -49,6 +64,15 @@ class Esse3CompetitionsApi(
         }
     }
 
+    /**
+     * Graduatoria di un dettaglio concorso
+     *
+     * @param academicYearId anno concorso
+     * @param testId test id concorso
+     * @param testDetailId identificativo dettaglio concorso
+     * @param start utilizzato insieme a `limit` per indicare la paginazione sui record; `start` indica il numero del primo record da caricare (se non indicato viene utilizzato 0)
+     * @param limit utilizzato insieme a `start` per indicare la paginazione sui record, `limit` indica il numero di record da recuperare (a partire da `start`); se non indicato viene utilizzato 50, i valori consentiti vanno da 0 a 100
+     */
     suspend fun getCompetitionRankingDetail(
         academicYearId: Long,
         testId: Long,
@@ -62,6 +86,12 @@ class Esse3CompetitionsApi(
         }
     }
 
+    /**
+     * Graduatoria di una persona
+     *
+     * @param personId identificativo persona
+     * @param positionId identificativo posizione
+     */
     suspend fun getPersonRanking(
         personId: Long,
         positionId: Long
@@ -69,6 +99,14 @@ class Esse3CompetitionsApi(
         return executeJsonGetList<Esse3CompetitionRankingList>("/concorsi/graduatoria/${personId}/${positionId}/persona", setOf(Esse3PermissionLevel.TECHNICAL_USER))
     }
 
+    /**
+     * Configurazione concorsi
+     *
+     * @param academicYearId anno concorso
+     * @param testId test id concorso
+     * @param start utilizzato insieme a `limit` per indicare la paginazione sui record; `start` indica il numero del primo record da caricare (se non indicato viene utilizzato 0)
+     * @param limit utilizzato insieme a `start` per indicare la paginazione sui record, `limit` indica il numero di record da recuperare (a partire da `start`); se non indicato viene utilizzato 50, i valori consentiti vanno da 0 a 100
+     */
     suspend fun getCompetition(
         academicYearId: Long,
         testId: Long,
@@ -81,6 +119,15 @@ class Esse3CompetitionsApi(
         }
     }
 
+    /**
+     * operazione di import della classifica di un concorso tramite JSON
+     *
+     * @param academicYearId anno concorso
+     * @param testId test id concorso
+     * @param competitionTestsId identificativo prova concorso
+     * @param body Oggetto che contiene la riga da inserire
+     * @param fileTypology tipologia del file di import classifiche
+     */
     suspend fun putCompetitionRanking(
         academicYearId: Long,
         testId: Long,
@@ -95,6 +142,14 @@ class Esse3CompetitionsApi(
         }
     }
 
+    /**
+     * operazione di import della classifica di un concorso tramite file txt o csv
+     *
+     * @param academicYearId identificativo anno
+     * @param testId identificativo del concorso
+     * @param competitionTestsId identificativo della prova
+     * @param fileTypology tipologia del file di import classifiche
+     */
     suspend fun putCompetitionRankingFile(
         academicYearId: Long,
         testId: Long,
@@ -109,6 +164,16 @@ class Esse3CompetitionsApi(
         }
     }
 
+    /**
+     * Classifica delle prove di un concorso
+     *
+     * @param academicYearId anno concorso
+     * @param testId test id concorso
+     * @param personId indetificativo persona
+     * @param order consente di specificare un ordine per il recupero dei record. La sintassi è la seguente * +/- : specifica l'ordinamento (+ = ASC, - = DESC); se omesso viene utilizzato + * field : nome del campo da ordinare E' possibile indicare più campi separandoli da virgola (Es: +annoCorso,+adCod)
+     * @param start utilizzato insieme a `limit` per indicare la paginazione sui record; `start` indica il numero del primo record da caricare (se non indicato viene utilizzato 0)
+     * @param limit utilizzato insieme a `start` per indicare la paginazione sui record, `limit` indica il numero di record da recuperare (a partire da `start`); se non indicato viene utilizzato 50, i valori consentiti vanno da 0 a 100
+     */
     suspend fun getCompetitionRanking(
         academicYearId: Long,
         testId: Long,
@@ -125,6 +190,12 @@ class Esse3CompetitionsApi(
         }
     }
 
+    /**
+     * operazione di import delle graduatorie di un concorso tramite file txt o csv
+     *
+     * @param academicYearId identificativo anno
+     * @param testId identificativo del concorso
+     */
     suspend fun putCompetitionRankingsFile(
         academicYearId: Long,
         testId: Long,
@@ -136,6 +207,14 @@ class Esse3CompetitionsApi(
         }
     }
 
+    /**
+     * operazione di import della classifica di un concorso tramite JSON
+     *
+     * @param academicYearId anno concorso
+     * @param testId test id concorso
+     * @param testDetailId identificativo dettaglio concorso
+     * @param body Oggetto che contiene la riga da inserire
+     */
     suspend fun putRankingTestDetail(
         academicYearId: Long,
         testId: Long,
@@ -148,6 +227,13 @@ class Esse3CompetitionsApi(
         }
     }
 
+    /**
+     * operazione di import della singola graduatoria tramite file txt o csv
+     *
+     * @param academicYearId identificativo anno
+     * @param testId identificativo del concorso
+     * @param testDetailId identificativo del dettaglio concorso
+     */
     suspend fun putRankingTestDetailFile(
         academicYearId: Long,
         testId: Long,
@@ -160,6 +246,15 @@ class Esse3CompetitionsApi(
         }
     }
 
+    /**
+     * Iscrizioni concorsi
+     *
+     * @param academicYearId anno concorso
+     * @param testId test id concorso
+     * @param personId indetificativo persona
+     * @param start utilizzato insieme a `limit` per indicare la paginazione sui record; `start` indica il numero del primo record da caricare (se non indicato viene utilizzato 0)
+     * @param limit utilizzato insieme a `start` per indicare la paginazione sui record, `limit` indica il numero di record da recuperare (a partire da `start`); se non indicato viene utilizzato 50, i valori consentiti vanno da 0 a 100
+     */
     suspend fun getCompetitionEnrolled(
         academicYearId: Long,
         testId: Long,
@@ -174,6 +269,12 @@ class Esse3CompetitionsApi(
         }
     }
 
+    /**
+     * @param academicYearId anno concorso
+     * @param testId test id concorso
+     * @param personId identificativo persona
+     * @param body Oggetto che contiene la riga da inserire
+     */
     suspend fun putCompetitionEnrollment(
         academicYearId: Long,
         testId: Long,
@@ -186,6 +287,14 @@ class Esse3CompetitionsApi(
         }
     }
 
+    /**
+     * Prove di un concorso
+     *
+     * @param academicYearId anno concorso
+     * @param testId test id concorso
+     * @param start utilizzato insieme a `limit` per indicare la paginazione sui record; `start` indica il numero del primo record da caricare (se non indicato viene utilizzato 0)
+     * @param limit utilizzato insieme a `start` per indicare la paginazione sui record, `limit` indica il numero di record da recuperare (a partire da `start`); se non indicato viene utilizzato 50, i valori consentiti vanno da 0 a 100
+     */
     suspend fun getCompetitionTests(
         academicYearId: Long,
         testId: Long,
@@ -198,6 +307,13 @@ class Esse3CompetitionsApi(
         }
     }
 
+    /**
+     * Classifica delle prove di una persona
+     *
+     * @param personId identificativo persona
+     * @param positionId identificativo posizione
+     * @param order consente di specificare un ordine per il recupero dei record. La sintassi è la seguente * +/- : specifica l'ordinamento (+ = ASC, - = DESC); se omesso viene utilizzato + * field : nome del campo da ordinare E' possibile indicare più campi separandoli da virgola (Es: +annoCorso,+adCod)
+     */
     suspend fun getPersonRanking(
         personId: Long,
         positionId: Long,
@@ -208,6 +324,12 @@ class Esse3CompetitionsApi(
         }
     }
 
+    /**
+     * Dettaglio di un iscritto ad un concorso
+     *
+     * @param personId identificativo persona
+     * @param positionId identificativo posizione
+     */
     suspend fun getCompetitionEnrolledDetail(
         personId: Long,
         positionId: Long

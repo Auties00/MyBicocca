@@ -20,6 +20,26 @@ class Esse3TeachersApi(
     json: Json
 ) : Esse3AbstractApi(client, json, "/docenti-service-v1") {
 
+    /**
+     * @param lecturerMatricola matricola del docente
+     * @param lecturerSurname cognome del docente (se viene utilizzato il carattere * viene applicato il like)
+     * @param lecturerName nome del docente (se viene utilizzato il carattere * viene applicato il like)
+     * @param fiscalCode codice fiscale dell'utente
+     * @param abbreviatedId ID address book della  persona in ugov
+     * @param modificationDate data di ultima modifica
+     * @param insertionDate data di inserimento
+     * @param positionId ID carica
+     * @param courseOfStudyPositionId ID Corso di Studio assiciata alla carica
+     * @param facultyPositionId ID Facoltà/Dipartimento assiciata alla carica
+     * @param positionValidityDate Filtro di una carica valida in una determinata data (formato DD/MM/YYYY)
+     * @param facultyBelongingId ID Facoltà/Dipartimento appartenenza
+     * @param lecturerRolesCode Codice ruoli Docenti
+     * @param start utilizzato insieme a `limit` per indicare la paginazione sui record; `start` indica il numero del primo record da caricare (se non indicato viene utilizzato 0)
+     * @param limit utilizzato insieme a `start` per indicare la paginazione sui record, `limit` indica il numero di record da recuperare (a partire da `start`); se non indicato viene utilizzato 50, i valori consentiti vanno da 0 a 100
+     * @param fields specifica la lista dei campi opzionali (che non vengono recupeati di default); impostando il valore `ALL` vengono mostrati tutti i campi. Per gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns* I dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello) Esempi * per il campo childObj con la poprietà childProp utilizzare la notazione `childProp.prop1` * Per visualizzare tutte le proprietà di childObj utilizzare la notazione `childProp.*` * Per visualizzare tutte le proprietà di childObj e di tutti i discendenti utilizzare la notazione `childProp.**`
+     * @param optionalFields specifica la lista dei campi opzionali (che non vengono recupeati di default); impostando il valore `ALL` vengono mostrati tutti i campi. Per gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns* I dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello) Esempi * per il campo childObj con la poprietà childProp utilizzare la notazione `childProp.prop1` * Per visualizzare tutte le proprietà di childObj utilizzare la notazione `childProp.*` * Per visualizzare tutte le proprietà di childObj e di tutti i discendenti utilizzare la notazione `childProp.**`
+     * @param order consente di specificare un ordine per il recupero dei record. La sintassi è la seguente * +/- : specifica l'ordinamento (+ = ASC, - = DESC); se omesso viene utilizzato + * field : nome del campo da ordinare E' possibile indicare più campi separandoli da virgola (Es: +annoCorso,+adCod)
+     */
     suspend fun getLecturers(
         lecturerMatricola: String? = null,
         lecturerSurname: String? = null,
@@ -62,6 +82,17 @@ class Esse3TeachersApi(
         }
     }
 
+    /**
+     * Recupero ruoli dei docenti
+     *
+     * @param lecturerRoleCode Codice ruolo docente.
+     * @param csaCode Codice CSA.
+     * @param lecturerRoleTypeCode Codice tipologia ruolo docente.
+     * @param fields specifica la lista dei campi opzionali (che non vengono recupeati di default); impostando il valore `ALL` vengono mostrati tutti i campi. Per gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns* I dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello) Esempi * per il campo childObj con la poprietà childProp utilizzare la notazione `childProp.prop1` * Per visualizzare tutte le proprietà di childObj utilizzare la notazione `childProp.*` * Per visualizzare tutte le proprietà di childObj e di tutti i discendenti utilizzare la notazione `childProp.**`
+     * @param order consente di specificare un ordine per il recupero dei record. La sintassi è la seguente * +/- : specifica l'ordinamento (+ = ASC, - = DESC); se omesso viene utilizzato + * field : nome del campo da ordinare E' possibile indicare più campi separandoli da virgola (Es: +annoCorso,+adCod)
+     * @param start utilizzato insieme a `limit` per indicare la paginazione sui record; `start` indica il numero del primo record da caricare (se non indicato viene utilizzato 0)
+     * @param limit utilizzato insieme a `start` per indicare la paginazione sui record, `limit` indica il numero di record da recuperare (a partire da `start`); se non indicato viene utilizzato 50, i valori consentiti vanno da 0 a 100
+     */
     suspend fun getLecturerRoles(
         lecturerRoleCode: String? = null,
         csaCode: String? = null,
@@ -82,6 +113,11 @@ class Esse3TeachersApi(
         }
     }
 
+    /**
+     * @param lecturerId id del docente
+     * @param fields specifica la lista dei campi opzionali (che non vengono recupeati di default); impostando il valore `ALL` vengono mostrati tutti i campi. Per gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns* I dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello) Esempi * per il campo childObj con la poprietà childProp utilizzare la notazione `childProp.prop1` * Per visualizzare tutte le proprietà di childObj utilizzare la notazione `childProp.*` * Per visualizzare tutte le proprietà di childObj e di tutti i discendenti utilizzare la notazione `childProp.**`
+     * @param optionalFields specifica la lista dei campi opzionali (che non vengono recupeati di default); impostando il valore `ALL` vengono mostrati tutti i campi. Per gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns* I dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello) Esempi * per il campo childObj con la poprietà childProp utilizzare la notazione `childProp.prop1` * Per visualizzare tutte le proprietà di childObj utilizzare la notazione `childProp.*` * Per visualizzare tutte le proprietà di childObj e di tutti i discendenti utilizzare la notazione `childProp.**`
+     */
     suspend fun getLecturer(
         lecturerId: Long,
         fields: String? = null,
@@ -93,6 +129,13 @@ class Esse3TeachersApi(
         }
     }
 
+    /**
+     * effettua l'aggiornamento dell'email di un docente
+     *
+     * @param lecturerId id del docente
+     * @param body Oggetto con i campi da modificare
+     * @param optionalFields specifica la lista dei campi opzionali (che non vengono recupeati di default); impostando il valore `ALL` vengono mostrati tutti i campi. Per gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns* I dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello) Esempi * per il campo childObj con la poprietà childProp utilizzare la notazione `childProp.prop1` * Per visualizzare tutte le proprietà di childObj utilizzare la notazione `childProp.*` * Per visualizzare tutte le proprietà di childObj e di tutti i discendenti utilizzare la notazione `childProp.**`
+     */
     suspend fun putLecturer(
         lecturerId: Long,
         body: Esse3TeacherParameters,
@@ -105,12 +148,23 @@ class Esse3TeachersApi(
         }
     }
 
+    /**
+     * Recupera le note associate ad un docente
+     *
+     * @param lecturerId id del docente
+     */
     suspend fun getLecturerNotes(
         lecturerId: Long
     ): Esse3TeachersNotes {
         return executeJsonGet<Esse3TeachersNotes>("/docenti/${lecturerId}/note", setOf(Esse3PermissionLevel.TECHNICAL_USER, Esse3PermissionLevel.TEACHER))
     }
 
+    /**
+     * Inserisce o aggiorna le note associate ad un docente
+     *
+     * @param lecturerId id del docente
+     * @param body Oggetto con i campi da modificare
+     */
     suspend fun putLecturerNotes(
         lecturerId: Long,
         body: Esse3PutTeacherNotes
@@ -121,6 +175,12 @@ class Esse3TeachersApi(
         }
     }
 
+    /**
+     * Recupera gli orari associati ad un docente
+     *
+     * @param lecturerId id del docente
+     * @param day giorno della settimana (1=Lunedì, 2=Martedì, 3=Mercoledì, 4=Giovedì, 5=Venerdì, 6=Sabato, 7=Domenica)
+     */
     suspend fun getLecturerSchedule(
         lecturerId: Long,
         day: Int? = null
@@ -130,6 +190,12 @@ class Esse3TeachersApi(
         }
     }
 
+    /**
+     * Inserisce gli orari associati ad un docente
+     *
+     * @param lecturerId id del docente
+     * @param body Oggetto con i campi da inserire
+     */
     suspend fun postLecturerSchedule(
         lecturerId: Long,
         body: List<Esse3PostTeacherSchedule>
@@ -140,6 +206,16 @@ class Esse3TeachersApi(
         }
     }
 
+    /**
+     * Aggiorna gli orari associati ad un docente
+     *
+     * @param lecturerId id del docente
+     * @param body Oggetto con i campi da inserire
+     * @param day giorno della settimana (1=Lunedì, 2=Martedì, 3=Mercoledì, 4=Giovedì, 5=Venerdì, 6=Sabato, 7=Domenica)
+     * @param lecturerResearchScheduleId id orario ricevimento docente
+     * @param startTime orario inizio ricevimento
+     * @param endTime orario fine ricevimento
+     */
     suspend fun putLecturerSchedule(
         lecturerId: Long,
         body: Esse3PostTeacherSchedule,
@@ -158,6 +234,15 @@ class Esse3TeachersApi(
         }
     }
 
+    /**
+     * Elimina gli orari associati ad un docente
+     *
+     * @param lecturerId id del docente
+     * @param day giorno della settimana (1=Lunedì, 2=Martedì, 3=Mercoledì, 4=Giovedì, 5=Venerdì, 6=Sabato, 7=Domenica)
+     * @param lecturerResearchScheduleId id orario ricevimento docente
+     * @param startTime orario inizio ricevimento
+     * @param endTime orario fine ricevimento
+     */
     suspend fun deleteLecturerSchedule(
         lecturerId: Long,
         day: Int? = null,

@@ -8,6 +8,8 @@ import it.attendance100.mybicocca.data.model.user.User
 import it.attendance100.mybicocca.data.repository.CareerRepository
 import it.attendance100.mybicocca.data.repository.UserRepository
 import it.attendance100.mybicocca.util.NetworkMonitor
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
@@ -27,8 +29,18 @@ class AppNavHostViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            userRepository.refresh()
-            careerRepository.refresh()
+            listOf(
+                async {
+                    runCatching {
+                        userRepository.refresh()
+                    }
+                },
+                async {
+                    runCatching {
+                        careerRepository.refresh()
+                    }
+                }
+            ).awaitAll()
         }
     }
 }

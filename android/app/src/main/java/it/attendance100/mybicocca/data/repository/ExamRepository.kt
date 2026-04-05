@@ -6,6 +6,7 @@ import it.attendance100.mybicocca.data.datasource.exam.Esse3ExamDataSource
 import it.attendance100.mybicocca.data.model.exam.ExamBooking
 import it.attendance100.mybicocca.data.model.exam.ExamCall
 import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import java.time.LocalDate
@@ -25,9 +26,6 @@ class ExamRepository @Inject constructor(
 
     fun observeBookings(): Flow<List<ExamBooking>> = dao.observeBookings()
 
-    fun observeBookingsByCareer(careerId: Long): Flow<List<ExamBooking>> =
-        dao.observeBookingsByCareer(careerId)
-
     suspend fun refreshExamCalls(
         careerId: Long,
         programCode: String?,
@@ -38,14 +36,14 @@ class ExamRepository @Inject constructor(
             listOf(
                 async { runCatching { refreshBookableExams(careerId) } },
                 async { runCatching { refreshScheduledExams(programCode, startDate, endDate) } },
-            ).map { it.await() }
+            ).awaitAll()
         }
         return if (results.any { it.isSuccess }) Result.success(Unit)
         else Result.failure(results.first { it.isFailure }.exceptionOrNull()!!)
     }
 
-    suspend fun refreshBookings(careerId: Long): Result<Unit> = runCatching {
-        val bookings = esse3Exam.getBookings(careerId)
+    suspend fun refreshBookings(matricolaId: Long?): Result<Unit> = runCatching {
+        val bookings = esse3Exam.getBookings(matricolaId)
         dao.deleteAllBookings()
         dao.upsertBookings(bookings)
     }

@@ -21,10 +21,20 @@ class Esse3AttachmentsApi(
     json: Json
 ) : Esse3AbstractApi(client, json, "/allegati-service-v1") {
 
+    /**
+     * tipologie di allegato
+     */
     suspend fun getAttachmentTypologies(): List<Esse3AttachmentType> {
         return executeJsonGetList<Esse3AttachmentType>("/allegati", setOf(Esse3PermissionLevel.TECHNICAL_USER))
     }
 
+    /**
+     * Recupera le tipologie di allegato ed i relativi codici gestiti da Esse3
+     *
+     * @param sessionLanguageCode codice ISO_6392 della lingua con la quale recuperare le descrizioni, nel caso non sia passato in ingresso viene utilizzata la lingua di default del sistema, e nel caso la lingua richiesta non sia disponibile, viene restituita la descrizione nella lingua di default
+     * @param start utilizzato insieme a `limit` per indicare la paginazione sui record; `start` indica il numero del primo record da caricare (se non indicato viene utilizzato 0)
+     * @param limit utilizzato insieme a `start` per indicare la paginazione sui record, `limit` indica il numero di record da recuperare (a partire da `start`); se non indicato viene utilizzato 50, i valori consentiti vanno da 0 a 100
+     */
     suspend fun getAttachmentTypeCodes(
         sessionLanguageCode: String? = null,
         start: Int? = null,
@@ -37,6 +47,12 @@ class Esse3AttachmentsApi(
         }
     }
 
+    /**
+     * Recupera le estensioni degli allegati ed i relativi codici gestiti da Esse3
+     *
+     * @param start utilizzato insieme a `limit` per indicare la paginazione sui record; `start` indica il numero del primo record da caricare (se non indicato viene utilizzato 0)
+     * @param limit utilizzato insieme a `start` per indicare la paginazione sui record, `limit` indica il numero di record da recuperare (a partire da `start`); se non indicato viene utilizzato 50, i valori consentiti vanno da 0 a 100
+     */
     suspend fun getAttachmentExtension(
         start: Int? = null,
         limit: Int? = null
@@ -47,6 +63,13 @@ class Esse3AttachmentsApi(
         }
     }
 
+    /**
+     * lista degli allegati di una determinata tipologia
+     *
+     * @param attachmentType codice del tipo allegato da recuperare
+     * @param start utilizzato insieme a `limit` per indicare la paginazione sui record; `start` indica il numero del primo record da caricare (se non indicato viene utilizzato 0)
+     * @param limit utilizzato insieme a `start` per indicare la paginazione sui record, `limit` indica il numero di record da recuperare (a partire da `start`); se non indicato viene utilizzato 50, i valori consentiti vanno da 0 a 100
+     */
     suspend fun getAttachmentsByType(
         attachmentType: String,
         start: Int? = null,
@@ -58,6 +81,12 @@ class Esse3AttachmentsApi(
         }
     }
 
+    /**
+     * inserimento metadati allegato
+     *
+     * @param attachmentType codice del tipo allegato da recuperare
+     * @param body Oggetto che contiene i metadati dell'allegato da inserire
+     */
     suspend fun postGenericAttachmentMetadata(
         attachmentType: String,
         body: Esse3GenericAttachmentInsertMetadata
@@ -69,6 +98,12 @@ class Esse3AttachmentsApi(
         ensureSuccess(response, setOf(Esse3PermissionLevel.TECHNICAL_USER))
     }
 
+    /**
+     * metadati di uno specifico allegato
+     *
+     * @param attachmentType codice del tipo allegato da recuperare
+     * @param attachmentId id di upload per caricare un allegato
+     */
     suspend fun getAttachmentMetadata(
         attachmentType: String,
         attachmentId: Long
@@ -76,6 +111,13 @@ class Esse3AttachmentsApi(
         return executeJsonGet<Esse3AttachmentMetadata>("/allegati/${attachmentType}/${attachmentId}", setOf(Esse3PermissionLevel.TECHNICAL_USER))
     }
 
+    /**
+     * modifica metadati di un allegato
+     *
+     * @param attachmentType codice del tipo allegato da recuperare
+     * @param attachmentId id di upload per caricare un allegato
+     * @param body Proprietà modificabili dell'allegato
+     */
     suspend fun validateAttachment(
         attachmentType: String,
         attachmentId: Long,
@@ -87,6 +129,12 @@ class Esse3AttachmentsApi(
         }
     }
 
+    /**
+     * download dell'allegato collegato ai metadati
+     *
+     * @param attachmentType codice del tipo allegato da recuperare
+     * @param attachmentId id di upload per caricare un allegato
+     */
     suspend fun getAttachmentContent(
         attachmentType: String,
         attachmentId: Long
@@ -94,12 +142,22 @@ class Esse3AttachmentsApi(
         return executeStreamGet("/allegati/${attachmentType}/${attachmentId}/blob", setOf(Esse3PermissionLevel.TECHNICAL_USER))
     }
 
+    /**
+     * metadati di upload dell'allegato
+     *
+     * @param uploadId id di upload per caricare un allegato
+     */
     suspend fun getUploadedAttachmentMetadata(
         uploadId: Long
     ): Esse3UploadMetadata {
         return executeJsonGet<Esse3UploadMetadata>("/upload/${uploadId}", setOf(Esse3PermissionLevel.ANY, Esse3PermissionLevel.TECHNICAL_USER))
     }
 
+    /**
+     * cancellazione dei metadati di upload
+     *
+     * @param uploadId id di upload per caricare un allegato
+     */
     suspend fun deleteUploadedAttachment(
         uploadId: Long
     ) {
@@ -107,6 +165,11 @@ class Esse3AttachmentsApi(
         ensureSuccess(response, setOf(Esse3PermissionLevel.ANY, Esse3PermissionLevel.TECHNICAL_USER))
     }
 
+    /**
+     * monitora lo stato di upload dell'allegato
+     *
+     * @param uploadId id di upload per caricare un allegato
+     */
     suspend fun getUploadedAttachmentState(
         uploadId: Long
     ) {
@@ -114,6 +177,11 @@ class Esse3AttachmentsApi(
         ensureSuccess(response, setOf(Esse3PermissionLevel.ANY, Esse3PermissionLevel.TECHNICAL_USER))
     }
 
+    /**
+     * operazione di upload dell'allegato
+     *
+     * @param uploadId id di upload per caricare un allegato
+     */
     suspend fun uploadAttachment(
         uploadId: Long,
         body: kotlinx.serialization.json.JsonObject

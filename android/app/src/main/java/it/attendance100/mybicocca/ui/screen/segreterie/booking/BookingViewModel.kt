@@ -4,14 +4,13 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import it.attendance100.mybicocca.data.model.exam.ExamCall
-import it.attendance100.mybicocca.data.model.exam.ExamBooking
 import it.attendance100.mybicocca.data.repository.CareerRepository
 import it.attendance100.mybicocca.data.repository.ExamRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.time.LocalDate
@@ -23,14 +22,7 @@ class BookingViewModel @Inject constructor(
     private val careerRepository: CareerRepository,
 ) : ViewModel() {
 
-    private val activeCareer = careerRepository.observeAll()
-        .map { it.firstOrNull() }
-        .stateIn(viewModelScope, SharingStarted.Eagerly, null)
-
     val examCalls: StateFlow<List<ExamCall>> = examRepository.observeExamCalls()
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
-
-    val bookings: StateFlow<List<ExamBooking>> = examRepository.observeBookings()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     private val _isRefreshing = MutableStateFlow(false)
@@ -57,15 +49,16 @@ class BookingViewModel @Inject constructor(
             _isRefreshing.value = true
             _error.value = null
             try {
-                val career = activeCareer.value
+                val career = careerRepository.observeAll()
+                    .first { it.isNotEmpty() }
+                    .first()
                 val now = LocalDate.now()
                 examRepository.refreshExamCalls(
-                    careerId = career?.studentId ?: 0L,
-                    programCode = career?.courseOfStudyCode,
+                    careerId = career.studentId,
+                    programCode = career.courseOfStudyCode,
                     startDate = now,
                     endDate = now.plusMonths(6),
                 )
-                examRepository.refreshBookings(career?.studentId ?: 0L)
             } catch (e: Exception) {
                 _error.value = e.message ?: "Errore durante il caricamento"
             } finally {

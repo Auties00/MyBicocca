@@ -24,9 +24,6 @@ interface ExamDao {
     @Query("SELECT * FROM exam_bookings ORDER BY examDate")
     fun observeBookings(): Flow<List<ExamBooking>>
 
-    @Query("SELECT * FROM exam_bookings WHERE careerId = :careerId ORDER BY examDate")
-    fun observeBookingsByCareer(careerId: Long): Flow<List<ExamBooking>>
-
     @Upsert
     suspend fun upsertBookings(bookings: List<ExamBooking>)
 

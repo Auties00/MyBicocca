@@ -16,10 +16,19 @@ class Esse3LoggingApi(
     json: Json
 ) : Esse3AbstractApi(client, json, "/logging-service-v1") {
 
+    /**
+     * Recupera sessioni in override
+     */
     suspend fun getTlogSessions(): List<Esse3TransactionLogSession> {
         return executeJsonGetList<Esse3TransactionLogSession>("/tlog/sessions", setOf(Esse3PermissionLevel.AUTHENTICATED_USER))
     }
 
+    /**
+     * Aggiunge una nuova sessione in override oppure la modifica, nel caso esista già
+     *
+     * @param sessionId Id della sessione
+     * @param body Oggetto che contiene i dati da inserire nella tlog_session
+     */
     suspend fun putTlogSessions(
         sessionId: String,
         body: Esse3TransactionLogSessionBody
@@ -30,6 +39,15 @@ class Esse3LoggingApi(
         }
     }
 
+    /**
+     * Recupera i log delle procedure
+     *
+     * @param sessionId Id della sessione
+     * @param contextParamsId Id del ctx
+     * @param transactionId Id della transazion
+     * @param startDate data inizio log
+     * @param endDate data fine log
+     */
     suspend fun getTlogText(
         sessionId: String? = null,
         contextParamsId: Long? = null,
@@ -46,6 +64,13 @@ class Esse3LoggingApi(
         }
     }
 
+    /**
+     * Recupera transazioni Tlog
+     *
+     * @param sessionId Id della sessione
+     * @param contextParamsId Id del ctx
+     * @param transactionId Id della transazion
+     */
     suspend fun getTlogTransactions(
         sessionId: String? = null,
         contextParamsId: Long? = null,

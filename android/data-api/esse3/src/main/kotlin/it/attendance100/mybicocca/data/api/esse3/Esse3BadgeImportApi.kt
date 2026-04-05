@@ -18,6 +18,11 @@ class Esse3BadgeImportApi(
     json: Json
 ) : Esse3AbstractApi(client, json, "/importbadge-service-v1") {
 
+    /**
+     * consente di importare uno o più badge (Award)
+     *
+     * @param body Oggetto che contiene il json con i dati da inserire
+     */
     suspend fun postImportAward(
         body: List<Esse3Award>
     ): Esse3AwardReturn {
@@ -27,6 +32,11 @@ class Esse3BadgeImportApi(
         }
     }
 
+    /**
+     * consente di importare una o più tipologie di badge (Badge Class)
+     *
+     * @param body Oggetto che contiene il json con i dati da inserire
+     */
     suspend fun postImportBadgeClass(
         body: List<Esse3BadgeClass>
     ): Esse3BadgeClassReturn {
@@ -36,6 +46,11 @@ class Esse3BadgeImportApi(
         }
     }
 
+    /**
+     * consente di importare i dati di emissione di un badge
+     *
+     * @param body Oggetto che contiene i dati di emissione/annullamento di un badge
+     */
     suspend fun putBadgeIssuing(
         body: Esse3BadgeIssuanceNotification
     ): String {

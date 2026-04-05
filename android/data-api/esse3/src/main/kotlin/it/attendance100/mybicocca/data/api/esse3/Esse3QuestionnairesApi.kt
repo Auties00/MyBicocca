@@ -29,6 +29,16 @@ class Esse3QuestionnairesApi(
     json: Json
 ) : Esse3AbstractApi(client, json, "/questionari-service-v1") {
 
+    /**
+     * Salva le risposte di una pagina di questionario
+     *
+     * @param studentId id della carriera dello studente
+     * @param questionnaireId codice del questionario
+     * @param questionComponentId id del questionario compilato
+     * @param pageId identifica la pagina di un questionario
+     * @param body Oggetto che contiene le risposte alle domande
+     * @param eventComponentId id dell'evento di compilazione del questionario (?)
+     */
     suspend fun savePageAnswers(
         studentId: Long,
         questionnaireId: String,
@@ -44,6 +54,18 @@ class Esse3QuestionnairesApi(
         }
     }
 
+    /**
+     * Crea un nuovo questionario da compilare
+     *
+     * @param questionnaireId codice del questionario
+     * @param activityChoiceId id dell'attivita' didattica di libretto
+     * @param studentId id della carriera dello studente
+     * @param body Metodo alternativo di passare la lista dei tag, il body viene trattato con precedenza. È comunque obbligatorio passare la lista dei tag attraverso il body o attraverso query string
+     * @param eventComponentId id dell'evento di compilazione del questionario (?)
+     * @param questionConfigId id della configurazione del questionario (?)
+     * @param tagList (DEPRECATO, usare tagListB) nodo restituito sul dataset UD_LOG_PDS_LIST_WEB dalla retrieve LISTA_UD_QUEST_VAL_DID
+     * @param raw Gestisce delle operazioni sulla descrizione delle domande e recupero tag * 1 Recupera la lista dei tag e le domande senza sostituire i placeholder. * 0 (default) recupera le domande con i placeholder restituiti, NON recupera la lista dei tag.
+     */
     suspend fun setNewSurvey(
         questionnaireId: String,
         activityChoiceId: Long,
@@ -64,6 +86,17 @@ class Esse3QuestionnairesApi(
         }
     }
 
+    /**
+     * Conferma la compilazione di un questionario
+     *
+     * @param activityChoiceId id dell'attivita' didattica di libretto
+     * @param questionnaireId codice del questionario
+     * @param questionComponentId id del questionario compilato
+     * @param studentId id della carriera dello studente
+     * @param questionConfigId id della configurazione del questionario (?)
+     * @param userComponentId id della sessione di compilazione dell'utente
+     * @param eventComponentId id dell'evento di compilazione del questionario (?)
+     */
     suspend fun putQuestionnaireComponentConfirm(
         activityChoiceId: Long,
         questionnaireId: String,
@@ -80,6 +113,17 @@ class Esse3QuestionnairesApi(
         }
     }
 
+    /**
+     * Recupera una pagina del questionario
+     *
+     * @param studentId id della carriera dello studente
+     * @param activityChoiceId id dell'attivita' didattica di libretto
+     * @param questionnaireId codice del questionario
+     * @param questionComponentId id del questionario compilato
+     * @param pageId identifica la pagina di un questionario
+     * @param userComponentId id della sessione di compilazione dell'utente
+     * @param raw Gestisce delle operazioni sulla descrizione delle domande e recupero tag * 1 Recupera la lista dei tag e le domande senza sostituire i placeholder. * 0 (default) recupera le domande con i placeholder restituiti, NON recupera la lista dei tag.
+     */
     suspend fun getPage(
         studentId: Long,
         activityChoiceId: Long,
@@ -95,6 +139,17 @@ class Esse3QuestionnairesApi(
         }
     }
 
+    /**
+     * Recupera la pagina successiva di un questionario
+     *
+     * @param studentId id della carriera dello studente
+     * @param activityChoiceId id dell'attivita' didattica di libretto
+     * @param questionnaireId codice del questionario
+     * @param questionComponentId id del questionario compilato
+     * @param pageId identifica la pagina di un questionario
+     * @param userComponentId id della sessione di compilazione dell'utente
+     * @param raw Gestisce delle operazioni sulla descrizione delle domande e recupero tag * 1 Recupera la lista dei tag e le domande senza sostituire i placeholder. * 0 (default) recupera le domande con i placeholder restituiti, NON recupera la lista dei tag.
+     */
     suspend fun getNextPage(
         studentId: Long,
         activityChoiceId: Long,
@@ -110,6 +165,17 @@ class Esse3QuestionnairesApi(
         }
     }
 
+    /**
+     * Recupera la pagina precedente di un questionario
+     *
+     * @param studentId id della carriera dello studente
+     * @param activityChoiceId id dell'attivita' didattica di libretto
+     * @param questionnaireId codice del questionario
+     * @param questionComponentId id del questionario compilato
+     * @param pageId identifica la pagina di un questionario
+     * @param userComponentId id della sessione di compilazione dell'utente
+     * @param raw Gestisce delle operazioni sulla descrizione delle domande e recupero tag * 1 Recupera la lista dei tag e le domande senza sostituire i placeholder. * 0 (default) recupera le domande con i placeholder restituiti, NON recupera la lista dei tag.
+     */
     suspend fun getPreviousPage(
         studentId: Long,
         activityChoiceId: Long,
@@ -125,6 +191,18 @@ class Esse3QuestionnairesApi(
         }
     }
 
+    /**
+     * Recupera il riepilogo del questionario compilato
+     *
+     * @param studentId id della carriera dello studente
+     * @param activityChoiceId id dell'attivita' didattica di libretto
+     * @param questionComponentId id del questionario compilato
+     * @param questionnaireId codice del questionario
+     * @param questionConfigId id della configurazione del questionario (?)
+     * @param userComponentId id della sessione di compilazione dell'utente
+     * @param eventComponentId id dell'evento di compilazione del questionario (?)
+     * @param raw Gestisce delle operazioni sulla descrizione delle domande e recupero tag * 1 Recupera la lista dei tag e le domande senza sostituire i placeholder. * 0 (default) recupera le domande con i placeholder restituiti, NON recupera la lista dei tag.
+     */
     suspend fun getComponentSummary(
         studentId: Long,
         activityChoiceId: Long,
@@ -143,6 +221,26 @@ class Esse3QuestionnairesApi(
         }
     }
 
+    /**
+     * Recupera gli ID degli accessi ai questionari compilati. I parametri opzionali filtrano una serie di acccessi. Vista di query V02_QUEST_DOC_VALDID_TAG_USER
+     *
+     * @param questionnaireId codice del questionario
+     * @param academicYearId Id dell'anno accademico di compilazione del questianario
+     * @param userId id utente
+     * @param academicYearOfferActivityId Id dell'anno accademico di offerta della AD valutata
+     * @param courseOfStudyTeachingActivityCode codice del corso di studio della AD valutata
+     * @param courseOfStudyTeachingActivityDescription descrizione del corso di studio della AD valutata (se viene utilizzato il carattere * viene applicato il like)
+     * @param academicYearOrderActivityId Id dell'ordinamento della AD valutata
+     * @param studyPlanTeachingActivityId id del percorso di studio della AD valutata
+     * @param activityCode codice dell'attivita didattica
+     * @param activityDescription descrizione  dell'attivita didattica (se viene utilizzato il carattere * viene applicato il like)
+     * @param lecturerMatricola matricola del docente valutato
+     * @param lecturerSurname cognome del docente valutato
+     * @param lecturerName nome del docente valutato
+     * @param start utilizzato insieme a `limit` per indicare la paginazione sui record; `start` indica il numero del primo record da caricare (se non indicato viene utilizzato 0)
+     * @param limit utilizzato insieme a `start` per indicare la paginazione sui record, `limit` indica il numero di record da recuperare (a partire da `start`); se non indicato viene utilizzato 50, i valori consentiti vanno da 0 a 100
+     * @param order consente di specificare un ordine per il recupero dei record. La sintassi è la seguente * +/- : specifica l'ordinamento (+ = ASC, - = DESC); se omesso viene utilizzato + * field : nome del campo da ordinare E' possibile indicare più campi separandoli da virgola (Es: +annoCorso,+adCod)
+     */
     suspend fun getUserComponentEventInfoAvaDoc(
         questionnaireId: String,
         academicYearId: Int,
@@ -179,6 +277,25 @@ class Esse3QuestionnairesApi(
         }
     }
 
+    /**
+     * Recupera gli ID dei questionari compilati. I parametri opzionali filtrano una serie di questionari. Vista di query V02_QUEST_DOC_VALDID_TAG_COMP
+     *
+     * @param questionnaireId codice del questionario
+     * @param academicYearId Id dell'anno accademico di compilazione del questianario
+     * @param academicYearOfferActivityId Id dell'anno accademico di offerta della AD valutata
+     * @param courseOfStudyTeachingActivityCode codice del corso di studio della AD valutata
+     * @param courseOfStudyTeachingActivityDescription descrizione del corso di studio della AD valutata (se viene utilizzato il carattere * viene applicato il like)
+     * @param academicYearOrderActivityId Id dell'ordinamento della AD valutata
+     * @param studyPlanTeachingActivityId id del percorso di studio della AD valutata
+     * @param activityCode codice dell'attivita didattica
+     * @param activityDescription descrizione  dell'attivita didattica (se viene utilizzato il carattere * viene applicato il like)
+     * @param lecturerMatricola matricola del docente valutato
+     * @param lecturerSurname cognome del docente valutato
+     * @param lecturerName nome del docente valutato
+     * @param start utilizzato insieme a `limit` per indicare la paginazione sui record; `start` indica il numero del primo record da caricare (se non indicato viene utilizzato 0)
+     * @param limit utilizzato insieme a `start` per indicare la paginazione sui record, `limit` indica il numero di record da recuperare (a partire da `start`); se non indicato viene utilizzato 50, i valori consentiti vanno da 0 a 100
+     * @param order consente di specificare un ordine per il recupero dei record. La sintassi è la seguente * +/- : specifica l'ordinamento (+ = ASC, - = DESC); se omesso viene utilizzato + * field : nome del campo da ordinare E' possibile indicare più campi separandoli da virgola (Es: +annoCorso,+adCod)
+     */
     suspend fun getQuestionnaireComponentEventInfoAvaDoc(
         questionnaireId: String,
         academicYearId: Int,
@@ -213,6 +330,20 @@ class Esse3QuestionnairesApi(
         }
     }
 
+    /**
+     * Recupera gli ID degli accessi ai questionari compilati. I parametri opzionali filtrano una serie di acccessi. Vista di query V02_QUEST_GEN_TAG_USER
+     *
+     * @param questionnaireId codice del questionario
+     * @param academicYearId Id dell'anno accademico di compilazione del questianario
+     * @param userId id utente
+     * @param courseOfStudyCode codice del corso di studio dello studente
+     * @param courseOfStudyDescription descrizione del corso di studio dello studente (se viene utilizzato il carattere * viene applicato il like)
+     * @param academicYearOrderId Id dell'ordinamento dello studente
+     * @param studyPlanId id del percorso di studio dello studente
+     * @param start utilizzato insieme a `limit` per indicare la paginazione sui record; `start` indica il numero del primo record da caricare (se non indicato viene utilizzato 0)
+     * @param limit utilizzato insieme a `start` per indicare la paginazione sui record, `limit` indica il numero di record da recuperare (a partire da `start`); se non indicato viene utilizzato 50, i valori consentiti vanno da 0 a 100
+     * @param order consente di specificare un ordine per il recupero dei record. La sintassi è la seguente * +/- : specifica l'ordinamento (+ = ASC, - = DESC); se omesso viene utilizzato + * field : nome del campo da ordinare E' possibile indicare più campi separandoli da virgola (Es: +annoCorso,+adCod)
+     */
     suspend fun getUserComponentEventInfoGeneralQuestionnaire(
         questionnaireId: String,
         academicYearId: Int,
@@ -237,6 +368,19 @@ class Esse3QuestionnairesApi(
         }
     }
 
+    /**
+     * Recupera gli ID dei questionari compilati. I parametri opzionali filtrano una serie di questionari. Vista di query V02_QUEST_GEN_TAG_COMP
+     *
+     * @param questionnaireId codice del questionario
+     * @param academicYearId Id dell'anno accademico di compilazione del questianario
+     * @param courseOfStudyCode codice del corso di studio dello studente
+     * @param courseOfStudyDescription descrizione del corso di studio dello studente (se viene utilizzato il carattere * viene applicato il like)
+     * @param academicYearOrderId Id dell'ordinamento dello studente
+     * @param studyPlanId id del percorso di studio dello studente
+     * @param start utilizzato insieme a `limit` per indicare la paginazione sui record; `start` indica il numero del primo record da caricare (se non indicato viene utilizzato 0)
+     * @param limit utilizzato insieme a `start` per indicare la paginazione sui record, `limit` indica il numero di record da recuperare (a partire da `start`); se non indicato viene utilizzato 50, i valori consentiti vanno da 0 a 100
+     * @param order consente di specificare un ordine per il recupero dei record. La sintassi è la seguente * +/- : specifica l'ordinamento (+ = ASC, - = DESC); se omesso viene utilizzato + * field : nome del campo da ordinare E' possibile indicare più campi separandoli da virgola (Es: +annoCorso,+adCod)
+     */
     suspend fun getQuestionnaireComponentEventInfoGeneralQuestionnaire(
         questionnaireId: String,
         academicYearId: Int,
@@ -259,6 +403,20 @@ class Esse3QuestionnairesApi(
         }
     }
 
+    /**
+     * Recupera gli ID degli accessi ai questionari compilati. I parametri opzionali filtrano una serie di acccessi. Vista di query V02_QUEST_POST_LOGIN_TAG_USER
+     *
+     * @param questionnaireId codice del questionario
+     * @param academicYearId Id dell'anno accademico di compilazione del questianario
+     * @param userId id utente
+     * @param courseOfStudyCode codice del corso di studio dello studente
+     * @param courseOfStudyDescription descrizione del corso di studio dello studente (se viene utilizzato il carattere * viene applicato il like)
+     * @param academicYearOrderId Id dell'ordinamento dello studente
+     * @param studyPlanId id del percorso di studio dello studente
+     * @param start utilizzato insieme a `limit` per indicare la paginazione sui record; `start` indica il numero del primo record da caricare (se non indicato viene utilizzato 0)
+     * @param limit utilizzato insieme a `start` per indicare la paginazione sui record, `limit` indica il numero di record da recuperare (a partire da `start`); se non indicato viene utilizzato 50, i valori consentiti vanno da 0 a 100
+     * @param order consente di specificare un ordine per il recupero dei record. La sintassi è la seguente * +/- : specifica l'ordinamento (+ = ASC, - = DESC); se omesso viene utilizzato + * field : nome del campo da ordinare E' possibile indicare più campi separandoli da virgola (Es: +annoCorso,+adCod)
+     */
     suspend fun getUserComponentEventInfoPostLogin(
         questionnaireId: String,
         academicYearId: Int,
@@ -283,6 +441,19 @@ class Esse3QuestionnairesApi(
         }
     }
 
+    /**
+     * Recupera gli ID dei questionari compilati. I parametri opzionali filtrano una serie di questionari. Vista di query V02_QUEST_POST_LOGIN_TAG_COMP
+     *
+     * @param questionnaireId codice del questionario
+     * @param academicYearId Id dell'anno accademico di compilazione del questianario
+     * @param courseOfStudyCode codice del corso di studio dello studente
+     * @param courseOfStudyDescription descrizione del corso di studio dello studente (se viene utilizzato il carattere * viene applicato il like)
+     * @param academicYearOrderId Id dell'ordinamento dello studente
+     * @param studyPlanId id del percorso di studio dello studente
+     * @param start utilizzato insieme a `limit` per indicare la paginazione sui record; `start` indica il numero del primo record da caricare (se non indicato viene utilizzato 0)
+     * @param limit utilizzato insieme a `start` per indicare la paginazione sui record, `limit` indica il numero di record da recuperare (a partire da `start`); se non indicato viene utilizzato 50, i valori consentiti vanno da 0 a 100
+     * @param order consente di specificare un ordine per il recupero dei record. La sintassi è la seguente * +/- : specifica l'ordinamento (+ = ASC, - = DESC); se omesso viene utilizzato + * field : nome del campo da ordinare E' possibile indicare più campi separandoli da virgola (Es: +annoCorso,+adCod)
+     */
     suspend fun getQuestionnaireComponentEventInfoPostLogin(
         questionnaireId: String,
         academicYearId: Int,
@@ -305,6 +476,26 @@ class Esse3QuestionnairesApi(
         }
     }
 
+    /**
+     * Recupera gli ID degli accessi ai questionari compilati. I parametri opzionali filtrano una serie di acccessi. Vista di query V02_QUEST_VALDID_TAG_USER
+     *
+     * @param questionnaireId codice del questionario
+     * @param academicYearId Id dell'anno accademico di compilazione del questianario
+     * @param userId id utente
+     * @param academicYearOfferActivityId Id dell'anno accademico di offerta della AD valutata
+     * @param courseOfStudyTeachingActivityCode codice del corso di studio della AD valutata
+     * @param courseOfStudyTeachingActivityDescription descrizione del corso di studio della AD valutata (se viene utilizzato il carattere * viene applicato il like)
+     * @param academicYearOrderActivityId Id dell'ordinamento della AD valutata
+     * @param studyPlanTeachingActivityId id del percorso di studio della AD valutata
+     * @param activityCode codice dell'attivita didattica
+     * @param activityDescription descrizione  dell'attivita didattica (se viene utilizzato il carattere * viene applicato il like)
+     * @param lecturerMatricola matricola del docente valutato
+     * @param lecturerSurname cognome del docente valutato
+     * @param lecturerName nome del docente valutato
+     * @param start utilizzato insieme a `limit` per indicare la paginazione sui record; `start` indica il numero del primo record da caricare (se non indicato viene utilizzato 0)
+     * @param limit utilizzato insieme a `start` per indicare la paginazione sui record, `limit` indica il numero di record da recuperare (a partire da `start`); se non indicato viene utilizzato 50, i valori consentiti vanno da 0 a 100
+     * @param order consente di specificare un ordine per il recupero dei record. La sintassi è la seguente * +/- : specifica l'ordinamento (+ = ASC, - = DESC); se omesso viene utilizzato + * field : nome del campo da ordinare E' possibile indicare più campi separandoli da virgola (Es: +annoCorso,+adCod)
+     */
     suspend fun getUserComponentEventInfoDidacticEvaluation(
         questionnaireId: String,
         academicYearId: Int,
@@ -341,6 +532,25 @@ class Esse3QuestionnairesApi(
         }
     }
 
+    /**
+     * Recupera gli ID dei questionari compilati. I parametri opzionali filtrano una serie di questionari. Vista di query V02_QUEST_VALDID_TAG_COMP
+     *
+     * @param questionnaireId codice del questionario
+     * @param academicYearId Id dell'anno accademico di compilazione del questianario
+     * @param academicYearOfferActivityId Id dell'anno accademico di offerta della AD valutata
+     * @param courseOfStudyTeachingActivityCode codice del corso di studio della AD valutata
+     * @param courseOfStudyTeachingActivityDescription descrizione del corso di studio della AD valutata (se viene utilizzato il carattere * viene applicato il like)
+     * @param academicYearOrderActivityId Id dell'ordinamento della AD valutata
+     * @param studyPlanTeachingActivityId id del percorso di studio della AD valutata
+     * @param activityCode codice dell'attivita didattica
+     * @param activityDescription descrizione  dell'attivita didattica (se viene utilizzato il carattere * viene applicato il like)
+     * @param lecturerMatricola matricola del docente valutato
+     * @param lecturerSurname cognome del docente valutato
+     * @param lecturerName nome del docente valutato
+     * @param start utilizzato insieme a `limit` per indicare la paginazione sui record; `start` indica il numero del primo record da caricare (se non indicato viene utilizzato 0)
+     * @param limit utilizzato insieme a `start` per indicare la paginazione sui record, `limit` indica il numero di record da recuperare (a partire da `start`); se non indicato viene utilizzato 50, i valori consentiti vanno da 0 a 100
+     * @param order consente di specificare un ordine per il recupero dei record. La sintassi è la seguente * +/- : specifica l'ordinamento (+ = ASC, - = DESC); se omesso viene utilizzato + * field : nome del campo da ordinare E' possibile indicare più campi separandoli da virgola (Es: +annoCorso,+adCod)
+     */
     suspend fun getQuestionnaireComponentEventInfoDidacticEvaluation(
         questionnaireId: String,
         academicYearId: Int,
@@ -375,6 +585,13 @@ class Esse3QuestionnairesApi(
         }
     }
 
+    /**
+     * Recupera unita' didattiche e situazione questionari valutazione
+     *
+     * @param activityChoiceId id dell'attivita' didattica di libretto
+     * @param eventComponentId id dell'evento di compilazione del questionario (?)
+     * @param domicilePartialCode codice della partizione
+     */
     suspend fun getTeachingUnitQuestionnaireEvaluation(
         activityChoiceId: Long,
         eventComponentId: String,
@@ -386,6 +603,16 @@ class Esse3QuestionnairesApi(
         }
     }
 
+    /**
+     * Tutte le attività del libretto del tratto di carriera selezionato
+     *
+     * @param matId id del tratto di carriera su cui calcolare le statistiche
+     * @param questionFilter se valorizzato permette di recuperare determinate attività * P recupera tutte le attività con questionari a prescindere dal loro stato * C recupera tutte le attività con questionari ancora da compilare
+     * @param optionalFields specifica la lista dei campi opzionali (che non vengono recupeati di default); impostando il valore `ALL` vengono mostrati tutti i campi. Per gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns* I dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello) Esempi * per il campo childObj con la poprietà childProp utilizzare la notazione `childProp.prop1` * Per visualizzare tutte le proprietà di childObj utilizzare la notazione `childProp.*` * Per visualizzare tutte le proprietà di childObj e di tutti i discendenti utilizzare la notazione `childProp.**`
+     * @param fields specifica la lista dei campi opzionali (che non vengono recupeati di default); impostando il valore `ALL` vengono mostrati tutti i campi. Per gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns* I dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello) Esempi * per il campo childObj con la poprietà childProp utilizzare la notazione `childProp.prop1` * Per visualizzare tutte le proprietà di childObj utilizzare la notazione `childProp.*` * Per visualizzare tutte le proprietà di childObj e di tutti i discendenti utilizzare la notazione `childProp.**`
+     * @param order consente di specificare un ordine per il recupero dei record. La sintassi è la seguente * +/- : specifica l'ordinamento (+ = ASC, - = DESC); se omesso viene utilizzato + * field : nome del campo da ordinare E' possibile indicare più campi separandoli da virgola (Es: +annoCorso,+adCod)
+     * @param filter il parametro consente di applicare dei filtri alla classe di modello utilizzando il linguaggio  [RSQL](https://github.com/jirutka/rsql-parser). La lista degli operatori utilizzabili è disponibile [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosullerigherecuperate) *NB* il filtro viene applicato DOPO aver recuperato i dati
+     */
     suspend fun getRecordBookQuestionnaires(
         matId: Long,
         questionFilter: String? = null,
@@ -403,6 +630,14 @@ class Esse3QuestionnairesApi(
         }
     }
 
+    /**
+     * Tutte le attività del libretto del tratto di carriera selezionato
+     *
+     * @param matId id del tratto di carriera su cui calcolare le statistiche
+     * @param activityChoiceId id dell'attivita' didattica di libretto
+     * @param questionFilter se valorizzato permette di recuperare determinate attività * P recupera tutte le attività con questionari a prescindere dal loro stato * C recupera tutte le attività con questionari ancora da compilare
+     * @param optionalFields specifica la lista dei campi opzionali (che non vengono recupeati di default); impostando il valore `ALL` vengono mostrati tutti i campi. Per gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns* I dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello) Esempi * per il campo childObj con la poprietà childProp utilizzare la notazione `childProp.prop1` * Per visualizzare tutte le proprietà di childObj utilizzare la notazione `childProp.*` * Per visualizzare tutte le proprietà di childObj e di tutti i discendenti utilizzare la notazione `childProp.**`
+     */
     suspend fun getRecordBookRow(
         matId: Long,
         activityChoiceId: Long,
@@ -415,18 +650,32 @@ class Esse3QuestionnairesApi(
         }
     }
 
+    /**
+     * Recupera tutti gli elementi del questionario compilato in chiave, con le risposte scelte dal compilatore. Vista di query V02_GEN_QUESTIONARIO ordinata per ORD_VIS ASC
+     *
+     * @param questionComponentId id del questionario compilato
+     */
     suspend fun getCompiledQuestionnaires(
         questionComponentId: Long
     ): List<Esse3CompiledQuestionnaires> {
         return executeJsonGetList<Esse3CompiledQuestionnaires>("/questionari/questionariCompilati/${questionComponentId}/", setOf(Esse3PermissionLevel.TECHNICAL_USER))
     }
 
+    /**
+     * @param domicileInternshipId codice della domanda di tirocinio
+     */
     suspend fun getInternshipQuestionnaires(
         domicileInternshipId: Long
     ): Esse3InternshipQuestionnaires {
         return executeJsonGet<Esse3InternshipQuestionnaires>("/questionari/tirocinio/${domicileInternshipId}", setOf(Esse3PermissionLevel.TECHNICAL_USER))
     }
 
+    /**
+     * @param userId id utente che effettua la modifica
+     * @param questionComponentId id del questionario compilato
+     * @param visibleKind tipologia di visibilità, VIS_DEST_FLG oppure VIS_PUB_FLG
+     * @param visibleValue visibilità da impostare
+     */
     suspend fun setVisibility(
         userId: Long,
         questionComponentId: Long,

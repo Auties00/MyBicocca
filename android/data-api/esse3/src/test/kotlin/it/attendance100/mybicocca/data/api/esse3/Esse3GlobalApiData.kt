@@ -75,7 +75,7 @@ object Esse3GlobalApiData : BeforeAllCallback, AutoCloseable {
             personId = career.personId ?: throw IllegalStateException("No personId in career"),
             studentId = career.studentId ?: throw IllegalStateException("No studentId in career"),
             enrollmentId = career.enrollmentId ?: throw IllegalStateException("No enrollmentId in career"),
-            enrollmentNumber = career.enrollmentId.toString(),
+            matricola = career.enrollmentId.toString(),
             degreeCourseId = career.courseOfStudyId ?: throw IllegalStateException("No degreeCourseId in career"),
             userId = session?.userId ?: throw IllegalStateException("No userId in session")
         )

@@ -15,14 +15,17 @@ data class ParsedOperation(
     val queryParams: List<ParsedParameter>,
     val bodyParam: ParsedParameter?,
     val responseType: ResolvedType?,
-    val permissions: List<String>
+    val permissions: List<String>,
+    val summary: String?,
+    val description: String?
 )
 
 data class ParsedParameter(
     val name: String,
     val type: ResolvedType,
     val required: Boolean,
-    val location: ParameterLocation
+    val location: ParameterLocation,
+    val description: String?
 )
 
 enum class ParameterLocation {
@@ -44,7 +47,8 @@ data class ParsedProperty(
     val itemRef: String?,
     val itemType: String?,
     val itemFormat: String?,
-    val enumValues: List<String>?
+    val enumValues: List<String>?,
+    val description: String?
 )
 
 sealed class ResolvedType {

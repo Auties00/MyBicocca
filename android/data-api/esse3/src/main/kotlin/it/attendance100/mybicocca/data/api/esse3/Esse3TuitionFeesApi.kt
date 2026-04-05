@@ -43,6 +43,11 @@ class Esse3TuitionFeesApi(
     json: Json
 ) : Esse3AbstractApi(client, json, "/tasse-service-v1") {
 
+    /**
+     * Consente di acquisire gli esiti delle borse di studio regionali.
+     *
+     * @param body Oggetto che contiene i dati della borsa da estudio da inserire.
+     */
     suspend fun postAcquireScholarshipOutcomeApplications(
         body: Esse3ScholarshipOutcomeData
     ): List<Esse3ScholarshipOutcomeResponse> {
@@ -52,6 +57,11 @@ class Esse3TuitionFeesApi(
         }
     }
 
+    /**
+     * Inserimento metadati esoneri.
+     *
+     * @param body Oggetto che contiene i dati dell'esonero da inserire.
+     */
     suspend fun postAcquireExemptions(
         body: List<Esse3ExemptionData>
     ): List<Esse3ExemptionResponse> {
@@ -61,6 +71,16 @@ class Esse3TuitionFeesApi(
         }
     }
 
+    /**
+     * @param personId Codice univoco che consente di individuare una persona.
+     * @param academicYearId Identificativo dell'anno accademico.
+     * @param invoiceId Identificativo della fattura.
+     * @param paidFlag Flag che indica se l'addebito è pagato o meno. (1 = solo tasse pagate - null = tutte le tasse - 0 = tasse non pagate)
+     * @param canceledFlag Flag che indica se l'addebito è annullato o meno. (1 = solo tasse annullate - 0 = tasse non non annullate). Il default è 0.
+     * @param start utilizzato insieme a `limit` per indicare la paginazione sui record; `start` indica il numero del primo record da caricare (se non indicato viene utilizzato 0)
+     * @param limit utilizzato insieme a `start` per indicare la paginazione sui record, `limit` indica il numero di record da recuperare (a partire da `start`); se non indicato viene utilizzato 50, i valori consentiti vanno da 0 a 100
+     * @param order consente di specificare un ordine per il recupero dei record. La sintassi è la seguente * +/- : specifica l'ordinamento (+ = ASC, - = DESC); se omesso viene utilizzato + * field : nome del campo da ordinare E' possibile indicare più campi separandoli da virgola (Es: +annoCorso,+adCod)
+     */
     suspend fun getPersonChargesList(
         personId: Long,
         academicYearId: Long? = null,
@@ -82,6 +102,23 @@ class Esse3TuitionFeesApi(
         }
     }
 
+    /**
+     * @param studentId Codice univoco che consente di individuare uno studente.
+     * @param externalStudentCode Codice dello studente dell'archivio esterno.
+     * @param academicYearId Identificativo dell'anno accademico.
+     * @param invoiceId Identificativo della fattura.
+     * @param invoiceExpiration Data di scadenza della fattura.
+     * @param installmentId Identificativo rata.
+     * @param taxTypeCode Tipologia di tassa.
+     * @param expiredFlag Flag che indica se l'addebito è scaduto o meno. (1 = solo tasse scadute - null = tutte le tasse - 0 = tasse non scadute).
+     * @param paidFlag Flag che indica se l'addebito è pagato o meno. (1 = solo tasse pagate - null = tutte le tasse - 0 = tasse non pagate)
+     * @param canceledFlag Flag che indica se l'addebito è annullato o meno. (1 = solo tasse annullate - 0 = tasse non non annullate). Il default è 0.
+     * @param taxCode Codice della tassa.
+     * @param start utilizzato insieme a `limit` per indicare la paginazione sui record; `start` indica il numero del primo record da caricare (se non indicato viene utilizzato 0)
+     * @param limit utilizzato insieme a `start` per indicare la paginazione sui record, `limit` indica il numero di record da recuperare (a partire da `start`); se non indicato viene utilizzato 50, i valori consentiti vanno da 0 a 100
+     * @param order consente di specificare un ordine per il recupero dei record. La sintassi è la seguente * +/- : specifica l'ordinamento (+ = ASC, - = DESC); se omesso viene utilizzato + * field : nome del campo da ordinare E' possibile indicare più campi separandoli da virgola (Es: +annoCorso,+adCod)
+     * @param optionalFields specifica la lista dei campi opzionali (che non vengono recupeati di default); impostando il valore `ALL` vengono mostrati tutti i campi. Per gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns* I dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello) Esempi * per il campo childObj con la poprietà childProp utilizzare la notazione `childProp.prop1` * Per visualizzare tutte le proprietà di childObj utilizzare la notazione `childProp.*` * Per visualizzare tutte le proprietà di childObj e di tutti i discendenti utilizzare la notazione `childProp.**`
+     */
     suspend fun getStudentChargesList(
         studentId: Long? = null,
         externalStudentCode: String? = null,
@@ -118,6 +155,10 @@ class Esse3TuitionFeesApi(
         }
     }
 
+    /**
+     * @param fiscalCode Codice fiscale dello studente.
+     * @param academicYearEnrollmentId Anno di iscrizione.
+     */
     suspend fun getAdisurcMeritScholarships(
         fiscalCode: String,
         academicYearEnrollmentId: Long
@@ -125,6 +166,12 @@ class Esse3TuitionFeesApi(
         return executeJsonGet<Esse3MeritData>("/adisurc/datiMerito/${fiscalCode}/annoIscr/${academicYearEnrollmentId}", setOf(Esse3PermissionLevel.TECHNICAL_USER))
     }
 
+    /**
+     * inserimento metadati allegato fattura
+     *
+     * @param invoiceId Identificativo della fattura.
+     * @param body Oggetto che contiene i metadati dell'allegato da inserire
+     */
     suspend fun postInvoiceAttachmentMetadata(
         invoiceId: Long,
         body: Esse3InvoiceAttachmentMetadata
@@ -136,6 +183,10 @@ class Esse3TuitionFeesApi(
         ensureSuccess(response, setOf(Esse3PermissionLevel.TECHNICAL_USER))
     }
 
+    /**
+     * @param invoiceId Identificativo della fattura che si vuole annullare.
+     * @param cancellationType tipo annullamento, i possibili valori sono 1 e 2.
+     */
     suspend fun cancelInvoice(
         invoiceId: Long,
         cancellationType: Int
@@ -143,6 +194,12 @@ class Esse3TuitionFeesApi(
         return executeJsonPut<Esse3CancelInvoiceResponse>("/annullaFattura/${invoiceId}/tipoAnnullamento/${cancellationType}", setOf(Esse3PermissionLevel.TECHNICAL_USER))
     }
 
+    /**
+     * Annulla un pagamento acquisito manualmente.
+     *
+     * @param invoiceId Identificativo della fattura di cui si vuole chiedere lo stato.
+     * @param cancelCall Flag che indica se annullare anche la convalida del pagamento.
+     */
     suspend fun putCancelPayment(
         invoiceId: Long,
         cancelCall: Int
@@ -151,6 +208,13 @@ class Esse3TuitionFeesApi(
         ensureSuccess(response, setOf(Esse3PermissionLevel.TECHNICAL_USER))
     }
 
+    /**
+     * @param personId Codice univoco che consente di individuare una persona.
+     * @param academicYearId Identificativo dell'anno accademico.
+     * @param start utilizzato insieme a `limit` per indicare la paginazione sui record; `start` indica il numero del primo record da caricare (se non indicato viene utilizzato 0)
+     * @param limit utilizzato insieme a `start` per indicare la paginazione sui record, `limit` indica il numero di record da recuperare (a partire da `start`); se non indicato viene utilizzato 50, i valori consentiti vanno da 0 a 100
+     * @param order consente di specificare un ordine per il recupero dei record. La sintassi è la seguente * +/- : specifica l'ordinamento (+ = ASC, - = DESC); se omesso viene utilizzato + * field : nome del campo da ordinare E' possibile indicare più campi separandoli da virgola (Es: +annoCorso,+adCod)
+     */
     suspend fun getSelfCertification(
         personId: Long,
         academicYearId: Long,
@@ -165,6 +229,12 @@ class Esse3TuitionFeesApi(
         }
     }
 
+    /**
+     * @param academicYearId Identificativo dell'anno accademico.
+     * @param exemptionCode Codice esonero.
+     * @param start utilizzato insieme a `limit` per indicare la paginazione sui record; `start` indica il numero del primo record da caricare (se non indicato viene utilizzato 0)
+     * @param limit utilizzato insieme a `start` per indicare la paginazione sui record, `limit` indica il numero di record da recuperare (a partire da `start`); se non indicato viene utilizzato 50, i valori consentiti vanno da 0 a 100
+     */
     suspend fun getValidExemptionsAcademicYear(
         academicYearId: Long,
         exemptionCode: String? = null,
@@ -178,6 +248,11 @@ class Esse3TuitionFeesApi(
         }
     }
 
+    /**
+     * Respigi esonero.
+     *
+     * @param body Oggetto che contiene i dati dell'esonero da respingere.
+     */
     suspend fun rejectExemption(
         body: Esse3RejectExemption
     ) {
@@ -188,6 +263,11 @@ class Esse3TuitionFeesApi(
         ensureSuccess(response, setOf(Esse3PermissionLevel.TECHNICAL_USER))
     }
 
+    /**
+     * Consente di creare una fattura associata a un anno accademico e a un studente.
+     *
+     * @param body Oggetto che contiene gli addebiti da fatturare.
+     */
     suspend fun postCreateStudentInvoice(
         body: Esse3InvoiceInsert
     ) {
@@ -198,12 +278,22 @@ class Esse3TuitionFeesApi(
         ensureSuccess(response, setOf(Esse3PermissionLevel.TECHNICAL_USER))
     }
 
+    /**
+     * Consente di recuperare i dati di una fattura.
+     *
+     * @param invoiceId Identificativo della fattura di cui si vuole chiedere lo stato.
+     */
     suspend fun getInvoice(
         invoiceId: Long
     ): Esse3Invoices {
         return executeJsonGet<Esse3Invoices>("/fattura/${invoiceId}", setOf(Esse3PermissionLevel.TECHNICAL_USER))
     }
 
+    /**
+     * Inserimento metadati di un incasso.
+     *
+     * @param body Oggetto che contiene i dati del pagamento da inserire
+     */
     suspend fun postCollection(
         body: Esse3CollectionData
     ): Esse3PostCollectionResponse {
@@ -213,6 +303,15 @@ class Esse3TuitionFeesApi(
         }
     }
 
+    /**
+     * @param studentId Codice univoco che consente di individuare uno studente.
+     * @param courseOfStudyId Identificativo del corso di studio
+     * @param academicYearEnrollmentId Identificativo dell'anno d'iscrizione.
+     * @param externalStudentCode Codice dello studente dell'archivio esterno.
+     * @param modificationDate Data di modifica (Usare il formato dd/mm/yyyy).
+     * @param start utilizzato insieme a `limit` per indicare la paginazione sui record; `start` indica il numero del primo record da caricare (se non indicato viene utilizzato 0)
+     * @param limit utilizzato insieme a `start` per indicare la paginazione sui record, `limit` indica il numero di record da recuperare (a partire da `start`); se non indicato viene utilizzato 50, i valori consentiti vanno da 0 a 100
+     */
     suspend fun getStudentExemptionsList(
         studentId: Long? = null,
         courseOfStudyId: Long? = null,
@@ -233,6 +332,17 @@ class Esse3TuitionFeesApi(
         }
     }
 
+    /**
+     * @param personId Codice univoco che consente di individuare una persona.
+     * @param invoiceId Identificativo della fattura.
+     * @param iUV Identificativo Univoco Versamento.
+     * @param noticeCode Codice avviso PagoPA
+     * @param expiredFlag Flag che indica se l'addebito è scaduto o meno. (1 = solo tasse scadute - null = tutte le tasse - 0 = tasse non scadute).
+     * @param paidFlag Flag che indica se l'addebito è pagato o meno. (1 = solo tasse pagate - null = tutte le tasse - 0 = tasse non pagate)
+     * @param canceledInvoice Flag che indica se la fattura è annullata o meno. (1 = solo fatture annullate - 0 = fatture non annullate). Il default è 0.
+     * @param academicYearId Identificativo dell'anno accademico.
+     * @param retrieveAdditionalInfo Indica se recuperare o meno le infoAggiuntive della fattura. Se true si deve valorizzare il fattId di una fattura.
+     */
     suspend fun getInvoicesList(
         personId: Long? = null,
         invoiceId: Long? = null,
@@ -257,6 +367,10 @@ class Esse3TuitionFeesApi(
         }
     }
 
+    /**
+     * @param personId Codice univoco che consente di individuare una persona.
+     * @param invoiceId Identificativo della fattura.
+     */
     suspend fun getPaymentsList(
         personId: Long,
         invoiceId: Long? = null
@@ -266,6 +380,10 @@ class Esse3TuitionFeesApi(
         }
     }
 
+    /**
+     * @param personId Codice univoco che consente di individuare una persona.
+     * @param refundedFlag Flag che indica se considerare le fatture rimborsate, non rimborsate o tutte.
+     */
     suspend fun getRefundsList(
         personId: Long,
         refundedFlag: Int? = null
@@ -275,6 +393,11 @@ class Esse3TuitionFeesApi(
         }
     }
 
+    /**
+     * Inserimento metadati del pagamenti di una fattura.
+     *
+     * @param body Oggetto che contiene i dati del pagamento da inserire
+     */
     suspend fun postPayInvoice(
         body: Esse3InvoicePaymentData
     ): Esse3MessageOutcomeResponse {
@@ -284,18 +407,34 @@ class Esse3TuitionFeesApi(
         }
     }
 
+    /**
+     * .
+     *
+     * @param invoiceId Identificativo della fattura per cui si vuole stampare l'avviso.
+     */
     suspend fun putPrintPagoPANotice(
         invoiceId: Long
     ): ByteReadChannel {
         return executeStreamPut("/pagopa/avviso/${invoiceId}", setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.PROVISIONAL_ENROLLED_STUDENT, Esse3PermissionLevel.REGISTERED_USER, Esse3PermissionLevel.TECHNICAL_USER))
     }
 
+    /**
+     * Chiede lo stato del versamento e in caso di pagamento eseguito lo aggiorna.
+     *
+     * @param invoiceId Identificativo della fattura di cui si vuole chiedere lo stato.
+     */
     suspend fun putRequestPaymentStatus(
         invoiceId: Long
     ): Esse3Payment {
         return executeJsonPut<Esse3Payment>("/pagopa/chiediStatoVersamento/${invoiceId}", setOf(Esse3PermissionLevel.TECHNICAL_USER))
     }
 
+    /**
+     * .
+     *
+     * @param invoiceId Identificativo della fattura per cui si vuole stampare l'avviso.
+     * @param language Lingua in cui si vuole stampare la quietanza, 'it' per italiano, 'en' per inglese.
+     */
     suspend fun getPagoPAReceipt(
         invoiceId: Long,
         language: String
@@ -303,6 +442,11 @@ class Esse3TuitionFeesApi(
         return executeStreamGet("/pagopa/quietanza/${invoiceId}/lingua/${language}", setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.PROVISIONAL_ENROLLED_STUDENT, Esse3PermissionLevel.REGISTERED_USER, Esse3PermissionLevel.TECHNICAL_USER))
     }
 
+    /**
+     * Consente di iniziare una transazione di pagamento immediato pagoPA in Esse3.
+     *
+     * @param body Oggetto che contiene il fattId che si intende pagare.
+     */
     suspend fun postInitPagoPaTransaction(
         body: Esse3PagoPATransaction
     ): Esse3PagoPATransactionResponse {
@@ -312,6 +456,14 @@ class Esse3TuitionFeesApi(
         }
     }
 
+    /**
+     * @param invoiceId Identificativo della fattura.
+     * @param iUV Identificativo Univoco Versamento.
+     * @param academicYearId Identificativo dell'anno accademico.
+     * @param fiscalCode Codice fiscale dello studente.
+     * @param finalState Indica se lo stato della transazione è finale.
+     * @param lastTransaction Indica se la transazione è l'ultima efettuata.
+     */
     suspend fun getPagoPATransactions(
         invoiceId: Long? = null,
         iUV: String? = null,
@@ -330,6 +482,17 @@ class Esse3TuitionFeesApi(
         }
     }
 
+    /**
+     * @param entity Ente che interroga il servizio.
+     * @param iUV Identificativo Univoco Versamento.
+     * @param iur Identificativo univoco di Riscossione.
+     * @param paymentDateFrom Data di pagamento da.
+     * @param paymentDateTo Data di pagamento A.
+     * @param secondaryEntityDomain Codice dominio dell'ente secondario.
+     * @param creditIban Iban di accredito dell'ente secondario.
+     * @param reportingFlowCode Codice del flusso di rendicontazione pagoPA.
+     * @param academicYearDebt Anno del debito.
+     */
     suspend fun getMultibenPayments(
         entity: String,
         iUV: String? = null,
@@ -353,6 +516,10 @@ class Esse3TuitionFeesApi(
         }
     }
 
+    /**
+     * @param invoiceId Identificativo della fattura.
+     * @param iUV Identificativo Univoco Versamento.
+     */
     suspend fun getPagoPAYPayment(
         invoiceId: Long? = null,
         iUV: String? = null
@@ -363,6 +530,11 @@ class Esse3TuitionFeesApi(
         }
     }
 
+    /**
+     * @param studentId Codice univoco che consente di individuare uno studente.
+     * @param academicYearEnrollmentId Identificativo dell'anno d'iscrizione.
+     * @param order consente di specificare un ordine per il recupero dei record. La sintassi è la seguente * +/- : specifica l'ordinamento (+ = ASC, - = DESC); se omesso viene utilizzato + * field : nome del campo da ordinare E' possibile indicare più campi separandoli da virgola (Es: +annoCorso,+adCod)
+     */
     suspend fun getEnrollmentsForTaxes(
         studentId: Long,
         academicYearEnrollmentId: Long? = null,
@@ -374,6 +546,11 @@ class Esse3TuitionFeesApi(
         }
     }
 
+    /**
+     * @param studentId Codice univoco che consente di individuare uno studente.
+     * @param academicYearId Identificativo dell'anno accademico.
+     * @param referenceDate Data di riferimento.
+     */
     suspend fun getTrafficLightParameters(
         studentId: Long,
         academicYearId: Long? = null,
@@ -385,6 +562,11 @@ class Esse3TuitionFeesApi(
         }
     }
 
+    /**
+     * Consente di aggiornare lo status di una transazione in Esse3.
+     *
+     * @param body Oggetto che contiene i dati del pagamento.
+     */
     suspend fun postNotifyStatus(
         body: Esse3SpgTransactionStatusData
     ): Esse3MessageOutcomeResponse {

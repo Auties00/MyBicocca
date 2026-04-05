@@ -6,7 +6,12 @@ import it.attendance100.mybicocca.data.model.exam.ExamBooking
 import it.attendance100.mybicocca.data.model.exam.ExamCall
 import it.attendance100.mybicocca.di.IoDispatcher
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.withContext
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -16,15 +21,19 @@ class Esse3ExamDataSource @Inject constructor(
     private val authTokenStore: AuthTokenStore,
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
 ) {
+    companion object {
+        private val formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")
+    }
+
     suspend fun getExamCalls(careerId: Long): List<ExamCall> = withContext(ioDispatcher) {
-        val activities = esse3Api.calesa.getActivitiesForExamCalls()
+        val activities = esse3Api.examsCalendar.getActivitiesForExamCalls()
         val results = mutableListOf<ExamCall>()
         val today = java.time.LocalDate.now().toString()
 
         for (activity in activities) {
             val cdsId = activity.courseOfStudyDefaultCallId
             val adId = activity.activityExamDefinitionId.toLong()
-            val sessions = esse3Api.calesa.getExamCalls(
+            val sessions = esse3Api.examsCalendar.getExamCalls(
                 courseOfStudyId = cdsId,
                 activityId = adId,
                 minCallDate = today,
@@ -56,48 +65,27 @@ class Esse3ExamDataSource @Inject constructor(
         results
     }
 
-    suspend fun getBookings(careerId: Long): List<ExamBooking> = withContext(ioDispatcher) {
-        val activities = esse3Api.calesa.getActivitiesForExamCalls()
-        val studentId = careerId
-        val results = mutableListOf<ExamBooking>()
-        val today = java.time.LocalDate.now().toString()
-
-        for (activity in activities) {
-            val cdsId = activity.courseOfStudyDefaultCallId
-            val adId = activity.activityExamDefinitionId.toLong()
-            val sessions = esse3Api.calesa.getExamCalls(
-                courseOfStudyId = cdsId,
-                activityId = adId,
-                minCallDate = today,
-            )
-
-            for (session in sessions) {
-                val callId = session.examCallId ?: session.callId?.toLong() ?: continue
-                val enrollment = runCatching {
-                    esse3Api.calesa.getEnrolledExamCall(
-                        courseOfStudyId = cdsId,
-                        activityId = adId,
-                        callId = callId,
-                        studentId = studentId,
-                    )
-                }.getOrNull() ?: continue
-
-                results.add(
-                    ExamBooking(
-                        id = enrollment.applicationListId ?: callId,
-                        careerId = careerId,
-                        activityName = enrollment.studentActivityDescription
-                            ?: session.activityDescription
-                            ?: activity.activityDescription
-                            ?: "",
-                        examDate = enrollment.graduationDate ?: session.callStartDate,
-                        bookingDate = enrollment.insertionDate,
-                        position = enrollment.position,
-                    )
+    suspend fun getBookings(matricolaId: Long?): List<ExamBooking> {
+        if(matricolaId == null) return listOf()
+        val now = LocalDateTime.now()
+        val nowFormatted = now.format(formatter)
+        val values = esse3Api.examsCalendar.getBookingsByMatId(
+            matricolaId,
+            optionalFields = "ALL",
+            filter = "dataOraTurno>=\"$nowFormatted\""
+        )
+        return withContext(ioDispatcher) {
+            values.mapNotNull { enrollment ->
+                val id = enrollment.applicationListId
+                    ?: return@mapNotNull null
+                ExamBooking(
+                    id = id,
+                    activityName = enrollment.studentActivityDescription ?: "",
+                    examDate = enrollment.shiftDateTime,
+                    bookingDate = enrollment.insertionDate,
+                    position = enrollment.position,
                 )
             }
         }
-
-        results
     }
 }

@@ -3,3 +3,6 @@ plugins {
     id("com.google.devtools.ksp")
     kotlin("plugin.serialization")
 }
+dependencies {
+    testImplementation(kotlin("test"))
+}

@@ -83,6 +83,10 @@ object DtoGenerator {
                 TypeMapping.needsSerializer(prop.type, prop.format)
             }
 
+            if (prop.description != null) {
+                sb.appendLine("    /** ${singleLine(prop.description)} */")
+            }
+
             if (serializer != null) {
                 sb.appendLine("    @Serializable(with = ${serializer}::class)")
             }
@@ -123,6 +127,18 @@ object DtoGenerator {
         if (TypeMapping.isDateType(kotlinType)) return "null"
         if (resolved is ResolvedType.ListOf) return "emptyList()"
         if (!isRequired) return "null"
-        return null
+        return when (kotlinType) {
+            "String" -> "\"\""
+            "Int" -> "0"
+            "Long" -> "0L"
+            "Float" -> "0f"
+            "Double" -> "0.0"
+            "Boolean" -> "false"
+            else -> null
+        }
+    }
+
+    private fun singleLine(text: String): String {
+        return text.replace(Regex("\\s*\\n\\s*"), " ").trim()
     }
 }

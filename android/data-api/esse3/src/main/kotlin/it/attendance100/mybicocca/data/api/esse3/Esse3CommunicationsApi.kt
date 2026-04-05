@@ -16,6 +16,11 @@ class Esse3CommunicationsApi(
     json: Json
 ) : Esse3AbstractApi(client, json, "/comunicazioni-service-v1") {
 
+    /**
+     * inserisce una nuova comunicazione
+     *
+     * @param body Oggetto che contiene i dati della comunicazione e relativi destinatari
+     */
     suspend fun postCommunication(
         body: Esse3CommunicationInsert
     ) {
@@ -26,6 +31,13 @@ class Esse3CommunicationsApi(
         ensureSuccess(response, setOf(Esse3PermissionLevel.TECHNICAL_USER))
     }
 
+    /**
+     * recupera i dati di una specifica comunicazione
+     *
+     * @param municipalityId ID univoco della comunicazione
+     * @param fields specifica la lista dei campi opzionali (che non vengono recupeati di default); impostando il valore `ALL` vengono mostrati tutti i campi. Per gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns* I dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello) Esempi * per il campo childObj con la poprietà childProp utilizzare la notazione `childProp.prop1` * Per visualizzare tutte le proprietà di childObj utilizzare la notazione `childProp.*` * Per visualizzare tutte le proprietà di childObj e di tutti i discendenti utilizzare la notazione `childProp.**`
+     * @param optionalFields specifica la lista dei campi opzionali (che non vengono recupeati di default); impostando il valore `ALL` vengono mostrati tutti i campi. Per gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns* I dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello) Esempi * per il campo childObj con la poprietà childProp utilizzare la notazione `childProp.prop1` * Per visualizzare tutte le proprietà di childObj utilizzare la notazione `childProp.*` * Per visualizzare tutte le proprietà di childObj e di tutti i discendenti utilizzare la notazione `childProp.**`
+     */
     suspend fun getCommunication(
         municipalityId: Long,
         fields: String? = null,
@@ -37,6 +49,19 @@ class Esse3CommunicationsApi(
         }
     }
 
+    /**
+     * recupera i dati dei destinatari di una specifica comunicazione
+     *
+     * @param municipalityId ID univoco della comunicazione
+     * @param dataOrigin tipologia di destinatario (PERSONE=studente/registrato, DOCENTI=docente, SOGG_EST=soggetto esterno, EXTERNAL=recapito email/cellulare)
+     * @param personalDataId ID univoco di anagrafica, per la tipologia di destinatario (se origineDato vale PERSONE, DOCENTI o SOGG_EST)
+     * @param contact indirizzo email o numero di cellulare del destinatario
+     * @param outcomeCode esito di invio comunicazione per il destinatario (SENT=inviata, FAIL=errore nell'invio, CANC=invio annullato, DRAFT=comunicazione ancora in bozza, ACTIVE=da inviare, WAIT=invio in corso)
+     * @param fields specifica la lista dei campi opzionali (che non vengono recupeati di default); impostando il valore `ALL` vengono mostrati tutti i campi. Per gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns* I dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello) Esempi * per il campo childObj con la poprietà childProp utilizzare la notazione `childProp.prop1` * Per visualizzare tutte le proprietà di childObj utilizzare la notazione `childProp.*` * Per visualizzare tutte le proprietà di childObj e di tutti i discendenti utilizzare la notazione `childProp.**`
+     * @param optionalFields specifica la lista dei campi opzionali (che non vengono recupeati di default); impostando il valore `ALL` vengono mostrati tutti i campi. Per gli oggetti è possibile utilizzare la notazione *Ant Glob Patterns* I dettagli sono presenti [qui](https://wiki.u-gov.it/confluence/display/ESSE3/Servizi+REST+su+ESSE3#ServiziRESTsuESSE3-Filtrosuicampidelleclassidimodello) Esempi * per il campo childObj con la poprietà childProp utilizzare la notazione `childProp.prop1` * Per visualizzare tutte le proprietà di childObj utilizzare la notazione `childProp.*` * Per visualizzare tutte le proprietà di childObj e di tutti i discendenti utilizzare la notazione `childProp.**`
+     * @param start utilizzato insieme a `limit` per indicare la paginazione sui record; `start` indica il numero del primo record da caricare (se non indicato viene utilizzato 0)
+     * @param limit utilizzato insieme a `start` per indicare la paginazione sui record, `limit` indica il numero di record da recuperare (a partire da `start`); se non indicato viene utilizzato 50, i valori consentiti vanno da 0 a 100
+     */
     suspend fun getCommonRecipients(
         municipalityId: Long,
         dataOrigin: String? = null,

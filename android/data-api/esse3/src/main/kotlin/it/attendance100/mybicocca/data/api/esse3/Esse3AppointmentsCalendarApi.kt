@@ -18,6 +18,12 @@ class Esse3AppointmentsCalendarApi(
     json: Json
 ) : Esse3AbstractApi(client, json, "/calendario-app-service-v1") {
 
+    /**
+     * Prenota un appuntamento
+     *
+     * @param personId Identificativo persona
+     * @param body Parametri
+     */
     suspend fun insertAppointment(
         personId: Long,
         body: Esse3Appointment
@@ -29,6 +35,13 @@ class Esse3AppointmentsCalendarApi(
         ensureSuccess(response, setOf(Esse3PermissionLevel.TECHNICAL_USER))
     }
 
+    /**
+     * Modifica una prenotazione
+     *
+     * @param callId Identificativo dell'appuntamento da eliminare
+     * @param personId Identificativo persona
+     * @param body turnoId      Identificativo turno da prenotare nota         Nota notaId       Identificativo nota
+     */
     suspend fun updateAppointment(
         callId: Long,
         personId: Long,
@@ -40,6 +53,12 @@ class Esse3AppointmentsCalendarApi(
         }
     }
 
+    /**
+     * Annulla una prenotazione
+     *
+     * @param callId Identificativo dell'appuntamento da eliminare
+     * @param personId Identificativo persona
+     */
     suspend fun cancelAppointment(
         callId: Long,
         personId: Long
@@ -48,6 +67,16 @@ class Esse3AppointmentsCalendarApi(
         ensureSuccess(response, setOf(Esse3PermissionLevel.TECHNICAL_USER))
     }
 
+    /**
+     * Lista calendari
+     *
+     * @param calendarContext Contesto del calendario
+     * @param language Codice della lingua
+     * @param siteId Identificativo della sede
+     * @param start utilizzato insieme a `limit` per indicare la paginazione sui record; `start` indica il numero del primo record da caricare (se non indicato viene utilizzato 0)
+     * @param limit utilizzato insieme a `start` per indicare la paginazione sui record, `limit` indica il numero di record da recuperare (a partire da `start`); se non indicato viene utilizzato 50, i valori consentiti vanno da 0 a 100
+     * @param order consente di specificare un ordine per il recupero dei record. La sintassi è la seguente * +/- : specifica l'ordinamento (+ = ASC, - = DESC); se omesso viene utilizzato + * field : nome del campo da ordinare E' possibile indicare più campi separandoli da virgola (Es: +annoCorso,+adCod)
+     */
     suspend fun getCalendarList(
         calendarContext: String,
         language: String? = null,
@@ -65,6 +94,23 @@ class Esse3AppointmentsCalendarApi(
         }
     }
 
+    /**
+     * Lista prenotazioni di una persona
+     *
+     * @param calendarContext Contesto del calendario
+     * @param personId Identificativo persona
+     * @param language Codice della lingua
+     * @param studentId Identificativo dello studente.
+     * @param courseOfStudyId Identificativo del corso di studio
+     * @param academicYearOrderId Identificativo dell'ordinamento di corso di studio
+     * @param studyPlanId Identificativo del percorso di studio
+     * @param academicYearEnrollmentId Identificativo dell'anno d'iscrizione.
+     * @param enrollmentId Identificativo dell'iscrizione
+     * @param siteId Identificativo della sede
+     * @param start utilizzato insieme a `limit` per indicare la paginazione sui record; `start` indica il numero del primo record da caricare (se non indicato viene utilizzato 0)
+     * @param limit utilizzato insieme a `start` per indicare la paginazione sui record, `limit` indica il numero di record da recuperare (a partire da `start`); se non indicato viene utilizzato 50, i valori consentiti vanno da 0 a 100
+     * @param order consente di specificare un ordine per il recupero dei record. La sintassi è la seguente * +/- : specifica l'ordinamento (+ = ASC, - = DESC); se omesso viene utilizzato + * field : nome del campo da ordinare E' possibile indicare più campi separandoli da virgola (Es: +annoCorso,+adCod)
+     */
     suspend fun getBookingsList(
         calendarContext: String,
         personId: Long,
@@ -95,6 +141,17 @@ class Esse3AppointmentsCalendarApi(
         }
     }
 
+    /**
+     * Lista turni
+     *
+     * @param calendarTypeCode Codice tipologia calendario
+     * @param language Codice della lingua
+     * @param siteId Identificativo della sede
+     * @param administrativeStructureId Identificativo della struttura amministrativa
+     * @param start utilizzato insieme a `limit` per indicare la paginazione sui record; `start` indica il numero del primo record da caricare (se non indicato viene utilizzato 0)
+     * @param limit utilizzato insieme a `start` per indicare la paginazione sui record, `limit` indica il numero di record da recuperare (a partire da `start`); se non indicato viene utilizzato 50, i valori consentiti vanno da 0 a 100
+     * @param order consente di specificare un ordine per il recupero dei record. La sintassi è la seguente * +/- : specifica l'ordinamento (+ = ASC, - = DESC); se omesso viene utilizzato + * field : nome del campo da ordinare E' possibile indicare più campi separandoli da virgola (Es: +annoCorso,+adCod)
+     */
     suspend fun getShiftsList(
         calendarTypeCode: String,
         language: String? = null,
