@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeout
 import javax.inject.Inject
 
 @HiltViewModel
@@ -39,9 +40,11 @@ class BookedViewModel @Inject constructor(
             _isRefreshing.value = true
             _error.value = null
             try {
-                val career = careerRepository.observeAll()
-                    .first { it.isNotEmpty() }
-                    .first()
+                val career = withTimeout(15_000) {
+                    careerRepository.observeAll()
+                        .first { it.isNotEmpty() }
+                        .first()
+                }
                 examRepository.refreshBookings(career.matricolaId)
             } catch (e: Exception) {
                 _error.value = e.message ?: "Errore durante il caricamento"
