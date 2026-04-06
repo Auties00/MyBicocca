@@ -8,7 +8,6 @@ import androidx.appcompat.app.AppCompatDelegate
 import androidx.biometric.BiometricManager
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -114,7 +113,7 @@ private fun SettingsSubScreenScaffold(
 @Composable
 fun AppearanceSettingsScreen(
     onNavigateBack: () -> Unit,
-    onThemeChange: (Boolean) -> Unit = {},
+    onThemeChange: (String) -> Unit = {},
 ) {
     val preferencesManager = rememberPreferencesManager()
     var selectedThemeMode by remember { mutableStateOf(preferencesManager.themeMode) }
@@ -160,7 +159,6 @@ fun AppearanceSettingsScreen(
                 containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
                 title = { Text(stringResource(R.string.settings_appearance_theme)) },
                 text = {
-                    val default = isSystemInDarkTheme()
                     Column {
                         themeOptions.forEach { themeMode ->
                             val themeName = when (themeMode) {
@@ -177,7 +175,7 @@ fun AppearanceSettingsScreen(
                                         preferencesManager.themeMode = themeMode
                                         preferencesManager.applyTheme()
                                         haptic.tap()
-                                        onThemeChange(preferencesManager.isDarkMode ?: default)
+                                        onThemeChange(themeMode)
                                     },
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {
@@ -188,7 +186,7 @@ fun AppearanceSettingsScreen(
                                         preferencesManager.themeMode = themeMode
                                         preferencesManager.applyTheme()
                                         haptic.tap()
-                                        onThemeChange(preferencesManager.isDarkMode ?: default)
+                                        onThemeChange(themeMode)
                                     },
                                     colors = RadioButtonDefaults.colors(selectedColor = primaryColor),
                                 )

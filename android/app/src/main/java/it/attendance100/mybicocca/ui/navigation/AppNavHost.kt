@@ -197,6 +197,7 @@ private fun resolveSubPageTitle(
 
 @Composable
 fun MyBicoccaNavHost(
+    onThemeModeChanged: (String) -> Unit = {},
     viewModel: AppNavHostViewModel = hiltViewModel(
         checkNotNull<ViewModelStoreOwner>(
             LocalViewModelStoreOwner.current
@@ -221,7 +222,8 @@ fun MyBicoccaNavHost(
             profilePic = profilePic,
             user = user,
             activeCareer = activeCareer,
-            isOnline = isOnline
+            isOnline = isOnline,
+            onThemeModeChanged = onThemeModeChanged,
         )
     } else {
         NavHost(navController = rootNavController, startDestination = AppRoutes.Splash) {
@@ -260,6 +262,7 @@ private fun MainShell(
     user: User?,
     activeCareer: Career?,
     isOnline: Boolean = true,
+    onThemeModeChanged: (String) -> Unit,
 ) {
     var selectedTab by rememberSaveable { mutableStateOf(Tab.Calendar) }
     var showAccountSwitcher by remember { mutableStateOf(false) }
@@ -736,6 +739,7 @@ private fun MainShell(
                             SubPageBackground {
                                 AppearanceSettingsScreen(
                                     onNavigateBack = { subNavController.popBackStack() },
+                                    onThemeChange = onThemeModeChanged,
                                 )
                             }
                         }
