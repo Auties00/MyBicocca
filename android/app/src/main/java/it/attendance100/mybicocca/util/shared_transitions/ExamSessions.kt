@@ -9,6 +9,7 @@ data class ExamSessionsElementKey(
 
 enum class ExamSessionSharedElementType {
     Title,
+    Card,
     Description,
     DateTimeBuilding,
 }
