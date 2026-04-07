@@ -24,14 +24,22 @@ import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.School
 import androidx.compose.material.icons.filled.Work
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -69,6 +77,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.ViewModelStoreOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
+import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -164,7 +173,7 @@ private val kDefaultPopEnterTransition = slideInHorizontally(
 )
 
 private fun resolveSubPageTitle(
-    entry: androidx.navigation.NavBackStackEntry?,
+    entry: NavBackStackEntry?,
 ): String? {
     val dest = entry?.destination ?: return null
     return when {
@@ -284,7 +293,16 @@ private fun MainShell(
     val isOnSubPage = subEntry?.destination?.hasRoute<AppRoutes.TabRoot>() == false
     val subPageTitle = if (isOnSubPage) resolveSubPageTitle(subEntry) else null
 
+
     val topBarProgress = remember { Animatable(0f) }
+    var useLocalTopBar by remember { mutableStateOf(false) }
+
+    LaunchedEffect(topBarProgress.value, isOnSubPage, searchActive) {
+        if (topBarProgress.value >= 0.99f && !topBarProgress.isRunning && isOnSubPage && !searchActive) useLocalTopBar =
+            true
+        else if (topBarProgress.value < 0.99f || !isOnSubPage || searchActive) useLocalTopBar =
+            false
+    }
 
     // Swipe gesture state (leftward → profile, rightward → search)
     val haptic = rememberHapticManager()
@@ -525,6 +543,7 @@ private fun MainShell(
                     onAvatarPositioned = { avatarSourceCenter = it },
                     searchIconScale = currentSearchScale,
                     popupProgress = popupProgress.value,
+                    globalAlpha = if (useLocalTopBar) 0f else 1f,
                 )
             },
         ) { innerPadding ->
@@ -580,9 +599,21 @@ private fun MainShell(
                 NavHost(
                     navController = subNavController,
                     startDestination = AppRoutes.TabRoot,
-                    modifier = contentModifier.fillMaxSize(),
-                    enterTransition = { fadeIn(spring(stiffness = Spring.StiffnessMediumLow)) },
-                    exitTransition = { fadeOut(tween(700)) },
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(bottom = bottomBarHeight),
+                    enterTransition = {
+                        slideInHorizontally(
+                            initialOffsetX = { it / 2 },
+                            animationSpec = tween(350, easing = kNavEasing)
+                        ) + fadeIn(animationSpec = tween(350))
+                    },
+                    exitTransition = {
+                        slideOutHorizontally(
+                            targetOffsetX = { -it / 2 },
+                            animationSpec = tween(350, easing = kNavEasing)
+                        ) + fadeOut(animationSpec = tween(350))
+                    },
                     popEnterTransition = { kDefaultPopEnterTransition },
                     popExitTransition = { kDefaultPopExitTransition },
                 ) {
@@ -603,7 +634,7 @@ private fun MainShell(
                         popEnterTransition = { EnterTransition.None },
                     ) {
                         CompositionLocalProvider(LocalAnimatedContentScope provides this) {
-                            FirstLevelSubPage(topBarProgress, subNavController) {
+                            FirstLevelSubPage(topBarProgress, subNavController, useLocalTopBar) {
                                 ProfileScreen()
                             }
                         }
@@ -611,16 +642,17 @@ private fun MainShell(
                     composable<AppRoutes.Room360View> { entry ->
                         CompositionLocalProvider(LocalAnimatedContentScope provides this) {
                             val route = entry.toRoute<AppRoutes.Room360View>()
-                            FirstLevelSubPage(topBarProgress, subNavController) {
+                            FirstLevelSubPage(topBarProgress, subNavController, useLocalTopBar) {
                                 Room360Screen(url = route.url)
                             }
                         }
                     }
                     composable<AppRoutes.Booking>(
                         enterTransition = { kDefaultPopEnterTransition + fadeIn() },
+                        exitTransition = { ExitTransition.None },
                     ) {
                         CompositionLocalProvider(LocalAnimatedContentScope provides this) {
-                            FirstLevelSubPage(topBarProgress, subNavController) {
+                            FirstLevelSubPage(topBarProgress, subNavController, useLocalTopBar) {
                                 BookingScreen(
                                     onNavigateToDetail = { id -> navigate(AppRoutes.BookingDetail(id)) },
                                 )
@@ -629,14 +661,18 @@ private fun MainShell(
                     }
                     composable<AppRoutes.Booked> {
                         CompositionLocalProvider(LocalAnimatedContentScope provides this) {
-                            FirstLevelSubPage(topBarProgress, subNavController) { BookedScreen() }
+                            FirstLevelSubPage(
+                                topBarProgress,
+                                subNavController,
+                                useLocalTopBar
+                            ) { BookedScreen() }
                         }
                     }
                     composable<AppRoutes.Taxes>(
                         enterTransition = { kDefaultPopEnterTransition + fadeIn() },
                     ) {
                         CompositionLocalProvider(LocalAnimatedContentScope provides this) {
-                            FirstLevelSubPage(topBarProgress, subNavController) {
+                            FirstLevelSubPage(topBarProgress, subNavController, useLocalTopBar) {
                                 TaxesScreen(
                                     onNavigateToDetail = { id -> navigate(AppRoutes.TaxDetail(id)) },
                                 )
@@ -645,54 +681,62 @@ private fun MainShell(
                     }
                     composable<AppRoutes.StudyPlan> {
                         CompositionLocalProvider(LocalAnimatedContentScope provides this) {
-                            FirstLevelSubPage(topBarProgress, subNavController) {
+                            FirstLevelSubPage(topBarProgress, subNavController, useLocalTopBar) {
                                 PianoCarrieraScreen()
                             }
                         }
                     }
                     composable<AppRoutes.Isee> {
                         CompositionLocalProvider(LocalAnimatedContentScope provides this) {
-                            FirstLevelSubPage(topBarProgress, subNavController) { IseeScreen() }
+                            FirstLevelSubPage(
+                                topBarProgress,
+                                subNavController,
+                                useLocalTopBar
+                            ) { IseeScreen() }
                         }
                     }
                     composable<AppRoutes.SelfCertificates> {
                         CompositionLocalProvider(LocalAnimatedContentScope provides this) {
-                            FirstLevelSubPage(topBarProgress, subNavController) {
+                            FirstLevelSubPage(topBarProgress, subNavController, useLocalTopBar) {
                                 SelfCertificatesScreen()
                             }
                         }
                     }
                     composable<AppRoutes.ExamResults> {
                         CompositionLocalProvider(LocalAnimatedContentScope provides this) {
-                            FirstLevelSubPage(topBarProgress, subNavController) {
+                            FirstLevelSubPage(topBarProgress, subNavController, useLocalTopBar) {
                                 ExamResultsScreen()
                             }
                         }
                     }
                     composable<AppRoutes.Attendance> {
                         CompositionLocalProvider(LocalAnimatedContentScope provides this) {
-                            FirstLevelSubPage(topBarProgress, subNavController) {
+                            FirstLevelSubPage(topBarProgress, subNavController, useLocalTopBar) {
                                 AttendanceScreen()
                             }
                         }
                     }
                     composable<AppRoutes.Questionnaires> {
                         CompositionLocalProvider(LocalAnimatedContentScope provides this) {
-                            FirstLevelSubPage(topBarProgress, subNavController) {
+                            FirstLevelSubPage(topBarProgress, subNavController, useLocalTopBar) {
                                 QuestionnairesScreen()
                             }
                         }
                     }
                     composable<AppRoutes.Reservations> {
                         CompositionLocalProvider(LocalAnimatedContentScope provides this) {
-                            FirstLevelSubPage(topBarProgress, subNavController) {
+                            FirstLevelSubPage(topBarProgress, subNavController, useLocalTopBar) {
                                 ReservationsScreen()
                             }
                         }
                     }
                     composable<AppRoutes.Internships> {
                         CompositionLocalProvider(LocalAnimatedContentScope provides this) {
-                            FirstLevelSubPage(topBarProgress, subNavController) { StageScreen() }
+                            FirstLevelSubPage(
+                                topBarProgress,
+                                subNavController,
+                                useLocalTopBar
+                            ) { StageScreen() }
                         }
                     }
 
@@ -703,7 +747,7 @@ private fun MainShell(
                     ) { entry ->
                         CompositionLocalProvider(LocalAnimatedContentScope provides this) {
                             val route = entry.toRoute<AppRoutes.BookingDetail>()
-                            SubPageBackground {
+                            SubPageBackground(subNavController) {
                                 ExamSessionDetailScreen(sessionId = route.sessionId)
                             }
                         }
@@ -713,14 +757,14 @@ private fun MainShell(
                         exitTransition = { ExitTransition.None },
                     ) {
                         CompositionLocalProvider(LocalAnimatedContentScope provides this) {
-                            SubPageBackground { TaxDetailScreen() }
+                            SubPageBackground(subNavController) { TaxDetailScreen() }
                         }
                     }
 
                     // Settings screens
                     composable<AppRoutes.Settings> {
                         CompositionLocalProvider(LocalAnimatedContentScope provides this) {
-                            FirstLevelSubPage(topBarProgress, subNavController) {
+                            FirstLevelSubPage(topBarProgress, subNavController, useLocalTopBar) {
                                 SettingsScreen(
                                     onNavigateBack = { subNavController.popBackStack() },
                                     onNavigateToAppearance = { navigate(AppRoutes.SettingsAppearance) },
@@ -736,7 +780,7 @@ private fun MainShell(
                     }
                     composable<AppRoutes.SettingsAppearance> {
                         CompositionLocalProvider(LocalAnimatedContentScope provides this) {
-                            SubPageBackground {
+                            SubPageBackground(subNavController) {
                                 AppearanceSettingsScreen(
                                     onNavigateBack = { subNavController.popBackStack() },
                                     onThemeChange = onThemeModeChanged,
@@ -746,7 +790,7 @@ private fun MainShell(
                     }
                     composable<AppRoutes.SettingsGeneral> {
                         CompositionLocalProvider(LocalAnimatedContentScope provides this) {
-                            SubPageBackground {
+                            SubPageBackground(subNavController) {
                                 GeneralSettingsScreen(
                                     onNavigateBack = { subNavController.popBackStack() },
                                 )
@@ -755,7 +799,7 @@ private fun MainShell(
                     }
                     composable<AppRoutes.SettingsBehaviour> {
                         CompositionLocalProvider(LocalAnimatedContentScope provides this) {
-                            SubPageBackground {
+                            SubPageBackground(subNavController) {
                                 BehaviourSettingsScreen(
                                     onNavigateBack = { subNavController.popBackStack() },
                                 )
@@ -764,7 +808,7 @@ private fun MainShell(
                     }
                     composable<AppRoutes.SettingsSecurity> {
                         CompositionLocalProvider(LocalAnimatedContentScope provides this) {
-                            SubPageBackground {
+                            SubPageBackground(subNavController) {
                                 SecuritySettingsScreen(
                                     onNavigateBack = { subNavController.popBackStack() },
                                 )
@@ -773,7 +817,7 @@ private fun MainShell(
                     }
                     composable<AppRoutes.SettingsDeveloper> {
                         CompositionLocalProvider(LocalAnimatedContentScope provides this) {
-                            SubPageBackground {
+                            SubPageBackground(subNavController) {
                                 DeveloperSettingsScreen(
                                     onNavigateBack = { subNavController.popBackStack() },
                                 )
@@ -782,7 +826,7 @@ private fun MainShell(
                     }
                     composable<AppRoutes.AppInfo> {
                         CompositionLocalProvider(LocalAnimatedContentScope provides this) {
-                            SubPageBackground {
+                            SubPageBackground(subNavController) {
                                 AppInfoScreen(
                                     onNavigateBack = { subNavController.popBackStack() },
                                 )
@@ -791,7 +835,7 @@ private fun MainShell(
                     }
                     composable<AppRoutes.LoginManager> {
                         CompositionLocalProvider(LocalAnimatedContentScope provides this) {
-                            SubPageBackground {
+                            SubPageBackground(subNavController) {
                                 // TODO: LoginManagerScreen
                             }
                         }
@@ -909,9 +953,12 @@ private fun MainShell(
 private fun FirstLevelSubPage(
     topBarProgress: Animatable<Float, *>,
     navController: androidx.navigation.NavController,
+    useLocalTopBar: Boolean,
     content: @Composable () -> Unit,
 ) {
     var gestureActive by remember { mutableStateOf(false) }
+    val entry = LocalViewModelStoreOwner.current as? NavBackStackEntry
+    val title = resolveSubPageTitle(entry) ?: ""
 
     PredictiveBackHandler(enabled = true) { backProgress ->
         gestureActive = true
@@ -936,16 +983,96 @@ private fun FirstLevelSubPage(
             .graphicsLayer { this.alpha = alpha },
         color = MaterialTheme.colorScheme.background,
     ) {
-        content()
+        androidx.compose.foundation.layout.Column(modifier = Modifier.fillMaxSize()) {
+            LocalAppTopBar(title, useLocalTopBar, { navController.popBackStack() })
+            androidx.compose.foundation.layout.Spacer(Modifier.height(8.dp))
+            Box(Modifier.weight(1f)) {
+                content()
+            }
+        }
     }
 }
 
 @Composable
-private fun SubPageBackground(content: @Composable () -> Unit) {
+private fun SubPageBackground(
+    navController: androidx.navigation.NavController,
+    content: @Composable () -> Unit
+) {
+    val entry = LocalViewModelStoreOwner.current as? NavBackStackEntry
+    val title = resolveSubPageTitle(entry) ?: ""
+
     Surface(
         modifier = Modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.background,
     ) {
-        content()
+        androidx.compose.foundation.layout.Column(modifier = Modifier.fillMaxSize()) {
+            LocalAppTopBar(title, true, { navController.popBackStack() })
+            androidx.compose.foundation.layout.Spacer(Modifier.height(8.dp))
+            Box(Modifier.weight(1f)) {
+                content()
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalSharedTransitionApi::class)
+@Composable
+private fun LocalAppTopBar(
+    title: String,
+    useLocalTopBar: Boolean,
+    onNavigateBack: () -> Unit,
+) {
+    val statusBarHeight = with(LocalDensity.current) {
+        WindowInsets.statusBars.getTop(this).toDp()
+    }
+
+    androidx.compose.foundation.layout.Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .graphicsLayer { alpha = if (useLocalTopBar) 1f else 0f }
+    ) {
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(0.dp),
+            color = MaterialTheme.colorScheme.surfaceContainer,
+            tonalElevation = 0.dp,
+        ) {
+            androidx.compose.foundation.layout.Column {
+                androidx.compose.foundation.layout.Spacer(Modifier.height(statusBarHeight + 8.dp))
+                androidx.compose.foundation.layout.Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp)
+                        .padding(horizontal = 10.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    IconButton(onClick = onNavigateBack, modifier = Modifier.size(37.dp)) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = androidx.compose.ui.res.stringResource(R.string.arrow_back),
+                        )
+                    }
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(56.dp),
+                        contentAlignment = Alignment.CenterStart
+                    ) {
+                        androidx.compose.foundation.layout.Row(verticalAlignment = Alignment.CenterVertically) {
+                            androidx.compose.foundation.layout.Spacer(Modifier.width(4.dp))
+                            Text(
+                                text = title,
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold,
+                                maxLines = 1,
+                                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+
+                                )
+                        }
+                    }
+                    androidx.compose.foundation.layout.Spacer(Modifier.size(37.dp))
+                }
+            }
+        }
     }
 }

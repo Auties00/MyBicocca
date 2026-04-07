@@ -11,6 +11,7 @@ data class CommonSharedElementKey(
         const val STUDY_PLAN_KEY: Long = 2
         const val TAXES_KEY: Long = 3
         const val ISEE_KEY: Long = 4
+        const val LOCAL_APP_TOP_BAR_KEY: Long = 5
     }
 }
 
@@ -18,4 +19,5 @@ enum class CommonSharedElementType {
     Card,
     BackButton,
     BottomActionBar,
+    Title,
 }

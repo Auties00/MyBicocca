@@ -62,6 +62,7 @@ private const val MAX_BACK_PROGRESS = 0.9f
 
 @Composable
 fun AppTopBar(
+    modifier: Modifier = Modifier,
     canNavigateBack: Boolean,
     subPageTitle: String?,
     searchQuery: String,
@@ -77,7 +78,7 @@ fun AppTopBar(
     onAvatarPositioned: (Offset) -> Unit = {},
     searchIconScale: Float = 1f,
     popupProgress: Float = 0f,
-    modifier: Modifier = Modifier,
+    globalAlpha: Float = 1f,
 ) {
     val focusRequester = remember { FocusRequester() }
     val keyboardController = LocalSoftwareKeyboardController.current
@@ -138,7 +139,10 @@ fun AppTopBar(
     val outerStatusBarHeight = lerp(statusBarHeight, 0.dp, p)
     val innerStatusBarHeight = lerp(0.dp, statusBarHeight + 8.dp, p)
 
-    Column(modifier = modifier.fillMaxWidth()) {
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .graphicsLayer { alpha = globalAlpha }) {
         Spacer(Modifier.height(outerStatusBarHeight))
         Spacer(Modifier.height(topPadding))
 
