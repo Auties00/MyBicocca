@@ -212,7 +212,7 @@ class Esse3ExamsCalendarApiTest : Esse3ApiTestBase() {
             }
 
             logger.info("testGetActivitiesForExamCalls: calling with matId from student profile")
-            val matIdResult = api.examsCalendar.getActivitiesForExamCalls(matId = studentProfile.enrollmentId)
+            val matIdResult = api.examsCalendar.getActivitiesForExamCalls(matId = studentProfile.matId)
             logger.info("testGetActivitiesForExamCalls: matId result size=${matIdResult.size}")
 
             logger.info("testGetActivitiesForExamCalls: calling with pagination start=0, limit=5")
@@ -527,7 +527,7 @@ class Esse3ExamsCalendarApiTest : Esse3ApiTestBase() {
         val requiredPermissions = setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.TECHNICAL_USER)
         if (userPermissions.any { it in requiredPermissions }) {
             logger.info("testGetEnrolledExamCall: fetching bookings by matId to derive path params")
-            val bookings = api.examsCalendar.getBookingsByMatId(matId = studentProfile.enrollmentId)
+            val bookings = api.examsCalendar.getBookingsByMatId(matId = studentProfile.matId)
             if (bookings.isEmpty()) {
                 logger.info("testGetEnrolledExamCall: no bookings found, skipping")
                 return@runTest
@@ -586,7 +586,7 @@ class Esse3ExamsCalendarApiTest : Esse3ApiTestBase() {
         val requiredPermissions = setOf(Esse3PermissionLevel.STUDENT)
         if (userPermissions.any { it in requiredPermissions }) {
             logger.info("testGetPresenceCertificate: fetching bookings by matId to derive path params")
-            val bookings = api.examsCalendar.getBookingsByMatId(matId = studentProfile.enrollmentId)
+            val bookings = api.examsCalendar.getBookingsByMatId(matId = studentProfile.matId)
             if (bookings.isEmpty()) {
                 logger.info("testGetPresenceCertificate: no bookings found, skipping")
                 return@runTest
@@ -645,7 +645,7 @@ class Esse3ExamsCalendarApiTest : Esse3ApiTestBase() {
         val requiredPermissions = setOf(Esse3PermissionLevel.STUDENT)
         if (userPermissions.any { it in requiredPermissions }) {
             logger.info("testGetBookingStatino: fetching bookings by matId to derive path params")
-            val bookings = api.examsCalendar.getBookingsByMatId(matId = studentProfile.enrollmentId)
+            val bookings = api.examsCalendar.getBookingsByMatId(matId = studentProfile.matId)
             if (bookings.isEmpty()) {
                 logger.info("testGetBookingStatino: no bookings found, skipping")
                 return@runTest
@@ -1293,7 +1293,7 @@ class Esse3ExamsCalendarApiTest : Esse3ApiTestBase() {
         val requiredPermissions = setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TECHNICAL_USER)
         if (userPermissions.any { it in requiredPermissions }) {
             logger.info("testGetBookingsByMatId: calling getBookingsByMatId with matId=${studentProfile.enrollmentId}")
-            val defaultResult = api.examsCalendar.getBookingsByMatId(matId = studentProfile.enrollmentId)
+            val defaultResult = api.examsCalendar.getBookingsByMatId(matId = studentProfile.matId)
             logger.info("testGetBookingsByMatId: default result size=${defaultResult.size}")
             for (booking in defaultResult) {
                 logger.info("testGetBookingsByMatId: applicationListId=${booking.applicationListId}, callId=${booking.callId}, studentActivityDescription=${booking.studentActivityDescription}")
@@ -1301,7 +1301,7 @@ class Esse3ExamsCalendarApiTest : Esse3ApiTestBase() {
         } else {
             logger.info("testGetBookingsByMatId: user lacks required permissions, expecting Esse3Exception")
             assertFailsWith<Esse3Exception> {
-                api.examsCalendar.getBookingsByMatId(matId = studentProfile.enrollmentId)
+                api.examsCalendar.getBookingsByMatId(matId = studentProfile.matId)
             }
         }
     }
@@ -1311,7 +1311,7 @@ class Esse3ExamsCalendarApiTest : Esse3ApiTestBase() {
         val requiredPermissions = setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TECHNICAL_USER)
         if (userPermissions.any { it in requiredPermissions }) {
             logger.info("testGetBooking: fetching bookings by matId to derive applicationListId")
-            val bookings = api.examsCalendar.getBookingsByMatId(matId = studentProfile.enrollmentId)
+            val bookings = api.examsCalendar.getBookingsByMatId(matId = studentProfile.matId)
             if (bookings.isEmpty()) {
                 logger.info("testGetBooking: no bookings found, skipping")
                 return@runTest
@@ -1325,7 +1325,7 @@ class Esse3ExamsCalendarApiTest : Esse3ApiTestBase() {
             logger.info("testGetBooking: using matId=${studentProfile.enrollmentId}, applicationListId=$applicationListId")
 
             val result = api.examsCalendar.getBooking(
-                matId = studentProfile.enrollmentId,
+                matId = studentProfile.matId,
                 applicationListId = applicationListId
             )
             logger.info("testGetBooking: applicationListId=${result.applicationListId}, matricola=${result.matricola}, examCallDescription=${result.examCallDescription}")
@@ -1333,7 +1333,7 @@ class Esse3ExamsCalendarApiTest : Esse3ApiTestBase() {
         } else {
             logger.info("testGetBooking: user lacks required permissions, expecting Esse3Exception")
             assertFailsWith<Esse3Exception> {
-                api.examsCalendar.getBooking(matId = studentProfile.enrollmentId, applicationListId = 1L)
+                api.examsCalendar.getBooking(matId = studentProfile.matId, applicationListId = 1L)
             }
         }
     }
