@@ -230,7 +230,7 @@ class Esse3TranscriptApiTest : Esse3ApiTestBase() {
         } else {
             logger.info("testGetCareerSegment: user lacks required permissions, expecting Esse3Exception")
             assertFailsWith<Esse3Exception> {
-                api.transcript.getCareerSegment(matId = studentProfile.enrollmentId)
+                api.transcript.getCareerSegment(matId = studentProfile.matId)
             }
             logger.info("testGetCareerSegment: Esse3Exception thrown as expected")
         }
@@ -262,7 +262,7 @@ class Esse3TranscriptApiTest : Esse3ApiTestBase() {
         } else {
             logger.info("testGetRecordBookExamCalls: user lacks required permissions, expecting Esse3Exception")
             assertFailsWith<Esse3Exception> {
-                api.transcript.getRecordBookExamCalls(matId = studentProfile.enrollmentId)
+                api.transcript.getRecordBookExamCalls(matId = studentProfile.matId)
             }
             logger.info("testGetRecordBookExamCalls: Esse3Exception thrown as expected")
         }
@@ -287,7 +287,7 @@ class Esse3TranscriptApiTest : Esse3ApiTestBase() {
         } else {
             logger.info("testGetRecordBookAverages: user lacks required permissions, expecting Esse3Exception")
             assertFailsWith<Esse3Exception> {
-                api.transcript.getRecordBookAverages(matId = studentProfile.enrollmentId)
+                api.transcript.getRecordBookAverages(matId = studentProfile.matId)
             }
             logger.info("testGetRecordBookAverages: Esse3Exception thrown as expected")
         }
@@ -322,7 +322,7 @@ class Esse3TranscriptApiTest : Esse3ApiTestBase() {
         } else {
             logger.info("testGetRecordBookAverage: user lacks required permissions, expecting Esse3Exception")
             assertFailsWith<Esse3Exception> {
-                api.transcript.getRecordBookAverage(matId = studentProfile.enrollmentId, base = "30", type = "A")
+                api.transcript.getRecordBookAverage(matId = studentProfile.matId, base = "30", type = "A")
             }
             logger.info("testGetRecordBookAverage: Esse3Exception thrown as expected")
         }
@@ -352,7 +352,7 @@ class Esse3TranscriptApiTest : Esse3ApiTestBase() {
         } else {
             logger.info("testGetRecordBookPartitions: user lacks required permissions, expecting Esse3Exception")
             assertFailsWith<Esse3Exception> {
-                api.transcript.getRecordBookPartitions(matId = studentProfile.enrollmentId)
+                api.transcript.getRecordBookPartitions(matId = studentProfile.matId)
             }
             logger.info("testGetRecordBookPartitions: Esse3Exception thrown as expected")
         }
@@ -381,7 +381,7 @@ class Esse3TranscriptApiTest : Esse3ApiTestBase() {
         } else {
             logger.info("testGetBookingsByMatId: user lacks required permissions, expecting Esse3Exception")
             assertFailsWith<Esse3Exception> {
-                api.transcript.getBookingsByMatId(matId = studentProfile.enrollmentId)
+                api.transcript.getBookingsByMatId(matId = studentProfile.matId)
             }
             logger.info("testGetBookingsByMatId: Esse3Exception thrown as expected")
         }
@@ -411,7 +411,7 @@ class Esse3TranscriptApiTest : Esse3ApiTestBase() {
         } else {
             logger.info("testGetRecordBookTests: user lacks required permissions, expecting Esse3Exception")
             assertFailsWith<Esse3Exception> {
-                api.transcript.getRecordBookTests(matId = studentProfile.enrollmentId)
+                api.transcript.getRecordBookTests(matId = studentProfile.matId)
             }
             logger.info("testGetRecordBookTests: Esse3Exception thrown as expected")
         }
@@ -445,7 +445,7 @@ class Esse3TranscriptApiTest : Esse3ApiTestBase() {
         } else {
             logger.info("testGetRecordBookRows: user lacks required permissions, expecting Esse3Exception")
             assertFailsWith<Esse3Exception> {
-                api.transcript.getRecordBookRows(matId = studentProfile.enrollmentId)
+                api.transcript.getRecordBookRows(matId = studentProfile.matId)
             }
             logger.info("testGetRecordBookRows: Esse3Exception thrown as expected")
         }
@@ -461,7 +461,7 @@ class Esse3TranscriptApiTest : Esse3ApiTestBase() {
             logger.info("testPostRecordBookRow: user lacks TECHNICAL_USER permission, expecting Esse3Exception")
             assertFailsWith<Esse3Exception> {
                 api.transcript.postRecordBookRow(
-                    matId = studentProfile.enrollmentId,
+                    matId = studentProfile.matId,
                     body = it.attendance100.mybicocca.data.dto.esse3.Esse3ActivitiesToInsert(
                         courseYear = 1,
                         activityType = "OBB"
@@ -501,7 +501,7 @@ class Esse3TranscriptApiTest : Esse3ApiTestBase() {
         } else {
             logger.info("testGetRecordBookRow: user lacks required permissions, expecting Esse3Exception")
             assertFailsWith<Esse3Exception> {
-                api.transcript.getRecordBookRow(matId = studentProfile.enrollmentId, activityChoiceId = 1)
+                api.transcript.getRecordBookRow(matId = studentProfile.matId, activityChoiceId = 1)
             }
             logger.info("testGetRecordBookRow: Esse3Exception thrown as expected")
         }
@@ -517,7 +517,7 @@ class Esse3TranscriptApiTest : Esse3ApiTestBase() {
             logger.info("testDeleteRecordBookRow: user lacks TECHNICAL_USER permission, expecting Esse3Exception")
             assertFailsWith<Esse3Exception> {
                 api.transcript.deleteRecordBookRow(
-                    matId = studentProfile.enrollmentId,
+                    matId = studentProfile.matId,
                     activityChoiceId = 1
                 )
             }
@@ -535,7 +535,7 @@ class Esse3TranscriptApiTest : Esse3ApiTestBase() {
             logger.info("testPatchRecordBookRow: user lacks required permissions, expecting Esse3Exception")
             assertFailsWith<Esse3Exception> {
                 api.transcript.patchRecordBookRow(
-                    matId = studentProfile.enrollmentId,
+                    matId = studentProfile.matId,
                     activityChoiceId = 1,
                     body = it.attendance100.mybicocca.data.dto.esse3.Esse3PatchTranscriptRow(
                         missionState = "NONE"
@@ -577,7 +577,7 @@ class Esse3TranscriptApiTest : Esse3ApiTestBase() {
         } else {
             logger.info("testGetExamCallsByRecordBookRow: user lacks required permissions, expecting Esse3Exception")
             assertFailsWith<Esse3Exception> {
-                api.transcript.getExamCallsByRecordBookRow(matId = studentProfile.enrollmentId, activityChoiceId = 1)
+                api.transcript.getExamCallsByRecordBookRow(matId = studentProfile.matId, activityChoiceId = 1)
             }
             logger.info("testGetExamCallsByRecordBookRow: Esse3Exception thrown as expected")
         }
@@ -593,7 +593,7 @@ class Esse3TranscriptApiTest : Esse3ApiTestBase() {
             logger.info("testSetManualAttendance: user lacks required permissions, expecting Esse3Exception")
             assertFailsWith<Esse3Exception> {
                 api.transcript.setManualAttendance(
-                    matId = studentProfile.enrollmentId,
+                    matId = studentProfile.matId,
                     activityChoiceId = 1,
                     body = it.attendance100.mybicocca.data.dto.esse3.Esse3SingleAttendanceParameters(
                         choiceStatusCode = "F"
@@ -627,7 +627,7 @@ class Esse3TranscriptApiTest : Esse3ApiTestBase() {
         } else {
             logger.info("testGetRecordBookRowPartitions: user lacks required permissions, expecting Esse3Exception")
             assertFailsWith<Esse3Exception> {
-                api.transcript.getRecordBookRowPartitions(matId = studentProfile.enrollmentId, activityChoiceId = 1)
+                api.transcript.getRecordBookRowPartitions(matId = studentProfile.matId, activityChoiceId = 1)
             }
             logger.info("testGetRecordBookRowPartitions: Esse3Exception thrown as expected")
         }
@@ -666,7 +666,7 @@ class Esse3TranscriptApiTest : Esse3ApiTestBase() {
             logger.info("testGetRecordBookRowPartition: user lacks required permissions, expecting Esse3Exception")
             assertFailsWith<Esse3Exception> {
                 api.transcript.getRecordBookRowPartition(
-                    matId = studentProfile.enrollmentId,
+                    matId = studentProfile.matId,
                     activityChoiceId = 1,
                     activityPartitionId = 1
                 )
@@ -706,7 +706,7 @@ class Esse3TranscriptApiTest : Esse3ApiTestBase() {
         } else {
             logger.info("testGetBookingsByTeachingActivityChoiceId: user lacks required permissions, expecting Esse3Exception")
             assertFailsWith<Esse3Exception> {
-                api.transcript.getBookingsByTeachingActivityChoiceId(matId = studentProfile.enrollmentId, activityChoiceId = 1)
+                api.transcript.getBookingsByTeachingActivityChoiceId(matId = studentProfile.matId, activityChoiceId = 1)
             }
             logger.info("testGetBookingsByTeachingActivityChoiceId: Esse3Exception thrown as expected")
         }
@@ -746,7 +746,7 @@ class Esse3TranscriptApiTest : Esse3ApiTestBase() {
             logger.info("testGetBookingByTeachingActivityChoiceId: user lacks required permissions, expecting Esse3Exception")
             assertFailsWith<Esse3Exception> {
                 api.transcript.getBookingByTeachingActivityChoiceId(
-                    matId = studentProfile.enrollmentId,
+                    matId = studentProfile.matId,
                     activityChoiceId = 1,
                     applicationListId = 1
                 )
@@ -788,7 +788,7 @@ class Esse3TranscriptApiTest : Esse3ApiTestBase() {
             logger.info("testGetPresenceCertificateByApplicationListId: user lacks STUDENT permission, expecting Esse3Exception")
             assertFailsWith<Esse3Exception> {
                 api.transcript.getPresenceCertificateByApplicationListId(
-                    matId = studentProfile.enrollmentId,
+                    matId = studentProfile.matId,
                     activityChoiceId = 1,
                     applicationListId = 1
                 )
@@ -830,7 +830,7 @@ class Esse3TranscriptApiTest : Esse3ApiTestBase() {
             logger.info("testGetBookingStatinoByApplicationListId: user lacks STUDENT permission, expecting Esse3Exception")
             assertFailsWith<Esse3Exception> {
                 api.transcript.getBookingStatinoByApplicationListId(
-                    matId = studentProfile.enrollmentId,
+                    matId = studentProfile.matId,
                     activityChoiceId = 1,
                     applicationListId = 1
                 )
@@ -868,7 +868,7 @@ class Esse3TranscriptApiTest : Esse3ApiTestBase() {
         } else {
             logger.info("testGetCheckProposalRecordBookRow: user lacks required permissions, expecting Esse3Exception")
             assertFailsWith<Esse3Exception> {
-                api.transcript.getCheckProposalRecordBookRow(matId = studentProfile.enrollmentId, activityChoiceId = 1)
+                api.transcript.getCheckProposalRecordBookRow(matId = studentProfile.matId, activityChoiceId = 1)
             }
             logger.info("testGetCheckProposalRecordBookRow: Esse3Exception thrown as expected")
         }
@@ -897,7 +897,7 @@ class Esse3TranscriptApiTest : Esse3ApiTestBase() {
         } else {
             logger.info("testGetRecordBookRowTests: user lacks required permissions, expecting Esse3Exception")
             assertFailsWith<Esse3Exception> {
-                api.transcript.getRecordBookRowTests(matId = studentProfile.enrollmentId, activityChoiceId = 1)
+                api.transcript.getRecordBookRowTests(matId = studentProfile.matId, activityChoiceId = 1)
             }
             logger.info("testGetRecordBookRowTests: Esse3Exception thrown as expected")
         }
@@ -936,7 +936,7 @@ class Esse3TranscriptApiTest : Esse3ApiTestBase() {
             logger.info("testGetRecordBookRowTest: user lacks required permissions, expecting Esse3Exception")
             assertFailsWith<Esse3Exception> {
                 api.transcript.getRecordBookRowTest(
-                    matId = studentProfile.enrollmentId,
+                    matId = studentProfile.matId,
                     activityChoiceId = 1,
                     activityRegulationId = 1
                 )
@@ -955,7 +955,7 @@ class Esse3TranscriptApiTest : Esse3ApiTestBase() {
             logger.info("testPutRecordBookRowRecognition: user lacks TECHNICAL_USER permission, expecting Esse3Exception")
             assertFailsWith<Esse3Exception> {
                 api.transcript.putRecordBookRowRecognition(
-                    matId = studentProfile.enrollmentId,
+                    matId = studentProfile.matId,
                     activityChoiceId = 1,
                     body = it.attendance100.mybicocca.data.dto.esse3.Esse3RecognitionParameters(
                         searchId = 1,
@@ -978,7 +978,7 @@ class Esse3TranscriptApiTest : Esse3ApiTestBase() {
             logger.info("testDeleteRecordBookRecognitionRow: user lacks TECHNICAL_USER permission, expecting Esse3Exception")
             assertFailsWith<Esse3Exception> {
                 api.transcript.deleteRecordBookRecognitionRow(
-                    matId = studentProfile.enrollmentId,
+                    matId = studentProfile.matId,
                     activityChoiceId = 1
                 )
             }
@@ -1014,7 +1014,7 @@ class Esse3TranscriptApiTest : Esse3ApiTestBase() {
             logger.info("testGetRecordBookRowDetections: user lacks required permissions, expecting Esse3Exception")
             assertFailsWith<Esse3Exception> {
                 api.transcript.getRecordBookRowDetections(
-                    matId = studentProfile.enrollmentId,
+                    matId = studentProfile.matId,
                     activityChoiceId = 1,
                     choiceReleaseId = 1
                 )
@@ -1046,7 +1046,7 @@ class Esse3TranscriptApiTest : Esse3ApiTestBase() {
         } else {
             logger.info("testGetRecordBookRowSegments: user lacks required permissions, expecting Esse3Exception")
             assertFailsWith<Esse3Exception> {
-                api.transcript.getRecordBookRowSegments(matId = studentProfile.enrollmentId, activityChoiceId = 1)
+                api.transcript.getRecordBookRowSegments(matId = studentProfile.matId, activityChoiceId = 1)
             }
             logger.info("testGetRecordBookRowSegments: Esse3Exception thrown as expected")
         }
@@ -1085,7 +1085,7 @@ class Esse3TranscriptApiTest : Esse3ApiTestBase() {
             logger.info("testGetRecordBookRowSegment: user lacks required permissions, expecting Esse3Exception")
             assertFailsWith<Esse3Exception> {
                 api.transcript.getRecordBookRowSegment(
-                    matId = studentProfile.enrollmentId,
+                    matId = studentProfile.matId,
                     activityChoiceId = 1,
                     segmentChoiceId = 1
                 )
@@ -1117,7 +1117,7 @@ class Esse3TranscriptApiTest : Esse3ApiTestBase() {
         } else {
             logger.info("testGetSyllabusTeachingActivityRecordBookRow: user lacks required permissions, expecting Esse3Exception")
             assertFailsWith<Esse3Exception> {
-                api.transcript.getSyllabusTeachingActivityRecordBookRow(matId = studentProfile.enrollmentId, activityChoiceId = 1)
+                api.transcript.getSyllabusTeachingActivityRecordBookRow(matId = studentProfile.matId, activityChoiceId = 1)
             }
             logger.info("testGetSyllabusTeachingActivityRecordBookRow: Esse3Exception thrown as expected")
         }
@@ -1146,7 +1146,7 @@ class Esse3TranscriptApiTest : Esse3ApiTestBase() {
         } else {
             logger.info("testGetSyllabusTeachingUnitRecordBookRow: user lacks required permissions, expecting Esse3Exception")
             assertFailsWith<Esse3Exception> {
-                api.transcript.getSyllabusTeachingUnitRecordBookRow(matId = studentProfile.enrollmentId, activityChoiceId = 1)
+                api.transcript.getSyllabusTeachingUnitRecordBookRow(matId = studentProfile.matId, activityChoiceId = 1)
             }
             logger.info("testGetSyllabusTeachingUnitRecordBookRow: Esse3Exception thrown as expected")
         }
@@ -1176,7 +1176,7 @@ class Esse3TranscriptApiTest : Esse3ApiTestBase() {
         } else {
             logger.info("testGetRecordBookSegments: user lacks required permissions, expecting Esse3Exception")
             assertFailsWith<Esse3Exception> {
-                api.transcript.getRecordBookSegments(matId = studentProfile.enrollmentId)
+                api.transcript.getRecordBookSegments(matId = studentProfile.matId)
             }
             logger.info("testGetRecordBookSegments: Esse3Exception thrown as expected")
         }
@@ -1214,7 +1214,7 @@ class Esse3TranscriptApiTest : Esse3ApiTestBase() {
         } else {
             logger.info("testGetRecordBookStats: user lacks required permissions, expecting Esse3Exception")
             assertFailsWith<Esse3Exception> {
-                api.transcript.getRecordBookStats(matId = studentProfile.enrollmentId)
+                api.transcript.getRecordBookStats(matId = studentProfile.matId)
             }
             logger.info("testGetRecordBookStats: Esse3Exception thrown as expected")
         }

@@ -15,7 +15,7 @@ class Esse3CountriesApiTest : Esse3ApiTestBase() {
 
     companion object {
         private lateinit var permissions: Set<Esse3PermissionLevel>
-        private const val ITALY_FISCAL_CODE = "100"
+        private const val ITALY_CODE = "200"
     }
 
     @BeforeAll
@@ -39,8 +39,8 @@ class Esse3CountriesApiTest : Esse3ApiTestBase() {
             assertNotNull(nation.description, "description should not be null")
             logger.info("  nation: id=${nation.nationId}, desc=${nation.description}, fiscalCode=${nation.fiscalCode}, iso31661=${nation.iso31661Code}")
         }
-        val italy = nations.find { it.fiscalCode == ITALY_FISCAL_CODE }
-        assertNotNull(italy, "Italy (fiscalCode=$ITALY_FISCAL_CODE) should be present in the nations list")
+        val italy = nations.find { it.code == ITALY_CODE }
+        assertNotNull(italy, "Italy (code=$ITALY_CODE) should be present in the nations list")
         logger.info("Italy found: nationId=${italy!!.nationId}, code=${italy.code}, description=${italy.description}")
     }
 
@@ -59,7 +59,7 @@ class Esse3CountriesApiTest : Esse3ApiTestBase() {
     @Test
     fun getProvinces_forItaly_defaults() = runTest {
         val nations = api.countries.getNations()
-        val italy = nations.first { it.fiscalCode == ITALY_FISCAL_CODE }
+        val italy = nations.first { it.code == ITALY_CODE }
         val italyId = italy.nationId!!
 
         val provinces = api.countries.getProvinces(nationId = italyId)
@@ -73,24 +73,9 @@ class Esse3CountriesApiTest : Esse3ApiTestBase() {
     }
 
     @Test
-    fun getProvinces_forItaly_withNationFiscalCode() = runTest {
-        val nations = api.countries.getNations()
-        val italy = nations.first { it.fiscalCode == ITALY_FISCAL_CODE }
-        val italyId = italy.nationId!!
-
-        val provinces = api.countries.getProvinces(nationId = italyId, nationFiscalCode = ITALY_FISCAL_CODE)
-        logger.info("getProvinces_forItaly_withNationFiscalCode: returned ${provinces.size} provinces")
-        assertTrue(provinces.isNotEmpty(), "Italy should have provinces when filtered by nationFiscalCode")
-        for (province in provinces) {
-            assertNotNull(province.nationId, "province nationId should not be null")
-            logger.info("  province: abbreviation=${province.abbreviation}, desc=${province.provinceDescription}")
-        }
-    }
-
-    @Test
     fun getMunicipalities_forItaly_defaults() = runTest {
         val nations = api.countries.getNations()
-        val italy = nations.first { it.fiscalCode == ITALY_FISCAL_CODE }
+        val italy = nations.first { it.code == ITALY_CODE }
         val italyId = italy.nationId!!
 
         val municipalities = api.countries.getMunicipalities(nationId = italyId, start = 0, limit = 5)
@@ -108,7 +93,7 @@ class Esse3CountriesApiTest : Esse3ApiTestBase() {
     @Test
     fun getMunicipalities_forItaly_withAbbreviationFilter() = runTest {
         val nations = api.countries.getNations()
-        val italy = nations.first { it.fiscalCode == ITALY_FISCAL_CODE }
+        val italy = nations.first { it.code == ITALY_CODE }
         val italyId = italy.nationId!!
 
         val municipalities = api.countries.getMunicipalities(nationId = italyId, abbreviation = "MI", start = 0, limit = 5)
@@ -124,7 +109,7 @@ class Esse3CountriesApiTest : Esse3ApiTestBase() {
     @Test
     fun getMunicipalities_forItaly_withRegionCodeFilter() = runTest {
         val nations = api.countries.getNations()
-        val italy = nations.first { it.fiscalCode == ITALY_FISCAL_CODE }
+        val italy = nations.first { it.code == ITALY_CODE }
         val italyId = italy.nationId!!
 
         val provinces = api.countries.getProvinces(nationId = italyId)
@@ -143,7 +128,7 @@ class Esse3CountriesApiTest : Esse3ApiTestBase() {
     @Test
     fun getMunicipalities_forItaly_withMunicipalityCodeFilter() = runTest {
         val nations = api.countries.getNations()
-        val italy = nations.first { it.fiscalCode == ITALY_FISCAL_CODE }
+        val italy = nations.first { it.code == ITALY_CODE }
         val italyId = italy.nationId!!
 
         val allMunicipalities = api.countries.getMunicipalities(nationId = italyId, start = 0, limit = 1)
@@ -163,7 +148,7 @@ class Esse3CountriesApiTest : Esse3ApiTestBase() {
     @Test
     fun getMunicipalities_forItaly_pagination() = runTest {
         val nations = api.countries.getNations()
-        val italy = nations.first { it.fiscalCode == ITALY_FISCAL_CODE }
+        val italy = nations.first { it.code == ITALY_CODE }
         val italyId = italy.nationId!!
 
         val page1 = api.countries.getMunicipalities(nationId = italyId, start = 0, limit = 5)
@@ -185,7 +170,7 @@ class Esse3CountriesApiTest : Esse3ApiTestBase() {
     @Test
     fun getMunicipalities_forItaly_withOrderParam() = runTest {
         val nations = api.countries.getNations()
-        val italy = nations.first { it.fiscalCode == ITALY_FISCAL_CODE }
+        val italy = nations.first { it.code == ITALY_CODE }
         val italyId = italy.nationId!!
 
         val municipalities = api.countries.getMunicipalities(nationId = italyId, start = 0, limit = 5, order = "+comuneDes")
@@ -200,7 +185,7 @@ class Esse3CountriesApiTest : Esse3ApiTestBase() {
     @Test
     fun getPostalCode_forItaly_defaults() = runTest {
         val nations = api.countries.getNations()
-        val italy = nations.first { it.fiscalCode == ITALY_FISCAL_CODE }
+        val italy = nations.first { it.code == ITALY_CODE }
         val italyId = italy.nationId!!
 
         val postalCodes = api.countries.getPostalCode(nationId = italyId)
@@ -215,7 +200,7 @@ class Esse3CountriesApiTest : Esse3ApiTestBase() {
     @Test
     fun getPostalCode_forItaly_withAbbreviationFilter() = runTest {
         val nations = api.countries.getNations()
-        val italy = nations.first { it.fiscalCode == ITALY_FISCAL_CODE }
+        val italy = nations.first { it.code == ITALY_CODE }
         val italyId = italy.nationId!!
 
         val postalCodes = api.countries.getPostalCode(nationId = italyId, abbreviation = "MI")
@@ -229,24 +214,9 @@ class Esse3CountriesApiTest : Esse3ApiTestBase() {
     }
 
     @Test
-    fun getPostalCode_forItaly_withNationFiscalCodeFilter() = runTest {
-        val nations = api.countries.getNations()
-        val italy = nations.first { it.fiscalCode == ITALY_FISCAL_CODE }
-        val italyId = italy.nationId!!
-
-        val postalCodes = api.countries.getPostalCode(nationId = italyId, nationFiscalCode = ITALY_FISCAL_CODE)
-        logger.info("getPostalCode_forItaly_withNationFiscalCodeFilter: returned ${postalCodes.size} postal codes")
-        assertTrue(postalCodes.isNotEmpty(), "Expected at least one postal code with nationFiscalCode=$ITALY_FISCAL_CODE")
-        for (postalCode in postalCodes.take(10)) {
-            assertNotNull(postalCode.nationId, "postalCode nationId should not be null")
-            logger.info("  postalCode: cap=${postalCode.postalCode}, nationFiscalCode=${postalCode.nationFiscalCode}")
-        }
-    }
-
-    @Test
     fun getPostalCode_forItaly_withRegionCodeFilter() = runTest {
         val nations = api.countries.getNations()
-        val italy = nations.first { it.fiscalCode == ITALY_FISCAL_CODE }
+        val italy = nations.first { it.code == ITALY_CODE }
         val italyId = italy.nationId!!
 
         val provinces = api.countries.getProvinces(nationId = italyId)
@@ -265,7 +235,7 @@ class Esse3CountriesApiTest : Esse3ApiTestBase() {
     @Test
     fun getPostalCode_forItaly_withMunicipalityIdFilter() = runTest {
         val nations = api.countries.getNations()
-        val italy = nations.first { it.fiscalCode == ITALY_FISCAL_CODE }
+        val italy = nations.first { it.code == ITALY_CODE }
         val italyId = italy.nationId!!
 
         val municipalities = api.countries.getMunicipalities(nationId = italyId, start = 0, limit = 1)
@@ -286,7 +256,7 @@ class Esse3CountriesApiTest : Esse3ApiTestBase() {
     @Test
     fun getPostalCode_forItaly_withMunicipalityCodeFilter() = runTest {
         val nations = api.countries.getNations()
-        val italy = nations.first { it.fiscalCode == ITALY_FISCAL_CODE }
+        val italy = nations.first { it.code == ITALY_CODE }
         val italyId = italy.nationId!!
 
         val municipalities = api.countries.getMunicipalities(nationId = italyId, start = 0, limit = 1)

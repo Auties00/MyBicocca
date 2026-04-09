@@ -39,6 +39,7 @@ class Esse3LogisticsApiTest : Esse3ApiTestBase() {
         logger.info("Derived user permissions: $userPermissions")
     }
 
+    @Disabled("easystaff integration is disabled")
     @Test
     fun testGetEasystaffLogistics() = runTest {
         val requiredPermissions = setOf(Esse3PermissionLevel.ANY)
@@ -82,6 +83,7 @@ class Esse3LogisticsApiTest : Esse3ApiTestBase() {
         }
     }
 
+    @Disabled("easystaff integration is disabled")
     @Test
     fun testGetEasystaffStructure() = runTest {
         val requiredPermissions = setOf(Esse3PermissionLevel.ANY)
@@ -182,6 +184,7 @@ class Esse3LogisticsApiTest : Esse3ApiTestBase() {
         }
     }
 
+    @Disabled("easystaff integration is disabled")
     @Test
     fun testGetCancellableCoverage() = runTest {
         val requiredPermissions = setOf(Esse3PermissionLevel.ANY)
