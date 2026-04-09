@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -46,6 +47,12 @@ import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import it.attendance100.mybicocca.data.model.exam.ExamCall
 import it.attendance100.mybicocca.ui.component.SingleActionBottomBar
 import it.attendance100.mybicocca.ui.component.card.SimpleCard
+import it.attendance100.mybicocca.ui.navigation.LocalSharedTransitionScope
+import it.attendance100.mybicocca.util.shared_transitions.CommonSharedElementKey
+import it.attendance100.mybicocca.util.shared_transitions.CommonSharedElementType
+import it.attendance100.mybicocca.util.shared_transitions.ExamSessionSharedElementType
+import it.attendance100.mybicocca.util.shared_transitions.ExamSessionsElementKey
+import it.attendance100.mybicocca.util.shared_transitions.bicoccaSharedElement
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
@@ -129,12 +136,23 @@ fun BookingScreen(
             }
         }
 
-        SingleActionBottomBar(
-            text = "Prenota Appello",
-            icon = Icons.Default.EventAvailable,
-            onClick = { /* nothing */ },
-            modifier = Modifier.align(Alignment.BottomCenter),
-        )
+        with(LocalSharedTransitionScope.current!!) {
+            SingleActionBottomBar(
+                text = "Prenota Appello",
+                icon = Icons.Default.EventAvailable,
+                onClick = { /* nothing */ },
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .offset(y = 128.dp)
+                    .renderInSharedTransitionScopeOverlay(100f)
+                    .bicoccaSharedElement(
+                        key = CommonSharedElementKey(
+                            CommonSharedElementKey.EXAM_SESSIONS_KEY,
+                            CommonSharedElementType.BottomActionBar
+                        )
+                    ),
+            )
+        }
     }
 }
 
@@ -145,142 +163,158 @@ fun BookingExamCard(
     modifier: Modifier = Modifier,
 ) {
     SimpleCard(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .bicoccaSharedElement(
+                key = ExamSessionsElementKey(
+                    examCall.id.toString(),
+                    ExamSessionSharedElementType.Card
+                ),
+                zIndexInOverlay = -100f
+            ),
         ditherImage = null,
         onClick = onClick,
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-        ) {
-            // Course Name
-            Text(
-                text = examCall.activityName,
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.fillMaxWidth(),
-            )
-
-            // Description (cleaned)
-            val displayDescription = remember(examCall.activityName, examCall.activityCode) {
-                examCall.activityCode?.let { code ->
-                    cleanDescription(examCall.activityName, code)
-                }
-            }
-            if (displayDescription != null) {
-                Spacer(modifier = Modifier.height(4.dp))
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+            ) {
+                // Course Name
                 Text(
-                    text = displayDescription,
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.fillMaxWidth(),
+                    text = examCall.activityName,
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .bicoccaSharedElement(
+                            key = ExamSessionsElementKey(
+                                examCall.id.toString(),
+                                ExamSessionSharedElementType.Title
+                            ),
+                        ),
                 )
-            }
 
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // Date and location info chips
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                val dateText = examCall.date?.format(
-                    DateTimeFormatter.ofPattern("dd MMM", Locale.getDefault())
-                )
-                val timeText = examCall.startTime?.format(
-                    DateTimeFormatter.ofPattern("HH:mm")
-                )
-                val dateTimeText = listOfNotNull(dateText, timeText).joinToString(" ")
-
-                if (dateTimeText.isNotBlank()) {
-                    InfoChip(
-                        icon = Icons.Outlined.CalendarMonth,
-                        text = dateTimeText,
-                    )
+                // Description (cleaned)
+                val displayDescription = remember(examCall.activityName, examCall.activityCode) {
+                    examCall.activityCode?.let { code ->
+                        cleanDescription(examCall.activityName, code)
+                    }
                 }
-                val building = examCall.building
-                if (!building.isNullOrBlank()) {
-                    InfoChip(
-                        icon = Icons.Outlined.LocationOn,
-                        text = building.take(15),
-                    )
-                }
-            }
-
-            // Exam state description row
-            examCall.stateDescription?.let { state ->
-                Spacer(modifier = Modifier.height(8.dp))
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        Icons.Outlined.CalendarMonth,
-                        contentDescription = null,
-                        modifier = Modifier.size(16.dp),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
+                if (displayDescription != null) {
+                    Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = state,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        text = displayDescription,
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.fillMaxWidth(),
                     )
                 }
-            }
 
-            // Extra details with AnimatedVisibility
-            val hasExtraDetails = (!examCall.building.isNullOrBlank() && !examCall.room.isNullOrBlank()) ||
-                    examCall.enrolledCount != null
+                Spacer(modifier = Modifier.height(12.dp))
 
-            AnimatedVisibility(
-                visible = hasExtraDetails,
-                enter = fadeIn(),
-                exit = fadeOut(),
-            ) {
-                Column {
-                    // Location
-                    val room = examCall.room
-                    val building = examCall.building
-                    if (!building.isNullOrBlank() || !room.isNullOrBlank()) {
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                Icons.Outlined.Business,
-                                contentDescription = null,
-                                modifier = Modifier.size(16.dp),
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text(
-                                text = listOfNotNull(building, room).joinToString(" - "),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                        }
+                // Date and location info chips
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    val dateText = examCall.date?.format(
+                        DateTimeFormatter.ofPattern("dd MMM", Locale.getDefault())
+                    )
+                    val timeText = examCall.startTime?.format(
+                        DateTimeFormatter.ofPattern("HH:mm")
+                    )
+                    val dateTimeText = listOfNotNull(dateText, timeText).joinToString(" ")
+
+                    if (dateTimeText.isNotBlank()) {
+                        InfoChip(
+                            icon = Icons.Outlined.CalendarMonth,
+                            text = dateTimeText,
+                        )
                     }
+                    val building = examCall.building
+                    if (!building.isNullOrBlank()) {
+                        InfoChip(
+                            icon = Icons.Outlined.LocationOn,
+                            text = building.take(15),
+                        )
+                    }
+                }
 
-                    // Registration count if available
-                    examCall.enrolledCount?.let { count ->
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                Icons.Outlined.Person,
-                                contentDescription = null,
-                                modifier = Modifier.size(16.dp),
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text(
-                                text = "$count iscritti",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
+                // Exam state description row
+                examCall.stateDescription?.let { state ->
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            Icons.Outlined.CalendarMonth,
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = state,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
+
+                // Extra details with AnimatedVisibility
+                val hasExtraDetails =
+                    (!examCall.building.isNullOrBlank() && !examCall.room.isNullOrBlank()) ||
+                            examCall.enrolledCount != null
+
+                AnimatedVisibility(
+                    visible = hasExtraDetails,
+                    enter = fadeIn(),
+                    exit = fadeOut(),
+                ) {
+                    Column {
+                        // Location
+                        val room = examCall.room
+                        val building = examCall.building
+                        if (!building.isNullOrBlank() || !room.isNullOrBlank()) {
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    Icons.Outlined.Business,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(16.dp),
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(
+                                    text = listOfNotNull(building, room).joinToString(" - "),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
+                        }
+
+                        // Registration count if available
+                        examCall.enrolledCount?.let { count ->
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    Icons.Outlined.Person,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(16.dp),
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(
+                                    text = "$count iscritti",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
                         }
                     }
                 }
             }
-        }
         }
     }
 }

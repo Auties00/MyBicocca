@@ -51,6 +51,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.font.FontWeight
@@ -62,6 +63,8 @@ import androidx.lifecycle.ViewModelStoreOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import it.attendance100.mybicocca.R
+import it.attendance100.mybicocca.R.drawable
+import it.attendance100.mybicocca.R.string
 import it.attendance100.mybicocca.ui.component.AutoScrollingFilterRow
 import it.attendance100.mybicocca.ui.component.DualActionBottomBar
 import it.attendance100.mybicocca.ui.component.SingleActionBottomBar
@@ -93,12 +96,12 @@ enum class DashboardCategory {
 @Composable
 fun DashboardCategory.label(): String {
     return when (this) {
-        DashboardCategory.Tutti -> stringResource(R.string.segreterie_filter_all)
-        DashboardCategory.Esami -> stringResource(R.string.segreterie_filter_exams)
-        DashboardCategory.Didattica -> stringResource(R.string.segreterie_filter_didattica)
-        DashboardCategory.Amministrazione -> stringResource(R.string.segreterie_filter_financial)
-        DashboardCategory.Agenda -> stringResource(R.string.segreterie_filter_agenda)
-        DashboardCategory.Stage -> stringResource(R.string.segreterie_filter_stage)
+        DashboardCategory.Tutti -> stringResource(string.segreterie_filter_all)
+        DashboardCategory.Esami -> stringResource(string.segreterie_filter_exams)
+        DashboardCategory.Didattica -> stringResource(string.segreterie_filter_didattica)
+        DashboardCategory.Amministrazione -> stringResource(string.segreterie_filter_financial)
+        DashboardCategory.Agenda -> stringResource(string.segreterie_filter_agenda)
+        DashboardCategory.Stage -> stringResource(string.segreterie_filter_stage)
     }
 }
 
@@ -148,6 +151,8 @@ fun SegreterieScreen(
     val haptic = rememberHapticManager()
     val unpaidTaxCount by viewModel.unpaidTaxCount.collectAsStateWithLifecycle()
     val bookedExamCount by viewModel.bookedExamCount.collectAsStateWithLifecycle()
+    val availableExamCount by viewModel.availableExamCount.collectAsStateWithLifecycle()
+    val examResultsCount by viewModel.examResultsCount.collectAsStateWithLifecycle()
 
     val shouldAnimate = remember { !SegreterieAnimationState.shown }
     LaunchedEffect(Unit) {
@@ -157,22 +162,27 @@ fun SegreterieScreen(
     val gridItems: List<DashboardItem> = listOf(
         DashboardHeader(
             id = "exam_title",
-            title = stringResource(R.string.segreterie_exams_booking),
+            title = stringResource(string.segreterie_exams_booking),
         ),
         DashboardTile(
             id = "booked_booking",
-            title = stringResource(R.string.segreterie_booking),
-            subtitle = stringResource(R.string.segreterie_booking_available, 2),
+            title = stringResource(string.segreterie_booking),
+            subtitle = if (availableExamCount > 0) pluralStringResource(
+                R.plurals.segreterie_booking_available,
+                count = availableExamCount,
+                availableExamCount
+            ) else null,
             icon = Icons.Filled.Event,
             category = DashboardCategory.Esami,
             action = onNavigateToBooking,
         ),
         DashboardTile(
             id = "booked_booked",
-            title = stringResource(R.string.segreterie_booked),
-            subtitle = if (bookedExamCount > 0) stringResource(
-                R.string.segreterie_booked_number,
-                bookedExamCount.toString()
+            title = stringResource(string.segreterie_booked),
+            subtitle = if (bookedExamCount > 0) pluralStringResource(
+                R.plurals.segreterie_booked_number,
+                count = bookedExamCount,
+                bookedExamCount,
             ) else null,
             icon = Icons.Filled.EventAvailable,
             status = if (bookedExamCount > 0) DashboardTileStatus.Important else DashboardTileStatus.Normal,
@@ -181,13 +191,20 @@ fun SegreterieScreen(
         ),
         DashboardHeader(
             id = "financial",
-            title = stringResource(R.string.segreterie_services),
+            title = stringResource(string.segreterie_services),
         ),
         DashboardTile(
             id = "taxes",
-            title = stringResource(R.string.segreterie_taxes),
-            subtitle = if (unpaidTaxCount > 0) stringResource(R.string.segreterie_taxes_desc_bad)
-            else stringResource(R.string.segreterie_taxes_desc_good),
+            title = stringResource(string.segreterie_taxes),
+            subtitle = if (unpaidTaxCount == 0) {
+                stringResource(string.segreterie_taxes_desc_zero)
+            } else {
+                pluralStringResource(
+                    R.plurals.segreterie_taxes_desc,
+                    count = unpaidTaxCount,
+                    unpaidTaxCount,
+                )
+            },
             icon = Icons.Outlined.Euro,
             status = if (unpaidTaxCount > 0) DashboardTileStatus.Warning else DashboardTileStatus.Normal,
             category = DashboardCategory.Amministrazione,
@@ -195,14 +212,14 @@ fun SegreterieScreen(
         ),
         DashboardTile(
             id = "isee",
-            title = stringResource(R.string.segreterie_isee),
+            title = stringResource(string.segreterie_isee),
             icon = Icons.Outlined.AccountBalance,
             category = DashboardCategory.Amministrazione,
             action = onNavigateToIsee,
         ),
         DashboardTile(
             id = "scholarship",
-            title = stringResource(R.string.segreterie_self_certificates),
+            title = stringResource(string.segreterie_self_certificates),
             icon = Icons.Outlined.Description,
             category = DashboardCategory.Amministrazione,
             action = onNavigateToSelfCertificates,
@@ -210,8 +227,8 @@ fun SegreterieScreen(
         DashboardTile(
             id = "exam_results",
             title = "Bacheca Esami",
-            subtitle = "3 voti pubblicati",
-            icon = ImageVector.vectorResource(R.drawable.clarify),
+            subtitle = if (examResultsCount > 0) "$examResultsCount voti pubblicati" else null,
+            icon = ImageVector.vectorResource(drawable.clarify),
             category = DashboardCategory.Esami,
             action = onNavigateToExamResults,
         ),
@@ -227,7 +244,7 @@ fun SegreterieScreen(
             id = "questionnaires",
             title = "Questionari",
             subtitle = "2 da compilare",
-            icon = ImageVector.vectorResource(R.drawable.stylus_note),
+            icon = ImageVector.vectorResource(drawable.stylus_note),
             category = DashboardCategory.Didattica,
             action = onNavigateToQuestionnaires,
         ),
@@ -243,7 +260,7 @@ fun SegreterieScreen(
             id = "attendance",
             title = "Presenze",
             subtitle = null,
-            icon = ImageVector.vectorResource(R.drawable.concierge),
+            icon = ImageVector.vectorResource(drawable.concierge),
             category = DashboardCategory.Agenda,
             action = onNavigateToAttendance,
         ),
@@ -345,12 +362,12 @@ fun SegreterieScreen(
 
         // Bottom bars (offscreen, available for shared transitions)
         DualActionBottomBar(
-            mainActionText = stringResource(R.string.career_plan_edit),
+            mainActionText = stringResource(string.career_plan_edit),
             mainActionIcon = Icons.Default.Edit,
             onMainActionClick = { /* nothing */ },
             secondaryActionIcon = Icons.Default.Print,
             onSecondaryActionClick = { /* nothing */ },
-            footerText = stringResource(R.string.career_plan_last_modified, "xx/xx/20xx"),
+            footerText = stringResource(string.career_plan_last_modified, "xx/xx/20xx"),
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .offset(y = 230.dp)
