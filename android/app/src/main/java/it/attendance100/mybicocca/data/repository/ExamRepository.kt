@@ -31,10 +31,11 @@ class ExamRepository @Inject constructor(
         programCode: String?,
         startDate: LocalDate,
         endDate: LocalDate,
+        matricolaId: Long? = null,
     ): Result<Unit> {
         val results = coroutineScope {
             listOf(
-                async { runCatching { refreshBookableExams(careerId) } },
+                async { runCatching { refreshBookableExams(careerId, matricolaId) } },
                 async { runCatching { refreshScheduledExams(programCode, startDate, endDate) } },
             ).awaitAll()
         }
@@ -48,8 +49,8 @@ class ExamRepository @Inject constructor(
         dao.upsertBookings(bookings)
     }
 
-    private suspend fun refreshBookableExams(careerId: Long) {
-        val calls = esse3Exam.getExamCalls(careerId)
+    private suspend fun refreshBookableExams(careerId: Long, matricolaId: Long? = null) {
+        val calls = esse3Exam.getExamCalls(careerId, matricolaId)
         dao.deleteAllCalls()
         dao.upsertCalls(calls)
     }

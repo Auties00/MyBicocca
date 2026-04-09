@@ -6,6 +6,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import it.attendance100.mybicocca.data.repository.CareerRepository
 import it.attendance100.mybicocca.data.repository.ExamRepository
 import it.attendance100.mybicocca.data.repository.TaxRepository
+import it.attendance100.mybicocca.data.repository.TranscriptRepository
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -19,6 +20,7 @@ import javax.inject.Inject
 class SegreterieViewModel @Inject constructor(
     taxRepository: TaxRepository,
     examRepository: ExamRepository,
+    transcriptRepository: TranscriptRepository,
     careerRepository: CareerRepository,
 ) : ViewModel() {
 
@@ -35,5 +37,16 @@ class SegreterieViewModel @Inject constructor(
 
     val bookedExamCount: StateFlow<Int> = examRepository.observeBookings()
         .map { it.size }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0)
+
+    val availableExamCount: StateFlow<Int> = examRepository.observeExamCalls()
+        .map { it.size }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0)
+
+    val examResultsCount: StateFlow<Int> = activeCareer
+        .flatMapLatest { career ->
+            transcriptRepository.observeRows(career?.studentId ?: 0)
+                .map { it.size }
+        }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0)
 }

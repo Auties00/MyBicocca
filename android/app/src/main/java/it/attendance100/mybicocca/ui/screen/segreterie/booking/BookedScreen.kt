@@ -1,5 +1,6 @@
 package it.attendance100.mybicocca.ui.screen.segreterie.booking
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -30,12 +31,16 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.valentinilk.shimmer.ShimmerBounds
+import com.valentinilk.shimmer.rememberShimmer
+import com.valentinilk.shimmer.shimmer
 import it.attendance100.mybicocca.data.model.exam.ExamBooking
 import it.attendance100.mybicocca.ui.component.card.SimpleCard
 
@@ -44,29 +49,114 @@ fun BookedScreen(
     viewModel: BookedViewModel = hiltViewModel(),
 ) {
     val bookings by viewModel.bookings.collectAsStateWithLifecycle()
+    val isRefreshing by viewModel.isRefreshing.collectAsStateWithLifecycle()
 
-    if (bookings.isEmpty()) {
-        Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center,
-        ) {
-            Text(
-                text = "Nessun esame prenotato",
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+    when {
+        bookings.isEmpty() && isRefreshing -> {
+            BookedSkeletonList()
         }
-    } else {
-        LazyColumn(
-            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-            modifier = Modifier.fillMaxSize(),
-        ) {
-            items(
-                items = bookings,
-                key = { it.id },
-            ) { booking ->
-                BookedExamCard(booking)
+
+        bookings.isEmpty() && !isRefreshing -> {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(
+                    text = "Nessun esame prenotato",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+
+        else -> {
+            LazyColumn(
+                contentPadding = PaddingValues(16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                modifier = Modifier.fillMaxSize(),
+            ) {
+                items(
+                    items = bookings,
+                    key = { it.id },
+                ) { booking ->
+                    BookedExamCard(booking)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun BookedSkeletonList() {
+    val shimmerInstance = rememberShimmer(shimmerBounds = ShimmerBounds.Window)
+    val skeletonColor = MaterialTheme.colorScheme.outlineVariant
+
+    Column(
+        modifier = Modifier
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
+        repeat(4) {
+            SimpleCard(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(220.dp)
+                    .shimmer(shimmerInstance),
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth(0.7f)
+                            .height(20.dp)
+                            .clip(MaterialTheme.shapes.small)
+                            .background(skeletonColor),
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth(0.5f)
+                            .height(28.dp)
+                            .clip(MaterialTheme.shapes.small)
+                            .background(skeletonColor),
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
+                    Spacer(modifier = Modifier.height(12.dp))
+                    repeat(2) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth(0.6f)
+                                .height(14.dp)
+                                .clip(MaterialTheme.shapes.extraSmall)
+                                .background(skeletonColor),
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
+                    Spacer(modifier = Modifier.weight(1f))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(40.dp)
+                                .clip(MaterialTheme.shapes.medium)
+                                .background(skeletonColor),
+                        )
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(40.dp)
+                                .clip(MaterialTheme.shapes.medium)
+                                .background(skeletonColor),
+                        )
+                    }
+                }
             }
         }
     }

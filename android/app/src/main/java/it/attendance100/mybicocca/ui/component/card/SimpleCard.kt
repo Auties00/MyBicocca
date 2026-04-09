@@ -56,6 +56,7 @@ fun SimpleCard(
     ditherImage: Int? = R.drawable.dither_95dp,
     backgroundColor: Color = MaterialTheme.colorScheme.surfaceContainerLowest,
     onClick: (() -> Unit)? = null,
+	shape: androidx.compose.ui.graphics.Shape = RoundedCornerShape(16.dp),
     background: (@Composable BoxScope.() -> Unit)? = null,
     leading: (@Composable BoxScope.() -> Unit)? = null,
     trailing: (@Composable BoxScope.() -> Unit)? = null,
@@ -93,7 +94,7 @@ fun SimpleCard(
 			if (onClick != null) onClick()
 		},
         enabled = onClick != null,
-		shape = RoundedCornerShape(16.dp),
+		shape = shape,
 	) {
 		Box {
 			Box(modifier = Modifier.align(Alignment.CenterStart)) {
@@ -103,9 +104,9 @@ fun SimpleCard(
 					contentScale = ContentScale.FillHeight,
 					colorFilter = ColorFilter.tint(LocalContentColor.current),
 					modifier = Modifier
-                        .fillMaxHeight()
-                        .alpha(.1f)
-                        .zIndex(-100f),
+						.fillMaxHeight()
+						.alpha(.1f)
+						.zIndex(-100f),
 				)
 			}
 
@@ -121,9 +122,9 @@ fun SimpleCard(
 
 			Column(
 				modifier = Modifier
-                    .padding(horizontal = 18.dp)
-                    .padding(top = 12.dp, bottom = 10.dp)
-                    .fillMaxWidth(),
+					.padding(horizontal = 18.dp)
+					.padding(top = 12.dp, bottom = 10.dp)
+					.fillMaxWidth(),
 				verticalArrangement = Arrangement.spacedBy(4.dp),
 			) {
 				content()

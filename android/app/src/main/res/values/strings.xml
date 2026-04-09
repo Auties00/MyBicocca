@@ -320,15 +320,25 @@
     <string name="segreterie_services">Services</string>
     <string name="segreterie_exams_booking">Exam Booking</string>
     <string name="segreterie_taxes">Tuition fee</string>
-    <string name="segreterie_taxes_desc_good">All good</string>
-    <string name="segreterie_taxes_desc_bad">Missing payments</string>
+    <string name="segreterie_taxes_desc_zero">All good</string>
+    <plurals name="segreterie_taxes_desc">
+        <item quantity="zero">All good</item>
+        <item quantity="one">%d Missing payment</item>
+        <item quantity="other">%d Missing payments</item>
+    </plurals>
     <string name="segreterie_plan_approved">Approved</string>
     <string name="segreterie_plan">Study Plan</string>
     <string name="filter">Exams registration</string>
     <string name="segreterie_booked">Booked Exams</string>
     <string name="segreterie_booking">Available exams</string>
-    <string name="segreterie_booking_available">%1$s Available dates</string>
-    <string name="segreterie_booked_number">%1$s Booked exams</string>
+    <plurals name="segreterie_booking_available">
+        <item quantity="one">%d Available date</item>
+        <item quantity="other">%d Available dates</item>
+    </plurals>
+    <plurals name="segreterie_booked_number">
+        <item quantity="one">%d Booked exam</item>
+        <item quantity="other">%d Booked exams</item>
+    </plurals>
     <string name="segreterie_isee">ISEE</string>
     <string name="segreterie_filter_all">All</string>
     <string name="segreterie_filter_exams">Exams</string>

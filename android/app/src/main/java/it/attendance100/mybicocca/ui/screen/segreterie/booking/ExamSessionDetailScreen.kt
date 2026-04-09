@@ -71,6 +71,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -82,10 +83,15 @@ import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import it.attendance100.mybicocca.data.model.exam.ExamCall
 import it.attendance100.mybicocca.ui.component.SingleActionBottomBar
 import it.attendance100.mybicocca.ui.component.card.SimpleCard
+import it.attendance100.mybicocca.ui.navigation.LocalSharedTransitionScope
 import it.attendance100.mybicocca.util.rememberHapticManager
+import it.attendance100.mybicocca.util.shared_transitions.CommonSharedElementKey
+import it.attendance100.mybicocca.util.shared_transitions.CommonSharedElementType
+import it.attendance100.mybicocca.util.shared_transitions.ExamSessionSharedElementType
+import it.attendance100.mybicocca.util.shared_transitions.ExamSessionsElementKey
+import it.attendance100.mybicocca.util.shared_transitions.bicoccaSharedElement
 import java.time.format.DateTimeFormatter
 import java.util.Locale
-
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -122,51 +128,57 @@ fun ExamSessionDetailScreen(
     Box(
         modifier = Modifier.fillMaxSize(),
     ) {
-        when {
-            examCall == null && isLoading -> {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    CircularProgressIndicator()
-                }
-            }
-
-            error != null && examCall == null -> {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier.padding(24.dp),
+        SimpleCard(
+            modifier = Modifier
+                .fillMaxSize()
+                .bicoccaSharedElement(
+                    key = ExamSessionsElementKey(
+                        sessionId.toString(),
+                        ExamSessionSharedElementType.Card
+                    ),
+                    zIndexInOverlay = -100f
+                ),
+            shape = RectangleShape,
+            ditherImage = null,
+            onClick = null,
+        ) {
+            when {
+                examCall == null && isLoading -> {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center,
                     ) {
-                        Icon(
-                            Icons.Outlined.ErrorOutline,
-                            contentDescription = null,
-                            modifier = Modifier.size(64.dp),
-                            tint = MaterialTheme.colorScheme.error,
-                        )
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Text(
-                            text = error ?: "Errore",
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.error,
-                            textAlign = TextAlign.Center,
-                        )
+                        CircularProgressIndicator()
                     }
                 }
-            }
 
-            examCall != null -> {
-                SimpleCard(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 4.dp)
-                        .padding(top = 8.dp),
-                    ditherImage = null,
-                    onClick = null,
-                ) {
+                error != null && examCall == null -> {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier.padding(24.dp),
+                        ) {
+                            Icon(
+                                Icons.Outlined.ErrorOutline,
+                                contentDescription = null,
+                                modifier = Modifier.size(64.dp),
+                                tint = MaterialTheme.colorScheme.error,
+                            )
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Text(
+                                text = error ?: "Errore",
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.error,
+                                textAlign = TextAlign.Center,
+                            )
+                        }
+                    }
+                }
+
+                examCall != null -> {
                     Box(modifier = Modifier.fillMaxSize()) {
                         // Scrollable content inside the card
                         Column(
@@ -187,15 +199,25 @@ fun ExamSessionDetailScreen(
             }
         }
 
-        SingleActionBottomBar(
-            text = "Prenota Appello",
-            icon = Icons.Default.EventAvailable,
-            onClick = {
-                haptic.tap()
-                showBookingSheet = true
-            },
-            modifier = Modifier.align(Alignment.BottomCenter),
-        )
+        with(LocalSharedTransitionScope.current!!) {
+            SingleActionBottomBar(
+                text = "Prenota Appello",
+                icon = Icons.Default.EventAvailable,
+                onClick = {
+                    haptic.tap()
+                    showBookingSheet = true
+                },
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .renderInSharedTransitionScopeOverlay(100f)
+                    .bicoccaSharedElement(
+                        key = CommonSharedElementKey(
+                            CommonSharedElementKey.EXAM_SESSIONS_KEY,
+                            CommonSharedElementType.BottomActionBar
+                        )
+                    ),
+            )
+        }
     }
 
     // Booking Bottom Sheet
@@ -239,12 +261,18 @@ private fun ExamSessionContent(
         // Title
         Text(
             text = examCall.activityName,
-            style = MaterialTheme.typography.headlineMedium,
+            style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold,
             color = primaryColor,
             modifier = Modifier
-                .padding(start = 28.dp)
-                .fillMaxWidth(),
+                .padding(end = 38.dp)
+                .fillMaxWidth()
+                .bicoccaSharedElement(
+                    key = ExamSessionsElementKey(
+                        examCall.id.toString(),
+                        ExamSessionSharedElementType.Title
+                    ),
+                ),
         )
 
         // Activity code as subtitle if different from name
@@ -362,7 +390,10 @@ private fun ExamSessionContent(
                 }
 
                 // Exam Details Section
-                SectionHeader(title = "Dettagli Esame", icon = Icons.AutoMirrored.Outlined.Assignment)
+                SectionHeader(
+                    title = "Dettagli Esame",
+                    icon = Icons.AutoMirrored.Outlined.Assignment
+                )
                 Spacer(modifier = Modifier.height(12.dp))
 
                 examCall.stateDescription?.let { state ->

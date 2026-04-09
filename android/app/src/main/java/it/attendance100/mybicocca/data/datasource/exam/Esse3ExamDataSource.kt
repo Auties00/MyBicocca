@@ -6,10 +6,7 @@ import it.attendance100.mybicocca.data.model.exam.ExamBooking
 import it.attendance100.mybicocca.data.model.exam.ExamCall
 import it.attendance100.mybicocca.di.IoDispatcher
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.withContext
-import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import javax.inject.Inject
@@ -25,8 +22,9 @@ class Esse3ExamDataSource @Inject constructor(
         private val formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")
     }
 
-    suspend fun getExamCalls(careerId: Long): List<ExamCall> = withContext(ioDispatcher) {
-        val activities = esse3Api.examsCalendar.getActivitiesForExamCalls()
+    suspend fun getExamCalls(careerId: Long, matricolaId: Long? = null): List<ExamCall> =
+        withContext(ioDispatcher) {
+            val activities = esse3Api.examsCalendar.getActivitiesForExamCalls(matId = matricolaId)
         val results = mutableListOf<ExamCall>()
         val today = java.time.LocalDate.now().toString()
 

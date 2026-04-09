@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeout
 import java.time.LocalDate
 import javax.inject.Inject
 
@@ -49,15 +50,18 @@ class BookingViewModel @Inject constructor(
             _isRefreshing.value = true
             _error.value = null
             try {
-                val career = careerRepository.observeAll()
-                    .first { it.isNotEmpty() }
-                    .first()
+                val career = withTimeout(15_000) {
+                    careerRepository.observeAll()
+                        .first { it.isNotEmpty() }
+                        .first()
+                }
                 val now = LocalDate.now()
                 examRepository.refreshExamCalls(
                     careerId = career.studentId,
                     programCode = career.courseOfStudyCode,
                     startDate = now,
                     endDate = now.plusMonths(6),
+                    matricolaId = career.matricolaId,
                 )
             } catch (e: Exception) {
                 _error.value = e.message ?: "Errore durante il caricamento"

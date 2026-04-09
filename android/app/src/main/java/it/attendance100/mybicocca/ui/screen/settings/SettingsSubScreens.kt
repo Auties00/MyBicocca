@@ -8,21 +8,17 @@ import androidx.appcompat.app.AppCompatDelegate
 import androidx.biometric.BiometricManager
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Badge
 import androidx.compose.material.icons.filled.Brightness4
 import androidx.compose.material.icons.filled.Code
@@ -37,12 +33,9 @@ import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.RadioButtonDefaults
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -55,7 +48,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.os.LocaleListCompat
@@ -73,48 +65,18 @@ private fun SettingsSubScreenScaffold(
     onNavigateBack: () -> Unit,
     content: @Composable (PaddingValues) -> Unit,
 ) {
-    Scaffold(
-        containerColor = MaterialTheme.colorScheme.background,
-        topBar = {
-            Surface(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .statusBarsPadding()
-                    .height(60.dp),
-                color = MaterialTheme.colorScheme.background,
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(horizontal = 13.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(
-                            Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onSurface,
-                        )
-                    }
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = title,
-                        color = MaterialTheme.colorScheme.onBackground,
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold,
-                    )
-                }
-            }
-        },
-    ) { paddingValues ->
-        content(paddingValues)
+    Surface(
+        modifier = Modifier.fillMaxSize(),
+        color = MaterialTheme.colorScheme.background,
+    ) {
+        content(PaddingValues())
     }
 }
 
 @Composable
 fun AppearanceSettingsScreen(
     onNavigateBack: () -> Unit,
-    onThemeChange: (Boolean) -> Unit = {},
+    onThemeChange: (String) -> Unit = {},
 ) {
     val preferencesManager = rememberPreferencesManager()
     var selectedThemeMode by remember { mutableStateOf(preferencesManager.themeMode) }
@@ -160,7 +122,6 @@ fun AppearanceSettingsScreen(
                 containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
                 title = { Text(stringResource(R.string.settings_appearance_theme)) },
                 text = {
-                    val default = isSystemInDarkTheme()
                     Column {
                         themeOptions.forEach { themeMode ->
                             val themeName = when (themeMode) {
@@ -177,7 +138,7 @@ fun AppearanceSettingsScreen(
                                         preferencesManager.themeMode = themeMode
                                         preferencesManager.applyTheme()
                                         haptic.tap()
-                                        onThemeChange(preferencesManager.isDarkMode ?: default)
+                                        onThemeChange(themeMode)
                                     },
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {
@@ -188,7 +149,7 @@ fun AppearanceSettingsScreen(
                                         preferencesManager.themeMode = themeMode
                                         preferencesManager.applyTheme()
                                         haptic.tap()
-                                        onThemeChange(preferencesManager.isDarkMode ?: default)
+                                        onThemeChange(themeMode)
                                     },
                                     colors = RadioButtonDefaults.colors(selectedColor = primaryColor),
                                 )
