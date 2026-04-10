@@ -14,7 +14,6 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
-import java.time.LocalDate
 import javax.inject.Inject
 
 @HiltViewModel
@@ -55,12 +54,8 @@ class BookingViewModel @Inject constructor(
                         .first { it.isNotEmpty() }
                         .first()
                 }
-                val now = LocalDate.now()
                 examRepository.refreshExamCalls(
                     careerId = career.studentId,
-                    programCode = career.courseOfStudyCode,
-                    startDate = now,
-                    endDate = now.plusMonths(6),
                     matricolaId = career.matricolaId,
                 )
             } catch (e: Exception) {
