@@ -5,6 +5,7 @@ data class Esse3StudentProfile(
     val studentId: Long,
     val enrollmentId: Long,
     val matricola: String,
+    val matId: Long,
     val degreeCourseId: Long,
     val userId: String
 )

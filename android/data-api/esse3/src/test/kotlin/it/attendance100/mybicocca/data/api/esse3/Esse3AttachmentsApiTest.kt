@@ -246,14 +246,14 @@ class Esse3AttachmentsApiTest : Esse3ApiTestBase() {
 
     @Test
     fun testGetUploadedAttachmentMetadata() = runTest {
-        val requiredPermissions = setOf(Esse3PermissionLevel.ANY, Esse3PermissionLevel.TECHNICAL_USER)
+        val requiredPermissions = setOf(Esse3PermissionLevel.TECHNICAL_USER)
         if (userPermissions.any { it in requiredPermissions }) {
             logger.info("testGetUploadedAttachmentMetadata: attempting to retrieve upload metadata with a known uploadId")
             try {
                 val result = api.attachments.getUploadedAttachmentMetadata(uploadId = 1L)
                 logger.info("testGetUploadedAttachmentMetadata: uploadId=1 result uploadState=${result.uploadState}, fileName=${result.fileName}, attachmentType=${result.attachmentType}, attachmentId=${result.attachmentId}, uploadId=${result.uploadId}")
                 assertNotNull(result, "getUploadedAttachmentMetadata() should not return null")
-            } catch (e: it.attendance100.mybicocca.data.exception.esse3.Esse3Exception) {
+            } catch (e: Esse3Exception) {
                 logger.info("testGetUploadedAttachmentMetadata: uploadId=1 not found or validation error: ${e.message}")
             }
 
@@ -271,7 +271,7 @@ class Esse3AttachmentsApiTest : Esse3ApiTestBase() {
                         assertNotNull(result, "getUploadedAttachmentMetadata() should not return null")
                         tested = true
                         break
-                    } catch (e: it.attendance100.mybicocca.data.exception.esse3.Esse3Exception) {
+                    } catch (e: Esse3Exception) {
                         logger.info("testGetUploadedAttachmentMetadata: uploadId=$attachmentId not valid as upload: ${e.message}")
                     }
                 }
@@ -292,13 +292,13 @@ class Esse3AttachmentsApiTest : Esse3ApiTestBase() {
 
     @Test
     fun testGetUploadedAttachmentState() = runTest {
-        val requiredPermissions = setOf(Esse3PermissionLevel.ANY, Esse3PermissionLevel.TECHNICAL_USER)
+        val requiredPermissions = setOf(Esse3PermissionLevel.TECHNICAL_USER)
         if (userPermissions.any { it in requiredPermissions }) {
             logger.info("testGetUploadedAttachmentState: attempting to retrieve upload state with uploadId=1")
             try {
                 api.attachments.getUploadedAttachmentState(uploadId = 1L)
                 logger.info("testGetUploadedAttachmentState: getUploadedAttachmentState(uploadId=1) succeeded")
-            } catch (e: it.attendance100.mybicocca.data.exception.esse3.Esse3Exception) {
+            } catch (e: Esse3Exception) {
                 logger.info("testGetUploadedAttachmentState: uploadId=1 not found or validation error: ${e.message}")
             }
 
@@ -315,7 +315,7 @@ class Esse3AttachmentsApiTest : Esse3ApiTestBase() {
                         logger.info("testGetUploadedAttachmentState: getUploadedAttachmentState(uploadId=$attachmentId) succeeded")
                         tested = true
                         break
-                    } catch (e: it.attendance100.mybicocca.data.exception.esse3.Esse3Exception) {
+                    } catch (e: Esse3Exception) {
                         logger.info("testGetUploadedAttachmentState: uploadId=$attachmentId not valid: ${e.message}")
                     }
                 }

@@ -67,6 +67,7 @@ object Esse3GlobalApiData : BeforeAllCallback, AutoCloseable {
         )
     }
 
+    // FIXME: Could fail if the user is not a STUDENT
     private suspend fun fetchStudentProfile(): Esse3StudentProfile {
         val careers = api.careers.getCareers()
         val career = careers.firstOrNull()
@@ -76,6 +77,7 @@ object Esse3GlobalApiData : BeforeAllCallback, AutoCloseable {
             studentId = career.studentId ?: throw IllegalStateException("No studentId in career"),
             enrollmentId = career.enrollmentId ?: throw IllegalStateException("No enrollmentId in career"),
             matricola = career.enrollmentId.toString(),
+            matId = career.matId ?: throw IllegalStateException("No matId in career"),
             degreeCourseId = career.courseOfStudyId ?: throw IllegalStateException("No degreeCourseId in career"),
             userId = session?.userId ?: throw IllegalStateException("No userId in session")
         )
