@@ -46,6 +46,7 @@ class PreferencesManager @Inject constructor(
     private const val KEY_PROGRESS_BAR_TOGGLE = "progress_bar_toggle"
     private const val KEY_SWIPE_PROFILE_ENABLED = "swipe_profile_enabled"
     private const val KEY_SWIPE_SEARCH_ENABLED = "swipe_search_enabled"
+    private const val KEY_STUDY_PLAN_LAST_MODIFIED = "study_plan_last_modified"
 
 
     // Public Settings
@@ -131,6 +132,12 @@ class PreferencesManager @Inject constructor(
     get() = prefs.getBoolean(KEY_SWIPE_SEARCH_ENABLED, true)
     set(value) {
       prefs.edit { putBoolean(KEY_SWIPE_SEARCH_ENABLED, value) }
+    }
+
+  var studyPlanLastModified: Long
+    get() = prefs.getLong(KEY_STUDY_PLAN_LAST_MODIFIED, 0L)
+    set(value) {
+      prefs.edit { putLong(KEY_STUDY_PLAN_LAST_MODIFIED, value) }
     }
 
   var fingerprintLogin: Boolean
