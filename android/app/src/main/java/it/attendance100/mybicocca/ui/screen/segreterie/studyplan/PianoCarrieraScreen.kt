@@ -55,9 +55,11 @@ import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.data.model.studyplan.PlannedCourse
 import it.attendance100.mybicocca.ui.component.DualActionBottomBar
 import it.attendance100.mybicocca.util.rememberHapticManager
+import it.attendance100.mybicocca.util.rememberPreferencesManager
 
 @Composable
 fun PianoCarrieraScreen(
+    onNavigateToEdit: (studentId: Long, choiceRegulationId: Long, schemaId: Long, planId: Long) -> Unit = { _, _, _, _ -> },
     viewModel: PianoCarrieraViewModel = hiltViewModel(
         checkNotNull<ViewModelStoreOwner>(
             LocalViewModelStoreOwner.current
@@ -68,6 +70,7 @@ fun PianoCarrieraScreen(
 ) {
     val courses by viewModel.courses.collectAsStateWithLifecycle()
     val headers by viewModel.headers.collectAsStateWithLifecycle()
+    val isEditEnabled by viewModel.isEditEnabled.collectAsStateWithLifecycle()
 
     // Group by year
     val groupedPlan = remember(courses) {
@@ -157,8 +160,7 @@ fun PianoCarrieraScreen(
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
                                 Text(
-                                    text = if (headerDescription.isNotBlank()) headerDescription
-                                    else stringResource(R.string.career_plan_type_value),
+                                    text = headerDescription.ifBlank { stringResource(R.string.career_plan_type_value) },
                                     style = MaterialTheme.typography.bodyLarge,
                                     fontWeight = FontWeight.SemiBold,
                                 )
@@ -200,20 +202,37 @@ fun PianoCarrieraScreen(
             }
         }
 
+        val prefs = rememberPreferencesManager()
+        val lastModifiedTime = prefs.studyPlanLastModified
+        val lastModifiedStr = remember(lastModifiedTime) {
+            if (lastModifiedTime == 0L) null
+            else java.text.SimpleDateFormat("dd/MM/yyyy", java.util.Locale.getDefault())
+                .format(java.util.Date(lastModifiedTime))
+        }
+
         // Bottom action bar
         DualActionBottomBar(
             mainActionText = stringResource(R.string.career_plan_edit),
             mainActionIcon = Icons.Default.Edit,
+            mainIsEnabled = isEditEnabled,
             onMainActionClick = {
                 haptic.tap()
-                /* TODO: implement career edit */
+                val header = headers.firstOrNull() ?: return@DualActionBottomBar
+                val regId = header.choiceRegulationId ?: return@DualActionBottomBar
+                val sId = header.schemaId ?: return@DualActionBottomBar
+                onNavigateToEdit(header.studentId, regId, sId, header.id)
             },
             secondaryActionIcon = Icons.Default.Print,
             onSecondaryActionClick = {
                 haptic.tap()
                 /* TODO: implement print */
             },
-            footerText = stringResource(R.string.career_plan_last_modified, "-"),
+            footerText = lastModifiedStr?.let {
+                stringResource(
+                    R.string.career_plan_last_modified,
+                    it
+                )
+            },
             isBottomBarVisible = isBottomBarVisible,
             modifier = Modifier.align(Alignment.BottomCenter),
         )

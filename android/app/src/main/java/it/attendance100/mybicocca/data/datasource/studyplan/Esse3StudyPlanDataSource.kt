@@ -1,6 +1,7 @@
 package it.attendance100.mybicocca.data.datasource.studyplan
 
 import it.attendance100.mybicocca.data.api.esse3.Esse3Api
+import it.attendance100.mybicocca.data.dto.esse3.Esse3ChoiceRegulationWindow
 import it.attendance100.mybicocca.data.dto.esse3.Esse3StudyPlanActivity
 import it.attendance100.mybicocca.data.dto.esse3.Esse3StudyPlanHeader
 import it.attendance100.mybicocca.data.model.studyplan.PlannedCourse
@@ -21,6 +22,11 @@ class Esse3StudyPlanDataSource @Inject constructor(
             esse3Api.plans.getStudentPlanHeaders(studentId).map { it.toStudyPlanHeader(studentId) }
         }
 
+    suspend fun getCompilationWindows(choiceRegulationId: Long): List<Esse3ChoiceRegulationWindow> =
+        withContext(ioDispatcher) {
+            esse3Api.choiceRules.getChoiceRegulationWindows(choiceRegulationId)
+        }
+
     suspend fun getPlannedCourses(studentId: Long, planId: Long): List<PlannedCourse> =
         withContext(ioDispatcher) {
             val plan = esse3Api.plans.getStudentPlan(studentId, planId)
@@ -33,6 +39,9 @@ class Esse3StudyPlanDataSource @Inject constructor(
         description = stateDescription,
         statusCode = state?.value,
         statusDescription = stateDescription,
+        choiceRegulationId = choiceRegulationId,
+        schemaId = schemaId?.toLong(),
+        planType = planType?.value,
     )
 
     private fun Esse3StudyPlanActivity.toPlannedCourse(planId: Long): PlannedCourse? {
