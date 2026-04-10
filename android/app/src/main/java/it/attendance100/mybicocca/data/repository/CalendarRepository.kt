@@ -2,18 +2,18 @@ package it.attendance100.mybicocca.data.repository
 
 import it.attendance100.mybicocca.data.database.dao.CalendarDao
 import it.attendance100.mybicocca.data.database.dao.CareerDao
+import it.attendance100.mybicocca.data.database.dao.StudyPlanDao
 import it.attendance100.mybicocca.data.datasource.calendar.EasyStaffCalendarDataSource
 import it.attendance100.mybicocca.data.datasource.calendar.ElearningCalendarDataSource
 import it.attendance100.mybicocca.data.datasource.calendar.Esse3CalendarDataSource
 import it.attendance100.mybicocca.data.model.calendar.CalendarEvent
 import it.attendance100.mybicocca.data.model.calendar.EventSource
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import java.time.LocalDate
 import javax.inject.Inject
 import javax.inject.Singleton
+
+private const val STATUS_PASSED = "Superata"
 
 @Singleton
 class CalendarRepository @Inject constructor(
@@ -22,6 +22,7 @@ class CalendarRepository @Inject constructor(
     private val esse3Calendar: Esse3CalendarDataSource,
     private val dao: CalendarDao,
     private val careerDao: CareerDao,
+    private val studyPlanDao: StudyPlanDao,
 ) {
     fun observeEvents(range: ClosedRange<LocalDate>): Flow<List<CalendarEvent>> =
         dao.observeInRange(range.start, range.endInclusive)
@@ -35,23 +36,41 @@ class CalendarRepository @Inject constructor(
     fun observeEventsBySource(source: EventSource): Flow<List<CalendarEvent>> =
         dao.observeBySource(source)
 
-    suspend fun refreshAll(range: ClosedRange<LocalDate>): Result<Unit> {
-        val results = coroutineScope {
-            listOf(
-                async { runCatching { refreshSchedule(range) } },
-                async { runCatching { refreshDeadlines(range) } },
-                async { runCatching { refreshAppointments(range) } },
-            ).awaitAll()
-        }
-        return if (results.any { it.isSuccess }) Result.success(Unit)
-        else Result.failure(results.first { it.isFailure }.exceptionOrNull()!!)
+    suspend fun refreshAll(range: ClosedRange<LocalDate>): Result<Unit> = runCatching {
+        refreshSchedule(range)
     }
 
     private suspend fun refreshSchedule(range: ClosedRange<LocalDate>) {
-        val programCodes = careerDao.getAll().mapNotNull { it.courseOfStudyCode }
-        val events = easyStaffCalendar.getScheduleEvents(range, programCodes)
+        val career = careerDao.getAll().firstOrNull() ?: return
+        val programCode = career.courseOfStudyCode ?: return
+
+        val currentAcademicYearStart = computeAcademicYearStart(range.start)
+        val maxStudyYear = career.enrollmentYear?.let { enrollment ->
+            (currentAcademicYearStart - enrollment + 1).coerceAtLeast(1)
+        }
+
+        val planHeader = studyPlanDao.getHeadersByStudentId(career.studentId).firstOrNull()
+        val plannedCourses = planHeader?.let { studyPlanDao.getCoursesByPlanId(it.id) } ?: emptyList()
+
+        val unpassedCourseNames = plannedCourses
+            .filter { !it.statusDescription.equals(STATUS_PASSED, ignoreCase = true) }
+            .filter { maxStudyYear == null || (it.year != null && it.year <= maxStudyYear) }
+            .map { it.activityName.lowercase().trim() }
+            .toSet()
+
+        val events = easyStaffCalendar.getScheduleEvents(
+            range = range,
+            programCode = programCode,
+            maxStudyYear = maxStudyYear,
+            unpassedCourseNames = unpassedCourseNames,
+        )
+
         dao.deleteBySourceAndRange(EventSource.EASYSTAFF, range.start, range.endInclusive)
         dao.upsertAll(events)
+    }
+
+    private fun computeAcademicYearStart(date: LocalDate): Int {
+        return if (date.monthValue >= 9) date.year else date.year - 1
     }
 
     private suspend fun refreshDeadlines(range: ClosedRange<LocalDate>) {

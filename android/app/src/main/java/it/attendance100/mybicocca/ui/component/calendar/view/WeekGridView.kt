@@ -64,7 +64,7 @@ fun WeekGridView(
 
     Column(modifier = Modifier.fillMaxSize()) {
         when {
-            isLoading && events.isEmpty() -> CalendarLoadingState()
+            isLoading -> CalendarLoadingState()
             events.isEmpty() && (searchQuery.isNotEmpty() || hasActiveFilters) -> {
                 CalendarEmptyState(
                     type = EmptyStateType.SEARCH,

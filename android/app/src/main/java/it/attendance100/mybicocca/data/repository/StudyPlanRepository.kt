@@ -2,6 +2,7 @@ package it.attendance100.mybicocca.data.repository
 
 import it.attendance100.mybicocca.data.database.dao.StudyPlanDao
 import it.attendance100.mybicocca.data.datasource.studyplan.Esse3StudyPlanDataSource
+import it.attendance100.mybicocca.data.model.document.AppDocument
 import it.attendance100.mybicocca.data.model.studyplan.PlannedCourse
 import it.attendance100.mybicocca.data.model.studyplan.StudyPlanHeader
 import kotlinx.coroutines.flow.Flow
@@ -20,11 +21,17 @@ class StudyPlanRepository @Inject constructor(
 
     suspend fun refreshHeaders(studentId: Long): Result<Unit> = runCatching {
         val headers = dataSource.getStudyPlanHeaders(studentId)
+        dao.deleteHeadersByStudentId(studentId)
         dao.upsertAllHeaders(headers)
     }
 
     suspend fun refreshCourses(studentId: Long, planId: Long): Result<Unit> = runCatching {
         val courses = dataSource.getPlannedCourses(studentId, planId)
+        dao.deleteCoursesByPlanId(planId)
         dao.upsertAllCourses(courses)
+    }
+
+    suspend fun getPlanPrint(studentId: Long, planId: Long): Result<AppDocument> = runCatching {
+        dataSource.getPlanPrint(studentId, planId)
     }
 }

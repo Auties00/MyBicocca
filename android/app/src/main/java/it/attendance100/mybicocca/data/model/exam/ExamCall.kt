@@ -11,6 +11,8 @@ data class ExamCall(
     val careerId: Long,
     val courseOfStudyId: Long = 0,
     val activityId: Long = 0,
+    val callId: Long = 0,
+    val activityChoiceId: Long = 0,
     val activityName: String,
     val activityCode: String? = null,
     val date: LocalDate? = null,
@@ -22,5 +24,6 @@ data class ExamCall(
     val enrollmentEndDate: String? = null,
     val enrolledCount: Int? = null,
     val stateDescription: String? = null,
-    val examinerEmails: List<String>? = null,
+    val callDescription: String? = null,
+    val examiners: List<String>? = null,
 )

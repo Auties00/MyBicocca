@@ -25,7 +25,6 @@ import androidx.compose.material.icons.outlined.Business
 import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material.icons.outlined.LocationOn
 import androidx.compose.material.icons.outlined.Person
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -45,7 +44,13 @@ import androidx.lifecycle.ViewModelStoreOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import it.attendance100.mybicocca.data.model.exam.ExamCall
+import it.attendance100.mybicocca.ui.component.EmptyOfflineState
+import it.attendance100.mybicocca.ui.component.EmptyState
+import it.attendance100.mybicocca.ui.component.ErrorState
+import it.attendance100.mybicocca.ui.component.NetworkStatusBar
 import it.attendance100.mybicocca.ui.component.SingleActionBottomBar
+import it.attendance100.mybicocca.ui.component.shimmer.SkeletonCardList
+import it.attendance100.mybicocca.ui.component.shimmer.SkeletonBookingCard
 import it.attendance100.mybicocca.ui.component.card.SimpleCard
 import it.attendance100.mybicocca.ui.navigation.LocalSharedTransitionScope
 import it.attendance100.mybicocca.util.shared_transitions.CommonSharedElementKey
@@ -72,48 +77,28 @@ fun BookingScreen(
     val isRefreshing by viewModel.isRefreshing.collectAsStateWithLifecycle()
 
     val error by viewModel.error.collectAsStateWithLifecycle()
+    val isOnline by viewModel.isOnline.collectAsStateWithLifecycle()
 
     Box {
         PullToRefreshBox(
             isRefreshing = isRefreshing,
             onRefresh = { viewModel.refresh() },
+            indicator = {},
             modifier = Modifier.fillMaxSize(),
         ) {
             when {
-                error != null && examCalls.isEmpty() -> {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Text(
-                            text = error ?: "Errore",
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.error,
-                        )
+                isRefreshing -> {
+                    Column {
+                        NetworkStatusBar(isOnline = isOnline, errorMessage = error, onDismissError = viewModel::clearError)
+                        SkeletonCardList(spacing = 16.dp) { shimmer ->
+                            SkeletonBookingCard(shimmerInstance = shimmer)
+                        }
                     }
                 }
 
-                examCalls.isEmpty() && isRefreshing -> {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        CircularProgressIndicator()
-                    }
-                }
-
-                examCalls.isEmpty() && !isRefreshing -> {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Text(
-                            text = "Nessun appello disponibile",
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                }
+                examCalls.isEmpty() && !isOnline -> EmptyOfflineState()
+                examCalls.isEmpty() && error != null -> ErrorState(message = error ?: "Errore")
+                examCalls.isEmpty() -> EmptyState(message = "Nessun appello disponibile")
 
                 else -> {
                     LazyColumn(
@@ -121,6 +106,10 @@ fun BookingScreen(
                         verticalArrangement = Arrangement.spacedBy(16.dp),
                         modifier = Modifier.fillMaxSize(),
                     ) {
+                        item {
+                            NetworkStatusBar(isOnline = isOnline, errorMessage = error, onDismissError = viewModel::clearError)
+                        }
+
                         items(
                             items = examCalls,
                             key = { it.id },
@@ -140,7 +129,7 @@ fun BookingScreen(
             SingleActionBottomBar(
                 text = "Prenota Appello",
                 icon = Icons.Default.EventAvailable,
-                onClick = { /* nothing */ },
+                onClick = {},
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .offset(y = 128.dp)

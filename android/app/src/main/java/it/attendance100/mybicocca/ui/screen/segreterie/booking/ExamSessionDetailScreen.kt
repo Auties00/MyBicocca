@@ -84,6 +84,7 @@ import it.attendance100.mybicocca.data.model.exam.ExamCall
 import it.attendance100.mybicocca.ui.component.SingleActionBottomBar
 import it.attendance100.mybicocca.ui.component.card.SimpleCard
 import it.attendance100.mybicocca.ui.navigation.LocalSharedTransitionScope
+import it.attendance100.mybicocca.ui.screen.segreterie.SegreterieActionEventEffect
 import it.attendance100.mybicocca.util.rememberHapticManager
 import it.attendance100.mybicocca.util.shared_transitions.CommonSharedElementKey
 import it.attendance100.mybicocca.util.shared_transitions.CommonSharedElementType
@@ -108,6 +109,7 @@ fun ExamSessionDetailScreen(
     val examCall by viewModel.selectedExamCall.collectAsStateWithLifecycle()
     val isLoading by viewModel.isLoadingDetail.collectAsStateWithLifecycle()
     val error by viewModel.selectedExamError.collectAsStateWithLifecycle()
+    val isSubmitting by viewModel.isActionInProgress.collectAsStateWithLifecycle()
 
     val haptic = rememberHapticManager()
 
@@ -124,6 +126,8 @@ fun ExamSessionDetailScreen(
     LaunchedEffect(sessionId) {
         viewModel.loadExamCallById(sessionId)
     }
+
+    SegreterieActionEventEffect(viewModel.events)
 
     Box(
         modifier = Modifier.fillMaxSize(),
@@ -204,6 +208,7 @@ fun ExamSessionDetailScreen(
                 text = "Prenota Appello",
                 icon = Icons.Default.EventAvailable,
                 onClick = {
+                    if (isSubmitting) return@SingleActionBottomBar
                     haptic.tap()
                     showBookingSheet = true
                 },
@@ -232,12 +237,13 @@ fun ExamSessionDetailScreen(
                 dateFormatter = dateFormatter,
                 timeFormatter = timeFormatter,
                 onConfirm = {
-                    // TODO: Implement actual booking
+                    viewModel.bookSelectedExam()
                     showBookingSheet = false
                 },
                 onDismiss = {
                     showBookingSheet = false
                 },
+                confirmEnabled = !isSubmitting,
             )
         }
     }
@@ -431,19 +437,14 @@ private fun ExamSessionContent(
                 }
 
                 // Teachers Section (from examinerEmails)
-                val emails = examCall.examinerEmails
-                if (!emails.isNullOrEmpty()) {
+                val examiners = examCall.examiners
+                if (!examiners.isNullOrEmpty()) {
                     Spacer(modifier = Modifier.height(24.dp))
 
                     SectionHeader(title = "Docenti", icon = Icons.Outlined.School)
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    emails.forEach { email ->
-                        val displayName = email.substringBefore("@")
-                            .replace(".", " ")
-                            .split(" ")
-                            .joinToString(" ") { it.replaceFirstChar { c -> c.uppercase() } }
-
+                    examiners.forEach { displayName ->
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -560,7 +561,7 @@ private fun ExamSessionContent(
                 }
 
                 // State description as notes if available
-                examCall.stateDescription?.let { state ->
+                (examCall.callDescription ?: examCall.stateDescription)?.let { notes ->
                     SectionHeader(title = "Note", icon = Icons.AutoMirrored.Outlined.Notes)
                     Spacer(modifier = Modifier.height(12.dp))
 
@@ -586,7 +587,7 @@ private fun ExamSessionContent(
                             )
                             Spacer(modifier = Modifier.width(12.dp))
                             Text(
-                                text = state,
+                                text = notes,
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurface,
                             )
@@ -667,6 +668,7 @@ private fun BookingConfirmationSheet(
     timeFormatter: DateTimeFormatter,
     onConfirm: () -> Unit,
     onDismiss: () -> Unit,
+    confirmEnabled: Boolean,
 ) {
     val primaryColor = MaterialTheme.colorScheme.primary
 
@@ -818,6 +820,7 @@ private fun BookingConfirmationSheet(
                     .height(52.dp),
                 shape = RoundedCornerShape(percent = cornerRadius),
                 interactionSource = interactionSource,
+                enabled = confirmEnabled,
                 colors = ButtonDefaults.buttonColors(
                     containerColor = primaryColor,
                 ),

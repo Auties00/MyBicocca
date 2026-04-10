@@ -2,11 +2,14 @@ package it.attendance100.mybicocca.data.datasource.tax
 
 import it.attendance100.mybicocca.data.api.esse3.Esse3Api
 import it.attendance100.mybicocca.data.datastore.AuthTokenStore
+import it.attendance100.mybicocca.data.dto.esse3.Esse3PagoPATransaction
 import it.attendance100.mybicocca.data.dto.esse3.Esse3Invoices
 import it.attendance100.mybicocca.data.dto.esse3.Esse3StudentDebit
 import it.attendance100.mybicocca.data.model.isee.IseeDeclaration
+import it.attendance100.mybicocca.data.model.document.AppDocument
 import it.attendance100.mybicocca.data.model.tax.Invoice
 import it.attendance100.mybicocca.data.model.tax.TaxCharge
+import it.attendance100.mybicocca.data.util.toAppDocument
 import it.attendance100.mybicocca.di.IoDispatcher
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
@@ -39,13 +42,25 @@ class Esse3TaxDataSource @Inject constructor(
             amount = invoiceAmount ?: 0.0,
             paidAmount = paidAmount ?: 0.0,
             dueDate = invoiceExpiration,
+            paymentDate = paymentDate,
             status = when {
                 canceledFlag == 1 -> "CANCELED"
                 paidFlag == 1 -> "PAID"
                 expiredFlag == 1 -> "EXPIRED"
                 else -> "PENDING"
             },
+            invoiceNumber = invoiceCode ?: chargeId.toString(),
+            bulletinCode = bulletinNumber ?: noticeCode,
+            modalita = collectedBy ?: if (iuv != null || noticeCode != null) "PagoPA" else null,
+            rptStatus = iuv,
+            isPagoPaEnabled = iuv != null || noticeCode != null,
         )
+    }
+
+    suspend fun getLatestIseeAcademicYearId(studentId: Long): Long? = withContext(ioDispatcher) {
+        esse3Api.tuitionFees.getEnrollmentsForTaxes(studentId = studentId)
+            .maxOfOrNull { it.academicYearEnrollmentId?.toLong() ?: 0L }
+            ?.takeIf { it > 0L }
     }
 
     suspend fun getIseeDeclarations(academicYearId: Long): List<IseeDeclaration> =
@@ -86,6 +101,36 @@ class Esse3TaxDataSource @Inject constructor(
                 expiredInvoiceFlag == 1 -> "EXPIRED"
                 else -> "PENDING"
             },
+            isPagoPaEnabled = pagopaEnabled == 1,
+            isPagoPaImmediate = pagopaImmediate == 1,
+            isPagoPaNotice = pagopaNotice == 1,
+            noticeCode = noticeCode,
+            iuv = iuv,
         )
+    }
+
+    suspend fun startPagoPaTransaction(
+        invoiceId: Long,
+        returnUrl: String,
+    ): String = withContext(ioDispatcher) {
+        esse3Api.tuitionFees.postInitPagoPaTransaction(
+            body = Esse3PagoPATransaction(
+                invoiceId = invoiceId,
+                returnURL = returnUrl,
+            ),
+        ).pagopaRedirectUrl.orEmpty()
+    }
+
+    suspend fun getPagoPaNotice(invoiceId: Long): AppDocument = withContext(ioDispatcher) {
+        esse3Api.tuitionFees.putPrintPagoPANotice(invoiceId)
+            .toAppDocument(fileName = "avviso_pagopa_${invoiceId}.pdf")
+    }
+
+    suspend fun getPagoPaReceipt(
+        invoiceId: Long,
+        language: String = "it",
+    ): AppDocument = withContext(ioDispatcher) {
+        esse3Api.tuitionFees.getPagoPAReceipt(invoiceId, language)
+            .toAppDocument(fileName = "quietanza_pagopa_${invoiceId}.pdf")
     }
 }

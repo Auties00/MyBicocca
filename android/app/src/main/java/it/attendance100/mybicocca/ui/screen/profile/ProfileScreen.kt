@@ -36,11 +36,11 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -55,9 +55,12 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.ViewModelStoreOwner
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import it.attendance100.mybicocca.R
+import it.attendance100.mybicocca.ui.component.NetworkStatusBar
+import it.attendance100.mybicocca.ui.component.shimmer.SkeletonProfileContent
 import it.attendance100.mybicocca.ui.component.DashboardTile
 import it.attendance100.mybicocca.ui.component.profile.CreditCard
 import it.attendance100.mybicocca.ui.component.profile.ProgressStatCard
@@ -80,9 +83,12 @@ fun ProfileScreen(
 		}, null
 	),
 ) {
-	val user by viewModel.user.collectAsState()
-	val career by viewModel.activeCareer.collectAsState()
-	val stats by viewModel.stats.collectAsState()
+	val user by viewModel.user.collectAsStateWithLifecycle()
+	val career by viewModel.activeCareer.collectAsStateWithLifecycle()
+	val stats by viewModel.stats.collectAsStateWithLifecycle()
+	val isRefreshing by viewModel.isRefreshing.collectAsStateWithLifecycle()
+	val error by viewModel.error.collectAsStateWithLifecycle()
+	val isOnline by viewModel.isOnline.collectAsStateWithLifecycle()
 
 	val primaryColor = MaterialTheme.colorScheme.primary
 	val textColor = MaterialTheme.colorScheme.onBackground
@@ -227,105 +233,126 @@ fun ProfileScreen(
 		}
 	}
 
-	LazyColumn(
+	PullToRefreshBox(
+		isRefreshing = isRefreshing,
+		onRefresh = { viewModel.refresh() },
+		indicator = {},
 		modifier = Modifier.fillMaxSize(),
-		contentPadding = PaddingValues(16.dp),
-		horizontalAlignment = Alignment.CenterHorizontally,
-		verticalArrangement = Arrangement.spacedBy(16.dp),
 	) {
-
-		item {
-			userDataSection()
-			Spacer(modifier = Modifier.height(16.dp))
-			statisticsSection()
-		}
-
-		item {
-			Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-
-				Row(
-					modifier = Modifier.fillMaxWidth(),
-					horizontalArrangement = Arrangement.spacedBy(12.dp),
-				) {
-					DashboardTile(
-						title = stringResource(R.string.profile_esami),
-						icon = Icons.AutoMirrored.Filled.LibraryBooks,
-						isWide = true,
-						primaryColor = primaryColor,
-						textColor = textColor,
-						onClick = { /* TODO: navigate to transcript */ },
-					)
-
-					DashboardTile(
-						title = stringResource(R.string.profile_piano_studi),
-						icon = Icons.Filled.Book,
-						isWide = false,
-						primaryColor = primaryColor,
-						textColor = textColor,
-						onClick = { /* TODO: navigate to study plan */ },
-					)
-				}
-
-				Row(
-					modifier = Modifier.fillMaxWidth(),
-					horizontalArrangement = Arrangement.spacedBy(12.dp),
-				) {
-					DashboardTile(
-						title = stringResource(R.string.profile_corsi),
-						icon = Icons.Filled.School,
-						isWide = false,
-						primaryColor = primaryColor,
-						textColor = textColor,
-						onClick = { /* TODO: navigate to elearning tab */ },
-					)
-
-					DashboardTile(
-						title = stringResource(R.string.profile_prenotazioni),
-						icon = Icons.Filled.CalendarMonth,
-						isWide = true,
-						primaryColor = primaryColor,
-						textColor = textColor,
-						onClick = { /* TODO: navigate to booking */ },
-					)
-				}
-
-				Row(
-					modifier = Modifier.fillMaxWidth(),
-					horizontalArrangement = Arrangement.spacedBy(12.dp),
-				) {
-					DashboardTile(
-						title = "Mails",
-						icon = Icons.Filled.Mail,
-						isWide = false,
-						height = 80.dp,
-						primaryColor = primaryColor,
-						textColor = textColor,
-						onClick = { /* TODO */ },
-					)
-
-					DashboardTile(
-						title = "Map",
-						icon = Icons.Filled.Map,
-						isWide = false,
-						height = 80.dp,
-						primaryColor = primaryColor,
-						textColor = textColor,
-						onClick = { /* TODO: navigate to map tab */ },
-					)
-
-					DashboardTile(
-						title = "Mensa",
-						icon = Icons.Filled.Restaurant,
-						isWide = false,
-						height = 80.dp,
-						primaryColor = primaryColor,
-						textColor = textColor,
-						onClick = { /* TODO */ },
-					)
+		when {
+			isRefreshing -> {
+				Column {
+					NetworkStatusBar(isOnline = isOnline, errorMessage = error, onDismissError = viewModel::clearError)
+					SkeletonProfileContent()
 				}
 			}
 
-			Spacer(modifier = Modifier.height(16.dp))
+			else -> {
+				LazyColumn(
+					modifier = Modifier.fillMaxSize(),
+					contentPadding = PaddingValues(16.dp),
+					horizontalAlignment = Alignment.CenterHorizontally,
+					verticalArrangement = Arrangement.spacedBy(16.dp),
+				) {
+					item {
+						NetworkStatusBar(isOnline = isOnline, errorMessage = error, onDismissError = viewModel::clearError)
+					}
+
+					item {
+						userDataSection()
+						Spacer(modifier = Modifier.height(16.dp))
+						statisticsSection()
+					}
+
+					item {
+						Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+
+							Row(
+								modifier = Modifier.fillMaxWidth(),
+								horizontalArrangement = Arrangement.spacedBy(12.dp),
+							) {
+								DashboardTile(
+									title = stringResource(R.string.profile_esami),
+									icon = Icons.AutoMirrored.Filled.LibraryBooks,
+									isWide = true,
+									primaryColor = primaryColor,
+									textColor = textColor,
+									onClick = { /* TODO: navigate to transcript */ },
+								)
+
+								DashboardTile(
+									title = stringResource(R.string.profile_piano_studi),
+									icon = Icons.Filled.Book,
+									isWide = false,
+									primaryColor = primaryColor,
+									textColor = textColor,
+									onClick = { /* TODO: navigate to study plan */ },
+								)
+							}
+
+							Row(
+								modifier = Modifier.fillMaxWidth(),
+								horizontalArrangement = Arrangement.spacedBy(12.dp),
+							) {
+								DashboardTile(
+									title = stringResource(R.string.profile_corsi),
+									icon = Icons.Filled.School,
+									isWide = false,
+									primaryColor = primaryColor,
+									textColor = textColor,
+									onClick = { /* TODO: navigate to elearning tab */ },
+								)
+
+								DashboardTile(
+									title = stringResource(R.string.profile_prenotazioni),
+									icon = Icons.Filled.CalendarMonth,
+									isWide = true,
+									primaryColor = primaryColor,
+									textColor = textColor,
+									onClick = { /* TODO: navigate to booking */ },
+								)
+							}
+
+							Row(
+								modifier = Modifier.fillMaxWidth(),
+								horizontalArrangement = Arrangement.spacedBy(12.dp),
+							) {
+								DashboardTile(
+									title = "Mails",
+									icon = Icons.Filled.Mail,
+									isWide = false,
+									height = 80.dp,
+									primaryColor = primaryColor,
+									textColor = textColor,
+									onClick = { /* TODO */ },
+								)
+
+								DashboardTile(
+									title = "Map",
+									icon = Icons.Filled.Map,
+									isWide = false,
+									height = 80.dp,
+									primaryColor = primaryColor,
+									textColor = textColor,
+									onClick = { /* TODO: navigate to map tab */ },
+								)
+
+								DashboardTile(
+									title = "Mensa",
+									icon = Icons.Filled.Restaurant,
+									isWide = false,
+									height = 80.dp,
+									primaryColor = primaryColor,
+									textColor = textColor,
+									onClick = { /* TODO */ },
+								)
+							}
+						}
+
+						Spacer(modifier = Modifier.height(16.dp))
+					}
+				}
+			}
 		}
 	}
 

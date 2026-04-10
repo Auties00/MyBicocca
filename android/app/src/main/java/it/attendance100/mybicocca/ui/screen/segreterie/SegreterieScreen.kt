@@ -40,6 +40,7 @@ import androidx.compose.material.icons.outlined.Euro
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -67,8 +68,9 @@ import it.attendance100.mybicocca.R.drawable
 import it.attendance100.mybicocca.R.string
 import it.attendance100.mybicocca.ui.component.AutoScrollingFilterRow
 import it.attendance100.mybicocca.ui.component.DualActionBottomBar
-import it.attendance100.mybicocca.ui.component.SingleActionBottomBar
+import it.attendance100.mybicocca.ui.component.NetworkStatusBar
 import it.attendance100.mybicocca.ui.component.card.SimpleCard
+import it.attendance100.mybicocca.ui.component.shimmer.SkeletonSegreterieContent
 import it.attendance100.mybicocca.util.rememberHapticManager
 import kotlinx.coroutines.delay
 import kotlin.random.Random
@@ -153,6 +155,12 @@ fun SegreterieScreen(
     val bookedExamCount by viewModel.bookedExamCount.collectAsStateWithLifecycle()
     val availableExamCount by viewModel.availableExamCount.collectAsStateWithLifecycle()
     val examResultsCount by viewModel.examResultsCount.collectAsStateWithLifecycle()
+    val studyPlanStatus by viewModel.studyPlanStatus.collectAsStateWithLifecycle()
+    val studyPlanLastUpdated by viewModel.studyPlanLastUpdated.collectAsStateWithLifecycle()
+    val questionnairePendingCount by viewModel.questionnairePendingCount.collectAsStateWithLifecycle()
+    val isRefreshing by viewModel.isRefreshing.collectAsStateWithLifecycle()
+    val error by viewModel.error.collectAsStateWithLifecycle()
+    val isOnline by viewModel.isOnline.collectAsStateWithLifecycle()
 
     val shouldAnimate = remember { !SegreterieAnimationState.shown }
     LaunchedEffect(Unit) {
@@ -235,7 +243,7 @@ fun SegreterieScreen(
         DashboardTile(
             id = "plan",
             title = "Piano Studi",
-            subtitle = "Approvato",
+            subtitle = studyPlanStatus,
             icon = Icons.Filled.Book,
             category = DashboardCategory.Didattica,
             action = onNavigateToPianoCarriera,
@@ -243,9 +251,15 @@ fun SegreterieScreen(
         DashboardTile(
             id = "questionnaires",
             title = "Questionari",
-            subtitle = "2 da compilare",
+            subtitle = if (questionnairePendingCount > 0) {
+                "$questionnairePendingCount da compilare"
+            } else {
+                "Tutti compilati"
+            },
             icon = ImageVector.vectorResource(drawable.stylus_note),
             category = DashboardCategory.Didattica,
+            status = if (questionnairePendingCount > 0) DashboardTileStatus.Warning
+            else DashboardTileStatus.Normal,
             action = onNavigateToQuestionnaires,
         ),
         DashboardTile(
@@ -303,87 +317,98 @@ fun SegreterieScreen(
         map
     }
 
-    Box(
-        modifier = Modifier.fillMaxSize()
+    PullToRefreshBox(
+        isRefreshing = isRefreshing,
+        onRefresh = { viewModel.refresh() },
+        indicator = {},
+        modifier = Modifier.fillMaxSize(),
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(MaterialTheme.colorScheme.background),
-        ) {
-            // Filter Chips
-            AutoScrollingFilterRow(
-                contentPadding = PaddingValues(bottom = 4.dp),
-                items = DashboardCategory.entries,
-                selectedItem = selectedCategory,
-                onSelectionChanged = { selectedCategory = it },
-                labelProvider = { it.label() },
-            )
+        when {
+            isRefreshing -> {
+                Column {
+                    NetworkStatusBar(isOnline = isOnline, errorMessage = error, onDismissError = viewModel::clearError)
+                    SkeletonSegreterieContent()
+                }
+            }
 
-            // Dashboard List
-            LazyColumn(
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-                contentPadding = PaddingValues(horizontal = 16.dp),
-                modifier = Modifier.fillMaxSize(),
-            ) {
-                displayedCategories.forEach { category ->
-                    val tiles = groupedTiles[category]
-                    if (!tiles.isNullOrEmpty()) {
-                        stickyHeader(key = "header_${category.name}") {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .background(MaterialTheme.colorScheme.background)
-                                    .padding(vertical = 8.dp),
-                            ) {
-                                Text(
-                                    text = category.label(),
-                                    color = primaryColor,
-                                    fontSize = 18.sp,
-                                    fontWeight = FontWeight.Bold,
-                                )
+            else -> {
+                Box(
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(MaterialTheme.colorScheme.background),
+                    ) {
+                        NetworkStatusBar(isOnline = isOnline, errorMessage = error, onDismissError = viewModel::clearError)
+
+                        // Filter Chips
+                        AutoScrollingFilterRow(
+                            contentPadding = PaddingValues(bottom = 4.dp),
+                            items = DashboardCategory.entries,
+                            selectedItem = selectedCategory,
+                            onSelectionChanged = { selectedCategory = it },
+                            labelProvider = { it.label() },
+                        )
+
+                        // Dashboard List
+                        LazyColumn(
+                            verticalArrangement = Arrangement.spacedBy(12.dp),
+                            contentPadding = PaddingValues(horizontal = 16.dp),
+                            modifier = Modifier.fillMaxSize(),
+                        ) {
+                            displayedCategories.forEach { category ->
+                                val tiles = groupedTiles[category]
+                                if (!tiles.isNullOrEmpty()) {
+                                    stickyHeader(key = "header_${category.name}") {
+                                        Box(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .background(MaterialTheme.colorScheme.background)
+                                                .padding(vertical = 8.dp),
+                                        ) {
+                                            Text(
+                                                text = category.label(),
+                                                color = primaryColor,
+                                                fontSize = 18.sp,
+                                                fontWeight = FontWeight.Bold,
+                                            )
+                                        }
+                                    }
+
+                                    items(
+                                        items = tiles,
+                                        key = { it.id },
+                                    ) { dashItem ->
+                                        val delay = delays[dashItem.id] ?: 0
+                                        LongTile(dashItem, delay = delay, shouldAnimate = shouldAnimate)
+                                    }
+                                }
                             }
-                        }
 
-                        items(
-                            items = tiles,
-                            key = { it.id },
-                        ) { dashItem ->
-                            val delay = delays[dashItem.id] ?: 0
-                            LongTile(dashItem, delay = delay, shouldAnimate = shouldAnimate)
+                            // Bottom Spacer
+                            item { Spacer(modifier = Modifier.height(80.dp)) }
                         }
                     }
-                }
 
-                // Bottom Spacer
-                item { Spacer(modifier = Modifier.height(80.dp)) }
+                    // Bottom bars (offscreen, available for shared transitions)
+                    DualActionBottomBar(
+                        mainActionText = stringResource(string.career_plan_edit),
+                        mainActionIcon = Icons.Default.Edit,
+                        onMainActionClick = {},
+                        secondaryActionIcon = Icons.Default.Print,
+                        onSecondaryActionClick = {},
+                        footerText = stringResource(
+                            string.career_plan_last_modified,
+                            studyPlanLastUpdated ?: "-"
+                        ),
+                        modifier = Modifier
+                            .align(Alignment.BottomCenter)
+                            .offset(y = 230.dp)
+                    )
+                }
             }
         }
-
-        // Bottom bars (offscreen, available for shared transitions)
-        DualActionBottomBar(
-            mainActionText = stringResource(string.career_plan_edit),
-            mainActionIcon = Icons.Default.Edit,
-            onMainActionClick = { /* nothing */ },
-            secondaryActionIcon = Icons.Default.Print,
-            onSecondaryActionClick = { /* nothing */ },
-            footerText = stringResource(string.career_plan_last_modified, "xx/xx/20xx"),
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .offset(y = 230.dp)
-        )
-
-        SingleActionBottomBar(
-            text = "Stampa importo Tasse dovute",
-            icon = Icons.Default.Print,
-            onClick = {
-                haptic.tap()
-                // TODO: implement pdf opening
-            },
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .offset(y = 230.dp)
-        )
     }
 }
 

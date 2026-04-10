@@ -18,7 +18,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Business
 import androidx.compose.material.icons.outlined.CalendarMonth
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -36,6 +35,12 @@ import androidx.lifecycle.ViewModelStoreOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import it.attendance100.mybicocca.data.model.internship.InternshipApplication
+import it.attendance100.mybicocca.ui.component.EmptyOfflineState
+import it.attendance100.mybicocca.ui.component.EmptyState
+import it.attendance100.mybicocca.ui.component.ErrorState
+import it.attendance100.mybicocca.ui.component.NetworkStatusBar
+import it.attendance100.mybicocca.ui.component.shimmer.SkeletonCardList
+import it.attendance100.mybicocca.ui.component.shimmer.SkeletonStageCard
 import it.attendance100.mybicocca.ui.component.card.SimpleCard
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -52,47 +57,27 @@ fun StageScreen(
     val applications by viewModel.applications.collectAsStateWithLifecycle()
     val isRefreshing by viewModel.isRefreshing.collectAsStateWithLifecycle()
     val error by viewModel.error.collectAsStateWithLifecycle()
+    val isOnline by viewModel.isOnline.collectAsStateWithLifecycle()
 
     PullToRefreshBox(
         isRefreshing = isRefreshing,
         onRefresh = { viewModel.refresh() },
+        indicator = {},
         modifier = Modifier.fillMaxSize(),
     ) {
         when {
-            error != null && applications.isEmpty() -> {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Text(
-                        text = error ?: "Errore",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.error,
-                    )
+            isRefreshing -> {
+                Column {
+                    NetworkStatusBar(isOnline = isOnline, errorMessage = error, onDismissError = viewModel::clearError)
+                    SkeletonCardList(spacing = 16.dp) { shimmer ->
+                        SkeletonStageCard(shimmerInstance = shimmer)
+                    }
                 }
             }
 
-            applications.isEmpty() && isRefreshing -> {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    CircularProgressIndicator()
-                }
-            }
-
-            applications.isEmpty() && !isRefreshing -> {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Text(
-                        text = "Nessuna candidatura",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-            }
+            applications.isEmpty() && !isOnline -> EmptyOfflineState()
+            applications.isEmpty() && error != null -> ErrorState(message = error ?: "Errore")
+            applications.isEmpty() -> EmptyState(message = "Nessuna candidatura")
 
             else -> {
                 LazyColumn(
@@ -100,6 +85,10 @@ fun StageScreen(
                     verticalArrangement = Arrangement.spacedBy(16.dp),
                     modifier = Modifier.fillMaxSize(),
                 ) {
+                    item {
+                        NetworkStatusBar(isOnline = isOnline, errorMessage = error, onDismissError = viewModel::clearError)
+                    }
+
                     items(
                         items = applications,
                         key = { it.id },

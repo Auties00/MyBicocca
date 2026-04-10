@@ -1,8 +1,6 @@
 package it.attendance100.mybicocca.ui.screen.segreterie.booking
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -22,138 +20,85 @@ import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material.icons.outlined.Description
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.valentinilk.shimmer.ShimmerBounds
-import com.valentinilk.shimmer.rememberShimmer
-import com.valentinilk.shimmer.shimmer
 import it.attendance100.mybicocca.data.model.exam.ExamBooking
+import it.attendance100.mybicocca.ui.component.EmptyOfflineState
+import it.attendance100.mybicocca.ui.component.EmptyState
+import it.attendance100.mybicocca.ui.component.ErrorState
+import it.attendance100.mybicocca.ui.component.NetworkStatusBar
+import it.attendance100.mybicocca.ui.component.shimmer.SkeletonBookedCard
+import it.attendance100.mybicocca.ui.component.shimmer.SkeletonCardList
 import it.attendance100.mybicocca.ui.component.card.SimpleCard
+import it.attendance100.mybicocca.ui.screen.segreterie.SegreterieActionEventEffect
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BookedScreen(
     viewModel: BookedViewModel = hiltViewModel(),
 ) {
     val bookings by viewModel.bookings.collectAsStateWithLifecycle()
     val isRefreshing by viewModel.isRefreshing.collectAsStateWithLifecycle()
+    val error by viewModel.error.collectAsStateWithLifecycle()
+    val isActionInProgress by viewModel.isActionInProgress.collectAsStateWithLifecycle()
+    val isOnline by viewModel.isOnline.collectAsStateWithLifecycle()
 
-    when {
-        bookings.isEmpty() && isRefreshing -> {
-            BookedSkeletonList()
-        }
+    SegreterieActionEventEffect(viewModel.events)
 
-        bookings.isEmpty() && !isRefreshing -> {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(
-                    text = "Nessun esame prenotato",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-        }
-
-        else -> {
-            LazyColumn(
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-                modifier = Modifier.fillMaxSize(),
-            ) {
-                items(
-                    items = bookings,
-                    key = { it.id },
-                ) { booking ->
-                    BookedExamCard(booking)
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun BookedSkeletonList() {
-    val shimmerInstance = rememberShimmer(shimmerBounds = ShimmerBounds.Window)
-    val skeletonColor = MaterialTheme.colorScheme.outlineVariant
-
-    Column(
-        modifier = Modifier
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
+    PullToRefreshBox(
+        isRefreshing = isRefreshing,
+        onRefresh = { viewModel.refresh() },
+        indicator = {},
+        modifier = Modifier.fillMaxSize(),
     ) {
-        repeat(4) {
-            SimpleCard(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(220.dp)
-                    .shimmer(shimmerInstance),
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth(0.7f)
-                            .height(20.dp)
-                            .clip(MaterialTheme.shapes.small)
-                            .background(skeletonColor),
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth(0.5f)
-                            .height(28.dp)
-                            .clip(MaterialTheme.shapes.small)
-                            .background(skeletonColor),
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
-                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
-                    Spacer(modifier = Modifier.height(12.dp))
-                    repeat(2) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth(0.6f)
-                                .height(14.dp)
-                                .clip(MaterialTheme.shapes.extraSmall)
-                                .background(skeletonColor),
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
+        when {
+            isRefreshing -> {
+                Column {
+                    NetworkStatusBar(isOnline = isOnline, errorMessage = error, onDismissError = viewModel::clearError)
+                    SkeletonCardList(spacing = 16.dp) { shimmer ->
+                        SkeletonBookedCard(shimmerInstance = shimmer)
                     }
-                    Spacer(modifier = Modifier.weight(1f))
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .weight(1f)
-                                .height(40.dp)
-                                .clip(MaterialTheme.shapes.medium)
-                                .background(skeletonColor),
-                        )
-                        Box(
-                            modifier = Modifier
-                                .weight(1f)
-                                .height(40.dp)
-                                .clip(MaterialTheme.shapes.medium)
-                                .background(skeletonColor),
+                }
+            }
+
+            bookings.isEmpty() && !isOnline -> EmptyOfflineState()
+            bookings.isEmpty() && error != null -> ErrorState(message = error ?: "Errore")
+            bookings.isEmpty() -> EmptyState(message = "Nessun esame prenotato")
+
+            else -> {
+                LazyColumn(
+                    contentPadding = PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                    modifier = Modifier.fillMaxSize(),
+                ) {
+                    item {
+                        NetworkStatusBar(isOnline = isOnline, errorMessage = error, onDismissError = viewModel::clearError)
+                    }
+
+                    items(
+                        items = bookings,
+                        key = { it.id },
+                    ) { booking ->
+                        BookedExamCard(
+                            booking = booking,
+                            onCancel = { viewModel.cancelBooking(booking) },
+                            onPrint = { viewModel.printBooking(booking) },
+                            actionsEnabled = !isActionInProgress,
                         )
                     }
                 }
@@ -161,11 +106,13 @@ fun BookedSkeletonList() {
         }
     }
 }
-
 
 @Composable
 fun BookedExamCard(
     booking: ExamBooking,
+    onCancel: () -> Unit,
+    onPrint: () -> Unit,
+    actionsEnabled: Boolean,
 ) {
     SimpleCard(
         modifier = Modifier.fillMaxWidth(),
@@ -178,7 +125,14 @@ fun BookedExamCard(
             // Header with Course Name and ID
             Row(verticalAlignment = Alignment.Top) {
                 Text(
-                    text = "${booking.activityName} [${booking.id}]",
+                    text = buildString {
+                        append(booking.activityName)
+                        booking.activityCode?.takeIf { it.isNotBlank() }?.let { code ->
+                            append(" [")
+                            append(code)
+                            append("]")
+                        }
+                    },
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.error,
                     fontWeight = FontWeight.Bold,
@@ -205,8 +159,13 @@ fun BookedExamCard(
             BookedDetailItem(Icons.Outlined.Description, booking.examDate ?: "Esame prenotato")
             BookedDetailItem(
                 Icons.AutoMirrored.Outlined.Assignment,
-                "Esame prenotato",
+                booking.callDescription ?: "Esame prenotato",
             )
+
+            val location = listOfNotNull(booking.building, booking.room).joinToString(" - ")
+            if (location.isNotBlank()) {
+                BookedDetailItem(Icons.Outlined.Description, location)
+            }
 
             // Booking date
             booking.bookingDate?.let { date ->
@@ -244,8 +203,9 @@ fun BookedExamCard(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 OutlinedButton(
-                    onClick = { /* TODO: Cancel booking */ },
+                    onClick = onCancel,
                     modifier = Modifier.weight(1f),
+                    enabled = actionsEnabled,
                     colors = ButtonDefaults.outlinedButtonColors(
                         contentColor = MaterialTheme.colorScheme.primary,
                     ),
@@ -254,8 +214,9 @@ fun BookedExamCard(
                 }
 
                 Button(
-                    onClick = { /* TODO: Print */ },
+                    onClick = onPrint,
                     modifier = Modifier.weight(1f),
+                    enabled = actionsEnabled,
                 ) {
                     Text("Stampa")
                 }

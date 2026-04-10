@@ -1,12 +1,12 @@
-package it.attendance100.mybicocca.ui.screen.segreterie.internships
+package it.attendance100.mybicocca.ui.screen.segreterie.attendance
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import it.attendance100.mybicocca.data.model.attendance.AttendanceRecord
 import it.attendance100.mybicocca.data.model.career.Career
-import it.attendance100.mybicocca.data.model.internship.InternshipApplication
+import it.attendance100.mybicocca.data.repository.AttendanceRepository
 import it.attendance100.mybicocca.data.repository.CareerRepository
-import it.attendance100.mybicocca.data.repository.InternshipRepository
 import it.attendance100.mybicocca.data.sync.ResourceSyncManager
 import it.attendance100.mybicocca.data.sync.SyncKeys
 import it.attendance100.mybicocca.data.sync.SyncPolicies
@@ -26,8 +26,8 @@ import javax.inject.Inject
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
-class StageViewModel @Inject constructor(
-    private val internshipRepository: InternshipRepository,
+class AttendanceViewModel @Inject constructor(
+    private val attendanceRepository: AttendanceRepository,
     private val careerRepository: CareerRepository,
     private val resourceSyncManager: ResourceSyncManager,
     networkMonitor: NetworkMonitor,
@@ -39,15 +39,13 @@ class StageViewModel @Inject constructor(
         .map { it.firstOrNull() }
         .stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
-    val applications: StateFlow<List<InternshipApplication>> = activeCareer
-        .flatMapLatest { career ->
-            career?.let { internshipRepository.observeByStudent(it.studentId) } ?: flowOf(emptyList())
-        }
+    val records: StateFlow<List<AttendanceRecord>> = attendanceRepository.observeAll()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     private val syncState: StateFlow<SyncUiState> = activeCareer
         .flatMapLatest { career ->
-            career?.let { resourceSyncManager.observe(SyncKeys.internships(it.studentId)) } ?: flowOf(SyncUiState())
+            career?.let { resourceSyncManager.observe(SyncKeys.attendance(it.attendanceStudentKey())) }
+                ?: flowOf(SyncUiState())
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SyncUiState())
 
@@ -77,19 +75,23 @@ class StageViewModel @Inject constructor(
 
     fun clearError() {
         val career = activeCareer.value ?: return
-        resourceSyncManager.clearError(SyncKeys.internships(career.studentId))
+        resourceSyncManager.clearError(SyncKeys.attendance(career.attendanceStudentKey()))
     }
 
     private suspend fun refreshCareer(career: Career, force: Boolean) {
-        val key = SyncKeys.internships(career.studentId)
+        val studentKey = career.attendanceStudentKey()
+        val syncKey = SyncKeys.attendance(studentKey)
         val refreshBlock: suspend () -> Result<Unit> = {
-            internshipRepository.refresh(career.studentId)
+            attendanceRepository.refresh(studentKey)
         }
 
         if (force) {
-            resourceSyncManager.refresh(key, SyncPolicies.Default, refreshBlock = refreshBlock)
+            resourceSyncManager.refresh(syncKey, SyncPolicies.Default, refreshBlock = refreshBlock)
         } else {
-            resourceSyncManager.refreshIfStale(key, SyncPolicies.Default, refreshBlock = refreshBlock)
+            resourceSyncManager.refreshIfStale(syncKey, SyncPolicies.Default, refreshBlock = refreshBlock)
         }
     }
+
+    private fun Career.attendanceStudentKey(): String =
+        (matricolaId ?: studentId).toString()
 }

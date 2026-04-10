@@ -21,8 +21,8 @@ import androidx.compose.material.icons.automirrored.filled.FactCheck
 import androidx.compose.material.icons.filled.AccountBalance
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.FamilyRestroom
-import androidx.compose.material.icons.filled.Print
 import androidx.compose.material3.Icon
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -48,7 +48,12 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.data.model.isee.IseeDeclaration
-import it.attendance100.mybicocca.ui.component.SingleActionBottomBar
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import it.attendance100.mybicocca.ui.component.EmptyOfflineState
+import it.attendance100.mybicocca.ui.component.EmptyState
+import it.attendance100.mybicocca.ui.component.ErrorState
+import it.attendance100.mybicocca.ui.component.NetworkStatusBar
+import it.attendance100.mybicocca.ui.component.shimmer.SkeletonIseeContent
 import it.attendance100.mybicocca.ui.component.card.DitheredTexture
 import it.attendance100.mybicocca.ui.component.card.SimpleCard
 import it.attendance100.mybicocca.ui.component.profile.CreditCard
@@ -59,6 +64,7 @@ import it.attendance100.mybicocca.util.UiFormatter
 import it.attendance100.mybicocca.util.rememberPreferencesManager
 import java.util.Locale.getDefault
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun IseeScreen(
     viewModel: IseeViewModel = hiltViewModel(
@@ -70,33 +76,39 @@ fun IseeScreen(
     ),
 ) {
     val iseeDeclaration by viewModel.iseeDeclaration.collectAsStateWithLifecycle()
+    val isRefreshing by viewModel.isRefreshing.collectAsStateWithLifecycle()
+    val error by viewModel.error.collectAsStateWithLifecycle()
+    val isOnline by viewModel.isOnline.collectAsStateWithLifecycle()
 
-    Box(
+    PullToRefreshBox(
+        isRefreshing = isRefreshing,
+        onRefresh = { viewModel.refresh() },
+        indicator = {},
         modifier = Modifier.fillMaxSize(),
     ) {
-        val declaration = iseeDeclaration
-        if (declaration != null) {
-            IseeContent(declaration)
-        } else {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(
-                    text = "Nessuna dichiarazione ISEE trovata",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+        when {
+            isRefreshing -> {
+                Column {
+                    NetworkStatusBar(isOnline = isOnline, errorMessage = error, onDismissError = viewModel::clearError)
+                    SkeletonIseeContent()
+                }
             }
-        }
 
-        // Bottom bar
-        SingleActionBottomBar(
-            text = "Stampa importo Tasse dovute",
-            icon = Icons.Default.Print,
-            onClick = { /* TODO: implement pdf opening */ },
-            modifier = Modifier.align(Alignment.BottomCenter),
-        )
+            iseeDeclaration != null -> {
+                Box(modifier = Modifier.fillMaxSize()) {
+                    IseeContent(iseeDeclaration!!)
+                    NetworkStatusBar(
+                        isOnline = isOnline,
+                        errorMessage = error,
+                        onDismissError = viewModel::clearError,
+                    )
+                }
+            }
+
+            !isOnline -> EmptyOfflineState()
+            error != null -> ErrorState(message = error ?: "Errore")
+            else -> EmptyState(message = "Nessuna dichiarazione ISEE trovata")
+        }
     }
 }
 

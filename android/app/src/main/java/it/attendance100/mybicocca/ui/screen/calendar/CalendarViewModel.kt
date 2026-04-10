@@ -7,6 +7,11 @@ import it.attendance100.mybicocca.data.model.calendar.CalendarEvent
 import it.attendance100.mybicocca.data.model.calendar.EventType
 import it.attendance100.mybicocca.data.model.calendar.startDateTime
 import it.attendance100.mybicocca.data.repository.CalendarRepository
+import it.attendance100.mybicocca.data.sync.ResourceSyncManager
+import it.attendance100.mybicocca.data.sync.SyncKeys
+import it.attendance100.mybicocca.data.sync.SyncPolicies
+import it.attendance100.mybicocca.data.sync.SyncUiState
+import it.attendance100.mybicocca.util.NetworkMonitor
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -15,7 +20,10 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.time.DayOfWeek
@@ -53,9 +61,11 @@ data class LocationFilter(
 @HiltViewModel
 class CalendarViewModel @Inject constructor(
     private val calendarRepository: CalendarRepository,
+    private val resourceSyncManager: ResourceSyncManager,
+    networkMonitor: NetworkMonitor,
 ) : ViewModel() {
 
-    private companion object { const val STALE_THRESHOLD_MS = 5 * 60 * 1000L }
+    val isOnline: StateFlow<Boolean> = networkMonitor.isOnline
 
     // Navigation
     private val _selectedDate = MutableStateFlow(LocalDate.now())
@@ -78,15 +88,17 @@ class CalendarViewModel @Inject constructor(
     val futureEvents: StateFlow<List<CalendarEvent>> = calendarRepository.observeFutureEvents()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
-    private val _isRefreshing = MutableStateFlow(false)
-    val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
+    private val syncState: StateFlow<SyncUiState> = _currentMonth
+        .flatMapLatest { month -> resourceSyncManager.observe(SyncKeys.calendar(month)) }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SyncUiState())
 
-    private val _error = MutableStateFlow<String?>(null)
-    val error: StateFlow<String?> = _error.asStateFlow()
+    val isRefreshing: StateFlow<Boolean> = syncState
+        .map { it.isRefreshing }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
 
-    // Staleness tracking
-    private val fetchedMonths = mutableSetOf<YearMonth>()
-    private var lastRefreshMillis = 0L
+    val error: StateFlow<String?> = syncState
+        .map { it.errorMessage }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
     // Filters
     private val _activeFilters = MutableStateFlow<Set<EventType>>(emptySet())
@@ -117,16 +129,8 @@ class CalendarViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            _currentMonth.collect { month ->
-                if (fetchedMonths.add(month)) {
-                    _isRefreshing.value = true
-                    _error.value = null
-                    val range = month.atDay(1)..month.atEndOfMonth()
-                    val result = calendarRepository.refreshAll(range)
-                    _error.value = result.exceptionOrNull()?.message
-                    lastRefreshMillis = System.currentTimeMillis()
-                    _isRefreshing.value = false
-                }
+            _currentMonth.collectLatest { month ->
+                refreshMonth(month, force = false)
             }
         }
     }
@@ -203,20 +207,13 @@ class CalendarViewModel @Inject constructor(
     fun refresh() {
         val month = _currentMonth.value
         viewModelScope.launch {
-            _isRefreshing.value = true
-            _error.value = null
-            val range = month.let { it.atDay(1)..it.atEndOfMonth() }
-            val result = calendarRepository.refreshAll(range)
-            _error.value = result.exceptionOrNull()?.message
-            fetchedMonths.add(month)
-            lastRefreshMillis = System.currentTimeMillis()
-            _isRefreshing.value = false
+            refreshMonth(month, force = true)
         }
     }
 
     fun refreshIfStale() {
-        if (System.currentTimeMillis() - lastRefreshMillis > STALE_THRESHOLD_MS) {
-            refresh()
+        viewModelScope.launch {
+            refreshMonth(_currentMonth.value, force = false)
         }
     }
 
@@ -256,7 +253,7 @@ class CalendarViewModel @Inject constructor(
     }
 
     fun clearError() {
-        _error.value = null
+        resourceSyncManager.clearError(SyncKeys.calendar(_currentMonth.value))
     }
 
     // === Computed helpers ===
@@ -267,4 +264,19 @@ class CalendarViewModel @Inject constructor(
             val hasTimeFilter = tr != null && !tr.isDefault
             return _activeFilters.value.isNotEmpty() || hasTimeFilter || !_locationFilter.value.isEmpty
         }
+
+    private suspend fun refreshMonth(month: YearMonth, force: Boolean) {
+        val key = SyncKeys.calendar(month)
+        val range = month.atDay(1)..month.atEndOfMonth()
+
+        if (force) {
+            resourceSyncManager.refresh(key, SyncPolicies.Default) {
+                calendarRepository.refreshAll(range)
+            }
+        } else {
+            resourceSyncManager.refreshIfStale(key, SyncPolicies.Default) {
+                calendarRepository.refreshAll(range)
+            }
+        }
+    }
 }

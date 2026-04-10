@@ -5,10 +5,14 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import it.attendance100.mybicocca.data.model.appointment.Appointment
 import it.attendance100.mybicocca.data.repository.AppointmentRepository
-import kotlinx.coroutines.flow.MutableStateFlow
+import it.attendance100.mybicocca.data.sync.ResourceSyncManager
+import it.attendance100.mybicocca.data.sync.SyncKeys
+import it.attendance100.mybicocca.data.sync.SyncPolicies
+import it.attendance100.mybicocca.data.sync.SyncUiState
+import it.attendance100.mybicocca.util.NetworkMonitor
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -16,32 +20,43 @@ import javax.inject.Inject
 @HiltViewModel
 class ReservationsViewModel @Inject constructor(
     private val appointmentRepository: AppointmentRepository,
+    private val resourceSyncManager: ResourceSyncManager,
+    networkMonitor: NetworkMonitor,
 ) : ViewModel() {
+
+    val isOnline: StateFlow<Boolean> = networkMonitor.isOnline
 
     val appointments: StateFlow<List<Appointment>> = appointmentRepository.observeAll()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
-    private val _isRefreshing = MutableStateFlow(false)
-    val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
+    private val syncState: StateFlow<SyncUiState> = resourceSyncManager.observe(SyncKeys.APPOINTMENTS_STUDENT)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SyncUiState())
 
-    private val _error = MutableStateFlow<String?>(null)
-    val error: StateFlow<String?> = _error.asStateFlow()
+    val isRefreshing: StateFlow<Boolean> = syncState
+        .map { it.isRefreshing }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
+
+    val error: StateFlow<String?> = syncState
+        .map { it.errorMessage }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
     init {
-        refresh()
+        viewModelScope.launch {
+            resourceSyncManager.refreshIfStale(SyncKeys.APPOINTMENTS_STUDENT, SyncPolicies.Default) {
+                appointmentRepository.refresh("STUDENTE")
+            }
+        }
     }
 
     fun refresh() {
         viewModelScope.launch {
-            _isRefreshing.value = true
-            _error.value = null
-            try {
+            resourceSyncManager.refresh(SyncKeys.APPOINTMENTS_STUDENT, SyncPolicies.Default) {
                 appointmentRepository.refresh("STUDENTE")
-            } catch (e: Exception) {
-                _error.value = e.message ?: "Errore durante il caricamento"
-            } finally {
-                _isRefreshing.value = false
             }
         }
+    }
+
+    fun clearError() {
+        resourceSyncManager.clearError(SyncKeys.APPOINTMENTS_STUDENT)
     }
 }

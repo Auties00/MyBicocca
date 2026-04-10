@@ -21,6 +21,12 @@ interface StudyPlanDao {
     @Query("SELECT * FROM planned_courses WHERE planId = :planId")
     fun observeCourses(planId: Long): Flow<List<PlannedCourse>>
 
+    @Query("SELECT * FROM study_plan_headers WHERE studentId = :studentId")
+    suspend fun getHeadersByStudentId(studentId: Long): List<StudyPlanHeader>
+
+    @Query("SELECT * FROM planned_courses WHERE planId = :planId")
+    suspend fun getCoursesByPlanId(planId: Long): List<PlannedCourse>
+
     @Upsert
     suspend fun upsertAllCourses(courses: List<PlannedCourse>)
 

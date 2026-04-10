@@ -7,11 +7,13 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.ViewModelStoreOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
+import it.attendance100.mybicocca.ui.component.NetworkStatusBar
 import it.attendance100.mybicocca.ui.component.map.BuildingDetailSheet
 import it.attendance100.mybicocca.ui.component.map.CampusMap
 
@@ -36,6 +38,8 @@ fun MapScreen(
     val roomDetails by viewModel.roomDetails.collectAsStateWithLifecycle()
     val occupation by viewModel.occupation.collectAsStateWithLifecycle()
     val isLoadingDetail by viewModel.isLoadingDetail.collectAsStateWithLifecycle()
+    val error by viewModel.error.collectAsStateWithLifecycle()
+    val isOnline by viewModel.isOnline.collectAsStateWithLifecycle()
 
     val filteredBuildings = remember(buildings, searchQuery) {
         if (searchQuery.isBlank()) buildings
@@ -45,6 +49,7 @@ fun MapScreen(
     PullToRefreshBox(
         isRefreshing = isRefreshing,
         onRefresh = { viewModel.refresh() },
+        indicator = {},
         modifier = Modifier.fillMaxSize(),
     ) {
         Box(Modifier.fillMaxSize()) {
@@ -53,6 +58,13 @@ fun MapScreen(
                 selectedBuilding = selectedBuilding,
                 onBuildingClick = { building -> viewModel.selectBuilding(building) },
                 modifier = Modifier.fillMaxSize(),
+            )
+
+            NetworkStatusBar(
+                isOnline = isOnline,
+                errorMessage = error,
+                onDismissError = viewModel::clearError,
+                modifier = Modifier.align(Alignment.TopCenter),
             )
         }
     }

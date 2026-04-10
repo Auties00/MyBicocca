@@ -32,16 +32,17 @@ import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.ViewModelStoreOwner
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import it.attendance100.mybicocca.data.model.calendar.CalendarEvent
+import it.attendance100.mybicocca.ui.component.NetworkStatusBar
 import it.attendance100.mybicocca.ui.component.calendar.CalendarConfig
 import it.attendance100.mybicocca.ui.component.calendar.CalendarUtils
 import it.attendance100.mybicocca.ui.component.calendar.dialog.DatePickerDialog
@@ -74,18 +75,20 @@ fun CalendarRoute(
     ),
 ) {
     // Collect all state
-    val selectedDate by viewModel.selectedDate.collectAsState()
-    val currentMonth by viewModel.currentMonth.collectAsState()
-    val viewMode by viewModel.viewMode.collectAsState()
-    val displayedWeekStart by viewModel.displayedWeekStart.collectAsState()
-    val eventsForMonth by viewModel.eventsForMonth.collectAsState()
-    val isRefreshing by viewModel.isRefreshing.collectAsState()
-    val activeFilters by viewModel.activeFilters.collectAsState()
-    val timeRange by viewModel.timeRange.collectAsState()
-    val locationFilter by viewModel.locationFilter.collectAsState()
-    val selectedEvent by viewModel.selectedEvent.collectAsState()
-    val showDatePicker by viewModel.showDatePicker.collectAsState()
-    val showFilters by viewModel.showFilters.collectAsState()
+    val selectedDate by viewModel.selectedDate.collectAsStateWithLifecycle()
+    val currentMonth by viewModel.currentMonth.collectAsStateWithLifecycle()
+    val viewMode by viewModel.viewMode.collectAsStateWithLifecycle()
+    val displayedWeekStart by viewModel.displayedWeekStart.collectAsStateWithLifecycle()
+    val eventsForMonth by viewModel.eventsForMonth.collectAsStateWithLifecycle()
+    val isRefreshing by viewModel.isRefreshing.collectAsStateWithLifecycle()
+    val error by viewModel.error.collectAsStateWithLifecycle()
+    val activeFilters by viewModel.activeFilters.collectAsStateWithLifecycle()
+    val timeRange by viewModel.timeRange.collectAsStateWithLifecycle()
+    val locationFilter by viewModel.locationFilter.collectAsStateWithLifecycle()
+    val selectedEvent by viewModel.selectedEvent.collectAsStateWithLifecycle()
+    val showDatePicker by viewModel.showDatePicker.collectAsStateWithLifecycle()
+    val showFilters by viewModel.showFilters.collectAsStateWithLifecycle()
+    val isOnline by viewModel.isOnline.collectAsStateWithLifecycle()
 
     // Register filter callbacks with parent
     DisposableEffect(viewModel) {
@@ -101,7 +104,6 @@ fun CalendarRoute(
     LaunchedEffect(Unit) {
         viewModel.snackbarEvent.collect { snackbarHostState.showSnackbar(it) }
     }
-
     // Derived state
     val filteredEvents = remember(eventsForMonth, activeFilters, timeRange, locationFilter, searchQuery) {
         CalendarUtils.filterEvents(eventsForMonth, activeFilters, timeRange, locationFilter)
@@ -187,6 +189,7 @@ fun CalendarRoute(
             isRefreshing = isRefreshing,
             onRefresh = viewModel::refresh,
             state = pullToRefreshState,
+            indicator = {},
             modifier = Modifier.fillMaxSize()
         ) {
             Column(
@@ -194,6 +197,8 @@ fun CalendarRoute(
                     .fillMaxSize()
                     .padding(paddingValues)
             ) {
+                NetworkStatusBar(isOnline = isOnline, errorMessage = error, onDismissError = viewModel::clearError)
+
                 AnimatedVisibility(
                     visible = viewMode != CalendarViewMode.MONTH,
                     enter = expandVertically() + fadeIn(),
@@ -226,7 +231,7 @@ fun CalendarRoute(
                     activeFilters = activeFilters,
                     timeRange = timeRange,
                     locationFilter = locationFilter,
-                    isLoading = false,
+                    isLoading = isRefreshing,
                     hasActiveFilters = hasActiveFilters,
                     dayPagerState = dayPagerState,
                     referenceDate = referenceDate,
