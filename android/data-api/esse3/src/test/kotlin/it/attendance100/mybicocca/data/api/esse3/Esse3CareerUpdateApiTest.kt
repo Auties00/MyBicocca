@@ -197,7 +197,7 @@ class Esse3CareerUpdateApiTest : Esse3ApiTestBase() {
             logger.info("testPutAddTeachingActivityOfferByStudent: user lacks TECHNICAL_USER permission, expecting Esse3Exception")
             assertFailsWith<Esse3Exception> {
                 api.careerUpdate.putAddTeachingActivityOfferByStudent(
-                    matId = studentProfile.enrollmentId,
+                    matId = studentProfile.matId,
                     body = it.attendance100.mybicocca.data.dto.esse3.Esse3ProcedureUpdateActivityOfferParameters(
                         forceFreeTeachingActivitiesFlag = false,
                         activityIdToUpdate = 0L
@@ -240,7 +240,7 @@ class Esse3CareerUpdateApiTest : Esse3ApiTestBase() {
             logger.info("testPutAttendanceByStudent: user lacks TECHNICAL_USER permission, expecting Esse3Exception")
             assertFailsWith<Esse3Exception> {
                 api.careerUpdate.putAttendanceByStudent(
-                    matId = studentProfile.enrollmentId,
+                    matId = studentProfile.matId,
                     body = it.attendance100.mybicocca.data.dto.esse3.Esse3AttendanceProcedureParameters(
                         forceStudentsX = false,
                         forceAttendanceDate = false,
@@ -282,7 +282,7 @@ class Esse3CareerUpdateApiTest : Esse3ApiTestBase() {
             logger.info("testPutRemoveAttendanceByStudent: user lacks TECHNICAL_USER permission, expecting Esse3Exception")
             assertFailsWith<Esse3Exception> {
                 api.careerUpdate.putRemoveAttendanceByStudent(
-                    matId = studentProfile.enrollmentId,
+                    matId = studentProfile.matId,
                     body = it.attendance100.mybicocca.data.dto.esse3.Esse3RemoveAttendanceProcedureParameters(
                         forceStudentsX = false
                     )
@@ -323,7 +323,7 @@ class Esse3CareerUpdateApiTest : Esse3ApiTestBase() {
             logger.info("testPutSEGByStudent: user lacks TECHNICAL_USER permission, expecting Esse3Exception")
             assertFailsWith<Esse3Exception> {
                 api.careerUpdate.putSEGByStudent(
-                    matId = studentProfile.enrollmentId,
+                    matId = studentProfile.matId,
                     body = it.attendance100.mybicocca.data.dto.esse3.Esse3SegmentProcedureParameters(
                         forceStateFSFlag = false,
                         forceStudentsX = false,
@@ -364,7 +364,7 @@ class Esse3CareerUpdateApiTest : Esse3ApiTestBase() {
             logger.info("testPutSubstitutionByStudent: user lacks TECHNICAL_USER permission, expecting Esse3Exception")
             assertFailsWith<Esse3Exception> {
                 api.careerUpdate.putSubstitutionByStudent(
-                    matId = studentProfile.enrollmentId,
+                    matId = studentProfile.matId,
                     body = it.attendance100.mybicocca.data.dto.esse3.Esse3SubstitutionProcedureParameters(
                         forceStateSFlag = false
                     )

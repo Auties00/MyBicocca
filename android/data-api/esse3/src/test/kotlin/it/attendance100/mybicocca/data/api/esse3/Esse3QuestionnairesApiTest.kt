@@ -114,7 +114,7 @@ class Esse3QuestionnairesApiTest : Esse3ApiTestBase() {
     fun testGetRecordBookQuestionnaires() = runTest {
         val requiredPermissions = setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TECHNICAL_USER)
         if (userPermissions.any { it in requiredPermissions }) {
-            val matId = studentProfile.enrollmentId
+            val matId = studentProfile.matId
             logger.info("testGetRecordBookQuestionnaires: calling getRecordBookQuestionnaires() with matId=$matId and defaults")
             val defaultResult = api.questionnaires.getRecordBookQuestionnaires(matId = matId)
             logger.info("testGetRecordBookQuestionnaires: default result size=${defaultResult.size}")
@@ -142,7 +142,7 @@ class Esse3QuestionnairesApiTest : Esse3ApiTestBase() {
         } else {
             logger.info("testGetRecordBookQuestionnaires: user lacks required permissions, expecting Esse3Exception")
             assertFailsWith<Esse3Exception> {
-                api.questionnaires.getRecordBookQuestionnaires(matId = studentProfile.enrollmentId)
+                api.questionnaires.getRecordBookQuestionnaires(matId = studentProfile.matId)
             }
             logger.info("testGetRecordBookQuestionnaires: Esse3Exception thrown as expected")
         }
@@ -152,7 +152,7 @@ class Esse3QuestionnairesApiTest : Esse3ApiTestBase() {
     fun testGetRecordBookRow() = runTest {
         val requiredPermissions = setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TECHNICAL_USER)
         if (userPermissions.any { it in requiredPermissions }) {
-            val matId = studentProfile.enrollmentId
+            val matId = studentProfile.matId
             logger.info("testGetRecordBookRow: fetching record book to obtain an activityChoiceId")
             val recordBook = api.questionnaires.getRecordBookQuestionnaires(matId = matId)
             assertTrue(recordBook.isNotEmpty(), "Record book should have at least one row to test getRecordBookRow()")
@@ -176,7 +176,7 @@ class Esse3QuestionnairesApiTest : Esse3ApiTestBase() {
         } else {
             logger.info("testGetRecordBookRow: user lacks required permissions, expecting Esse3Exception")
             assertFailsWith<Esse3Exception> {
-                api.questionnaires.getRecordBookRow(matId = studentProfile.enrollmentId, activityChoiceId = 1L)
+                api.questionnaires.getRecordBookRow(matId = studentProfile.matId, activityChoiceId = 1L)
             }
             logger.info("testGetRecordBookRow: Esse3Exception thrown as expected")
         }
@@ -186,7 +186,7 @@ class Esse3QuestionnairesApiTest : Esse3ApiTestBase() {
     fun testGetTeachingUnitQuestionnaireEvaluation() = runTest {
         val requiredPermissions = setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TECHNICAL_USER)
         if (userPermissions.any { it in requiredPermissions }) {
-            val matId = studentProfile.enrollmentId
+            val matId = studentProfile.matId
             logger.info("testGetTeachingUnitQuestionnaireEvaluation: fetching record book to find a row with questionnaire link")
             val recordBook = api.questionnaires.getRecordBookQuestionnaires(
                 matId = matId,
