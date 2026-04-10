@@ -46,6 +46,9 @@ class PianoCarrieraViewModel @Inject constructor(
     private val _isRefreshing = MutableStateFlow(false)
     val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
 
+    private val _isEditEnabled = MutableStateFlow(false)
+    val isEditEnabled: StateFlow<Boolean> = _isEditEnabled.asStateFlow()
+
     init {
         refresh()
     }
@@ -55,11 +58,23 @@ class PianoCarrieraViewModel @Inject constructor(
             _isRefreshing.value = true
             val studentId = activeCareer.filterNotNull().first().studentId
             studyPlanRepository.refreshHeaders(studentId)
-            val planId = studyPlanRepository.observeHeaders(studentId).first().firstOrNull()?.id
-            if (planId != null) {
-                studyPlanRepository.refreshCourses(studentId, planId)
+            val header = studyPlanRepository.observeHeaders(studentId).first().firstOrNull()
+            if (header?.id != null) {
+                studyPlanRepository.refreshCourses(studentId, header.id)
             }
             _isRefreshing.value = false
+            checkEditingWindow(header)
+        }
+    }
+
+    private fun checkEditingWindow(preFetchedHeader: StudyPlanHeader? = null) {
+        viewModelScope.launch {
+            val header = preFetchedHeader ?: headers.value.firstOrNull() ?: return@launch
+            val regId = header.choiceRegulationId ?: return@launch
+            _isEditEnabled.value = runCatching {
+                // TODO fix this, currently returns always true
+                studyPlanRepository.isEditingWindowOpen(regId)
+            }.getOrDefault(false)
         }
     }
 }
