@@ -18,7 +18,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material.icons.outlined.School
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -38,7 +37,15 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import it.attendance100.mybicocca.data.model.transcript.RecordBookRow
 import it.attendance100.mybicocca.data.model.transcript.RecordBookStats
+import it.attendance100.mybicocca.ui.component.EmptyOfflineState
+import it.attendance100.mybicocca.ui.component.EmptyState
+import it.attendance100.mybicocca.ui.component.ErrorState
+import it.attendance100.mybicocca.ui.component.NetworkStatusBar
 import it.attendance100.mybicocca.ui.component.card.SimpleCard
+import it.attendance100.mybicocca.ui.component.shimmer.SkeletonIconBadgeCard
+import it.attendance100.mybicocca.ui.component.shimmer.SkeletonStatsCard
+import com.valentinilk.shimmer.ShimmerBounds
+import com.valentinilk.shimmer.rememberShimmer
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -55,47 +62,34 @@ fun ExamResultsScreen(
     val stats by viewModel.stats.collectAsStateWithLifecycle()
     val isRefreshing by viewModel.isRefreshing.collectAsStateWithLifecycle()
     val error by viewModel.error.collectAsStateWithLifecycle()
+    val isOnline by viewModel.isOnline.collectAsStateWithLifecycle()
 
     PullToRefreshBox(
         isRefreshing = isRefreshing,
         onRefresh = { viewModel.refresh() },
+        indicator = {},
         modifier = Modifier.fillMaxSize(),
     ) {
         when {
-            error != null && rows.isEmpty() -> {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Text(
-                        text = error ?: "Errore",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.error,
-                    )
+            isRefreshing -> {
+                val shimmerInstance = rememberShimmer(shimmerBounds = ShimmerBounds.Window)
+                Column {
+                    NetworkStatusBar(isOnline = isOnline, errorMessage = error, onDismissError = viewModel::clearError)
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                    ) {
+                        SkeletonStatsCard(shimmerInstance = shimmerInstance)
+                        repeat(4) {
+                            SkeletonIconBadgeCard(shimmerInstance = shimmerInstance)
+                        }
+                    }
                 }
             }
 
-            rows.isEmpty() && isRefreshing -> {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    CircularProgressIndicator()
-                }
-            }
-
-            rows.isEmpty() && !isRefreshing -> {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Text(
-                        text = "Nessun esito disponibile",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-            }
+            rows.isEmpty() && !isOnline -> EmptyOfflineState()
+            rows.isEmpty() && error != null -> ErrorState(message = error ?: "Errore")
+            rows.isEmpty() -> EmptyState(message = "Nessun esito disponibile")
 
             else -> {
                 LazyColumn(
@@ -103,6 +97,10 @@ fun ExamResultsScreen(
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                     modifier = Modifier.fillMaxSize(),
                 ) {
+                    item {
+                        NetworkStatusBar(isOnline = isOnline, errorMessage = error, onDismissError = viewModel::clearError)
+                    }
+
                     stats?.let { s ->
                         item {
                             StatsCard(stats = s)

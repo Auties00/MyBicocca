@@ -17,7 +17,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material.icons.outlined.EventAvailable
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -34,6 +33,12 @@ import androidx.lifecycle.ViewModelStoreOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import it.attendance100.mybicocca.data.model.appointment.Appointment
+import it.attendance100.mybicocca.ui.component.EmptyOfflineState
+import it.attendance100.mybicocca.ui.component.EmptyState
+import it.attendance100.mybicocca.ui.component.ErrorState
+import it.attendance100.mybicocca.ui.component.NetworkStatusBar
+import it.attendance100.mybicocca.ui.component.shimmer.SkeletonCardList
+import it.attendance100.mybicocca.ui.component.shimmer.SkeletonReservationCard
 import it.attendance100.mybicocca.ui.component.card.SimpleCard
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -50,47 +55,27 @@ fun ReservationsScreen(
     val appointments by viewModel.appointments.collectAsStateWithLifecycle()
     val isRefreshing by viewModel.isRefreshing.collectAsStateWithLifecycle()
     val error by viewModel.error.collectAsStateWithLifecycle()
+    val isOnline by viewModel.isOnline.collectAsStateWithLifecycle()
 
     PullToRefreshBox(
         isRefreshing = isRefreshing,
         onRefresh = { viewModel.refresh() },
+        indicator = {},
         modifier = Modifier.fillMaxSize(),
     ) {
         when {
-            error != null && appointments.isEmpty() -> {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Text(
-                        text = error ?: "Errore",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.error,
-                    )
+            isRefreshing -> {
+                Column {
+                    NetworkStatusBar(isOnline = isOnline, errorMessage = error, onDismissError = viewModel::clearError)
+                    SkeletonCardList { shimmer ->
+                        SkeletonReservationCard(shimmerInstance = shimmer)
+                    }
                 }
             }
 
-            appointments.isEmpty() && isRefreshing -> {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    CircularProgressIndicator()
-                }
-            }
-
-            appointments.isEmpty() && !isRefreshing -> {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Text(
-                        text = "Nessuna prenotazione",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-            }
+            appointments.isEmpty() && !isOnline -> EmptyOfflineState()
+            appointments.isEmpty() && error != null -> ErrorState(message = error ?: "Errore")
+            appointments.isEmpty() -> EmptyState(message = "Nessuna prenotazione")
 
             else -> {
                 LazyColumn(
@@ -98,6 +83,10 @@ fun ReservationsScreen(
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                     modifier = Modifier.fillMaxSize(),
                 ) {
+                    item {
+                        NetworkStatusBar(isOnline = isOnline, errorMessage = error, onDismissError = viewModel::clearError)
+                    }
+
                     items(
                         items = appointments,
                         key = { it.id },

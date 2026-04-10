@@ -4,6 +4,7 @@ import it.attendance100.mybicocca.data.database.dao.IseeDao
 import it.attendance100.mybicocca.data.database.dao.TaxDao
 import it.attendance100.mybicocca.data.datasource.tax.Esse3TaxDataSource
 import it.attendance100.mybicocca.data.model.isee.IseeDeclaration
+import it.attendance100.mybicocca.data.model.document.AppDocument
 import it.attendance100.mybicocca.data.model.tax.Invoice
 import it.attendance100.mybicocca.data.model.tax.TaxCharge
 import kotlinx.coroutines.flow.Flow
@@ -23,11 +24,13 @@ class TaxRepository @Inject constructor(
 
     suspend fun refreshCharges(studentId: Long, careerId: Long): Result<Unit> = runCatching {
         val charges = dataSource.getStudentCharges(studentId)
+        taxDao.deleteChargesByCareerId(careerId)
         taxDao.upsertAllCharges(charges)
     }
 
     suspend fun refreshInvoices(personId: Long, careerId: Long): Result<Unit> = runCatching {
         val invoices = dataSource.getInvoices(personId, careerId)
+        taxDao.deleteInvoicesByCareerId(careerId)
         taxDao.upsertAllInvoices(invoices)
     }
 
@@ -39,5 +42,30 @@ class TaxRepository @Inject constructor(
     suspend fun refreshIsee(academicYearId: Long): Result<Unit> = runCatching {
         val declarations = dataSource.getIseeDeclarations(academicYearId)
         iseeDao.upsertAll(declarations)
+    }
+
+    suspend fun refreshLatestIsee(studentId: Long): Result<Unit> = runCatching {
+        val academicYearId = dataSource.getLatestIseeAcademicYearId(studentId)
+            ?: return@runCatching
+        val declarations = dataSource.getIseeDeclarations(academicYearId)
+        iseeDao.upsertAll(declarations)
+    }
+
+    suspend fun startPagoPaTransaction(
+        invoiceId: Long,
+        returnUrl: String,
+    ): Result<String> = runCatching {
+        dataSource.startPagoPaTransaction(invoiceId, returnUrl)
+    }
+
+    suspend fun getPagoPaNotice(invoiceId: Long): Result<AppDocument> = runCatching {
+        dataSource.getPagoPaNotice(invoiceId)
+    }
+
+    suspend fun getPagoPaReceipt(
+        invoiceId: Long,
+        language: String = "it",
+    ): Result<AppDocument> = runCatching {
+        dataSource.getPagoPaReceipt(invoiceId, language)
     }
 }

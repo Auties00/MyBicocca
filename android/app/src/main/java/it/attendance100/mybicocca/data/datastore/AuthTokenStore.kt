@@ -2,6 +2,7 @@ package it.attendance100.mybicocca.data.datastore
 
 import android.content.Context
 import android.content.SharedPreferences
+import androidx.core.content.edit
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKeys
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -22,29 +23,29 @@ class AuthTokenStore @Inject constructor(
 
     var esse3BasicAuth: String?
         get() = prefs.getString(KEY_ESSE3_BASIC_AUTH, null)
-        set(value) = prefs.edit().putString(KEY_ESSE3_BASIC_AUTH, value).apply()
+        set(value) = prefs.edit { putString(KEY_ESSE3_BASIC_AUTH, value) }
 
     var elearningWsToken: String?
         get() = prefs.getString(KEY_ELEARNING_WS_TOKEN, null)
-        set(value) = prefs.edit().putString(KEY_ELEARNING_WS_TOKEN, value).apply()
+        set(value) = prefs.edit { putString(KEY_ELEARNING_WS_TOKEN, value) }
 
     var esse3PersonId: Long
         get() = prefs.getLong(KEY_ESSE3_PERSON_ID, -1L)
-        set(value) = prefs.edit().putLong(KEY_ESSE3_PERSON_ID, value).apply()
+        set(value) = prefs.edit { putLong(KEY_ESSE3_PERSON_ID, value) }
 
     var esse3UserId: Long
         get() = prefs.getLong(KEY_ESSE3_USER_ID, -1L)
-        set(value) = prefs.edit().putLong(KEY_ESSE3_USER_ID, value).apply()
+        set(value) = prefs.edit { putLong(KEY_ESSE3_USER_ID, value) }
 
     var elearningUserId: Int
         get() = prefs.getInt(KEY_ELEARNING_USER_ID, -1)
-        set(value) = prefs.edit().putInt(KEY_ELEARNING_USER_ID, value).apply()
+        set(value) = prefs.edit { putInt(KEY_ELEARNING_USER_ID, value) }
 
     val isLoggedIn: Boolean
         get() = esse3BasicAuth != null
 
     fun clearAll() {
-        prefs.edit().clear().apply()
+        prefs.edit { clear() }
     }
 
     private companion object {

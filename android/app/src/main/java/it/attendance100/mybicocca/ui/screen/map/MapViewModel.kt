@@ -10,27 +10,40 @@ import it.attendance100.mybicocca.data.model.campus.RoomDetails
 import it.attendance100.mybicocca.data.model.campus.RoomOccupationEvent
 import it.attendance100.mybicocca.data.repository.CampusRepository
 import kotlinx.coroutines.async
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import it.attendance100.mybicocca.data.sync.ResourceSyncManager
+import it.attendance100.mybicocca.data.sync.SyncKeys
+import it.attendance100.mybicocca.data.sync.SyncPolicies
+import it.attendance100.mybicocca.data.sync.SyncUiState
+import it.attendance100.mybicocca.util.NetworkMonitor
 import javax.inject.Inject
 
 @HiltViewModel
 class MapViewModel @Inject constructor(
     private val campusRepository: CampusRepository,
+    private val resourceSyncManager: ResourceSyncManager,
+    networkMonitor: NetworkMonitor,
 ) : ViewModel() {
 
-    private companion object { const val STALE_THRESHOLD_MS = 5 * 60 * 1000L }
+    val isOnline: StateFlow<Boolean> = networkMonitor.isOnline
 
     val buildings: StateFlow<List<Building>> = campusRepository.observeBuildings()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
-    private val _isRefreshing = MutableStateFlow(false)
-    val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
+    private val syncState: StateFlow<SyncUiState> = resourceSyncManager.observe(SyncKeys.CAMPUS_BUILDINGS)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SyncUiState())
+
+    val isRefreshing: StateFlow<Boolean> = syncState
+        .map { it.isRefreshing }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
 
     private val _selectedBuilding = MutableStateFlow<Building?>(null)
     val selectedBuilding: StateFlow<Building?> = _selectedBuilding.asStateFlow()
@@ -50,29 +63,34 @@ class MapViewModel @Inject constructor(
     private val _isLoadingDetail = MutableStateFlow(false)
     val isLoadingDetail: StateFlow<Boolean> = _isLoadingDetail.asStateFlow()
 
-    private val _error = MutableStateFlow<String?>(null)
-    val error: StateFlow<String?> = _error.asStateFlow()
-
-    private var lastRefreshMillis = 0L
+    private val _detailError = MutableStateFlow<String?>(null)
+    val error: StateFlow<String?> = combine(syncState, _detailError) { sync, detail ->
+        detail ?: sync.errorMessage
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
     init {
-        refresh()
+        refreshIfStale()
     }
 
     fun refresh() {
         viewModelScope.launch {
-            _isRefreshing.value = true
-            _error.value = null
-            campusRepository.refreshBuildings()
-                .onFailure { _error.value = it.localizedMessage }
-            lastRefreshMillis = System.currentTimeMillis()
-            _isRefreshing.value = false
+            _detailError.value = null
+            resourceSyncManager.refresh(SyncKeys.CAMPUS_BUILDINGS, SyncPolicies.Static) {
+                campusRepository.refreshBuildings()
+            }
         }
     }
 
+    fun clearError() {
+        _detailError.value = null
+        resourceSyncManager.clearError(SyncKeys.CAMPUS_BUILDINGS)
+    }
+
     fun refreshIfStale() {
-        if (System.currentTimeMillis() - lastRefreshMillis > STALE_THRESHOLD_MS) {
-            refresh()
+        viewModelScope.launch {
+            resourceSyncManager.refreshIfStale(SyncKeys.CAMPUS_BUILDINGS, SyncPolicies.Static) {
+                campusRepository.refreshBuildings()
+            }
         }
     }
 
@@ -88,7 +106,7 @@ class MapViewModel @Inject constructor(
     private fun loadBuildingDetail(buildingCode: String) {
         viewModelScope.launch {
             _isLoadingDetail.value = true
-            _error.value = null
+            _detailError.value = null
 
             val roomsDeferred = async {
                 campusRepository.refreshRooms(buildingCode)
@@ -108,15 +126,15 @@ class MapViewModel @Inject constructor(
 
             eventsDeferred.await()
                 .onSuccess { _todayEvents.value = it }
-                .onFailure { _error.value = it.localizedMessage }
+                .onFailure { _detailError.value = it.localizedMessage }
 
             detailsDeferred.await()
                 .onSuccess { _roomDetails.value = it }
-                .onFailure { _error.value = it.localizedMessage }
+                .onFailure { _detailError.value = it.localizedMessage }
 
             occupationDeferred.await()
                 .onSuccess { _occupation.value = it }
-                .onFailure { _error.value = it.localizedMessage }
+                .onFailure { _detailError.value = it.localizedMessage }
 
             _isLoadingDetail.value = false
         }

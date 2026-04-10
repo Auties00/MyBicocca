@@ -15,15 +15,24 @@ class Esse3EvaluationDataSource @Inject constructor(
 ) {
     suspend fun getEvaluationEntries(matId: Long): List<EvaluationEntry> = withContext(ioDispatcher) {
         val rows = esse3Api.questionnaires.getRecordBookQuestionnaires(matId)
+        val pendingIds = esse3Api.questionnaires
+            .getRecordBookQuestionnaires(
+                matId = matId,
+                questionFilter = "COMPILABILI",
+            )
+            .map { it.activityChoiceId }
+            .toSet()
+
         rows.map { row ->
             EvaluationEntry(
                 id = row.activityChoiceId,
                 activityName = row.activityDescription,
                 activityCode = row.activityCode,
                 questionnaireId = null,
-                isCompiled = false, // determined by checking questionnaire compilation status separately
+                isCompiled = row.linkState == 1 && row.activityChoiceId !in pendingIds,
                 academicYear = row.academicYearAttendanceId,
             )
         }
+            .filter { it.id != 0L }
     }
 }

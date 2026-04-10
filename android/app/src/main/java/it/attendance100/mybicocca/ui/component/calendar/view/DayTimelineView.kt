@@ -76,13 +76,12 @@ fun DayTimelineView(
             }
 
         when {
-            isLoading && pageEvents.isEmpty() -> {
+            isLoading -> {
                 SkeletonLoadingList()
             }
-            pageEvents.isEmpty() -> {
+            pageEvents.isEmpty() && (searchQuery.isNotEmpty() || hasActiveFilters) -> {
                 CalendarEmptyState(
-                    type = if (searchQuery.isNotEmpty() || hasActiveFilters)
-                        EmptyStateType.SEARCH else EmptyStateType.DAY,
+                    type = EmptyStateType.SEARCH,
                     modifier = Modifier.fillMaxSize()
                 )
             }

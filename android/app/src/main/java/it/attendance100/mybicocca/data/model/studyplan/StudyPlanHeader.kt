@@ -10,4 +10,5 @@ data class StudyPlanHeader(
     val description: String? = null,
     val statusCode: String? = null,
     val statusDescription: String? = null,
+    val lastUpdated: String? = null,
 )

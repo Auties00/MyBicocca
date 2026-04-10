@@ -7,9 +7,10 @@ import it.attendance100.mybicocca.data.model.career.Career
 import it.attendance100.mybicocca.data.model.user.User
 import it.attendance100.mybicocca.data.repository.CareerRepository
 import it.attendance100.mybicocca.data.repository.UserRepository
+import it.attendance100.mybicocca.data.sync.ResourceSyncManager
+import it.attendance100.mybicocca.data.sync.SyncKeys
+import it.attendance100.mybicocca.data.sync.SyncPolicies
 import it.attendance100.mybicocca.util.NetworkMonitor
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
@@ -20,6 +21,7 @@ import javax.inject.Inject
 class AppNavHostViewModel @Inject constructor(
     private val userRepository: UserRepository,
     private val careerRepository: CareerRepository,
+    private val resourceSyncManager: ResourceSyncManager,
     networkMonitor: NetworkMonitor,
 ) : ViewModel() {
     val profilePic: Flow<ByteArray?> = userRepository.observeUser().map { it?.profilePic }
@@ -29,18 +31,14 @@ class AppNavHostViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            listOf(
-                async {
-                    runCatching {
-                        userRepository.refresh()
-                    }
-                },
-                async {
-                    runCatching {
-                        careerRepository.refresh()
-                    }
-                }
-            ).awaitAll()
+            resourceSyncManager.refreshIfStale(SyncKeys.USER, SyncPolicies.ShortLived) {
+                userRepository.refresh()
+            }
+        }
+        viewModelScope.launch {
+            resourceSyncManager.refreshIfStale(SyncKeys.CAREERS, SyncPolicies.ShortLived) {
+                careerRepository.refresh()
+            }
         }
     }
 }

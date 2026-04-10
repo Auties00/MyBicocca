@@ -43,7 +43,13 @@ import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.data.model.tax.TaxCharge
 import it.attendance100.mybicocca.ui.component.ActionBottomBar
 import it.attendance100.mybicocca.ui.component.AutoScrollingFilterRow
+import it.attendance100.mybicocca.ui.component.EmptyOfflineState
+import it.attendance100.mybicocca.ui.component.EmptyState
+import it.attendance100.mybicocca.ui.component.ErrorState
+import it.attendance100.mybicocca.ui.component.NetworkStatusBar
 import it.attendance100.mybicocca.ui.component.shape.DynamicCard
+import it.attendance100.mybicocca.ui.component.shimmer.SkeletonCardList
+import it.attendance100.mybicocca.ui.component.shimmer.SkeletonTaxCard
 import it.attendance100.mybicocca.ui.component.tax.formatCurrency
 import it.attendance100.mybicocca.ui.theme.GrayColor
 import it.attendance100.mybicocca.util.UiFormatter
@@ -84,6 +90,8 @@ fun TaxesScreen(
     var selectedStatus by remember { mutableStateOf(TaxStatusFilter.All) }
     val charges by viewModel.charges.collectAsStateWithLifecycle()
     val isRefreshing by viewModel.isRefreshing.collectAsStateWithLifecycle()
+    val error by viewModel.error.collectAsStateWithLifecycle()
+    val isOnline by viewModel.isOnline.collectAsStateWithLifecycle()
 
     val shownCharges = remember(selectedStatus, charges) {
         when (selectedStatus) {
@@ -146,24 +154,46 @@ fun TaxesScreen(
             PullToRefreshBox(
                 isRefreshing = isRefreshing,
                 onRefresh = { viewModel.refresh() },
+                indicator = {},
                 modifier = Modifier.fillMaxSize(),
             ) {
-                LazyColumn(
-                    contentPadding = PaddingValues(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp),
-                    modifier = Modifier.fillMaxSize(),
-                ) {
-                    items(
-                        items = shownCharges,
-                        key = { it.id },
-                    ) { charge ->
-                        TaxCard(
-                            charge = charge,
-                            onClick = { onNavigateToDetail(charge.id) },
-                        )
+                when {
+                    isRefreshing -> {
+                        Column {
+                            NetworkStatusBar(isOnline = isOnline, errorMessage = error, onDismissError = viewModel::clearError)
+                            SkeletonCardList(spacing = 16.dp) { shimmer ->
+                                SkeletonTaxCard(shimmerInstance = shimmer)
+                            }
+                        }
                     }
 
-                    item { Spacer(modifier = Modifier.height(80.dp)) }
+                    shownCharges.isEmpty() && !isOnline -> EmptyOfflineState()
+                    shownCharges.isEmpty() && error != null -> ErrorState(message = error ?: "Errore")
+                    shownCharges.isEmpty() -> EmptyState(message = "Nessuna tassa disponibile")
+
+                    else -> {
+                        LazyColumn(
+                            contentPadding = PaddingValues(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(16.dp),
+                            modifier = Modifier.fillMaxSize(),
+                        ) {
+                            item {
+                                NetworkStatusBar(isOnline = isOnline, errorMessage = error, onDismissError = viewModel::clearError)
+                            }
+
+                            items(
+                                items = shownCharges,
+                                key = { it.id },
+                            ) { charge ->
+                                TaxCard(
+                                    charge = charge,
+                                    onClick = { onNavigateToDetail(charge.id) },
+                                )
+                            }
+
+                            item { Spacer(modifier = Modifier.height(80.dp)) }
+                        }
+                    }
                 }
             }
         }

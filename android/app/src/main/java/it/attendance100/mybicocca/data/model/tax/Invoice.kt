@@ -12,4 +12,9 @@ data class Invoice(
     val issueDate: String? = null,
     val paymentDate: String? = null,
     val status: String,
+    val isPagoPaEnabled: Boolean = false,
+    val isPagoPaImmediate: Boolean = false,
+    val isPagoPaNotice: Boolean = false,
+    val noticeCode: String? = null,
+    val iuv: String? = null,
 )

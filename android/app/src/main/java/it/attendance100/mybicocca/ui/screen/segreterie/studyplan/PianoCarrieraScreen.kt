@@ -54,8 +54,16 @@ import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.data.model.studyplan.PlannedCourse
 import it.attendance100.mybicocca.ui.component.DualActionBottomBar
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import it.attendance100.mybicocca.ui.component.EmptyOfflineState
+import it.attendance100.mybicocca.ui.component.EmptyState
+import it.attendance100.mybicocca.ui.component.NetworkStatusBar
+import it.attendance100.mybicocca.ui.component.shimmer.SkeletonExpandableList
+import it.attendance100.mybicocca.ui.screen.segreterie.SegreterieActionEventEffect
 import it.attendance100.mybicocca.util.rememberHapticManager
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PianoCarrieraScreen(
     viewModel: PianoCarrieraViewModel = hiltViewModel(
@@ -68,6 +76,11 @@ fun PianoCarrieraScreen(
 ) {
     val courses by viewModel.courses.collectAsStateWithLifecycle()
     val headers by viewModel.headers.collectAsStateWithLifecycle()
+    val error by viewModel.error.collectAsStateWithLifecycle()
+    val isRefreshing by viewModel.isRefreshing.collectAsStateWithLifecycle()
+    val isOnline by viewModel.isOnline.collectAsStateWithLifecycle()
+
+    SegreterieActionEventEffect(viewModel.events)
 
     // Group by year
     val groupedPlan = remember(courses) {
@@ -109,114 +122,159 @@ fun PianoCarrieraScreen(
         }
     }
 
-    Box(
+    PullToRefreshBox(
+        isRefreshing = isRefreshing,
+        onRefresh = { viewModel.refresh() },
+        indicator = {},
         modifier = Modifier.fillMaxSize(),
     ) {
-        LazyColumn(
-            state = listState,
-            modifier = Modifier
-                .fillMaxSize()
-                .nestedScroll(nestedScrollConnection),
-            contentPadding = PaddingValues(bottom = 140.dp, top = 16.dp),
-        ) {
-            // Plan info card
-            item {
-                val headerDescription = headers.firstOrNull()?.description ?: ""
-                val headerStatus = headers.firstOrNull()?.statusDescription
-                    ?: stringResource(R.string.career_plan_status_value)
+        when {
+            isRefreshing -> {
+                Column {
+                    NetworkStatusBar(isOnline = isOnline, errorMessage = error, onDismissError = viewModel::clearError)
+                    SkeletonExpandableList()
+                }
+            }
 
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 8.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceContainer,
-                    ),
-                    onClick = {
-                        haptic.tap()
-                    },
+            courses.isEmpty() && !isOnline -> EmptyOfflineState()
+            courses.isEmpty() && error != null -> {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center,
                 ) {
-                    Box(
+                    Text(
+                        text = error ?: "Errore",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.error,
+                    )
+                }
+            }
+            courses.isEmpty() -> EmptyState(message = "Nessun piano di studi disponibile")
+
+            else -> {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                ) {
+                    LazyColumn(
+                        state = listState,
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(
-                                start = 16.dp,
-                                top = 16.dp,
-                                end = 16.dp,
-                                bottom = 12.dp
-                            ),
+                            .fillMaxSize()
+                            .nestedScroll(nestedScrollConnection),
+                        contentPadding = PaddingValues(bottom = 140.dp, top = 16.dp),
                     ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                        ) {
-                            Column {
-                                Text(
-                                    text = stringResource(R.string.career_plan_type_label),
-                                    style = MaterialTheme.typography.labelMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                )
-                                Text(
-                                    text = if (headerDescription.isNotBlank()) headerDescription
-                                    else stringResource(R.string.career_plan_type_value),
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    fontWeight = FontWeight.SemiBold,
+                        item {
+                            NetworkStatusBar(
+                                isOnline = isOnline,
+                                errorMessage = error,
+                                onDismissError = viewModel::clearError,
+                                modifier = Modifier.padding(horizontal = 16.dp),
+                            )
+                        }
+
+                        // Plan info card
+                        item {
+                            val headerDescription = headers.firstOrNull()?.description ?: ""
+                            val headerStatus = headers.firstOrNull()?.statusDescription
+                                ?: stringResource(R.string.career_plan_status_value)
+
+                            Card(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                                ),
+                                onClick = {
+                                    haptic.tap()
+                                },
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(
+                                            start = 16.dp,
+                                            top = 16.dp,
+                                            end = 16.dp,
+                                            bottom = 12.dp
+                                        ),
+                                ) {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                    ) {
+                                        Column {
+                                            Text(
+                                                text = stringResource(R.string.career_plan_type_label),
+                                                style = MaterialTheme.typography.labelMedium,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            )
+                                            Text(
+                                                text = if (headerDescription.isNotBlank()) headerDescription
+                                                else stringResource(R.string.career_plan_type_value),
+                                                style = MaterialTheme.typography.bodyLarge,
+                                                fontWeight = FontWeight.SemiBold,
+                                            )
+                                        }
+                                        Box(
+                                            modifier = Modifier.height(35.dp),
+                                            contentAlignment = Alignment.CenterEnd,
+                                        ) {
+                                            Text(
+                                                text = headerStatus,
+                                                style = MaterialTheme.typography.bodyLarge,
+                                                fontWeight = FontWeight.SemiBold,
+                                                color = MaterialTheme.colorScheme.primary,
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        years.forEach { year ->
+                            stickyHeader {
+                                PianoExpandableHeader(
+                                    title = "${stringResource(R.string.career_plan_year_prefix)} $year",
+                                    count = groupedPlan[year]?.size ?: 0,
+                                    isExpanded = expandedStates[year] == true,
+                                    titleColor = MaterialTheme.colorScheme.primary,
+                                    onToggle = {
+                                        expandedStates[year] = !(expandedStates[year] ?: true)
+                                    },
                                 )
                             }
-                            Box(
-                                modifier = Modifier.height(35.dp),
-                                contentAlignment = Alignment.CenterEnd,
-                            ) {
-                                Text(
-                                    text = headerStatus,
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = MaterialTheme.colorScheme.primary,
-                                )
+
+                            if (expandedStates[year] == true) {
+                                items(groupedPlan[year] ?: emptyList()) { item ->
+                                    PlannedCourseCard(item = item)
+                                }
                             }
                         }
                     }
-                }
-            }
 
-            years.forEach { year ->
-                stickyHeader {
-                    PianoExpandableHeader(
-                        title = "${stringResource(R.string.career_plan_year_prefix)} $year",
-                        count = groupedPlan[year]?.size ?: 0,
-                        isExpanded = expandedStates[year] == true,
-                        titleColor = MaterialTheme.colorScheme.primary,
-                        onToggle = {
-                            expandedStates[year] = !(expandedStates[year] ?: true)
+                    // Bottom action bar
+                    DualActionBottomBar(
+                        mainActionText = stringResource(R.string.career_plan_edit),
+                        mainActionIcon = Icons.Default.Edit,
+                        onMainActionClick = {
+                            haptic.tap()
+                            viewModel.editStudyPlan()
                         },
+                        secondaryActionIcon = Icons.Default.Print,
+                        onSecondaryActionClick = {
+                            haptic.tap()
+                            viewModel.printStudyPlan()
+                        },
+                        footerText = stringResource(
+                            R.string.career_plan_last_modified,
+                            headers.firstOrNull()?.lastUpdated ?: "-"
+                        ),
+                        isBottomBarVisible = isBottomBarVisible,
+                        modifier = Modifier.align(Alignment.BottomCenter),
                     )
-                }
-
-                if (expandedStates[year] == true) {
-                    items(groupedPlan[year] ?: emptyList()) { item ->
-                        PlannedCourseCard(item = item)
-                    }
                 }
             }
         }
-
-        // Bottom action bar
-        DualActionBottomBar(
-            mainActionText = stringResource(R.string.career_plan_edit),
-            mainActionIcon = Icons.Default.Edit,
-            onMainActionClick = {
-                haptic.tap()
-                /* TODO: implement career edit */
-            },
-            secondaryActionIcon = Icons.Default.Print,
-            onSecondaryActionClick = {
-                haptic.tap()
-                /* TODO: implement print */
-            },
-            footerText = stringResource(R.string.career_plan_last_modified, "-"),
-            isBottomBarVisible = isBottomBarVisible,
-            modifier = Modifier.align(Alignment.BottomCenter),
-        )
     }
 }
 
