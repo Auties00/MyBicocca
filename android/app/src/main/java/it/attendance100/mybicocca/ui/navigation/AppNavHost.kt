@@ -470,13 +470,15 @@ private fun MainShell(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .pointerInput( // TODO: disable when on map
+            .pointerInput(
+                selectedTab,
                 isOnSubPage,
                 searchActive,
                 showAccountSwitcher,
                 swipeProfileEnabled,
                 swipeSearchEnabled
             ) {
+                if (selectedTab == Tab.Map) return@pointerInput
                 if (isOnSubPage || searchActive || showAccountSwitcher) return@pointerInput
                 if (!swipeProfileEnabled && !swipeSearchEnabled) return@pointerInput
                 detectHorizontalDragGestures(
