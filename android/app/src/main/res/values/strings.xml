@@ -313,6 +313,13 @@
     <string name="career_plan_title">Study Plan</string>
     <string name="career_plan_year_prefix">Learning Activities - Year</string>
     <string name="career_plan_print">Print Plan</string>
+    <string name="career_plan_edit_submit">Invia Piano</string>
+    <string name="career_plan_edit_next">Avanti</string>
+    <string name="career_plan_edit_previous">Indietro</string>
+    <string name="career_plan_edit_unsaved_title">Modifiche non salvate</string>
+    <string name="career_plan_edit_unsaved_body">Hai modifiche non salvate. Vuoi uscire?</string>
+    <string name="career_plan_edit_exit">Esci</string>
+    <string name="career_plan_edit_stay">Resta</string>
     <string name="profile_prenotazioni">Exam Booking</string>
     <string name="profile_corsi">Courses</string>
 

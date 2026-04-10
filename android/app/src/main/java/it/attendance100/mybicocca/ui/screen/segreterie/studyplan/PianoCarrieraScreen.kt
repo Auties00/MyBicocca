@@ -62,10 +62,12 @@ import it.attendance100.mybicocca.ui.component.NetworkStatusBar
 import it.attendance100.mybicocca.ui.component.shimmer.SkeletonExpandableList
 import it.attendance100.mybicocca.ui.screen.segreterie.SegreterieActionEventEffect
 import it.attendance100.mybicocca.util.rememberHapticManager
+import it.attendance100.mybicocca.util.rememberPreferencesManager
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PianoCarrieraScreen(
+    onNavigateToEdit: (studentId: Long, choiceRegulationId: Long, schemaId: Long, planId: Long) -> Unit = { _, _, _, _ -> },
     viewModel: PianoCarrieraViewModel = hiltViewModel(
         checkNotNull<ViewModelStoreOwner>(
             LocalViewModelStoreOwner.current
@@ -79,6 +81,7 @@ fun PianoCarrieraScreen(
     val error by viewModel.error.collectAsStateWithLifecycle()
     val isRefreshing by viewModel.isRefreshing.collectAsStateWithLifecycle()
     val isOnline by viewModel.isOnline.collectAsStateWithLifecycle()
+    val isEditEnabled by viewModel.isEditEnabled.collectAsStateWithLifecycle()
 
     SegreterieActionEventEffect(viewModel.events)
 
@@ -256,9 +259,13 @@ fun PianoCarrieraScreen(
                     DualActionBottomBar(
                         mainActionText = stringResource(R.string.career_plan_edit),
                         mainActionIcon = Icons.Default.Edit,
+                        mainIsEnabled = isEditEnabled,
                         onMainActionClick = {
                             haptic.tap()
-                            viewModel.editStudyPlan()
+                            val header = headers.firstOrNull() ?: return@DualActionBottomBar
+                            val regId = header.choiceRegulationId ?: return@DualActionBottomBar
+                            val sId = header.schemaId ?: return@DualActionBottomBar
+                            onNavigateToEdit(header.studentId, regId, sId, header.id)
                         },
                         secondaryActionIcon = Icons.Default.Print,
                         onSecondaryActionClick = {
