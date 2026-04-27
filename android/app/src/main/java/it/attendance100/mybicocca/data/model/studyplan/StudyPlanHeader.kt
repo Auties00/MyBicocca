@@ -11,4 +11,7 @@ data class StudyPlanHeader(
     val statusCode: String? = null,
     val statusDescription: String? = null,
     val lastUpdated: String? = null,
+    val choiceRegulationId: Long? = null,
+    val schemaId: Long? = null,
+    val planType: String? = null,
 )

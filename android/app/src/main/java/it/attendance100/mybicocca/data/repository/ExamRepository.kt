@@ -1,6 +1,5 @@
 package it.attendance100.mybicocca.data.repository
 
-import it.attendance100.mybicocca.data.model.document.AppDocument
 import it.attendance100.mybicocca.data.database.dao.ExamDao
 import it.attendance100.mybicocca.data.datasource.exam.Esse3ExamDataSource
 import it.attendance100.mybicocca.data.model.exam.ExamBooking
@@ -23,9 +22,11 @@ class ExamRepository @Inject constructor(
 
     suspend fun refreshExamCalls(
         careerId: Long,
-        matricolaId: Long?
+        matricolaId: Long? = null,
     ): Result<Unit> = runCatching {
-        refreshBookableExams(careerId, matricolaId)
+        val calls = esse3Exam.getExamCalls(careerId, matricolaId)
+        dao.deleteAllCalls()
+        dao.upsertCalls(calls)
     }
 
     suspend fun refreshBookings(matricolaId: Long?): Result<Unit> = runCatching {
@@ -34,34 +35,5 @@ class ExamRepository @Inject constructor(
         dao.upsertBookings(bookings)
     }
 
-    private suspend fun refreshBookableExams(careerId: Long, matricolaId: Long?) {
-        val calls = esse3Exam.getExamCalls(careerId, matricolaId)
-        dao.deleteAllCalls()
-        dao.upsertCalls(calls)
-    }
-
     suspend fun getExamCallById(id: Long): ExamCall? = dao.getExamCallById(id)
-
-    suspend fun getExamCallDetailById(id: Long): ExamCall? = runCatching {
-        val call = dao.getExamCallById(id) ?: return@runCatching null
-        val detailed = esse3Exam.getExamCallDetail(call)
-        dao.upsertCalls(listOf(detailed))
-        detailed
-    }.getOrNull()
-
-    suspend fun bookExam(call: ExamCall): Result<Unit> = runCatching {
-        esse3Exam.bookExam(call)
-    }
-
-    suspend fun cancelBooking(booking: ExamBooking): Result<Unit> = runCatching {
-        esse3Exam.cancelBooking(booking)
-    }
-
-    suspend fun getBookingStatino(booking: ExamBooking): Result<AppDocument> = runCatching {
-        esse3Exam.getBookingStatino(booking)
-    }
-
-    suspend fun getPresenceCertificate(booking: ExamBooking): Result<AppDocument> = runCatching {
-        esse3Exam.getPresenceCertificate(booking)
-    }
 }

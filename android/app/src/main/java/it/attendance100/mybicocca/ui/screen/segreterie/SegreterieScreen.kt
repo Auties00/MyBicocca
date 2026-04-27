@@ -72,6 +72,7 @@ import it.attendance100.mybicocca.ui.component.NetworkStatusBar
 import it.attendance100.mybicocca.ui.component.card.SimpleCard
 import it.attendance100.mybicocca.ui.component.shimmer.SkeletonSegreterieContent
 import it.attendance100.mybicocca.util.rememberHapticManager
+import it.attendance100.mybicocca.util.rememberPreferencesManager
 import kotlinx.coroutines.delay
 import kotlin.random.Random
 
@@ -409,6 +410,44 @@ fun SegreterieScreen(
                 }
             }
         }
+
+        val prefs = rememberPreferencesManager()
+        val lastModifiedTime = prefs.studyPlanLastModified
+        val lastModifiedStr = remember(lastModifiedTime) {
+            if (lastModifiedTime == 0L) null
+            else java.text.SimpleDateFormat("dd/MM/yyyy", java.util.Locale.getDefault())
+                .format(java.util.Date(lastModifiedTime))
+        }
+
+        // Bottom bars (offscreen, available for shared transitions)
+        DualActionBottomBar(
+            mainActionText = stringResource(string.career_plan_edit),
+            mainActionIcon = Icons.Default.Edit,
+            onMainActionClick = { /* nothing */ },
+            secondaryActionIcon = Icons.Default.Print,
+            onSecondaryActionClick = { /* nothing */ },
+            footerText = lastModifiedStr?.let {
+                stringResource(
+                    string.career_plan_last_modified,
+                    it
+                )
+            },
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .offset(y = 230.dp)
+        )
+
+        SingleActionBottomBar(
+            text = "Stampa importo Tasse dovute",
+            icon = Icons.Default.Print,
+            onClick = {
+                haptic.tap()
+                // TODO: implement pdf opening
+            },
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .offset(y = 230.dp)
+        )
     }
 }
 
