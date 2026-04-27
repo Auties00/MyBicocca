@@ -80,11 +80,15 @@ class PianoCarrieraViewModel @Inject constructor(
     val events: SharedFlow<it.attendance100.mybicocca.ui.screen.segreterie.SegreterieActionEvent> =
         _events.asSharedFlow()
 
+    private val _isEditEnabled = MutableStateFlow(false)
+    val isEditEnabled: StateFlow<Boolean> = _isEditEnabled.asStateFlow()
+
     init {
         viewModelScope.launch {
             activeCareer.collectLatest { career ->
                 if (career != null) {
                     refreshCareer(career, force = false)
+                    checkEditingWindow()
                 }
             }
         }
@@ -93,6 +97,7 @@ class PianoCarrieraViewModel @Inject constructor(
     fun refresh() {
         viewModelScope.launch {
             refreshCareer(activeCareer.awaitFirstNonNull(), force = true)
+            checkEditingWindow()
         }
     }
 
@@ -163,6 +168,16 @@ class PianoCarrieraViewModel @Inject constructor(
             resourceSyncManager.refresh(key, SyncPolicies.Default, refreshBlock = refreshBlock)
         } else {
             resourceSyncManager.refreshIfStale(key, SyncPolicies.Default, refreshBlock = refreshBlock)
+        }
+    }
+
+    private fun checkEditingWindow(preFetchedHeader: StudyPlanHeader? = null) {
+        viewModelScope.launch {
+            val header = preFetchedHeader ?: headers.value.firstOrNull() ?: return@launch
+            val regId = header.choiceRegulationId ?: return@launch
+            _isEditEnabled.value = runCatching {
+                studyPlanRepository.isEditingWindowOpen(regId)
+            }.getOrDefault(false)
         }
     }
 }

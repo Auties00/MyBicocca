@@ -36,6 +36,13 @@ sealed interface AppRoutes {
     @Serializable data object Taxes : AppRoutes
     @Serializable data class TaxDetail(val chargeId: Long) : AppRoutes
     @Serializable data object StudyPlan : AppRoutes
+    @Serializable
+    data class StudyPlanEdit(
+        val studentId: Long,
+        val choiceRegulationId: Long,
+        val schemaId: Long,
+        val planId: Long,
+    ) : AppRoutes
     @Serializable data class Transcript(val careerId: Long) : AppRoutes
     @Serializable data object ExamResults : AppRoutes
     @Serializable data object Attendance : AppRoutes
