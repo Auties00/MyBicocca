@@ -372,32 +372,6 @@ fun PlannedCourseCard(item: PlannedCourse) {
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.weight(1f),
                 )
-
-                val status = item.statusDescription ?: ""
-                val containerColor =
-                    if (status.equals("Superata", ignoreCase = true))
-                        MaterialTheme.colorScheme.primaryContainer
-                    else MaterialTheme.colorScheme.secondaryContainer
-                val contentColor =
-                    if (status.equals("Superata", ignoreCase = true))
-                        MaterialTheme.colorScheme.onPrimaryContainer
-                    else MaterialTheme.colorScheme.onSecondaryContainer
-
-                if (status.isNotBlank()) {
-                    Surface(
-                        modifier = Modifier.width(80.dp),
-                        color = containerColor,
-                        shape = RoundedCornerShape(8.dp),
-                    ) {
-                        Text(
-                            text = status,
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                            style = MaterialTheme.typography.labelSmall,
-                            color = contentColor,
-                            textAlign = TextAlign.Center,
-                        )
-                    }
-                }
             }
 
             Spacer(modifier = Modifier.height(8.dp))

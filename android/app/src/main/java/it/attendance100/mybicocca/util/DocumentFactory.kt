@@ -1,4 +1,4 @@
-package it.attendance100.mybicocca.data.util
+package it.attendance100.mybicocca.util
 
 import io.ktor.utils.io.ByteReadChannel
 import io.ktor.utils.io.readRemaining

@@ -5,7 +5,7 @@ import it.attendance100.mybicocca.data.dto.esse3.Esse3ExamSessionEnrollmentParam
 import it.attendance100.mybicocca.data.model.document.AppDocument
 import it.attendance100.mybicocca.data.model.exam.ExamBooking
 import it.attendance100.mybicocca.data.model.exam.ExamCall
-import it.attendance100.mybicocca.data.util.toAppDocument
+import it.attendance100.mybicocca.util.toAppDocument
 import it.attendance100.mybicocca.di.IoDispatcher
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.async

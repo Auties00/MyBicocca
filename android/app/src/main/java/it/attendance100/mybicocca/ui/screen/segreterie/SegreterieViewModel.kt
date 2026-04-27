@@ -3,6 +3,7 @@ package it.attendance100.mybicocca.ui.screen.segreterie
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import it.attendance100.mybicocca.data.model.transcript.RecordBookRow
 import it.attendance100.mybicocca.data.repository.CareerRepository
 import it.attendance100.mybicocca.data.repository.EvaluationRepository
 import it.attendance100.mybicocca.data.repository.ExamRepository
@@ -90,7 +91,7 @@ class SegreterieViewModel @Inject constructor(
         }
         .map { rows ->
             rows.count { row ->
-                row.status == "L" || row.grade != null || row.date != null
+                row.status == RecordBookRow.Status.PASSED || row.grade != null || row.date != null
             }
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0)

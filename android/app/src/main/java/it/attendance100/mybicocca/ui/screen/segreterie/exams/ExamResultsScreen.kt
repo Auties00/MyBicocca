@@ -259,7 +259,12 @@ fun ExamResultCard(
             val gradeText = when {
                 row.grade != null && row.cumLaude -> "${row.grade}L"
                 row.grade != null -> "${row.grade}"
-                else -> row.status
+                else -> when(row.status) {
+                    RecordBookRow.Status.PLANNED -> "Pianificato"
+                    RecordBookRow.Status.FREQUENTED -> "Frequentato"
+                    RecordBookRow.Status.PASSED -> "Passato"
+                    RecordBookRow.Status.UNKNOWN -> "Sconosciuto"
+                }
             }
             Surface(
                 shape = RoundedCornerShape(8.dp),

@@ -1,6 +1,7 @@
 package it.attendance100.mybicocca.data.api.elearning
 
 import it.attendance100.mybicocca.data.dto.elearning.ElearningCourseCategory
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -43,6 +44,21 @@ class ElearningCourseApiTest : ElearningTestApiBase() {
                 assertNotNull(contents)
             }
         }
+    }
+
+    @Test
+    suspend fun getCoursePublicInfo() {
+        val info = api.courses.getCoursePublicInfo(60702)
+        assertEquals(60702, info.id)
+        assertTrue(info.name.isNotBlank())
+        assertTrue(info.code.isNotBlank())
+        assertTrue(info.viewUrl.contains("course/view.php"))
+        assertNotNull(info.metadata)
+        assertTrue(info.syllabus.isNotEmpty())
+        assertTrue(info.syllabus.any { it.language == "it" })
+        assertTrue(info.syllabus.all { it.fields.isNotEmpty() })
+        assertTrue(info.staff.isNotEmpty())
+        assertTrue(info.enrolmentMethods.isNotEmpty())
     }
 
     @Test
