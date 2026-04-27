@@ -91,7 +91,8 @@ Request parameters are sent as form data with the web service token.
 
 ### HTML Scraping
 
-Two operations use HTML scraping for course catalog browsing (no authentication required):
+Three operations use HTML scraping for course catalog browsing (no authentication required):
 
 - `courses.getCoursesAreas()` - Scrapes course categories from the homepage
 - `courses.getCourseCategoryContents()` - Scrapes courses within a category
+- `courses.getCoursePublicInfo(courseId)` - Scrapes the public info page for a course (syllabus, staff, "Scheda del corso" metadata, enrolment methods); works for courses the user is not enrolled in

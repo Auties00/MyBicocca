@@ -7,7 +7,7 @@ import it.attendance100.mybicocca.data.dto.esse3.Esse3StudyPlanHeader
 import it.attendance100.mybicocca.data.model.document.AppDocument
 import it.attendance100.mybicocca.data.model.studyplan.PlannedCourse
 import it.attendance100.mybicocca.data.model.studyplan.StudyPlanHeader
-import it.attendance100.mybicocca.data.util.toAppDocument
+import it.attendance100.mybicocca.util.toAppDocument
 import it.attendance100.mybicocca.di.IoDispatcher
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
@@ -26,7 +26,7 @@ class Esse3StudyPlanDataSource @Inject constructor(
 
     suspend fun getPlannedCourses(studentId: Long, planId: Long): List<PlannedCourse> =
         withContext(ioDispatcher) {
-            val plan = esse3Api.plans.getStudentPlan(studentId, planId)
+            val plan = esse3Api.plans.getStudentPlan(studentId, planId, optionalFields = "ALL")
             plan.activity.mapNotNull { it.toPlannedCourse(planId) }
         }
 
@@ -48,16 +48,22 @@ class Esse3StudyPlanDataSource @Inject constructor(
     }
 
     private fun Esse3StudyPlanActivity.toPlannedCourse(planId: Long): PlannedCourse? {
-        val courseId = activityChoiceId ?: return null
+        if (choiceFlag == 0) return null
+        val courseId = activityChoiceId
+            ?: choiceActivityId
+            ?: teachingActivityChoiceId?.toLong()
+            ?: return null
+        val name = activityTranscriptDescription
+            ?: contextualizedTeachingActivityKey?.activityDescription
+            ?: return null
         return PlannedCourse(
             id = courseId,
             planId = planId,
-            activityName = activityTranscriptDescription ?: "",
-            activityCode = activityTranscriptCode,
+            activityName = name,
+            activityCode = activityTranscriptCode ?: contextualizedTeachingActivityKey?.activityCode,
             credits = weight ?: 0f,
             year = courseYear,
-            statusCode = null,
-            statusDescription = null,
+            partialCode = partitionKey?.partialCode?.takeIf { it.isNotBlank() },
         )
     }
 

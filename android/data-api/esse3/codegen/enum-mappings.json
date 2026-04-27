@@ -205,7 +205,7 @@
     "IscrizioneAppello.statoAdsce": {
         "P": "Planned",
         "F": "Frequented",
-        "S": "Exempted"
+        "S": "Passed"
     },
     "MediaLibretto.definizioneBase": {
         "CDS": "DegreeCourse",
@@ -442,7 +442,7 @@
     "RigaLibretto.stato": {
         "P": "Planned",
         "F": "Frequented",
-        "S": "Exempted"
+        "S": "Passed"
     },
     "RigaLibrettoConStatoQuestionario.raggEsaTipo": {
         "ESA": "Examination",
@@ -451,7 +451,7 @@
     "RigaLibrettoConStatoQuestionario.stato": {
         "P": "Planned",
         "F": "Frequented",
-        "S": "Exempted"
+        "S": "Passed"
     },
     "SEGContestualizzato.interclaTipoAfCod": {
         "A": "CoreActivities",

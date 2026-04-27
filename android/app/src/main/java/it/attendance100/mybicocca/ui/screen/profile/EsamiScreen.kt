@@ -98,7 +98,7 @@ data class GradePoint(
 )
 
 private fun RecordBookRow.isPassed(): Boolean =
-    status == "S" || (grade != null && grade >= 18)
+    status == RecordBookRow.Status.PASSED || (grade != null && grade >= 18)
 
 private fun RecordBookRow.gradeDisplay(): String? {
     if (grade == null) return null

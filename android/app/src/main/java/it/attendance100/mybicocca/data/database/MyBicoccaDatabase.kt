@@ -93,7 +93,7 @@ import it.attendance100.mybicocca.data.model.user.User
         DidacticStructure::class,
         IseeDeclaration::class,
     ],
-    version = 10,
+    version = 12,
     exportSchema = false,
 )
 @TypeConverters(MyBicoccaTypeConverters::class)

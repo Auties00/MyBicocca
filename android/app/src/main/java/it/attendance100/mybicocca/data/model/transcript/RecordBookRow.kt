@@ -13,5 +13,12 @@ data class RecordBookRow(
     val grade: Int? = null,
     val cumLaude: Boolean,
     val date: String? = null,
-    val status: String,
-)
+    val status: Status
+) {
+    enum class Status {
+        PLANNED,
+        FREQUENTED,
+        PASSED,
+        UNKNOWN
+    }
+}

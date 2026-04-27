@@ -9,7 +9,7 @@ import it.attendance100.mybicocca.data.model.isee.IseeDeclaration
 import it.attendance100.mybicocca.data.model.document.AppDocument
 import it.attendance100.mybicocca.data.model.tax.Invoice
 import it.attendance100.mybicocca.data.model.tax.TaxCharge
-import it.attendance100.mybicocca.data.util.toAppDocument
+import it.attendance100.mybicocca.util.toAppDocument
 import it.attendance100.mybicocca.di.IoDispatcher
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext

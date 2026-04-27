@@ -11,6 +11,5 @@ data class PlannedCourse(
     val activityCode: String? = null,
     val credits: Float,
     val year: Int? = null,
-    val statusCode: String? = null,
-    val statusDescription: String? = null,
+    val partialCode: String? = null,
 )

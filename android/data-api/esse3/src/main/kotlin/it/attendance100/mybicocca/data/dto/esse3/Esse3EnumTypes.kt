@@ -1003,7 +1003,7 @@ sealed interface Esse3State {
 
     data object Planned : Esse3State { override val value = "P" }
     data object Frequented : Esse3State { override val value = "F" }
-    data object Exempted : Esse3State { override val value = "S" }
+    data object Passed : Esse3State { override val value = "S" }
     data class Unknown(override val value: String) : Esse3State
 
     object Serializer : KSerializer<Esse3State> {
@@ -1018,7 +1018,7 @@ sealed interface Esse3State {
             return when (raw) {
                 "P" -> Planned
                 "F" -> Frequented
-                "S" -> Exempted
+                "S" -> Passed
                 else -> Unknown(raw)
             }
         }
