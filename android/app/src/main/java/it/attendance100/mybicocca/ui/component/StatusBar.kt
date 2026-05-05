@@ -27,7 +27,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun NetworkStatusBar(
+fun StatusBar(
     isOnline: Boolean,
     errorMessage: String?,
     onDismissError: () -> Unit,

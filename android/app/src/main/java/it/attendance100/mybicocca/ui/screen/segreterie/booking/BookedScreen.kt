@@ -25,8 +25,8 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.Text
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -41,10 +41,10 @@ import it.attendance100.mybicocca.data.model.exam.ExamBooking
 import it.attendance100.mybicocca.ui.component.EmptyOfflineState
 import it.attendance100.mybicocca.ui.component.EmptyState
 import it.attendance100.mybicocca.ui.component.ErrorState
-import it.attendance100.mybicocca.ui.component.NetworkStatusBar
+import it.attendance100.mybicocca.ui.component.StatusBar
+import it.attendance100.mybicocca.ui.component.card.SimpleCard
 import it.attendance100.mybicocca.ui.component.shimmer.SkeletonBookedCard
 import it.attendance100.mybicocca.ui.component.shimmer.SkeletonCardList
-import it.attendance100.mybicocca.ui.component.card.SimpleCard
 import it.attendance100.mybicocca.ui.screen.segreterie.SegreterieActionEventEffect
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -69,7 +69,11 @@ fun BookedScreen(
         when {
             isRefreshing -> {
                 Column {
-                    NetworkStatusBar(isOnline = isOnline, errorMessage = error, onDismissError = viewModel::clearError)
+                    StatusBar(
+                        isOnline = isOnline,
+                        errorMessage = error,
+                        onDismissError = viewModel::clearError
+                    )
                     SkeletonCardList(spacing = 16.dp) { shimmer ->
                         SkeletonBookedCard(shimmerInstance = shimmer)
                     }
@@ -87,7 +91,11 @@ fun BookedScreen(
                     modifier = Modifier.fillMaxSize(),
                 ) {
                     item {
-                        NetworkStatusBar(isOnline = isOnline, errorMessage = error, onDismissError = viewModel::clearError)
+                        StatusBar(
+                            isOnline = isOnline,
+                            errorMessage = error,
+                            onDismissError = viewModel::clearError
+                        )
                     }
 
                     items(

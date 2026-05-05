@@ -84,7 +84,6 @@ import it.attendance100.mybicocca.data.model.exam.ExamCall
 import it.attendance100.mybicocca.ui.component.SingleActionBottomBar
 import it.attendance100.mybicocca.ui.component.card.SimpleCard
 import it.attendance100.mybicocca.ui.navigation.LocalSharedTransitionScope
-import it.attendance100.mybicocca.ui.screen.segreterie.SegreterieActionEventEffect
 import it.attendance100.mybicocca.util.rememberHapticManager
 import it.attendance100.mybicocca.util.shared_transitions.CommonSharedElementKey
 import it.attendance100.mybicocca.util.shared_transitions.CommonSharedElementType
@@ -109,7 +108,7 @@ fun ExamSessionDetailScreen(
     val examCall by viewModel.selectedExamCall.collectAsStateWithLifecycle()
     val isLoading by viewModel.isLoadingDetail.collectAsStateWithLifecycle()
     val error by viewModel.selectedExamError.collectAsStateWithLifecycle()
-    val isSubmitting by viewModel.isActionInProgress.collectAsStateWithLifecycle()
+    val isSubmitting by remember { mutableStateOf(false) }
 
     val haptic = rememberHapticManager()
 
@@ -127,7 +126,7 @@ fun ExamSessionDetailScreen(
         viewModel.loadExamCallById(sessionId)
     }
 
-    SegreterieActionEventEffect(viewModel.events)
+    // SegreterieActionEventEffect(viewModel.events) TODO: implement
 
     Box(
         modifier = Modifier.fillMaxSize(),
@@ -237,7 +236,7 @@ fun ExamSessionDetailScreen(
                 dateFormatter = dateFormatter,
                 timeFormatter = timeFormatter,
                 onConfirm = {
-                    viewModel.bookSelectedExam()
+                    // viewModel.bookSelectedExam() TODO: implement
                     showBookingSheet = false
                 },
                 onDismiss = {

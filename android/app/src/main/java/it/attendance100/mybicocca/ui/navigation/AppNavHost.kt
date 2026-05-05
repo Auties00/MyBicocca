@@ -35,7 +35,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Map
+import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.School
 import androidx.compose.material.icons.filled.Work
 import androidx.compose.material3.AlertDialog
@@ -134,7 +134,7 @@ import kotlin.coroutines.cancellation.CancellationException
 private enum class Tab(val label: String, val icon: ImageVector) {
     Calendar("Calendario", Icons.Default.CalendarMonth),
     Elearning("E-Learning", Icons.Default.School),
-    Map("Luoghi", Icons.Default.Map),
+    Map("Luoghi", Icons.Default.LocationOn),
     Segreterie("Segreterie", Icons.Default.Work),
 }
 

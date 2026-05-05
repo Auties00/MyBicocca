@@ -21,10 +21,11 @@ import androidx.compose.material.icons.automirrored.filled.FactCheck
 import androidx.compose.material.icons.filled.AccountBalance
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.FamilyRestroom
-import androidx.compose.material3.Icon
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -48,15 +49,14 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.data.model.isee.IseeDeclaration
-import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import it.attendance100.mybicocca.ui.component.EmptyOfflineState
 import it.attendance100.mybicocca.ui.component.EmptyState
 import it.attendance100.mybicocca.ui.component.ErrorState
-import it.attendance100.mybicocca.ui.component.NetworkStatusBar
-import it.attendance100.mybicocca.ui.component.shimmer.SkeletonIseeContent
+import it.attendance100.mybicocca.ui.component.StatusBar
 import it.attendance100.mybicocca.ui.component.card.DitheredTexture
 import it.attendance100.mybicocca.ui.component.card.SimpleCard
 import it.attendance100.mybicocca.ui.component.profile.CreditCard
+import it.attendance100.mybicocca.ui.component.shimmer.SkeletonIseeContent
 import it.attendance100.mybicocca.ui.component.tax.formatCurrency
 import it.attendance100.mybicocca.ui.theme.BadgeWhiteDrawableColor
 import it.attendance100.mybicocca.ui.theme.OnBackgroundColor
@@ -89,7 +89,11 @@ fun IseeScreen(
         when {
             isRefreshing -> {
                 Column {
-                    NetworkStatusBar(isOnline = isOnline, errorMessage = error, onDismissError = viewModel::clearError)
+                    StatusBar(
+                        isOnline = isOnline,
+                        errorMessage = error,
+                        onDismissError = viewModel::clearError
+                    )
                     SkeletonIseeContent()
                 }
             }
@@ -97,7 +101,7 @@ fun IseeScreen(
             iseeDeclaration != null -> {
                 Box(modifier = Modifier.fillMaxSize()) {
                     IseeContent(iseeDeclaration!!)
-                    NetworkStatusBar(
+                    StatusBar(
                         isOnline = isOnline,
                         errorMessage = error,
                         onDismissError = viewModel::clearError,

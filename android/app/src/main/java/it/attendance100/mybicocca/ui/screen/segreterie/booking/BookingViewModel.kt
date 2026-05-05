@@ -6,6 +6,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import it.attendance100.mybicocca.data.model.exam.ExamCall
 import it.attendance100.mybicocca.data.repository.CareerRepository
 import it.attendance100.mybicocca.data.repository.ExamRepository
+import it.attendance100.mybicocca.util.NetworkMonitor
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -20,7 +21,10 @@ import javax.inject.Inject
 class BookingViewModel @Inject constructor(
     private val examRepository: ExamRepository,
     private val careerRepository: CareerRepository,
+    networkMonitor: NetworkMonitor,
 ) : ViewModel() {
+
+    val isOnline: StateFlow<Boolean> = networkMonitor.isOnline
 
     val examCalls: StateFlow<List<ExamCall>> = examRepository.observeExamCalls()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
@@ -42,6 +46,10 @@ class BookingViewModel @Inject constructor(
 
     init {
         refresh()
+    }
+
+    fun clearError() {
+        // TODO: maybe implement
     }
 
     fun refresh() {

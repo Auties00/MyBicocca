@@ -46,7 +46,7 @@ import it.attendance100.mybicocca.ui.component.AutoScrollingFilterRow
 import it.attendance100.mybicocca.ui.component.EmptyOfflineState
 import it.attendance100.mybicocca.ui.component.EmptyState
 import it.attendance100.mybicocca.ui.component.ErrorState
-import it.attendance100.mybicocca.ui.component.NetworkStatusBar
+import it.attendance100.mybicocca.ui.component.StatusBar
 import it.attendance100.mybicocca.ui.component.shape.DynamicCard
 import it.attendance100.mybicocca.ui.component.shimmer.SkeletonCardList
 import it.attendance100.mybicocca.ui.component.shimmer.SkeletonTaxCard
@@ -160,7 +160,11 @@ fun TaxesScreen(
                 when {
                     isRefreshing -> {
                         Column {
-                            NetworkStatusBar(isOnline = isOnline, errorMessage = error, onDismissError = viewModel::clearError)
+                            StatusBar(
+                                isOnline = isOnline,
+                                errorMessage = error,
+                                onDismissError = viewModel::clearError
+                            )
                             SkeletonCardList(spacing = 16.dp) { shimmer ->
                                 SkeletonTaxCard(shimmerInstance = shimmer)
                             }
@@ -178,7 +182,11 @@ fun TaxesScreen(
                             modifier = Modifier.fillMaxSize(),
                         ) {
                             item {
-                                NetworkStatusBar(isOnline = isOnline, errorMessage = error, onDismissError = viewModel::clearError)
+                                StatusBar(
+                                    isOnline = isOnline,
+                                    errorMessage = error,
+                                    onDismissError = viewModel::clearError
+                                )
                             }
 
                             items(

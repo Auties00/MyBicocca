@@ -25,10 +25,12 @@ import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Print
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -54,15 +56,12 @@ import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.data.model.studyplan.PlannedCourse
 import it.attendance100.mybicocca.ui.component.DualActionBottomBar
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import it.attendance100.mybicocca.ui.component.EmptyOfflineState
 import it.attendance100.mybicocca.ui.component.EmptyState
-import it.attendance100.mybicocca.ui.component.NetworkStatusBar
+import it.attendance100.mybicocca.ui.component.StatusBar
 import it.attendance100.mybicocca.ui.component.shimmer.SkeletonExpandableList
 import it.attendance100.mybicocca.ui.screen.segreterie.SegreterieActionEventEffect
 import it.attendance100.mybicocca.util.rememberHapticManager
-import it.attendance100.mybicocca.util.rememberPreferencesManager
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -134,7 +133,11 @@ fun PianoCarrieraScreen(
         when {
             isRefreshing -> {
                 Column {
-                    NetworkStatusBar(isOnline = isOnline, errorMessage = error, onDismissError = viewModel::clearError)
+                    StatusBar(
+                        isOnline = isOnline,
+                        errorMessage = error,
+                        onDismissError = viewModel::clearError
+                    )
                     SkeletonExpandableList()
                 }
             }
@@ -166,7 +169,7 @@ fun PianoCarrieraScreen(
                         contentPadding = PaddingValues(bottom = 140.dp, top = 16.dp),
                     ) {
                         item {
-                            NetworkStatusBar(
+                            StatusBar(
                                 isOnline = isOnline,
                                 errorMessage = error,
                                 onDismissError = viewModel::clearError,

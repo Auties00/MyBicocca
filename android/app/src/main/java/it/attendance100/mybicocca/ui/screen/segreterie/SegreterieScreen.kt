@@ -68,7 +68,8 @@ import it.attendance100.mybicocca.R.drawable
 import it.attendance100.mybicocca.R.string
 import it.attendance100.mybicocca.ui.component.AutoScrollingFilterRow
 import it.attendance100.mybicocca.ui.component.DualActionBottomBar
-import it.attendance100.mybicocca.ui.component.NetworkStatusBar
+import it.attendance100.mybicocca.ui.component.SingleActionBottomBar
+import it.attendance100.mybicocca.ui.component.StatusBar
 import it.attendance100.mybicocca.ui.component.card.SimpleCard
 import it.attendance100.mybicocca.ui.component.shimmer.SkeletonSegreterieContent
 import it.attendance100.mybicocca.util.rememberHapticManager
@@ -327,7 +328,11 @@ fun SegreterieScreen(
         when {
             isRefreshing -> {
                 Column {
-                    NetworkStatusBar(isOnline = isOnline, errorMessage = error, onDismissError = viewModel::clearError)
+                    StatusBar(
+                        isOnline = isOnline,
+                        errorMessage = error,
+                        onDismissError = viewModel::clearError
+                    )
                     SkeletonSegreterieContent()
                 }
             }
@@ -341,7 +346,11 @@ fun SegreterieScreen(
                             .fillMaxSize()
                             .background(MaterialTheme.colorScheme.background),
                     ) {
-                        NetworkStatusBar(isOnline = isOnline, errorMessage = error, onDismissError = viewModel::clearError)
+                        StatusBar(
+                            isOnline = isOnline,
+                            errorMessage = error,
+                            onDismissError = viewModel::clearError
+                        )
 
                         // Filter Chips
                         AutoScrollingFilterRow(
