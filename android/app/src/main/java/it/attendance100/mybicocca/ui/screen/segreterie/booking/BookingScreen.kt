@@ -47,11 +47,11 @@ import it.attendance100.mybicocca.data.model.exam.ExamCall
 import it.attendance100.mybicocca.ui.component.EmptyOfflineState
 import it.attendance100.mybicocca.ui.component.EmptyState
 import it.attendance100.mybicocca.ui.component.ErrorState
-import it.attendance100.mybicocca.ui.component.NetworkStatusBar
 import it.attendance100.mybicocca.ui.component.SingleActionBottomBar
-import it.attendance100.mybicocca.ui.component.shimmer.SkeletonCardList
-import it.attendance100.mybicocca.ui.component.shimmer.SkeletonBookingCard
+import it.attendance100.mybicocca.ui.component.StatusBar
 import it.attendance100.mybicocca.ui.component.card.SimpleCard
+import it.attendance100.mybicocca.ui.component.shimmer.SkeletonBookingCard
+import it.attendance100.mybicocca.ui.component.shimmer.SkeletonCardList
 import it.attendance100.mybicocca.ui.navigation.LocalSharedTransitionScope
 import it.attendance100.mybicocca.util.shared_transitions.CommonSharedElementKey
 import it.attendance100.mybicocca.util.shared_transitions.CommonSharedElementType
@@ -89,7 +89,11 @@ fun BookingScreen(
             when {
                 isRefreshing -> {
                     Column {
-                        NetworkStatusBar(isOnline = isOnline, errorMessage = error, onDismissError = viewModel::clearError)
+                        StatusBar(
+                            isOnline = isOnline,
+                            errorMessage = error,
+                            onDismissError = viewModel::clearError
+                        )
                         SkeletonCardList(spacing = 16.dp) { shimmer ->
                             SkeletonBookingCard(shimmerInstance = shimmer)
                         }
@@ -107,7 +111,11 @@ fun BookingScreen(
                         modifier = Modifier.fillMaxSize(),
                     ) {
                         item {
-                            NetworkStatusBar(isOnline = isOnline, errorMessage = error, onDismissError = viewModel::clearError)
+                            StatusBar(
+                                isOnline = isOnline,
+                                errorMessage = error,
+                                onDismissError = viewModel::clearError
+                            )
                         }
 
                         items(
@@ -159,7 +167,8 @@ fun BookingExamCard(
                     examCall.id.toString(),
                     ExamSessionSharedElementType.Card
                 ),
-                zIndexInOverlay = -100f
+                zIndexInOverlay = -1f,
+                clipShape = RoundedCornerShape(16.dp),
             ),
         ditherImage = null,
         onClick = onClick,

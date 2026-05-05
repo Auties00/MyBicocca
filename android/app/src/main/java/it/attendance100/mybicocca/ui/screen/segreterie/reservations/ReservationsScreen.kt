@@ -1,7 +1,6 @@
 package it.attendance100.mybicocca.ui.screen.segreterie.reservations
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -36,10 +35,10 @@ import it.attendance100.mybicocca.data.model.appointment.Appointment
 import it.attendance100.mybicocca.ui.component.EmptyOfflineState
 import it.attendance100.mybicocca.ui.component.EmptyState
 import it.attendance100.mybicocca.ui.component.ErrorState
-import it.attendance100.mybicocca.ui.component.NetworkStatusBar
+import it.attendance100.mybicocca.ui.component.StatusBar
+import it.attendance100.mybicocca.ui.component.card.SimpleCard
 import it.attendance100.mybicocca.ui.component.shimmer.SkeletonCardList
 import it.attendance100.mybicocca.ui.component.shimmer.SkeletonReservationCard
-import it.attendance100.mybicocca.ui.component.card.SimpleCard
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -66,7 +65,11 @@ fun ReservationsScreen(
         when {
             isRefreshing -> {
                 Column {
-                    NetworkStatusBar(isOnline = isOnline, errorMessage = error, onDismissError = viewModel::clearError)
+                    StatusBar(
+                        isOnline = isOnline,
+                        errorMessage = error,
+                        onDismissError = viewModel::clearError
+                    )
                     SkeletonCardList { shimmer ->
                         SkeletonReservationCard(shimmerInstance = shimmer)
                     }
@@ -84,7 +87,11 @@ fun ReservationsScreen(
                     modifier = Modifier.fillMaxSize(),
                 ) {
                     item {
-                        NetworkStatusBar(isOnline = isOnline, errorMessage = error, onDismissError = viewModel::clearError)
+                        StatusBar(
+                            isOnline = isOnline,
+                            errorMessage = error,
+                            onDismissError = viewModel::clearError
+                        )
                     }
 
                     items(

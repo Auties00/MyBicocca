@@ -36,9 +36,9 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -55,16 +55,16 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.ViewModelStoreOwner
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import it.attendance100.mybicocca.R
-import it.attendance100.mybicocca.ui.component.NetworkStatusBar
-import it.attendance100.mybicocca.ui.component.shimmer.SkeletonProfileContent
 import it.attendance100.mybicocca.ui.component.DashboardTile
+import it.attendance100.mybicocca.ui.component.StatusBar
 import it.attendance100.mybicocca.ui.component.profile.CreditCard
 import it.attendance100.mybicocca.ui.component.profile.ProgressStatCard
 import it.attendance100.mybicocca.ui.component.profile.StatCard
+import it.attendance100.mybicocca.ui.component.shimmer.SkeletonProfileContent
 import it.attendance100.mybicocca.ui.theme.BadgeWhiteDrawableColor
 import it.attendance100.mybicocca.ui.theme.GrayColor
 import it.attendance100.mybicocca.ui.theme.OnBackgroundColor
@@ -242,7 +242,11 @@ fun ProfileScreen(
 		when {
 			isRefreshing -> {
 				Column {
-					NetworkStatusBar(isOnline = isOnline, errorMessage = error, onDismissError = viewModel::clearError)
+					StatusBar(
+						isOnline = isOnline,
+						errorMessage = error,
+						onDismissError = viewModel::clearError
+					)
 					SkeletonProfileContent()
 				}
 			}
@@ -255,7 +259,11 @@ fun ProfileScreen(
 					verticalArrangement = Arrangement.spacedBy(16.dp),
 				) {
 					item {
-						NetworkStatusBar(isOnline = isOnline, errorMessage = error, onDismissError = viewModel::clearError)
+						StatusBar(
+							isOnline = isOnline,
+							errorMessage = error,
+							onDismissError = viewModel::clearError
+						)
 					}
 
 					item {

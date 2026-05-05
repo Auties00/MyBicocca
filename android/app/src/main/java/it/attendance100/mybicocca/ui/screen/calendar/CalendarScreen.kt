@@ -38,11 +38,11 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.ViewModelStoreOwner
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import it.attendance100.mybicocca.data.model.calendar.CalendarEvent
-import it.attendance100.mybicocca.ui.component.NetworkStatusBar
+import it.attendance100.mybicocca.ui.component.StatusBar
 import it.attendance100.mybicocca.ui.component.calendar.CalendarConfig
 import it.attendance100.mybicocca.ui.component.calendar.CalendarUtils
 import it.attendance100.mybicocca.ui.component.calendar.dialog.DatePickerDialog
@@ -197,7 +197,11 @@ fun CalendarRoute(
                     .fillMaxSize()
                     .padding(paddingValues)
             ) {
-                NetworkStatusBar(isOnline = isOnline, errorMessage = error, onDismissError = viewModel::clearError)
+                StatusBar(
+                    isOnline = isOnline,
+                    errorMessage = error,
+                    onDismissError = viewModel::clearError
+                )
 
                 AnimatedVisibility(
                     visible = viewMode != CalendarViewMode.MONTH,

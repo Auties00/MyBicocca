@@ -1,7 +1,6 @@
 package it.attendance100.mybicocca.ui.screen.segreterie.exams
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -35,17 +34,17 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.ViewModelStoreOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
+import com.valentinilk.shimmer.ShimmerBounds
+import com.valentinilk.shimmer.rememberShimmer
 import it.attendance100.mybicocca.data.model.transcript.RecordBookRow
 import it.attendance100.mybicocca.data.model.transcript.RecordBookStats
 import it.attendance100.mybicocca.ui.component.EmptyOfflineState
 import it.attendance100.mybicocca.ui.component.EmptyState
 import it.attendance100.mybicocca.ui.component.ErrorState
-import it.attendance100.mybicocca.ui.component.NetworkStatusBar
+import it.attendance100.mybicocca.ui.component.StatusBar
 import it.attendance100.mybicocca.ui.component.card.SimpleCard
 import it.attendance100.mybicocca.ui.component.shimmer.SkeletonIconBadgeCard
 import it.attendance100.mybicocca.ui.component.shimmer.SkeletonStatsCard
-import com.valentinilk.shimmer.ShimmerBounds
-import com.valentinilk.shimmer.rememberShimmer
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -74,7 +73,11 @@ fun ExamResultsScreen(
             isRefreshing -> {
                 val shimmerInstance = rememberShimmer(shimmerBounds = ShimmerBounds.Window)
                 Column {
-                    NetworkStatusBar(isOnline = isOnline, errorMessage = error, onDismissError = viewModel::clearError)
+                    StatusBar(
+                        isOnline = isOnline,
+                        errorMessage = error,
+                        onDismissError = viewModel::clearError
+                    )
                     Column(
                         modifier = Modifier.padding(16.dp),
                         verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -98,7 +101,11 @@ fun ExamResultsScreen(
                     modifier = Modifier.fillMaxSize(),
                 ) {
                     item {
-                        NetworkStatusBar(isOnline = isOnline, errorMessage = error, onDismissError = viewModel::clearError)
+                        StatusBar(
+                            isOnline = isOnline,
+                            errorMessage = error,
+                            onDismissError = viewModel::clearError
+                        )
                     }
 
                     stats?.let { s ->

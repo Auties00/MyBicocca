@@ -13,7 +13,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.ViewModelStoreOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
-import it.attendance100.mybicocca.ui.component.NetworkStatusBar
+import it.attendance100.mybicocca.ui.component.StatusBar
 import it.attendance100.mybicocca.ui.component.map.BuildingDetailSheet
 import it.attendance100.mybicocca.ui.component.map.CampusMap
 
@@ -60,7 +60,7 @@ fun MapScreen(
                 modifier = Modifier.fillMaxSize(),
             )
 
-            NetworkStatusBar(
+            StatusBar(
                 isOnline = isOnline,
                 errorMessage = error,
                 onDismissError = viewModel::clearError,

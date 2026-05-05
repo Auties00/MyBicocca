@@ -96,7 +96,7 @@ class BookedViewModel @Inject constructor(
             val career = activeCareer.awaitFirstNonNull()
             _isActionInProgress.value = true
             try {
-                examRepository.cancelBooking(booking).getOrThrow()
+//                examRepository.cancelBooking(booking).getOrThrow() TODO: implement
                 refreshCareer(career, force = true)
                 examRepository.refreshExamCalls(career.studentId, career.matricolaId).getOrThrow()
                 _events.emit(
@@ -120,12 +120,12 @@ class BookedViewModel @Inject constructor(
         viewModelScope.launch {
             _isActionInProgress.value = true
             try {
-                val document = examRepository.getBookingStatino(booking).getOrThrow()
-                _events.emit(
-                    it.attendance100.mybicocca.ui.screen.segreterie.SegreterieActionEvent.OpenDocument(
-                        document
-                    )
-                )
+//                val document = examRepository.getBookingStatino(booking).getOrThrow() TODO: implement
+//                _events.emit(
+//                    it.attendance100.mybicocca.ui.screen.segreterie.SegreterieActionEvent.OpenDocument(
+//                        document
+//                    )
+//                )
             } catch (e: Exception) {
                 _events.emit(
                     it.attendance100.mybicocca.ui.screen.segreterie.SegreterieActionEvent.ShowMessage(
