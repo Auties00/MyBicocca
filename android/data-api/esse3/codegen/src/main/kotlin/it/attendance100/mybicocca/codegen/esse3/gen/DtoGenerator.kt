@@ -17,7 +17,7 @@ object DtoGenerator {
     fun generate(spec: ParsedSpec, outputDir: File, glossary: Glossary, enumTypeMap: Map<String, String>, requiredOverrides: RequiredOverrides, basePackage: String) {
         if (spec.definitions.isEmpty()) return
 
-        val dtoPackage = "$basePackage.dto.esse3"
+        val dtoPackage = "$basePackage.esse3.dto"
         val originalFileName = "${PREFIX}${spec.specName}Types.kt"
         val fileName = glossary.translate(originalFileName)
         val file = File(outputDir, fileName)

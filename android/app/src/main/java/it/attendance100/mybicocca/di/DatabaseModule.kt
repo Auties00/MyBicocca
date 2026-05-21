@@ -7,104 +7,81 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
-import it.attendance100.mybicocca.data.database.MyBicoccaDatabase
-import it.attendance100.mybicocca.data.database.dao.AppointmentDao
-import it.attendance100.mybicocca.data.database.dao.AssignmentDao
-import it.attendance100.mybicocca.data.database.dao.AttendanceDao
-import it.attendance100.mybicocca.data.database.dao.BadgeDao
-import it.attendance100.mybicocca.data.database.dao.CalendarDao
-import it.attendance100.mybicocca.data.database.dao.CampusDao
-import it.attendance100.mybicocca.data.database.dao.CourseDao
-import it.attendance100.mybicocca.data.database.dao.DegreeAwardDao
-import it.attendance100.mybicocca.data.database.dao.EvaluationDao
-import it.attendance100.mybicocca.data.database.dao.ExamDao
-import it.attendance100.mybicocca.data.database.dao.ForumDao
-import it.attendance100.mybicocca.data.database.dao.InternshipDao
-import it.attendance100.mybicocca.data.database.dao.MessagingDao
-import it.attendance100.mybicocca.data.database.dao.QuizDao
-import it.attendance100.mybicocca.data.database.dao.CareerDao
-import it.attendance100.mybicocca.data.database.dao.IseeDao
-import it.attendance100.mybicocca.data.database.dao.ReferenceDao
-import it.attendance100.mybicocca.data.database.dao.StudyPlanDao
-import it.attendance100.mybicocca.data.database.dao.TaxDao
-import it.attendance100.mybicocca.data.database.dao.TeacherDao
-import it.attendance100.mybicocca.data.database.dao.TranscriptDao
-import it.attendance100.mybicocca.data.database.dao.UserDao
+import it.attendance100.mybicocca.data.local.account.AccountDao
+import it.attendance100.mybicocca.data.local.account.MyBicoccaDatabase
+import it.attendance100.mybicocca.data.local.calendar.CalendarDao
+import it.attendance100.mybicocca.data.local.calendar.CalendarSyncStateDao
+import it.attendance100.mybicocca.data.local.elearning.assignment.AssignmentDao
+import it.attendance100.mybicocca.data.local.elearning.badge.BadgeDao
+import it.attendance100.mybicocca.data.local.elearning.course.CourseDao
+import it.attendance100.mybicocca.data.local.elearning.deadline.DeadlineDao
+import it.attendance100.mybicocca.data.local.elearning.forum.ForumDao
+import it.attendance100.mybicocca.data.local.elearning.grade.GradeDao
+import it.attendance100.mybicocca.data.local.elearning.message.MessageDao
+import it.attendance100.mybicocca.data.local.elearning.quiz.QuizDao
+import it.attendance100.mybicocca.data.local.elearning.sync.ElearningSyncStateDao
+import it.attendance100.mybicocca.data.local.elearning.video.VideoProgressDao
+import it.attendance100.mybicocca.data.local.transcript.TranscriptDao
+import it.attendance100.mybicocca.data.local.transcript.TranscriptSyncStateDao
 import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
 object DatabaseModule {
+
     @Provides
     @Singleton
     fun provideDatabase(@ApplicationContext context: Context): MyBicoccaDatabase =
-        Room.databaseBuilder(context, MyBicoccaDatabase::class.java, "mybicocca.db")
+        Room.databaseBuilder(context, MyBicoccaDatabase::class.java, DATABASE_NAME)
+            // TODO remove before first prod release
             .fallbackToDestructiveMigration(dropAllTables = true)
             .build()
 
     @Provides
-    fun provideUserDao(db: MyBicoccaDatabase): UserDao = db.userDao()
-
-    @Provides
-    fun provideCourseDao(db: MyBicoccaDatabase): CourseDao = db.courseDao()
-
-    @Provides
-    fun provideAssignmentDao(db: MyBicoccaDatabase): AssignmentDao = db.assignmentDao()
-
-    @Provides
-    fun provideQuizDao(db: MyBicoccaDatabase): QuizDao = db.quizDao()
-
-    @Provides
-    fun provideForumDao(db: MyBicoccaDatabase): ForumDao = db.forumDao()
-
-    @Provides
-    fun provideBadgeDao(db: MyBicoccaDatabase): BadgeDao = db.badgeDao()
-
-    @Provides
-    fun provideMessagingDao(db: MyBicoccaDatabase): MessagingDao = db.messagingDao()
-
-    @Provides
-    fun provideCareerDao(db: MyBicoccaDatabase): CareerDao = db.careerDao()
-
-    @Provides
-    fun provideTranscriptDao(db: MyBicoccaDatabase): TranscriptDao = db.transcriptDao()
-
-    @Provides
-    fun provideStudyPlanDao(db: MyBicoccaDatabase): StudyPlanDao = db.studyPlanDao()
-
-    @Provides
-    fun provideTaxDao(db: MyBicoccaDatabase): TaxDao = db.taxDao()
+    fun provideAccountDao(db: MyBicoccaDatabase): AccountDao = db.accountDao()
 
     @Provides
     fun provideCalendarDao(db: MyBicoccaDatabase): CalendarDao = db.calendarDao()
 
     @Provides
-    fun provideExamDao(db: MyBicoccaDatabase): ExamDao = db.examDao()
+    fun provideCalendarSyncStateDao(db: MyBicoccaDatabase): CalendarSyncStateDao = db.calendarSyncStateDao()
 
     @Provides
-    fun provideCampusDao(db: MyBicoccaDatabase): CampusDao = db.campusDao()
+    fun provideElearningCourseDao(db: MyBicoccaDatabase): CourseDao = db.elearningCourseDao()
 
     @Provides
-    fun provideTeacherDao(db: MyBicoccaDatabase): TeacherDao = db.teacherDao()
+    fun provideElearningDeadlineDao(db: MyBicoccaDatabase): DeadlineDao = db.elearningDeadlineDao()
 
     @Provides
-    fun provideAttendanceDao(db: MyBicoccaDatabase): AttendanceDao = db.attendanceDao()
+    fun provideElearningAssignmentDao(db: MyBicoccaDatabase): AssignmentDao = db.elearningAssignmentDao()
 
     @Provides
-    fun provideDegreeAwardDao(db: MyBicoccaDatabase): DegreeAwardDao = db.degreeAwardDao()
+    fun provideElearningQuizDao(db: MyBicoccaDatabase): QuizDao = db.elearningQuizDao()
 
     @Provides
-    fun provideInternshipDao(db: MyBicoccaDatabase): InternshipDao = db.internshipDao()
+    fun provideElearningForumDao(db: MyBicoccaDatabase): ForumDao = db.elearningForumDao()
 
     @Provides
-    fun provideEvaluationDao(db: MyBicoccaDatabase): EvaluationDao = db.evaluationDao()
+    fun provideElearningGradeDao(db: MyBicoccaDatabase): GradeDao = db.elearningGradeDao()
 
     @Provides
-    fun provideAppointmentDao(db: MyBicoccaDatabase): AppointmentDao = db.appointmentDao()
+    fun provideElearningMessageDao(db: MyBicoccaDatabase): MessageDao = db.elearningMessageDao()
 
     @Provides
-    fun provideReferenceDao(db: MyBicoccaDatabase): ReferenceDao = db.referenceDao()
+    fun provideElearningBadgeDao(db: MyBicoccaDatabase): BadgeDao = db.elearningBadgeDao()
 
     @Provides
-    fun provideIseeDao(db: MyBicoccaDatabase): IseeDao = db.iseeDao()
+    fun provideElearningSyncStateDao(db: MyBicoccaDatabase): ElearningSyncStateDao = db.elearningSyncStateDao()
+
+    @Provides
+    fun provideElearningVideoProgressDao(db: MyBicoccaDatabase): VideoProgressDao =
+        db.elearningVideoProgressDao()
+
+    @Provides
+    fun provideTranscriptDao(db: MyBicoccaDatabase): TranscriptDao = db.transcriptDao()
+
+    @Provides
+    fun provideTranscriptSyncStateDao(db: MyBicoccaDatabase): TranscriptSyncStateDao = db.transcriptSyncStateDao()
+
+    private const val DATABASE_NAME = "mybicocca.db"
 }

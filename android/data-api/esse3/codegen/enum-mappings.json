@@ -602,5 +602,213 @@
         "AC": "ActivityCourse",
         "AD": "DidacticActivity",
         "SET": "ScientificSector"
+    },
+    "checkEligibilitaStageStu.codLingua": {
+        "ita": "",
+        "eng": ""
+    },
+    "checkEligibilitaStageStu.tipoServizio": {
+        "tirocinio_curricolare": "",
+        "tirocinio_postlaurea": ""
+    },
+    "filterDiarioDocente.staDiarioCod": {
+        "B": "",
+        "S": "",
+        "A": ""
+    },
+    "getAppelli.q": {
+        "APPELLI_PRENOTABILI": "",
+        "APPELLI_MOODLE_QUIZ": "",
+        "APPELLI_PRENOTABILI_E_FUTURI": ""
+    },
+    "getAppelli.statoInsEsiti": {
+        "C": "Closed",
+        "A": "Open",
+        "F": "Finalized"
+    },
+    "getAppelli.statoPubblEsiti": {
+        "C": "NotPublished",
+        "A": "Published",
+        "F": "Definitive"
+    },
+    "getAppelli.statoVerb": {
+        "C": "ToBeProcessed",
+        "A": "InProgress",
+        "F": "Completed"
+    },
+    "getAppelliLibretto.q": {
+        "APPELLI_PRENOTABILI": "",
+        "APPELLI_PRENOTABILI_E_FUTURI": ""
+    },
+    "getAppelliPerAbildoc.q": {
+        "APPELLI_MOODLE_QUIZ": ""
+    },
+    "getAppelliPerAbildoc.statoInsEsiti": {
+        "C": "Closed",
+        "A": "Open",
+        "F": "Finalized"
+    },
+    "getAppelliPerAbildoc.statoPubblEsiti": {
+        "C": "NotPublished",
+        "A": "Published",
+        "F": "Definitive"
+    },
+    "getAppelliPerAbildoc.statoVerb": {
+        "C": "ToBeProcessed",
+        "A": "InProgress",
+        "F": "Completed"
+    },
+    "getAppelliPerRigaLibretto.q": {
+        "APPELLI_PRENOTABILI": "",
+        "APPELLI_PRENOTABILI_E_FUTURI": ""
+    },
+    "getAppello.q": {
+        "APPELLI_PRENOTABILI": "",
+        "APPELLI_MOODLE_QUIZ": "",
+        "APPELLI_PRENOTABILI_E_FUTURI": ""
+    },
+    "getAziendeTirocini.statoAziendaCod": {
+        "A": "",
+        "B": "",
+        "BL": "",
+        "C": "",
+        "P": "",
+        "R": ""
+    },
+    "getBadgesNew.staMatCod": {
+        "A": "",
+        "S": "",
+        "I": ""
+    },
+    "getBadgesNew.staStuCod": {
+        "A": "",
+        "S": "",
+        "X": "",
+        "I": ""
+    },
+    "getConvenzioniAzienda.statoCnvzCod": {
+        "P": "",
+        "I": "",
+        "X": "",
+        "R": ""
+    },
+    "getCorsiDiStudio.q": {
+        "STRUTTURE_DEF_AMM": ""
+    },
+    "getCorsoDiStudio.q": {
+        "STRUTTURE_DEF_AMM": ""
+    },
+    "getCorsoTitoliAccesso.tipologiaCod": {
+        "AMM": "AdmissionTitle",
+        "IMM": "EnrollmentTitle",
+        "ABBR": "AbbreviationTitle",
+        "EQUI": "EquivalentTitle"
+    },
+    "getIscrittoAppello.q": {
+        "BACHECA_ESITI": ""
+    },
+    "getOfferte.statoAttCod": {
+        "A": "Active",
+        "B": "Draft"
+    },
+    "getPersonaMisureComp.q": {
+        "PRENOTAZIONE": ""
+    },
+    "getPrenotazionePerAdsceId.q": {
+        "BACHECA_ESITI": ""
+    },
+    "getPrenotazioniPerAdsceId.q": {
+        "BACHECA_ESITI": ""
+    },
+    "getPrenotazioniPerMatId.q": {
+        "BACHECA_ESITI": ""
+    },
+    "getRegolamentiDiPropedeuticita.statoRegprop": {
+        "A": "",
+        "B": "",
+        "X": ""
+    },
+    "getRegolamentiDiScelta.statoRegsce": {
+        "A": "",
+        "B": "",
+        "X": ""
+    },
+    "getSediAzienda.tipoSedeCod": {
+        "LEG": "",
+        "OPE": "",
+        "PER": ""
+    },
+    "getStatsLibretto.motOrigineDati": {
+        "LIBRETTO_AD_SUPERATE": "",
+        "LIBRETTO_AD_SUPERATE_FREQUENTATE": "",
+        "LIBRETTO_TUTTE_AD": "",
+        "PIANO": ""
+    },
+    "getStatsLibretto.motRegolePercorso": {
+        "OFFF": "",
+        "RAD": ""
+    },
+    "getTestateDomandaDiTirocinioStudente.statoDomTiroCod": {
+        "PRE": "PreEnrolled",
+        "CHI": "Closed",
+        "ANN": "Cancelled",
+        "CON": "Confirmed",
+        "RIF": "Rejected",
+        "AVV": "Started",
+        "NAS": "NotAssigned"
+    },
+    "getTestatePianiStudente.statoPiano": {
+        "B": "",
+        "P": "",
+        "V": "",
+        "A": "",
+        "R": "",
+        "X": ""
+    },
+    "getValutazioneTirocinioStudente.tipoQuestCod": {
+        "VF": "",
+        "RF": "",
+        "MT": ""
+    },
+    "getentiEsterni.tipoEnte": {
+        "AZIENDA": "",
+        "AGENZIA": "",
+        "ALL": ""
+    },
+    "putClassificaConcorso.tipologiaFile": {
+        "STD": "",
+        "MED_CINECA": ""
+    },
+    "putClassificaConcorsoFile.tipologiaFile": {
+        "STD": "",
+        "MED_CINECA": ""
+    },
+    "putPresaVisione.appRelOpType": {
+        "INSERT": "Insert",
+        "DELETE": "Delete",
+        "UPDATE": "Update",
+        "DELETE_ALL": "DeleteAll"
+    },
+    "putPresaVisione.presaVisione": {
+        "N": "NotViewed",
+        "V": "Viewed",
+        "R": "Rejected",
+        "A": "Accepted"
+    },
+    "putPresaVisioneApplista.appRelOpType": {
+        "INSERT": "Insert",
+        "DELETE": "Delete",
+        "UPDATE": "Update",
+        "DELETE_ALL": "DeleteAll"
+    },
+    "putPresaVisioneApplista.presaVisione": {
+        "N": "NotViewed",
+        "V": "Viewed",
+        "R": "Rejected",
+        "A": "Accepted"
+    },
+    "putRiconoscimentoRigaLibretto.type": {
+        "ric": "",
+        "attoCar": ""
     }
 }
