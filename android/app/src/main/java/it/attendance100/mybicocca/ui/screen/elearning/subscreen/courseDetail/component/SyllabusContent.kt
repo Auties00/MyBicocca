@@ -1,0 +1,646 @@
+package it.attendance100.mybicocca.ui.screen.elearning.subscreen.courseDetail.component
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.PlatformTextStyle
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.LineHeightStyle
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import it.attendance100.mybicocca.domain.model.elearning.course.CourseDetails
+import it.attendance100.mybicocca.domain.model.elearning.course.CourseLevel
+import it.attendance100.mybicocca.domain.model.elearning.course.CourseStaffMember
+import it.attendance100.mybicocca.domain.model.elearning.course.CourseStaffRole
+import it.attendance100.mybicocca.domain.model.elearning.course.ProgrammeSection
+import it.attendance100.mybicocca.domain.model.elearning.course.Semester
+import it.attendance100.mybicocca.domain.model.elearning.course.SyllabusInfo
+import it.attendance100.mybicocca.ui.component.shape.OrganicShapes
+import it.attendance100.mybicocca.ui.screen.elearning.subscreen.courseDetail.state.StaffGridVariant
+
+@Composable
+fun SyllabusContent(
+    details: CourseDetails,
+    modifier: Modifier = Modifier,
+) {
+    val syllabus = details.syllabus
+    if (syllabus == null || (syllabus.fields.isEmpty() && !syllabus.info.hasInfoTile)) {
+        SyllabusEmpty(modifier = modifier)
+        return
+    }
+
+    val info = syllabus.info
+
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(start = 16.dp, end = 16.dp, top = 14.dp, bottom = 28.dp),
+        verticalArrangement = Arrangement.spacedBy(24.dp),
+    ) {
+        if (info.hasInfoTile) {
+            Column(modifier = Modifier.fillMaxWidth()) {
+                SyllabusHeader(title = "Informazioni")
+                Spacer(Modifier.height(12.dp))
+                SyllabusInfoTile(info = info)
+            }
+        }
+
+        info.objectives?.let { SyllabusSection(title = "Obiettivi", body = it) }
+        info.summary?.let { SyllabusSection(title = "Contenuti sintetici", body = it) }
+
+        if (info.extendedProgramme.isNotEmpty()) {
+            ExtendedProgrammeList(parts = info.extendedProgramme)
+        }
+
+        info.prerequisites?.let { SyllabusSection(title = "Prerequisiti", body = it) }
+        info.teachingMethod?.let { SyllabusSection(title = "Modalità didattica", body = it) }
+        info.referenceMaterial?.let { SyllabusSection(title = "Materiale didattico", body = it) }
+        info.assessment?.let { SyllabusSection(title = "Verifica del profitto", body = it) }
+        info.officeHours?.let { SyllabusSection(title = "Orario di ricevimento", body = it) }
+
+        if (details.staff.isNotEmpty()) {
+            StaffGrid(staff = details.staff)
+        }
+    }
+}
+
+@Composable
+private fun SyllabusHeader(title: String) {
+    val scheme = MaterialTheme.colorScheme
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Text(
+            text = title,
+            color = scheme.onSurface,
+            fontWeight = FontWeight.ExtraBold,
+            fontSize = 22.sp,
+            lineHeight = 24.sp,
+            letterSpacing = (-0.6).sp,
+        )
+        Spacer(Modifier.height(8.dp))
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(2.dp)
+                .background(scheme.outlineVariant, RoundedCornerShape(2.dp)),
+        )
+    }
+}
+
+@Composable
+private fun SyllabusSection(title: String, body: String) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        SyllabusHeader(title = title)
+        Spacer(Modifier.height(12.dp))
+        Text(
+            text = body,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            fontSize = 14.sp,
+            lineHeight = 22.sp,
+            modifier = Modifier.padding(horizontal = 2.dp),
+        )
+    }
+}
+
+@Composable
+private fun SyllabusInfoTile(info: SyllabusInfo) {
+    val scheme = MaterialTheme.colorScheme
+    Surface(
+        shape = RoundedCornerShape(28.dp),
+        color = scheme.surfaceContainer,
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Column(
+            modifier = Modifier.padding(10.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                if (info.credits != null) {
+                    BigStatCard(
+                        value = info.credits.toString(),
+                        label = "CFU",
+                        caption = "crediti formativi",
+                        modifier = Modifier.weight(1f),
+                    )
+                }
+                if (info.hours != null) {
+                    BigStatCard(
+                        value = info.hours.toString(),
+                        label = "ORE",
+                        caption = "ore di lezione",
+                        modifier = Modifier.weight(1f),
+                    )
+                }
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                if (!info.language.isNullOrBlank()) {
+                    LanguageCard(language = info.language, modifier = Modifier.weight(1f))
+                }
+                if (info.level != null) {
+                    LevelCard(level = info.level, modifier = Modifier.weight(1f))
+                }
+            }
+
+            if (info.semester != null) {
+                SemesterCalendar(semester = info.semester)
+            }
+        }
+    }
+}
+
+@Composable
+private fun BigStatCard(value: String, label: String, caption: String, modifier: Modifier = Modifier) {
+    val scheme = MaterialTheme.colorScheme
+    Surface(
+        shape = RoundedCornerShape(24.dp),
+        color = scheme.surfaceContainerHigh,
+        modifier = modifier,
+    ) {
+        Column(modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 14.dp, bottom = 12.dp)) {
+            Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                Text(
+                    text = value,
+                    color = scheme.onSurface,
+                    fontWeight = FontWeight.Black,
+                    fontSize = 46.sp,
+                    lineHeight = 40.sp,
+                    letterSpacing = (-2.5).sp,
+                )
+                Text(
+                    text = label,
+                    color = scheme.onSurfaceVariant.copy(alpha = 0.85f),
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 10.sp,
+                    letterSpacing = 1.4.sp,
+                    modifier = Modifier.padding(bottom = 6.dp),
+                )
+            }
+            Spacer(Modifier.height(3.dp))
+            Text(
+                text = caption,
+                color = scheme.onSurfaceVariant.copy(alpha = 0.78f),
+                fontStyle = FontStyle.Italic,
+                fontSize = 10.5.sp,
+            )
+        }
+    }
+}
+
+@Composable
+private fun LanguageCard(language: String, modifier: Modifier = Modifier) {
+    val scheme = MaterialTheme.colorScheme
+    Surface(
+        shape = RoundedCornerShape(24.dp),
+        color = scheme.surfaceContainerHigh,
+        modifier = modifier,
+    ) {
+        Column(modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 14.dp, bottom = 12.dp)) {
+            FlagSwatch(language = language)
+            Spacer(Modifier.height(8.dp))
+            Text(
+                text = language.replaceFirstChar { it.titlecase() },
+                color = scheme.onSurface,
+                fontWeight = FontWeight.ExtraBold,
+                fontSize = 18.sp,
+                lineHeight = 19.sp,
+                letterSpacing = (-0.3).sp,
+            )
+            Text(
+                text = "lingua del corso",
+                color = scheme.onSurfaceVariant.copy(alpha = 0.78f),
+                fontStyle = FontStyle.Italic,
+                fontSize = 10.5.sp,
+            )
+        }
+    }
+}
+
+@Composable
+private fun FlagSwatch(language: String) {
+    val colors = when (language.trim().lowercase()) {
+        "italiano", "italian", "it" -> listOf(
+            Color(0xFF008C45),
+            Color(0xFFF4F5F0),
+            Color(0xFFCD212A),
+        )
+        "inglese", "english", "en" -> listOf(
+            Color(0xFF012169),
+            Color(0xFFFFFFFF),
+            Color(0xFFC8102E),
+        )
+        else -> listOf(
+            MaterialTheme.colorScheme.primary,
+            MaterialTheme.colorScheme.tertiary,
+            MaterialTheme.colorScheme.secondary,
+        )
+    }
+    Row(horizontalArrangement = Arrangement.spacedBy(3.dp)) {
+        colors.forEach { c ->
+            Box(
+                modifier = Modifier
+                    .size(width = 12.dp, height = 20.dp)
+                    .clip(RoundedCornerShape(3.dp))
+                    .background(c),
+            )
+        }
+    }
+}
+
+@Composable
+private fun LevelCard(level: CourseLevel, modifier: Modifier = Modifier) {
+    val scheme = MaterialTheme.colorScheme
+    Surface(
+        shape = RoundedCornerShape(24.dp),
+        color = scheme.surfaceContainerHigh,
+        modifier = modifier,
+    ) {
+        Column(modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 14.dp, bottom = 12.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(3.dp)) {
+                CourseLevel.entries.forEachIndexed { i, t ->
+                    LevelPip(label = t.short, active = t == level)
+                    if (i < CourseLevel.entries.lastIndex) {
+                        Box(
+                            modifier = Modifier
+                                .width(5.dp)
+                                .height(1.5.dp)
+                                .background(scheme.outlineVariant, RoundedCornerShape(1.dp)),
+                        )
+                    }
+                }
+            }
+            Spacer(Modifier.height(8.dp))
+            Text(
+                text = level.title,
+                color = scheme.onSurface,
+                fontWeight = FontWeight.ExtraBold,
+                fontSize = 18.sp,
+                lineHeight = 19.sp,
+                letterSpacing = (-0.3).sp,
+            )
+            Text(
+                text = "corso di laurea",
+                color = scheme.onSurfaceVariant.copy(alpha = 0.78f),
+                fontStyle = FontStyle.Italic,
+                fontSize = 10.5.sp,
+            )
+        }
+    }
+}
+
+@Composable
+private fun LevelPip(label: String, active: Boolean) {
+    val scheme = MaterialTheme.colorScheme
+    val bg = if (active) scheme.primary else Color.Transparent
+    val fg = if (active) scheme.onPrimary else scheme.outline
+    val mod = if (active) {
+        Modifier.background(bg, RoundedCornerShape(6.dp))
+    } else {
+        Modifier.border(1.5.dp, scheme.outlineVariant, RoundedCornerShape(6.dp))
+    }
+    Box(
+        modifier = mod
+            .padding(horizontal = 4.dp)
+            .height(20.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            text = label,
+            color = fg,
+            fontWeight = FontWeight.ExtraBold,
+            fontSize = 9.5.sp,
+            letterSpacing = 0.4.sp,
+        )
+    }
+}
+
+@Composable
+private fun SemesterCalendar(semester: Semester) {
+    val scheme = MaterialTheme.colorScheme
+    Surface(
+        shape = RoundedCornerShape(24.dp),
+        color = scheme.surfaceContainerHigh,
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Column(modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 14.dp, bottom = 16.dp)) {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(3.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 10.dp),
+            ) {
+                ACADEMIC_MONTHS.forEachIndexed { i, m ->
+                    val active = i in semester.activeMonthIndices
+                    Column(
+                        modifier = Modifier.weight(1f),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(6.dp),
+                    ) {
+                        Text(
+                            text = m,
+                            color = if (active) scheme.onSurface else scheme.outlineVariant,
+                            fontWeight = if (active) FontWeight.Bold else FontWeight.Medium,
+                            fontSize = 9.sp,
+                            letterSpacing = 0.6.sp,
+                        )
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(10.dp)
+                                .clip(RoundedCornerShape(6.dp))
+                                .background(
+                                    if (active) scheme.primary
+                                    else scheme.outlineVariant.copy(alpha = 0.45f),
+                                ),
+                        )
+                    }
+                }
+            }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.Bottom,
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                Text(
+                    text = semester.title,
+                    color = scheme.onSurface,
+                    fontWeight = FontWeight.ExtraBold,
+                    fontSize = 15.sp,
+                    letterSpacing = (-0.2).sp,
+                )
+                Text(
+                    text = semester.rangeLabel,
+                    color = scheme.onSurfaceVariant.copy(alpha = 0.78f),
+                    fontStyle = FontStyle.Italic,
+                    fontSize = 12.sp,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ExtendedProgrammeList(parts: List<ProgrammeSection>) {
+    val scheme = MaterialTheme.colorScheme
+    Column(modifier = Modifier.fillMaxWidth()) {
+        SyllabusHeader(title = "Programma esteso")
+        Spacer(Modifier.height(8.dp))
+        parts.forEachIndexed { index, part ->
+            if (index > 0) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(1.dp)
+                        .background(scheme.outlineVariant),
+                )
+            }
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = if (index == 0) 4.dp else 18.dp, bottom = 18.dp),
+            ) {
+                Row(
+                    verticalAlignment = Alignment.Top,
+                    horizontalArrangement = Arrangement.spacedBy(18.dp),
+                ) {
+                    Column {
+                        Text(
+                            text = "PARTE",
+                            color = scheme.tertiary,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 9.sp,
+                            letterSpacing = 1.6.sp,
+                            style = TightTextStyle,
+                        )
+                        Spacer(Modifier.height(4.dp))
+                        Text(
+                            text = (index + 1).toString().padStart(2, '0'),
+                            color = scheme.primary,
+                            fontWeight = FontWeight.Black,
+                            fontSize = 54.sp,
+                            lineHeight = 48.sp,
+                            letterSpacing = (-3.5).sp,
+                            style = TightTextStyle,
+                        )
+                    }
+                    Column(modifier = Modifier.weight(1f).padding(top = 18.dp)) {
+                        Text(
+                            text = cleanProgrammeTitle(part.title),
+                            color = scheme.onSurface,
+                            fontWeight = FontWeight.ExtraBold,
+                            fontSize = 20.sp,
+                            lineHeight = 22.sp,
+                            letterSpacing = (-0.4).sp,
+                            overflow = TextOverflow.Ellipsis,
+                            style = TightTextStyle,
+                        )
+                        if (part.items.isNotEmpty()) {
+                            Spacer(Modifier.height(5.dp))
+                            Text(
+                                text = "${part.items.size} argomenti",
+                                color = scheme.onSurfaceVariant.copy(alpha = 0.75f),
+                                fontStyle = FontStyle.Italic,
+                                fontSize = 12.sp,
+                                style = TightTextStyle,
+                            )
+                        }
+                    }
+                }
+                if (part.items.isNotEmpty()) {
+                    Spacer(Modifier.height(14.dp))
+                    PillCluster(items = part.items)
+                }
+            }
+        }
+    }
+}
+
+// Strips Compose's default font padding so visual text edges line up with the
+// layout box; the magazine PARTE/title/number column drifts visibly without it.
+private val TightTextStyle = TextStyle(
+    platformStyle = PlatformTextStyle(includeFontPadding = false),
+    lineHeightStyle = LineHeightStyle(
+        alignment = LineHeightStyle.Alignment.Top,
+        trim = LineHeightStyle.Trim.Both,
+    ),
+)
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun PillCluster(items: List<String>) {
+    val scheme = MaterialTheme.colorScheme
+    FlowRow(
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp),
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        items.forEach { label ->
+            Surface(
+                shape = RoundedCornerShape(999.dp),
+                color = scheme.surfaceContainerLow,
+            ) {
+                Text(
+                    text = label,
+                    color = scheme.onSurface,
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 12.sp,
+                    modifier = Modifier.padding(horizontal = 13.dp, vertical = 7.dp),
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun StaffGrid(staff: List<CourseStaffMember>) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        SyllabusHeader(title = "Staff")
+        Spacer(Modifier.height(12.dp))
+        val rows = staff.chunked(2)
+        rows.forEachIndexed { rowIdx, pair ->
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                pair.forEachIndexed { colIdx, member ->
+                    val variantIdx = rowIdx * 2 + colIdx
+                    StaffGridTile(
+                        member = member,
+                        variant = staffVariantAt(variantIdx),
+                        modifier = Modifier.weight(1f),
+                    )
+                }
+                if (pair.size == 1) {
+                    Box(modifier = Modifier.weight(1f))
+                }
+            }
+            if (rowIdx < rows.lastIndex) Spacer(Modifier.height(8.dp))
+        }
+    }
+}
+
+@Composable
+private fun staffVariantAt(index: Int): StaffGridVariant {
+    val scheme = MaterialTheme.colorScheme
+    val tileBg = scheme.surfaceContainerHigh
+    return when (index % 4) {
+        0 -> StaffGridVariant(tileBg, OrganicShapes.Cookie, scheme.primary, scheme.onPrimary)
+        1 -> StaffGridVariant(tileBg, OrganicShapes.Burst, scheme.tertiary, scheme.onTertiary)
+        2 -> StaffGridVariant(tileBg, OrganicShapes.Sunny, scheme.primary, scheme.onPrimary)
+        else -> StaffGridVariant(tileBg, OrganicShapes.SmoothCookie6, scheme.tertiary, scheme.onTertiary)
+    }
+}
+
+@Composable
+private fun StaffGridTile(member: CourseStaffMember, variant: StaffGridVariant, modifier: Modifier = Modifier) {
+    val scheme = MaterialTheme.colorScheme
+    Surface(
+        shape = RoundedCornerShape(22.dp),
+        color = variant.tileBg,
+        modifier = modifier,
+    ) {
+        Column(
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 14.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(44.dp)
+                    .clip(variant.avatarShape)
+                    .background(variant.avatarBg),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(
+                    text = member.initials ?: initialsOf(member.fullName),
+                    color = variant.avatarFg,
+                    fontWeight = FontWeight.Black,
+                    fontSize = 13.sp,
+                )
+            }
+            Column {
+                Text(
+                    text = member.fullName,
+                    color = scheme.onSurface,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 13.sp,
+                    lineHeight = 16.sp,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Spacer(Modifier.height(3.dp))
+                Text(
+                    text = roleLabel(member.role).uppercase(),
+                    color = scheme.tertiary,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 9.sp,
+                    letterSpacing = 1.4.sp,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun SyllabusEmpty(modifier: Modifier) {
+    val scheme = MaterialTheme.colorScheme
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 32.dp, vertical = 48.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Text(
+            text = "Scheda non disponibile",
+            style = MaterialTheme.typography.titleMedium,
+            color = scheme.onSurface,
+            fontWeight = FontWeight.SemiBold,
+        )
+        Spacer(Modifier.height(6.dp))
+        Text(
+            text = "La scheda di questo corso non è stata pubblicata.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = scheme.onSurfaceVariant,
+        )
+    }
+}
+
+private fun roleLabel(role: CourseStaffRole): String = when (role) {
+    CourseStaffRole.Docente -> "Docente"
+    CourseStaffRole.Tutor -> "Tutor"
+    CourseStaffRole.Esercitatore -> "Esercitatore"
+    CourseStaffRole.Other -> "Staff"
+}
+
+private fun initialsOf(name: String): String =
+    name.split(" ", "\t").filter { it.isNotBlank() }.take(2)
+        .joinToString("") { it.first().uppercaseChar().toString() }
+        .ifBlank { "?" }
+
+private val LeadingNumberRegex = Regex("""^\d+[.):\s-]*""")
+
+private fun cleanProgrammeTitle(raw: String): String =
+    raw.trim().replaceFirst(LeadingNumberRegex, "").trim()
+
+private val ACADEMIC_MONTHS = listOf("S", "O", "N", "D", "G", "F", "M", "A", "M", "G", "L", "A")

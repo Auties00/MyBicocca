@@ -32,25 +32,24 @@ This module provides type-safe API clients for integrating with the university's
 
 ## Project Structure
 
+All Kotlin code lives under the base package `it.attendance100.mybicocca.data.remote.*`. Each module owns one subpackage; shared utilities live in `data.remote.common.*`.
+
 ```
 data-api/
 ├── build.gradle.kts       # Root configuration
-├── esse3/                 # Esse3 module
-│   └── src/main/kotlin/
-│       ├── api/esse3/     # API clients
-│       └── dto/esse3/     # Data transfer objects
-├── elearning/             # Moodle module
-│   └── src/main/kotlin/
-│       ├── api/elearning/
-│       └── dto/elearning/
-├── easystaff/             # EasyStaff module
-│   └── src/main/kotlin/
-│       ├── api/easystaff/
-│       └── dto/easystaff/
-└── bicoccapp/             # BicoccApp module
-    └── src/main/kotlin/
-        ├── api/bicoccapp/
-        └── dto/bicoccapp/
+├── src/main/kotlin/.../data/remote/common/   # shared utilities (util/, exception/)
+├── esse3/                 # data.remote.esse3.{api,dto,exception}
+├── elearning/             # data.remote.elearning.{api,dto,exception}
+├── easystaff/             # data.remote.easystaff.{api,dto}
+└── bicoccapp/             # data.remote.bicoccapp.{api,dto}
+```
+
+Per-module layout (e.g. `esse3/`):
+```
+esse3/src/main/kotlin/it/attendance100/mybicocca/data/remote/esse3/
+├── api/         # Ktor/Ktorfit clients (Esse3Api, Esse3CareerApi, ...)
+├── dto/         # @Serializable data classes
+└── exception/   # API-specific exceptions
 ```
 
 ## Usage

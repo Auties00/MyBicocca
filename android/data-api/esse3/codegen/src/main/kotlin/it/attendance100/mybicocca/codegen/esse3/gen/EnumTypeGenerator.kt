@@ -9,41 +9,62 @@ object EnumTypeGenerator {
 
     private const val PREFIX = "Esse3"
 
+    data class Index(
+        val byProperty: Map<String, String>,
+        val byParameter: Map<String, String>,
+    )
+
     fun generate(
         specs: List<ParsedSpec>,
         outputDir: File,
         glossary: Glossary,
         enumMappings: EnumMappings,
         basePackage: String
-    ): Map<String, String> {
-        val dtoPackage = "$basePackage.dto.esse3"
+    ): Index {
+        val dtoPackage = "$basePackage.esse3.dto"
 
         val fields = mutableListOf<EnumField>()
         for (spec in specs) {
             for (def in spec.definitions) {
                 for (prop in def.properties) {
                     if (prop.enumValues.isNullOrEmpty()) continue
-                    val key = "${def.name}.${prop.wireName}"
+                    val key = "prop:${def.name}.${prop.wireName}"
                     val userMappings = enumMappings.getValueMappings(def.name, prop.wireName)
-                    val values = linkedMapOf<String, String>()
+                    val values = linkedMapOf<String, EnumValue>()
                     for (raw in prop.enumValues) {
-                        values[raw] = userMappings?.get(raw)?.ifEmpty { null }
-                            ?: sanitizeEnumConstant(raw)
+                        val name = userMappings?.get(raw)?.ifEmpty { null } ?: sanitizeEnumConstant(raw)
+                        values[raw] = EnumValue(name, null)
                     }
-                    fields.add(EnumField(key, prop.wireName, values))
+                    fields.add(EnumField(key, prop.wireName, FieldKind.Property, values))
+                }
+            }
+            for (op in spec.operations) {
+                val candidates = op.queryParams + op.formParams
+                for (param in candidates) {
+                    if (param.enumValues.isNullOrEmpty()) continue
+                    val key = "param:${op.operationId}.${param.name}"
+                    val userMappings = enumMappings.getValueMappings(op.operationId, param.name)
+                    val values = linkedMapOf<String, EnumValue>()
+                    for (raw in param.enumValues) {
+                        val name = userMappings?.get(raw)?.ifEmpty { null } ?: sanitizeEnumConstant(raw)
+                        val doc = param.enumValueDocs?.get(raw)
+                        values[raw] = EnumValue(name, doc)
+                    }
+                    val basis = "${op.operationId.replaceFirstChar { it.uppercaseChar() }}${param.name.replaceFirstChar { it.uppercaseChar() }}"
+                    fields.add(EnumField(key, basis, FieldKind.Parameter, values))
                 }
             }
         }
 
-        val groups = fields.groupBy { it.values.entries.map { (k, v) -> k to v } }
+        val groups = fields.groupBy { it.values.entries.map { (k, v) -> k to v.kotlinName }.sortedBy { it.first } }
 
-        val fieldToClassName = mutableMapOf<String, String>()
+        val keyToClassName = mutableMapOf<String, String>()
         val types = mutableListOf<EnumTypeInfo>()
         val usedClassNames = mutableSetOf<String>()
 
         for ((_, group) in groups) {
-            val wireName = group.first().wireName
-            val translated = glossary.translate(wireName)
+            val preferred = group.firstOrNull { it.kind == FieldKind.Property } ?: group.first()
+            val translated = glossary.translate(preferred.basisName)
             var className = "$PREFIX${translated.replaceFirstChar { it.uppercaseChar() }}"
 
             if (className in usedClassNames) {
@@ -55,7 +76,7 @@ object EnumTypeGenerator {
 
             types.add(EnumTypeInfo(className, group.first().values))
             for (field in group) {
-                fieldToClassName[field.key] = className
+                keyToClassName[field.key] = className
             }
         }
 
@@ -63,7 +84,15 @@ object EnumTypeGenerator {
             generateFile(outputDir, types.sortedBy { it.className }, dtoPackage)
         }
 
-        return fieldToClassName
+        val byProperty = mutableMapOf<String, String>()
+        val byParameter = mutableMapOf<String, String>()
+        for ((key, className) in keyToClassName) {
+            when {
+                key.startsWith("prop:") -> byProperty[key.removePrefix("prop:")] = className
+                key.startsWith("param:") -> byParameter[key.removePrefix("param:")] = className
+            }
+        }
+        return Index(byProperty, byParameter)
     }
 
     private fun generateFile(outputDir: File, types: List<EnumTypeInfo>, dtoPackage: String) {
@@ -95,14 +124,17 @@ object EnumTypeGenerator {
     }
 
     private fun generateSealedInterface(sb: StringBuilder, type: EnumTypeInfo) {
-        val hasUnknownConstant = "Unknown" in type.values.values
+        val hasUnknownConstant = type.values.values.any { it.kotlinName == "Unknown" }
 
         sb.appendLine("@Serializable(with = ${type.className}.Serializer::class)")
         sb.appendLine("sealed interface ${type.className} {")
         sb.appendLine("    val value: String")
         sb.appendLine()
-        for ((raw, kotlinName) in type.values) {
-            sb.appendLine("    data object $kotlinName : ${type.className} { override val value = \"$raw\" }")
+        for ((raw, info) in type.values) {
+            if (info.doc != null) {
+                sb.appendLine("    /** ${singleLine(info.doc)} */")
+            }
+            sb.appendLine("    data object ${info.kotlinName} : ${type.className} { override val value = \"$raw\" }")
         }
         if (!hasUnknownConstant) {
             sb.appendLine("    data class Unknown(override val value: String) : ${type.className}")
@@ -118,8 +150,8 @@ object EnumTypeGenerator {
         sb.appendLine("                else -> \"\"")
         sb.appendLine("            }")
         sb.appendLine("            return when (raw) {")
-        for ((raw, kotlinName) in type.values) {
-            sb.appendLine("                \"$raw\" -> $kotlinName")
+        for ((raw, info) in type.values) {
+            sb.appendLine("                \"$raw\" -> ${info.kotlinName}")
         }
         if (hasUnknownConstant) {
             sb.appendLine("                else -> Unknown")
@@ -144,14 +176,23 @@ object EnumTypeGenerator {
             }
     }
 
+    private fun singleLine(text: String): String {
+        return text.replace(Regex("\\s*\\n\\s*"), " ").trim()
+    }
+
+    private data class EnumValue(val kotlinName: String, val doc: String?)
+
+    private enum class FieldKind { Property, Parameter }
+
     private data class EnumField(
         val key: String,
-        val wireName: String,
-        val values: LinkedHashMap<String, String>
+        val basisName: String,
+        val kind: FieldKind,
+        val values: LinkedHashMap<String, EnumValue>
     )
 
     private data class EnumTypeInfo(
         val className: String,
-        val values: LinkedHashMap<String, String>
+        val values: LinkedHashMap<String, EnumValue>
     )
 }

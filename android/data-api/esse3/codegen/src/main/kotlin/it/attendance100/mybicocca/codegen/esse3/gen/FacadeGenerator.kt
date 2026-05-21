@@ -7,7 +7,7 @@ import java.io.File
 object FacadeGenerator {
 
     fun generate(specs: List<ParsedSpec>, outputDir: File, glossary: Glossary, basePackage: String) {
-        val apiPackage = "$basePackage.api.esse3"
+        val apiPackage = "$basePackage.esse3.api"
         val apiSpecs = specs.filter { it.operations.isNotEmpty() }
         if (apiSpecs.isEmpty()) return
 
@@ -18,6 +18,7 @@ object FacadeGenerator {
         sb.appendLine()
         sb.appendLine("import io.ktor.client.HttpClient")
         sb.appendLine("import io.ktor.client.HttpClientConfig")
+        sb.appendLine("import io.ktor.client.plugins.cache.HttpCache")
         sb.appendLine("import io.ktor.client.plugins.contentnegotiation.ContentNegotiation")
         sb.appendLine("import io.ktor.client.plugins.cookies.AcceptAllCookiesStorage")
         sb.appendLine("import io.ktor.client.plugins.cookies.HttpCookies")
@@ -44,6 +45,8 @@ object FacadeGenerator {
         sb.appendLine("        install(HttpCookies) {")
         sb.appendLine("            storage = AcceptAllCookiesStorage()")
         sb.appendLine("        }")
+        sb.appendLine()
+        sb.appendLine("        install(HttpCache)")
         sb.appendLine()
         sb.appendLine("        followRedirects = true")
         sb.appendLine("    }")

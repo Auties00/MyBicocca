@@ -13,11 +13,11 @@ import java.io.File
 
 fun main(args: Array<String>) {
     val specDir = File(args.getOrElse(0) { "./openapi" }).canonicalFile
-    val outputDir = File(args.getOrElse(1) { "../src/main/kotlin/it/attendance100/mybicocca/data" }).canonicalFile
-    val basePackage = args.getOrElse(2) { "it.attendance100.mybicocca.data" }
+    val outputDir = File(args.getOrElse(1) { "../src/main/kotlin/it/attendance100/mybicocca/data/remote" }).canonicalFile
+    val basePackage = args.getOrElse(2) { "it.attendance100.mybicocca.data.remote" }
 
-    val dtoOutputDir = File(outputDir, "dto/esse3")
-    val apiOutputDir = File(outputDir, "api/esse3")
+    val dtoOutputDir = File(outputDir, "esse3/dto")
+    val apiOutputDir = File(outputDir, "esse3/api")
     dtoOutputDir.mkdirs()
     apiOutputDir.mkdirs()
 
@@ -81,26 +81,27 @@ fun main(args: Array<String>) {
             ?.forEach { it.delete() }
     }
 
-    val enumTypeMap = EnumTypeGenerator.generate(dedupedSpecs, dtoOutputDir, glossary, enumMappings, basePackage)
-    println("Generated ${enumTypeMap.values.toSet().size} sealed enum types")
+    val enumIndex = EnumTypeGenerator.generate(dedupedSpecs, dtoOutputDir, glossary, enumMappings, basePackage)
+    val totalTypes = (enumIndex.byProperty.values + enumIndex.byParameter.values).toSet().size
+    println("Generated $totalTypes sealed enum types (${enumIndex.byProperty.size} property bindings, ${enumIndex.byParameter.size} parameter bindings)")
 
-    val generatedFiles = mutableListOf("dto/esse3/Esse3EnumTypes.kt")
+    val generatedFiles = mutableListOf("esse3/dto/Esse3EnumTypes.kt")
     for (spec in dedupedSpecs) {
         if (spec.definitions.isNotEmpty()) {
-            DtoGenerator.generate(spec, dtoOutputDir, glossary, enumTypeMap, requiredOverrides, basePackage)
+            DtoGenerator.generate(spec, dtoOutputDir, glossary, enumIndex.byProperty, requiredOverrides, basePackage)
             val fileName = glossary.translate("Esse3${spec.specName}Types.kt")
-            generatedFiles.add("dto/esse3/$fileName")
+            generatedFiles.add("esse3/dto/$fileName")
         }
 
         if (spec.operations.isNotEmpty()) {
-            ApiGenerator.generate(spec, apiOutputDir, glossary, basePackage)
+            ApiGenerator.generate(spec, apiOutputDir, glossary, basePackage, enumIndex.byParameter)
             val className = glossary.translate("Esse3${spec.specName}Api")
-            generatedFiles.add("api/esse3/$className.kt")
+            generatedFiles.add("esse3/api/$className.kt")
         }
     }
 
     FacadeGenerator.generate(dedupedSpecs, apiOutputDir, glossary, basePackage)
-    generatedFiles.add("api/esse3/Esse3Api.kt")
+    generatedFiles.add("esse3/api/Esse3Api.kt")
 
     println("Summary: ${generatedFiles.size} files generated")
     for (f in generatedFiles.sorted()) {
@@ -132,7 +133,16 @@ fun main(args: Array<String>) {
             for (param in op.queryParams) {
                 names.add(param.name)
             }
+            for (param in op.formParams) {
+                names.add(param.name)
+            }
             op.bodyParam?.let { names.add(it.name) }
+            for (param in op.queryParams + op.formParams) {
+                if (!param.enumValues.isNullOrEmpty()) {
+                    val basis = "${op.operationId.replaceFirstChar { it.uppercaseChar() }}${param.name.replaceFirstChar { it.uppercaseChar() }}"
+                    names.add(basis)
+                }
+            }
         }
 
         for (definition in spec.definitions) {
@@ -167,6 +177,19 @@ fun main(args: Array<String>) {
                     val existing = enumMappings.existingMappingOrNull(key)
                     val valueMap = linkedMapOf<String, String>()
                     for (enumValue in prop.enumValues) {
+                        valueMap[enumValue] = existing?.get(enumValue) ?: ""
+                    }
+                    enumMappingsMap[key] = valueMap
+                }
+            }
+        }
+        for (op in spec.operations) {
+            for (param in op.queryParams + op.formParams) {
+                if (!param.enumValues.isNullOrEmpty()) {
+                    val key = "${op.operationId}.${param.name}"
+                    val existing = enumMappings.existingMappingOrNull(key)
+                    val valueMap = linkedMapOf<String, String>()
+                    for (enumValue in param.enumValues) {
                         valueMap[enumValue] = existing?.get(enumValue) ?: ""
                     }
                     enumMappingsMap[key] = valueMap

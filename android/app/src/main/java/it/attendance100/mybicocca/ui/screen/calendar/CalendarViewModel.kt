@@ -1,282 +1,193 @@
 package it.attendance100.mybicocca.ui.screen.calendar
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import it.attendance100.mybicocca.data.model.calendar.CalendarEvent
-import it.attendance100.mybicocca.data.model.calendar.EventType
-import it.attendance100.mybicocca.data.model.calendar.startDateTime
-import it.attendance100.mybicocca.data.repository.CalendarRepository
-import it.attendance100.mybicocca.data.sync.ResourceSyncManager
-import it.attendance100.mybicocca.data.sync.SyncKeys
-import it.attendance100.mybicocca.data.sync.SyncPolicies
-import it.attendance100.mybicocca.data.sync.SyncUiState
-import it.attendance100.mybicocca.util.NetworkMonitor
+import it.attendance100.mybicocca.core.state.Loadable
+import it.attendance100.mybicocca.core.state.valueOrNull
+import it.attendance100.mybicocca.core.state.SyncStatus
+import it.attendance100.mybicocca.domain.model.calendar.CalendarEvent
+import it.attendance100.mybicocca.domain.model.calendar.CalendarEventId
+import it.attendance100.mybicocca.domain.model.career.CareerId
+import it.attendance100.mybicocca.domain.usecase.account.ObserveActiveAccountUseCase
+import it.attendance100.mybicocca.domain.usecase.calendar.ObserveDayEventsUseCase
+import it.attendance100.mybicocca.domain.usecase.calendar.ObserveMonthEventsUseCase
+import it.attendance100.mybicocca.domain.usecase.calendar.PrefetchAdjacentMonthsUseCase
+import it.attendance100.mybicocca.domain.usecase.calendar.RefreshCalendarMonthUseCase
+import it.attendance100.mybicocca.ui.screen.calendar.ext.weekStartFor
+import it.attendance100.mybicocca.ui.screen.calendar.state.CalendarOneShotEvent
+import it.attendance100.mybicocca.ui.screen.calendar.state.CalendarViewMode
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import java.time.DayOfWeek
 import java.time.LocalDate
-import java.time.LocalDateTime
-import java.time.LocalTime
 import java.time.YearMonth
 import javax.inject.Inject
-
-enum class CalendarViewMode { LIST, WEEK, MONTH }
-
-data class TimeRange(
-    val startMinutes: Int = 7 * 60,
-    val endMinutes: Int = 22 * 60,
-) {
-    val startHour: Int get() = startMinutes / 60
-    val startMinute: Int get() = startMinutes % 60
-    val endHour: Int get() = endMinutes / 60
-    val endMinute: Int get() = endMinutes % 60
-    val isDefault: Boolean get() = startMinutes == 7 * 60 && endMinutes == 22 * 60
-    fun contains(time: LocalTime): Boolean {
-        val m = time.hour * 60 + time.minute
-        return m in startMinutes until endMinutes
-    }
-}
-
-data class LocationFilter(
-    val selectedRooms: Set<String> = emptySet(),
-) {
-    val isEmpty: Boolean get() = selectedRooms.isEmpty()
-    val count: Int get() = selectedRooms.size
-}
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class CalendarViewModel @Inject constructor(
-    private val calendarRepository: CalendarRepository,
-    private val resourceSyncManager: ResourceSyncManager,
-    networkMonitor: NetworkMonitor,
+    private val savedState: SavedStateHandle,
+    observeActiveAccount: ObserveActiveAccountUseCase,
+    private val observeMonthEvents: ObserveMonthEventsUseCase,
+    private val observeDayEvents: ObserveDayEventsUseCase,
+    private val refreshMonth: RefreshCalendarMonthUseCase,
+    private val prefetchAdjacent: PrefetchAdjacentMonthsUseCase,
 ) : ViewModel() {
 
-    val isOnline: StateFlow<Boolean> = networkMonitor.isOnline
+    val viewMode: StateFlow<CalendarViewMode> = savedState
+        .getStateFlow(KEY_VIEW_MODE, CalendarViewMode.DAY.name)
+        .map { runCatching { CalendarViewMode.valueOf(it) }.getOrDefault(CalendarViewMode.DAY) }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, CalendarViewMode.DAY)
 
-    // Navigation
-    private val _selectedDate = MutableStateFlow(LocalDate.now())
-    val selectedDate: StateFlow<LocalDate> = _selectedDate.asStateFlow()
+    val selectedMonth: StateFlow<YearMonth> = savedState
+        .getStateFlow(KEY_MONTH, YearMonth.now().toString())
+        .map { runCatching { YearMonth.parse(it) }.getOrDefault(YearMonth.now()) }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, YearMonth.now())
 
-    private val _currentMonth = MutableStateFlow(YearMonth.now())
-    val currentMonth: StateFlow<YearMonth> = _currentMonth.asStateFlow()
+    val selectedDay: StateFlow<LocalDate> = savedState
+        .getStateFlow(KEY_DAY, LocalDate.now().toString())
+        .map { runCatching { LocalDate.parse(it) }.getOrDefault(LocalDate.now()) }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, LocalDate.now())
 
-    private val _viewMode = MutableStateFlow(CalendarViewMode.LIST)
-    val viewMode: StateFlow<CalendarViewMode> = _viewMode.asStateFlow()
+    val weekStart: StateFlow<LocalDate> = selectedDay
+        .map { weekStartFor(it) }
+        .distinctUntilChanged()
+        .stateIn(viewModelScope, SharingStarted.Eagerly, weekStartFor(LocalDate.now()))
 
-    private val _displayedWeekStart = MutableStateFlow(LocalDate.now().with(DayOfWeek.MONDAY))
-    val displayedWeekStart: StateFlow<LocalDate> = _displayedWeekStart.asStateFlow()
+    val selectedEventId: StateFlow<CalendarEventId?> = savedState
+        .getStateFlow<String?>(KEY_SELECTED_EVENT, null)
+        .map { it?.let(::CalendarEventId) }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
-    // Data
-    val eventsForMonth: StateFlow<List<CalendarEvent>> = _currentMonth
-        .flatMapLatest { calendarRepository.observeEventsForMonth(it) }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+    private val activeCareerId: Flow<CareerId?> = observeActiveAccount()
+        .map { it?.academic?.selectedCareerId }
+        .distinctUntilChanged()
 
-    val futureEvents: StateFlow<List<CalendarEvent>> = calendarRepository.observeFutureEvents()
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+    val events: StateFlow<Loadable<List<CalendarEvent>>> =
+        combine(activeCareerId, selectedMonth) { c, ym -> c to ym }
+            .flatMapLatest { (c, ym) ->
+                if (c == null) flowOf(Loadable.Loaded(emptyList()))
+                else observeMonthEvents(c, ym)
+            }
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STATE_KEEP_ALIVE_MS), Loadable.NotYetLoaded)
 
-    private val syncState: StateFlow<SyncUiState> = _currentMonth
-        .flatMapLatest { month -> resourceSyncManager.observe(SyncKeys.calendar(month)) }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SyncUiState())
+    val eventsByDay: StateFlow<Map<LocalDate, List<CalendarEvent>>> =
+        combine(activeCareerId, selectedMonth) { c, ym -> c to ym }
+            .flatMapLatest { (c, ym) ->
+                if (c == null) flowOf(emptyMap())
+                else combine(
+                    observeMonthEvents(c, ym.minusMonths(1)),
+                    observeMonthEvents(c, ym),
+                    observeMonthEvents(c, ym.plusMonths(1)),
+                ) { prev, curr, next ->
+                    (
+                        prev.valueOrNull().orEmpty() +
+                            curr.valueOrNull().orEmpty() +
+                            next.valueOrNull().orEmpty()
+                        ).groupBy(CalendarEvent::date)
+                }
+            }
+            .flowOn(Dispatchers.Default)
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STATE_KEEP_ALIVE_MS), emptyMap())
 
-    val isRefreshing: StateFlow<Boolean> = syncState
-        .map { it.isRefreshing }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
+    val dayEvents: StateFlow<Loadable<List<CalendarEvent>>> =
+        combine(activeCareerId, selectedDay) { c, d -> c to d }
+            .flatMapLatest { (c, d) ->
+                if (c == null) flowOf(Loadable.Loaded(emptyList()))
+                else observeDayEvents(c, d)
+            }
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STATE_KEEP_ALIVE_MS), Loadable.NotYetLoaded)
 
-    val error: StateFlow<String?> = syncState
-        .map { it.errorMessage }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+    private val _syncStatus = MutableStateFlow<SyncStatus>(SyncStatus.Idle)
+    val syncStatus: StateFlow<SyncStatus> = _syncStatus.asStateFlow()
 
-    // Filters
-    private val _activeFilters = MutableStateFlow<Set<EventType>>(emptySet())
-    val activeFilters: StateFlow<Set<EventType>> = _activeFilters.asStateFlow()
-
-    private val _timeRange = MutableStateFlow<TimeRange?>(null)
-    val timeRange: StateFlow<TimeRange?> = _timeRange.asStateFlow()
-
-    private val _locationFilter = MutableStateFlow(LocationFilter())
-    val locationFilter: StateFlow<LocationFilter> = _locationFilter.asStateFlow()
-
-    // Dialogs
-    private val _selectedEvent = MutableStateFlow<CalendarEvent?>(null)
-    val selectedEvent: StateFlow<CalendarEvent?> = _selectedEvent.asStateFlow()
-
-    private val _showDatePicker = MutableStateFlow(false)
-    val showDatePicker: StateFlow<Boolean> = _showDatePicker.asStateFlow()
-
-    private val _showFilters = MutableStateFlow(false)
-    val showFilters: StateFlow<Boolean> = _showFilters.asStateFlow()
-
-    // One-shot events
-    private val _scrollToDateEvent = MutableSharedFlow<LocalDate>()
-    val scrollToDateEvent: SharedFlow<LocalDate> = _scrollToDateEvent.asSharedFlow()
-
-    private val _snackbarEvent = MutableSharedFlow<String>()
-    val snackbarEvent: SharedFlow<String> = _snackbarEvent.asSharedFlow()
+    private val oneShotChannel = Channel<CalendarOneShotEvent>(Channel.BUFFERED)
+    val oneShotEvents: Flow<CalendarOneShotEvent> = oneShotChannel.receiveAsFlow()
 
     init {
         viewModelScope.launch {
-            _currentMonth.collectLatest { month ->
-                refreshMonth(month, force = false)
-            }
+            combine(activeCareerId.filterNotNull(), selectedMonth) { c, ym -> c to ym }
+                .distinctUntilChanged()
+                .collect { (c, ym) ->
+                    runRefresh(c, ym, force = false)
+                    launch { runCatching { prefetchAdjacent(c, ym) } }
+                }
         }
     }
 
-    // === Navigation ===
-
-    fun selectDate(date: LocalDate) {
-        _selectedDate.value = date
-        val newMonth = YearMonth.from(date)
-        if (_currentMonth.value != newMonth) _currentMonth.value = newMonth
+    fun selectViewMode(mode: CalendarViewMode) {
+        savedState[KEY_VIEW_MODE] = mode.name
     }
 
-    fun setCurrentMonth(month: YearMonth) {
-        _currentMonth.value = month
+    fun selectMonth(yearMonth: YearMonth) {
+        savedState[KEY_MONTH] = yearMonth.toString()
     }
 
-    fun previousMonth() {
-        val newMonth = _currentMonth.value.minusMonths(1)
-        val newDay = minOf(_selectedDate.value.dayOfMonth, newMonth.lengthOfMonth())
-        _currentMonth.value = newMonth
-        _selectedDate.value = newMonth.atDay(newDay)
+    fun selectDay(date: LocalDate) {
+        savedState[KEY_DAY] = date.toString()
+        // Keep month state aligned so events/eventsByDay covers the selected day's month.
+        val ym = YearMonth.from(date)
+        if (ym != selectedMonth.value) savedState[KEY_MONTH] = ym.toString()
     }
 
-    fun nextMonth() {
-        val newMonth = _currentMonth.value.plusMonths(1)
-        val newDay = minOf(_selectedDate.value.dayOfMonth, newMonth.lengthOfMonth())
-        _currentMonth.value = newMonth
-        _selectedDate.value = newMonth.atDay(newDay)
+    // Move selected day by N days, snapping the visible week/month to follow.
+    fun shiftSelectedDay(deltaDays: Long) {
+        selectDay(selectedDay.value.plusDays(deltaDays))
     }
 
-    fun goToToday() {
-        val today = LocalDate.now()
-        _selectedDate.value = today
-        _currentMonth.value = YearMonth.now()
-        _viewMode.value = CalendarViewMode.LIST
-        viewModelScope.launch { _scrollToDateEvent.emit(today) }
+    fun shiftSelectedMonth(deltaMonths: Long) {
+        selectMonth(selectedMonth.value.plusMonths(deltaMonths))
     }
 
-    fun jumpToDate(date: LocalDate) {
-        _selectedDate.value = date
-        _currentMonth.value = YearMonth.from(date)
-        viewModelScope.launch { _scrollToDateEvent.emit(date) }
+    fun openEventDetail(id: CalendarEventId) {
+        savedState[KEY_SELECTED_EVENT] = id.value
     }
 
-    fun jumpToNextExam() = jumpToNextEventOfType(EventType.EXAM, "Nessun esame in programma")
-
-    fun jumpToNextLesson() = jumpToNextEventOfType(EventType.LECTURE, "Nessuna lezione in programma")
-
-    private fun jumpToNextEventOfType(type: EventType, fallbackMessage: String) {
-        val now = LocalDateTime.now()
-        val next = futureEvents.value
-            .filter { it.eventType == type && it.startDateTime.isAfter(now) }
-            .minByOrNull { it.startDateTime }
-
-        if (next != null) {
-            jumpToDate(next.date)
-            _showFilters.value = false
-            _viewMode.value = CalendarViewMode.LIST
-        } else {
-            viewModelScope.launch { _snackbarEvent.emit(fallbackMessage) }
-        }
+    fun closeEventDetail() {
+        savedState[KEY_SELECTED_EVENT] = null
     }
 
-    fun setViewMode(mode: CalendarViewMode) {
-        _viewMode.value = mode
-    }
-
-    fun setDisplayedWeekStart(weekStart: LocalDate) {
-        _displayedWeekStart.value = weekStart
-    }
-
-    // === Data ===
-
-    fun refresh() {
-        val month = _currentMonth.value
+    fun pullToRefresh() {
         viewModelScope.launch {
-            refreshMonth(month, force = true)
+            val careerId = activeCareerId.filterNotNull().first()
+            runRefresh(careerId, selectedMonth.value, force = true)
         }
     }
 
-    fun refreshIfStale() {
-        viewModelScope.launch {
-            refreshMonth(_currentMonth.value, force = false)
-        }
-    }
-
-    // === Filters ===
-
-    fun toggleFilter(eventType: EventType) {
-        _activeFilters.value = if (eventType in _activeFilters.value)
-            _activeFilters.value - eventType else _activeFilters.value + eventType
-    }
-
-    fun setTimeRange(range: TimeRange?) {
-        _timeRange.value = range
-    }
-
-    fun setLocationFilter(filter: LocationFilter) {
-        _locationFilter.value = filter
-    }
-
-    fun clearFilters() {
-        _activeFilters.value = emptySet()
-        _timeRange.value = null
-        _locationFilter.value = LocationFilter()
-    }
-
-    // === Dialogs ===
-
-    fun selectEvent(event: CalendarEvent?) {
-        _selectedEvent.value = event
-    }
-
-    fun setShowDatePicker(show: Boolean) {
-        _showDatePicker.value = show
-    }
-
-    fun toggleFiltersVisibility() {
-        _showFilters.value = !_showFilters.value
-    }
-
-    fun clearError() {
-        resourceSyncManager.clearError(SyncKeys.calendar(_currentMonth.value))
-    }
-
-    // === Computed helpers ===
-
-    val hasActiveFilters: Boolean
-        get() {
-            val tr = _timeRange.value
-            val hasTimeFilter = tr != null && !tr.isDefault
-            return _activeFilters.value.isNotEmpty() || hasTimeFilter || !_locationFilter.value.isEmpty
-        }
-
-    private suspend fun refreshMonth(month: YearMonth, force: Boolean) {
-        val key = SyncKeys.calendar(month)
-        val range = month.atDay(1)..month.atEndOfMonth()
-
-        if (force) {
-            resourceSyncManager.refresh(key, SyncPolicies.Default) {
-                calendarRepository.refreshAll(range)
+    private suspend fun runRefresh(careerId: CareerId, yearMonth: YearMonth, force: Boolean) {
+        _syncStatus.value = SyncStatus.Refreshing
+        runCatching { refreshMonth(careerId, yearMonth, force) }
+            .onSuccess { _syncStatus.value = SyncStatus.Idle }
+            .onFailure {
+                _syncStatus.value = SyncStatus.Failed(it)
+                oneShotChannel.trySend(CalendarOneShotEvent.RefreshFailed(it))
             }
-        } else {
-            resourceSyncManager.refreshIfStale(key, SyncPolicies.Default) {
-                calendarRepository.refreshAll(range)
-            }
-        }
+    }
+
+    private companion object {
+        const val KEY_VIEW_MODE = "calendar_view_mode"
+        const val KEY_MONTH = "calendar_year_month"
+        const val KEY_DAY = "calendar_selected_day"
+        const val KEY_SELECTED_EVENT = "calendar_selected_event_id"
+        const val STATE_KEEP_ALIVE_MS = 5_000L
     }
 }
+

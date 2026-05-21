@@ -13,6 +13,7 @@ data class ParsedOperation(
     val path: String,
     val pathParams: List<ParsedParameter>,
     val queryParams: List<ParsedParameter>,
+    val formParams: List<ParsedParameter>,
     val bodyParam: ParsedParameter?,
     val responseType: ResolvedType?,
     val permissions: List<String>,
@@ -25,11 +26,13 @@ data class ParsedParameter(
     val type: ResolvedType,
     val required: Boolean,
     val location: ParameterLocation,
-    val description: String?
+    val description: String?,
+    val enumValues: List<String>? = null,
+    val enumValueDocs: Map<String, String>? = null,
 )
 
 enum class ParameterLocation {
-    PATH, QUERY, BODY
+    PATH, QUERY, BODY, FORM
 }
 
 data class ParsedDefinition(

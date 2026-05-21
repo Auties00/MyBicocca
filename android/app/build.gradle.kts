@@ -1,7 +1,6 @@
 // Plugins
 plugins {
     id("com.android.application")
-    id("org.jetbrains.kotlin.android")
     id("org.jetbrains.kotlin.plugin.compose")
     id("com.google.android.gms.oss-licenses-plugin")
     id("com.google.devtools.ksp")
@@ -12,7 +11,7 @@ plugins {
 // Android config
 android {
     namespace = "it.attendance100.mybicocca"
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "it.attendance100.mybicocca"
@@ -68,9 +67,9 @@ ksp {
 // Dependencies
 dependencies {
     // Data API modules
-    implementation("it.attendance100.mybicocca.data.api:esse3:1.0")
-    implementation("it.attendance100.mybicocca.data.api:easystaff:1.0")
-    implementation("it.attendance100.mybicocca.data.api:elearning:1.0")
+    implementation("it.attendance100.mybicocca.data.remote:esse3:1.0")
+    implementation("it.attendance100.mybicocca.data.remote:easystaff:1.0")
+    implementation("it.attendance100.mybicocca.data.remote:elearning:1.0")
 
     // Android
     implementation("androidx.core:core-ktx:1.17.0")
@@ -80,7 +79,7 @@ dependencies {
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-graphics")
     implementation("androidx.compose.ui:ui-tooling-preview")
-    implementation("androidx.compose.material3:material3")
+    implementation("androidx.compose.material3:material3:1.5.0-alpha19")
     implementation("androidx.appcompat:appcompat:1.7.1")
     implementation("com.google.android.material:material:1.13.0")
     implementation("androidx.compose.ui:ui-text-google-fonts:1.10.0")
@@ -92,8 +91,8 @@ dependencies {
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
 
     // Hilt
-    implementation("com.google.dagger:hilt-android:2.57.2")
-    ksp("com.google.dagger:hilt-android-compiler:2.57.2")
+    implementation("com.google.dagger:hilt-android:2.59.2")
+    ksp("com.google.dagger:hilt-android-compiler:2.59.2")
     implementation("androidx.hilt:hilt-navigation-compose:1.3.0")
 
     // Room
@@ -137,6 +136,11 @@ dependencies {
     // Kotlinx Serialization (for Room type converters)
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.1")
 
+    // Jsoup — HTML parsing of the syllabus htmlContent the Moodle public-info
+    // scrape gives us. Data-api ships it as `implementation`, so we need our own
+    // explicit dep to use it in the app's mappers.
+    implementation("org.jsoup:jsoup:1.18.3")
+
     // Ktor
     implementation("io.ktor:ktor-io:3.3.3")
     implementation("io.ktor:ktor-client-core:3.3.3")
@@ -152,4 +156,12 @@ dependencies {
 
     // Email validation
     implementation(platform("androidx.compose:compose-bom:2026.03.01"))
+
+    // Media3 — Kaltura video playback in elearning. Compose-native UI (1.10+),
+    // no PlayerView/AndroidView interop.
+    val media3 = "1.10.1"
+    implementation("androidx.media3:media3-exoplayer:$media3")
+    implementation("androidx.media3:media3-exoplayer-hls:$media3")
+    implementation("androidx.media3:media3-session:$media3")
+    implementation("androidx.media3:media3-ui-compose-material3:$media3")
 }

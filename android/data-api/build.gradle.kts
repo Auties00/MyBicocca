@@ -7,7 +7,7 @@ plugins {
     kotlin("plugin.serialization") version "2.3.0" apply false
 }
 
-group = "it.attendance100.mybicocca.data.api"
+group = "it.attendance100.mybicocca.data.remote"
 version = "1.0"
 
 dependencies {

@@ -1,0 +1,74 @@
+package it.attendance100.mybicocca.data.auth
+
+import android.content.SharedPreferences
+import androidx.core.content.edit
+import it.attendance100.mybicocca.data.local.credentials.CredentialsStore
+import it.attendance100.mybicocca.domain.model.account.AccountId
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
+import javax.inject.Inject
+import javax.inject.Named
+import javax.inject.Singleton
+
+// Persistence is best-effort: tokens are always recoverable via re-auth, so this cache
+// exists only to skip the SAML / login dance on warm starts and across rotations.
+@Singleton
+class SessionCache @Inject constructor(
+    @Named(CredentialsStore.EncryptedPrefsName) private val prefs: SharedPreferences,
+) {
+
+    private val mutex = Mutex()
+    private val tokens = mutableMapOf<AccountId, SessionTokens>()
+
+    suspend fun read(accountId: AccountId): SessionTokens = mutex.withLock { loadLocked(accountId) }
+
+    suspend fun update(
+        accountId: AccountId,
+        transform: SessionTokens.() -> SessionTokens,
+    ): SessionTokens = mutex.withLock {
+        val updated = loadLocked(accountId).transform()
+        tokens[accountId] = updated
+        withContext(Dispatchers.IO) {
+            prefs.edit {
+                writeString(wsTokenKey(accountId), updated.wsToken)
+                writeString(moodleSessionCookieKey(accountId), updated.moodleSessionCookie)
+                writeString(jwtKey(accountId), updated.jwt)
+            }
+        }
+        updated
+    }
+
+    suspend fun delete(accountId: AccountId): Unit = mutex.withLock {
+        tokens.remove(accountId)
+        withContext(Dispatchers.IO) {
+            prefs.edit {
+                remove(wsTokenKey(accountId))
+                remove(moodleSessionCookieKey(accountId))
+                remove(jwtKey(accountId))
+            }
+        }
+    }
+
+    private suspend fun loadLocked(accountId: AccountId): SessionTokens {
+        tokens[accountId]?.let { return it }
+        val loaded = withContext(Dispatchers.IO) {
+            SessionTokens(
+                wsToken = prefs.getString(wsTokenKey(accountId), null),
+                moodleSessionCookie = prefs.getString(moodleSessionCookieKey(accountId), null),
+                jwt = prefs.getString(jwtKey(accountId), null),
+            )
+        }
+        tokens[accountId] = loaded
+        return loaded
+    }
+
+    private fun SharedPreferences.Editor.writeString(key: String, value: String?) {
+        if (value == null) remove(key) else putString(key, value)
+    }
+
+    private fun wsTokenKey(id: AccountId) = "session:${id.value}:wsToken"
+    private fun moodleSessionCookieKey(id: AccountId) = "session:${id.value}:moodleSessionCookie"
+    private fun jwtKey(id: AccountId) = "session:${id.value}:jwt"
+}

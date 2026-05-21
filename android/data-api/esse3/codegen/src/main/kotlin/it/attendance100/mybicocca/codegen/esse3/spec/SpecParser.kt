@@ -75,29 +75,48 @@ object SpecParser {
                 val params = operation.parameters ?: emptyList()
                 val pathParams = mutableListOf<ParsedParameter>()
                 val queryParams = mutableListOf<ParsedParameter>()
+                val formParams = mutableListOf<ParsedParameter>()
                 var bodyParam: ParsedParameter? = null
+
+                val xQueryParams = extractXQueryParams(operation)
 
                 for (param in params) {
                     when (param.`in`) {
-                        "path" -> pathParams.add(parseParameter(param, ParameterLocation.PATH))
-                        "query" -> queryParams.add(parseParameter(param, ParameterLocation.QUERY))
+                        "path" -> pathParams.add(parseParameter(param, ParameterLocation.PATH, xQueryParams))
+                        "query" -> queryParams.add(parseParameter(param, ParameterLocation.QUERY, xQueryParams))
+                        "formData" -> formParams.add(parseParameter(param, ParameterLocation.FORM, xQueryParams))
                     }
                 }
 
                 val requestBody = operation.requestBody
                 if (requestBody != null) {
                     val content = requestBody.content
-                    val mediaType = content?.get("application/json") ?: content?.values?.firstOrNull()
-                    val schema = mediaType?.schema
-                    if (schema != null) {
-                        val bodyType = resolveSchemaType(schema)
-                        bodyParam = ParsedParameter(
-                            name = "body",
-                            type = bodyType,
-                            required = requestBody.required ?: true,
-                            location = ParameterLocation.BODY,
-                            description = requestBody.description
-                        )
+                    val formMediaType = content?.get("application/x-www-form-urlencoded")
+                    val jsonMediaType = content?.get("application/json")
+                    if (formMediaType != null && jsonMediaType == null) {
+                        val schema = formMediaType.schema
+                        val schemaProperties = schema?.properties
+                        if (schemaProperties != null) {
+                            val requiredFields = (schema.required ?: emptyList()).toSet()
+                            for ((propName, propSchema) in schemaProperties) {
+                                formParams.add(
+                                    parseFormDataProperty(propName, propSchema, propName in requiredFields)
+                                )
+                            }
+                        }
+                    } else {
+                        val mediaType = jsonMediaType ?: content?.values?.firstOrNull()
+                        val schema = mediaType?.schema
+                        if (schema != null) {
+                            val bodyType = resolveSchemaType(schema)
+                            bodyParam = ParsedParameter(
+                                name = "body",
+                                type = bodyType,
+                                required = requestBody.required ?: true,
+                                location = ParameterLocation.BODY,
+                                description = requestBody.description
+                            )
+                        }
                     }
                 }
 
@@ -129,6 +148,7 @@ object SpecParser {
                         path = pathStr,
                         pathParams = pathParams,
                         queryParams = queryParams,
+                        formParams = formParams,
                         bodyParam = bodyParam,
                         responseType = responseType,
                         permissions = permissions,
@@ -141,7 +161,11 @@ object SpecParser {
         return ops
     }
 
-    private fun parseParameter(param: Parameter, location: ParameterLocation): ParsedParameter {
+    private fun parseParameter(
+        param: Parameter,
+        location: ParameterLocation,
+        xQueryParams: List<XQueryParam>,
+    ): ParsedParameter {
         val schema = param.schema
         val type = if (schema != null) {
             resolveSchemaType(schema)
@@ -149,13 +173,55 @@ object SpecParser {
             TypeMapping.resolveScalar("string", null)
         }
 
+        var enumValues: List<String>? = schema?.enum?.map { it.toString() }?.takeIf { it.isNotEmpty() }
+        var enumValueDocs: Map<String, String>? = null
+        if (param.name == "q" && xQueryParams.isNotEmpty()) {
+            enumValues = xQueryParams.map { it.value }
+            enumValueDocs = xQueryParams
+                .filter { it.description != null }
+                .associate { it.value to it.description!! }
+                .takeIf { it.isNotEmpty() }
+        }
+
         return ParsedParameter(
             name = param.name,
             type = type,
             required = param.required ?: false,
             location = location,
-            description = param.description
+            description = param.description,
+            enumValues = enumValues,
+            enumValueDocs = enumValueDocs,
         )
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    private fun parseFormDataProperty(name: String, schema: Schema<*>, required: Boolean): ParsedParameter {
+        val type = resolveSchemaType(schema)
+        val enumValues = schema.enum?.map { it.toString() }?.takeIf { it.isNotEmpty() }
+        return ParsedParameter(
+            name = name,
+            type = type,
+            required = required,
+            location = ParameterLocation.FORM,
+            description = schema.description,
+            enumValues = enumValues,
+            enumValueDocs = null,
+        )
+    }
+
+    private data class XQueryParam(val value: String, val description: String?)
+
+    @Suppress("UNCHECKED_CAST")
+    private fun extractXQueryParams(operation: Operation): List<XQueryParam> {
+        val extensions = operation.extensions ?: return emptyList()
+        val raw = extensions["x-query-params"] as? List<*> ?: return emptyList()
+        return raw.mapNotNull { entry ->
+            (entry as? Map<String, Any?>)?.let { map ->
+                val name = map["name"] as? String ?: return@mapNotNull null
+                val description = map["description"] as? String
+                XQueryParam(value = name, description = description)
+            }
+        }
     }
 
     private fun resolveSchemaType(schema: Schema<*>): ResolvedType {
