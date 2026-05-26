@@ -1,8 +1,6 @@
 package it.attendance100.mybicocca.ui.screen.calendar.component
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -20,7 +18,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -35,15 +32,12 @@ private val ItalianLocale = Locale.ITALIAN
 @Composable
 fun DayStrip(
     weekStart: LocalDate,
-    selectedDay: LocalDate?,
-    onSelect: (LocalDate) -> Unit,
+    onSelect: ((LocalDate) -> Unit)? = null,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(horizontal = 14.dp),
     leadingSpacerWidth: Dp = 32.dp,
 ) {
     val scheme = MaterialTheme.colorScheme
-    val dark = isSystemInDarkTheme()
-    val selectedBg = if (dark) scheme.primaryContainer else scheme.primary
     val days = remember(weekStart) { visibleWeekDays(weekStart) }
 
     Row(
@@ -57,14 +51,12 @@ fun DayStrip(
             Spacer(Modifier.width(leadingSpacerWidth))
         }
         days.forEach { day ->
-            val isSelected = day == selectedDay
-
+            val handler = onSelect
             Column(
                 modifier = Modifier
                     .weight(1f)
                     .clip(CircleShape)
-                    .background(color = if (isSelected) selectedBg else Color.Transparent)
-                    .clickable { onSelect(day) }
+                    .then(if (handler != null) Modifier.clickable { handler(day) } else Modifier)
                     .padding(vertical = 4.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center,
@@ -80,7 +72,7 @@ fun DayStrip(
                 Text(
                     text = day.dayOfMonth.toString(),
                     fontSize = 14.sp,
-                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                    fontWeight = FontWeight.Medium,
                     color = scheme.onSurface,
                 )
             }

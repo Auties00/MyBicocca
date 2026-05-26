@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.ime
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialTheme
@@ -25,8 +24,10 @@ import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.IntOffset
@@ -41,12 +42,13 @@ import it.attendance100.mybicocca.ui.component.feedback.LocalAppSnackbarControll
 import it.attendance100.mybicocca.ui.screen.calendar.component.CalendarSegmentedControl
 import it.attendance100.mybicocca.ui.screen.calendar.component.DayView
 import it.attendance100.mybicocca.ui.screen.calendar.component.MonthView
+import it.attendance100.mybicocca.ui.screen.calendar.component.TIMELINE_ZOOM_DEFAULT
 import it.attendance100.mybicocca.ui.screen.calendar.component.TodayFab
 import it.attendance100.mybicocca.ui.screen.calendar.component.WeekView
-import it.attendance100.mybicocca.ui.screen.calendar.subscreen.eventDetail.EventDetailSheet
-import it.attendance100.mybicocca.ui.screen.calendar.subscreen.monthAgenda.MonthAgendaSheet
 import it.attendance100.mybicocca.ui.screen.calendar.state.CalendarOneShotEvent
 import it.attendance100.mybicocca.ui.screen.calendar.state.CalendarViewMode
+import it.attendance100.mybicocca.ui.screen.calendar.subscreen.eventDetail.EventDetailSheet
+import it.attendance100.mybicocca.ui.screen.calendar.subscreen.monthAgenda.MonthAgendaSheet
 import it.attendance100.mybicocca.ui.screen.calendar.theme.ProvideEventPalette
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
@@ -97,6 +99,7 @@ fun CalendarScreen(
     }
 
     var monthSheetSize by remember { mutableStateOf(IntSize.Zero) }
+    var timelineZoom by rememberSaveable { mutableFloatStateOf(TIMELINE_ZOOM_DEFAULT) }
 
     ProvideEventPalette {
     Box(modifier = modifier.fillMaxSize()) {
@@ -141,14 +144,17 @@ fun CalendarScreen(
                             onSelectDay = viewModel::selectDay,
                             onEventClick = { viewModel.openEventDetail(it.id) },
                             modifier = Modifier.fillMaxSize(),
+                            zoom = timelineZoom,
+                            onZoomChange = { timelineZoom = it },
                         )
                         CalendarViewMode.WEEK -> WeekView(
-                            selectedDay = selectedDay,
                             weekStart = weekStart,
                             eventsByDay = filteredEventsByDay,
                             onSelectDay = viewModel::selectDay,
                             onEventClick = { viewModel.openEventDetail(it.id) },
                             modifier = Modifier.fillMaxSize(),
+                            zoom = timelineZoom,
+                            onZoomChange = { timelineZoom = it },
                         )
                         CalendarViewMode.MONTH -> MonthView(
                             yearMonth = selectedMonth,

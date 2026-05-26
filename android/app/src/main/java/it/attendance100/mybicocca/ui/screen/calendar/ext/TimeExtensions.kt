@@ -34,11 +34,6 @@ fun weekStartFor(date: LocalDate): LocalDate =
 fun visibleWeekDays(weekStart: LocalDate): List<LocalDate> =
     (0L..6L).map { weekStart.plusDays(it) }
 
-fun highlightedDayFor(pageWeekStart: LocalDate, selectedDay: LocalDate): LocalDate? {
-    if (weekStartFor(selectedDay) == pageWeekStart) return selectedDay
-    return null
-}
-
 // 7-column month grid (Mon..Sun). Returns nullable cells so leading/trailing padding cells
 // outside the month appear as nulls — UI renders them as blanks.
 fun monthGridCells(yearMonth: YearMonth): List<LocalDate?> {

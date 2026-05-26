@@ -15,14 +15,18 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import it.attendance100.mybicocca.domain.model.calendar.CalendarEvent
-import it.attendance100.mybicocca.ui.screen.calendar.ext.highlightedDayFor
 import it.attendance100.mybicocca.ui.screen.calendar.ext.weekStartFor
+import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
+import kotlin.math.roundToInt
 
 private const val PAGER_ANCHOR = 5000
 private const val PAGER_COUNT = 10000
@@ -33,12 +37,13 @@ private val StripBottomSpacing = 12.dp
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun WeekView(
-    selectedDay: LocalDate,
     weekStart: LocalDate,
     eventsByDay: Map<LocalDate, List<CalendarEvent>>,
     onSelectDay: (LocalDate) -> Unit,
     onEventClick: (CalendarEvent) -> Unit,
     modifier: Modifier = Modifier,
+    zoom: Float = TIMELINE_ZOOM_DEFAULT,
+    onZoomChange: (Float) -> Unit = {},
 ) {
     val anchorWeekStart = remember { weekStart }
     val pagerState = rememberPagerState(initialPage = PAGER_ANCHOR) { PAGER_COUNT }
@@ -59,40 +64,58 @@ fun WeekView(
         }
     }
 
-    val pageContentHeight = StripRowHeight + StripBottomSpacing + TimelineHeight
+    // Same stable-ref pattern as DayView: pointerInput(Unit) never restarts,
+    // so we need a MutableFloatState to give the coroutine a live zoom value.
+    val zoomRef = remember { mutableFloatStateOf(zoom) }
+    SideEffect { zoomRef.floatValue = zoom }
+
+    val minuteHeight = minuteHeightFor(zoom)
+    val timelineH = timelineHeightFor(minuteHeight)
+    val pageContentHeight = StripRowHeight + StripBottomSpacing + timelineH
+    val scroll = rememberScrollState()
+    val coroutineScope = rememberCoroutineScope()
 
     Row(
         modifier = modifier
             .fillMaxSize()
-            .verticalScroll(rememberScrollState())
+            .verticalPinchZoom(currentZoom = { zoomRef.floatValue }) { newZoom, focalY, factor ->
+                zoomRef.floatValue = newZoom  // sync immediately for the next gesture frame
+                onZoomChange(newZoom)
+                val newOffset = ((scroll.value + focalY) * factor - focalY)
+                    .roundToInt().coerceIn(0, scroll.maxValue)
+                coroutineScope.launch { scroll.scrollTo(newOffset) }
+            }
+            .verticalScroll(scroll)
             .padding(start = 14.dp, end = 14.dp, bottom = 12.dp),
     ) {
         Column {
             Spacer(Modifier.height(StripRowHeight + StripBottomSpacing))
-            HourGutterColumn(modifier = Modifier.height(TimelineHeight))
+            HourGutterColumn(minuteHeight = minuteHeight, modifier = Modifier.height(timelineH))
         }
         HorizontalPager(
             state = pagerState,
-            modifier = Modifier.weight(1f).height(pageContentHeight),
+            modifier = Modifier
+                .weight(1f)
+                .height(pageContentHeight),
             beyondViewportPageCount = 1,
         ) { page ->
             val pageWeekStart = anchorWeekStart.plusWeeks((page - PAGER_ANCHOR).toLong())
-            val highlightedDay = highlightedDayFor(pageWeekStart, selectedDay)
             Column {
                 DayStrip(
                     weekStart = pageWeekStart,
-                    selectedDay = highlightedDay,
-                    onSelect = onSelectDay,
-                    modifier = Modifier.fillMaxWidth().height(StripRowHeight),
+                    onSelect = null,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(StripRowHeight),
                     contentPadding = PaddingValues(0.dp),
                     leadingSpacerWidth = 0.dp,
                 )
                 Spacer(Modifier.height(StripBottomSpacing))
                 WeekEventsLayer(
                     weekStart = pageWeekStart,
-                    selectedDay = highlightedDay,
                     eventsByDay = eventsByDay,
                     onEventClick = onEventClick,
+                    minuteHeight = minuteHeight,
                 )
             }
         }
