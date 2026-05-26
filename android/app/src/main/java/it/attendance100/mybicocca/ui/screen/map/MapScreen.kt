@@ -1,6 +1,7 @@
 package it.attendance100.mybicocca.ui.screen.map
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -31,9 +32,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.core.content.ContextCompat
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.core.content.ContextCompat.checkSelfPermission
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.CameraPosition
@@ -63,13 +65,18 @@ private const val CAMPUS_ZOOM = 15.5f
 private const val BUILDING_ZOOM = 17f
 
 @OptIn(ExperimentalMaterial3Api::class)
+@SuppressLint("MissingPermission")
 @Composable
 fun MapScreen(
     modifier: Modifier = Modifier,
     searchQuery: String = "",
     onProvideFilterToggle: ((() -> Unit)?) -> Unit = {},
     onOpenRoom360: (String, String) -> Unit = { _, _ -> },
-    viewModel: MapViewModel = hiltViewModel(),
+    viewModel: MapViewModel = hiltViewModel(
+        checkNotNull(LocalViewModelStoreOwner.current) {
+            "No ViewModelStoreOwner was provided via LocalViewModelStoreOwner"
+        }, null
+    ),
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -93,6 +100,7 @@ fun MapScreen(
             when (event) {
                 is MapOneShotEvent.RefreshFailed ->
                     snackbar.showError("Impossibile aggiornare le aule", event.cause)
+
                 MapOneShotEvent.LocationPermissionDenied ->
                     snackbar.showInfo("Permesso di localizzazione negato")
             }
@@ -106,7 +114,10 @@ fun MapScreen(
     }
 
     fun centerOnUser() {
-        if (!hasLocationPermission) return
+        if (!hasLocationPermission) {
+            viewModel.reportLocationPermissionDenied()
+            return
+        }
         runCatching {
             fusedLocation.lastLocation.addOnSuccessListener { location ->
                 if (location != null) {
@@ -126,8 +137,8 @@ fun MapScreen(
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions(),
     ) { result ->
-        val granted = result[Manifest.permission.ACCESS_FINE_LOCATION] == true ||
-            result[Manifest.permission.ACCESS_COARSE_LOCATION] == true
+        val granted =
+            result[Manifest.permission.ACCESS_FINE_LOCATION] == true || result[Manifest.permission.ACCESS_COARSE_LOCATION] == true
         hasLocationPermission = granted
         if (granted) centerOnUser() else viewModel.reportLocationPermissionDenied()
     }
@@ -135,7 +146,10 @@ fun MapScreen(
     LaunchedEffect(selectedBuilding) {
         selectedBuilding?.let {
             cameraPositionState.animate(
-                CameraUpdateFactory.newLatLngZoom(LatLng(it.point.latitude, it.point.longitude), BUILDING_ZOOM),
+                CameraUpdateFactory.newLatLngZoom(
+                    LatLng(it.point.latitude, it.point.longitude),
+                    BUILDING_ZOOM
+                ),
             )
         }
     }
@@ -145,15 +159,16 @@ fun MapScreen(
         MapProperties(
             mapStyleOptions = mapStyle,
             isMyLocationEnabled = hasLocationPermission,
-            latLngBoundsForCameraTarget = ITALY_BOUNDS,
+            // latLngBoundsForCameraTarget = ITALY_BOUNDS,
             minZoomPreference = MIN_ZOOM,
         )
     }
     val uiSettings = remember {
         MapUiSettings(
             zoomControlsEnabled = false,
-            myLocationButtonEnabled = false,
             mapToolbarEnabled = false,
+            compassEnabled = false,
+            tiltGesturesEnabled = false,
         )
     }
 
@@ -204,7 +219,12 @@ fun MapScreen(
                 pins.forEach { building ->
                     key(building.code.value) {
                         val markerState = remember {
-                            MarkerState(LatLng(building.point.latitude, building.point.longitude))
+                            MarkerState(
+                                LatLng(
+                                    building.point.latitude,
+                                    building.point.longitude
+                                )
+                            )
                         }
                         val isSelected = building.code == selectedBuilding?.code
                         MarkerComposable(
@@ -256,7 +276,10 @@ fun MapScreen(
 }
 
 private fun hasLocationPermission(context: Context): Boolean =
-    ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) ==
-        PackageManager.PERMISSION_GRANTED ||
-        ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) ==
-        PackageManager.PERMISSION_GRANTED
+    checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) ==
+            PackageManager.PERMISSION_GRANTED ||
+            checkSelfPermission(
+                context,
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            ) ==
+            PackageManager.PERMISSION_GRANTED
