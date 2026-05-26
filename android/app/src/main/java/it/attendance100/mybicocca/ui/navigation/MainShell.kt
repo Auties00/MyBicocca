@@ -57,6 +57,8 @@ import it.attendance100.mybicocca.ui.screen.map.subscreen.room360.Room360Screen
 import it.attendance100.mybicocca.ui.screen.profile.ProfileScreen
 import it.attendance100.mybicocca.ui.screen.registry.RegistryScreen
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.attendance.AttendanceScreen
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.bookableExams.BookableExamsViewModel
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.bookedExams.BookedExamsViewModel
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.degreeAward.DegreeAwardScreen
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.examResults.ExamResultsScreen
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.internships.InternshipsScreen
@@ -64,10 +66,10 @@ import it.attendance100.mybicocca.ui.screen.registry.subscreen.isee.IseeScreen
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.questionnaires.QuestionnairesScreen
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.reservations.ReservationsScreen
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.selfCertificates.SelfCertificatesScreen
-import it.attendance100.mybicocca.ui.screen.registry.subscreen.studyPlanEdit.StudyPlanEditScreen
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.studyPlan.StudyPlanScreen
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.studyPlanEdit.StudyPlanEditScreen
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.taxDetail.TaxDetailScreen
-import it.attendance100.mybicocca.ui.screen.registry.subscreen.taxes.TaxesScreen
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.taxes.TaxesViewModel
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.transcript.TranscriptScreen
 import it.attendance100.mybicocca.ui.screen.settings.SettingsScreen
 import it.attendance100.mybicocca.ui.screen.settings.subscreen.appInfo.AppInfoScreen
@@ -91,6 +93,11 @@ fun MainShell(
     val calendarViewModel: CalendarViewModel = hiltViewModel()
     val elearningViewModel: ElearningViewModel = hiltViewModel()
     val mapViewModel: MapViewModel = hiltViewModel()
+    val bookedExamsViewModel: BookedExamsViewModel = hiltViewModel()
+    val bookableExamsViewModel: BookableExamsViewModel = hiltViewModel()
+    // Hoisted here so the tax fetch starts on shell load and the list / detail / ISEE
+    // destinations share one in-memory result (taxes are not cached to Room).
+    val taxesViewModel: TaxesViewModel = hiltViewModel()
 
     val subNavController = rememberNavController()
     val subEntry by subNavController.currentBackStackEntryAsState()
@@ -121,6 +128,10 @@ fun MainShell(
     var filterActive by remember { mutableStateOf(false) }
     // Null = use the route's static title; non-null = sub-page is driving it at runtime.
     var subPageTitleOverride by remember { mutableStateOf<String?>(null) }
+    // The active sub-page's trailing action, hoisted so the global top bar can render it during
+    // the morph. The lambda is published by the screen and captures the screen's own ViewModel,
+    // so it stays correctly scoped even when invoked from the shell-level bar.
+    var subPageActions by remember { mutableStateOf<(@Composable () -> Unit)?>(null) }
 
     // Reset search/filter only when the tab actually changes after first composition. Doing
     // this in the bottom-bar onClick wouldn't survive process restore — and resetting on
@@ -133,6 +144,7 @@ fun MainShell(
             filterToggle = null
             filterActive = false
             subPageTitleOverride = null
+            subPageActions = null
             prevTab = tab
         }
     }
@@ -176,6 +188,7 @@ fun MainShell(
                 globalAlpha = if (useLocalTopBar) 0f else 1f,
                 onFilterToggle = filterToggle,
                 filterActive = filterActive,
+                trailingActions = subPageActions,
             )
         },
         bottomBar = {
@@ -236,6 +249,13 @@ fun MainShell(
                             },
                         )
                         ShellTab.Registry -> RegistryScreen(
+                            bookedExamsViewModel = bookedExamsViewModel,
+                            bookableExamsViewModel = bookableExamsViewModel,
+                            taxesViewModel = taxesViewModel,
+                            onOpenTaxDetail = { chargeId ->
+                                subNavController.navigate(AppRoute.TaxDetail(chargeId = chargeId))
+                            },
+                            onOpenIsee = { subNavController.navigate(AppRoute.Isee) },
                             searchQuery = searchQuery,
                             onProvideFilterToggle = onProvideFilterToggle,
                         )
@@ -272,9 +292,8 @@ fun MainShell(
                                 )
                             }
                             firstLevel<AppRoute.Settings>(subNavController, topBarProgress, useLocalTopBarProvider = { useLocalTopBar }) { SettingsScreen() }
-                            firstLevel<AppRoute.Taxes>(subNavController, topBarProgress, useLocalTopBarProvider = { useLocalTopBar }) { TaxesScreen() }
                             firstLevel<AppRoute.StudyPlan>(subNavController, topBarProgress, useLocalTopBarProvider = { useLocalTopBar }) { StudyPlanScreen() }
-                            firstLevel<AppRoute.Isee>(subNavController, topBarProgress, useLocalTopBarProvider = { useLocalTopBar }) { IseeScreen() }
+                            firstLevel<AppRoute.Isee>(subNavController, topBarProgress, useLocalTopBarProvider = { useLocalTopBar }) { IseeScreen(viewModel = taxesViewModel) }
                             firstLevel<AppRoute.SelfCertificates>(subNavController, topBarProgress, useLocalTopBarProvider = { useLocalTopBar }) { SelfCertificatesScreen() }
                             firstLevel<AppRoute.ExamResults>(subNavController, topBarProgress, useLocalTopBarProvider = { useLocalTopBar }) { ExamResultsScreen() }
                             firstLevel<AppRoute.Attendance>(subNavController, topBarProgress, useLocalTopBarProvider = { useLocalTopBar }) { AttendanceScreen() }
@@ -306,6 +325,7 @@ fun MainShell(
                                 CourseDetailScreen(
                                     courseId = args.courseId,
                                     onProvideTitle = { subPageTitleOverride = it },
+                                    onProvideActions = { subPageActions = it },
                                     onOpenAssignment = { id ->
                                         subNavController.navigate(
                                             AppRoute.AssignmentDetail(assignId = id.value, courseId = args.courseId),
@@ -336,7 +356,7 @@ fun MainShell(
                             // Deeper sub-pages — always-on local top bar; no progress drive.
                             deepLevel<AppRoute.TaxDetail>(subNavController) { entry ->
                                 val args = entry.toRoute<AppRoute.TaxDetail>()
-                                TaxDetailScreen(chargeId = args.chargeId)
+                                TaxDetailScreen(chargeId = args.chargeId, viewModel = taxesViewModel)
                             }
                             deepLevel<AppRoute.StudyPlanEdit>(subNavController) { entry ->
                                 val args = entry.toRoute<AppRoute.StudyPlanEdit>()

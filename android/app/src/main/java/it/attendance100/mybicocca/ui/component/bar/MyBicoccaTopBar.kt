@@ -38,13 +38,16 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.BiasAlignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.GraphicsLayerScope
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
@@ -68,6 +71,41 @@ private enum class BarMode { PAGE, SUB_PAGE, SEARCH }
 
 private const val MaxBackProgress = 0.9f
 
+// Material "fade through" handoff for the bar's two end states, driven by the continuous morph
+// progress p (1 = expanded sub-page/search, 0 = collapsed page). Each side fades over its own
+// half of the range and both reach 0 at the midpoint, so the outgoing element is gone before the
+// incoming one appears — they're never composited on top of each other. The visual is symmetric
+// because predictive back can scrub p in either direction.
+private fun fadeThroughExpanded(p: Float): Float = ((p - 0.5f) / 0.5f).coerceIn(0f, 1f)
+
+private fun fadeThroughCollapsed(p: Float): Float = ((0.5f - p) / 0.5f).coerceIn(0f, 1f)
+
+// The scale half of a fade-through: an element grows from minScale to 1 as it fades in (and
+// shrinks back as it fades out), so the swap reads as a transformation rather than a blink.
+// 0.92 is the Material spec default for text/large surfaces; icons pass a smaller value for a
+// punchier morph since they don't also travel in position.
+private fun GraphicsLayerScope.fadeThroughLayer(alpha: Float, minScale: Float = 0.92f) {
+    this.alpha = alpha
+    val scale = minScale + (1f - minScale) * alpha
+    scaleX = scale
+    scaleY = scale
+}
+
+@Composable
+private fun MorphIcon(
+    imageVector: ImageVector,
+    contentDescription: String?,
+    tint: Color,
+    alpha: Float,
+) {
+    Icon(
+        imageVector = imageVector,
+        contentDescription = contentDescription,
+        tint = tint,
+        modifier = Modifier.graphicsLayer { fadeThroughLayer(alpha, minScale = 0.6f) },
+    )
+}
+
 @Composable
 fun MyBicoccaTopBar(
     progress: Animatable<Float, *>,
@@ -80,6 +118,10 @@ fun MyBicoccaTopBar(
     modifier: Modifier = Modifier,
     onFilterToggle: (() -> Unit)? = null,
     filterActive: Boolean = false,
+    // The active sub-page's trailing action (e.g. a favourite star), hoisted up so the global
+    // bar can render it during the morph — the per-screen local bar that owns it is hard-hidden
+    // mid-morph, so without this the action would vanish instantly instead of morphing.
+    trailingActions: (@Composable () -> Unit)? = null,
     globalAlpha: Float = 1f,
 ) {
     val scheme = MaterialTheme.colorScheme
@@ -182,6 +224,7 @@ fun MyBicoccaTopBar(
                 ) {
                     LeadingSlot(
                         mode = mode,
+                        p = p,
                         onSearchClick = { searchState.onActiveChange(true) },
                         onBackClick = onNavigateBack,
                         onCloseSearch = ::closeSearch,
@@ -191,13 +234,22 @@ fun MyBicoccaTopBar(
                         modifier = Modifier
                             .weight(1f)
                             .fillMaxSize(),
-                        contentAlignment = Alignment.CenterStart,
+                        // One shared anchor lerps the title's horizontal position from start
+                        // (p=1, sub-page) to center (p=0, page), so the sub-page title travels
+                        // to exactly where the wordmark sits as the bar collapses. Both children
+                        // inherit this alignment, which is what makes the swap read as one title
+                        // transforming into the other rather than two independent labels.
+                        contentAlignment = BiasAlignment(horizontalBias = -p, verticalBias = 0f),
                     ) {
+                        // Material "fade through": the outgoing text fades out before the
+                        // incoming one fades in (handoff at the midpoint), so they are never
+                        // composited on top of each other — no smeared text-on-text.
+                        WordmarkContent(alpha = fadeThroughCollapsed(p))
                         when (mode) {
-                            BarMode.PAGE -> WordmarkContent(p = p)
+                            BarMode.PAGE -> Unit
                             BarMode.SUB_PAGE -> SubPageTitleContent(
                                 title = subPageTitle.orEmpty(),
-                                p = p,
+                                alpha = fadeThroughExpanded(p),
                             )
                             BarMode.SEARCH -> SearchFieldContent(
                                 query = searchState.query,
@@ -205,17 +257,19 @@ fun MyBicoccaTopBar(
                                 onQueryChange = searchState.onQueryChange,
                                 onImeDone = ::closeSearch,
                                 focusRequester = focusRequester,
+                                alpha = fadeThroughExpanded(p),
                             )
                         }
                     }
 
                     TrailingSlot(
                         mode = mode,
+                        p = p,
                         photo = photo,
-                        avatarAlpha = 1f - p,
                         onProfileClick = onProfileClick,
                         onFilterToggle = onFilterToggle,
                         filterActive = filterActive,
+                        trailingActions = trailingActions,
                         onClearSearch = {
                             if (searchState.query.isEmpty()) closeSearch()
                             else searchState.onQueryChange("")
@@ -230,6 +284,7 @@ fun MyBicoccaTopBar(
 @Composable
 private fun LeadingSlot(
     mode: BarMode,
+    p: Float,
     onSearchClick: () -> Unit,
     onBackClick: () -> Unit,
     onCloseSearch: () -> Unit,
@@ -240,64 +295,64 @@ private fun LeadingSlot(
         BarMode.SUB_PAGE -> onBackClick
         BarMode.SEARCH -> onCloseSearch
     }
-    val icon = when (mode) {
-        BarMode.PAGE -> Icons.Outlined.Search
-        BarMode.SUB_PAGE -> Icons.AutoMirrored.Outlined.ArrowBack
-        BarMode.SEARCH -> Icons.AutoMirrored.Outlined.ArrowBack
-    }
-    val description = when (mode) {
-        BarMode.PAGE -> "Cerca"
-        else -> "Indietro"
-    }
+    // Single click target, two glyphs handed off by fade-through + scale: the search icon owns
+    // the collapsed (PAGE) state, the back arrow the expanded (SUB_PAGE / SEARCH) state. Only
+    // one is visible at a time (they swap at the midpoint) and each shrinks as it leaves /
+    // grows as it arrives, so the change reads as a morph instead of a stacked cross-fade.
+    // Keeping one IconButton as the hit target also avoids overlapping-touch ambiguity mid-morph.
     IconButton(onClick = onClick, modifier = Modifier.size(40.dp)) {
-        Icon(imageVector = icon, contentDescription = description, tint = scheme.onSurface)
-    }
-}
-
-@Composable
-private fun WordmarkContent(p: Float) {
-    val scheme = MaterialTheme.colorScheme
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .graphicsLayer {
-                alpha = 1f - p
-                translationX = p * 30.dp.toPx()
-            },
-        contentAlignment = Alignment.Center,
-    ) {
-        Text(
-            text = wordmark(scheme.onSurface, BicoccaWordmarkAccent),
-            fontSize = 21.sp,
-            fontWeight = FontWeight.SemiBold,
-        )
-    }
-}
-
-@Composable
-private fun SubPageTitleContent(title: String, p: Float) {
-    val scheme = MaterialTheme.colorScheme
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(start = 4.dp)
-            .graphicsLayer {
-                alpha = p
-                translationX = (1f - p) * -30.dp.toPx()
-            },
-        contentAlignment = Alignment.CenterStart,
-    ) {
-        Crossfade(targetState = title, label = "sub-page-title") { t ->
-            Text(
-                text = t,
-                color = scheme.onSurface,
-                fontSize = 18.sp,
-                fontWeight = FontWeight.SemiBold,
-                letterSpacing = (-0.2).sp,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
+        Box(contentAlignment = Alignment.Center) {
+            MorphIcon(
+                imageVector = Icons.Outlined.Search,
+                contentDescription = if (mode == BarMode.PAGE) "Cerca" else null,
+                tint = scheme.onSurface,
+                alpha = fadeThroughCollapsed(p),
+            )
+            MorphIcon(
+                imageVector = Icons.AutoMirrored.Outlined.ArrowBack,
+                contentDescription = if (mode == BarMode.PAGE) null else "Indietro",
+                tint = scheme.onSurface,
+                alpha = fadeThroughExpanded(p),
             )
         }
+    }
+}
+
+@Composable
+private fun WordmarkContent(alpha: Float) {
+    val scheme = MaterialTheme.colorScheme
+    // Horizontal position comes from the parent's shared BiasAlignment; this only owns its
+    // fade-through alpha and the incoming 92% -> 100% scale.
+    Text(
+        text = wordmark(scheme.onSurface, BicoccaWordmarkAccent),
+        fontSize = 21.sp,
+        fontWeight = FontWeight.SemiBold,
+        maxLines = 1,
+        modifier = Modifier.graphicsLayer { fadeThroughLayer(alpha) },
+    )
+}
+
+@Composable
+private fun SubPageTitleContent(title: String, alpha: Float) {
+    val scheme = MaterialTheme.colorScheme
+    // start=4dp inset matches the local sub-page top bar so the alpha handoff at p=1 doesn't
+    // shift the title. Position otherwise comes from the parent's shared BiasAlignment.
+    Crossfade(
+        targetState = title,
+        label = "sub-page-title",
+        modifier = Modifier
+            .padding(start = 4.dp)
+            .graphicsLayer { fadeThroughLayer(alpha) },
+    ) { t ->
+        Text(
+            text = t,
+            color = scheme.onSurface,
+            fontSize = 18.sp,
+            fontWeight = FontWeight.SemiBold,
+            letterSpacing = (-0.2).sp,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
     }
 }
 
@@ -308,9 +363,15 @@ private fun SearchFieldContent(
     onQueryChange: (String) -> Unit,
     onImeDone: () -> Unit,
     focusRequester: FocusRequester,
+    alpha: Float,
 ) {
     val scheme = MaterialTheme.colorScheme
-    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.CenterStart) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .graphicsLayer { fadeThroughLayer(alpha) },
+        contentAlignment = Alignment.CenterStart,
+    ) {
         if (query.isEmpty()) {
             Text(
                 text = placeholder,
@@ -339,39 +400,55 @@ private fun SearchFieldContent(
 @Composable
 private fun TrailingSlot(
     mode: BarMode,
+    p: Float,
     photo: File?,
-    avatarAlpha: Float,
     onProfileClick: () -> Unit,
     onFilterToggle: (() -> Unit)?,
     filterActive: Boolean,
+    trailingActions: (@Composable () -> Unit)?,
     onClearSearch: () -> Unit,
 ) {
     val scheme = MaterialTheme.colorScheme
-    when (mode) {
-        BarMode.PAGE -> AvatarSlot(
+    // Same fade-through + scale handoff as the leading slot: the avatar (collapsed/PAGE) is
+    // always composed — it reserves the slot's 40dp width and morphs into the expanded action
+    // (the screen's own action if any, else filter on a sub-page, clear on search). Only one is
+    // visible at a time, and only the variant matching the current `mode` is clickable so the
+    // faded-out one can't intercept taps.
+    Box(contentAlignment = Alignment.Center) {
+        AvatarSlot(
             photo = photo,
-            alpha = avatarAlpha,
+            alpha = fadeThroughCollapsed(p),
+            enabled = mode == BarMode.PAGE,
             onClick = onProfileClick,
         )
-        BarMode.SUB_PAGE -> {
-            if (onFilterToggle != null) {
-                IconButton(onClick = onFilterToggle, modifier = Modifier.size(40.dp)) {
-                    Icon(
+        when (mode) {
+            BarMode.PAGE -> Unit
+            BarMode.SUB_PAGE -> when {
+                // The screen's own action (provided as a composable that captures its
+                // entry-scoped ViewModel). Wrapped so it fades/scales through like the icons.
+                trailingActions != null -> Box(
+                    modifier = Modifier.graphicsLayer {
+                        fadeThroughLayer(fadeThroughExpanded(p), minScale = 0.6f)
+                    },
+                ) {
+                    trailingActions()
+                }
+                onFilterToggle != null -> IconButton(onClick = onFilterToggle, modifier = Modifier.size(40.dp)) {
+                    MorphIcon(
                         imageVector = Icons.Outlined.FilterList,
                         contentDescription = "Filtri",
                         tint = if (filterActive) scheme.primary else scheme.onSurface,
+                        alpha = fadeThroughExpanded(p),
                     )
                 }
-            } else {
-                Spacer(Modifier.size(40.dp))
+                else -> Unit
             }
-        }
-        BarMode.SEARCH -> {
-            IconButton(onClick = onClearSearch, modifier = Modifier.size(40.dp)) {
-                Icon(
+            BarMode.SEARCH -> IconButton(onClick = onClearSearch, modifier = Modifier.size(40.dp)) {
+                MorphIcon(
                     imageVector = Icons.Outlined.Close,
                     contentDescription = "Chiudi ricerca",
                     tint = scheme.onSurface,
+                    alpha = fadeThroughExpanded(p),
                 )
             }
         }
@@ -382,16 +459,17 @@ private fun TrailingSlot(
 private fun AvatarSlot(
     photo: File?,
     alpha: Float,
+    enabled: Boolean,
     onClick: () -> Unit,
 ) {
     val scheme = MaterialTheme.colorScheme
     Box(
         modifier = Modifier
             .size(40.dp)
-            .graphicsLayer { this.alpha = alpha }
+            .graphicsLayer { fadeThroughLayer(alpha, minScale = 0.6f) }
             .clip(CircleShape)
             .background(scheme.surfaceContainerHigh)
-            .clickable(onClick = onClick),
+            .clickable(enabled = enabled, onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
         if (photo != null) {

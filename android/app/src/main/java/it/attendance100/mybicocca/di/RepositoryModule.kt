@@ -17,6 +17,7 @@ import it.attendance100.mybicocca.data.repository.ElearningQuizRepositoryImpl
 import it.attendance100.mybicocca.data.repository.ExamRepositoryImpl
 import it.attendance100.mybicocca.data.repository.MapRepositoryImpl
 import it.attendance100.mybicocca.data.repository.StudyPlanRepositoryImpl
+import it.attendance100.mybicocca.data.repository.TaxRepositoryImpl
 import it.attendance100.mybicocca.data.repository.TranscriptRepositoryImpl
 import it.attendance100.mybicocca.data.repository.VideoPlaybackRepositoryImpl
 import it.attendance100.mybicocca.domain.repository.AccountRepository
@@ -32,6 +33,7 @@ import it.attendance100.mybicocca.domain.repository.ElearningQuizRepository
 import it.attendance100.mybicocca.domain.repository.ExamRepository
 import it.attendance100.mybicocca.domain.repository.MapRepository
 import it.attendance100.mybicocca.domain.repository.StudyPlanRepository
+import it.attendance100.mybicocca.domain.repository.TaxRepository
 import it.attendance100.mybicocca.domain.repository.TranscriptRepository
 import it.attendance100.mybicocca.domain.repository.VideoPlaybackRepository
 import javax.inject.Singleton
@@ -95,6 +97,10 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindExamRepository(impl: ExamRepositoryImpl): ExamRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindTaxRepository(impl: TaxRepositoryImpl): TaxRepository
 
     @Binds
     @Singleton
