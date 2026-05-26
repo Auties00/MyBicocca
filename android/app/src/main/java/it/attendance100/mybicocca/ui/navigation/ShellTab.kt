@@ -15,5 +15,5 @@ enum class ShellTab(
     Calendar(label = "Calendario", searchPlaceholder = "Cerca lezioni", icon = Icons.Outlined.CalendarMonth),
     Elearning(label = "E-learning", searchPlaceholder = "Cerca corsi", icon = Icons.Outlined.School),
     Map(label = "Mappe", searchPlaceholder = "Cerca aule", icon = Icons.Outlined.Map),
-    Registry(label = "Segreterie", searchPlaceholder = "Cerca", icon = Icons.Outlined.WorkOutline),
+    Registry(label = "Servizi", searchPlaceholder = "Cerca", icon = Icons.Outlined.WorkOutline),
 }

@@ -1,3 +1,5 @@
+import java.util.Properties
+
 // Plugins
 plugins {
     id("com.android.application")
@@ -7,6 +9,13 @@ plugins {
     id("com.google.dagger.hilt.android")
     id("org.jetbrains.kotlin.plugin.serialization")
 }
+
+// Google Maps key — kept out of VCS in local.properties (already git-ignored). Falls back to
+// an empty string so the project still builds without it (the map tiles just render blank).
+val mapsApiKey: String = Properties().apply {
+    val f = rootProject.file("local.properties")
+    if (f.exists()) f.inputStream().use { load(it) }
+}.getProperty("MAPS_API_KEY", "")
 
 // Android config
 android {
@@ -24,6 +33,9 @@ android {
         vectorDrawables {
             useSupportLibrary = true
         }
+
+        // Injected into the Google Maps <meta-data> in the manifest.
+        manifestPlaceholders["MAPS_API_KEY"] = mapsApiKey
     }
 
     buildFeatures {
@@ -151,8 +163,11 @@ dependencies {
     // Shimmer effect for loading screens
     implementation("com.valentinilk.shimmer:compose-shimmer:1.3.3")
 
-    // MapLibre Compose for interactive maps
-    implementation("org.maplibre.compose:maplibre-compose:0.12.1")
+    // Google Maps — campus map (maps-compose), the underlying SDK, and fused location
+    // for the "center on me" action.
+    implementation("com.google.maps.android:maps-compose:6.4.1")
+    implementation("com.google.android.gms:play-services-maps:19.2.0")
+    implementation("com.google.android.gms:play-services-location:21.3.0")
 
     // Email validation
     implementation(platform("androidx.compose:compose-bom:2026.03.01"))

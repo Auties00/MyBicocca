@@ -59,12 +59,6 @@ sealed interface AppRoute {
     }
 
     // Registry (Segreterie) sub-screens.
-    @Serializable data object Booking : AppRoute {
-        override val appTitle = AppTitle.SubPage("Prenotazione Esami")
-    }
-    @Serializable data object Booked : AppRoute {
-        override val appTitle = AppTitle.SubPage("Esami Prenotati")
-    }
     @Serializable data object Taxes : AppRoute {
         override val appTitle = AppTitle.SubPage("Tasse")
     }

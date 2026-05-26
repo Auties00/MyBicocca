@@ -252,8 +252,6 @@ fun NavBackStackEntry.toAppRoute(): AppRoute? {
         dest.hasRoute<AppRoute.SettingsDeveloper>() -> AppRoute.SettingsDeveloper
         dest.hasRoute<AppRoute.AppInfo>() -> AppRoute.AppInfo
         dest.hasRoute<AppRoute.LoginManager>() -> AppRoute.LoginManager
-        dest.hasRoute<AppRoute.Booking>() -> AppRoute.Booking
-        dest.hasRoute<AppRoute.Booked>() -> AppRoute.Booked
         dest.hasRoute<AppRoute.Taxes>() -> AppRoute.Taxes
         dest.hasRoute<AppRoute.TaxDetail>() -> toRoute<AppRoute.TaxDetail>()
         dest.hasRoute<AppRoute.StudyPlan>() -> AppRoute.StudyPlan
