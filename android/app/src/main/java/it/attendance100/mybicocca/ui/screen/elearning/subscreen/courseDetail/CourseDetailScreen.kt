@@ -97,6 +97,7 @@ fun CourseDetailActions(viewModel: CourseDetailViewModel = hiltViewModel()) {
 fun CourseDetailScreen(
     courseId: Int,
     onProvideTitle: (String?) -> Unit = {},
+    onProvideActions: ((@Composable () -> Unit)?) -> Unit = {},
     onOpenAssignment: (AssignmentId) -> Unit = {},
     onOpenQuiz: (QuizId) -> Unit = {},
     onOpenForum: (ForumId) -> Unit = {},
@@ -119,6 +120,14 @@ fun CourseDetailScreen(
     val continueWatchingThumbnailUrl by viewModel.continueWatchingThumbnailUrl.collectAsStateWithLifecycle()
 
     val snackbar = LocalAppSnackbarController.current
+
+    // Publish the favourite toggle up to the shell so the global top bar can morph it during the
+    // back/forward transition (the local bar that normally shows it is hidden mid-morph). The
+    // lambda captures this entry-scoped ViewModel, so it stays valid when the shell renders it.
+    DisposableEffect(viewModel) {
+        onProvideActions { CourseDetailActions(viewModel = viewModel) }
+        onDispose { onProvideActions(null) }
+    }
 
     LaunchedEffect(viewModel) {
         viewModel.oneShotEvents.collectLatest { event ->

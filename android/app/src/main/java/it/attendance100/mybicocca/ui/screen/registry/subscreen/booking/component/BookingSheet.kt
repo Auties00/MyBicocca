@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -33,14 +34,11 @@ import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -51,7 +49,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.SyncStatus
-import it.attendance100.mybicocca.domain.model.exam.ExamCall
 import it.attendance100.mybicocca.domain.model.exam.ExamCallDetail
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.booking.state.BookingActionState
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.booking.state.BookingSheetStep
@@ -68,52 +65,51 @@ private val FullDateFormat = DateTimeFormatter.ofPattern("EEEE d MMMM yyyy", Loc
 private val TimeFormat = DateTimeFormatter.ofPattern("HH:mm")
 private val WindowFormat = DateTimeFormatter.ofPattern("d MMM yyyy", Locale.ITALIAN)
 
+// Booking detail/confirm content, without a ModalBottomSheet wrapper — the host embeds
+// it (e.g. the bookable modal swaps between its list and this). `onBackToList` returns
+// from the Info step to whatever the host showed before.
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun BookingSheet(
+fun BookingSheetContent(
     target: BookingTarget,
     detail: Loadable<ExamCallDetail>,
     syncStatus: SyncStatus,
     step: BookingSheetStep,
     bookingAction: BookingActionState,
+    onBackToList: () -> Unit,
     onRefresh: () -> Unit,
     onGoToConfirm: () -> Unit,
     onGoBackToInfo: () -> Unit,
     onConfirm: (note: String?) -> Unit,
-    onDismiss: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val isSubmitting = bookingAction is BookingActionState.InProgress
-
     val effectsSpec = MaterialTheme.motionScheme.defaultEffectsSpec<Float>()
-    ModalBottomSheet(
-        onDismissRequest = { if (!isSubmitting) onDismiss() },
-        sheetState = sheetState,
-    ) {
-        AnimatedContent(
-            targetState = step,
-            transitionSpec = {
-                fadeIn(animationSpec = effectsSpec)
-                    .togetherWith(fadeOut(animationSpec = effectsSpec))
-            },
-            label = "bookingSheetStep",
-        ) { stage ->
-            when (stage) {
-                BookingSheetStep.Info -> InfoStep(
-                    target = target,
-                    detail = detail,
-                    syncStatus = syncStatus,
-                    onRefresh = onRefresh,
-                    onBook = onGoToConfirm,
-                )
-                BookingSheetStep.Confirm -> ConfirmStep(
-                    target = target,
-                    detail = (detail as? Loadable.Loaded)?.value,
-                    isSubmitting = isSubmitting,
-                    onBack = onGoBackToInfo,
-                    onConfirm = onConfirm,
-                )
-            }
+    AnimatedContent(
+        targetState = step,
+        transitionSpec = {
+            fadeIn(animationSpec = effectsSpec)
+                .togetherWith(fadeOut(animationSpec = effectsSpec))
+        },
+        modifier = modifier,
+        label = "bookingSheetStep",
+    ) { stage ->
+        when (stage) {
+            BookingSheetStep.Info -> InfoStep(
+                target = target,
+                detail = detail,
+                syncStatus = syncStatus,
+                onBack = onBackToList,
+                onRefresh = onRefresh,
+                onBook = onGoToConfirm,
+            )
+            BookingSheetStep.Confirm -> ConfirmStep(
+                target = target,
+                detail = (detail as? Loadable.Loaded)?.value,
+                isSubmitting = isSubmitting,
+                onBack = onGoBackToInfo,
+                onConfirm = onConfirm,
+            )
         }
     }
 }
@@ -123,6 +119,7 @@ private fun InfoStep(
     target: BookingTarget,
     detail: Loadable<ExamCallDetail>,
     syncStatus: SyncStatus,
+    onBack: () -> Unit,
     onRefresh: () -> Unit,
     onBook: () -> Unit,
 ) {
@@ -131,7 +128,7 @@ private fun InfoStep(
 
     Column(
         modifier = Modifier
-            .fillMaxWidth()
+            .fillMaxSize()
             .padding(horizontal = 20.dp)
             .padding(top = 4.dp, bottom = 24.dp)
             .verticalScroll(rememberScrollState()),
@@ -142,6 +139,7 @@ private fun InfoStep(
             subtitle = listOfNotNull(call.activityCode, call.courseOfStudyDescription)
                 .joinToString(" · ")
                 .takeIf { it.isNotBlank() },
+            onBack = onBack,
         )
 
         val dateLabel = call.callDate?.format(FullDateFormat)
@@ -217,9 +215,10 @@ private fun ConfirmStep(
 
     Column(
         modifier = Modifier
-            .fillMaxWidth()
+            .fillMaxSize()
             .padding(horizontal = 20.dp)
-            .padding(top = 4.dp, bottom = 24.dp),
+            .padding(top = 4.dp, bottom = 24.dp)
+            .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -306,20 +305,27 @@ private fun ConfirmStep(
 private fun SheetHeader(
     title: String,
     subtitle: String?,
+    onBack: () -> Unit,
 ) {
-    Column(modifier = Modifier.fillMaxWidth()) {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onSurface,
-        )
-        if (subtitle != null) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        IconButton(onClick = onBack) {
+            Icon(imageVector = Icons.Rounded.ArrowBack, contentDescription = "Indietro")
+        }
+        Spacer(Modifier.width(4.dp))
+        Column(modifier = Modifier.weight(1f)) {
             Text(
-                text = subtitle,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                text = title,
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface,
             )
+            if (subtitle != null) {
+                Text(
+                    text = subtitle,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
         }
     }
 }

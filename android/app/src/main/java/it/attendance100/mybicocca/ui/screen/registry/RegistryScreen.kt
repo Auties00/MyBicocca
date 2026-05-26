@@ -16,11 +16,20 @@ import androidx.compose.ui.Modifier
 import it.attendance100.mybicocca.ui.screen.registry.component.RegistryTabBar
 import it.attendance100.mybicocca.ui.screen.registry.state.RegistryTab
 import it.attendance100.mybicocca.ui.screen.registry.state.label
-import it.attendance100.mybicocca.ui.screen.registry.subscreen.exams.ExamsScreen
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.bookableExams.BookableExamsViewModel
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.bookedExams.BookedExamsScreen
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.bookedExams.BookedExamsViewModel
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.taxes.TaxesScreen
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.taxes.TaxesViewModel
 import kotlinx.coroutines.launch
 
 @Composable
 fun RegistryScreen(
+    bookedExamsViewModel: BookedExamsViewModel,
+    bookableExamsViewModel: BookableExamsViewModel,
+    taxesViewModel: TaxesViewModel,
+    onOpenTaxDetail: (Long) -> Unit,
+    onOpenIsee: () -> Unit,
     modifier: Modifier = Modifier,
     searchQuery: String = "",
     onProvideFilterToggle: ((() -> Unit)?) -> Unit = {},
@@ -44,7 +53,15 @@ fun RegistryScreen(
             modifier = Modifier.fillMaxSize(),
         ) { page ->
             when (tabs[page]) {
-                RegistryTab.Exams -> ExamsScreen()
+                RegistryTab.Exams -> BookedExamsScreen(
+                    bookedViewModel = bookedExamsViewModel,
+                    bookableViewModel = bookableExamsViewModel,
+                )
+                RegistryTab.Taxes -> TaxesScreen(
+                    viewModel = taxesViewModel,
+                    onOpenDetail = onOpenTaxDetail,
+                    onOpenIsee = onOpenIsee,
+                )
                 // Remaining pages wired later.
                 else -> RegistryTabPage(tab = tabs[page])
             }
