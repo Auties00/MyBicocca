@@ -57,8 +57,6 @@ import it.attendance100.mybicocca.ui.screen.map.subscreen.room360.Room360Screen
 import it.attendance100.mybicocca.ui.screen.profile.ProfileScreen
 import it.attendance100.mybicocca.ui.screen.registry.RegistryScreen
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.attendance.AttendanceScreen
-import it.attendance100.mybicocca.ui.screen.registry.subscreen.booked.BookedScreen
-import it.attendance100.mybicocca.ui.screen.registry.subscreen.booking.BookingScreen
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.degreeAward.DegreeAwardScreen
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.examResults.ExamResultsScreen
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.internships.InternshipsScreen
@@ -233,21 +231,13 @@ fun MainShell(
                             viewModel = mapViewModel,
                             searchQuery = searchQuery,
                             onProvideFilterToggle = onProvideFilterToggle,
+                            onOpenRoom360 = { url, roomName ->
+                                subNavController.navigate(AppRoute.Room360View(url = url, roomName = roomName))
+                            },
                         )
                         ShellTab.Registry -> RegistryScreen(
                             searchQuery = searchQuery,
                             onProvideFilterToggle = onProvideFilterToggle,
-                            onNavigateToBooking = { subNavController.navigate(AppRoute.Booking) },
-                            onNavigateToBooked = { subNavController.navigate(AppRoute.Booked) },
-                            onNavigateToTaxes = { subNavController.navigate(AppRoute.Taxes) },
-                            onNavigateToIsee = { subNavController.navigate(AppRoute.Isee) },
-                            onNavigateToSelfCertificates = { subNavController.navigate(AppRoute.SelfCertificates) },
-                            onNavigateToExamResults = { subNavController.navigate(AppRoute.ExamResults) },
-                            onNavigateToStudyPlan = { subNavController.navigate(AppRoute.StudyPlan) },
-                            onNavigateToQuestionnaires = { subNavController.navigate(AppRoute.Questionnaires) },
-                            onNavigateToReservations = { subNavController.navigate(AppRoute.Reservations) },
-                            onNavigateToAttendance = { subNavController.navigate(AppRoute.Attendance) },
-                            onNavigateToInternships = { subNavController.navigate(AppRoute.Internships) },
                         )
                     }
                 }
@@ -282,10 +272,6 @@ fun MainShell(
                                 )
                             }
                             firstLevel<AppRoute.Settings>(subNavController, topBarProgress, useLocalTopBarProvider = { useLocalTopBar }) { SettingsScreen() }
-                            firstLevel<AppRoute.Booking>(subNavController, topBarProgress, useLocalTopBarProvider = { useLocalTopBar }) {
-                                BookingScreen()
-                            }
-                            firstLevel<AppRoute.Booked>(subNavController, topBarProgress, useLocalTopBarProvider = { useLocalTopBar }) { BookedScreen() }
                             firstLevel<AppRoute.Taxes>(subNavController, topBarProgress, useLocalTopBarProvider = { useLocalTopBar }) { TaxesScreen() }
                             firstLevel<AppRoute.StudyPlan>(subNavController, topBarProgress, useLocalTopBarProvider = { useLocalTopBar }) { StudyPlanScreen() }
                             firstLevel<AppRoute.Isee>(subNavController, topBarProgress, useLocalTopBarProvider = { useLocalTopBar }) { IseeScreen() }

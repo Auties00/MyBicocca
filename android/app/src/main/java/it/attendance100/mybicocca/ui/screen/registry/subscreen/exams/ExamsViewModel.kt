@@ -1,4 +1,4 @@
-package it.attendance100.mybicocca.ui.screen.registry.subscreen.booked
+package it.attendance100.mybicocca.ui.screen.registry.subscreen.exams
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -7,12 +7,16 @@ import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.SyncStatus
 import it.attendance100.mybicocca.domain.model.career.CareerId
 import it.attendance100.mybicocca.domain.model.exam.BookedExam
+import it.attendance100.mybicocca.domain.model.exam.ExamCall
 import it.attendance100.mybicocca.domain.usecase.account.ObserveActiveAccountUseCase
 import it.attendance100.mybicocca.domain.usecase.exam.CancelBookingUseCase
 import it.attendance100.mybicocca.domain.usecase.exam.GetBookingsUseCase
+import it.attendance100.mybicocca.domain.usecase.exam.GetExamCallsUseCase
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.booked.state.BookedEvent
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.booked.state.CancelActionState
+import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -27,8 +31,12 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import javax.inject.Inject
 
+// Backs the unified Esami tab: booked exams (Esami prenotati) and bookable exam
+// calls (Esami prenotabili) are independent sources, exposed as independent
+// flows. The screen derives "prenotabili" by subtracting the booked keys.
 @HiltViewModel
-class BookedViewModel @Inject constructor(
+class ExamsViewModel @Inject constructor(
+    private val getExamCalls: GetExamCallsUseCase,
     private val getBookings: GetBookingsUseCase,
     private val cancelBooking: CancelBookingUseCase,
     observeActiveAccount: ObserveActiveAccountUseCase,
@@ -38,6 +46,9 @@ class BookedViewModel @Inject constructor(
         .map { it?.academic?.selectedCareerId }
         .distinctUntilChanged()
         .stateIn(viewModelScope, SharingStarted.Eagerly, null)
+
+    private val _examCalls = MutableStateFlow<Loadable<List<ExamCall>>>(Loadable.NotYetLoaded)
+    val examCalls: StateFlow<Loadable<List<ExamCall>>> = _examCalls.asStateFlow()
 
     private val _bookings = MutableStateFlow<Loadable<List<BookedExam>>>(Loadable.NotYetLoaded)
     val bookings: StateFlow<Loadable<List<BookedExam>>> = _bookings.asStateFlow()
@@ -61,15 +72,17 @@ class BookedViewModel @Inject constructor(
         }
     }
 
+    // Keeps the current lists visible while refreshing (used after a booking or cancellation).
     fun refresh() {
         val careerId = activeCareerId.value ?: return
         viewModelScope.launch { fetch(careerId) }
     }
 
-    // pull-to-refresh: invalidate the cached list so the screen falls back to its cold
+    // pull-to-refresh: invalidate both lists so the screen falls back to its cold
     // loading indicator while the new fetch is in flight.
     fun pullToRefresh() {
         val careerId = activeCareerId.value ?: return
+        _examCalls.value = Loadable.NotYetLoaded
         _bookings.value = Loadable.NotYetLoaded
         viewModelScope.launch { fetch(careerId) }
     }
@@ -84,12 +97,10 @@ class BookedViewModel @Inject constructor(
                 .onSuccess {
                     _cancelAction.value = CancelActionState.Idle
                     _events.trySend(BookedEvent.CancellationSucceeded)
-                    // Optimistic: drop the cancelled row locally so the user sees it gone
-                    // immediately. The next refresh re-confirms from the server.
+                    // Optimistic: drop the cancelled row so it reappears under "prenotabili"
+                    // immediately. The follow-up fetch re-confirms both lists from the server.
                     val current = (_bookings.value as? Loadable.Loaded)?.value.orEmpty()
                     _bookings.value = Loadable.Loaded(current.filterNot { it.identityKey() == booking.identityKey() })
-                    // And kick a background refresh so seat counts on the booking screen
-                    // can update too if the user navigates there.
                     fetch(careerId)
                 }
                 .onFailure { cause ->
@@ -103,18 +114,23 @@ class BookedViewModel @Inject constructor(
         if (!refreshMutex.tryLock()) return
         try {
             _syncStatus.value = SyncStatus.Refreshing
-            runCatching { getBookings(careerId) }.fold(
-                onSuccess = { list ->
-                    _bookings.value = Loadable.Loaded(list)
-                    _syncStatus.value = SyncStatus.Idle
-                },
-                onFailure = { cause -> _syncStatus.value = SyncStatus.Failed(cause) },
-            )
+            val (callsResult, bookingsResult) = coroutineScope {
+                val calls = async { runCatching { getExamCalls(careerId) } }
+                val booked = async { runCatching { getBookings(careerId) } }
+                calls.await() to booked.await()
+            }
+            callsResult.onSuccess { _examCalls.value = Loadable.Loaded(it) }
+            bookingsResult.onSuccess { _bookings.value = Loadable.Loaded(it) }
+            val failure = callsResult.exceptionOrNull() ?: bookingsResult.exceptionOrNull()
+            _syncStatus.value = if (failure != null) SyncStatus.Failed(failure) else SyncStatus.Idle
         } finally {
             refreshMutex.unlock()
         }
     }
 }
 
+// Stable identity for a booking across refreshes — used for list keys and for matching
+// the in-progress cancellation. applicationListId/studentId disambiguate two bookings
+// that share an exam-call key (rare, but possible across careers).
 internal fun BookedExam.identityKey(): String =
     "${key.courseOfStudyId}/${key.activityId}/${key.callId}/${applicationListId ?: studentId ?: 0}"

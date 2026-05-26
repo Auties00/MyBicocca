@@ -1,7 +1,6 @@
 package it.attendance100.mybicocca.ui.screen.registry.subscreen.booking.state
 
 import it.attendance100.mybicocca.domain.model.exam.ExamCall
-import java.time.LocalDate
 
 data class BookingCourseGroup(
     val courseKey: String,
@@ -26,20 +25,3 @@ fun List<ExamCall>.groupByCourse(): List<BookingCourseGroup> =
             calls = calls.sortedWith(compareBy(nullsLast()) { it.callDate }),
         )
     }.sortedBy { it.courseTitle.lowercase() }
-
-fun List<ExamCall>.imminent(today: LocalDate, limit: Int = 7): List<ExamCall> {
-    val withinHorizon = today.plusDays(ImminentHorizonDays)
-    return asSequence()
-        .filter { call ->
-            val closes = call.enrollmentWindow.closesAt ?: return@filter false
-            !closes.isBefore(today) && !closes.isAfter(withinHorizon)
-        }
-        .sortedWith(
-            compareBy<ExamCall> { it.enrollmentWindow.closesAt }
-                .thenBy(nullsLast()) { it.callDate },
-        )
-        .take(limit)
-        .toList()
-}
-
-private const val ImminentHorizonDays: Long = 21

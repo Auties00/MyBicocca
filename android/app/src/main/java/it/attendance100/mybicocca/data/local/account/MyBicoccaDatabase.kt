@@ -39,6 +39,12 @@ import it.attendance100.mybicocca.data.local.elearning.sync.ElearningSyncStateDa
 import it.attendance100.mybicocca.data.local.elearning.sync.ElearningSyncStateEntity
 import it.attendance100.mybicocca.data.local.elearning.video.VideoProgressDao
 import it.attendance100.mybicocca.data.local.elearning.video.VideoProgressEntity
+import it.attendance100.mybicocca.data.local.map.MapBuildingDao
+import it.attendance100.mybicocca.data.local.map.MapBuildingEntity
+import it.attendance100.mybicocca.data.local.map.MapRoomDao
+import it.attendance100.mybicocca.data.local.map.MapRoomEntity
+import it.attendance100.mybicocca.data.local.map.MapRoomSyncStateDao
+import it.attendance100.mybicocca.data.local.map.MapRoomSyncStateEntity
 import it.attendance100.mybicocca.data.local.transcript.TranscriptDao
 import it.attendance100.mybicocca.data.local.transcript.TranscriptRowEntity
 import it.attendance100.mybicocca.data.local.transcript.TranscriptStatsEntity
@@ -77,8 +83,11 @@ import it.attendance100.mybicocca.data.local.transcript.TranscriptSyncStateEntit
         TranscriptRowEntity::class,
         TranscriptStatsEntity::class,
         TranscriptSyncStateEntity::class,
+        MapBuildingEntity::class,
+        MapRoomEntity::class,
+        MapRoomSyncStateEntity::class,
     ],
-    version = 10,
+    version = 11,
     exportSchema = false,
 )
 abstract class MyBicoccaDatabase : RoomDatabase() {
@@ -98,4 +107,8 @@ abstract class MyBicoccaDatabase : RoomDatabase() {
     abstract fun elearningBadgeDao(): BadgeDao
     abstract fun elearningSyncStateDao(): ElearningSyncStateDao
     abstract fun elearningVideoProgressDao(): VideoProgressDao
+
+    abstract fun mapBuildingDao(): MapBuildingDao
+    abstract fun mapRoomDao(): MapRoomDao
+    abstract fun mapRoomSyncStateDao(): MapRoomSyncStateDao
 }
