@@ -129,7 +129,8 @@ fun MonthAgendaSheet(
     }
 
     val baseBottomMarginPx = lerp(bottomNavPx, 0f, progress.value)
-    val totalBottomMarginPx = (baseBottomMarginPx - slideOffPx * (1f - presence)).roundToInt()
+    val totalBottomMarginPx =
+        (baseBottomMarginPx - slideOffPx * (1f - presence)).coerceAtLeast(0f).roundToInt()
     val positionProvider = remember(totalBottomMarginPx) {
         AgendaPositionProvider(bottomMarginPx = totalBottomMarginPx)
     }
@@ -197,7 +198,9 @@ private fun AgendaSheetSurface(
         modifier = Modifier
             .fillMaxWidth()
             .layout { measurable, constraints ->
-                val heightPx = lerp(collapsedPx, expandedMaxPx, progressProvider()).roundToInt()
+                val heightPx =
+                    lerp(collapsedPx, expandedMaxPx, progressProvider()).coerceAtLeast(0f)
+                        .roundToInt()
                 val placeable = measurable.measure(
                     constraints.copy(minHeight = heightPx, maxHeight = heightPx),
                 )
@@ -411,8 +414,10 @@ private fun AgendaRow(
                             }
                             .layout { measurable, constraints ->
                                 val placeable = measurable.measure(constraints.copy(minHeight = 0))
-                                val expansion = tapExpansion.value * cardExpansionFactor(progressProvider())
-                                val h = (placeable.height * expansion).roundToInt()
+                                val expansion =
+                                    tapExpansion.value * cardExpansionFactor(progressProvider())
+                                val h =
+                                    (placeable.height * expansion).coerceAtLeast(0f).roundToInt()
                                 layout(placeable.width, h) { placeable.place(0, 0) }
                             },
                     ) {

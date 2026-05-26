@@ -1,7 +1,5 @@
 package it.attendance100.mybicocca.ui.screen.calendar.component
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.material3.MaterialTheme
@@ -11,11 +9,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.layoutId
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.unit.Dp
 import it.attendance100.mybicocca.domain.model.calendar.CalendarEvent
 import it.attendance100.mybicocca.ui.screen.calendar.ext.rememberCurrentTime
 import it.attendance100.mybicocca.ui.screen.calendar.ext.visibleWeekDays
@@ -25,35 +23,37 @@ import java.time.LocalDate
 @Composable
 fun WeekEventsLayer(
     weekStart: LocalDate,
-    selectedDay: LocalDate?,
     eventsByDay: Map<LocalDate, List<CalendarEvent>>,
     onEventClick: (CalendarEvent) -> Unit,
     modifier: Modifier = Modifier,
+    minuteHeight: Dp = TimelineMinuteHeightDefault,
 ) {
     val scheme = MaterialTheme.colorScheme
     val days = remember(weekStart) { visibleWeekDays(weekStart) }
     val now by rememberCurrentTime()
     val today = now.toLocalDate()
-    val pxPerMinute = with(LocalDensity.current) { TimelineMinuteHeight.toPx() }
+    val pxPerMinute = with(LocalDensity.current) { minuteHeight.toPx() }
     val perDay = remember(days, eventsByDay) {
         days.associateWith { layoutDay(eventsByDay[it].orEmpty()) }
     }
     val gridColor = scheme.outline.copy(alpha = 0.5f)
     val nowColor = scheme.primary
+    val oddGridAlpha = oddHourAlphaFor(minuteHeight)
 
     Layout(
         modifier = modifier
             .fillMaxWidth()
-            .height(TimelineHeight)
+            .height(timelineHeightFor(minuteHeight))
             .drawBehind {
                 val width = size.width
                 val firstLineMinute = ((TimelineWindowStart + 59) / 60) * 60
                 var minute = firstLineMinute
                 while (minute <= TimelineWindowEnd) {
                     val y = (minute - TimelineWindowStart) * pxPerMinute
-                    if (((minute / 60) % TimelineHourLabelStep) == 0) {
+                    val effectiveAlpha = if ((minute / 60) % 2 != 0) oddGridAlpha else 1f
+                    if (effectiveAlpha > 0f) {
                         drawLine(
-                            color = gridColor,
+                            color = gridColor.copy(alpha = gridColor.alpha * effectiveAlpha),
                             strokeWidth = 1f,
                             start = Offset(0f, y),
                             end = Offset(width, y),
@@ -69,20 +69,6 @@ fun WeekEventsLayer(
                 }
             },
         content = {
-            days.forEachIndexed { idx, day ->
-                val tint: Color = if (day == selectedDay) {
-                    scheme.primaryContainer.copy(alpha = 0.33f)
-                } else {
-                    Color.Transparent
-                }
-                if (tint != Color.Transparent) {
-                    Box(
-                        modifier = Modifier
-                            .background(tint)
-                            .layoutId(WeekColumnTag(idx)),
-                    )
-                }
-            }
             days.forEachIndexed { idx, day ->
                 val layout = perDay[day] ?: return@forEachIndexed
                 layout.items.forEach { item ->
@@ -106,10 +92,6 @@ fun WeekEventsLayer(
 
         measurables.forEach { m ->
             when (val tag = m.layoutId) {
-                is WeekColumnTag -> {
-                    val p = m.measure(Constraints.fixed(columnWidth.coerceAtLeast(1), height))
-                    positioned += Positioned(p, tag.dayIndex * columnWidth, 0)
-                }
                 is WeekEventTag -> {
                     val cardWidth = (columnWidth * tag.fracWidth).toInt() - 2
                     val cardHeight = ((tag.endMin - tag.startMin) * pxPerMinute).toInt() - 2
@@ -132,7 +114,6 @@ fun WeekEventsLayer(
     }
 }
 
-private data class WeekColumnTag(val dayIndex: Int)
 private data class WeekEventTag(
     val dayIndex: Int,
     val startMin: Int,

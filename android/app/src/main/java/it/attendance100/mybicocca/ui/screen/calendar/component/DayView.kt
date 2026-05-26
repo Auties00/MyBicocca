@@ -26,10 +26,13 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -42,9 +45,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import it.attendance100.mybicocca.domain.model.calendar.CalendarEvent
 import it.attendance100.mybicocca.ui.screen.calendar.ext.weekStartFor
+import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
 import kotlin.math.floor
+import kotlin.math.roundToInt
 
 private const val PAGER_ANCHOR = 5000
 private const val PAGER_COUNT = 10000
@@ -63,6 +68,8 @@ fun DayView(
     onSelectDay: (LocalDate) -> Unit,
     onEventClick: (CalendarEvent) -> Unit,
     modifier: Modifier = Modifier,
+    zoom: Float = TIMELINE_ZOOM_DEFAULT,
+    onZoomChange: (Float) -> Unit = {},
 ) {
     val anchorDay = remember { selectedDay }
     val anchorWeekStart = remember { weekStartFor(anchorDay) }
@@ -80,8 +87,18 @@ fun DayView(
         if (pageDay != selectedDay) onSelectDay(pageDay)
     }
 
+    val zoomRef = remember { mutableFloatStateOf(zoom) }
+    SideEffect { zoomRef.floatValue = zoom }
+
+    val minuteHeight = minuteHeightFor(zoom)
+    val timelineH = timelineHeightFor(minuteHeight)
+    val scroll = rememberScrollState()
+    val coroutineScope = rememberCoroutineScope()
+
     Column(modifier = modifier.fillMaxSize()) {
-        Row(modifier = Modifier.fillMaxWidth().padding(start = 14.dp, end = 14.dp)) {
+        Row(modifier = Modifier
+            .fillMaxWidth()
+            .padding(start = 14.dp, end = 14.dp)) {
             Spacer(Modifier.width(TimelineGutterWidth))
             DayStripCarousel(
                 eventsPagerState = eventsPagerState,
@@ -95,13 +112,22 @@ fun DayView(
         Row(
             modifier = Modifier
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState())
+                .verticalPinchZoom(currentZoom = { zoomRef.floatValue }) { newZoom, focalY, factor ->
+                    zoomRef.floatValue = newZoom  // sync immediately for the next gesture frame
+                    onZoomChange(newZoom)
+                    val newOffset = ((scroll.value + focalY) * factor - focalY)
+                        .roundToInt().coerceIn(0, scroll.maxValue)
+                    coroutineScope.launch { scroll.scrollTo(newOffset) }
+                }
+                .verticalScroll(scroll)
                 .padding(start = 14.dp, end = 14.dp, bottom = 12.dp),
         ) {
-            HourGutterColumn(modifier = Modifier.height(TimelineHeight))
+            HourGutterColumn(minuteHeight = minuteHeight, modifier = Modifier.height(timelineH))
             HorizontalPager(
                 state = eventsPagerState,
-                modifier = Modifier.weight(1f).height(TimelineHeight),
+                modifier = Modifier
+                    .weight(1f)
+                    .height(timelineH),
                 beyondViewportPageCount = 1,
             ) { page ->
                 val day = anchorDay.plusDays((page - PAGER_ANCHOR).toLong())
@@ -109,6 +135,7 @@ fun DayView(
                     selectedDay = day,
                     events = eventsByDay[day].orEmpty(),
                     onEventClick = onEventClick,
+                    minuteHeight = minuteHeight,
                 )
             }
         }
@@ -204,9 +231,10 @@ private fun DayStripCarousel(
                         val weekStart = anchorWeekStart.plusWeeks(weekIndex.toLong())
                         DayStrip(
                             weekStart = weekStart,
-                            selectedDay = null,
                             onSelect = onSelect,
-                            modifier = Modifier.width(stripDpWidth).height(StripRowHeight),
+                            modifier = Modifier
+                                .width(stripDpWidth)
+                                .height(StripRowHeight),
                             contentPadding = PaddingValues(0.dp),
                             leadingSpacerWidth = 0.dp,
                         )

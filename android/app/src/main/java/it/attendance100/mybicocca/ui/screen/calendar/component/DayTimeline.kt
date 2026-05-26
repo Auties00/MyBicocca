@@ -13,7 +13,7 @@ import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.layoutId
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Constraints
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.Dp
 import it.attendance100.mybicocca.domain.model.calendar.CalendarEvent
 import it.attendance100.mybicocca.ui.screen.calendar.ext.rememberCurrentTime
 import it.attendance100.mybicocca.ui.screen.calendar.state.layoutDay
@@ -25,21 +25,23 @@ fun DayEventsLayer(
     events: List<CalendarEvent>,
     onEventClick: (CalendarEvent) -> Unit,
     modifier: Modifier = Modifier,
+    minuteHeight: Dp = TimelineMinuteHeightDefault,
 ) {
     val layout = remember(events) { layoutDay(events) }
     val now by rememberCurrentTime()
     val scheme = MaterialTheme.colorScheme
     val gridColor = scheme.outline.copy(alpha = 0.5f)
     val nowColor = scheme.primary
-    val pxPerMinute = with(LocalDensity.current) { TimelineMinuteHeight.toPx() }
+    val pxPerMinute = with(LocalDensity.current) { minuteHeight.toPx() }
 
     val nowMinute = if (selectedDay == now.toLocalDate()) {
         now.toLocalTime().let { it.hour * 60 + it.minute }
     } else null
+    val oddGridAlpha = oddHourAlphaFor(minuteHeight)
 
     Layout(
         modifier = modifier
-            .height(TimelineHeight)
+            .height(timelineHeightFor(minuteHeight))
             .fillMaxWidth()
             .drawBehind {
                 val width = size.width
@@ -47,9 +49,10 @@ fun DayEventsLayer(
                 var minute = firstLineMinute
                 while (minute <= layout.endMinute) {
                     val y = (minute - layout.startMinute) * pxPerMinute
-                    if (((minute / 60) % TimelineHourLabelStep) == 0) {
+                    val effectiveAlpha = if ((minute / 60) % 2 != 0) oddGridAlpha else 1f
+                    if (effectiveAlpha > 0f) {
                         drawLine(
-                            color = gridColor,
+                            color = gridColor.copy(alpha = gridColor.alpha * effectiveAlpha),
                             strokeWidth = 1f,
                             start = Offset(0f, y),
                             end = Offset(width, y),
