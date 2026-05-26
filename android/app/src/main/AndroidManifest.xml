@@ -10,6 +10,10 @@
   <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
   <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
   <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+  <!-- Legacy write access; ignored on API 30+ (scoped storage), so capped to API 29. -->
+  <uses-permission
+          android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+          android:maxSdkVersion="29" />
 
   <application
     android:name=".MyBicoccaApplication"
@@ -22,6 +26,9 @@
     <meta-data
       android:name="com.google.android.geo.API_KEY"
       android:value="${MAPS_API_KEY}" />
+    <meta-data
+            android:name="com.google.android.gms.version"
+            android:value="@integer/google_play_services_version" />
 
     <activity
       android:name="it.attendance100.mybicocca.MyBicoccaActivity"
