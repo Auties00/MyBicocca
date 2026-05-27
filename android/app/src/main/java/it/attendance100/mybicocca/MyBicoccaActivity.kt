@@ -9,6 +9,8 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
 import it.attendance100.mybicocca.data.auth.SessionManager
 import it.attendance100.mybicocca.ui.navigation.AppRoot
@@ -16,6 +18,8 @@ import it.attendance100.mybicocca.ui.screen.elearning.subscreen.videoPlayer.play
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.videoPlayer.player.PipController
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.videoPlayer.player.PipState
 import it.attendance100.mybicocca.ui.theme.BicoccaTheme
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -32,8 +36,17 @@ class MyBicoccaActivity : ComponentActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        enableEdgeToEdge()
+        val splashscreen = installSplashScreen()
+        var keepSplashScreen = true
+
         super.onCreate(savedInstanceState)
+        splashscreen.setKeepOnScreenCondition { keepSplashScreen }
+        lifecycleScope.launch {
+            delay(100)
+            keepSplashScreen = false
+        }
+        enableEdgeToEdge()
+
         setContent {
             BicoccaTheme(dark = isSystemInDarkTheme()) {
                 CompositionLocalProvider(LocalPipController provides pipController) {
