@@ -35,6 +35,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.FloatState
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -52,18 +53,14 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.lerp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
-import it.attendance100.mybicocca.ui.theme.BicoccaWordmarkAccent
+import it.attendance100.mybicocca.ui.component.brand.MyBicoccaWordmark
 import java.io.File
 import kotlin.coroutines.cancellation.CancellationException
 
@@ -108,7 +105,10 @@ private fun MorphIcon(
 
 @Composable
 fun MyBicoccaTopBar(
-    progress: Animatable<Float, *>,
+    // Sub-page coverage, driven by the NavDisplay transition in MainShell (seeks with the gesture).
+    navProgress: FloatState,
+    // Search field open/close, scrubbed below by this bar's own predictive-back handler.
+    searchProgress: Animatable<Float, *>,
     canNavigateBack: Boolean,
     subPageTitle: String?,
     searchState: TopBarSearchState,
@@ -135,7 +135,6 @@ fun MyBicoccaTopBar(
         isSubPage -> BarMode.SUB_PAGE
         else -> BarMode.PAGE
     }
-    val expanded = mode != BarMode.PAGE
 
     fun closeSearch() {
         searchState.onActiveChange(false)
@@ -147,10 +146,12 @@ fun MyBicoccaTopBar(
     val motion = MaterialTheme.motionScheme
     val barSpec = remember(motion) { motion.defaultSpatialSpec<Float>() }
 
-    LaunchedEffect(expanded) {
-        val target = if (expanded) 1f else 0f
-        if (progress.value != target) {
-            progress.animateTo(target, barSpec)
+    // Only the search half is animated here; sub-page coverage rides navProgress (the NavDisplay
+    // transition) so it stays in sync with the page slide and the predictive-back gesture.
+    LaunchedEffect(searchState.active) {
+        val target = if (searchState.active) 1f else 0f
+        if (searchProgress.value != target) {
+            searchProgress.animateTo(target, barSpec)
         }
     }
 
@@ -158,12 +159,12 @@ fun MyBicoccaTopBar(
         try {
             keyboardController?.hide()
             backProgress.collect { event ->
-                progress.snapTo(1f - (event.progress / MaxBackProgress).coerceIn(0f, 1f))
+                searchProgress.snapTo(1f - (event.progress / MaxBackProgress).coerceIn(0f, 1f))
             }
-            progress.animateTo(0f, barSpec)
+            searchProgress.animateTo(0f, barSpec)
             closeSearch()
         } catch (_: CancellationException) {
-            progress.animateTo(1f, barSpec)
+            searchProgress.animateTo(1f, barSpec)
         }
     }
 
@@ -171,7 +172,8 @@ fun MyBicoccaTopBar(
         if (searchState.active) focusRequester.requestFocus()
     }
 
-    val p = progress.value
+    // The chrome morphs on whichever driver is further along; the two never overlap in practice.
+    val p = maxOf(navProgress.floatValue, searchProgress.value)
     val cornerRadius = lerp(32.dp, 0.dp, p)
     val outerHorizontalPadding = lerp(20.dp, 0.dp, p)
     val outerTopPadding = lerp(8.dp, 0.dp, p)
@@ -320,14 +322,13 @@ private fun LeadingSlot(
 
 @Composable
 private fun WordmarkContent(alpha: Float) {
-    val scheme = MaterialTheme.colorScheme
-    // Horizontal position comes from the parent's shared BiasAlignment; this only owns its
-    // fade-through alpha and the incoming 92% -> 100% scale.
-    Text(
-        text = wordmark(scheme.onSurface, BicoccaWordmarkAccent),
+    // Horizontal position comes from the parent's shared BiasAlignment; the passed modifier owns
+    // the collapse/expand fade-through alpha + scale. sharedElement = true makes this the landing
+    // target for the splash wordmark's flight (the shared-bounds modifier is applied inside the
+    // component, outside this one) and is inert once that startup transition has settled.
+    MyBicoccaWordmark(
         fontSize = 21.sp,
-        fontWeight = FontWeight.SemiBold,
-        maxLines = 1,
+        sharedElement = true,
         modifier = Modifier.graphicsLayer { fadeThroughLayer(alpha) },
     )
 }
@@ -489,9 +490,3 @@ private fun AvatarSlot(
         }
     }
 }
-
-private fun wordmark(myColor: Color, bicoccaColor: Color): AnnotatedString =
-    buildAnnotatedString {
-        withStyle(SpanStyle(color = myColor)) { append("My") }
-        withStyle(SpanStyle(color = bicoccaColor)) { append("Bicocca") }
-    }

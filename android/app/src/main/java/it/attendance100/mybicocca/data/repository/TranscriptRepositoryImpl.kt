@@ -82,14 +82,20 @@ class TranscriptRepositoryImpl @Inject constructor(
         if (!force && !isStale(careerId)) return
 
         val esse3 = sessionManager.esse3()
-        val (rowsDto, statsDto) = coroutineScope {
+        val (rowsDto, statsDto, averagesDto) = coroutineScope {
             val rowsAsync = async { esse3.transcript.getRecordBookRows(matId) }
             val statsAsync = async { esse3.transcript.getRecordBookStats(matId) }
-            rowsAsync.await() to statsAsync.await()
+            // The /stats endpoint returns an empty `medie` for some careers, so the averages
+            // come from the dedicated endpoint and are merged in below.
+            val averagesAsync = async {
+                runCatching { esse3.transcript.getRecordBookAverages(matId) }.getOrDefault(emptyList())
+            }
+            Triple(rowsAsync.await(), statsAsync.await(), averagesAsync.await())
         }
 
+        val effectiveStats = if (statsDto.averages.isEmpty()) statsDto.copy(averages = averagesDto) else statsDto
         val rowEntities = rowsDto.map { it.toEntity(careerId) }
-        val statsEntity = statsDto.toEntity(careerId)
+        val statsEntity = effectiveStats.toEntity(careerId)
         dao.replaceAll(careerId.value, rowEntities, statsEntity)
         syncStateDao.upsertState(
             TranscriptSyncStateEntity(

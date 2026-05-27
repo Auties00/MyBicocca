@@ -8,10 +8,10 @@ import it.attendance100.mybicocca.data.local.elearning.sync.ElearningJson
 import it.attendance100.mybicocca.data.local.elearning.sync.ElearningSyncScope
 import it.attendance100.mybicocca.data.local.elearning.sync.ElearningSyncStateDao
 import it.attendance100.mybicocca.data.local.elearning.sync.ElearningSyncStateEntity
-import it.attendance100.mybicocca.data.mapper.SubmissionStatusJson
-import it.attendance100.mybicocca.data.mapper.toDomain
-import it.attendance100.mybicocca.data.mapper.toEntity
-import it.attendance100.mybicocca.data.mapper.toSubmissionStatusJson
+import it.attendance100.mybicocca.data.mapper.elearning.SubmissionStatusJson
+import it.attendance100.mybicocca.data.mapper.elearning.toDomain
+import it.attendance100.mybicocca.data.mapper.elearning.toEntity
+import it.attendance100.mybicocca.data.mapper.elearning.toSubmissionStatusJson
 import it.attendance100.mybicocca.di.ApplicationScope
 import it.attendance100.mybicocca.domain.model.account.AccountId
 import it.attendance100.mybicocca.domain.model.elearning.assignment.Assignment

@@ -2,6 +2,7 @@ package it.attendance100.mybicocca.data.auth
 
 import android.content.SharedPreferences
 import androidx.core.content.edit
+import dagger.Lazy
 import it.attendance100.mybicocca.data.local.credentials.CredentialsStore
 import it.attendance100.mybicocca.domain.model.account.AccountId
 import kotlinx.coroutines.Dispatchers
@@ -16,7 +17,9 @@ import javax.inject.Singleton
 // exists only to skip the SAML / login dance on warm starts and across rotations.
 @Singleton
 class SessionCache @Inject constructor(
-    @Named(CredentialsStore.EncryptedPrefsName) private val prefs: SharedPreferences,
+    // Lazy: shares the encrypted prefs with CredentialsStore; deferring get() to first access (always on
+    // Dispatchers.IO below) keeps EncryptedSharedPreferences.create() off the cold-start main thread.
+    @Named(CredentialsStore.EncryptedPrefsName) private val prefs: Lazy<SharedPreferences>,
 ) {
 
     private val mutex = Mutex()
@@ -31,7 +34,7 @@ class SessionCache @Inject constructor(
         val updated = loadLocked(accountId).transform()
         tokens[accountId] = updated
         withContext(Dispatchers.IO) {
-            prefs.edit {
+            prefs.get().edit {
                 writeString(wsTokenKey(accountId), updated.wsToken)
                 writeString(moodleSessionCookieKey(accountId), updated.moodleSessionCookie)
                 writeString(jwtKey(accountId), updated.jwt)
@@ -43,7 +46,7 @@ class SessionCache @Inject constructor(
     suspend fun delete(accountId: AccountId): Unit = mutex.withLock {
         tokens.remove(accountId)
         withContext(Dispatchers.IO) {
-            prefs.edit {
+            prefs.get().edit {
                 remove(wsTokenKey(accountId))
                 remove(moodleSessionCookieKey(accountId))
                 remove(jwtKey(accountId))
@@ -54,10 +57,11 @@ class SessionCache @Inject constructor(
     private suspend fun loadLocked(accountId: AccountId): SessionTokens {
         tokens[accountId]?.let { return it }
         val loaded = withContext(Dispatchers.IO) {
+            val store = prefs.get()
             SessionTokens(
-                wsToken = prefs.getString(wsTokenKey(accountId), null),
-                moodleSessionCookie = prefs.getString(moodleSessionCookieKey(accountId), null),
-                jwt = prefs.getString(jwtKey(accountId), null),
+                wsToken = store.getString(wsTokenKey(accountId), null),
+                moodleSessionCookie = store.getString(moodleSessionCookieKey(accountId), null),
+                jwt = store.getString(jwtKey(accountId), null),
             )
         }
         tokens[accountId] = loaded

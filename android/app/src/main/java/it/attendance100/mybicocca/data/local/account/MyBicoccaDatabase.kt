@@ -87,7 +87,7 @@ import it.attendance100.mybicocca.data.local.transcript.TranscriptSyncStateEntit
         MapRoomEntity::class,
         MapRoomSyncStateEntity::class,
     ],
-    version = 11,
+    version = 13,
     exportSchema = false,
 )
 abstract class MyBicoccaDatabase : RoomDatabase() {

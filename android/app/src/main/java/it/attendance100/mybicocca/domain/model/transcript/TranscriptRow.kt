@@ -15,4 +15,5 @@ data class TranscriptRow(
     val cumLaude: Boolean,
     val examDate: LocalDate?,
     val academicYear: Int?,
+    val inStudyPlan: Boolean,
 )

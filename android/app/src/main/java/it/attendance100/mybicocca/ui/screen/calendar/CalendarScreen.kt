@@ -56,6 +56,9 @@ import it.attendance100.mybicocca.ui.screen.calendar.theme.ProvideEventPalette
 fun CalendarScreen(
     modifier: Modifier = Modifier,
     searchQuery: String = "",
+    // True only while this is the visible tab. The shell keeps all tabs composed (pager cache),
+    // so the filter chrome must be (re)claimed on activation rather than once on composition.
+    isActive: Boolean = true,
     onProvideFilterToggle: ((() -> Unit)?) -> Unit = {},
     bottomNavBarPadding: PaddingValues,
     viewModel: CalendarViewModel = hiltViewModel(),
@@ -72,8 +75,8 @@ fun CalendarScreen(
 
     val snackbar = LocalAppSnackbarController.current
 
-    // No filter chips in v1; clear any registration the previous tab left.
-    LaunchedEffect(Unit) { onProvideFilterToggle(null) }
+    // No filter chips in v1; clear any registration the previous tab left when we become active.
+    LaunchedEffect(isActive) { if (isActive) onProvideFilterToggle(null) }
 
     LaunchedEffect(Unit) {
         viewModel.oneShotEvents.collect { event ->

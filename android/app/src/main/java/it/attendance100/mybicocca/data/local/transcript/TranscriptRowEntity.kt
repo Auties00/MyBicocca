@@ -25,4 +25,6 @@ data class TranscriptRowEntity(
     // ISO-8601 (yyyy-MM-dd) so lexicographic ORDER BY = chronological.
     @ColumnInfo(name = "exam_date") val examDate: String?,
     @ColumnInfo(name = "academic_year") val academicYear: Int?,
+    // false for supernumerary (sovrannumerarie) activities not counted in the study plan.
+    @ColumnInfo(name = "in_study_plan") val inStudyPlan: Boolean,
 )

@@ -8,8 +8,8 @@ import it.attendance100.mybicocca.data.local.elearning.message.MessageEntity
 import it.attendance100.mybicocca.data.local.elearning.sync.ElearningSyncScope
 import it.attendance100.mybicocca.data.local.elearning.sync.ElearningSyncStateDao
 import it.attendance100.mybicocca.data.local.elearning.sync.ElearningSyncStateEntity
-import it.attendance100.mybicocca.data.mapper.toDomain
-import it.attendance100.mybicocca.data.mapper.toProjection
+import it.attendance100.mybicocca.data.mapper.elearning.toDomain
+import it.attendance100.mybicocca.data.mapper.elearning.toProjection
 import it.attendance100.mybicocca.di.ApplicationScope
 import it.attendance100.mybicocca.domain.model.account.AccountId
 import it.attendance100.mybicocca.domain.model.elearning.message.Conversation

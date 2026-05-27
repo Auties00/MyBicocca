@@ -3,7 +3,7 @@ package it.attendance100.mybicocca.data.repository
 import it.attendance100.mybicocca.data.auth.SessionManager
 import it.attendance100.mybicocca.data.local.elearning.video.VideoProgressDao
 import it.attendance100.mybicocca.data.local.elearning.video.VideoProgressEntity
-import it.attendance100.mybicocca.data.mapper.toDomain
+import it.attendance100.mybicocca.data.mapper.elearning.toDomain
 import it.attendance100.mybicocca.data.remote.elearning.api.ElearningKalturaApi
 import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningKalturaEntryIdResponse
 import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningKalturaVideoStreamResponse

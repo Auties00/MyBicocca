@@ -60,11 +60,15 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import javax.inject.Inject
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedFactory
+import dagger.assisted.AssistedInject
+import it.attendance100.mybicocca.ui.navigation.AppRoute
 
 @OptIn(ExperimentalCoroutinesApi::class, UnstableApi::class)
-@HiltViewModel
-class VideoPlayerViewModel @Inject constructor(
+@HiltViewModel(assistedFactory = VideoPlayerViewModel.Factory::class)
+class VideoPlayerViewModel @AssistedInject constructor(
+    @Assisted private val key: AppRoute.VideoPlayback,
     @ApplicationContext private val context: Context,
     savedState: SavedStateHandle,
     observeActiveAccount: ObserveActiveAccountUseCase,
@@ -74,13 +78,14 @@ class VideoPlayerViewModel @Inject constructor(
     private val saveVideoProgress: SaveVideoProgressUseCase,
 ) : ViewModel() {
 
-    private val courseId: CourseId = CourseId(
-        savedState.get<Int>(KEY_COURSE_ID)
-            ?: error("VideoPlayerViewModel requires a $KEY_COURSE_ID arg")
-    )
+    @AssistedFactory
+    interface Factory {
+        fun create(key: AppRoute.VideoPlayback): VideoPlayerViewModel
+    }
 
-    private val initialCmId: Int = savedState.get<Int>(KEY_CM_ID)
-        ?: error("VideoPlayerViewModel requires a $KEY_CM_ID arg")
+    private val courseId: CourseId = CourseId(key.courseId)
+
+    private val initialCmId: Int = key.cmId
 
     private val activeAccountId: Flow<AccountId?> = observeActiveAccount()
         .map { it?.id }

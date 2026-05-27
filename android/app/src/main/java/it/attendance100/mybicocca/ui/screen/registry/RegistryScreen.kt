@@ -29,12 +29,13 @@ fun RegistryScreen(
     bookableExamsViewModel: BookableExamsViewModel,
     taxesViewModel: TaxesViewModel,
     onOpenTaxDetail: (Long) -> Unit,
-    onOpenIsee: () -> Unit,
     modifier: Modifier = Modifier,
     searchQuery: String = "",
+    // True only while this is the visible tab — see CalendarScreen for the pager-cache rationale.
+    isActive: Boolean = true,
     onProvideFilterToggle: ((() -> Unit)?) -> Unit = {},
 ) {
-    LaunchedEffect(Unit) { onProvideFilterToggle(null) }
+    LaunchedEffect(isActive) { if (isActive) onProvideFilterToggle(null) }
 
     val tabs = RegistryTab.entries
     val pagerState = rememberPagerState(pageCount = { tabs.size })
@@ -60,7 +61,6 @@ fun RegistryScreen(
                 RegistryTab.Taxes -> TaxesScreen(
                     viewModel = taxesViewModel,
                     onOpenDetail = onOpenTaxDetail,
-                    onOpenIsee = onOpenIsee,
                 )
                 // Remaining pages wired later.
                 else -> RegistryTabPage(tab = tabs[page])

@@ -2,7 +2,7 @@ package it.attendance100.mybicocca.data.repository
 
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.time.StalePolicy
-import it.attendance100.mybicocca.data.local.campus.CampusGeometrySource
+import it.attendance100.mybicocca.data.local.map.BuildingCatalogSource
 import it.attendance100.mybicocca.data.local.map.MapBuildingDao
 import it.attendance100.mybicocca.data.local.map.MapRoomDao
 import it.attendance100.mybicocca.data.local.map.MapRoomSyncStateDao
@@ -27,7 +27,7 @@ import javax.inject.Singleton
 @Singleton
 class MapRepositoryImpl @Inject constructor(
     private val easyStaffApi: EasyStaffApi,
-    private val campusGeometry: CampusGeometrySource,
+    private val buildingCatalog: BuildingCatalogSource,
     private val buildingDao: MapBuildingDao,
     private val roomDao: MapRoomDao,
     private val syncStateDao: MapRoomSyncStateDao,
@@ -47,9 +47,11 @@ class MapRepositoryImpl @Inject constructor(
             .flowOn(Dispatchers.Default)
 
     override suspend fun refreshBuildings() {
-        // The asset is static — seed once and leave it; nothing remote to re-pull.
-        if (buildingDao.count() > 0) return
-        buildingDao.upsertAll(campusGeometry.loadBuildings().map { it.toEntity() })
+        // Buildings come entirely from the bundled catalog (no remote call). Re-seeded on every
+        // launch so edits to buildings.json take effect; guarded so a read failure never wipes
+        // an already-populated table.
+        val catalog = runCatching { buildingCatalog.load() }.getOrDefault(emptyList())
+        if (catalog.isNotEmpty()) buildingDao.upsertAll(catalog.map { it.toEntity() })
     }
 
     override suspend fun refreshRooms(buildingCode: BuildingCode) {

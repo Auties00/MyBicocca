@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "buildings": [
+    { "code": "U01", "name": "ATLAS ex U1", "latitude": 45.5133377, "longitude": 9.2112416, "category": "TEACHING", "address": "Piazza della Scienza, Milano" },
+    { "code": "U02", "name": "QUANTUM ex U2", "latitude": 45.5134912, "longitude": 9.2098814, "category": "TEACHING", "address": "Piazza della Scienza, Milano" },
+    { "code": "U03", "name": "BIOS ex U3", "latitude": 45.5136892, "longitude": 9.2098930, "category": "TEACHING", "address": "Piazza della Scienza, Milano" },
+    { "code": "U04", "name": "TELLUS ex U4", "latitude": 45.5141215, "longitude": 9.2086619, "category": "TEACHING", "address": "Piazza della Scienza, Milano" },
+    { "code": "U05-MATERIALI", "name": "RATIO ex U5", "latitude": 45.5122310, "longitude": 9.2111399, "category": "TEACHING", "address": "Via Roberto Cozzi 55, Milano" },
+    { "code": "U06", "name": "AGORA' ex U6", "latitude": 45.5184319, "longitude": 9.2126705, "category": "ADMIN", "address": "Piazza dell'Ateneo Nuovo 1, Milano" },
+    { "code": "U07", "name": "CIVITAS ex U7", "latitude": 45.5174000, "longitude": 9.2109113, "category": "TEACHING", "address": "Via Bicocca degli Arcimboldi 8, Milano" },
+    { "code": "U08", "name": "ASCLEPIO ex U8", "latitude": 45.6038746, "longitude": 9.2588509, "category": "TEACHING", "address": "Via Cadore 48, Monza" },
+    { "code": "U09", "name": "KOINE' ex U9", "latitude": 45.5111442, "longitude": 9.2090374, "category": "TEACHING", "address": "Viale dell'Innovazione 10, Milano" },
+    { "code": "U14", "name": "ABACUS ex U14", "latitude": 45.5236553, "longitude": 9.2174781, "category": "TEACHING", "address": "Viale Sarca 336, Milano" },
+    { "code": "U16", "name": "MAIEUTICA ex U16", "latitude": 45.5239972, "longitude": 9.2064406, "category": "TEACHING", "address": "Piazza dell'Ateneo Nuovo 1, Milano" },
+    { "code": "U18", "name": "YGEIA ex U18", "latitude": 45.6045061, "longitude": 9.2605632, "category": "TEACHING", "address": "Via Cadore, Monza" },
+    { "code": "U24", "name": "ZIFERA ex U24", "latitude": 45.5238048, "longitude": 9.2198874, "category": "TEACHING", "address": "Viale Sarca, Milano" },
+    { "code": "U26", "name": "AGON (PalaBicocca) ex U26", "latitude": 45.5259241, "longitude": 9.2108797, "category": "SPORT", "address": "Via Raffaello Giolli 7A, Milano" },
+    { "code": "U28", "name": "KYTOS ex U28", "latitude": 45.6053218, "longitude": 9.2595075, "category": "TEACHING", "address": "Via Cadore, Monza" },
+    { "code": "U38", "name": "VILLA SERENA ex U38", "latitude": 45.6024754, "longitude": 9.2607768, "category": "TEACHING", "address": "Via Pergolesi, Monza" },
+    { "code": "U-BG", "name": "Sede di Bergamo (Nini da Fano)", "latitude": 45.6908253, "longitude": 9.6331909, "category": "TEACHING", "address": "Via Alessandro Ninì da Fano 11, Bergamo" },
+    { "code": "U-MB", "name": "Istituti Clinici Zucchi - Villa Maria (Carate Brianza)", "latitude": 45.6762710, "longitude": 9.2393697, "category": "TEACHING", "address": "Piazza Madonnina 1, Carate Brianza" }
+  ]
+}

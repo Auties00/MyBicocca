@@ -72,6 +72,8 @@ import java.net.UnknownHostException
 fun ElearningScreen(
     modifier: Modifier = Modifier,
     searchQuery: String = "",
+    // True only while this is the visible tab — see CalendarScreen for the pager-cache rationale.
+    isActive: Boolean = true,
     onProvideFilterToggle: ((() -> Unit)?) -> Unit = {},
     onOpenCourse: (CourseId) -> Unit = {},
     onOpenAssignment: (CourseId, AssignmentId) -> Unit = { _, _ -> },
@@ -89,7 +91,7 @@ fun ElearningScreen(
     var addSheetVisible by rememberSaveable { mutableStateOf(false) }
 
     LaunchedEffect(searchQuery) { viewModel.setSearch(searchQuery) }
-    LaunchedEffect(Unit) { onProvideFilterToggle(null) }
+    LaunchedEffect(isActive) { if (isActive) onProvideFilterToggle(null) }
 
     LaunchedEffect(viewModel) {
         viewModel.oneShotEvents.collectLatest { event ->
@@ -155,7 +157,7 @@ fun ElearningScreen(
                 onClick = { addSheetVisible = true },
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
-                    .padding(end = 20.dp, bottom = 24.dp),
+                    .padding(16.dp),
             )
         }
     }

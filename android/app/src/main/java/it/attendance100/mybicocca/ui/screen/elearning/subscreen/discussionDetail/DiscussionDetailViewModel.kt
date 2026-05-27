@@ -31,11 +31,15 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import javax.inject.Inject
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedFactory
+import dagger.assisted.AssistedInject
+import it.attendance100.mybicocca.ui.navigation.AppRoute
 
 @OptIn(ExperimentalCoroutinesApi::class)
-@HiltViewModel
-class DiscussionDetailViewModel @Inject constructor(
+@HiltViewModel(assistedFactory = DiscussionDetailViewModel.Factory::class)
+class DiscussionDetailViewModel @AssistedInject constructor(
+    @Assisted private val key: AppRoute.DiscussionDetail,
     private val savedState: SavedStateHandle,
     observeActiveAccount: ObserveActiveAccountUseCase,
     private val observePosts: ObservePostsUseCase,
@@ -43,10 +47,12 @@ class DiscussionDetailViewModel @Inject constructor(
     private val replyToPost: ReplyToPostUseCase,
 ) : ViewModel() {
 
-    private val discussionId: DiscussionId = DiscussionId(
-        savedState.get<Int>(KEY_DISCUSSION_ID)
-            ?: error("DiscussionDetailViewModel requires $KEY_DISCUSSION_ID")
-    )
+    @AssistedFactory
+    interface Factory {
+        fun create(key: AppRoute.DiscussionDetail): DiscussionDetailViewModel
+    }
+
+    private val discussionId: DiscussionId = DiscussionId(key.discussionId)
 
     val replyTarget: StateFlow<PostId?> = savedState
         .getStateFlow<Int?>(KEY_REPLY_TARGET, null)

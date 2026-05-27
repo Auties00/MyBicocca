@@ -25,6 +25,9 @@ class RootViewModel @Inject constructor(
     private val _pendingPickFor = MutableStateFlow<AccountId?>(null)
     private val _addingFor = MutableStateFlow<Account?>(null)
 
+    // Loading is only the initial value before observeActiveAccount() first emits. The visible splash
+    // (OS splash + the Compose SplashRevealOverlay) is driven by the Activity, not by a timed Loading
+    // phase, so there is no artificial minimum hold here — the app resolves and reveals as soon as it can.
     val phase: StateFlow<RootPhase> = combine(
         observeActiveAccount(),
         _pendingPickFor,

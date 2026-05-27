@@ -49,7 +49,9 @@ class MapViewModel @Inject constructor(
     private val _categoryFilter = MutableStateFlow<Set<BuildingCategory>>(emptySet())
     val categoryFilter: StateFlow<Set<BuildingCategory>> = _categoryFilter.asStateFlow()
 
-    private val allBuildings: StateFlow<Loadable<List<MapBuilding>>> =
+    // The full, unfiltered catalog — used by the "Visualizza edifici" list. (`buildings` below
+    // is the search/category-narrowed view used for map pins.)
+    val allBuildings: StateFlow<Loadable<List<MapBuilding>>> =
         observeBuildings()
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STATE_KEEP_ALIVE_MS), Loadable.NotYetLoaded)
 
@@ -138,10 +140,6 @@ class MapViewModel @Inject constructor(
                     oneShotChannel.trySend(MapOneShotEvent.RefreshFailed(it))
                 }
         }
-    }
-
-    fun reportLocationPermissionDenied() {
-        oneShotChannel.trySend(MapOneShotEvent.LocationPermissionDenied)
     }
 
     private companion object {

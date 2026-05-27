@@ -1,144 +1,110 @@
 package it.attendance100.mybicocca.ui.screen.registry.subscreen.taxes
 
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.CloudOff
 import androidx.compose.material.icons.outlined.ReceiptLong
+import androidx.compose.material.icons.outlined.Savings
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FilledTonalButton
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.SyncStatus
-import it.attendance100.mybicocca.core.state.valueOrNull
 import it.attendance100.mybicocca.ui.component.feedback.EmptyState
-import it.attendance100.mybicocca.ui.screen.registry.subscreen.taxes.component.IseeEntryCard
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.isee.IseeSheet
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.taxes.component.TaxInvoiceCard
-import it.attendance100.mybicocca.ui.screen.registry.subscreen.taxes.component.TaxSummaryCard
-import it.attendance100.mybicocca.ui.screen.registry.subscreen.taxes.state.TaxFilter
-import it.attendance100.mybicocca.ui.screen.registry.subscreen.taxes.state.label
-import it.attendance100.mybicocca.ui.screen.registry.subscreen.taxes.state.matches
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TaxesScreen(
     viewModel: TaxesViewModel,
     onOpenDetail: (Long) -> Unit,
-    onOpenIsee: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val invoicesState by viewModel.invoices.collectAsStateWithLifecycle()
-    val summaryState by viewModel.summary.collectAsStateWithLifecycle()
-    val iseeState by viewModel.isee.collectAsStateWithLifecycle()
     val syncStatus by viewModel.syncStatus.collectAsStateWithLifecycle()
-    var filter by rememberSaveable { mutableStateOf(TaxFilter.ALL) }
+    var showIsee by remember { mutableStateOf(false) }
 
-    PullToRefreshBox(
-        isRefreshing = syncStatus is SyncStatus.Refreshing,
-        onRefresh = viewModel::refresh,
-        modifier = modifier.fillMaxSize(),
-    ) {
-        when (val snapshot = invoicesState) {
-            Loadable.NotYetLoaded -> Centered {
-                when (val status = syncStatus) {
-                    is SyncStatus.Failed -> EmptyState(
-                        icon = Icons.Outlined.CloudOff,
-                        title = "Caricamento non riuscito",
-                        body = status.cause.taxFriendlyMessage(),
-                        action = { FilledTonalButton(onClick = viewModel::refresh) { Text("Riprova") } },
-                    )
-                    else -> CircularProgressIndicator()
-                }
-            }
-
-            is Loadable.Loaded -> {
-                val invoices = snapshot.value
-                val shown = remember(filter, invoices) {
-                    invoices.filter { filter.matches(it.status) }
-                }
-                val latestIsee = remember(iseeState) {
-                    iseeState.valueOrNull()
-                        ?.filter { it.isee != null }
-                        ?.maxByOrNull { it.academicYearEnrollmentId ?: 0L }
-                }
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp),
-                ) {
-                    summaryState.valueOrNull()?.let { summary ->
-                        item { TaxSummaryCard(summary) }
+    Box(modifier = modifier.fillMaxSize()) {
+        PullToRefreshBox(
+            isRefreshing = syncStatus is SyncStatus.Refreshing,
+            onRefresh = viewModel::refresh,
+            modifier = Modifier.fillMaxSize(),
+        ) {
+            when (val snapshot = invoicesState) {
+                Loadable.NotYetLoaded -> Centered {
+                    when (val status = syncStatus) {
+                        is SyncStatus.Failed -> EmptyState(
+                            icon = Icons.Outlined.CloudOff,
+                            title = "Caricamento non riuscito",
+                            body = status.cause.taxFriendlyMessage(),
+                            action = { FilledTonalButton(onClick = viewModel::refresh) { Text("Riprova") } },
+                        )
+                        else -> CircularProgressIndicator()
                     }
-                    item { IseeEntryCard(declaration = latestIsee, onClick = onOpenIsee) }
-                    item { TaxFilterRow(selected = filter, onSelect = { filter = it }) }
+                }
 
-                    when {
-                        invoices.isEmpty() -> item { InlineHint("Nessuna tassa registrata.") }
-                        shown.isEmpty() -> item { InlineHint("Nessuna tassa per questo filtro.") }
-                        else -> items(items = shown, key = { it.id.value }) { invoice ->
-                            TaxInvoiceCard(invoice = invoice, onClick = { onOpenDetail(invoice.id.value) })
+                is Loadable.Loaded -> {
+                    val invoices = snapshot.value
+                    if (invoices.isEmpty()) {
+                        Centered {
+                            EmptyState(
+                                icon = Icons.Outlined.ReceiptLong,
+                                title = "Nessuna tassa",
+                                body = "Non risultano fatture per la tua carriera.",
+                            )
+                        }
+                    } else {
+                        LazyColumn(
+                            modifier = Modifier.fillMaxSize(),
+                            // Bottom inset clears the ISEE FAB.
+                            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 96.dp),
+                            verticalArrangement = Arrangement.spacedBy(12.dp),
+                        ) {
+                            items(items = invoices, key = { it.id.value }) { invoice ->
+                                TaxInvoiceCard(
+                                    invoice = invoice,
+                                    onClick = { onOpenDetail(invoice.id.value) },
+                                )
+                            }
                         }
                     }
                 }
             }
         }
-    }
-}
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun TaxFilterRow(selected: TaxFilter, onSelect: (TaxFilter) -> Unit) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .horizontalScroll(rememberScrollState()),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        TaxFilter.entries.forEach { entry ->
-            FilterChip(
-                selected = entry == selected,
-                onClick = { onSelect(entry) },
-                label = { Text(entry.label) },
-            )
-        }
+        ExtendedFloatingActionButton(
+            text = { Text("ISEE") },
+            icon = { Icon(Icons.Outlined.Savings, contentDescription = null) },
+            onClick = { showIsee = true },
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(16.dp),
+        )
     }
-}
 
-@Composable
-private fun InlineHint(text: String) {
-    Text(
-        text = text,
-        style = MaterialTheme.typography.bodyMedium,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        textAlign = TextAlign.Center,
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 32.dp),
-    )
+    if (showIsee) {
+        IseeSheet(viewModel = viewModel, onDismiss = { showIsee = false })
+    }
 }
 
 // Centers content while remaining vertically scrollable so pull-to-refresh works.
