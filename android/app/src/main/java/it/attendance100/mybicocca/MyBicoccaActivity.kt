@@ -16,7 +16,6 @@ import androidx.compose.ui.unit.IntRect
 import androidx.core.graphics.createBitmap
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.doOnPreDraw
-import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
 import it.attendance100.mybicocca.data.auth.SessionManager
 import it.attendance100.mybicocca.ui.navigation.AppRoot
@@ -26,8 +25,6 @@ import it.attendance100.mybicocca.ui.screen.elearning.subscreen.videoPlayer.play
 import it.attendance100.mybicocca.ui.screen.splash.SplashIconSnapshot
 import it.attendance100.mybicocca.ui.screen.splash.SplashRevealController
 import it.attendance100.mybicocca.ui.theme.BicoccaTheme
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -47,7 +44,6 @@ class MyBicoccaActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         val splashScreen = installSplashScreen()
-        var keepSplashScreen = true
 
         super.onCreate(savedInstanceState)
 
@@ -62,12 +58,6 @@ class MyBicoccaActivity : ComponentActivity() {
                 }
                 window.decorView.postInvalidateOnAnimation()
             }
-        }
-
-        splashScreen.setKeepOnScreenCondition { keepSplashScreen }
-        lifecycleScope.launch {
-            delay(100)
-            keepSplashScreen = false
         }
 
         enableEdgeToEdge()

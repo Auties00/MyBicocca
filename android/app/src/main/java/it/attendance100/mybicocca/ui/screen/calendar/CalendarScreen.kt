@@ -22,6 +22,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.FloatState
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -59,6 +60,11 @@ fun CalendarScreen(
     // True only while this is the visible tab. The shell keeps all tabs composed (pager cache),
     // so the filter chrome must be (re)claimed on activation rather than once on composition.
     isActive: Boolean = true,
+    // Shell's TabRoot<->sub-page transition fraction (0 = TabRoot fully on top). The agenda/FAB
+    // popups live in their own window, which neither the pager nor a covering sub-page can clip;
+    // gating them on this hides them the instant a sub-page push/pop begins. null = no shell
+    // (preview) -> treated as fully settled.
+    navProgress: FloatState? = null,
     onProvideFilterToggle: ((() -> Unit)?) -> Unit = {},
     bottomNavBarPadding: PaddingValues,
     viewModel: CalendarViewModel = hiltViewModel(),
@@ -178,7 +184,15 @@ fun CalendarScreen(
             .asPaddingValues()
             .calculateBottomPadding() > 0.dp
 
-        if (agendaPresence > 0.01f && !keyboardOpen) {
+        // The agenda sheet and the FAB both draw in their own Popup window, which neither the
+        // pager nor a covering sub-page can clip — so they bleed on top of other content unless
+        // we hide them ourselves. Two conditions must hold: this is the visible tab (isActive —
+        // the shell keeps every tab composed) AND TabRoot is fully on top, i.e. no sub-page
+        // push/pop is in flight (navProgress ~ 0). The latter catches the transition window
+        // before NavDisplay disposes TabRoot, in both directions and during predictive back.
+        val chromeVisible = isActive && (navProgress?.floatValue ?: 0f) < 0.01f
+
+        if (chromeVisible && agendaPresence > 0.01f && !keyboardOpen) {
             MonthAgendaSheet(
                 selectedDay = selectedDay,
                 events = (eventsByDay[selectedDay] ?: emptyList()),
@@ -190,7 +204,7 @@ fun CalendarScreen(
             )
         }
 
-        if (!keyboardOpen) {
+        if (chromeVisible && !keyboardOpen) {
             androidx.compose.runtime.key(agendaPresence > 0.01f) {
                 TodayFab(
                     viewMode = viewMode,

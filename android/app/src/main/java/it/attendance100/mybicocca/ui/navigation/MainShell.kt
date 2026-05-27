@@ -322,6 +322,7 @@ fun MainShell(
                                             ShellTab.Calendar -> CalendarScreen(
                                                 viewModel = calendarViewModel,
                                                 isActive = isActive,
+                                                navProgress = navProgress,
                                                 searchQuery = pageQuery,
                                                 onProvideFilterToggle = onProvideFilterToggle,
                                                 bottomNavBarPadding = innerPadding,
