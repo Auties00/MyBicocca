@@ -24,16 +24,25 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import javax.inject.Inject
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedFactory
+import dagger.assisted.AssistedInject
+import it.attendance100.mybicocca.ui.navigation.AppRoute
 
-@HiltViewModel
-class TranscriptViewModel @Inject constructor(
+@HiltViewModel(assistedFactory = TranscriptViewModel.Factory::class)
+class TranscriptViewModel @AssistedInject constructor(
+    @Assisted private val key: AppRoute.Transcript,
     savedState: SavedStateHandle,
     observeRowsUseCase: ObserveTranscriptRowsUseCase,
     private val refreshTranscript: RefreshTranscriptUseCase,
 ) : ViewModel() {
 
-    val careerId: CareerId = CareerId(savedState.get<Long>("careerId") ?: 0L)
+    @AssistedFactory
+    interface Factory {
+        fun create(key: AppRoute.Transcript): TranscriptViewModel
+    }
+
+    val careerId: CareerId = CareerId(key.careerId)
 
     val rows: StateFlow<Loadable<List<TranscriptRow>>> = observeRowsUseCase(careerId)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(KEEP_ALIVE_MS), Loadable.NotYetLoaded)

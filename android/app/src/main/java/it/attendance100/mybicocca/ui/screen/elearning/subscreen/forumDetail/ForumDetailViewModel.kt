@@ -33,11 +33,15 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import javax.inject.Inject
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedFactory
+import dagger.assisted.AssistedInject
+import it.attendance100.mybicocca.ui.navigation.AppRoute
 
 @OptIn(ExperimentalCoroutinesApi::class)
-@HiltViewModel
-class ForumDetailViewModel @Inject constructor(
+@HiltViewModel(assistedFactory = ForumDetailViewModel.Factory::class)
+class ForumDetailViewModel @AssistedInject constructor(
+    @Assisted private val key: AppRoute.ForumDetail,
     savedState: SavedStateHandle,
     observeActiveAccount: ObserveActiveAccountUseCase,
     private val observeForum: ObserveForumUseCase,
@@ -46,9 +50,12 @@ class ForumDetailViewModel @Inject constructor(
     private val createDiscussion: CreateDiscussionUseCase,
 ) : ViewModel() {
 
-    private val forumId: ForumId = ForumId(
-        savedState.get<Int>(KEY_FORUM_ID) ?: error("ForumDetailViewModel requires $KEY_FORUM_ID")
-    )
+    @AssistedFactory
+    interface Factory {
+        fun create(key: AppRoute.ForumDetail): ForumDetailViewModel
+    }
+
+    private val forumId: ForumId = ForumId(key.forumId)
 
     private val activeAccountId: Flow<AccountId?> = observeActiveAccount()
         .map { it?.id }

@@ -43,3 +43,17 @@ internal val SurfaceContainerHighestDark = Color(0xFF322028)
 internal val OnSurfaceVariantDark = Color(0xFFB89398)
 internal val OutlineDark = Color(0xFF7C5A60)
 internal val OutlineVariantDark = Color(0xFF3A1B22)
+
+// Profile ID-card badge palette. The badge renders its own art over a chromatic
+// red face, so it carries fixed colors independent of the active Material scheme.
+// The card face is a saturated red in both modes (the post-refactor Material primary
+// lightened to pink in dark mode, which washed the badge out), so it's pinned to the
+// pre-refactor primary reds here rather than reading colorScheme.primary.
+val BadgeCardColorLight = Color(0xFFF01D59)
+val BadgeCardColorDark = Color(0xFF9C0C35)
+val OnBackgroundColor = Color(0xFFFFF8F7)
+val BadgeWhiteDrawableColor = Color(0xFF551420)
+val BadgeSignatureBoxColorRed = Color(0xFFA6A6A6).copy(alpha = 0.75f)
+val BadgeSignatureBoxColorRed2 = Color(0xFFB8B8B8).copy(alpha = 0.75f)
+val BadgeSignatureBoxColorWhite = Color(0xFFE3E3E3).copy(alpha = 0.95f)
+val BadgeSignatureBoxColorWhite2 = Color(0xFFEEEEEE).copy(alpha = 0.95f)

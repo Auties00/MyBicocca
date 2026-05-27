@@ -1,69 +1,174 @@
 package it.attendance100.mybicocca.ui.screen.profile.component
 
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.valentinilk.shimmer.shimmer
+import it.attendance100.mybicocca.ui.component.card.DitheredTexture
+import kotlinx.coroutines.launch
 
 @Composable
 fun StatCard(
-    title: String,
-    value: String?,
     modifier: Modifier = Modifier,
+    title: String,
+    value: String,
+    textColor: Color,
+    secondaryColor: Color = MaterialTheme.colorScheme.onSurfaceVariant,
+    isLoading: Boolean = false,
+    icon: (@Composable (Modifier) -> Unit)? = null,
+    iconOnClick: (() -> Unit)? = null,
+    onClick: (() -> Unit)? = null,
 ) {
+    val scope = rememberCoroutineScope()
+    val scale = remember { Animatable(1f) }
+    val rotation = remember { Animatable(0f) }
+    val rotationDef = 0f
+    val rotationDelta = -4f
+
     Card(
-        modifier = modifier.height(110.dp),
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
-    ) {
-        Column(
-            modifier = Modifier.fillMaxSize().padding(16.dp),
-            verticalArrangement = Arrangement.SpaceBetween,
-        ) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-            )
-            if (value == null) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(28.dp)
-                        .clip(RoundedCornerShape(6.dp))
-                        .shimmer(),
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .clip(RoundedCornerShape(6.dp)),
-                    )
+        modifier = modifier,
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
+        ),
+        onClick = {
+            onClick?.invoke()
+            scope.launch {
+                launch {
+                    scale.animateTo(1.1f, tween(150))
+                    scale.animateTo(1f, spring(dampingRatio = 0.4f, stiffness = 500f))
                 }
-            } else {
-                Text(
-                    text = value,
-                    fontSize = 28.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface,
+                launch {
+                    rotation.animateTo(rotationDef - rotationDelta, tween(100))
+                    rotation.animateTo(rotationDef + rotationDelta, tween(100))
+                    rotation.animateTo(rotationDef, spring(dampingRatio = 0.4f, stiffness = 500f))
+                }
+            }
+        },
+        shape = RoundedCornerShape(16.dp),
+    ) {
+        Box {
+            Box(modifier = Modifier.align(Alignment.CenterStart)) {
+                DitheredTexture(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .offset(x = (-60).dp, y = (80).dp)
+                        .rotate(13f),
+                    color = MaterialTheme.colorScheme.outlineVariant,
+                    spacing = 10f,
+                    dotSize = 5f,
+                    globalRotation = 35f,
+                    dotRotation = 80f,
+                    fadeStart = 0f,
+                    fadeEnd = 1f,
+                    alpha = 0.5f,
                 )
+            }
+
+            Column(
+                modifier = Modifier
+                    .padding(horizontal = 18.dp)
+                    .padding(top = 12.dp, bottom = 10.dp)
+                    .fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                Text(
+                    text = title,
+                    color = secondaryColor,
+                    fontSize = 12.sp,
+                    maxLines = 2,
+                )
+                Box(contentAlignment = Alignment.BottomStart) {
+                    if (isLoading) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .width(60.dp)
+                                    .height(24.dp)
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .shimmer()
+                                    .background(textColor.copy(alpha = 0.2f)),
+                            )
+                            Box(
+                                modifier = Modifier
+                                    .width(24.dp)
+                                    .height(24.dp)
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .shimmer()
+                                    .background(textColor.copy(alpha = 0.2f)),
+                            )
+                        }
+                    } else {
+                        Text(
+                            text = value,
+                            color = textColor,
+                            fontSize = 24.sp,
+                            fontWeight = FontWeight.Bold,
+                        )
+                    }
+
+                    if (icon != null) {
+                        Box(
+                            modifier = Modifier.fillMaxWidth(),
+                            contentAlignment = Alignment.BottomEnd,
+                        ) {
+                            Card(
+                                modifier = Modifier
+                                    .height(34.dp)
+                                    .width(34.dp)
+                                    .offset(y = (-4).dp),
+                                colors = CardDefaults.cardColors(containerColor = Color.Transparent),
+                                onClick = {
+                                    iconOnClick?.invoke()
+                                },
+                                shape = RoundedCornerShape(16),
+                            ) {
+                                Box(
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentAlignment = Alignment.Center,
+                                ) {
+                                    icon(
+                                        Modifier
+                                            .size(34.dp)
+                                            .scale(scale.value)
+                                            .rotate(rotation.value),
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
     }

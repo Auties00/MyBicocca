@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.MyBicocca" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/launcher_background</item>
+        <item name="android:statusBarColor">@color/launcher_background</item>
+        <item name="android:windowLightStatusBar">false</item>
+    </style>
+    <!-- Theme.MyBicocca.Starting is inherited from values/themes.xml; @color/launcher_background and
+         @drawable/logo already resolve to their drawable-night / values-night variants here. -->
+</resources>

@@ -53,11 +53,15 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import javax.inject.Inject
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedFactory
+import dagger.assisted.AssistedInject
+import it.attendance100.mybicocca.ui.navigation.AppRoute
 
 @OptIn(ExperimentalCoroutinesApi::class)
-@HiltViewModel
-class CourseDetailViewModel @Inject constructor(
+@HiltViewModel(assistedFactory = CourseDetailViewModel.Factory::class)
+class CourseDetailViewModel @AssistedInject constructor(
+    @Assisted private val key: AppRoute.CourseDetail,
     private val savedState: SavedStateHandle,
     observeActiveAccount: ObserveActiveAccountUseCase,
     private val observeDetails: ObserveCourseDetailsUseCase,
@@ -77,10 +81,12 @@ class CourseDetailViewModel @Inject constructor(
     private val getVideoThumbnailUrl: GetVideoThumbnailUrlUseCase,
 ) : ViewModel() {
 
-    private val courseId: CourseId = CourseId(
-        savedState.get<Int>(KEY_COURSE_ID)
-            ?: error("CourseDetailViewModel requires a $KEY_COURSE_ID arg")
-    )
+    @AssistedFactory
+    interface Factory {
+        fun create(key: AppRoute.CourseDetail): CourseDetailViewModel
+    }
+
+    private val courseId: CourseId = CourseId(key.courseId)
 
     val selectedTab: StateFlow<CourseTab> = savedState
         .getStateFlow(KEY_TAB, CourseTab.Syllabus.name)

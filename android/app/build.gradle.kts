@@ -87,6 +87,7 @@ dependencies {
     implementation("androidx.core:core-ktx:1.17.0")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.10.0")
     implementation("androidx.activity:activity-compose:1.12.2")
+    implementation("androidx.core:core-splashscreen:1.0.1")
     implementation(platform("androidx.compose:compose-bom:2025.12.01"))
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-graphics")
@@ -131,7 +132,12 @@ dependencies {
     debugImplementation("androidx.compose.ui:ui-test-manifest")
     implementation("androidx.compose.material:material-icons-extended-android:1.7.8")
     implementation("io.coil-kt:coil-compose:2.7.0")
-    implementation("androidx.navigation:navigation-compose:2.9.6")
+
+    // Navigation 3. runtime = NavKey/NavBackStack, ui = NavDisplay,
+    // lifecycle-viewmodel-navigation3 = rememberViewModelStoreNavEntryDecorator for VM scoping.
+    implementation("androidx.navigation3:navigation3-runtime:1.1.0")
+    implementation("androidx.navigation3:navigation3-ui:1.1.0")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-navigation3:2.10.0")
     implementation("com.google.android.gms:play-services-oss-licenses:17.3.0")
     implementation("androidx.biometric:biometric:1.1.0")
 
@@ -163,11 +169,9 @@ dependencies {
     // Shimmer effect for loading screens
     implementation("com.valentinilk.shimmer:compose-shimmer:1.3.3")
 
-    // Google Maps — campus map (maps-compose), the underlying SDK, and fused location
-    // for the "center on me" action.
+    // Google Maps — campus map (maps-compose) + the underlying SDK.
     implementation("com.google.maps.android:maps-compose:6.4.1")
     implementation("com.google.android.gms:play-services-maps:19.2.0")
-    implementation("com.google.android.gms:play-services-location:21.3.0")
 
     // Email validation
     implementation(platform("androidx.compose:compose-bom:2026.03.01"))

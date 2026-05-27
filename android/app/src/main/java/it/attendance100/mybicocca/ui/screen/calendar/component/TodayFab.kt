@@ -34,8 +34,8 @@ import it.attendance100.mybicocca.ui.screen.calendar.state.CalendarViewMode
 import java.time.LocalDate
 import java.time.YearMonth
 
-private val BottomEdgePadding = 24.dp
-private val EndEdgePadding = 20.dp
+private val BottomEdgePadding = 16.dp
+private val EndEdgePadding = 16.dp
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable

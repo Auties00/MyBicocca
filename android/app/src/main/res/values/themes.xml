@@ -1,4 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.MyBicocca" parent="android:Theme.Material.Light.NoActionBar" />
+    <style name="Theme.MyBicocca" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/launcher_background</item>
+        <item name="android:statusBarColor">@color/launcher_background</item>
+        <item name="android:windowLightStatusBar">false</item>
+    </style>
+
+    <!-- Cold-start theme set on the launcher activity. The OS splash shows the logo (icon only — it
+         sits cleanly inside the circular splash mask) on the launcher background, then
+         installSplashScreen() swaps to Theme.MyBicocca. Uses the core-splashscreen attrs (no android:
+         prefix) so the splash also renders on API < 31. The "MyBicocca" wordmark and the zoom-through
+         reveal are owned by Compose (SplashRevealOverlay), not the OS splash. -->
+    <style name="Theme.MyBicocca.Starting" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/launcher_background</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/logo</item>
+        <item name="postSplashScreenTheme">@style/Theme.MyBicocca</item>
+    </style>
 </resources>

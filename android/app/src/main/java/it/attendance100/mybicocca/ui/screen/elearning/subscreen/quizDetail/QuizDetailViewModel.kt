@@ -41,11 +41,15 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import javax.inject.Inject
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedFactory
+import dagger.assisted.AssistedInject
+import it.attendance100.mybicocca.ui.navigation.AppRoute
 
 @OptIn(ExperimentalCoroutinesApi::class)
-@HiltViewModel
-class QuizDetailViewModel @Inject constructor(
+@HiltViewModel(assistedFactory = QuizDetailViewModel.Factory::class)
+class QuizDetailViewModel @AssistedInject constructor(
+    @Assisted private val key: AppRoute.QuizDetail,
     private val savedState: SavedStateHandle,
     observeActiveAccount: ObserveActiveAccountUseCase,
     private val observeQuiz: ObserveQuizUseCase,
@@ -59,9 +63,12 @@ class QuizDetailViewModel @Inject constructor(
     private val loadReview: LoadAttemptReviewUseCase,
 ) : ViewModel() {
 
-    private val quizId: QuizId = QuizId(
-        savedState.get<Int>(KEY_QUIZ_ID) ?: error("QuizDetailViewModel requires $KEY_QUIZ_ID")
-    )
+    @AssistedFactory
+    interface Factory {
+        fun create(key: AppRoute.QuizDetail): QuizDetailViewModel
+    }
+
+    private val quizId: QuizId = QuizId(key.quizId)
 
     private val activeAccountId: Flow<AccountId?> = observeActiveAccount()
         .map { it?.id }

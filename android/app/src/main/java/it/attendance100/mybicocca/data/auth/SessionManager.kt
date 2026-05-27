@@ -5,11 +5,11 @@ import it.attendance100.mybicocca.data.local.account.AccountWithCareers
 import it.attendance100.mybicocca.data.local.credentials.AccountCredentials
 import it.attendance100.mybicocca.data.local.credentials.CredentialsStore
 import it.attendance100.mybicocca.data.local.settings.ActiveAccountStore
-import it.attendance100.mybicocca.data.mapper.buildAcademicIdentity
-import it.attendance100.mybicocca.data.mapper.composeDisplayName
-import it.attendance100.mybicocca.data.mapper.toDomain
-import it.attendance100.mybicocca.data.mapper.toEntity
-import it.attendance100.mybicocca.data.mapper.toLearningIdentity
+import it.attendance100.mybicocca.data.mapper.account.buildAcademicIdentity
+import it.attendance100.mybicocca.data.mapper.account.composeDisplayName
+import it.attendance100.mybicocca.data.mapper.account.toDomain
+import it.attendance100.mybicocca.data.mapper.account.toEntity
+import it.attendance100.mybicocca.data.mapper.account.toLearningIdentity
 import io.ktor.utils.io.ByteReadChannel
 import it.attendance100.mybicocca.data.remote.elearning.api.ElearningApi
 import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningGetSiteInfoResponse

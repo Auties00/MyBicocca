@@ -1,5 +1,10 @@
 package it.attendance100.mybicocca.ui.screen.profile.subscreen.hypotheticalGrade
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandHorizontally
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -8,10 +13,17 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Calculate
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
@@ -31,6 +43,10 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import it.attendance100.mybicocca.domain.model.transcript.GradeRollup
+import java.util.Locale
+
+private const val MIN_PASSING_GRADE = 18
+private const val MAX_GRADE = 31
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -38,121 +54,200 @@ fun HypotheticalGradeSheet(
     rollup: GradeRollup?,
     currentArithmetic: Float?,
     currentWeighted: Float?,
+    isWeighted: Boolean,
     onDismiss: () -> Unit,
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState) {
+    val primaryColor = MaterialTheme.colorScheme.primary
+    val textColor = MaterialTheme.colorScheme.onSurface
+    val grayColor = MaterialTheme.colorScheme.onSurfaceVariant
+
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState,
+        containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+    ) {
+        var gradeText by remember { mutableStateOf("") }
+        var cfuText by remember { mutableStateOf("") }
+
+        val grade = gradeText.toIntOrNull()
+        val cfu = cfuText.toIntOrNull()
+        val gradeValid = grade != null && grade in MIN_PASSING_GRADE..MAX_GRADE
+
+        // O(1) recompute from the pre-aggregated rollup — add one hypothetical entry, divide once.
+        val current = if (isWeighted) currentWeighted else currentArithmetic
+        val projected: Float? = when {
+            rollup == null || grade == null || !gradeValid -> null
+            !isWeighted -> (rollup.gradeSum + grade).toFloat() / (rollup.gradedExamCount + 1).toFloat()
+            cfu != null && cfu > 0 ->
+                ((rollup.weightedGradeSum + grade.toDouble() * cfu).toFloat()) / (rollup.gradedCreditsSum + cfu)
+            else -> null
+        }
+
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 20.dp, vertical = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
+                .padding(start = 24.dp, end = 24.dp, bottom = 24.dp),
         ) {
-            Text(
-                text = "Calcola Media Ipotetica",
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
-            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Filled.Calculate, contentDescription = null, tint = primaryColor)
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "Calcola Media Ipotetica",
+                    color = textColor,
+                    fontSize = 22.sp,
+                    fontWeight = FontWeight.SemiBold,
+                )
+            }
 
-            var gradeText by remember { mutableStateOf("") }
-            var cfuText by remember { mutableStateOf("") }
+            Spacer(modifier = Modifier.height(16.dp))
 
-            val grade = gradeText.toIntOrNull()
-            val cfu = cfuText.toFloatOrNull()
-            val gradeError = grade != null && (grade < 18 || grade > 31)
-            val cfuError = cfu != null && cfu <= 0f
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(6.dp),
+            ) {
+                HypotheticalStatCard(
+                    title = if (isWeighted) "Media Ponderata" else "Media Aritmetica",
+                    currentValue = current,
+                    newValue = projected,
+                    textColor = textColor,
+                    grayColor = grayColor,
+                    primaryColor = primaryColor,
+                )
+                DifferenceIndicator(difference = if (projected != null && current != null) projected - current else null)
+            }
 
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
                 OutlinedTextField(
                     value = gradeText,
                     onValueChange = { if (it.length <= 2) gradeText = it.filter(Char::isDigit) },
                     label = { Text("Voto") },
-                    isError = gradeError,
+                    placeholder = { Text(">17", color = grayColor) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    singleLine = true,
+                    isError = grade != null && grade < MIN_PASSING_GRADE,
+                    supportingText = when {
+                        grade != null && grade < MIN_PASSING_GRADE -> { { Text("Voto non valido (>17)") } }
+                        grade != null && grade > MAX_GRADE -> { { Text("Voto troppo alto!") } }
+                        else -> null
+                    },
                     modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(12.dp),
                 )
-                OutlinedTextField(
-                    value = cfuText,
-                    onValueChange = { cfuText = it.filter { ch -> ch.isDigit() || ch == '.' } },
-                    label = { Text("CFU") },
-                    isError = cfuError,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                    modifier = Modifier.weight(1f),
-                )
+
+                if (isWeighted) {
+                    OutlinedTextField(
+                        value = cfuText,
+                        onValueChange = { if (it.length <= 2) cfuText = it.filter(Char::isDigit) },
+                        label = { Text("CFU") },
+                        placeholder = { Text("Opzionale", color = grayColor) },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        singleLine = true,
+                        isError = cfu != null && cfu <= 0,
+                        supportingText = if (cfu != null && cfu <= 0) { { Text("CFU non validi") } } else null,
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(12.dp),
+                    )
+                }
             }
 
-            // O(1) recompute: read pre-aggregated sums, add the hypothetical, divide once.
-            // No list traversal, no flow collection, no recomposition outside this scope.
-            val newArithmetic: Float? = if (rollup != null && grade != null && !gradeError) {
-                (rollup.gradeSum + grade).toFloat() / (rollup.gradedExamCount + 1).toFloat()
-            } else null
-            val newWeighted: Float? = if (rollup != null && grade != null && cfu != null && !gradeError && !cfuError) {
-                ((rollup.weightedGradeSum + grade.toDouble() * cfu).toFloat()) /
-                    (rollup.gradedCreditsSum + cfu)
-            } else null
-
-            HypotheticalRow(
-                label = "Media Aritmetica",
-                current = currentArithmetic,
-                projected = newArithmetic,
-            )
-            HypotheticalRow(
-                label = "Media Ponderata",
-                current = currentWeighted,
-                projected = newWeighted,
-            )
-
-            Spacer(Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(16.dp))
         }
     }
 }
 
 @Composable
-private fun HypotheticalRow(label: String, current: Float?, projected: Float?) {
-    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text(
-                text = current?.let { "%.2f".format(it) } ?: "—",
-                fontSize = 22.sp,
-                fontWeight = FontWeight.Bold,
-            )
-            if (projected != null && current != null) {
-                Text(text = "→", fontSize = 22.sp)
-                Text(
-                    text = "%.2f".format(projected),
-                    fontSize = 22.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary,
-                )
-                DifferenceIndicator(delta = projected - current)
-            }
-        }
-    }
-}
-
-@Composable
-private fun DifferenceIndicator(delta: Float) {
-    val (bg, fg, sign) = when {
-        delta > 0.005f -> Triple(Color(0xFF1FA84B).copy(alpha = 0.2f), Color(0xFF1FA84B), "+")
-        delta < -0.005f -> Triple(Color(0xFFCC1F2F).copy(alpha = 0.2f), Color(0xFFCC1F2F), "")
-        else -> Triple(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.onSurfaceVariant, "")
-    }
-    Box(
-        modifier = Modifier
-            .clip(RoundedCornerShape(8.dp))
-            .background(bg)
-            .padding(horizontal = 8.dp, vertical = 2.dp),
+private fun HypotheticalStatCard(
+    modifier: Modifier = Modifier,
+    title: String,
+    currentValue: Float?,
+    newValue: Float?,
+    textColor: Color,
+    grayColor: Color,
+    primaryColor: Color,
+) {
+    Card(
+        modifier = modifier,
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+        shape = RoundedCornerShape(12.dp),
     ) {
-        Text(
-            text = "$sign${"%.2f".format(delta)}",
-            color = fg,
-            fontSize = 13.sp,
-            fontWeight = FontWeight.Bold,
-        )
+        Column(
+            modifier = Modifier
+                .padding(12.dp)
+                .fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            Text(text = title, color = grayColor, fontSize = 11.sp, maxLines = 1)
+            Row(
+                verticalAlignment = Alignment.Bottom,
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+            ) {
+                Text(
+                    text = currentValue?.let { String.format(Locale.getDefault(), "%.2f", it) } ?: "—",
+                    color = textColor,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                )
+                AnimatedVisibility(
+                    visible = newValue != null,
+                    enter = fadeIn() + expandHorizontally(),
+                    exit = fadeOut() + shrinkHorizontally(),
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.Bottom,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    ) {
+                        Text(text = "→", color = grayColor, fontSize = 14.sp)
+                        Text(
+                            text = newValue?.let { String.format(Locale.getDefault(), "%.2f", it) } ?: "",
+                            color = primaryColor,
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold,
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun DifferenceIndicator(
+    modifier: Modifier = Modifier,
+    difference: Float?,
+) {
+    val isPositive = difference != null && difference >= 0
+
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(20.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        AnimatedVisibility(visible = difference != null, enter = fadeIn(), exit = fadeOut()) {
+            val chipColor = if (isPositive) Color(0xFF4CAF50).copy(alpha = 0.15f) else Color(0xFFF44336).copy(alpha = 0.15f)
+            val chipTextColor = if (isPositive) Color(0xFF2E7D32) else Color(0xFFC62828)
+
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(6.dp))
+                    .background(chipColor)
+                    .padding(horizontal = 8.dp, vertical = 2.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(
+                    modifier = Modifier.offset(y = (-2.85).dp),
+                    text = difference?.let {
+                        String.format(Locale.getDefault(), "%s%.2f", if (it >= 0) "+" else "", it)
+                    } ?: "",
+                    color = chipTextColor,
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Medium,
+                )
+            }
+        }
     }
 }

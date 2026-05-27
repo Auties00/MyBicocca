@@ -29,21 +29,27 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import javax.inject.Inject
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedFactory
+import dagger.assisted.AssistedInject
+import it.attendance100.mybicocca.ui.navigation.AppRoute
 
 @OptIn(ExperimentalCoroutinesApi::class)
-@HiltViewModel
-class AssignmentDetailViewModel @Inject constructor(
+@HiltViewModel(assistedFactory = AssignmentDetailViewModel.Factory::class)
+class AssignmentDetailViewModel @AssistedInject constructor(
+    @Assisted private val key: AppRoute.AssignmentDetail,
     savedState: SavedStateHandle,
     observeActiveAccount: ObserveActiveAccountUseCase,
     private val observeAssignment: ObserveAssignmentUseCase,
     private val refreshSubmissionStatus: RefreshSubmissionStatusUseCase,
 ) : ViewModel() {
 
-    private val assignmentId: AssignmentId = AssignmentId(
-        savedState.get<Int>(KEY_ASSIGNMENT_ID)
-            ?: error("AssignmentDetailViewModel requires $KEY_ASSIGNMENT_ID")
-    )
+    @AssistedFactory
+    interface Factory {
+        fun create(key: AppRoute.AssignmentDetail): AssignmentDetailViewModel
+    }
+
+    private val assignmentId: AssignmentId = AssignmentId(key.assignId)
 
     private val activeAccountId: Flow<AccountId?> = observeActiveAccount()
         .map { it?.id }

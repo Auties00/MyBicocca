@@ -9,12 +9,15 @@ import it.attendance100.mybicocca.domain.model.account.Account
 import it.attendance100.mybicocca.domain.model.career.Career
 import it.attendance100.mybicocca.domain.model.career.CareerId
 import it.attendance100.mybicocca.domain.model.transcript.GradeRollup
+import it.attendance100.mybicocca.domain.model.transcript.TranscriptRow
 import it.attendance100.mybicocca.domain.model.transcript.TranscriptStats
 import it.attendance100.mybicocca.domain.usecase.account.GetUserPhotoUseCase
 import it.attendance100.mybicocca.domain.usecase.account.ObserveActiveAccountUseCase
 import it.attendance100.mybicocca.domain.usecase.transcript.ObserveGradeRollupUseCase
+import it.attendance100.mybicocca.domain.usecase.transcript.ObserveTranscriptRowsUseCase
 import it.attendance100.mybicocca.domain.usecase.transcript.ObserveTranscriptStatsUseCase
 import it.attendance100.mybicocca.domain.usecase.transcript.RefreshTranscriptUseCase
+import it.attendance100.mybicocca.util.NetworkMonitor
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -38,9 +41,13 @@ class ProfileViewModel @Inject constructor(
     observeActiveAccount: ObserveActiveAccountUseCase,
     private val observeStats: ObserveTranscriptStatsUseCase,
     private val observeGradeRollup: ObserveGradeRollupUseCase,
+    private val observeRows: ObserveTranscriptRowsUseCase,
     private val refreshTranscript: RefreshTranscriptUseCase,
     private val getUserPhoto: GetUserPhotoUseCase,
+    networkMonitor: NetworkMonitor,
 ) : ViewModel() {
+
+    val isOnline: StateFlow<Boolean> = networkMonitor.isOnline
 
     val account: StateFlow<Account?> = observeActiveAccount()
         .stateIn(viewModelScope, SharingStarted.Eagerly, null)
@@ -80,8 +87,32 @@ class ProfileViewModel @Inject constructor(
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(KEEP_ALIVE_MS), Loadable.NotYetLoaded)
 
+    // Only study-plan activities are surfaced on the profile; supernumerary ones are dropped.
+    val transcriptRows: StateFlow<Loadable<List<TranscriptRow>>> = activeCareerId
+        .flatMapLatest { id ->
+            if (id == null) {
+                flowOf(Loadable.NotYetLoaded)
+            } else {
+                observeRows(id).map { loadable ->
+                    when (loadable) {
+                        Loadable.NotYetLoaded -> Loadable.NotYetLoaded
+                        is Loadable.Loaded -> Loadable.Loaded(loadable.value.filter { it.inStudyPlan })
+                    }
+                }
+            }
+        }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(KEEP_ALIVE_MS), Loadable.NotYetLoaded)
+
     private val _syncStatus = MutableStateFlow<SyncStatus>(SyncStatus.Idle)
     val syncStatus: StateFlow<SyncStatus> = _syncStatus.asStateFlow()
+
+    val isRefreshing: StateFlow<Boolean> = syncStatus
+        .map { it is SyncStatus.Refreshing }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(KEEP_ALIVE_MS), false)
+
+    val errorMessage: StateFlow<String?> = syncStatus
+        .map { status -> if (status is SyncStatus.Failed) "Impossibile aggiornare i dati" else null }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(KEEP_ALIVE_MS), null)
 
     init {
         viewModelScope.launch {
@@ -96,6 +127,10 @@ class ProfileViewModel @Inject constructor(
             val id = activeCareerId.filterNotNull().first()
             runRefresh(id, force = true)
         }
+    }
+
+    fun clearError() {
+        if (_syncStatus.value is SyncStatus.Failed) _syncStatus.value = SyncStatus.Idle
     }
 
     private suspend fun runRefresh(careerId: CareerId, force: Boolean) {

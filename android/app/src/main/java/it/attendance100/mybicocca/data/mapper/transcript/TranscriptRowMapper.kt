@@ -3,7 +3,6 @@ package it.attendance100.mybicocca.data.mapper.transcript
 import it.attendance100.mybicocca.data.local.transcript.GradeRollupProjection
 import it.attendance100.mybicocca.data.local.transcript.TranscriptRowEntity
 import it.attendance100.mybicocca.data.local.transcript.TranscriptStatsEntity
-import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3AverageTypeCode
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3State
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3TranscriptRow
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3TranscriptStats
@@ -22,7 +21,10 @@ fun Esse3TranscriptRow.toEntity(careerId: CareerId): TranscriptRowEntity {
     val outcome = outcome
     val grade = outcome?.grade?.takeIf { outcome.evaluationModeCode.value == "V" }?.toInt()
     val cumLaude = outcome?.cumLaudeFlag == 1
-    val parsedDate = outcome?.graduationDate?.let { runCatching { LocalDate.parse(it, ESSE3_DATE) }.getOrNull() }
+    // dataEsa comes as "dd/MM/yyyy HH:mm:ss"; keep only the date part.
+    val parsedDate = outcome?.graduationDate
+        ?.substringBefore(' ')
+        ?.let { runCatching { LocalDate.parse(it, ESSE3_DATE) }.getOrNull() }
     return TranscriptRowEntity(
         id = activityChoiceId,
         careerId = careerId.value,
@@ -35,6 +37,10 @@ fun Esse3TranscriptRow.toEntity(careerId: CareerId): TranscriptRowEntity {
         cumLaude = cumLaude,
         examDate = parsedDate?.toString(),
         academicYear = outcome?.academicYearSupervisorId ?: academicYearAttendanceId,
+        // In the study plan when linked to it (pianoId set) — matches Esse3's numAdPiano count.
+        // Year-0 prerequisites carry no plan link but are still part of the path, so keep them;
+        // libretto rows that are neither (e.g. pending/extra activities) are excluded.
+        inStudyPlan = planId != null || courseYear <= 0,
     )
 }
 
@@ -50,19 +56,26 @@ fun TranscriptRowEntity.toDomain(): TranscriptRow = TranscriptRow(
     cumLaude = cumLaude,
     examDate = examDate?.let { runCatching { LocalDate.parse(it) }.getOrNull() },
     academicYear = academicYear,
+    inStudyPlan = inStudyPlan,
 )
 
 fun Esse3TranscriptStats.toEntity(careerId: CareerId): TranscriptStatsEntity {
-    val arithmetic = averages.firstOrNull { it.averageTypeCode is Esse3AverageTypeCode.Arithmetic }?.average
-    val weighted = averages.firstOrNull { it.averageTypeCode is Esse3AverageTypeCode.Weighted }?.average
+    // Prefer the exam-scale (base 30) average; base 110 is the graduation-grade projection.
+    // "A" = arithmetic, "P" = weighted (ponderata).
+    fun average(typeCode: String): Float? {
+        val ofType = averages.filter { it.averageTypeCode.value == typeCode }
+        return (ofType.firstOrNull { it.base == 30 } ?: ofType.firstOrNull())?.average
+    }
     return TranscriptStatsEntity(
         careerId = careerId.value,
         passedCredits = passedMeasurementUnitWeight ?: 0f,
         totalCreditsRequired = minMeasurementUnitWeight ?: maxMeasurementUnitWeight ?: 0f,
-        arithmeticAverage = arithmetic,
-        weightedAverage = weighted,
+        arithmeticAverage = average("A"),
+        weightedAverage = average("P"),
         passedExamCount = passedTeachingActivityNumber ?: 0,
-        plannedExamCount = plannedTeachingActivityNumber ?: 0,
+        // "Exams to take" is the study-plan activity count (numAdPiano); the planned-STATE
+        // count (numAdPianificate) collapses to 0 once everything is passed/attended.
+        plannedExamCount = studyPlanTeachingActivityNumber ?: bookletTeachingActivityNumber ?: 0,
         maxGrade = gradeGroup?.maxPoints ?: 30,
         cumLaudeAvailable = (gradeGroup?.cumLaudeFlag ?: 0) == 1,
     )

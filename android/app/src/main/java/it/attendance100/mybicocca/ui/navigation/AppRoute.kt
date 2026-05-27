@@ -1,5 +1,6 @@
 package it.attendance100.mybicocca.ui.navigation
 
+import androidx.navigation3.runtime.NavKey
 import kotlinx.serialization.Serializable
 
 // Title shown by the global top bar, modelled as a sealed type so "this is the tab root"
@@ -16,7 +17,7 @@ val AppRoute.isSubPage: Boolean
 
 // The inner NavHost only knows tab + sub-pages. Auth/career-pick is handled upstream of
 // MainShell via RootPhase, so Splash and Login are intentionally absent.
-sealed interface AppRoute {
+sealed interface AppRoute : NavKey {
 
     val appTitle: AppTitle
 
@@ -29,9 +30,6 @@ sealed interface AppRoute {
     // Top-level destinations reachable from the avatar / switcher.
     @Serializable data object Profile : AppRoute {
         override val appTitle = AppTitle.SubPage("Profilo")
-    }
-    @Serializable data class AccountManagement(val accountId: String) : AppRoute {
-        override val appTitle get() = AppTitle.SubPage("Account")
     }
     @Serializable data object Settings : AppRoute {
         override val appTitle = AppTitle.SubPage("Impostazioni")
@@ -59,9 +57,6 @@ sealed interface AppRoute {
     }
 
     // Registry (Segreterie) sub-screens.
-    @Serializable data object Taxes : AppRoute {
-        override val appTitle = AppTitle.SubPage("Tasse")
-    }
     @Serializable data class TaxDetail(val chargeId: Long) : AppRoute {
         override val appTitle get() = AppTitle.SubPage("Dettaglio Tassa")
     }
@@ -99,9 +94,6 @@ sealed interface AppRoute {
     }
     @Serializable data object Reservations : AppRoute {
         override val appTitle = AppTitle.SubPage("Prenotazioni")
-    }
-    @Serializable data object Isee : AppRoute {
-        override val appTitle = AppTitle.SubPage("ISEE")
     }
 
     // Elearning sub-screens.
