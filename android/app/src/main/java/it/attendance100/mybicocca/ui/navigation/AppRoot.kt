@@ -67,8 +67,6 @@ private fun RootNavDisplay(phase: RootPhase, viewModel: RootViewModel) {
             NavDisplay(
                 backStack = backStack,
                 onBack = {},
-                // No entry decorators: root entries (incl. MainShell) keep resolving hiltViewModel()
-                // to the Activity, so RootViewModel stays the single shared instance AppRoot owns.
                 entryDecorators = emptyList(),
                 transitionSpec = { fadeIn(tween(500)) togetherWith fadeOut(tween(500)) },
                 popTransitionSpec = { fadeIn(tween(500)) togetherWith fadeOut(tween(500)) },
