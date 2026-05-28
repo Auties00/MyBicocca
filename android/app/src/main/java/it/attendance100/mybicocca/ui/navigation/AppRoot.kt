@@ -6,8 +6,6 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -15,7 +13,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.entryProvider
@@ -24,8 +21,6 @@ import androidx.navigation3.ui.NavDisplay
 import it.attendance100.mybicocca.domain.model.account.Account
 import it.attendance100.mybicocca.ui.screen.account.CareerPickerScreen
 import it.attendance100.mybicocca.ui.screen.auth.AuthScreen
-import it.attendance100.mybicocca.ui.screen.splash.SplashRevealController
-import it.attendance100.mybicocca.ui.screen.splash.SplashRevealOverlay
 
 // A top-level NavDisplay drives the auth / career-pick / main journey so the MyBicocca wordmark
 // morphs as a NATIVE Nav3 shared element (via LocalNavAnimatedContentScope) on login -> main. MainShell
@@ -33,15 +28,11 @@ import it.attendance100.mybicocca.ui.screen.splash.SplashRevealOverlay
 // shared-transition scopes are independent (LocalRootSharedTransitionScope vs LocalSharedTransitionScope).
 @Composable
 fun AppRoot(
-    reveal: SplashRevealController,
     viewModel: RootViewModel = hiltViewModel(),
 ) {
     val phase by viewModel.phase.collectAsStateWithLifecycle()
 
-    Box(Modifier.fillMaxSize()) {
-        RootNavDisplay(phase = phase, viewModel = viewModel)
-        SplashRevealOverlay(controller = reveal)
-    }
+    RootNavDisplay(phase = phase, viewModel = viewModel)
 }
 
 @OptIn(ExperimentalSharedTransitionApi::class)
