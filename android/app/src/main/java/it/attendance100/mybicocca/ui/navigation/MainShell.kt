@@ -218,295 +218,400 @@ fun MainShell(
     val snackbarController = rememberAppSnackbarController()
 
     CompositionLocalProvider(LocalAppSnackbarController provides snackbarController) {
-    Box(
-        modifier = modifier.fillMaxSize(),
-    ) {
-    Scaffold(
-        modifier = Modifier.fillMaxSize(),
-        topBar = {
-            MyBicoccaTopBar(
-                navProgress = navProgress,
-                searchProgress = searchProgress,
-                canNavigateBack = isOnSubPage,
-                subPageTitle = subPageTitleOverride ?: subPageTitle,
-                searchState = searchState,
-                onProfileClick = { showAccountSwitcher = true },
-                onNavigateBack = { backStack.removeLastOrNull() },
-                photo = photo,
-                globalAlpha = if (immersive) 0f else 1f,
-                onFilterToggle = filterToggle,
-                filterActive = filterActive,
-                trailingActions = subPageActions,
-            )
-        },
-        bottomBar = {
-            MyBicoccaBottomBar(
-                items = bottomBarItems,
-                selected = tab,
-                onSelect = { selected ->
-                    // Always pop the sub-stack first — switching tabs (or re-tapping the
-                    // current tab) should land you at TabRoot, never deep on a sub-page.
-                    while (backStack.size > 1) backStack.removeAt(backStack.lastIndex)
-                    // Instant jump (no scroll-through of intermediate pages); the pages are
-                    // already composed, so this is a cheap show/hide, not a rebuild.
-                    scope.launch { pagerState.scrollToPage(selected.ordinal) }
+        Box(
+            modifier = modifier.fillMaxSize(),
+        ) {
+            Scaffold(
+                modifier = Modifier.fillMaxSize(),
+                topBar = {
+                    MyBicoccaTopBar(
+                        navProgress = navProgress,
+                        searchProgress = searchProgress,
+                        canNavigateBack = isOnSubPage,
+                        subPageTitle = subPageTitleOverride ?: subPageTitle,
+                        searchState = searchState,
+                        onProfileClick = { showAccountSwitcher = true },
+                        onNavigateBack = { backStack.removeLastOrNull() },
+                        photo = photo,
+                        globalAlpha = if (immersive) 0f else 1f,
+                        onFilterToggle = filterToggle,
+                        filterActive = filterActive,
+                        trailingActions = subPageActions,
+                    )
                 },
-                translationY = maxOf(navProgress.floatValue, searchProgress.value) * 300f,
-            )
-        },
-        snackbarHost = { AppSnackbarHost(controller = snackbarController) },
-    ) { innerPadding ->
-        val topInset = innerPadding.calculateTopPadding()
-        Box(modifier = Modifier.fillMaxSize()) {
-            // SharedTransitionLayout wraps the NavDisplay so shared elements can morph between
-            // NavEntry instances. The tab pager is hosted inside the TabRoot entry (below) so its
-            // list tickets share NavDisplay's AnimatedContent scope with the detail entry.
-            SharedTransitionLayout(modifier = Modifier.fillMaxSize()) {
-            CompositionLocalProvider(LocalSharedTransitionScope provides this) {
-                NavDisplay(
-                    backStack = backStack,
-                    onBack = { backStack.removeLastOrNull() },
-                    modifier = Modifier.fillMaxSize(),
-                    entryDecorators = listOf(
-                        rememberSaveableStateHolderNavEntryDecorator(),
-                        rememberViewModelStoreNavEntryDecorator(),
-                    ),
-                    transitionSpec = { enterTransition togetherWith exitTransition },
-                    popTransitionSpec = { popEnterTransition togetherWith popExitTransition },
-                    predictivePopTransitionSpec = { popEnterTransition togetherWith popExitTransition },
-                    entryProvider = entryProvider {
-                        // Root: the four-tab pager. Bridges NavDisplay's AnimatedContentScope into
-                        // the app's LocalAnimatedContentScope so list tickets can be true shared
-                        // elements that seek into the detail entry.
-                        entry<AppRoute.TabRoot> {
-                            val tabRootScope = LocalNavAnimatedContentScope.current
-                            // Publish the bar/bottom-bar morph fraction off THIS entry's enter/exit.
-                            // animateFloat rides the same (seekable) transition that slides the page
-                            // and seeks the shared elements, so the chrome tracks the predictive-back
-                            // gesture frame-for-frame. presence is 1 when TabRoot fully covers the
-                            // screen and 0 once a sub-page has fully replaced it.
-                            val tabRootPresence = tabRootScope.transition.animateFloat(
-                                transitionSpec = { motion.defaultSpatialSpec() },
-                                label = "tabRootPresence",
-                            ) { state -> if (state == EnterExitState.Visible) 1f else 0f }
-                            LaunchedEffect(tabRootPresence) {
-                                snapshotFlow { tabRootPresence.value }
-                                    .collect { navProgress.floatValue = 1f - it }
-                            }
-                            CompositionLocalProvider(
-                                LocalAnimatedContentScope provides tabRootScope,
-                            ) {
-                                // All four tabs stay composed (beyondViewportPageCount = size - 1)
-                                // so switching is instant. User swipe is disabled: Registry hosts
-                                // its own pager and the map pans horizontally — the bottom bar
-                                // drives page changes.
-                                HorizontalPager(
-                                    state = pagerState,
-                                    beyondViewportPageCount = ShellTab.entries.size - 1,
-                                    userScrollEnabled = false,
-                                    modifier = Modifier.fillMaxSize(),
-                                ) { page ->
-                                    val pageTab = ShellTab.entries[page]
-                                    val isActive = page == pagerState.settledPage
-                                    val pageQuery = if (isActive) searchQuery else ""
-                                    val onProvideFilterToggle: ((() -> Unit)?) -> Unit = { filterToggle = it }
-                                    // The map renders behind the floating top bar; other tabs
-                                    // inset under both bars.
-                                    val pagePadding = if (pageTab == ShellTab.Map) {
-                                        PaddingValues(bottom = innerPadding.calculateBottomPadding())
-                                    } else {
-                                        innerPadding
+                bottomBar = {
+                    MyBicoccaBottomBar(
+                        items = bottomBarItems,
+                        selected = tab,
+                        onSelect = { selected ->
+                            // Always pop the sub-stack first — switching tabs (or re-tapping the
+                            // current tab) should land you at TabRoot, never deep on a sub-page.
+                            while (backStack.size > 1) backStack.removeAt(backStack.lastIndex)
+                            // Instant jump (no scroll-through of intermediate pages); the pages are
+                            // already composed, so this is a cheap show/hide, not a rebuild.
+                            scope.launch { pagerState.scrollToPage(selected.ordinal) }
+                        },
+                        translationY = maxOf(navProgress.floatValue, searchProgress.value) * 300f,
+                    )
+                },
+                snackbarHost = { AppSnackbarHost(controller = snackbarController) },
+            ) { innerPadding ->
+                val topInset = innerPadding.calculateTopPadding()
+                Box(modifier = Modifier.fillMaxSize()) {
+                    // SharedTransitionLayout wraps the NavDisplay so shared elements can morph between
+                    // NavEntry instances. The tab pager is hosted inside the TabRoot entry (below) so its
+                    // list tickets share NavDisplay's AnimatedContent scope with the detail entry.
+                    SharedTransitionLayout(modifier = Modifier.fillMaxSize()) {
+                        CompositionLocalProvider(LocalSharedTransitionScope provides this) {
+                            NavDisplay(
+                                backStack = backStack,
+                                onBack = { backStack.removeLastOrNull() },
+                                modifier = Modifier.fillMaxSize(),
+                                entryDecorators = listOf(
+                                    rememberSaveableStateHolderNavEntryDecorator(),
+                                    rememberViewModelStoreNavEntryDecorator(),
+                                ),
+                                transitionSpec = { enterTransition togetherWith exitTransition },
+                                popTransitionSpec = { popEnterTransition togetherWith popExitTransition },
+                                predictivePopTransitionSpec = { popEnterTransition togetherWith popExitTransition },
+                                entryProvider = entryProvider {
+                                    // Root: the four-tab pager. Bridges NavDisplay's AnimatedContentScope into
+                                    // the app's LocalAnimatedContentScope so list tickets can be true shared
+                                    // elements that seek into the detail entry.
+                                    entry<AppRoute.TabRoot> {
+                                        val tabRootScope = LocalNavAnimatedContentScope.current
+                                        // Publish the bar/bottom-bar morph fraction off THIS entry's enter/exit.
+                                        // animateFloat rides the same (seekable) transition that slides the page
+                                        // and seeks the shared elements, so the chrome tracks the predictive-back
+                                        // gesture frame-for-frame. presence is 1 when TabRoot fully covers the
+                                        // screen and 0 once a sub-page has fully replaced it.
+                                        val tabRootPresence = tabRootScope.transition.animateFloat(
+                                            transitionSpec = { motion.defaultSpatialSpec() },
+                                            label = "tabRootPresence",
+                                        ) { state -> if (state == EnterExitState.Visible) 1f else 0f }
+                                        LaunchedEffect(tabRootPresence) {
+                                            snapshotFlow { tabRootPresence.value }
+                                                .collect { navProgress.floatValue = 1f - it }
+                                        }
+                                        CompositionLocalProvider(
+                                            LocalAnimatedContentScope provides tabRootScope,
+                                        ) {
+                                            // All four tabs stay composed (beyondViewportPageCount = size - 1)
+                                            // so switching is instant. User swipe is disabled: Registry hosts
+                                            // its own pager and the map pans horizontally — the bottom bar
+                                            // drives page changes.
+                                            HorizontalPager(
+                                                state = pagerState,
+                                                beyondViewportPageCount = ShellTab.entries.size - 1,
+                                                userScrollEnabled = false,
+                                                modifier = Modifier.fillMaxSize(),
+                                            ) { page ->
+                                                val pageTab = ShellTab.entries[page]
+                                                val isActive = page == pagerState.settledPage
+                                                val pageQuery = if (isActive) searchQuery else ""
+                                                val onProvideFilterToggle: ((() -> Unit)?) -> Unit =
+                                                    { filterToggle = it }
+                                                // The map renders behind the floating top bar; other tabs
+                                                // inset under both bars.
+                                                val pagePadding = if (pageTab == ShellTab.Map) {
+                                                    PaddingValues(bottom = innerPadding.calculateBottomPadding())
+                                                } else {
+                                                    innerPadding
+                                                }
+                                                Box(
+                                                    modifier = Modifier
+                                                        .fillMaxSize()
+                                                        .padding(pagePadding)
+                                                ) {
+                                                    when (pageTab) {
+                                                        ShellTab.Calendar -> CalendarScreen(
+                                                            viewModel = calendarViewModel,
+                                                            isActive = isActive,
+                                                            navProgress = navProgress,
+                                                            searchQuery = pageQuery,
+                                                            onProvideFilterToggle = onProvideFilterToggle,
+                                                            bottomNavBarPadding = innerPadding,
+                                                        )
+
+                                                        ShellTab.Elearning -> ElearningScreen(
+                                                            viewModel = elearningViewModel,
+                                                            isActive = isActive,
+                                                            searchQuery = pageQuery,
+                                                            onProvideFilterToggle = onProvideFilterToggle,
+                                                            onOpenCourse = { courseId ->
+                                                                backStack.add(
+                                                                    AppRoute.CourseDetail(
+                                                                        courseId.value
+                                                                    )
+                                                                )
+                                                            },
+                                                            onOpenAssignment = { courseId, assignmentId ->
+                                                                backStack.add(
+                                                                    AppRoute.AssignmentDetail(
+                                                                        assignId = assignmentId.value,
+                                                                        courseId = courseId.value
+                                                                    ),
+                                                                )
+                                                            },
+                                                            onOpenQuiz = { courseId, quizId ->
+                                                                backStack.add(
+                                                                    AppRoute.QuizDetail(
+                                                                        quizId = quizId.value,
+                                                                        courseId = courseId.value
+                                                                    ),
+                                                                )
+                                                            },
+                                                        )
+
+                                                        ShellTab.Map -> MapScreen(
+                                                            viewModel = mapViewModel,
+                                                            isActive = isActive,
+                                                            searchQuery = pageQuery,
+                                                            contentInsets = innerPadding,
+                                                            onProvideFilterToggle = onProvideFilterToggle,
+                                                            onOpenRoom360 = { url, roomName ->
+                                                                backStack.add(
+                                                                    AppRoute.Room360View(
+                                                                        url = url,
+                                                                        roomName = roomName
+                                                                    )
+                                                                )
+                                                            },
+                                                        )
+
+                                                        ShellTab.Registry -> RegistryScreen(
+                                                            bookedExamsViewModel = bookedExamsViewModel,
+                                                            bookableExamsViewModel = bookableExamsViewModel,
+                                                            taxesViewModel = taxesViewModel,
+                                                            isActive = isActive,
+                                                            onOpenTaxDetail = { chargeId ->
+                                                                backStack.add(
+                                                                    AppRoute.TaxDetail(
+                                                                        chargeId = chargeId
+                                                                    )
+                                                                )
+                                                            },
+                                                            searchQuery = pageQuery,
+                                                            onProvideFilterToggle = onProvideFilterToggle,
+                                                        )
+                                                    }
+                                                }
+                                            }
+                                        }
                                     }
-                                    Box(modifier = Modifier.fillMaxSize().padding(pagePadding)) {
-                                        when (pageTab) {
-                                            ShellTab.Calendar -> CalendarScreen(
-                                                viewModel = calendarViewModel,
-                                                isActive = isActive,
-                                                navProgress = navProgress,
-                                                searchQuery = pageQuery,
-                                                onProvideFilterToggle = onProvideFilterToggle,
-                                                bottomNavBarPadding = innerPadding,
-                                            )
-                                            ShellTab.Elearning -> ElearningScreen(
-                                                viewModel = elearningViewModel,
-                                                isActive = isActive,
-                                                searchQuery = pageQuery,
-                                                onProvideFilterToggle = onProvideFilterToggle,
-                                                onOpenCourse = { courseId ->
-                                                    backStack.add(AppRoute.CourseDetail(courseId.value))
-                                                },
-                                                onOpenAssignment = { courseId, assignmentId ->
-                                                    backStack.add(
-                                                        AppRoute.AssignmentDetail(assignId = assignmentId.value, courseId = courseId.value),
-                                                    )
-                                                },
-                                                onOpenQuiz = { courseId, quizId ->
-                                                    backStack.add(
-                                                        AppRoute.QuizDetail(quizId = quizId.value, courseId = courseId.value),
-                                                    )
-                                                },
-                                            )
-                                            ShellTab.Map -> MapScreen(
-                                                viewModel = mapViewModel,
-                                                isActive = isActive,
-                                                searchQuery = pageQuery,
-                                                contentInsets = innerPadding,
-                                                onProvideFilterToggle = onProvideFilterToggle,
-                                                onOpenRoom360 = { url, roomName ->
-                                                    backStack.add(AppRoute.Room360View(url = url, roomName = roomName))
-                                                },
-                                            )
-                                            ShellTab.Registry -> RegistryScreen(
-                                                bookedExamsViewModel = bookedExamsViewModel,
-                                                bookableExamsViewModel = bookableExamsViewModel,
-                                                taxesViewModel = taxesViewModel,
-                                                isActive = isActive,
-                                                onOpenTaxDetail = { chargeId ->
-                                                    backStack.add(AppRoute.TaxDetail(chargeId = chargeId))
-                                                },
-                                                searchQuery = pageQuery,
-                                                onProvideFilterToggle = onProvideFilterToggle,
+
+                                    // First-level sub-pages (no arguments).
+                                    entry<AppRoute.Profile> {
+                                        SubPage(topInset) {
+                                            ProfileScreen(
+                                                viewModel = profileViewModel
                                             )
                                         }
                                     }
-                                }
-                            }
-                        }
+                                    entry<AppRoute.Settings> { SubPage(topInset) { SettingsScreen() } }
+                                    entry<AppRoute.StudyPlan> { SubPage(topInset) { StudyPlanScreen() } }
+                                    entry<AppRoute.SelfCertificates> { SubPage(topInset) { SelfCertificatesScreen() } }
+                                    entry<AppRoute.ExamResults> { SubPage(topInset) { ExamResultsScreen() } }
+                                    entry<AppRoute.Attendance> { SubPage(topInset) { AttendanceScreen() } }
+                                    entry<AppRoute.Questionnaires> { SubPage(topInset) { QuestionnairesScreen() } }
+                                    entry<AppRoute.Reservations> { SubPage(topInset) { ReservationsScreen() } }
+                                    entry<AppRoute.Internships> { SubPage(topInset) { InternshipsScreen() } }
+                                    entry<AppRoute.DegreeAward> { SubPage(topInset) { DegreeAwardScreen() } }
+                                    entry<AppRoute.AppInfo> { SubPage(topInset) { AppInfoScreen() } }
+                                    entry<AppRoute.LoginManager> { SubPage(topInset) { LoginManagerScreen() } }
+                                    entry<AppRoute.Messaging> { SubPage(topInset) { MessagingScreen() } }
 
-                        // First-level sub-pages (no arguments).
-                        entry<AppRoute.Profile> { SubPage(topInset) { ProfileScreen(viewModel = profileViewModel) } }
-                        entry<AppRoute.Settings> { SubPage(topInset) { SettingsScreen() } }
-                        entry<AppRoute.StudyPlan> { SubPage(topInset) { StudyPlanScreen() } }
-                        entry<AppRoute.SelfCertificates> { SubPage(topInset) { SelfCertificatesScreen() } }
-                        entry<AppRoute.ExamResults> { SubPage(topInset) { ExamResultsScreen() } }
-                        entry<AppRoute.Attendance> { SubPage(topInset) { AttendanceScreen() } }
-                        entry<AppRoute.Questionnaires> { SubPage(topInset) { QuestionnairesScreen() } }
-                        entry<AppRoute.Reservations> { SubPage(topInset) { ReservationsScreen() } }
-                        entry<AppRoute.Internships> { SubPage(topInset) { InternshipsScreen() } }
-                        entry<AppRoute.DegreeAward> { SubPage(topInset) { DegreeAwardScreen() } }
-                        entry<AppRoute.AppInfo> { SubPage(topInset) { AppInfoScreen() } }
-                        entry<AppRoute.LoginManager> { SubPage(topInset) { LoginManagerScreen() } }
-                        entry<AppRoute.Messaging> { SubPage(topInset) { MessagingScreen() } }
+                                    // First-level with arguments.
+                                    entry<AppRoute.Room360View> { key ->
+                                        SubPage(topInset) {
+                                            Room360Screen(
+                                                url = key.url,
+                                                roomName = key.roomName
+                                            )
+                                        }
+                                    }
+                                    entry<AppRoute.Transcript> { key ->
+                                        val vm =
+                                            hiltViewModel<TranscriptViewModel, TranscriptViewModel.Factory>(
+                                                creationCallback = { it.create(key) },
+                                            )
+                                        SubPage(topInset) {
+                                            TranscriptScreen(
+                                                careerId = key.careerId,
+                                                viewModel = vm
+                                            )
+                                        }
+                                    }
+                                    entry<AppRoute.CourseDetail> { key ->
+                                        val vm =
+                                            hiltViewModel<CourseDetailViewModel, CourseDetailViewModel.Factory>(
+                                                creationCallback = { it.create(key) },
+                                            )
+                                        SubPage(topInset) {
+                                            CourseDetailScreen(
+                                                courseId = key.courseId,
+                                                viewModel = vm,
+                                                onProvideTitle = { subPageTitleOverride = it },
+                                                onProvideActions = { subPageActions = it },
+                                                onOpenAssignment = { id ->
+                                                    backStack.add(
+                                                        AppRoute.AssignmentDetail(
+                                                            assignId = id.value,
+                                                            courseId = key.courseId
+                                                        )
+                                                    )
+                                                },
+                                                onOpenQuiz = { id ->
+                                                    backStack.add(
+                                                        AppRoute.QuizDetail(
+                                                            quizId = id.value,
+                                                            courseId = key.courseId
+                                                        )
+                                                    )
+                                                },
+                                                onOpenForum = { id ->
+                                                    backStack.add(
+                                                        AppRoute.ForumDetail(
+                                                            forumId = id.value,
+                                                            courseId = key.courseId
+                                                        )
+                                                    )
+                                                },
+                                                onOpenVideo = { cmId, title ->
+                                                    backStack.add(
+                                                        AppRoute.VideoPlayback(
+                                                            courseId = key.courseId,
+                                                            cmId = cmId,
+                                                            title = title
+                                                        )
+                                                    )
+                                                },
+                                            )
+                                        }
+                                    }
+                                    entry<AppRoute.TaxDetail> { key ->
+                                        SubPage(topInset) {
+                                            TaxDetailScreen(
+                                                chargeId = key.chargeId,
+                                                viewModel = taxesViewModel
+                                            )
+                                        }
+                                    }
 
-                        // First-level with arguments.
-                        entry<AppRoute.Room360View> { key ->
-                            SubPage(topInset) { Room360Screen(url = key.url, roomName = key.roomName) }
-                        }
-                        entry<AppRoute.Transcript> { key ->
-                            val vm = hiltViewModel<TranscriptViewModel, TranscriptViewModel.Factory>(
-                                creationCallback = { it.create(key) },
-                            )
-                            SubPage(topInset) { TranscriptScreen(careerId = key.careerId, viewModel = vm) }
-                        }
-                        entry<AppRoute.CourseDetail> { key ->
-                            val vm = hiltViewModel<CourseDetailViewModel, CourseDetailViewModel.Factory>(
-                                creationCallback = { it.create(key) },
-                            )
-                            SubPage(topInset) {
-                                CourseDetailScreen(
-                                    courseId = key.courseId,
-                                    viewModel = vm,
-                                    onProvideTitle = { subPageTitleOverride = it },
-                                    onProvideActions = { subPageActions = it },
-                                    onOpenAssignment = { id ->
-                                        backStack.add(AppRoute.AssignmentDetail(assignId = id.value, courseId = key.courseId))
-                                    },
-                                    onOpenQuiz = { id ->
-                                        backStack.add(AppRoute.QuizDetail(quizId = id.value, courseId = key.courseId))
-                                    },
-                                    onOpenForum = { id ->
-                                        backStack.add(AppRoute.ForumDetail(forumId = id.value, courseId = key.courseId))
-                                    },
-                                    onOpenVideo = { cmId, title ->
-                                        backStack.add(AppRoute.VideoPlayback(courseId = key.courseId, cmId = cmId, title = title))
-                                    },
-                                )
-                            }
-                        }
-                        entry<AppRoute.TaxDetail> { key ->
-                            SubPage(topInset) { TaxDetailScreen(chargeId = key.chargeId, viewModel = taxesViewModel) }
-                        }
+                                    // Deeper sub-pages.
+                                    entry<AppRoute.StudyPlanEdit> { key ->
+                                        SubPage(topInset) {
+                                            StudyPlanEditScreen(
+                                                studentId = key.studentId,
+                                                choiceRegulationId = key.choiceRegulationId,
+                                                schemaId = key.schemaId,
+                                                planId = key.planId,
+                                            )
+                                        }
+                                    }
+                                    entry<AppRoute.QuizDetail> { key ->
+                                        val vm =
+                                            hiltViewModel<QuizDetailViewModel, QuizDetailViewModel.Factory>(
+                                                creationCallback = { it.create(key) },
+                                            )
+                                        SubPage(topInset) {
+                                            QuizDetailScreen(
+                                                quizId = key.quizId,
+                                                courseId = key.courseId,
+                                                viewModel = vm
+                                            )
+                                        }
+                                    }
+                                    entry<AppRoute.AssignmentDetail> { key ->
+                                        val vm =
+                                            hiltViewModel<AssignmentDetailViewModel, AssignmentDetailViewModel.Factory>(
+                                                creationCallback = { it.create(key) },
+                                            )
+                                        SubPage(topInset) {
+                                            AssignmentDetailScreen(
+                                                assignId = key.assignId,
+                                                courseId = key.courseId,
+                                                viewModel = vm
+                                            )
+                                        }
+                                    }
+                                    entry<AppRoute.ForumDetail> { key ->
+                                        val vm =
+                                            hiltViewModel<ForumDetailViewModel, ForumDetailViewModel.Factory>(
+                                                creationCallback = { it.create(key) },
+                                            )
+                                        SubPage(topInset) {
+                                            ForumDetailScreen(
+                                                forumId = key.forumId,
+                                                courseId = key.courseId,
+                                                viewModel = vm
+                                            )
+                                        }
+                                    }
+                                    entry<AppRoute.DiscussionDetail> { key ->
+                                        val vm =
+                                            hiltViewModel<DiscussionDetailViewModel, DiscussionDetailViewModel.Factory>(
+                                                creationCallback = { it.create(key) },
+                                            )
+                                        SubPage(topInset) {
+                                            DiscussionDetailScreen(
+                                                discussionId = key.discussionId,
+                                                viewModel = vm
+                                            )
+                                        }
+                                    }
+                                    entry<AppRoute.ConversationDetail> { key ->
+                                        val vm =
+                                            hiltViewModel<ConversationDetailViewModel, ConversationDetailViewModel.Factory>(
+                                                creationCallback = { it.create(key) },
+                                            )
+                                        SubPage(topInset) {
+                                            ConversationDetailScreen(
+                                                conversationId = key.conversationId,
+                                                viewModel = vm
+                                            )
+                                        }
+                                    }
+                                    entry<AppRoute.VideoPlayback> { key ->
+                                        val vm =
+                                            hiltViewModel<VideoPlayerViewModel, VideoPlayerViewModel.Factory>(
+                                                creationCallback = { it.create(key) },
+                                            )
+                                        SubPage(topInset, immersive = true) {
+                                            VideoPlayerScreen(
+                                                courseId = key.courseId,
+                                                cmId = key.cmId,
+                                                onBack = { backStack.removeLastOrNull() },
+                                                viewModel = vm,
+                                            )
+                                        }
+                                    }
+                                    entry<AppRoute.TeacherDetail> { key ->
+                                        SubPage(topInset) { TeacherDetailScreen(teacherCode = key.teacherCode) }
+                                    }
 
-                        // Deeper sub-pages.
-                        entry<AppRoute.StudyPlanEdit> { key ->
-                            SubPage(topInset) {
-                                StudyPlanEditScreen(
-                                    studentId = key.studentId,
-                                    choiceRegulationId = key.choiceRegulationId,
-                                    schemaId = key.schemaId,
-                                    planId = key.planId,
-                                )
-                            }
-                        }
-                        entry<AppRoute.QuizDetail> { key ->
-                            val vm = hiltViewModel<QuizDetailViewModel, QuizDetailViewModel.Factory>(
-                                creationCallback = { it.create(key) },
+                                    // Settings sub-pages.
+                                    entry<AppRoute.SettingsAppearance> { SubPage(topInset) { SettingsAppearanceScreen() } }
+                                    entry<AppRoute.SettingsGeneral> { SubPage(topInset) { SettingsGeneralScreen() } }
+                                    entry<AppRoute.SettingsBehaviour> { SubPage(topInset) { SettingsBehaviourScreen() } }
+                                    entry<AppRoute.SettingsSecurity> { SubPage(topInset) { SettingsSecurityScreen() } }
+                                    entry<AppRoute.SettingsDeveloper> { SubPage(topInset) { SettingsDeveloperScreen() } }
+                                },
                             )
-                            SubPage(topInset) { QuizDetailScreen(quizId = key.quizId, courseId = key.courseId, viewModel = vm) }
                         }
-                        entry<AppRoute.AssignmentDetail> { key ->
-                            val vm = hiltViewModel<AssignmentDetailViewModel, AssignmentDetailViewModel.Factory>(
-                                creationCallback = { it.create(key) },
-                            )
-                            SubPage(topInset) { AssignmentDetailScreen(assignId = key.assignId, courseId = key.courseId, viewModel = vm) }
-                        }
-                        entry<AppRoute.ForumDetail> { key ->
-                            val vm = hiltViewModel<ForumDetailViewModel, ForumDetailViewModel.Factory>(
-                                creationCallback = { it.create(key) },
-                            )
-                            SubPage(topInset) { ForumDetailScreen(forumId = key.forumId, courseId = key.courseId, viewModel = vm) }
-                        }
-                        entry<AppRoute.DiscussionDetail> { key ->
-                            val vm = hiltViewModel<DiscussionDetailViewModel, DiscussionDetailViewModel.Factory>(
-                                creationCallback = { it.create(key) },
-                            )
-                            SubPage(topInset) { DiscussionDetailScreen(discussionId = key.discussionId, viewModel = vm) }
-                        }
-                        entry<AppRoute.ConversationDetail> { key ->
-                            val vm = hiltViewModel<ConversationDetailViewModel, ConversationDetailViewModel.Factory>(
-                                creationCallback = { it.create(key) },
-                            )
-                            SubPage(topInset) { ConversationDetailScreen(conversationId = key.conversationId, viewModel = vm) }
-                        }
-                        entry<AppRoute.VideoPlayback> { key ->
-                            val vm = hiltViewModel<VideoPlayerViewModel, VideoPlayerViewModel.Factory>(
-                                creationCallback = { it.create(key) },
-                            )
-                            SubPage(topInset, immersive = true) {
-                                VideoPlayerScreen(
-                                    courseId = key.courseId,
-                                    cmId = key.cmId,
-                                    onBack = { backStack.removeLastOrNull() },
-                                    viewModel = vm,
-                                )
-                            }
-                        }
-                        entry<AppRoute.TeacherDetail> { key ->
-                            SubPage(topInset) { TeacherDetailScreen(teacherCode = key.teacherCode) }
-                        }
+                    }
+                }
+            }
 
-                        // Settings sub-pages.
-                        entry<AppRoute.SettingsAppearance> { SubPage(topInset) { SettingsAppearanceScreen() } }
-                        entry<AppRoute.SettingsGeneral> { SubPage(topInset) { SettingsGeneralScreen() } }
-                        entry<AppRoute.SettingsBehaviour> { SubPage(topInset) { SettingsBehaviourScreen() } }
-                        entry<AppRoute.SettingsSecurity> { SubPage(topInset) { SettingsSecurityScreen() } }
-                        entry<AppRoute.SettingsDeveloper> { SubPage(topInset) { SettingsDeveloperScreen() } }
-                    },
+            if (showAccountSwitcher) {
+                AccountSwitcherSheet(
+                    onDismiss = { showAccountSwitcher = false },
+                    onAddAccount = { returnTo -> rootViewModel.requestAddAccount(returnTo) },
+                    onOpenProfile = { backStack.add(AppRoute.Profile) },
+                    viewModel = accountViewModel,
                 )
             }
-            }
         }
-    }
-
-    if (showAccountSwitcher) {
-        AccountSwitcherSheet(
-            onDismiss = { showAccountSwitcher = false },
-            onAddAccount = { returnTo -> rootViewModel.requestAddAccount(returnTo) },
-            onOpenProfile = { backStack.add(AppRoute.Profile) },
-            viewModel = accountViewModel,
-        )
-    }
-    }
     }
 }
 

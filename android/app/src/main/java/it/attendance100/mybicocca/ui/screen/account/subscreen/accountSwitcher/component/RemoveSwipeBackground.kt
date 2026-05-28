@@ -21,8 +21,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.PersonRemove
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SwipeToDismissBoxState
-import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -34,21 +32,19 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
-// The reveal behind a profile card while it is swiped left. Tracks the swipe via the dismiss
-// state: the trash-style icon grows in as you drag, then springs to full size with a slight
-// overshoot once you cross the commit threshold — at which point the zone turns vivid and a
-// "Rimuovi" label slides in. This mirrors the pop the latest Gmail uses on its swipe actions.
+// The reveal behind a profile card while it is swiped left. The trash-style icon grows in as
+// the card is dragged, then springs to full size with a slight overshoot once the commit
+// threshold is crossed — at which point the zone turns vivid and a "Rimuovi" label slides in.
+// Driven by primitive booleans because [SwipeToRemoveBox] tracks its own gesture state.
 @Composable
 fun RemoveSwipeBackground(
-    state: SwipeToDismissBoxState,
+    armed: Boolean,
+    revealed: Boolean,
     shape: RoundedCornerShape,
     modifier: Modifier = Modifier,
 ) {
     val scheme = MaterialTheme.colorScheme
     val motion = MaterialTheme.motionScheme
-
-    val revealed = state.dismissDirection == SwipeToDismissBoxValue.EndToStart
-    val armed = state.targetValue == SwipeToDismissBoxValue.EndToStart
 
     val container by animateColorAsState(
         targetValue = if (armed) scheme.error else scheme.errorContainer,

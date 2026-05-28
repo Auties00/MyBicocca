@@ -1,5 +1,13 @@
 package it.attendance100.mybicocca.ui.screen.account.subscreen.accountSwitcher.component
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -10,15 +18,18 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.RadioButton
+import androidx.compose.material3.RadioButtonDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -38,34 +49,72 @@ fun ProfileCard(
     isActive: Boolean,
     photo: File?,
     onOpenDetails: () -> Unit,
+    onSwitchAccount: () -> Unit,
     onSelectCareer: (CareerId) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val scheme = MaterialTheme.colorScheme
+    val motion = MaterialTheme.motionScheme
     val careers = account.academic.careers.sortedByDescending { it.status.isSelectable }
     val selectedCareerId = account.academic.selectedCareerId
 
-    // onClick on the Surface itself so the whole card is tappable and the ripple is clipped
-    // to CardShape. The career sub-cards are nested clickables, so tapping one selects that
-    // career instead of opening details (the inner click consumes the gesture).
+    // Active = filled chip on `surfaceContainerHigh`; inactive = the modal's own background
+    // color (`surfaceContainerLow`, which is what ModalBottomSheet uses by default) with a
+    // hairline `outlineVariant` border, matching the "Aggiungi un altro account" tile so the
+    // two outlined slots feel like one family. Both halves animate together when the active
+    // selection swaps so the colors keep up with the LazyColumn placement slide.
+    val containerColor by animateColorAsState(
+        targetValue = if (isActive) scheme.surfaceContainerHigh else scheme.surfaceContainerLow,
+        animationSpec = motion.defaultEffectsSpec(),
+        label = "ProfileCardContainer",
+    )
+    val borderColor by animateColorAsState(
+        targetValue = if (isActive) Color.Transparent else scheme.outlineVariant,
+        animationSpec = motion.defaultEffectsSpec(),
+        label = "ProfileCardBorder",
+    )
+    val elevation by animateDpAsState(
+        targetValue = if (isActive) 3.dp else 0.dp,
+        animationSpec = motion.defaultEffectsSpec(),
+        label = "ProfileCardElevation",
+    )
+
+    // Tapping the card itself: active -> open the profile page (and close the sheet upstream);
+    // inactive -> just switch the active account in place. The careers underneath are nested
+    // clickables that consume their own gesture, so this fallback only fires on the header.
     Surface(
-        onClick = onOpenDetails,
+        onClick = if (isActive) onOpenDetails else onSwitchAccount,
         shape = CardShape,
-        color = if (isActive) scheme.surfaceContainerHighest else scheme.surfaceContainerHigh,
-        tonalElevation = if (isActive) 3.dp else 0.dp,
+        color = containerColor,
+        border = BorderStroke(width = 1.dp, color = borderColor),
+        tonalElevation = elevation,
         modifier = modifier.fillMaxWidth(),
     ) {
         Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp)) {
             ProfileHeader(account = account, isActive = isActive, photo = photo)
 
-            Spacer(Modifier.height(12.dp))
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                careers.forEach { career ->
-                    CareerSubCard(
-                        career = career,
-                        selected = career.id == selectedCareerId,
-                        onClick = { onSelectCareer(career.id) },
-                    )
+            // Careers only render for the active account. AnimatedVisibility makes the
+            // expand/collapse smooth when the active flag flips between cards.
+            AnimatedVisibility(
+                visible = isActive,
+                enter = expandVertically(motion.defaultSpatialSpec()) + fadeIn(motion.defaultEffectsSpec()),
+                exit = shrinkVertically(motion.defaultSpatialSpec()) + fadeOut(motion.defaultEffectsSpec()),
+            ) {
+                Column {
+                    Spacer(Modifier.height(12.dp))
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        careers.forEach { career ->
+                            CareerSubCard(
+                                career = career,
+                                selected = career.id == selectedCareerId,
+                                // Tapping the already-active career is a no-op per design;
+                                // only a different career triggers a switch.
+                                onClick = {
+                                    if (career.id != selectedCareerId) onSelectCareer(career.id)
+                                },
+                            )
+                        }
+                    }
                 }
             }
         }
@@ -79,12 +128,18 @@ private fun ProfileHeader(
     photo: File?,
 ) {
     val scheme = MaterialTheme.colorScheme
+    val motion = MaterialTheme.motionScheme
+    val avatarSize by animateDpAsState(
+        targetValue = if (isActive) 56.dp else 48.dp,
+        animationSpec = motion.defaultSpatialSpec(),
+        label = "ProfileAvatarSize",
+    )
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(14.dp),
     ) {
-        AccountAvatar(photo = photo, size = if (isActive) 56.dp else 48.dp)
+        AccountAvatar(photo = photo, size = avatarSize)
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = account.displayName,
@@ -102,11 +157,19 @@ private fun ProfileHeader(
                 overflow = TextOverflow.Ellipsis,
             )
         }
-        Icon(
-            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-            contentDescription = null,
-            tint = scheme.onSurfaceVariant,
-        )
+        // Inactive accounts get an unfilled radio dot as the "switch to me" affordance; the
+        // active card needs no trailing glyph because the filled background + carriera slot
+        // already read as the selected state.
+        if (!isActive) {
+            RadioButton(
+                selected = false,
+                // The whole card handles the click; the radio is a visual indicator only.
+                onClick = null,
+                colors = RadioButtonDefaults.colors(
+                    unselectedColor = scheme.outline,
+                ),
+            )
+        }
     }
 }
 
