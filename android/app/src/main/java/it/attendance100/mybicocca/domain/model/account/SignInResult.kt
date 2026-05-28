@@ -7,7 +7,6 @@ sealed interface SignInResult {
     ) : SignInResult
 
     data class Failure(
-        val esse3Error: Throwable?,
-        val elearningError: Throwable?,
+        val reason: SignInFailure,
     ) : SignInResult
 }

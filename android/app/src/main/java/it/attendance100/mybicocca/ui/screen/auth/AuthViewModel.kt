@@ -3,6 +3,7 @@ package it.attendance100.mybicocca.ui.screen.auth
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import it.attendance100.mybicocca.domain.model.account.SignInFailure
 import it.attendance100.mybicocca.domain.model.account.SignInResult
 import it.attendance100.mybicocca.domain.usecase.account.SignInUseCase
 import it.attendance100.mybicocca.ui.screen.auth.state.AuthEvent
@@ -29,23 +30,20 @@ class AuthViewModel @Inject constructor(
     private val _inflight = MutableStateFlow(false)
     val inflight: StateFlow<Boolean> = _inflight.asStateFlow()
 
-    private val _esse3Error = MutableStateFlow<Throwable?>(null)
-    val esse3Error: StateFlow<Throwable?> = _esse3Error.asStateFlow()
-
-    private val _elearningError = MutableStateFlow<Throwable?>(null)
-    val elearningError: StateFlow<Throwable?> = _elearningError.asStateFlow()
+    private val _error = MutableStateFlow<SignInFailure?>(null)
+    val error: StateFlow<SignInFailure?> = _error.asStateFlow()
 
     private val _events = Channel<AuthEvent>(Channel.BUFFERED)
     val events: Flow<AuthEvent> = _events.receiveAsFlow()
 
     fun setUsername(value: String) {
         _username.value = value
-        clearErrors()
+        clearError()
     }
 
     fun setPassword(value: String) {
         _password.value = value
-        clearErrors()
+        clearError()
     }
 
     fun submit() {
@@ -53,7 +51,7 @@ class AuthViewModel @Inject constructor(
         if (_username.value.isBlank() || _password.value.isBlank()) return
         viewModelScope.launch {
             _inflight.value = true
-            clearErrors()
+            clearError()
             val result = signIn(_username.value, _password.value)
             _inflight.value = false
             when (result) {
@@ -62,15 +60,13 @@ class AuthViewModel @Inject constructor(
                     _events.send(AuthEvent.SignedIn(result.account, result.requiresCareerPick))
                 }
                 is SignInResult.Failure -> {
-                    _esse3Error.value = result.esse3Error
-                    _elearningError.value = result.elearningError
+                    _error.value = result.reason
                 }
             }
         }
     }
 
-    private fun clearErrors() {
-        _esse3Error.value = null
-        _elearningError.value = null
+    private fun clearError() {
+        _error.value = null
     }
 }
