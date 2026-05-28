@@ -1,6 +1,16 @@
 package it.attendance100.mybicocca.ui.screen.auth
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -18,10 +28,12 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
+import androidx.compose.material.icons.outlined.ErrorOutline
 import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.Visibility
 import androidx.compose.material.icons.outlined.VisibilityOff
+import androidx.compose.material.icons.outlined.WifiOff
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -60,8 +72,12 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.domain.model.account.Account
+import it.attendance100.mybicocca.domain.model.account.SignInFailure
 import it.attendance100.mybicocca.ui.component.brand.MyBicoccaWordmark
+import it.attendance100.mybicocca.ui.component.button.rememberPressShrink
+import it.attendance100.mybicocca.ui.component.button.rememberPressShrinkShape
 import it.attendance100.mybicocca.ui.screen.auth.state.AuthEvent
+import it.attendance100.mybicocca.ui.theme.BicoccaWordmarkAccent
 import kotlinx.coroutines.launch
 
 @Composable
@@ -73,8 +89,7 @@ fun AuthScreen(
     val username by viewModel.username.collectAsStateWithLifecycle()
     val password by viewModel.password.collectAsStateWithLifecycle()
     val inflight by viewModel.inflight.collectAsStateWithLifecycle()
-    val esse3Error by viewModel.esse3Error.collectAsStateWithLifecycle()
-    val elearningError by viewModel.elearningError.collectAsStateWithLifecycle()
+    val error by viewModel.error.collectAsStateWithLifecycle()
 
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
@@ -90,12 +105,18 @@ fun AuthScreen(
 
     if (onCancel != null) BackHandler(enabled = !inflight) { onCancel() }
 
+    // Bad-credential errors mark both fields red — the password is the usual culprit
+    // but we can't tell which one is wrong, so both light up.
+    val fieldsInError = error is SignInFailure.BadCredentials
+
     // Local SnackbarHost: AuthScreen lives in AppRoot, above MainShell's snackbar host, so it
     // can't reach it. The placeholder SPID/CIE actions surface their message through this one.
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { scaffoldPadding ->
-        Box(modifier = Modifier.fillMaxSize().padding(scaffoldPadding)) {
+        Box(modifier = Modifier
+            .fillMaxSize()
+            .padding(scaffoldPadding)) {
             if (onCancel != null) {
                 IconButton(
                     onClick = onCancel,
@@ -120,7 +141,7 @@ fun AuthScreen(
                     .padding(horizontal = 28.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                Spacer(Modifier.height(96.dp))
+                Spacer(Modifier.height(106.dp))
 
                 MyBicoccaWordmark(fontSize = 34.sp, sharedElement = true)
                 Spacer(Modifier.height(8.dp))
@@ -131,15 +152,17 @@ fun AuthScreen(
                     textAlign = TextAlign.Center,
                 )
 
-                Spacer(Modifier.height(40.dp))
+                Spacer(Modifier.height(80.dp))
 
                 OutlinedTextField(
                     value = username,
                     onValueChange = viewModel::setUsername,
-                    label = { Text("Username") },
+                    label = { Text("Username o Email") },
+                    placeholder = { Text("m.rossi1") },
                     leadingIcon = { Icon(Icons.Outlined.Person, contentDescription = null) },
                     enabled = !inflight,
                     singleLine = true,
+                    isError = fieldsInError,
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Email,
                         imeAction = ImeAction.Next,
@@ -162,6 +185,7 @@ fun AuthScreen(
                     },
                     enabled = !inflight,
                     singleLine = true,
+                    isError = fieldsInError,
                     visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Password,
@@ -170,11 +194,22 @@ fun AuthScreen(
                     modifier = Modifier.fillMaxWidth(),
                 )
 
+                AuthFailureCard(failure = error)
+
                 Spacer(Modifier.height(24.dp))
+                val (accediInteractionSource, accediShape) = rememberPressShrink()
                 Button(
                     onClick = viewModel::submit,
                     enabled = !inflight && username.isNotBlank() && password.isNotBlank(),
-                    modifier = Modifier.fillMaxWidth().height(52.dp),
+                    interactionSource = accediInteractionSource,
+                    shape = accediShape,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = BicoccaWordmarkAccent,
+                        contentColor = MaterialTheme.colorScheme.onPrimary,
+                    ),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(52.dp),
                 ) {
                     if (inflight) {
                         CircularProgressIndicator(
@@ -183,12 +218,9 @@ fun AuthScreen(
                             color = MaterialTheme.colorScheme.onPrimary,
                         )
                     } else {
-                        Text("Accedi")
+                        Text("Accedi", color = Color.White)
                     }
                 }
-
-                esse3Error?.let { ErrorBanner(label = "Carriera (Esse3)", error = it) }
-                elearningError?.let { ErrorBanner(label = "E-learning", error = it) }
 
                 Spacer(Modifier.height(28.dp))
                 Row(
@@ -204,7 +236,7 @@ fun AuthScreen(
                     )
                     HorizontalDivider(modifier = Modifier.weight(1f))
                 }
-                Spacer(Modifier.height(20.dp))
+                Spacer(Modifier.height(28.dp))
 
                 AlternativeLoginButton(
                     label = "Entra con SPID",
@@ -236,6 +268,14 @@ fun AuthScreen(
     }
 }
 
+/**
+ * Pressed splash for the SPID and CIE buttons. Hard-coded to the official Italian
+ * government identity blue (`#0066CC`) so the splash reads as "SPID/CIE branding"
+ * regardless of the active Material scheme — the Accedi button above is the one
+ * that follows the app's primary colour.
+ */
+private val AlternativeLoginPressedColor = Color(0xFF0066CC)
+
 @Composable
 private fun AlternativeLoginButton(
     label: String,
@@ -244,44 +284,119 @@ private fun AlternativeLoginButton(
     enabled: Boolean,
     onClick: () -> Unit,
 ) {
+    // Each button gets its own remembered InteractionSource, so SPID and CIE
+    // track press state independently — touching one won't tint the other.
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+
+    val containerColor by animateColorAsState(
+        targetValue = if (isPressed) AlternativeLoginPressedColor else Color.Transparent,
+        label = "altLoginContainer",
+    )
+    val contentColor by animateColorAsState(
+        targetValue = if (isPressed) Color.White else MaterialTheme.colorScheme.onSurface,
+        label = "altLoginContent",
+    )
+    val borderColor by animateColorAsState(
+        targetValue = if (isPressed) AlternativeLoginPressedColor else MaterialTheme.colorScheme.outline,
+        label = "altLoginBorder",
+    )
+
     OutlinedButton(
         onClick = onClick,
         enabled = enabled,
+        interactionSource = interactionSource,
         colors = ButtonDefaults.outlinedButtonColors(
-            contentColor = MaterialTheme.colorScheme.onSurface,
+            containerColor = containerColor,
+            contentColor = contentColor,
         ),
-        modifier = Modifier.fillMaxWidth().height(52.dp),
+        border = BorderStroke(1.dp, borderColor),
+        shape = rememberPressShrinkShape(interactionSource),
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(52.dp),
     ) {
         // No size override: both vectors are authored at 24dp tall (SPID wide, CIE near square),
         // so their intrinsic size keeps each logo's aspect ratio and a consistent height.
+        // Press forces the icon to white — overrides the caller-supplied tint
+        // (SPID's official blue, CIE's onSurface) so both logos read clearly on
+        // the #0066CC splash.
         Icon(
             painter = icon,
             contentDescription = null,
-            tint = iconTint,
+            tint = if (isPressed) Color.White else iconTint,
         )
         Spacer(Modifier.width(12.dp))
         Text(label)
     }
 }
 
+/**
+ * Single, friendly error surface — replaces the two raw backend stack-trace cards.
+ * Slides in below the password field so it sits between the input and the action button,
+ * exactly where the user is already looking after a failed tap on "Accedi".
+ */
 @Composable
-private fun ErrorBanner(label: String, error: Throwable) {
-    Spacer(Modifier.height(12.dp))
-    Card(
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer),
-        modifier = Modifier.fillMaxWidth(),
+private fun AuthFailureCard(failure: SignInFailure?) {
+    AnimatedVisibility(
+        visible = failure != null,
+        enter = fadeIn() + expandVertically(),
+        exit = fadeOut() + shrinkVertically(),
     ) {
-        Column(modifier = Modifier.padding(12.dp)) {
-            Text(
-                text = label,
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onErrorContainer,
+        val (icon, title, body) = when (failure) {
+            is SignInFailure.BadCredentials -> Triple(
+                Icons.Outlined.ErrorOutline,
+                "Credenziali non valide",
+                "Controlla username e password e riprova.",
             )
-            Text(
-                text = error.message ?: error.javaClass.simpleName,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onErrorContainer,
+
+            is SignInFailure.NoConnection -> Triple(
+                Icons.Outlined.WifiOff,
+                "Connessione non disponibile",
+                "Controlla la rete e riprova.",
             )
+
+            is SignInFailure.Unknown, null -> Triple(
+                Icons.Outlined.ErrorOutline,
+                "Accesso non riuscito",
+                "Si è verificato un errore imprevisto. Riprova tra qualche istante.",
+            )
+        }
+        Column {
+            Spacer(Modifier.height(12.dp))
+            Card(
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.errorContainer,
+                ),
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Row(
+                    verticalAlignment = Alignment.Top,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    modifier = Modifier.padding(14.dp),
+                ) {
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onErrorContainer,
+                        modifier = Modifier.size(20.dp),
+                    )
+                    Column {
+                        Text(
+                            text = title,
+                            style = MaterialTheme.typography.titleSmall,
+                            color = MaterialTheme.colorScheme.onErrorContainer,
+                        )
+                        Spacer(Modifier.height(2.dp))
+                        Text(
+                            text = body,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onErrorContainer,
+                        )
+                    }
+                }
+            }
         }
     }
 }
+

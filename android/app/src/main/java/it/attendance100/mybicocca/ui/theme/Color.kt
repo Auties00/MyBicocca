@@ -2,10 +2,15 @@ package it.attendance100.mybicocca.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-val BicoccaWordmarkAccent = Color(0xFFD81648)
-
 // Light scheme
 internal val PrimaryLight = Color(0xFFD81648)
+
+// Brand-fixed accent for the wordmark. The literal matches PrimaryLight by
+// design — both render the same brand red — but they live as separate
+// references because they have different theming contracts: PrimaryLight pairs
+// with PrimaryDark (pink) for the active Material scheme, while the wordmark
+// stays this red across both themes so the brand asset never shifts.
+val BicoccaWordmarkAccent = PrimaryLight
 internal val OnPrimaryLight = Color(0xFFFFFFFF)
 internal val PrimaryContainerLight = Color(0xFFFFD9DF)
 internal val OnPrimaryContainerLight = Color(0xFF400014)

@@ -1,5 +1,6 @@
 package it.attendance100.mybicocca.data.auth
 
+import io.ktor.utils.io.ByteReadChannel
 import it.attendance100.mybicocca.data.local.account.AccountDao
 import it.attendance100.mybicocca.data.local.account.AccountWithCareers
 import it.attendance100.mybicocca.data.local.credentials.AccountCredentials
@@ -10,19 +11,18 @@ import it.attendance100.mybicocca.data.mapper.account.composeDisplayName
 import it.attendance100.mybicocca.data.mapper.account.toDomain
 import it.attendance100.mybicocca.data.mapper.account.toEntity
 import it.attendance100.mybicocca.data.mapper.account.toLearningIdentity
-import io.ktor.utils.io.ByteReadChannel
 import it.attendance100.mybicocca.data.remote.elearning.api.ElearningApi
 import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningGetSiteInfoResponse
 import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningLoginResponse
 import it.attendance100.mybicocca.data.remote.esse3.api.Esse3Api
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3CacheInfo
-import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3UserSession
 import it.attendance100.mybicocca.di.ApplicationScope
 import it.attendance100.mybicocca.domain.model.account.Account
 import it.attendance100.mybicocca.domain.model.account.AccountEvent
 import it.attendance100.mybicocca.domain.model.account.AccountId
-import it.attendance100.mybicocca.domain.model.career.CareerId
+import it.attendance100.mybicocca.domain.model.account.SignInFailure
 import it.attendance100.mybicocca.domain.model.account.SignInResult
+import it.attendance100.mybicocca.domain.model.career.CareerId
 import it.attendance100.mybicocca.domain.model.career.isSelectable
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
@@ -45,6 +45,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import java.io.IOException
 import java.time.Instant
 import java.util.UUID
 import javax.inject.Inject
@@ -99,13 +100,17 @@ class SessionManager @Inject constructor(
 
     suspend fun signIn(username: String, password: String): SignInResult = coroutineScope {
         if (username.isBlank() || password.isBlank()) {
-            return@coroutineScope SignInResult.Failure(
-                esse3Error = IllegalArgumentException("Username and password are required."),
-                elearningError = null,
-            )
+            return@coroutineScope SignInResult.Failure(SignInFailure.BadCredentials)
         }
 
-        val tempCredentials = AccountCredentials(username.trim(), password)
+        // Students typically know themselves by the short username (e.g. `l.lupi3`)
+        // rather than the full `l.lupi3@campus.unimib.it`. Append the campus domain
+        // when missing so both Esse3 (HTTP Basic) and Elearning (SAML j_username)
+        // see the form they expect. An input that already contains `@` is passed
+        // through verbatim — staff/PhD addresses on other unimib subdomains keep
+        // working, and we never silently rewrite what the user typed.
+        val normalizedUsername = normalizeUsername(username)
+        val tempCredentials = AccountCredentials(normalizedUsername, password)
         // accountId comes from the SAML identity, so the retry callbacks await it through
         // this deferred — a 401 during signIn is bad credentials, not an expired session.
         val accountIdDeferred = CompletableDeferred<AccountId>()
@@ -122,7 +127,7 @@ class SessionManager @Inject constructor(
         val freshElearningApi = elearningApiFactory.create()
         val elearningDeferred = async {
             runCatching {
-                when (val response = freshElearningApi.auth.login(username.trim(), password)) {
+                when (val response = freshElearningApi.auth.login(normalizedUsername, password)) {
                     is ElearningLoginResponse.Success -> {
                         val siteInfo = freshElearningApi.site.getSiteInfo(response.wsToken)
                         ElearningLoginOutcome(response.wsToken, response.moodleSessionCookie, siteInfo)
@@ -139,8 +144,10 @@ class SessionManager @Inject constructor(
             esse3.close()
             freshElearningApi.close()
             return@coroutineScope SignInResult.Failure(
-                esse3Error = esse3Result.exceptionOrNull(),
-                elearningError = elearningResult.exceptionOrNull(),
+                classifySignInFailure(
+                    esse3Result.exceptionOrNull(),
+                    elearningResult.exceptionOrNull(),
+                ),
             )
         }
 
@@ -157,7 +164,7 @@ class SessionManager @Inject constructor(
 
         val account = Account(
             id = accountId,
-            username = username.trim(),
+            username = normalizedUsername,
             displayName = composeDisplayName(esse3Session),
             academic = academic,
             learning = learning,
@@ -414,6 +421,59 @@ class SessionManager @Inject constructor(
 
     private companion object {
         const val STATE_KEEP_ALIVE_MS = 5_000L
+        const val DEFAULT_USERNAME_DOMAIN = "campus.unimib.it"
+
+        /** Adds the campus domain when the user typed only the short form (no `@`). */
+        fun normalizeUsername(raw: String): String {
+            val trimmed = raw.trim()
+            return if (trimmed.contains('@')) trimmed else "$trimmed@$DEFAULT_USERNAME_DOMAIN"
+        }
+
+        /**
+         * Collapses raw backend throwables into a UI-friendly [SignInFailure].
+         *
+         * The data-api `ApiRequestException`/`Esse3Exception` types live in a module
+         * that isn't on `:app`'s compile classpath, so we sniff stable text in the
+         * generated messages instead of type-checking. Both probes are anchored to
+         * strings emitted by code in this repository (`Esse3Exception.buildMessage`
+         * and the SAML "missing form at step three" branch in `ElearningAuthApi`).
+         */
+        fun classifySignInFailure(esse3: Throwable?, elearning: Throwable?): SignInFailure {
+            if (looksLikeBadCredentials(esse3) || looksLikeBadCredentials(elearning)) {
+                return SignInFailure.BadCredentials
+            }
+            if (looksLikeNetworkFailure(esse3) || looksLikeNetworkFailure(elearning)) {
+                return SignInFailure.NoConnection
+            }
+            return SignInFailure.Unknown
+        }
+
+        private fun looksLikeBadCredentials(t: Throwable?): Boolean {
+            var cur: Throwable? = t
+            while (cur != null) {
+                val msg = cur.message
+                if (msg != null) {
+                    // Esse3Exception multi-line message: "Status code: 401" on its own line.
+                    if ("Status code: 401" in msg) return true
+                    // Esse3 retErrMsg verbatim when login is refused.
+                    if ("credenziali" in msg.lowercase()) return true
+                    // Elearning SAML rejects bad creds by re-rendering the login page
+                    // without the auto-submit form — the auth flow then bails out here.
+                    if ("missing form at step three" in msg) return true
+                }
+                cur = cur.cause
+            }
+            return false
+        }
+
+        private fun looksLikeNetworkFailure(t: Throwable?): Boolean {
+            var cur: Throwable? = t
+            while (cur != null) {
+                if (cur is IOException) return true
+                cur = cur.cause
+            }
+            return false
+        }
     }
 }
 
