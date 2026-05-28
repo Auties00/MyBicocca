@@ -74,8 +74,9 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.domain.model.account.Account
 import it.attendance100.mybicocca.domain.model.account.SignInFailure
@@ -86,18 +87,79 @@ import it.attendance100.mybicocca.ui.screen.auth.state.AuthEvent
 import it.attendance100.mybicocca.ui.theme.BicoccaWordmarkAccent
 import kotlinx.coroutines.launch
 
+// Initial-login entry: lives inside AppRoot's NavDisplay.
+// Wraps the form body in a Scaffold + SnackbarHost.
 @Composable
 fun AuthScreen(
     onSignedIn: (account: Account, requiresCareerPick: Boolean) -> Unit,
-    onCancel: (() -> Unit)? = null,
+    viewModel: AuthViewModel = hiltViewModel(
+        checkNotNull(
+            LocalViewModelStoreOwner.current
+        ) {
+            "No ViewModelStoreOwner was provided via LocalViewModelStoreOwner"
+        }, null
+    ),
+) {
+    val snackbarHostState = remember { SnackbarHostState() }
+    Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
+    ) { scaffoldPadding ->
+        AuthScreenBody(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(scaffoldPadding),
+            onSignedIn = onSignedIn,
+            onCancel = null,
+            snackbarHostState = snackbarHostState,
+            morphWordmark = true,
+            interceptBack = true,
+            viewModel = viewModel,
+        )
+    }
+}
+
+// In-sheet variant: rendered as the "login mode" scene of AccountSwitcherSheet's AnimatedContent.
+// interceptBack = false so the sheet's outer PredictiveBackHandler receives the back event first.
+@Composable
+fun AuthScreenSheetContent(
+    modifier: Modifier = Modifier,
+    onSignedIn: (account: Account, requiresCareerPick: Boolean) -> Unit,
+    onCancel: () -> Unit,
     viewModel: AuthViewModel = hiltViewModel(),
+) {
+    val snackbarHostState = remember { SnackbarHostState() }
+    Box(modifier = modifier) {
+        AuthScreenBody(
+            modifier = Modifier.fillMaxSize(),
+            onSignedIn = onSignedIn,
+            onCancel = onCancel,
+            snackbarHostState = snackbarHostState,
+            morphWordmark = false,
+            interceptBack = false,
+            viewModel = viewModel,
+        )
+        SnackbarHost(
+            hostState = snackbarHostState,
+            modifier = Modifier.align(Alignment.BottomCenter),
+        )
+    }
+}
+
+@Composable
+private fun AuthScreenBody(
+    modifier: Modifier,
+    onSignedIn: (Account, Boolean) -> Unit,
+    onCancel: (() -> Unit)?,
+    snackbarHostState: SnackbarHostState,
+    morphWordmark: Boolean,
+    interceptBack: Boolean,
+    viewModel: AuthViewModel,
 ) {
     val username by viewModel.username.collectAsStateWithLifecycle()
     val password by viewModel.password.collectAsStateWithLifecycle()
     val inflight by viewModel.inflight.collectAsStateWithLifecycle()
     val error by viewModel.error.collectAsStateWithLifecycle()
 
-    val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     var passwordVisible by remember { mutableStateOf(false) }
 
@@ -117,177 +179,168 @@ fun AuthScreen(
         }
     }
 
-    if (onCancel != null) BackHandler(enabled = !inflight) { onCancel() }
+    if (onCancel != null && interceptBack) BackHandler(enabled = !inflight) { onCancel() }
 
     // Bad-credential errors mark both fields red — the password is the usual culprit
     // but we can't tell which one is wrong, so both light up.
     val fieldsInError = error is SignInFailure.BadCredentials
 
-    // Local SnackbarHost: AuthScreen lives in AppRoot, above MainShell's snackbar host, so it
-    // can't reach it. The placeholder SPID/CIE actions surface their message through this one.
-    Scaffold(
-        snackbarHost = { SnackbarHost(snackbarHostState) },
-    ) { scaffoldPadding ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(scaffoldPadding)
-        ) {
-            if (onCancel != null) {
-                IconButton(
-                    onClick = onCancel,
-                    enabled = !inflight,
-                    modifier = Modifier
-                        .align(Alignment.TopStart)
-                        .statusBarsPadding()
-                        .padding(8.dp),
-                ) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Outlined.ArrowBack,
-                        contentDescription = "Annulla",
-                    )
-                }
+    Box(modifier = modifier) {
+        if (onCancel != null) {
+            IconButton(
+                onClick = onCancel,
+                enabled = !inflight,
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .statusBarsPadding()
+                    .padding(8.dp),
+            ) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Outlined.ArrowBack,
+                    contentDescription = "Annulla",
+                )
             }
-            val autofillColorHighlight = BicoccaWordmarkAccent.copy(alpha = 0.1f)
-            CompositionLocalProvider(LocalAutofillHighlightColor provides autofillColorHighlight) {
-                Column(
+        }
+        val autofillColorHighlight = BicoccaWordmarkAccent.copy(alpha = 0.1f)
+        @Suppress("DEPRECATION")
+        CompositionLocalProvider(LocalAutofillHighlightColor provides autofillColorHighlight) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .imePadding()
+                    .padding(horizontal = 28.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Spacer(Modifier.height(106.dp))
+
+                MyBicoccaWordmark(fontSize = 34.sp, sharedElement = morphWordmark)
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    text = "Accedi con le tue credenziali di Ateneo",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center,
+                )
+
+                Spacer(Modifier.height(80.dp))
+
+                OutlinedTextField(
+                    value = username,
+                    onValueChange = viewModel::setUsername,
+                    label = { Text("Username o Email") },
+                    placeholder = { Text("m.rossi1") },
+                    leadingIcon = { Icon(Icons.Outlined.Person, contentDescription = null) },
+                    enabled = !inflight,
+                    singleLine = true,
+                    isError = fieldsInError,
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Email,
+                        imeAction = ImeAction.Next,
+                    ),
                     modifier = Modifier
-                        .fillMaxSize()
-                        .verticalScroll(rememberScrollState())
-                        .imePadding()
-                        .padding(horizontal = 28.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                ) {
-                    Spacer(Modifier.height(106.dp))
-
-                    MyBicoccaWordmark(fontSize = 34.sp, sharedElement = true)
-                    Spacer(Modifier.height(8.dp))
-                    Text(
-                        text = "Accedi con le tue credenziali di Ateneo",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        textAlign = TextAlign.Center,
-                    )
-
-                    Spacer(Modifier.height(80.dp))
-
-                    OutlinedTextField(
-                        value = username,
-                        onValueChange = viewModel::setUsername,
-                        label = { Text("Username o Email") },
-                        placeholder = { Text("m.rossi1") },
-                        leadingIcon = { Icon(Icons.Outlined.Person, contentDescription = null) },
-                        enabled = !inflight,
-                        singleLine = true,
-                        isError = fieldsInError,
-                        keyboardOptions = KeyboardOptions(
-                            keyboardType = KeyboardType.Email,
-                            imeAction = ImeAction.Next,
-                        ),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .semantics {
-                                contentType = ContentType.Username + ContentType.EmailAddress
-                            },
-                    )
-
-                    Spacer(Modifier.height(12.dp))
-                    OutlinedTextField(
-                        value = password,
-                        onValueChange = viewModel::setPassword,
-                        label = { Text("Password") },
-                        leadingIcon = { Icon(Icons.Outlined.Lock, contentDescription = null) },
-                        trailingIcon = {
-                            IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                                Icon(
-                                    imageVector = if (passwordVisible) Icons.Outlined.VisibilityOff else Icons.Outlined.Visibility,
-                                    contentDescription = if (passwordVisible) "Nascondi password" else "Mostra password",
-                                )
-                            }
+                        .fillMaxWidth()
+                        .semantics {
+                            contentType = ContentType.Username + ContentType.EmailAddress
                         },
-                        enabled = !inflight,
-                        singleLine = true,
-                        isError = fieldsInError,
-                        visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                        keyboardOptions = KeyboardOptions(
-                            keyboardType = KeyboardType.Password,
-                            imeAction = ImeAction.Done,
-                        ),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .semantics { contentType = ContentType.Password },
-                    )
+                )
 
-                    AuthFailureCard(failure = error)
-
-                    Spacer(Modifier.height(24.dp))
-                    val (accediInteractionSource, accediShape) = rememberPressShrink()
-                    Button(
-                        onClick = viewModel::submit,
-                        enabled = !inflight && username.isNotBlank() && password.isNotBlank(),
-                        interactionSource = accediInteractionSource,
-                        shape = accediShape,
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = BicoccaWordmarkAccent,
-                            contentColor = MaterialTheme.colorScheme.onPrimary,
-                        ),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(52.dp),
-                    ) {
-                        if (inflight) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(20.dp),
-                                strokeWidth = 2.dp,
-                                color = MaterialTheme.colorScheme.onPrimary,
+                Spacer(Modifier.height(12.dp))
+                OutlinedTextField(
+                    value = password,
+                    onValueChange = viewModel::setPassword,
+                    label = { Text("Password") },
+                    leadingIcon = { Icon(Icons.Outlined.Lock, contentDescription = null) },
+                    trailingIcon = {
+                        IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                            Icon(
+                                imageVector = if (passwordVisible) Icons.Outlined.VisibilityOff else Icons.Outlined.Visibility,
+                                contentDescription = if (passwordVisible) "Nascondi password" else "Mostra password",
                             )
-                        } else {
-                            Text("Accedi", color = Color.White)
                         }
-                    }
+                    },
+                    enabled = !inflight,
+                    singleLine = true,
+                    isError = fieldsInError,
+                    visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Password,
+                        imeAction = ImeAction.Done,
+                    ),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .semantics { contentType = ContentType.Password },
+                )
 
-                    Spacer(Modifier.height(28.dp))
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.fillMaxWidth(),
-                    ) {
-                        HorizontalDivider(modifier = Modifier.weight(1f))
-                        Text(
-                            text = "oppure",
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(horizontal = 16.dp),
+                AuthFailureCard(failure = error)
+
+                Spacer(Modifier.height(24.dp))
+                val (accediInteractionSource, accediShape) = rememberPressShrink()
+                Button(
+                    onClick = viewModel::submit,
+                    enabled = !inflight && username.isNotBlank() && password.isNotBlank(),
+                    interactionSource = accediInteractionSource,
+                    shape = accediShape,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = BicoccaWordmarkAccent,
+                        contentColor = MaterialTheme.colorScheme.onPrimary,
+                    ),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(52.dp),
+                ) {
+                    if (inflight) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(20.dp),
+                            strokeWidth = 2.dp,
+                            color = MaterialTheme.colorScheme.onPrimary,
                         )
-                        HorizontalDivider(modifier = Modifier.weight(1f))
+                    } else {
+                        Text("Accedi", color = Color.White)
                     }
-                    Spacer(Modifier.height(28.dp))
-
-                    AlternativeLoginButton(
-                        label = "Entra con SPID",
-                        icon = painterResource(R.drawable.ic_spid),
-                        iconTint = Color.Unspecified, // keep the official SPID blue
-                        enabled = !inflight,
-                        onClick = {
-                            scope.launch {
-                                snackbarHostState.showSnackbar("Accesso con SPID non ancora disponibile")
-                            }
-                        },
-                    )
-                    Spacer(Modifier.height(12.dp))
-                    AlternativeLoginButton(
-                        label = "Entra con CIE",
-                        icon = painterResource(R.drawable.ic_cie),
-                        iconTint = MaterialTheme.colorScheme.onSurface,
-                        enabled = !inflight,
-                        onClick = {
-                            scope.launch {
-                                snackbarHostState.showSnackbar("Accesso con CIE non ancora disponibile")
-                            }
-                        },
-                    )
-
-                    Spacer(Modifier.height(32.dp))
                 }
+
+                Spacer(Modifier.height(28.dp))
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    HorizontalDivider(modifier = Modifier.weight(1f))
+                    Text(
+                        text = "oppure",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(horizontal = 16.dp),
+                    )
+                    HorizontalDivider(modifier = Modifier.weight(1f))
+                }
+                Spacer(Modifier.height(28.dp))
+
+                AlternativeLoginButton(
+                    label = "Entra con SPID",
+                    icon = painterResource(R.drawable.ic_spid),
+                    iconTint = Color.Unspecified, // keep the official SPID blue
+                    enabled = !inflight,
+                    onClick = {
+                        scope.launch {
+                            snackbarHostState.showSnackbar("Accesso con SPID non ancora disponibile")
+                        }
+                    },
+                )
+                Spacer(Modifier.height(12.dp))
+                AlternativeLoginButton(
+                    label = "Entra con CIE",
+                    icon = painterResource(R.drawable.ic_cie),
+                    iconTint = MaterialTheme.colorScheme.onSurface,
+                    enabled = !inflight,
+                    onClick = {
+                        scope.launch {
+                            snackbarHostState.showSnackbar("Accesso con CIE non ancora disponibile")
+                        }
+                    },
+                )
+
+                Spacer(Modifier.height(32.dp))
             }
         }
     }
@@ -424,4 +477,3 @@ private fun AuthFailureCard(failure: SignInFailure?) {
         }
     }
 }
-

@@ -13,8 +13,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
@@ -28,7 +29,13 @@ import it.attendance100.mybicocca.ui.screen.auth.AuthScreen
 // shared-transition scopes are independent (LocalRootSharedTransitionScope vs LocalSharedTransitionScope).
 @Composable
 fun AppRoot(
-    viewModel: RootViewModel = hiltViewModel(),
+    viewModel: RootViewModel = hiltViewModel(
+        checkNotNull(
+            LocalViewModelStoreOwner.current
+        ) {
+            "No ViewModelStoreOwner was provided via LocalViewModelStoreOwner"
+        }, null
+    ),
 ) {
     val phase by viewModel.phase.collectAsStateWithLifecycle()
 
@@ -74,17 +81,14 @@ private fun RootNavDisplay(phase: RootPhase, viewModel: RootViewModel) {
                         careerPickAccount?.let { account ->
                             CareerPickerScreen(
                                 account = account,
-                                onPicked = { careerId -> viewModel.onCareerPicked(account.id, careerId) },
+                                onPicked = { careerId ->
+                                    viewModel.onCareerPicked(
+                                        account.id,
+                                        careerId
+                                    )
+                                },
                             )
                         }
-                    }
-                    entry<RootRoute.AddAccount> {
-                        AuthScreen(
-                            onSignedIn = { account, requiresPick ->
-                                viewModel.onSignedIn(account.id, requiresPick)
-                            },
-                            onCancel = { viewModel.cancelAddAccount() },
-                        )
                     }
                     entry<RootRoute.Main> { MainShell() }
                 },

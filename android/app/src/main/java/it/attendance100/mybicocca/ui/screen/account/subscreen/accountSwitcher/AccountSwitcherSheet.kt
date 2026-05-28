@@ -1,6 +1,16 @@
 package it.attendance100.mybicocca.ui.screen.account.subscreen.accountSwitcher
 
+import android.annotation.SuppressLint
+import androidx.activity.compose.PredictiveBackHandler
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.ContentTransform
+import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.animation.SizeTransform
+import androidx.compose.animation.core.FastOutLinearInEasing
+import androidx.compose.animation.core.SeekableTransitionState
+import androidx.compose.animation.core.rememberTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -8,59 +18,106 @@ import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.MotionScheme
+import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import it.attendance100.mybicocca.domain.model.account.Account
+import it.attendance100.mybicocca.domain.model.account.AccountId
+import it.attendance100.mybicocca.domain.model.career.CareerId
 import it.attendance100.mybicocca.ui.screen.account.AccountViewModel
 import it.attendance100.mybicocca.ui.screen.account.subscreen.accountSwitcher.component.AddAccountCard
 import it.attendance100.mybicocca.ui.screen.account.subscreen.accountSwitcher.component.ProfileCard
 import it.attendance100.mybicocca.ui.screen.account.subscreen.accountSwitcher.component.RemoveSwipeBackground
 import it.attendance100.mybicocca.ui.screen.account.subscreen.accountSwitcher.component.SwipeToRemoveBox
 import it.attendance100.mybicocca.ui.screen.account.subscreen.accountSwitcher.component.UndoRemovalBar
+import it.attendance100.mybicocca.ui.screen.auth.AuthScreenSheetContent
+import it.attendance100.mybicocca.ui.screen.auth.AuthViewModel
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
+import java.io.File
 
 private val CardShape = RoundedCornerShape(28.dp)
 private const val ADD_ACCOUNT_KEY = "__add_account__"
 
-@OptIn(ExperimentalMaterial3Api::class)
+@SuppressLint("ConfigurationScreenWidthHeight")
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
 @Composable
 fun AccountSwitcherSheet(
     onDismiss: () -> Unit,
-    onAddAccount: (returnTo: Account) -> Unit,
     onOpenProfile: () -> Unit,
     viewModel: AccountViewModel = hiltViewModel(),
+    authViewModel: AuthViewModel = hiltViewModel(
+        checkNotNull(
+            LocalViewModelStoreOwner.current
+        ) {
+            "No ViewModelStoreOwner was provided via LocalViewModelStoreOwner"
+        }, null
+    ),
 ) {
     val accounts by viewModel.accounts.collectAsStateWithLifecycle()
     val active by viewModel.activeAccount.collectAsStateWithLifecycle()
     val photos by viewModel.photos.collectAsStateWithLifecycle()
     val pending by viewModel.pendingRemoval.collectAsStateWithLifecycle()
+    val inflight by authViewModel.inflight.collectAsStateWithLifecycle()
 
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val scope = rememberCoroutineScope()
     val motion = MaterialTheme.motionScheme
+
+    var isAddingAccount by rememberSaveable { mutableStateOf(false) }
+
+    val seekableState = remember { SeekableTransitionState(false) }
+    val transition = rememberTransition(seekableState, label = "addAccountTransition")
+
+    LaunchedEffect(isAddingAccount) {
+        if (seekableState.targetState != isAddingAccount) {
+            seekableState.animateTo(
+                isAddingAccount,
+                tween(durationMillis = 800, easing = FastOutLinearInEasing)
+            )
+        }
+    }
+
+    val isAddingAccountState = rememberUpdatedState(isAddingAccount)
+    val sheetState = rememberModalBottomSheetState(
+        skipPartiallyExpanded = true,
+        confirmValueChange = { newState ->
+            !(isAddingAccountState.value && newState == SheetValue.Hidden)
+        },
+    )
 
     val close: () -> Unit = {
         scope.launch { sheetState.hide() }.invokeOnCompletion {
@@ -68,119 +125,219 @@ fun AccountSwitcherSheet(
         }
     }
 
-    // Active profile first; the rest keep their natural order. We do NOT drop the pending
-    // account here — its card is collapsed in place so the gesture reads as a smooth fold.
-    // The LazyColumn keys items by account id, so this re-sort triggers placement animations
-    // when the active account changes instead of a layout jump.
     val activeId = active?.id
     val ordered = remember(accounts, activeId) {
         accounts.sortedByDescending { it.id == activeId }
     }
-
-    // Keep the last removed name around so the undo bar text doesn't blank out mid-exit.
     var lastRemovedName by remember { mutableStateOf("") }
     LaunchedEffect(pending) { pending?.let { lastRemovedName = it.displayName } }
 
-    val maxListHeight = LocalConfiguration.current.screenHeightDp.dp * 0.68f
+    val configuration = LocalConfiguration.current
+    val screenHeight = configuration.screenHeightDp.dp
+    val maxListHeight = screenHeight * 0.68f
 
     ModalBottomSheet(
-        onDismissRequest = onDismiss,
+        onDismissRequest = {
+            if (isAddingAccount) {
+                isAddingAccount = false
+            } else {
+                onDismiss()
+            }
+        },
         sheetState = sheetState,
+        contentWindowInsets = { WindowInsets(0) },
+        dragHandle = { Box(Modifier.padding(top = 16.dp)) },
+        shape = RoundedCornerShape(topStart = 40.dp, topEnd = 40.dp),
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(start = 16.dp, end = 16.dp, bottom = 24.dp)
-        ) {
-            Text(
-                text = "Account",
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(start = 8.dp, top = 4.dp, bottom = 12.dp),
-            )
-
-            // LazyColumn (instead of Column + verticalScroll) so each item can use
-            // Modifier.animateItem — that's what makes the active card slide to the top
-            // and the previously active one slide down when the user switches accounts.
-            // Placement uses the project's standard spatial spec (no extra bounce) so the
-            // reorder feels controlled rather than springy.
-            LazyColumn(
-                modifier = Modifier.heightIn(max = maxListHeight),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                items(ordered, key = { it.id.value }) { account ->
-                    val isPending = pending?.id == account.id
-
-                    AnimatedVisibility(
-                        visible = !isPending,
-                        enter = expandVertically(motion.defaultSpatialSpec()) + fadeIn(motion.defaultEffectsSpec()),
-                        exit = shrinkVertically(motion.defaultSpatialSpec()) + fadeOut(motion.defaultEffectsSpec()),
-                        modifier = Modifier.animateItem(
-                            fadeInSpec = motion.defaultEffectsSpec(),
-                            fadeOutSpec = motion.defaultEffectsSpec(),
-                            placementSpec = motion.defaultSpatialSpec(),
-                        ),
-                    ) {
-                        SwipeToRemoveBox(
-                            pendingRemoval = isPending,
-                            onConfirmRemove = { viewModel.requestRemove(account) },
-                            background = { armed, revealed ->
-                                RemoveSwipeBackground(
-                                    armed = armed,
-                                    revealed = revealed,
-                                    shape = CardShape,
-                                )
-                            },
-                        ) {
-                            ProfileCard(
-                                account = account,
-                                isActive = account.id == activeId,
-                                photo = photos[account.id],
-                                // Active header: open the profile page (closes the sheet).
-                                onOpenDetails = {
-                                    onOpenProfile()
-                                    close()
-                                },
-                                // Inactive header / radio: promote this account but stay on
-                                // the sheet so the user sees the new layout reorder itself.
-                                onSwitchAccount = {
-                                    viewModel.switchAccount(account.id)
-                                },
-                                // Inactive carriere don't render for non-active accounts;
-                                // for the active account this switches the selected career
-                                // in place without closing the sheet.
-                                onSelectCareer = { careerId ->
-                                    viewModel.selectAccountCareer(account.id, careerId)
-                                },
-                            )
-                        }
-                    }
+        PredictiveBackHandler(enabled = isAddingAccount && !inflight) { progress ->
+            try {
+                progress.collect { backEvent ->
+                    seekableState.seekTo(backEvent.progress, targetState = false)
                 }
+                isAddingAccount = false
+                seekableState.animateTo(false)
+            } catch (_: CancellationException) {
+                seekableState.animateTo(true)
+            }
+        }
 
-                item(key = ADD_ACCOUNT_KEY) {
-                    AddAccountCard(
-                        onClick = {
-                            active?.let { onAddAccount(it) }
-                            close()
+        Box(
+            modifier = Modifier
+                .padding(horizontal = 16.dp)
+                .clip(
+                    RoundedCornerShape(
+                        topStart = 24.dp,
+                        topEnd = 24.dp,
+                        bottomEnd = 0.dp,
+                        bottomStart = 0.dp
+                    )
+                )
+        ) {
+            transition.AnimatedContent(
+                modifier = Modifier
+                    .fillMaxWidth(),
+                transitionSpec = {
+                    val isForward = targetState
+                    val enter = slideInVertically(
+                        tween(durationMillis = 400)
+                    ) { h ->
+                        if (isForward) h else -h
+                    } + fadeIn(
+                        tween(durationMillis = 400),
+                        initialAlpha = 0.5f
+                    )
+
+                    val exit = slideOutVertically(
+                        tween(durationMillis = 600)
+                    ) { h ->
+                        if (isForward) -2 * h else h
+                    } + fadeOut(
+                        tween(durationMillis = 400),
+                        targetAlpha = 0.5f
+                    )
+
+                    val modalShrinkDownSpeed = 500
+
+                    ContentTransform(
+                        targetContentEnter = enter,
+                        initialContentExit = exit,
+                        sizeTransform = SizeTransform(clip = true) { _, _ ->
+                            tween(durationMillis = modalShrinkDownSpeed)
                         },
-                        modifier = Modifier.animateItem(
-                            placementSpec = motion.defaultSpatialSpec(),
-                        ),
+                    )
+                },
+                contentKey = { it },
+            ) { adding ->
+                if (adding) {
+                    DisposableEffect(Unit) {
+                        onDispose { authViewModel.reset() }
+                    }
+                    AuthScreenSheetContent(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(screenHeight),
+                        onSignedIn = { _, requiresCareerPick ->
+                            if (!requiresCareerPick) isAddingAccount = false
+                        },
+                        onCancel = { isAddingAccount = false },
+                        viewModel = authViewModel,
+                    )
+                } else {
+                    AccountsScene(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .wrapContentHeight(),
+                        ordered = ordered,
+                        activeId = activeId,
+                        photos = photos,
+                        pending = pending,
+                        lastRemovedName = lastRemovedName,
+                        maxListHeight = maxListHeight,
+                        motion = motion,
+                        onOpenDetails = { onOpenProfile(); close() },
+                        onSwitchAccount = { viewModel.switchAccount(it) },
+                        onSelectCareer = { id, careerId ->
+                            viewModel.selectAccountCareer(id, careerId)
+                        },
+                        onRequestRemove = { viewModel.requestRemove(it) },
+                        onUndoRemove = { viewModel.undoRemove() },
+                        onAddAccount = { isAddingAccount = true },
                     )
                 }
             }
+        }
+    }
+}
 
-            AnimatedVisibility(
-                visible = pending != null,
-                enter = slideInVertically(motion.defaultSpatialSpec()) { it } + fadeIn(motion.defaultEffectsSpec()),
-                exit = slideOutVertically(motion.defaultSpatialSpec()) { it } + fadeOut(motion.defaultEffectsSpec()),
-            ) {
-                UndoRemovalBar(
-                    displayName = lastRemovedName,
-                    onUndo = { viewModel.undoRemove() },
-                    modifier = Modifier.padding(top = 12.dp),
+@Composable
+private fun AccountsScene(
+    modifier: Modifier,
+    ordered: List<Account>,
+    activeId: AccountId?,
+    photos: Map<AccountId, File?>,
+    pending: Account?,
+    lastRemovedName: String,
+    maxListHeight: Dp,
+    motion: MotionScheme,
+    onOpenDetails: () -> Unit,
+    onSwitchAccount: (AccountId) -> Unit,
+    onSelectCareer: (AccountId, CareerId) -> Unit,
+    onRequestRemove: (Account) -> Unit,
+    onUndoRemove: () -> Unit,
+    onAddAccount: () -> Unit,
+) {
+    Column(
+        modifier = modifier.padding(bottom = 24.dp, top = 8.dp),
+    ) {
+        Text(
+            text = "Account",
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(start = 8.dp, top = 4.dp, bottom = 12.dp),
+        )
+
+        LazyColumn(
+            modifier = Modifier.heightIn(max = maxListHeight),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            items(ordered, key = { it.id.value }) { account ->
+                val isPending = pending?.id == account.id
+
+                AnimatedVisibility(
+                    visible = !isPending,
+                    enter = expandVertically(motion.defaultSpatialSpec()) + fadeIn(motion.defaultEffectsSpec()),
+                    exit = shrinkVertically(motion.defaultSpatialSpec()) + fadeOut(motion.defaultEffectsSpec()),
+                    modifier = Modifier.animateItem(
+                        fadeInSpec = motion.defaultEffectsSpec(),
+                        fadeOutSpec = motion.defaultEffectsSpec(),
+                        placementSpec = motion.defaultSpatialSpec(),
+                    ),
+                ) {
+                    SwipeToRemoveBox(
+                        pendingRemoval = isPending,
+                        onConfirmRemove = { onRequestRemove(account) },
+                        background = { armed, revealed ->
+                            RemoveSwipeBackground(
+                                armed = armed,
+                                revealed = revealed,
+                                shape = CardShape,
+                            )
+                        },
+                    ) {
+                        ProfileCard(
+                            account = account,
+                            isActive = account.id == activeId,
+                            photo = photos[account.id],
+                            onOpenDetails = onOpenDetails,
+                            onSwitchAccount = { onSwitchAccount(account.id) },
+                            onSelectCareer = { careerId -> onSelectCareer(account.id, careerId) },
+                        )
+                    }
+                }
+            }
+
+            item(key = ADD_ACCOUNT_KEY) {
+                AddAccountCard(
+                    onClick = onAddAccount,
+                    modifier = Modifier.animateItem(
+                        placementSpec = motion.defaultSpatialSpec(),
+                    ),
                 )
             }
+        }
+
+        AnimatedVisibility(
+            visible = pending != null,
+            enter = slideInVertically(motion.defaultSpatialSpec()) { it } + fadeIn(motion.defaultEffectsSpec()),
+            exit = slideOutVertically(motion.defaultSpatialSpec()) { it } + fadeOut(motion.defaultEffectsSpec()) + shrinkVertically(
+                tween(delayMillis = 300)
+            ),
+        ) {
+            UndoRemovalBar(
+                displayName = lastRemovedName,
+                onUndo = onUndoRemove,
+                modifier = Modifier.padding(top = 12.dp),
+            )
         }
     }
 }

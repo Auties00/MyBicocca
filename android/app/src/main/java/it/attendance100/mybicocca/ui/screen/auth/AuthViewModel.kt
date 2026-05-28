@@ -66,6 +66,12 @@ class AuthViewModel @Inject constructor(
         }
     }
 
+    fun reset() {
+        _username.value = ""
+        _password.value = ""
+        clearError()
+    }
+
     private fun clearError() {
         _error.value = null
     }
