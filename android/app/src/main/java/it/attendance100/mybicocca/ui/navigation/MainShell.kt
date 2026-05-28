@@ -21,6 +21,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -31,8 +32,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
@@ -102,12 +104,18 @@ import it.attendance100.mybicocca.ui.screen.settings.subscreen.settingsGeneral.S
 import it.attendance100.mybicocca.ui.screen.settings.subscreen.settingsSecurity.SettingsSecurityScreen
 import kotlinx.coroutines.launch
 
+@Suppress("AssignedValueIsNeverRead")
 @OptIn(ExperimentalSharedTransitionApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun MainShell(
     modifier: Modifier = Modifier,
-    accountViewModel: AccountViewModel = hiltViewModel(),
-    rootViewModel: RootViewModel = hiltViewModel(),
+    accountViewModel: AccountViewModel = hiltViewModel(
+        checkNotNull(
+            LocalViewModelStoreOwner.current
+        ) {
+            "No ViewModelStoreOwner was provided via LocalViewModelStoreOwner"
+        }, null
+    ),
 ) {
     // One pager hosts all four tabs and keeps them composed (see beyondViewportPageCount below),
     // so switching is instant. The pager state (saveable) is the source of truth for the selected
@@ -191,7 +199,7 @@ fun MainShell(
     var subPageActions by remember { mutableStateOf<(@Composable () -> Unit)?>(null) }
 
     // Reset search/filter only when the settled tab actually changes after first composition.
-    var prevPage by remember { mutableStateOf(pagerState.settledPage) }
+    var prevPage by remember { mutableIntStateOf(pagerState.settledPage) }
     LaunchedEffect(pagerState.settledPage) {
         if (prevPage != pagerState.settledPage) {
             searchActive = false
@@ -606,7 +614,6 @@ fun MainShell(
             if (showAccountSwitcher) {
                 AccountSwitcherSheet(
                     onDismiss = { showAccountSwitcher = false },
-                    onAddAccount = { returnTo -> rootViewModel.requestAddAccount(returnTo) },
                     onOpenProfile = { backStack.add(AppRoute.Profile) },
                     viewModel = accountViewModel,
                 )

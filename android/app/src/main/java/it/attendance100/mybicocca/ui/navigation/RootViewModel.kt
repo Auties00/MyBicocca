@@ -3,7 +3,6 @@ package it.attendance100.mybicocca.ui.navigation
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import it.attendance100.mybicocca.domain.model.account.Account
 import it.attendance100.mybicocca.domain.model.account.AccountId
 import it.attendance100.mybicocca.domain.model.career.CareerId
 import it.attendance100.mybicocca.domain.usecase.account.ObserveActiveAccountUseCase
@@ -23,7 +22,6 @@ class RootViewModel @Inject constructor(
 ) : ViewModel() {
 
     private val _pendingPickFor = MutableStateFlow<AccountId?>(null)
-    private val _addingFor = MutableStateFlow<Account?>(null)
 
     // Loading is only the initial value before observeActiveAccount() first emits. The visible splash
     // (OS splash + the Compose SplashRevealOverlay) is driven by the Activity, not by a timed Loading
@@ -31,21 +29,16 @@ class RootViewModel @Inject constructor(
     val phase: StateFlow<RootPhase> = combine(
         observeActiveAccount(),
         _pendingPickFor,
-        _addingFor,
-    ) { active, pendingPick, addingFor ->
+    ) { active, pendingPick ->
         when {
             active == null -> RootPhase.Authenticating
             pendingPick == active.id -> RootPhase.NeedsCareerPick(active)
-            addingFor != null -> RootPhase.AddingAccount(returnTo = addingFor)
             else -> RootPhase.SignedIn(active)
         }
     }.stateIn(viewModelScope, SharingStarted.Eagerly, RootPhase.Loading)
 
     fun onSignedIn(accountId: AccountId, requiresPick: Boolean) {
         _pendingPickFor.value = if (requiresPick) accountId else null
-        // Clearing here covers both first-time sign-in (no-op) and adding a second account
-        // (drops the AddingAccount overlay so the new sign-in's active account takes over).
-        _addingFor.value = null
     }
 
     fun onCareerPicked(accountId: AccountId, careerId: CareerId) {
@@ -53,13 +46,5 @@ class RootViewModel @Inject constructor(
             pickCareerUseCase(accountId, careerId)
             if (_pendingPickFor.value == accountId) _pendingPickFor.value = null
         }
-    }
-
-    fun requestAddAccount(returnTo: Account) {
-        _addingFor.value = returnTo
-    }
-
-    fun cancelAddAccount() {
-        _addingFor.value = null
     }
 }
