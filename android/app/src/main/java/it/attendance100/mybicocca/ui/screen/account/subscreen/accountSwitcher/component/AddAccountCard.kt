@@ -31,6 +31,9 @@ fun AddAccountCard(
     modifier: Modifier = Modifier,
 ) {
     val scheme = MaterialTheme.colorScheme
+    // Fill matches the bottom sheet's own background (`surfaceContainerLow`) with an
+    // outlineVariant stroke, so this tile is visually identical to an inactive account tile —
+    // they form one "outlined slot" family below the filled active card.
     Surface(
         onClick = onClick,
         shape = CardShape,

@@ -26,6 +26,7 @@ import it.attendance100.mybicocca.ui.screen.elearning.subscreen.videoPlayer.play
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.videoPlayer.player.PipController
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.videoPlayer.player.PipState
 import it.attendance100.mybicocca.ui.theme.BicoccaTheme
+import it.attendance100.mybicocca.util.ProvideHapticManager
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -57,7 +58,9 @@ class MyBicoccaActivity : ComponentActivity() {
         setContent {
             BicoccaTheme(dark = isSystemInDarkTheme()) {
                 CompositionLocalProvider(LocalPipController provides pipController) {
-                    AppRoot()
+                    ProvideHapticManager {
+                        AppRoot()
+                    }
                 }
             }
         }
