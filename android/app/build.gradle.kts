@@ -1,3 +1,7 @@
+import org.gradle.kotlin.dsl.android
+import org.gradle.kotlin.dsl.kotlin
+import org.gradle.kotlin.dsl.ksp
+import org.jetbrains.kotlin.gradle.internal.types.error.ErrorModuleDescriptor.platform
 import java.util.Properties
 
 // Plugins
@@ -19,6 +23,14 @@ val mapsApiKey: String = Properties().apply {
 
 // Android config
 android {
+    signingConfigs {
+        create("release") {
+            storeFile = file("keystore_release_key")
+            storePassword = "mybicocca"
+            keyAlias = "releasekey"
+            keyPassword = "mybicocca"
+        }
+    }
     namespace = "it.attendance100.mybicocca"
     compileSdk = 37
 
@@ -50,6 +62,7 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            signingConfig = signingConfigs.getByName("release")
         }
     }
 

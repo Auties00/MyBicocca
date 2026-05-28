@@ -4,7 +4,7 @@
     <style name="Theme.MyBicocca.AnimatedSplash" parent="Theme.SplashScreen">
         <item name="windowSplashScreenBackground">@color/launcher_background</item>
         <!--        <item name="windowSplashScreenIconBackgroundColor">@color/white</item>-->
-        <item name="windowSplashScreenAnimatedIcon">@drawable/avd_mybicocca3</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/avd_mybicocca</item>
         <item name="windowSplashScreenAnimationDuration">100</item>
         <item name="postSplashScreenTheme">@style/Theme.MyBicocca</item>
     </style>

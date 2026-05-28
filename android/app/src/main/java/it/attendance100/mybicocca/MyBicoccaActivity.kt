@@ -49,7 +49,7 @@ class MyBicoccaActivity : ComponentActivity() {
 
         super.onCreate(savedInstanceState)
 
-        // Animate the splash screen to transition to the app's content.
+        // Animate the splash screen to transition to the app's content
         splashScreen.setOnExitAnimationListener { provider -> provider.animateExitAndRemove() }
 
         enableEdgeToEdge()
@@ -90,17 +90,40 @@ class MyBicoccaActivity : ComponentActivity() {
 
 // Animates the splash screen exit
 private fun SplashScreenViewProvider.animateExitAndRemove() {
-    val animators = buildList<Animator> {
-        val splashIconEndScale = 5f
-        add(ofFloat(iconView, View.SCALE_X, 1f, splashIconEndScale)) // The icon zooms out
-        add(ofFloat(iconView, View.SCALE_Y, 1f, splashIconEndScale))
-        add(ofFloat(iconView, View.ALPHA, 1f, 0f))                   // The icon fades out
-        add(ofInt(view.background, "alpha", 255, 0))            // The background fades out
-        addAll(brandingExitAnimators())                                                  // The branding image slides down and fades out
+    val iconDuration = 700L   // icon scale + fade
+    val chromeDuration = 500L // background fade + branding slide
+
+    val animators = buildList {
+        val splashIconEndScale = 10f
+        add(
+            ofFloat(
+                iconView,
+                View.SCALE_X,
+                1f,
+                splashIconEndScale
+            ).lasting(iconDuration)
+        ) // The icon zooms out
+        add(ofFloat(iconView, View.SCALE_Y, 1f, splashIconEndScale).lasting(iconDuration))
+        add(
+            ofFloat(
+                iconView,
+                View.ALPHA,
+                1f,
+                0f
+            ).lasting(iconDuration)
+        )                   // The icon fades out
+        add(
+            ofInt(
+                view.background,
+                "alpha",
+                255,
+                0
+            ).lasting(chromeDuration)
+        )          // The background fades out
+        addAll(brandingExitAnimators(chromeDuration))                                                          // The branding image slides down and fades out
     }
 
     AnimatorSet().apply {
-        duration = 500L
         interpolator = AccelerateInterpolator()
         playTogether(animators)
         doOnEnd { remove() }
@@ -109,7 +132,7 @@ private fun SplashScreenViewProvider.animateExitAndRemove() {
 }
 
 @SuppressLint("DiscouragedApi")
-private fun SplashScreenViewProvider.brandingExitAnimators(): List<Animator> {
+private fun SplashScreenViewProvider.brandingExitAnimators(durationMs: Long): List<Animator> {
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return emptyList()
 
     val brandingId = view.resources.getIdentifier(
@@ -117,12 +140,16 @@ private fun SplashScreenViewProvider.brandingExitAnimators(): List<Animator> {
         "id",
         "android"
     ) // Identifier not available in api
+
     val brandingView =
         brandingId.takeIf { it != 0 }?.let { view.findViewById<View>(it) } ?: return emptyList()
 
     val slideDownwardDistance = brandingView.height.toFloat() + 100f // 100px downwards
     return listOf(
-        ofFloat(brandingView, View.ALPHA, 1f, 0f),
-        ofFloat(brandingView, View.TRANSLATION_Y, 0f, slideDownwardDistance),
+        ofFloat(brandingView, View.ALPHA, 1f, 0f).lasting(durationMs),
+        ofFloat(brandingView, View.TRANSLATION_Y, 0f, slideDownwardDistance).lasting(durationMs),
     )
 }
+
+// Sets an animator's duration inline so groups of animators can run at different speeds within one AnimatorSet
+private fun Animator.lasting(durationMs: Long): Animator = apply { duration = durationMs }
