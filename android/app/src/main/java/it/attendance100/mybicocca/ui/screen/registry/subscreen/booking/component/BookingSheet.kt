@@ -10,9 +10,9 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -46,6 +46,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.SyncStatus
@@ -80,8 +81,9 @@ fun BookingSheetContent(
     onRefresh: () -> Unit,
     onGoToConfirm: () -> Unit,
     onGoBackToInfo: () -> Unit,
-    onConfirm: (note: String?) -> Unit,
+    onConfirm: (String?) -> Unit,
     modifier: Modifier = Modifier,
+    maxHeight: Dp,
 ) {
     val isSubmitting = bookingAction is BookingActionState.InProgress
     val effectsSpec = MaterialTheme.motionScheme.defaultEffectsSpec<Float>()
@@ -91,7 +93,7 @@ fun BookingSheetContent(
             fadeIn(animationSpec = effectsSpec)
                 .togetherWith(fadeOut(animationSpec = effectsSpec))
         },
-        modifier = modifier,
+        modifier = modifier.heightIn(max = maxHeight),
         label = "bookingSheetStep",
     ) { stage ->
         when (stage) {
@@ -128,7 +130,7 @@ private fun InfoStep(
 
     Column(
         modifier = Modifier
-            .fillMaxSize()
+            .fillMaxWidth()
             .padding(horizontal = 20.dp)
             .padding(top = 4.dp, bottom = 24.dp)
             .verticalScroll(rememberScrollState()),
@@ -215,7 +217,7 @@ private fun ConfirmStep(
 
     Column(
         modifier = Modifier
-            .fillMaxSize()
+            .fillMaxWidth()
             .padding(horizontal = 20.dp)
             .padding(top = 4.dp, bottom = 24.dp)
             .verticalScroll(rememberScrollState()),

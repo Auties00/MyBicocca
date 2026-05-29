@@ -1,14 +1,23 @@
 package it.attendance100.mybicocca.ui.screen.registry.subscreen.bookableExams
 
-import androidx.activity.compose.BackHandler
+import androidx.activity.compose.PredictiveBackHandler
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.ContentTransform
+import androidx.compose.animation.SizeTransform
+import androidx.compose.animation.core.FastOutLinearInEasing
+import androidx.compose.animation.core.SeekableTransitionState
+import androidx.compose.animation.core.rememberTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.togetherWith
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -16,6 +25,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.CloudOff
 import androidx.compose.material3.CircularProgressIndicator
@@ -24,13 +34,18 @@ import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveableStateHolder
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -44,8 +59,10 @@ import it.attendance100.mybicocca.ui.screen.registry.subscreen.booking.BookingSh
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.booking.component.BookingSheetContent
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.booking.component.CourseCard
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.booking.state.BookingActionState
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.booking.state.BookingTarget
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.booking.state.accentForCourse
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.booking.state.groupByCourse
+import kotlinx.coroutines.CancellationException
 import java.io.IOException
 import java.net.ConnectException
 import java.net.SocketTimeoutException
@@ -78,6 +95,8 @@ fun BookableExamsSheet(
     val today = remember { LocalDate.now() }
     val isSubmitting = sheetAction is BookingActionState.InProgress
 
+    var isClosing by remember { mutableStateOf(false) }
+
     // Reset the booking VM so reopening starts on the list, then let the host close.
     val dismiss = {
         sheetViewModel.close()
@@ -85,51 +104,179 @@ fun BookableExamsSheet(
     }
 
     // Fixed sheet height so switching list <-> detail doesn't resize the sheet.
-    val sheetHeight = LocalConfiguration.current.screenHeightDp.dp * 0.8f
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    val effectsSpec = MaterialTheme.motionScheme.defaultEffectsSpec<Float>()
+    val sheetHeight = LocalConfiguration.current.screenHeightDp.dp * 0.67f // sessantasette
+    val sheetTargetState = androidx.compose.runtime.rememberUpdatedState(sheetTarget)
+    val sheetState = rememberModalBottomSheetState(
+        skipPartiallyExpanded = true,
+        confirmValueChange = { newState ->
+            !(sheetTargetState.value != null && newState == SheetValue.Hidden)
+        }
+    )
+
+    // Retains the list's scroll position and expanded cards across the detail trip. The holder lives
+    // outside the AnimatedContent, so the list's saveable state survives while its slot is removed.
+    val listStateHolder = rememberSaveableStateHolder()
+
+    // Drives the list <-> detail slide AND the close slide.
+    val stepState = remember { SeekableTransitionState<BookingTarget?>(null) }
+    val stepTransition = rememberTransition(stepState, label = "bookableStep")
+
+    androidx.compose.runtime.LaunchedEffect(sheetTarget) {
+        if (stepState.targetState != sheetTarget) {
+            stepState.animateTo(
+                sheetTarget,
+                tween(durationMillis = 800, easing = FastOutLinearInEasing)
+            )
+        }
+    }
+
+    val closeSeekableState = remember { SeekableTransitionState(true) }
+    val closeTransition = rememberTransition(closeSeekableState, label = "closeTransition")
 
     ModalBottomSheet(
-        onDismissRequest = { if (!isSubmitting) dismiss() },
+        onDismissRequest = {
+            if (!isSubmitting) {
+                if (sheetTarget != null) {
+                    sheetViewModel.close()
+                } else {
+                    dismiss()
+                }
+            }
+        },
+        contentWindowInsets = { WindowInsets(0) },
         sheetState = sheetState,
+        shape = RoundedCornerShape(topStart = 40.dp, topEnd = 40.dp),
     ) {
-        // Back from the detail step returns to the list rather than closing the sheet.
-        BackHandler(enabled = sheetTarget != null && !isSubmitting) {
-            sheetViewModel.close()
+        // Back from the detail step scrubs it back down to the list rather than closing the sheet.
+        PredictiveBackHandler(enabled = sheetTarget != null && !isClosing && !isSubmitting) { progress ->
+            try {
+                progress.collect { backEvent ->
+                    stepState.seekTo(backEvent.progress, targetState = null)
+                }
+                sheetViewModel.close()
+                stepState.animateTo(null)
+            } catch (_: CancellationException) {
+                stepState.animateTo(sheetTarget)
+            }
         }
-        AnimatedContent(
-            targetState = sheetTarget,
+
+        // Back from the list scrubs it down to closed.
+        PredictiveBackHandler(enabled = sheetTarget == null && !isClosing && !isSubmitting && sheetState.isVisible) { progress ->
+            try {
+                progress.collect { backEvent ->
+                    closeSeekableState.seekTo(backEvent.progress, targetState = false)
+                }
+                isClosing = true
+                closeSeekableState.animateTo(false)
+                dismiss()
+            } catch (_: CancellationException) {
+                closeSeekableState.animateTo(true)
+            }
+        }
+
+        closeTransition.AnimatedContent(
+            modifier = Modifier.fillMaxWidth(),
             transitionSpec = {
-                fadeIn(animationSpec = effectsSpec)
-                    .togetherWith(fadeOut(animationSpec = effectsSpec))
-            },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(sheetHeight),
-            label = "bookableStep",
-        ) { target ->
-            if (target == null) {
-                BookableListStep(
-                    callsData = callsData,
-                    syncStatus = callsSync,
-                    bookedKeys = bookedKeys,
-                    today = today,
-                    onOpen = sheetViewModel::open,
-                    onRetry = bookableViewModel::refresh,
+                ContentTransform(
+                    targetContentEnter = fadeIn(tween(durationMillis = 400)),
+                    initialContentExit = fadeOut(tween(durationMillis = 400)),
+                    sizeTransform = SizeTransform(clip = true) { _, _ ->
+                        tween(durationMillis = 500)
+                    },
                 )
+            },
+            contentKey = { it }
+        ) { isVisible ->
+            if (isVisible) {
+                Box(
+                    modifier = Modifier
+                        .padding(horizontal = 16.dp)
+                        .clip(
+                            RoundedCornerShape(
+                                topStart = 24.dp,
+                                topEnd = 24.dp,
+                                bottomEnd = 0.dp,
+                                bottomStart = 0.dp
+                            )
+                        )
+                ) {
+                    stepTransition.AnimatedContent(
+                        modifier = Modifier.fillMaxWidth(),
+                        transitionSpec = {
+                            val isForward = targetState != null
+                            val enter = slideInVertically(
+                                tween(durationMillis = 600)
+                            ) { h ->
+                                if (isForward) h else -h
+                            } + fadeIn(
+                                tween(durationMillis = 400),
+                                initialAlpha = 0.2f
+                            )
+
+                            val exit = slideOutVertically(
+                                tween(durationMillis = 400)
+                            ) { h ->
+                                if (isForward) -h else h
+                            } + fadeOut(
+                                tween(durationMillis = 400),
+                                targetAlpha = 0.2f
+                            )
+
+                            val modalShrinkDownSpeed = 500
+
+                            ContentTransform(
+                                targetContentEnter = enter,
+                                initialContentExit = exit,
+                                sizeTransform = SizeTransform(clip = true) { _, _ ->
+                                    tween(durationMillis = modalShrinkDownSpeed)
+                                },
+                            )
+                        },
+                        contentAlignment = Alignment.BottomCenter,
+                        contentKey = { it },
+                    ) { bookingDetail ->
+                        if (bookingDetail != null) {
+                            BookingSheetContent(
+                                target = bookingDetail,
+                                detail = sheetDetail,
+                                syncStatus = sheetSync,
+                                step = sheetStep,
+                                bookingAction = sheetAction,
+                                onBackToList = sheetViewModel::close,
+                                onRefresh = sheetViewModel::refresh,
+                                onGoToConfirm = sheetViewModel::goToConfirm,
+                                onGoBackToInfo = sheetViewModel::goBackToInfo,
+                                onConfirm = sheetViewModel::confirmBooking,
+                                maxHeight = sheetHeight,
+                                modifier = Modifier.fillMaxWidth(),
+                            )
+                        }
+                        // The list keeps its tall height; the detail (below) sizes to its own content.
+                        else {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(sheetHeight)
+                            ) {
+                                listStateHolder.SaveableStateProvider("bookable-list") {
+                                    BookableListStep(
+                                        callsData = callsData,
+                                        syncStatus = callsSync,
+                                        bookedKeys = bookedKeys,
+                                        today = today,
+                                        onOpen = sheetViewModel::open,
+                                        onRetry = bookableViewModel::refresh,
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
             } else {
-                BookingSheetContent(
-                    target = target,
-                    detail = sheetDetail,
-                    syncStatus = sheetSync,
-                    step = sheetStep,
-                    bookingAction = sheetAction,
-                    onBackToList = sheetViewModel::close,
-                    onRefresh = sheetViewModel::refresh,
-                    onGoToConfirm = sheetViewModel::goToConfirm,
-                    onGoBackToInfo = sheetViewModel::goBackToInfo,
-                    onConfirm = sheetViewModel::confirmBooking,
-                    modifier = Modifier.fillMaxSize(),
+                Spacer(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(0.dp)
                 )
             }
         }
@@ -164,6 +311,7 @@ private fun BookableListStep(
                     else -> CircularProgressIndicator(modifier = Modifier.size(40.dp))
                 }
             }
+
             is Loadable.Loaded -> {
                 val groups = remember(snapshot, bookedKeys) {
                     snapshot.value.filterNot { it.key in bookedKeys }.groupByCourse()
@@ -183,11 +331,16 @@ private fun BookableListStep(
                 } else {
                     LazyColumn(
                         modifier = bodyModifier,
-                        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 28.dp),
+                        contentPadding = PaddingValues(
+                            start = 16.dp,
+                            end = 16.dp,
+                            bottom = 28.dp
+                        ),
                         verticalArrangement = Arrangement.spacedBy(14.dp),
                     ) {
                         items(items = groups, key = { it.courseKey }) { group ->
-                            val groupAccent = accentForCourse(courseKey = group.courseKey, scheme = scheme)
+                            val groupAccent =
+                                accentForCourse(courseKey = group.courseKey, scheme = scheme)
                             CourseCard(
                                 group = group,
                                 accent = groupAccent,
@@ -227,6 +380,7 @@ private fun SheetError(cause: Throwable, onRetry: () -> Unit) {
 private fun Throwable.friendlyMessage(): String = when (this) {
     is UnknownHostException,
     is ConnectException -> "Rete non disponibile. Controlla la connessione e riprova."
+
     is SocketTimeoutException -> "Timeout di rete. Riprova tra un momento."
     is IOException -> "Errore di rete. Riprova tra un momento."
     else -> "Si è verificato un errore imprevisto. Riprova."

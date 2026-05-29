@@ -24,6 +24,7 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -155,6 +156,9 @@ fun AccountSwitcherSheet(
     val topWindowInsets = windowInsets.calculateTopPadding()
     val handleHeight = 16.dp
 
+    val closeSeekableState = remember { SeekableTransitionState(true) }
+    val closeTransition = rememberTransition(closeSeekableState, label = "closeTransition")
+
     ModalBottomSheet(
         onDismissRequest = {
             if (isAddingAccount) {
@@ -180,108 +184,142 @@ fun AccountSwitcherSheet(
             }
         }
 
-        Box(
-            modifier = Modifier
-                .padding(horizontal = 16.dp)
-                .clip(
-                    RoundedCornerShape(
-                        topStart = 24.dp,
-                        topEnd = 24.dp,
-                        bottomEnd = 0.dp,
-                        bottomStart = 0.dp
-                    )
+        PredictiveBackHandler(enabled = !isAddingAccount && sheetState.isVisible) { progress ->
+            try {
+                progress.collect { backEvent ->
+                    closeSeekableState.seekTo(backEvent.progress, targetState = false)
+                }
+                closeSeekableState.animateTo(false)
+                onDismiss()
+            } catch (_: kotlin.coroutines.cancellation.CancellationException) {
+                closeSeekableState.animateTo(true)
+            }
+        }
+
+        closeTransition.AnimatedContent(
+            modifier = Modifier.fillMaxWidth(),
+            transitionSpec = {
+                ContentTransform(
+                    targetContentEnter = fadeIn(tween(durationMillis = 400)),
+                    initialContentExit = fadeOut(tween(durationMillis = 400)),
+                    sizeTransform = SizeTransform(clip = true) { _, _ ->
+                        tween(durationMillis = 500)
+                    },
                 )
-        ) {
-            transition.AnimatedContent(
-                modifier = Modifier
-                    .fillMaxWidth(),
-                transitionSpec = {
-                    val isForward = targetState
-                    val enter = slideInVertically(
-                        tween(durationMillis = 400)
-                    ) { h ->
-                        if (isForward) h else -h
-                    } + fadeIn(
-                        tween(durationMillis = 400),
-                        initialAlpha = 0.2f
-                    )
-
-                    val exit = slideOutVertically(
-                        tween(durationMillis = 600)
-                    ) { h ->
-                        if (isForward) -h else h
-                    } + fadeOut(
-                        tween(durationMillis = 400),
-                        targetAlpha = 0.2f
-                    )
-
-                    val modalShrinkDownSpeed = 500
-
-                    ContentTransform(
-                        targetContentEnter = enter,
-                        initialContentExit = exit,
-                        sizeTransform = SizeTransform(clip = true) { _, _ ->
-                            tween(durationMillis = modalShrinkDownSpeed)
-                        },
-                    )
-                },
-                contentKey = { it },
-            ) { adding ->
-                if (adding) {
-                    val animatedCancelPadding by this@AnimatedContent.transition.animateDp(
+            },
+            contentKey = { it }
+        ) { isVisible ->
+            if (isVisible) {
+                Box(
+                    modifier = Modifier
+                        .padding(horizontal = 16.dp)
+                        .clip(
+                            RoundedCornerShape(
+                                topStart = 24.dp,
+                                topEnd = 24.dp,
+                                bottomEnd = 0.dp,
+                                bottomStart = 0.dp
+                            )
+                        )
+                ) {
+                    transition.AnimatedContent(
+                        modifier = Modifier
+                            .fillMaxWidth(),
                         transitionSpec = {
-                            tween(
-                                durationMillis = 200,
-                                easing = FastOutSlowInEasing
+                            val isForward = targetState
+                            val enter = slideInVertically(
+                                tween(durationMillis = 400)
+                            ) { h ->
+                                if (isForward) h else -h
+                            } + fadeIn(
+                                tween(durationMillis = 400),
+                                initialAlpha = 0.2f
+                            )
+
+                            val exit = slideOutVertically(
+                                tween(durationMillis = 600)
+                            ) { h ->
+                                if (isForward) -h else h
+                            } + fadeOut(
+                                tween(durationMillis = 400),
+                                targetAlpha = 0.2f
+                            )
+
+                            val modalShrinkDownSpeed = 500
+
+                            ContentTransform(
+                                targetContentEnter = enter,
+                                initialContentExit = exit,
+                                sizeTransform = SizeTransform(clip = true) { _, _ ->
+                                    tween(durationMillis = modalShrinkDownSpeed)
+                                },
                             )
                         },
-                        label = "cancelPadding"
-                    ) { state ->
-                        if (state == EnterExitState.Visible) 32.dp else 0.dp
+                        contentKey = { it },
+                    ) { adding ->
+                        if (adding) {
+                            val animatedCancelPadding by this@AnimatedContent.transition.animateDp(
+                                transitionSpec = {
+                                    tween(
+                                        durationMillis = 200,
+                                        easing = FastOutSlowInEasing
+                                    )
+                                },
+                                label = "cancelPadding"
+                            ) { state ->
+                                if (state == EnterExitState.Visible) 32.dp else 0.dp
+                            }
+                            val animatedCancelOpacity by this@AnimatedContent.transition.animateFloat(
+                                transitionSpec = { tween(durationMillis = 500) },
+                                label = "cancelOpacity"
+                            ) { state ->
+                                if (state == EnterExitState.Visible) 0f else 1f
+                            }
+                            DisposableEffect(Unit) {
+                                onDispose { authViewModel.reset() }
+                            }
+                            AuthScreenSheetContent(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(screenHeight - topWindowInsets - handleHeight),
+                                onSignedIn = { _, requiresCareerPick ->
+                                    if (!requiresCareerPick) isAddingAccount = false
+                                },
+                                onCancel = { isAddingAccount = false },
+                                cancelPaddingProvider = { animatedCancelPadding },
+                                cancelOpacityProvider = { animatedCancelOpacity },
+                                viewModel = authViewModel,
+                            )
+                        } else {
+                            AccountsScene(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .wrapContentHeight(),
+                                ordered = ordered,
+                                activeId = activeId,
+                                photos = photos,
+                                pending = pending,
+                                lastRemovedName = lastRemovedName,
+                                maxListHeight = maxListHeight,
+                                motion = motion,
+                                onOpenDetails = { onOpenProfile(); close() },
+                                onSwitchAccount = { viewModel.switchAccount(it) },
+                                onSelectCareer = { id, careerId ->
+                                    viewModel.selectAccountCareer(id, careerId)
+                                },
+                                onRequestRemove = { viewModel.requestRemove(it) },
+                                onUndoRemove = { viewModel.undoRemove() },
+                                onAddAccount = { isAddingAccount = true },
+                            )
+                        }
                     }
-                    val animatedCancelOpacity by this@AnimatedContent.transition.animateFloat(
-                        transitionSpec = { tween(durationMillis = 500) },
-                        label = "cancelPadding"
-                    ) { state ->
-                        if (state == EnterExitState.Visible) 0f else 1f
-                    }
-                    DisposableEffect(Unit) {
-                        onDispose { authViewModel.reset() }
-                    }
-                    AuthScreenSheetContent(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(screenHeight - topWindowInsets - handleHeight),
-                        onSignedIn = { _, requiresCareerPick ->
-                            if (!requiresCareerPick) isAddingAccount = false
-                        },
-                        onCancel = { isAddingAccount = false },
-                        cancelPaddingProvider = { animatedCancelPadding },
-                        cancelOpacityProvider = { animatedCancelOpacity },
-                        viewModel = authViewModel,
-                    )
-                } else {
-                    AccountsScene(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .wrapContentHeight(),
-                        ordered = ordered,
-                        activeId = activeId,
-                        photos = photos,
-                        pending = pending,
-                        lastRemovedName = lastRemovedName,
-                        maxListHeight = maxListHeight,
-                        motion = motion,
-                        onOpenDetails = { onOpenProfile(); close() },
-                        onSwitchAccount = { viewModel.switchAccount(it) },
-                        onSelectCareer = { id, careerId ->
-                            viewModel.selectAccountCareer(id, careerId)
-                        },
-                        onRequestRemove = { viewModel.requestRemove(it) },
-                        onUndoRemove = { viewModel.undoRemove() },
-                        onAddAccount = { isAddingAccount = true },
-                    )
                 }
+            } else {
+                Spacer(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(0.dp)
+                )
             }
         }
     }
@@ -311,6 +349,7 @@ private fun AccountsScene(
             text = "Account",
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.padding(start = 8.dp, top = 4.dp, bottom = 12.dp),
         )
 
@@ -388,7 +427,11 @@ private fun AccountsScenePreview() {
     }
 }
 
-@Preview(showBackground = true, uiMode = android.content.res.Configuration.UI_MODE_NIGHT_YES, backgroundColor = 0xFF0F0606)
+@Preview(
+    showBackground = true,
+    uiMode = android.content.res.Configuration.UI_MODE_NIGHT_YES,
+    backgroundColor = 0xFF0F0606
+)
 @Composable
 private fun AccountsSceneDarkPreview() {
     BicoccaTheme(dark = true) {
