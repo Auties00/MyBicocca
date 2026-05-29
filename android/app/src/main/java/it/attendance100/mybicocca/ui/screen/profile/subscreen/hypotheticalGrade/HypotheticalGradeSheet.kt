@@ -22,13 +22,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Calculate
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -43,12 +40,12 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import it.attendance100.mybicocca.domain.model.transcript.GradeRollup
+import it.attendance100.mybicocca.ui.component.modal.PredictiveModalBottomSheet
 import java.util.Locale
 
 private const val MIN_PASSING_GRADE = 18
 private const val MAX_GRADE = 31
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HypotheticalGradeSheet(
     rollup: GradeRollup?,
@@ -57,16 +54,14 @@ fun HypotheticalGradeSheet(
     isWeighted: Boolean,
     onDismiss: () -> Unit,
 ) {
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val primaryColor = MaterialTheme.colorScheme.primary
     val textColor = MaterialTheme.colorScheme.onSurface
     val grayColor = MaterialTheme.colorScheme.onSurfaceVariant
 
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        sheetState = sheetState,
-        containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-    ) {
+    PredictiveModalBottomSheet(
+        onDismiss = onDismiss,
+        sizeDuration = 500,
+    ) { _, _ ->
         var gradeText by remember { mutableStateOf("") }
         var cfuText by remember { mutableStateOf("") }
 

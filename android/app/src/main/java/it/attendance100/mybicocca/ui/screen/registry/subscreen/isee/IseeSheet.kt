@@ -14,13 +14,10 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -31,11 +28,11 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.SyncStatus
 import it.attendance100.mybicocca.domain.model.tax.IseeDeclaration
+import it.attendance100.mybicocca.ui.component.modal.PredictiveModalBottomSheet
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.taxes.TaxesViewModel
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.taxes.formatEuro
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.taxes.taxFriendlyMessage
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun IseeSheet(
     viewModel: TaxesViewModel,
@@ -43,15 +40,13 @@ fun IseeSheet(
 ) {
     val iseeState by viewModel.isee.collectAsStateWithLifecycle()
     val syncStatus by viewModel.syncStatus.collectAsStateWithLifecycle()
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val scheme = MaterialTheme.colorScheme
 
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        sheetState = sheetState,
+    PredictiveModalBottomSheet(
+        onDismiss = onDismiss,
         shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
-        containerColor = scheme.surfaceContainerLow,
-    ) {
+        sizeDuration = 500,
+    ) { _, _ ->
         Column(
             modifier = Modifier
                 .fillMaxWidth()
