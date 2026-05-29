@@ -1,7 +1,3 @@
-import org.gradle.kotlin.dsl.android
-import org.gradle.kotlin.dsl.kotlin
-import org.gradle.kotlin.dsl.ksp
-import org.jetbrains.kotlin.gradle.internal.types.error.ErrorModuleDescriptor.platform
 import java.util.Properties
 
 // Plugins
@@ -109,8 +105,7 @@ dependencies {
     implementation("androidx.appcompat:appcompat:1.7.1")
     implementation("com.google.android.material:material:1.13.0")
     implementation("androidx.compose.ui:ui-text-google-fonts:1.10.0")
-    implementation("androidx.wear.compose:compose-material3:1.5.6")
-    implementation("androidx.compose.foundation:foundation:1.10.0")
+    implementation("androidx.compose.foundation:foundation:1.11.2")
     implementation("androidx.compose.ui:ui-graphics:1.10.0")
 
     // Core library desugaring for java.time API on older Android versions
