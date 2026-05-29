@@ -19,14 +19,11 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.KeyboardArrowDown
 import androidx.compose.material.icons.outlined.Map
 import androidx.compose.material.icons.outlined.Place
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -39,42 +36,46 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import it.attendance100.mybicocca.domain.model.map.BuildingCode
 import it.attendance100.mybicocca.domain.model.map.MapBuilding
+import it.attendance100.mybicocca.ui.component.modal.PredictiveModalBottomSheet
 import it.attendance100.mybicocca.ui.screen.map.component.icon
 import it.attendance100.mybicocca.ui.screen.map.component.label
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BuildingsListSheet(
     buildings: List<MapBuilding>,
     onShowOnMap: (BuildingCode) -> Unit,
     onDismiss: () -> Unit,
 ) {
-    val sheetState = rememberModalBottomSheetState()
-    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState) {
-        var expandedCode by remember { mutableStateOf<String?>(null) }
+    PredictiveModalBottomSheet(
+        onDismiss = onDismiss,
+        sizeDuration = 500,
+    ) { _, _ ->
+        Column {
+            var expandedCode by remember { mutableStateOf<String?>(null) }
 
-        Text(
-            text = "Edifici",
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.SemiBold,
-            modifier = Modifier.padding(start = 24.dp, end = 24.dp, bottom = 8.dp),
-        )
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp),
-            contentPadding = PaddingValues(bottom = 24.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            items(buildings, key = { it.code.value }) { building ->
-                BuildingRow(
-                    building = building,
-                    expanded = expandedCode == building.code.value,
-                    onToggle = {
-                        expandedCode = if (expandedCode == building.code.value) null else building.code.value
-                    },
-                    onShowOnMap = { onShowOnMap(building.code) },
-                )
+            Text(
+                text = "Edifici",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier.padding(start = 24.dp, end = 24.dp, bottom = 8.dp),
+            )
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+                contentPadding = PaddingValues(bottom = 24.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                items(buildings, key = { it.code.value }) { building ->
+                    BuildingRow(
+                        building = building,
+                        expanded = expandedCode == building.code.value,
+                        onToggle = {
+                            expandedCode = if (expandedCode == building.code.value) null else building.code.value
+                        },
+                        onShowOnMap = { onShowOnMap(building.code) },
+                    )
+                }
             }
         }
     }
