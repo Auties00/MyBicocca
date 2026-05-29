@@ -5,10 +5,14 @@ import androidx.activity.compose.PredictiveBackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ContentTransform
+import androidx.compose.animation.EnterExitState
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.core.FastOutLinearInEasing
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.SeekableTransitionState
+import androidx.compose.animation.core.animateDp
+import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.rememberTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
@@ -21,10 +25,12 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -49,6 +55,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -136,6 +143,10 @@ fun AccountSwitcherSheet(
     val screenHeight = configuration.screenHeightDp.dp
     val maxListHeight = screenHeight * 0.68f
 
+    val windowInsets = WindowInsets.safeDrawing.asPaddingValues(LocalDensity.current)
+    val topWindowInsets = windowInsets.calculateTopPadding()
+    val handleHeight = 16.dp
+
     ModalBottomSheet(
         onDismissRequest = {
             if (isAddingAccount) {
@@ -146,7 +157,7 @@ fun AccountSwitcherSheet(
         },
         sheetState = sheetState,
         contentWindowInsets = { WindowInsets(0) },
-        dragHandle = { Box(Modifier.padding(top = 16.dp)) },
+        dragHandle = { Box(Modifier.padding(top = handleHeight)) },
         shape = RoundedCornerShape(topStart = 40.dp, topEnd = 40.dp),
     ) {
         PredictiveBackHandler(enabled = isAddingAccount && !inflight) { progress ->
@@ -184,16 +195,16 @@ fun AccountSwitcherSheet(
                         if (isForward) h else -h
                     } + fadeIn(
                         tween(durationMillis = 400),
-                        initialAlpha = 0.5f
+                        initialAlpha = 0.2f
                     )
 
                     val exit = slideOutVertically(
                         tween(durationMillis = 600)
                     ) { h ->
-                        if (isForward) -2 * h else h
+                        if (isForward) -h else h
                     } + fadeOut(
                         tween(durationMillis = 400),
-                        targetAlpha = 0.5f
+                        targetAlpha = 0.2f
                     )
 
                     val modalShrinkDownSpeed = 500
@@ -209,17 +220,36 @@ fun AccountSwitcherSheet(
                 contentKey = { it },
             ) { adding ->
                 if (adding) {
+                    val animatedCancelPadding by this@AnimatedContent.transition.animateDp(
+                        transitionSpec = {
+                            tween(
+                                durationMillis = 200,
+                                easing = FastOutSlowInEasing
+                            )
+                        },
+                        label = "cancelPadding"
+                    ) { state ->
+                        if (state == EnterExitState.Visible) 32.dp else 0.dp
+                    }
+                    val animatedCancelOpacity by this@AnimatedContent.transition.animateFloat(
+                        transitionSpec = { tween(durationMillis = 500) },
+                        label = "cancelPadding"
+                    ) { state ->
+                        if (state == EnterExitState.Visible) 0f else 1f
+                    }
                     DisposableEffect(Unit) {
                         onDispose { authViewModel.reset() }
                     }
                     AuthScreenSheetContent(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(screenHeight),
+                            .height(screenHeight - topWindowInsets - handleHeight),
                         onSignedIn = { _, requiresCareerPick ->
                             if (!requiresCareerPick) isAddingAccount = false
                         },
                         onCancel = { isAddingAccount = false },
+                        cancelPaddingProvider = { animatedCancelPadding },
+                        cancelOpacityProvider = { animatedCancelOpacity },
                         viewModel = authViewModel,
                     )
                 } else {

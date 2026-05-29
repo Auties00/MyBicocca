@@ -28,7 +28,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.LocalAutofillHighlightColor
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.outlined.ArrowBack
+import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.outlined.ErrorOutline
 import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.Person
@@ -61,6 +61,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.autofill.ContentType
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.platform.LocalAutofillManager
@@ -72,6 +73,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -125,6 +127,8 @@ fun AuthScreenSheetContent(
     modifier: Modifier = Modifier,
     onSignedIn: (account: Account, requiresCareerPick: Boolean) -> Unit,
     onCancel: () -> Unit,
+    cancelPaddingProvider: () -> Dp = { 32.dp },
+    cancelOpacityProvider: () -> Float = { 1f },
     viewModel: AuthViewModel = hiltViewModel(),
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
@@ -133,6 +137,8 @@ fun AuthScreenSheetContent(
             modifier = Modifier.fillMaxSize(),
             onSignedIn = onSignedIn,
             onCancel = onCancel,
+            cancelPaddingProvider = cancelPaddingProvider,
+            cancelOpacityProvider = cancelOpacityProvider,
             snackbarHostState = snackbarHostState,
             morphWordmark = false,
             interceptBack = false,
@@ -150,6 +156,8 @@ private fun AuthScreenBody(
     modifier: Modifier,
     onSignedIn: (Account, Boolean) -> Unit,
     onCancel: (() -> Unit)?,
+    cancelPaddingProvider: () -> Dp = { 32.dp },
+    cancelOpacityProvider: () -> Float = { 1f },
     snackbarHostState: SnackbarHostState,
     morphWordmark: Boolean,
     interceptBack: Boolean,
@@ -163,9 +171,6 @@ private fun AuthScreenBody(
     val scope = rememberCoroutineScope()
     var passwordVisible by remember { mutableStateOf(false) }
 
-    // System autofill bridge — Compose ≥1.8 exposes it via LocalAutofillManager.
-    // We only commit() on a successful sign-in so password managers don't get
-    // prompted to "save" credentials that just failed authentication.
     val autofillManager = LocalAutofillManager.current
 
     LaunchedEffect(Unit) {
@@ -181,26 +186,9 @@ private fun AuthScreenBody(
 
     if (onCancel != null && interceptBack) BackHandler(enabled = !inflight) { onCancel() }
 
-    // Bad-credential errors mark both fields red — the password is the usual culprit
-    // but we can't tell which one is wrong, so both light up.
     val fieldsInError = error is SignInFailure.BadCredentials
 
     Box(modifier = modifier) {
-        if (onCancel != null) {
-            IconButton(
-                onClick = onCancel,
-                enabled = !inflight,
-                modifier = Modifier
-                    .align(Alignment.TopStart)
-                    .statusBarsPadding()
-                    .padding(8.dp),
-            ) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Outlined.ArrowBack,
-                    contentDescription = "Annulla",
-                )
-            }
-        }
         val autofillColorHighlight = BicoccaWordmarkAccent.copy(alpha = 0.1f)
         @Suppress("DEPRECATION")
         CompositionLocalProvider(LocalAutofillHighlightColor provides autofillColorHighlight) {
@@ -212,7 +200,7 @@ private fun AuthScreenBody(
                     .padding(horizontal = 28.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                Spacer(Modifier.height(106.dp))
+                Spacer(Modifier.height(146.dp))
 
                 MyBicoccaWordmark(fontSize = 34.sp, sharedElement = morphWordmark)
                 Spacer(Modifier.height(8.dp))
@@ -223,7 +211,7 @@ private fun AuthScreenBody(
                     textAlign = TextAlign.Center,
                 )
 
-                Spacer(Modifier.height(80.dp))
+                Spacer(Modifier.height(60.dp))
 
                 OutlinedTextField(
                     value = username,
@@ -282,7 +270,7 @@ private fun AuthScreenBody(
                     interactionSource = accediInteractionSource,
                     shape = accediShape,
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = BicoccaWordmarkAccent,
+                        containerColor = MaterialTheme.colorScheme.primary,
                         contentColor = MaterialTheme.colorScheme.onPrimary,
                     ),
                     modifier = Modifier
@@ -343,15 +331,37 @@ private fun AuthScreenBody(
                 Spacer(Modifier.height(32.dp))
             }
         }
+
+        if (onCancel != null) {
+            val (cancelInteractionSource, cancelShape) = rememberPressShrink()
+
+            OutlinedButton(
+                onClick = onCancel,
+                enabled = !inflight,
+                interactionSource = cancelInteractionSource,
+                shape = cancelShape,
+                colors = ButtonDefaults.outlinedButtonColors(
+                    contentColor = MaterialTheme.colorScheme.onSurface,
+                ),
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.onSurface),
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .statusBarsPadding()
+                    .padding(horizontal = cancelPaddingProvider())
+                    .padding(top = cancelPaddingProvider())
+                    .fillMaxWidth()
+                    .height(48.dp)
+                    .alpha((0.5f - cancelOpacityProvider()).coerceIn(0f, 1f))
+            ) {
+                Icon(
+                    imageVector = Icons.Default.ArrowUpward,
+                    contentDescription = "Annulla",
+                )
+            }
+        }
     }
 }
 
-/**
- * Pressed splash for the SPID and CIE buttons. Hard-coded to the official Italian
- * government identity blue (`#0066CC`) so the splash reads as "SPID/CIE branding"
- * regardless of the active Material scheme — the Accedi button above is the one
- * that follows the app's primary colour.
- */
 private val AlternativeLoginPressedColor = Color(0xFF0066CC)
 
 @Composable
@@ -362,8 +372,6 @@ private fun AlternativeLoginButton(
     enabled: Boolean,
     onClick: () -> Unit,
 ) {
-    // Each button gets its own remembered InteractionSource, so SPID and CIE
-    // track press state independently — touching one won't tint the other.
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
 
@@ -394,11 +402,6 @@ private fun AlternativeLoginButton(
             .fillMaxWidth()
             .height(52.dp),
     ) {
-        // No size override: both vectors are authored at 24dp tall (SPID wide, CIE near square),
-        // so their intrinsic size keeps each logo's aspect ratio and a consistent height.
-        // Press forces the icon to white — overrides the caller-supplied tint
-        // (SPID's official blue, CIE's onSurface) so both logos read clearly on
-        // the #0066CC splash.
         Icon(
             painter = icon,
             contentDescription = null,
@@ -409,11 +412,6 @@ private fun AlternativeLoginButton(
     }
 }
 
-/**
- * Single, friendly error surface — replaces the two raw backend stack-trace cards.
- * Slides in below the password field so it sits between the input and the action button,
- * exactly where the user is already looking after a failed tap on "Accedi".
- */
 @Composable
 private fun AuthFailureCard(failure: SignInFailure?) {
     AnimatedVisibility(

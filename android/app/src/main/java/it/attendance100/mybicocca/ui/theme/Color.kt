@@ -30,8 +30,8 @@ internal val OutlineLight = Color(0xFF9B7C82)
 internal val OutlineVariantLight = Color(0xFFE8C8CE)
 
 // Dark scheme
-internal val PrimaryDark = Color(0xFFFFB1BE)
-internal val OnPrimaryDark = Color(0xFF5B0017)
+internal val PrimaryDark = Color(0xFFD81648)
+internal val OnPrimaryDark = Color(0xff3d121a)
 internal val PrimaryContainerDark = Color(0xFF7A1530)
 internal val OnPrimaryContainerDark = Color(0xFFFFD9DF)
 internal val SecondaryDark = Color(0xFFE5BCC2)
