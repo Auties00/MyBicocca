@@ -57,14 +57,19 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
+import it.attendance100.mybicocca.domain.model.account.AcademicIdentity
 import it.attendance100.mybicocca.domain.model.account.Account
 import it.attendance100.mybicocca.domain.model.account.AccountId
+import it.attendance100.mybicocca.domain.model.account.LearningIdentity
+import it.attendance100.mybicocca.domain.model.career.Career
 import it.attendance100.mybicocca.domain.model.career.CareerId
+import it.attendance100.mybicocca.domain.model.career.CareerStatus
 import it.attendance100.mybicocca.ui.screen.account.AccountViewModel
 import it.attendance100.mybicocca.ui.screen.account.subscreen.accountSwitcher.component.AddAccountCard
 import it.attendance100.mybicocca.ui.screen.account.subscreen.accountSwitcher.component.ProfileCard
@@ -73,9 +78,12 @@ import it.attendance100.mybicocca.ui.screen.account.subscreen.accountSwitcher.co
 import it.attendance100.mybicocca.ui.screen.account.subscreen.accountSwitcher.component.UndoRemovalBar
 import it.attendance100.mybicocca.ui.screen.auth.AuthScreenSheetContent
 import it.attendance100.mybicocca.ui.screen.auth.AuthViewModel
+import it.attendance100.mybicocca.ui.theme.BicoccaTheme
+import it.attendance100.mybicocca.util.ProvideHapticManager
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 import java.io.File
+import java.time.Instant
 
 private val CardShape = RoundedCornerShape(28.dp)
 private const val ADD_ACCOUNT_KEY = "__add_account__"
@@ -369,5 +377,80 @@ private fun AccountsScene(
                 modifier = Modifier.padding(top = 12.dp),
             )
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun AccountsScenePreview() {
+    BicoccaTheme(dark = false) {
+        AccountsScenePreviewContent()
+    }
+}
+
+@Preview(showBackground = true, uiMode = android.content.res.Configuration.UI_MODE_NIGHT_YES, backgroundColor = 0xFF0F0606)
+@Composable
+private fun AccountsSceneDarkPreview() {
+    BicoccaTheme(dark = true) {
+        AccountsScenePreviewContent()
+    }
+}
+
+@Composable
+private fun AccountsScenePreviewContent() {
+    val account = Account(
+        id = AccountId("1"),
+        username = "m.rossi@campus.unimib.it",
+        displayName = "MARIO ROSSI",
+        academic = AcademicIdentity(
+            recordUserId = "1",
+            personId = 1,
+            fiscalCode = "RSSMRA80A01H501U",
+            careers = listOf(
+                Career(
+                    id = CareerId(1),
+                    enrollmentTraitId = 1,
+                    programId = 1,
+                    easyStaffProgramCode = "P01",
+                    academicYearEnrollmentId = 1,
+                    matricola = "123456",
+                    description = "Informatica",
+//                    academicYear = Instant.now().get(ChronoField.YEAR),
+                    academicYear = 2026,
+                    status = CareerStatus.ACTIVE
+                )
+            ),
+            selectedCareerId = CareerId(1)
+        ),
+        learning = LearningIdentity(
+            lmsUserId = 1,
+            lmsUsername = "m.rossi",
+            locale = "it",
+            isSiteAdmin = false,
+            maxUploadFileSizeBytes = 100,
+            storageQuotaBytes = 100
+        ),
+        createdAt = Instant.now(),
+        lastUsedAt = Instant.now(),
+        lastSyncedAt = Instant.now()
+    )
+
+    ProvideHapticManager {
+        AccountsScene(
+            modifier = Modifier.fillMaxWidth(),
+            ordered = listOf(account),
+            activeId = account.id,
+            photos = emptyMap(),
+            pending = null,
+            lastRemovedName = "",
+            maxListHeight = 600.dp,
+            motion = MaterialTheme.motionScheme,
+            onOpenDetails = {},
+            onSwitchAccount = {},
+            onSelectCareer = { _, _ -> },
+            onRequestRemove = {},
+            onUndoRemove = {},
+            onAddAccount = {}
+        )
     }
 }

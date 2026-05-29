@@ -73,6 +73,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -86,6 +87,7 @@ import it.attendance100.mybicocca.ui.component.brand.MyBicoccaWordmark
 import it.attendance100.mybicocca.ui.component.button.rememberPressShrink
 import it.attendance100.mybicocca.ui.component.button.rememberPressShrinkShape
 import it.attendance100.mybicocca.ui.screen.auth.state.AuthEvent
+import it.attendance100.mybicocca.ui.theme.BicoccaTheme
 import it.attendance100.mybicocca.ui.theme.BicoccaWordmarkAccent
 import kotlinx.coroutines.launch
 
@@ -359,6 +361,56 @@ private fun AuthScreenBody(
                 )
             }
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun AlternativeLoginButtonPreview() {
+    BicoccaTheme(dark = false) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            AlternativeLoginButton(
+                label = "Entra con SPID",
+                icon = painterResource(R.drawable.ic_spid),
+                iconTint = Color.Unspecified,
+                enabled = true,
+                onClick = {}
+            )
+            AlternativeLoginButton(
+                label = "Entra con CIE",
+                icon = painterResource(R.drawable.ic_cie),
+                iconTint = MaterialTheme.colorScheme.onSurface,
+                enabled = true,
+                onClick = {}
+            )
+        }
+    }
+}
+
+@Preview(showBackground = true, backgroundColor = 0xFF0F0606)
+@Composable
+private fun AuthFailureCardBadCredentialsPreview() {
+    BicoccaTheme(dark = true) {
+        AuthFailureCard(failure = SignInFailure.BadCredentials)
+    }
+}
+
+@Preview(showBackground = true, backgroundColor = 0xFF0B0808)
+@Composable
+private fun AuthFailureCardNoConnectionPreview() {
+    BicoccaTheme(dark = true) {
+        AuthFailureCard(failure = SignInFailure.NoConnection)
+    }
+}
+
+@Preview(showBackground = true, backgroundColor = 0xFF0F0606)
+@Composable
+private fun AuthFailureCardUnknownPreview() {
+    BicoccaTheme(dark = true) {
+        AuthFailureCard(failure = SignInFailure.Unknown)
     }
 }
 
