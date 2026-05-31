@@ -19,6 +19,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.rounded.ArrowOutward
+import androidx.compose.material.icons.rounded.School
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -34,11 +35,15 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import it.attendance100.mybicocca.ui.screen.registry.state.RegistryAccentShape
+import it.attendance100.mybicocca.ui.screen.registry.state.RegistryCategory
 import it.attendance100.mybicocca.ui.screen.registry.state.RegistryDashboardTile
 import it.attendance100.mybicocca.ui.screen.registry.state.RegistryTileStatus
 import it.attendance100.mybicocca.ui.screen.registry.state.colors
 import it.attendance100.mybicocca.ui.screen.registry.state.materialShape
+import it.attendance100.mybicocca.ui.theme.BicoccaTheme
 
 enum class RegistryHeroLayout { Portrait, Banner }
 
@@ -70,15 +75,20 @@ fun RegistryHeroTile(
     val pressed by interaction.collectIsPressedAsState()
     val scale by animateFloatAsState(
         targetValue = if (pressed) 0.97f else 1f,
-        animationSpec = MaterialTheme.motionScheme.fastSpatialSpec<Float>(),
+        animationSpec = MaterialTheme.motionScheme.fastSpatialSpec(),
         label = "heroPressScale",
     )
 
-    val tileShape = RoundedCornerShape(
+    val tileShape = if (!tile.mirrored) RoundedCornerShape(
         topStart = 36.dp,
         topEnd = 18.dp,
         bottomStart = 18.dp,
         bottomEnd = 36.dp,
+    ) else RoundedCornerShape(
+        topStart = 18.dp,
+        topEnd = 36.dp,
+        bottomStart = 36.dp,
+        bottomEnd = 18.dp,
     )
 
     Surface(
@@ -102,6 +112,7 @@ fun RegistryHeroTile(
                 shapeIconTint = shapeIconTint,
                 errorTint = scheme.error,
             )
+
             RegistryHeroLayout.Banner -> BannerContent(
                 tile = tile,
                 shape = shape,
@@ -291,6 +302,75 @@ private fun OpenChip(onContainer: Color) {
             contentDescription = null,
             tint = onContainer,
             modifier = Modifier.size(14.dp),
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun RegistryHeroTilePortraitPreview() {
+    BicoccaTheme(dark = false) {
+        RegistryHeroTile(
+            tile = RegistryDashboardTile(
+                id = "exams",
+                title = "Esami e Libretto",
+                subtitle = "Vedi i tuoi voti e prenota esami",
+                icon = Icons.Rounded.School,
+                shape = RegistryAccentShape.Sunny,
+                category = RegistryCategory.Exams,
+                onClick = {}
+            ),
+            layout = RegistryHeroLayout.Portrait,
+            modifier = Modifier
+                .padding(16.dp)
+                .size(width = 160.dp, height = 220.dp)
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun RegistryHeroTileBannerPreview() {
+    BicoccaTheme(dark = false) {
+        RegistryHeroTile(
+            tile = RegistryDashboardTile(
+                id = "exams",
+                title = "Esami e Libretto",
+                subtitle = "Vedi i tuoi voti e prenota esami",
+                icon = Icons.Rounded.School,
+                shape = RegistryAccentShape.Sunny,
+                category = RegistryCategory.Exams,
+                onClick = {}
+            ),
+            layout = RegistryHeroLayout.Banner,
+            modifier = Modifier
+                .padding(16.dp)
+                .fillMaxWidth()
+                .height(160.dp)
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun RegistryHeroTileWarningPreview() {
+    BicoccaTheme(dark = false) {
+        RegistryHeroTile(
+            tile = RegistryDashboardTile(
+                id = "taxes",
+                title = "Tasse e Pagamenti",
+                subtitle = "Hai pagamenti in sospeso",
+                status = RegistryTileStatus.Warning,
+                icon = Icons.Rounded.School,
+                shape = RegistryAccentShape.SoftBurst,
+                category = RegistryCategory.Taxes,
+                onClick = {}
+            ),
+            layout = RegistryHeroLayout.Banner,
+            modifier = Modifier
+                .padding(16.dp)
+                .fillMaxWidth()
+                .height(160.dp)
         )
     }
 }

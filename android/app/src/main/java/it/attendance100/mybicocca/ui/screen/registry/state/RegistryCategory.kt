@@ -1,20 +1,18 @@
 package it.attendance100.mybicocca.ui.screen.registry.state
 
 enum class RegistryCategory {
-    All,
     Exams,
+    Taxes,
     Teaching,
-    Administration,
+    Documents,
     Agenda,
-    Internships,
 }
 
 val RegistryCategory.label: String
     get() = when (this) {
-        RegistryCategory.All -> "Tutti"
         RegistryCategory.Exams -> "Esami"
+        RegistryCategory.Taxes -> "Tasse"
         RegistryCategory.Teaching -> "Didattica"
-        RegistryCategory.Administration -> "Amministrazione"
+        RegistryCategory.Documents -> "Documenti"
         RegistryCategory.Agenda -> "Agenda"
-        RegistryCategory.Internships -> "Stage"
     }

@@ -20,6 +20,7 @@ import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
 import it.attendance100.mybicocca.domain.model.account.Account
+import it.attendance100.mybicocca.ui.navigation.transitions.LocalRootSharedTransitionScope
 import it.attendance100.mybicocca.ui.screen.account.CareerPickerScreen
 import it.attendance100.mybicocca.ui.screen.auth.AuthScreen
 

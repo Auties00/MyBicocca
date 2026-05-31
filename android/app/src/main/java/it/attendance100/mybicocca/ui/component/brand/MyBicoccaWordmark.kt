@@ -19,7 +19,7 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.sp
 import androidx.navigation3.ui.LocalNavAnimatedContentScope
-import it.attendance100.mybicocca.ui.navigation.LocalRootSharedTransitionScope
+import it.attendance100.mybicocca.ui.navigation.transitions.LocalRootSharedTransitionScope
 import it.attendance100.mybicocca.ui.theme.BicoccaWordmarkAccent
 
 // The two-colour "My"+"Bicocca" brand wordmark, shared by the splash, the login header and the
