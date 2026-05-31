@@ -1,4 +1,4 @@
-package it.attendance100.mybicocca.ui.navigation
+package it.attendance100.mybicocca.ui.navigation.transitions
 
 import androidx.compose.animation.AnimatedContentScope
 import androidx.compose.animation.ExperimentalSharedTransitionApi

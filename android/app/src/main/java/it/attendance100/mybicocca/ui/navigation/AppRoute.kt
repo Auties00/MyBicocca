@@ -57,8 +57,26 @@ sealed interface AppRoute : NavKey {
     }
 
     // Registry (Segreterie) sub-screens.
+    @Serializable
+    data object BookedExams : AppRoute {
+        override val appTitle = AppTitle.SubPage("Esami")
+    }
+
+    @Serializable
+    data object Taxes : AppRoute {
+        override val appTitle = AppTitle.SubPage("Tasse")
+    }
     @Serializable data class TaxDetail(val chargeId: Long) : AppRoute {
         override val appTitle get() = AppTitle.SubPage("Dettaglio Tassa")
+    }
+
+    @Serializable
+    data class BookedExamDetail(
+        val courseOfStudyId: Long,
+        val activityId: Long,
+        val callId: Int
+    ) : AppRoute {
+        override val appTitle get() = AppTitle.SubPage("Dettaglio Esame")
     }
     @Serializable data object StudyPlan : AppRoute {
         override val appTitle = AppTitle.SubPage("Piano di Studi")

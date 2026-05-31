@@ -12,7 +12,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.CloudOff
 import androidx.compose.material.icons.outlined.EditCalendar
 import androidx.compose.material.icons.outlined.EventAvailable
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.ExtendedFloatingActionButton
@@ -20,7 +19,6 @@ import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
@@ -38,14 +36,12 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.SyncStatus
-import it.attendance100.mybicocca.domain.model.exam.BookedExam
 import it.attendance100.mybicocca.ui.component.feedback.EmptyState
 import it.attendance100.mybicocca.ui.component.feedback.LocalAppSnackbarController
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.bookableExams.BookableExamsSheet
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.bookableExams.BookableExamsViewModel
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.booked.component.BookedExamCard
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.booked.state.BookedEvent
-import it.attendance100.mybicocca.ui.screen.registry.subscreen.booked.state.CancelActionState
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.booking.BookingSheetViewModel
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.booking.state.BookingSheetEvent
 import kotlinx.coroutines.delay
@@ -61,18 +57,15 @@ import java.net.UnknownHostException
 fun BookedExamsScreen(
     bookedViewModel: BookedExamsViewModel,
     bookableViewModel: BookableExamsViewModel,
+    onOpenExam: (courseOfStudyId: Long, activityId: Long, callId: Int) -> Unit,
     modifier: Modifier = Modifier,
     sheetViewModel: BookingSheetViewModel = hiltViewModel(),
 ) {
     val bookingsData by bookedViewModel.bookings.collectAsStateWithLifecycle()
     val bookedSync by bookedViewModel.syncStatus.collectAsStateWithLifecycle()
-    val cancelAction by bookedViewModel.cancelAction.collectAsStateWithLifecycle()
 
     val snackbar = LocalAppSnackbarController.current
     val scope = rememberCoroutineScope()
-    // Confirmation state is intentionally NOT saveable — letting it lapse across process
-    // death is safer than restoring a destructive action prompt.
-    var confirming by remember { mutableStateOf<BookedExam?>(null) }
     var showBookable by rememberSaveable { mutableStateOf(false) }
 
     LaunchedEffect(bookedViewModel) {
@@ -139,9 +132,11 @@ fun BookedExamsScreen(
                     val booked = snapshot.value
                     val failure = bookedSync as? SyncStatus.Failed
                     when {
+                        // Failed sync but we have cached data
                         failure != null && booked.isEmpty() -> RefreshableEmpty {
                             ErrorEmptyState(cause = failure.cause, onRetry = bookedViewModel::refresh)
                         }
+                        // Sync successful but no exams booked
                         booked.isEmpty() -> RefreshableEmpty {
                             EmptyState(
                                 icon = Icons.Outlined.EventAvailable,
@@ -149,18 +144,29 @@ fun BookedExamsScreen(
                                 body = "Quando prenoti un appello lo trovi qui. Usa il pulsante in basso per prenotarne uno.",
                             )
                         }
+                        // Display list of booked exams
                         else -> LazyColumn(
                             modifier = Modifier.fillMaxSize(),
                             contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 96.dp),
                             verticalArrangement = Arrangement.spacedBy(12.dp),
                         ) {
+                            item(key = "header_title") {
+                                Text(
+                                    text = "Iscrizioni Appelli",
+                                    style = androidx.compose.material3.MaterialTheme.typography.titleLarge,
+                                    modifier = Modifier.padding(bottom = 8.dp, start = 4.dp)
+                                )
+                            }
                             items(items = booked, key = { it.identityKey() }) { booking ->
-                                val cancelling = (cancelAction as? CancelActionState.InProgress)
-                                    ?.key == booking.identityKey()
                                 BookedExamCard(
                                     booking = booking,
-                                    isCancelling = cancelling,
-                                    onCancel = { confirming = booking },
+                                    onClick = {
+                                        onOpenExam(
+                                            booking.key.courseOfStudyId,
+                                            booking.key.activityId,
+                                            booking.key.callId
+                                        )
+                                    }
                                 )
                             }
                         }
@@ -190,32 +196,6 @@ fun BookedExamsScreen(
             sheetViewModel = sheetViewModel,
             bookedKeys = bookedKeys,
             onDismiss = { showBookable = false },
-        )
-    }
-
-    val pending = confirming
-    if (pending != null) {
-        AlertDialog(
-            onDismissRequest = { confirming = null },
-            title = { Text("Annullare la prenotazione?") },
-            text = {
-                Text(
-                    "Stai per annullare la prenotazione a " +
-                        (pending.activityDescription?.takeIf { it.isNotBlank() } ?: "questo appello") +
-                        ". L'operazione non può essere ripristinata."
-                )
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        bookedViewModel.cancel(pending)
-                        confirming = null
-                    },
-                ) { Text("Annulla prenotazione") }
-            },
-            dismissButton = {
-                TextButton(onClick = { confirming = null }) { Text("Indietro") }
-            },
         )
     }
 }

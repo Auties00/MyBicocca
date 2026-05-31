@@ -17,4 +17,5 @@ data class RegistryDashboardTile(
     val shape: RegistryAccentShape,
     val category: RegistryCategory,
     val onClick: () -> Unit,
+    val mirrored: Boolean = false,
 )

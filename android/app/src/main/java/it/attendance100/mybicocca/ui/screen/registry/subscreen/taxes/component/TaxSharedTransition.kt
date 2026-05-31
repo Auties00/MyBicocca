@@ -11,8 +11,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.layout.ContentScale
-import it.attendance100.mybicocca.ui.navigation.LocalAnimatedContentScope
-import it.attendance100.mybicocca.ui.navigation.LocalSharedTransitionScope
+import it.attendance100.mybicocca.ui.navigation.transitions.LocalAnimatedContentScope
+import it.attendance100.mybicocca.ui.navigation.transitions.LocalSharedTransitionScope
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.taxes.state.TaxesSharedElement
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.taxes.state.TaxesSharedKey
 

@@ -51,6 +51,8 @@ import it.attendance100.mybicocca.ui.component.bar.TopBarSearchState
 import it.attendance100.mybicocca.ui.component.feedback.AppSnackbarHost
 import it.attendance100.mybicocca.ui.component.feedback.LocalAppSnackbarController
 import it.attendance100.mybicocca.ui.component.feedback.rememberAppSnackbarController
+import it.attendance100.mybicocca.ui.navigation.transitions.LocalAnimatedContentScope
+import it.attendance100.mybicocca.ui.navigation.transitions.LocalSharedTransitionScope
 import it.attendance100.mybicocca.ui.screen.account.AccountViewModel
 import it.attendance100.mybicocca.ui.screen.account.subscreen.accountSwitcher.AccountSwitcherSheet
 import it.attendance100.mybicocca.ui.screen.calendar.CalendarScreen
@@ -81,6 +83,8 @@ import it.attendance100.mybicocca.ui.screen.profile.ProfileViewModel
 import it.attendance100.mybicocca.ui.screen.registry.RegistryScreen
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.attendance.AttendanceScreen
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.bookableExams.BookableExamsViewModel
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.bookedExams.BookedExamDetailScreen
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.bookedExams.BookedExamsScreen
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.bookedExams.BookedExamsViewModel
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.degreeAward.DegreeAwardScreen
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.examResults.ExamResultsScreen
@@ -91,6 +95,7 @@ import it.attendance100.mybicocca.ui.screen.registry.subscreen.selfCertificates.
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.studyPlan.StudyPlanScreen
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.studyPlanEdit.StudyPlanEditScreen
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.taxDetail.TaxDetailScreen
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.taxes.TaxesScreen
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.taxes.TaxesViewModel
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.transcript.TranscriptScreen
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.transcript.TranscriptViewModel
@@ -392,11 +397,50 @@ fun MainShell(
                                                             bookableExamsViewModel = bookableExamsViewModel,
                                                             taxesViewModel = taxesViewModel,
                                                             isActive = isActive,
-                                                            onOpenTaxDetail = { chargeId ->
+                                                            onOpenBookedExams = {
                                                                 backStack.add(
-                                                                    AppRoute.TaxDetail(
-                                                                        chargeId = chargeId
-                                                                    )
+                                                                    AppRoute.BookedExams
+                                                                )
+                                                            },
+                                                            onOpenTaxes = { backStack.add(AppRoute.Taxes) },
+                                                            onOpenExamResults = {
+                                                                backStack.add(
+                                                                    AppRoute.ExamResults
+                                                                )
+                                                            },
+                                                            onOpenStudyPlan = {
+                                                                backStack.add(
+                                                                    AppRoute.StudyPlan
+                                                                )
+                                                            },
+                                                            onOpenQuestionnaires = {
+                                                                backStack.add(
+                                                                    AppRoute.Questionnaires
+                                                                )
+                                                            },
+                                                            onOpenReservations = {
+                                                                backStack.add(
+                                                                    AppRoute.Reservations
+                                                                )
+                                                            },
+                                                            onOpenAttendance = {
+                                                                backStack.add(
+                                                                    AppRoute.Attendance
+                                                                )
+                                                            },
+                                                            onOpenInternships = {
+                                                                backStack.add(
+                                                                    AppRoute.Internships
+                                                                )
+                                                            },
+                                                            onOpenSelfCertificates = {
+                                                                backStack.add(
+                                                                    AppRoute.SelfCertificates
+                                                                )
+                                                            },
+                                                            onOpenDegreeAward = {
+                                                                backStack.add(
+                                                                    AppRoute.DegreeAward
                                                                 )
                                                             },
                                                             searchQuery = pageQuery,
@@ -413,6 +457,36 @@ fun MainShell(
                                         SubPage(topInset) {
                                             ProfileScreen(
                                                 viewModel = profileViewModel
+                                            )
+                                        }
+                                    }
+                                    // Esami and Tasse are launched from the Registry dashboard cards.
+                                    // Hosted here (not inside the Registry pager) so their list -> detail
+                                    // shared-element morphs seek with predictive back like every other sub-page.
+                                    entry<AppRoute.BookedExams> {
+                                        SubPage(topInset) {
+                                            BookedExamsScreen(
+                                                bookedViewModel = bookedExamsViewModel,
+                                                bookableViewModel = bookableExamsViewModel,
+                                                onOpenExam = { courseOfStudyId, activityId, callId ->
+                                                    backStack.add(
+                                                        AppRoute.BookedExamDetail(
+                                                            courseOfStudyId = courseOfStudyId,
+                                                            activityId = activityId,
+                                                            callId = callId
+                                                        )
+                                                    )
+                                                },
+                                            )
+                                        }
+                                    }
+                                    entry<AppRoute.Taxes> {
+                                        SubPage(topInset) {
+                                            TaxesScreen(
+                                                viewModel = taxesViewModel,
+                                                onOpenDetail = { chargeId ->
+                                                    backStack.add(AppRoute.TaxDetail(chargeId = chargeId))
+                                                },
                                             )
                                         }
                                     }
@@ -435,6 +509,17 @@ fun MainShell(
                                             Room360Screen(
                                                 url = key.url,
                                                 roomName = key.roomName
+                                            )
+                                        }
+                                    }
+                                    entry<AppRoute.BookedExamDetail> { key ->
+                                        SubPage(topInset) {
+                                            BookedExamDetailScreen(
+                                                courseOfStudyId = key.courseOfStudyId,
+                                                activityId = key.activityId,
+                                                callId = key.callId,
+                                                viewModel = bookedExamsViewModel,
+                                                onBack = { backStack.removeLastOrNull() },
                                             )
                                         }
                                     }

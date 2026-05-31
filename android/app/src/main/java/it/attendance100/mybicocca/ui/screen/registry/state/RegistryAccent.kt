@@ -39,12 +39,11 @@ fun RegistryAccentShape.materialShape(): Shape = when (this) {
 }
 
 fun RegistryCategory.glyph(): RegistryAccentShape = when (this) {
-    RegistryCategory.All -> RegistryAccentShape.Cookie9
     RegistryCategory.Exams -> RegistryAccentShape.Sunny
+    RegistryCategory.Taxes -> RegistryAccentShape.Cookie6
     RegistryCategory.Teaching -> RegistryAccentShape.Clover4
-    RegistryCategory.Administration -> RegistryAccentShape.Cookie6
+    RegistryCategory.Documents -> RegistryAccentShape.Cookie9
     RegistryCategory.Agenda -> RegistryAccentShape.Cookie12
-    RegistryCategory.Internships -> RegistryAccentShape.Flower
 }
 
 data class RegistryCategoryColors(
@@ -55,17 +54,17 @@ data class RegistryCategoryColors(
 )
 
 fun RegistryCategory.colors(scheme: ColorScheme): RegistryCategoryColors = when (this) {
-    RegistryCategory.All -> RegistryCategoryColors(
-        bigContainer = scheme.primary,
-        bigOnContainer = scheme.onPrimary,
-        accent = scheme.primary,
-        onAccent = scheme.onPrimary,
-    )
     RegistryCategory.Exams -> RegistryCategoryColors(
         bigContainer = scheme.primary,
         bigOnContainer = scheme.onPrimary,
         accent = scheme.primary,
         onAccent = scheme.onPrimary,
+    )
+    RegistryCategory.Taxes -> RegistryCategoryColors(
+        bigContainer = scheme.secondary,
+        bigOnContainer = scheme.onSecondary,
+        accent = scheme.secondary,
+        onAccent = scheme.onSecondary,
     )
     RegistryCategory.Teaching -> RegistryCategoryColors(
         bigContainer = scheme.tertiary,
@@ -73,7 +72,7 @@ fun RegistryCategory.colors(scheme: ColorScheme): RegistryCategoryColors = when 
         accent = scheme.tertiary,
         onAccent = scheme.onTertiary,
     )
-    RegistryCategory.Administration -> RegistryCategoryColors(
+    RegistryCategory.Documents -> RegistryCategoryColors(
         bigContainer = scheme.secondary,
         bigOnContainer = scheme.onSecondary,
         accent = scheme.secondary,
@@ -84,11 +83,5 @@ fun RegistryCategory.colors(scheme: ColorScheme): RegistryCategoryColors = when 
         bigOnContainer = scheme.onPrimaryContainer,
         accent = scheme.onPrimaryContainer,
         onAccent = scheme.primaryContainer,
-    )
-    RegistryCategory.Internships -> RegistryCategoryColors(
-        bigContainer = scheme.tertiary,
-        bigOnContainer = scheme.onTertiary,
-        accent = scheme.tertiary,
-        onAccent = scheme.onTertiary,
     )
 }
