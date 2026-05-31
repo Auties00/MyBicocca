@@ -74,8 +74,7 @@ import java.util.Locale
 private fun String.titleCase(): String {
     if (isEmpty()) return ""
     return split("\\s+".toRegex()).joinToString(" ") { word ->
-        if (word.isEmpty()) "" else word.take(1).uppercase(Locale.ROOT) + word.substring(1)
-            .lowercase(Locale.ROOT)
+        if (word.isEmpty()) "" else word.take(1).uppercase(Locale.ROOT) + word.substring(1).lowercase(Locale.ROOT)
     }
 }
 
