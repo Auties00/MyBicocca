@@ -3,8 +3,6 @@ package it.attendance100.mybicocca.ui.screen.profile.component
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -33,35 +31,33 @@ fun SkeletonProfileContent(
             .shimmer(shimmerInstance),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        ShimmerBox(Modifier.width(120.dp).height(16.dp))
+        // The student card itself is the floating shell overlay (see MainShell); the
+        // first-load placeholder only mirrors the sections that scroll beneath it.
+        ShimmerBox(
+            Modifier
+                .width(100.dp)
+                .height(16.dp)
+        )
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            SkeletonStatTile(Modifier.weight(1f))
+            SkeletonStatTile(Modifier.weight(1f))
+        }
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            SkeletonStatTile(Modifier.weight(1f))
+            SkeletonStatTile(Modifier.weight(1f))
+        }
 
         ShimmerBox(
             modifier = Modifier
                 .fillMaxWidth()
-                .aspectRatio(1.6111112f),
-            shape = RoundedCornerShape(20.dp),
-        )
-
-        Spacer(Modifier.height(4.dp))
-        ShimmerBox(Modifier.width(100.dp).height(16.dp))
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            SkeletonStatTile(Modifier.weight(1f))
-            SkeletonStatTile(Modifier.weight(1f))
-        }
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            SkeletonStatTile(Modifier.weight(1f))
-            SkeletonStatTile(Modifier.weight(1f))
-        }
-
-        ShimmerBox(
-            modifier = Modifier.fillMaxWidth().height(72.dp),
+                .height(72.dp),
             shape = RoundedCornerShape(20.dp),
         )
     }

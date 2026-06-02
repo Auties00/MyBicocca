@@ -37,6 +37,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.FloatState
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.BiasAlignment
@@ -56,17 +58,28 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.lerp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import it.attendance100.mybicocca.ui.component.brand.MyBicoccaWordmark
+import it.attendance100.mybicocca.ui.navigation.AppRoute
+import it.attendance100.mybicocca.ui.theme.BicoccaTheme
 import java.io.File
 import kotlin.coroutines.cancellation.CancellationException
 
 private enum class BarMode { PAGE, SUB_PAGE, SEARCH }
 
 private const val MaxBackProgress = 0.9f
+
+// Pill heights, shared so the shell can compute where the pill's bottom edge (the seam the
+// floating student card straddles) lands. Collapsed is the standard page/sub-page bar; the
+// Profilo sub-page expands to [ProfilePillExpandedHeight]. [PillTopGap] is the constant gap
+// between the status bar and the pill content inside the expanded bar.
+internal val PillCollapsedHeight = 56.dp
+internal val ProfilePillExpandedHeight = 176.dp
+internal val PillTopGap = 8.dp
 
 // Material "fade through" handoff for the bar's two end states, driven by the continuous morph
 // progress p (1 = expanded sub-page/search, 0 = collapsed page). Each side fades over its own
@@ -175,6 +188,20 @@ fun MyBicoccaTopBar(
     // The chrome morphs on whichever driver is further along; the two never overlap in practice.
     val p = maxOf(navProgress.floatValue, searchProgress.value)
     val cornerRadius = lerp(32.dp, 0.dp, p)
+    // Retain the title of the sub-page we expanded to: on back navigation subPageTitle flips to
+    // null immediately while navProgress is still morphing 1 → 0, so without remembering it the
+    // Profilo pill would snap from 176.dp straight to 56.dp instead of collapsing with the gesture.
+    // Height tracks navProgress (not p) so search — which can only open from a page — can never
+    // expand the pill via a stale remembered title.
+    val expandedSubPageTitle = remember { mutableStateOf(subPageTitle) }
+    if (subPageTitle != null) expandedSubPageTitle.value = subPageTitle
+    val pillHeight =
+        if ((subPageTitle ?: expandedSubPageTitle.value) == AppRoute.Profile.appTitle.title) {
+            lerp(PillCollapsedHeight, ProfilePillExpandedHeight, navProgress.floatValue)
+        } else {
+            PillCollapsedHeight
+        }
+
     val outerHorizontalPadding = lerp(20.dp, 0.dp, p)
     val outerTopPadding = lerp(8.dp, 0.dp, p)
     val containerColor = androidx.compose.ui.graphics.lerp(
@@ -187,15 +214,15 @@ fun MyBicoccaTopBar(
         WindowInsets.statusBars.getTop(this).toDp()
     }
     val outerStatusBarHeight = lerp(statusBarHeight, 0.dp, p)
-    val innerStatusBarHeight = lerp(0.dp, statusBarHeight + 8.dp, p)
+    val innerStatusBarHeight = lerp(0.dp, statusBarHeight + PillTopGap, p)
 
     Column(
         modifier = modifier
             .fillMaxWidth()
             .graphicsLayer { alpha = globalAlpha },
     ) {
-        Spacer(Modifier.height(outerStatusBarHeight))
-        Spacer(Modifier.height(outerTopPadding))
+        Spacer(Modifier.height(outerStatusBarHeight)) // System bar padding
+        Spacer(Modifier.height(outerTopPadding)) // Extra top padding
 
         Surface(
             modifier = Modifier
@@ -208,10 +235,11 @@ fun MyBicoccaTopBar(
             Column {
                 Spacer(Modifier.height(innerStatusBarHeight))
 
+                // Pill
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(56.dp)
+                        .height(pillHeight)
                         .then(
                             if (mode == BarMode.PAGE && p < 0.1f) {
                                 Modifier.clickable(
@@ -221,7 +249,7 @@ fun MyBicoccaTopBar(
                             } else Modifier,
                         )
                         .padding(horizontal = 10.dp),
-                    verticalAlignment = Alignment.CenterVertically,
+                    verticalAlignment = Alignment.Top,
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     LeadingSlot(
@@ -230,6 +258,7 @@ fun MyBicoccaTopBar(
                         onSearchClick = { searchState.onActiveChange(true) },
                         onBackClick = onNavigateBack,
                         onCloseSearch = ::closeSearch,
+                        Modifier.padding(top = 7.dp)
                     )
 
                     Box(
@@ -241,18 +270,23 @@ fun MyBicoccaTopBar(
                         // to exactly where the wordmark sits as the bar collapses. Both children
                         // inherit this alignment, which is what makes the swap read as one title
                         // transforming into the other rather than two independent labels.
-                        contentAlignment = BiasAlignment(horizontalBias = -p, verticalBias = 0f),
+                        contentAlignment = BiasAlignment(horizontalBias = -p, verticalBias = -1f),
                     ) {
                         // Material "fade through": the outgoing text fades out before the
                         // incoming one fades in (handoff at the midpoint), so they are never
                         // composited on top of each other — no smeared text-on-text.
-                        WordmarkContent(alpha = fadeThroughCollapsed(p))
+                        WordmarkContent(
+                            alpha = fadeThroughCollapsed(p),
+                            Modifier.padding(top = 17.dp)
+                        )
                         when (mode) {
                             BarMode.PAGE -> Unit
                             BarMode.SUB_PAGE -> SubPageTitleContent(
                                 title = subPageTitle.orEmpty(),
                                 alpha = fadeThroughExpanded(p),
+                                Modifier.padding(top = 17.dp)
                             )
+
                             BarMode.SEARCH -> SearchFieldContent(
                                 query = searchState.query,
                                 placeholder = searchState.placeholder,
@@ -276,6 +310,7 @@ fun MyBicoccaTopBar(
                             if (searchState.query.isEmpty()) closeSearch()
                             else searchState.onQueryChange("")
                         },
+                        Modifier.padding(top = 7.dp)
                     )
                 }
             }
@@ -290,6 +325,7 @@ private fun LeadingSlot(
     onSearchClick: () -> Unit,
     onBackClick: () -> Unit,
     onCloseSearch: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val scheme = MaterialTheme.colorScheme
     val onClick = when (mode) {
@@ -302,7 +338,7 @@ private fun LeadingSlot(
     // one is visible at a time (they swap at the midpoint) and each shrinks as it leaves /
     // grows as it arrives, so the change reads as a morph instead of a stacked cross-fade.
     // Keeping one IconButton as the hit target also avoids overlapping-touch ambiguity mid-morph.
-    IconButton(onClick = onClick, modifier = Modifier.size(40.dp)) {
+    IconButton(onClick = onClick, modifier = modifier.size(40.dp)) {
         Box(contentAlignment = Alignment.Center) {
             MorphIcon(
                 imageVector = Icons.Outlined.Search,
@@ -320,8 +356,9 @@ private fun LeadingSlot(
     }
 }
 
+
 @Composable
-private fun WordmarkContent(alpha: Float) {
+private fun WordmarkContent(alpha: Float, modifier: Modifier = Modifier) {
     // Horizontal position comes from the parent's shared BiasAlignment; the passed modifier owns
     // the collapse/expand fade-through alpha + scale. sharedElement = true makes this the landing
     // target for the splash wordmark's flight (the shared-bounds modifier is applied inside the
@@ -329,19 +366,19 @@ private fun WordmarkContent(alpha: Float) {
     MyBicoccaWordmark(
         fontSize = 21.sp,
         sharedElement = true,
-        modifier = Modifier.graphicsLayer { fadeThroughLayer(alpha) },
+        modifier = modifier.graphicsLayer { fadeThroughLayer(alpha) },
     )
 }
 
 @Composable
-private fun SubPageTitleContent(title: String, alpha: Float) {
+private fun SubPageTitleContent(title: String, alpha: Float, modifier: Modifier = Modifier) {
     val scheme = MaterialTheme.colorScheme
     // start=4dp inset matches the local sub-page top bar so the alpha handoff at p=1 doesn't
     // shift the title. Position otherwise comes from the parent's shared BiasAlignment.
     Crossfade(
         targetState = title,
         label = "sub-page-title",
-        modifier = Modifier
+        modifier = modifier
             .padding(start = 4.dp)
             .graphicsLayer { fadeThroughLayer(alpha) },
     ) { t ->
@@ -408,6 +445,7 @@ private fun TrailingSlot(
     filterActive: Boolean,
     trailingActions: (@Composable () -> Unit)?,
     onClearSearch: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val scheme = MaterialTheme.colorScheme
     // Same fade-through + scale handoff as the leading slot: the avatar (collapsed/PAGE) is
@@ -415,7 +453,7 @@ private fun TrailingSlot(
     // (the screen's own action if any, else filter on a sub-page, clear on search). Only one is
     // visible at a time, and only the variant matching the current `mode` is clickable so the
     // faded-out one can't intercept taps.
-    Box(contentAlignment = Alignment.Center) {
+    Box(contentAlignment = Alignment.Center, modifier = modifier) {
         AvatarSlot(
             photo = photo,
             alpha = fadeThroughCollapsed(p),
@@ -434,7 +472,11 @@ private fun TrailingSlot(
                 ) {
                     trailingActions()
                 }
-                onFilterToggle != null -> IconButton(onClick = onFilterToggle, modifier = Modifier.size(40.dp)) {
+
+                onFilterToggle != null -> IconButton(
+                    onClick = onFilterToggle,
+                    modifier = Modifier.size(40.dp)
+                ) {
                     MorphIcon(
                         imageVector = Icons.Outlined.FilterList,
                         contentDescription = "Filtri",
@@ -442,8 +484,10 @@ private fun TrailingSlot(
                         alpha = fadeThroughExpanded(p),
                     )
                 }
+
                 else -> Unit
             }
+
             BarMode.SEARCH -> IconButton(onClick = onClearSearch, modifier = Modifier.size(40.dp)) {
                 MorphIcon(
                     imageVector = Icons.Outlined.Close,
@@ -478,7 +522,9 @@ private fun AvatarSlot(
                 model = photo,
                 contentDescription = "Profilo",
                 contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxSize().clip(CircleShape),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .clip(CircleShape),
             )
         } else {
             Icon(
@@ -488,5 +534,74 @@ private fun AvatarSlot(
                 modifier = Modifier.size(24.dp),
             )
         }
+    }
+}
+
+@Preview
+@Composable
+private fun MyBicoccaTopBarPreview() {
+    BicoccaTheme(dark = true) {
+        MyBicoccaTopBar(
+            navProgress = remember { mutableFloatStateOf(0f) },
+            searchProgress = remember { Animatable(0f) },
+            canNavigateBack = false,
+            subPageTitle = null,
+            searchState = TopBarSearchState(
+                query = "",
+                active = false,
+                placeholder = "Cerca",
+                onQueryChange = {},
+                onActiveChange = {},
+            ),
+            onProfileClick = {},
+            onNavigateBack = {},
+            photo = null,
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun MyBicoccaTopBarSubPagePreview() {
+    BicoccaTheme(dark = true) {
+        MyBicoccaTopBar(
+            navProgress = remember { mutableFloatStateOf(1f) },
+            searchProgress = remember { Animatable(0f) },
+            canNavigateBack = true,
+            subPageTitle = "Dettaglio Esame",
+            searchState = TopBarSearchState(
+                query = "",
+                active = false,
+                placeholder = "Cerca",
+                onQueryChange = {},
+                onActiveChange = {},
+            ),
+            onProfileClick = {},
+            onNavigateBack = {},
+            photo = null,
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun MyBicoccaTopBarSearchPreview() {
+    BicoccaTheme(dark = true) {
+        MyBicoccaTopBar(
+            navProgress = remember { mutableFloatStateOf(0f) },
+            searchProgress = remember { Animatable(1f) },
+            canNavigateBack = false,
+            subPageTitle = null,
+            searchState = TopBarSearchState(
+                query = "Sistemi",
+                active = true,
+                placeholder = "Cerca",
+                onQueryChange = {},
+                onActiveChange = {},
+            ),
+            onProfileClick = {},
+            onNavigateBack = {},
+            photo = null,
+        )
     }
 }

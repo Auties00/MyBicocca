@@ -486,7 +486,7 @@ fun getChipDrawable(account: Account?): Int {
 
     // Use the hash of the account ID to select a chip drawable, ensuring that the same user gets the same chip each time
     val index = account?.id?.value?.hashCode()?.rem(chips.size)?.let {
-        (if (it < 0) it + chips.size else it) - 3
+        if (it < 0) it + chips.size else it
     } ?: 0
     return chips[index]
 }
