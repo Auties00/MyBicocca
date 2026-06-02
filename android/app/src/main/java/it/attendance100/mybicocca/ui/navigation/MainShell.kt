@@ -9,10 +9,16 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -29,9 +35,12 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.lerp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
@@ -44,13 +53,20 @@ import androidx.navigation3.ui.NavDisplay
 import coil.imageLoader
 import coil.request.ImageRequest
 import coil.size.Size
+import com.valentinilk.shimmer.ShimmerBounds
+import com.valentinilk.shimmer.rememberShimmer
+import com.valentinilk.shimmer.shimmer
 import it.attendance100.mybicocca.ui.component.bar.BottomBarItem
 import it.attendance100.mybicocca.ui.component.bar.MyBicoccaBottomBar
 import it.attendance100.mybicocca.ui.component.bar.MyBicoccaTopBar
+import it.attendance100.mybicocca.ui.component.bar.PillCollapsedHeight
+import it.attendance100.mybicocca.ui.component.bar.PillTopGap
+import it.attendance100.mybicocca.ui.component.bar.ProfilePillExpandedHeight
 import it.attendance100.mybicocca.ui.component.bar.TopBarSearchState
 import it.attendance100.mybicocca.ui.component.feedback.AppSnackbarHost
 import it.attendance100.mybicocca.ui.component.feedback.LocalAppSnackbarController
 import it.attendance100.mybicocca.ui.component.feedback.rememberAppSnackbarController
+import it.attendance100.mybicocca.ui.component.shimmer.ShimmerBox
 import it.attendance100.mybicocca.ui.navigation.transitions.LocalAnimatedContentScope
 import it.attendance100.mybicocca.ui.navigation.transitions.LocalSharedTransitionScope
 import it.attendance100.mybicocca.ui.screen.account.AccountViewModel
@@ -80,6 +96,10 @@ import it.attendance100.mybicocca.ui.screen.map.MapViewModel
 import it.attendance100.mybicocca.ui.screen.map.subscreen.room360.Room360Screen
 import it.attendance100.mybicocca.ui.screen.profile.ProfileScreen
 import it.attendance100.mybicocca.ui.screen.profile.ProfileViewModel
+import it.attendance100.mybicocca.ui.screen.profile.component.CreditCardAspectRatio
+import it.attendance100.mybicocca.ui.screen.profile.component.CreditCardHorizontalInset
+import it.attendance100.mybicocca.ui.screen.profile.component.StudentCard
+import it.attendance100.mybicocca.ui.screen.profile.component.creditCardHeight
 import it.attendance100.mybicocca.ui.screen.registry.RegistryScreen
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.attendance.AttendanceScreen
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.bookableExams.BookableExamsViewModel
@@ -166,6 +186,10 @@ fun MainShell(
     // Hoisted so the transcript refresh (kicked off in the VM's init) starts on shell load,
     // not when the Profile sub-page is first opened — the stats/badge are then already warm.
     val profileViewModel: ProfileViewModel = hiltViewModel()
+    // The student card is rendered as a shell-level overlay (below), so its data is read here.
+    val profileAccount by profileViewModel.account.collectAsStateWithLifecycle()
+    val profileCareer by profileViewModel.activeCareer.collectAsStateWithLifecycle()
+    val profilePhoto by profileViewModel.photoFile.collectAsStateWithLifecycle()
 
     // Navigation 3 back stack. TabRoot is always the root; sub-pages are pushed on top of it.
     // The four tabs live in the pager hosted INSIDE the TabRoot entry, so a list ticket and a
@@ -194,6 +218,15 @@ fun MainShell(
     //    handler. Search is page-only, so the two never both drive the morph at the same time.
     val navProgress = remember { mutableFloatStateOf(0f) }
     val searchProgress = remember { Animatable(0f) }
+
+    // Whether the floating student card (the shell-level overlay below) should be shown. It must
+    // stay true through the back-collapse: on back the Profile route pops immediately while
+    // navProgress is still decaying 1 → 0, so we keep it visible until the morph fully settles
+    // (mirrors the sticky Profilo pill-height in MyBicoccaTopBar).
+    val onProfile = currentRoute is AppRoute.Profile
+    val profileCardActive = remember { mutableStateOf(false) }
+    if (onProfile) profileCardActive.value = true
+    else if (navProgress.floatValue == 0f) profileCardActive.value = false
 
     var showAccountSwitcher by remember { mutableStateOf(false) }
     var searchActive by rememberSaveable { mutableStateOf(false) }
@@ -697,6 +730,69 @@ fun MainShell(
                                 },
                             )
                         }
+                    }
+                }
+            }
+
+            // Floating student card. Hosted at the shell root — a sibling drawn AFTER the
+            // Scaffold, so it hovers above the top bar — rather than inside ProfileScreen, which
+            // the Scaffold draws beneath the bar. That lets it straddle the seam between the
+            // expanded pill (lighter) and the page content (darker). It is centered on that seam
+            // and rides navProgress: alpha + scale fade/shrink it in lockstep with the pill
+            // collapse and the predictive-back gesture; the empty overlay area has no pointer
+            // modifiers, so only the card itself is interactive (its flip gesture is preserved).
+            if (profileCardActive.value) {
+                val statusBarTop = with(LocalDensity.current) {
+                    WindowInsets.statusBars.getTop(this).toDp()
+                }
+                // Seam = the pill's bottom edge (== the Scaffold top inset where content begins).
+                // The status-bar/top portion of the bar is constant across the morph, so only the
+                // pill height varies. Card center sits on the seam, so it slides up as it collapses.
+                val seamY = statusBarTop + PillTopGap + lerp(
+                    PillCollapsedHeight,
+                    ProfilePillExpandedHeight,
+                    navProgress.floatValue
+                )
+                val cardTop = seamY - creditCardHeight() / 2
+                val prog = navProgress.floatValue
+
+                // Geometry + morph transform shared by the real card and its loading placeholder so
+                // the swap (and the collapse) read as one element fading/shrinking in lockstep.
+                val cardModifier = Modifier
+                    .offset(y = cardTop)
+                    .padding(horizontal = CreditCardHorizontalInset)
+                    .fillMaxWidth()
+                    .graphicsLayer {
+                        alpha = prog
+                        val static = 0.75f
+                        val dynamic = 1 - static
+                        scaleX = static + dynamic * prog
+                        scaleY = static + dynamic * prog
+                    }
+
+                Box(modifier = Modifier.fillMaxSize()) {
+                    if (profileAccount == null) {
+                        // Cold start: the account StateFlow hasn't emitted yet. Shimmer in the
+                        // card's footprint instead of flashing a real card full of placeholder
+                        // strings ("Studente", empty fields) until the data arrives.
+                        val shimmerInstance = rememberShimmer(shimmerBounds = ShimmerBounds.Window)
+                        ShimmerBox(
+                            modifier = cardModifier
+                                .aspectRatio(CreditCardAspectRatio)
+                                .shimmer(shimmerInstance),
+                            shape = RoundedCornerShape(20.dp),
+                        )
+                    } else {
+                        StudentCard(
+                            account = profileAccount,
+                            career = profileCareer,
+                            photoFile = profilePhoto,
+                            // Interactive only once fully settled on Profile (prog == 1f). During
+                            // the expand/collapse flight the card is non-interactive so it can't
+                            // swallow taps/drags while it is fading and sliding.
+                            enabled = prog > 0.99f,
+                            modifier = cardModifier,
+                        )
                     }
                 }
             }

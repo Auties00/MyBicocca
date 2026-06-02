@@ -33,7 +33,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.valentinilk.shimmer.shimmer
-import it.attendance100.mybicocca.ui.component.card.DitheredTexture
 import kotlinx.coroutines.launch
 
 @Composable
@@ -57,7 +56,7 @@ fun StatCard(
     Card(
         modifier = modifier,
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
+            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
         ),
         onClick = {
             onClick?.invoke()
@@ -75,96 +74,77 @@ fun StatCard(
         },
         shape = RoundedCornerShape(16.dp),
     ) {
-        Box {
-            Box(modifier = Modifier.align(Alignment.CenterStart)) {
-                DitheredTexture(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .offset(x = (-60).dp, y = (80).dp)
-                        .rotate(13f),
-                    color = MaterialTheme.colorScheme.outlineVariant,
-                    spacing = 10f,
-                    dotSize = 5f,
-                    globalRotation = 35f,
-                    dotRotation = 80f,
-                    fadeStart = 0f,
-                    fadeEnd = 1f,
-                    alpha = 0.5f,
-                )
-            }
-
-            Column(
-                modifier = Modifier
-                    .padding(horizontal = 18.dp)
-                    .padding(top = 12.dp, bottom = 10.dp)
-                    .fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(4.dp),
-            ) {
-                Text(
-                    text = title,
-                    color = secondaryColor,
-                    fontSize = 12.sp,
-                    maxLines = 2,
-                )
-                Box(contentAlignment = Alignment.BottomStart) {
-                    if (isLoading) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .width(60.dp)
-                                    .height(24.dp)
-                                    .clip(RoundedCornerShape(8.dp))
-                                    .shimmer()
-                                    .background(textColor.copy(alpha = 0.2f)),
-                            )
-                            Box(
-                                modifier = Modifier
-                                    .width(24.dp)
-                                    .height(24.dp)
-                                    .clip(RoundedCornerShape(8.dp))
-                                    .shimmer()
-                                    .background(textColor.copy(alpha = 0.2f)),
-                            )
-                        }
-                    } else {
-                        Text(
-                            text = value,
-                            color = textColor,
-                            fontSize = 24.sp,
-                            fontWeight = FontWeight.Bold,
+        Column(
+            modifier = Modifier
+                .padding(horizontal = 18.dp)
+                .padding(top = 12.dp, bottom = 10.dp)
+                .fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            Text(
+                text = title,
+                color = secondaryColor,
+                fontSize = 12.sp,
+                maxLines = 2,
+            )
+            Box(contentAlignment = Alignment.BottomStart) {
+                if (isLoading) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .width(60.dp)
+                                .height(24.dp)
+                                .clip(RoundedCornerShape(8.dp))
+                                .shimmer()
+                                .background(textColor.copy(alpha = 0.2f)),
+                        )
+                        Box(
+                            modifier = Modifier
+                                .width(24.dp)
+                                .height(24.dp)
+                                .clip(RoundedCornerShape(8.dp))
+                                .shimmer()
+                                .background(textColor.copy(alpha = 0.2f)),
                         )
                     }
+                } else {
+                    Text(
+                        text = value,
+                        color = textColor,
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.Bold,
+                    )
+                }
 
-                    if (icon != null) {
-                        Box(
-                            modifier = Modifier.fillMaxWidth(),
-                            contentAlignment = Alignment.BottomEnd,
+                if (icon != null) {
+                    Box(
+                        modifier = Modifier.fillMaxWidth(),
+                        contentAlignment = Alignment.BottomEnd,
+                    ) {
+                        Card(
+                            modifier = Modifier
+                                .height(34.dp)
+                                .width(34.dp)
+                                .offset(y = (-4).dp),
+                            colors = CardDefaults.cardColors(containerColor = Color.Transparent),
+                            onClick = {
+                                iconOnClick?.invoke()
+                            },
+                            shape = RoundedCornerShape(16),
                         ) {
-                            Card(
-                                modifier = Modifier
-                                    .height(34.dp)
-                                    .width(34.dp)
-                                    .offset(y = (-4).dp),
-                                colors = CardDefaults.cardColors(containerColor = Color.Transparent),
-                                onClick = {
-                                    iconOnClick?.invoke()
-                                },
-                                shape = RoundedCornerShape(16),
+                            Box(
+                                modifier = Modifier.fillMaxSize(),
+                                contentAlignment = Alignment.Center,
                             ) {
-                                Box(
-                                    modifier = Modifier.fillMaxSize(),
-                                    contentAlignment = Alignment.Center,
-                                ) {
-                                    icon(
-                                        Modifier
-                                            .size(34.dp)
-                                            .scale(scale.value)
-                                            .rotate(rotation.value),
-                                    )
-                                }
+                                icon(
+                                    Modifier
+                                        .size(34.dp)
+                                        .scale(scale.value)
+                                        .rotate(rotation.value),
+                                )
                             }
                         }
                     }
