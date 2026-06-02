@@ -3,49 +3,56 @@ package it.attendance100.mybicocca.ui.screen.registry
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.GridItemSpan
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.Assignment
+import androidx.compose.material.icons.automirrored.outlined.FactCheck
 import androidx.compose.material.icons.automirrored.outlined.MenuBook
+import androidx.compose.material.icons.outlined.CoPresent
 import androidx.compose.material.icons.outlined.Description
-import androidx.compose.material.icons.outlined.Euro
-import androidx.compose.material.icons.outlined.EventAvailable
+import androidx.compose.material.icons.outlined.EditCalendar
 import androidx.compose.material.icons.outlined.EventSeat
-import androidx.compose.material.icons.outlined.HowToReg
+import androidx.compose.material.icons.outlined.Payments
 import androidx.compose.material.icons.outlined.School
-import androidx.compose.material.icons.outlined.WorkOutline
+import androidx.compose.material.icons.outlined.Work
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import it.attendance100.mybicocca.core.state.valueOrNull
+import it.attendance100.mybicocca.domain.model.exam.AcknowledgmentStatus
 import it.attendance100.mybicocca.domain.model.tax.TaxStatus
-import it.attendance100.mybicocca.ui.screen.registry.component.RegistryGridTile
-import it.attendance100.mybicocca.ui.screen.registry.component.RegistryHeroLayout
-import it.attendance100.mybicocca.ui.screen.registry.component.RegistryHeroTile
-import it.attendance100.mybicocca.ui.screen.registry.component.RegistrySectionHeader
-import it.attendance100.mybicocca.ui.screen.registry.state.RegistryAccentShape
-import it.attendance100.mybicocca.ui.screen.registry.state.RegistryCategory
-import it.attendance100.mybicocca.ui.screen.registry.state.RegistryDashboardTile
-import it.attendance100.mybicocca.ui.screen.registry.state.RegistryTileStatus
+import it.attendance100.mybicocca.ui.screen.registry.component.ScadenzeHeader
+import it.attendance100.mybicocca.ui.screen.registry.component.ServiceGroupCard
+import it.attendance100.mybicocca.ui.screen.registry.state.RegistryBadge
+import it.attendance100.mybicocca.ui.screen.registry.state.RegistryBadgeTone
+import it.attendance100.mybicocca.ui.screen.registry.state.RegistryService
+import it.attendance100.mybicocca.ui.screen.registry.state.RegistryServiceGroup
+import it.attendance100.mybicocca.ui.screen.registry.state.buildRegistryDeadlines
+import it.attendance100.mybicocca.ui.screen.registry.state.isUrgent
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.deadlines.DeadlinesSheet
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.deadlines.nextDeadlineLabel
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.bookableExams.BookableExamsViewModel
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.bookedExams.BookedExamsViewModel
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.examResults.ExamResultsViewModel
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.taxes.TaxesViewModel
+import java.time.LocalDate
 
-// Landing of the Registry (Segreterie) tab: a dashboard of cards that open the individual
-// services as sub-pages. Esami and Tasse are surfaced as live summary hero tiles (booked
-// count / tax status); every other service is a categorized grid tile.
+// Landing of the Registry (Segreterie) tab: a tappable "Scadenze" banner that opens the
+// scadenzario timeline, followed by an outlined directory of every Esse3 service grouped
+// by area. Live status badges (open exam calls, new results, tax position) and the
+// deadline spine are both derived from the same in-memory feature streams.
 @Composable
 fun RegistryScreen(
     bookedExamsViewModel: BookedExamsViewModel,
     bookableExamsViewModel: BookableExamsViewModel,
     taxesViewModel: TaxesViewModel,
+    examResultsViewModel: ExamResultsViewModel,
     onOpenBookedExams: () -> Unit,
     onOpenTaxes: () -> Unit,
     onOpenExamResults: () -> Unit,
@@ -67,195 +74,113 @@ fun RegistryScreen(
     val bookings by bookedExamsViewModel.bookings.collectAsStateWithLifecycle()
     val examCalls by bookableExamsViewModel.examCalls.collectAsStateWithLifecycle()
     val invoices by taxesViewModel.invoices.collectAsStateWithLifecycle()
+    val examResults by examResultsViewModel.results.collectAsStateWithLifecycle()
 
-    val bookedCount = bookings.valueOrNull()?.size
-    val availableCount = examCalls.valueOrNull()?.size
-    val examSubtitle = when {
-        bookedCount == null -> "Gestisci le iscrizioni agli appelli"
-        availableCount != null && availableCount > 0 -> "$bookedCount prenotati · $availableCount disponibili"
-        else -> "$bookedCount appelli prenotati"
+    val bookingList = bookings.valueOrNull().orEmpty()
+    val examCallList = examCalls.valueOrNull().orEmpty()
+    val invoiceList = invoices.valueOrNull().orEmpty()
+    val resultList = examResults.valueOrNull().orEmpty()
+
+    // Badges.
+    val availableCount = examCallList.size
+    val examsBadge = if (availableCount > 0) {
+        RegistryBadge("$availableCount disponibili", RegistryBadgeTone.New)
+    } else null
+
+    val unviewedCount = resultList.count { it.acknowledgment == AcknowledgmentStatus.NotViewed }
+    val resultsBadge = if (unviewedCount > 0) {
+        RegistryBadge(if (unviewedCount == 1) "1 nuovo" else "$unviewedCount nuovi", RegistryBadgeTone.Alert)
+    } else null
+
+    val expiredCount = invoiceList.count { it.status == TaxStatus.EXPIRED }
+    val pendingCount = invoiceList.count { it.status == TaxStatus.PENDING }
+    val taxBadge = when {
+        invoices.valueOrNull() == null -> null
+        expiredCount > 0 -> RegistryBadge("In ritardo", RegistryBadgeTone.Alert)
+        pendingCount > 0 -> RegistryBadge(if (pendingCount == 1) "1 da pagare" else "$pendingCount da pagare", RegistryBadgeTone.Attention)
+        else -> RegistryBadge("In regola", RegistryBadgeTone.Ok)
     }
 
-    val invoiceList = invoices.valueOrNull()
-    val expiredCount = invoiceList?.count { it.status == TaxStatus.EXPIRED } ?: 0
-    val pendingCount = invoiceList?.count { it.status == TaxStatus.PENDING } ?: 0
-    val taxSubtitle = when {
-        invoiceList == null -> "Visualizza e paga le tasse"
-        expiredCount > 0 -> if (expiredCount == 1) "1 pagamento in ritardo" else "$expiredCount pagamenti in ritardo"
-        pendingCount > 0 -> if (pendingCount == 1) "1 tassa da pagare" else "$pendingCount tasse da pagare"
-        else -> "Tutto in regola"
+    // Deadlines (scadenzario spine + header summary).
+    val today = remember { LocalDate.now() }
+    val deadlines = remember(resultList, invoiceList, bookingList, examCallList) {
+        buildRegistryDeadlines(
+            today = today,
+            examResults = resultList,
+            invoices = invoiceList,
+            bookings = bookingList,
+            examCalls = examCallList,
+            onOpenExamResults = onOpenExamResults,
+            onOpenTaxes = onOpenTaxes,
+            onOpenBookedExams = onOpenBookedExams,
+        )
     }
-    val taxStatus = if (expiredCount > 0) RegistryTileStatus.Warning else RegistryTileStatus.Normal
+    val urgentCount = deadlines.count { it.isUrgent() }
+    val headerSummary = when {
+        deadlines.isEmpty() -> "Nessuna scadenza imminente"
+        urgentCount == 0 -> "Prossima il ${nextDeadlineLabel(deadlines.first().date)}"
+        else -> {
+            val urgent = if (urgentCount == 1) "1 urgente" else "$urgentCount urgenti"
+            "$urgent · prossima il ${nextDeadlineLabel(deadlines.first().date)}"
+        }
+    }
 
-    val examsHero = RegistryDashboardTile(
-        id = "exams",
-        title = "Appelli",
-        subtitle = examSubtitle,
-        icon = Icons.Outlined.EventAvailable,
-        shape = RegistryAccentShape.Sunny,
-        category = RegistryCategory.Exams,
-        onClick = onOpenBookedExams,
-        mirrored = false,
-    )
-    val taxesHero = RegistryDashboardTile(
-        id = "taxes",
-        title = "Tasse",
-        subtitle = taxSubtitle,
-        status = taxStatus,
-        icon = Icons.Outlined.Euro,
-        shape = RegistryAccentShape.Cookie6,
-        category = RegistryCategory.Taxes,
-        onClick = onOpenTaxes,
-        mirrored = true,
-    )
-
-//    val examServices = listOf(
-//        RegistryDashboardTile(
-//            id = "exam_results",
-//            title = "Bacheca Esiti",
-//            subtitle = null,
-//            icon = Icons.Outlined.Assessment,
-//            shape = RegistryAccentShape.Burst,
-//            category = RegistryCategory.Exams,
-//            onClick = onOpenExamResults,
-//        ),
-//    )
-    val teachingServices = listOf(
-        RegistryDashboardTile(
-            id = "study_plan",
-            title = "Piano di Studi",
-            icon = Icons.AutoMirrored.Outlined.MenuBook,
-            shape = RegistryAccentShape.Clover4,
-            category = RegistryCategory.Teaching,
-            onClick = onOpenStudyPlan,
+    val groups = listOf(
+        RegistryServiceGroup(
+            name = "Didattica",
+            caption = "Il tuo percorso accademico",
+            services = listOf(
+                RegistryService("study_plan", "Piano di studi", "Percorso e crediti", Icons.AutoMirrored.Outlined.MenuBook, onClick = onOpenStudyPlan),
+                RegistryService("exams", "Esami", "Appelli e prenotazioni", Icons.Outlined.EditCalendar, examsBadge, onOpenBookedExams),
+                RegistryService("exam_results", "Esiti esami", "Voti e accettazione", Icons.AutoMirrored.Outlined.FactCheck, resultsBadge, onOpenExamResults),
+                RegistryService("attendance", "Presenze", "Frequenze e rilevazioni", Icons.Outlined.CoPresent, onClick = onOpenAttendance),
+                RegistryService("questionnaires", "Questionari", "Valutazione della didattica", Icons.AutoMirrored.Outlined.Assignment, onClick = onOpenQuestionnaires),
+            ),
         ),
-        RegistryDashboardTile(
-            id = "questionnaires",
-            title = "Questionari",
-            icon = Icons.AutoMirrored.Outlined.Assignment,
-            shape = RegistryAccentShape.Flower,
-            category = RegistryCategory.Teaching,
-            onClick = onOpenQuestionnaires,
+        RegistryServiceGroup(
+            name = "Tasse & documenti",
+            caption = "La tua posizione amministrativa",
+            services = listOf(
+                RegistryService("taxes", "Tasse & agevolazioni", "Pagamenti ed esoneri", Icons.Outlined.Payments, taxBadge, onOpenTaxes),
+                RegistryService("self_certificates", "Autocertificazioni", "Certificati e dichiarazioni", Icons.Outlined.Description, onClick = onOpenSelfCertificates),
+                RegistryService("degree_award", "Conseguimento titolo", "Domanda di laurea", Icons.Outlined.School, onClick = onOpenDegreeAward),
+            ),
         ),
-        RegistryDashboardTile(
-            id = "degree_award",
-            title = "Conseguimento Titolo",
-            icon = Icons.Outlined.School,
-            shape = RegistryAccentShape.Pentagon,
-            category = RegistryCategory.Teaching,
-            onClick = onOpenDegreeAward,
-        ),
-        RegistryDashboardTile(
-            id = "internships",
-            title = "Stage",
-            icon = Icons.Outlined.WorkOutline,
-            shape = RegistryAccentShape.Diamond,
-            category = RegistryCategory.Teaching,
-            onClick = onOpenInternships,
-        ),
-    )
-    val documentServices = listOf(
-        RegistryDashboardTile(
-            id = "self_certificates",
-            title = "Autocertificazioni",
-            icon = Icons.Outlined.Description,
-            shape = RegistryAccentShape.Cookie9,
-            category = RegistryCategory.Documents,
-            onClick = onOpenSelfCertificates,
-        ),
-    )
-    val agendaServices = listOf(
-        RegistryDashboardTile(
-            id = "reservations",
-            title = "Prenotazioni",
-            icon = Icons.Outlined.EventSeat,
-            shape = RegistryAccentShape.Cookie12,
-            category = RegistryCategory.Agenda,
-            onClick = onOpenReservations,
-        ),
-        RegistryDashboardTile(
-            id = "attendance",
-            title = "Presenze",
-            icon = Icons.Outlined.HowToReg,
-            shape = RegistryAccentShape.SoftBurst,
-            category = RegistryCategory.Agenda,
-            onClick = onOpenAttendance,
+        RegistryServiceGroup(
+            name = "Procedure & opportunità",
+            caption = "Esperienze e prenotazioni",
+            services = listOf(
+                RegistryService("internships", "Tirocini e stage", "Ricerca e gestione stage", Icons.Outlined.Work, onClick = onOpenInternships),
+                RegistryService("reservations", "Prenotazioni", "Appuntamenti agli sportelli", Icons.Outlined.EventSeat, onClick = onOpenReservations),
+            ),
         ),
     )
 
-    // hero = full-width live-summary card that heads the section; when present it stands
-    // in for the inverted lead tile. invertLead applies the accent-on-card treatment to
-    // the first grid tile of sections that have no hero.
-    data class Section(
-        val category: RegistryCategory,
-        val hero: RegistryDashboardTile?,
-        val tiles: List<RegistryDashboardTile>,
-        val invertLead: Boolean,
-    )
+    var showDeadlines by remember { mutableStateOf(false) }
 
-    val sections = listOf(
-        Section(RegistryCategory.Exams, examsHero, emptyList(), invertLead = false),
-        Section(RegistryCategory.Taxes, taxesHero, emptyList(), invertLead = false),
-        Section(RegistryCategory.Teaching, null, teachingServices, invertLead = true),
-        Section(RegistryCategory.Documents, null, documentServices, invertLead = true),
-        Section(RegistryCategory.Agenda, null, agendaServices, invertLead = true),
-    )
-
-    LazyVerticalGrid(
-        columns = GridCells.Fixed(2),
+    LazyColumn(
         modifier = modifier.fillMaxSize(),
         contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 24.dp),
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        sections.forEach { section ->
-            item(span = { GridItemSpan(maxLineSpan) }, key = "header_${section.category}") {
-                RegistrySectionHeader(
-                    category = section.category,
-                    modifier = Modifier.padding(top = 12.dp, bottom = 2.dp),
-                )
-            }
-            if (section.hero != null) {
-                item(span = { GridItemSpan(maxLineSpan) }, key = section.hero.id) {
-                    RegistryHeroTile(
-                        tile = section.hero,
-                        layout = RegistryHeroLayout.Banner,
-                        modifier = Modifier.height(150.dp),
-                    )
-                }
-            }
-            section.tiles.forEachIndexed { index, tile ->
-                val singleItemWide = section.invertLead && section.tiles.size == 1 && index == 0
-                item(
-                    key = tile.id,
-                    span = {
-                        if (singleItemWide) {
-                            GridItemSpan(maxLineSpan)
-                        } else {
-                            GridItemSpan(1)
-                        }
-                    },
-                ) {
-                    if (singleItemWide) {
-                        RegistryGridTile(
-                            tile = tile,
-                            inverted = true,
-                            wide = true,
-                            modifier = Modifier.height(124.dp),
-                        )
-                    } else if (section.invertLead && index == 0) {
-                        RegistryHeroTile(
-                            tile = tile,
-                            layout = RegistryHeroLayout.Portrait,
-                            modifier = Modifier.height(200.dp),
-                        )
-                    } else RegistryGridTile(
-                        tile = tile,
-                        inverted = false,
-                        modifier = Modifier.height(124.dp),
-                    )
-                }
+        item(key = "scadenze") {
+            ScadenzeHeader(
+                urgentCount = urgentCount,
+                summary = headerSummary,
+                onClick = { showDeadlines = true },
+            )
+        }
+        groups.forEach { group ->
+            item(key = "group_${group.name}") {
+                ServiceGroupCard(group = group)
             }
         }
+    }
+
+    if (showDeadlines) {
+        DeadlinesSheet(
+            deadlines = deadlines,
+            onDismiss = { showDeadlines = false },
+        )
     }
 }

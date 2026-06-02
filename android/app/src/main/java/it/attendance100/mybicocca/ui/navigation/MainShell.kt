@@ -88,6 +88,7 @@ import it.attendance100.mybicocca.ui.screen.registry.subscreen.bookedExams.Booke
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.bookedExams.BookedExamsViewModel
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.degreeAward.DegreeAwardScreen
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.examResults.ExamResultsScreen
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.examResults.ExamResultsViewModel
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.internships.InternshipsScreen
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.questionnaires.QuestionnairesScreen
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.reservations.ReservationsScreen
@@ -156,6 +157,9 @@ fun MainShell(
     val mapViewModel: MapViewModel = hiltViewModel()
     val bookedExamsViewModel: BookedExamsViewModel = hiltViewModel()
     val bookableExamsViewModel: BookableExamsViewModel = hiltViewModel()
+    // Hoisted so the Segreterie landing can derive its status badges and the scadenzario
+    // deadline spine from the exam outcomes, and the Esiti sub-page shares the same fetch.
+    val examResultsViewModel: ExamResultsViewModel = hiltViewModel()
     // Hoisted here so the tax fetch starts on shell load and the list / detail / ISEE
     // destinations share one in-memory result (taxes are not cached to Room).
     val taxesViewModel: TaxesViewModel = hiltViewModel()
@@ -396,6 +400,7 @@ fun MainShell(
                                                             bookedExamsViewModel = bookedExamsViewModel,
                                                             bookableExamsViewModel = bookableExamsViewModel,
                                                             taxesViewModel = taxesViewModel,
+                                                            examResultsViewModel = examResultsViewModel,
                                                             isActive = isActive,
                                                             onOpenBookedExams = {
                                                                 backStack.add(
@@ -493,7 +498,7 @@ fun MainShell(
                                     entry<AppRoute.Settings> { SubPage(topInset) { SettingsScreen() } }
                                     entry<AppRoute.StudyPlan> { SubPage(topInset) { StudyPlanScreen() } }
                                     entry<AppRoute.SelfCertificates> { SubPage(topInset) { SelfCertificatesScreen() } }
-                                    entry<AppRoute.ExamResults> { SubPage(topInset) { ExamResultsScreen() } }
+                                    entry<AppRoute.ExamResults> { SubPage(topInset) { ExamResultsScreen(viewModel = examResultsViewModel) } }
                                     entry<AppRoute.Attendance> { SubPage(topInset) { AttendanceScreen() } }
                                     entry<AppRoute.Questionnaires> { SubPage(topInset) { QuestionnairesScreen() } }
                                     entry<AppRoute.Reservations> { SubPage(topInset) { ReservationsScreen() } }
