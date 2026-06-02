@@ -41,8 +41,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.coerceAtLeast
 import androidx.compose.ui.unit.dp
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.hazeSource
@@ -66,6 +69,19 @@ private val partialChromaticColors = listOf(
     Color.Transparent,
     Color.Magenta.copy(alpha = 0.12f),
 )
+
+// Card geometry, shared so callers that must reserve / position the card (the floating
+// shell overlay, the profile content clearance, the skeleton) all derive the same height.
+const val CreditCardAspectRatio = 1.6111112f
+val CreditCardHorizontalInset = 16.dp
+
+// Height the card occupies when laid out full-width with [horizontalInset] on each side.
+// Derived from the screen width so the floating overlay and the content padding stay in sync.
+@Composable
+fun creditCardHeight(horizontalInset: Dp = CreditCardHorizontalInset): Dp {
+    val widthDp = LocalConfiguration.current.screenWidthDp.dp
+    return ((widthDp - horizontalInset * 2) / CreditCardAspectRatio).coerceAtLeast(0.dp)
+}
 
 // Draggable / tappable 3D flip card. rotationY accumulates freely; a flick (short, fast drag)
 // or a half-card drag commits a 180° turn, otherwise it snaps back to the nearest face.
@@ -170,7 +186,10 @@ fun CreditCard(
                         base
                     }
                     scope.launch {
-                        rotationY.animateTo(target, animationSpec = tween(300, easing = FastOutSlowInEasing))
+                        rotationY.animateTo(
+                            target,
+                            animationSpec = tween(300, easing = FastOutSlowInEasing)
+                        )
                     }
                     rotationX = 0f
                     touchX = 0.5f
@@ -180,7 +199,10 @@ fun CreditCard(
                     val current = rotationY.value
                     val base = round(current / 180f) * 180f
                     scope.launch {
-                        rotationY.animateTo(base, animationSpec = tween(300, easing = FastOutSlowInEasing))
+                        rotationY.animateTo(
+                            base,
+                            animationSpec = tween(300, easing = FastOutSlowInEasing)
+                        )
                     }
                     rotationX = 0f
                     touchX = 0.5f
@@ -215,7 +237,10 @@ fun CreditCard(
                     val target = (round(current / 180f) + direction) * 180f
 
                     scope.launch {
-                        rotationY.animateTo(target, animationSpec = tween(300, easing = FastOutSlowInEasing))
+                        rotationY.animateTo(
+                            target,
+                            animationSpec = tween(300, easing = FastOutSlowInEasing)
+                        )
                     }
                 },
             )
@@ -282,7 +307,7 @@ private fun CardFace(
         Card(
             modifier = Modifier
                 .clip(shape = RoundedCornerShape(size = 20.dp))
-                .aspectRatio(1.6111112f),
+                .aspectRatio(CreditCardAspectRatio),
             colors = CardDefaults.cardColors(containerColor = if (isChromatic) primaryColor else background),
         ) {
             content(touchX, touchY, whiteBadge, hazeState)
