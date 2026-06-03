@@ -80,7 +80,7 @@ import it.attendance100.mybicocca.ui.screen.map.MapViewModel
 import it.attendance100.mybicocca.ui.screen.map.subscreen.room360.Room360Screen
 import it.attendance100.mybicocca.ui.screen.profile.ProfileScreen
 import it.attendance100.mybicocca.ui.screen.profile.ProfileViewModel
-import it.attendance100.mybicocca.ui.screen.registry.RegistryScreen
+import it.attendance100.mybicocca.ui.screen.registry.Registry
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.attendance.AttendanceScreen
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.bookableExams.BookableExamsViewModel
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.bookedExams.BookedExamDetailScreen
@@ -392,7 +392,7 @@ fun MainShell(
                                                             },
                                                         )
 
-                                                        ShellTab.Registry -> RegistryScreen(
+                                                        ShellTab.Registry ->  Registry(
                                                             bookedExamsViewModel = bookedExamsViewModel,
                                                             bookableExamsViewModel = bookableExamsViewModel,
                                                             taxesViewModel = taxesViewModel,
@@ -443,7 +443,6 @@ fun MainShell(
                                                                     AppRoute.DegreeAward
                                                                 )
                                                             },
-                                                            searchQuery = pageQuery,
                                                             onProvideFilterToggle = onProvideFilterToggle,
                                                         )
                                                     }
