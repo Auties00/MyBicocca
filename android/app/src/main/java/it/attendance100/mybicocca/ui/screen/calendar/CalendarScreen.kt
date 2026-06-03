@@ -1,5 +1,6 @@
 package it.attendance100.mybicocca.ui.screen.calendar
 
+import androidx.activity.compose.PredictiveBackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.animateFloatAsState
@@ -22,6 +23,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.FloatState
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -39,6 +42,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import it.attendance100.mybicocca.core.state.SyncStatus
 import it.attendance100.mybicocca.core.state.valueOrNull
 import it.attendance100.mybicocca.domain.model.calendar.CalendarEvent
+import it.attendance100.mybicocca.domain.model.elearning.course.CourseId
 import it.attendance100.mybicocca.ui.component.feedback.LocalAppSnackbarController
 import it.attendance100.mybicocca.ui.screen.calendar.component.CalendarSegmentedControl
 import it.attendance100.mybicocca.ui.screen.calendar.component.DayView
@@ -46,11 +50,14 @@ import it.attendance100.mybicocca.ui.screen.calendar.component.MonthView
 import it.attendance100.mybicocca.ui.screen.calendar.component.TIMELINE_ZOOM_DEFAULT
 import it.attendance100.mybicocca.ui.screen.calendar.component.TodayFab
 import it.attendance100.mybicocca.ui.screen.calendar.component.WeekView
+import it.attendance100.mybicocca.ui.screen.calendar.ext.resolveEnrolledCourseId
 import it.attendance100.mybicocca.ui.screen.calendar.state.CalendarOneShotEvent
 import it.attendance100.mybicocca.ui.screen.calendar.state.CalendarViewMode
 import it.attendance100.mybicocca.ui.screen.calendar.subscreen.eventDetail.EventDetailSheet
+import it.attendance100.mybicocca.ui.screen.calendar.subscreen.eventDetail.LocalEventCourseOpener
 import it.attendance100.mybicocca.ui.screen.calendar.subscreen.monthAgenda.MonthAgendaSheet
 import it.attendance100.mybicocca.ui.screen.calendar.theme.ProvideEventPalette
+import kotlin.coroutines.cancellation.CancellationException
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -66,6 +73,7 @@ fun CalendarScreen(
     // (preview) -> treated as fully settled.
     navProgress: FloatState? = null,
     onProvideFilterToggle: ((() -> Unit)?) -> Unit = {},
+    onOpenCourse: (CourseId) -> Unit = {},
     bottomNavBarPadding: PaddingValues,
     viewModel: CalendarViewModel = hiltViewModel(),
 ) {
@@ -78,8 +86,20 @@ fun CalendarScreen(
     val dayEventsLoadable by viewModel.dayEvents.collectAsStateWithLifecycle()
     val monthEventsLoadable by viewModel.events.collectAsStateWithLifecycle()
     val selectedEventId by viewModel.selectedEventId.collectAsStateWithLifecycle()
+    val enrolledCourses by viewModel.enrolledCourses.collectAsStateWithLifecycle()
 
     val snackbar = LocalAppSnackbarController.current
+
+    val courseOpener: (CalendarEvent) -> (() -> Unit)? = remember(enrolledCourses, onOpenCourse) {
+        { event ->
+            resolveEnrolledCourseId(event, enrolledCourses)?.let { courseId ->
+                {
+                    viewModel.closeEventDetail()
+                    onOpenCourse(courseId)
+                }
+            }
+        }
+    }
 
     // No filter chips in v1; clear any registration the previous tab left when we become active.
     LaunchedEffect(isActive) { if (isActive) onProvideFilterToggle(null) }
@@ -111,6 +131,7 @@ fun CalendarScreen(
     var timelineZoom by rememberSaveable { mutableFloatStateOf(TIMELINE_ZOOM_DEFAULT) }
 
     ProvideEventPalette {
+    CompositionLocalProvider(LocalEventCourseOpener provides courseOpener) {
     Box(modifier = modifier.fillMaxSize()) {
         PullToRefreshBox(
             isRefreshing = syncStatus is SyncStatus.Refreshing,
@@ -204,6 +225,21 @@ fun CalendarScreen(
             )
         }
 
+        val agendaRaised by remember { derivedStateOf { agendaProgress.value > 0.01f } }
+        PredictiveBackHandler(
+            enabled = chromeVisible && !keyboardOpen && agendaRaised,
+        ) { backEvent ->
+            val start = agendaProgress.value
+            try {
+                backEvent.collect { event ->
+                    agendaProgress.snapTo(start * (1f - event.progress))
+                }
+                agendaProgress.animateTo(0f)
+            } catch (_: CancellationException) {
+                agendaProgress.animateTo(start)
+            }
+        }
+
         if (chromeVisible && !keyboardOpen) {
             androidx.compose.runtime.key(agendaPresence > 0.01f) {
                 TodayFab(
@@ -227,6 +263,7 @@ fun CalendarScreen(
         if (selected != null) {
             EventDetailSheet(event = selected, onDismiss = viewModel::closeEventDetail)
         }
+    }
     }
     }
 }

@@ -6,6 +6,7 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -35,10 +36,12 @@ import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.ShapeDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -56,6 +59,8 @@ import it.attendance100.mybicocca.ui.screen.calendar.ext.locationLine
 import it.attendance100.mybicocca.ui.screen.calendar.ext.minutesRemaining
 import it.attendance100.mybicocca.ui.screen.calendar.ext.peopleLine
 import it.attendance100.mybicocca.ui.screen.calendar.ext.rememberCurrentTime
+
+val LocalEventCourseOpener = compositionLocalOf<(CalendarEvent) -> (() -> Unit)?> { { null } }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -157,6 +162,7 @@ fun EventDetailContent(
                 }
             },
             onNotify = {},
+            onOpenCourse = LocalEventCourseOpener.current(event),
         )
     }
 }
@@ -222,34 +228,63 @@ private fun IconRow(icon: ImageVector, label: String, value: String) {
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-private fun ActionRow(onDirections: () -> Unit, onNotify: () -> Unit) {
+private fun ActionRow(
+    onDirections: () -> Unit,
+    onNotify: () -> Unit,
+    onOpenCourse: (() -> Unit)? = null,
+) {
     val scheme = MaterialTheme.colorScheme
     val dark = isSystemInDarkTheme()
-    val directionsBg = if (dark) scheme.primaryContainer else scheme.primary
-    val directionsFg = if (dark) scheme.onPrimaryContainer else scheme.onPrimary
+    val accentBg = if (dark) scheme.primaryContainer else scheme.primary
+    val accentFg = if (dark) scheme.onPrimaryContainer else scheme.onPrimary
+
+    val compactPadding = PaddingValues(horizontal = 8.dp)
 
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(4.dp),
     ) {
-        Button(
+        FilledTonalButton(
             onClick = onDirections,
             modifier = Modifier
-                .weight(1.4f)
+                .weight(1.3f)
                 .height(56.dp),
             shape = ButtonGroupDefaults.connectedLeadingButtonShape,
-            colors = ButtonDefaults.buttonColors(
-                containerColor = directionsBg,
-                contentColor = directionsFg,
+            colors = ButtonDefaults.filledTonalButtonColors(
+                containerColor = scheme.surfaceContainerHigh,
+                contentColor = scheme.onSurface,
             ),
+            contentPadding = compactPadding,
         ) {
             Icon(
                 imageVector = Icons.Outlined.LocationOn,
                 contentDescription = null,
-                modifier = Modifier.size(20.dp),
+                modifier = Modifier.size(18.dp),
             )
-            Spacer(Modifier.width(8.dp))
-            Text("Indicazioni", fontWeight = FontWeight.SemiBold)
+            Spacer(Modifier.width(6.dp))
+            Text("Indicazioni", fontWeight = FontWeight.SemiBold, maxLines = 1)
+        }
+        if (onOpenCourse != null) {
+            Button(
+                onClick = onOpenCourse,
+                modifier = Modifier
+                    .weight(1f)
+                    .height(56.dp),
+                shape = ShapeDefaults.Small,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = accentBg,
+                    contentColor = accentFg,
+                ),
+                contentPadding = compactPadding,
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.School,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp),
+                )
+                Spacer(Modifier.width(6.dp))
+                Text("Corso", fontWeight = FontWeight.SemiBold, maxLines = 1)
+            }
         }
         FilledTonalButton(
             onClick = onNotify,
@@ -261,14 +296,15 @@ private fun ActionRow(onDirections: () -> Unit, onNotify: () -> Unit) {
                 containerColor = scheme.surfaceContainerHigh,
                 contentColor = scheme.onSurface,
             ),
+            contentPadding = compactPadding,
         ) {
             Icon(
                 imageVector = Icons.Outlined.NotificationsNone,
                 contentDescription = null,
-                modifier = Modifier.size(20.dp),
+                modifier = Modifier.size(18.dp),
             )
-            Spacer(Modifier.width(8.dp))
-            Text("Notifica", fontWeight = FontWeight.SemiBold)
+            Spacer(Modifier.width(6.dp))
+            Text("Notifica", fontWeight = FontWeight.SemiBold, maxLines = 1)
         }
     }
 }

@@ -376,6 +376,13 @@ fun MainShell(
                                                             navProgress = navProgress,
                                                             searchQuery = pageQuery,
                                                             onProvideFilterToggle = onProvideFilterToggle,
+                                                            onOpenCourse = { courseId ->
+                                                                backStack.add(
+                                                                    AppRoute.CourseDetail(
+                                                                        courseId.value
+                                                                    )
+                                                                )
+                                                            },
                                                             bottomNavBarPadding = innerPadding,
                                                         )
 

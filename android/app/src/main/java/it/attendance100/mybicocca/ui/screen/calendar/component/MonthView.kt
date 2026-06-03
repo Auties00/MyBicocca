@@ -67,8 +67,6 @@ fun MonthView(
                 modifier = Modifier.fillMaxWidth(),
             )
         }
-        Spacer(Modifier.height(10.dp))
-        MonthBusyLegend()
         Box(
             modifier = Modifier
                 .fillMaxSize()

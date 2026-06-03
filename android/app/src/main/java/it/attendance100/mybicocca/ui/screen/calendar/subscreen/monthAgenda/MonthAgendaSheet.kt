@@ -349,8 +349,7 @@ private fun AgendaRow(
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(14.dp),
-        color = scheme.surface,
-        tonalElevation = 1.dp,
+        color = scheme.surfaceContainerHigh,
     ) {
         Row(
             modifier = Modifier

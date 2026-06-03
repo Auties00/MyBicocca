@@ -27,7 +27,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.platform.LocalLocale
@@ -214,46 +213,5 @@ private fun busyForeground(level: BusyLevel): Color {
     return when (level) {
         BusyLevel.HEAVY, BusyLevel.FULL -> onAccent
         else -> scheme.onSurface
-    }
-}
-
-@Composable
-fun MonthBusyLegend(modifier: Modifier = Modifier) {
-    val scheme = MaterialTheme.colorScheme
-    val gradientStart = busyBackground(BusyLevel.LIGHT)
-    val gradientEnd = busyBackground(BusyLevel.FULL)
-    val bucketLabels = listOf("≤2h", "2–4h", "4–6h", ">6h")
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = 14.dp),
-        verticalArrangement = Arrangement.spacedBy(4.dp),
-    ) {
-        Text(
-            text = "Leggenda",
-            color = scheme.onSurfaceVariant,
-            fontSize = 10.sp,
-            fontWeight = FontWeight.SemiBold,
-            letterSpacing = 0.4.sp,
-        )
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(8.dp)
-                .clip(RoundedCornerShape(4.dp))
-                .background(Brush.horizontalGradient(listOf(gradientStart, gradientEnd))),
-        )
-        Row(modifier = Modifier.fillMaxWidth()) {
-            bucketLabels.forEach { label ->
-                Text(
-                    text = label,
-                    color = scheme.onSurfaceVariant,
-                    fontSize = 9.sp,
-                    fontWeight = FontWeight.Medium,
-                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                    modifier = Modifier.weight(1f),
-                )
-            }
-        }
     }
 }
