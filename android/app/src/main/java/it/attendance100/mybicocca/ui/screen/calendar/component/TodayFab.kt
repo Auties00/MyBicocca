@@ -45,6 +45,7 @@ fun TodayFab(
     weekStart: LocalDate,
     selectedMonth: YearMonth,
     agendaProgress: Float,
+    dayJumpFraction: Float,
     bottomNavBarPadding: PaddingValues,
     onJumpToToday: () -> Unit,
     modifier: Modifier = Modifier,
@@ -76,34 +77,55 @@ fun TodayFab(
         popupPositionProvider = positionProvider,
         properties = PopupProperties(focusable = false, clippingEnabled = false),
     ) {
-        AnimatedVisibility(
-            visible = needsJump,
-            enter = scaleIn(animationSpec = spatialSpec) + fadeIn(animationSpec = effectsSpec),
-            exit = scaleOut(animationSpec = spatialSpec) + fadeOut(animationSpec = effectsSpec),
-            modifier = modifier,
-        ) {
-            Box(
-                modifier = Modifier.graphicsLayer {
-                    scaleX = agendaInverse
-                    scaleY = agendaInverse
-                    alpha = agendaInverse
-                },
-            ) {
-                ExtendedFloatingActionButton(
-                    onClick = onJumpToToday,
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                    icon = {
-                        Icon(
-                            imageVector = Icons.Outlined.Today,
-                            contentDescription = null,
-                        )
+        if (viewMode == CalendarViewMode.DAY) {
+            val fraction = dayJumpFraction.coerceIn(0f, 1f)
+            if (fraction > 0.001f) {
+                Box(
+                    modifier = modifier.graphicsLayer {
+                        scaleX = fraction
+                        scaleY = fraction
+                        alpha = fraction
                     },
-                    text = { Text("Vai a oggi") },
-                )
+                ) {
+                    TodayFabButton(onClick = onJumpToToday)
+                }
+            }
+        } else {
+            AnimatedVisibility(
+                visible = needsJump,
+                enter = scaleIn(animationSpec = spatialSpec) + fadeIn(animationSpec = effectsSpec),
+                exit = scaleOut(animationSpec = spatialSpec) + fadeOut(animationSpec = effectsSpec),
+                modifier = modifier,
+            ) {
+                Box(
+                    modifier = Modifier.graphicsLayer {
+                        scaleX = agendaInverse
+                        scaleY = agendaInverse
+                        alpha = agendaInverse
+                    },
+                ) {
+                    TodayFabButton(onClick = onJumpToToday)
+                }
             }
         }
     }
+}
+
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+private fun TodayFabButton(onClick: () -> Unit) {
+    ExtendedFloatingActionButton(
+        onClick = onClick,
+        containerColor = MaterialTheme.colorScheme.primaryContainer,
+        contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+        icon = {
+            Icon(
+                imageVector = Icons.Outlined.Today,
+                contentDescription = null,
+            )
+        },
+        text = { Text("Vai a oggi") },
+    )
 }
 
 private class FabPositionProvider(

@@ -33,6 +33,7 @@ import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -48,6 +49,7 @@ import it.attendance100.mybicocca.ui.screen.calendar.ext.weekStartFor
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
+import kotlin.math.abs
 import kotlin.math.floor
 import kotlin.math.roundToInt
 
@@ -70,6 +72,7 @@ fun DayView(
     modifier: Modifier = Modifier,
     zoom: Float = TIMELINE_ZOOM_DEFAULT,
     onZoomChange: (Float) -> Unit = {},
+    onTodayJumpFractionChange: (Float) -> Unit = {},
 ) {
     val anchorDay = remember { selectedDay }
     val anchorWeekStart = remember { weekStartFor(anchorDay) }
@@ -85,6 +88,18 @@ fun DayView(
     LaunchedEffect(eventsPagerState.settledPage) {
         val pageDay = anchorDay.plusDays((eventsPagerState.settledPage - PAGER_ANCHOR).toLong())
         if (pageDay != selectedDay) onSelectDay(pageDay)
+    }
+
+    // Report how far the live pager position sits from today (in days, clamped to 1) so the
+    // "Vai a oggi" FAB can fade/scale in step with the swipe rather than after it settles.
+    LaunchedEffect(anchorDay) {
+        snapshotFlow {
+            (eventsPagerState.currentPage - PAGER_ANCHOR) + eventsPagerState.currentPageOffsetFraction
+        }.collect { livePageDelta ->
+            val distanceFromToday =
+                (anchorDay.toEpochDay() - LocalDate.now().toEpochDay()) + livePageDelta
+            onTodayJumpFractionChange(abs(distanceFromToday).coerceIn(0f, 1f))
+        }
     }
 
     val zoomRef = remember { mutableFloatStateOf(zoom) }

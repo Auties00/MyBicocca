@@ -109,6 +109,7 @@ fun CalendarScreen(
 
     var monthSheetSize by remember { mutableStateOf(IntSize.Zero) }
     var timelineZoom by rememberSaveable { mutableFloatStateOf(TIMELINE_ZOOM_DEFAULT) }
+    var dayJumpFraction by remember { mutableFloatStateOf(0f) }
 
     ProvideEventPalette {
     Box(modifier = modifier.fillMaxSize()) {
@@ -155,6 +156,7 @@ fun CalendarScreen(
                             modifier = Modifier.fillMaxSize(),
                             zoom = timelineZoom,
                             onZoomChange = { timelineZoom = it },
+                            onTodayJumpFractionChange = { dayJumpFraction = it },
                         )
                         CalendarViewMode.WEEK -> WeekView(
                             weekStart = weekStart,
@@ -212,6 +214,7 @@ fun CalendarScreen(
                     weekStart = weekStart,
                     selectedMonth = selectedMonth,
                     agendaProgress = agendaProgress.value,
+                    dayJumpFraction = dayJumpFraction,
                     bottomNavBarPadding = bottomNavBarPadding,
                     onJumpToToday = { viewModel.selectDay(java.time.LocalDate.now()) },
                 )
