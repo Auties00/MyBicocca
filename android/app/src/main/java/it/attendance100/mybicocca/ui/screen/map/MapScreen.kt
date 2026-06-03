@@ -1,5 +1,6 @@
 package it.attendance100.mybicocca.ui.screen.map
 
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -7,8 +8,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Apartment
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -22,6 +25,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
@@ -42,9 +46,12 @@ import it.attendance100.mybicocca.ui.component.feedback.LocalAppSnackbarControll
 import it.attendance100.mybicocca.ui.screen.map.component.BuildingMarker
 import it.attendance100.mybicocca.ui.screen.map.component.MapFilterSheet
 import it.attendance100.mybicocca.ui.screen.map.component.rememberBicoccaMapStyle
+import it.attendance100.mybicocca.ui.screen.map.ext.splitLegacyAlias
 import it.attendance100.mybicocca.ui.screen.map.state.MapOneShotEvent
 import it.attendance100.mybicocca.ui.screen.map.subscreen.buildingDetail.BuildingDetailSheet
 import it.attendance100.mybicocca.ui.screen.map.subscreen.buildingsList.BuildingsListSheet
+import kotlin.math.cos
+import kotlin.math.pow
 
 // Campus center (Piazza dell'Ateneo Nuovo). minZoom keeps the user from drifting out to the globe.
 private val BICOCCA = LatLng(45.5160, 9.2120)
@@ -53,11 +60,10 @@ private const val MIN_ZOOM = 5f
 private const val CAMPUS_ZOOM = 15.5f
 private const val BUILDING_ZOOM = 17f
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun MapScreen(
     modifier: Modifier = Modifier,
-    searchQuery: String = "",
     // True only while this is the visible tab — see CalendarScreen for the pager-cache rationale.
     isActive: Boolean = true,
     // The shell's content insets (top = floating app bar + status bar, bottom = nav bar). The map
@@ -80,11 +86,12 @@ fun MapScreen(
     val rooms by viewModel.rooms.collectAsStateWithLifecycle()
     val selectedRoom by viewModel.selectedRoom.collectAsStateWithLifecycle()
     val roomDetail by viewModel.roomDetail.collectAsStateWithLifecycle()
+    val daySchedule by viewModel.daySchedule.collectAsStateWithLifecycle()
     val syncStatus by viewModel.syncStatus.collectAsStateWithLifecycle()
     val categoryFilter by viewModel.categoryFilter.collectAsStateWithLifecycle()
 
-    // The shell's "Cerca aule" box drives building search; the top-bar filter icon opens the sheet.
-    LaunchedEffect(searchQuery) { viewModel.setSearch(searchQuery) }
+    // The top-bar filter icon opens the category sheet; building search lives in the
+    // unified app-bar search.
     var showFilterSheet by remember { mutableStateOf(false) }
     var showBuildingsList by remember { mutableStateOf(false) }
     LaunchedEffect(isActive) { if (isActive) onProvideFilterToggle { showFilterSheet = true } }
@@ -102,25 +109,38 @@ fun MapScreen(
         position = CameraPosition.fromLatLngZoom(BICOCCA, CAMPUS_ZOOM)
     }
 
-    // Map contentPadding so the projected center sits in the area the chrome doesn't cover: the
-    // floating top bar up top, and the open detail sheet at the bottom (its height minus the nav
-    // bar the sheet also overlaps). This is what makes "center on building" land above the sheet.
+    // Selections made from inside the buildings list sheet stay in that sheet's pager — the
+    // standalone detail modal (and its camera centering) only reacts to pin taps.
+    val detailModalBuilding = if (showBuildingsList) null else selectedBuilding
+
+    // Only the floating top bar goes through the map's contentPadding. The open detail sheet is
+    // deliberately NOT fed in as bottom padding: Google Maps anchors its logo above the bottom
+    // padding, so the logo would jump up every time the sheet opens. The sheet's cover is instead
+    // compensated by shifting the camera target (below).
     val topInsetPx = with(density) { contentInsets.calculateTopPadding().roundToPx() }
     val bottomBarPx = with(density) { contentInsets.calculateBottomPadding().roundToPx() }
     var sheetHeightPx by remember { mutableIntStateOf(0) }
-    val sheetCoverPx = if (selectedBuilding != null) (sheetHeightPx - bottomBarPx).coerceAtLeast(0) else 0
-    val mapContentPadding = remember(topInsetPx, sheetCoverPx, density) {
-        with(density) { PaddingValues(top = topInsetPx.toDp(), bottom = sheetCoverPx.toDp()) }
+    val sheetCoverPx = if (detailModalBuilding != null) (sheetHeightPx - bottomBarPx).coerceAtLeast(0) else 0
+    val mapContentPadding = remember(topInsetPx, density) {
+        with(density) { PaddingValues(top = topInsetPx.toDp()) }
     }
 
-    // Center the selected building in the visible area — wait until the sheet has been measured so
-    // the contentPadding offset is in effect first.
-    LaunchedEffect(selectedBuilding, sheetHeightPx, topInsetPx) {
-        val building = selectedBuilding ?: return@LaunchedEffect
+    // Center the selected building in the area the sheet doesn't cover — wait until the sheet has
+    // been measured. The target is moved south by half the covered height so the building lands
+    // above the sheet without bottom contentPadding (which would also move the Google logo).
+    LaunchedEffect(detailModalBuilding, sheetHeightPx) {
+        val building = detailModalBuilding ?: return@LaunchedEffect
         if (sheetHeightPx == 0) return@LaunchedEffect
+        // Mercator latitude degrees per screen pixel at this latitude/zoom — the world is 256dp
+        // wide at zoom 0, so the pixel world width scales with density and 2^zoom.
+        val worldWidthPx = 256.0 * density.density * 2.0.pow(BUILDING_ZOOM.toDouble())
+        val latitudePerPixel = 360.0 * cos(Math.toRadians(building.point.latitude)) / worldWidthPx
         cameraPositionState.animate(
             CameraUpdateFactory.newLatLngZoom(
-                LatLng(building.point.latitude, building.point.longitude),
+                LatLng(
+                    building.point.latitude - sheetCoverPx / 2.0 * latitudePerPixel,
+                    building.point.longitude,
+                ),
                 BUILDING_ZOOM,
             ),
         )
@@ -160,9 +180,17 @@ fun MapScreen(
                         MarkerState(LatLng(building.point.latitude, building.point.longitude))
                     }
                     val isSelected = building.code == selectedBuilding?.code
+                    // The marker is a rasterized bitmap: animating the selection outside and
+                    // keying the rasterizer on the animated value re-renders it every frame,
+                    // so the pin grows smoothly instead of snapping between the two sizes.
+                    val selectionProgress by animateFloatAsState(
+                        targetValue = if (isSelected) 1f else 0f,
+                        animationSpec = MaterialTheme.motionScheme.defaultSpatialSpec(),
+                        label = "pin_selection",
+                    )
                     MarkerComposable(
                         building.code.value,
-                        isSelected,
+                        selectionProgress,
                         state = markerState,
                         title = building.name,
                         onClick = {
@@ -170,7 +198,10 @@ fun MapScreen(
                             true
                         },
                     ) {
-                        BuildingMarker(category = building.category, selected = isSelected)
+                        BuildingMarker(
+                            selectionProgress = selectionProgress,
+                            code = remember(building.name) { splitLegacyAlias(building.name).second },
+                        )
                     }
                 }
             }
@@ -186,20 +217,24 @@ fun MapScreen(
         )
     }
 
-    val building = selectedBuilding
-    if (building != null) {
+    if (detailModalBuilding != null) {
         val modalState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
         ModalBottomSheet(
             onDismissRequest = { viewModel.clearSelection() },
             sheetState = modalState,
+            // No scrim: the sheet coexists with the map (the camera centers the selected building
+            // above it), so dimming the map behind it would defeat the point.
+            scrimColor = Color.Transparent,
         ) {
             BuildingDetailSheet(
-                building = building,
+                building = detailModalBuilding,
                 rooms = rooms,
+                daySchedule = daySchedule,
                 syncStatus = syncStatus,
                 selectedRoom = selectedRoom,
                 roomDetail = roomDetail,
                 onRoomClick = viewModel::selectRoom,
+                onCloseRoom = viewModel::clearRoomSelection,
                 onOpen360 = onOpenRoom360,
                 modifier = Modifier.onSizeChanged { sheetHeightPx = it.height },
             )
@@ -209,11 +244,21 @@ fun MapScreen(
     if (showBuildingsList) {
         BuildingsListSheet(
             buildings = (allBuildings as? Loadable.Loaded)?.value.orEmpty(),
-            onShowOnMap = { code ->
+            detailBuilding = selectedBuilding,
+            rooms = rooms,
+            daySchedule = daySchedule,
+            syncStatus = syncStatus,
+            selectedRoom = selectedRoom,
+            roomDetail = roomDetail,
+            onShowInfo = viewModel::selectBuilding,
+            onRoomClick = viewModel::selectRoom,
+            onCloseRoom = viewModel::clearRoomSelection,
+            onOpen360 = onOpenRoom360,
+            onBack = viewModel::clearSelection,
+            onDismiss = {
                 showBuildingsList = false
-                viewModel.selectBuilding(code)
+                viewModel.clearSelection()
             },
-            onDismiss = { showBuildingsList = false },
         )
     }
 

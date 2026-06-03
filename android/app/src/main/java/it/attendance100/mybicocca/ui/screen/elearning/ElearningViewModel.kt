@@ -1,17 +1,14 @@
 package it.attendance100.mybicocca.ui.screen.elearning
 
-import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.SyncStatus
-import it.attendance100.mybicocca.core.state.map
 import it.attendance100.mybicocca.domain.model.account.AccountId
 import it.attendance100.mybicocca.domain.model.career.CareerId
 import it.attendance100.mybicocca.domain.model.elearning.course.CourseFilter
 import it.attendance100.mybicocca.domain.model.elearning.course.CourseId
-import it.attendance100.mybicocca.domain.model.elearning.course.EnrolledCourse
 import it.attendance100.mybicocca.domain.model.elearning.course.EnrolledCourseGroup
 import it.attendance100.mybicocca.domain.model.elearning.deadline.Deadline
 import it.attendance100.mybicocca.domain.model.studyplan.StudyYear
@@ -46,7 +43,6 @@ import javax.inject.Inject
 @OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class ElearningViewModel @Inject constructor(
-    private val savedState: SavedStateHandle,
     observeActiveAccount: ObserveActiveAccountUseCase,
     observeCourseFilter: ObserveCourseFilterUseCase,
     private val observeFilteredCourses: ObserveFilteredCoursesUseCase,
@@ -56,9 +52,6 @@ class ElearningViewModel @Inject constructor(
     private val toggleCourseFavourite: ToggleCourseFavouriteUseCase,
     private val setCourseHidden: SetCourseHiddenUseCase,
 ) : ViewModel() {
-
-    val searchQuery: StateFlow<String> =
-        savedState.getStateFlow(KEY_SEARCH, "")
 
     val filter: StateFlow<CourseFilter> = observeCourseFilter()
         .stateIn(viewModelScope, SharingStarted.Eagerly, CourseFilter.All)
@@ -79,18 +72,13 @@ class ElearningViewModel @Inject constructor(
     // Eagerly so Room is subscribed at VM construction. Combined with the VM being
     // hoisted at MainShell, this means visibleCourses is already Loaded by the time
     // the user picks the Elearning tab — no NotYetLoaded flash on first visit.
-    private val filteredCourses: StateFlow<Loadable<List<EnrolledCourseGroup>>> =
+    val visibleCourses: StateFlow<Loadable<List<EnrolledCourseGroup>>> =
         combine(activeAccountId, activeCareerId) { a, c -> a to c }
             .flatMapLatest { (accountId, careerId) ->
                 if (accountId == null) flowOf(Loadable.Loaded(emptyList()))
                 else observeFilteredCourses(accountId, careerId)
             }
             .stateIn(viewModelScope, SharingStarted.Eagerly, Loadable.NotYetLoaded)
-
-    val visibleCourses: StateFlow<Loadable<List<EnrolledCourseGroup>>> =
-        combine(filteredCourses, searchQuery) { loadable, query ->
-            loadable.map { it.applySearch(query) }
-        }.stateIn(viewModelScope, SharingStarted.Eagerly, Loadable.NotYetLoaded)
 
     private val _syncStatus = MutableStateFlow<SyncStatus>(SyncStatus.Idle)
     val syncStatus: StateFlow<SyncStatus> = _syncStatus.asStateFlow()
@@ -104,10 +92,6 @@ class ElearningViewModel @Inject constructor(
                 runRefresh(id, force = false)
             }
         }
-    }
-
-    fun setSearch(query: String) {
-        savedState[KEY_SEARCH] = query
     }
 
     fun setFilter(filter: CourseFilter) {
@@ -165,20 +149,4 @@ class ElearningViewModel @Inject constructor(
             .onFailure { _syncStatus.value = SyncStatus.Failed(it) }
     }
 
-    private fun List<EnrolledCourseGroup>.applySearch(query: String): List<EnrolledCourseGroup> {
-        val q = query.trim()
-        if (q.isEmpty()) return this
-        return filter { group ->
-            group.editions.any { matchesSearch(it, q) }
-        }
-    }
-
-    private fun matchesSearch(course: EnrolledCourse, q: String): Boolean =
-        course.fullName.contains(q, ignoreCase = true) ||
-            course.shortName.contains(q, ignoreCase = true) ||
-            course.idNumber?.contains(q, ignoreCase = true) == true
-
-    private companion object {
-        const val KEY_SEARCH = "elearning_search"
-    }
 }

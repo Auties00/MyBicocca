@@ -63,6 +63,10 @@ data class EasyStaffRoom(
  * Represents the comprehensive details of a university room as extracted from the
  * EasyStaff/Esse3 system.
  *
+ * @param roomCode The unique code identifying the room (e.g., "U6-22"), parsed from the
+ * showcase card header, or null if the header is missing or malformed.
+ * @param roomName The display name of the room as shown in the showcase card header
+ * (e.g., "U6-22 con Podio"), or null if the header is missing.
  * @param name The name of the building or site where the room is located (e.g., "Sede Centrale").
  * @param address The physical street address of the location.
  * @param googleMapsLink The URL for the Google Maps iframe or external navigation link.
@@ -75,6 +79,8 @@ data class EasyStaffRoom(
  * @param equipment A list of available facilities and tools found within the room.
  */
 data class EasyStaffRoomDetails(
+    val roomCode: String?,
+    val roomName: String?,
     val name: String,
     val address: String?,
     val googleMapsLink: String?,

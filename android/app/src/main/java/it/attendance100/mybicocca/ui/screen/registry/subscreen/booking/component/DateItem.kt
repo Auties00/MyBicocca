@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -21,7 +22,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import it.attendance100.mybicocca.domain.model.exam.ExamCall
 import java.time.LocalDate
@@ -33,6 +33,7 @@ import java.util.Locale
 private val MonthFormat = DateTimeFormatter.ofPattern("MMM", Locale.ITALIAN)
 private val TimeFormat = DateTimeFormatter.ofPattern("HH:mm")
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun DateItem(
     call: ExamCall,
@@ -79,15 +80,13 @@ fun DateItem(
         ) {
             Text(
                 text = dateLabel(call.callDate),
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.SemiBold,
+                style = MaterialTheme.typography.titleSmallEmphasized,
                 color = scheme.onSurface,
             )
             Box(modifier = Modifier.weight(1f))
             Text(
                 text = call.callTime?.format(TimeFormat) ?: "—",
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.titleLargeEmphasized,
                 color = scheme.onSurface,
             )
             WindowChip(
@@ -108,6 +107,7 @@ private fun dateLabel(date: LocalDate?): String {
     return "$weekday ${date.dayOfMonth} $month"
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun WindowChip(
     opens: LocalDate?,
@@ -133,8 +133,7 @@ private fun WindowChip(
     ) {
         Text(
             text = state.label(),
-            style = MaterialTheme.typography.labelSmall,
-            fontWeight = FontWeight.SemiBold,
+            style = MaterialTheme.typography.labelSmallEmphasized,
             color = fg,
         )
     }

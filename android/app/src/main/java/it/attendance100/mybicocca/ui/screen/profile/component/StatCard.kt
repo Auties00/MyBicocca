@@ -8,10 +8,11 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -77,9 +78,12 @@ fun StatCard(
         Column(
             modifier = Modifier
                 .padding(horizontal = 18.dp)
-                .padding(top = 12.dp, bottom = 10.dp)
-                .fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(4.dp),
+                .padding(top = 12.dp, bottom = 16.dp)
+                .fillMaxWidth()
+                .fillMaxHeight(),
+            // Title pinned to the top, value + button pushed to the bottom so they line up with
+            // the progress bar in the sibling ProgressStatCard (which sits 16dp from the bottom).
+            verticalArrangement = Arrangement.SpaceBetween,
         ) {
             Text(
                 text = title,
@@ -87,29 +91,21 @@ fun StatCard(
                 fontSize = 12.sp,
                 maxLines = 2,
             )
-            Box(contentAlignment = Alignment.BottomStart) {
+            // Value and the icon button share one Row so the calculator sits vertically centered
+            // on the grade rather than bottom-aligned beside it.
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
                 if (isLoading) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .width(60.dp)
-                                .height(24.dp)
-                                .clip(RoundedCornerShape(8.dp))
-                                .shimmer()
-                                .background(textColor.copy(alpha = 0.2f)),
-                        )
-                        Box(
-                            modifier = Modifier
-                                .width(24.dp)
-                                .height(24.dp)
-                                .clip(RoundedCornerShape(8.dp))
-                                .shimmer()
-                                .background(textColor.copy(alpha = 0.2f)),
-                        )
-                    }
+                    Box(
+                        modifier = Modifier
+                            .width(60.dp)
+                            .height(24.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                            .shimmer()
+                            .background(textColor.copy(alpha = 0.2f)),
+                    )
                 } else {
                     Text(
                         text = value,
@@ -120,15 +116,20 @@ fun StatCard(
                 }
 
                 if (icon != null) {
-                    Box(
-                        modifier = Modifier.fillMaxWidth(),
-                        contentAlignment = Alignment.BottomEnd,
-                    ) {
+                    Spacer(Modifier.weight(1f))
+                    if (isLoading) {
+                        Box(
+                            modifier = Modifier
+                                .size(34.dp)
+                                .clip(RoundedCornerShape(8.dp))
+                                .shimmer()
+                                .background(textColor.copy(alpha = 0.2f)),
+                        )
+                    } else {
                         Card(
                             modifier = Modifier
                                 .height(34.dp)
-                                .width(34.dp)
-                                .offset(y = (-4).dp),
+                                .width(34.dp),
                             colors = CardDefaults.cardColors(containerColor = Color.Transparent),
                             onClick = {
                                 iconOnClick?.invoke()

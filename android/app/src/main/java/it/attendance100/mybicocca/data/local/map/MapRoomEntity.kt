@@ -14,4 +14,5 @@ data class MapRoomEntity(
     @ColumnInfo(name = "building_code") val buildingCode: String,
     val name: String,
     val capacity: Int?,
+    val floor: Int?,
 )

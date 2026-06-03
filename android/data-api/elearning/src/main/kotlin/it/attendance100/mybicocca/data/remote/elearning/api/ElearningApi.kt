@@ -143,6 +143,11 @@ class ElearningApi(
     val completion: ElearningCompletionApi = ElearningCompletionApi(client, json)
 
     /**
+     * API for attendance-related operations (mod_attendance).
+     */
+    val attendance: ElearningAttendanceApi = ElearningAttendanceApi(client, json)
+
+    /**
      * API for grade-related operations.
      */
     val grades: ElearningGradeApi = ElearningGradeApi(client, json)

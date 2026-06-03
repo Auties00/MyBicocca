@@ -1,13 +1,12 @@
 package it.attendance100.mybicocca.ui.screen.profile
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -16,18 +15,14 @@ import androidx.compose.material.icons.filled.Calculate
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
-import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -38,6 +33,7 @@ import it.attendance100.mybicocca.domain.model.transcript.TranscriptStats
 import it.attendance100.mybicocca.ui.component.SectionHeader
 import it.attendance100.mybicocca.ui.component.feedback.StatusBar
 import it.attendance100.mybicocca.ui.screen.profile.component.GradeTrendChart
+import it.attendance100.mybicocca.ui.screen.profile.component.ProfileCardTopGap
 import it.attendance100.mybicocca.ui.screen.profile.component.ProgressStatCard
 import it.attendance100.mybicocca.ui.screen.profile.component.SkeletonProfileContent
 import it.attendance100.mybicocca.ui.screen.profile.component.StatCard
@@ -79,38 +75,19 @@ fun ProfileScreen(
     // Which exams-by-year modal is open (passed-exam grades vs acquired credits), or null.
     var examsModal by remember { mutableStateOf<ExamValueMode?>(null) }
 
-    val accent = MaterialTheme.colorScheme.primary
-
-    val surfaceColor = MaterialTheme.colorScheme.surfaceContainer
-    val brush = remember(surfaceColor) {
-        Brush.verticalGradient(
-            colors = listOf(
-                surfaceColor,
-                Color.Transparent
-            )
-        )
-    }
-
     Box(modifier) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(200.dp)
-                .background(brush)
-        )
-
         PullToRefreshBox(
             isRefreshing = isRefreshing,
             onRefresh = { viewModel.refresh() },
             modifier = Modifier.fillMaxSize(),
         ) {
             // Top clearance leaves room for the floating student card, which is hosted as a
-            // shell-level overlay (in MainShell) so it can hover above the top bar. Its lower
-            // half overlaps this content, so the first section starts just below it.
+            // shell-level overlay (in MainShell) and floats fully below the top bar. The card sits
+            // ProfileCardTopGap below the bar, so content starts a matching gap below the card.
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(top = creditCardHeight() / 2 + 8.dp),
+                    .padding(top = ProfileCardTopGap * 2 + creditCardHeight()),
             ) {
                 StatusBar(
                     isOnline = isOnline,
@@ -134,8 +111,6 @@ fun ProfileScreen(
                         item {
                             SectionHeader(
                                 title = "Statistiche",
-                                accent = accent,
-                                glyph = MaterialShapes.Burst.toShape(),
                                 modifier = Modifier.padding(bottom = 12.dp),
                             )
                             StatisticsGrid(
@@ -150,8 +125,6 @@ fun ProfileScreen(
                         item {
                             SectionHeader(
                                 title = "Andamento",
-                                accent = accent,
-                                glyph = MaterialShapes.Cookie9Sided.toShape(),
                                 modifier = Modifier.padding(bottom = 12.dp),
                             )
                             GradeTrendChart(rows = rows)
@@ -192,10 +165,17 @@ private fun StatisticsGrid(
     val textColor = MaterialTheme.colorScheme.onSurface
     val primaryColor = MaterialTheme.colorScheme.primary
 
+    val rowHeight = 110.dp
+
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            modifier = Modifier.height(rowHeight),
+        ) {
             StatCard(
-                modifier = Modifier.weight(1f),
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxHeight(),
                 title = "Media Aritmetica",
                 value = stats?.arithmeticAverage?.let {
                     String.format(
@@ -217,7 +197,9 @@ private fun StatisticsGrid(
                 onClick = onCalculateArithmetic,
             )
             StatCard(
-                modifier = Modifier.weight(1f),
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxHeight(),
                 title = "Media Ponderata",
                 value = stats?.weightedAverage?.let {
                     String.format(
@@ -239,9 +221,14 @@ private fun StatisticsGrid(
                 onClick = onCalculateWeighted,
             )
         }
-        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            modifier = Modifier.height(rowHeight),
+        ) {
             ProgressStatCard(
-                modifier = Modifier.weight(1f),
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxHeight(),
                 title = "Esami Sostenuti",
                 current = stats?.passedExamCount ?: 0,
                 total = stats?.plannedExamCount ?: 0,
@@ -250,7 +237,9 @@ private fun StatisticsGrid(
                 onClick = onShowExams,
             )
             ProgressStatCard(
-                modifier = Modifier.weight(1f),
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxHeight(),
                 title = "CFU Acquisiti",
                 current = stats?.passedCredits?.toInt() ?: 0,
                 total = stats?.totalCreditsRequired?.toInt() ?: 0,

@@ -13,4 +13,5 @@ internal fun BuildingCatalogDto.toEntity(): MapBuildingEntity = MapBuildingEntit
         .getOrDefault(BuildingCategory.TEACHING)
         .name,
     address = address,
+    city = city,
 )

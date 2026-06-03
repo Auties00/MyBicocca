@@ -18,7 +18,8 @@ interface ElearningForumRepository {
     fun observePosts(accountId: AccountId, discussionId: DiscussionId): Flow<Loadable<List<Post>>>
 
     suspend fun refreshForumsForCourse(accountId: AccountId, courseId: CourseId, force: Boolean = false)
-    suspend fun refreshDiscussions(accountId: AccountId, forumId: ForumId, page: Int = 0, perPage: Int = 25)
+    // Returns how many discussions the page contained, so callers can tell whether more pages exist.
+    suspend fun refreshDiscussions(accountId: AccountId, forumId: ForumId, page: Int = 0, perPage: Int = 25): Int
     suspend fun refreshPosts(accountId: AccountId, discussionId: DiscussionId)
     suspend fun createDiscussion(
         accountId: AccountId,

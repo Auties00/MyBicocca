@@ -162,6 +162,12 @@ dependencies {
     // Kotlinx Serialization (for Room type converters)
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.1")
 
+    // ML Kit GenAI (Gemini Nano on supported devices): search-query interpretation + dictation.
+    // Both self-gate at runtime — unsupported devices fall back to deterministic search and
+    // the platform SpeechRecognizer.
+    implementation("com.google.mlkit:genai-prompt:1.0.0-beta2")
+    implementation("com.google.mlkit:genai-speech-recognition:1.0.0-alpha1")
+
     // Jsoup — HTML parsing of the syllabus htmlContent the Moodle public-info
     // scrape gives us. Data-api ships it as `implementation`, so we need our own
     // explicit dep to use it in the app's mappers.
@@ -194,4 +200,7 @@ dependencies {
 
     // Splash Screen
     implementation("androidx.core:core-splashscreen:1.2.0")
+
+    // Custom Tabs — in-app browser for external university pages (news, elections)
+    implementation("androidx.browser:browser:1.9.0")
 }

@@ -40,7 +40,7 @@ import it.attendance100.mybicocca.domain.model.elearning.course.CourseDetails
 import it.attendance100.mybicocca.domain.model.elearning.course.CourseStaffRole
 import it.attendance100.mybicocca.domain.model.elearning.course.courseCode
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.courseDetail.state.ContinuePlayable
-import it.attendance100.mybicocca.ui.screen.elearning.subscreen.courseDetail.theme.HeroShapeTriple
+import it.attendance100.mybicocca.ui.screen.elearning.theme.HeroShapeTriple
 import kotlin.math.floor
 
 @Composable

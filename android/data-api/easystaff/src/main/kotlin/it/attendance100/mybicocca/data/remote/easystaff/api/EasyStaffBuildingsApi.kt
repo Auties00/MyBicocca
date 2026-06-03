@@ -190,6 +190,17 @@ class EasyStaffBuildingsApi(
             }
         }
 
+        // The card header carries the room's own identity, e.g. "U6-22 con Podio<span><br>[U6-22]</span>".
+        val cardHeader = card.selectFirst(".attendance-course-name")
+        val roomCode = cardHeader?.selectFirst("span")
+            ?.text()
+            ?.cleanText()
+            ?.removeSurrounding("[", "]")
+            ?.takeIf { it.isNotBlank() }
+        val roomName = cardHeader?.ownText()
+            ?.cleanText()
+            ?.takeIf { it.isNotBlank() }
+
         val locationName = extractText("Sede")
             ?: return null
 
@@ -219,6 +230,8 @@ class EasyStaffBuildingsApi(
             ?: emptyList()
 
         return EasyStaffRoomDetails(
+            roomCode = roomCode,
+            roomName = roomName,
             name = locationName,
             address = address,
             googleMapsLink = googleMapsLink,

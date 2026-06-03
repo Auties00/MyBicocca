@@ -1,20 +1,27 @@
 package it.attendance100.mybicocca.ui.screen.registry
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.layout.padding
+import androidx.browser.customtabs.CustomTabsIntent
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.Assignment
 import androidx.compose.material.icons.automirrored.outlined.FactCheck
-import androidx.compose.material.icons.automirrored.outlined.MenuBook
+import androidx.compose.material.icons.outlined.AccountTree
+import androidx.compose.material.icons.outlined.Badge
 import androidx.compose.material.icons.outlined.CoPresent
-import androidx.compose.material.icons.outlined.Description
 import androidx.compose.material.icons.outlined.EditCalendar
-import androidx.compose.material.icons.outlined.EventSeat
+import androidx.compose.material.icons.outlined.Explore
+import androidx.compose.material.icons.outlined.Grading
+import androidx.compose.material.icons.outlined.HowToReg
+import androidx.compose.material.icons.outlined.HowToVote
+import androidx.compose.material.icons.outlined.Newspaper
 import androidx.compose.material.icons.outlined.Payments
-import androidx.compose.material.icons.outlined.School
 import androidx.compose.material.icons.outlined.Work
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -22,30 +29,28 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import it.attendance100.mybicocca.core.state.valueOrNull
-import it.attendance100.mybicocca.domain.model.exam.AcknowledgmentStatus
-import it.attendance100.mybicocca.domain.model.tax.TaxStatus
+import it.attendance100.mybicocca.ui.screen.registry.component.RegistryServiceSection
 import it.attendance100.mybicocca.ui.screen.registry.component.ScadenzeHeader
-import it.attendance100.mybicocca.ui.screen.registry.component.ServiceGroupCard
-import it.attendance100.mybicocca.ui.screen.registry.state.RegistryBadge
-import it.attendance100.mybicocca.ui.screen.registry.state.RegistryBadgeTone
 import it.attendance100.mybicocca.ui.screen.registry.state.RegistryService
 import it.attendance100.mybicocca.ui.screen.registry.state.RegistryServiceGroup
 import it.attendance100.mybicocca.ui.screen.registry.state.buildRegistryDeadlines
 import it.attendance100.mybicocca.ui.screen.registry.state.isUrgent
-import it.attendance100.mybicocca.ui.screen.registry.subscreen.deadlines.DeadlinesSheet
-import it.attendance100.mybicocca.ui.screen.registry.subscreen.deadlines.nextDeadlineLabel
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.bookableExams.BookableExamsViewModel
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.bookedExams.BookedExamsViewModel
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.deadlines.DeadlinesSheet
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.deadlines.nextDeadlineLabel
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.examResults.ExamResultsViewModel
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.taxes.TaxesViewModel
 import java.time.LocalDate
 
-// Landing of the Registry (Segreterie) tab: a tappable "Scadenze" banner that opens the
-// scadenzario timeline, followed by an outlined directory of every Esse3 service grouped
-// by area. Live status badges (open exam calls, new results, tax position) and the
+// Landing of the Registry (Segreterie) tab: a pinned "Scadenze" banner that opens the
+// scadenzario timeline, over a directory of services grouped into connected segmented
+// cards. Live status badges (open exam calls, new outcomes, tax position) and the
 // deadline spine are both derived from the same in-memory feature streams.
 @Composable
 fun RegistryScreen(
@@ -62,14 +67,20 @@ fun RegistryScreen(
     onOpenAttendance: () -> Unit,
     onOpenInternships: () -> Unit,
     onOpenSelfCertificates: () -> Unit,
-    onOpenDegreeAward: () -> Unit,
     modifier: Modifier = Modifier,
-    searchQuery: String = "",
     // True only while this is the visible tab — see CalendarScreen for the pager-cache rationale.
     isActive: Boolean = true,
     onProvideFilterToggle: ((() -> Unit)?) -> Unit = {},
 ) {
     LaunchedEffect(isActive) { if (isActive) onProvideFilterToggle(null) }
+
+    val scheme = MaterialTheme.colorScheme
+    val context = LocalContext.current
+    // External university pages open in an in-app browser (Custom Tab) instead of
+    // kicking the user out to the system browser.
+    val openInAppBrowser: (String) -> Unit = remember(context) {
+        { url -> CustomTabsIntent.Builder().setShowTitle(true).build().launchUrl(context, url.toUri()) }
+    }
 
     val bookings by bookedExamsViewModel.bookings.collectAsStateWithLifecycle()
     val examCalls by bookableExamsViewModel.examCalls.collectAsStateWithLifecycle()
@@ -81,28 +92,9 @@ fun RegistryScreen(
     val invoiceList = invoices.valueOrNull().orEmpty()
     val resultList = examResults.valueOrNull().orEmpty()
 
-    // Badges.
-    val availableCount = examCallList.size
-    val examsBadge = if (availableCount > 0) {
-        RegistryBadge("$availableCount disponibili", RegistryBadgeTone.New)
-    } else null
-
-    val unviewedCount = resultList.count { it.acknowledgment == AcknowledgmentStatus.NotViewed }
-    val resultsBadge = if (unviewedCount > 0) {
-        RegistryBadge(if (unviewedCount == 1) "1 nuovo" else "$unviewedCount nuovi", RegistryBadgeTone.Alert)
-    } else null
-
-    val expiredCount = invoiceList.count { it.status == TaxStatus.EXPIRED }
-    val pendingCount = invoiceList.count { it.status == TaxStatus.PENDING }
-    val taxBadge = when {
-        invoices.valueOrNull() == null -> null
-        expiredCount > 0 -> RegistryBadge("In ritardo", RegistryBadgeTone.Alert)
-        pendingCount > 0 -> RegistryBadge(if (pendingCount == 1) "1 da pagare" else "$pendingCount da pagare", RegistryBadgeTone.Attention)
-        else -> RegistryBadge("In regola", RegistryBadgeTone.Ok)
-    }
+    val today = remember { LocalDate.now() }
 
     // Deadlines (scadenzario spine + header summary).
-    val today = remember { LocalDate.now() }
     val deadlines = remember(resultList, invoiceList, bookingList, examCallList) {
         buildRegistryDeadlines(
             today = today,
@@ -125,54 +117,81 @@ fun RegistryScreen(
         }
     }
 
-    val groups = listOf(
-        RegistryServiceGroup(
-            name = "Didattica",
-            caption = "Il tuo percorso accademico",
-            services = listOf(
-                RegistryService("study_plan", "Piano di studi", "Percorso e crediti", Icons.AutoMirrored.Outlined.MenuBook, onClick = onOpenStudyPlan),
-                RegistryService("exams", "Esami", "Appelli e prenotazioni", Icons.Outlined.EditCalendar, examsBadge, onOpenBookedExams),
-                RegistryService("exam_results", "Esiti esami", "Voti e accettazione", Icons.AutoMirrored.Outlined.FactCheck, resultsBadge, onOpenExamResults),
-                RegistryService("attendance", "Presenze", "Frequenze e rilevazioni", Icons.Outlined.CoPresent, onClick = onOpenAttendance),
-                RegistryService("questionnaires", "Questionari", "Valutazione della didattica", Icons.AutoMirrored.Outlined.Assignment, onClick = onOpenQuestionnaires),
+    // (group, iconChip container, iconChip onContainer) per section.
+    val sections = listOf(
+        Triple(
+            RegistryServiceGroup(
+                name = "Didattica",
+                caption = "Il tuo percorso accademico",
+                services = listOf(
+                    RegistryService("study_plan", "Piano di studi", "Percorso e crediti", Icons.Outlined.AccountTree, onClick = onOpenStudyPlan),
+                    RegistryService("exams", "Esami", "Appelli e prenotazioni", Icons.Outlined.EditCalendar, onClick = onOpenBookedExams),
+                    RegistryService("exam_results", "Esiti", "Accetta o rifiuta esiti", Icons.Outlined.Grading, onClick = onOpenExamResults),
+                    RegistryService("attendance", "Presenze", "Frequenze e rilevazioni", Icons.Outlined.CoPresent, onClick = onOpenAttendance),
+                    RegistryService("questionnaires", "Questionari", "Valutazione didattica", Icons.AutoMirrored.Outlined.FactCheck, onClick = onOpenQuestionnaires),
+                ),
             ),
+            scheme.primaryContainer, scheme.onPrimaryContainer,
         ),
-        RegistryServiceGroup(
-            name = "Tasse & documenti",
-            caption = "La tua posizione amministrativa",
-            services = listOf(
-                RegistryService("taxes", "Tasse & agevolazioni", "Pagamenti ed esoneri", Icons.Outlined.Payments, taxBadge, onOpenTaxes),
-                RegistryService("self_certificates", "Autocertificazioni", "Certificati e dichiarazioni", Icons.Outlined.Description, onClick = onOpenSelfCertificates),
-                RegistryService("degree_award", "Conseguimento titolo", "Domanda di laurea", Icons.Outlined.School, onClick = onOpenDegreeAward),
+        Triple(
+            RegistryServiceGroup(
+                name = "Tasse & documenti",
+                caption = "La tua posizione amministrativa",
+                services = listOf(
+                    RegistryService("taxes", "Tasse & agevolazioni", "Pagamenti ed esoneri", Icons.Outlined.Payments, onClick = onOpenTaxes),
+                    RegistryService("documents", "Documenti & tessera", "Tessera, titoli e certificati", Icons.Outlined.Badge, onClick = onOpenSelfCertificates),
+                ),
             ),
+            scheme.tertiaryContainer, scheme.onTertiaryContainer,
         ),
-        RegistryServiceGroup(
-            name = "Procedure & opportunità",
-            caption = "Esperienze e prenotazioni",
-            services = listOf(
-                RegistryService("internships", "Tirocini e stage", "Ricerca e gestione stage", Icons.Outlined.Work, onClick = onOpenInternships),
-                RegistryService("reservations", "Prenotazioni", "Appuntamenti agli sportelli", Icons.Outlined.EventSeat, onClick = onOpenReservations),
+        Triple(
+            RegistryServiceGroup(
+                name = "Procedure & opportunità",
+                caption = "Esperienze e nuove occasioni",
+                services = listOf(
+                    RegistryService("internships", "Tirocini e stage", "Ricerca e gestione stage", Icons.Outlined.Work, onClick = onOpenInternships),
+                    RegistryService("requests", "Domande e procedure", "Appuntamenti e istanze", Icons.AutoMirrored.Outlined.Assignment, onClick = onOpenReservations),
+                    RegistryService("opportunities", "Opportunità", "Bandi, borse e mobilità", Icons.Outlined.Explore, onClick = {}),
+                    RegistryService("admissions", "Ammissioni", "Concorsi e graduatorie", Icons.Outlined.HowToReg, onClick = {}),
+                ),
             ),
+            scheme.secondaryContainer, scheme.onSecondaryContainer,
+        ),
+        Triple(
+            RegistryServiceGroup(
+                name = "Ateneo",
+                caption = "Comunicazioni e vita universitaria",
+                services = listOf(
+                    RegistryService("news", "Notizie", "News ed eventi dall'ateneo", Icons.Outlined.Newspaper, external = true, onClick = { openInAppBrowser("https://www.unimib.it/news") }),
+                    RegistryService("elections", "Elezioni studentesche", "Rappresentanza", Icons.Outlined.HowToVote, external = true, onClick = { openInAppBrowser("https://unimib-electors-prod.gea.esse3.cineca.it/app/select-event") }),
+                ),
+            ),
+            scheme.primaryContainer, scheme.onPrimaryContainer,
         ),
     )
 
     var showDeadlines by remember { mutableStateOf(false) }
 
-    LazyColumn(
-        modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 24.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        item(key = "scadenze") {
-            ScadenzeHeader(
-                urgentCount = urgentCount,
-                summary = headerSummary,
-                onClick = { showDeadlines = true },
-            )
-        }
-        groups.forEach { group ->
-            item(key = "group_${group.name}") {
-                ServiceGroupCard(group = group)
+    // The Scadenze banner stays pinned above the directory; only the sections scroll.
+    Column(modifier = modifier.fillMaxSize()) {
+        ScadenzeHeader(
+            summary = headerSummary,
+            onClick = { showDeadlines = true },
+            modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 12.dp),
+        )
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(start = 16.dp, end = 16.dp, bottom = 32.dp),
+            verticalArrangement = Arrangement.spacedBy(24.dp),
+        ) {
+            sections.forEach { (group, container, onContainer) ->
+                RegistryServiceSection(
+                    group = group,
+                    accentContainer = container,
+                    accentOnContainer = onContainer,
+                )
             }
         }
     }

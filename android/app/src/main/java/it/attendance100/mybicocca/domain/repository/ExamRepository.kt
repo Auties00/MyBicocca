@@ -32,6 +32,10 @@ interface ExamRepository {
     // which only includes outcomes whose acknowledgment deadline has passed.
     suspend fun getExamResults(careerId: CareerId): List<ExamResult>
 
+    // Accept (presaVisione=A) or reject (R) a published outcome. applicationListId is the
+    // booking's prenotazione id carried through getExamResults → ExamResult.
+    suspend fun acknowledgeExamResult(careerId: CareerId, applicationListId: Long, accept: Boolean)
+
     // studentId here is the booking's `stuId`, not the user's matId.
     suspend fun cancelBooking(careerId: CareerId, key: ExamCallKey, studentId: Long)
 }

@@ -75,6 +75,10 @@ private val partialChromaticColors = listOf(
 const val CreditCardAspectRatio = 1.6111112f
 val CreditCardHorizontalInset = 16.dp
 
+// Gap between the bottom of the top bar and the top of the floating student card, shared by the
+// shell overlay (which positions the card) and the profile content (which reserves space for it).
+val ProfileCardTopGap = 20.dp
+
 // Height the card occupies when laid out full-width with [horizontalInset] on each side.
 // Derived from the screen width so the floating overlay and the content padding stay in sync.
 @Composable

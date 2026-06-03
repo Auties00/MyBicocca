@@ -15,5 +15,11 @@ data class Discussion(
     val isPinned: Boolean,
     val isLocked: Boolean,
     val unreadCount: Int,
+    val replyCount: Int,
+    // Who wrote the most recent post; equals authorName when the thread has no replies.
+    val lastPostAuthorName: String?,
+    // Plain-text excerpt of the opening post, pre-stripped at mapping time for list previews.
+    val messagePreview: String?,
+    val hasAttachments: Boolean,
     val canReply: Boolean,
 )

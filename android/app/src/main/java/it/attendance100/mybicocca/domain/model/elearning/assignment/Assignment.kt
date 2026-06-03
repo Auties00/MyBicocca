@@ -18,6 +18,9 @@ data class Assignment(
     val allowedExtensions: List<String>,
     val allowDrafts: Boolean,
     val submissionStatus: SubmissionStatus,
+    // Web page of the activity; submission upload is not supported in-app, so the UI
+    // offers this as the escape hatch to complete a hand-in.
+    val pageUrl: String?,
 ) {
     data class AttachmentRef(
         val fileName: String,

@@ -12,8 +12,11 @@ import it.attendance100.mybicocca.domain.model.elearning.assignment.AssignmentId
 import it.attendance100.mybicocca.domain.model.elearning.course.CompletionState
 import it.attendance100.mybicocca.domain.model.elearning.course.CourseDetails
 import it.attendance100.mybicocca.domain.model.elearning.course.CourseId
+import it.attendance100.mybicocca.domain.model.elearning.forum.Discussion
+import it.attendance100.mybicocca.domain.model.elearning.forum.DiscussionId
 import it.attendance100.mybicocca.domain.model.elearning.forum.Forum
 import it.attendance100.mybicocca.domain.model.elearning.forum.ForumId
+import it.attendance100.mybicocca.domain.model.elearning.forum.ForumType
 import it.attendance100.mybicocca.domain.model.elearning.grade.GradeItem
 import it.attendance100.mybicocca.domain.model.elearning.quiz.Quiz
 import it.attendance100.mybicocca.domain.model.elearning.quiz.QuizId
@@ -26,7 +29,9 @@ import it.attendance100.mybicocca.domain.usecase.elearning.course.RefreshCourseD
 import it.attendance100.mybicocca.domain.usecase.elearning.course.SetActivityCompletedUseCase
 import it.attendance100.mybicocca.domain.usecase.elearning.course.ToggleCourseFavouriteUseCase
 import it.attendance100.mybicocca.domain.usecase.elearning.forum.ObserveCourseForumsUseCase
+import it.attendance100.mybicocca.domain.usecase.elearning.forum.ObserveDiscussionsUseCase
 import it.attendance100.mybicocca.domain.usecase.elearning.forum.RefreshCourseForumsUseCase
+import it.attendance100.mybicocca.domain.usecase.elearning.forum.RefreshDiscussionsUseCase
 import it.attendance100.mybicocca.domain.usecase.elearning.grade.ObserveCourseGradeItemsUseCase
 import it.attendance100.mybicocca.domain.usecase.elearning.grade.RefreshCourseGradeItemsUseCase
 import it.attendance100.mybicocca.domain.usecase.elearning.quiz.ObserveCourseQuizzesUseCase
@@ -68,6 +73,8 @@ class CourseDetailViewModel @AssistedInject constructor(
     private val observeAssignments: ObserveCourseAssignmentsUseCase,
     private val observeQuizzes: ObserveCourseQuizzesUseCase,
     private val observeForums: ObserveCourseForumsUseCase,
+    private val observeDiscussions: ObserveDiscussionsUseCase,
+    private val refreshDiscussions: RefreshDiscussionsUseCase,
     private val observeGradeItems: ObserveCourseGradeItemsUseCase,
     private val observeCompletion: ObserveCompletionStatesUseCase,
     private val refreshDetails: RefreshCourseDetailsUseCase,
@@ -126,6 +133,31 @@ class CourseDetailViewModel @AssistedInject constructor(
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STATE_KEEP_ALIVE_MS), Loadable.NotYetLoaded)
 
+    // The course's single read-only "Avvisi" forum, when it has one. Drives the announcements
+    // hero on the Forum tab.
+    private val newsForumId: Flow<ForumId?> = forums
+        .map { loadable ->
+            (loadable as? Loadable.Loaded)?.value?.firstOrNull { it.type == ForumType.News }?.id
+        }
+        .distinctUntilChanged()
+
+    // Latest teacher announcement from the news forum. Independent stream from `forums`:
+    // the card renders forum metadata immediately and fills the preview when this lands.
+    val latestAnnouncement: StateFlow<Loadable<Discussion?>> = activeAccountId
+        .flatMapLatest { accountId ->
+            if (accountId == null) return@flatMapLatest flowOf(Loadable.NotYetLoaded)
+            newsForumId.flatMapLatest { forumId ->
+                if (forumId == null) flowOf(Loadable.NotYetLoaded)
+                else observeDiscussions(accountId, forumId).map { loadable ->
+                    when (loadable) {
+                        is Loadable.Loaded -> Loadable.Loaded(loadable.value.pickLatest())
+                        Loadable.NotYetLoaded -> Loadable.NotYetLoaded
+                    }
+                }
+            }
+        }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STATE_KEEP_ALIVE_MS), Loadable.NotYetLoaded)
+
     val gradeItems: StateFlow<Loadable<List<GradeItem>>> = activeAccountId
         .flatMapLatest { id ->
             if (id == null) flowOf(Loadable.Loaded(emptyList())) else observeGradeItems(id, courseId)
@@ -165,6 +197,10 @@ class CourseDetailViewModel @AssistedInject constructor(
     private val oneShotChannel = Channel<CourseDetailOneShotEvent>(Channel.BUFFERED)
     val oneShotEvents: Flow<CourseDetailOneShotEvent> = oneShotChannel.receiveAsFlow()
 
+    // News forums refreshed during this VM's lifetime; refreshDiscussions has no stale-policy
+    // gate, so guard here against re-fetching on every forums emission.
+    private val announcementRefreshed = mutableSetOf<Int>()
+
     init {
         viewModelScope.launch {
             activeAccountId.filterNotNull().distinctUntilChanged().collect { id ->
@@ -176,6 +212,13 @@ class CourseDetailViewModel @AssistedInject constructor(
                 _initialFetchInProgress.value = !hadCache
                 runRefresh(id, force = false)
                 _initialFetchInProgress.value = false
+            }
+        }
+        viewModelScope.launch {
+            newsForumId.filterNotNull().collect { forumId ->
+                if (!announcementRefreshed.add(forumId.value)) return@collect
+                val accountId = activeAccountId.filterNotNull().first()
+                runCatching { refreshDiscussions(accountId, forumId, page = 0, perPage = 10) }
             }
         }
     }
@@ -254,6 +297,10 @@ class CourseDetailViewModel @AssistedInject constructor(
         oneShotChannel.trySend(CourseDetailOneShotEvent.OpenForum(ForumId(id)))
     }
 
+    fun emitOpenDiscussion(id: DiscussionId) {
+        oneShotChannel.trySend(CourseDetailOneShotEvent.OpenDiscussion(id))
+    }
+
     fun emitOpenResource(url: String) {
         oneShotChannel.trySend(CourseDetailOneShotEvent.OpenModuleResource(url))
     }
@@ -269,3 +316,7 @@ class CourseDetailViewModel @AssistedInject constructor(
         const val STATE_KEEP_ALIVE_MS = 5_000L
     }
 }
+
+// Pinned announcements can be old; "latest" means most recent activity regardless of pin.
+private fun List<Discussion>.pickLatest(): Discussion? =
+    maxByOrNull { it.timeModified ?: it.createdAt ?: java.time.Instant.EPOCH }

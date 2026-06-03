@@ -73,9 +73,9 @@ class ElearningAssignmentRepositoryImpl @Inject constructor(
             assignments.map { dto ->
                 async {
                     val status = runCatching {
-                        api.assignments.getSubmissionStatus(token, dto.id, null, null).toSubmissionStatusJson()
+                        api.assignments.getSubmissionStatus(token, dto.id, null, null).toSubmissionStatusJson(token)
                     }.getOrDefault(SubmissionStatusJson.NotSubmitted)
-                    dto.toEntity(accountId, status)
+                    dto.toEntity(accountId, status, token)
                 }
             }.map { it.await() }
         }
@@ -86,7 +86,7 @@ class ElearningAssignmentRepositoryImpl @Inject constructor(
     override suspend fun refreshSubmissionStatus(accountId: AccountId, assignmentId: AssignmentId) {
         val (api, token) = sessionManager.elearning()
         val statusJson = api.assignments.getSubmissionStatus(token, assignmentId.value, null, null)
-            .toSubmissionStatusJson()
+            .toSubmissionStatusJson(token)
         val row = assignmentDao.observe(accountId.value, assignmentId.value).firstOrNull()
             ?: return
         val encoded = ElearningJson.encodeToString(SubmissionStatusJson.serializer(), statusJson)

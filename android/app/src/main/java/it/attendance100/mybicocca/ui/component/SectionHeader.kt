@@ -21,15 +21,16 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 /**
- * App-wide section header: a 30dp rotated accent glyph followed by a [headlineSmall] Bold title.
- * Shared by the Registry dashboard and Profile — use it wherever an in-content section needs a header.
+ * App-wide section header: an optional 30dp rotated accent glyph followed by a [headlineSmall] Bold
+ * title. Pass a null [glyph] for a title-only header. Shared by the Registry dashboard and Profile —
+ * use it wherever an in-content section needs a header.
  */
 @Composable
 fun SectionHeader(
     title: String,
-    accent: Color,
-    glyph: Shape,
     modifier: Modifier = Modifier,
+    accent: Color = Color.Unspecified,
+    glyph: Shape? = null,
 ) {
     val scheme = MaterialTheme.colorScheme
 
@@ -37,14 +38,16 @@ fun SectionHeader(
         modifier = modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Box(
-            modifier = Modifier
-                .size(30.dp)
-                .graphicsLayer { rotationZ = -12f }
-                .clip(glyph)
-                .background(accent),
-        )
-        Spacer(Modifier.width(14.dp))
+        if (glyph != null) {
+            Box(
+                modifier = Modifier
+                    .size(30.dp)
+                    .graphicsLayer { rotationZ = -12f }
+                    .clip(glyph)
+                    .background(accent),
+            )
+            Spacer(Modifier.width(14.dp))
+        }
         Text(
             text = title,
             style = MaterialTheme.typography.headlineSmall,

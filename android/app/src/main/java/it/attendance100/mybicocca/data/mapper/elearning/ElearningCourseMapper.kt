@@ -309,7 +309,7 @@ private fun buildSyllabusInfo(
     }
 
     fun pickText(vararg keys: String): String? =
-        pick(*keys)?.text()?.trim()?.takeIf { it.isNotBlank() }
+        pick(*keys)?.textWithNewlines()?.takeIf { it.isNotBlank() }
 
     val programme = pick("programma esteso", "detailed program", "programma del corso", "programma")
         ?.let { parseProgrammeSections(it) }
@@ -405,6 +405,22 @@ private fun Element.splitOnBreaks(): List<String> {
     val pieces = html().split(Regex("<br\\s*/?>", RegexOption.IGNORE_CASE))
     return pieces.map { Jsoup.parseBodyFragment(it).body().text().trim() }
 }
+
+// Jsoup's text() collapses every line break, gluing the lines of a syllabus field together;
+// wholeText() instead keeps source newlines and renders <br> as "\n". Block tags contribute
+// no separator to it though, so close them off with explicit newlines first. Works on a
+// clone - the parsed elements are shared with the programme parser and must stay untouched.
+private fun Element.textWithNewlines(): String {
+    val copy = clone()
+    copy.select("p, div, li, tr, h1, h2, h3, h4, h5, h6").forEach { it.appendText("\n") }
+    return copy.wholeText()
+        .lines()
+        .joinToString("\n") { it.trim() }
+        .replace(BlankLineRun, "\n\n")
+        .trim()
+}
+
+private val BlankLineRun = Regex("\n{3,}")
 
 private fun firstWord(text: String): String? =
     text.split(' ', '\n', '\t', ',', '.', ':').firstOrNull { it.isNotBlank() }

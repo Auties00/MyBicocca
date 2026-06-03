@@ -7,6 +7,7 @@ data class PlannedCourse(
     val normalizedName: String,
     val teacherName: String,
     val periodId: String,
+    val semester: Semester,
     val studyYear: StudyYear,
     val cfu: Int?,
 )

@@ -5,6 +5,7 @@ import dagger.Module
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import it.attendance100.mybicocca.data.repository.AccountRepositoryImpl
+import it.attendance100.mybicocca.data.repository.AttendanceRepositoryImpl
 import it.attendance100.mybicocca.data.repository.CalendarRepositoryImpl
 import it.attendance100.mybicocca.data.repository.ElearningAssignmentRepositoryImpl
 import it.attendance100.mybicocca.data.repository.ElearningBadgeRepositoryImpl
@@ -14,13 +15,16 @@ import it.attendance100.mybicocca.data.repository.ElearningForumRepositoryImpl
 import it.attendance100.mybicocca.data.repository.ElearningGradeRepositoryImpl
 import it.attendance100.mybicocca.data.repository.ElearningMessageRepositoryImpl
 import it.attendance100.mybicocca.data.repository.ElearningQuizRepositoryImpl
-import it.attendance100.mybicocca.data.repository.ExamRepositoryImpl
+import it.attendance100.mybicocca.data.repository.FakeExamRepository
 import it.attendance100.mybicocca.data.repository.MapRepositoryImpl
+import it.attendance100.mybicocca.data.repository.QuestionnaireRepositoryImpl
+import it.attendance100.mybicocca.data.repository.SearchHistoryRepositoryImpl
 import it.attendance100.mybicocca.data.repository.StudyPlanRepositoryImpl
 import it.attendance100.mybicocca.data.repository.TaxRepositoryImpl
 import it.attendance100.mybicocca.data.repository.TranscriptRepositoryImpl
 import it.attendance100.mybicocca.data.repository.VideoPlaybackRepositoryImpl
 import it.attendance100.mybicocca.domain.repository.AccountRepository
+import it.attendance100.mybicocca.domain.repository.AttendanceRepository
 import it.attendance100.mybicocca.domain.repository.CalendarRepository
 import it.attendance100.mybicocca.domain.repository.ElearningAssignmentRepository
 import it.attendance100.mybicocca.domain.repository.ElearningBadgeRepository
@@ -32,6 +36,8 @@ import it.attendance100.mybicocca.domain.repository.ElearningMessageRepository
 import it.attendance100.mybicocca.domain.repository.ElearningQuizRepository
 import it.attendance100.mybicocca.domain.repository.ExamRepository
 import it.attendance100.mybicocca.domain.repository.MapRepository
+import it.attendance100.mybicocca.domain.repository.QuestionnaireRepository
+import it.attendance100.mybicocca.domain.repository.SearchHistoryRepository
 import it.attendance100.mybicocca.domain.repository.StudyPlanRepository
 import it.attendance100.mybicocca.domain.repository.TaxRepository
 import it.attendance100.mybicocca.domain.repository.TranscriptRepository
@@ -57,6 +63,10 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindTranscriptRepository(impl: TranscriptRepositoryImpl): TranscriptRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindAttendanceRepository(impl: AttendanceRepositoryImpl): AttendanceRepository
 
     @Binds
     @Singleton
@@ -94,9 +104,10 @@ abstract class RepositoryModule {
     @Singleton
     abstract fun bindVideoPlaybackRepository(impl: VideoPlaybackRepositoryImpl): VideoPlaybackRepository
 
+    // TEMPORARY: fake esiti for UI testing — revert to ExamRepositoryImpl.
     @Binds
     @Singleton
-    abstract fun bindExamRepository(impl: ExamRepositoryImpl): ExamRepository
+    abstract fun bindExamRepository(impl: FakeExamRepository): ExamRepository
 
     @Binds
     @Singleton
@@ -104,5 +115,13 @@ abstract class RepositoryModule {
 
     @Binds
     @Singleton
+    abstract fun bindQuestionnaireRepository(impl: QuestionnaireRepositoryImpl): QuestionnaireRepository
+
+    @Binds
+    @Singleton
     abstract fun bindMapRepository(impl: MapRepositoryImpl): MapRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindSearchHistoryRepository(impl: SearchHistoryRepositoryImpl): SearchHistoryRepository
 }

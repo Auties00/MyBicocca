@@ -12,6 +12,8 @@ import it.attendance100.mybicocca.domain.model.map.BuildingCode
 import it.attendance100.mybicocca.domain.model.map.MapBuilding
 import it.attendance100.mybicocca.domain.model.map.MapRoom
 import it.attendance100.mybicocca.domain.model.map.MapRoomDetail
+import it.attendance100.mybicocca.domain.model.map.RoomScheduleEntry
+import it.attendance100.mybicocca.domain.usecase.map.LoadBuildingScheduleUseCase
 import it.attendance100.mybicocca.domain.usecase.map.LoadRoomDetailUseCase
 import it.attendance100.mybicocca.domain.usecase.map.ObserveBuildingsUseCase
 import it.attendance100.mybicocca.domain.usecase.map.ObserveRoomsUseCase
@@ -33,6 +35,7 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.time.LocalDate
 import javax.inject.Inject
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -43,9 +46,9 @@ class MapViewModel @Inject constructor(
     private val refreshBuildings: RefreshBuildingsUseCase,
     private val refreshRooms: RefreshRoomsUseCase,
     private val loadRoomDetail: LoadRoomDetailUseCase,
+    private val loadBuildingSchedule: LoadBuildingScheduleUseCase,
 ) : ViewModel() {
 
-    private val _searchQuery = MutableStateFlow("")
     private val _categoryFilter = MutableStateFlow<Set<BuildingCategory>>(emptySet())
     val categoryFilter: StateFlow<Set<BuildingCategory>> = _categoryFilter.asStateFlow()
 
@@ -55,10 +58,10 @@ class MapViewModel @Inject constructor(
         observeBuildings()
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STATE_KEEP_ALIVE_MS), Loadable.NotYetLoaded)
 
-    // Pins to render: the full set narrowed by the search box and the category filter.
+    // Pins to render: the full set narrowed by the category filter.
     val buildings: StateFlow<Loadable<List<MapBuilding>>> =
-        combine(allBuildings, _searchQuery, _categoryFilter) { loadable, query, categories ->
-            loadable.map { list -> list.filter { it.matches(query, categories) } }
+        combine(allBuildings, _categoryFilter) { loadable, categories ->
+            loadable.map { list -> list.filter { it.matches(categories) } }
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STATE_KEEP_ALIVE_MS), Loadable.NotYetLoaded)
 
     private val _selectedBuildingCode = MutableStateFlow<BuildingCode?>(null)
@@ -71,6 +74,22 @@ class MapViewModel @Inject constructor(
     val rooms: StateFlow<Loadable<List<MapRoom>>> =
         _selectedBuildingCode.flatMapLatest { code ->
             if (code == null) flowOf(Loadable.Loaded(emptyList())) else observeRooms(code)
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STATE_KEEP_ALIVE_MS), Loadable.NotYetLoaded)
+
+    // The selected building's live occupation slots for today, keyed by room code. Not cached —
+    // re-fetched on every selection so "free/busy now" stays trustworthy. null = fetch failed,
+    // which the UI distinguishes from "no events today" (= free all day).
+    val daySchedule: StateFlow<Loadable<Map<String, List<RoomScheduleEntry>>?>> =
+        _selectedBuildingCode.flatMapLatest { code ->
+            if (code == null) {
+                flowOf(Loadable.Loaded(emptyMap<String, List<RoomScheduleEntry>>()) as Loadable<Map<String, List<RoomScheduleEntry>>?>)
+            } else {
+                flow {
+                    emit(Loadable.NotYetLoaded)
+                    val entries = runCatching { loadBuildingSchedule(code, LocalDate.now()) }.getOrNull()
+                    emit(Loadable.Loaded(entries?.groupBy { it.roomCode.value }))
+                }
+            }
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STATE_KEEP_ALIVE_MS), Loadable.NotYetLoaded)
 
     private val _selectedRoom = MutableStateFlow<MapRoom?>(null)
@@ -99,10 +118,6 @@ class MapViewModel @Inject constructor(
         viewModelScope.launch { runCatching { refreshBuildings() } }
     }
 
-    fun setSearch(query: String) {
-        _searchQuery.value = query
-    }
-
     fun toggleCategory(category: BuildingCategory) {
         _categoryFilter.update { if (category in it) it - category else it + category }
     }
@@ -123,7 +138,11 @@ class MapViewModel @Inject constructor(
     }
 
     fun selectRoom(room: MapRoom) {
-        _selectedRoom.value = if (_selectedRoom.value == room) null else room
+        _selectedRoom.value = room
+    }
+
+    fun clearRoomSelection() {
+        _selectedRoom.value = null
     }
 
     fun retryRooms() {
@@ -147,11 +166,5 @@ class MapViewModel @Inject constructor(
     }
 }
 
-private fun MapBuilding.matches(query: String, categories: Set<BuildingCategory>): Boolean {
-    if (categories.isNotEmpty() && category !in categories) return false
-    if (query.isBlank()) return true
-    val needle = query.trim().lowercase()
-    return name.lowercase().contains(needle) ||
-        code.value.lowercase().contains(needle) ||
-        (address?.lowercase()?.contains(needle) == true)
-}
+private fun MapBuilding.matches(categories: Set<BuildingCategory>): Boolean =
+    categories.isEmpty() || category in categories

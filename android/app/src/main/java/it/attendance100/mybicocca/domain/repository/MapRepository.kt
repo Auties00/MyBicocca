@@ -5,7 +5,9 @@ import it.attendance100.mybicocca.domain.model.map.BuildingCode
 import it.attendance100.mybicocca.domain.model.map.MapBuilding
 import it.attendance100.mybicocca.domain.model.map.MapRoom
 import it.attendance100.mybicocca.domain.model.map.MapRoomDetail
+import it.attendance100.mybicocca.domain.model.map.RoomScheduleEntry
 import kotlinx.coroutines.flow.Flow
+import java.time.LocalDate
 
 interface MapRepository {
     fun observeBuildings(): Flow<Loadable<List<MapBuilding>>>
@@ -20,4 +22,8 @@ interface MapRepository {
 
     // On-demand rich detail for a single room (floor, accessibility, 360° view). Throws on failure.
     suspend fun loadRoomDetail(room: MapRoom): MapRoomDetail?
+
+    // The day's confirmed occupation slots for every room in the building. Not cached —
+    // volatile live data fetched when a building is opened. Throws on failure.
+    suspend fun loadDaySchedule(buildingCode: BuildingCode, date: LocalDate): List<RoomScheduleEntry>
 }

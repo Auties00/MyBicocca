@@ -5,6 +5,7 @@ import it.attendance100.mybicocca.data.mapper.exam.ESSE3_DATE
 import it.attendance100.mybicocca.data.mapper.exam.toBookedExam
 import it.attendance100.mybicocca.data.mapper.exam.toDomain
 import it.attendance100.mybicocca.data.mapper.exam.toExamResult
+import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3AcknowledgmentOfReceipt
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3BookableExamFilter
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3ExamSessionEnrollmentParameters
 import it.attendance100.mybicocca.domain.model.career.Career
@@ -92,7 +93,9 @@ class ExamRepositoryImpl @Inject constructor(
             actorCode = "STU",
             filter = "dataOraTurno=ge=$today",
             order = "+dataOraTurno",
-            optionalFields = "adStuDes,desAppello,aulaDes,edificioDes,dataInizioApp,dataOraTurno",
+            // tipoAppCod (prova parziale/finale) and dataFineIscr (cancellation deadline)
+            // are optional too — verified live: they only come back when requested.
+            optionalFields = "adStuDes,desAppello,aulaDes,edificioDes,dataInizioApp,dataOraTurno,tipoEsaCod,tipoAppCod,dataFineIscr",
         )
         return withContext(Dispatchers.Default) { dtos.mapNotNull { it.toBookedExam() } }
     }
@@ -112,6 +115,24 @@ class ExamRepositoryImpl @Inject constructor(
             optionalFields = "adStuDes,desAppello,dataOraTurno,notaPubbl,dataRifEsitoStu,pubblId",
         )
         return withContext(Dispatchers.Default) { dtos.mapNotNull { it.toExamResult() } }
+    }
+
+    override suspend fun acknowledgeExamResult(
+        careerId: CareerId,
+        applicationListId: Long,
+        accept: Boolean,
+    ) {
+        val career = requireCareer(careerId)
+        // PUT /prenotazioni/{matId}/{applicationListId}/presaVisione — STUDENT-scoped.
+        sessionManager.esse3().examsCalendar.putAcknowledgmentOfReceiptApplicationList(
+            matId = career.enrollmentTraitId,
+            applicationListId = applicationListId,
+            acknowledgmentOfReceipt = if (accept) {
+                Esse3AcknowledgmentOfReceipt.Accepted
+            } else {
+                Esse3AcknowledgmentOfReceipt.Rejected
+            },
+        )
     }
 
     override suspend fun cancelBooking(careerId: CareerId, key: ExamCallKey, studentId: Long) {

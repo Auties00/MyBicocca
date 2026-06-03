@@ -4,9 +4,7 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -17,24 +15,26 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.CalendarToday
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.outlined.CloudOff
 import androidx.compose.material.icons.outlined.EditNote
 import androidx.compose.material.icons.outlined.Groups
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.Schedule
-import androidx.compose.material.icons.rounded.ArrowBack
 import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.FilledTonalIconButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -43,14 +43,14 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.SyncStatus
+import it.attendance100.mybicocca.domain.model.exam.ExamCall
 import it.attendance100.mybicocca.domain.model.exam.ExamCallDetail
+import it.attendance100.mybicocca.ui.component.exam.ExamDateBadge
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.booking.state.BookingActionState
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.booking.state.BookingSheetStep
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.booking.state.BookingTarget
@@ -62,7 +62,9 @@ import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
-private val FullDateFormat = DateTimeFormatter.ofPattern("EEEE d MMMM yyyy", Locale.ITALIAN)
+private val LongDateFormat = DateTimeFormatter.ofPattern("EEEE d MMMM yyyy", Locale.ITALIAN)
+private val DayOfMonthFormat = DateTimeFormatter.ofPattern("d")
+private val MonthFormat = DateTimeFormatter.ofPattern("MMM", Locale.ITALIAN)
 private val TimeFormat = DateTimeFormatter.ofPattern("HH:mm")
 private val WindowFormat = DateTimeFormatter.ofPattern("d MMM yyyy", Locale.ITALIAN)
 
@@ -116,6 +118,7 @@ fun BookingSheetContent(
     }
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun InfoStep(
     target: BookingTarget,
@@ -144,32 +147,55 @@ private fun InfoStep(
             onBack = onBack,
         )
 
-        val dateLabel = call.callDate?.format(FullDateFormat)
-            ?.replaceFirstChar { it.titlecase(Locale.ITALIAN) }
-        val timeLabel = call.callTime?.format(TimeFormat)
-        InfoRow(
-            icon = Icons.Outlined.CalendarToday,
-            label = "Quando",
-            value = listOfNotNull(dateLabel, timeLabel?.let { "ore $it" })
-                .joinToString(" · ")
-                .ifBlank { "Data da definire" },
-        )
+        CallSummaryCard(call = call)
 
-        call.stateDescription?.takeIf { it.isNotBlank() }?.let {
-            InfoRow(icon = Icons.Outlined.Schedule, label = "Stato", value = it)
+        // Secondary facts grouped in one tonal list card; rows split by inset dividers.
+        val rows = buildList {
+            call.stateDescription?.takeIf { it.isNotBlank() }?.let {
+                add(Triple(Icons.Outlined.Schedule, "Stato", it))
+            }
+            val window = call.enrollmentWindow
+            if (window.opensAt != null || window.closesAt != null) {
+                add(
+                    Triple(
+                        Icons.Outlined.EditNote,
+                        "Iscrizioni",
+                        formatWindow(window.opensAt, window.closesAt),
+                    )
+                )
+            }
+            call.enrolledNumber?.takeIf { it > 0 }?.let { n ->
+                add(Triple(Icons.Outlined.Groups, "Iscritti", "$n studenti"))
+            }
+            (detail as? Loadable.Loaded)?.value?.let { d ->
+                d.bookingTypeDescription?.takeIf { it.isNotBlank() }?.let {
+                    add(Triple(Icons.Outlined.EditNote, "Modalità prenotazione", it))
+                }
+                d.president?.let { p ->
+                    listOfNotNull(p.name, p.surname).joinToString(" ").ifBlank { null }?.let {
+                        add(Triple(Icons.Outlined.Person, "Presidente", it))
+                    }
+                }
+            }
         }
-
-        val window = call.enrollmentWindow
-        if (window.opensAt != null || window.closesAt != null) {
-            InfoRow(
-                icon = Icons.Outlined.EditNote,
-                label = "Iscrizioni",
-                value = formatWindow(window.opensAt, window.closesAt),
-            )
-        }
-
-        call.enrolledNumber?.takeIf { it > 0 }?.let { n ->
-            InfoRow(icon = Icons.Outlined.Groups, label = "Iscritti", value = "$n studenti")
+        if (rows.isNotEmpty()) {
+            Surface(
+                shape = MaterialTheme.shapes.extraLarge,
+                color = scheme.surfaceContainerHigh,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Column(modifier = Modifier.padding(vertical = 4.dp)) {
+                    rows.forEachIndexed { index, (icon, label, value) ->
+                        InfoRow(icon = icon, label = label, value = value)
+                        if (index < rows.lastIndex) {
+                            HorizontalDivider(
+                                color = scheme.outlineVariant,
+                                modifier = Modifier.padding(start = 52.dp, end = 16.dp),
+                            )
+                        }
+                    }
+                }
+            }
         }
 
         when (detail) {
@@ -179,10 +205,12 @@ private fun InfoStep(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.Center,
                 ) {
-                    CircularProgressIndicator(modifier = Modifier.size(28.dp), strokeWidth = 3.dp)
+                    LoadingIndicator(modifier = Modifier.size(40.dp))
                 }
             }
-            is Loadable.Loaded -> DetailExtras(detail.value)
+            is Loadable.Loaded -> detail.value.notes?.takeIf { it.isNotBlank() }?.let { notes ->
+                NotesCard(notes = notes)
+            }
         }
 
         Spacer(Modifier.height(4.dp))
@@ -190,9 +218,13 @@ private fun InfoStep(
         if (target.canBook) {
             Button(
                 onClick = onBook,
-                modifier = Modifier.fillMaxWidth(),
+                shapes = ButtonDefaults.shapes(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = ButtonDefaults.MediumContainerHeight),
+                contentPadding = ButtonDefaults.MediumContentPadding,
             ) {
-                Text("Prenota")
+                Text("Prenota", style = MaterialTheme.typography.titleMedium)
             }
         } else {
             Text(
@@ -204,6 +236,7 @@ private fun InfoStep(
     }
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun ConfirmStep(
     target: BookingTarget,
@@ -221,48 +254,25 @@ private fun ConfirmStep(
             .padding(horizontal = 20.dp)
             .padding(top = 4.dp, bottom = 24.dp)
             .verticalScroll(rememberScrollState()),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            IconButton(onClick = onBack, enabled = !isSubmitting) {
-                Icon(
-                    imageVector = Icons.Rounded.ArrowBack,
-                    contentDescription = "Indietro",
-                )
-            }
-            Spacer(Modifier.width(4.dp))
-            Text(
-                text = "Conferma prenotazione",
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
-            )
-        }
-
-        Text(
-            text = call.activityDescription?.takeIf { it.isNotBlank() } ?: "Esame",
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Medium,
-            color = MaterialTheme.colorScheme.onSurface,
+        SheetHeader(
+            title = "Conferma prenotazione",
+            subtitle = null,
+            onBack = onBack,
+            backEnabled = !isSubmitting,
         )
 
-        val dateLabel = call.callDate?.format(FullDateFormat)
-            ?.replaceFirstChar { it.titlecase(Locale.ITALIAN) }
-        val timeLabel = call.callTime?.format(TimeFormat)
-        val whenLabel = listOfNotNull(dateLabel, timeLabel?.let { "alle $it" }).joinToString(" ")
-        if (whenLabel.isNotBlank()) {
-            Text(
-                text = whenLabel,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
+        CallSummaryCard(
+            call = call,
+            title = call.activityDescription?.takeIf { it.isNotBlank() } ?: "Esame",
+        )
 
         OutlinedTextField(
             value = note,
             onValueChange = { note = it },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 8.dp),
+            modifier = Modifier.fillMaxWidth(),
+            shape = MaterialTheme.shapes.large,
             label = { Text("Nota (facoltativa)") },
             singleLine = false,
             minLines = 2,
@@ -276,21 +286,22 @@ private fun ConfirmStep(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
 
-        Spacer(Modifier.height(4.dp))
-
         Button(
             onClick = { onConfirm(note.ifBlank { null }) },
-            modifier = Modifier.fillMaxWidth(),
+            shapes = ButtonDefaults.shapes(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = ButtonDefaults.MediumContainerHeight),
+            contentPadding = ButtonDefaults.MediumContentPadding,
             enabled = !isSubmitting,
         ) {
             if (isSubmitting) {
-                CircularProgressIndicator(
-                    modifier = Modifier.size(18.dp),
-                    strokeWidth = 2.dp,
+                LoadingIndicator(
+                    modifier = Modifier.size(28.dp),
                     color = MaterialTheme.colorScheme.onPrimary,
                 )
             } else {
-                Text("Conferma")
+                Text("Conferma", style = MaterialTheme.typography.titleMedium)
             }
         }
         if (detail == null) {
@@ -303,22 +314,77 @@ private fun ConfirmStep(
     }
 }
 
+// Hero recap of the chosen call: arch date badge + long date + time.
+@Composable
+private fun CallSummaryCard(
+    call: ExamCall,
+    title: String? = null,
+) {
+    val scheme = MaterialTheme.colorScheme
+    val date = call.callDate
+    Surface(
+        shape = MaterialTheme.shapes.extraLarge,
+        color = scheme.surfaceContainerHigh,
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Row(
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            if (date != null) {
+                ExamDateBadge(
+                    dayOfMonth = date.format(DayOfMonthFormat),
+                    month = date.format(MonthFormat).uppercase(Locale.ITALIAN),
+                    modifier = Modifier.padding(end = 16.dp),
+                )
+            }
+            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                if (title != null) {
+                    Text(
+                        text = title,
+                        style = MaterialTheme.typography.titleMedium,
+                        color = scheme.onSurface,
+                    )
+                }
+                Text(
+                    text = date?.format(LongDateFormat)
+                        ?.replaceFirstChar { it.titlecase(Locale.ITALIAN) }
+                        ?: "Data da definire",
+                    style = MaterialTheme.typography.titleSmall,
+                    color = scheme.onSurface,
+                )
+                call.callTime?.let {
+                    Text(
+                        text = "ore ${it.format(TimeFormat)}",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = scheme.onSurfaceVariant,
+                    )
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun SheetHeader(
     title: String,
     subtitle: String?,
     onBack: () -> Unit,
+    backEnabled: Boolean = true,
 ) {
     Row(verticalAlignment = Alignment.CenterVertically) {
-        IconButton(onClick = onBack) {
-            Icon(imageVector = Icons.Rounded.ArrowBack, contentDescription = "Indietro")
+        FilledTonalIconButton(onClick = onBack, enabled = backEnabled) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
+                contentDescription = "Indietro",
+            )
         }
-        Spacer(Modifier.width(4.dp))
+        Spacer(Modifier.width(8.dp))
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = title,
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.headlineSmallEmphasized,
                 color = MaterialTheme.colorScheme.onSurface,
             )
             if (subtitle != null) {
@@ -333,36 +399,26 @@ private fun SheetHeader(
 }
 
 @Composable
-private fun DetailExtras(detail: ExamCallDetail) {
-    detail.bookingTypeDescription?.takeIf { it.isNotBlank() }?.let {
-        InfoRow(icon = Icons.Outlined.EditNote, label = "Modalità prenotazione", value = it)
-    }
-    detail.president?.let { p ->
-        val full = listOfNotNull(p.name, p.surname).joinToString(" ").ifBlank { null }
-        if (full != null) {
-            InfoRow(icon = Icons.Outlined.Person, label = "Presidente", value = full)
-        }
-    }
-    detail.notes?.takeIf { it.isNotBlank() }?.let { notes ->
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(16.dp))
-                .background(MaterialTheme.colorScheme.surfaceContainerHigh)
-                .padding(16.dp),
+private fun NotesCard(notes: String) {
+    Surface(
+        shape = MaterialTheme.shapes.large,
+        color = MaterialTheme.colorScheme.surfaceContainerHighest,
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp),
         ) {
-            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                Text(
-                    text = "Note",
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                Text(
-                    text = notes,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurface,
-                )
-            }
+            Text(
+                text = "Note",
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Text(
+                text = notes,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
         }
     }
 }
@@ -374,14 +430,16 @@ private fun InfoRow(
     value: String,
 ) {
     Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
         verticalAlignment = Alignment.Top,
     ) {
         Icon(
             imageVector = icon,
             contentDescription = null,
-            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            tint = MaterialTheme.colorScheme.primary,
             modifier = Modifier.size(20.dp),
         )
         Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(2.dp)) {
@@ -399,6 +457,7 @@ private fun InfoRow(
     }
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun ErrorRow(cause: Throwable, onRetry: () -> Unit) {
     Row(
@@ -418,7 +477,7 @@ private fun ErrorRow(cause: Throwable, onRetry: () -> Unit) {
             color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.weight(1f),
         )
-        FilledTonalButton(onClick = onRetry) { Text("Riprova") }
+        FilledTonalButton(onClick = onRetry, shapes = ButtonDefaults.shapes()) { Text("Riprova") }
     }
 }
 

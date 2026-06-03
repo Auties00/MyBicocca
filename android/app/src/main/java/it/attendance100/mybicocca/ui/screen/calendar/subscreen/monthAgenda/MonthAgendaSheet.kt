@@ -1,7 +1,11 @@
 package it.attendance100.mybicocca.ui.screen.calendar.subscreen.monthAgenda
 
+import androidx.compose.animation.animateColor
+import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.animateDp
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.updateTransition
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.Orientation
@@ -19,7 +23,6 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
@@ -237,13 +240,14 @@ private fun AgendaSheetSurface(
                     modifier = Modifier
                         .fillMaxWidth()
                         .verticalScroll(rememberScrollState()),
-                    verticalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalArrangement = Arrangement.spacedBy(2.dp),
                 ) {
-                    events.forEach { e ->
+                    events.forEachIndexed { index, e ->
                         AgendaRow(
                             event = e,
+                            isFirst = index == 0,
+                            isLast = index == events.lastIndex,
                             isInlineExpanded = expandedEventId == e.id,
-                            progressProvider = progressProvider,
                             onClick = {
                                 if (isSheetExpanded) onToggleExpand(e.id)
                                 else onEventClick(e)
@@ -327,30 +331,52 @@ private fun DateLabel(selectedDay: LocalDate, eventCount: Int, isToday: Boolean)
     }
 }
 
+// Segmented M3E group, same scheme as the edifici sheet: 28dp corners cap the group's ends,
+// 6dp where rows touch; the expanded row morphs to a fully rounded standalone card and rises
+// one tonal step. The event accent bar stays as the leading edge.
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun AgendaRow(
     event: CalendarEvent,
+    isFirst: Boolean,
+    isLast: Boolean,
     isInlineExpanded: Boolean,
-    progressProvider: () -> Float,
     onClick: () -> Unit,
 ) {
     val scheme = MaterialTheme.colorScheme
+    val motion = MaterialTheme.motionScheme
     val now by rememberCurrentTime()
     val colors = event.colorsFor(now)
-    val arrowRotation by animateFloatAsState(
-        targetValue = if (isInlineExpanded) 180f else 0f,
-        label = "agenda_row_arrow_rotation",
-    )
-    val tapExpansion = animateFloatAsState(
-        targetValue = if (isInlineExpanded) 1f else 0f,
-        label = "agenda_row_inline_expansion",
-    )
+    val transition = updateTransition(isInlineExpanded, label = "agenda_row")
+    val topCorner by transition.animateDp(
+        transitionSpec = { motion.defaultSpatialSpec() },
+        label = "top_corner",
+    ) { if (it || isFirst) 28.dp else 6.dp }
+    val bottomCorner by transition.animateDp(
+        transitionSpec = { motion.defaultSpatialSpec() },
+        label = "bottom_corner",
+    ) { if (it || isLast) 28.dp else 6.dp }
+    val containerColor by transition.animateColor(
+        transitionSpec = { motion.defaultEffectsSpec() },
+        label = "container_color",
+    ) { if (it) scheme.surfaceContainerHigh else scheme.surfaceContainer }
+    val arrowRotation by transition.animateFloat(
+        transitionSpec = { motion.defaultSpatialSpec() },
+        label = "arrow",
+    ) { if (it) 180f else 0f }
+    val sizeSpec = remember(motion) { motion.defaultSpatialSpec<IntSize>() }
 
     Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(14.dp),
-        color = scheme.surface,
-        tonalElevation = 1.dp,
+        modifier = Modifier
+            .fillMaxWidth()
+            .animateContentSize(animationSpec = sizeSpec),
+        shape = RoundedCornerShape(
+            topStart = topCorner,
+            topEnd = topCorner,
+            bottomStart = bottomCorner,
+            bottomEnd = bottomCorner,
+        ),
+        color = containerColor,
     ) {
         Row(
             modifier = Modifier
@@ -361,7 +387,6 @@ private fun AgendaRow(
                 modifier = Modifier
                     .width(3.dp)
                     .fillMaxHeight()
-                    .heightIn(min = 42.dp)
                     .background(colors.accent),
             )
             Column(modifier = Modifier.weight(1f)) {
@@ -369,7 +394,7 @@ private fun AgendaRow(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clickable(onClick = onClick)
-                        .padding(start = 10.dp, top = 8.dp, bottom = 8.dp, end = 10.dp),
+                        .padding(start = 13.dp, top = 16.dp, bottom = 16.dp, end = 16.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Column(
@@ -378,9 +403,7 @@ private fun AgendaRow(
                     ) {
                         Text(
                             text = event.title,
-                            color = scheme.onSurface,
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.Medium,
+                            style = MaterialTheme.typography.titleMediumEmphasized,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                         )
@@ -390,42 +413,26 @@ private fun AgendaRow(
                         ).joinToString(" · ")
                         Text(
                             text = parts,
+                            style = MaterialTheme.typography.bodySmall,
                             color = scheme.onSurfaceVariant,
-                            fontSize = 10.sp,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                         )
                     }
                     Icon(
                         imageVector = Icons.Outlined.KeyboardArrowDown,
-                        contentDescription = null,
+                        contentDescription = if (isInlineExpanded) "Comprimi" else "Espandi",
                         tint = scheme.onSurfaceVariant,
                         modifier = Modifier
                             .padding(start = 10.dp)
                             .rotate(arrowRotation),
                     )
                 }
-                if (isInlineExpanded || tapExpansion.value > 0.001f) {
-                    Box(
-                        modifier = Modifier
-                            .padding(start = 10.dp, end = 10.dp, bottom = 8.dp)
-                            .graphicsLayer {
-                                alpha = tapExpansion.value * cardExpansionFactor(progressProvider())
-                            }
-                            .layout { measurable, constraints ->
-                                val placeable = measurable.measure(constraints.copy(minHeight = 0))
-                                val expansion =
-                                    tapExpansion.value * cardExpansionFactor(progressProvider())
-                                val h =
-                                    (placeable.height * expansion).coerceAtLeast(0f).roundToInt()
-                                layout(placeable.width, h) { placeable.place(0, 0) }
-                            },
-                    ) {
-                        EventDetailContent(
-                            event = event,
-                            modifier = Modifier.padding(top = 4.dp, bottom = 8.dp),
-                        )
-                    }
+                if (isInlineExpanded) {
+                    EventDetailContent(
+                        event = event,
+                        modifier = Modifier.padding(start = 13.dp, end = 16.dp, bottom = 16.dp),
+                    )
                 }
             }
         }
@@ -434,8 +441,3 @@ private fun AgendaRow(
 
 private fun monthName(monthValue: Int): String =
     Month.of(monthValue).getDisplayName(TextStyle.FULL_STANDALONE, ItalianLocale)
-
-private fun cardExpansionFactor(progress: Float): Float {
-    if (progress <= ExpansionThreshold) return 0f
-    return ((progress - ExpansionThreshold) / (1f - ExpansionThreshold)).coerceIn(0f, 1f)
-}

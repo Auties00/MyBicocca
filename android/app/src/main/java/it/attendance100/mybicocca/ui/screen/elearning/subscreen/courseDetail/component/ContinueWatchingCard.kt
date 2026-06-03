@@ -18,6 +18,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.SubdirectoryArrowRight
+import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -46,7 +47,9 @@ fun ContinueWatchingCard(
     modifier: Modifier = Modifier,
 ) {
     val scheme = MaterialTheme.colorScheme
+    // Clickable Surface overload so the tap ripple is clipped to the card shape.
     Surface(
+        onClick = onResume,
         shape = RoundedCornerShape(32.dp),
         color = scheme.surfaceContainerLowest,
         modifier = modifier.fillMaxWidth(),
@@ -103,7 +106,6 @@ private fun ThumbnailBlock(
             .aspectRatio(16f / 10f)
             .clip(RoundedCornerShape(24.dp))
             .background(scheme.surfaceContainerHighest),
-        contentAlignment = Alignment.Center,
     ) {
         if (thumbnailUrl != null) {
             AsyncImage(
@@ -128,21 +130,6 @@ private fun ThumbnailBlock(
                     .size(120.dp)
                     .graphicsLayer { alpha = 0.10f }
                     .background(scheme.tertiary, OrganicShapes.Puffy),
-            )
-        }
-
-        Box(
-            modifier = Modifier
-                .size(78.dp)
-                .clip(OrganicShapes.Burst)
-                .background(scheme.tertiary),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(
-                imageVector = Icons.Filled.PlayArrow,
-                contentDescription = "Play",
-                tint = Color.White,
-                modifier = Modifier.size(34.dp),
             )
         }
 
@@ -175,34 +162,25 @@ private fun ActionRow(label: String, onResume: () -> Unit, onGoToLesson: () -> U
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         modifier = Modifier.fillMaxWidth(),
     ) {
-        Surface(
+        Button(
+            onClick = onResume,
             shape = CircleShape,
-            color = scheme.primary,
             modifier = Modifier
                 .weight(1f)
-                .height(72.dp)
-                .clickable(onClick = onResume),
+                .height(72.dp),
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center,
-            ) {
-                Icon(
-                    imageVector = Icons.Filled.PlayArrow,
-                    contentDescription = null,
-                    tint = scheme.onPrimary,
-                    modifier = Modifier.size(24.dp),
-                )
-                Spacer(Modifier.size(12.dp))
-                Text(
-                    text = label,
-                    color = scheme.onPrimary,
-                    fontWeight = FontWeight.ExtraBold,
-                    fontSize = 17.sp,
-                    letterSpacing = 0.1.sp,
-                )
-            }
+            Icon(
+                imageVector = Icons.Filled.PlayArrow,
+                contentDescription = null,
+                modifier = Modifier.size(24.dp),
+            )
+            Spacer(Modifier.size(12.dp))
+            Text(
+                text = label,
+                fontWeight = FontWeight.ExtraBold,
+                fontSize = 17.sp,
+                letterSpacing = 0.1.sp,
+            )
         }
         Box(
             modifier = Modifier

@@ -52,7 +52,7 @@ class VideoPlaybackRepositoryImpl @Inject constructor(
 
     override suspend fun thumbnailUrl(cmId: Int): String? {
         val cached = entryIdCacheMutex.withLock { entryIdByCmId[cmId] }
-        if (cached != null) return ElearningKalturaApi.thumbnailUrl(cached)
+        if (cached != null) return ElearningKalturaApi.thumbnailUrl(cached, widthPx = THUMBNAIL_WIDTH_PX)
         val (api, _) = sessionManager.elearning()
         val entryId = when (val response = api.kaltura.resolveKalturaEntryIdForModule(cmId)) {
             is ElearningKalturaEntryIdResponse.Success -> response.kalturaEntryId
@@ -65,7 +65,7 @@ class VideoPlaybackRepositoryImpl @Inject constructor(
             }
         }
         entryIdCacheMutex.withLock { entryIdByCmId[cmId] = entryId }
-        return ElearningKalturaApi.thumbnailUrl(entryId)
+        return ElearningKalturaApi.thumbnailUrl(entryId, widthPx = THUMBNAIL_WIDTH_PX)
     }
 
     override fun observeProgress(accountId: AccountId, cmId: Int): Flow<VideoProgress?> =
@@ -156,5 +156,9 @@ class VideoPlaybackRepositoryImpl @Inject constructor(
 
     private companion object {
         const val COMPLETION_FRACTION = 0.9
+
+        // Without an explicit size Kaltura serves its small default thumb, which gets upscaled
+        // and blurry in the full-width continue-watching card; 1280 covers high-density screens.
+        const val THUMBNAIL_WIDTH_PX = 1280
     }
 }

@@ -15,6 +15,7 @@ import it.attendance100.mybicocca.domain.model.exam.ExamEnrollmentWindow
 import it.attendance100.mybicocca.domain.model.exam.ExamExaminer
 import it.attendance100.mybicocca.domain.model.exam.ExamGrade
 import it.attendance100.mybicocca.domain.model.exam.ExamResult
+import it.attendance100.mybicocca.domain.model.exam.ExamType
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.intOrNull
 import kotlinx.serialization.json.jsonPrimitive
@@ -158,11 +159,17 @@ fun Esse3ExamSessionEnrollment.toBookedExam(): BookedExam? {
         activityDescription = studentActivityDescription?.takeIf { it.isNotBlank() }
             ?: examCallDescription,
         examCallDescription = examCallDescription,
+        // tipoEsaCod — the DTO calls it graduationTypeCode, but it's the call's exam mode
+        examType = graduationTypeCode.toExamType(),
+        callType = callTypeCode.toCallType(),
         examDateTime = shiftDateTime.parseDateTime(),
         classroomDescription = classroomDescription?.takeIf { it.isNotBlank() },
         buildingDescription = buildingDescription?.takeIf { it.isNotBlank() },
+        credits = teachingActivityWeight,
+        examModeDescription = examTypeDescription?.takeIf { it.isNotBlank() },
         position = applicationPosition,
         bookingDate = insertionDate.parseDateTime(),
+        cancellableUntil = enrollmentEndDate.parseDate(),
         studentNote = studentNote?.takeIf { it.isNotBlank() },
     )
 }
@@ -187,4 +194,12 @@ private fun String?.toCallType(): ExamCallType = when (this?.trim()?.uppercase()
     "PF" -> ExamCallType.Final
     "PP" -> ExamCallType.Partial
     else -> ExamCallType.Other
+}
+
+private fun String?.toExamType(): ExamType = when (this?.trim()?.uppercase()) {
+    "S" -> ExamType.Written
+    "O" -> ExamType.Oral
+    "SOC" -> ExamType.WrittenAndOralJoint
+    "SOS" -> ExamType.WrittenAndOralSeparate
+    else -> ExamType.Unknown
 }

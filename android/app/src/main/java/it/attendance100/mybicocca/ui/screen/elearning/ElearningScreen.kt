@@ -18,7 +18,6 @@ import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.CloudOff
 import androidx.compose.material.icons.outlined.FilterAltOff
 import androidx.compose.material.icons.outlined.School
-import androidx.compose.material.icons.outlined.SearchOff
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
@@ -71,7 +70,6 @@ import java.net.UnknownHostException
 @Composable
 fun ElearningScreen(
     modifier: Modifier = Modifier,
-    searchQuery: String = "",
     // True only while this is the visible tab — see CalendarScreen for the pager-cache rationale.
     isActive: Boolean = true,
     onProvideFilterToggle: ((() -> Unit)?) -> Unit = {},
@@ -90,7 +88,6 @@ fun ElearningScreen(
     val coroutineScope = rememberCoroutineScope()
     var addSheetVisible by rememberSaveable { mutableStateOf(false) }
 
-    LaunchedEffect(searchQuery) { viewModel.setSearch(searchQuery) }
     LaunchedEffect(isActive) { if (isActive) onProvideFilterToggle(null) }
 
     LaunchedEffect(viewModel) {
@@ -141,7 +138,6 @@ fun ElearningScreen(
                         }
                         data is Loadable.Loaded -> RefreshableEmpty {
                             EmptyStateForCurrentFilter(
-                                searchActive = searchQuery.isNotBlank(),
                                 filterActive = filter !is CourseFilter.All,
                                 modifier = Modifier.fillMaxSize(),
                             )
@@ -266,17 +262,10 @@ private fun CourseList(
 
 @Composable
 private fun EmptyStateForCurrentFilter(
-    searchActive: Boolean,
     filterActive: Boolean,
     modifier: Modifier = Modifier,
 ) {
     when {
-        searchActive -> EmptyState(
-            icon = Icons.Outlined.SearchOff,
-            title = "Nessun corso trovato",
-            body = "Prova a modificare la ricerca.",
-            modifier = modifier,
-        )
         filterActive -> EmptyState(
             icon = Icons.Outlined.FilterAltOff,
             title = "Nessun corso per questo filtro",

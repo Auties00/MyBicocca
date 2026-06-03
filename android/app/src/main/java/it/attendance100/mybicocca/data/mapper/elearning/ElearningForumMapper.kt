@@ -67,6 +67,10 @@ internal fun ElearningForumDiscussion.toEntity(accountId: AccountId, forumId: In
         isPinned = pinned == true,
         isLocked = locked == true,
         unreadCount = numberOfUnread ?: 0,
+        replyCount = numberOfReplies ?: 0,
+        lastPostAuthorName = modifierFullName ?: authorFullName,
+        messagePreview = message?.toPlainPreview(),
+        hasAttachments = hasAttachment == true,
         canReply = canReply == true,
     )
 
@@ -84,6 +88,10 @@ internal fun DiscussionEntity.toDomain(): Discussion =
         isPinned = isPinned,
         isLocked = isLocked,
         unreadCount = unreadCount,
+        replyCount = replyCount,
+        lastPostAuthorName = lastPostAuthorName,
+        messagePreview = messagePreview,
+        hasAttachments = hasAttachments,
         canReply = canReply,
     )
 
@@ -148,3 +156,22 @@ internal fun PostEntity.toDomain(): Post {
 }
 
 private fun Long?.toMillisOrNullSec(): Long? = this?.takeIf { it > 0 }?.let { it * 1000L }
+
+// Strips the opening post's HTML down to a single-line excerpt at write time, so list rows
+// never pay an Html.fromHtml pass per frame.
+private val HtmlTagRegex = Regex("<[^>]*>")
+private val HtmlEntities = mapOf(
+    "&nbsp;" to " ", "&amp;" to "&", "&lt;" to "<", "&gt;" to ">",
+    "&quot;" to "\"", "&#39;" to "'", "&apos;" to "'", "&egrave;" to "è",
+    "&eacute;" to "é", "&agrave;" to "à", "&ograve;" to "ò", "&ugrave;" to "ù", "&igrave;" to "ì",
+)
+
+private fun String.toPlainPreview(maxLength: Int = 220): String? {
+    var text = replace(HtmlTagRegex, " ")
+    for ((entity, char) in HtmlEntities) text = text.replace(entity, char)
+    val collapsed = text.split(Regex("[\\s\u00A0]+"))
+        .filter { it.isNotEmpty() }
+        .joinToString(" ")
+    if (collapsed.isEmpty()) return null
+    return if (collapsed.length <= maxLength) collapsed else collapsed.take(maxLength - 1) + "…"
+}

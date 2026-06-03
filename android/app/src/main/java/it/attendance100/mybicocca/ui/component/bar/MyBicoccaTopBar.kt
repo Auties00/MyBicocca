@@ -2,7 +2,9 @@ package it.attendance100.mybicocca.ui.component.bar
 
 import androidx.activity.compose.PredictiveBackHandler
 import androidx.compose.animation.Crossfade
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -27,6 +29,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.FilterList
+import androidx.compose.material.icons.outlined.Mic
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.Icon
@@ -37,9 +40,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.FloatState
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.BiasAlignment
 import androidx.compose.ui.Modifier
@@ -47,7 +52,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.GraphicsLayerScope
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -55,8 +59,10 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -64,7 +70,6 @@ import androidx.compose.ui.unit.lerp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import it.attendance100.mybicocca.ui.component.brand.MyBicoccaWordmark
-import it.attendance100.mybicocca.ui.navigation.AppRoute
 import it.attendance100.mybicocca.ui.theme.BicoccaTheme
 import java.io.File
 import kotlin.coroutines.cancellation.CancellationException
@@ -73,33 +78,13 @@ private enum class BarMode { PAGE, SUB_PAGE, SEARCH }
 
 private const val MaxBackProgress = 0.9f
 
-// Pill heights, shared so the shell can compute where the pill's bottom edge (the seam the
-// floating student card straddles) lands. Collapsed is the standard page/sub-page bar; the
-// Profilo sub-page expands to [ProfilePillExpandedHeight]. [PillTopGap] is the constant gap
-// between the status bar and the pill content inside the expanded bar.
+// Pill heights, shared so the shell can compute where the pill's bottom edge lands (the floating
+// student card on Profilo floats just below it). Every page/sub-page — Profilo included — uses the
+// same collapsed bar height. [PillTopGap] is the constant gap between the status bar and the pill.
 internal val PillCollapsedHeight = 56.dp
-internal val ProfilePillExpandedHeight = 176.dp
 internal val PillTopGap = 8.dp
 
-// Material "fade through" handoff for the bar's two end states, driven by the continuous morph
-// progress p (1 = expanded sub-page/search, 0 = collapsed page). Each side fades over its own
-// half of the range and both reach 0 at the midpoint, so the outgoing element is gone before the
-// incoming one appears — they're never composited on top of each other. The visual is symmetric
-// because predictive back can scrub p in either direction.
-private fun fadeThroughExpanded(p: Float): Float = ((p - 0.5f) / 0.5f).coerceIn(0f, 1f)
-
-private fun fadeThroughCollapsed(p: Float): Float = ((0.5f - p) / 0.5f).coerceIn(0f, 1f)
-
-// The scale half of a fade-through: an element grows from minScale to 1 as it fades in (and
-// shrinks back as it fades out), so the swap reads as a transformation rather than a blink.
-// 0.92 is the Material spec default for text/large surfaces; icons pass a smaller value for a
-// punchier morph since they don't also travel in position.
-private fun GraphicsLayerScope.fadeThroughLayer(alpha: Float, minScale: Float = 0.92f) {
-    this.alpha = alpha
-    val scale = minScale + (1f - minScale) * alpha
-    scaleX = scale
-    scaleY = scale
-}
+// Fade-through morph helpers live in BarMorph.kt (same package) — shared with the search overlay.
 
 @Composable
 private fun MorphIcon(
@@ -136,6 +121,11 @@ fun MyBicoccaTopBar(
     // mid-morph, so without this the action would vanish instantly instead of morphing.
     trailingActions: (@Composable () -> Unit)? = null,
     globalAlpha: Float = 1f,
+    // True while the active sub-page draws its content behind the bar and hasn't published a
+    // runtime title yet: the expanded background melts away so the page shows through, with
+    // only the back/action buttons floating on top. The pill background always returns as p
+    // collapses, so the morph back to a tab page is unaffected.
+    transparentBackground: Boolean = false,
 ) {
     val scheme = MaterialTheme.colorScheme
     val focusRequester = remember { FocusRequester() }
@@ -143,9 +133,11 @@ fun MyBicoccaTopBar(
     val focusManager = LocalFocusManager.current
 
     val isSubPage = canNavigateBack && subPageTitle != null
+    // Sub-page outranks search: a result can push a sub-page while search stays alive
+    // underneath, so popping back lands on the still-open search view.
     val mode = when {
-        searchState.active -> BarMode.SEARCH
         isSubPage -> BarMode.SUB_PAGE
+        searchState.active -> BarMode.SEARCH
         else -> BarMode.PAGE
     }
 
@@ -168,7 +160,9 @@ fun MyBicoccaTopBar(
         }
     }
 
-    PredictiveBackHandler(enabled = searchState.active) { backProgress ->
+    // Disabled while a sub-page sits on top of search — back must pop the page (NavDisplay's
+    // own predictive back), not scrub the search collapse underneath it.
+    PredictiveBackHandler(enabled = searchState.active && !isSubPage) { backProgress ->
         try {
             keyboardController?.hide()
             backProgress.collect { event ->
@@ -188,25 +182,24 @@ fun MyBicoccaTopBar(
     // The chrome morphs on whichever driver is further along; the two never overlap in practice.
     val p = maxOf(navProgress.floatValue, searchProgress.value)
     val cornerRadius = lerp(32.dp, 0.dp, p)
-    // Retain the title of the sub-page we expanded to: on back navigation subPageTitle flips to
-    // null immediately while navProgress is still morphing 1 → 0, so without remembering it the
-    // Profilo pill would snap from 176.dp straight to 56.dp instead of collapsing with the gesture.
-    // Height tracks navProgress (not p) so search — which can only open from a page — can never
-    // expand the pill via a stale remembered title.
-    val expandedSubPageTitle = remember { mutableStateOf(subPageTitle) }
-    if (subPageTitle != null) expandedSubPageTitle.value = subPageTitle
-    val pillHeight =
-        if ((subPageTitle ?: expandedSubPageTitle.value) == AppRoute.Profile.appTitle.title) {
-            lerp(PillCollapsedHeight, ProfilePillExpandedHeight, navProgress.floatValue)
-        } else {
-            PillCollapsedHeight
-        }
+    // The bar height is constant; only the chrome (corners, padding, title) morphs with p.
+    val pillHeight = PillCollapsedHeight
 
     val outerHorizontalPadding = lerp(20.dp, 0.dp, p)
     val outerTopPadding = lerp(8.dp, 0.dp, p)
+    // Alpha-only fade (same hue) so the bg dissolves in place when the page scrolls back to
+    // the top, and the runtime-title handoff fades it back in over the scrolled content.
+    val expandedColor by animateColorAsState(
+        targetValue = if (transparentBackground) {
+            scheme.surfaceContainer.copy(alpha = 0f)
+        } else {
+            scheme.surfaceContainer
+        },
+        label = "bar-expanded-color",
+    )
     val containerColor = androidx.compose.ui.graphics.lerp(
         scheme.surfaceContainerHigh,
-        scheme.surfaceContainer,
+        expandedColor,
         p,
     )
 
@@ -219,7 +212,15 @@ fun MyBicoccaTopBar(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .graphicsLayer { alpha = globalAlpha },
+            .graphicsLayer {
+                alpha = globalAlpha
+                // Alpha 0 alone keeps the bar hit-testable, and Scaffold layers it above the
+                // page — on the immersive video route the invisible bar swallowed the taps
+                // meant for the player chrome. Shifting the layer off-screen removes it from
+                // hit testing while the measured height (and thus the scaffold top inset
+                // other sub-pages rely on mid-transition) stays stable.
+                if (globalAlpha == 0f) translationY = -size.height
+            },
     ) {
         Spacer(Modifier.height(outerStatusBarHeight)) // System bar padding
         Spacer(Modifier.height(outerTopPadding)) // Extra top padding
@@ -289,9 +290,13 @@ fun MyBicoccaTopBar(
 
                             BarMode.SEARCH -> SearchFieldContent(
                                 query = searchState.query,
-                                placeholder = searchState.placeholder,
                                 onQueryChange = searchState.onQueryChange,
-                                onImeDone = ::closeSearch,
+                                // M3 search view: submitting commits the query and dismisses
+                                // the keyboard but keeps the results visible.
+                                onImeSearch = {
+                                    searchState.onSubmit()
+                                    keyboardController?.hide()
+                                },
                                 focusRequester = focusRequester,
                                 alpha = fadeThroughExpanded(p),
                             )
@@ -306,11 +311,18 @@ fun MyBicoccaTopBar(
                         onFilterToggle = onFilterToggle,
                         filterActive = filterActive,
                         trailingActions = trailingActions,
-                        onClearSearch = {
-                            if (searchState.query.isEmpty()) closeSearch()
-                            else searchState.onQueryChange("")
+                        searchQueryEmpty = searchState.query.isEmpty(),
+                        dictating = searchState.dictating,
+                        onMicClick = searchState.onMicClick,
+                        onClearText = {
+                            searchState.onQueryChange("")
+                            // Clearing implies retyping: restore focus and bring the keyboard
+                            // back if it was dismissed by scrolling or submitting. Both calls
+                            // are no-ops when the field is already focused with the IME up.
+                            focusRequester.requestFocus()
+                            keyboardController?.show()
                         },
-                        Modifier.padding(top = 7.dp)
+                        modifier = Modifier.padding(top = 7.dp)
                     )
                 }
             }
@@ -397,13 +409,19 @@ private fun SubPageTitleContent(title: String, alpha: Float, modifier: Modifier 
 @Composable
 private fun SearchFieldContent(
     query: String,
-    placeholder: String,
     onQueryChange: (String) -> Unit,
-    onImeDone: () -> Unit,
+    onImeSearch: () -> Unit,
     focusRequester: FocusRequester,
     alpha: Float,
 ) {
     val scheme = MaterialTheme.colorScheme
+    // Local TextFieldValue mirror of the hoisted query string: programmatic writes (history
+    // insert, dictation transcripts) land with the cursor at the end, ready for typing;
+    // user edits pass through with their own selection untouched.
+    var fieldValue by remember { mutableStateOf(TextFieldValue(query, TextRange(query.length))) }
+    if (fieldValue.text != query) {
+        fieldValue = TextFieldValue(query, TextRange(query.length))
+    }
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -412,14 +430,17 @@ private fun SearchFieldContent(
     ) {
         if (query.isEmpty()) {
             Text(
-                text = placeholder,
+                text = SearchPlaceholder,
                 color = scheme.onSurfaceVariant,
                 fontSize = 16.sp,
             )
         }
         BasicTextField(
-            value = query,
-            onValueChange = onQueryChange,
+            value = fieldValue,
+            onValueChange = {
+                fieldValue = it
+                if (it.text != query) onQueryChange(it.text)
+            },
             singleLine = true,
             cursorBrush = SolidColor(scheme.primary),
             textStyle = MaterialTheme.typography.titleMedium.copy(
@@ -427,13 +448,16 @@ private fun SearchFieldContent(
                 fontSize = 16.sp,
             ),
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-            keyboardActions = KeyboardActions(onSearch = { onImeDone() }),
+            keyboardActions = KeyboardActions(onSearch = { onImeSearch() }),
             modifier = Modifier
                 .fillMaxWidth()
                 .focusRequester(focusRequester),
         )
     }
 }
+
+// One app-wide placeholder — search is unified, not scoped to the visible tab.
+private const val SearchPlaceholder = "Cerca in MyBicocca"
 
 @Composable
 private fun TrailingSlot(
@@ -444,7 +468,10 @@ private fun TrailingSlot(
     onFilterToggle: (() -> Unit)?,
     filterActive: Boolean,
     trailingActions: (@Composable () -> Unit)?,
-    onClearSearch: () -> Unit,
+    searchQueryEmpty: Boolean,
+    dictating: Boolean,
+    onMicClick: () -> Unit,
+    onClearText: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val scheme = MaterialTheme.colorScheme
@@ -488,13 +515,32 @@ private fun TrailingSlot(
                 else -> Unit
             }
 
-            BarMode.SEARCH -> IconButton(onClick = onClearSearch, modifier = Modifier.size(40.dp)) {
-                MorphIcon(
-                    imageVector = Icons.Outlined.Close,
-                    contentDescription = "Chiudi ricerca",
-                    tint = scheme.onSurface,
-                    alpha = fadeThroughExpanded(p),
+            // M3 search view: mic while the field is empty (dictation entry point), clear once
+            // there's text. Same single-hit-target + dual-glyph handoff as the leading slot.
+            BarMode.SEARCH -> {
+                val micAlpha by animateFloatAsState(
+                    targetValue = if (searchQueryEmpty) 1f else 0f,
+                    label = "search-mic-clear",
                 )
+                IconButton(
+                    onClick = { if (searchQueryEmpty) onMicClick() else onClearText() },
+                    modifier = Modifier.size(40.dp),
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        MorphIcon(
+                            imageVector = Icons.Outlined.Mic,
+                            contentDescription = if (searchQueryEmpty) "Ricerca vocale" else null,
+                            tint = if (dictating) scheme.primary else scheme.onSurface,
+                            alpha = fadeThroughExpanded(p) * micAlpha,
+                        )
+                        MorphIcon(
+                            imageVector = Icons.Outlined.Close,
+                            contentDescription = if (searchQueryEmpty) null else "Cancella testo",
+                            tint = scheme.onSurface,
+                            alpha = fadeThroughExpanded(p) * (1f - micAlpha),
+                        )
+                    }
+                }
             }
         }
     }
@@ -549,9 +595,11 @@ private fun MyBicoccaTopBarPreview() {
             searchState = TopBarSearchState(
                 query = "",
                 active = false,
-                placeholder = "Cerca",
+                dictating = false,
                 onQueryChange = {},
                 onActiveChange = {},
+                onMicClick = {},
+                onSubmit = {},
             ),
             onProfileClick = {},
             onNavigateBack = {},
@@ -572,9 +620,11 @@ private fun MyBicoccaTopBarSubPagePreview() {
             searchState = TopBarSearchState(
                 query = "",
                 active = false,
-                placeholder = "Cerca",
+                dictating = false,
                 onQueryChange = {},
                 onActiveChange = {},
+                onMicClick = {},
+                onSubmit = {},
             ),
             onProfileClick = {},
             onNavigateBack = {},
@@ -595,9 +645,11 @@ private fun MyBicoccaTopBarSearchPreview() {
             searchState = TopBarSearchState(
                 query = "Sistemi",
                 active = true,
-                placeholder = "Cerca",
+                dictating = false,
                 onQueryChange = {},
                 onActiveChange = {},
+                onMicClick = {},
+                onSubmit = {},
             ),
             onProfileClick = {},
             onNavigateBack = {},

@@ -1,0 +1,146 @@
+package it.attendance100.mybicocca.data.remote.elearning.dto
+
+import io.ktor.http.ParametersBuilder
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+
+/**
+ * Request to list the modules of a course filtered by module type.
+ *
+ * Uses the same `core_course_get_contents` web service function as
+ * [ElearningGetCourseContentsRequest] but applies the `modname` option so only
+ * modules of the requested type are returned, and `excludecontents` so file
+ * listings are omitted. This keeps the response small when the caller only
+ * needs module identities (e.g. to discover attendance modules).
+ *
+ * @property courseId The course ID to inspect.
+ * @property moduleName The module type to filter by (e.g. "attendance").
+ */
+class ElearningGetFilteredCourseModulesRequest(
+    private val courseId: Int,
+    private val moduleName: String
+) : ElearningRequest<ElearningGetCourseContentsResponse> {
+    override val functionName: String
+        get() = "core_course_get_contents"
+
+    override fun writeAdditionalData(formData: ParametersBuilder) {
+        formData.append("courseid", courseId.toString())
+        formData.append("options[0][name]", "modname")
+        formData.append("options[0][value]", moduleName)
+        formData.append("options[1][name]", "excludecontents")
+        formData.append("options[1][value]", "1")
+    }
+}
+
+/**
+ * Request to render a mobile view of an activity through the Moodle mobile
+ * site-plugins bridge (`tool_mobile_get_content`).
+ *
+ * This is how the official Moodle app displays activities whose module type
+ * has no dedicated web service functions exposed (e.g. `mod_attendance` on
+ * the UniMiB instance). The server executes the plugin's mobile handler and
+ * returns the rendered Ionic templates.
+ *
+ * @property component The plugin component (e.g. "mod_attendance").
+ * @property method The mobile handler method (e.g. "mobile_view_activity").
+ * @property args Name-value arguments forwarded to the handler (e.g. cmid, courseid).
+ */
+class ElearningGetMobileContentRequest(
+    private val component: String,
+    private val method: String,
+    private val args: Map<String, String>
+) : ElearningRequest<ElearningGetMobileContentResponse> {
+    override val functionName: String
+        get() = "tool_mobile_get_content"
+
+    override fun writeAdditionalData(formData: ParametersBuilder) {
+        formData.append("component", component)
+        formData.append("method", method)
+        args.entries.forEachIndexed { index, (name, value) ->
+            formData.append("args[$index][name]", name)
+            formData.append("args[$index][value]", value)
+        }
+    }
+}
+
+/**
+ * Response of [ElearningGetMobileContentRequest], mirroring the structure
+ * returned by `tool_mobile_get_content`.
+ *
+ * @property templates The rendered Ionic templates, keyed by template ID.
+ * @property javascript JavaScript code to inject in the mobile app (unused here).
+ * @property otherData Additional key-value data exposed to the template.
+ * @property disabled Whether the plugin handler reported itself as disabled.
+ */
+@Serializable
+data class ElearningGetMobileContentResponse(
+    @SerialName("templates")
+    val templates: List<ElearningMobileContentTemplate> = emptyList(),
+
+    @SerialName("javascript")
+    val javascript: String = "",
+
+    @SerialName("otherdata")
+    val otherData: List<ElearningMobileContentOtherData> = emptyList(),
+
+    @SerialName("disabled")
+    val disabled: Boolean = false
+) : ElearningResponse
+
+/**
+ * A single rendered mobile template.
+ *
+ * @property id The template identifier (usually "main").
+ * @property html The rendered Ionic/Angular HTML markup.
+ */
+@Serializable
+data class ElearningMobileContentTemplate(
+    @SerialName("id")
+    val id: String,
+
+    @SerialName("html")
+    val html: String
+)
+
+/**
+ * A key-value entry from the `otherdata` section of a mobile content response.
+ *
+ * @property name The entry name.
+ * @property value The entry value.
+ */
+@Serializable
+data class ElearningMobileContentOtherData(
+    @SerialName("name")
+    val name: String,
+
+    @SerialName("value")
+    val value: String
+)
+
+/**
+ * Attendance statistics of the current user for a single attendance module,
+ * parsed from the `mod_attendance` mobile view template.
+ *
+ * "Taken" refers to the sessions whose attendance has already been recorded
+ * by the teacher; "all" includes sessions not yet recorded. Percentages are
+ * in the 0.0 to 100.0 range.
+ *
+ * @property attendedSessions The number of sessions the user attended.
+ * @property takenSessionsPercentage The attendance percentage over the recorded sessions.
+ * @property totalSessions The total number of sessions of the module.
+ * @property allSessionsPercentage The attendance percentage over all sessions.
+ */
+@Serializable
+data class ElearningAttendanceSummary(
+    @SerialName("attendedSessions")
+    val attendedSessions: Int?,
+
+    @SerialName("takenSessionsPercentage")
+    val takenSessionsPercentage: Double?,
+
+    @SerialName("totalSessions")
+    val totalSessions: Int?,
+
+    @SerialName("allSessionsPercentage")
+    val allSessionsPercentage: Double?
+)

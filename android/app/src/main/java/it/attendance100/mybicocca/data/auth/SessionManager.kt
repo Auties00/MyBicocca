@@ -62,7 +62,7 @@ class SessionManager @Inject constructor(
     private val elearningApiFactory: ElearningApiFactory,
     private val authMutexes: AccountKeyedMutexes,
     private val careerReconciler: CareerReconciler,
-    private val accountWipeService: AccountWipeService,
+    private val accountWiper: AccountWiper,
     @ApplicationScope private val scope: CoroutineScope,
 ) {
 
@@ -207,7 +207,7 @@ class SessionManager @Inject constructor(
             }
             credentialsStore.delete(accountId)
             sessionCache.delete(accountId)
-            accountWipeService.wipe(accountId)
+            accountWiper.wipe(accountId)
             accountDao.delete(accountId.value)
             val active = activeAccountStore.activeAccountId.first()
             if (active == accountId) {

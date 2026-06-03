@@ -18,6 +18,7 @@ import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LoadingIndicator
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
@@ -42,6 +43,8 @@ import it.attendance100.mybicocca.ui.screen.registry.subscreen.bookableExams.Boo
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.bookableExams.BookableExamsViewModel
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.booked.component.BookedExamCard
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.booked.state.BookedEvent
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.booked.state.CancelActionState
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.bookedExamDetail.BookedExamDetailSheet
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.booking.BookingSheetViewModel
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.booking.state.BookingSheetEvent
 import kotlinx.coroutines.delay
@@ -51,28 +54,33 @@ import java.io.IOException
 import java.net.ConnectException
 import java.net.SocketTimeoutException
 import java.net.UnknownHostException
+import java.time.LocalDate
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun BookedExamsScreen(
     bookedViewModel: BookedExamsViewModel,
     bookableViewModel: BookableExamsViewModel,
-    onOpenExam: (courseOfStudyId: Long, activityId: Long, callId: Int) -> Unit,
     modifier: Modifier = Modifier,
     sheetViewModel: BookingSheetViewModel = hiltViewModel(),
 ) {
     val bookingsData by bookedViewModel.bookings.collectAsStateWithLifecycle()
     val bookedSync by bookedViewModel.syncStatus.collectAsStateWithLifecycle()
+    val cancelAction by bookedViewModel.cancelAction.collectAsStateWithLifecycle()
 
     val snackbar = LocalAppSnackbarController.current
     val scope = rememberCoroutineScope()
     var showBookable by rememberSaveable { mutableStateOf(false) }
+    // Tapping a card opens its detail sheet; identified by identityKey so the sheet
+    // survives refreshes and disappears with the booking once a cancellation lands.
+    var detailKey by rememberSaveable { mutableStateOf<String?>(null) }
 
     LaunchedEffect(bookedViewModel) {
         bookedViewModel.events.collectLatest { event ->
             when (event) {
-                BookedEvent.CancellationSucceeded -> scope.launch {
-                    snackbar.showInfo("Prenotazione annullata")
+                BookedEvent.CancellationSucceeded -> {
+                    detailKey = null
+                    scope.launch { snackbar.showInfo("Prenotazione annullata") }
                 }
                 is BookedEvent.CancellationFailed -> scope.launch {
                     snackbar.showError("Annullamento non riuscito", event.cause)
@@ -144,29 +152,16 @@ fun BookedExamsScreen(
                                 body = "Quando prenoti un appello lo trovi qui. Usa il pulsante in basso per prenotarne uno.",
                             )
                         }
-                        // Display list of booked exams
                         else -> LazyColumn(
                             modifier = Modifier.fillMaxSize(),
-                            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 96.dp),
+                            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 120.dp),
                             verticalArrangement = Arrangement.spacedBy(12.dp),
                         ) {
-                            item(key = "header_title") {
-                                Text(
-                                    text = "Iscrizioni Appelli",
-                                    style = androidx.compose.material3.MaterialTheme.typography.titleLarge,
-                                    modifier = Modifier.padding(bottom = 8.dp, start = 4.dp)
-                                )
-                            }
                             items(items = booked, key = { it.identityKey() }) { booking ->
                                 BookedExamCard(
                                     booking = booking,
-                                    onClick = {
-                                        onOpenExam(
-                                            booking.key.courseOfStudyId,
-                                            booking.key.activityId,
-                                            booking.key.callId
-                                        )
-                                    }
+                                    onClick = { detailKey = booking.identityKey() },
+                                    modifier = Modifier.animateItem(),
                                 )
                             }
                         }
@@ -178,13 +173,36 @@ fun BookedExamsScreen(
         if (bookingsData is Loadable.Loaded) {
             ExtendedFloatingActionButton(
                 onClick = { showBookable = true },
-                icon = { Icon(Icons.Outlined.EditCalendar, contentDescription = null) },
+                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                icon = {
+                    Icon(
+                        imageVector = Icons.Outlined.EditCalendar,
+                        contentDescription = null,
+                    )
+                },
                 text = { Text("Prenota un esame") },
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
                     .padding(16.dp),
             )
         }
+    }
+
+    // The sheet's booking is re-derived from the live list: a refresh updates it in
+    // place, and the optimistic removal after a cancellation dismisses it.
+    val detailBooking = detailKey?.let { key ->
+        (bookingsData as? Loadable.Loaded)?.value?.firstOrNull { it.identityKey() == key }
+    }
+    if (detailBooking != null) {
+        val today = remember { LocalDate.now() }
+        BookedExamDetailSheet(
+            booking = detailBooking,
+            today = today,
+            isCancelling = (cancelAction as? CancelActionState.InProgress)?.key == detailBooking.identityKey(),
+            onCancel = bookedViewModel::cancel,
+            onDismiss = { detailKey = null },
+        )
     }
 
     if (showBookable) {

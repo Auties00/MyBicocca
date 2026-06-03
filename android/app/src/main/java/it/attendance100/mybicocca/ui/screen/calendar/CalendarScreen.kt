@@ -22,7 +22,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.FloatState
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -30,6 +29,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.State
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
@@ -56,15 +56,14 @@ import it.attendance100.mybicocca.ui.screen.calendar.theme.ProvideEventPalette
 @Composable
 fun CalendarScreen(
     modifier: Modifier = Modifier,
-    searchQuery: String = "",
     // True only while this is the visible tab. The shell keeps all tabs composed (pager cache),
     // so the filter chrome must be (re)claimed on activation rather than once on composition.
     isActive: Boolean = true,
-    // Shell's TabRoot<->sub-page transition fraction (0 = TabRoot fully on top). The agenda/FAB
-    // popups live in their own window, which neither the pager nor a covering sub-page can clip;
-    // gating them on this hides them the instant a sub-page push/pop begins. null = no shell
-    // (preview) -> treated as fully settled.
-    navProgress: FloatState? = null,
+    // How far the tab is covered by shell-level chrome (max of the sub-page transition and the
+    // search overlay open fraction; 0 = TabRoot fully on top). The agenda/FAB popups live in
+    // their own window, which no in-content cover can clip; gating them on this hides them the
+    // instant a sub-page push/pop or a search open begins. null = no shell (preview) -> settled.
+    coverProgress: State<Float>? = null,
     onProvideFilterToggle: ((() -> Unit)?) -> Unit = {},
     bottomNavBarPadding: PaddingValues,
     viewModel: CalendarViewModel = hiltViewModel(),
@@ -142,14 +141,10 @@ fun CalendarScreen(
                     label = "calendar_view_transition",
                     modifier = Modifier.fillMaxSize()
                 ) { mode ->
-                    val filteredEventsByDay = remember(searchQuery, eventsByDay) {
-                        if (searchQuery.isBlank()) eventsByDay
-                        else eventsByDay.mapValues { it.value.applySearch(searchQuery) }
-                    }
                     when (mode) {
                         CalendarViewMode.DAY -> DayView(
                             selectedDay = selectedDay,
-                            eventsByDay = filteredEventsByDay,
+                            eventsByDay = eventsByDay,
                             onSelectDay = viewModel::selectDay,
                             onEventClick = { viewModel.openEventDetail(it.id) },
                             modifier = Modifier.fillMaxSize(),
@@ -158,7 +153,7 @@ fun CalendarScreen(
                         )
                         CalendarViewMode.WEEK -> WeekView(
                             weekStart = weekStart,
-                            eventsByDay = filteredEventsByDay,
+                            eventsByDay = eventsByDay,
                             onSelectDay = viewModel::selectDay,
                             onEventClick = { viewModel.openEventDetail(it.id) },
                             modifier = Modifier.fillMaxSize(),
@@ -168,7 +163,7 @@ fun CalendarScreen(
                         CalendarViewMode.MONTH -> MonthView(
                             yearMonth = selectedMonth,
                             selectedDay = selectedDay,
-                            eventsByDay = filteredEventsByDay,
+                            eventsByDay = eventsByDay,
                             onSelectDay = viewModel::selectDay,
                             onSelectMonth = viewModel::selectMonth,
                             onEventClick = { viewModel.openEventDetail(it.id) },
@@ -185,12 +180,12 @@ fun CalendarScreen(
             .calculateBottomPadding() > 0.dp
 
         // The agenda sheet and the FAB both draw in their own Popup window, which neither the
-        // pager nor a covering sub-page can clip — so they bleed on top of other content unless
-        // we hide them ourselves. Two conditions must hold: this is the visible tab (isActive —
-        // the shell keeps every tab composed) AND TabRoot is fully on top, i.e. no sub-page
-        // push/pop is in flight (navProgress ~ 0). The latter catches the transition window
-        // before NavDisplay disposes TabRoot, in both directions and during predictive back.
-        val chromeVisible = isActive && (navProgress?.floatValue ?: 0f) < 0.01f
+        // pager nor a covering sub-page/search overlay can clip — so they bleed on top of other
+        // content unless we hide them ourselves. Two conditions must hold: this is the visible
+        // tab (isActive — the shell keeps every tab composed) AND TabRoot is fully on top, i.e.
+        // no sub-page push/pop or search open is in flight (coverProgress ~ 0). The latter
+        // catches the transition window in both directions and during predictive back.
+        val chromeVisible = isActive && (coverProgress?.value ?: 0f) < 0.01f
 
         if (chromeVisible && agendaPresence > 0.01f && !keyboardOpen) {
             MonthAgendaSheet(
@@ -228,16 +223,5 @@ fun CalendarScreen(
             EventDetailSheet(event = selected, onDismiss = viewModel::closeEventDetail)
         }
     }
-    }
-}
-
-private fun List<CalendarEvent>.applySearch(query: String): List<CalendarEvent> {
-    if (query.isBlank()) return this
-    val needle = query.trim().lowercase()
-    return filter { e ->
-        e.title.lowercase().contains(needle) ||
-            (e.shortLabel?.lowercase()?.contains(needle) == true) ||
-            (e.location?.room?.lowercase()?.contains(needle) == true) ||
-            (e.location?.building?.lowercase()?.contains(needle) == true)
     }
 }

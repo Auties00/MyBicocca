@@ -21,6 +21,12 @@ sealed interface AppRoute : NavKey {
 
     val appTitle: AppTitle
 
+    // True when the destination draws its content edge-to-edge behind the global top bar:
+    // the bar keeps a see-through background until the page publishes a runtime title, so
+    // the page's own hero scrolls visibly through the bar region instead of being clipped
+    // at its bottom edge.
+    val extendsBehindTopBar: Boolean get() = false
+
     // Idle destination — the active tab content renders behind the NavHost when this entry
     // is on top of the back stack. Switching tabs pops back to here.
     @Serializable data object TabRoot : AppRoute {
@@ -70,14 +76,6 @@ sealed interface AppRoute : NavKey {
         override val appTitle get() = AppTitle.SubPage("Dettaglio Tassa")
     }
 
-    @Serializable
-    data class BookedExamDetail(
-        val courseOfStudyId: Long,
-        val activityId: Long,
-        val callId: Int
-    ) : AppRoute {
-        override val appTitle get() = AppTitle.SubPage("Dettaglio Esame")
-    }
     @Serializable data object StudyPlan : AppRoute {
         override val appTitle = AppTitle.SubPage("Piano di Studi")
     }
@@ -93,7 +91,7 @@ sealed interface AppRoute : NavKey {
         override val appTitle get() = AppTitle.SubPage("Carriera")
     }
     @Serializable data object ExamResults : AppRoute {
-        override val appTitle = AppTitle.SubPage("Bacheca Esiti")
+        override val appTitle = AppTitle.SubPage("Esiti")
     }
     @Serializable data object Attendance : AppRoute {
         override val appTitle = AppTitle.SubPage("Presenze")
@@ -103,6 +101,20 @@ sealed interface AppRoute : NavKey {
     }
     @Serializable data object Questionnaires : AppRoute {
         override val appTitle = AppTitle.SubPage("Questionari")
+    }
+    // Carries the full compilation target so the screen can start the server-side
+    // session without re-fetching the activity's questionnaire config.
+    @Serializable data class QuestionnaireCompilation(
+        val activityChoiceId: Long,
+        val questionnaireId: Int,
+        val questionnaireConfigId: Int,
+        val anonymous: Boolean,
+        val tags: String,
+        val activityName: String,
+        val lecturerName: String? = null,
+        val partitionName: String? = null,
+    ) : AppRoute {
+        override val appTitle get() = AppTitle.SubPage("Valutazione")
     }
     @Serializable data object DegreeAward : AppRoute {
         override val appTitle = AppTitle.SubPage("Conseguimento Titolo")
@@ -118,6 +130,7 @@ sealed interface AppRoute : NavKey {
     // Empty: CourseDetailScreen overrides the title once the hero scrolls past.
     @Serializable data class CourseDetail(val courseId: Int) : AppRoute {
         override val appTitle get() = AppTitle.SubPage("")
+        override val extendsBehindTopBar get() = true
     }
     @Serializable data class QuizDetail(val quizId: Int, val courseId: Int) : AppRoute {
         override val appTitle get() = AppTitle.SubPage("Quiz")

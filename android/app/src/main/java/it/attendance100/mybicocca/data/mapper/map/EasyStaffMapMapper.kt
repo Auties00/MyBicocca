@@ -3,16 +3,30 @@ package it.attendance100.mybicocca.data.mapper.map
 import it.attendance100.mybicocca.data.remote.easystaff.dto.Esse3RoomEquipment
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffRoom
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffRoomDetails
+import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffRoomOccupationEvent
 import it.attendance100.mybicocca.domain.model.map.BuildingCode
 import it.attendance100.mybicocca.domain.model.map.MapRoom
 import it.attendance100.mybicocca.domain.model.map.MapRoomDetail
 import it.attendance100.mybicocca.domain.model.map.RoomCode
+import it.attendance100.mybicocca.domain.model.map.RoomScheduleEntry
 
-internal fun EasyStaffRoom.toDomain(buildingCode: BuildingCode): MapRoom = MapRoom(
+internal fun EasyStaffRoom.toDomain(buildingCode: BuildingCode, floor: Int?): MapRoom = MapRoom(
     code = RoomCode(code),
     buildingCode = buildingCode,
     name = name,
     capacity = capacity,
+    floor = floor,
+)
+
+internal fun EasyStaffRoomOccupationEvent.toDomain(): RoomScheduleEntry = RoomScheduleEntry(
+    roomCode = RoomCode(roomCode),
+    title = title,
+    kind = eventType.takeIf { it.isNotBlank() },
+    teacher = teachersList.firstOrNull()
+        ?.let { "${it.name} ${it.surname}".trim() }
+        ?.takeIf { it.isNotBlank() },
+    start = startDateTime,
+    end = endDateTime,
 )
 
 internal fun EasyStaffRoomDetails.toDomain(): MapRoomDetail = MapRoomDetail(

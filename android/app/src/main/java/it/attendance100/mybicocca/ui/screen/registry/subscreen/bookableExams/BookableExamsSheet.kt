@@ -4,10 +4,8 @@ import androidx.activity.compose.PredictiveBackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.ContentTransform
 import androidx.compose.animation.SizeTransform
-import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.SeekableTransitionState
 import androidx.compose.animation.core.rememberTransition
-import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
@@ -28,10 +26,11 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.CloudOff
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.SheetValue
@@ -47,7 +46,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -75,7 +73,7 @@ import java.time.LocalDate
 // drilling in. `bookedKeys` hides already-booked exams. Confirming keeps the sheet
 // open with a spinner; the host (which outlives this composable) collects the
 // booking result and closes the sheet + shows a snackbar, on success and failure.
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun BookableExamsSheet(
     bookableViewModel: BookableExamsViewModel,
@@ -121,12 +119,11 @@ fun BookableExamsSheet(
     val stepState = remember { SeekableTransitionState<BookingTarget?>(null) }
     val stepTransition = rememberTransition(stepState, label = "bookableStep")
 
+    // Expressive spring motion for the list <-> detail step change.
+    val motion = MaterialTheme.motionScheme
     androidx.compose.runtime.LaunchedEffect(sheetTarget) {
         if (stepState.targetState != sheetTarget) {
-            stepState.animateTo(
-                sheetTarget,
-                tween(durationMillis = 800, easing = FastOutLinearInEasing)
-            )
+            stepState.animateTo(sheetTarget, motion.slowSpatialSpec())
         }
     }
 
@@ -178,10 +175,10 @@ fun BookableExamsSheet(
             modifier = Modifier.fillMaxWidth(),
             transitionSpec = {
                 ContentTransform(
-                    targetContentEnter = fadeIn(tween(durationMillis = 400)),
-                    initialContentExit = fadeOut(tween(durationMillis = 400)),
+                    targetContentEnter = fadeIn(motion.defaultEffectsSpec()),
+                    initialContentExit = fadeOut(motion.defaultEffectsSpec()),
                     sizeTransform = SizeTransform(clip = true) { _, _ ->
-                        tween(durationMillis = 500)
+                        motion.defaultSpatialSpec()
                     },
                 )
             },
@@ -204,31 +201,19 @@ fun BookableExamsSheet(
                         modifier = Modifier.fillMaxWidth(),
                         transitionSpec = {
                             val isForward = targetState != null
-                            val enter = slideInVertically(
-                                tween(durationMillis = 600)
-                            ) { h ->
+                            val enter = slideInVertically(motion.defaultSpatialSpec()) { h ->
                                 if (isForward) h else -h
-                            } + fadeIn(
-                                tween(durationMillis = 400),
-                                initialAlpha = 0.2f
-                            )
+                            } + fadeIn(motion.defaultEffectsSpec(), initialAlpha = 0.2f)
 
-                            val exit = slideOutVertically(
-                                tween(durationMillis = 400)
-                            ) { h ->
+                            val exit = slideOutVertically(motion.defaultSpatialSpec()) { h ->
                                 if (isForward) -h else h
-                            } + fadeOut(
-                                tween(durationMillis = 400),
-                                targetAlpha = 0.2f
-                            )
-
-                            val modalShrinkDownSpeed = 500
+                            } + fadeOut(motion.defaultEffectsSpec(), targetAlpha = 0.2f)
 
                             ContentTransform(
                                 targetContentEnter = enter,
                                 initialContentExit = exit,
                                 sizeTransform = SizeTransform(clip = true) { _, _ ->
-                                    tween(durationMillis = modalShrinkDownSpeed)
+                                    motion.defaultSpatialSpec()
                                 },
                             )
                         },
@@ -283,6 +268,7 @@ fun BookableExamsSheet(
     }
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun BookableListStep(
     callsData: Loadable<List<ExamCall>>,
@@ -293,29 +279,41 @@ private fun BookableListStep(
     onRetry: () -> Unit,
 ) {
     val scheme = MaterialTheme.colorScheme
+    val loadedGroups = (callsData as? Loadable.Loaded)?.let { snapshot ->
+        remember(snapshot, bookedKeys) {
+            snapshot.value.filterNot { it.key in bookedKeys }.groupByCourse()
+        }
+    }
     Column(modifier = Modifier.fillMaxSize()) {
-        Text(
-            text = "Prenota un esame",
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold,
-            color = scheme.onSurface,
+        Column(
             modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 4.dp, bottom = 12.dp),
-        )
+        ) {
+            Text(
+                text = "Prenota un esame",
+                style = MaterialTheme.typography.headlineSmallEmphasized,
+                color = scheme.onSurface,
+            )
+            loadedGroups?.sumOf { it.calls.size }?.takeIf { it > 0 }?.let { count ->
+                Text(
+                    text = if (count == 1) "1 appello disponibile" else "$count appelli disponibili",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = scheme.onSurfaceVariant,
+                )
+            }
+        }
         val bodyModifier = Modifier
             .weight(1f)
             .fillMaxWidth()
-        when (val snapshot = callsData) {
+        when (callsData) {
             Loadable.NotYetLoaded -> Box(bodyModifier, contentAlignment = Alignment.Center) {
                 when (val status = syncStatus) {
                     is SyncStatus.Failed -> SheetError(cause = status.cause, onRetry = onRetry)
-                    else -> CircularProgressIndicator(modifier = Modifier.size(40.dp))
+                    else -> LoadingIndicator(modifier = Modifier.size(56.dp))
                 }
             }
 
             is Loadable.Loaded -> {
-                val groups = remember(snapshot, bookedKeys) {
-                    snapshot.value.filterNot { it.key in bookedKeys }.groupByCourse()
-                }
+                val groups = loadedGroups.orEmpty()
                 if (groups.isEmpty()) {
                     Box(
                         modifier = bodyModifier.padding(24.dp),

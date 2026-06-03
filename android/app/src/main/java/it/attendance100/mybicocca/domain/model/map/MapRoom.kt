@@ -5,4 +5,5 @@ data class MapRoom(
     val buildingCode: BuildingCode,
     val name: String,
     val capacity: Int?,
+    val floor: Int?,
 )

@@ -159,12 +159,15 @@ fun ProgressStatCard(
                 )
             }
 
+            // Title pinned to the top, value + progress bar grouped at the bottom — same content
+            // alignment as the sibling Media StatCard.
             Column(
                 modifier = Modifier
-                    .padding(outerRadius.dp)
-                    .padding(horizontal = 8.dp)
-                    .fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
+                    .padding(horizontal = 18.dp)
+                    .padding(top = 12.dp, bottom = 16.dp)
+                    .fillMaxWidth()
+                    .fillMaxHeight(),
+                verticalArrangement = Arrangement.SpaceBetween,
             ) {
                 Text(
                     text = title,
@@ -172,40 +175,42 @@ fun ProgressStatCard(
                     fontSize = 12.sp,
                     maxLines = 2,
                 )
-                if (isLoading) {
-                    Box(
-                        modifier = Modifier
-                            .width(60.dp)
-                            .height(24.dp)
-                            .clip(RoundedCornerShape(8.dp))
-                            .shimmer()
-                            .background(textColor.copy(alpha = 0.2f)),
-                    )
-                } else {
-                    Text(
-                        text = "$current/$total",
-                        color = textColor,
-                        fontSize = 24.sp,
-                        fontWeight = FontWeight.Bold,
-                    )
-                }
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    if (isLoading) {
+                        Box(
+                            modifier = Modifier
+                                .width(60.dp)
+                                .height(24.dp)
+                                .clip(RoundedCornerShape(8.dp))
+                                .shimmer()
+                                .background(textColor.copy(alpha = 0.2f)),
+                        )
+                    } else {
+                        Text(
+                            text = "$current/$total",
+                            color = textColor,
+                            fontSize = 24.sp,
+                            fontWeight = FontWeight.Bold,
+                        )
+                    }
 
-                if (progressbar) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(8.dp)
-                            .clip(RoundedCornerShape(4.dp))
-                            .background(secondaryColor.copy(alpha = 0.2f)),
-                    ) {
-                        if (!isLoading) {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth(progress)
-                                    .fillMaxHeight()
-                                    .clip(RoundedCornerShape(4.dp))
-                                    .background(primaryColor!!),
-                            )
+                    if (progressbar) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(8.dp)
+                                .clip(RoundedCornerShape(4.dp))
+                                .background(secondaryColor.copy(alpha = 0.2f)),
+                        ) {
+                            if (!isLoading) {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth(progress)
+                                        .fillMaxHeight()
+                                        .clip(RoundedCornerShape(4.dp))
+                                        .background(primaryColor!!),
+                                )
+                            }
                         }
                     }
                 }

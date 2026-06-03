@@ -15,6 +15,7 @@ internal fun MapBuildingEntity.toDomain(): MapBuilding = MapBuilding(
     point = GeoPoint(latitude, longitude),
     category = runCatching { BuildingCategory.valueOf(category) }.getOrDefault(BuildingCategory.OTHER),
     address = address,
+    city = city,
 )
 
 internal fun MapRoomEntity.toDomain(): MapRoom = MapRoom(
@@ -22,6 +23,7 @@ internal fun MapRoomEntity.toDomain(): MapRoom = MapRoom(
     buildingCode = BuildingCode(buildingCode),
     name = name,
     capacity = capacity,
+    floor = floor,
 )
 
 internal fun MapRoom.toEntity(): MapRoomEntity = MapRoomEntity(
@@ -29,4 +31,5 @@ internal fun MapRoom.toEntity(): MapRoomEntity = MapRoomEntity(
     buildingCode = buildingCode.value,
     name = name,
     capacity = capacity,
+    floor = floor,
 )

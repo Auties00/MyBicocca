@@ -23,5 +23,9 @@ data class DiscussionEntity(
     @ColumnInfo(name = "is_pinned") val isPinned: Boolean,
     @ColumnInfo(name = "is_locked") val isLocked: Boolean,
     @ColumnInfo(name = "unread_count") val unreadCount: Int,
+    @ColumnInfo(name = "reply_count") val replyCount: Int,
+    @ColumnInfo(name = "last_post_author_name") val lastPostAuthorName: String?,
+    @ColumnInfo(name = "message_preview") val messagePreview: String?,
+    @ColumnInfo(name = "has_attachments") val hasAttachments: Boolean,
     @ColumnInfo(name = "can_reply") val canReply: Boolean,
 )

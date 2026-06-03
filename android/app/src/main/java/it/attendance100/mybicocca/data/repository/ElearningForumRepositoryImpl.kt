@@ -87,7 +87,7 @@ class ElearningForumRepositoryImpl @Inject constructor(
         forumId: ForumId,
         page: Int,
         perPage: Int,
-    ) {
+    ): Int {
         val (api, token) = sessionManager.elearning()
         val response = api.forums.getForumDiscussions(
             wsToken = token,
@@ -104,6 +104,7 @@ class ElearningForumRepositoryImpl @Inject constructor(
             forumDao.upsertDiscussions(rows)
         }
         stamp(accountId, ElearningSyncScope.FORUM_DISCUSSIONS, forumId.value.toLong())
+        return rows.size
     }
 
     override suspend fun refreshPosts(accountId: AccountId, discussionId: DiscussionId) {

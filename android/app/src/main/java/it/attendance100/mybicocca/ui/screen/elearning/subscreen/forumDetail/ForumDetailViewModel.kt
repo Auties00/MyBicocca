@@ -79,23 +79,39 @@ class ForumDetailViewModel @AssistedInject constructor(
     private val _syncStatus = MutableStateFlow<SyncStatus>(SyncStatus.Idle)
     val syncStatus: StateFlow<SyncStatus> = _syncStatus.asStateFlow()
 
+    // True only while fetching with no cached discussions to show — gates the full-screen
+    // loading visual; pull-to-refresh and warm-cache refreshes stay on syncStatus alone.
+    private val _initialFetchInProgress = MutableStateFlow(false)
+    val initialFetchInProgress: StateFlow<Boolean> = _initialFetchInProgress.asStateFlow()
+
+    private val _creatingDiscussion = MutableStateFlow(false)
+    val creatingDiscussion: StateFlow<Boolean> = _creatingDiscussion.asStateFlow()
+
     private val oneShotChannel = Channel<ForumDetailOneShotEvent>(Channel.BUFFERED)
     val oneShotEvents: Flow<ForumDetailOneShotEvent> = oneShotChannel.receiveAsFlow()
 
     init {
         viewModelScope.launch {
             activeAccountId.filterNotNull().distinctUntilChanged().collect { id ->
+                val snapshot = observeDiscussions(id, forumId).first()
+                val hadCache = snapshot is Loadable.Loaded && snapshot.value.isNotEmpty()
+                _initialFetchInProgress.value = !hadCache
                 runFirstPage(id)
+                _initialFetchInProgress.value = false
             }
         }
     }
 
     private suspend fun runFirstPage(accountId: AccountId) {
         _syncStatus.value = SyncStatus.Refreshing
-        runCatching { refreshDiscussions(accountId, forumId, page = 0) }
-            .onSuccess {
+        runCatching { refreshDiscussions(accountId, forumId, page = 0, perPage = PAGE_SIZE) }
+            .onSuccess { count ->
                 _syncStatus.value = SyncStatus.Idle
-                _pageState.value = PageState(loadedPages = 1, hasMore = true, isLoadingMore = false)
+                _pageState.value = PageState(
+                    loadedPages = 1,
+                    hasMore = count >= PAGE_SIZE,
+                    isLoadingMore = false,
+                )
             }
             .onFailure {
                 _syncStatus.value = SyncStatus.Failed(it)
@@ -109,14 +125,15 @@ class ForumDetailViewModel @AssistedInject constructor(
 
     fun loadMore() {
         val state = _pageState.value
-        if (state.isLoadingMore || !state.hasMore) return
+        if (state.isLoadingMore || !state.hasMore || state.loadedPages == 0) return
         viewModelScope.launch {
             val accountId = activeAccountId.filterNotNull().first()
             _pageState.value = state.copy(isLoadingMore = true)
-            runCatching { refreshDiscussions(accountId, forumId, page = state.loadedPages) }
-                .onSuccess {
+            runCatching { refreshDiscussions(accountId, forumId, page = state.loadedPages, perPage = PAGE_SIZE) }
+                .onSuccess { count ->
                     _pageState.value = state.copy(
                         loadedPages = state.loadedPages + 1,
+                        hasMore = count >= PAGE_SIZE,
                         isLoadingMore = false,
                     )
                 }
@@ -132,8 +149,9 @@ class ForumDetailViewModel @AssistedInject constructor(
     }
 
     fun onCreateDiscussion(subject: String, message: String) {
-        if (subject.isBlank() || message.isBlank()) return
+        if (subject.isBlank() || message.isBlank() || _creatingDiscussion.value) return
         viewModelScope.launch {
+            _creatingDiscussion.value = true
             val accountId = activeAccountId.filterNotNull().first()
             runCatching { createDiscussion(accountId, forumId, subject, message) }
                 .onSuccess {
@@ -141,11 +159,13 @@ class ForumDetailViewModel @AssistedInject constructor(
                     runFirstPage(accountId)
                 }
                 .onFailure { oneShotChannel.trySend(ForumDetailOneShotEvent.RefreshFailed(it)) }
+            _creatingDiscussion.value = false
         }
     }
 
     private companion object {
         const val KEY_FORUM_ID = "forumId"
         const val STATE_KEEP_ALIVE_MS = 5_000L
+        const val PAGE_SIZE = 25
     }
 }

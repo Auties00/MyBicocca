@@ -1,7 +1,13 @@
 package it.attendance100.mybicocca.ui.screen.registry.subscreen.booking.component
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -17,6 +23,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ExpandMore
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -31,7 +38,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import it.attendance100.mybicocca.domain.model.exam.ExamCall
@@ -39,6 +45,7 @@ import it.attendance100.mybicocca.ui.screen.registry.subscreen.booking.state.Boo
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.booking.state.ExamCardAccent
 import java.time.LocalDate
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun CourseCard(
     group: BookingCourseGroup,
@@ -48,25 +55,57 @@ fun CourseCard(
     modifier: Modifier = Modifier,
 ) {
     val scheme = MaterialTheme.colorScheme
+    val motion = MaterialTheme.motionScheme
     var expanded by rememberSaveable(group.courseKey) { mutableStateOf(false) }
 
     val chevronRotation by animateFloatAsState(
         targetValue = if (expanded) 180f else 0f,
-        animationSpec = MaterialTheme.motionScheme.defaultSpatialSpec<Float>(),
+        animationSpec = motion.defaultSpatialSpec(),
         label = "chevronRotation",
     )
-
-    val cardShape = RoundedCornerShape(
-        topStart = 32.dp,
-        topEnd = 18.dp,
-        bottomStart = 18.dp,
-        bottomEnd = 32.dp,
+    // Expressive interaction feedback: the card morphs from its skewed resting shape
+    // to an even one, brightens a surface step, and the accent glyph tips the other
+    // way — all on springs.
+    val topStart by animateDpAsState(
+        targetValue = if (expanded) 24.dp else 32.dp,
+        animationSpec = motion.defaultSpatialSpec(),
+        label = "topStart",
+    )
+    val topEnd by animateDpAsState(
+        targetValue = if (expanded) 24.dp else 18.dp,
+        animationSpec = motion.defaultSpatialSpec(),
+        label = "topEnd",
+    )
+    val bottomStart by animateDpAsState(
+        targetValue = if (expanded) 24.dp else 18.dp,
+        animationSpec = motion.defaultSpatialSpec(),
+        label = "bottomStart",
+    )
+    val bottomEnd by animateDpAsState(
+        targetValue = if (expanded) 24.dp else 32.dp,
+        animationSpec = motion.defaultSpatialSpec(),
+        label = "bottomEnd",
+    )
+    val containerColor by animateColorAsState(
+        targetValue = if (expanded) scheme.surfaceContainerHigh else scheme.surfaceContainerLow,
+        animationSpec = motion.defaultEffectsSpec(),
+        label = "containerColor",
+    )
+    val accentRotation by animateFloatAsState(
+        targetValue = if (expanded) 8f else -10f,
+        animationSpec = motion.defaultSpatialSpec(),
+        label = "accentRotation",
     )
 
     Surface(
         modifier = modifier.fillMaxWidth(),
-        color = scheme.surfaceContainerLow,
-        shape = cardShape,
+        color = containerColor,
+        shape = RoundedCornerShape(
+            topStart = topStart,
+            topEnd = topEnd,
+            bottomEnd = bottomEnd,
+            bottomStart = bottomStart,
+        ),
     ) {
         Column(
             modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 14.dp, bottom = 14.dp),
@@ -74,10 +113,17 @@ fun CourseCard(
             HeaderRow(
                 group = group,
                 accent = accent,
+                accentRotation = accentRotation,
                 chevronRotation = chevronRotation,
                 onToggle = { expanded = !expanded },
             )
-            AnimatedVisibility(visible = expanded) {
+            AnimatedVisibility(
+                visible = expanded,
+                enter = expandVertically(motion.defaultSpatialSpec()) +
+                        fadeIn(motion.defaultEffectsSpec()),
+                exit = shrinkVertically(motion.defaultSpatialSpec()) +
+                        fadeOut(motion.defaultEffectsSpec()),
+            ) {
                 Column(
                     modifier = Modifier.padding(top = 12.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -95,10 +141,12 @@ fun CourseCard(
     }
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun HeaderRow(
     group: BookingCourseGroup,
     accent: ExamCardAccent,
+    accentRotation: Float,
     chevronRotation: Float,
     onToggle: () -> Unit,
 ) {
@@ -118,7 +166,7 @@ private fun HeaderRow(
         Box(
             modifier = Modifier
                 .size(28.dp)
-                .graphicsLayer { rotationZ = -10f }
+                .graphicsLayer { rotationZ = accentRotation }
                 .clip(accent.shape)
                 .background(accent.accent),
         )
@@ -126,8 +174,7 @@ private fun HeaderRow(
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = group.courseTitle,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.titleMediumEmphasized,
                 color = scheme.onSurface,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,

@@ -6,4 +6,5 @@ data class MapBuilding(
     val point: GeoPoint,
     val category: BuildingCategory,
     val address: String?,
+    val city: String?,
 )

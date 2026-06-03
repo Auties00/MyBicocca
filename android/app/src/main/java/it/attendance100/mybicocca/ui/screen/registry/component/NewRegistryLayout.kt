@@ -69,6 +69,7 @@ import it.attendance100.mybicocca.domain.model.exam.ExamCall
 import it.attendance100.mybicocca.domain.model.exam.ExamCallKey
 import it.attendance100.mybicocca.domain.model.exam.ExamCallType
 import it.attendance100.mybicocca.domain.model.exam.ExamEnrollmentWindow
+import it.attendance100.mybicocca.domain.model.exam.ExamType
 import it.attendance100.mybicocca.domain.model.tax.InvoiceId
 import it.attendance100.mybicocca.domain.model.tax.TaxInvoice
 import it.attendance100.mybicocca.domain.model.tax.TaxStatus
@@ -105,7 +106,6 @@ fun NewRegistryLayout(
     onOpenSelfCertificates: () -> Unit,
     onOpenDegreeAward: () -> Unit,
     modifier: Modifier = Modifier,
-    searchQuery: String = "",
     isActive: Boolean = true,
     onProvideFilterToggle: ((() -> Unit)?) -> Unit = {},
 ) {
@@ -135,7 +135,6 @@ fun NewRegistryLayout(
         onOpenSelfCertificates = onOpenSelfCertificates,
         onOpenDegreeAward = onOpenDegreeAward,
         modifier = modifier,
-        searchQuery = searchQuery,
         isActive = isActive,
         onProvideFilterToggle = onProvideFilterToggle,
     )
@@ -160,7 +159,6 @@ fun NewRegistryLayout(
     onOpenSelfCertificates: () -> Unit,
     onOpenDegreeAward: () -> Unit,
     modifier: Modifier = Modifier,
-    searchQuery: String = "",
     isActive: Boolean = true,
     onProvideFilterToggle: ((() -> Unit)?) -> Unit = {},
 ) {
@@ -554,11 +552,16 @@ private fun NewRegistryLayoutPreview() {
                         activityChoiceId = 1,
                         activityDescription = "Sistemi Operativi",
                         examCallDescription = "Appello Ordinario",
+                        examType = ExamType.Written,
+                        callType = ExamCallType.Final,
                         examDateTime = LocalDateTime.now().plusDays(5),
                         classroomDescription = "Aula G24",
                         buildingDescription = "Edificio U6",
+                        credits = 8f,
+                        examModeDescription = "Esame in Presenza",
                         position = 1,
                         bookingDate = LocalDateTime.now(),
+                        cancellableUntil = LocalDate.now().plusDays(3),
                         studentNote = null
                     )
                 )

@@ -10,17 +10,20 @@ import it.attendance100.mybicocca.data.local.map.MapRoomSyncStateEntity
 import it.attendance100.mybicocca.data.mapper.map.toDomain
 import it.attendance100.mybicocca.data.mapper.map.toEntity
 import it.attendance100.mybicocca.data.remote.easystaff.api.EasyStaffApi
+import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffBookingStatus
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffBuilding
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffRoom
 import it.attendance100.mybicocca.domain.model.map.BuildingCode
 import it.attendance100.mybicocca.domain.model.map.MapBuilding
 import it.attendance100.mybicocca.domain.model.map.MapRoom
 import it.attendance100.mybicocca.domain.model.map.MapRoomDetail
+import it.attendance100.mybicocca.domain.model.map.RoomScheduleEntry
 import it.attendance100.mybicocca.domain.repository.MapRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
+import java.time.LocalDate
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -57,9 +60,16 @@ class MapRepositoryImpl @Inject constructor(
     override suspend fun refreshRooms(buildingCode: BuildingCode) {
         if (!isRoomsStale(buildingCode)) return
         val building = EasyStaffBuilding(code = buildingCode.value, name = "")
+        // One bulk showcase call resolves every room's floor up front — each card carries its own
+        // room code, so the mapping is unambiguous. Best-effort: a parse failure costs floors only.
+        val floorByRoomCode = runCatching {
+            easyStaffApi.buildings.getRoomDetails(listOf(building))
+                .mapNotNull { detail -> detail.roomCode?.let { it to detail.floor } }
+                .toMap()
+        }.getOrDefault(emptyMap())
         val rooms = easyStaffApi.buildings.getRooms(building)
             .filter { it.code != EasyStaffRoom.FILTER_ALLOW_ALL.code }
-            .map { it.toDomain(buildingCode) }
+            .map { it.toDomain(buildingCode, floorByRoomCode[it.code]) }
         roomDao.replaceForBuilding(buildingCode.value, rooms.map { it.toEntity() })
         syncStateDao.upsertState(MapRoomSyncStateEntity(buildingCode.value, now()))
     }
@@ -72,6 +82,13 @@ class MapRepositoryImpl @Inject constructor(
         return easyStaffApi.buildings.getRoomDetails(listOf(building), listOf(easyRoom))
             .firstOrNull()
             ?.toDomain()
+    }
+
+    override suspend fun loadDaySchedule(buildingCode: BuildingCode, date: LocalDate): List<RoomScheduleEntry> {
+        val building = EasyStaffBuilding(code = buildingCode.value, name = "")
+        return easyStaffApi.buildings.getBuildingOccupation(building, date)
+            .filter { it.status == EasyStaffBookingStatus.CONFIRMED }
+            .map { it.toDomain() }
     }
 
     private suspend fun isRoomsStale(buildingCode: BuildingCode): Boolean {

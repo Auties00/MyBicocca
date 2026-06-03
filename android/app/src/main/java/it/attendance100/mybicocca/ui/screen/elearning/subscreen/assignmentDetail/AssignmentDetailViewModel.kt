@@ -9,8 +9,10 @@ import it.attendance100.mybicocca.core.state.SyncStatus
 import it.attendance100.mybicocca.domain.model.account.AccountId
 import it.attendance100.mybicocca.domain.model.elearning.assignment.Assignment
 import it.attendance100.mybicocca.domain.model.elearning.assignment.AssignmentId
+import it.attendance100.mybicocca.domain.model.elearning.course.CourseId
 import it.attendance100.mybicocca.domain.usecase.account.ObserveActiveAccountUseCase
 import it.attendance100.mybicocca.domain.usecase.elearning.assignment.ObserveAssignmentUseCase
+import it.attendance100.mybicocca.domain.usecase.elearning.assignment.RefreshCourseAssignmentsUseCase
 import it.attendance100.mybicocca.domain.usecase.elearning.assignment.RefreshSubmissionStatusUseCase
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.assignmentDetail.state.AssignmentDetailOneShotEvent
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -42,6 +44,7 @@ class AssignmentDetailViewModel @AssistedInject constructor(
     observeActiveAccount: ObserveActiveAccountUseCase,
     private val observeAssignment: ObserveAssignmentUseCase,
     private val refreshSubmissionStatus: RefreshSubmissionStatusUseCase,
+    private val refreshCourseAssignments: RefreshCourseAssignmentsUseCase,
 ) : ViewModel() {
 
     @AssistedFactory
@@ -50,6 +53,7 @@ class AssignmentDetailViewModel @AssistedInject constructor(
     }
 
     private val assignmentId: AssignmentId = AssignmentId(key.assignId)
+    private val courseId: CourseId = CourseId(key.courseId)
 
     private val activeAccountId: Flow<AccountId?> = observeActiveAccount()
         .map { it?.id }
@@ -85,7 +89,15 @@ class AssignmentDetailViewModel @AssistedInject constructor(
 
     private suspend fun runRefresh(accountId: AccountId) {
         _syncStatus.value = SyncStatus.Refreshing
-        runCatching { refreshSubmissionStatus(accountId, assignmentId) }
+        runCatching {
+            // Deep-opens (e.g. from the home deadlines rail) can land here before the
+            // course's assignments were ever cached; the status-only refresh no-ops on a
+            // missing row, so make sure the row exists first.
+            if (assignment.value !is Loadable.Loaded) {
+                refreshCourseAssignments(accountId, courseId)
+            }
+            refreshSubmissionStatus(accountId, assignmentId)
+        }
             .onSuccess { _syncStatus.value = SyncStatus.Idle }
             .onFailure {
                 _syncStatus.value = SyncStatus.Failed(it)

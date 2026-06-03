@@ -42,4 +42,5 @@ data class BuildingCatalogDto(
     val longitude: Double,
     val category: String = "TEACHING",
     val address: String? = null,
+    val city: String? = null,
 )

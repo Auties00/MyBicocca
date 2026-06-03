@@ -50,9 +50,10 @@ internal sealed interface SubmissionStatusJson {
 internal fun ElearningAssignment.toEntity(
     accountId: AccountId,
     submissionStatus: SubmissionStatusJson,
+    wsToken: String,
 ): AssignmentEntity {
     val introFiles = (introductionFiles.orEmpty() + introductionAttachments.orEmpty())
-        .map(ElearningFile::toAttachmentJson)
+        .map { it.toAttachmentJson(wsToken) }
     return AssignmentEntity(
         accountId = accountId.value,
         assignmentId = id,
@@ -72,7 +73,7 @@ internal fun ElearningAssignment.toEntity(
     )
 }
 
-internal fun ElearningGetSubmissionStatusResponse.toSubmissionStatusJson(): SubmissionStatusJson {
+internal fun ElearningGetSubmissionStatusResponse.toSubmissionStatusJson(wsToken: String): SubmissionStatusJson {
     val attempt = lastAttempt?.submission ?: return SubmissionStatusJson.NotSubmitted
     val submittedAtMs = (attempt.modifiedTimestamp ?: attempt.createdTimestamp).toMillisOrNullSec()
     val isGraded = lastAttempt?.graded == true
@@ -82,7 +83,7 @@ internal fun ElearningGetSubmissionStatusResponse.toSubmissionStatusJson(): Subm
     }
     val files = attempt.plugins.orEmpty().flatMap { plugin ->
         plugin.fileAreas.orEmpty().flatMap { area -> area.files.orEmpty() }
-    }.map(ElearningFile::toAttachmentJson)
+    }.map { it.toAttachmentJson(wsToken) }
     val onlineText = attempt.plugins.orEmpty()
         .firstOrNull { it.type == "onlinetext" }
         ?.editorFields?.firstOrNull()?.text
@@ -148,16 +149,28 @@ internal fun AssignmentEntity.toDomain(): Assignment {
         allowedExtensions = allowedExtensionsCsv?.split(",")?.filter { it.isNotBlank() }.orEmpty(),
         allowDrafts = allowDrafts,
         submissionStatus = status,
+        pageUrl = cmId?.let { "$ELEARNING_BASE_URL/mod/assign/view.php?id=$it" },
     )
 }
 
-internal fun ElearningFile.toAttachmentJson(): AttachmentRefJson =
+internal fun ElearningFile.toAttachmentJson(wsToken: String): AttachmentRefJson =
     AttachmentRefJson(
         fileName = fileName ?: fileUrl?.substringAfterLast('/') ?: "file",
-        fileUrl = fileUrl,
+        fileUrl = fileUrl?.let { appendWsToken(it, wsToken) },
         mimeType = mimeType,
         sizeBytes = fileSize,
     )
+
+// webservice/pluginfile.php URLs are only downloadable with the ws token appended;
+// browser-scope pluginfile.php URLs are left untouched.
+private fun appendWsToken(url: String, wsToken: String): String = when {
+    !url.contains("/webservice/pluginfile.php/") -> url
+    url.contains("token=") -> url
+    url.contains('?') -> "$url&token=$wsToken"
+    else -> "$url?token=$wsToken"
+}
+
+private const val ELEARNING_BASE_URL = "https://elearning.unimib.it"
 
 private fun AttachmentRefJson.toDomain(): Assignment.AttachmentRef =
     Assignment.AttachmentRef(

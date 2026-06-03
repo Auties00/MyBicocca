@@ -11,4 +11,5 @@ data class MapBuildingEntity(
     val longitude: Double,
     val category: String,
     val address: String?,
+    val city: String?,
 )
