@@ -27,7 +27,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
@@ -93,7 +93,7 @@ fun CreditCard(
 
     var touchX by remember { mutableFloatStateOf(0.5f) }
     var touchY by remember { mutableFloatStateOf(0.5f) }
-    var gestureStartTime by remember { mutableStateOf(0L) }
+    var gestureStartTime by remember { mutableLongStateOf(0L) }
     var totalDragX by remember { mutableFloatStateOf(0f) }
 
     val animatedRotationX by animateFloatAsState(
@@ -170,7 +170,10 @@ fun CreditCard(
                         base
                     }
                     scope.launch {
-                        rotationY.animateTo(target, animationSpec = tween(300, easing = FastOutSlowInEasing))
+                        rotationY.animateTo(
+                            target,
+                            animationSpec = tween(300, easing = FastOutSlowInEasing)
+                        )
                     }
                     rotationX = 0f
                     touchX = 0.5f
@@ -180,7 +183,10 @@ fun CreditCard(
                     val current = rotationY.value
                     val base = round(current / 180f) * 180f
                     scope.launch {
-                        rotationY.animateTo(base, animationSpec = tween(300, easing = FastOutSlowInEasing))
+                        rotationY.animateTo(
+                            base,
+                            animationSpec = tween(300, easing = FastOutSlowInEasing)
+                        )
                     }
                     rotationX = 0f
                     touchX = 0.5f
@@ -215,7 +221,10 @@ fun CreditCard(
                     val target = (round(current / 180f) + direction) * 180f
 
                     scope.launch {
-                        rotationY.animateTo(target, animationSpec = tween(300, easing = FastOutSlowInEasing))
+                        rotationY.animateTo(
+                            target,
+                            animationSpec = tween(300, easing = FastOutSlowInEasing)
+                        )
                     }
                 },
             )

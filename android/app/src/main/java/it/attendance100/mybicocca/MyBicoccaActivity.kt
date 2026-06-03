@@ -10,8 +10,8 @@ import android.os.Build
 import android.os.Bundle
 import android.util.Rational
 import android.view.View
+import android.view.WindowManager
 import android.view.animation.AccelerateInterpolator
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -19,21 +19,32 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.core.animation.doOnEnd
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.splashscreen.SplashScreenViewProvider
+import androidx.fragment.app.FragmentActivity
+import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
 import it.attendance100.mybicocca.data.auth.SessionManager
+import it.attendance100.mybicocca.data.local.settings.SecuritySettingsStore
 import it.attendance100.mybicocca.ui.navigation.AppRoot
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.videoPlayer.player.LocalPipController
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.videoPlayer.player.PipController
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.videoPlayer.player.PipState
 import it.attendance100.mybicocca.ui.theme.BicoccaTheme
 import it.attendance100.mybicocca.util.ProvideHapticManager
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+// FragmentActivity (a ComponentActivity subclass) is required by androidx.biometric's
+// BiometricPrompt; Compose setContent, edge-to-edge, splash, PiP, and Hilt are unaffected.
 @AndroidEntryPoint
-class MyBicoccaActivity : ComponentActivity() {
+class MyBicoccaActivity : FragmentActivity() {
 
     @Inject
     lateinit var sessionManager: SessionManager
+
+    @Inject
+    lateinit var securitySettingsStore: SecuritySettingsStore
 
     private val pipController = object : PipController {
         private var state: PipState? = null
@@ -54,6 +65,23 @@ class MyBicoccaActivity : ComponentActivity() {
         splashScreen.setOnExitAnimationListener { provider -> provider.animateExitAndRemove() }
 
         enableEdgeToEdge()
+
+        // Mark the window secure (hide from recents/app-switcher + block screenshots) only while the
+        // lock is active and the user opted in. Off by default, so screenshots stay allowed.
+        lifecycleScope.launch {
+            combine(
+                securitySettingsStore.appLockEnabled,
+                securitySettingsStore.secureScreenEnabled,
+            ) { lockEnabled, secure -> lockEnabled && secure }
+                .distinctUntilChanged()
+                .collect { secure ->
+                    if (secure) {
+                        window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
+                    } else {
+                        window.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
+                    }
+                }
+        }
 
         setContent {
             BicoccaTheme(dark = isSystemInDarkTheme()) {

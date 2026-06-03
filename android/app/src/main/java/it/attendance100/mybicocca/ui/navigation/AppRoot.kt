@@ -6,6 +6,8 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -13,6 +15,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
@@ -23,6 +26,8 @@ import it.attendance100.mybicocca.domain.model.account.Account
 import it.attendance100.mybicocca.ui.navigation.transitions.LocalRootSharedTransitionScope
 import it.attendance100.mybicocca.ui.screen.account.CareerPickerScreen
 import it.attendance100.mybicocca.ui.screen.auth.AuthScreen
+import it.attendance100.mybicocca.ui.screen.lock.AppLockScreen
+import it.attendance100.mybicocca.ui.screen.lock.AppLockViewModel
 
 // A top-level NavDisplay drives the auth / career-pick / main journey so the MyBicocca wordmark
 // morphs as a NATIVE Nav3 shared element (via LocalNavAnimatedContentScope) on login -> main. MainShell
@@ -37,10 +42,24 @@ fun AppRoot(
             "No ViewModelStoreOwner was provided via LocalViewModelStoreOwner"
         }, null
     ),
+    lockViewModel: AppLockViewModel = hiltViewModel(
+        checkNotNull(
+            LocalViewModelStoreOwner.current
+        ) {
+            "No ViewModelStoreOwner was provided via LocalViewModelStoreOwner"
+        }, null
+    ),
 ) {
     val phase by viewModel.phase.collectAsStateWithLifecycle()
+    val locked by lockViewModel.locked.collectAsStateWithLifecycle()
 
-    RootNavDisplay(phase = phase, viewModel = viewModel)
+    Box(Modifier.fillMaxSize()) {
+        RootNavDisplay(phase = phase, viewModel = viewModel)
+        // The gate only guards an established session
+        if (locked && phase is RootPhase.SignedIn) {
+            AppLockScreen(viewModel = lockViewModel)
+        }
+    }
 }
 
 @OptIn(ExperimentalSharedTransitionApi::class)
