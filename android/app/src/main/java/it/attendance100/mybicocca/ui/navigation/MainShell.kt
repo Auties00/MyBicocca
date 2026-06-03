@@ -565,7 +565,13 @@ fun MainShell(
                                             )
                                         }
                                     }
-                                    entry<AppRoute.Settings> { SubPage(topInset) { SettingsScreen() } }
+                                    entry<AppRoute.Settings> {
+                                        SubPage(topInset) {
+                                            SettingsScreen(
+                                                onOpenSecurity = { backStack.add(AppRoute.SettingsSecurity) },
+                                            )
+                                        }
+                                    }
                                     entry<AppRoute.StudyPlan> {
                                         SubPage(topInset) {
                                             StudyPlanScreen(
@@ -582,6 +588,7 @@ fun MainShell(
                                             )
                                         }
                                     }
+                                    entry<AppRoute.StudyPlan> { SubPage(topInset) { StudyPlanScreen() } }
                                     entry<AppRoute.SelfCertificates> { SubPage(topInset) { SelfCertificatesScreen() } }
                                     entry<AppRoute.ExamResults> { SubPage(topInset) { ExamResultsScreen(viewModel = examResultsViewModel) } }
                                     entry<AppRoute.Attendance> { SubPage(topInset) { AttendanceScreen() } }
@@ -954,6 +961,7 @@ fun MainShell(
                 AccountSwitcherSheet(
                     onDismiss = { showAccountSwitcher = false },
                     onOpenProfile = { backStack.add(AppRoute.Profile) },
+                    onOpenSettings = { backStack.add(AppRoute.Settings) },
                     viewModel = accountViewModel,
                 )
             }

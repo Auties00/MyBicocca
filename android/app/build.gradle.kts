@@ -124,6 +124,8 @@ dependencies {
     // ViewModel + Lifecycle
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.10.0")
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.10.0")
+    // ProcessLifecycleOwner — app-wide foreground/background signal for the app lock.
+    implementation("androidx.lifecycle:lifecycle-process:2.10.0")
 
     // DataStore
     implementation("androidx.datastore:datastore-preferences:1.1.4")
