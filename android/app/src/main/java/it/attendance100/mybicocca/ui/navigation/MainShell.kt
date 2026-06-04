@@ -62,6 +62,8 @@ import coil.size.Size
 import com.valentinilk.shimmer.ShimmerBounds
 import com.valentinilk.shimmer.rememberShimmer
 import com.valentinilk.shimmer.shimmer
+import it.attendance100.mybicocca.domain.model.search.SearchDestination
+import it.attendance100.mybicocca.domain.model.search.SearchResult
 import it.attendance100.mybicocca.ui.component.bar.BottomBarItem
 import it.attendance100.mybicocca.ui.component.bar.MyBicoccaBottomBar
 import it.attendance100.mybicocca.ui.component.bar.MyBicoccaTopBar
@@ -105,7 +107,6 @@ import it.attendance100.mybicocca.ui.screen.profile.component.CreditCardAspectRa
 import it.attendance100.mybicocca.ui.screen.profile.component.CreditCardHorizontalInset
 import it.attendance100.mybicocca.ui.screen.profile.component.ProfileCardTopGap
 import it.attendance100.mybicocca.ui.screen.profile.component.StudentCard
-import it.attendance100.mybicocca.ui.screen.profile.component.creditCardHeight
 import it.attendance100.mybicocca.ui.screen.registry.RegistryScreen
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.attendance.AttendanceScreen
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.bookableExams.BookableExamsViewModel
@@ -126,8 +127,6 @@ import it.attendance100.mybicocca.ui.screen.registry.subscreen.studyPlanEdit.Stu
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.taxDetail.TaxDetailScreen
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.taxes.TaxesScreen
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.taxes.TaxesViewModel
-import it.attendance100.mybicocca.domain.model.search.SearchDestination
-import it.attendance100.mybicocca.domain.model.search.SearchResult
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.transcript.TranscriptScreen
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.transcript.TranscriptViewModel
 import it.attendance100.mybicocca.ui.screen.search.SearchOverlay
@@ -588,7 +587,6 @@ fun MainShell(
                                             )
                                         }
                                     }
-                                    entry<AppRoute.StudyPlan> { SubPage(topInset) { StudyPlanScreen() } }
                                     entry<AppRoute.SelfCertificates> { SubPage(topInset) { SelfCertificatesScreen() } }
                                     entry<AppRoute.ExamResults> { SubPage(topInset) { ExamResultsScreen(viewModel = examResultsViewModel) } }
                                     entry<AppRoute.Attendance> { SubPage(topInset) { AttendanceScreen() } }
