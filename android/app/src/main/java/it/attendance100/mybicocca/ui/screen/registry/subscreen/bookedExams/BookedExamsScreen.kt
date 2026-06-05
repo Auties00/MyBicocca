@@ -4,21 +4,16 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.CloudOff
-import androidx.compose.material.icons.outlined.EditCalendar
 import androidx.compose.material.icons.outlined.EventAvailable
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FilledTonalButton
-import androidx.compose.material3.Icon
 import androidx.compose.material3.LoadingIndicator
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
@@ -32,21 +27,19 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.SyncStatus
 import it.attendance100.mybicocca.ui.component.feedback.EmptyState
 import it.attendance100.mybicocca.ui.component.feedback.LocalAppSnackbarController
-import it.attendance100.mybicocca.ui.screen.registry.subscreen.bookableExams.BookableExamsSheet
-import it.attendance100.mybicocca.ui.screen.registry.subscreen.bookableExams.BookableExamsViewModel
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.booked.component.BookedExamCard
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.booked.state.BookedEvent
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.booked.state.CancelActionState
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.booked.state.DocDownloadState
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.bookedExamDetail.BookedExamDetailSheet
-import it.attendance100.mybicocca.ui.screen.registry.subscreen.booking.BookingSheetViewModel
-import it.attendance100.mybicocca.ui.screen.registry.subscreen.booking.state.BookingSheetEvent
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.taxes.openPdfDocument
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -60,17 +53,17 @@ import java.time.LocalDate
 @Composable
 fun BookedExamsScreen(
     bookedViewModel: BookedExamsViewModel,
-    bookableViewModel: BookableExamsViewModel,
     modifier: Modifier = Modifier,
-    sheetViewModel: BookingSheetViewModel = hiltViewModel(),
 ) {
     val bookingsData by bookedViewModel.bookings.collectAsStateWithLifecycle()
     val bookedSync by bookedViewModel.syncStatus.collectAsStateWithLifecycle()
     val cancelAction by bookedViewModel.cancelAction.collectAsStateWithLifecycle()
+    val docDownload by bookedViewModel.docDownload.collectAsStateWithLifecycle()
 
     val snackbar = LocalAppSnackbarController.current
+    val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    var showBookable by rememberSaveable { mutableStateOf(false) }
+
     // Tapping a card opens its detail sheet; identified by identityKey so the sheet
     // survives refreshes and disappears with the booking once a cancellation lands.
     var detailKey by rememberSaveable { mutableStateOf<String?>(null) }
@@ -85,25 +78,11 @@ fun BookedExamsScreen(
                 is BookedEvent.CancellationFailed -> scope.launch {
                     snackbar.showError("Annullamento non riuscito", event.cause)
                 }
-            }
-        }
-    }
-
-    // Booking outcome is handled here (not in the modal) so the sheet can close on both
-    // success and failure while the snackbar/refresh still run from a living scope.
-    LaunchedEffect(sheetViewModel) {
-        sheetViewModel.events.collectLatest { event ->
-            showBookable = false
-            sheetViewModel.close()
-            when (event) {
-                BookingSheetEvent.BookedSuccessfully -> {
-                    scope.launch { snackbar.showInfo("Prenotazione confermata") }
-                    bookedViewModel.refresh()
-                    bookableViewModel.refresh()
+                is BookedEvent.OpenPdf -> scope.launch {
+                    runCatching { openPdfDocument(context, event.bytes, event.fileName) }
+                        .onFailure { snackbar.showError("Impossibile aprire il PDF", it) }
                 }
-                is BookingSheetEvent.BookingFailed -> scope.launch {
-                    snackbar.showError("Prenotazione non riuscita", event.cause)
-                }
+                is BookedEvent.ShowMessage -> scope.launch { snackbar.showInfo(event.message) }
             }
         }
     }
@@ -149,7 +128,7 @@ fun BookedExamsScreen(
                             EmptyState(
                                 icon = Icons.Outlined.EventAvailable,
                                 title = "Nessun esame prenotato",
-                                body = "Quando prenoti un appello lo trovi qui. Usa il pulsante in basso per prenotarne uno.",
+                                body = "Quando prenoti un appello lo trovi qui. Prenotane uno dalla sezione Prenota esame.",
                             )
                         }
                         else -> LazyColumn(
@@ -169,24 +148,6 @@ fun BookedExamsScreen(
                 }
             }
         }
-
-        if (bookingsData is Loadable.Loaded) {
-            ExtendedFloatingActionButton(
-                onClick = { showBookable = true },
-                containerColor = MaterialTheme.colorScheme.primaryContainer,
-                contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                icon = {
-                    Icon(
-                        imageVector = Icons.Outlined.EditCalendar,
-                        contentDescription = null,
-                    )
-                },
-                text = { Text("Prenota un esame") },
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(16.dp),
-            )
-        }
     }
 
     // The sheet's booking is re-derived from the live list: a refresh updates it in
@@ -200,20 +161,13 @@ fun BookedExamsScreen(
             booking = detailBooking,
             today = today,
             isCancelling = (cancelAction as? CancelActionState.InProgress)?.key == detailBooking.identityKey(),
+            downloadingDocument = (docDownload as? DocDownloadState.InProgress)
+                ?.takeIf { it.bookingKey == detailBooking.identityKey() }
+                ?.document,
             onCancel = bookedViewModel::cancel,
+            onDownloadSlip = bookedViewModel::downloadBookingSlip,
+            onDownloadCertificate = bookedViewModel::downloadPresenceCertificate,
             onDismiss = { detailKey = null },
-        )
-    }
-
-    if (showBookable) {
-        val bookedKeys = remember(bookingsData) {
-            (bookingsData as? Loadable.Loaded)?.value?.map { it.key }?.toSet() ?: emptySet()
-        }
-        BookableExamsSheet(
-            bookableViewModel = bookableViewModel,
-            sheetViewModel = sheetViewModel,
-            bookedKeys = bookedKeys,
-            onDismiss = { showBookable = false },
         )
     }
 }

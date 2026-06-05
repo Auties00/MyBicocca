@@ -91,6 +91,9 @@ dependencies {
     implementation("it.attendance100.mybicocca.data.remote:esse3:1.0")
     implementation("it.attendance100.mybicocca.data.remote:easystaff:1.0")
     implementation("it.attendance100.mybicocca.data.remote:elearning:1.0")
+    // Legacy Esse3 web-scrape client (Shibboleth SAML cookie session) for the
+    // Struts (.do) flows with no REST surface, e.g. certificati / autocertificazioni.
+    implementation("it.attendance100.mybicocca.data.remote:esse3-scraper:1.0")
 
     // Android
     implementation("androidx.core:core-ktx:1.17.0")
@@ -197,6 +200,18 @@ dependencies {
     implementation("androidx.media3:media3-exoplayer-hls:$media3")
     implementation("androidx.media3:media3-session:$media3")
     implementation("androidx.media3:media3-ui-compose-material3:$media3")
+
+    // In-app file viewer (elearning course files).
+    // androidx.pdf needs API 28+ at runtime (manifest overrideLibrary + Build.VERSION gate);
+    // a plain PdfRenderer fallback covers 25-27.
+    implementation("androidx.pdf:pdf-compose:1.0.0-alpha18")
+    implementation("androidx.pdf:pdf-document-service:1.0.0-alpha18")
+    // telephoto: zoom/pan + sub-sampling for image files (Coil 2 flavor).
+    implementation("me.saket.telephoto:zoomable-image-coil:0.19.0")
+    implementation("io.coil-kt:coil-gif:2.7.0")
+    implementation("io.coil-kt:coil-svg:2.7.0")
+    // Syntax highlighting for the code viewer (Darcula theme).
+    implementation("dev.snipme:highlights:1.1.0")
 
     // Splash Screen
     implementation("androidx.core:core-splashscreen:1.2.0")

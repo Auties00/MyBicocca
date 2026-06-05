@@ -309,6 +309,16 @@ class CourseDetailViewModel @AssistedInject constructor(
         oneShotChannel.trySend(CourseDetailOneShotEvent.OpenVideo(cmId, title))
     }
 
+    fun emitOpenFile(fileName: String, fileUrl: String, mimeType: String?, sizeBytes: Long?) {
+        oneShotChannel.trySend(
+            CourseDetailOneShotEvent.OpenFile(fileName, fileUrl, mimeType, sizeBytes),
+        )
+    }
+
+    fun emitOpenFolder(cmId: Int) {
+        oneShotChannel.trySend(CourseDetailOneShotEvent.OpenFolder(cmId))
+    }
+
     private companion object {
         const val KEY_COURSE_ID = "courseId"
         const val KEY_TAB = "course_detail_tab"

@@ -10,6 +10,7 @@ import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffStudyProgra
 import it.attendance100.mybicocca.data.remote.esse3.api.Esse3PlansApi
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3ChoiceRuleSchemaWithDetails
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3ChoiceType
+import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3PlanSchema
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3PlanType
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3PostPlanActivity
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3PostPlanBody
@@ -25,6 +26,9 @@ import it.attendance100.mybicocca.domain.model.studyplan.EditableCourse
 import it.attendance100.mybicocca.domain.model.studyplan.EditableRule
 import it.attendance100.mybicocca.domain.model.studyplan.PlannedCourse
 import it.attendance100.mybicocca.domain.model.studyplan.Semester
+import it.attendance100.mybicocca.domain.model.studyplan.StudyPath
+import it.attendance100.mybicocca.domain.model.studyplan.StudyPathFacet
+import it.attendance100.mybicocca.domain.model.studyplan.StudyPathOption
 import it.attendance100.mybicocca.domain.model.studyplan.StudyPlan
 import it.attendance100.mybicocca.domain.model.studyplan.StudyPlanCourse
 import it.attendance100.mybicocca.domain.model.studyplan.StudyPlanType
@@ -118,6 +122,60 @@ class StudyPlanRepositoryImpl @Inject constructor(
         )
     }
 
+    override suspend fun getStudyPath(careerId: CareerId): StudyPath? = coroutineScope {
+        val esse3 = sessionManager.esse3()
+        val header = esse3.plans.getStudentPlanHeaders(studentId = careerId.value).pickBest()
+            ?: return@coroutineScope null
+        // Only standard plans (tipoPiano = S) hang off a choice regulation with selectable
+        // schemas. Individual plans have no percorso/orientamento choice.
+        val regulationId = header.choiceRegulationId
+
+        // Fetch schemas and windows concurrently; both are non-fatal — a path with no
+        // selectable alternatives still renders the current configuration read-only.
+        val schemasDeferred = async {
+            if (regulationId == null) emptyList()
+            else runCatching { esse3.choiceRules.getStudyPlanSchemas(regulationId) }.getOrDefault(emptyList())
+        }
+        val windowOpenDeferred = async {
+            if (regulationId == null) false
+            else runCatching { isPlanEditingOpen(regulationId) }.getOrDefault(false)
+        }
+        val schemas = schemasDeferred.await()
+        val windowOpen = windowOpenDeferred.await()
+
+        val currentSchema = header.schemaId?.let { id -> schemas.firstOrNull { it.schemaId == id } }
+
+        // Percorso and part-time live on the plan header; orientamento and profilo are
+        // only carried on the schema, so read them from the student's current schema.
+        val percorso = facet(
+            code = header.studyPlanChoiceCode ?: header.studyPlanStudentCode,
+            description = header.studyPlanChoiceDescription ?: header.studyPlanDescription
+                ?: currentSchema?.studyPlanDescription,
+        )
+        val orientamento = facet(currentSchema?.orientationCode, currentSchema?.orientationDescription)
+        val profilo = facet(currentSchema?.professionCode, currentSchema?.professionDescription)
+        val partTime = facet(
+            code = header.aptCode ?: currentSchema?.aptCode,
+            description = header.aptDescription ?: currentSchema?.aptDescription,
+        )
+
+        // De-duplicate schemas by their distinct path tuple — two schemas that differ only
+        // by approval flavour (e.g. GGG vs GGG-A) are the same choice for the student.
+        val options = schemas
+            .filter { it.webViewFlag != 0 }
+            .distinctBy { pathTuple(it) }
+            .map { it.toOption(isCurrent = pathTuple(it) == currentSchema?.let(::pathTuple)) }
+
+        StudyPath(
+            percorso = percorso,
+            orientamento = orientamento,
+            profilo = profilo,
+            partTime = partTime,
+            options = options,
+            choiceAvailable = windowOpen && options.size > 1,
+        )
+    }
+
     override suspend fun isPlanEditingOpen(choiceRegulationId: Long): Boolean {
         val windows = sessionManager.esse3().choiceRules.getChoiceRegulationWindows(choiceRegulationId)
         if (windows.isEmpty()) return false
@@ -154,6 +212,34 @@ class StudyPlanRepositoryImpl @Inject constructor(
             credits = weight ?: 0f,
             year = courseYear?.let(::StudyYear) ?: StudyYear.Unknown,
         )
+    }
+
+    // Path identity of a schema: the tuple that distinguishes a real choice. Schemas
+    // sharing this tuple are duplicates (typically approval-flavour variants).
+    private fun pathTuple(schema: Esse3PlanSchema): List<String?> = listOf(
+        schema.studyPlanCode,
+        schema.orientationCode?.takeIf { it.isNotBlank() },
+        schema.professionCode?.takeIf { it.isNotBlank() },
+        schema.aptCode?.takeIf { it.isNotBlank() },
+    )
+
+    private fun Esse3PlanSchema.toOption(isCurrent: Boolean): StudyPathOption = StudyPathOption(
+        schemaId = schemaId ?: 0L,
+        schemaCode = schemaCode,
+        schemaDescription = schemaDescription,
+        percorso = facet(studyPlanCode, studyPlanDescription),
+        orientamento = facet(orientationCode, orientationDescription),
+        profilo = facet(professionCode, professionDescription),
+        partTime = facet(aptCode, aptDescription),
+        isCurrent = isCurrent,
+    )
+
+    // A facet exists only when at least one of code/description carries text.
+    private fun facet(code: String?, description: String?): StudyPathFacet? {
+        val cleanCode = code?.takeIf { it.isNotBlank() }
+        val cleanDesc = description?.takeIf { it.isNotBlank() }
+        return if (cleanCode == null && cleanDesc == null) null
+        else StudyPathFacet(code = cleanCode, description = cleanDesc)
     }
 
     override suspend fun getStudyPlanDraft(

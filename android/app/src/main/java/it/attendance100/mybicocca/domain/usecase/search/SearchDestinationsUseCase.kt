@@ -43,8 +43,14 @@ class SearchDestinationsUseCase @Inject constructor() {
                 listOf("segreterie", "segreteria", "sportello"),
             ),
             Entry(
+                // Libretto/carriera and titoli/certificati moved into the Profile page, so their
+                // search terms live here.
                 SearchDestination.Profile, "Profilo", null,
-                listOf("account", "media", "statistiche", "matricola"),
+                listOf(
+                    "account", "media", "statistiche", "matricola",
+                    "carriera", "libretto", "esami sostenuti", "crediti", "cfu",
+                    "titoli", "certificati", "autodichiarazioni", "autocertificazione",
+                ),
             ),
             Entry(
                 SearchDestination.Taxes, "Tasse", "Servizi",
@@ -63,20 +69,12 @@ class SearchDestinationsUseCase @Inject constructor() {
                 listOf("piano", "piano carriera", "piano di studio"),
             ),
             Entry(
-                SearchDestination.Transcript, "Carriera", "Servizi",
-                listOf("libretto", "esami sostenuti", "crediti", "cfu"),
-            ),
-            Entry(
                 SearchDestination.Attendance, "Presenze", "Servizi",
                 listOf("frequenza", "frequenze", "presenza"),
             ),
             Entry(
                 SearchDestination.Internships, "Stage", "Servizi",
                 listOf("tirocini", "tirocinio", "internship"),
-            ),
-            Entry(
-                SearchDestination.SelfCertificates, "Autocertificazioni", "Servizi",
-                listOf("certificati", "autodichiarazioni", "autocertificazione"),
             ),
             Entry(
                 SearchDestination.Questionnaires, "Questionari", "Servizi",

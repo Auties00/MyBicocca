@@ -70,6 +70,7 @@ fun TaxDetailScreen(
             onPay = { viewModel.payInvoice(invoice.id) },
             onPrintNotice = { viewModel.printNotice(invoice.id) },
             onPrintReceipt = { viewModel.printReceipt(invoice.id) },
+            onCheckStatus = { viewModel.checkPaymentStatus(invoice.id) },
         )
 
         invoicesState is Loadable.NotYetLoaded ->
@@ -90,6 +91,7 @@ private fun TaxDetailContent(
     onPay: () -> Unit,
     onPrintNotice: () -> Unit,
     onPrintReceipt: () -> Unit,
+    onCheckStatus: () -> Unit,
 ) {
     val payable = invoice.status == TaxStatus.PENDING || invoice.status == TaxStatus.EXPIRED
 
@@ -133,6 +135,13 @@ private fun TaxDetailContent(
                 enabled = !actionInProgress,
                 modifier = Modifier.fillMaxWidth().height(52.dp),
             ) { Text("Stampa quietanza") }
+        }
+        if (invoice.pagoPaEnabled) {
+            FilledTonalButton(
+                onClick = onCheckStatus,
+                enabled = !actionInProgress,
+                modifier = Modifier.fillMaxWidth().height(52.dp),
+            ) { Text("Verifica stato pagamento") }
         }
     }
 }

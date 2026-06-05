@@ -2,8 +2,13 @@ package it.attendance100.mybicocca.ui.screen.elearning.subscreen.quizDetail
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
@@ -19,17 +24,26 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ButtonGroupDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearWavyProgressIndicator
 import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -46,6 +60,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -373,6 +388,9 @@ private fun AttemptContent(
     val totalPages = remember(attempt?.layout) { attempt?.layout.totalPagesFromLayout() }
     val pageIndex = state.page.pageIndex
     val isLastPage = state.page.nextPage == null
+    // The stretching dots read at a glance only while they fit on one line; longer
+    // quizzes keep the wavy bar in the header instead.
+    val showDots = totalPages != null && totalPages in 2..MAX_PAGE_DOTS
 
     Column(modifier = Modifier.fillMaxSize()) {
         Column(modifier = Modifier.padding(start = 20.dp, top = 14.dp, end = 20.dp, bottom = 8.dp)) {
@@ -402,20 +420,22 @@ private fun AttemptContent(
                     RemainingTimePill(start = start, limitSeconds = limit)
                 }
             }
-            Spacer(Modifier.height(10.dp))
-            LinearWavyProgressIndicator(
-                progress = {
-                    if (totalPages == null || totalPages == 0) 0f
-                    else ((pageIndex + 1).toFloat() / totalPages).coerceIn(0f, 1f)
-                },
-                modifier = Modifier.fillMaxWidth(),
-            )
+            if (!showDots) {
+                Spacer(Modifier.height(10.dp))
+                LinearWavyProgressIndicator(
+                    progress = {
+                        if (totalPages == null || totalPages == 0) 0f
+                        else ((pageIndex + 1).toFloat() / totalPages).coerceIn(0f, 1f)
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
         }
 
         LazyColumn(
             modifier = Modifier.weight(1f),
             contentPadding = PaddingValues(start = 16.dp, top = 8.dp, end = 16.dp, bottom = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             state.page.questions.forEach { question ->
                 item("question_${question.slot}") {
@@ -433,34 +453,24 @@ private fun AttemptContent(
             }
         }
 
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 20.dp, vertical = 14.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            if (pageIndex > 0) {
-                OutlinedButton(
-                    onClick = {
-                        viewModel.onSaveDraft()
-                        viewModel.loadPage(pageIndex - 1)
-                    },
-                    modifier = Modifier.weight(1f),
-                ) {
-                    Text("Indietro")
-                }
-            }
-            Button(
-                onClick = {
-                    viewModel.onSaveDraft()
-                    val next = state.page.nextPage
-                    if (next == null) confirmSubmit = true else viewModel.loadPage(next)
-                },
-                modifier = Modifier.weight(if (pageIndex > 0) 1f else 2f),
-            ) {
-                Text(if (isLastPage) "Consegna" else "Avanti")
-            }
-        }
+        QuizWizardBottomBar(
+            pageCount = totalPages ?: 0,
+            currentPage = pageIndex,
+            showDots = showDots,
+            isLast = isLastPage,
+            onBack = {
+                viewModel.onSaveDraft()
+                viewModel.loadPage(pageIndex - 1)
+            },
+            onNext = {
+                viewModel.onSaveDraft()
+                state.page.nextPage?.let(viewModel::loadPage)
+            },
+            onSubmit = {
+                viewModel.onSaveDraft()
+                confirmSubmit = true
+            },
+        )
     }
 
     if (confirmSubmit) {
@@ -517,6 +527,153 @@ private fun RemainingTimePill(start: Instant, limitSeconds: Long) {
     }
 }
 
+// The app's connected button pair (see StudyPlanEditScreen/EventDetailSheet): an
+// icon-only tonal back that springs in past the first page, and the primary action
+// morphing between Avanti and Consegna on the last page.
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+private fun QuizWizardBottomBar(
+    pageCount: Int,
+    currentPage: Int,
+    showDots: Boolean,
+    isLast: Boolean,
+    onBack: () -> Unit,
+    onNext: () -> Unit,
+    onSubmit: () -> Unit,
+) {
+    val scheme = MaterialTheme.colorScheme
+    val motion = MaterialTheme.motionScheme
+    val spatialOffsetSpec = motion.defaultSpatialSpec<IntOffset>()
+    val effectsFloatSpec = motion.defaultEffectsSpec<Float>()
+    val backVisible = currentPage > 0
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(start = 16.dp, end = 16.dp, top = 10.dp, bottom = 14.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        if (showDots) {
+            PageDots(pageCount = pageCount, currentPage = currentPage)
+            Spacer(Modifier.height(12.dp))
+        }
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            AnimatedVisibility(
+                visible = backVisible,
+                enter = expandHorizontally(motion.defaultSpatialSpec()) + fadeIn(motion.defaultEffectsSpec()),
+                exit = shrinkHorizontally(motion.defaultSpatialSpec()) + fadeOut(motion.defaultEffectsSpec()),
+            ) {
+                FilledTonalButton(
+                    onClick = onBack,
+                    modifier = Modifier
+                        .width(64.dp)
+                        .height(56.dp),
+                    shape = ButtonGroupDefaults.connectedLeadingButtonShape,
+                    contentPadding = PaddingValues(0.dp),
+                    colors = ButtonDefaults.filledTonalButtonColors(
+                        containerColor = scheme.surfaceContainerHigh,
+                        contentColor = scheme.onSurface,
+                    ),
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = "Pagina precedente",
+                        modifier = Modifier.size(20.dp),
+                    )
+                }
+            }
+
+            // The primary action stays a full pill alone and flattens its start corners
+            // when the back button joins the pair.
+            val startCorner by animateDpAsState(
+                targetValue = if (backVisible) 8.dp else 28.dp,
+                animationSpec = motion.defaultSpatialSpec(),
+                label = "actionCorner",
+            )
+            Button(
+                onClick = { if (isLast) onSubmit() else onNext() },
+                modifier = Modifier
+                    .weight(1f)
+                    .height(56.dp),
+                shape = RoundedCornerShape(
+                    topStart = startCorner,
+                    bottomStart = startCorner,
+                    topEnd = 28.dp,
+                    bottomEnd = 28.dp,
+                ),
+                // The course accent computes its own readable on-color.
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = scheme.primary,
+                    contentColor = scheme.onPrimary,
+                ),
+            ) {
+                AnimatedContent(
+                    targetState = isLast,
+                    transitionSpec = {
+                        (slideInHorizontally(spatialOffsetSpec) { it / 3 } + fadeIn(effectsFloatSpec)) togetherWith
+                            (slideOutHorizontally(spatialOffsetSpec) { -it / 3 } + fadeOut(effectsFloatSpec))
+                    },
+                    label = "quizActionLabel",
+                ) { last ->
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        if (last) {
+                            Text("Consegna", fontWeight = FontWeight.SemiBold)
+                            Spacer(Modifier.width(8.dp))
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.Send,
+                                contentDescription = null,
+                                modifier = Modifier.size(20.dp),
+                            )
+                        } else {
+                            Text("Avanti", fontWeight = FontWeight.SemiBold)
+                            Spacer(Modifier.width(8.dp))
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                                contentDescription = null,
+                                modifier = Modifier.size(20.dp),
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+// Page indicator: the active dot stretches into a primary pill on spring physics.
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+private fun PageDots(pageCount: Int, currentPage: Int) {
+    val scheme = MaterialTheme.colorScheme
+    val motion = MaterialTheme.motionScheme
+    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+        repeat(pageCount) { index ->
+            val active = index == currentPage
+            val width by animateDpAsState(
+                targetValue = if (active) 26.dp else 8.dp,
+                animationSpec = motion.defaultSpatialSpec(),
+                label = "dotWidth",
+            )
+            val color by animateColorAsState(
+                targetValue = if (active) scheme.primary else scheme.surfaceContainerHighest,
+                animationSpec = motion.defaultEffectsSpec(),
+                label = "dotColor",
+            )
+            Box(
+                modifier = Modifier
+                    .size(width = width, height = 8.dp)
+                    .background(color, CircleShape),
+            )
+        }
+    }
+}
+
+private const val MAX_PAGE_DOTS = 10
+
 // Moodle attempt layouts list slots with a 0 closing each page: "1,2,0,3,0" = 2 pages.
 private fun String?.totalPagesFromLayout(): Int? =
     this?.split(',')?.count { it.trim() == "0" }?.takeIf { it > 0 }
@@ -532,53 +689,59 @@ private fun ReviewContent(
     BackHandler(onBack = onClose)
     val questions = remember(review) { review.pages.flatMap { it.questions } }
 
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(top = 6.dp, bottom = 28.dp),
-    ) {
-        item("review_hero") {
-            ReviewGradeHero(review = review, questions = questions)
-        }
-        val feedback = review.feedback?.takeIf { it.isNotBlank() }
-        if (feedback != null) {
-            item("review_feedback") {
-                Surface(
-                    shape = RoundedCornerShape(18.dp),
-                    color = scheme.surfaceContainerLow,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 4.dp),
-                ) {
-                    HtmlBody(html = feedback, modifier = Modifier.padding(14.dp))
+    Column(modifier = Modifier.fillMaxSize()) {
+        LazyColumn(
+            modifier = Modifier.weight(1f),
+            contentPadding = PaddingValues(top = 6.dp, bottom = 16.dp),
+        ) {
+            item("review_hero") {
+                ReviewGradeHero(review = review, questions = questions)
+            }
+            val feedback = review.feedback?.takeIf { it.isNotBlank() }
+            if (feedback != null) {
+                item("review_feedback") {
+                    Surface(
+                        shape = RoundedCornerShape(18.dp),
+                        color = scheme.surfaceContainerLow,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 4.dp),
+                    ) {
+                        HtmlBody(html = feedback, modifier = Modifier.padding(14.dp))
+                    }
+                }
+            }
+            questions.forEach { question ->
+                item("review_question_${question.slot}") {
+                    val parsed = remember(question.html) { question.parseQuestion() }
+                    QuestionCard(
+                        question = question,
+                        parsed = parsed,
+                        answerFields = emptyMap(),
+                        flagged = false,
+                        readOnly = true,
+                        onAnswer = {},
+                        onToggleFlag = null,
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                    )
                 }
             }
         }
-        questions.forEach { question ->
-            item("review_question_${question.slot}") {
-                val parsed = remember(question.html) { question.parseQuestion() }
-                QuestionCard(
-                    question = question,
-                    parsed = parsed,
-                    answerFields = emptyMap(),
-                    flagged = false,
-                    readOnly = true,
-                    onAnswer = {},
-                    onToggleFlag = null,
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp),
-                )
-            }
-        }
-        item("review_close") {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 18.dp),
-                contentAlignment = Alignment.Center,
-            ) {
-                OutlinedButton(onClick = onClose) {
-                    Text("Chiudi revisione")
-                }
-            }
+
+        // Same closing bar as the attempt wizard, with the single full-pill action.
+        Button(
+            onClick = onClose,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = 16.dp, end = 16.dp, top = 10.dp, bottom = 14.dp)
+                .height(56.dp),
+            shape = RoundedCornerShape(28.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = scheme.primary,
+                contentColor = scheme.onPrimary,
+            ),
+        ) {
+            Text("Chiudi revisione", fontWeight = FontWeight.SemiBold)
         }
     }
 }

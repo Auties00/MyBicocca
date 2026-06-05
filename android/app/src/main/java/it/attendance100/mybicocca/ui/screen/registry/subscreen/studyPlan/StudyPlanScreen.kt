@@ -54,6 +54,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
@@ -63,6 +64,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.SyncStatus
 import it.attendance100.mybicocca.core.state.valueOrNull
+import it.attendance100.mybicocca.domain.model.studyplan.StudyPath
+import it.attendance100.mybicocca.domain.model.studyplan.StudyPathOption
 import it.attendance100.mybicocca.domain.model.studyplan.StudyPlan
 import it.attendance100.mybicocca.domain.model.studyplan.StudyPlanCourse
 import it.attendance100.mybicocca.domain.model.studyplan.StudyPlanType
@@ -88,6 +91,7 @@ fun StudyPlanScreen(
     viewModel: StudyPlanViewModel = hiltViewModel(),
 ) {
     val planData by viewModel.plan.collectAsStateWithLifecycle()
+    val pathData by viewModel.studyPath.collectAsStateWithLifecycle()
     val syncStatus by viewModel.syncStatus.collectAsStateWithLifecycle()
     val editable by viewModel.editable.collectAsStateWithLifecycle()
     val actionInProgress by viewModel.actionInProgress.collectAsStateWithLifecycle()
@@ -153,8 +157,10 @@ fun StudyPlanScreen(
 
                         else -> PlanContent(
                             plan = plan,
+                            studyPath = pathData.valueOrNull(),
                             printing = actionInProgress,
                             onPrint = viewModel::printPlan,
+                            onChoosePath = viewModel::chooseStudyPath,
                         )
                     }
                 }
@@ -183,8 +189,10 @@ fun StudyPlanScreen(
 @Composable
 private fun PlanContent(
     plan: StudyPlan,
+    studyPath: StudyPath?,
     printing: Boolean,
     onPrint: () -> Unit,
+    onChoosePath: (schemaId: Long) -> Unit,
 ) {
     // Years ascending, with the generic "no specific year" bucket at the end.
     val coursesByYear = remember(plan) {
@@ -201,9 +209,186 @@ private fun PlanContent(
             PlanHeroCard(plan = plan, printing = printing, onPrint = onPrint)
         }
 
+        if (studyPath != null && studyPath.hasAnyFacet) {
+            item(key = "study_path") {
+                StudyPathSection(path = studyPath, onChoose = onChoosePath)
+            }
+        }
+
         coursesByYear.forEach { (year, courses) ->
             item(key = "year_${year.value}") {
                 YearSection(title = year.label(), courses = courses)
+            }
+        }
+    }
+}
+
+// "Percorso" section: the current path facets as a connected tile group, plus the
+// selectable alternatives when a choice window is open and more than one option exists.
+@Composable
+private fun StudyPathSection(
+    path: StudyPath,
+    onChoose: (schemaId: Long) -> Unit,
+) {
+    val scheme = MaterialTheme.colorScheme
+
+    val facets = remember(path) {
+        buildList {
+            path.percorso?.let { add("Percorso" to it.label) }
+            path.orientamento?.let { add("Orientamento" to it.label) }
+            path.profilo?.let { add("Profilo" to it.label) }
+            path.partTime?.let { add("Impegno" to it.label) }
+        }.filter { it.second.isNotBlank() }
+    }
+
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(2.dp),
+    ) {
+        YearHeaderTile(
+            title = "Percorso",
+            subtitle = if (path.choiceAvailable) {
+                "Scelta disponibile · ${path.options.size} opzioni"
+            } else {
+                "Percorso unico · nessuna scelta disponibile"
+            },
+        )
+
+        facets.forEachIndexed { index, (label, value) ->
+            FacetTile(
+                label = label,
+                value = value,
+                isLast = !path.choiceAvailable && index == facets.lastIndex,
+            )
+        }
+
+        if (path.choiceAvailable) {
+            Spacer(Modifier.height(6.dp))
+            Text(
+                text = "Scegli il tuo percorso",
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold,
+                color = scheme.onSurfaceVariant,
+                modifier = Modifier.padding(start = 4.dp, top = 2.dp, bottom = 4.dp),
+            )
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                path.options.forEach { option ->
+                    PathOptionCard(option = option, onClick = { onChoose(option.schemaId) })
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun FacetTile(label: String, value: String, isLast: Boolean) {
+    val scheme = MaterialTheme.colorScheme
+    val large = 20.dp
+    val small = 4.dp
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        color = scheme.surfaceContainer,
+        contentColor = scheme.onSurface,
+        shape = RoundedCornerShape(
+            topStart = small,
+            topEnd = small,
+            bottomStart = if (isLast) large else small,
+            bottomEnd = if (isLast) large else small,
+        ),
+    ) {
+        Row(
+            modifier = Modifier.padding(start = 18.dp, end = 16.dp, top = 14.dp, bottom = 14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = label.uppercase(),
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.SemiBold,
+                letterSpacing = 0.6.sp,
+                color = scheme.onSurfaceVariant,
+            )
+            Spacer(Modifier.weight(1f))
+            Text(
+                text = value,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = scheme.onSurface,
+                textAlign = TextAlign.End,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(2f),
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun PathOptionCard(option: StudyPathOption, onClick: () -> Unit) {
+    val scheme = MaterialTheme.colorScheme
+    val container = if (option.isCurrent) scheme.secondaryContainer else scheme.surfaceContainer
+    val onContainer = if (option.isCurrent) scheme.onSecondaryContainer else scheme.onSurface
+
+    Surface(
+        onClick = onClick,
+        enabled = !option.isCurrent,
+        modifier = Modifier.fillMaxWidth(),
+        color = container,
+        contentColor = onContainer,
+        shape = RoundedCornerShape(20.dp),
+    ) {
+        Row(
+            modifier = Modifier.padding(start = 16.dp, end = 14.dp, top = 14.dp, bottom = 14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(Modifier.weight(1f)) {
+                Text(
+                    text = option.title,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = onContainer,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                val detail = listOfNotNull(
+                    option.orientamento?.label?.takeIf { it.isNotBlank() },
+                    option.profilo?.label?.takeIf { it.isNotBlank() },
+                    option.partTime?.label?.takeIf { it.isNotBlank() },
+                ).joinToString(" · ")
+                if (detail.isNotBlank()) {
+                    Text(
+                        text = detail,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = onContainer.copy(alpha = 0.75f),
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+            }
+            Spacer(Modifier.width(12.dp))
+            if (option.isCurrent) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.CheckCircle,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp),
+                    )
+                    Text(
+                        text = "Attuale",
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                }
+            } else {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Outlined.MenuBook,
+                    contentDescription = null,
+                    tint = onContainer.copy(alpha = 0.7f),
+                    modifier = Modifier.size(20.dp),
+                )
             }
         }
     }

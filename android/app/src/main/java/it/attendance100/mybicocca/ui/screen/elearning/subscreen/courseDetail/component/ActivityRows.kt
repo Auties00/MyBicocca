@@ -448,23 +448,6 @@ private fun GradeChip(label: String) {
     }
 }
 
-@Composable
-fun ActivityEmpty(message: String, modifier: Modifier = Modifier) {
-    val scheme = MaterialTheme.colorScheme
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = 32.dp, vertical = 48.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Text(
-            text = message,
-            style = MaterialTheme.typography.bodyMedium,
-            color = scheme.onSurfaceVariant,
-        )
-    }
-}
-
 private val DateFmt = DateTimeFormatter
     .ofPattern("d MMM", Locale.ITALIAN)
     .withZone(ZoneId.systemDefault())

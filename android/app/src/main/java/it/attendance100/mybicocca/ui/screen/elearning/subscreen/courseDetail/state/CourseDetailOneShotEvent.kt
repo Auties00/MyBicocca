@@ -13,4 +13,13 @@ sealed interface CourseDetailOneShotEvent {
     data class OpenDiscussion(val id: DiscussionId) : CourseDetailOneShotEvent
     data class OpenModuleResource(val url: String) : CourseDetailOneShotEvent
     data class OpenVideo(val cmId: Int, val title: String) : CourseDetailOneShotEvent
+    // Single file resources open in the in-app viewer.
+    data class OpenFile(
+        val fileName: String,
+        val fileUrl: String,
+        val mimeType: String?,
+        val sizeBytes: Long?,
+    ) : CourseDetailOneShotEvent
+    // Folders (and multi-file resources) open a picker sheet before the viewer.
+    data class OpenFolder(val cmId: Int) : CourseDetailOneShotEvent
 }

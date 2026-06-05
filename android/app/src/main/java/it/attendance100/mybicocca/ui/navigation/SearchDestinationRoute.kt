@@ -25,10 +25,8 @@ fun SearchDestination.toAppRoute(activeCareerId: CareerId?): AppRoute? = when (t
     SearchDestination.ExamResults -> AppRoute.ExamResults
     SearchDestination.BookedExams -> AppRoute.BookedExams
     SearchDestination.StudyPlan -> AppRoute.StudyPlan
-    SearchDestination.Transcript -> activeCareerId?.let { AppRoute.Transcript(it.value) }
     SearchDestination.Attendance -> AppRoute.Attendance
     SearchDestination.Internships -> AppRoute.Internships
-    SearchDestination.SelfCertificates -> AppRoute.SelfCertificates
     SearchDestination.Questionnaires -> AppRoute.Questionnaires
     SearchDestination.DegreeAward -> AppRoute.DegreeAward
     SearchDestination.Reservations -> AppRoute.Reservations

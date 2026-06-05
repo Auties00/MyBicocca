@@ -69,15 +69,26 @@ sealed interface AppRoute : NavKey {
     }
 
     @Serializable
+    data object BookableExams : AppRoute {
+        override val appTitle = AppTitle.SubPage("Prenota esame")
+    }
+
+    @Serializable
     data object Taxes : AppRoute {
         override val appTitle = AppTitle.SubPage("Tasse")
     }
     @Serializable data class TaxDetail(val chargeId: Long) : AppRoute {
         override val appTitle get() = AppTitle.SubPage("Dettaglio Tassa")
     }
+    @Serializable data object Isee : AppRoute {
+        override val appTitle = AppTitle.SubPage("ISEE")
+    }
+    @Serializable data object Refunds : AppRoute {
+        override val appTitle = AppTitle.SubPage("Rimborsi")
+    }
 
     @Serializable data object StudyPlan : AppRoute {
-        override val appTitle = AppTitle.SubPage("Piano di Studi")
+        override val appTitle = AppTitle.SubPage("Percorso e piano")
     }
     @Serializable data class StudyPlanEdit(
         val studentId: Long,
@@ -87,9 +98,6 @@ sealed interface AppRoute : NavKey {
     ) : AppRoute {
         override val appTitle get() = AppTitle.SubPage("Modifica Piano")
     }
-    @Serializable data class Transcript(val careerId: Long) : AppRoute {
-        override val appTitle get() = AppTitle.SubPage("Carriera")
-    }
     @Serializable data object ExamResults : AppRoute {
         override val appTitle = AppTitle.SubPage("Esiti")
     }
@@ -98,6 +106,9 @@ sealed interface AppRoute : NavKey {
     }
     @Serializable data object Internships : AppRoute {
         override val appTitle = AppTitle.SubPage("Stage")
+    }
+    @Serializable data object SavedOpportunities : AppRoute {
+        override val appTitle = AppTitle.SubPage("Opportunità salvate")
     }
     @Serializable data object Questionnaires : AppRoute {
         override val appTitle = AppTitle.SubPage("Questionari")
@@ -119,11 +130,17 @@ sealed interface AppRoute : NavKey {
     @Serializable data object DegreeAward : AppRoute {
         override val appTitle = AppTitle.SubPage("Conseguimento Titolo")
     }
-    @Serializable data object SelfCertificates : AppRoute {
-        override val appTitle = AppTitle.SubPage("Autocertificazioni")
-    }
     @Serializable data object Reservations : AppRoute {
         override val appTitle = AppTitle.SubPage("Prenotazioni")
+    }
+    @Serializable data object Procedures : AppRoute {
+        override val appTitle = AppTitle.SubPage("Domande e procedure")
+    }
+    @Serializable data object CourseChange : AppRoute {
+        override val appTitle = AppTitle.SubPage("Cambio percorso")
+    }
+    @Serializable data object EnrollmentExtension : AppRoute {
+        override val appTitle = AppTitle.SubPage("Proroga iscrizione")
     }
 
     // Elearning sub-screens.
@@ -150,6 +167,18 @@ sealed interface AppRoute : NavKey {
     @Serializable data class ConversationDetail(val conversationId: Int) : AppRoute {
         override val appTitle get() = AppTitle.SubPage("Conversazione")
     }
+    // In-app viewer for course files. Carries either a remote pluginfile URL (normal case,
+    // downloaded on open) or an already-local path (a file extracted from a zip archive).
+    @Serializable data class FileViewer(
+        val fileName: String,
+        val fileUrl: String? = null,
+        val localPath: String? = null,
+        val mimeType: String? = null,
+        val sizeBytes: Long? = null,
+    ) : AppRoute {
+        override val appTitle get() = AppTitle.SubPage(fileName)
+    }
+
     // Player draws its own chrome — global top bar fades out, but the title carries the
     // video name during the entry morph.
     @Serializable data class VideoPlayback(

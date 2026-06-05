@@ -38,4 +38,11 @@ interface ExamRepository {
 
     // studentId here is the booking's `stuId`, not the user's matId.
     suspend fun cancelBooking(careerId: CareerId, key: ExamCallKey, studentId: Long)
+
+    // Booking PDFs (raw bytes). The booking slip (statino di prenotazione) is available for
+    // any booking; the attendance certificate (attestato di presenza) only once the outcome
+    // is published (Esse3 422s otherwise). studentId is the booking's `stuId`, as for cancelBooking.
+    suspend fun getBookingSlip(careerId: CareerId, key: ExamCallKey, studentId: Long): ByteArray
+
+    suspend fun getPresenceCertificate(careerId: CareerId, key: ExamCallKey, studentId: Long): ByteArray
 }

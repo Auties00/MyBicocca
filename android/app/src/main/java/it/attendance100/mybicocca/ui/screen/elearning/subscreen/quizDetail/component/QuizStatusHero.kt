@@ -1,7 +1,6 @@
 package it.attendance100.mybicocca.ui.screen.elearning.subscreen.quizDetail.component
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,8 +11,13 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -66,6 +70,7 @@ fun QuizStatusHero(
         inProgress != null -> HeroCard(
             container = scheme.secondaryContainer,
             accent = scheme.secondary,
+            onAccent = scheme.onSecondary,
             onContainer = scheme.onSecondaryContainer,
             decorShape = OrganicShapes.SmoothCookie6,
             eyebrow = "✦ TENTATIVO IN CORSO",
@@ -90,6 +95,7 @@ fun QuizStatusHero(
         closed -> HeroCard(
             container = scheme.errorContainer,
             accent = scheme.error,
+            onAccent = scheme.onError,
             onContainer = scheme.onErrorContainer,
             decorShape = OrganicShapes.Burst,
             eyebrow = "✸ CHIUSO",
@@ -103,6 +109,7 @@ fun QuizStatusHero(
         notYetOpen -> HeroCard(
             container = scheme.tertiaryContainer,
             accent = scheme.tertiary,
+            onAccent = scheme.onTertiary,
             onContainer = scheme.onTertiaryContainer,
             decorShape = OrganicShapes.Puffy,
             eyebrow = "✦ IN ARRIVO",
@@ -116,6 +123,7 @@ fun QuizStatusHero(
         else -> HeroCard(
             container = scheme.tertiaryContainer,
             accent = scheme.tertiary,
+            onAccent = scheme.onTertiary,
             onContainer = scheme.onTertiaryContainer,
             decorShape = OrganicShapes.Puffy,
             eyebrow = "✦ DA SVOLGERE",
@@ -195,7 +203,7 @@ private fun GradeHero(
                 )
                 if (cta != null) {
                     Spacer(Modifier.height(14.dp))
-                    HeroCta(label = cta, container = scheme.primaryContainer, onContainer = scheme.onPrimaryContainer, onClick = onCta)
+                    HeroCta(label = cta, accent = scheme.primary, onAccent = scheme.onPrimary, onClick = onCta)
                 }
             }
         }
@@ -206,6 +214,7 @@ private fun GradeHero(
 private fun HeroCard(
     container: Color,
     accent: Color,
+    onAccent: Color,
     onContainer: Color,
     decorShape: Shape,
     eyebrow: String,
@@ -256,31 +265,39 @@ private fun HeroCard(
                 )
                 if (cta != null) {
                     Spacer(Modifier.height(14.dp))
-                    HeroCta(label = cta, container = container, onContainer = onContainer, onClick = onCta)
+                    HeroCta(label = cta, accent = accent, onAccent = onAccent, onClick = onCta)
                 }
             }
         }
     }
 }
 
+// The CTA borrows the plan compiler's primary action: a full-width 56dp pill in the
+// hero's accent with a trailing arrow.
 @Composable
 private fun HeroCta(
     label: String,
-    container: Color,
-    onContainer: Color,
+    accent: Color,
+    onAccent: Color,
     onClick: () -> Unit,
 ) {
-    Surface(
-        shape = CircleShape,
-        color = onContainer,
-        modifier = Modifier.clickable(onClick = onClick),
+    Button(
+        onClick = onClick,
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(56.dp),
+        shape = RoundedCornerShape(28.dp),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = accent,
+            contentColor = onAccent,
+        ),
     ) {
-        Text(
-            text = label,
-            color = container,
-            fontWeight = FontWeight.Bold,
-            fontSize = 14.sp,
-            modifier = Modifier.padding(horizontal = 22.dp, vertical = 12.dp),
+        Text(label, fontWeight = FontWeight.SemiBold)
+        Spacer(Modifier.width(8.dp))
+        Icon(
+            imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+            contentDescription = null,
+            modifier = Modifier.size(20.dp),
         )
     }
 }

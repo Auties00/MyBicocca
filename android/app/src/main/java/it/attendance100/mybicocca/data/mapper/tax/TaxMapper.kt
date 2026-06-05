@@ -2,10 +2,15 @@ package it.attendance100.mybicocca.data.mapper.tax
 
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3EnrollmentForTuition
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3Invoices
+import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3Refunds
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3StudentDebit
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3TrafficLight
+import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3Transaction
 import it.attendance100.mybicocca.domain.model.tax.InvoiceId
 import it.attendance100.mybicocca.domain.model.tax.IseeDeclaration
+import it.attendance100.mybicocca.domain.model.tax.PaymentOutcome
+import it.attendance100.mybicocca.domain.model.tax.PaymentStatus
+import it.attendance100.mybicocca.domain.model.tax.Refund
 import it.attendance100.mybicocca.domain.model.tax.TaxChargeItem
 import it.attendance100.mybicocca.domain.model.tax.TaxInvoice
 import it.attendance100.mybicocca.domain.model.tax.TaxLight
@@ -36,6 +41,45 @@ internal fun Esse3TrafficLight.toSummary(): TaxSummary = TaxSummary(
     dueAmount = dueAmount ?: 0.0,
     expiredCount = expiredTaxes.size,
     dueCount = dueTaxes.size,
+)
+
+internal fun Esse3Transaction.toPaymentStatus(invoiceId: InvoiceId): PaymentStatus {
+    val completed = paidFlag == 1 ||
+        transactionOutcome.equals("PAGAMENTO_ESEGUITO", ignoreCase = true) ||
+        outcomeCode.equals("OK", ignoreCase = true)
+    val pending = !completed && (
+        finalState == 0 ||
+            transactionOutcome?.contains("CORSO", ignoreCase = true) == true ||
+            transactionOutcome?.contains("PEND", ignoreCase = true) == true
+        )
+    val outcome = when {
+        completed -> PaymentOutcome.Completed
+        pending -> PaymentOutcome.Pending
+        finalState == 1 -> PaymentOutcome.Failed
+        else -> PaymentOutcome.Unknown
+    }
+    return PaymentStatus(
+        invoiceId = invoiceId,
+        outcome = outcome,
+        description = outcomeDescription?.takeIf { it.isNotBlank() },
+        paid = paidFlag == 1,
+        paymentDate = paymentDate.toEsse3LocalDate(),
+        paidAmount = paidAmount,
+        receiptPrintable = printableReceipt == 1,
+    )
+}
+
+internal fun Esse3Refunds.toRefund(): Refund = Refund(
+    invoiceId = invoiceId,
+    academicYear = academicYearId?.toInt(),
+    amount = invoiceAmount ?: paidAmount,
+    reasonCode = refundReasonCode?.takeIf { it.isNotBlank() },
+    mandateNumber = refundMandateNumber?.takeIf { it.isNotBlank() },
+    refunded = refundedFlag == 1,
+    note = refundNote?.takeIf { it.isNotBlank() },
+    issueDate = issuanceDate.toEsse3LocalDate(),
+    paymentDate = paymentDate.toEsse3LocalDate(),
+    creditDate = creditDate.toEsse3LocalDate(),
 )
 
 internal fun Esse3EnrollmentForTuition.toIseeDeclaration(): IseeDeclaration = IseeDeclaration(

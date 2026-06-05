@@ -1,0 +1,140 @@
+package it.attendance100.mybicocca.ui.screen.elearning.subscreen.fileViewer.component
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.MusicNote
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.media3.common.MediaItem
+import androidx.media3.common.util.UnstableApi
+import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.ui.compose.PlayerSurface
+import androidx.media3.ui.compose.SURFACE_TYPE_SURFACE_VIEW
+import androidx.media3.ui.compose.material3.buttons.PlayPauseButton
+import androidx.media3.ui.compose.material3.buttons.SeekBackButton
+import androidx.media3.ui.compose.material3.buttons.SeekForwardButton
+import androidx.media3.ui.compose.material3.indicator.PositionAndDurationText
+import androidx.media3.ui.compose.material3.indicator.ProgressSlider
+import androidx.media3.ui.compose.modifiers.resizeWithContentScale
+import androidx.media3.ui.compose.state.rememberPresentationState
+
+// mp4/audio resources play straight off the tokenized pluginfile URL — the endpoint
+// honors Range requests, so seeking works without downloading the file first. Local
+// playback (zip-extracted media) goes through the same path with a file uri.
+@androidx.annotation.OptIn(UnstableApi::class)
+@Composable
+fun MediaViewerContent(
+    mediaUri: String,
+    isVideo: Boolean,
+    fileName: String,
+    modifier: Modifier = Modifier,
+) {
+    val context = LocalContext.current
+    val player = remember { ExoPlayer.Builder(context).build() }
+    LaunchedEffect(mediaUri) {
+        player.setMediaItem(MediaItem.fromUri(mediaUri))
+        player.prepare()
+        player.playWhenReady = true
+    }
+    // Course material isn't background-listening content: pause when the screen leaves
+    // the foreground, release with the composition.
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_STOP) player.pause()
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+            player.release()
+        }
+    }
+
+    Column(modifier = modifier.fillMaxSize()) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f)
+                .background(if (isVideo) Color.Black else MaterialTheme.colorScheme.surfaceContainerHighest),
+            contentAlignment = Alignment.Center,
+        ) {
+            if (isVideo) {
+                val presentation = rememberPresentationState(player)
+                PlayerSurface(
+                    player = player,
+                    surfaceType = SURFACE_TYPE_SURFACE_VIEW,
+                    modifier = Modifier.resizeWithContentScale(ContentScale.Fit, presentation.videoSizeDp),
+                )
+                if (presentation.coverSurface) {
+                    Box(modifier = Modifier.fillMaxSize().background(Color.Black))
+                }
+            } else {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Icon(
+                        imageVector = Icons.Outlined.MusicNote,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(96.dp),
+                    )
+                    Text(
+                        text = fileName,
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.padding(top = 16.dp, start = 24.dp, end = 24.dp),
+                    )
+                }
+            }
+        }
+        MediaControls(player = player)
+    }
+}
+
+@androidx.annotation.OptIn(UnstableApi::class)
+@Composable
+private fun MediaControls(player: ExoPlayer) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(MaterialTheme.colorScheme.surfaceContainer)
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+    ) {
+        ProgressSlider(player = player, modifier = Modifier.fillMaxWidth())
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            SeekBackButton(player = player)
+            PlayPauseButton(player = player)
+            SeekForwardButton(player = player)
+            Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.CenterEnd) {
+                PositionAndDurationText(player = player)
+            }
+        }
+    }
+}

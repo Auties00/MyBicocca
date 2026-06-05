@@ -5,12 +5,16 @@ import io.ktor.utils.io.jvm.javaio.toInputStream
 import it.attendance100.mybicocca.data.auth.SessionManager
 import it.attendance100.mybicocca.data.mapper.tax.mapInvoices
 import it.attendance100.mybicocca.data.mapper.tax.toIseeDeclaration
+import it.attendance100.mybicocca.data.mapper.tax.toPaymentStatus
+import it.attendance100.mybicocca.data.mapper.tax.toRefund
 import it.attendance100.mybicocca.data.mapper.tax.toSummary
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3PagoPATransaction
 import it.attendance100.mybicocca.domain.model.career.Career
 import it.attendance100.mybicocca.domain.model.career.CareerId
 import it.attendance100.mybicocca.domain.model.tax.InvoiceId
 import it.attendance100.mybicocca.domain.model.tax.IseeDeclaration
+import it.attendance100.mybicocca.domain.model.tax.PaymentStatus
+import it.attendance100.mybicocca.domain.model.tax.Refund
 import it.attendance100.mybicocca.domain.model.tax.TaxInvoice
 import it.attendance100.mybicocca.domain.model.tax.TaxSummary
 import it.attendance100.mybicocca.domain.repository.TaxRepository
@@ -84,6 +88,25 @@ class TaxRepositoryImpl @Inject constructor(
         return sessionManager.esse3().tuitionFees
             .getPagoPAReceipt(invoiceId.value, language)
             .drainToByteArray()
+    }
+
+    override suspend fun getPaymentStatus(careerId: CareerId, invoiceId: InvoiceId): PaymentStatus? {
+        requireCareer(careerId)
+        // /pagopa/transazioni is STUDENT-accessible; lastTransaction=1 returns just the
+        // latest attempt for this invoice. Empty list = no pagoPA transaction yet.
+        return sessionManager.esse3().tuitionFees
+            .getPagoPATransactions(invoiceId = invoiceId.value, lastTransaction = 1)
+            .firstOrNull()
+            ?.toPaymentStatus(invoiceId)
+    }
+
+    override suspend fun getRefunds(careerId: CareerId): List<Refund> {
+        requireCareer(careerId)
+        val personId = requirePersonId()
+        // refundedFlag=2 -> all refunds (refunded + pending).
+        return sessionManager.esse3().tuitionFees
+            .getRefundsList(personId = personId, refundedFlag = 2)
+            .map { it.toRefund() }
     }
 
     // Fully reads a streamed PDF response into memory off the main thread.

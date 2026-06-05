@@ -18,6 +18,8 @@ import it.attendance100.mybicocca.domain.model.exam.ExamCallDetail
 import it.attendance100.mybicocca.domain.model.exam.ExamCallKey
 import it.attendance100.mybicocca.domain.model.exam.ExamResult
 import it.attendance100.mybicocca.domain.repository.ExamRepository
+import io.ktor.utils.io.ByteReadChannel
+import io.ktor.utils.io.jvm.javaio.toInputStream
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.time.LocalDate
@@ -147,10 +149,42 @@ class ExamRepositoryImpl @Inject constructor(
         )
     }
 
+    override suspend fun getBookingSlip(
+        careerId: CareerId,
+        key: ExamCallKey,
+        studentId: Long,
+    ): ByteArray {
+        requireCareer(careerId)
+        return sessionManager.esse3().examsCalendar.getBookingStatino(
+            courseOfStudyId = key.courseOfStudyId,
+            activityId = key.activityId,
+            callId = key.callId.toLong(),
+            studentId = studentId,
+        ).drainToByteArray()
+    }
+
+    override suspend fun getPresenceCertificate(
+        careerId: CareerId,
+        key: ExamCallKey,
+        studentId: Long,
+    ): ByteArray {
+        requireCareer(careerId)
+        return sessionManager.esse3().examsCalendar.getPresenceCertificate(
+            courseOfStudyId = key.courseOfStudyId,
+            activityId = key.activityId,
+            callId = key.callId.toLong(),
+            studentId = studentId,
+        ).drainToByteArray()
+    }
+
     private fun requireCareer(careerId: CareerId): Career {
         val account = sessionManager.activeAccount.value
             ?: error("No active account; cannot resolve career for exam booking.")
         return account.academic.careers.firstOrNull { it.id == careerId }
             ?: error("Career ${careerId.value} not found on active account.")
     }
+
+    // Fully reads a streamed PDF response into memory off the main thread.
+    private suspend fun ByteReadChannel.drainToByteArray(): ByteArray =
+        withContext(Dispatchers.IO) { toInputStream().use { it.readBytes() } }
 }

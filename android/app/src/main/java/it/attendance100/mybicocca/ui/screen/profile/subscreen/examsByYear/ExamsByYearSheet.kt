@@ -26,6 +26,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.outlined.Schedule
+import androidx.compose.material.icons.outlined.WarningAmber
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -52,9 +53,13 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import it.attendance100.mybicocca.domain.model.transcript.PrerequisiteStatus
 import it.attendance100.mybicocca.domain.model.transcript.TranscriptRow
 import it.attendance100.mybicocca.domain.model.transcript.TranscriptRowState
 import it.attendance100.mybicocca.ui.component.modal.PredictiveModalBottomSheet
+import it.attendance100.mybicocca.ui.screen.profile.subscreen.courseDetail.CourseDetailSheet
+import it.attendance100.mybicocca.ui.screen.registry.state.RegistryBadgeTone
+import it.attendance100.mybicocca.ui.screen.registry.theme.registryBadgeTone
 import it.attendance100.mybicocca.util.rememberHapticManager
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
@@ -67,9 +72,13 @@ private val PassedGreen = Color(0xFF1FA84B)
 fun ExamsByYearSheet(
     rows: List<TranscriptRow>,
     initialMode: ExamValueMode,
+    prerequisiteStatuses: Map<Long, PrerequisiteStatus>,
+    onOpenAppelli: (courseKey: String) -> Unit,
     onDismiss: () -> Unit,
 ) {
     var mode by remember { mutableStateOf(initialMode) }
+    // Which course's detail sheet is open (nested on top of this modal), or null.
+    var detailRow by remember { mutableStateOf<TranscriptRow?>(null) }
 
     // Grouped by year of the study plan (anno di corso), passed exams first within each year.
     val byYear = rows
@@ -115,7 +124,12 @@ fun ExamsByYearSheet(
                             )
                         }
                         items(exams, key = { it.id }) { exam ->
-                            ExamRow(exam = exam, mode = mode)
+                            ExamRow(
+                                exam = exam,
+                                mode = mode,
+                                prerequisiteStatus = prerequisiteStatuses[exam.id],
+                                onClick = { detailRow = exam },
+                            )
                         }
                     }
                 }
@@ -137,37 +151,88 @@ fun ExamsByYearSheet(
             }
         }
     }
+
+    detailRow?.let { row ->
+        CourseDetailSheet(
+            row = row,
+            onOpenAppelli = { courseKey ->
+                // Close both this nested sheet and the libretto modal before driving the
+                // cross-screen deep-link, so the back stack lands cleanly on the appelli.
+                detailRow = null
+                onDismiss()
+                onOpenAppelli(courseKey)
+            },
+            onDismiss = { detailRow = null },
+        )
+    }
 }
 
 @Composable
-private fun ExamRow(exam: TranscriptRow, mode: ExamValueMode) {
+private fun ExamRow(
+    exam: TranscriptRow,
+    mode: ExamValueMode,
+    prerequisiteStatus: PrerequisiteStatus?,
+    onClick: () -> Unit,
+) {
+    val scheme = MaterialTheme.colorScheme
     val passed = exam.state == TranscriptRowState.Passed
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    // Orange warning only when the activity is NOT passed AND its propedeuticità check came
+    // back NotSatisfied (esito != 1). Pending-but-prereqs-OK keeps the neutral clock icon.
+    val prereqMissing = !passed && prerequisiteStatus == PrerequisiteStatus.NotSatisfied
+    val warningTone = registryBadgeTone(RegistryBadgeTone.Attention)
+
+    Surface(
+        onClick = onClick,
+        color = Color.Transparent,
+        shape = RoundedCornerShape(16.dp),
+        modifier = Modifier.fillMaxWidth(),
     ) {
-        Icon(
-            imageVector = if (passed) Icons.Filled.CheckCircle else Icons.Outlined.Schedule,
-            contentDescription = if (passed) "Superato" else "In sospeso",
-            tint = if (passed) PassedGreen else MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.size(20.dp),
-        )
-        Text(
-            text = exam.activityName,
-            style = MaterialTheme.typography.bodyMedium,
-            maxLines = 2,
-            overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.weight(1f),
-        )
-        Text(
-            text = valueLabel(exam, mode),
-            fontSize = 15.sp,
-            fontWeight = FontWeight.Bold,
-            color = if (passed) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
-        )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 8.dp, horizontal = 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            if (prereqMissing) {
+                // Reuse the registry Attention token as a compact badge: the soft-orange
+                // container is the warning fill, the glyph rides the matching onContainer.
+                Box(
+                    modifier = Modifier
+                        .size(24.dp)
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(warningTone.container),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.WarningAmber,
+                        contentDescription = "Propedeuticità non soddisfatte",
+                        tint = warningTone.onContainer,
+                        modifier = Modifier.size(16.dp),
+                    )
+                }
+            } else {
+                Icon(
+                    imageVector = if (passed) Icons.Filled.CheckCircle else Icons.Outlined.Schedule,
+                    contentDescription = if (passed) "Superato" else "In sospeso",
+                    tint = if (passed) PassedGreen else scheme.onSurfaceVariant,
+                    modifier = Modifier.size(20.dp),
+                )
+            }
+            Text(
+                text = exam.activityName,
+                style = MaterialTheme.typography.bodyMedium,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f),
+            )
+            Text(
+                text = valueLabel(exam, mode),
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Bold,
+                color = if (passed) scheme.onSurface else scheme.onSurfaceVariant,
+            )
+        }
     }
 }
 

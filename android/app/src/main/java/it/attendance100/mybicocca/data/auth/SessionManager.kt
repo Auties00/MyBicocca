@@ -16,6 +16,9 @@ import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningGetSiteInfo
 import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningLoginResponse
 import it.attendance100.mybicocca.data.remote.esse3.api.Esse3Api
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3CacheInfo
+import it.attendance100.mybicocca.data.remote.esse3.scraper.api.Esse3Api as Esse3LegacyApi
+import io.ktor.http.Cookie
+import io.ktor.http.CookieEncoding
 import it.attendance100.mybicocca.di.ApplicationScope
 import it.attendance100.mybicocca.domain.model.account.Account
 import it.attendance100.mybicocca.domain.model.account.AccountEvent
@@ -59,6 +62,7 @@ class SessionManager @Inject constructor(
     private val credentialsStore: CredentialsStore,
     private val sessionCache: SessionCache,
     private val esse3Factory: Esse3ApiFactory,
+    private val esse3LegacyApiFactory: Esse3LegacyApiFactory,
     private val elearningApiFactory: ElearningApiFactory,
     private val authMutexes: AccountKeyedMutexes,
     private val careerReconciler: CareerReconciler,
@@ -74,6 +78,14 @@ class SessionManager @Inject constructor(
 
     private val esse3Apis = mutableMapOf<AccountId, Esse3Api>()
     private val esse3Mutex = Mutex()
+
+    // Legacy Esse3 web-SSO (scrape) session — established LAZILY on first certificati
+    // access and kept entirely independent of the REST esse3() / elearning() paths so a
+    // SAML failure here can never break sign-in. Cookies are minted once via SAML and
+    // cached (in-memory + SessionCache); the api re-logs in on expiry. Mirrors the
+    // elearningApi single-instance caching, but keyed per account.
+    private val esse3LegacyApis = mutableMapOf<AccountId, Esse3LegacyApi>()
+    private val esse3LegacyMutex = Mutex()
 
     private val _events = MutableSharedFlow<AccountEvent>(replay = 0, extraBufferCapacity = 16)
     val events: Flow<AccountEvent> = _events.asSharedFlow()
@@ -205,6 +217,9 @@ class SessionManager @Inject constructor(
             esse3Mutex.withLock {
                 esse3Apis.remove(accountId)?.close()
             }
+            esse3LegacyMutex.withLock {
+                esse3LegacyApis.remove(accountId)?.close()
+            }
             credentialsStore.delete(accountId)
             sessionCache.delete(accountId)
             accountWiper.wipe(accountId)
@@ -224,6 +239,11 @@ class SessionManager @Inject constructor(
             val toClose = esse3Apis.filterKeys { it != accountId }
             toClose.values.forEach { it.close() }
             esse3Apis.keys.removeAll(toClose.keys)
+        }
+        esse3LegacyMutex.withLock {
+            val toClose = esse3LegacyApis.filterKeys { it != accountId }
+            toClose.values.forEach { it.close() }
+            esse3LegacyApis.keys.removeAll(toClose.keys)
         }
         activeAccountStore.set(accountId)
         accountDao.updateLastUsed(accountId.value, System.currentTimeMillis())
@@ -265,6 +285,26 @@ class SessionManager @Inject constructor(
         return esse3ForAccount(active.id)
     }
 
+    // Lazily establishes (or reuses) the legacy Esse3 web-SSO scrape session for the
+    // active account. On first use it reseeds from cached cookies if present, otherwise
+    // it runs the SAML login and caches the cookies. Independent of esse3() / elearning().
+    suspend fun esse3Legacy(): Esse3LegacyApi {
+        val active = activeAccount.value ?: error("No active account.")
+        return esse3LegacyForAccount(active.id)
+    }
+
+    // Forces a fresh SAML login for the active account's legacy session, discarding the
+    // cached cookies and scrape client. Call this after the scrape layer raises
+    // AuthenticationException (the session cookie died and Esse3 bounced to the IdP).
+    suspend fun reauthEsse3Legacy(): Esse3LegacyApi {
+        val active = activeAccount.value ?: error("No active account.")
+        esse3LegacyMutex.withLock {
+            esse3LegacyApis.remove(active.id)?.close()
+        }
+        sessionCache.update(active.id) { copy(esse3LegacyCookies = null) }
+        return esse3LegacyForAccount(active.id)
+    }
+
     suspend fun streamPersonPhoto(accountId: AccountId): ByteReadChannel {
         val row = accountDao.getById(accountId.value)
             ?: error("Account ${accountId.value} not found.")
@@ -298,6 +338,30 @@ class SessionManager @Inject constructor(
         val api = ensureElearningApiForAccount(active.id, tokens.moodleSessionCookie)
         return ElearningSession(api, tokens.wsToken)
     }
+
+    private suspend fun esse3LegacyForAccount(accountId: AccountId): Esse3LegacyApi =
+        // Single-flight per account under authMutexes so two concurrent certificati
+        // calls don't each kick off a separate SAML round-trip.
+        authMutexes.withLock(accountId) {
+            esse3LegacyMutex.withLock { esse3LegacyApis[accountId] }?.let { return@withLock it }
+
+            val cached = sessionCache.read(accountId)
+            val cookies = deserializeCookies(cached.esse3LegacyCookies)
+                ?: run {
+                    val creds = credentialsStore.read(accountId)
+                        ?: error("No stored credentials for ${accountId.value}.")
+                    val fresh = esse3LegacyApiFactory.login(creds.username, creds.password)
+                    sessionCache.update(accountId) { copy(esse3LegacyCookies = serializeCookies(fresh)) }
+                    fresh
+                }
+
+            val api = esse3LegacyApiFactory.create(cookies)
+            esse3LegacyMutex.withLock {
+                esse3LegacyApis.remove(accountId)?.close()
+                esse3LegacyApis[accountId] = api
+            }
+            api
+        }
 
     private suspend fun esse3ForAccount(accountId: AccountId): Esse3Api = esse3Mutex.withLock {
         esse3Apis[accountId]?.let { return@withLock it }
@@ -473,6 +537,37 @@ class SessionManager @Inject constructor(
                 cur = cur.cause
             }
             return false
+        }
+
+        // Esse3 web-SSO cookies serialized one per line as name\tvalue\tdomain\tpath.
+        // Only the fields needed to re-seed Esse3Api's cookie jar are kept; the cache is
+        // best-effort (a stale entry just triggers a fresh SAML login). Cookie name/value
+        // (JSESSIONID, _shibsession_*) never contain tabs or newlines.
+        private const val COOKIE_FIELD_SEP = "\t"
+        private const val COOKIE_RECORD_SEP = "\n"
+
+        fun serializeCookies(cookies: List<Cookie>): String? {
+            if (cookies.isEmpty()) return null
+            return cookies.joinToString(COOKIE_RECORD_SEP) { c ->
+                listOf(c.name, c.value, c.domain.orEmpty(), c.path.orEmpty())
+                    .joinToString(COOKIE_FIELD_SEP)
+            }
+        }
+
+        fun deserializeCookies(raw: String?): List<Cookie>? {
+            if (raw.isNullOrBlank()) return null
+            val cookies = raw.split(COOKIE_RECORD_SEP).mapNotNull { line ->
+                val parts = line.split(COOKIE_FIELD_SEP)
+                if (parts.size < 4) return@mapNotNull null
+                Cookie(
+                    name = parts[0],
+                    value = parts[1],
+                    encoding = CookieEncoding.RAW,
+                    domain = parts[2].ifBlank { null },
+                    path = parts[3].ifBlank { null },
+                )
+            }
+            return cookies.ifEmpty { null }
         }
     }
 }

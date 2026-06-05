@@ -3,6 +3,7 @@ package it.attendance100.mybicocca.domain.repository
 import it.attendance100.mybicocca.domain.model.career.CareerId
 import it.attendance100.mybicocca.domain.model.studyplan.EditableRule
 import it.attendance100.mybicocca.domain.model.studyplan.PlannedCourse
+import it.attendance100.mybicocca.domain.model.studyplan.StudyPath
 import it.attendance100.mybicocca.domain.model.studyplan.StudyPlan
 import it.attendance100.mybicocca.domain.model.studyplan.StudyYear
 
@@ -13,6 +14,11 @@ interface StudyPlanRepository {
     // The student's chosen plan (approved if present, else the most recent) with its
     // in-plan activities, or null when the career has no plan. Throws on network failure.
     suspend fun getStudyPlan(careerId: CareerId): StudyPlan?
+
+    // The student's path configuration (percorso / orientamento / profilo / part-time)
+    // plus any selectable alternatives offered by the plan's choice regulation, or null
+    // when the career has no standard plan. Throws on network failure.
+    suspend fun getStudyPath(careerId: CareerId): StudyPath?
 
     // Whether the plan-compilation window for the given choice regulation is open today.
     suspend fun isPlanEditingOpen(choiceRegulationId: Long): Boolean

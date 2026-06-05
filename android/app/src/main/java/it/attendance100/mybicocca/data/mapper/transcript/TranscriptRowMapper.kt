@@ -41,6 +41,8 @@ fun Esse3TranscriptRow.toEntity(careerId: CareerId): TranscriptRowEntity {
         // Year-0 prerequisites carry no plan link but are still part of the path, so keep them;
         // libretto rows that are neither (e.g. pending/extra activities) are excluded.
         inStudyPlan = planId != null || courseYear <= 0,
+        examType = graduationTypeDescription?.trim()?.takeIf { it.isNotEmpty() },
+        bookableCallsCount = bookableCallsNumber ?: 0,
     )
 }
 
@@ -57,6 +59,8 @@ fun TranscriptRowEntity.toDomain(): TranscriptRow = TranscriptRow(
     examDate = examDate?.let { runCatching { LocalDate.parse(it) }.getOrNull() },
     academicYear = academicYear,
     inStudyPlan = inStudyPlan,
+    examType = examType,
+    bookableCallsCount = bookableCallsCount,
 )
 
 fun Esse3TranscriptStats.toEntity(careerId: CareerId): TranscriptStatsEntity {

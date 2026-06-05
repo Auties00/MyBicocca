@@ -5,7 +5,6 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -39,7 +38,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.automirrored.filled.Send
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Warning
@@ -52,7 +50,6 @@ import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LoadingIndicator
-import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -68,22 +65,12 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Matrix
-import androidx.compose.ui.graphics.Outline
-import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.graphics.asComposePath
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.IntOffset
-import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.graphics.shapes.Morph
-import androidx.graphics.shapes.toPath
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import it.attendance100.mybicocca.core.state.SyncStatus
@@ -91,6 +78,7 @@ import it.attendance100.mybicocca.core.state.valueOrNull
 import it.attendance100.mybicocca.domain.model.studyplan.ChoiceConstraintUnit
 import it.attendance100.mybicocca.domain.model.studyplan.EditableCourse
 import it.attendance100.mybicocca.domain.model.studyplan.EditableRule
+import it.attendance100.mybicocca.ui.component.button.MorphKnob
 import it.attendance100.mybicocca.ui.component.feedback.EmptyState
 import it.attendance100.mybicocca.ui.component.feedback.LocalAppSnackbarController
 import it.attendance100.mybicocca.ui.navigation.AppRoute
@@ -550,40 +538,6 @@ private fun NoteTile(text: String) {
     }
 }
 
-// The selection knob: a circle that morphs into the sunny shape when checked.
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
-@Composable
-private fun MorphKnob(checked: Boolean) {
-    val scheme = MaterialTheme.colorScheme
-    val motion = MaterialTheme.motionScheme
-    val morph = remember { Morph(MaterialShapes.Circle, MaterialShapes.Sunny) }
-    val progress by animateFloatAsState(
-        targetValue = if (checked) 1f else 0f,
-        animationSpec = motion.defaultSpatialSpec(),
-        label = "knobMorph",
-    )
-    val container by animateColorAsState(
-        targetValue = if (checked) scheme.primary else scheme.surfaceContainerHighest,
-        animationSpec = motion.defaultEffectsSpec(),
-        label = "knobContainer",
-    )
-
-    Box(
-        modifier = Modifier
-            .size(32.dp)
-            .clip(MorphPolygonShape(morph, progress))
-            .background(container),
-        contentAlignment = Alignment.Center,
-    ) {
-        Icon(
-            imageVector = if (checked) Icons.Default.Check else Icons.Default.Add,
-            contentDescription = null,
-            tint = if (checked) Color.White else scheme.onSurfaceVariant,
-            modifier = Modifier.size(16.dp),
-        )
-    }
-}
-
 // The app's connected button pair (see EventDetailSheet/ExamResultsScreen): an
 // icon-only tonal back that springs in past the first page, and the primary action
 // morphing between Avanti and Invia. Broken rules disable the primary action.
@@ -766,20 +720,6 @@ private fun ErrorEmptyState(cause: Throwable, onRetry: () -> Unit) {
         body = cause.friendlyMessage(),
         action = { FilledTonalButton(onClick = onRetry) { Text("Riprova") } },
     )
-}
-
-// Scales the normalized morph path up to the knob's actual size.
-private class MorphPolygonShape(
-    private val morph: Morph,
-    private val progress: Float,
-) : Shape {
-    override fun createOutline(size: Size, layoutDirection: LayoutDirection, density: Density): Outline {
-        val matrix = Matrix()
-        matrix.scale(size.width, size.height)
-        val path = morph.toPath(progress).asComposePath()
-        path.transform(matrix)
-        return Outline.Generic(path)
-    }
 }
 
 // The subtitle states what the rule requires, not what it offers: "2 attività da

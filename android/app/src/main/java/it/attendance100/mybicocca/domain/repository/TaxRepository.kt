@@ -3,6 +3,8 @@ package it.attendance100.mybicocca.domain.repository
 import it.attendance100.mybicocca.domain.model.career.CareerId
 import it.attendance100.mybicocca.domain.model.tax.InvoiceId
 import it.attendance100.mybicocca.domain.model.tax.IseeDeclaration
+import it.attendance100.mybicocca.domain.model.tax.PaymentStatus
+import it.attendance100.mybicocca.domain.model.tax.Refund
 import it.attendance100.mybicocca.domain.model.tax.TaxInvoice
 import it.attendance100.mybicocca.domain.model.tax.TaxSummary
 
@@ -26,4 +28,11 @@ interface TaxRepository {
 
     // pagoPA payment receipt ("quietanza") PDF bytes.
     suspend fun getPagoPaReceipt(careerId: CareerId, invoiceId: InvoiceId, language: String = "it"): ByteArray
+
+    // Live pagoPA status of an invoice from its latest transaction; null if none exists.
+    // Student-accessible via /pagopa/transazioni (the admin-only chiediStatoVersamento 403s).
+    suspend fun getPaymentStatus(careerId: CareerId, invoiceId: InvoiceId): PaymentStatus?
+
+    // Fee refunds (rimborsi). Student-accessible via /lista-rimborsi/{persId}.
+    suspend fun getRefunds(careerId: CareerId): List<Refund>
 }

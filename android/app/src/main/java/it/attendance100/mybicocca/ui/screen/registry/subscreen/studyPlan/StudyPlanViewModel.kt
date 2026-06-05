@@ -8,8 +8,10 @@ import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.SyncStatus
 import it.attendance100.mybicocca.core.state.valueOrNull
 import it.attendance100.mybicocca.domain.model.career.CareerId
+import it.attendance100.mybicocca.domain.model.studyplan.StudyPath
 import it.attendance100.mybicocca.domain.model.studyplan.StudyPlan
 import it.attendance100.mybicocca.domain.usecase.account.ObserveActiveAccountUseCase
+import it.attendance100.mybicocca.domain.usecase.studyplan.GetStudyPathUseCase
 import it.attendance100.mybicocca.domain.usecase.studyplan.GetStudyPlanPrintUseCase
 import it.attendance100.mybicocca.domain.usecase.studyplan.GetStudyPlanUseCase
 import it.attendance100.mybicocca.domain.usecase.studyplan.IsStudyPlanEditableUseCase
@@ -35,6 +37,7 @@ import kotlin.coroutines.cancellation.CancellationException
 @HiltViewModel
 class StudyPlanViewModel @Inject constructor(
     private val getStudyPlan: GetStudyPlanUseCase,
+    private val getStudyPath: GetStudyPathUseCase,
     private val isStudyPlanEditable: IsStudyPlanEditableUseCase,
     private val getStudyPlanPrint: GetStudyPlanPrintUseCase,
     observeActiveAccount: ObserveActiveAccountUseCase,
@@ -47,6 +50,11 @@ class StudyPlanViewModel @Inject constructor(
 
     private val _plan = MutableStateFlow<Loadable<StudyPlan?>>(Loadable.NotYetLoaded)
     val plan: StateFlow<Loadable<StudyPlan?>> = _plan.asStateFlow()
+
+    // The path section (percorso / orientamento / profilo / part-time). Independent of
+    // the plan stream: a path lookup failure must not blank the course list.
+    private val _studyPath = MutableStateFlow<Loadable<StudyPath?>>(Loadable.NotYetLoaded)
+    val studyPath: StateFlow<Loadable<StudyPath?>> = _studyPath.asStateFlow()
 
     private val _syncStatus = MutableStateFlow<SyncStatus>(SyncStatus.Idle)
     val syncStatus: StateFlow<SyncStatus> = _syncStatus.asStateFlow()
@@ -79,6 +87,7 @@ class StudyPlanViewModel @Inject constructor(
     fun pullToRefresh() {
         val careerId = activeCareerId.value ?: return
         _plan.value = Loadable.NotYetLoaded
+        _studyPath.value = Loadable.NotYetLoaded
         viewModelScope.launch { fetch(careerId) }
     }
 
@@ -101,6 +110,29 @@ class StudyPlanViewModel @Inject constructor(
         }
     }
 
+    // Selecting a different path option means recompiling the plan against the chosen
+    // schema and POSTing it to /piani/{stuId} — the same mutating endpoint the plan
+    // editor uses. It is only ever reachable when a window is open AND >1 distinct option
+    // exists (UI-gated) and re-checked here.
+    //
+    // TODO: wire the real submit once it can be exercised on a multi-percorso account.
+    //  The flow is: getStudyPlanDraft(careerId, planId=null, regsceId, schemaId) to build
+    //  the rules for the picked schema (pre-selecting mandatory + carry-over activities),
+    //  then submitStudyPlan(careerId, rules) which POSTs Esse3PostPlanBody(type="S",
+    //  state="P", cancelValidPlanFlag=true, activity=[...]) to /piani/{stuId}. Left as a
+    //  read-only preview for now to avoid a destructive POST during testing.
+    fun chooseStudyPath(schemaId: Long) {
+        val path = _studyPath.value.valueOrNull() ?: return
+        if (!path.choiceAvailable) return
+        if (path.options.none { it.schemaId == schemaId }) return
+        if (_actionInProgress.value) return
+        viewModelScope.launch {
+            _events.send(
+                StudyPlanEvent.ShowMessage("Il cambio percorso non è ancora disponibile in app.")
+            )
+        }
+    }
+
     private suspend fun fetch(careerId: CareerId) {
         if (!refreshMutex.tryLock()) return
         try {
@@ -117,6 +149,11 @@ class StudyPlanViewModel @Inject constructor(
                     } ?: false)
                 },
                 onFailure = { cause -> _syncStatus.value = SyncStatus.Failed(cause) },
+            )
+            // Secondary stream: the path section degrades to "non disponibile" on failure
+            // rather than failing the whole page.
+            _studyPath.value = Loadable.Loaded(
+                runCatching { getStudyPath(careerId) }.getOrNull()
             )
         } finally {
             refreshMutex.unlock()

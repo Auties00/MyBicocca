@@ -11,13 +11,17 @@ import it.attendance100.mybicocca.data.repository.ElearningAssignmentRepositoryI
 import it.attendance100.mybicocca.data.repository.ElearningBadgeRepositoryImpl
 import it.attendance100.mybicocca.data.repository.ElearningCatalogRepositoryImpl
 import it.attendance100.mybicocca.data.repository.ElearningCourseRepositoryImpl
+import it.attendance100.mybicocca.data.repository.ElearningFileRepositoryImpl
 import it.attendance100.mybicocca.data.repository.ElearningForumRepositoryImpl
 import it.attendance100.mybicocca.data.repository.ElearningGradeRepositoryImpl
 import it.attendance100.mybicocca.data.repository.ElearningMessageRepositoryImpl
 import it.attendance100.mybicocca.data.repository.ElearningQuizRepositoryImpl
+import it.attendance100.mybicocca.data.repository.EnrollmentRepositoryImpl
 import it.attendance100.mybicocca.data.repository.FakeExamRepository
+import it.attendance100.mybicocca.data.repository.InternshipRepositoryImpl
 import it.attendance100.mybicocca.data.repository.MapRepositoryImpl
 import it.attendance100.mybicocca.data.repository.QuestionnaireRepositoryImpl
+import it.attendance100.mybicocca.data.repository.SavedOpportunityRepositoryImpl
 import it.attendance100.mybicocca.data.repository.SearchHistoryRepositoryImpl
 import it.attendance100.mybicocca.data.repository.StudyPlanRepositoryImpl
 import it.attendance100.mybicocca.data.repository.TaxRepositoryImpl
@@ -30,13 +34,17 @@ import it.attendance100.mybicocca.domain.repository.ElearningAssignmentRepositor
 import it.attendance100.mybicocca.domain.repository.ElearningBadgeRepository
 import it.attendance100.mybicocca.domain.repository.ElearningCatalogRepository
 import it.attendance100.mybicocca.domain.repository.ElearningCourseRepository
+import it.attendance100.mybicocca.domain.repository.ElearningFileRepository
 import it.attendance100.mybicocca.domain.repository.ElearningForumRepository
 import it.attendance100.mybicocca.domain.repository.ElearningGradeRepository
 import it.attendance100.mybicocca.domain.repository.ElearningMessageRepository
 import it.attendance100.mybicocca.domain.repository.ElearningQuizRepository
+import it.attendance100.mybicocca.domain.repository.EnrollmentRepository
 import it.attendance100.mybicocca.domain.repository.ExamRepository
+import it.attendance100.mybicocca.domain.repository.InternshipRepository
 import it.attendance100.mybicocca.domain.repository.MapRepository
 import it.attendance100.mybicocca.domain.repository.QuestionnaireRepository
+import it.attendance100.mybicocca.domain.repository.SavedOpportunityRepository
 import it.attendance100.mybicocca.domain.repository.SearchHistoryRepository
 import it.attendance100.mybicocca.domain.repository.StudyPlanRepository
 import it.attendance100.mybicocca.domain.repository.TaxRepository
@@ -90,6 +98,10 @@ abstract class RepositoryModule {
 
     @Binds
     @Singleton
+    abstract fun bindElearningFileRepository(impl: ElearningFileRepositoryImpl): ElearningFileRepository
+
+    @Binds
+    @Singleton
     abstract fun bindElearningGradeRepository(impl: ElearningGradeRepositoryImpl): ElearningGradeRepository
 
     @Binds
@@ -119,9 +131,21 @@ abstract class RepositoryModule {
 
     @Binds
     @Singleton
+    abstract fun bindInternshipRepository(impl: InternshipRepositoryImpl): InternshipRepository
+
+    @Binds
+    @Singleton
     abstract fun bindMapRepository(impl: MapRepositoryImpl): MapRepository
 
     @Binds
     @Singleton
     abstract fun bindSearchHistoryRepository(impl: SearchHistoryRepositoryImpl): SearchHistoryRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindEnrollmentRepository(impl: EnrollmentRepositoryImpl): EnrollmentRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindSavedOpportunityRepository(impl: SavedOpportunityRepositoryImpl): SavedOpportunityRepository
 }

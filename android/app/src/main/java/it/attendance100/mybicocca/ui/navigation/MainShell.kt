@@ -13,16 +13,11 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -40,9 +35,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -59,19 +52,13 @@ import androidx.navigation3.ui.NavDisplay
 import coil.imageLoader
 import coil.request.ImageRequest
 import coil.size.Size
-import com.valentinilk.shimmer.ShimmerBounds
-import com.valentinilk.shimmer.rememberShimmer
-import com.valentinilk.shimmer.shimmer
 import it.attendance100.mybicocca.ui.component.bar.BottomBarItem
 import it.attendance100.mybicocca.ui.component.bar.MyBicoccaBottomBar
 import it.attendance100.mybicocca.ui.component.bar.MyBicoccaTopBar
-import it.attendance100.mybicocca.ui.component.bar.PillCollapsedHeight
-import it.attendance100.mybicocca.ui.component.bar.PillTopGap
 import it.attendance100.mybicocca.ui.component.bar.TopBarSearchState
 import it.attendance100.mybicocca.ui.component.feedback.AppSnackbarHost
 import it.attendance100.mybicocca.ui.component.feedback.LocalAppSnackbarController
 import it.attendance100.mybicocca.ui.component.feedback.rememberAppSnackbarController
-import it.attendance100.mybicocca.ui.component.shimmer.ShimmerBox
 import it.attendance100.mybicocca.ui.navigation.transitions.LocalAnimatedContentScope
 import it.attendance100.mybicocca.ui.navigation.transitions.LocalSharedTransitionScope
 import it.attendance100.mybicocca.ui.screen.account.AccountViewModel
@@ -87,6 +74,8 @@ import it.attendance100.mybicocca.ui.screen.elearning.subscreen.conversationDeta
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.conversationDetail.ConversationDetailViewModel
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.courseDetail.CourseDetailScreen
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.courseDetail.CourseDetailViewModel
+import it.attendance100.mybicocca.ui.screen.elearning.subscreen.fileViewer.FileViewerScreen
+import it.attendance100.mybicocca.ui.screen.elearning.subscreen.fileViewer.FileViewerViewModel
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.discussionDetail.DiscussionDetailScreen
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.discussionDetail.DiscussionDetailViewModel
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.forumDetail.ForumDetailScreen
@@ -101,26 +90,27 @@ import it.attendance100.mybicocca.ui.screen.map.MapViewModel
 import it.attendance100.mybicocca.ui.screen.map.subscreen.room360.Room360Screen
 import it.attendance100.mybicocca.ui.screen.profile.ProfileScreen
 import it.attendance100.mybicocca.ui.screen.profile.ProfileViewModel
-import it.attendance100.mybicocca.ui.screen.profile.component.CreditCardAspectRatio
-import it.attendance100.mybicocca.ui.screen.profile.component.CreditCardHorizontalInset
-import it.attendance100.mybicocca.ui.screen.profile.component.ProfileCardTopGap
-import it.attendance100.mybicocca.ui.screen.profile.component.StudentCard
-import it.attendance100.mybicocca.ui.screen.profile.component.creditCardHeight
 import it.attendance100.mybicocca.ui.screen.registry.RegistryScreen
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.attendance.AttendanceScreen
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.bookableExams.BookableExamsScreen
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.bookableExams.BookableExamsViewModel
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.bookedExams.BookedExamsScreen
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.bookedExams.BookedExamsViewModel
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.degreeAward.DegreeAwardScreen
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.examResults.ExamResultsScreen
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.examResults.ExamResultsViewModel
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.isee.IseeScreen
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.refunds.RefundsScreen
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.internships.InternshipsScreen
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.internships.subscreen.saved.SavedOpportunitiesScreen
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.questionnaires.QuestionnairesScreen
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.questionnaires.QuestionnairesViewModel
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.questionnaires.subscreen.compilation.QuestionnaireCompilationScreen
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.questionnaires.subscreen.compilation.QuestionnaireCompilationViewModel
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.procedures.ProceduresScreen
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.procedures.subscreen.courseChange.CourseChangeScreen
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.procedures.subscreen.enrollmentExtension.EnrollmentExtensionScreen
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.reservations.ReservationsScreen
-import it.attendance100.mybicocca.ui.screen.registry.subscreen.selfCertificates.SelfCertificatesScreen
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.studyPlan.StudyPlanScreen
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.studyPlanEdit.StudyPlanEditScreen
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.taxDetail.TaxDetailScreen
@@ -128,8 +118,6 @@ import it.attendance100.mybicocca.ui.screen.registry.subscreen.taxes.TaxesScreen
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.taxes.TaxesViewModel
 import it.attendance100.mybicocca.domain.model.search.SearchDestination
 import it.attendance100.mybicocca.domain.model.search.SearchResult
-import it.attendance100.mybicocca.ui.screen.registry.subscreen.transcript.TranscriptScreen
-import it.attendance100.mybicocca.ui.screen.registry.subscreen.transcript.TranscriptViewModel
 import it.attendance100.mybicocca.ui.screen.search.SearchOverlay
 import it.attendance100.mybicocca.ui.screen.search.SearchViewModel
 import it.attendance100.mybicocca.ui.screen.settings.SettingsScreen
@@ -201,10 +189,8 @@ fun MainShell(
     // Hoisted so the transcript refresh (kicked off in the VM's init) starts on shell load,
     // not when the Profile sub-page is first opened — the stats/badge are then already warm.
     val profileViewModel: ProfileViewModel = hiltViewModel()
-    // The student card is rendered as a shell-level overlay (below), so its data is read here.
-    val profileAccount by profileViewModel.account.collectAsStateWithLifecycle()
+    // Used for search deep-link routing (toAppRoute needs the active career id).
     val profileCareer by profileViewModel.activeCareer.collectAsStateWithLifecycle()
-    val profilePhoto by profileViewModel.photoFile.collectAsStateWithLifecycle()
 
     // Unified search: one ViewModel feeds both the bar's text field and the full-screen
     // overlay body, so it is hoisted at shell level like the tab ViewModels above.
@@ -237,15 +223,6 @@ fun MainShell(
     //    handler. Search is page-only, so the two never both drive the morph at the same time.
     val navProgress = remember { mutableFloatStateOf(0f) }
     val searchProgress = remember { Animatable(0f) }
-
-    // Whether the floating student card (the shell-level overlay below) should be shown. It must
-    // stay true through the back-collapse: on back the Profile route pops immediately while
-    // navProgress is still decaying 1 → 0, so we keep it visible until the morph fully settles
-    // (mirrors the sticky Profilo pill-height in MyBicoccaTopBar).
-    val onProfile = currentRoute is AppRoute.Profile
-    val profileCardActive = remember { mutableStateOf(false) }
-    if (onProfile) profileCardActive.value = true
-    else if (navProgress.floatValue == 0f) profileCardActive.value = false
 
     var showAccountSwitcher by remember { mutableStateOf(false) }
     var searchActive by rememberSaveable { mutableStateOf(false) }
@@ -494,7 +471,16 @@ fun MainShell(
                                                                     AppRoute.BookedExams
                                                                 )
                                                             },
+                                                            onOpenBookableExams = {
+                                                                backStack.add(
+                                                                    AppRoute.BookableExams
+                                                                )
+                                                            },
                                                             onOpenTaxes = { backStack.add(AppRoute.Taxes) },
+                                                            onOpenIsee = { backStack.add(AppRoute.Isee) },
+                                                            onOpenRefunds = {
+                                                                backStack.add(AppRoute.Refunds)
+                                                            },
                                                             onOpenExamResults = {
                                                                 backStack.add(AppRoute.ExamResults)
                                                             },
@@ -508,9 +494,9 @@ fun MainShell(
                                                                     AppRoute.Questionnaires
                                                                 )
                                                             },
-                                                            onOpenReservations = {
+                                                            onOpenProcedures = {
                                                                 backStack.add(
-                                                                    AppRoute.Reservations
+                                                                    AppRoute.Procedures
                                                                 )
                                                             },
                                                             onOpenAttendance = {
@@ -523,9 +509,9 @@ fun MainShell(
                                                                     AppRoute.Internships
                                                                 )
                                                             },
-                                                            onOpenSelfCertificates = {
+                                                            onOpenDegreeAward = {
                                                                 backStack.add(
-                                                                    AppRoute.SelfCertificates
+                                                                    AppRoute.DegreeAward
                                                                 )
                                                             },
                                                             onProvideFilterToggle = onProvideFilterToggle,
@@ -540,7 +526,19 @@ fun MainShell(
                                     entry<AppRoute.Profile> {
                                         SubPage(topInset) {
                                             ProfileScreen(
-                                                viewModel = profileViewModel
+                                                viewModel = profileViewModel,
+                                                // Deep-link from a libretto course to its bookable
+                                                // appelli: arm the focus on the shell-scoped bookable
+                                                // VM, switch to the Servizi tab, then push the bookable-
+                                                // exams sub-page which consumes the focus, scrolls to
+                                                // the course group and lets the user pick an appello.
+                                                onOpenAppelli = { courseKey ->
+                                                    bookableExamsViewModel.requestFocus(courseKey)
+                                                    scope.launch {
+                                                        pagerState.scrollToPage(ShellTab.Registry.ordinal)
+                                                    }
+                                                    backStack.add(AppRoute.BookableExams)
+                                                },
                                             )
                                         }
                                     }
@@ -549,10 +547,12 @@ fun MainShell(
                                     // predictive back like every other sub-page.
                                     entry<AppRoute.BookedExams> {
                                         SubPage(topInset) {
-                                            BookedExamsScreen(
-                                                bookedViewModel = bookedExamsViewModel,
-                                                bookableViewModel = bookableExamsViewModel,
-                                            )
+                                            BookedExamsScreen(bookedViewModel = bookedExamsViewModel)
+                                        }
+                                    }
+                                    entry<AppRoute.BookableExams> {
+                                        SubPage(topInset) {
+                                            BookableExamsScreen(bookableViewModel = bookableExamsViewModel)
                                         }
                                     }
                                     entry<AppRoute.Taxes> {
@@ -565,6 +565,10 @@ fun MainShell(
                                             )
                                         }
                                     }
+                                    entry<AppRoute.Isee> {
+                                        SubPage(topInset) { IseeScreen(viewModel = taxesViewModel) }
+                                    }
+                                    entry<AppRoute.Refunds> { SubPage(topInset) { RefundsScreen() } }
                                     entry<AppRoute.Settings> { SubPage(topInset) { SettingsScreen() } }
                                     entry<AppRoute.StudyPlan> {
                                         SubPage(topInset) {
@@ -582,7 +586,6 @@ fun MainShell(
                                             )
                                         }
                                     }
-                                    entry<AppRoute.SelfCertificates> { SubPage(topInset) { SelfCertificatesScreen() } }
                                     entry<AppRoute.ExamResults> { SubPage(topInset) { ExamResultsScreen(viewModel = examResultsViewModel) } }
                                     entry<AppRoute.Attendance> { SubPage(topInset) { AttendanceScreen() } }
                                     entry<AppRoute.Questionnaires> {
@@ -607,7 +610,26 @@ fun MainShell(
                                         }
                                     }
                                     entry<AppRoute.Reservations> { SubPage(topInset) { ReservationsScreen() } }
-                                    entry<AppRoute.Internships> { SubPage(topInset) { InternshipsScreen() } }
+                                    entry<AppRoute.Procedures> {
+                                        SubPage(topInset) {
+                                            ProceduresScreen(
+                                                onOpenCourseChange = { backStack.add(AppRoute.CourseChange) },
+                                                onOpenEnrollmentExtension = { backStack.add(AppRoute.EnrollmentExtension) },
+                                            )
+                                        }
+                                    }
+                                    entry<AppRoute.CourseChange> { SubPage(topInset) { CourseChangeScreen() } }
+                                    entry<AppRoute.EnrollmentExtension> { SubPage(topInset) { EnrollmentExtensionScreen() } }
+                                    entry<AppRoute.Internships> {
+                                        SubPage(topInset) {
+                                            InternshipsScreen(
+                                                onOpenSaved = { backStack.add(AppRoute.SavedOpportunities) },
+                                            )
+                                        }
+                                    }
+                                    entry<AppRoute.SavedOpportunities> {
+                                        SubPage(topInset) { SavedOpportunitiesScreen() }
+                                    }
                                     entry<AppRoute.DegreeAward> { SubPage(topInset) { DegreeAwardScreen() } }
                                     entry<AppRoute.AppInfo> { SubPage(topInset) { AppInfoScreen() } }
                                     entry<AppRoute.LoginManager> { SubPage(topInset) { LoginManagerScreen() } }
@@ -619,18 +641,6 @@ fun MainShell(
                                             Room360Screen(
                                                 url = key.url,
                                                 roomName = key.roomName
-                                            )
-                                        }
-                                    }
-                                    entry<AppRoute.Transcript> { key ->
-                                        val vm =
-                                            hiltViewModel<TranscriptViewModel, TranscriptViewModel.Factory>(
-                                                creationCallback = { it.create(key) },
-                                            )
-                                        SubPage(topInset) {
-                                            TranscriptScreen(
-                                                careerId = key.careerId,
-                                                viewModel = vm
                                             )
                                         }
                                     }
@@ -700,6 +710,20 @@ fun MainShell(
                                                         )
                                                     )
                                                 },
+                                                onOpenFile = { route -> backStack.add(route) },
+                                            )
+                                        }
+                                    }
+                                    entry<AppRoute.FileViewer> { key ->
+                                        val vm =
+                                            hiltViewModel<FileViewerViewModel, FileViewerViewModel.Factory>(
+                                                creationCallback = { it.create(key) },
+                                            )
+                                        SubPage(topInset) {
+                                            FileViewerScreen(
+                                                // Zip entries re-dispatch through a nested viewer.
+                                                onOpenFile = { route -> backStack.add(route) },
+                                                viewModel = vm,
                                             )
                                         }
                                     }
@@ -878,73 +902,14 @@ fun MainShell(
                                         closeSearch()
                                     }
 
-                                    is SearchResult.TranscriptEntry ->
-                                        profileCareer?.id?.let { openSubPage(AppRoute.Transcript(it.value)) }
+                                    // Libretto exam hits land on the Profile page, which renders the libretto.
+                                    is SearchResult.TranscriptEntry -> openSubPage(AppRoute.Profile)
                                 }
                             },
                             onOpenDestination = { destination ->
                                 searchViewModel.commitToHistory()
                                 openDestination(destination)
                             },
-                        )
-                    }
-                }
-            }
-
-            // Floating student card. Hosted at the shell root — a sibling drawn AFTER the
-            // Scaffold, so it hovers above the top bar — rather than inside ProfileScreen, which
-            // the Scaffold draws beneath the bar. That lets it straddle the seam between the
-            // expanded pill (lighter) and the page content (darker). It is centered on that seam
-            // and rides navProgress: alpha + scale fade/shrink it in lockstep with the pill
-            // collapse and the predictive-back gesture; the empty overlay area has no pointer
-            // modifiers, so only the card itself is interactive (its flip gesture is preserved).
-            if (profileCardActive.value) {
-                val statusBarTop = with(LocalDensity.current) {
-                    WindowInsets.statusBars.getTop(this).toDp()
-                }
-                // The bar no longer expands on Profilo — it stays at the collapsed height like every
-                // other sub-page. The card floats just below that bar's bottom edge (status bar +
-                // gap + collapsed pill). prog still drives the fade/scale fly-in below.
-                val barBottom = statusBarTop + PillTopGap + PillCollapsedHeight
-                val cardTop = barBottom + ProfileCardTopGap
-                val prog = navProgress.floatValue
-
-                // Geometry + morph transform shared by the real card and its loading placeholder so
-                // the swap (and the collapse) read as one element fading/shrinking in lockstep.
-                val cardModifier = Modifier
-                    .offset(y = cardTop)
-                    .padding(horizontal = CreditCardHorizontalInset)
-                    .fillMaxWidth()
-                    .graphicsLayer {
-                        alpha = prog
-                        val static = 0.75f
-                        val dynamic = 1 - static
-                        scaleX = static + dynamic * prog
-                        scaleY = static + dynamic * prog
-                    }
-
-                Box(modifier = Modifier.fillMaxSize()) {
-                    if (profileAccount == null) {
-                        // Cold start: the account StateFlow hasn't emitted yet. Shimmer in the
-                        // card's footprint instead of flashing a real card full of placeholder
-                        // strings ("Studente", empty fields) until the data arrives.
-                        val shimmerInstance = rememberShimmer(shimmerBounds = ShimmerBounds.Window)
-                        ShimmerBox(
-                            modifier = cardModifier
-                                .aspectRatio(CreditCardAspectRatio)
-                                .shimmer(shimmerInstance),
-                            shape = RoundedCornerShape(20.dp),
-                        )
-                    } else {
-                        StudentCard(
-                            account = profileAccount,
-                            career = profileCareer,
-                            photoFile = profilePhoto,
-                            // Interactive only once fully settled on Profile (prog == 1f). During
-                            // the expand/collapse flight the card is non-interactive so it can't
-                            // swallow taps/drags while it is fading and sliding.
-                            enabled = prog > 0.99f,
-                            modifier = cardModifier,
                         )
                     }
                 }

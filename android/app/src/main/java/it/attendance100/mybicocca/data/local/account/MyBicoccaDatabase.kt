@@ -50,6 +50,8 @@ import it.attendance100.mybicocca.data.local.transcript.TranscriptRowEntity
 import it.attendance100.mybicocca.data.local.transcript.TranscriptStatsEntity
 import it.attendance100.mybicocca.data.local.transcript.TranscriptSyncStateDao
 import it.attendance100.mybicocca.data.local.transcript.TranscriptSyncStateEntity
+import it.attendance100.mybicocca.data.local.internship.SavedOpportunityDao
+import it.attendance100.mybicocca.data.local.internship.SavedOpportunityEntity
 
 @Database(
     entities = [
@@ -86,8 +88,9 @@ import it.attendance100.mybicocca.data.local.transcript.TranscriptSyncStateEntit
         MapBuildingEntity::class,
         MapRoomEntity::class,
         MapRoomSyncStateEntity::class,
+        SavedOpportunityEntity::class,
     ],
-    version = 16,
+    version = 18,
     exportSchema = false,
 )
 abstract class MyBicoccaDatabase : RoomDatabase() {
@@ -111,4 +114,6 @@ abstract class MyBicoccaDatabase : RoomDatabase() {
     abstract fun mapBuildingDao(): MapBuildingDao
     abstract fun mapRoomDao(): MapRoomDao
     abstract fun mapRoomSyncStateDao(): MapRoomSyncStateDao
+
+    abstract fun savedOpportunityDao(): SavedOpportunityDao
 }

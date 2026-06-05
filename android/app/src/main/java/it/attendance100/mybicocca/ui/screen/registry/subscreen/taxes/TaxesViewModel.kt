@@ -9,14 +9,19 @@ import it.attendance100.mybicocca.core.state.valueOrNull
 import it.attendance100.mybicocca.domain.model.career.CareerId
 import it.attendance100.mybicocca.domain.model.tax.InvoiceId
 import it.attendance100.mybicocca.domain.model.tax.IseeDeclaration
+import it.attendance100.mybicocca.domain.model.tax.PaymentOutcome
+import it.attendance100.mybicocca.domain.model.tax.PaymentStatus
 import it.attendance100.mybicocca.domain.model.tax.TaxInvoice
 import it.attendance100.mybicocca.domain.usecase.account.ObserveActiveAccountUseCase
 import it.attendance100.mybicocca.domain.usecase.tax.GetIseeDeclarationsUseCase
 import it.attendance100.mybicocca.domain.usecase.tax.GetPagoPaNoticeUseCase
 import it.attendance100.mybicocca.domain.usecase.tax.GetPagoPaReceiptUseCase
+import it.attendance100.mybicocca.domain.usecase.tax.GetPaymentStatusUseCase
 import it.attendance100.mybicocca.domain.usecase.tax.GetTaxInvoicesUseCase
 import it.attendance100.mybicocca.domain.usecase.tax.StartPagoPaPaymentUseCase
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.taxes.state.TaxEvent
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -42,6 +47,7 @@ class TaxesViewModel @Inject constructor(
     private val startPagoPaPayment: StartPagoPaPaymentUseCase,
     private val getPagoPaNotice: GetPagoPaNoticeUseCase,
     private val getPagoPaReceipt: GetPagoPaReceiptUseCase,
+    private val getPaymentStatus: GetPaymentStatusUseCase,
     observeActiveAccount: ObserveActiveAccountUseCase,
 ) : ViewModel() {
 
@@ -123,6 +129,11 @@ class TaxesViewModel @Inject constructor(
         _events.send(TaxEvent.OpenPdf(bytes, "quietanza_pagopa_${invoiceId.value}.pdf"))
     }
 
+    fun checkPaymentStatus(invoiceId: InvoiceId) = invoiceAction { careerId ->
+        val status = getPaymentStatus(careerId, invoiceId)
+        _events.send(TaxEvent.ShowMessage(status.toStatusMessage()))
+    }
+
     private fun invoiceAction(block: suspend (CareerId) -> Unit) {
         val careerId = activeCareerId.value ?: return
         viewModelScope.launch {
@@ -142,4 +153,21 @@ class TaxesViewModel @Inject constructor(
     private companion object {
         const val PAGOPA_RETURN_URL = "https://s3w.si.unimib.it/esse3/"
     }
+}
+
+private val PAYMENT_DATE_FORMAT = DateTimeFormatter.ofPattern("d MMMM yyyy", Locale.ITALIAN)
+
+private fun PaymentStatus?.toStatusMessage(): String {
+    if (this == null) return "Nessuna transazione pagoPA trovata per questa fattura."
+    val head = when (outcome) {
+        PaymentOutcome.Completed -> "Pagamento eseguito"
+        PaymentOutcome.Pending -> "Pagamento in corso"
+        PaymentOutcome.Failed -> "Pagamento non riuscito"
+        PaymentOutcome.Unknown -> description ?: "Stato del pagamento non disponibile"
+    }
+    val details = buildList {
+        paymentDate?.let { add(it.format(PAYMENT_DATE_FORMAT)) }
+        paidAmount?.takeIf { it > 0 }?.let { add("€ %.2f".format(Locale.ITALIAN, it)) }
+    }
+    return if (details.isEmpty()) head else "$head · ${details.joinToString(" · ")}"
 }

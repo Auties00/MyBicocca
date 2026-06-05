@@ -1,5 +1,7 @@
 package it.attendance100.mybicocca.ui.screen.elearning.subscreen.quizDetail.component
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -18,25 +20,40 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Flag
+import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Flag
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Matrix
+import androidx.compose.ui.graphics.Outline
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.asComposePath
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.graphics.shapes.Morph
+import androidx.graphics.shapes.toPath
 import it.attendance100.mybicocca.domain.model.elearning.quiz.AttemptQuestion
 import it.attendance100.mybicocca.ui.component.text.HtmlBody
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.quizDetail.state.ChoiceOption
@@ -45,9 +62,13 @@ import it.attendance100.mybicocca.ui.screen.elearning.subscreen.quizDetail.state
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.quizDetail.state.QuestionUiModel
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.quizDetail.state.ReviewMark
 
-// Renders one parsed question, both while answering and in read-only review. Every
-// interaction emits the FULL field map for the slot (controls + hidden base fields),
-// which is exactly the payload mod_quiz_save_attempt / process_attempt expect.
+// Renders one parsed question, both while answering and in read-only review, as a
+// connected segment group in the plan-compiler language (see StudyPlanEditScreen):
+// a header tile carrying the prompt, one connected tile per choice with a morphing
+// selection knob, free-text/cloze fields in a closing tile, and review notes
+// appended as closing segments. Every interaction emits the FULL field map for the
+// slot (controls + hidden base fields), which is exactly the payload
+// mod_quiz_save_attempt / process_attempt expect.
 @Composable
 fun QuestionCard(
     question: AttemptQuestion,
@@ -59,13 +80,144 @@ fun QuestionCard(
     onToggleFlag: (() -> Unit)?,
     modifier: Modifier = Modifier,
 ) {
-    val scheme = MaterialTheme.colorScheme
-    Surface(
-        shape = RoundedCornerShape(20.dp),
-        color = scheme.surfaceContainerLow,
+    val noteCount = if (readOnly) listOfNotNull(parsed.rightAnswerHtml, parsed.feedbackHtml).size else 0
+    // Unsupported questions have no interactive body in review, so the header may
+    // need to close the group on its own.
+    val hasBody = parsed.model !is QuestionUiModel.Unsupported || !readOnly
+    val bodyClosing = noteCount == 0
+
+    Column(
         modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(2.dp),
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
+        QuestionHeaderTile(
+            question = question,
+            // Cloze carries its text inside the segments, not in the prompt.
+            promptHtml = if (parsed.model is QuestionUiModel.Cloze) "" else parsed.model.promptHtml,
+            flagged = flagged,
+            readOnly = readOnly,
+            onToggleFlag = onToggleFlag,
+            alone = !hasBody && noteCount == 0,
+        )
+
+        when (val model = parsed.model) {
+            is QuestionUiModel.SingleChoice -> {
+                val selected = answerFields[model.fieldName]
+                    ?: model.options.firstOrNull { it.initiallySelected }?.value.orEmpty()
+                ChoiceTiles(
+                    options = model.options,
+                    isSelected = { it.value == selected },
+                    readOnly = readOnly,
+                    closing = bodyClosing,
+                    onSelect = { option ->
+                        onAnswer(model.baseFields + (model.fieldName to option.value))
+                    },
+                )
+            }
+
+            is QuestionUiModel.MultiChoice -> {
+                val checked = { option: ChoiceOption ->
+                    (answerFields[option.fieldName] ?: if (option.initiallySelected) "1" else "0") == "1"
+                }
+                ChoiceTiles(
+                    options = model.options,
+                    isSelected = checked,
+                    readOnly = readOnly,
+                    closing = bodyClosing,
+                    onSelect = { option ->
+                        val updated = model.options.associate { o ->
+                            val value = if (o.fieldName == option.fieldName) {
+                                if (checked(o)) "0" else "1"
+                            } else {
+                                if (checked(o)) "1" else "0"
+                            }
+                            o.fieldName to value
+                        }
+                        onAnswer(model.baseFields + updated)
+                    },
+                )
+            }
+
+            is QuestionUiModel.TextEntry -> BodyTile(closing = bodyClosing) {
+                OutlinedTextField(
+                    value = answerFields[model.fieldName] ?: model.initialValue,
+                    onValueChange = { onAnswer(model.baseFields + (model.fieldName to it)) },
+                    readOnly = readOnly,
+                    singleLine = true,
+                    placeholder = { Text("Risposta…") },
+                    keyboardOptions = if (model.numeric) {
+                        KeyboardOptions(keyboardType = KeyboardType.Decimal)
+                    } else {
+                        KeyboardOptions.Default
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+
+            is QuestionUiModel.Essay -> BodyTile(closing = bodyClosing) {
+                OutlinedTextField(
+                    value = answerFields[model.fieldName] ?: model.initialValue,
+                    onValueChange = { onAnswer(model.baseFields + (model.fieldName to it)) },
+                    readOnly = readOnly,
+                    minLines = 5,
+                    placeholder = { Text("Scrivi qui la tua risposta…") },
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+
+            is QuestionUiModel.Cloze -> BodyTile(closing = bodyClosing) {
+                ClozeContent(
+                    model = model,
+                    answerFields = answerFields,
+                    readOnly = readOnly,
+                    onAnswer = onAnswer,
+                )
+            }
+
+            is QuestionUiModel.Unsupported -> if (!readOnly) {
+                BodyTile(closing = bodyClosing) {
+                    Text(
+                        text = "Questo tipo di domanda non è supportato nell'app: rispondi dal sito e-learning.",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.error,
+                        fontStyle = FontStyle.Italic,
+                    )
+                }
+            }
+        }
+
+        if (readOnly) {
+            val hasFeedback = parsed.feedbackHtml != null
+            parsed.rightAnswerHtml?.let {
+                ReviewNoteTile(title = "Risposta corretta", html = it, accent = true, closing = !hasFeedback)
+            }
+            parsed.feedbackHtml?.let {
+                ReviewNoteTile(title = "Feedback", html = it, accent = false, closing = true)
+            }
+        }
+    }
+}
+
+// Header tile in the rule-group style: eyebrow row with the flag/verdict, then the
+// question formulation as the tile body.
+@Composable
+private fun QuestionHeaderTile(
+    question: AttemptQuestion,
+    promptHtml: String,
+    flagged: Boolean,
+    readOnly: Boolean,
+    onToggleFlag: (() -> Unit)?,
+    alone: Boolean,
+) {
+    val scheme = MaterialTheme.colorScheme
+    val bottom = if (alone) 20.dp else 4.dp
+    Surface(
+        shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp, bottomStart = bottom, bottomEnd = bottom),
+        color = scheme.surfaceContainerLow,
+        contentColor = scheme.onSurface,
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Column(modifier = Modifier.padding(start = 18.dp, end = 16.dp, top = 14.dp, bottom = 14.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
                     text = "DOMANDA ${question.slot}",
@@ -97,176 +249,155 @@ fun QuestionCard(
                     fontStyle = FontStyle.Italic,
                 )
             }
-            Spacer(Modifier.height(10.dp))
-
-            when (val model = parsed.model) {
-                is QuestionUiModel.SingleChoice -> {
-                    Prompt(model.promptHtml)
-                    Spacer(Modifier.height(12.dp))
-                    val selected = answerFields[model.fieldName]
-                        ?: model.options.firstOrNull { it.initiallySelected }?.value.orEmpty()
-                    ChoiceList(
-                        options = model.options,
-                        isSelected = { it.value == selected },
-                        readOnly = readOnly,
-                        onSelect = { option ->
-                            onAnswer(model.baseFields + (model.fieldName to option.value))
-                        },
-                    )
-                }
-
-                is QuestionUiModel.MultiChoice -> {
-                    Prompt(model.promptHtml)
-                    Spacer(Modifier.height(12.dp))
-                    val checked = { option: ChoiceOption ->
-                        (answerFields[option.fieldName] ?: if (option.initiallySelected) "1" else "0") == "1"
-                    }
-                    ChoiceList(
-                        options = model.options,
-                        isSelected = checked,
-                        readOnly = readOnly,
-                        onSelect = { option ->
-                            val updated = model.options.associate { o ->
-                                val value = if (o.fieldName == option.fieldName) {
-                                    if (checked(o)) "0" else "1"
-                                } else {
-                                    if (checked(o)) "1" else "0"
-                                }
-                                o.fieldName to value
-                            }
-                            onAnswer(model.baseFields + updated)
-                        },
-                    )
-                }
-
-                is QuestionUiModel.TextEntry -> {
-                    Prompt(model.promptHtml)
-                    Spacer(Modifier.height(12.dp))
-                    OutlinedTextField(
-                        value = answerFields[model.fieldName] ?: model.initialValue,
-                        onValueChange = { onAnswer(model.baseFields + (model.fieldName to it)) },
-                        readOnly = readOnly,
-                        singleLine = true,
-                        placeholder = { Text("Risposta…") },
-                        keyboardOptions = if (model.numeric) {
-                            KeyboardOptions(keyboardType = KeyboardType.Decimal)
-                        } else {
-                            KeyboardOptions.Default
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                }
-
-                is QuestionUiModel.Essay -> {
-                    Prompt(model.promptHtml)
-                    Spacer(Modifier.height(12.dp))
-                    OutlinedTextField(
-                        value = answerFields[model.fieldName] ?: model.initialValue,
-                        onValueChange = { onAnswer(model.baseFields + (model.fieldName to it)) },
-                        readOnly = readOnly,
-                        minLines = 5,
-                        placeholder = { Text("Scrivi qui la tua risposta…") },
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                }
-
-                is QuestionUiModel.Cloze -> ClozeContent(
-                    model = model,
-                    answerFields = answerFields,
-                    readOnly = readOnly,
-                    onAnswer = onAnswer,
-                )
-
-                is QuestionUiModel.Unsupported -> {
-                    Prompt(model.promptHtml)
-                    if (!readOnly) {
-                        Spacer(Modifier.height(10.dp))
-                        Text(
-                            text = "Questo tipo di domanda non è supportato nell'app: rispondi dal sito e-learning.",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = scheme.error,
-                            fontStyle = FontStyle.Italic,
-                        )
-                    }
-                }
-            }
-
-            if (readOnly) {
-                parsed.rightAnswerHtml?.let { ReviewNote(title = "Risposta corretta", html = it, accent = true) }
-                parsed.feedbackHtml?.let { ReviewNote(title = "Feedback", html = it, accent = false) }
+            if (promptHtml.isNotBlank()) {
+                Spacer(Modifier.height(10.dp))
+                HtmlBody(html = promptHtml, color = scheme.onSurface)
             }
         }
     }
 }
 
-@Composable
-private fun Prompt(html: String) {
-    if (html.isNotBlank()) {
-        HtmlBody(html = html, color = MaterialTheme.colorScheme.onSurface)
-    }
-}
+// Middle segments keep flat 4dp corners; the group's last segment closes with 20dp.
+private fun segmentShape(closing: Boolean): RoundedCornerShape = RoundedCornerShape(
+    topStart = 4.dp,
+    topEnd = 4.dp,
+    bottomStart = if (closing) 20.dp else 4.dp,
+    bottomEnd = if (closing) 20.dp else 4.dp,
+)
 
+// One connected tile per option. Like the plan compiler's course tiles, the tile
+// itself doesn't change on selection — the knob carries it. Review verdicts DO wash
+// the tile: the verdict must be loud.
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-private fun ChoiceList(
+private fun ChoiceTiles(
     options: List<ChoiceOption>,
     isSelected: (ChoiceOption) -> Boolean,
     readOnly: Boolean,
+    closing: Boolean,
     onSelect: (ChoiceOption) -> Unit,
 ) {
     val scheme = MaterialTheme.colorScheme
-    Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
-        options.forEachIndexed { index, option ->
-            val selected = isSelected(option)
-            val first = index == 0
-            val last = index == options.lastIndex
-            val (container, content) = when {
-                readOnly && option.reviewMark == ReviewMark.Correct ->
-                    scheme.primaryContainer to scheme.onPrimaryContainer
-                readOnly && option.reviewMark == ReviewMark.Incorrect ->
-                    scheme.errorContainer to scheme.onErrorContainer
-                selected -> scheme.secondaryContainer to scheme.onSecondaryContainer
-                else -> scheme.surfaceContainerHigh to scheme.onSurface
-            }
-            Surface(
-                shape = RoundedCornerShape(
-                    topStart = if (first) 14.dp else 5.dp,
-                    topEnd = if (first) 14.dp else 5.dp,
-                    bottomStart = if (last) 14.dp else 5.dp,
-                    bottomEnd = if (last) 14.dp else 5.dp,
-                ),
-                color = container,
-                contentColor = content,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .then(if (readOnly) Modifier else Modifier.clickable { onSelect(option) }),
+    options.forEachIndexed { index, option ->
+        val selected = isSelected(option)
+        val (container, content) = when {
+            readOnly && option.reviewMark == ReviewMark.Correct ->
+                scheme.primaryContainer to scheme.onPrimaryContainer
+            readOnly && option.reviewMark == ReviewMark.Incorrect ->
+                scheme.errorContainer to scheme.onErrorContainer
+            else -> scheme.surfaceContainerLow to scheme.onSurface
+        }
+        Surface(
+            onClick = { onSelect(option) },
+            enabled = !readOnly,
+            shape = segmentShape(closing = closing && index == options.lastIndex),
+            color = container,
+            contentColor = content,
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Row(
+                modifier = Modifier.padding(start = 16.dp, end = 12.dp, top = 12.dp, bottom = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
-                Row(
-                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Box(modifier = Modifier.weight(1f)) {
-                        HtmlBody(html = option.labelHtml, color = content)
-                    }
-                    when {
-                        readOnly && option.reviewMark == ReviewMark.Correct -> ChoiceMark(Icons.Rounded.Check, scheme.primary)
-                        readOnly && option.reviewMark == ReviewMark.Incorrect -> ChoiceMark(Icons.Rounded.Close, scheme.error)
-                        selected -> ChoiceMark(Icons.Rounded.Check, scheme.primary)
-                    }
+                Box(modifier = Modifier.weight(1f)) {
+                    HtmlBody(html = option.labelHtml, color = content)
+                }
+                Spacer(Modifier.width(10.dp))
+                when {
+                    readOnly && option.reviewMark == ReviewMark.Correct -> MorphKnob(
+                        checked = true,
+                        container = scheme.primary,
+                        content = scheme.onPrimary,
+                        icon = Icons.Rounded.Check,
+                    )
+
+                    readOnly && option.reviewMark == ReviewMark.Incorrect -> MorphKnob(
+                        checked = true,
+                        container = scheme.error,
+                        content = scheme.onError,
+                        icon = Icons.Rounded.Close,
+                    )
+
+                    else -> MorphKnob(
+                        checked = selected,
+                        container = if (selected) scheme.primary else scheme.surfaceContainerHighest,
+                        content = if (selected) scheme.onPrimary else scheme.onSurfaceVariant,
+                        icon = if (selected) Icons.Rounded.Check else Icons.Rounded.Add,
+                    )
                 }
             }
         }
     }
 }
 
+// The plan compiler's selection knob: a circle that morphs into the sunny shape
+// when checked.
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-private fun ChoiceMark(icon: androidx.compose.ui.graphics.vector.ImageVector, tint: Color) {
-    Spacer(Modifier.width(8.dp))
-    Icon(
-        imageVector = icon,
-        contentDescription = null,
-        tint = tint,
-        modifier = Modifier.size(18.dp),
+private fun MorphKnob(
+    checked: Boolean,
+    container: Color,
+    content: Color,
+    icon: ImageVector,
+) {
+    val motion = MaterialTheme.motionScheme
+    val morph = remember { Morph(MaterialShapes.Circle, MaterialShapes.Sunny) }
+    val progress by animateFloatAsState(
+        targetValue = if (checked) 1f else 0f,
+        animationSpec = motion.defaultSpatialSpec(),
+        label = "knobMorph",
     )
+    val containerColor by animateColorAsState(
+        targetValue = container,
+        animationSpec = motion.defaultEffectsSpec(),
+        label = "knobContainer",
+    )
+    Box(
+        modifier = Modifier
+            .size(32.dp)
+            .clip(MorphPolygonShape(morph, progress))
+            .background(containerColor),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = content,
+            modifier = Modifier.size(16.dp),
+        )
+    }
+}
+
+// Scales the normalized morph path up to the knob's actual size.
+private class MorphPolygonShape(
+    private val morph: Morph,
+    private val progress: Float,
+) : Shape {
+    override fun createOutline(size: Size, layoutDirection: LayoutDirection, density: Density): Outline {
+        val matrix = Matrix()
+        matrix.scale(size.width, size.height)
+        val path = morph.toPath(progress).asComposePath()
+        path.transform(matrix)
+        return Outline.Generic(path)
+    }
+}
+
+@Composable
+private fun BodyTile(
+    closing: Boolean,
+    content: @Composable () -> Unit,
+) {
+    val scheme = MaterialTheme.colorScheme
+    Surface(
+        shape = segmentShape(closing),
+        color = scheme.surfaceContainerLow,
+        contentColor = scheme.onSurface,
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Box(modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp)) {
+            content()
+        }
+    }
 }
 
 // Cloze: text chunks flow vertically with their gaps inline-ish below each chunk.
@@ -400,15 +531,14 @@ private fun VerdictBadge(question: AttemptQuestion) {
 }
 
 @Composable
-private fun ReviewNote(title: String, html: String, accent: Boolean) {
+private fun ReviewNoteTile(title: String, html: String, accent: Boolean, closing: Boolean) {
     val scheme = MaterialTheme.colorScheme
-    Spacer(Modifier.height(12.dp))
     Surface(
-        shape = RoundedCornerShape(14.dp),
-        color = if (accent) scheme.tertiaryContainer else scheme.surfaceContainerHigh,
+        shape = segmentShape(closing),
+        color = if (accent) scheme.tertiaryContainer else scheme.surfaceContainerLow,
         modifier = Modifier.fillMaxWidth(),
     ) {
-        Column(modifier = Modifier.padding(12.dp)) {
+        Column(modifier = Modifier.padding(start = 18.dp, end = 16.dp, top = 12.dp, bottom = 12.dp)) {
             Text(
                 text = title.uppercase(),
                 color = if (accent) scheme.onTertiaryContainer else scheme.tertiary,

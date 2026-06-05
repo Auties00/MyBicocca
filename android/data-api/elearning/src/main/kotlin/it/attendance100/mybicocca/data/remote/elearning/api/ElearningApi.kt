@@ -163,6 +163,11 @@ class ElearningApi(
     val kaltura: ElearningKalturaApi = ElearningKalturaApi(client, json)
 
     /**
+     * API for downloading files served by the web service file endpoint.
+     */
+    val files: ElearningFileApi = ElearningFileApi(client, json)
+
+    /**
      * Closes the underlying HTTP client and releases resources.
      *
      * After calling this method, the API instance should not be used.

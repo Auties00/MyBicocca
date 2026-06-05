@@ -20,11 +20,18 @@
     <intent>
       <action android:name="android.speech.RecognitionService" />
     </intent>
+    <!-- Office documents hand off to Microsoft's apps via their ms-* protocol handlers;
+         PackageManager checks need explicit visibility on API 30+. -->
+    <package android:name="com.microsoft.office.word" />
+    <package android:name="com.microsoft.office.excel" />
+    <package android:name="com.microsoft.office.powerpoint" />
   </queries>
 
   <!-- ML Kit GenAI declares minSdk 26; the app supports 25. Safe to override: every GenAI
-       call site guards on Build.VERSION >= 26 and falls back to the deterministic path. -->
-  <uses-sdk tools:overrideLibrary="com.google.mlkit.genai.prompt,com.google.mlkit.genai.speechrecognition,com.google.mlkit.genai.common" />
+       call site guards on Build.VERSION >= 26 and falls back to the deterministic path.
+       androidx.pdf declares minSdk 28; the PDF viewer gates on Build.VERSION >= 28 and
+       falls back to a PdfRenderer-based pager below that. -->
+  <uses-sdk tools:overrideLibrary="com.google.mlkit.genai.prompt,com.google.mlkit.genai.speechrecognition,com.google.mlkit.genai.common,androidx.pdf,androidx.pdf.compose,androidx.pdf.viewer,androidx.pdf.document.service" />
 
   <application
     android:name=".MyBicoccaApplication"

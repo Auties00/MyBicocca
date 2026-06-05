@@ -15,6 +15,7 @@ import kotlinx.serialization.json.Json
  * - Exam calendar (Calendario esami)
  * - Room occupation and information (Occupazione/Vetrina aule)
  * - Event search (Ricerca eventi)
+ * - Appointment booking (Portale Planning)
  *
  * The Agenda Web platform (powered by EasyStaff) is the scheduling system
  * for Università degli Studi di Milano-Bicocca. It provides:
@@ -31,6 +32,7 @@ import kotlinx.serialization.json.Json
  * @see EasyStaffBuildingsApi for room operations
  * @see EasyStaffEventsApi for event search operations
  * @see EasyStaffAttendanceApi for attendance operations
+ * @see EasyStaffPlanningApi for appointment booking operations
  */
 class EasyStaffApi(httpClientConfig: HttpClientConfig<*>.() -> Unit = {}) : AutoCloseable {
 
@@ -136,6 +138,17 @@ class EasyStaffApi(httpClientConfig: HttpClientConfig<*>.() -> Unit = {}) : Auto
      * - Attendance verification
      */
     val attendance: EasyStaffAttendanceApi = EasyStaffAttendanceApi(client, json)
+
+    /**
+     * API for appointment booking operations (Portale Planning).
+     *
+     * Provides access to:
+     * - Booking portal discovery and configuration
+     * - The information desks portal, with service/area listings, availability schedules,
+     *   and the full anonymous reservation lifecycle: create, confirm, manage, edit, cancel
+     * - The legacy study rooms portal, limited to configuration and discovery
+     */
+    val planning: EasyStaffPlanningApi = EasyStaffPlanningApi(client, json)
 
     /**
      * Closes the underlying HTTP client and releases resources.

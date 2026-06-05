@@ -4,8 +4,12 @@ import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.rememberScrollableState
+import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -14,15 +18,23 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsTopHeight
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.Assignment
+import androidx.compose.material.icons.automirrored.outlined.LibraryBooks
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.outlined.Forum
+import androidx.compose.material.icons.outlined.Quiz
 import androidx.compose.material.icons.outlined.StarBorder
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
@@ -40,20 +52,30 @@ import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -77,8 +99,9 @@ import it.attendance100.mybicocca.domain.model.elearning.forum.ForumType
 import it.attendance100.mybicocca.domain.model.elearning.quiz.Quiz
 import it.attendance100.mybicocca.domain.model.elearning.quiz.QuizId
 import it.attendance100.mybicocca.domain.model.elearning.video.VideoProgress
+import it.attendance100.mybicocca.ui.component.feedback.EmptyState
 import it.attendance100.mybicocca.ui.component.feedback.LocalAppSnackbarController
-import it.attendance100.mybicocca.ui.screen.elearning.subscreen.courseDetail.component.ActivityEmpty
+import it.attendance100.mybicocca.ui.navigation.AppRoute
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.courseDetail.component.AnnouncementsCard
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.courseDetail.component.AssignmentRow
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.courseDetail.component.CourseHero
@@ -89,18 +112,20 @@ import it.attendance100.mybicocca.ui.screen.elearning.subscreen.courseDetail.com
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.courseDetail.component.SectionsList
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.courseDetail.component.SyllabusContent
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.courseDetail.component.UpNextCard
+import it.attendance100.mybicocca.ui.screen.elearning.subscreen.courseDetail.state.CollapsingHeaderState
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.courseDetail.state.ContinuePlayable
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.courseDetail.state.CourseDetailOneShotEvent
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.courseDetail.state.CourseTab
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.courseDetail.state.PickedContinueWatching
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.courseDetail.state.UpNextItem
+import it.attendance100.mybicocca.ui.screen.elearning.subscreen.courseDetail.subscreen.folderContents.FolderContentsSheet
 import it.attendance100.mybicocca.ui.screen.elearning.theme.CourseDetailTheme
 import it.attendance100.mybicocca.ui.screen.elearning.theme.heroShapesFor
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
 import java.time.Instant
+import kotlin.math.roundToInt
 
 @Composable
 fun CourseDetailActions(viewModel: CourseDetailViewModel = hiltViewModel()) {
@@ -131,6 +156,7 @@ fun CourseDetailScreen(
     onOpenDiscussion: (DiscussionId) -> Unit = {},
     onOpenResource: (String) -> Unit = {},
     onOpenVideo: (cmId: Int, title: String) -> Unit = { _, _ -> },
+    onOpenFile: (AppRoute.FileViewer) -> Unit = {},
     viewModel: CourseDetailViewModel = hiltViewModel(),
 ) {
     val context = LocalContext.current
@@ -150,6 +176,9 @@ fun CourseDetailScreen(
     val continueWatchingThumbnailUrl by viewModel.continueWatchingThumbnailUrl.collectAsStateWithLifecycle()
 
     val snackbar = LocalAppSnackbarController.current
+
+    // cmId of the folder module whose file list is showing in the picker sheet.
+    var folderPickCmId by remember { mutableStateOf<Int?>(null) }
 
     // Publish the favourite toggle up to the shell so the global top bar can morph it during the
     // back/forward transition (the local bar that normally shows it is hidden mid-morph). The
@@ -176,6 +205,15 @@ fun CourseDetailScreen(
                         )
                     }
                 }
+                is CourseDetailOneShotEvent.OpenFile -> onOpenFile(
+                    AppRoute.FileViewer(
+                        fileName = event.fileName,
+                        fileUrl = event.fileUrl,
+                        mimeType = event.mimeType,
+                        sizeBytes = event.sizeBytes,
+                    ),
+                )
+                is CourseDetailOneShotEvent.OpenFolder -> folderPickCmId = event.cmId
                 is CourseDetailOneShotEvent.RefreshFailed ->
                     snackbar.showError("Sincronizzazione del corso non riuscita", event.cause)
             }
@@ -185,44 +223,38 @@ fun CourseDetailScreen(
     CourseDetailTheme(courseId = courseIdValue) {
     val scheme = MaterialTheme.colorScheme
     val pullState = rememberPullToRefreshState()
-    val listState = rememberLazyListState()
     val pullScope = rememberCoroutineScope()
     // Pull-to-refresh indicator stays only while the user-pull dismiss animation runs;
     // the shapes-loading indicator picks up afterwards (or on cold open).
     var pullIndicatorVisible by remember { mutableStateOf(false) }
 
-    // Roughly the bottom of the hero's headline; the bar title fades in past this.
+    // Standard collapsing-header pattern: hero + tab bar + pager form one column that the
+    // nested-scroll connection below translates up before any tab list scrolls (and back down
+    // once the active list is at its top again). The tab bar therefore pins purely off header
+    // geometry — page content height can never drag it around — and every tab page owns a
+    // real LazyListState, so per-tab scroll positions are kept by the framework for free.
     val density = LocalDensity.current
-    val titleHideThresholdPx = remember(density) { with(density) { 120.dp.toPx() } }
-    val titleHidden by remember(listState) {
-        derivedStateOf {
-            val hero = listState.layoutInfo.visibleItemsInfo.firstOrNull { it.key == "hero" }
-            hero == null || -hero.offset >= titleHideThresholdPx
-        }
-    }
-    // Drive off the tab bar's own offset (not hero.bottom) so spacedBy doesn't put a
-    // 2dp seam between the inline copy and the overlay at the swap moment. The morph is
-    // continuous over the bar's last stretch of travel, so by the time the overlay swaps
-    // in at progress 1 the two copies render identically — no snap.
     val tabBarMorphPx = remember(density) { with(density) { TAB_BAR_MORPH_DISTANCE.toPx() } }
-    val tabBarPinProgress by remember(listState) {
-        derivedStateOf {
-            val tabBar = listState.layoutInfo.visibleItemsInfo.firstOrNull { it.key == "tab_bar" }
-            when {
-                tabBar != null -> (1f - tabBar.offset / tabBarMorphPx).coerceIn(0f, 1f)
-                listState.firstVisibleItemIndex > 1 -> 1f
-                else -> 0f
-            }
-        }
+    val header = rememberSaveable(tabBarMorphPx, saver = CollapsingHeaderState.saver(tabBarMorphPx)) {
+        CollapsingHeaderState(tabBarMorphPx)
     }
-    val tabBarPinned by remember { derivedStateOf { tabBarPinProgress >= 1f } }
+    var tabBarHeightPx by remember { mutableIntStateOf(0) }
+
+    // Roughly the bottom of the hero's headline; the bar title fades in past this.
+    val titleHideThresholdPx = remember(density) { with(density) { 120.dp.toPx() } }
+    val titleHidden by remember(header) {
+        derivedStateOf { header.collapsedPx >= titleHideThresholdPx }
+    }
 
     // One pager drives both the swipeable tab content and the tab bar's indicator; the
     // SavedStateHandle-backed selectedTab stays the source of truth so the tab survives
     // process death (tab clicks land there first, then animate the pager from here).
     val pagerState = rememberPagerState(initialPage = selectedTab.ordinal) { CourseTab.entries.size }
+    // Sync the VM from settledPage, not currentPage: a multi-page animateScrollToPage walks
+    // through every intermediate page, and writing those back to selectedTab restarts the
+    // animating LaunchedEffect below, cancelling the animation mid-flight.
     LaunchedEffect(pagerState, viewModel) {
-        snapshotFlow { pagerState.currentPage }
+        snapshotFlow { pagerState.settledPage }
             .collect { page -> viewModel.selectTab(CourseTab.entries[page]) }
     }
     LaunchedEffect(selectedTab) {
@@ -230,12 +262,31 @@ fun CourseDetailScreen(
             pagerState.animateScrollToPage(selectedTab.ordinal)
         }
     }
-    // Landing on a new tab while the bar is pinned starts that tab from its top; when the
-    // bar is still in-list the scroll position is left alone, matching the old behavior.
-    LaunchedEffect(pagerState, listState) {
-        snapshotFlow { pagerState.settledPage }
-            .drop(1)
-            .collect { if (tabBarPinned) listState.animateScrollToItem(TAB_BAR_ITEM_INDEX) }
+    // One saveable list state per tab: swiping back to a tab restores exactly where it was.
+    val pageListStates = CourseTab.entries.map { tab -> key(tab) { rememberLazyListState() } }
+
+    val nestedScrollConnection = remember(header) {
+        object : NestedScrollConnection {
+            // Scrolling up collapses the header before the active list moves...
+            override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset =
+                if (available.y < 0f) Offset(0f, header.drag(available.y)) else Offset.Zero
+
+            // ...and scrolling down expands it only with what the active list left over,
+            // i.e. once that list is back at its own top.
+            override fun onPostScroll(
+                consumed: Offset,
+                available: Offset,
+                source: NestedScrollSource,
+            ): Offset =
+                if (available.y > 0f) Offset(0f, header.drag(available.y)) else Offset.Zero
+        }
+    }
+    // Drags starting on the hero or the tab bar (which are not scrollables themselves) still
+    // have to scroll the page: this state backs a scrollable on the root box, which dispatches
+    // through the same nested-scroll chain (header first) and hands whatever is left over to
+    // the active tab's list.
+    val headerDragState = rememberScrollableState { delta ->
+        -pageListStates[pagerState.currentPage].dispatchRawDelta(-delta)
     }
 
     val courseTitle = detailsLoadable.valueOrNull()?.enrolled?.fullName?.trim().orEmpty()
@@ -283,56 +334,90 @@ fun CourseDetailScreen(
             LaunchedEffect(continueWatching?.module?.cmId) {
                 viewModel.resolveContinueWatchingThumbnail(continueWatching?.module?.cmId)
             }
-            LazyColumn(
-                state = listState,
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(top = topBarInset, bottom = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(2.dp),
+
+            var heroHeightPx by remember { mutableIntStateOf(0) }
+            val headerSpacingPx = with(density) { HEADER_SPACING.toPx() }
+            // No collapsing while there is nothing below the hero to scroll; pull-to-refresh
+            // still works through the (otherwise idle) root scrollable.
+            val collapseRangePx = if (hasFullData) heroHeightPx + headerSpacingPx else 0f
+            SideEffect { header.updateCollapseRange(collapseRangePx) }
+
+            BoxWithConstraints(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .nestedScroll(nestedScrollConnection)
+                    .scrollable(headerDragState, Orientation.Vertical),
             ) {
-                item("hero") {
+                // Pages are sized for the pinned state (viewport below the pinned bar): while
+                // the header is still expanded the column simply extends past the bottom edge
+                // and slides up into place as it collapses. Fixed page bounds are what keep
+                // the bar steady no matter how short a tab's content is.
+                val pagerHeight = (maxHeight - topBarInset - HEADER_SPACING -
+                    with(density) { tabBarHeightPx.toDp() }).coerceAtLeast(0.dp)
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        // Measure with unbounded height: the column is taller than the
+                        // viewport while the hero is expanded, and coercing it would shrink
+                        // the pager below pagerHeight, leaving dead space once collapsed.
+                        .wrapContentHeight(align = Alignment.Top, unbounded = true)
+                        .padding(top = topBarInset)
+                        .offset { IntOffset(0, -header.collapsedPx.roundToInt()) },
+                    verticalArrangement = Arrangement.spacedBy(HEADER_SPACING),
+                ) {
                     val refreshing = syncStatus is SyncStatus.Refreshing
                     val shapesSpinning = initialFetchInProgress ||
                         (refreshing && !pullIndicatorVisible)
-                    CourseHero(
-                        details = details,
-                        continueWatching = continueWatching?.playable,
-                        shapes = heroShapes,
-                        isLoading = shapesSpinning,
-                        onResume = {
-                            continueWatching?.module?.let { openModule(it, viewModel) }
-                        },
-                        onGoToLesson = {
-                            viewModel.selectTab(CourseTab.Content)
-                            continueWatching?.let { picked ->
-                                if (picked.sectionId !in expanded) {
-                                    viewModel.toggleSection(picked.sectionId)
+                    Box(modifier = Modifier.onSizeChanged { heroHeightPx = it.height }) {
+                        CourseHero(
+                            details = details,
+                            continueWatching = continueWatching?.playable,
+                            shapes = heroShapes,
+                            isLoading = shapesSpinning,
+                            onResume = {
+                                continueWatching?.module?.let { openModule(it, viewModel) }
+                            },
+                            onGoToLesson = {
+                                viewModel.selectTab(CourseTab.Content)
+                                continueWatching?.let { picked ->
+                                    if (picked.sectionId !in expanded) {
+                                        viewModel.toggleSection(picked.sectionId)
+                                    }
                                 }
-                            }
-                        },
-                    )
-                }
-                if (hasFullData && details != null) {
-                    // Not stickyHeader — that would let the list's stretchy overscroll
-                    // deform the pinned bar; the overlay below handles the pinned state.
-                    item(key = "tab_bar") {
+                            },
+                        )
+                    }
+                    if (hasFullData && details != null) {
                         CourseTabBar(
                             pagerState = pagerState,
                             onSelect = viewModel::selectTab,
-                            pinProgress = { tabBarPinProgress },
-                            modifier = Modifier.animateItem(),
+                            pinProgress = { header.pinProgress },
+                            modifier = Modifier.onSizeChanged { tabBarHeightPx = it.height },
                         )
-                    }
-
-                    // Pages wrap their content height, so the outer list stays the only
-                    // vertical scrollable and the hero/title/pin behavior is untouched.
-                    item(key = "tab_pager") {
                         HorizontalPager(
                             state = pagerState,
                             verticalAlignment = Alignment.Top,
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(pagerHeight),
                         ) { page ->
+                            val pageModifier = Modifier.fillMaxSize()
+                            // Empty/loading states center inside the slice of the page that
+                            // is on screen while the hero is still expanded, so they are
+                            // visible without scrolling.
+                            val emptyModifier = Modifier
+                                .fillMaxWidth()
+                                .height(
+                                    (pagerHeight - with(density) { heroHeightPx.toDp() })
+                                        .coerceAtLeast(240.dp),
+                                )
                             when (CourseTab.entries[page]) {
-                                CourseTab.Syllabus -> SyllabusContent(details = details)
+                                CourseTab.Syllabus -> SyllabusContent(
+                                    details = details,
+                                    listState = pageListStates[page],
+                                    modifier = pageModifier,
+                                    emptyModifier = emptyModifier,
+                                )
                                 CourseTab.Content -> ContentPage(
                                     details = details,
                                     expanded = expanded,
@@ -340,22 +425,34 @@ fun CourseDetailScreen(
                                     videoProgress = videoProgress,
                                     onToggleSection = viewModel::toggleSection,
                                     onModuleClick = { openModule(it, viewModel) },
+                                    listState = pageListStates[page],
+                                    modifier = pageModifier,
+                                    emptyModifier = emptyModifier,
                                 )
                                 CourseTab.Quiz -> QuizzesPage(
                                     quizzesLoadable = quizzesLoadable,
                                     details = details,
                                     completion = completion,
                                     onClick = { viewModel.emitOpenQuiz(it.value) },
+                                    listState = pageListStates[page],
+                                    modifier = pageModifier,
+                                    emptyModifier = emptyModifier,
                                 )
                                 CourseTab.Assignments -> AssignmentsPage(
                                     assignmentsLoadable = assignmentsLoadable,
                                     onClick = { viewModel.emitOpenAssignment(it.value) },
+                                    listState = pageListStates[page],
+                                    modifier = pageModifier,
+                                    emptyModifier = emptyModifier,
                                 )
                                 CourseTab.Forum -> ForumsPage(
                                     forumsLoadable = forumsLoadable,
                                     latestAnnouncement = latestAnnouncement,
                                     onClick = { viewModel.emitOpenForum(it.value) },
                                     onOpenDiscussion = { viewModel.emitOpenDiscussion(it) },
+                                    listState = pageListStates[page],
+                                    modifier = pageModifier,
+                                    emptyModifier = emptyModifier,
                                 )
                             }
                         }
@@ -377,25 +474,38 @@ fun CourseDetailScreen(
                     ),
                 ),
         )
+    }
 
-        // Sits outside the LazyColumn so the list's overscroll doesn't deform it; offset below
-        // the global bar, which is opaque again by the time the tab bar can reach it.
-        if (tabBarPinned) {
-            CourseTabBar(
-                pagerState = pagerState,
-                onSelect = viewModel::selectTab,
-                pinProgress = { 1f },
-                modifier = Modifier
-                    .align(Alignment.TopStart)
-                    .padding(top = topBarInset),
-            )
-        }
+    val folderModule = folderPickCmId?.let { cmId ->
+        detailsLoadable.valueOrNull()
+            ?.sections
+            ?.asSequence()
+            ?.flatMap { it.modules }
+            ?.firstOrNull { it.cmId == cmId }
+    }
+    if (folderModule != null) {
+        FolderContentsSheet(
+            title = folderModule.name,
+            contents = folderModule.contents.filter { it.fileUrl != null && it.type != "url" },
+            onOpenContent = { content ->
+                viewModel.emitOpenFile(
+                    fileName = content.fileName ?: folderModule.name,
+                    fileUrl = content.fileUrl.orEmpty(),
+                    mimeType = content.mimeType,
+                    sizeBytes = content.sizeBytes,
+                )
+            },
+            onDismiss = { folderPickCmId = null },
+        )
     }
     }
 }
 
 private fun openModule(module: CourseModule, viewModel: CourseDetailViewModel) {
     val kalvidresCmId = module.kalvidresCmIdOrNull()
+    // Only entries with a real pluginfile payload can go to the in-app viewer; "url"-typed
+    // contents are external links that stay on the browser path.
+    val fileContents = module.contents.filter { it.fileUrl != null && it.type != "url" }
     when {
         module.type == ModuleType.Quiz ->
             module.instanceId?.let { viewModel.emitOpenQuiz(it) }
@@ -405,6 +515,19 @@ private fun openModule(module: CourseModule, viewModel: CourseDetailViewModel) {
             module.instanceId?.let { viewModel.emitOpenForum(it) }
         kalvidresCmId != null ->
             viewModel.emitOpenVideo(kalvidresCmId, module.name)
+        module.type == ModuleType.Folder && fileContents.isNotEmpty() ->
+            viewModel.emitOpenFolder(module.cmId)
+        module.type == ModuleType.Resource && fileContents.size > 1 ->
+            viewModel.emitOpenFolder(module.cmId)
+        module.type == ModuleType.Resource && fileContents.size == 1 -> {
+            val content = fileContents.first()
+            viewModel.emitOpenFile(
+                fileName = content.fileName ?: module.name,
+                fileUrl = content.fileUrl.orEmpty(),
+                mimeType = content.mimeType,
+                sizeBytes = content.sizeBytes,
+            )
+        }
         else ->
             module.url?.takeIf { it.isNotBlank() }?.let { viewModel.emitOpenResource(it) }
     }
@@ -418,20 +541,33 @@ private fun ContentPage(
     videoProgress: Map<Int, VideoProgress>,
     onToggleSection: (Int) -> Unit,
     onModuleClick: (CourseModule) -> Unit,
+    listState: LazyListState,
+    modifier: Modifier = Modifier,
+    emptyModifier: Modifier = Modifier,
 ) {
     if (details.sections.isEmpty()) {
-        ActivityEmpty(message = "Nessuna sezione disponibile")
+        EmptyState(
+            icon = Icons.AutoMirrored.Outlined.LibraryBooks,
+            title = "Nessun contenuto",
+            body = "I materiali del corso appariranno qui.",
+            modifier = emptyModifier,
+        )
     } else {
-        Column {
-            Spacer(Modifier.height(12.dp))
-            SectionsList(
-                sections = details.sections,
-                expanded = expanded,
-                completion = completion,
-                videoProgress = videoProgress,
-                onToggleSection = onToggleSection,
-                onModuleClick = onModuleClick,
-            )
+        LazyColumn(
+            state = listState,
+            modifier = modifier,
+            contentPadding = PaddingValues(top = 12.dp, bottom = LIST_BOTTOM_PADDING),
+        ) {
+            item {
+                SectionsList(
+                    sections = details.sections,
+                    expanded = expanded,
+                    completion = completion,
+                    videoProgress = videoProgress,
+                    onToggleSection = onToggleSection,
+                    onModuleClick = onModuleClick,
+                )
+            }
         }
     }
 }
@@ -442,34 +578,48 @@ private fun QuizzesPage(
     details: CourseDetails?,
     completion: Map<Int, CompletionState>,
     onClick: (QuizId) -> Unit,
+    listState: LazyListState,
+    modifier: Modifier = Modifier,
+    emptyModifier: Modifier = Modifier,
 ) {
     when (quizzesLoadable) {
-        Loadable.NotYetLoaded -> ListLoadingRow()
+        Loadable.NotYetLoaded -> ListLoadingRow(modifier = emptyModifier)
         is Loadable.Loaded -> {
             val list = quizzesLoadable.value
             if (list.isEmpty()) {
-                ActivityEmpty(message = "Nessun quiz nel corso")
+                EmptyState(
+                    icon = Icons.Outlined.Quiz,
+                    title = "Nessun quiz",
+                    body = "I quiz del corso appariranno qui.",
+                    modifier = emptyModifier,
+                )
             } else {
                 // Real courses ship up to ~100 quizzes with heavily repeated names
                 // ("Esercizio 1.2", "Esercizi da svolgere" ×12); the section a quiz lives
                 // in is what gives the row its identity, so the list mirrors course order
                 // grouped by section instead of the cache's flat alphabetical order.
                 val groups = remember(list, details) { groupQuizzesBySection(list, details) }
-                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                    Spacer(Modifier.height(12.dp))
-                    val tracked = list.count { completion[it.cmId]?.isTracked == true }
-                    val done = list.count { completion[it.cmId]?.isCompleted == true }
+                val tracked = list.count { completion[it.cmId]?.isTracked == true }
+                val done = list.count { completion[it.cmId]?.isCompleted == true }
+                LazyColumn(
+                    state = listState,
+                    modifier = modifier,
+                    contentPadding = PaddingValues(top = 12.dp, bottom = LIST_BOTTOM_PADDING),
+                    verticalArrangement = Arrangement.spacedBy(2.dp),
+                ) {
                     if (list.size >= 2 && tracked >= list.size / 2) {
-                        QuizProgressCard(done = done, total = list.size)
+                        item { QuizProgressCard(done = done, total = list.size) }
                     }
                     groups.forEachIndexed { index, group ->
                         if (group.title != null) {
-                            SectionTitle(
-                                title = "${group.title} · ${group.quizzes.size}",
-                                mark = QuizSectionMarks[index % QuizSectionMarks.size],
-                            )
+                            item {
+                                SectionTitle(
+                                    title = "${group.title} · ${group.quizzes.size}",
+                                    mark = QuizSectionMarks[index % QuizSectionMarks.size],
+                                )
+                            }
                         }
-                        group.quizzes.forEach { quiz ->
+                        items(group.quizzes) { quiz ->
                             Box(modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)) {
                                 QuizRow(
                                     quiz = quiz,
@@ -559,38 +709,53 @@ private fun groupQuizzesBySection(quizzes: List<Quiz>, details: CourseDetails?):
 private fun AssignmentsPage(
     assignmentsLoadable: Loadable<List<Assignment>>,
     onClick: (AssignmentId) -> Unit,
+    listState: LazyListState,
+    modifier: Modifier = Modifier,
+    emptyModifier: Modifier = Modifier,
 ) {
-    val list = assignmentsLoadable.valueOrNull()
-    val now = Instant.now()
-    val next = list?.let { pickNextDueAssignment(it, now) }
-    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-        if (next != null) {
-            Spacer(Modifier.height(12.dp))
-            UpNextCard(
-                item = UpNextItem(
-                    title = next.name,
-                    subtitle = next.intro?.takeIf { it.isNotBlank() }?.let { stripTagsShort(it) },
-                    dueAt = next.dueDate!!,
-                    onClick = { onClick(next.id) },
-                ),
-                now = now,
-                onSubmit = { onClick(next.id) },
-                onViewBrief = { onClick(next.id) },
-            )
-        }
-        when (assignmentsLoadable) {
-            Loadable.NotYetLoaded -> ListLoadingRow()
-            is Loadable.Loaded -> {
-                val values = assignmentsLoadable.value
-                if (values.isEmpty()) {
-                    ActivityEmpty(message = "Nessun compito assegnato")
-                } else {
-                    groupAssignments(values, now).forEach { group ->
+    when (assignmentsLoadable) {
+        Loadable.NotYetLoaded -> ListLoadingRow(modifier = emptyModifier)
+        is Loadable.Loaded -> {
+            val values = assignmentsLoadable.value
+            if (values.isEmpty()) {
+                EmptyState(
+                    icon = Icons.AutoMirrored.Outlined.Assignment,
+                    title = "Nessun compito",
+                    body = "I compiti assegnati nel corso appariranno qui.",
+                    modifier = emptyModifier,
+                )
+                return
+            }
+            val now = Instant.now()
+            val next = pickNextDueAssignment(values, now)
+            LazyColumn(
+                state = listState,
+                modifier = modifier,
+                contentPadding = PaddingValues(top = 12.dp, bottom = LIST_BOTTOM_PADDING),
+                verticalArrangement = Arrangement.spacedBy(2.dp),
+            ) {
+                if (next != null) {
+                    item {
+                        UpNextCard(
+                            item = UpNextItem(
+                                title = next.name,
+                                subtitle = next.intro?.takeIf { it.isNotBlank() }?.let { stripTagsShort(it) },
+                                dueAt = next.dueDate!!,
+                                onClick = { onClick(next.id) },
+                            ),
+                            now = now,
+                            onSubmit = { onClick(next.id) },
+                            onViewBrief = { onClick(next.id) },
+                        )
+                    }
+                }
+                groupAssignments(values, now).forEach { group ->
+                    item {
                         SectionTitle(title = "${group.title} · ${group.items.size}", mark = group.mark)
-                        group.items.forEach { a ->
-                            Box(modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)) {
-                                AssignmentRow(assignment = a, now = now, onClick = { onClick(a.id) })
-                            }
+                    }
+                    items(group.items) { a ->
+                        Box(modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)) {
+                            AssignmentRow(assignment = a, now = now, onClick = { onClick(a.id) })
                         }
                     }
                 }
@@ -642,13 +807,21 @@ private fun ForumsPage(
     latestAnnouncement: Loadable<Discussion?>,
     onClick: (ForumId) -> Unit,
     onOpenDiscussion: (DiscussionId) -> Unit,
+    listState: LazyListState,
+    modifier: Modifier = Modifier,
+    emptyModifier: Modifier = Modifier,
 ) {
     when (forumsLoadable) {
-        Loadable.NotYetLoaded -> ListLoadingRow()
+        Loadable.NotYetLoaded -> ListLoadingRow(modifier = emptyModifier)
         is Loadable.Loaded -> {
             val list = forumsLoadable.value
             if (list.isEmpty()) {
-                ActivityEmpty(message = "Nessun forum nel corso")
+                EmptyState(
+                    icon = Icons.Outlined.Forum,
+                    title = "Nessun forum",
+                    body = "Gli spazi di discussione del corso appariranno qui.",
+                    modifier = emptyModifier,
+                )
                 return
             }
             // The read-only teacher board gets the hero; everything else lists below,
@@ -657,23 +830,27 @@ private fun ForumsPage(
             val others = list
                 .filterNot { it.id == news?.id }
                 .sortedByDescending { it.discussionCount }
-            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            LazyColumn(
+                state = listState,
+                modifier = modifier,
+                contentPadding = PaddingValues(top = 12.dp, bottom = LIST_BOTTOM_PADDING),
+                verticalArrangement = Arrangement.spacedBy(2.dp),
+            ) {
                 if (news != null) {
-                    Spacer(Modifier.height(12.dp))
-                    AnnouncementsCard(
-                        forum = news,
-                        latestAnnouncement = latestAnnouncement,
-                        onOpenForum = { onClick(news.id) },
-                        onOpenDiscussion = { onOpenDiscussion(it.id) },
-                    )
+                    item {
+                        AnnouncementsCard(
+                            forum = news,
+                            latestAnnouncement = latestAnnouncement,
+                            onOpenForum = { onClick(news.id) },
+                            onOpenDiscussion = { onOpenDiscussion(it.id) },
+                        )
+                    }
                 }
                 if (others.isNotEmpty()) {
                     if (news != null) {
-                        SectionTitle(title = "Spazi di discussione")
-                    } else {
-                        Spacer(Modifier.height(12.dp))
+                        item { SectionTitle(title = "Spazi di discussione") }
                     }
-                    others.forEach { f ->
+                    items(others) { f ->
                         Box(modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)) {
                             ForumRow(forum = f, onClick = { onClick(f.id) })
                         }
@@ -685,11 +862,9 @@ private fun ForumsPage(
 }
 
 @Composable
-private fun ListLoadingRow() {
+private fun ListLoadingRow(modifier: Modifier = Modifier) {
     Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 32.dp),
+        modifier = modifier,
         contentAlignment = Alignment.Center,
     ) {
         CircularProgressIndicator()
@@ -781,7 +956,9 @@ private fun stripTagsShort(html: String): String {
 }
 
 private const val PULL_INDICATOR_DISMISS_DELAY_MS = 350L
-// List index of the "tab_bar" item (hero is 0); scrolled to when a swipe lands while pinned.
-private const val TAB_BAR_ITEM_INDEX = 1
-// How much of the bar's final travel is spent morphing buttons into tab indicators.
+// How much of the header's final travel is spent morphing buttons into tab indicators.
 private val TAB_BAR_MORPH_DISTANCE = 80.dp
+// Gap between hero, tab bar and pager in the collapsing column.
+private val HEADER_SPACING = 2.dp
+// Bottom padding inside each tab page's list.
+private val LIST_BOTTOM_PADDING = 16.dp

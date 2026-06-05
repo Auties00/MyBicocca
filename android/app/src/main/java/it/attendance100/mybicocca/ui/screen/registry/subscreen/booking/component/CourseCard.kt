@@ -29,6 +29,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -53,10 +54,20 @@ fun CourseCard(
     today: LocalDate,
     onOpen: (ExamCall) -> Unit,
     modifier: Modifier = Modifier,
+    // Deep-link: when set, the card auto-expands once (the caller clears the request after).
+    expandRequest: Boolean = false,
+    onExpandConsumed: () -> Unit = {},
 ) {
     val scheme = MaterialTheme.colorScheme
     val motion = MaterialTheme.motionScheme
     var expanded by rememberSaveable(group.courseKey) { mutableStateOf(false) }
+
+    LaunchedEffect(expandRequest) {
+        if (expandRequest) {
+            expanded = true
+            onExpandConsumed()
+        }
+    }
 
     val chevronRotation by animateFloatAsState(
         targetValue = if (expanded) 180f else 0f,

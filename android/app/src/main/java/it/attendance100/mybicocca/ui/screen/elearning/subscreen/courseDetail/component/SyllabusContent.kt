@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -14,7 +15,11 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Description
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -38,51 +43,56 @@ import it.attendance100.mybicocca.domain.model.elearning.course.CourseStaffRole
 import it.attendance100.mybicocca.domain.model.elearning.course.ProgrammeSection
 import it.attendance100.mybicocca.domain.model.elearning.course.Semester
 import it.attendance100.mybicocca.domain.model.elearning.course.SyllabusInfo
+import it.attendance100.mybicocca.ui.component.feedback.EmptyState
 import it.attendance100.mybicocca.ui.component.shape.OrganicShapes
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.courseDetail.state.StaffGridVariant
 
 @Composable
 fun SyllabusContent(
     details: CourseDetails,
+    listState: LazyListState,
     modifier: Modifier = Modifier,
+    emptyModifier: Modifier = Modifier,
 ) {
     val syllabus = details.syllabus
     if (syllabus == null || (syllabus.fields.isEmpty() && !syllabus.info.hasInfoTile)) {
-        SyllabusEmpty(modifier = modifier)
+        SyllabusEmpty(modifier = emptyModifier)
         return
     }
 
     val info = syllabus.info
 
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(start = 16.dp, end = 16.dp, top = 14.dp, bottom = 28.dp),
+    LazyColumn(
+        state = listState,
+        modifier = modifier,
+        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 14.dp, bottom = 28.dp),
         verticalArrangement = Arrangement.spacedBy(24.dp),
     ) {
         if (info.hasInfoTile) {
-            Column(modifier = Modifier.fillMaxWidth()) {
-                SyllabusHeader(title = "Informazioni")
-                Spacer(Modifier.height(12.dp))
-                SyllabusInfoTile(info = info)
+            item {
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    SyllabusHeader(title = "Informazioni")
+                    Spacer(Modifier.height(12.dp))
+                    SyllabusInfoTile(info = info)
+                }
             }
         }
 
-        info.objectives?.let { SyllabusSection(title = "Obiettivi", body = it) }
-        info.summary?.let { SyllabusSection(title = "Contenuti sintetici", body = it) }
+        info.objectives?.let { item { SyllabusSection(title = "Obiettivi", body = it) } }
+        info.summary?.let { item { SyllabusSection(title = "Contenuti sintetici", body = it) } }
 
         if (info.extendedProgramme.isNotEmpty()) {
-            ExtendedProgrammeList(parts = info.extendedProgramme)
+            item { ExtendedProgrammeList(parts = info.extendedProgramme) }
         }
 
-        info.prerequisites?.let { SyllabusSection(title = "Prerequisiti", body = it) }
-        info.teachingMethod?.let { SyllabusSection(title = "Modalità didattica", body = it) }
-        info.referenceMaterial?.let { SyllabusSection(title = "Materiale didattico", body = it) }
-        info.assessment?.let { SyllabusSection(title = "Verifica del profitto", body = it) }
-        info.officeHours?.let { SyllabusSection(title = "Orario di ricevimento", body = it) }
+        info.prerequisites?.let { item { SyllabusSection(title = "Prerequisiti", body = it) } }
+        info.teachingMethod?.let { item { SyllabusSection(title = "Modalità didattica", body = it) } }
+        info.referenceMaterial?.let { item { SyllabusSection(title = "Materiale didattico", body = it) } }
+        info.assessment?.let { item { SyllabusSection(title = "Verifica del profitto", body = it) } }
+        info.officeHours?.let { item { SyllabusSection(title = "Orario di ricevimento", body = it) } }
 
         if (details.staff.isNotEmpty()) {
-            StaffGrid(staff = details.staff)
+            item { StaffGrid(staff = details.staff) }
         }
     }
 }
@@ -604,26 +614,12 @@ private fun StaffGridTile(member: CourseStaffMember, variant: StaffGridVariant, 
 
 @Composable
 private fun SyllabusEmpty(modifier: Modifier) {
-    val scheme = MaterialTheme.colorScheme
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = 32.dp, vertical = 48.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Text(
-            text = "Scheda non disponibile",
-            style = MaterialTheme.typography.titleMedium,
-            color = scheme.onSurface,
-            fontWeight = FontWeight.SemiBold,
-        )
-        Spacer(Modifier.height(6.dp))
-        Text(
-            text = "La scheda di questo corso non è stata pubblicata.",
-            style = MaterialTheme.typography.bodyMedium,
-            color = scheme.onSurfaceVariant,
-        )
-    }
+    EmptyState(
+        icon = Icons.Outlined.Description,
+        title = "Scheda non disponibile",
+        body = "La scheda di questo corso non è stata pubblicata.",
+        modifier = modifier,
+    )
 }
 
 private fun roleLabel(role: CourseStaffRole): String = when (role) {

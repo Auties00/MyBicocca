@@ -151,6 +151,11 @@ fun MapScreen(
         MapProperties(
             mapStyleOptions = mapStyle,
             isMyLocationEnabled = false,
+            // The 3D buildings layer kicks in at zoom 17+ and can't be recolored by JSON styles,
+            // so it would flip the map to default colors as the user zooms in. Footprints are
+            // styled via landscape.man_made in the style JSONs instead.
+            isBuildingEnabled = false,
+            isIndoorEnabled = false,
             minZoomPreference = MIN_ZOOM,
         )
     }

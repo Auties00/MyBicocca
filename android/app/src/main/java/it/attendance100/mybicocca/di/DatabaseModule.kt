@@ -21,6 +21,7 @@ import it.attendance100.mybicocca.data.local.elearning.message.MessageDao
 import it.attendance100.mybicocca.data.local.elearning.quiz.QuizDao
 import it.attendance100.mybicocca.data.local.elearning.sync.ElearningSyncStateDao
 import it.attendance100.mybicocca.data.local.elearning.video.VideoProgressDao
+import it.attendance100.mybicocca.data.local.internship.SavedOpportunityDao
 import it.attendance100.mybicocca.data.local.map.MapBuildingDao
 import it.attendance100.mybicocca.data.local.map.MapRoomDao
 import it.attendance100.mybicocca.data.local.map.MapRoomSyncStateDao
@@ -94,6 +95,9 @@ object DatabaseModule {
 
     @Provides
     fun provideMapRoomSyncStateDao(db: MyBicoccaDatabase): MapRoomSyncStateDao = db.mapRoomSyncStateDao()
+
+    @Provides
+    fun provideSavedOpportunityDao(db: MyBicoccaDatabase): SavedOpportunityDao = db.savedOpportunityDao()
 
     private const val DATABASE_NAME = "mybicocca.db"
 }

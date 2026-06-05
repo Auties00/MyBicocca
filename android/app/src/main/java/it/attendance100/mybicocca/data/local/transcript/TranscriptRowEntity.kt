@@ -27,4 +27,6 @@ data class TranscriptRowEntity(
     @ColumnInfo(name = "academic_year") val academicYear: Int?,
     // false for supernumerary (sovrannumerarie) activities not counted in the study plan.
     @ColumnInfo(name = "in_study_plan") val inStudyPlan: Boolean,
+    @ColumnInfo(name = "exam_type") val examType: String? = null,
+    @ColumnInfo(name = "bookable_calls_count", defaultValue = "0") val bookableCallsCount: Int = 0,
 )

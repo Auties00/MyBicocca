@@ -2,31 +2,34 @@ package it.attendance100.mybicocca.ui.screen.elearning.subscreen.assignmentDetai
 
 import android.content.Intent
 import android.net.Uri
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.Send
 import androidx.compose.material.icons.rounded.OpenInNew
-import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
@@ -40,10 +43,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import it.attendance100.mybicocca.core.state.Loadable
@@ -51,10 +52,11 @@ import it.attendance100.mybicocca.domain.model.elearning.assignment.Assignment
 import it.attendance100.mybicocca.domain.model.elearning.assignment.SubmissionStatus
 import it.attendance100.mybicocca.domain.model.elearning.course.CourseId
 import it.attendance100.mybicocca.ui.component.feedback.LocalAppSnackbarController
-import it.attendance100.mybicocca.ui.screen.elearning.subscreen.assignmentDetail.component.AssignmentStatusHero
+import it.attendance100.mybicocca.ui.screen.elearning.subscreen.assignmentDetail.component.AssignmentStatusTile
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.assignmentDetail.component.AssignmentTimeline
-import it.attendance100.mybicocca.ui.screen.elearning.subscreen.assignmentDetail.component.AttachmentCard
-import it.attendance100.mybicocca.ui.component.text.HtmlBody
+import it.attendance100.mybicocca.ui.screen.elearning.subscreen.assignmentDetail.component.AttachmentTile
+import it.attendance100.mybicocca.ui.screen.elearning.subscreen.assignmentDetail.component.SegmentHeaderTile
+import it.attendance100.mybicocca.ui.screen.elearning.subscreen.assignmentDetail.component.SegmentHtmlTile
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.assignmentDetail.state.AssignmentDetailOneShotEvent
 import it.attendance100.mybicocca.ui.screen.elearning.theme.CourseDetailTheme
 import java.time.Instant
@@ -62,7 +64,10 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalMaterial3Api::class)
+// Compito page in the Piano di Studi connected-segment language: a status group
+// (header tile + lifecycle date tiles), one segment group per section, and the plan
+// compiler's full-pill action bar pinned at the bottom.
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun AssignmentDetailScreen(
     assignId: Int,
@@ -95,40 +100,41 @@ fun AssignmentDetailScreen(
     CourseDetailTheme(courseId = remember(courseId) { CourseId(courseId) }) {
         val scheme = MaterialTheme.colorScheme
         val assignmentLoadable by viewModel.assignment.collectAsStateWithLifecycle()
+        val now = remember(assignmentLoadable) { Instant.now() }
         val pullState = rememberPullToRefreshState()
         val pullScope = rememberCoroutineScope()
         var pullIndicatorVisible by remember { mutableStateOf(false) }
 
-        Box(
+        Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(scheme.surfaceContainer),
+                .background(scheme.surface),
         ) {
-            PullToRefreshBox(
-                isRefreshing = pullIndicatorVisible,
-                onRefresh = {
-                    pullIndicatorVisible = true
-                    viewModel.pullToRefresh()
-                    pullScope.launch {
-                        delay(PULL_INDICATOR_DISMISS_DELAY_MS)
-                        pullIndicatorVisible = false
-                    }
-                },
-                state = pullState,
-                modifier = Modifier.fillMaxSize(),
-            ) {
-                when (val loadable = assignmentLoadable) {
-                    Loadable.NotYetLoaded -> Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        CircularProgressIndicator()
-                    }
-                    is Loadable.Loaded -> {
-                        val now = remember(loadable) { Instant.now() }
-                        LazyColumn(
+            Box(modifier = Modifier.weight(1f)) {
+                PullToRefreshBox(
+                    isRefreshing = pullIndicatorVisible,
+                    onRefresh = {
+                        pullIndicatorVisible = true
+                        viewModel.pullToRefresh()
+                        pullScope.launch {
+                            delay(PULL_INDICATOR_DISMISS_DELAY_MS)
+                            pullIndicatorVisible = false
+                        }
+                    },
+                    state = pullState,
+                    modifier = Modifier.fillMaxSize(),
+                ) {
+                    when (val loadable = assignmentLoadable) {
+                        Loadable.NotYetLoaded -> Box(
                             modifier = Modifier.fillMaxSize(),
-                            contentPadding = PaddingValues(top = 6.dp, bottom = 28.dp),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            LoadingIndicator(modifier = Modifier.size(72.dp))
+                        }
+                        is Loadable.Loaded -> LazyColumn(
+                            modifier = Modifier.fillMaxSize(),
+                            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 24.dp),
+                            verticalArrangement = Arrangement.spacedBy(16.dp),
                         ) {
                             assignmentItems(
                                 assignment = loadable.value,
@@ -139,6 +145,15 @@ fun AssignmentDetailScreen(
                     }
                 }
             }
+
+            val assignment = (assignmentLoadable as? Loadable.Loaded)?.value
+            if (assignment?.pageUrl != null) {
+                AssignmentActionBar(
+                    assignment = assignment,
+                    now = now,
+                    onOpenPage = { assignment.pageUrl?.let { viewModel.openFile(it, null) } },
+                )
+            }
         }
     }
 }
@@ -148,55 +163,31 @@ private fun LazyListScope.assignmentItems(
     now: Instant,
     onOpenFile: (url: String, fileName: String?) -> Unit,
 ) {
-    val openPage = { assignment.pageUrl?.let { onOpenFile(it, null) } ?: Unit }
-
     item("title") {
-        Column(modifier = Modifier.padding(horizontal = 20.dp, vertical = 10.dp)) {
-            Text(
-                text = "✦ COMPITO",
-                color = MaterialTheme.colorScheme.tertiary,
-                fontWeight = FontWeight.Bold,
-                fontSize = 10.sp,
-                letterSpacing = 1.6.sp,
-            )
-            Spacer(Modifier.height(6.dp))
-            Text(
-                text = assignment.name,
-                color = MaterialTheme.colorScheme.onSurface,
-                fontWeight = FontWeight.ExtraBold,
-                fontSize = 26.sp,
-                lineHeight = 30.sp,
-                letterSpacing = (-0.6).sp,
-            )
+        Text(
+            text = assignment.name,
+            modifier = Modifier.padding(horizontal = 4.dp),
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurface,
+        )
+    }
+
+    // Status header + lifecycle dates read as one segment group, like a plan rule
+    // with its course tiles.
+    item("status") {
+        val hasDates = assignment.allowSubmissionsFrom != null ||
+            assignment.dueDate != null ||
+            assignment.cutoffDate != null
+        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            AssignmentStatusTile(assignment = assignment, now = now, isLast = !hasDates)
+            AssignmentTimeline(assignment = assignment, now = now)
         }
-    }
-
-    item("hero") {
-        AssignmentStatusHero(
-            assignment = assignment,
-            now = now,
-            onOpenPage = openPage,
-        )
-    }
-
-    item("timeline") {
-        // Self-skips when the teacher set no dates at all.
-        AssignmentTimeline(
-            assignment = assignment,
-            now = now,
-            modifier = Modifier.padding(top = 10.dp),
-        )
     }
 
     submissionItems(assignment, onOpenFile)
     instructionsItems(assignment, onOpenFile)
     feedbackItems(assignment)
-
-    if (assignment.pageUrl != null) {
-        item("open_on_site") {
-            OpenOnSiteButton(onClick = { openPage() })
-        }
-    }
 }
 
 // Real Bicocca data: submitted hand-ins carry 1-2 files and almost never online text,
@@ -208,36 +199,22 @@ private fun LazyListScope.submissionItems(
     val status = assignment.submissionStatus as? SubmissionStatus.Submitted ?: return
     if (status.files.isEmpty() && status.onlineText.isNullOrBlank()) return
 
-    item("submission_header") {
-        DetailSectionLabel(
-            title = "La tua consegna",
-            mark = "❀",
-            subtitle = maxAttemptsLabel(assignment.maxAttempts),
-        )
-    }
-    status.files.forEachIndexed { index, file ->
-        item("submission_file_$index") {
-            AttachmentCard(
-                file = file,
-                onOpen = { file.fileUrl?.let { onOpenFile(it, file.fileName) } },
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
+    item("submission") {
+        val onlineText = status.onlineText?.takeIf { it.isNotBlank() }
+        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            SegmentHeaderTile(
+                title = "La tua consegna",
+                subtitle = maxAttemptsLabel(assignment.maxAttempts),
             )
-        }
-    }
-    val onlineText = status.onlineText
-    if (!onlineText.isNullOrBlank()) {
-        item("submission_text") {
-            Surface(
-                shape = RoundedCornerShape(18.dp),
-                color = MaterialTheme.colorScheme.surfaceContainerLow,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 4.dp),
-            ) {
-                HtmlBody(
-                    html = onlineText,
-                    modifier = Modifier.padding(14.dp),
+            status.files.forEachIndexed { index, file ->
+                AttachmentTile(
+                    file = file,
+                    onOpen = { file.fileUrl?.let { onOpenFile(it, file.fileName) } },
+                    isLast = onlineText == null && index == status.files.lastIndex,
                 )
+            }
+            if (onlineText != null) {
+                SegmentHtmlTile(html = onlineText, isLast = true)
             }
         }
     }
@@ -250,24 +227,19 @@ private fun LazyListScope.instructionsItems(
     val intro = assignment.intro?.takeIf { it.isNotBlank() }
     if (intro == null && assignment.introFiles.isEmpty()) return
 
-    item("instructions_header") {
-        DetailSectionLabel(title = "Istruzioni", mark = "✦")
-    }
-    if (intro != null) {
-        item("instructions_body") {
-            HtmlBody(
-                html = intro,
-                modifier = Modifier.padding(horizontal = 20.dp, vertical = 4.dp),
-            )
-        }
-    }
-    assignment.introFiles.forEachIndexed { index, file ->
-        item("instructions_file_$index") {
-            AttachmentCard(
-                file = file,
-                onOpen = { file.fileUrl?.let { onOpenFile(it, file.fileName) } },
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
-            )
+    item("instructions") {
+        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            SegmentHeaderTile(title = "Istruzioni")
+            if (intro != null) {
+                SegmentHtmlTile(html = intro, isLast = assignment.introFiles.isEmpty())
+            }
+            assignment.introFiles.forEachIndexed { index, file ->
+                AttachmentTile(
+                    file = file,
+                    onOpen = { file.fileUrl?.let { onOpenFile(it, file.fileName) } },
+                    isLast = index == assignment.introFiles.lastIndex,
+                )
+            }
         }
     }
 }
@@ -276,90 +248,80 @@ private fun LazyListScope.feedbackItems(assignment: Assignment) {
     val status = assignment.submissionStatus as? SubmissionStatus.Graded ?: return
     val feedback = status.feedback?.takeIf { it.isNotBlank() } ?: return
 
-    item("feedback_header") {
-        DetailSectionLabel(title = "Feedback del docente", mark = "❀")
-    }
-    item("feedback_body") {
-        Surface(
-            shape = RoundedCornerShape(18.dp),
-            color = MaterialTheme.colorScheme.surfaceContainerLow,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 4.dp),
-        ) {
-            HtmlBody(
-                html = feedback,
-                modifier = Modifier.padding(14.dp),
-            )
+    item("feedback") {
+        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            SegmentHeaderTile(title = "Feedback del docente")
+            SegmentHtmlTile(html = feedback, isLast = true)
         }
     }
 }
 
+// The plan compiler's action bar language: one full-pill 56dp button pinned under the
+// list — accent-filled when there's a submission to push, tonal when the site is just
+// a reference. CourseDetailTheme computes a contrast-correct onPrimary for the accent.
 @Composable
-private fun DetailSectionLabel(
-    title: String,
-    mark: String,
-    subtitle: String? = null,
+private fun AssignmentActionBar(
+    assignment: Assignment,
+    now: Instant,
+    onOpenPage: () -> Unit,
 ) {
     val scheme = MaterialTheme.colorScheme
+    val status = assignment.submissionStatus
+    val due = assignment.dueDate
+    val overdue = status == SubmissionStatus.NotSubmitted && due != null && due.isBefore(now)
+    val opensLater = assignment.allowSubmissionsFrom?.isAfter(now) == true
+    val lateWindowOpen = assignment.cutoffDate?.isAfter(now) == true
+
+    val (label, submit) = when {
+        status is SubmissionStatus.Graded || status is SubmissionStatus.Submitted ->
+            "Apri su e-learning" to false
+        status is SubmissionStatus.Draft -> "Completa consegna" to true
+        overdue && lateWindowOpen -> "Consegna in ritardo" to true
+        overdue || opensLater -> "Apri su e-learning" to false
+        else -> "Consegna sul sito" to true
+    }
+
     Column(
         modifier = Modifier
-            .padding(horizontal = 20.dp)
-            .padding(top = 22.dp, bottom = 8.dp),
+            .fillMaxWidth()
+            .navigationBarsPadding()
+            .padding(start = 16.dp, end = 16.dp, top = 10.dp, bottom = 12.dp),
     ) {
-        Text(
-            text = "$mark ${title.uppercase()}",
-            color = scheme.tertiary,
-            fontWeight = FontWeight.Bold,
-            fontSize = 11.sp,
-            letterSpacing = 1.4.sp,
-        )
-        if (subtitle != null) {
-            Spacer(Modifier.height(4.dp))
-            Text(
-                text = subtitle,
-                style = MaterialTheme.typography.labelSmall,
-                color = scheme.onSurfaceVariant,
-                fontStyle = FontStyle.Italic,
+        val content: @Composable RowScope.() -> Unit = {
+            Text(label, fontWeight = FontWeight.SemiBold)
+            Spacer(Modifier.width(8.dp))
+            Icon(
+                imageVector = if (submit) Icons.AutoMirrored.Rounded.Send else Icons.Rounded.OpenInNew,
+                contentDescription = null,
+                modifier = Modifier.size(20.dp),
             )
         }
-    }
-}
-
-@Composable
-private fun OpenOnSiteButton(onClick: () -> Unit) {
-    val scheme = MaterialTheme.colorScheme
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp)
-            .padding(top = 26.dp),
-        contentAlignment = Alignment.Center,
-    ) {
-        Surface(
-            shape = CircleShape,
-            color = scheme.surfaceContainerLow,
-            border = BorderStroke(1.5.dp, scheme.outline),
-            modifier = Modifier.clickable(onClick = onClick),
-        ) {
-            Row(
-                modifier = Modifier.padding(horizontal = 22.dp, vertical = 13.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                Icon(
-                    imageVector = Icons.Rounded.OpenInNew,
-                    contentDescription = null,
-                    tint = scheme.onSurface,
-                    modifier = Modifier.size(16.dp),
-                )
-                Text(
-                    text = "Apri su e-learning",
-                    color = scheme.onSurface,
-                    fontWeight = FontWeight.SemiBold,
-                    fontSize = 14.sp,
-                )
-            }
+        if (submit) {
+            Button(
+                onClick = onOpenPage,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp),
+                shape = RoundedCornerShape(28.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = scheme.primary,
+                    contentColor = scheme.onPrimary,
+                ),
+                content = content,
+            )
+        } else {
+            FilledTonalButton(
+                onClick = onOpenPage,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp),
+                shape = RoundedCornerShape(28.dp),
+                colors = ButtonDefaults.filledTonalButtonColors(
+                    containerColor = scheme.surfaceContainerHigh,
+                    contentColor = scheme.onSurface,
+                ),
+                content = content,
+            )
         }
     }
 }

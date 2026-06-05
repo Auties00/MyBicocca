@@ -41,6 +41,21 @@ class BookableExamsViewModel @Inject constructor(
     private val _syncStatus = MutableStateFlow<SyncStatus>(SyncStatus.Idle)
     val syncStatus: StateFlow<SyncStatus> = _syncStatus.asStateFlow()
 
+    // Deep-link from the libretto course sheet: the course key (= ExamCall activityCode,
+    // see groupByCourse) the bookable list should scroll to and auto-expand on open. This
+    // VM is shell-scoped, so the signal survives the cross-tab navigation from Profile to
+    // the booked-exams sub-page where the sheet actually lives.
+    private val _pendingFocusCourseKey = MutableStateFlow<String?>(null)
+    val pendingFocusCourseKey: StateFlow<String?> = _pendingFocusCourseKey.asStateFlow()
+
+    fun requestFocus(courseKey: String) {
+        _pendingFocusCourseKey.value = courseKey
+    }
+
+    fun consumeFocus() {
+        _pendingFocusCourseKey.value = null
+    }
+
     private val refreshMutex = Mutex()
 
     init {

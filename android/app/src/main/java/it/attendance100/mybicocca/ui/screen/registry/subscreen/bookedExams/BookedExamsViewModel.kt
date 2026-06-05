@@ -9,9 +9,13 @@ import it.attendance100.mybicocca.domain.model.career.CareerId
 import it.attendance100.mybicocca.domain.model.exam.BookedExam
 import it.attendance100.mybicocca.domain.usecase.account.ObserveActiveAccountUseCase
 import it.attendance100.mybicocca.domain.usecase.exam.CancelBookingUseCase
+import it.attendance100.mybicocca.domain.usecase.exam.GetBookingSlipUseCase
 import it.attendance100.mybicocca.domain.usecase.exam.GetBookingsUseCase
+import it.attendance100.mybicocca.domain.usecase.exam.GetPresenceCertificateUseCase
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.booked.state.BookedEvent
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.booked.state.CancelActionState
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.booked.state.DocDownloadState
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.booked.state.ExamDocument
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -34,6 +38,8 @@ import javax.inject.Inject
 class BookedExamsViewModel @Inject constructor(
     private val getBookings: GetBookingsUseCase,
     private val cancelBooking: CancelBookingUseCase,
+    private val getBookingSlip: GetBookingSlipUseCase,
+    private val getPresenceCertificate: GetPresenceCertificateUseCase,
     observeActiveAccount: ObserveActiveAccountUseCase,
 ) : ViewModel() {
 
@@ -50,6 +56,9 @@ class BookedExamsViewModel @Inject constructor(
 
     private val _cancelAction = MutableStateFlow<CancelActionState>(CancelActionState.Idle)
     val cancelAction: StateFlow<CancelActionState> = _cancelAction.asStateFlow()
+
+    private val _docDownload = MutableStateFlow<DocDownloadState>(DocDownloadState.Idle)
+    val docDownload: StateFlow<DocDownloadState> = _docDownload.asStateFlow()
 
     private val _events = Channel<BookedEvent>(Channel.BUFFERED)
     val events: Flow<BookedEvent> = _events.receiveAsFlow()
@@ -98,6 +107,31 @@ class BookedExamsViewModel @Inject constructor(
         }
     }
 
+    fun downloadBookingSlip(booking: BookedExam) = downloadDocument(booking, ExamDocument.BookingSlip)
+
+    fun downloadPresenceCertificate(booking: BookedExam) =
+        downloadDocument(booking, ExamDocument.PresenceCertificate)
+
+    private fun downloadDocument(booking: BookedExam, document: ExamDocument) {
+        val careerId = activeCareerId.value ?: return
+        val studentId = booking.studentId ?: return
+        if (_docDownload.value is DocDownloadState.InProgress) return
+        viewModelScope.launch {
+            _docDownload.value = DocDownloadState.InProgress(booking.identityKey(), document)
+            runCatching {
+                when (document) {
+                    ExamDocument.BookingSlip -> getBookingSlip(careerId, booking.key, studentId)
+                    ExamDocument.PresenceCertificate -> getPresenceCertificate(careerId, booking.key, studentId)
+                }
+            }.onSuccess { bytes ->
+                _events.trySend(BookedEvent.OpenPdf(bytes, document.fileName(booking)))
+            }.onFailure { cause ->
+                _events.trySend(BookedEvent.ShowMessage(document.errorMessage(cause)))
+            }
+            _docDownload.value = DocDownloadState.Idle
+        }
+    }
+
     private suspend fun fetch(careerId: CareerId) {
         if (!refreshMutex.tryLock()) return
         try {
@@ -120,3 +154,19 @@ class BookedExamsViewModel @Inject constructor(
 // that share an exam-call key (rare, but possible across careers).
 internal fun BookedExam.identityKey(): String =
     "${key.courseOfStudyId}/${key.activityId}/${key.callId}/${applicationListId ?: studentId ?: 0}"
+
+private fun ExamDocument.fileName(booking: BookedExam): String {
+    val suffix = "${booking.key.activityId}_${booking.key.callId}"
+    return when (this) {
+        ExamDocument.BookingSlip -> "statino_prenotazione_$suffix.pdf"
+        ExamDocument.PresenceCertificate -> "attestato_presenza_$suffix.pdf"
+    }
+}
+
+// The attendance certificate 422s until the outcome is published; surface a clear,
+// actionable message instead of the raw server error.
+private fun ExamDocument.errorMessage(cause: Throwable): String = when (this) {
+    ExamDocument.BookingSlip -> "Impossibile scaricare lo statino di prenotazione. Riprova tra un momento."
+    ExamDocument.PresenceCertificate ->
+        "L'attestato di presenza non è ancora disponibile per questo appello."
+}

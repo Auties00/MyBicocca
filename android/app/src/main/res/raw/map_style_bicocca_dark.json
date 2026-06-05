@@ -5,6 +5,8 @@
   {"elementType":"labels.icon","stylers":[{"visibility":"off"}]},
   {"featureType":"administrative.land_parcel","stylers":[{"visibility":"off"}]},
   {"featureType":"administrative.neighborhood","stylers":[{"visibility":"off"}]},
+  {"featureType":"landscape.man_made","elementType":"geometry.fill","stylers":[{"color":"#1d1013"}]},
+  {"featureType":"landscape.man_made","elementType":"geometry.stroke","stylers":[{"color":"#2a181d"}]},
   {"featureType":"poi","stylers":[{"visibility":"off"}]},
   {"featureType":"poi.school","elementType":"geometry.fill","stylers":[{"color":"#261317"}]},
   {"featureType":"poi.school","elementType":"geometry.stroke","stylers":[{"color":"#261317"}]},

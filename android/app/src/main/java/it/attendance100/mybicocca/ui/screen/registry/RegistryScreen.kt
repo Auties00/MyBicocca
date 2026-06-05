@@ -11,15 +11,18 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.Assignment
 import androidx.compose.material.icons.automirrored.outlined.FactCheck
 import androidx.compose.material.icons.outlined.AccountTree
-import androidx.compose.material.icons.outlined.Badge
 import androidx.compose.material.icons.outlined.CoPresent
 import androidx.compose.material.icons.outlined.EditCalendar
+import androidx.compose.material.icons.outlined.EventAvailable
 import androidx.compose.material.icons.outlined.Explore
 import androidx.compose.material.icons.outlined.Grading
 import androidx.compose.material.icons.outlined.HowToReg
 import androidx.compose.material.icons.outlined.HowToVote
+import androidx.compose.material.icons.outlined.CurrencyExchange
 import androidx.compose.material.icons.outlined.Newspaper
 import androidx.compose.material.icons.outlined.Payments
+import androidx.compose.material.icons.outlined.Savings
+import androidx.compose.material.icons.outlined.School
 import androidx.compose.material.icons.outlined.Work
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
@@ -59,14 +62,17 @@ fun RegistryScreen(
     taxesViewModel: TaxesViewModel,
     examResultsViewModel: ExamResultsViewModel,
     onOpenBookedExams: () -> Unit,
+    onOpenBookableExams: () -> Unit,
     onOpenTaxes: () -> Unit,
+    onOpenIsee: () -> Unit,
+    onOpenRefunds: () -> Unit,
     onOpenExamResults: () -> Unit,
     onOpenStudyPlan: () -> Unit,
     onOpenQuestionnaires: () -> Unit,
-    onOpenReservations: () -> Unit,
+    onOpenProcedures: () -> Unit,
     onOpenAttendance: () -> Unit,
     onOpenInternships: () -> Unit,
-    onOpenSelfCertificates: () -> Unit,
+    onOpenDegreeAward: () -> Unit,
     modifier: Modifier = Modifier,
     // True only while this is the visible tab — see CalendarScreen for the pager-cache rationale.
     isActive: Boolean = true,
@@ -124,22 +130,34 @@ fun RegistryScreen(
                 name = "Didattica",
                 caption = "Il tuo percorso accademico",
                 services = listOf(
-                    RegistryService("study_plan", "Piano di studi", "Percorso e crediti", Icons.Outlined.AccountTree, onClick = onOpenStudyPlan),
-                    RegistryService("exams", "Esami", "Appelli e prenotazioni", Icons.Outlined.EditCalendar, onClick = onOpenBookedExams),
-                    RegistryService("exam_results", "Esiti", "Accetta o rifiuta esiti", Icons.Outlined.Grading, onClick = onOpenExamResults),
+                    RegistryService("study_plan", "Percorso e piano", "Percorso, orientamento, piano e crediti", Icons.Outlined.AccountTree, onClick = onOpenStudyPlan),
                     RegistryService("attendance", "Presenze", "Frequenze e rilevazioni", Icons.Outlined.CoPresent, onClick = onOpenAttendance),
                     RegistryService("questionnaires", "Questionari", "Valutazione didattica", Icons.AutoMirrored.Outlined.FactCheck, onClick = onOpenQuestionnaires),
+                    RegistryService("degree_award", "Conseguimento titolo", "Domanda di laurea e tesi", Icons.Outlined.School, onClick = onOpenDegreeAward),
                 ),
             ),
             scheme.primaryContainer, scheme.onPrimaryContainer,
         ),
         Triple(
             RegistryServiceGroup(
-                name = "Tasse & documenti",
+                name = "Esami",
+                caption = "Appelli, prenotazioni ed esiti",
+                services = listOf(
+                    RegistryService("booked_exams", "Prenotazioni", "I tuoi esami prenotati", Icons.Outlined.EventAvailable, onClick = onOpenBookedExams),
+                    RegistryService("bookable_exams", "Prenota esame", "Appelli disponibili", Icons.Outlined.EditCalendar, onClick = onOpenBookableExams),
+                    RegistryService("exam_results", "Esiti", "Accetta o rifiuta esiti", Icons.Outlined.Grading, onClick = onOpenExamResults),
+                ),
+            ),
+            scheme.secondaryContainer, scheme.onSecondaryContainer,
+        ),
+        Triple(
+            RegistryServiceGroup(
+                name = "Tasse & agevolazioni",
                 caption = "La tua posizione amministrativa",
                 services = listOf(
-                    RegistryService("taxes", "Tasse & agevolazioni", "Pagamenti ed esoneri", Icons.Outlined.Payments, onClick = onOpenTaxes),
-                    RegistryService("documents", "Documenti & tessera", "Tessera, titoli e certificati", Icons.Outlined.Badge, onClick = onOpenSelfCertificates),
+                    RegistryService("taxes", "Tasse", "Pagamenti e fatture", Icons.Outlined.Payments, onClick = onOpenTaxes),
+                    RegistryService("isee", "ISEE", "Dichiarazioni e fasce", Icons.Outlined.Savings, onClick = onOpenIsee),
+                    RegistryService("refunds", "Rimborsi", "Importi e mandati", Icons.Outlined.CurrencyExchange, onClick = onOpenRefunds),
                 ),
             ),
             scheme.tertiaryContainer, scheme.onTertiaryContainer,
@@ -150,7 +168,7 @@ fun RegistryScreen(
                 caption = "Esperienze e nuove occasioni",
                 services = listOf(
                     RegistryService("internships", "Tirocini e stage", "Ricerca e gestione stage", Icons.Outlined.Work, onClick = onOpenInternships),
-                    RegistryService("requests", "Domande e procedure", "Appuntamenti e istanze", Icons.AutoMirrored.Outlined.Assignment, onClick = onOpenReservations),
+                    RegistryService("requests", "Domande e procedure", "Appuntamenti e istanze", Icons.AutoMirrored.Outlined.Assignment, onClick = onOpenProcedures),
                     RegistryService("opportunities", "Opportunità", "Bandi, borse e mobilità", Icons.Outlined.Explore, onClick = {}),
                     RegistryService("admissions", "Ammissioni", "Concorsi e graduatorie", Icons.Outlined.HowToReg, onClick = {}),
                 ),

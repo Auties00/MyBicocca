@@ -2,4 +2,6 @@
 <paths>
     <!-- pagoPA avviso/quietanza PDFs are written to cacheDir/taxes and shared via FileProvider. -->
     <cache-path name="tax_docs" path="taxes/" />
+    <!-- Downloaded elearning course files; shared when the user opens one in an external app. -->
+    <cache-path name="elearning_files" path="elearning_files/" />
 </paths>

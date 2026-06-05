@@ -24,7 +24,9 @@ import androidx.compose.material.icons.outlined.ConfirmationNumber
 import androidx.compose.material.icons.outlined.EventAvailable
 import androidx.compose.material.icons.outlined.EventBusy
 import androidx.compose.material.icons.outlined.LocationOn
+import androidx.compose.material.icons.outlined.ReceiptLong
 import androidx.compose.material.icons.outlined.School
+import androidx.compose.material.icons.outlined.Verified
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -54,6 +56,7 @@ import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import it.attendance100.mybicocca.domain.model.exam.BookedExam
 import it.attendance100.mybicocca.ui.component.exam.ExamDateBadge
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.booked.state.ExamDocument
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.booked.component.ExamCallChips
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.booked.ext.countdownLabel
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.booked.ext.creditsLabel
@@ -80,7 +83,10 @@ fun BookedExamDetailSheet(
     booking: BookedExam,
     today: LocalDate,
     isCancelling: Boolean,
+    downloadingDocument: ExamDocument?,
     onCancel: (BookedExam) -> Unit,
+    onDownloadSlip: (BookedExam) -> Unit,
+    onDownloadCertificate: (BookedExam) -> Unit,
     onDismiss: () -> Unit,
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -197,6 +203,14 @@ fun BookedExamDetailSheet(
 
             Spacer(Modifier.height(24.dp))
 
+            DocumentsRow(
+                downloading = downloadingDocument,
+                onSlip = { onDownloadSlip(booking) },
+                onCertificate = { onDownloadCertificate(booking) },
+            )
+
+            Spacer(Modifier.height(8.dp))
+
             ActionRow(
                 canNavigate = booking.buildingDescription != null,
                 isCancelling = isCancelling,
@@ -239,6 +253,73 @@ fun BookedExamDetailSheet(
                 TextButton(onClick = { confirming = false }) { Text("Indietro") }
             },
         )
+    }
+}
+
+// Two connected tonal buttons for the booking PDFs. The booking slip always works; the
+// attendance certificate 422s until the outcome is published — handled upstream as a
+// snackbar message, so both buttons stay enabled.
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+private fun DocumentsRow(
+    downloading: ExamDocument?,
+    onSlip: () -> Unit,
+    onCertificate: () -> Unit,
+) {
+    val scheme = MaterialTheme.colorScheme
+    val busy = downloading != null
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        FilledTonalButton(
+            onClick = onSlip,
+            enabled = !busy,
+            modifier = Modifier
+                .weight(1f)
+                .height(56.dp),
+            shape = ButtonGroupDefaults.connectedLeadingButtonShape,
+        ) {
+            if (downloading == ExamDocument.BookingSlip) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(20.dp),
+                    strokeWidth = 2.5.dp,
+                    color = scheme.onSecondaryContainer,
+                )
+            } else {
+                Icon(
+                    imageVector = Icons.Outlined.ReceiptLong,
+                    contentDescription = null,
+                    modifier = Modifier.size(20.dp),
+                )
+                Spacer(Modifier.width(8.dp))
+                Text("Statino", fontWeight = FontWeight.SemiBold)
+            }
+        }
+        FilledTonalButton(
+            onClick = onCertificate,
+            enabled = !busy,
+            modifier = Modifier
+                .weight(1f)
+                .height(56.dp),
+            shape = ButtonGroupDefaults.connectedTrailingButtonShape,
+        ) {
+            if (downloading == ExamDocument.PresenceCertificate) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(20.dp),
+                    strokeWidth = 2.5.dp,
+                    color = scheme.onSecondaryContainer,
+                )
+            } else {
+                Icon(
+                    imageVector = Icons.Outlined.Verified,
+                    contentDescription = null,
+                    modifier = Modifier.size(20.dp),
+                )
+                Spacer(Modifier.width(8.dp))
+                Text("Attestato", fontWeight = FontWeight.SemiBold)
+            }
+        }
     }
 }
 
