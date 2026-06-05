@@ -205,4 +205,7 @@ dependencies {
 
     // Custom Tabs — in-app browser for external university pages (news, elections)
     implementation("androidx.browser:browser:1.9.0")
+
+    // Device Type detection for UI adaptations
+    implementation("androidx.compose.material3:material3-window-size-class:1.4.0")
 }

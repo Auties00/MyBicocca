@@ -15,7 +15,6 @@ enum class SearchDestination {
     SettingsSecurity,
     SettingsDeveloper,
     AppInfo,
-    LoginManager,
     Taxes,
     ExamResults,
     BookedExams,

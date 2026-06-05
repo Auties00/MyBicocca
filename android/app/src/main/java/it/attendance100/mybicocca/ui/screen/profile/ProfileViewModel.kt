@@ -3,6 +3,7 @@ package it.attendance100.mybicocca.ui.screen.profile
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import it.attendance100.mybicocca.core.os.NetworkMonitor
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.SyncStatus
 import it.attendance100.mybicocca.domain.model.account.Account
@@ -17,7 +18,6 @@ import it.attendance100.mybicocca.domain.usecase.transcript.ObserveGradeRollupUs
 import it.attendance100.mybicocca.domain.usecase.transcript.ObserveTranscriptRowsUseCase
 import it.attendance100.mybicocca.domain.usecase.transcript.ObserveTranscriptStatsUseCase
 import it.attendance100.mybicocca.domain.usecase.transcript.RefreshTranscriptUseCase
-import it.attendance100.mybicocca.util.NetworkMonitor
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted

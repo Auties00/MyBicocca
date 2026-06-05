@@ -1,4 +1,4 @@
-package it.attendance100.mybicocca.util
+package it.attendance100.mybicocca.core.os
 
 import android.content.Context
 import android.net.ConnectivityManager

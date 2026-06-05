@@ -133,7 +133,6 @@ import it.attendance100.mybicocca.ui.screen.search.SearchOverlay
 import it.attendance100.mybicocca.ui.screen.search.SearchViewModel
 import it.attendance100.mybicocca.ui.screen.settings.SettingsScreen
 import it.attendance100.mybicocca.ui.screen.settings.subscreen.appInfo.AppInfoScreen
-import it.attendance100.mybicocca.ui.screen.settings.subscreen.loginManager.LoginManagerScreen
 import it.attendance100.mybicocca.ui.screen.settings.subscreen.settingsAppearance.SettingsAppearanceScreen
 import it.attendance100.mybicocca.ui.screen.settings.subscreen.settingsBehaviour.SettingsBehaviourScreen
 import it.attendance100.mybicocca.ui.screen.settings.subscreen.settingsDeveloper.SettingsDeveloperScreen
@@ -567,7 +566,10 @@ fun MainShell(
                                     entry<AppRoute.Settings> {
                                         SubPage(topInset) {
                                             SettingsScreen(
+                                                onOpenAppearance = { backStack.add(AppRoute.SettingsAppearance) },
+                                                onOpenGeneral = { backStack.add(AppRoute.SettingsGeneral) },
                                                 onOpenSecurity = { backStack.add(AppRoute.SettingsSecurity) },
+                                                onOpenAppInfo = { backStack.add(AppRoute.AppInfo) },
                                             )
                                         }
                                     }
@@ -615,7 +617,6 @@ fun MainShell(
                                     entry<AppRoute.Internships> { SubPage(topInset) { InternshipsScreen() } }
                                     entry<AppRoute.DegreeAward> { SubPage(topInset) { DegreeAwardScreen() } }
                                     entry<AppRoute.AppInfo> { SubPage(topInset) { AppInfoScreen() } }
-                                    entry<AppRoute.LoginManager> { SubPage(topInset) { LoginManagerScreen() } }
                                     entry<AppRoute.Messaging> { SubPage(topInset) { MessagingScreen() } }
 
                                     // First-level with arguments.

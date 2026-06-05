@@ -70,6 +70,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
+import it.attendance100.mybicocca.core.os.ProvideHapticManager
 import it.attendance100.mybicocca.domain.model.account.AcademicIdentity
 import it.attendance100.mybicocca.domain.model.account.Account
 import it.attendance100.mybicocca.domain.model.account.AccountId
@@ -86,7 +87,7 @@ import it.attendance100.mybicocca.ui.screen.account.subscreen.accountSwitcher.co
 import it.attendance100.mybicocca.ui.screen.auth.AuthScreenSheetContent
 import it.attendance100.mybicocca.ui.screen.auth.AuthViewModel
 import it.attendance100.mybicocca.ui.theme.BicoccaTheme
-import it.attendance100.mybicocca.util.ProvideHapticManager
+import it.attendance100.mybicocca.ui.theme.PreviewBgLowest
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 import java.io.File
@@ -455,7 +456,7 @@ private fun AccountsScenePreview() {
 @Preview(
     showBackground = true,
     uiMode = android.content.res.Configuration.UI_MODE_NIGHT_YES,
-    backgroundColor = 0xFF0F0606
+    backgroundColor = PreviewBgLowest
 )
 @Composable
 private fun AccountsSceneDarkPreview() {

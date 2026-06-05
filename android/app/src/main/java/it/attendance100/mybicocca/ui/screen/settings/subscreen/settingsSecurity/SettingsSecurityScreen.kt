@@ -2,18 +2,15 @@ package it.attendance100.mybicocca.ui.screen.settings.subscreen.settingsSecurity
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -21,7 +18,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
@@ -34,11 +30,9 @@ import it.attendance100.mybicocca.ui.screen.lock.errorMessage
 import it.attendance100.mybicocca.ui.screen.lock.findFragmentActivity
 import it.attendance100.mybicocca.ui.screen.lock.promptBiometric
 import it.attendance100.mybicocca.ui.screen.lock.rememberBiometricCapability
-import it.attendance100.mybicocca.ui.screen.settings.component.SettingsClickableRow
-import it.attendance100.mybicocca.ui.screen.settings.component.SettingsSectionHeader
-import it.attendance100.mybicocca.ui.screen.settings.component.SettingsSwitchRow
-
-private val TIMEOUT_OPTIONS = listOf(0, 1, 5, 10, 15, 30, 60, 240)
+import it.attendance100.mybicocca.ui.screen.settings.component.preference.OpenDialogTile
+import it.attendance100.mybicocca.ui.screen.settings.component.preference.SettingsSectionTitle
+import it.attendance100.mybicocca.ui.screen.settings.component.preference.SwitchSettingTile
 
 private fun timeoutLabel(minutes: Int): String = when (minutes) {
     0 -> "Immediatamente"
@@ -46,6 +40,8 @@ private fun timeoutLabel(minutes: Int): String = when (minutes) {
     240 -> "4 ore"
     else -> "$minutes min"
 }
+
+private val TIMEOUT_ENTRIES = listOf(0, 1, 5, 10, 15, 30, 60, 240).associateWith(::timeoutLabel)
 
 @Suppress("AssignedValueIsNeverRead")
 @Composable
@@ -60,15 +56,12 @@ fun SettingsSecurityScreen(
     val timeoutMinutes by viewModel.timeoutMinutes.collectAsStateWithLifecycle()
     val secureScreen by viewModel.secureScreen.collectAsStateWithLifecycle()
 
-    var showTimeoutDialog by remember { mutableStateOf(false) }
     var showPasswordDialog by remember { mutableStateOf(false) }
     var pendingTarget by remember { mutableStateOf(false) }
     var password by remember { mutableStateOf("") }
     var passwordError by remember { mutableStateOf<String?>(null) }
     var authorizing by remember { mutableStateOf(false) }
 
-    // Flipping the master switch is security-critical, so it must be authenticated first —
-    // biometric when available, otherwise (or on cancel/lockout) the password dialog.
     val startToggle: () -> Unit = {
         val target = !enabled
         if (capability == BiometricCapability.Available && activity != null) {
@@ -97,30 +90,30 @@ fun SettingsSecurityScreen(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .padding(vertical = 8.dp),
+            .padding(bottom = 16.dp),
     ) {
-        SettingsSectionHeader("Blocco app")
+        SettingsSectionTitle("Blocco app")
 
-        SettingsSwitchRow(
-            title = "Richiedi sblocco",
-            subtitle = "Sblocca con impronta, volto o password all'avvio",
-            checked = enabled,
-            onClick = startToggle,
+        SwitchSettingTile(
+            label = "Richiedi sblocco",
+            description = "Sblocca con impronta, volto o password all'avvio",
+            isToggled = enabled,
+            onToggle = { startToggle() },
         )
 
         AnimatedVisibility(visible = enabled) {
             Column {
-                SettingsClickableRow(
+                OpenDialogTile(
                     title = "Blocca quando inattivo",
-                    subtitle = "Tempo in background prima del riblocco",
-                    value = timeoutLabel(timeoutMinutes),
-                    onClick = { showTimeoutDialog = true },
+                    value = timeoutMinutes,
+                    entries = TIMEOUT_ENTRIES,
+                    onValueChange = { viewModel.setTimeout(it) },
                 )
-                SettingsSwitchRow(
-                    title = "Schermo privato",
-                    subtitle = "Nascondi l'app nelle anteprime e blocca gli screenshot",
-                    checked = secureScreen,
-                    onClick = { viewModel.setSecureScreen(!secureScreen) },
+                SwitchSettingTile(
+                    label = "Schermo privato",
+                    description = "Nascondi l'app nelle anteprime e blocca gli screenshot",
+                    isToggled = secureScreen,
+                    onToggle = { viewModel.setSecureScreen(it) },
                 )
             }
         }
@@ -133,42 +126,6 @@ fun SettingsSecurityScreen(
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
             )
         }
-    }
-
-    if (showTimeoutDialog) {
-        AlertDialog(
-            onDismissRequest = { showTimeoutDialog = false },
-            title = { Text("Blocca quando inattivo") },
-            text = {
-                Column {
-                    TIMEOUT_OPTIONS.forEach { minutes ->
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .selectable(
-                                    selected = minutes == timeoutMinutes,
-                                    onClick = {
-                                        viewModel.setTimeout(minutes)
-                                        showTimeoutDialog = false
-                                    },
-                                )
-                                .padding(vertical = 12.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            RadioButton(selected = minutes == timeoutMinutes, onClick = null)
-                            Text(
-                                text = timeoutLabel(minutes),
-                                style = MaterialTheme.typography.bodyLarge,
-                                modifier = Modifier.padding(start = 12.dp),
-                            )
-                        }
-                    }
-                }
-            },
-            confirmButton = {
-                TextButton(onClick = { showTimeoutDialog = false }) { Text("Chiudi") }
-            },
-        )
     }
 
     if (showPasswordDialog) {

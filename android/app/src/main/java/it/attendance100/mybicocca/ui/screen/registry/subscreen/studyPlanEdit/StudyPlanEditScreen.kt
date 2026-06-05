@@ -70,7 +70,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Matrix
 import androidx.compose.ui.graphics.Outline
 import androidx.compose.ui.graphics.Shape
@@ -84,8 +83,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.graphics.shapes.Morph
 import androidx.graphics.shapes.toPath
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import it.attendance100.mybicocca.core.state.SyncStatus
 import it.attendance100.mybicocca.core.state.valueOrNull
 import it.attendance100.mybicocca.domain.model.studyplan.ChoiceConstraintUnit
@@ -97,6 +97,7 @@ import it.attendance100.mybicocca.ui.navigation.AppRoute
 import it.attendance100.mybicocca.ui.screen.registry.state.RegistryBadgeTone
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.studyPlanEdit.state.StudyPlanEditEvent
 import it.attendance100.mybicocca.ui.screen.registry.theme.registryBadgeTone
+import it.attendance100.mybicocca.ui.theme.contrastingContent
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import java.io.IOException
@@ -115,8 +116,12 @@ fun StudyPlanEditScreen(
     schemaId: Long,
     planId: Long,
     onClose: () -> Unit = {},
-    viewModel: StudyPlanEditViewModel = hiltViewModel<StudyPlanEditViewModel, StudyPlanEditViewModel.Factory>(
-        creationCallback = { factory: StudyPlanEditViewModel.Factory ->
+    viewModel: StudyPlanEditViewModel = hiltViewModel(
+        checkNotNull(
+            LocalViewModelStoreOwner.current
+        ) {
+            "No ViewModelStoreOwner was provided via LocalViewModelStoreOwner"
+        }, null, { factory: StudyPlanEditViewModel.Factory ->
             factory.create(
                 AppRoute.StudyPlanEdit(
                     studentId = studentId,
@@ -125,8 +130,7 @@ fun StudyPlanEditScreen(
                     planId = planId,
                 )
             )
-        },
-    ),
+        }),
 ) {
     val rulesData by viewModel.rules.collectAsStateWithLifecycle()
     val syncStatus by viewModel.syncStatus.collectAsStateWithLifecycle()
@@ -158,7 +162,11 @@ fun StudyPlanEditScreen(
 
     when {
         rules == null -> when (val status = syncStatus) {
-            is SyncStatus.Failed -> ErrorEmptyState(cause = status.cause, onRetry = viewModel::refresh)
+            is SyncStatus.Failed -> ErrorEmptyState(
+                cause = status.cause,
+                onRetry = viewModel::refresh
+            )
+
             else -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 LoadingIndicator(modifier = Modifier.size(72.dp))
             }
@@ -182,6 +190,7 @@ fun StudyPlanEditScreen(
     }
 }
 
+@Suppress("AssignedValueIsNeverRead")
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun PlanCompilerPager(
@@ -263,7 +272,12 @@ private fun PlanCompilerPager(
 
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 24.dp),
+                contentPadding = PaddingValues(
+                    start = 16.dp,
+                    end = 16.dp,
+                    top = 12.dp,
+                    bottom = 24.dp
+                ),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
                 items(segmentRules, key = { it.choiceId }) { rule ->
@@ -326,7 +340,7 @@ private fun RuleGroup(
             )
         }
         if (hasNote) {
-            NoteTile(text = rule.postNote.orEmpty())
+            NoteTile(text = rule.postNote)
         }
     }
 }
@@ -339,9 +353,21 @@ private fun RuleHeaderTile(rule: EditableRule) {
         modifier = Modifier.fillMaxWidth(),
         color = scheme.surfaceContainer,
         contentColor = scheme.onSurface,
-        shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp, bottomStart = 4.dp, bottomEnd = 4.dp),
+        shape = RoundedCornerShape(
+            topStart = 20.dp,
+            topEnd = 20.dp,
+            bottomStart = 4.dp,
+            bottomEnd = 4.dp
+        ),
     ) {
-        Column(modifier = Modifier.padding(start = 18.dp, end = 16.dp, top = 16.dp, bottom = 14.dp)) {
+        Column(
+            modifier = Modifier.padding(
+                start = 18.dp,
+                end = 16.dp,
+                top = 16.dp,
+                bottom = 14.dp
+            )
+        ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
@@ -409,7 +435,7 @@ private fun RuleProgressPill(selected: Int, target: Int?, unitLabel: String, sat
                 targetState = satisfied,
                 transitionSpec = {
                     (scaleIn(motion.defaultSpatialSpec()) + fadeIn(motion.defaultEffectsSpec())) togetherWith
-                        (scaleOut(motion.defaultSpatialSpec()) + fadeOut(motion.defaultEffectsSpec()))
+                            (scaleOut(motion.defaultSpatialSpec()) + fadeOut(motion.defaultEffectsSpec()))
                 },
                 label = "pillMark",
             ) { ok ->
@@ -457,7 +483,8 @@ private fun CourseTile(
         label = "chipColor",
     )
     val chipContent by animateColorAsState(
-        targetValue = if (chipChecked) Color.White else scheme.onPrimaryContainer,
+        // Pick dark/light content from the chip's own fill so the credits read in every palette.
+        targetValue = if (chipChecked) scheme.primary.contrastingContent() else scheme.onPrimaryContainer,
         animationSpec = motion.defaultEffectsSpec(),
         label = "chipContent",
     )
@@ -540,7 +567,12 @@ private fun NoteTile(text: String) {
         modifier = Modifier.fillMaxWidth(),
         color = scheme.surfaceContainer,
         contentColor = scheme.onSurfaceVariant,
-        shape = RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp, bottomStart = 20.dp, bottomEnd = 20.dp),
+        shape = RoundedCornerShape(
+            topStart = 4.dp,
+            topEnd = 4.dp,
+            bottomStart = 20.dp,
+            bottomEnd = 20.dp
+        ),
     ) {
         Text(
             text = text,
@@ -578,7 +610,7 @@ private fun MorphKnob(checked: Boolean) {
         Icon(
             imageVector = if (checked) Icons.Default.Check else Icons.Default.Add,
             contentDescription = null,
-            tint = if (checked) Color.White else scheme.onSurfaceVariant,
+            tint = if (checked) scheme.primary.contrastingContent() else scheme.onSurfaceVariant,
             modifier = Modifier.size(16.dp),
         )
     }
@@ -679,17 +711,19 @@ private fun WizardBottomBar(
                     topEnd = 28.dp,
                     bottomEnd = 28.dp,
                 ),
-                // Brand red always pairs with white content, in dark mode too.
+                // Content color is chosen for contrast against the palette's primary (light or dark).
                 colors = ButtonDefaults.buttonColors(
                     containerColor = scheme.primary,
-                    contentColor = Color.White,
+                    contentColor = scheme.primary.contrastingContent(),
                 ),
             ) {
                 AnimatedContent(
                     targetState = action,
                     transitionSpec = {
                         (slideInHorizontally(spatialOffsetSpec) { it / 3 } + fadeIn(effectsFloatSpec)) togetherWith
-                            (slideOutHorizontally(spatialOffsetSpec) { -it / 3 } + fadeOut(effectsFloatSpec))
+                                (slideOutHorizontally(spatialOffsetSpec) { -it / 3 } + fadeOut(
+                                    effectsFloatSpec
+                                ))
                     },
                     label = "wizardActionLabel",
                 ) { target ->
@@ -716,7 +750,10 @@ private fun WizardBottomBar(
                             }
 
                             WizardAction.Sending -> {
-                                LoadingIndicator(modifier = Modifier.size(24.dp), color = Color.White)
+                                LoadingIndicator(
+                                    modifier = Modifier.size(24.dp),
+                                    color = scheme.primary.contrastingContent()
+                                )
                                 Spacer(Modifier.width(8.dp))
                                 Text("Invio in corso…", fontWeight = FontWeight.SemiBold)
                             }
@@ -773,7 +810,11 @@ private class MorphPolygonShape(
     private val morph: Morph,
     private val progress: Float,
 ) : Shape {
-    override fun createOutline(size: Size, layoutDirection: LayoutDirection, density: Density): Outline {
+    override fun createOutline(
+        size: Size,
+        layoutDirection: LayoutDirection,
+        density: Density
+    ): Outline {
         val matrix = Matrix()
         matrix.scale(size.width, size.height)
         val path = morph.toPath(progress).asComposePath()
@@ -788,7 +829,8 @@ private class MorphPolygonShape(
 private fun EditableRule.subtitle(): String {
     if (isMandatoryRule) {
         val count = courses.size
-        val activities = if (count == 1) "1 attività obbligatoria" else "$count attività obbligatorie"
+        val activities =
+            if (count == 1) "1 attività obbligatoria" else "$count attività obbligatorie"
         val credits = selectedCredits.toInt()
         return if (credits > 0) "$activities · $credits CFU" else activities
     }
@@ -811,6 +853,7 @@ private fun EditableRule.subtitle(): String {
 private fun Throwable.friendlyMessage(): String = when (this) {
     is UnknownHostException,
     is ConnectException -> "Rete non disponibile. Controlla la connessione e riprova."
+
     is SocketTimeoutException -> "Timeout di rete. Riprova tra un momento."
     is IOException -> "Errore di rete. Riprova tra un momento."
     else -> "Si è verificato un errore imprevisto. Riprova."

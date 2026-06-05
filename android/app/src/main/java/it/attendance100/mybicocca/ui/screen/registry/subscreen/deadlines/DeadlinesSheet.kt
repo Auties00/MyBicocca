@@ -137,9 +137,10 @@ private fun TimelineEvent(
     onClick: () -> Unit,
 ) {
     val scheme = MaterialTheme.colorScheme
-    // Node/kicker accent: bright error (pink-red) for urgent, brand primary otherwise —
-    // matching the design's --error / --primary tokens.
-    val accent = if (deadline.urgency == DeadlineUrgency.Urgent) scheme.error else scheme.primary
+    // Node/kicker accent follows the active palette: the primary accent for urgent items, a muted
+    // neutral for the rest — so urgent deadlines pop in whichever theme is selected.
+    val accent =
+        if (deadline.urgency == DeadlineUrgency.Urgent) scheme.primary else scheme.onSurfaceVariant
 
     Row(
         modifier = Modifier

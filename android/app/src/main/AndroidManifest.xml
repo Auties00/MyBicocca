@@ -33,6 +33,7 @@
     android:icon="@mipmap/ic_launcher"
     android:roundIcon="@mipmap/ic_launcher_round"
     android:label="@string/app_name"
+          android:localeConfig="@xml/locales_config"
     android:supportsRtl="true"
           android:theme="@style/Theme.MyBicocca.AnimatedSplash"
     tools:targetApi="33">
@@ -74,6 +75,25 @@
         android:name="android.support.FILE_PROVIDER_PATHS"
         android:resource="@xml/file_paths" />
     </provider>
+
+    <service
+            android:name="androidx.appcompat.app.AppLocalesMetadataHolderService"
+            android:enabled="false"
+            android:exported="false">
+      <meta-data
+              android:name="autoStoreLocales"
+              android:value="true" />
+    </service>
+
+    <activity
+            android:name="com.google.android.gms.oss.licenses.OssLicensesMenuActivity"
+            android:theme="@style/Theme.MyBicocca.OssLicenses"
+            tools:replace="android:theme" />
+
+    <activity
+            android:name="com.google.android.gms.oss.licenses.OssLicensesActivity"
+            android:theme="@style/Theme.MyBicocca.OssLicenses"
+            tools:replace="android:theme" />
   </application>
 
 </manifest>

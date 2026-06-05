@@ -58,8 +58,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.SyncStatus
 import it.attendance100.mybicocca.core.state.valueOrNull
@@ -85,7 +86,13 @@ import java.util.Locale
 @Composable
 fun StudyPlanScreen(
     onOpenEdit: (studentId: Long, choiceRegulationId: Long, schemaId: Long, planId: Long) -> Unit = { _, _, _, _ -> },
-    viewModel: StudyPlanViewModel = hiltViewModel(),
+    viewModel: StudyPlanViewModel = hiltViewModel(
+        checkNotNull(
+            LocalViewModelStoreOwner.current
+        ) {
+            "No ViewModelStoreOwner was provided via LocalViewModelStoreOwner"
+        }, null
+    ),
 ) {
     val planData by viewModel.plan.collectAsStateWithLifecycle()
     val syncStatus by viewModel.syncStatus.collectAsStateWithLifecycle()
@@ -257,13 +264,13 @@ private fun PlanHeroCard(
                     .graphicsLayer { rotationZ = 14f },
                 shape = glyph,
                 color = scheme.surface,
-                contentColor = PrintIconPink,
+                contentColor = scheme.primary,
             ) {
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     if (printing) {
                         CircularProgressIndicator(
                             modifier = Modifier.size(24.dp),
-                            color = PrintIconPink,
+                            color = scheme.primary,
                             strokeWidth = 2.dp,
                         )
                     } else {
@@ -433,7 +440,14 @@ private fun YearHeaderTile(
             bottomEnd = 4.dp,
         ),
     ) {
-        Column(modifier = Modifier.padding(start = 18.dp, end = 16.dp, top = 16.dp, bottom = 12.dp)) {
+        Column(
+            modifier = Modifier.padding(
+                start = 18.dp,
+                end = 16.dp,
+                top = 16.dp,
+                bottom = 12.dp
+            )
+        ) {
             Text(
                 text = title,
                 style = MaterialTheme.typography.titleLarge,
@@ -543,6 +557,7 @@ private fun ErrorEmptyState(cause: Throwable, onRetry: () -> Unit) {
 private fun Throwable.friendlyMessage(): String = when (this) {
     is UnknownHostException,
     is ConnectException -> "Rete non disponibile. Controlla la connessione e riprova."
+
     is SocketTimeoutException -> "Timeout di rete. Riprova tra un momento."
     is IOException -> "Errore di rete. Riprova tra un momento."
     else -> "Si è verificato un errore imprevisto. Riprova."
@@ -562,8 +577,5 @@ private val PlanDateFormat = DateTimeFormatter.ofPattern("d MMM yyyy", Locale.IT
 // Reference status-badge colors, fixed across themes (vibrant mint on the wine card).
 private val StatusPillGreen = Color(0xFF9DF0BC)
 private val OnStatusPillGreen = Color(0xFF00210F)
-
-// The reference's print glyph pink.
-private val PrintIconPink = Color(0xFFFF9DAC)
 
 private const val PULL_INDICATOR_DISMISS_DELAY_MS = 350L

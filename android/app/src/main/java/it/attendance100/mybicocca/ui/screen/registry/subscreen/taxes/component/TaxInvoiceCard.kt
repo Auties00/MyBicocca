@@ -23,7 +23,6 @@ import it.attendance100.mybicocca.domain.model.tax.TaxInvoice
 import it.attendance100.mybicocca.domain.model.tax.TaxStatus
 import it.attendance100.mybicocca.ui.component.shape.DynamicCard
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.taxes.formatTaxDate
-import it.attendance100.mybicocca.ui.theme.BicoccaWordmarkAccent
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.taxes.state.TaxesSharedElement
 
 @Composable
@@ -44,11 +43,15 @@ fun TaxInvoiceCard(
         sliceTopHeightDp = 10.dp,
         sliceBottomHeightDp = 10.dp,
         fill = scheme.surfaceContainerLowest,
-        stroke = BicoccaWordmarkAccent,
+        stroke = scheme.primary,
         onClick = onClick,
         modifier = modifier.fillMaxWidth(),
     ) {
-        Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 24.dp)) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp, vertical = 24.dp)
+        ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
