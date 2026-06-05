@@ -1,4 +1,4 @@
-package it.attendance100.mybicocca.util
+package it.attendance100.mybicocca.core.os
 
 import android.annotation.SuppressLint
 import android.content.Context
@@ -20,7 +20,7 @@ import kotlin.math.roundToInt
 /**
  * Haptic Manager for MyBicoca
  */
-class HapticManager(private val context: Context, private val view: View?) {
+class HapticManager(context: Context, private val view: View?) {
 
     private val vibrator: Vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
         val vibratorManager =
@@ -201,7 +201,7 @@ class HapticManager(private val context: Context, private val view: View?) {
         // Safe check for primitive support
         return try {
             vibrator.areAllPrimitivesSupported(*primitiveIds)
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             false
         }
     }

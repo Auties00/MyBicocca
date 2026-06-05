@@ -58,9 +58,6 @@ sealed interface AppRoute : NavKey {
     @Serializable data object AppInfo : AppRoute {
         override val appTitle = AppTitle.SubPage("Info App")
     }
-    @Serializable data object LoginManager : AppRoute {
-        override val appTitle = AppTitle.SubPage("Login Manager")
-    }
 
     // Registry (Segreterie) sub-screens.
     @Serializable

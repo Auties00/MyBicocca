@@ -22,7 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.IntOffset
-import it.attendance100.mybicocca.util.rememberHapticManager
+import it.attendance100.mybicocca.core.os.rememberHapticManager
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 

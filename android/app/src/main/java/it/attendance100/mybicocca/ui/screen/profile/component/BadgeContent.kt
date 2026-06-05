@@ -67,6 +67,7 @@ import it.attendance100.mybicocca.ui.theme.BadgeSignatureBoxColorWhite2
 import it.attendance100.mybicocca.ui.theme.BadgeWhiteDrawableColor
 import it.attendance100.mybicocca.ui.theme.BicoccaTheme
 import it.attendance100.mybicocca.ui.theme.OnBackgroundColor
+import it.attendance100.mybicocca.ui.theme.PreviewBgLowest
 import java.io.File
 import java.time.Instant
 import java.util.Locale
@@ -491,7 +492,7 @@ fun getChipDrawable(account: Account?): Int {
     return chips[index]
 }
 
-@Preview(showBackground = true, backgroundColor = 0xFF0F0606)
+@Preview(showBackground = true, backgroundColor = PreviewBgLowest)
 @Composable
 private fun BadgeFrontDarkModePreview() {
     val careerId = CareerId(123456L)
@@ -546,7 +547,7 @@ private fun BadgeFrontDarkModePreview() {
     }
 }
 
-@Preview(showBackground = true, backgroundColor = 0xFF0F0606)
+@Preview(showBackground = true, backgroundColor = PreviewBgLowest)
 @Composable
 private fun BadgeBackDarkModePreview() {
     val careerId = CareerId(123456L)

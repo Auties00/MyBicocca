@@ -221,283 +221,283 @@ fun CourseDetailScreen(
     }
 
     CourseDetailTheme(courseId = courseIdValue) {
-    val scheme = MaterialTheme.colorScheme
-    val pullState = rememberPullToRefreshState()
-    val pullScope = rememberCoroutineScope()
-    // Pull-to-refresh indicator stays only while the user-pull dismiss animation runs;
-    // the shapes-loading indicator picks up afterwards (or on cold open).
-    var pullIndicatorVisible by remember { mutableStateOf(false) }
+        val scheme = MaterialTheme.colorScheme
+        val pullState = rememberPullToRefreshState()
+        val pullScope = rememberCoroutineScope()
+        // Pull-to-refresh indicator stays only while the user-pull dismiss animation runs;
+        // the shapes-loading indicator picks up afterwards (or on cold open).
+        var pullIndicatorVisible by remember { mutableStateOf(false) }
 
-    // Standard collapsing-header pattern: hero + tab bar + pager form one column that the
-    // nested-scroll connection below translates up before any tab list scrolls (and back down
-    // once the active list is at its top again). The tab bar therefore pins purely off header
-    // geometry — page content height can never drag it around — and every tab page owns a
-    // real LazyListState, so per-tab scroll positions are kept by the framework for free.
-    val density = LocalDensity.current
-    val tabBarMorphPx = remember(density) { with(density) { TAB_BAR_MORPH_DISTANCE.toPx() } }
-    val header = rememberSaveable(tabBarMorphPx, saver = CollapsingHeaderState.saver(tabBarMorphPx)) {
-        CollapsingHeaderState(tabBarMorphPx)
-    }
-    var tabBarHeightPx by remember { mutableIntStateOf(0) }
-
-    // Roughly the bottom of the hero's headline; the bar title fades in past this.
-    val titleHideThresholdPx = remember(density) { with(density) { 120.dp.toPx() } }
-    val titleHidden by remember(header) {
-        derivedStateOf { header.collapsedPx >= titleHideThresholdPx }
-    }
-
-    // One pager drives both the swipeable tab content and the tab bar's indicator; the
-    // SavedStateHandle-backed selectedTab stays the source of truth so the tab survives
-    // process death (tab clicks land there first, then animate the pager from here).
-    val pagerState = rememberPagerState(initialPage = selectedTab.ordinal) { CourseTab.entries.size }
-    // Sync the VM from settledPage, not currentPage: a multi-page animateScrollToPage walks
-    // through every intermediate page, and writing those back to selectedTab restarts the
-    // animating LaunchedEffect below, cancelling the animation mid-flight.
-    LaunchedEffect(pagerState, viewModel) {
-        snapshotFlow { pagerState.settledPage }
-            .collect { page -> viewModel.selectTab(CourseTab.entries[page]) }
-    }
-    LaunchedEffect(selectedTab) {
-        if (pagerState.currentPage != selectedTab.ordinal) {
-            pagerState.animateScrollToPage(selectedTab.ordinal)
+        // Standard collapsing-header pattern: hero + tab bar + pager form one column that the
+        // nested-scroll connection below translates up before any tab list scrolls (and back down
+        // once the active list is at its top again). The tab bar therefore pins purely off header
+        // geometry — page content height can never drag it around — and every tab page owns a
+        // real LazyListState, so per-tab scroll positions are kept by the framework for free.
+        val density = LocalDensity.current
+        val tabBarMorphPx = remember(density) { with(density) { TAB_BAR_MORPH_DISTANCE.toPx() } }
+        val header = rememberSaveable(tabBarMorphPx, saver = CollapsingHeaderState.saver(tabBarMorphPx)) {
+            CollapsingHeaderState(tabBarMorphPx)
         }
-    }
-    // One saveable list state per tab: swiping back to a tab restores exactly where it was.
-    val pageListStates = CourseTab.entries.map { tab -> key(tab) { rememberLazyListState() } }
+        var tabBarHeightPx by remember { mutableIntStateOf(0) }
 
-    val nestedScrollConnection = remember(header) {
-        object : NestedScrollConnection {
-            // Scrolling up collapses the header before the active list moves...
-            override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset =
-                if (available.y < 0f) Offset(0f, header.drag(available.y)) else Offset.Zero
-
-            // ...and scrolling down expands it only with what the active list left over,
-            // i.e. once that list is back at its own top.
-            override fun onPostScroll(
-                consumed: Offset,
-                available: Offset,
-                source: NestedScrollSource,
-            ): Offset =
-                if (available.y > 0f) Offset(0f, header.drag(available.y)) else Offset.Zero
+        // Roughly the bottom of the hero's headline; the bar title fades in past this.
+        val titleHideThresholdPx = remember(density) { with(density) { 120.dp.toPx() } }
+        val titleHidden by remember(header) {
+            derivedStateOf { header.collapsedPx >= titleHideThresholdPx }
         }
-    }
-    // Drags starting on the hero or the tab bar (which are not scrollables themselves) still
-    // have to scroll the page: this state backs a scrollable on the root box, which dispatches
-    // through the same nested-scroll chain (header first) and hands whatever is left over to
-    // the active tab's list.
-    val headerDragState = rememberScrollableState { delta ->
-        -pageListStates[pagerState.currentPage].dispatchRawDelta(-delta)
-    }
 
-    val courseTitle = detailsLoadable.valueOrNull()?.enrolled?.fullName?.trim().orEmpty()
-    LaunchedEffect(titleHidden, courseTitle) {
-        onProvideTitle(courseTitle.takeIf { titleHidden && it.isNotBlank() })
-    }
-    DisposableEffect(Unit) {
-        onDispose { onProvideTitle(null) }
-    }
+        // One pager drives both the swipeable tab content and the tab bar's indicator; the
+        // SavedStateHandle-backed selectedTab stays the source of truth so the tab survives
+        // process death (tab clicks land there first, then animate the pager from here).
+        val pagerState = rememberPagerState(initialPage = selectedTab.ordinal) { CourseTab.entries.size }
+        // Sync the VM from settledPage, not currentPage: a multi-page animateScrollToPage walks
+        // through every intermediate page, and writing those back to selectedTab restarts the
+        // animating LaunchedEffect below, cancelling the animation mid-flight.
+        LaunchedEffect(pagerState, viewModel) {
+            snapshotFlow { pagerState.settledPage }
+                .collect { page -> viewModel.selectTab(CourseTab.entries[page]) }
+        }
+        LaunchedEffect(selectedTab) {
+            if (pagerState.currentPage != selectedTab.ordinal) {
+                pagerState.animateScrollToPage(selectedTab.ordinal)
+            }
+        }
+        // One saveable list state per tab: swiping back to a tab restores exactly where it was.
+        val pageListStates = CourseTab.entries.map { tab -> key(tab) { rememberLazyListState() } }
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(scheme.surfaceContainer),
-    ) {
-        PullToRefreshBox(
-            isRefreshing = pullIndicatorVisible,
-            onRefresh = {
-                pullIndicatorVisible = true
-                viewModel.pullToRefresh()
-                pullScope.launch {
-                    delay(PULL_INDICATOR_DISMISS_DELAY_MS)
-                    pullIndicatorVisible = false
-                }
-            },
-            state = pullState,
-            modifier = Modifier.fillMaxSize(),
-            // The box is full-bleed now, so the spinner must drop below the floating bar
-            // instead of emerging behind it.
-            indicator = {
-                PullToRefreshDefaults.Indicator(
-                    state = pullState,
-                    isRefreshing = pullIndicatorVisible,
-                    modifier = Modifier
-                        .align(Alignment.TopCenter)
-                        .padding(top = topBarInset),
-                )
-            },
+        val nestedScrollConnection = remember(header) {
+            object : NestedScrollConnection {
+                // Scrolling up collapses the header before the active list moves...
+                override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset =
+                    if (available.y < 0f) Offset(0f, header.drag(available.y)) else Offset.Zero
+
+                // ...and scrolling down expands it only with what the active list left over,
+                // i.e. once that list is back at its own top.
+                override fun onPostScroll(
+                    consumed: Offset,
+                    available: Offset,
+                    source: NestedScrollSource,
+                ): Offset =
+                    if (available.y > 0f) Offset(0f, header.drag(available.y)) else Offset.Zero
+            }
+        }
+        // Drags starting on the hero or the tab bar (which are not scrollables themselves) still
+        // have to scroll the page: this state backs a scrollable on the root box, which dispatches
+        // through the same nested-scroll chain (header first) and hands whatever is left over to
+        // the active tab's list.
+        val headerDragState = rememberScrollableState { delta ->
+            -pageListStates[pagerState.currentPage].dispatchRawDelta(-delta)
+        }
+
+        val courseTitle = detailsLoadable.valueOrNull()?.enrolled?.fullName?.trim().orEmpty()
+        LaunchedEffect(titleHidden, courseTitle) {
+            onProvideTitle(courseTitle.takeIf { titleHidden && it.isNotBlank() })
+        }
+        DisposableEffect(Unit) {
+            onDispose { onProvideTitle(null) }
+        }
+
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(scheme.surfaceContainer),
         ) {
-            val details = detailsLoadable.valueOrNull()
-            val hasFullData = details != null && details.sections.isNotEmpty()
-            val continueWatching = remember(details, completion, videoProgress, continueWatchingThumbnailUrl) {
-                details?.let { pickContinueWatching(it, completion, videoProgress, continueWatchingThumbnailUrl) }
-            }
-            LaunchedEffect(continueWatching?.module?.cmId) {
-                viewModel.resolveContinueWatchingThumbnail(continueWatching?.module?.cmId)
-            }
-
-            var heroHeightPx by remember { mutableIntStateOf(0) }
-            val headerSpacingPx = with(density) { HEADER_SPACING.toPx() }
-            // No collapsing while there is nothing below the hero to scroll; pull-to-refresh
-            // still works through the (otherwise idle) root scrollable.
-            val collapseRangePx = if (hasFullData) heroHeightPx + headerSpacingPx else 0f
-            SideEffect { header.updateCollapseRange(collapseRangePx) }
-
-            BoxWithConstraints(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .nestedScroll(nestedScrollConnection)
-                    .scrollable(headerDragState, Orientation.Vertical),
-            ) {
-                // Pages are sized for the pinned state (viewport below the pinned bar): while
-                // the header is still expanded the column simply extends past the bottom edge
-                // and slides up into place as it collapses. Fixed page bounds are what keep
-                // the bar steady no matter how short a tab's content is.
-                val pagerHeight = (maxHeight - topBarInset - HEADER_SPACING -
-                    with(density) { tabBarHeightPx.toDp() }).coerceAtLeast(0.dp)
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        // Measure with unbounded height: the column is taller than the
-                        // viewport while the hero is expanded, and coercing it would shrink
-                        // the pager below pagerHeight, leaving dead space once collapsed.
-                        .wrapContentHeight(align = Alignment.Top, unbounded = true)
-                        .padding(top = topBarInset)
-                        .offset { IntOffset(0, -header.collapsedPx.roundToInt()) },
-                    verticalArrangement = Arrangement.spacedBy(HEADER_SPACING),
-                ) {
-                    val refreshing = syncStatus is SyncStatus.Refreshing
-                    val shapesSpinning = initialFetchInProgress ||
-                        (refreshing && !pullIndicatorVisible)
-                    Box(modifier = Modifier.onSizeChanged { heroHeightPx = it.height }) {
-                        CourseHero(
-                            details = details,
-                            continueWatching = continueWatching?.playable,
-                            shapes = heroShapes,
-                            isLoading = shapesSpinning,
-                            onResume = {
-                                continueWatching?.module?.let { openModule(it, viewModel) }
-                            },
-                            onGoToLesson = {
-                                viewModel.selectTab(CourseTab.Content)
-                                continueWatching?.let { picked ->
-                                    if (picked.sectionId !in expanded) {
-                                        viewModel.toggleSection(picked.sectionId)
-                                    }
-                                }
-                            },
-                        )
+            PullToRefreshBox(
+                isRefreshing = pullIndicatorVisible,
+                onRefresh = {
+                    pullIndicatorVisible = true
+                    viewModel.pullToRefresh()
+                    pullScope.launch {
+                        delay(PULL_INDICATOR_DISMISS_DELAY_MS)
+                        pullIndicatorVisible = false
                     }
-                    if (hasFullData && details != null) {
-                        CourseTabBar(
-                            pagerState = pagerState,
-                            onSelect = viewModel::selectTab,
-                            pinProgress = { header.pinProgress },
-                            modifier = Modifier.onSizeChanged { tabBarHeightPx = it.height },
-                        )
-                        HorizontalPager(
-                            state = pagerState,
-                            verticalAlignment = Alignment.Top,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(pagerHeight),
-                        ) { page ->
-                            val pageModifier = Modifier.fillMaxSize()
-                            // Empty/loading states center inside the slice of the page that
-                            // is on screen while the hero is still expanded, so they are
-                            // visible without scrolling.
-                            val emptyModifier = Modifier
-                                .fillMaxWidth()
-                                .height(
-                                    (pagerHeight - with(density) { heroHeightPx.toDp() })
-                                        .coerceAtLeast(240.dp),
-                                )
-                            when (CourseTab.entries[page]) {
-                                CourseTab.Syllabus -> SyllabusContent(
-                                    details = details,
-                                    listState = pageListStates[page],
-                                    modifier = pageModifier,
-                                    emptyModifier = emptyModifier,
-                                )
-                                CourseTab.Content -> ContentPage(
-                                    details = details,
-                                    expanded = expanded,
-                                    completion = completion,
-                                    videoProgress = videoProgress,
-                                    onToggleSection = viewModel::toggleSection,
-                                    onModuleClick = { openModule(it, viewModel) },
-                                    listState = pageListStates[page],
-                                    modifier = pageModifier,
-                                    emptyModifier = emptyModifier,
-                                )
-                                CourseTab.Quiz -> QuizzesPage(
-                                    quizzesLoadable = quizzesLoadable,
-                                    details = details,
-                                    completion = completion,
-                                    onClick = { viewModel.emitOpenQuiz(it.value) },
-                                    listState = pageListStates[page],
-                                    modifier = pageModifier,
-                                    emptyModifier = emptyModifier,
-                                )
-                                CourseTab.Assignments -> AssignmentsPage(
-                                    assignmentsLoadable = assignmentsLoadable,
-                                    onClick = { viewModel.emitOpenAssignment(it.value) },
-                                    listState = pageListStates[page],
-                                    modifier = pageModifier,
-                                    emptyModifier = emptyModifier,
-                                )
-                                CourseTab.Forum -> ForumsPage(
-                                    forumsLoadable = forumsLoadable,
-                                    latestAnnouncement = latestAnnouncement,
-                                    onClick = { viewModel.emitOpenForum(it.value) },
-                                    onOpenDiscussion = { viewModel.emitOpenDiscussion(it) },
-                                    listState = pageListStates[page],
-                                    modifier = pageModifier,
-                                    emptyModifier = emptyModifier,
-                                )
+                },
+                state = pullState,
+                modifier = Modifier.fillMaxSize(),
+                // The box is full-bleed now, so the spinner must drop below the floating bar
+                // instead of emerging behind it.
+                indicator = {
+                    PullToRefreshDefaults.Indicator(
+                        state = pullState,
+                        isRefreshing = pullIndicatorVisible,
+                        modifier = Modifier
+                            .align(Alignment.TopCenter)
+                            .padding(top = topBarInset),
+                    )
+                },
+            ) {
+                val details = detailsLoadable.valueOrNull()
+                val hasFullData = details != null && details.sections.isNotEmpty()
+                val continueWatching = remember(details, completion, videoProgress, continueWatchingThumbnailUrl) {
+                    details?.let { pickContinueWatching(it, completion, videoProgress, continueWatchingThumbnailUrl) }
+                }
+                LaunchedEffect(continueWatching?.module?.cmId) {
+                    viewModel.resolveContinueWatchingThumbnail(continueWatching?.module?.cmId)
+                }
+
+                var heroHeightPx by remember { mutableIntStateOf(0) }
+                val headerSpacingPx = with(density) { HEADER_SPACING.toPx() }
+                // No collapsing while there is nothing below the hero to scroll; pull-to-refresh
+                // still works through the (otherwise idle) root scrollable.
+                val collapseRangePx = if (hasFullData) heroHeightPx + headerSpacingPx else 0f
+                SideEffect { header.updateCollapseRange(collapseRangePx) }
+
+                BoxWithConstraints(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .nestedScroll(nestedScrollConnection)
+                        .scrollable(headerDragState, Orientation.Vertical),
+                ) {
+                    // Pages are sized for the pinned state (viewport below the pinned bar): while
+                    // the header is still expanded the column simply extends past the bottom edge
+                    // and slides up into place as it collapses. Fixed page bounds are what keep
+                    // the bar steady no matter how short a tab's content is.
+                    val pagerHeight = (maxHeight - topBarInset - HEADER_SPACING -
+                            with(density) { tabBarHeightPx.toDp() }).coerceAtLeast(0.dp)
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            // Measure with unbounded height: the column is taller than the
+                            // viewport while the hero is expanded, and coercing it would shrink
+                            // the pager below pagerHeight, leaving dead space once collapsed.
+                            .wrapContentHeight(align = Alignment.Top, unbounded = true)
+                            .padding(top = topBarInset)
+                            .offset { IntOffset(0, -header.collapsedPx.roundToInt()) },
+                        verticalArrangement = Arrangement.spacedBy(HEADER_SPACING),
+                    ) {
+                        val refreshing = syncStatus is SyncStatus.Refreshing
+                        val shapesSpinning = initialFetchInProgress ||
+                                (refreshing && !pullIndicatorVisible)
+                        Box(modifier = Modifier.onSizeChanged { heroHeightPx = it.height }) {
+                            CourseHero(
+                                details = details,
+                                continueWatching = continueWatching?.playable,
+                                shapes = heroShapes,
+                                isLoading = shapesSpinning,
+                                onResume = {
+                                    continueWatching?.module?.let { openModule(it, viewModel) }
+                                },
+                                onGoToLesson = {
+                                    viewModel.selectTab(CourseTab.Content)
+                                    continueWatching?.let { picked ->
+                                        if (picked.sectionId !in expanded) {
+                                            viewModel.toggleSection(picked.sectionId)
+                                        }
+                                    }
+                                },
+                            )
+                        }
+                        if (hasFullData && details != null) {
+                            CourseTabBar(
+                                pagerState = pagerState,
+                                onSelect = viewModel::selectTab,
+                                pinProgress = { header.pinProgress },
+                                modifier = Modifier.onSizeChanged { tabBarHeightPx = it.height },
+                            )
+                            HorizontalPager(
+                                state = pagerState,
+                                verticalAlignment = Alignment.Top,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(pagerHeight),
+                            ) { page ->
+                                val pageModifier = Modifier.fillMaxSize()
+                                // Empty/loading states center inside the slice of the page that
+                                // is on screen while the hero is still expanded, so they are
+                                // visible without scrolling.
+                                val emptyModifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(
+                                        (pagerHeight - with(density) { heroHeightPx.toDp() })
+                                            .coerceAtLeast(240.dp),
+                                    )
+                                when (CourseTab.entries[page]) {
+                                    CourseTab.Syllabus -> SyllabusContent(
+                                        details = details,
+                                        listState = pageListStates[page],
+                                        modifier = pageModifier,
+                                        emptyModifier = emptyModifier,
+                                    )
+                                    CourseTab.Content -> ContentPage(
+                                        details = details,
+                                        expanded = expanded,
+                                        completion = completion,
+                                        videoProgress = videoProgress,
+                                        onToggleSection = viewModel::toggleSection,
+                                        onModuleClick = { openModule(it, viewModel) },
+                                        listState = pageListStates[page],
+                                        modifier = pageModifier,
+                                        emptyModifier = emptyModifier,
+                                    )
+                                    CourseTab.Quiz -> QuizzesPage(
+                                        quizzesLoadable = quizzesLoadable,
+                                        details = details,
+                                        completion = completion,
+                                        onClick = { viewModel.emitOpenQuiz(it.value) },
+                                        listState = pageListStates[page],
+                                        modifier = pageModifier,
+                                        emptyModifier = emptyModifier,
+                                    )
+                                    CourseTab.Assignments -> AssignmentsPage(
+                                        assignmentsLoadable = assignmentsLoadable,
+                                        onClick = { viewModel.emitOpenAssignment(it.value) },
+                                        listState = pageListStates[page],
+                                        modifier = pageModifier,
+                                        emptyModifier = emptyModifier,
+                                    )
+                                    CourseTab.Forum -> ForumsPage(
+                                        forumsLoadable = forumsLoadable,
+                                        latestAnnouncement = latestAnnouncement,
+                                        onClick = { viewModel.emitOpenForum(it.value) },
+                                        onOpenDiscussion = { viewModel.emitOpenDiscussion(it) },
+                                        listState = pageListStates[page],
+                                        modifier = pageModifier,
+                                        emptyModifier = emptyModifier,
+                                    )
+                                }
                             }
                         }
                     }
                 }
             }
+
+            // Soft fade under the status bar so scrolling content doesn't collide with the system
+            // icons while it travels through the see-through bar region. Same hue as the page
+            // background, so it is invisible at rest.
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .windowInsetsTopHeight(WindowInsets.statusBars)
+                    .background(
+                        Brush.verticalGradient(
+                            listOf(scheme.surfaceContainer, scheme.surfaceContainer.copy(alpha = 0f)),
+                        ),
+                    ),
+            )
         }
 
-        // Soft fade under the status bar so scrolling content doesn't collide with the system
-        // icons while it travels through the see-through bar region. Same hue as the page
-        // background, so it is invisible at rest.
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .windowInsetsTopHeight(WindowInsets.statusBars)
-                .background(
-                    Brush.verticalGradient(
-                        listOf(scheme.surfaceContainer, scheme.surfaceContainer.copy(alpha = 0f)),
-                    ),
-                ),
-        )
-    }
-
-    val folderModule = folderPickCmId?.let { cmId ->
-        detailsLoadable.valueOrNull()
-            ?.sections
-            ?.asSequence()
-            ?.flatMap { it.modules }
-            ?.firstOrNull { it.cmId == cmId }
-    }
-    if (folderModule != null) {
-        FolderContentsSheet(
-            title = folderModule.name,
-            contents = folderModule.contents.filter { it.fileUrl != null && it.type != "url" },
-            onOpenContent = { content ->
-                viewModel.emitOpenFile(
-                    fileName = content.fileName ?: folderModule.name,
-                    fileUrl = content.fileUrl.orEmpty(),
-                    mimeType = content.mimeType,
-                    sizeBytes = content.sizeBytes,
-                )
-            },
-            onDismiss = { folderPickCmId = null },
-        )
-    }
+        val folderModule = folderPickCmId?.let { cmId ->
+            detailsLoadable.valueOrNull()
+                ?.sections
+                ?.asSequence()
+                ?.flatMap { it.modules }
+                ?.firstOrNull { it.cmId == cmId }
+        }
+        if (folderModule != null) {
+            FolderContentsSheet(
+                title = folderModule.name,
+                contents = folderModule.contents.filter { it.fileUrl != null && it.type != "url" },
+                onOpenContent = { content ->
+                    viewModel.emitOpenFile(
+                        fileName = content.fileName ?: folderModule.name,
+                        fileUrl = content.fileUrl.orEmpty(),
+                        mimeType = content.mimeType,
+                        sizeBytes = content.sizeBytes,
+                    )
+                },
+                onDismiss = { folderPickCmId = null },
+            )
+        }
     }
 }
 
@@ -937,9 +937,9 @@ private fun pickNextDueAssignment(
 ): Assignment? = assignments
     .filter {
         it.dueDate != null &&
-            it.dueDate.isAfter(now) &&
-            it.submissionStatus !is SubmissionStatus.Submitted &&
-            it.submissionStatus !is SubmissionStatus.Graded
+                it.dueDate.isAfter(now) &&
+                it.submissionStatus !is SubmissionStatus.Submitted &&
+                it.submissionStatus !is SubmissionStatus.Graded
     }
     .minByOrNull { it.dueDate!! }
 

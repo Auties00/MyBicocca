@@ -274,7 +274,7 @@ fun MainShell(
             when {
                 searchDictating -> searchViewModel.stopDictation()
                 ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) ==
-                    PackageManager.PERMISSION_GRANTED -> searchViewModel.startDictation()
+                        PackageManager.PERMISSION_GRANTED -> searchViewModel.startDictation()
 
                 else -> recordAudioLauncher.launch(Manifest.permission.RECORD_AUDIO)
             }
@@ -312,7 +312,7 @@ fun MainShell(
                         // until they publish a runtime title — i.e. until their own hero
                         // headline has scrolled past and the bar must take over as the header.
                         transparentBackground = currentRoute?.extendsBehindTopBar == true &&
-                            subPageTitleOverride == null,
+                                subPageTitleOverride == null,
                     )
                 },
                 bottomBar = {

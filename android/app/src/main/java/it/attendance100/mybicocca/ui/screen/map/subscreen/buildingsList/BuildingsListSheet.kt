@@ -361,34 +361,18 @@ private fun ActionRow(
     val infoFg = if (dark) scheme.onPrimaryContainer else scheme.onPrimary
 
     Row(
-        modifier = Modifier.fillMaxWidth().padding(top = 2.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 2.dp),
         horizontalArrangement = Arrangement.spacedBy(4.dp),
     ) {
-        Button(
-            onClick = onShowInfo,
-            modifier = Modifier
-                .weight(1f)
-                .height(48.dp),
-            shape = ButtonGroupDefaults.connectedLeadingButtonShape,
-            colors = ButtonDefaults.buttonColors(
-                containerColor = infoBg,
-                contentColor = infoFg,
-            ),
-        ) {
-            Icon(
-                imageVector = Icons.Outlined.Info,
-                contentDescription = null,
-                modifier = Modifier.size(20.dp),
-            )
-            Spacer(Modifier.width(8.dp))
-            Text("Informazioni", fontWeight = FontWeight.SemiBold)
-        }
+        // Directions button
         FilledTonalButton(
             onClick = { context.openBuildingInMaps(building) },
             modifier = Modifier
                 .weight(1f)
                 .height(48.dp),
-            shape = ButtonGroupDefaults.connectedTrailingButtonShape,
+            shape = ButtonGroupDefaults.connectedLeadingButtonShape,
             colors = ButtonDefaults.filledTonalButtonColors(
                 containerColor = scheme.surfaceContainerHighest,
                 contentColor = scheme.onSurface,
@@ -401,6 +385,27 @@ private fun ActionRow(
             )
             Spacer(Modifier.width(8.dp))
             Text("Indicazioni", fontWeight = FontWeight.SemiBold)
+        }
+
+        // Info button
+        Button(
+            onClick = onShowInfo,
+            modifier = Modifier
+                .weight(1f)
+                .height(48.dp),
+            shape = ButtonGroupDefaults.connectedTrailingButtonShape,
+            colors = ButtonDefaults.buttonColors(
+                containerColor = infoBg,
+                contentColor = infoFg,
+            ),
+        ) {
+            Icon(
+                imageVector = Icons.Outlined.Info,
+                contentDescription = null,
+                modifier = Modifier.size(20.dp),
+            )
+            Spacer(Modifier.width(8.dp))
+            Text("Informazioni", fontWeight = FontWeight.SemiBold)
         }
     }
 }

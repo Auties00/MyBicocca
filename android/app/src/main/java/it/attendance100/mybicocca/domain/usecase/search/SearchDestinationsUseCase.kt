@@ -120,10 +120,6 @@ class SearchDestinationsUseCase @Inject constructor() {
                 SearchDestination.AppInfo, "Info App", null,
                 listOf("informazioni", "versione", "about"),
             ),
-            Entry(
-                SearchDestination.LoginManager, "Login Manager", null,
-                listOf("accessi", "credenziali", "sessioni"),
-            ),
         )
     }
 }

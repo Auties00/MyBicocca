@@ -40,6 +40,7 @@ import it.attendance100.mybicocca.domain.model.exam.ExamType
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.booked.ext.displayTitle
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.booked.ext.examKindLabel
 import it.attendance100.mybicocca.ui.theme.BicoccaTheme
+import it.attendance100.mybicocca.ui.theme.PreviewBgDark
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -235,7 +236,7 @@ private val PreviewBooking = BookedExam(
 @Preview(
     showBackground = true,
     uiMode = android.content.res.Configuration.UI_MODE_NIGHT_YES,
-    backgroundColor = 0xFF0B0808
+    backgroundColor = PreviewBgDark
 )
 @Composable
 private fun BookedExamCardDarkPreview() {

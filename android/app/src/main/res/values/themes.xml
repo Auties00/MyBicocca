@@ -16,4 +16,6 @@
         <item name="windowSplashScreenAnimatedIcon">@drawable/logo</item>
         <item name="postSplashScreenTheme">@style/Theme.MyBicocca</item>
     </style>
+
+    <style name="Theme.MyBicocca.OssLicenses" parent="Theme.MaterialComponents.DayNight.DarkActionBar" />
 </resources>
