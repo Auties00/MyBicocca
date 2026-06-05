@@ -83,6 +83,8 @@ import it.attendance100.mybicocca.ui.component.input.PasswordTextField
 import it.attendance100.mybicocca.ui.screen.auth.state.AuthEvent
 import it.attendance100.mybicocca.ui.theme.BicoccaTheme
 import it.attendance100.mybicocca.ui.theme.BicoccaWordmarkAccent
+import it.attendance100.mybicocca.ui.theme.PreviewBgDark
+import it.attendance100.mybicocca.ui.theme.PreviewBgLowest
 import kotlinx.coroutines.launch
 
 // Initial-login entry: lives inside AppRoot's NavDisplay.
@@ -366,7 +368,7 @@ private fun AlternativeLoginButtonPreview() {
     }
 }
 
-@Preview(showBackground = true, backgroundColor = 0xFF0F0606)
+@Preview(showBackground = true, backgroundColor = PreviewBgLowest)
 @Composable
 private fun AuthFailureCardBadCredentialsPreview() {
     BicoccaTheme(dark = true) {
@@ -374,7 +376,7 @@ private fun AuthFailureCardBadCredentialsPreview() {
     }
 }
 
-@Preview(showBackground = true, backgroundColor = 0xFF0B0808)
+@Preview(showBackground = true, backgroundColor = PreviewBgDark)
 @Composable
 private fun AuthFailureCardNoConnectionPreview() {
     BicoccaTheme(dark = true) {
@@ -382,7 +384,7 @@ private fun AuthFailureCardNoConnectionPreview() {
     }
 }
 
-@Preview(showBackground = true, backgroundColor = 0xFF0F0606)
+@Preview(showBackground = true, backgroundColor = PreviewBgLowest)
 @Composable
 private fun AuthFailureCardUnknownPreview() {
     BicoccaTheme(dark = true) {

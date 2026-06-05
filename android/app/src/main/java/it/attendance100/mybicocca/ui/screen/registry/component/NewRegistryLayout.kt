@@ -84,6 +84,7 @@ import it.attendance100.mybicocca.ui.screen.registry.subscreen.bookableExams.Boo
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.bookedExams.BookedExamsViewModel
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.taxes.TaxesViewModel
 import it.attendance100.mybicocca.ui.theme.BicoccaTheme
+import it.attendance100.mybicocca.ui.theme.PreviewBgLowest
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -498,7 +499,7 @@ private fun CareerStat(
 
 @Preview(
     showBackground = true,
-    backgroundColor = 0xFF0F0606,
+    backgroundColor = PreviewBgLowest,
     uiMode = Configuration.UI_MODE_NIGHT_YES
 )
 @Composable
