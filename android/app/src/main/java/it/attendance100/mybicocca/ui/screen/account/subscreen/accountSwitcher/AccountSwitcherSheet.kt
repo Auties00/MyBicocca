@@ -21,7 +21,6 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -34,17 +33,15 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.MotionScheme
@@ -166,8 +163,7 @@ fun AccountSwitcherSheet(
 
     val windowInsets = WindowInsets.safeDrawing.asPaddingValues(LocalDensity.current)
     val topWindowInsets = windowInsets.calculateTopPadding()
-    // Default M3 drag handle footprint: 4dp pill + 22dp vertical padding on each side.
-    val handleHeight = 48.dp
+    val handleHeight = 16.dp
 
     val closeSeekableState = remember { SeekableTransitionState(true) }
     val closeTransition = rememberTransition(closeSeekableState, label = "closeTransition")
@@ -182,6 +178,7 @@ fun AccountSwitcherSheet(
         },
         sheetState = sheetState,
         contentWindowInsets = { WindowInsets(0) },
+        dragHandle = { Box(Modifier.padding(top = handleHeight)) },
         shape = RoundedCornerShape(topStart = 40.dp, topEnd = 40.dp),
     ) {
         PredictiveBackHandler(enabled = isAddingAccount && !inflight) { progress ->
@@ -338,7 +335,6 @@ fun AccountSwitcherSheet(
     }
 }
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun AccountsScene(
     modifier: Modifier,
@@ -358,39 +354,27 @@ private fun AccountsScene(
     onAddAccount: () -> Unit,
 ) {
     Column(
-        modifier = modifier.padding(bottom = 24.dp),
+        modifier = modifier.padding(bottom = 24.dp, top = 8.dp),
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(bottom = 12.dp),
+                .padding(top = 4.dp, bottom = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = "Account",
-                    style = MaterialTheme.typography.titleLargeEmphasized,
-                    fontWeight = FontWeight.SemiBold,
-                )
-                Text(
-                    text = "Gestisci i tuoi account",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-            // Manual box instead of IconButton: the expressive IconButton's interactive-size
-            // accommodation makes the glyph sit visibly off-center next to a two-line block.
-            Box(
-                modifier = Modifier
-                    .size(40.dp)
-                    .clip(CircleShape)
-                    .clickable(onClick = onOpenSettings),
-                contentAlignment = Alignment.Center,
-            ) {
+            Text(
+                text = "Account",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.padding(start = 8.dp),
+            )
+            Spacer(Modifier.weight(1f))
+            IconButton(onClick = onOpenSettings) {
                 Icon(
                     imageVector = Icons.Default.Settings,
                     contentDescription = "Impostazioni",
-                    tint = MaterialTheme.colorScheme.onSurface,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
         }

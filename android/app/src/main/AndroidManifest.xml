@@ -8,27 +8,20 @@
   <uses-permission android:name="android.permission.VIBRATE" />
   <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
   <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
-  <!-- Search dictation (mic streaming into the unified search field). -->
   <uses-permission android:name="android.permission.RECORD_AUDIO" />
-  <!-- Legacy write access; ignored on API 30+ (scoped storage), so capped to API 29. -->
   <uses-permission
-      android:name="android.permission.WRITE_EXTERNAL_STORAGE"
-      android:maxSdkVersion="29" />
+          android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+          android:maxSdkVersion="29" />
 
-  <!-- Package visibility for the platform speech recognizer (API 30+ filters services). -->
   <queries>
     <intent>
       <action android:name="android.speech.RecognitionService" />
     </intent>
-    <!-- Office documents hand off to Microsoft's apps via their ms-* protocol handlers;
-         PackageManager checks need explicit visibility on API 30+. -->
     <package android:name="com.microsoft.office.word" />
     <package android:name="com.microsoft.office.excel" />
     <package android:name="com.microsoft.office.powerpoint" />
   </queries>
 
-  <!-- ML Kit GenAI declares minSdk 26; the app supports 25. Safe to override: every GenAI
-       call site guards on Build.VERSION >= 26 and falls back to the deterministic path. -->
   <uses-sdk tools:overrideLibrary="com.google.mlkit.genai.prompt,com.google.mlkit.genai.speechrecognition,com.google.mlkit.genai.common" />
 
   <application

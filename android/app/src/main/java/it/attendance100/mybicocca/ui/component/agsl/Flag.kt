@@ -62,7 +62,7 @@ fun DeformingFlagBox(
         initialValue = 0f,
         targetValue = (2 * Math.PI).toFloat(),
         animationSpec = infiniteRepeatable(
-            animation = tween(3000, easing = LinearEasing),
+            animation = tween(1000, easing = LinearEasing),
             repeatMode = RepeatMode.Restart
         ),
         label = "phase"
@@ -71,7 +71,7 @@ fun DeformingFlagBox(
     // Smoothly transition the amplitude so the flag doesn't "snap" when stopping/starting
     val animatedAmplitude by animateFloatAsState(
         targetValue = if (isWaving) amplitudeRatio else 0f,
-        animationSpec = tween(durationMillis = 1000, easing = FastOutSlowInEasing),
+        animationSpec = tween(durationMillis = 500, easing = FastOutSlowInEasing),
         label = "amplitudeSmooth"
     )
 

@@ -22,7 +22,7 @@ fun FlagFrame(
     Box(
         modifier = modifier
             .aspectRatio(3f / 2f)
-            .clip(RoundedCornerShape(12.dp)),
+            .clip(RoundedCornerShape(8.dp)),
         content = content,
     )
 }
