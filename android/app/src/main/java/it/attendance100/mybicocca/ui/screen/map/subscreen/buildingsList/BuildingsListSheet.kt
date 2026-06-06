@@ -63,8 +63,8 @@ import it.attendance100.mybicocca.domain.model.map.MapRoomDetail
 import it.attendance100.mybicocca.domain.model.map.RoomScheduleEntry
 import it.attendance100.mybicocca.ui.component.modal.PredictiveModalBottomSheet
 import it.attendance100.mybicocca.ui.component.modal.SheetPagerHeader
-import it.attendance100.mybicocca.ui.screen.map.component.label
 import it.attendance100.mybicocca.ui.component.modal.sheetPageTransform
+import it.attendance100.mybicocca.ui.screen.map.component.label
 import it.attendance100.mybicocca.ui.screen.map.ext.buildingDisplayName
 import it.attendance100.mybicocca.ui.screen.map.ext.openBuildingInMaps
 import it.attendance100.mybicocca.ui.screen.map.ext.splitLegacyAlias
@@ -367,15 +367,15 @@ private fun ActionRow(
         horizontalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         // Directions button
-        Button(
+        FilledTonalButton(
             onClick = { context.openBuildingInMaps(building) },
             modifier = Modifier
                 .weight(1f)
                 .height(48.dp),
             shape = ButtonGroupDefaults.connectedLeadingButtonShape,
-            colors = ButtonDefaults.buttonColors(
-                containerColor = directionsBg,
-                contentColor = directionsFg,
+            colors = ButtonDefaults.filledTonalButtonColors(
+                containerColor = scheme.surfaceContainerHighest,
+                contentColor = scheme.onSurface,
             ),
         ) {
             Icon(
@@ -388,15 +388,15 @@ private fun ActionRow(
         }
 
         // Info button
-        FilledTonalButton(
+        Button(
             onClick = onShowInfo,
             modifier = Modifier
                 .weight(1f)
                 .height(48.dp),
             shape = ButtonGroupDefaults.connectedTrailingButtonShape,
-            colors = ButtonDefaults.filledTonalButtonColors(
-                containerColor = scheme.surfaceContainerHighest,
-                contentColor = scheme.onSurface,
+            colors = ButtonDefaults.buttonColors(
+                containerColor = directionsBg,
+                contentColor = directionsFg,
             ),
         ) {
             Icon(

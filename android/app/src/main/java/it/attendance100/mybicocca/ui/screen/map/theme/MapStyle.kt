@@ -64,9 +64,14 @@ private val ROAD_LABELS = listOf("roads_labels_minor", "roads_labels_major")
 private val PLACE_LABELS = listOf("places_subplace", "places_region", "places_locality", "places_country")
 private val WATER_LABELS = listOf("water_waterway_label", "water_label_ocean", "water_label_lakes", "earth_label_islands")
 
+// Hide only the POI layer (icons + their labels). All other labels — place names, road labels,
+// water labels — remain visible. Call ONCE at style bring-up.
+fun Style.hidePois() {
+    (getLayer("pois") as? SymbolLayer)?.setProperties(PropertyFactory.visibility(Property.NONE))
+}
+
 // Recolor the live GL style to [palette]. Safe to call on every theme change — it mutates layer
-// paint in place (no setStyle), so there is no flash. The `pois` layer is deliberately left alone
-// so Protomaps' default category icons keep their own colors.
+// paint in place (no setStyle), so there is no flash.
 fun Style.applyBicoccaPalette(palette: MapPalette) {
     val ground = palette.ground.toArgb()
     val urban = palette.urban.toArgb()

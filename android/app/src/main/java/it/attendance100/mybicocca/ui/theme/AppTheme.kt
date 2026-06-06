@@ -23,6 +23,11 @@ enum class AppTheme(val displayName: String) {
 // can tell the exact brand palette (Default) from a derived/dynamic one (Material You, Oceano…).
 val LocalAppTheme = staticCompositionLocalOf { AppTheme.Default }
 
+// The resolved dark flag (ThemeMode.System/Light/Dark → boolean). Exposed so the map palette can
+// follow the in-app override instead of reading isSystemInDarkTheme() directly, which ignores the
+// manual Light/Dark setting.
+val LocalDarkTheme = staticCompositionLocalOf { false }
+
 // Dynamic (Material You) color is only available on Android 12+
 val isDynamicColorAvailable: Boolean
     get() = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S

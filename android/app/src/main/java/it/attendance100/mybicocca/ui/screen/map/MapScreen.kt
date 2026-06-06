@@ -1,7 +1,5 @@
 package it.attendance100.mybicocca.ui.screen.map
 
-import android.graphics.Color as AndroidColor
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -50,15 +48,13 @@ import it.attendance100.mybicocca.ui.screen.map.ext.splitLegacyAlias
 import it.attendance100.mybicocca.ui.screen.map.state.MapOneShotEvent
 import it.attendance100.mybicocca.ui.screen.map.subscreen.buildingDetail.BuildingDetailSheet
 import it.attendance100.mybicocca.ui.screen.map.subscreen.buildingsList.BuildingsListSheet
-import it.attendance100.mybicocca.ui.screen.map.theme.resolveBicoccaStyleJson
 import it.attendance100.mybicocca.ui.screen.map.theme.MapPalette
 import it.attendance100.mybicocca.ui.screen.map.theme.applyBicoccaPalette
+import it.attendance100.mybicocca.ui.screen.map.theme.hidePois
+import it.attendance100.mybicocca.ui.screen.map.theme.resolveBicoccaStyleJson
 import it.attendance100.mybicocca.ui.theme.AppTheme
 import it.attendance100.mybicocca.ui.theme.LocalAppTheme
-import kotlin.coroutines.resume
-import kotlin.math.cos
-import kotlin.math.pow
-import kotlin.math.roundToInt
+import it.attendance100.mybicocca.ui.theme.LocalDarkTheme
 import kotlinx.coroutines.suspendCancellableCoroutine
 import org.maplibre.android.MapLibre
 import org.maplibre.android.camera.CameraUpdate
@@ -71,6 +67,10 @@ import org.maplibre.android.plugins.annotation.Symbol
 import org.maplibre.android.plugins.annotation.SymbolManager
 import org.maplibre.android.plugins.annotation.SymbolOptions
 import org.maplibre.android.style.layers.Property
+import kotlin.coroutines.resume
+import kotlin.math.cos
+import kotlin.math.pow
+import android.graphics.Color as AndroidColor
 
 // Campus center (Piazza dell'Ateneo Nuovo). The offline pmtiles extract covers the Milan area, so
 // minZoom is kept city-level rather than the globe — you can't pan off the bundled tiles.
@@ -129,7 +129,7 @@ fun MapScreen(
     // You, Oceano, Bosco) derives map colors from its M3 scheme so the map tracks the theme.
     val appTheme = LocalAppTheme.current
     val scheme = MaterialTheme.colorScheme
-    val dark = isSystemInDarkTheme()
+    val dark = LocalDarkTheme.current
     val palette = remember(appTheme, scheme, dark) {
         when (appTheme) {
             AppTheme.Default -> if (dark) MapPalette.BicoccaDark else MapPalette.BicoccaLight
@@ -159,7 +159,7 @@ fun MapScreen(
             isTiltGesturesEnabled = false
             isCompassEnabled = false
             isLogoEnabled = false
-            isAttributionEnabled = true
+            isAttributionEnabled = false
         }
         map.setMinZoomPreference(MIN_ZOOM)
         map.setMaxZoomPreference(MAX_ZOOM)
@@ -169,6 +169,7 @@ fun MapScreen(
         val style = suspendCancellableCoroutine<Style> { cont ->
             map.setStyle(Style.Builder().fromJson(styleJson)) { cont.resume(it) }
         }
+        style.hidePois()
         val sm = SymbolManager(mapView, map, style).apply {
             iconAllowOverlap = true
             iconIgnorePlacement = true
@@ -207,7 +208,7 @@ fun MapScreen(
         val d = density.density
         pins.forEach { building ->
             val codeValue = building.code.value
-            val pinCode = splitLegacyAlias(building.name).second
+            val pinCode = splitLegacyAlias(building.name).second ?: codeValue
             val idleKey = "pin_${codeValue}_idle"
             val selKey = "pin_${codeValue}_sel"
             style.addImage(idleKey, BuildingPin.render(d, pinCode, pinIdleContainer, pinBorder, pinText, selected = false))
