@@ -39,6 +39,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import it.attendance100.mybicocca.core.state.SyncStatus
 import it.attendance100.mybicocca.core.state.valueOrNull
 import it.attendance100.mybicocca.domain.model.calendar.CalendarEvent
+import it.attendance100.mybicocca.domain.model.elearning.course.CourseId
 import it.attendance100.mybicocca.ui.component.feedback.LocalAppSnackbarController
 import it.attendance100.mybicocca.ui.screen.calendar.component.CalendarSegmentedControl
 import it.attendance100.mybicocca.ui.screen.calendar.component.DayView
@@ -65,6 +66,7 @@ fun CalendarScreen(
     // instant a sub-page push/pop or a search open begins. null = no shell (preview) -> settled.
     coverProgress: State<Float>? = null,
     onProvideFilterToggle: ((() -> Unit)?) -> Unit = {},
+    onOpenCourse: (CourseId) -> Unit = {},
     bottomNavBarPadding: PaddingValues,
     viewModel: CalendarViewModel = hiltViewModel(),
 ) {
@@ -77,6 +79,7 @@ fun CalendarScreen(
     val dayEventsLoadable by viewModel.dayEvents.collectAsStateWithLifecycle()
     val monthEventsLoadable by viewModel.events.collectAsStateWithLifecycle()
     val selectedEventId by viewModel.selectedEventId.collectAsStateWithLifecycle()
+    val coursesByActivityCode by viewModel.coursesByActivityCode.collectAsStateWithLifecycle()
 
     val snackbar = LocalAppSnackbarController.current
 
@@ -192,6 +195,8 @@ fun CalendarScreen(
                 selectedDay = selectedDay,
                 events = (eventsByDay[selectedDay] ?: emptyList()),
                 onEventClick = { viewModel.openEventDetail(it.id) },
+                elearningCoursesFor = { it.activityCode?.let(coursesByActivityCode::get).orEmpty() },
+                onOpenCourse = onOpenCourse,
                 progress = agendaProgress,
                 presence = agendaPresence,
                 bottomNavBarPadding = bottomNavBarPadding,
@@ -220,7 +225,12 @@ fun CalendarScreen(
                 ?: dayEventsLoadable.valueOrNull()?.firstOrNull { it.id == id }
         }
         if (selected != null) {
-            EventDetailSheet(event = selected, onDismiss = viewModel::closeEventDetail)
+            EventDetailSheet(
+                event = selected,
+                elearningCourses = selected.activityCode?.let(coursesByActivityCode::get).orEmpty(),
+                onOpenCourse = onOpenCourse,
+                onDismiss = viewModel::closeEventDetail,
+            )
         }
     }
     }

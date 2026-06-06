@@ -219,7 +219,10 @@ fun OfficeOpenSheet(
                         modifier = Modifier.size(20.dp),
                     )
                     Spacer(Modifier.width(8.dp))
-                    Text(if (installed) "Apri" else "Installa", fontWeight = FontWeight.SemiBold)
+                    Text(
+                        text = if (installed) "Apri in ${app.label}" else "Installa ${app.label}",
+                        fontWeight = FontWeight.SemiBold,
+                    )
                 }
                 FilledTonalButton(
                     onClick = viewModel::openWithExternalApp,

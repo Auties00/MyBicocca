@@ -105,7 +105,7 @@ fun CourseHero(
 
         Column(modifier = Modifier.fillMaxWidth()) {
             if (enrolled != null) {
-                val yearLabel = enrolled.courseCode().academicYear?.toString()
+                val yearLabel = enrolled.courseCode().periodLabel
                 if (!yearLabel.isNullOrBlank()) {
                     Text(
                         text = yearLabel,

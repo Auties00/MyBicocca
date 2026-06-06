@@ -7,6 +7,7 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 
@@ -17,6 +18,10 @@ enum class AppTheme(val displayName: String) {
     Oceano("Oceano"),
     Bosco("Bosco"),
 }
+
+// The active palette, exposed so screens that style non-Compose surfaces (the MapLibre base map)
+// can tell the exact brand palette (Default) from a derived/dynamic one (Material You, Oceano…).
+val LocalAppTheme = staticCompositionLocalOf { AppTheme.Default }
 
 // Dynamic (Material You) color is only available on Android 12+
 val isDynamicColorAvailable: Boolean

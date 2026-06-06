@@ -23,8 +23,6 @@ import androidx.compose.material.icons.outlined.EventBusy
 import androidx.compose.material.icons.outlined.Repeat
 import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material.icons.rounded.OpenInNew
-import androidx.compose.material3.AssistChip
-import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -142,15 +140,12 @@ private fun AssignmentSheetContent(
                 )
             }
         }
-        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text(
-                text = assignment.name,
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.SemiBold,
-                color = scheme.onSurface,
-            )
-            StatusChip(assignment = assignment, now = now)
-        }
+        Text(
+            text = assignment.name,
+            style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.SemiBold,
+            color = scheme.onSurface,
+        )
     }
 
     Spacer(Modifier.height(24.dp))
@@ -194,7 +189,7 @@ private fun AssignmentSheetContent(
     // Instructions.
     val intro = assignment.intro?.takeIf { it.isNotBlank() }
     if (intro != null || assignment.introFiles.isNotEmpty()) {
-        SectionLabel("Istruzioni")
+        Spacer(Modifier.height(22.dp))
         if (intro != null) {
             Surface(
                 shape = RoundedCornerShape(18.dp),
@@ -262,29 +257,6 @@ private fun AttachmentList(
             )
         }
     }
-}
-
-@Composable
-private fun StatusChip(assignment: Assignment, now: Instant) {
-    val scheme = MaterialTheme.colorScheme
-    val status = assignment.submissionStatus
-    val overdue = status == SubmissionStatus.NotSubmitted &&
-        assignment.dueDate?.isBefore(now) == true
-    val opensLater = assignment.allowSubmissionsFrom?.isAfter(now) == true
-    val (label, fg, bg) = when {
-        status is SubmissionStatus.Graded -> Triple("Valutato", scheme.onPrimaryContainer, scheme.primaryContainer)
-        status is SubmissionStatus.Submitted -> Triple("Consegnato", scheme.onSecondaryContainer, scheme.secondaryContainer)
-        status is SubmissionStatus.Draft -> Triple("Bozza", scheme.onTertiaryContainer, scheme.tertiaryContainer)
-        overdue -> Triple("In ritardo", scheme.onErrorContainer, scheme.errorContainer)
-        opensLater -> Triple("Non ancora aperto", scheme.onTertiaryContainer, scheme.tertiaryContainer)
-        else -> Triple("Da consegnare", scheme.onSurface, scheme.surfaceContainerHigh)
-    }
-    AssistChip(
-        onClick = {},
-        label = { Text(label, fontWeight = FontWeight.SemiBold) },
-        colors = AssistChipDefaults.assistChipColors(containerColor = bg, labelColor = fg),
-        border = null,
-    )
 }
 
 // Single pinned action. Submission upload isn't supported in-app, so every path hands off to

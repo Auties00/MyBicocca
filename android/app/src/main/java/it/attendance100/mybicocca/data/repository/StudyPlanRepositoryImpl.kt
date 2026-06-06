@@ -406,6 +406,7 @@ class StudyPlanRepositoryImpl @Inject constructor(
             PlannedCourse(
                 easyStaffSubjectId = subject.id,
                 easyStaffSubjectCode = subject.code,
+                activityCode = activityCode,
                 name = subject.name.ifBlank { activityName },
                 normalizedName = normalizeSubjectName(activityName),
                 teacherName = subject.teacherName,

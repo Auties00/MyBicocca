@@ -237,11 +237,12 @@ private fun CourseList(
                 ?: group.latest.id
             val active = group.editions.first { it.id == resolvedActiveId }
             val cardEditions = group.editions.map { e ->
+                val code = e.courseCode()
                 CardEdition(
                     id = e.id,
-                    yearLabel = e.courseCode().academicYear?.toString() ?: "Trasversale",
+                    yearLabel = code.periodLabel ?: "Trasversale",
                     accent = accentPalette.accentFor(e.id),
-                    academicYear = e.courseCode().academicYear,
+                    academicYear = code.academicYear,
                 )
             }
             NotebookCard(

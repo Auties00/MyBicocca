@@ -28,6 +28,7 @@ data class CalendarEventEntity(
     @ColumnInfo(name = "maps_url") val mapsUrl: String?,
     val status: String,
     val notes: String?,
+    @ColumnInfo(name = "activity_code") val activityCode: String?,
     @ColumnInfo(name = "subject_code") val subjectCode: String?,
     @ColumnInfo(name = "teachers_csv") val teachersCsv: String?,
     val cfu: Int?,

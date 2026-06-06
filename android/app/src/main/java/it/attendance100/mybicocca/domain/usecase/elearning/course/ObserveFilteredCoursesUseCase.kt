@@ -96,6 +96,11 @@ class ObserveFilteredCoursesUseCase @Inject constructor(
         }
     }
 
+    // Latest academic year first; within a year the base course (no stream) precedes its
+    // streams, T1 before T2.
     private fun List<EnrolledCourse>.sortedByLatestEdition(): List<EnrolledCourse> =
-        sortedByDescending { it.courseCode().academicYear?.startYear ?: Int.MIN_VALUE }
+        sortedWith(
+            compareByDescending<EnrolledCourse> { it.courseCode().academicYear?.startYear ?: Int.MIN_VALUE }
+                .thenBy { it.courseCode().stream ?: 0 }
+        )
 }

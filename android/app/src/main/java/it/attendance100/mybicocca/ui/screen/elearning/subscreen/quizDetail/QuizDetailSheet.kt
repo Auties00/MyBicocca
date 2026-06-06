@@ -1,9 +1,13 @@
 package it.attendance100.mybicocca.ui.screen.elearning.subscreen.quizDetail
 
+import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -12,7 +16,10 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -20,29 +27,26 @@ import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.automirrored.outlined.Notes
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.outlined.EmojiEvents
-import androidx.compose.material.icons.outlined.Quiz
+import androidx.compose.material.icons.outlined.History
 import androidx.compose.material.icons.outlined.Repeat
 import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material.icons.outlined.Timer
-import androidx.compose.material.icons.outlined.Visibility
-import androidx.compose.material3.AssistChip
-import androidx.compose.material3.AssistChipDefaults
+import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ButtonGroupDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -51,13 +55,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.valueOrNull
 import it.attendance100.mybicocca.domain.model.elearning.course.CourseId
 import it.attendance100.mybicocca.domain.model.elearning.quiz.AttemptState
 import it.attendance100.mybicocca.domain.model.elearning.quiz.BestGrade
 import it.attendance100.mybicocca.domain.model.elearning.quiz.Quiz
 import it.attendance100.mybicocca.domain.model.elearning.quiz.QuizAttempt
+import it.attendance100.mybicocca.ui.component.modal.PredictiveModalBottomSheet
+import it.attendance100.mybicocca.ui.component.modal.SheetPagerHeader
+import it.attendance100.mybicocca.ui.component.modal.sheetPageTransform
 import it.attendance100.mybicocca.ui.component.text.HtmlBody
 import it.attendance100.mybicocca.ui.navigation.AppRoute
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.quizDetail.component.formatGradeValue
@@ -67,12 +73,11 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
-// The quiz overview as a modal, built to the app's detail-sheet language (see
-// BookedExamDetailSheet / EventDetailSheet): an icon-badged header with a status chip, a
-// column of IconRows for the facts, and a connected action group — all in one scrolling
-// column. The action navigates to the full-screen attempt/review; this sheet never hosts the
-// quiz-taking itself.
-@OptIn(ExperimentalMaterial3Api::class)
+// The quiz overview as a nested-pager modal, mirroring the maps "Edifici" sheet: a single
+// PredictiveModalBottomSheet with a pinned morphing header over a two-level body pager.
+// Level 0 is the overview (facts + start/resume); "Storico" pushes level 1, the full list of
+// attempts, each tappable to review (finished) or resume (in progress). The sheet never hosts
+// the quiz-taking itself — that navigates to the full-screen attempt/review.
 @Composable
 fun QuizDetailSheet(
     quizId: Int,
@@ -86,42 +91,58 @@ fun QuizDetailSheet(
         creationCallback = { it.create(AppRoute.QuizDetail(quizId = quizId, courseId = courseId)) },
     ),
 ) {
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val quizLoadable by viewModel.quiz.collectAsStateWithLifecycle()
     val attemptsLoadable by viewModel.attempts.collectAsStateWithLifecycle()
     val bestGradeLoadable by viewModel.bestGrade.collectAsStateWithLifecycle()
 
     CourseDetailTheme(courseId = remember(courseId) { CourseId(courseId) }) {
-        ModalBottomSheet(
-            onDismissRequest = onDismiss,
-            sheetState = sheetState,
-            shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(max = 720.dp)
-                    .padding(horizontal = 24.dp)
-                    .padding(bottom = 24.dp)
-                    .verticalScroll(rememberScrollState()),
-            ) {
-                when (val loadable = quizLoadable) {
-                    Loadable.NotYetLoaded -> Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(200.dp),
-                        contentAlignment = Alignment.Center,
-                    ) { CircularProgressIndicator() }
+        PredictiveModalBottomSheet(
+            onDismiss = onDismiss,
+            sizeDuration = 500,
+        ) { _, _ ->
+            val quiz = quizLoadable.valueOrNull()
+            val attempts = attemptsLoadable.valueOrNull().orEmpty().filterNot { it.previewMode }
+            val bestGrade = bestGradeLoadable.valueOrNull()
 
-                    is Loadable.Loaded -> QuizSheetContent(
-                        quiz = loadable.value,
-                        attempts = attemptsLoadable.valueOrNull().orEmpty().filterNot { it.previewMode },
-                        bestGrade = bestGradeLoadable.valueOrNull(),
-                        onStartAttempt = onStartAttempt,
-                        onResumeAttempt = onResumeAttempt,
-                        onReviewAttempt = onReviewAttempt,
-                    )
+            var page by remember { mutableIntStateOf(0) }
+            BackHandler(enabled = page == 1) { page = 0 }
+
+            Column {
+                SheetPagerHeader(
+                    depth = page,
+                    title = if (page == 0) (quiz?.name ?: "Quiz") else "Storico",
+                    subtitle = if (page == 1) attemptsCountLabel(attempts.size) else null,
+                    onBack = if (page == 1) ({ page = 0 }) else null,
+                )
+                AnimatedContent(
+                    targetState = page,
+                    transitionSpec = { sheetPageTransform(forward = targetState >= initialState) },
+                    contentKey = { it },
+                    label = "quiz_sheet_pages",
+                ) { target ->
+                    when {
+                        quiz == null -> Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(200.dp),
+                            contentAlignment = Alignment.Center,
+                        ) { CircularProgressIndicator() }
+
+                        target == 0 -> QuizOverviewPage(
+                            quiz = quiz,
+                            attempts = attempts,
+                            bestGrade = bestGrade,
+                            onStartAttempt = onStartAttempt,
+                            onResumeAttempt = onResumeAttempt,
+                            onShowHistory = { page = 1 },
+                        )
+
+                        else -> QuizHistoryPage(
+                            attempts = attempts,
+                            onResumeAttempt = onResumeAttempt,
+                            onReviewAttempt = onReviewAttempt,
+                        )
+                    }
                 }
             }
         }
@@ -129,128 +150,182 @@ fun QuizDetailSheet(
 }
 
 @Composable
-private fun QuizSheetContent(
+private fun QuizOverviewPage(
     quiz: Quiz,
     attempts: List<QuizAttempt>,
     bestGrade: BestGrade?,
     onStartAttempt: () -> Unit,
     onResumeAttempt: (Int) -> Unit,
-    onReviewAttempt: (Int) -> Unit,
+    onShowHistory: () -> Unit,
 ) {
     val scheme = MaterialTheme.colorScheme
     val now = remember(quiz, attempts) { Instant.now() }
 
     val resumable = attempts.firstOrNull { it.state == AttemptState.InProgress }
-    val lastFinished = attempts.lastOrNull {
-        it.state == AttemptState.Finished || it.state == AttemptState.Overdue
-    }
     val closed = quiz.timeClose != null && now.isAfter(quiz.timeClose)
     val notYetOpen = quiz.timeOpen != null && now.isBefore(quiz.timeOpen)
     val attemptsLeft = quiz.maxAttempts.let { max -> max == null || max <= 0 || attempts.size < max }
     val canStart = resumable != null || (!closed && !notYetOpen && attemptsLeft)
 
-    // Header: icon badge + title + a single status chip, mirroring the booking/event sheets.
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Surface(
-            shape = RoundedCornerShape(20.dp),
-            color = scheme.primaryContainer,
-            modifier = Modifier
-                .padding(end = 16.dp)
-                .size(64.dp),
-        ) {
-            Box(contentAlignment = Alignment.Center) {
-                Icon(
-                    imageVector = Icons.Outlined.Quiz,
-                    contentDescription = null,
-                    tint = scheme.onPrimaryContainer,
-                    modifier = Modifier.size(30.dp),
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(max = 620.dp)
+            .padding(horizontal = 24.dp)
+            .padding(bottom = 24.dp)
+            .verticalScroll(rememberScrollState()),
+    ) {
+        Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+            if (bestGrade?.grade != null) {
+                IconRow(
+                    icon = Icons.Outlined.EmojiEvents,
+                    label = "VOTO MIGLIORE",
+                    value = buildString {
+                        append(formatGradeValue(bestGrade.grade))
+                        bestGrade.maxGrade?.takeIf { it > 0 }?.let { append(" / ${formatGradeValue(it)}") }
+                    },
                 )
             }
-        }
-        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text(
-                text = quiz.name,
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.SemiBold,
-                color = scheme.onSurface,
-            )
-            StatusChip(
-                resumable = resumable != null,
-                bestGrade = bestGrade,
-                closed = closed,
-                notYetOpen = notYetOpen,
-            )
-        }
-    }
-
-    Spacer(Modifier.height(24.dp))
-
-    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        if (bestGrade?.grade != null) {
             IconRow(
-                icon = Icons.Outlined.EmojiEvents,
-                label = "VOTO MIGLIORE",
-                value = buildString {
-                    append(formatGradeValue(bestGrade.grade))
-                    bestGrade.maxGrade?.takeIf { it > 0 }?.let { append(" / ${formatGradeValue(it)}") }
+                icon = Icons.Outlined.Repeat,
+                label = "TENTATIVI",
+                value = attemptsValue(quiz, attempts.size),
+            )
+            quiz.timeLimitSeconds?.takeIf { it > 0 }?.let { limit ->
+                IconRow(
+                    icon = Icons.Outlined.Timer,
+                    label = "TEMPO",
+                    value = "${limit / 60} minuti",
+                )
+            }
+            availabilityValue(quiz, now)?.let { (label, value) ->
+                IconRow(icon = Icons.Outlined.Schedule, label = label, value = value)
+            }
+            quiz.intro?.takeIf { it.isNotBlank() }?.let { intro ->
+                IconRow(icon = Icons.AutoMirrored.Outlined.Notes, label = "ISTRUZIONI") {
+                    HtmlBody(html = intro, color = scheme.onSurface)
+                }
+            }
+        }
+
+        Spacer(Modifier.height(24.dp))
+
+        QuizActionRow(
+            canStart = canStart,
+            primaryLabel = primaryLabel(resumable != null, notYetOpen, closed, attemptsLeft),
+            primaryIsResume = resumable != null,
+            hasHistory = attempts.isNotEmpty(),
+            onPrimary = { if (resumable != null) onResumeAttempt(resumable.id.value) else onStartAttempt() },
+            onShowHistory = onShowHistory,
+        )
+    }
+}
+
+// Level 1: the full attempt list as a segmented Material Expressive group. Tapping a finished
+// attempt opens its review; an in-progress one resumes it.
+@Composable
+private fun QuizHistoryPage(
+    attempts: List<QuizAttempt>,
+    onResumeAttempt: (Int) -> Unit,
+    onReviewAttempt: (Int) -> Unit,
+) {
+    // Newest first reads more naturally in a history list.
+    val ordered = remember(attempts) { attempts.sortedByDescending { it.attemptNumber } }
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(max = 560.dp)
+            .padding(horizontal = 16.dp),
+        contentPadding = PaddingValues(bottom = 24.dp),
+        verticalArrangement = Arrangement.spacedBy(2.dp),
+    ) {
+        itemsIndexed(ordered, key = { _, attempt -> attempt.id.value }) { index, attempt ->
+            AttemptRow(
+                attempt = attempt,
+                isFirst = index == 0,
+                isLast = index == ordered.lastIndex,
+                onClick = {
+                    if (attempt.state == AttemptState.InProgress) onResumeAttempt(attempt.id.value)
+                    else onReviewAttempt(attempt.id.value)
                 },
             )
         }
-        IconRow(
-            icon = Icons.Outlined.Repeat,
-            label = "TENTATIVI",
-            value = attemptsValue(quiz, attempts.size),
-        )
-        quiz.timeLimitSeconds?.takeIf { it > 0 }?.let { limit ->
-            IconRow(
-                icon = Icons.Outlined.Timer,
-                label = "TEMPO",
-                value = "${limit / 60} minuti",
-            )
-        }
-        availabilityValue(quiz, now)?.let { (label, value) ->
-            IconRow(icon = Icons.Outlined.Schedule, label = label, value = value)
-        }
-        quiz.intro?.takeIf { it.isNotBlank() }?.let { intro ->
-            IconRow(icon = Icons.AutoMirrored.Outlined.Notes, label = "ISTRUZIONI") {
-                HtmlBody(html = intro, color = scheme.onSurface)
-            }
-        }
     }
-
-    Spacer(Modifier.height(24.dp))
-
-    QuizActionRow(
-        canStart = canStart,
-        primaryLabel = primaryLabel(resumable != null, notYetOpen, closed, attemptsLeft),
-        primaryIsResume = resumable != null,
-        hasReview = lastFinished != null,
-        onPrimary = { if (resumable != null) onResumeAttempt(resumable.id.value) else onStartAttempt() },
-        onReview = { lastFinished?.let { onReviewAttempt(it.id.value) } },
-    )
 }
 
+// Segmented row: 28dp corners cap the group's ends, 6dp where rows touch — same language as the
+// maps building list.
 @Composable
-private fun StatusChip(
-    resumable: Boolean,
-    bestGrade: BestGrade?,
-    closed: Boolean,
-    notYetOpen: Boolean,
+private fun AttemptRow(
+    attempt: QuizAttempt,
+    isFirst: Boolean,
+    isLast: Boolean,
+    onClick: () -> Unit,
 ) {
     val scheme = MaterialTheme.colorScheme
-    val (label, fg, bg) = when {
-        resumable -> Triple("Tentativo in corso", scheme.onSecondaryContainer, scheme.secondaryContainer)
-        bestGrade?.grade != null -> Triple("Concluso", scheme.onPrimaryContainer, scheme.primaryContainer)
-        closed -> Triple("Chiuso", scheme.onErrorContainer, scheme.errorContainer)
-        notYetOpen -> Triple("Non ancora aperto", scheme.onTertiaryContainer, scheme.tertiaryContainer)
-        else -> Triple("Da svolgere", scheme.onSurface, scheme.surfaceContainerHigh)
+    val inProgress = attempt.state == AttemptState.InProgress
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(
+            topStart = if (isFirst) 28.dp else 6.dp,
+            topEnd = if (isFirst) 28.dp else 6.dp,
+            bottomStart = if (isLast) 28.dp else 6.dp,
+            bottomEnd = if (isLast) 28.dp else 6.dp,
+        ),
+        color = scheme.surfaceContainer,
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable(onClick = onClick)
+                .padding(horizontal = 16.dp, vertical = 14.dp),
+            horizontalArrangement = Arrangement.spacedBy(14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Surface(shape = CircleShape, color = scheme.primaryContainer) {
+                Box(
+                    modifier = Modifier.size(36.dp),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(
+                        text = attempt.attemptNumber.toString(),
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.SemiBold,
+                        color = scheme.onPrimaryContainer,
+                    )
+                }
+            }
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(2.dp),
+            ) {
+                Text(
+                    text = "Tentativo ${attempt.attemptNumber}",
+                    style = MaterialTheme.typography.titleMediumEmphasized,
+                    color = scheme.onSurface,
+                )
+                Text(
+                    text = attemptSubtitle(attempt),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = scheme.onSurfaceVariant,
+                )
+            }
+            attempt.sumGrades?.let { grade ->
+                Text(
+                    text = formatGradeValue(grade),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = scheme.onSurface,
+                )
+            }
+            Icon(
+                imageVector = if (inProgress) Icons.Filled.PlayArrow else Icons.Rounded.ChevronRight,
+                contentDescription = null,
+                tint = scheme.onSurfaceVariant,
+                modifier = Modifier.size(if (inProgress) 20.dp else 24.dp),
+            )
+        }
     }
-    AssistChip(
-        onClick = {},
-        label = { Text(label, fontWeight = FontWeight.SemiBold) },
-        colors = AssistChipDefaults.assistChipColors(containerColor = bg, labelColor = fg),
-        border = null,
-    )
 }
 
 @Composable
@@ -299,18 +374,18 @@ private fun IconRow(
     }
 }
 
-// Connected button group, same arrangement as the booking/event sheets: a wide brand leading
-// button (start / resume / review) and a neutral tonal "Rivedi" trailing half when there's a
-// finished attempt to look back at. Collapses to a single full-width button when one applies.
+// Connected button group: a wide brand leading button (start / resume) and a neutral tonal
+// "Storico" trailing half when there are attempts to look back at. Collapses to a single
+// full-width button when there's no history yet.
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun QuizActionRow(
     canStart: Boolean,
     primaryLabel: String,
     primaryIsResume: Boolean,
-    hasReview: Boolean,
+    hasHistory: Boolean,
     onPrimary: () -> Unit,
-    onReview: () -> Unit,
+    onShowHistory: () -> Unit,
 ) {
     val scheme = MaterialTheme.colorScheme
     val dark = isSystemInDarkTheme()
@@ -321,62 +396,41 @@ private fun QuizActionRow(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(4.dp),
     ) {
-        when {
-            // Can start/resume, with a finished attempt to review: the canonical pair.
-            canStart && hasReview -> {
-                BrandButton(
-                    label = primaryLabel,
-                    icon = if (primaryIsResume) Icons.Filled.PlayArrow else Icons.AutoMirrored.Filled.ArrowForward,
-                    bg = brandBg,
-                    fg = brandFg,
-                    shape = ButtonGroupDefaults.connectedLeadingButtonShape,
-                    onClick = onPrimary,
-                    modifier = Modifier.weight(1.4f),
-                )
-                FilledTonalButton(
-                    onClick = onReview,
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(56.dp),
-                    shape = ButtonGroupDefaults.connectedTrailingButtonShape,
-                    colors = ButtonDefaults.filledTonalButtonColors(
-                        containerColor = scheme.surfaceContainerHigh,
-                        contentColor = scheme.onSurface,
-                    ),
-                ) {
-                    Icon(Icons.Outlined.Visibility, contentDescription = null, modifier = Modifier.size(20.dp))
-                    Spacer(Modifier.width(8.dp))
-                    Text("Rivedi", fontWeight = FontWeight.SemiBold)
-                }
+        if (hasHistory) {
+            BrandButton(
+                label = primaryLabel,
+                icon = if (primaryIsResume) Icons.Filled.PlayArrow else Icons.AutoMirrored.Filled.ArrowForward,
+                bg = brandBg,
+                fg = brandFg,
+                shape = ButtonGroupDefaults.connectedLeadingButtonShape,
+                onClick = onPrimary,
+                enabled = canStart,
+                modifier = Modifier.weight(1.4f),
+            )
+            FilledTonalButton(
+                onClick = onShowHistory,
+                modifier = Modifier
+                    .weight(1f)
+                    .height(56.dp),
+                shape = ButtonGroupDefaults.connectedTrailingButtonShape,
+                colors = ButtonDefaults.filledTonalButtonColors(
+                    containerColor = scheme.surfaceContainerHigh,
+                    contentColor = scheme.onSurface,
+                ),
+            ) {
+                Icon(Icons.Outlined.History, contentDescription = null, modifier = Modifier.size(20.dp))
+                Spacer(Modifier.width(8.dp))
+                Text("Storico", fontWeight = FontWeight.SemiBold)
             }
-            // Only one action available -> a single full-width button.
-            canStart -> BrandButton(
+        } else {
+            BrandButton(
                 label = primaryLabel,
                 icon = if (primaryIsResume) Icons.Filled.PlayArrow else Icons.AutoMirrored.Filled.ArrowForward,
                 bg = brandBg,
                 fg = brandFg,
                 shape = RoundedCornerShape(28.dp),
                 onClick = onPrimary,
-                modifier = Modifier.weight(1f),
-            )
-            hasReview -> BrandButton(
-                label = "Rivedi tentativo",
-                icon = Icons.Outlined.Visibility,
-                bg = brandBg,
-                fg = brandFg,
-                shape = RoundedCornerShape(28.dp),
-                onClick = onReview,
-                modifier = Modifier.weight(1f),
-            )
-            // Nothing to do (closed / not open / exhausted with no attempts): disabled hint.
-            else -> BrandButton(
-                label = primaryLabel,
-                icon = Icons.AutoMirrored.Filled.ArrowForward,
-                bg = brandBg,
-                fg = brandFg,
-                shape = RoundedCornerShape(28.dp),
-                onClick = {},
-                enabled = false,
+                enabled = canStart,
                 modifier = Modifier.weight(1f),
             )
         }
@@ -405,6 +459,21 @@ private fun BrandButton(
         Spacer(Modifier.width(8.dp))
         Text(label, fontWeight = FontWeight.SemiBold, maxLines = 1)
     }
+}
+
+private fun attemptsCountLabel(count: Int): String =
+    if (count == 1) "1 tentativo" else "$count tentativi"
+
+private fun attemptSubtitle(attempt: QuizAttempt): String {
+    val state = when (attempt.state) {
+        AttemptState.InProgress -> "In corso"
+        AttemptState.Overdue -> "Scaduto"
+        AttemptState.Finished -> "Concluso"
+        AttemptState.Abandoned -> "Abbandonato"
+        AttemptState.Unknown -> "Tentativo"
+    }
+    val instant = attempt.timeFinish ?: attempt.timeStart
+    return if (instant != null) "$state · ${DateFmt.format(instant)}" else state
 }
 
 private fun primaryLabel(

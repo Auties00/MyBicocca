@@ -11,7 +11,7 @@ import it.attendance100.mybicocca.domain.model.calendar.EventSource
 import it.attendance100.mybicocca.domain.model.calendar.EventStatus
 import it.attendance100.mybicocca.domain.model.career.CareerId
 
-internal fun EasyStaffScheduleCell.Lesson.toDomain(careerId: CareerId): CalendarEvent.Lesson =
+internal fun EasyStaffScheduleCell.Lesson.toDomain(careerId: CareerId, activityCode: String?): CalendarEvent.Lesson =
     CalendarEvent.Lesson(
         id = CalendarEventId.of(EventSource.LESSON, id),
         careerId = careerId,
@@ -23,12 +23,13 @@ internal fun EasyStaffScheduleCell.Lesson.toDomain(careerId: CareerId): Calendar
         location = locationFrom(roomCode, buildingCode, mapsUrl),
         status = if (status == EasyStaffBookingStatus.CONFIRMED) EventStatus.CONFIRMED else EventStatus.CANCELLED,
         notes = curriculumPath.takeIf { it.isNotBlank() },
+        activityCode = activityCode,
         subjectCode = subjectCode,
         teachers = teacherNames,
         cfu = null,
     )
 
-internal fun EasyStaffScheduledExam.toDomain(careerId: CareerId): CalendarEvent.Exam =
+internal fun EasyStaffScheduledExam.toDomain(careerId: CareerId, activityCode: String?): CalendarEvent.Exam =
     CalendarEvent.Exam(
         id = CalendarEventId.of(EventSource.EXAM, eventId),
         careerId = careerId,
@@ -40,6 +41,7 @@ internal fun EasyStaffScheduledExam.toDomain(careerId: CareerId): CalendarEvent.
         location = locationFrom(room, building, null),
         status = if (isCancelled) EventStatus.CANCELLED else EventStatus.CONFIRMED,
         notes = notes.takeIf { it.isNotBlank() },
+        activityCode = activityCode,
         examiners = examiners.map { listOfNotNull(it.name, it.lastName).joinToString(" ").trim() }
             .filter { it.isNotBlank() },
         examTypeLabel = examTypeLabel(examType),

@@ -83,7 +83,6 @@ import it.attendance100.mybicocca.ui.screen.elearning.subscreen.fileViewer.Exter
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.fileViewer.FileOpenPreferenceViewModel
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.fileViewer.FileViewerScreen
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.fileViewer.FileViewerViewModel
-import it.attendance100.mybicocca.ui.screen.elearning.subscreen.fileViewer.isPackageInstalled
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.fileViewer.state.FileKind
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.fileViewer.state.OfficeApp
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.fileViewer.subscreen.officeOpen.OfficeOpenSheet
@@ -253,9 +252,10 @@ fun MainShell(
     // Office opens in its app when installed, else shows the install prompt.
     val openFile: (AppRoute.FileViewer, Boolean) -> Unit = { route, forceChooser ->
         when (val kind = FileKind.classify(route.fileName, route.mimeType)) {
-            is FileKind.Office ->
-                if (isPackageInstalled(context, kind.app.packageName)) externalFile = route
-                else officeFile = kind.app to route
+            // Office has no in-app viewer and ACTION_VIEW doesn't reliably open it, so always
+            // show the hand-off sheet: it opens the file directly in the Microsoft app via the
+            // documented ms-*:ofv protocol (and offers install / another app as fallbacks).
+            is FileKind.Office -> officeFile = kind.app to route
             FileKind.Unknown -> externalFile = route
             else -> {
                 val remembered = kind.preferenceKey?.let { fileOpenChoices[it] }
@@ -457,6 +457,13 @@ fun MainShell(
                                                                 }
                                                             },
                                                             onProvideFilterToggle = onProvideFilterToggle,
+                                                            onOpenCourse = { courseId ->
+                                                                backStack.add(
+                                                                    AppRoute.CourseDetail(
+                                                                        courseId.value
+                                                                    )
+                                                                )
+                                                            },
                                                             bottomNavBarPadding = innerPadding,
                                                         )
 

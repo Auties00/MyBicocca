@@ -10,19 +10,15 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
 import androidx.compose.material.icons.outlined.CloudOff
-import androidx.compose.material.icons.outlined.EditCalendar
 import androidx.compose.material.icons.outlined.EventAvailable
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
@@ -45,16 +41,9 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.compositeOver
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -82,7 +71,7 @@ import java.time.format.DateTimeFormatter
 import java.util.Locale
 
 // "Prenota esame" sub-page — the bookable exam calls grouped by course, rendered in the
-// StudyPlan visual idiom (wine hero + connected segmented tile groups). Tapping an appello
+// StudyPlan visual idiom (connected segmented tile groups). Tapping an appello
 // opens the booking detail/confirm modal (BookingSheetContent), whose result is collected
 // here so the sheet can close + the list refresh on both success and failure.
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
@@ -132,13 +121,13 @@ fun BookableExamsScreen(
 
     // Deep-link from the libretto course sheet: once loaded, animate-scroll to the matching
     // course group's header item, then consume the request (whether or not it was found, so we
-    // don't keep re-scrolling). The hero occupies item 0, so groups start at index 1.
+    // don't keep re-scrolling).
     LaunchedEffect(pendingFocus, loadedGroups) {
         val groups = loadedGroups ?: return@LaunchedEffect
         val key = pendingFocus ?: return@LaunchedEffect
         val index = groups.indexOfFirst { it.courseKey == key }
         if (index >= 0) {
-            listState.animateScrollToItem(index + 1)
+            listState.animateScrollToItem(index)
         }
         bookableViewModel.consumeFocus()
     }
@@ -187,7 +176,6 @@ fun BookableExamsScreen(
                         }
 
                         else -> {
-                            val totalCalls = remember(groups) { groups.sumOf { it.calls.size } }
                             val today = remember { LocalDate.now() }
                             LazyColumn(
                                 state = listState,
@@ -195,9 +183,6 @@ fun BookableExamsScreen(
                                 contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 16.dp),
                                 verticalArrangement = Arrangement.spacedBy(12.dp),
                             ) {
-                                item(key = "exams_hero") {
-                                    ExamsHeroCard(callCount = totalCalls, courseCount = groups.size)
-                                }
                                 groups.forEach { group ->
                                     item(key = group.courseKey) {
                                         CourseGroupSection(
@@ -241,112 +226,6 @@ fun BookableExamsScreen(
             )
         }
     }
-}
-
-// Hero copied from the StudyPlan reference: a deep-wine rounded card with a circle blob
-// bleeding off the top-right and a decorative (non-interactive) calendar glyph, the title
-// anchored bottom-start over a single stat line.
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
-@Composable
-private fun ExamsHeroCard(callCount: Int, courseCount: Int) {
-    val scheme = MaterialTheme.colorScheme
-    val container = scheme.primaryContainer.copy(alpha = 0.55f).compositeOver(scheme.surface)
-
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        color = container,
-        contentColor = scheme.onPrimaryContainer,
-        shape = RoundedCornerShape(30.dp),
-    ) {
-        Box(
-            Modifier
-                .fillMaxWidth()
-                .height(190.dp),
-        ) {
-            Box(
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .offset(x = 60.dp, y = (-44).dp)
-                    .size(250.dp)
-                    .clip(CircleShape)
-                    .background(scheme.onPrimaryContainer.copy(alpha = 0.08f)),
-            )
-            // Decorative only — no booking action lives on the hero.
-            Surface(
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .padding(top = 32.dp, end = 24.dp)
-                    .size(84.dp)
-                    .graphicsLayer { rotationZ = 14f },
-                shape = RoundedCornerShape(28.dp),
-                color = scheme.surface,
-                contentColor = scheme.primary,
-            ) {
-                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Icon(
-                        imageVector = Icons.Outlined.EditCalendar,
-                        contentDescription = null,
-                        modifier = Modifier
-                            .size(30.dp)
-                            .graphicsLayer { rotationZ = -14f },
-                    )
-                }
-            }
-
-            Box(
-                Modifier
-                    .fillMaxSize()
-                    .padding(24.dp),
-            ) {
-                Column(Modifier.align(Alignment.BottomStart)) {
-                    Text(
-                        text = "Prenota un esame",
-                        fontSize = 32.sp,
-                        lineHeight = 34.sp,
-                        fontWeight = FontWeight.ExtraBold,
-                        letterSpacing = (-0.3).sp,
-                        color = scheme.onPrimaryContainer,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                    Spacer(Modifier.height(14.dp))
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    ) {
-                        HeroStat(value = "$callCount", unit = if (callCount == 1) "appello" else "appelli")
-                        MetaDot(color = scheme.onPrimaryContainer)
-                        HeroStat(value = "$courseCount", unit = if (courseCount == 1) "corso" else "corsi")
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun HeroStat(value: String, unit: String) {
-    val scheme = MaterialTheme.colorScheme
-    Text(
-        text = buildAnnotatedString {
-            withStyle(SpanStyle(fontWeight = FontWeight.ExtraBold)) { append(value) }
-            append(" $unit")
-        },
-        fontSize = 13.sp,
-        fontWeight = FontWeight.Medium,
-        color = scheme.onPrimaryContainer,
-        maxLines = 1,
-    )
-}
-
-@Composable
-private fun MetaDot(color: Color) {
-    Box(
-        modifier = Modifier
-            .size(3.dp)
-            .clip(CircleShape)
-            .background(color.copy(alpha = 0.55f)),
-    )
 }
 
 // One course rendered like the StudyPlan year sections: a header tile and connected

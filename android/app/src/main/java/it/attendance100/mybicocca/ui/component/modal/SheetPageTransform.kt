@@ -1,4 +1,4 @@
-package it.attendance100.mybicocca.ui.screen.map.component
+package it.attendance100.mybicocca.ui.component.modal
 
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.ContentTransform

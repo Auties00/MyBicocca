@@ -6,19 +6,17 @@ import android.graphics.pdf.PdfRenderer
 import android.os.ParcelFileDescriptor
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.pager.VerticalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -31,10 +29,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.foundation.layout.BoxWithConstraints
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -44,10 +41,10 @@ import me.saket.telephoto.zoomable.zoomable
 import java.io.Closeable
 import java.io.File
 
-// In-app PDF viewer built on the platform PdfRenderer (no third-party dependency): a vertical
-// list of pages, each rendered to a fit-to-width bitmap on demand. PdfRenderer only allows one
-// page open at a time, so renders are serialized through a mutex; off-screen pages drop their
-// bitmaps with the LazyColumn item, keeping memory bounded for long documents.
+// In-app PDF viewer built on the platform PdfRenderer (no third-party dependency): one page
+// per screen in a vertical pager so each page fits the full screen height and a pinch-zoom
+// uses the whole screen. Pages render to bitmaps on demand (serialized — PdfRenderer allows
+// one open page at a time). At minimum zoom, vertical swipes flip pages; zoomed in they pan.
 @Composable
 fun PdfViewerContent(localPath: String, modifier: Modifier = Modifier) {
     val document = remember(localPath) { runCatching { PdfDocument(localPath) }.getOrNull() }
@@ -72,20 +69,36 @@ fun PdfViewerContent(localPath: String, modifier: Modifier = Modifier) {
     }
 
     val density = LocalDensity.current
+    val pagerState = rememberPagerState(pageCount = { document.pageCount })
     BoxWithConstraints(
         modifier = modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.surfaceContainerHigh),
     ) {
-        // Render a touch above container width for crispness, capped to keep bitmaps sane.
+        // Render around the screen width for crispness; the page is then fit to the viewport
+        // height, so zooming in has the full screen to expand into.
         val widthPx = with(density) { (maxWidth.toPx() * 1.5f).toInt() }.coerceIn(1, 2400)
-        LazyColumn(
+        VerticalPager(
+            state = pagerState,
             modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(12.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            items(document.pageCount, key = { it }) { index ->
-                PdfPage(document = document, index = index, widthPx = widthPx)
+            pageSpacing = 8.dp,
+        ) { index ->
+            PdfPage(document = document, index = index, widthPx = widthPx)
+        }
+        if (document.pageCount > 1) {
+            Surface(
+                shape = RoundedCornerShape(50),
+                color = MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.92f),
+                contentColor = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = 16.dp),
+            ) {
+                Text(
+                    text = "${pagerState.currentPage + 1} / ${document.pageCount}",
+                    style = MaterialTheme.typography.labelMedium,
+                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp),
+                )
             }
         }
     }
@@ -93,34 +106,25 @@ fun PdfViewerContent(localPath: String, modifier: Modifier = Modifier) {
 
 @Composable
 private fun PdfPage(document: PdfDocument, index: Int, widthPx: Int) {
-    val scheme = MaterialTheme.colorScheme
     var page by remember(index, widthPx) { mutableStateOf<ImageBitmap?>(null) }
     LaunchedEffect(index, widthPx) {
         page = runCatching { document.renderPage(index, widthPx).asImageBitmap() }.getOrNull()
     }
     val bitmap = page
-    if (bitmap != null) {
-        // telephoto's zoomable gives pinch + double-tap zoom and pan per page; at min zoom it
-        // forwards vertical drags to the LazyColumn so paging between pages still works.
-        val zoomState = rememberZoomableState()
-        Image(
-            bitmap = bitmap,
-            contentDescription = "Pagina ${index + 1}",
-            contentScale = ContentScale.Fit,
-            modifier = Modifier
-                .fillMaxWidth()
-                .aspectRatio(bitmap.width.toFloat() / bitmap.height.toFloat())
-                .zoomable(zoomState),
-        )
-    } else {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                // A4 portrait until the real page lands.
-                .aspectRatio(0.707f)
-                .background(scheme.surfaceContainerHighest, RoundedCornerShape(4.dp)),
-            contentAlignment = Alignment.Center,
-        ) {
+    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        if (bitmap != null) {
+            // telephoto's zoomable gives pinch + double-tap zoom and pan; at min zoom it forwards
+            // vertical swipes to the pager so paging still works.
+            val zoomState = rememberZoomableState()
+            Image(
+                bitmap = bitmap,
+                contentDescription = "Pagina ${index + 1}",
+                contentScale = ContentScale.Fit,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .zoomable(zoomState),
+            )
+        } else {
             CircularProgressIndicator(modifier = Modifier.size(28.dp))
         }
     }

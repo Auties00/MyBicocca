@@ -7,14 +7,17 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.valueOrNull
 import it.attendance100.mybicocca.core.state.SyncStatus
+import it.attendance100.mybicocca.domain.model.account.AccountId
 import it.attendance100.mybicocca.domain.model.calendar.CalendarEvent
 import it.attendance100.mybicocca.domain.model.calendar.CalendarEventId
 import it.attendance100.mybicocca.domain.model.career.CareerId
+import it.attendance100.mybicocca.domain.model.elearning.course.EnrolledCourse
 import it.attendance100.mybicocca.domain.usecase.account.ObserveActiveAccountUseCase
 import it.attendance100.mybicocca.domain.usecase.calendar.ObserveDayEventsUseCase
 import it.attendance100.mybicocca.domain.usecase.calendar.ObserveMonthEventsUseCase
 import it.attendance100.mybicocca.domain.usecase.calendar.PrefetchAdjacentMonthsUseCase
 import it.attendance100.mybicocca.domain.usecase.calendar.RefreshCalendarMonthUseCase
+import it.attendance100.mybicocca.domain.usecase.elearning.course.ObserveCoursesByActivityCodeUseCase
 import it.attendance100.mybicocca.ui.screen.calendar.ext.weekStartFor
 import it.attendance100.mybicocca.ui.screen.calendar.state.CalendarOneShotEvent
 import it.attendance100.mybicocca.ui.screen.calendar.state.CalendarViewMode
@@ -50,6 +53,7 @@ class CalendarViewModel @Inject constructor(
     private val observeDayEvents: ObserveDayEventsUseCase,
     private val refreshMonth: RefreshCalendarMonthUseCase,
     private val prefetchAdjacent: PrefetchAdjacentMonthsUseCase,
+    observeCoursesByActivityCode: ObserveCoursesByActivityCodeUseCase,
 ) : ViewModel() {
 
     val viewMode: StateFlow<CalendarViewMode> = savedState
@@ -80,6 +84,19 @@ class CalendarViewModel @Inject constructor(
     private val activeCareerId: Flow<CareerId?> = observeActiveAccount()
         .map { it?.academic?.selectedCareerId }
         .distinctUntilChanged()
+
+    private val activeAccountId: Flow<AccountId?> = observeActiveAccount()
+        .map { it?.id }
+        .distinctUntilChanged()
+
+    // Elearning course editions keyed by activity code so the event detail can offer
+    // "Apri corso" when the event's course exists in elearning.
+    val coursesByActivityCode: StateFlow<Map<String, List<EnrolledCourse>>> = activeAccountId
+        .flatMapLatest { account ->
+            if (account == null) flowOf(emptyMap())
+            else observeCoursesByActivityCode(account)
+        }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STATE_KEEP_ALIVE_MS), emptyMap())
 
     val events: StateFlow<Loadable<List<CalendarEvent>>> =
         combine(activeCareerId, selectedMonth) { c, ym -> c to ym }

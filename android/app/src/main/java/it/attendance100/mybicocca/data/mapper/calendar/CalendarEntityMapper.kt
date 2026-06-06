@@ -39,6 +39,7 @@ internal fun CalendarEvent.toEntity(): CalendarEventEntity {
         mapsUrl = location?.mapsUrl,
         status = status.name,
         notes = notes,
+        activityCode = activityCode,
         subjectCode = extras.subjectCode,
         teachersCsv = extras.teachersCsv,
         cfu = extras.cfu,
@@ -69,6 +70,7 @@ internal fun CalendarEventEntity.toDomain(): CalendarEvent? {
             location = location,
             status = statusEnum,
             notes = notes,
+            activityCode = activityCode,
             subjectCode = subjectCode,
             teachers = teachersCsv?.split(LIST_DELIMITER).orEmpty().filter { it.isNotBlank() },
             cfu = cfu,
@@ -84,6 +86,7 @@ internal fun CalendarEventEntity.toDomain(): CalendarEvent? {
             location = location,
             status = statusEnum,
             notes = notes,
+            activityCode = activityCode,
             examiners = examinersCsv?.split(LIST_DELIMITER).orEmpty().filter { it.isNotBlank() },
             examTypeLabel = examTypeLabel,
         )

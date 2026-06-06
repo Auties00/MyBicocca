@@ -64,6 +64,8 @@ import androidx.compose.ui.window.PopupPositionProvider
 import androidx.compose.ui.window.PopupProperties
 import it.attendance100.mybicocca.domain.model.calendar.CalendarEvent
 import it.attendance100.mybicocca.domain.model.calendar.CalendarEventId
+import it.attendance100.mybicocca.domain.model.elearning.course.CourseId
+import it.attendance100.mybicocca.domain.model.elearning.course.EnrolledCourse
 import it.attendance100.mybicocca.ui.screen.calendar.ext.colorsFor
 import it.attendance100.mybicocca.ui.screen.calendar.ext.formatTimeRange
 import it.attendance100.mybicocca.ui.screen.calendar.ext.locationLine
@@ -86,6 +88,8 @@ fun MonthAgendaSheet(
     selectedDay: LocalDate,
     events: List<CalendarEvent>,
     onEventClick: (CalendarEvent) -> Unit,
+    elearningCoursesFor: (CalendarEvent) -> List<EnrolledCourse>,
+    onOpenCourse: (CourseId) -> Unit,
     progress: Animatable<Float, *>,
     presence: Float,
     bottomNavBarPadding: PaddingValues,
@@ -147,6 +151,8 @@ fun MonthAgendaSheet(
             events = events,
             isToday = isToday,
             onEventClick = onEventClick,
+            elearningCoursesFor = elearningCoursesFor,
+            onOpenCourse = onOpenCourse,
             isSheetExpanded = isSheetExpanded,
             expandedEventId = expandedEventId,
             onToggleExpand = { id ->
@@ -184,6 +190,8 @@ private fun AgendaSheetSurface(
     events: List<CalendarEvent>,
     isToday: Boolean,
     onEventClick: (CalendarEvent) -> Unit,
+    elearningCoursesFor: (CalendarEvent) -> List<EnrolledCourse>,
+    onOpenCourse: (CourseId) -> Unit,
     isSheetExpanded: Boolean,
     expandedEventId: CalendarEventId?,
     onToggleExpand: (CalendarEventId) -> Unit,
@@ -248,6 +256,8 @@ private fun AgendaSheetSurface(
                             isFirst = index == 0,
                             isLast = index == events.lastIndex,
                             isInlineExpanded = expandedEventId == e.id,
+                            elearningCourses = elearningCoursesFor(e),
+                            onOpenCourse = onOpenCourse,
                             onClick = {
                                 if (isSheetExpanded) onToggleExpand(e.id)
                                 else onEventClick(e)
@@ -341,6 +351,8 @@ private fun AgendaRow(
     isFirst: Boolean,
     isLast: Boolean,
     isInlineExpanded: Boolean,
+    elearningCourses: List<EnrolledCourse>,
+    onOpenCourse: (CourseId) -> Unit,
     onClick: () -> Unit,
 ) {
     val scheme = MaterialTheme.colorScheme
@@ -431,6 +443,8 @@ private fun AgendaRow(
                 if (isInlineExpanded) {
                     EventDetailContent(
                         event = event,
+                        elearningCourses = elearningCourses,
+                        onOpenCourse = onOpenCourse,
                         modifier = Modifier.padding(start = 13.dp, end = 16.dp, bottom = 16.dp),
                     )
                 }

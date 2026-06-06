@@ -18,8 +18,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.MenuBook
 import androidx.compose.material.icons.outlined.LocationOn
-import androidx.compose.material.icons.outlined.NotificationsNone
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.Quiz
 import androidx.compose.material.icons.outlined.Schedule
@@ -40,6 +40,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -49,6 +52,8 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import it.attendance100.mybicocca.domain.model.calendar.CalendarEvent
 import it.attendance100.mybicocca.domain.model.calendar.EventStatus
+import it.attendance100.mybicocca.domain.model.elearning.course.CourseId
+import it.attendance100.mybicocca.domain.model.elearning.course.EnrolledCourse
 import it.attendance100.mybicocca.ui.screen.calendar.ext.durationMinutes
 import it.attendance100.mybicocca.ui.screen.calendar.ext.formatTimeRange
 import it.attendance100.mybicocca.ui.screen.calendar.ext.isInProgress
@@ -56,11 +61,14 @@ import it.attendance100.mybicocca.ui.screen.calendar.ext.locationLine
 import it.attendance100.mybicocca.ui.screen.calendar.ext.minutesRemaining
 import it.attendance100.mybicocca.ui.screen.calendar.ext.peopleLine
 import it.attendance100.mybicocca.ui.screen.calendar.ext.rememberCurrentTime
+import it.attendance100.mybicocca.ui.screen.calendar.subscreen.coursePicker.CourseEditionPickerSheet
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EventDetailSheet(
     event: CalendarEvent,
+    elearningCourses: List<EnrolledCourse>,
+    onOpenCourse: (CourseId) -> Unit,
     onDismiss: () -> Unit,
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -88,7 +96,11 @@ fun EventDetailSheet(
                 color = if (cancelled) scheme.onSurfaceVariant else scheme.onSurface,
                 textDecoration = if (cancelled) TextDecoration.LineThrough else TextDecoration.None,
             )
-            EventDetailContent(event = event)
+            EventDetailContent(
+                event = event,
+                elearningCourses = elearningCourses,
+                onOpenCourse = onOpenCourse,
+            )
         }
     }
 }
@@ -96,12 +108,15 @@ fun EventDetailSheet(
 @Composable
 fun EventDetailContent(
     event: CalendarEvent,
+    elearningCourses: List<EnrolledCourse>,
+    onOpenCourse: (CourseId) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val now by rememberCurrentTime()
     val cancelled = event.status == EventStatus.CANCELLED
     val inProgress = event.isInProgress(now)
     val context = LocalContext.current
+    var showEditionPicker by remember { mutableStateOf(false) }
 
     Column(modifier = modifier) {
         if (cancelled || inProgress) {
@@ -142,7 +157,14 @@ fun EventDetailContent(
         Spacer(Modifier.height(24.dp))
 
         ActionRow(
-            onDirections = {
+            onOpenCourse = elearningCourses.takeIf { it.isNotEmpty() }?.let { courses ->
+                {
+                    // One edition opens straight away; multiple hand off to the picker.
+                    courses.singleOrNull()?.let { onOpenCourse(it.id) }
+                        ?: run { showEditionPicker = true }
+                }
+            },
+            onMap = {
                 val label = event.locationLine().takeIf { it.isNotBlank() }
                 val url = event.location?.mapsUrl
                     ?.let { mapsUrlToGeoUri(it, label) }
@@ -156,7 +178,17 @@ fun EventDetailContent(
                     }
                 }
             },
-            onNotify = {},
+        )
+    }
+
+    if (showEditionPicker) {
+        CourseEditionPickerSheet(
+            courses = elearningCourses,
+            onPick = { courseId ->
+                showEditionPicker = false
+                onOpenCourse(courseId)
+            },
+            onDismiss = { showEditionPicker = false },
         )
     }
 }
@@ -220,27 +252,25 @@ private fun IconRow(icon: ImageVector, label: String, value: String) {
     }
 }
 
+// "Apri corso" leads when the event's course exists in elearning, with "Mappa" as the
+// tonal trailing action; without a course, "Mappa" takes the primary slot alone.
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-private fun ActionRow(onDirections: () -> Unit, onNotify: () -> Unit) {
+private fun ActionRow(onOpenCourse: (() -> Unit)?, onMap: () -> Unit) {
     val scheme = MaterialTheme.colorScheme
     val dark = isSystemInDarkTheme()
-    val directionsBg = if (dark) scheme.primaryContainer else scheme.primary
-    val directionsFg = if (dark) scheme.onPrimaryContainer else scheme.onPrimary
+    val primaryBg = if (dark) scheme.primaryContainer else scheme.primary
+    val primaryFg = if (dark) scheme.onPrimaryContainer else scheme.onPrimary
 
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
-    ) {
+    if (onOpenCourse == null) {
         Button(
-            onClick = onDirections,
+            onClick = onMap,
             modifier = Modifier
-                .weight(1.4f)
+                .fillMaxWidth()
                 .height(56.dp),
-            shape = ButtonGroupDefaults.connectedLeadingButtonShape,
             colors = ButtonDefaults.buttonColors(
-                containerColor = directionsBg,
-                contentColor = directionsFg,
+                containerColor = primaryBg,
+                contentColor = primaryFg,
             ),
         ) {
             Icon(
@@ -249,10 +279,36 @@ private fun ActionRow(onDirections: () -> Unit, onNotify: () -> Unit) {
                 modifier = Modifier.size(20.dp),
             )
             Spacer(Modifier.width(8.dp))
-            Text("Indicazioni", fontWeight = FontWeight.SemiBold)
+            Text("Mappa", fontWeight = FontWeight.SemiBold)
+        }
+        return
+    }
+
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        Button(
+            onClick = onOpenCourse,
+            modifier = Modifier
+                .weight(1.4f)
+                .height(56.dp),
+            shape = ButtonGroupDefaults.connectedLeadingButtonShape,
+            colors = ButtonDefaults.buttonColors(
+                containerColor = primaryBg,
+                contentColor = primaryFg,
+            ),
+        ) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Outlined.MenuBook,
+                contentDescription = null,
+                modifier = Modifier.size(20.dp),
+            )
+            Spacer(Modifier.width(8.dp))
+            Text("Apri corso", fontWeight = FontWeight.SemiBold)
         }
         FilledTonalButton(
-            onClick = onNotify,
+            onClick = onMap,
             modifier = Modifier
                 .weight(1f)
                 .height(56.dp),
@@ -263,12 +319,12 @@ private fun ActionRow(onDirections: () -> Unit, onNotify: () -> Unit) {
             ),
         ) {
             Icon(
-                imageVector = Icons.Outlined.NotificationsNone,
+                imageVector = Icons.Outlined.LocationOn,
                 contentDescription = null,
                 modifier = Modifier.size(20.dp),
             )
             Spacer(Modifier.width(8.dp))
-            Text("Notifica", fontWeight = FontWeight.SemiBold)
+            Text("Mappa", fontWeight = FontWeight.SemiBold)
         }
     }
 }

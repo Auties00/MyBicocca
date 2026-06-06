@@ -58,8 +58,8 @@ import it.attendance100.mybicocca.ui.component.shimmer.ShimmerCircle
 import it.attendance100.mybicocca.ui.screen.map.component.label
 import it.attendance100.mybicocca.ui.screen.map.component.rememberMinDurationLoading
 import it.attendance100.mybicocca.ui.screen.map.component.SheetLoadingIndicator
-import it.attendance100.mybicocca.ui.screen.map.component.SheetPagerHeader
-import it.attendance100.mybicocca.ui.screen.map.component.sheetPageTransform
+import it.attendance100.mybicocca.ui.component.modal.SheetPagerHeader
+import it.attendance100.mybicocca.ui.component.modal.sheetPageTransform
 import it.attendance100.mybicocca.ui.screen.map.ext.buildingDisplayName
 import it.attendance100.mybicocca.ui.screen.map.ext.openBuildingInMaps
 import it.attendance100.mybicocca.ui.screen.map.subscreen.buildingDetail.state.RoomStatus

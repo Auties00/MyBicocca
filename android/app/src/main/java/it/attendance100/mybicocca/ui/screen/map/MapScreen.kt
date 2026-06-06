@@ -1,6 +1,6 @@
 package it.attendance100.mybicocca.ui.screen.map
 
-import androidx.compose.animation.core.animateFloatAsState
+import android.graphics.Color as AndroidColor
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -17,10 +17,9 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -29,50 +28,58 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
-import com.google.android.gms.maps.CameraUpdate
-import com.google.android.gms.maps.CameraUpdateFactory
-import com.google.android.gms.maps.GoogleMapOptions
-import com.google.android.gms.maps.model.CameraPosition
-import com.google.android.gms.maps.model.LatLng
-import com.google.maps.android.compose.ComposeMapColorScheme
-import com.google.maps.android.compose.GoogleMap
-import com.google.maps.android.compose.MapProperties
-import com.google.maps.android.compose.MapUiSettings
-import com.google.maps.android.compose.MarkerComposable
-import com.google.maps.android.compose.MarkerState
-import com.google.maps.android.compose.rememberCameraPositionState
+import com.google.gson.JsonPrimitive
 import it.attendance100.mybicocca.core.state.Loadable
+import it.attendance100.mybicocca.domain.model.map.BuildingCode
 import it.attendance100.mybicocca.ui.component.feedback.LocalAppSnackbarController
-import it.attendance100.mybicocca.ui.screen.map.component.BICOCCA_MAP_ID
-import it.attendance100.mybicocca.ui.screen.map.component.BuildingMarker
+import it.attendance100.mybicocca.ui.screen.map.component.BuildingPin
 import it.attendance100.mybicocca.ui.screen.map.component.MapFilterSheet
-import it.attendance100.mybicocca.ui.screen.map.component.rememberBicoccaMapStyle
 import it.attendance100.mybicocca.ui.screen.map.ext.splitLegacyAlias
 import it.attendance100.mybicocca.ui.screen.map.state.MapOneShotEvent
 import it.attendance100.mybicocca.ui.screen.map.subscreen.buildingDetail.BuildingDetailSheet
 import it.attendance100.mybicocca.ui.screen.map.subscreen.buildingsList.BuildingsListSheet
-import kotlin.coroutines.cancellation.CancellationException
+import it.attendance100.mybicocca.ui.screen.map.theme.resolveBicoccaStyleJson
+import it.attendance100.mybicocca.ui.screen.map.theme.MapPalette
+import it.attendance100.mybicocca.ui.screen.map.theme.applyBicoccaPalette
+import it.attendance100.mybicocca.ui.theme.AppTheme
+import it.attendance100.mybicocca.ui.theme.LocalAppTheme
+import kotlin.coroutines.resume
 import kotlin.math.cos
 import kotlin.math.pow
 import kotlin.math.roundToInt
-import kotlinx.coroutines.currentCoroutineContext
-import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.suspendCancellableCoroutine
+import org.maplibre.android.MapLibre
+import org.maplibre.android.camera.CameraUpdate
+import org.maplibre.android.camera.CameraUpdateFactory
+import org.maplibre.android.geometry.LatLng
+import org.maplibre.android.maps.MapLibreMap
+import org.maplibre.android.maps.MapView
+import org.maplibre.android.maps.Style
+import org.maplibre.android.plugins.annotation.Symbol
+import org.maplibre.android.plugins.annotation.SymbolManager
+import org.maplibre.android.plugins.annotation.SymbolOptions
+import org.maplibre.android.style.layers.Property
 
-// Campus center (Piazza dell'Ateneo Nuovo). minZoom keeps the user from drifting out to the globe.
+// Campus center (Piazza dell'Ateneo Nuovo). The offline pmtiles extract covers the Milan area, so
+// minZoom is kept city-level rather than the globe — you can't pan off the bundled tiles.
 private val BICOCCA = LatLng(45.5160, 9.2120)
 
-private const val MIN_ZOOM = 5f
-private const val CAMPUS_ZOOM = 15.5f
-private const val BUILDING_ZOOM = 17f
-
-// Buckets the pin-selection spring is quantized into before re-rasterizing the marker bitmap.
-private const val MARKER_RASTER_STEPS = 5
+private const val MIN_ZOOM = 10.0
+private const val CAMPUS_ZOOM = 15.5
+private const val BUILDING_ZOOM = 17.0
+private const val MAX_ZOOM = 19.0
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -81,7 +88,7 @@ fun MapScreen(
     // True only while this is the visible tab — see CalendarScreen for the pager-cache rationale.
     isActive: Boolean = true,
     // The shell's content insets (top = floating app bar + status bar, bottom = nav bar). The map
-    // renders edge-to-edge behind the top bar, so we feed these to the map's contentPadding.
+    // renders edge-to-edge behind the top bar, so we feed the top inset to the map's padding.
     contentInsets: PaddingValues = PaddingValues(),
     onProvideFilterToggle: ((() -> Unit)?) -> Unit = {},
     onOpenRoom360: (String, String) -> Unit = { _, _ -> },
@@ -92,6 +99,7 @@ fun MapScreen(
     ),
 ) {
     val density = LocalDensity.current
+    val context = LocalContext.current
     val snackbar = LocalAppSnackbarController.current
 
     val buildings by viewModel.buildings.collectAsStateWithLifecycle()
@@ -104,8 +112,6 @@ fun MapScreen(
     val syncStatus by viewModel.syncStatus.collectAsStateWithLifecycle()
     val categoryFilter by viewModel.categoryFilter.collectAsStateWithLifecycle()
 
-    // The top-bar filter icon opens the category sheet; building search lives in the
-    // unified app-bar search.
     var showFilterSheet by remember { mutableStateOf(false) }
     var showBuildingsList by remember { mutableStateOf(false) }
     LaunchedEffect(isActive) { if (isActive) onProvideFilterToggle { showFilterSheet = true } }
@@ -119,57 +125,146 @@ fun MapScreen(
         }
     }
 
-    val cameraPositionState = rememberCameraPositionState {
-        position = CameraPosition.fromLatLngZoom(BICOCCA, CAMPUS_ZOOM)
+    // Base-map palette: the brand uses its exact hand-tuned hexes; every other palette (Material
+    // You, Oceano, Bosco) derives map colors from its M3 scheme so the map tracks the theme.
+    val appTheme = LocalAppTheme.current
+    val scheme = MaterialTheme.colorScheme
+    val dark = isSystemInDarkTheme()
+    val palette = remember(appTheme, scheme, dark) {
+        when (appTheme) {
+            AppTheme.Default -> if (dark) MapPalette.BicoccaDark else MapPalette.BicoccaLight
+            else -> MapPalette.fromColorScheme(scheme, dark)
+        }
+    }
+    // Building-pin colors come from the M3 scheme (not the map palette) — primary head, white text.
+    val pinIdleContainer = scheme.primary.toArgb()
+    val pinSelContainer = scheme.primaryContainer.toArgb()
+    val pinBorder = scheme.surface.toArgb()
+    val pinText = AndroidColor.WHITE
+
+    val mapView = rememberMapViewWithLifecycle()
+    var libreMap by remember { mutableStateOf<MapLibreMap?>(null) }
+    var mapStyle by remember { mutableStateOf<Style?>(null) }
+    var symbolManager by remember { mutableStateOf<SymbolManager?>(null) }
+    val symbols = remember { mutableMapOf<String, Symbol>() }
+
+    // One-time map bring-up: await the map + style, configure gestures/zoom, install the symbol
+    // layer and the click handlers.
+    LaunchedEffect(mapView) {
+        val map = suspendCancellableCoroutine<MapLibreMap> { cont ->
+            mapView.getMapAsync { cont.resume(it) }
+        }
+        map.uiSettings.apply {
+            isRotateGesturesEnabled = false
+            isTiltGesturesEnabled = false
+            isCompassEnabled = false
+            isLogoEnabled = false
+            isAttributionEnabled = true
+        }
+        map.setMinZoomPreference(MIN_ZOOM)
+        map.setMaxZoomPreference(MAX_ZOOM)
+        map.moveCamera(CameraUpdateFactory.newLatLngZoom(BICOCCA, CAMPUS_ZOOM))
+
+        val styleJson = resolveBicoccaStyleJson(context)
+        val style = suspendCancellableCoroutine<Style> { cont ->
+            map.setStyle(Style.Builder().fromJson(styleJson)) { cont.resume(it) }
+        }
+        val sm = SymbolManager(mapView, map, style).apply {
+            iconAllowOverlap = true
+            iconIgnorePlacement = true
+        }
+        sm.addClickListener { symbol ->
+            symbol.data?.asString?.let { viewModel.selectBuilding(BuildingCode(it)) }
+            true
+        }
+        map.addOnMapClickListener {
+            viewModel.clearSelection()
+            false
+        }
+        libreMap = map
+        mapStyle = style
+        symbolManager = sm
+    }
+
+    // Recolor the live style to the active palette — in place, no reload, so theme changes are
+    // instant. POI icons keep Protomaps' own colors.
+    LaunchedEffect(palette, mapStyle) { mapStyle?.applyBicoccaPalette(palette) }
+
+    // Top inset goes to the map padding (keeps the camera target below the floating bar). The
+    // detail sheet is NOT fed as bottom padding — the camera is shifted instead (below).
+    val topInsetPx = with(density) { contentInsets.calculateTopPadding().roundToPx() }
+    val bottomBarPx = with(density) { contentInsets.calculateBottomPadding().roundToPx() }
+    LaunchedEffect(libreMap, topInsetPx) { libreMap?.setPadding(0, topInsetPx, 0, 0) }
+
+    // Build/refresh the pin symbols whenever the pin set or the pin colors (theme) change. Each
+    // building registers two bitmaps (idle + selected) and a symbol; selection just swaps the icon.
+    LaunchedEffect(buildings, symbolManager, mapStyle, pinIdleContainer, pinSelContainer, pinBorder) {
+        val sm = symbolManager ?: return@LaunchedEffect
+        val style = mapStyle ?: return@LaunchedEffect
+        val pins = (buildings as? Loadable.Loaded)?.value.orEmpty()
+        sm.deleteAll()
+        symbols.clear()
+        val d = density.density
+        pins.forEach { building ->
+            val codeValue = building.code.value
+            val pinCode = splitLegacyAlias(building.name).second
+            val idleKey = "pin_${codeValue}_idle"
+            val selKey = "pin_${codeValue}_sel"
+            style.addImage(idleKey, BuildingPin.render(d, pinCode, pinIdleContainer, pinBorder, pinText, selected = false))
+            style.addImage(selKey, BuildingPin.render(d, pinCode, pinSelContainer, pinBorder, pinText, selected = true))
+            val isSelected = building.code == selectedBuilding?.code
+            val symbol = sm.create(
+                SymbolOptions()
+                    .withLatLng(LatLng(building.point.latitude, building.point.longitude))
+                    .withIconImage(if (isSelected) selKey else idleKey)
+                    .withIconAnchor(Property.ICON_ANCHOR_BOTTOM)
+                    .withData(JsonPrimitive(codeValue)),
+            )
+            symbols[codeValue] = symbol
+        }
+    }
+
+    // Reflect the current selection by swapping each symbol's icon (idle/selected).
+    LaunchedEffect(selectedBuilding, symbolManager) {
+        val sm = symbolManager ?: return@LaunchedEffect
+        if (symbols.isEmpty()) return@LaunchedEffect
+        val selectedValue = selectedBuilding?.code?.value
+        symbols.forEach { (codeValue, symbol) ->
+            symbol.iconImage = if (codeValue == selectedValue) "pin_${codeValue}_sel" else "pin_${codeValue}_idle"
+        }
+        sm.update(symbols.values.toList())
     }
 
     // Selections made from inside the buildings list sheet stay in that sheet's pager — the
     // standalone detail modal (and its camera centering) only reacts to pin taps.
     val detailModalBuilding = if (showBuildingsList) null else selectedBuilding
-
-    // Only the floating top bar goes through the map's contentPadding. The open detail sheet is
-    // deliberately NOT fed in as bottom padding: Google Maps anchors its logo above the bottom
-    // padding, so the logo would jump up every time the sheet opens. The sheet's cover is instead
-    // compensated by shifting the camera target (below).
-    val topInsetPx = with(density) { contentInsets.calculateTopPadding().roundToPx() }
-    val bottomBarPx = with(density) { contentInsets.calculateBottomPadding().roundToPx() }
     var sheetHeightPx by remember { mutableIntStateOf(0) }
-    val mapContentPadding = remember(topInsetPx, density) {
-        with(density) { PaddingValues(top = topInsetPx.toDp()) }
-    }
 
-    // Center the selected building in the area the sheet doesn't cover — wait until the sheet has
-    // been measured. The target is moved south by half the covered height so the building lands
-    // above the sheet without bottom contentPadding (which would also move the Google logo).
-    // The full lat/lng centering runs ONCE per selection: when the sheet later resizes (e.g. the
-    // loading state is replaced by the room grid) the camera is only nudged vertically by the
-    // height delta, so the map never shifts horizontally because the modal changed size.
-    LaunchedEffect(detailModalBuilding) {
+    // Center the selected building in the area the sheet doesn't cover. The target is moved south
+    // by half the covered height so the building lands above the sheet without bottom padding. The
+    // full lat/lng centering runs ONCE per selection; later sheet resizes only nudge vertically by
+    // the height delta, so the map never shifts horizontally when the modal content loads.
+    LaunchedEffect(detailModalBuilding, libreMap) {
+        val map = libreMap ?: return@LaunchedEffect
         val building = detailModalBuilding ?: return@LaunchedEffect
-        // Mercator latitude degrees per screen pixel at this latitude/zoom — the world is 256dp
-        // wide at zoom 0, so the pixel world width scales with density and 2^zoom.
-        val worldWidthPx = 256.0 * density.density * 2.0.pow(BUILDING_ZOOM.toDouble())
+        // Mercator latitude degrees per screen pixel at this latitude/zoom (256dp world at zoom 0).
+        val worldWidthPx = 256.0 * density.density * 2.0.pow(BUILDING_ZOOM)
         val latitudePerPixel = 360.0 * cos(Math.toRadians(building.point.latitude)) / worldWidthPx
         var lastCoverPx = -1
 
-        // A map gesture (or a newer camera animation) cancels the in-flight one with a
-        // CancellationException even though this coroutine is still alive — swallow that case
-        // so the effect keeps tracking later sheet resizes, but rethrow real cancellation.
-        suspend fun animateCamera(update: CameraUpdate) {
-            try {
-                cameraPositionState.animate(update)
-            } catch (_: CancellationException) {
-                currentCoroutineContext().ensureActive()
-            }
+        suspend fun animate(update: CameraUpdate) = suspendCancellableCoroutine<Unit> { cont ->
+            map.animateCamera(update, object : MapLibreMap.CancelableCallback {
+                override fun onFinish() { if (cont.isActive) cont.resume(Unit) }
+                override fun onCancel() { if (cont.isActive) cont.resume(Unit) }
+            })
         }
 
         snapshotFlow { (sheetHeightPx - bottomBarPx).coerceAtLeast(0) }.collect { coverPx ->
             when {
-                coverPx == 0 -> Unit // sheet not measured yet
-
+                coverPx == 0 -> Unit
                 lastCoverPx < 0 -> {
                     lastCoverPx = coverPx
-                    animateCamera(
+                    animate(
                         CameraUpdateFactory.newLatLngZoom(
                             LatLng(
                                 building.point.latitude - coverPx / 2.0 * latitudePerPixel,
@@ -179,100 +274,26 @@ fun MapScreen(
                         ),
                     )
                 }
-
                 coverPx != lastCoverPx -> {
-                    // Positive y scrolls the camera south, lifting the building above the
-                    // now-taller sheet; a shrinking sheet nudges it back down.
-                    val deltaPx = (coverPx - lastCoverPx) / 2f
+                    // Re-center on the building shifted for the new cover. Longitude is held fixed,
+                    // so the map never drifts horizontally when the sheet content resizes; zoom is
+                    // left untouched (newLatLng, not newLatLngZoom).
                     lastCoverPx = coverPx
-                    animateCamera(CameraUpdateFactory.scrollBy(0f, deltaPx))
+                    animate(
+                        CameraUpdateFactory.newLatLng(
+                            LatLng(
+                                building.point.latitude - coverPx / 2.0 * latitudePerPixel,
+                                building.point.longitude,
+                            ),
+                        ),
+                    )
                 }
             }
         }
-    }
-
-    val dark = isSystemInDarkTheme()
-    val mapStyle = rememberBicoccaMapStyle()
-    val properties = remember(mapStyle) {
-        MapProperties(
-            mapStyleOptions = mapStyle,
-            isMyLocationEnabled = false,
-            // The 3D buildings layer kicks in at zoom 17+ and can't be recolored by JSON styles,
-            // so it would flip the map to default colors as the user zooms in. Footprints are
-            // styled via landscape.man_made in the style JSONs instead.
-            isBuildingEnabled = false,
-            isIndoorEnabled = false,
-            minZoomPreference = MIN_ZOOM,
-        )
-    }
-    val uiSettings = remember {
-        MapUiSettings(
-            zoomControlsEnabled = false,
-            mapToolbarEnabled = false,
-            compassEnabled = false,
-            tiltGesturesEnabled = false,
-            myLocationButtonEnabled = false,
-        )
     }
 
     Box(modifier = modifier.fillMaxSize()) {
-        GoogleMap(
-            modifier = Modifier.fillMaxSize(),
-            cameraPositionState = cameraPositionState,
-            // Creation-time options: binds the cloud style variants when a map id is configured.
-            googleMapOptionsFactory = {
-                GoogleMapOptions().apply { if (BICOCCA_MAP_ID.isNotEmpty()) mapId(BICOCCA_MAP_ID) }
-            },
-            properties = properties,
-            uiSettings = uiSettings,
-            // Selects the light/dark cloud style; no effect on the legacy JSON fallback.
-            mapColorScheme = if (dark) ComposeMapColorScheme.DARK else ComposeMapColorScheme.LIGHT,
-            contentPadding = mapContentPadding,
-            onMapClick = { viewModel.clearSelection() },
-        ) {
-            val pins = (buildings as? Loadable.Loaded)?.value.orEmpty()
-            pins.forEach { building ->
-                key(building.code.value) {
-                    val markerState = remember {
-                        MarkerState(LatLng(building.point.latitude, building.point.longitude))
-                    }
-                    val isSelected = building.code == selectedBuilding?.code
-                    // The marker is a rasterized bitmap: keying the rasterizer on an animated
-                    // value re-renders it on every change, which is what makes the pin grow
-                    // instead of snapping. But a full re-rasterization per animation frame
-                    // (composition -> bitmap -> marker icon swap) is heavy enough to jank the
-                    // whole pin-tap sequence, so the spring is quantized to a few buckets:
-                    // the growth still reads as smooth at pin size while the raster count per
-                    // selection change drops from dozens to a handful.
-                    val selectionProgress = animateFloatAsState(
-                        targetValue = if (isSelected) 1f else 0f,
-                        animationSpec = MaterialTheme.motionScheme.defaultSpatialSpec(),
-                        label = "pin_selection",
-                    )
-                    val rasterProgress by remember(selectionProgress) {
-                        derivedStateOf {
-                            (selectionProgress.value * MARKER_RASTER_STEPS).roundToInt() /
-                                MARKER_RASTER_STEPS.toFloat()
-                        }
-                    }
-                    MarkerComposable(
-                        building.code.value,
-                        rasterProgress,
-                        state = markerState,
-                        title = building.name,
-                        onClick = {
-                            viewModel.selectBuilding(building.code)
-                            true
-                        },
-                    ) {
-                        BuildingMarker(
-                            selectionProgress = rasterProgress,
-                            code = remember(building.name) { splitLegacyAlias(building.name).second },
-                        )
-                    }
-                }
-            }
-        }
+        AndroidView(factory = { mapView }, modifier = Modifier.fillMaxSize())
 
         ExtendedFloatingActionButton(
             onClick = { showBuildingsList = true },
@@ -337,4 +358,37 @@ fun MapScreen(
             onDismiss = { showFilterSheet = false },
         )
     }
+}
+
+// MapLibre's MapView is an Android View with a manual lifecycle. Bind it to the composition: create
+// + catch up to the current lifecycle state (addObserver does not replay past events, so a View
+// added while already RESUMED must be started/resumed eagerly), then forward future events.
+@Composable
+private fun rememberMapViewWithLifecycle(): MapView {
+    val context = LocalContext.current
+    val mapView = remember {
+        MapLibre.getInstance(context)
+        MapView(context).apply { onCreate(null) }
+    }
+    val lifecycle = LocalLifecycleOwner.current.lifecycle
+    DisposableEffect(lifecycle, mapView) {
+        if (lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)) mapView.onStart()
+        if (lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)) mapView.onResume()
+        val observer = LifecycleEventObserver { _, event ->
+            when (event) {
+                Lifecycle.Event.ON_START -> mapView.onStart()
+                Lifecycle.Event.ON_RESUME -> mapView.onResume()
+                Lifecycle.Event.ON_PAUSE -> mapView.onPause()
+                Lifecycle.Event.ON_STOP -> mapView.onStop()
+                else -> Unit
+            }
+        }
+        lifecycle.addObserver(observer)
+        onDispose {
+            lifecycle.removeObserver(observer)
+            mapView.onStop()
+            mapView.onDestroy()
+        }
+    }
+    return mapView
 }

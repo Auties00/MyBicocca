@@ -1,5 +1,3 @@
-import java.util.Properties
-
 // Plugins
 plugins {
     id("com.android.application")
@@ -9,17 +7,6 @@ plugins {
     id("com.google.dagger.hilt.android")
     id("org.jetbrains.kotlin.plugin.serialization")
 }
-
-// Google Maps key — kept out of VCS in local.properties (already git-ignored). Falls back to
-// an empty string so the project still builds without it (the map tiles just render blank).
-val localProperties: Properties = Properties().apply {
-    val f = rootProject.file("local.properties")
-    if (f.exists()) f.inputStream().use { load(it) }
-}
-val mapsApiKey: String = localProperties.getProperty("MAPS_API_KEY", "")
-// Map id whose cloud styles (light + dark, configured in the Cloud console) replace the bundled
-// legacy JSON map styles. Optional: blank keeps the JSON fallback.
-val mapsMapId: String = localProperties.getProperty("MAPS_MAP_ID", "")
 
 // Android config
 android {
@@ -45,11 +32,6 @@ android {
         vectorDrawables {
             useSupportLibrary = true
         }
-
-        // Injected into the Google Maps <meta-data> in the manifest.
-        manifestPlaceholders["MAPS_API_KEY"] = mapsApiKey
-        // Read at runtime by the map screen to opt into cloud-based styling.
-        buildConfigField("String", "MAPS_MAP_ID", "\"$mapsMapId\"")
     }
 
     buildFeatures {
@@ -78,6 +60,14 @@ android {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
+    }
+
+    androidResources {
+        // The offline basemap (.pmtiles) is read via memory-mapped, offset-based range requests
+        // straight out of the APK. If AGP deflates it into the package those byte offsets no longer
+        // line up with the stored bytes, so MapLibre's PMTilesFileSource reads garbage for the root
+        // directory and aborts the process with a zlib "incorrect header check". Store it raw.
+        noCompress += "pmtiles"
     }
 }
 
@@ -194,9 +184,13 @@ dependencies {
     // Shimmer effect for loading screens
     implementation("com.valentinilk.shimmer:compose-shimmer:1.3.3")
 
-    // Google Maps — campus map (maps-compose) + the underlying SDK.
-    implementation("com.google.maps.android:maps-compose:6.4.1")
-    implementation("com.google.android.gms:play-services-maps:19.2.0")
+    // MapLibre — campus map. Renders Protomaps offline vector tiles (.pmtiles, native since
+    // SDK 11.8.0) inside a Compose AndroidView, recolored at runtime to the active theme.
+    // Replaces Google Maps (maps-compose): no per-load billing, fully offline, and — unlike the
+    // Google road-detail "Surface" feature — no zoom-17 palette flip. annotation-v9 = SymbolManager
+    // for the building pins (BuildingMarker rasterized to a bitmap icon).
+    implementation("org.maplibre.gl:android-sdk:13.2.0")
+    implementation("org.maplibre.gl:android-plugin-annotation-v9:3.0.2")
 
     // Email validation
     implementation(platform("androidx.compose:compose-bom:2026.03.01"))

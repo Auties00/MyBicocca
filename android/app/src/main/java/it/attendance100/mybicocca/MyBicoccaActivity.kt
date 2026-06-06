@@ -43,6 +43,7 @@ import it.attendance100.mybicocca.ui.screen.elearning.subscreen.videoPlayer.play
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.videoPlayer.player.PipState
 import it.attendance100.mybicocca.ui.theme.AppTheme
 import it.attendance100.mybicocca.ui.theme.BicoccaTheme
+import it.attendance100.mybicocca.ui.theme.LocalAppTheme
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
@@ -135,7 +136,10 @@ class MyBicoccaActivity : AppCompatActivity() {
             val deviceType = getDeviceType(windowSizeClass.widthSizeClass)
 
             BicoccaTheme(dark = dark, appTheme = appTheme) {
-                CompositionLocalProvider(LocalDeviceType provides deviceType) {
+                CompositionLocalProvider(
+                    LocalDeviceType provides deviceType,
+                    LocalAppTheme provides appTheme,
+                ) {
                     CompositionLocalProvider(LocalPipController provides pipController) {
                         ProvideHapticManager {
                             AppRoot()

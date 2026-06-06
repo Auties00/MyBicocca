@@ -128,14 +128,13 @@ class CalendarRepositoryImpl @Inject constructor(
                         runCatching {
                             easyStaffApi.schedule.getScheduleBySubject(academicYear, subject, monday)
                         }.getOrDefault(emptyList())
-                    }
+                    }.filterIsInstance<EasyStaffScheduleCell.Lesson>()
+                        .map { it.toDomain(career.id, pc.activityCode) }
                 }
             }.awaitAll()
         }.asSequence()
             .flatten()
-            .filterIsInstance<EasyStaffScheduleCell.Lesson>()
             .filter { it.date in yearMonth.startDate()..yearMonth.endDate() }
-            .map { it.toDomain(career.id) }
             .distinctBy { it.id }.toList()
         replaceSourceRange(career.id, EventSource.LESSON, yearMonth, events)
         stampSync(career.id, EventSource.LESSON, yearMonth)
@@ -154,11 +153,10 @@ class CalendarRepositoryImpl @Inject constructor(
                     val subject = pc.toEasyStaffSubject()
                     runCatching {
                         easyStaffApi.exams.getExamsBySubject(subject, start, end)
-                    }.getOrDefault(emptyList())
+                    }.getOrDefault(emptyList()).map { it.toDomain(career.id, pc.activityCode) }
                 }
             }.awaitAll()
         }.flatten()
-            .map { it.toDomain(career.id) }
             .distinctBy { it.id }
         replaceSourceRange(career.id, EventSource.EXAM, yearMonth, events)
         stampSync(career.id, EventSource.EXAM, yearMonth)
