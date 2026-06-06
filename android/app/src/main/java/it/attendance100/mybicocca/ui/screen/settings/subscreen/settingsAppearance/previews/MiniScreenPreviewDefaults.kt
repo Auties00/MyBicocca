@@ -4,8 +4,11 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
@@ -64,5 +67,18 @@ fun BoxScope.MapPin(alignment: Alignment, padding: PaddingValues) {
             .padding(padding)
             .size(9.dp)
             .background(scheme.primary, CircleShape),
+    )
+}
+
+@Composable
+fun SysNavBarPreview(modifier: Modifier = Modifier) {
+    val scheme = MaterialTheme.colorScheme
+    Box(
+        modifier = modifier
+            .padding(bottom = 7.dp)
+            .fillMaxWidth(0.4f)
+            .widthIn(max = 50.dp)
+            .height(2.5.dp)
+            .background(scheme.onBackground.copy(alpha = 0.25f), CircleShape)
     )
 }

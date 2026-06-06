@@ -152,6 +152,7 @@ fun CalendarPreviewTablet() {
                 // FAB
                 Box(
                     Modifier
+                        .padding(bottom = 4.dp)
                         .align(Alignment.BottomEnd)
                         .size(width = 25.dp, height = 12.dp)
                         .background(scheme.primary, FabShape),
