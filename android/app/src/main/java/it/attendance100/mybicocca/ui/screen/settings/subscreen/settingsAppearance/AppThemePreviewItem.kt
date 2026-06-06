@@ -4,26 +4,20 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.DividerDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.tooling.preview.Preview
@@ -41,6 +35,7 @@ import it.attendance100.mybicocca.ui.screen.settings.subscreen.settingsAppearanc
 import it.attendance100.mybicocca.ui.screen.settings.subscreen.settingsAppearance.previews.RegistryPreviewPhone
 import it.attendance100.mybicocca.ui.screen.settings.subscreen.settingsAppearance.previews.RegistryPreviewTablet
 import it.attendance100.mybicocca.ui.screen.settings.subscreen.settingsAppearance.previews.TabletNavRail
+import it.attendance100.mybicocca.ui.screen.settings.subscreen.settingsSecurity.unlockpreview.AppBarMock
 import it.attendance100.mybicocca.ui.theme.BicoccaTheme
 
 /**
@@ -102,84 +97,7 @@ fun AppThemePreviewItem(
                 .weight(1f),
         ) {
             // App bar
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(32.dp)
-                    .padding(
-                        start = if (deviceType == DeviceType.Tablet) 4.dp else 8.dp,
-                        end = 8.dp,
-                        top = 8.dp
-                    )
-                    .offset(y = (-1).dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxHeight(0.8f)
-                        .fillMaxWidth()
-                        .background(
-                            color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                            shape = MaterialTheme.shapes.small,
-                        ),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(3.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        // Search icon button
-                        Box(
-                            modifier = Modifier
-                                .padding(start = 3.dp)
-                                .size(6.dp)
-                                .background(
-                                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.3f),
-                                    shape = CircleShape,
-                                )
-                        )
-                        // MyBicocca text
-                        Row(
-                            modifier = Modifier.height(8.dp)
-                        ) {
-                            // "My" white text
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxHeight()
-                                    .width(12.dp)
-                                    .background(
-                                        color = MaterialTheme.colorScheme.onBackground,
-                                        shape = CircleShape,
-                                    )
-                            )
-                            Spacer(modifier = Modifier.width(2.dp))
-                            // "Bicocca" red text
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxHeight()
-                                    .width(27.dp)
-                                    .background(
-                                        color = MaterialTheme.colorScheme.primary,
-                                        shape = RoundedCornerShape(5.dp),
-                                    )
-                            )
-                        }
-
-                        // Profile Picture
-                        Box(
-                            modifier = Modifier
-                                .size(13.dp)
-                                .background(
-                                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.3f),
-                                    shape = CircleShape,
-                                )
-                        )
-                    }
-                }
-            }
+            AppBarMock()
 
             val previews = when (deviceType) {
                 DeviceType.Phone -> listOf<@Composable () -> Unit>(
