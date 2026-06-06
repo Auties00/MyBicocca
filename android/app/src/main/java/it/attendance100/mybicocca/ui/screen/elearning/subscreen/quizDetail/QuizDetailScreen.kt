@@ -76,9 +76,7 @@ import it.attendance100.mybicocca.domain.model.elearning.quiz.Quiz
 import it.attendance100.mybicocca.domain.model.elearning.quiz.QuizAttempt
 import it.attendance100.mybicocca.ui.component.feedback.LocalAppSnackbarController
 import it.attendance100.mybicocca.ui.component.text.HtmlBody
-import it.attendance100.mybicocca.ui.screen.elearning.subscreen.quizDetail.component.AttemptRow
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.quizDetail.component.QuestionCard
-import it.attendance100.mybicocca.ui.screen.elearning.subscreen.quizDetail.component.QuizStatusHero
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.quizDetail.component.formatGradeValue
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.quizDetail.ext.parseQuestion
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.quizDetail.state.AttemptUiState
@@ -95,6 +93,7 @@ import kotlinx.coroutines.launch
 fun QuizDetailScreen(
     quizId: Int,
     courseId: Int,
+    onExit: () -> Unit = {},
     viewModel: QuizDetailViewModel = hiltViewModel(),
 ) {
     val snackbar = LocalAppSnackbarController.current
@@ -115,8 +114,16 @@ fun QuizDetailScreen(
         val scheme = MaterialTheme.colorScheme
         val quizLoadable by viewModel.quiz.collectAsStateWithLifecycle()
         val attemptsLoadable by viewModel.attempts.collectAsStateWithLifecycle()
-        val bestGradeLoadable by viewModel.bestGrade.collectAsStateWithLifecycle()
         val attemptUi by viewModel.attemptUi.collectAsStateWithLifecycle()
+
+        // The overview is the sheet; this screen only hosts the attempt/review. Once an action
+        // has moved past the initial Idle, returning to Idle (back, close, or a load failure)
+        // means we're done — pop the screen.
+        var armed by remember { mutableStateOf(false) }
+        LaunchedEffect(attemptUi) {
+            if (attemptUi != AttemptUiState.Idle) armed = true
+            else if (armed) onExit()
+        }
 
         Box(
             modifier = Modifier
@@ -136,13 +143,9 @@ fun QuizDetailScreen(
                 modifier = Modifier.fillMaxSize(),
             ) { state ->
                 when (state) {
-                    AttemptUiState.Idle -> OverviewContent(
-                        quizLoadable = quizLoadable,
-                        attempts = attemptsLoadable.valueOrNull().orEmpty(),
-                        bestGrade = bestGradeLoadable.valueOrNull(),
-                        viewModel = viewModel,
-                    )
-
+                    // Idle is transient here (the requested action kicks in on init); the
+                    // armed-pop effect above closes the screen if we ever settle back on it.
+                    AttemptUiState.Idle,
                     AttemptUiState.Loading -> CenteredLoading()
 
                     is AttemptUiState.InProgress -> AttemptContent(
@@ -199,169 +202,6 @@ private fun CenteredLoading() {
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         @OptIn(ExperimentalMaterial3ExpressiveApi::class)
         LoadingIndicator(modifier = Modifier.size(72.dp))
-    }
-}
-
-// ---------- Overview ----------
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun OverviewContent(
-    quizLoadable: Loadable<Quiz>,
-    attempts: List<QuizAttempt>,
-    bestGrade: BestGrade?,
-    viewModel: QuizDetailViewModel,
-) {
-    val pullState = rememberPullToRefreshState()
-    val pullScope = rememberCoroutineScope()
-    var pullIndicatorVisible by remember { mutableStateOf(false) }
-
-    PullToRefreshBox(
-        isRefreshing = pullIndicatorVisible,
-        onRefresh = {
-            pullIndicatorVisible = true
-            viewModel.pullToRefresh()
-            pullScope.launch {
-                delay(PULL_INDICATOR_DISMISS_DELAY_MS)
-                pullIndicatorVisible = false
-            }
-        },
-        state = pullState,
-        modifier = Modifier.fillMaxSize(),
-    ) {
-        when (quizLoadable) {
-            Loadable.NotYetLoaded -> CenteredLoading()
-            is Loadable.Loaded -> {
-                val quiz = quizLoadable.value
-                val now = remember(quiz, attempts) { Instant.now() }
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(top = 6.dp, bottom = 28.dp),
-                ) {
-                    overviewItems(
-                        quiz = quiz,
-                        attempts = attempts.filterNot { it.previewMode },
-                        bestGrade = bestGrade,
-                        now = now,
-                        viewModel = viewModel,
-                    )
-                }
-            }
-        }
-    }
-}
-
-private fun LazyListScope.overviewItems(
-    quiz: Quiz,
-    attempts: List<QuizAttempt>,
-    bestGrade: BestGrade?,
-    now: Instant,
-    viewModel: QuizDetailViewModel,
-) {
-    item("title") {
-        Column(modifier = Modifier.padding(horizontal = 20.dp, vertical = 10.dp)) {
-            Text(
-                text = "✦ QUIZ",
-                color = MaterialTheme.colorScheme.tertiary,
-                fontWeight = FontWeight.Bold,
-                fontSize = 10.sp,
-                letterSpacing = 1.6.sp,
-            )
-            Spacer(Modifier.height(6.dp))
-            Text(
-                text = quiz.name,
-                color = MaterialTheme.colorScheme.onSurface,
-                fontWeight = FontWeight.ExtraBold,
-                fontSize = 26.sp,
-                lineHeight = 30.sp,
-                letterSpacing = (-0.6).sp,
-            )
-        }
-    }
-
-    item("hero") {
-        QuizStatusHero(
-            quiz = quiz,
-            attempts = attempts,
-            bestGrade = bestGrade,
-            now = now,
-            onStartAttempt = viewModel::onStartAttempt,
-            onResumeAttempt = viewModel::resumeAttempt,
-        )
-    }
-
-    val intro = quiz.intro?.takeIf { it.isNotBlank() }
-    if (intro != null) {
-        item("intro_header") {
-            DetailSectionLabel(title = "Istruzioni", mark = "✦")
-        }
-        item("intro_body") {
-            HtmlBody(
-                html = intro,
-                modifier = Modifier.padding(horizontal = 20.dp, vertical = 4.dp),
-            )
-        }
-    }
-
-    if (attempts.isNotEmpty()) {
-        item("attempts_header") {
-            DetailSectionLabel(
-                title = "I tuoi tentativi",
-                mark = "❀",
-                subtitle = quiz.maxAttempts
-                    ?.takeIf { it > 0 }
-                    ?.let { max -> "${attempts.size} di $max disponibili" },
-            )
-        }
-        attempts.forEach { attempt ->
-            item("attempt_${attempt.id.value}") {
-                AttemptRow(
-                    attempt = attempt,
-                    maxSumGrades = quiz.sumGrades,
-                    onClick = when (attempt.state) {
-                        AttemptState.InProgress -> {
-                            { viewModel.resumeAttempt(attempt.id) }
-                        }
-                        AttemptState.Finished, AttemptState.Overdue -> {
-                            { viewModel.viewReview(attempt.id) }
-                        }
-                        else -> null
-                    },
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun DetailSectionLabel(
-    title: String,
-    mark: String,
-    subtitle: String? = null,
-) {
-    val scheme = MaterialTheme.colorScheme
-    Column(
-        modifier = Modifier
-            .padding(horizontal = 20.dp)
-            .padding(top = 22.dp, bottom = 8.dp),
-    ) {
-        Text(
-            text = "$mark ${title.uppercase()}",
-            color = scheme.tertiary,
-            fontWeight = FontWeight.Bold,
-            fontSize = 11.sp,
-            letterSpacing = 1.4.sp,
-        )
-        if (subtitle != null) {
-            Spacer(Modifier.height(4.dp))
-            Text(
-                text = subtitle,
-                style = MaterialTheme.typography.labelSmall,
-                color = scheme.onSurfaceVariant,
-                fontStyle = FontStyle.Italic,
-            )
-        }
     }
 }
 

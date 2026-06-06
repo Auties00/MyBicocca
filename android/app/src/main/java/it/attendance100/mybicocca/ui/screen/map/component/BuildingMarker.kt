@@ -53,8 +53,9 @@ private object PinShape : Shape {
 
 // Rasterized into a Google Maps marker via MarkerComposable. The pin tip lands on the marker's
 // default bottom-center anchor. selectionProgress (0 = idle, 1 = selected) is animated by the
-// caller and must also be passed as a MarkerComposable key — the marker is a bitmap, so each
-// animation frame needs a re-rasterization; lerping here is what makes the growth smooth.
+// caller and must also be passed as a MarkerComposable key — the marker is a bitmap, so every
+// distinct value triggers a re-rasterization. The caller quantizes the animated value to a few
+// buckets to keep that affordable; lerping here is what turns those buckets into growth.
 // The head shows the building's legacy U-number when it has one, otherwise a generic icon.
 @Composable
 fun BuildingMarker(selectionProgress: Float, code: String? = null) {

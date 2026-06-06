@@ -1,12 +1,11 @@
 package it.attendance100.mybicocca.ui.screen.elearning.subscreen.courseDetail.component
 
-import androidx.compose.animation.animateColor
 import androidx.compose.animation.animateContentSize
-import androidx.compose.animation.core.animateDp
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.updateTransition
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,10 +15,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.Article
 import androidx.compose.material.icons.automirrored.outlined.Assignment
+import androidx.compose.material.icons.automirrored.outlined.FactCheck
 import androidx.compose.material.icons.automirrored.outlined.HelpOutline
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.KeyboardArrowDown
@@ -27,23 +29,27 @@ import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.outlined.Archive
 import androidx.compose.material.icons.outlined.Book
 import androidx.compose.material.icons.outlined.Description
+import androidx.compose.material.icons.outlined.EventAvailable
+import androidx.compose.material.icons.outlined.Extension
 import androidx.compose.material.icons.outlined.Folder
 import androidx.compose.material.icons.outlined.Forum
+import androidx.compose.material.icons.outlined.Groups
 import androidx.compose.material.icons.outlined.Image
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Link
+import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.PictureAsPdf
 import androidx.compose.material.icons.outlined.Poll
 import androidx.compose.material.icons.outlined.Quiz
 import androidx.compose.material.icons.outlined.School
+import androidx.compose.material.icons.outlined.Storage
+import androidx.compose.material.icons.outlined.Videocam
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearWavyProgressIndicator
-import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -53,9 +59,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntSize
@@ -67,9 +71,11 @@ import it.attendance100.mybicocca.domain.model.elearning.course.ModuleType
 import it.attendance100.mybicocca.domain.model.elearning.course.kalvidresCmIdOrNull
 import it.attendance100.mybicocca.domain.model.elearning.video.VideoProgress
 import it.attendance100.mybicocca.ui.component.shape.OrganicShapes
+import it.attendance100.mybicocca.ui.component.text.HtmlBody
+import it.attendance100.mybicocca.ui.screen.elearning.subscreen.courseDetail.ext.containsRenderableHtml
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.courseDetail.ext.contentBlocks
+import it.attendance100.mybicocca.ui.screen.elearning.subscreen.courseDetail.ext.htmlToPlainText
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.courseDetail.ext.stripCopySuffix
-import it.attendance100.mybicocca.ui.screen.elearning.subscreen.courseDetail.ext.summaryPlainText
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.courseDetail.state.ContentBlock
 import java.time.Instant
 import java.time.ZoneId
@@ -77,38 +83,51 @@ import java.time.format.DateTimeFormatter
 import java.util.Locale
 import kotlin.math.roundToInt
 
-@Composable
-fun SectionsList(
+// One LazyColumn item per section card, so long courses only compose the cards on screen
+// (the host list owns spacing and padding).
+fun LazyListScope.sectionCards(
     sections: List<CourseSection>,
     expanded: Set<Int>,
     completion: Map<Int, CompletionState>,
     videoProgress: Map<Int, VideoProgress>,
     onToggleSection: (Int) -> Unit,
     onModuleClick: (CourseModule) -> Unit,
-    modifier: Modifier = Modifier,
+    onModuleLongClick: (CourseModule) -> Unit,
 ) {
-    val visibleSections = sections.filter { it.visible }
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 4.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        visibleSections.forEachIndexed { index, section ->
-            SectionCard(
-                section = section,
-                ordinal = index + 1,
-                expanded = section.id in expanded,
-                completion = completion,
-                videoProgress = videoProgress,
-                onToggle = { onToggleSection(section.id) },
-                onModuleClick = onModuleClick,
-            )
-        }
+    // mod_subsection child sections are not top-level cards: they render inline under their
+    // placeholder module. Resolve a subsection module to its child by the linked section id
+    // (customdata.sectionid) or, failing that, by the child's owning itemid.
+    val children = sections.filter { it.isSubsectionChild }
+    val childById = children.associateBy { it.id }
+    val childByItemId = children.mapNotNull { c -> c.itemId?.let { it to c } }.toMap()
+    val resolveSubsection: (CourseModule) -> CourseSection? = { module ->
+        module.linkedSectionId?.let(childById::get) ?: module.instanceId?.let(childByItemId::get)
+    }
+    val visibleSections = sections.filter {
+        it.visible && !it.isSubsectionChild && it.isRenderable()
+    }
+    itemsIndexed(visibleSections, key = { _, section -> section.id }) { index, section ->
+        SectionCard(
+            section = section,
+            ordinal = index + 1,
+            expanded = section.id in expanded,
+            completion = completion,
+            videoProgress = videoProgress,
+            resolveSubsection = resolveSubsection,
+            onToggle = { onToggleSection(section.id) },
+            onModuleClick = onModuleClick,
+            onModuleLongClick = onModuleLongClick,
+        )
     }
 }
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+// A section earns a card if it has a renderable summary or at least one module the student can
+// actually see (visible + on the course page). Sections that are wholly empty or hold only
+// stealth modules render to nothing and are dropped instead of showing a blank expandable card.
+private fun CourseSection.isRenderable(): Boolean =
+    summary?.containsRenderableHtml() == true ||
+        modules.any { it.visible && it.onCoursePage }
+
 @Composable
 private fun SectionCard(
     section: CourseSection,
@@ -116,157 +135,86 @@ private fun SectionCard(
     expanded: Boolean,
     completion: Map<Int, CompletionState>,
     videoProgress: Map<Int, VideoProgress>,
+    resolveSubsection: (CourseModule) -> CourseSection?,
     onToggle: () -> Unit,
     onModuleClick: (CourseModule) -> Unit,
+    onModuleLongClick: (CourseModule) -> Unit,
 ) {
     val scheme = MaterialTheme.colorScheme
-    val motion = MaterialTheme.motionScheme
-    val blocks = remember(section) { section.contentBlocks() }
-    val summary = remember(section) { section.summaryPlainText() }
+    val blocks = remember(section) { section.contentBlocks(resolveSubsection) }
+    val summaryHtml = remember(section) { section.summary?.takeIf { it.containsRenderableHtml() } }
     val subtitle = remember(blocks) { typeSummary(blocks) }
 
-    val transition = updateTransition(expanded, label = "section-card")
-    val cornerDp by transition.animateDp(
-        transitionSpec = { motion.defaultSpatialSpec() },
-        label = "corner",
-    ) { if (it) 28.dp else 20.dp }
-    val chevronRotation by transition.animateFloat(
-        transitionSpec = { motion.defaultSpatialSpec() },
-        label = "chevron",
-    ) { if (it) 180f else 0f }
-    // The number badge twirls as its container morphs from a quiet rounded square into an
-    // expressive polygon; the digit itself stays upright because only the backdrop rotates.
-    val badgeRotation by transition.animateFloat(
-        transitionSpec = { motion.defaultSpatialSpec() },
-        label = "badge-rotation",
-    ) { if (it) 120f else 0f }
-    val badgeColor by transition.animateColor(
-        transitionSpec = { motion.defaultEffectsSpec() },
-        label = "badge-color",
-    ) { if (it) scheme.primary else scheme.secondaryContainer }
-    val badgeContentColor by transition.animateColor(
-        transitionSpec = { motion.defaultEffectsSpec() },
-        label = "badge-content-color",
-    ) { if (it) scheme.onPrimary else scheme.onSecondaryContainer }
-    val sizeSpec = remember(motion) { motion.defaultSpatialSpec<IntSize>() }
-    val expandedShape = expandedBadgeShape(ordinal)
-    val badgeShape = if (expanded) expandedShape else RoundedCornerShape(14.dp)
-
-    Surface(
-        shape = RoundedCornerShape(cornerDp),
-        color = scheme.surfaceContainerLow,
-        modifier = Modifier
-            .fillMaxWidth()
-            .animateContentSize(animationSpec = sizeSpec),
+    ExpandableGroupCard(
+        ordinal = ordinal,
+        title = section.name.stripCopySuffix().ifBlank { "Sezione ${section.sectionNumber}" },
+        subtitle = subtitle,
+        expanded = expanded,
+        onToggle = onToggle,
     ) {
-        Column {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable(onClick = onToggle)
-                    .padding(horizontal = 14.dp, vertical = 14.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(14.dp),
-            ) {
-                Box(
-                    modifier = Modifier.size(44.dp),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .matchParentSize()
-                            .graphicsLayer { rotationZ = badgeRotation }
-                            .background(badgeColor, badgeShape),
-                    )
-                    Text(
-                        text = ordinal.toString(),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = badgeContentColor,
-                    )
-                }
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = section.name.stripCopySuffix()
-                            .ifBlank { "Sezione ${section.sectionNumber}" },
-                        style = MaterialTheme.typography.titleMedium,
-                        color = scheme.onSurface,
-                        fontWeight = FontWeight.Bold,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                    Spacer(Modifier.height(2.dp))
-                    Text(
-                        text = subtitle,
-                        style = MaterialTheme.typography.labelMedium,
-                        color = scheme.onSurfaceVariant,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                }
-                Icon(
-                    imageVector = Icons.Filled.KeyboardArrowDown,
-                    contentDescription = if (expanded) "Comprimi" else "Espandi",
-                    tint = scheme.onSurfaceVariant,
-                    modifier = Modifier.rotate(chevronRotation),
+        summaryHtml?.let { HtmlCallout(html = it) }
+        if (blocks.isEmpty() && summaryHtml == null) {
+            Text(
+                text = "Nessuna risorsa in questa sezione",
+                style = MaterialTheme.typography.bodySmall,
+                color = scheme.onSurfaceVariant,
+                modifier = Modifier.padding(horizontal = 4.dp),
+            )
+        }
+        SectionBlocks(
+            blocks = blocks,
+            completion = completion,
+            videoProgress = videoProgress,
+            onModuleClick = onModuleClick,
+            onModuleLongClick = onModuleLongClick,
+        )
+    }
+}
+
+// Renders a run of content blocks; recurses for inlined subsections. Shared by the section
+// card body and the subsection expander so nesting renders identically.
+@Composable
+private fun SectionBlocks(
+    blocks: List<ContentBlock>,
+    completion: Map<Int, CompletionState>,
+    videoProgress: Map<Int, VideoProgress>,
+    onModuleClick: (CourseModule) -> Unit,
+    onModuleLongClick: (CourseModule) -> Unit,
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        blocks.forEach { block ->
+            when (block) {
+                is ContentBlock.Note -> HtmlCallout(html = block.html)
+                is ContentBlock.Group -> GroupBlock(
+                    group = block,
+                    completion = completion,
+                    videoProgress = videoProgress,
+                    onModuleClick = onModuleClick,
+                    onModuleLongClick = onModuleLongClick,
                 )
-            }
-            if (expanded) {
-                Column(
-                    modifier = Modifier.padding(start = 12.dp, end = 12.dp, bottom = 14.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp),
-                ) {
-                    summary?.let { NoteCallout(text = it) }
-                    if (blocks.isEmpty()) {
-                        Text(
-                            text = "Nessuna risorsa in questa sezione",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = scheme.onSurfaceVariant,
-                            modifier = Modifier.padding(horizontal = 4.dp),
-                        )
-                    }
-                    blocks.forEach { block ->
-                        when (block) {
-                            is ContentBlock.Note -> NoteCallout(text = block.text)
-                            is ContentBlock.Group -> GroupBlock(
-                                group = block,
-                                completion = completion,
-                                videoProgress = videoProgress,
-                                onModuleClick = onModuleClick,
-                            )
-                        }
-                    }
-                }
+                is ContentBlock.Subsection -> SubsectionBlock(
+                    block = block,
+                    completion = completion,
+                    videoProgress = videoProgress,
+                    onModuleClick = onModuleClick,
+                    onModuleLongClick = onModuleLongClick,
+                )
             }
         }
     }
 }
 
-// MaterialShapes getters are @Composable in this material3 version, so the mapper is too.
+// A teacher note (content label) rendered as real HTML so links stay tappable and lists keep
+// their structure — the previous plain-text flattening silently dropped ebook/Meet/GitHub
+// links and lesson syllabi.
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-private fun expandedBadgeShape(ordinal: Int): Shape = when (ordinal % 6) {
-    0 -> MaterialShapes.Sunny
-    1 -> MaterialShapes.Cookie9Sided
-    2 -> MaterialShapes.Clover4Leaf
-    3 -> MaterialShapes.Pentagon
-    4 -> MaterialShapes.Flower
-    else -> MaterialShapes.Cookie6Sided
-}.toShape()
-
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
-@Composable
-private fun NoteCallout(text: String) {
+private fun HtmlCallout(html: String) {
     val scheme = MaterialTheme.colorScheme
-    val motion = MaterialTheme.motionScheme
-    var noteExpanded by remember { mutableStateOf(false) }
-    val sizeSpec = remember(motion) { motion.defaultSpatialSpec<IntSize>() }
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { noteExpanded = !noteExpanded }
-            .padding(horizontal = 4.dp, vertical = 2.dp)
-            .animateContentSize(animationSpec = sizeSpec),
+            .padding(horizontal = 4.dp, vertical = 2.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         Icon(
@@ -277,14 +225,90 @@ private fun NoteCallout(text: String) {
                 .padding(top = 2.dp)
                 .size(16.dp),
         )
-        Text(
-            text = text,
-            style = MaterialTheme.typography.bodySmall,
+        HtmlBody(
+            html = html,
             color = scheme.onSurfaceVariant,
-            fontStyle = FontStyle.Italic,
-            maxLines = if (noteExpanded) Int.MAX_VALUE else 3,
-            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.weight(1f),
         )
+    }
+}
+
+// An inlined mod_subsection: a labelled expander that reveals the child section's own blocks.
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+private fun SubsectionBlock(
+    block: ContentBlock.Subsection,
+    completion: Map<Int, CompletionState>,
+    videoProgress: Map<Int, VideoProgress>,
+    onModuleClick: (CourseModule) -> Unit,
+    onModuleLongClick: (CourseModule) -> Unit,
+) {
+    val scheme = MaterialTheme.colorScheme
+    val motion = MaterialTheme.motionScheme
+    var open by remember(block) { mutableStateOf(false) }
+    val chevron by animateFloatAsState(if (open) 180f else 0f, label = "subsection-chevron")
+    val sizeSpec = remember(motion) { motion.defaultSpatialSpec<IntSize>() }
+    Surface(
+        shape = RoundedCornerShape(16.dp),
+        color = scheme.surfaceContainerLowest,
+        modifier = Modifier
+            .fillMaxWidth()
+            .animateContentSize(animationSpec = sizeSpec),
+    ) {
+        Column(modifier = Modifier.padding(vertical = 4.dp)) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { open = !open }
+                    .padding(horizontal = 12.dp, vertical = 10.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(10.dp)
+                        .background(scheme.tertiary, OrganicShapes.Leaf),
+                )
+                Text(
+                    text = block.title.ifBlank { "Sezione" },
+                    style = MaterialTheme.typography.labelLarge,
+                    color = scheme.onSurface,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f),
+                )
+                Icon(
+                    imageVector = Icons.Filled.KeyboardArrowDown,
+                    contentDescription = if (open) "Comprimi" else "Espandi",
+                    tint = scheme.onSurfaceVariant,
+                    modifier = Modifier.rotate(chevron),
+                )
+            }
+            if (open) {
+                Column(
+                    modifier = Modifier.padding(start = 10.dp, end = 10.dp, bottom = 8.dp, top = 2.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                ) {
+                    block.summaryHtml?.let { HtmlCallout(html = it) }
+                    if (block.blocks.isEmpty() && block.summaryHtml == null) {
+                        Text(
+                            text = "Nessuna risorsa",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = scheme.onSurfaceVariant,
+                            modifier = Modifier.padding(horizontal = 4.dp),
+                        )
+                    }
+                    SectionBlocks(
+                        blocks = block.blocks,
+                        completion = completion,
+                        videoProgress = videoProgress,
+                        onModuleClick = onModuleClick,
+                        onModuleLongClick = onModuleLongClick,
+                    )
+                }
+            }
+        }
     }
 }
 
@@ -294,6 +318,7 @@ private fun GroupBlock(
     completion: Map<Int, CompletionState>,
     videoProgress: Map<Int, VideoProgress>,
     onModuleClick: (CourseModule) -> Unit,
+    onModuleLongClick: (CourseModule) -> Unit,
 ) {
     val scheme = MaterialTheme.colorScheme
     Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
@@ -331,22 +356,13 @@ private fun GroupBlock(
                 progress = module.kalvidresCmIdOrNull()?.let { videoProgress[it] },
                 done = completion[module.cmId]?.isCompleted == true,
                 onClick = { onModuleClick(module) },
+                onLongClick = { onModuleLongClick(module) },
             )
         }
     }
 }
 
-// The signature M3 Expressive grouped-list silhouette: big corners cap the run,
-// small corners knit the inner seams together.
-private fun stackShape(index: Int, count: Int): RoundedCornerShape {
-    val big = 16.dp
-    val small = 5.dp
-    val top = if (index == 0) big else small
-    val bottom = if (index == count - 1) big else small
-    return RoundedCornerShape(topStart = top, topEnd = top, bottomEnd = bottom, bottomStart = bottom)
-}
-
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalFoundationApi::class)
 @Composable
 private fun ModuleRow(
     module: CourseModule,
@@ -354,24 +370,46 @@ private fun ModuleRow(
     progress: VideoProgress?,
     done: Boolean,
     onClick: () -> Unit,
+    onLongClick: () -> Unit,
 ) {
     val scheme = MaterialTheme.colorScheme
     val watched = progress?.completed == true
     val watchingFraction = progress
         ?.takeIf { !it.completed && it.progressFraction > 0.01f }
         ?.progressFraction
+    val locked = !module.accessible
+    // Teacher-visible but gated for this user: show the restriction reason instead of the
+    // usual meta, but keep the row tappable (e.g. a password-protected Webex unlocks in the
+    // browser). A description preview surfaces lecture syllabi / deadlines stated in the body.
+    // Kept as raw HTML so links in the description stay tappable (forum deadlines, Meet/GitHub
+    // links). Rendered compactly and line-limited so video syllabi don't bloat the row.
+    val descriptionHtml = remember(module) {
+        module.description?.takeIf { it.containsRenderableHtml() }
+    }
+    val restriction = remember(module) {
+        module.availabilityInfo?.htmlToPlainText()?.takeIf { it.isNotBlank() }
+    }
+    // Subsection placeholders carry indent on their children; for normal rows honour the
+    // teacher's visual nesting.
+    val indentPadding = (module.indent.coerceIn(0, 4) * 14).dp
     Surface(
-        onClick = onClick,
         shape = shape,
         color = scheme.surfaceContainerLowest,
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .combinedClickable(onClick = onClick, onLongClick = onLongClick),
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+            modifier = Modifier.padding(
+                start = 12.dp + indentPadding,
+                end = 12.dp,
+                top = 10.dp,
+                bottom = 10.dp,
+            ),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            ModuleBadge(module = module, done = done || watched)
+            ModuleBadge(module = module, done = done || watched, locked = locked)
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = module.name.stripCopySuffix(),
@@ -383,12 +421,26 @@ private fun ModuleRow(
                 )
                 Spacer(Modifier.height(1.dp))
                 Text(
-                    text = moduleMeta(module, progress),
+                    text = restriction?.let { "🔒 $it" } ?: moduleMeta(module, progress),
                     style = MaterialTheme.typography.labelSmall,
-                    color = if (watched) scheme.primary else scheme.onSurfaceVariant,
-                    maxLines = 1,
+                    color = when {
+                        locked -> scheme.onSurfaceVariant
+                        watched -> scheme.primary
+                        else -> scheme.onSurfaceVariant
+                    },
+                    maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
                 )
+                if (descriptionHtml != null && !locked) {
+                    Spacer(Modifier.height(2.dp))
+                    HtmlBody(
+                        html = descriptionHtml,
+                        color = scheme.onSurfaceVariant,
+                        style = MaterialTheme.typography.labelSmall,
+                        maxLines = 3,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
                 if (watchingFraction != null) {
                     LinearWavyProgressIndicator(
                         progress = { watchingFraction },
@@ -403,10 +455,11 @@ private fun ModuleRow(
 }
 
 @Composable
-private fun ModuleBadge(module: CourseModule, done: Boolean) {
+private fun ModuleBadge(module: CourseModule, done: Boolean, locked: Boolean = false) {
     val scheme = MaterialTheme.colorScheme
     val family = module.family()
     val (bg, fg) = when {
+        locked -> scheme.surfaceContainerHigh to scheme.onSurfaceVariant
         done -> scheme.primary to scheme.onPrimary
         family == ModuleFamily.Media -> scheme.primaryContainer to scheme.onPrimaryContainer
         family == ModuleFamily.Document -> scheme.secondaryContainer to scheme.onSecondaryContainer
@@ -421,7 +474,11 @@ private fun ModuleBadge(module: CourseModule, done: Boolean) {
         contentAlignment = Alignment.Center,
     ) {
         Icon(
-            imageVector = if (done) Icons.Filled.Check else module.icon(),
+            imageVector = when {
+                locked -> Icons.Outlined.Lock
+                done -> Icons.Filled.Check
+                else -> module.icon()
+            },
             contentDescription = null,
             tint = fg,
             modifier = Modifier.size(20.dp),
@@ -432,12 +489,15 @@ private fun ModuleBadge(module: CourseModule, done: Boolean) {
 private enum class ModuleFamily { Media, Document, Interactive, Neutral }
 
 private fun CourseModule.family(): ModuleFamily = when {
-    isVideo() -> ModuleFamily.Media
+    isVideo() || type == ModuleType.Webex -> ModuleFamily.Media
     type in setOf(ModuleType.Resource, ModuleType.Folder, ModuleType.Book, ModuleType.Page) ->
         ModuleFamily.Document
     type in setOf(
         ModuleType.Quiz, ModuleType.Assign, ModuleType.Choice,
         ModuleType.Workshop, ModuleType.Lesson, ModuleType.Feedback,
+        ModuleType.Wooclap, ModuleType.Lti, ModuleType.Reservation,
+        ModuleType.ChoiceGroup, ModuleType.Database, ModuleType.Attendance,
+        ModuleType.Scheduler,
     ) -> ModuleFamily.Interactive
     else -> ModuleFamily.Neutral
 }
@@ -451,13 +511,20 @@ private fun CourseModule.icon(): ImageVector = when {
     type == ModuleType.Resource -> resourceIcon()
     type == ModuleType.Quiz -> Icons.Outlined.Quiz
     type == ModuleType.Assign -> Icons.AutoMirrored.Outlined.Assignment
-    type == ModuleType.Forum -> Icons.Outlined.Forum
+    type == ModuleType.Forum || type == ModuleType.HsuForum -> Icons.Outlined.Forum
     type == ModuleType.Url -> Icons.Outlined.Link
     type == ModuleType.Folder -> Icons.Outlined.Folder
     type == ModuleType.Page -> Icons.AutoMirrored.Outlined.Article
     type == ModuleType.Book -> Icons.Outlined.Book
     type == ModuleType.Lesson -> Icons.Outlined.School
-    type == ModuleType.Choice -> Icons.Outlined.Poll
+    type == ModuleType.Choice || type == ModuleType.Feedback -> Icons.Outlined.Poll
+    type == ModuleType.Wooclap -> Icons.Outlined.Poll
+    type == ModuleType.Webex -> Icons.Outlined.Videocam
+    type == ModuleType.Lti -> Icons.Outlined.Extension
+    type == ModuleType.Reservation || type == ModuleType.Scheduler -> Icons.Outlined.EventAvailable
+    type == ModuleType.ChoiceGroup -> Icons.Outlined.Groups
+    type == ModuleType.Database -> Icons.Outlined.Storage
+    type == ModuleType.Attendance -> Icons.AutoMirrored.Outlined.FactCheck
     else -> Icons.AutoMirrored.Outlined.HelpOutline
 }
 
@@ -472,43 +539,70 @@ private fun CourseModule.resourceIcon(): ImageVector {
     }
 }
 
-private fun moduleMeta(module: CourseModule, progress: VideoProgress?): String = when {
-    module.isVideo() -> when {
-        progress?.completed == true -> "Guardato"
-        progress != null && progress.progressFraction > 0.01f ->
-            "Visto al ${(progress.progressFraction * 100).roundToInt()}%"
-        else -> "Video"
+private fun moduleMeta(module: CourseModule, progress: VideoProgress?): String {
+    val base = when {
+        module.isVideo() -> when {
+            progress?.completed == true -> "Guardato"
+            progress != null && progress.progressFraction > 0.01f ->
+                "Visto al ${(progress.progressFraction * 100).roundToInt()}%"
+            else -> "Video"
+        }
+        module.type == ModuleType.Resource -> {
+            val mimeLabel = mimeShortLabel(module.contents.firstOrNull()?.mimeType)
+            val size = module.contents.sumOf { it.sizeBytes ?: 0L }.takeIf { it > 0 }?.let(::formatBytes)
+            listOfNotNull(mimeLabel, size).joinToString(" · ")
+        }
+        // Deadlines now come from dates[] keyed by dataId, so Italian-labelled deadlines
+        // ("Data limite:", "Chiuso:") surface where the old English-substring match dropped them.
+        module.type == ModuleType.Quiz -> withDeadline("Quiz", module.dueAt)
+        module.type == ModuleType.Assign -> withDeadlineOrOpen("Compito", module)
+        module.type == ModuleType.Folder -> {
+            val files = module.contents.size.takeIf { it > 0 }
+            if (files != null) "Cartella · $files file" else "Cartella"
+        }
+        module.type == ModuleType.Forum || module.type == ModuleType.HsuForum -> "Forum"
+        module.type == ModuleType.Url -> "Link"
+        module.type == ModuleType.Page -> "Pagina"
+        module.type == ModuleType.Book -> "Libro"
+        module.type == ModuleType.Lesson -> "Lezione"
+        module.type == ModuleType.Choice -> withDeadline("Sondaggio", module.dueAt)
+        module.type == ModuleType.ChoiceGroup -> withDeadlineOrOpen("Scelta gruppo", module)
+        module.type == ModuleType.Wiki -> "Wiki"
+        module.type == ModuleType.Glossary -> "Glossario"
+        module.type == ModuleType.Workshop -> "Workshop"
+        module.type == ModuleType.Feedback -> withDeadline("Questionario", module.dueAt)
+        module.type == ModuleType.Wooclap -> "Wooclap"
+        module.type == ModuleType.Lti -> "Strumento esterno"
+        module.type == ModuleType.Reservation -> withDeadlineOrOpen("Prenotazione", module)
+        module.type == ModuleType.Webex -> "Webex"
+        module.type == ModuleType.Database -> "Database"
+        module.type == ModuleType.Attendance -> "Presenze"
+        module.type == ModuleType.Scheduler -> "Appuntamenti"
+        // Unknown type: prefer the server's plural label ("Open Forums", …) over a flat "Attività".
+        else -> module.typeLabel?.takeIf { it.isNotBlank() } ?: "Attività"
     }
-    module.type == ModuleType.Resource -> {
-        val mimeLabel = mimeShortLabel(module.contents.firstOrNull()?.mimeType)
-        val size = module.contents.sumOf { it.sizeBytes ?: 0L }.takeIf { it > 0 }?.let(::formatBytes)
-        listOfNotNull(mimeLabel, size).joinToString(" · ")
-    }
-    module.type == ModuleType.Quiz -> withDueDate("Quiz", module.dueAt)
-    module.type == ModuleType.Assign -> withDueDate("Compito", module.dueAt)
-    module.type == ModuleType.Folder -> {
-        val files = module.contents.size.takeIf { it > 0 }
-        if (files != null) "Cartella · $files file" else "Cartella"
-    }
-    module.type == ModuleType.Forum -> "Forum"
-    module.type == ModuleType.Url -> "Link"
-    module.type == ModuleType.Page -> "Pagina"
-    module.type == ModuleType.Book -> "Libro"
-    module.type == ModuleType.Lesson -> "Lezione"
-    module.type == ModuleType.Choice -> "Sondaggio"
-    module.type == ModuleType.Wiki -> "Wiki"
-    module.type == ModuleType.Glossary -> "Glossario"
-    module.type == ModuleType.Workshop -> "Workshop"
-    module.type == ModuleType.Feedback -> "Questionario"
-    else -> "Attività"
+    // Forum unread counts (and similar afterlink badges) are worth surfacing; resource upload
+    // metadata is noise, so only forums carry it through.
+    val badge = module.afterLink
+        ?.takeIf { module.type == ModuleType.Forum || module.type == ModuleType.HsuForum }
+        ?.takeIf { it.length <= 30 }
+    return if (badge != null) "$base · $badge" else base
 }
 
-private val DUE_DATE_FORMAT = DateTimeFormatter.ofPattern("d MMM", Locale.ITALIAN)
+private val DEADLINE_FORMAT = DateTimeFormatter.ofPattern("d MMM HH:mm", Locale.ITALIAN)
 
-private fun withDueDate(base: String, dueAt: Instant?): String {
-    if (dueAt == null) return base
-    val label = DUE_DATE_FORMAT.format(dueAt.atZone(ZoneId.systemDefault()))
-    return if (dueAt.isBefore(Instant.now())) "$base · chiuso il $label" else "$base · scade il $label"
+private fun withDeadline(base: String, deadline: Instant?): String {
+    if (deadline == null) return base
+    val label = DEADLINE_FORMAT.format(deadline.atZone(ZoneId.systemDefault()))
+    return if (deadline.isBefore(Instant.now())) "$base · chiuso il $label" else "$base · entro il $label"
+}
+
+// Prefer a real deadline; fall back to the opening date when that's all the module exposes.
+private fun withDeadlineOrOpen(base: String, module: CourseModule): String {
+    module.dueAt?.let { return withDeadline(base, it) }
+    val opens = module.opensAt ?: return base
+    val label = DEADLINE_FORMAT.format(opens.atZone(ZoneId.systemDefault()))
+    return if (opens.isAfter(Instant.now())) "$base · dal $label" else base
 }
 
 private fun formatBytes(bytes: Long): String = when {

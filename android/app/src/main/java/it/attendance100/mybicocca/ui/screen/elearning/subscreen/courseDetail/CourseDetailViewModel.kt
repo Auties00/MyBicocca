@@ -105,6 +105,13 @@ class CourseDetailViewModel @AssistedInject constructor(
         .map { it.toSet() }
         .stateIn(viewModelScope, SharingStarted.Eagerly, emptySet())
 
+    // The Quiz tab reuses the Contenuti expandable-card pattern but keys groups by section id
+    // independently, so expanding a quiz card never leaks into the Contenuti tab.
+    val expandedQuizGroups: StateFlow<Set<Int>> = savedState
+        .getStateFlow(KEY_QUIZ_EXPANDED, emptyList<Int>())
+        .map { it.toSet() }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, emptySet())
+
     private val activeAccountId: Flow<AccountId?> = observeActiveAccount()
         .map { it?.id }
         .distinctUntilChanged()
@@ -227,10 +234,14 @@ class CourseDetailViewModel @AssistedInject constructor(
         savedState[KEY_TAB] = tab.name
     }
 
-    fun toggleSection(sectionId: Int) {
-        val current = (savedState.get<List<Int>>(KEY_EXPANDED) ?: emptyList()).toMutableSet()
-        if (!current.add(sectionId)) current.remove(sectionId)
-        savedState[KEY_EXPANDED] = current.toList()
+    fun toggleSection(sectionId: Int) = toggleExpansion(KEY_EXPANDED, sectionId)
+
+    fun toggleQuizGroup(groupKey: Int) = toggleExpansion(KEY_QUIZ_EXPANDED, groupKey)
+
+    private fun toggleExpansion(stateKey: String, id: Int) {
+        val current = (savedState.get<List<Int>>(stateKey) ?: emptyList()).toMutableSet()
+        if (!current.add(id)) current.remove(id)
+        savedState[stateKey] = current.toList()
     }
 
     fun onSetActivityCompleted(cmId: Int, completed: Boolean) {
@@ -305,13 +316,23 @@ class CourseDetailViewModel @AssistedInject constructor(
         oneShotChannel.trySend(CourseDetailOneShotEvent.OpenModuleResource(url))
     }
 
+    fun emitOpenLink(title: String, url: String) {
+        oneShotChannel.trySend(CourseDetailOneShotEvent.OpenLink(title, url))
+    }
+
     fun emitOpenVideo(cmId: Int, title: String) {
         oneShotChannel.trySend(CourseDetailOneShotEvent.OpenVideo(cmId, title))
     }
 
-    fun emitOpenFile(fileName: String, fileUrl: String, mimeType: String?, sizeBytes: Long?) {
+    fun emitOpenFile(
+        fileName: String,
+        fileUrl: String,
+        mimeType: String?,
+        sizeBytes: Long?,
+        forceChooser: Boolean = false,
+    ) {
         oneShotChannel.trySend(
-            CourseDetailOneShotEvent.OpenFile(fileName, fileUrl, mimeType, sizeBytes),
+            CourseDetailOneShotEvent.OpenFile(fileName, fileUrl, mimeType, sizeBytes, forceChooser),
         )
     }
 
@@ -323,6 +344,7 @@ class CourseDetailViewModel @AssistedInject constructor(
         const val KEY_COURSE_ID = "courseId"
         const val KEY_TAB = "course_detail_tab"
         const val KEY_EXPANDED = "course_detail_expanded"
+        const val KEY_QUIZ_EXPANDED = "course_detail_quiz_expanded"
         const val STATE_KEEP_ALIVE_MS = 5_000L
     }
 }

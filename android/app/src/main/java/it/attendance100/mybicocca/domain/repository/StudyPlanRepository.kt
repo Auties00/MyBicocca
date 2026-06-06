@@ -5,11 +5,9 @@ import it.attendance100.mybicocca.domain.model.studyplan.EditableRule
 import it.attendance100.mybicocca.domain.model.studyplan.PlannedCourse
 import it.attendance100.mybicocca.domain.model.studyplan.StudyPath
 import it.attendance100.mybicocca.domain.model.studyplan.StudyPlan
-import it.attendance100.mybicocca.domain.model.studyplan.StudyYear
 
 interface StudyPlanRepository {
     suspend fun getPlannedCoursesForActiveCareer(careerId: CareerId): List<PlannedCourse>
-    suspend fun getActivityYearByCodeForCareer(careerId: CareerId): Map<String, StudyYear>
 
     // The student's chosen plan (approved if present, else the most recent) with its
     // in-plan activities, or null when the career has no plan. Throws on network failure.

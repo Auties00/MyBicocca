@@ -221,7 +221,7 @@ fun QuestionnaireCompilationScreen(
                 is QuestionnaireCompilationStep.StartFailed -> EmptyState(
                     icon = Icons.Outlined.CloudOff,
                     title = "Impossibile iniziare",
-                    body = "Il questionario non può essere avviato in questo momento. Riprova.",
+                    body = "Il questionario non può essere avviato in questo momento",
                     action = {
                         FilledTonalButton(onClick = viewModel::retryStart) { Text("Riprova") }
                     },

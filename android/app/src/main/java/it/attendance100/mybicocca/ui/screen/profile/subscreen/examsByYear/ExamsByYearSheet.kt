@@ -60,7 +60,7 @@ import it.attendance100.mybicocca.ui.component.modal.PredictiveModalBottomSheet
 import it.attendance100.mybicocca.ui.screen.profile.subscreen.courseDetail.CourseDetailSheet
 import it.attendance100.mybicocca.ui.screen.registry.state.RegistryBadgeTone
 import it.attendance100.mybicocca.ui.screen.registry.theme.registryBadgeTone
-import it.attendance100.mybicocca.util.rememberHapticManager
+import it.attendance100.mybicocca.core.os.rememberHapticManager
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 

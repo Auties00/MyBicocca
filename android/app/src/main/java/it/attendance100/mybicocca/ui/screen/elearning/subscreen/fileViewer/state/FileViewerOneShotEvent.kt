@@ -9,6 +9,9 @@ sealed interface FileViewerOneShotEvent {
     // Hand the downloaded file to an external app via FileProvider + ACTION_VIEW.
     data class OpenWithExternalApp(val localPath: String, val mimeType: String?) : FileViewerOneShotEvent
 
+    // Share the downloaded file via the Android share sheet (FileProvider + ACTION_SEND).
+    data class ShareFile(val localPath: String, val fileName: String, val mimeType: String?) : FileViewerOneShotEvent
+
     // A zip entry was extracted; navigate to a nested viewer for it.
     data class OpenExtractedFile(
         val fileName: String,

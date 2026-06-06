@@ -11,7 +11,10 @@ import java.time.Instant
 
 internal fun ElearningCalendarEvent.toDeadlineEntity(accountId: AccountId): DeadlineEntity? {
     val courseId = course?.id ?: return null
-    val instanceId = instance ?: return null
+    // Despite the name, the exported `instance` is the course-module id; the repository
+    // rewrites it to the real module instance id before persisting (see
+    // ElearningCourseRepositoryImpl.resolveDeadlineInstanceIds).
+    val cmId = instance ?: return null
     val module = moduleName?.lowercase() ?: return null
     val kind = when (module) {
         "assign" -> DeadlineEntity.Kind.ASSIGNMENT
@@ -24,7 +27,7 @@ internal fun ElearningCalendarEvent.toDeadlineEntity(accountId: AccountId): Dead
         eventId = id,
         courseId = courseId,
         kind = kind,
-        instanceId = instanceId,
+        instanceId = cmId,
         title = name,
         dueAtMs = dueAtSec * 1000L,
     )

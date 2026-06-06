@@ -24,6 +24,7 @@ import androidx.compose.ui.graphics.Matrix
 import androidx.compose.ui.graphics.Outline
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.asComposePath
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
@@ -32,9 +33,15 @@ import androidx.graphics.shapes.toPath
 
 // The app's selection knob (Piano di Studi language): a circle that morphs into the
 // sunny shape when checked, washing to the brand red with explicit white content.
+// `uncheckedIcon = null` leaves the resting circle empty — radio-like, for single-choice
+// pickers where "+" would wrongly read as "add".
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-fun MorphKnob(checked: Boolean, modifier: Modifier = Modifier) {
+fun MorphKnob(
+    checked: Boolean,
+    modifier: Modifier = Modifier,
+    uncheckedIcon: ImageVector? = Icons.Default.Add,
+) {
     val scheme = MaterialTheme.colorScheme
     val motion = MaterialTheme.motionScheme
     val morph = remember { Morph(MaterialShapes.Circle, MaterialShapes.Sunny) }
@@ -56,12 +63,15 @@ fun MorphKnob(checked: Boolean, modifier: Modifier = Modifier) {
             .background(container),
         contentAlignment = Alignment.Center,
     ) {
-        Icon(
-            imageVector = if (checked) Icons.Default.Check else Icons.Default.Add,
-            contentDescription = null,
-            tint = if (checked) Color.White else scheme.onSurfaceVariant,
-            modifier = Modifier.size(16.dp),
-        )
+        val icon = if (checked) Icons.Default.Check else uncheckedIcon
+        if (icon != null) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = if (checked) Color.White else scheme.onSurfaceVariant,
+                modifier = Modifier.size(16.dp),
+            )
+        }
     }
 }
 

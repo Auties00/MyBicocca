@@ -29,6 +29,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontStyle
@@ -215,9 +216,12 @@ private fun DraftBadge() {
 // Real Bicocca data: quizzes are self-assessment batteries (221/222 surveyed allow unlimited
 // attempts, almost none have open/close windows), so the row's identity is completion state,
 // not deadlines. Completion comes from the course module completion map keyed by cmId.
+// Rows render inside the tab's expandable section cards, so they sit on surfaceContainerLowest
+// with the stacked-run shape the caller assigns — mirroring ModuleRow, not standalone cards.
 @Composable
 fun QuizRow(
     quiz: Quiz,
+    shape: Shape,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     completed: Boolean = false,
@@ -230,8 +234,8 @@ fun QuizRow(
     val closingSoon = !locked && !completed && quiz.timeClose != null &&
         Duration.between(now, quiz.timeClose).toHours() < DUE_SOON_HOURS
     Surface(
-        shape = RoundedCornerShape(22.dp),
-        color = scheme.surfaceContainerLow,
+        shape = shape,
+        color = scheme.surfaceContainerLowest,
         modifier = modifier
             .fillMaxWidth()
             .clickable(onClick = onClick),

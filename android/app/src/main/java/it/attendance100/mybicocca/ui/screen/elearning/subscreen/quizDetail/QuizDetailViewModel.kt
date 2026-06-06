@@ -107,6 +107,14 @@ class QuizDetailViewModel @AssistedInject constructor(
                 runRefresh(id)
             }
         }
+        // The overview lives in the sheet; this view model only ever backs the full-screen
+        // attempt/review, so it kicks off the requested action immediately. A base key (no
+        // action set, used by the sheet's own instance) leaves it idle.
+        when {
+            key.startNew -> onStartAttempt()
+            key.resumeAttemptId != null -> resumeAttempt(AttemptId(key.resumeAttemptId))
+            key.reviewAttemptId != null -> viewReview(AttemptId(key.reviewAttemptId))
+        }
     }
 
     private suspend fun runRefresh(accountId: AccountId) {

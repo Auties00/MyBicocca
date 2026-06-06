@@ -21,5 +21,5 @@ fun Throwable.taxFriendlyMessage(): String = when (this) {
     is ConnectException -> "Rete non disponibile. Controlla la connessione e riprova."
     is SocketTimeoutException -> "Timeout di rete. Riprova tra un momento."
     is IOException -> "Errore di rete. Riprova tra un momento."
-    else -> "Si è verificato un errore imprevisto. Riprova."
+    else -> "Si è verificato un errore imprevisto"
 }

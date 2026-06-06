@@ -14,18 +14,19 @@ import android.view.WindowManager
 import android.view.animation.AccelerateInterpolator
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
 import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.platform.LocalView
 import androidx.core.animation.doOnEnd
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.splashscreen.SplashScreenViewProvider
 import androidx.core.view.WindowCompat
-import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
@@ -47,10 +48,13 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-// FragmentActivity (a ComponentActivity subclass) is required by androidx.biometric's
-// BiometricPrompt; Compose setContent, edge-to-edge, splash, PiP, and Hilt are unaffected.
+// AppCompatActivity for two reasons: it extends FragmentActivity (required by
+// androidx.biometric's BiometricPrompt), and AppCompatDelegate.setApplicationLocales only
+// applies in-app locales to AppCompat activities on pre-Android-13 — with a plain
+// FragmentActivity the language switch there only took effect on the next launch.
+// Compose setContent, edge-to-edge, splash, PiP, and Hilt are unaffected.
 @AndroidEntryPoint
-class MyBicoccaActivity : FragmentActivity() {
+class MyBicoccaActivity : AppCompatActivity() {
 
     @Inject
     lateinit var sessionManager: SessionManager
@@ -63,12 +67,23 @@ class MyBicoccaActivity : FragmentActivity() {
 
     private val pipController = object : PipController {
         private var state: PipState? = null
+        val inPip = mutableStateOf(false)
         override fun setActive(state: PipState?) {
             this.state = state
         }
 
         override fun currentState(): PipState? = state
-        override fun enterPipNow(): Boolean = tryEnterPip()
+        // The button works for any file; auto-enter (onUserLeaveHint) needs playing media.
+        override fun enterPipNow(): Boolean = tryEnterPip(requirePlaying = false)
+        override val isInPip get() = inPip
+    }
+
+    override fun onPictureInPictureModeChanged(
+        isInPictureInPictureMode: Boolean,
+        newConfig: android.content.res.Configuration,
+    ) {
+        super.onPictureInPictureModeChanged(isInPictureInPictureMode, newConfig)
+        pipController.inPip.value = isInPictureInPictureMode
     }
 
     @OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
@@ -133,20 +148,27 @@ class MyBicoccaActivity : FragmentActivity() {
 
     override fun onUserLeaveHint() {
         super.onUserLeaveHint()
-        tryEnterPip()
+        // Auto-enter only for playing media (video/audio), never for static files.
+        tryEnterPip(requirePlaying = true)
     }
 
-    private fun tryEnterPip(): Boolean {
+    private fun tryEnterPip(requirePlaying: Boolean): Boolean {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return false
 
-        val state = pipController.currentState() ?: return false
-        if (!state.isPlaying) return false
+        val state = pipController.currentState()
+        if (requirePlaying && state?.isPlaying != true) return false
 
         return runCatching {
-            val ratio = Rational(
-                state.aspectNumerator.coerceAtLeast(1),
-                state.aspectDenominator.coerceAtLeast(1),
-            )
+            // Use the content aspect when known (media); a portrait default otherwise so a
+            // document/image still pops out at a sensible size.
+            val ratio = if (state != null) {
+                Rational(
+                    state.aspectNumerator.coerceAtLeast(1),
+                    state.aspectDenominator.coerceAtLeast(1),
+                )
+            } else {
+                Rational(2, 3)
+            }
             enterPictureInPictureMode(
                 PictureInPictureParams.Builder()
                     .setAspectRatio(ratio)

@@ -20,9 +20,11 @@ import it.attendance100.mybicocca.domain.model.map.MapRoomDetail
 import it.attendance100.mybicocca.domain.model.map.RoomScheduleEntry
 import it.attendance100.mybicocca.domain.repository.MapRepository
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.withContext
 import java.time.LocalDate
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -57,19 +59,32 @@ class MapRepositoryImpl @Inject constructor(
         if (catalog.isNotEmpty()) buildingDao.upsertAll(catalog.map { it.toEntity() })
     }
 
+    // The EasyStaff client parses responses on the caller's dispatcher (Jsoup over a multi-
+    // hundred-KB showcase page, JSON decoding of a full day of events), and these are invoked
+    // from viewModelScope — i.e. the main thread, right while the detail modal animates in.
+    // Every remote call below therefore hops to Dispatchers.Default for the fetch+parse+map
+    // pipeline; network suspension releases the worker, only the parsing occupies it.
+
     override suspend fun refreshRooms(buildingCode: BuildingCode) {
         if (!isRoomsStale(buildingCode)) return
         val building = EasyStaffBuilding(code = buildingCode.value, name = "")
-        // One bulk showcase call resolves every room's floor up front — each card carries its own
-        // room code, so the mapping is unambiguous. Best-effort: a parse failure costs floors only.
-        val floorByRoomCode = runCatching {
-            easyStaffApi.buildings.getRoomDetails(listOf(building))
-                .mapNotNull { detail -> detail.roomCode?.let { it to detail.floor } }
-                .toMap()
-        }.getOrDefault(emptyMap())
-        val rooms = easyStaffApi.buildings.getRooms(building)
-            .filter { it.code != EasyStaffRoom.FILTER_ALLOW_ALL.code }
-            .map { it.toDomain(buildingCode, floorByRoomCode[it.code]) }
+        val rooms = withContext(Dispatchers.Default) {
+            // One bulk showcase call resolves every room's floor up front — each card carries its
+            // own room code, so the mapping is unambiguous, and it is independent of the rooms
+            // call, so the two run concurrently. Best-effort: a parse failure costs floors only.
+            val floorByRoomCodeDeferred = async {
+                runCatching {
+                    easyStaffApi.buildings.getRoomDetails(listOf(building))
+                        .mapNotNull { detail -> detail.roomCode?.let { it to detail.floor } }
+                        .toMap()
+                }.getOrDefault(emptyMap())
+            }
+            val remoteRooms = easyStaffApi.buildings.getRooms(building)
+            val floorByRoomCode = floorByRoomCodeDeferred.await()
+            remoteRooms
+                .filter { it.code != EasyStaffRoom.FILTER_ALLOW_ALL.code }
+                .map { it.toDomain(buildingCode, floorByRoomCode[it.code]) }
+        }
         roomDao.replaceForBuilding(buildingCode.value, rooms.map { it.toEntity() })
         syncStateDao.upsertState(MapRoomSyncStateEntity(buildingCode.value, now()))
     }
@@ -79,16 +94,20 @@ class MapRepositoryImpl @Inject constructor(
         val easyRoom = EasyStaffRoom(code = room.code.value, name = room.name)
         // Querying one room at a time makes the returned showcase card unambiguously this room's
         // — EasyStaff's room detail DTO carries no room identity of its own.
-        return easyStaffApi.buildings.getRoomDetails(listOf(building), listOf(easyRoom))
-            .firstOrNull()
-            ?.toDomain()
+        return withContext(Dispatchers.Default) {
+            easyStaffApi.buildings.getRoomDetails(listOf(building), listOf(easyRoom))
+                .firstOrNull()
+                ?.toDomain()
+        }
     }
 
     override suspend fun loadDaySchedule(buildingCode: BuildingCode, date: LocalDate): List<RoomScheduleEntry> {
         val building = EasyStaffBuilding(code = buildingCode.value, name = "")
-        return easyStaffApi.buildings.getBuildingOccupation(building, date)
-            .filter { it.status == EasyStaffBookingStatus.CONFIRMED }
-            .map { it.toDomain() }
+        return withContext(Dispatchers.Default) {
+            easyStaffApi.buildings.getBuildingOccupation(building, date)
+                .filter { it.status == EasyStaffBookingStatus.CONFIRMED }
+                .map { it.toDomain() }
+        }
     }
 
     private suspend fun isRoomsStale(buildingCode: BuildingCode): Boolean {

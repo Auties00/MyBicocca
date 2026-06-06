@@ -29,6 +29,27 @@ sealed interface FileKind {
     data class Office(val app: OfficeApp) : FileKind
     data object Unknown : FileKind
 
+    // Kinds with a real in-app viewer; the rest (pdf, office, unknown) only hand off externally,
+    // so they never get the in-app-vs-external chooser.
+    val supportsInApp: Boolean
+        get() = when (this) {
+            Pdf, Image, Video, Audio, Html, Text, Zip -> true
+            is Office, Unknown -> false
+        }
+
+    // Stable per-kind key for remembering the user's in-app/external open choice.
+    val preferenceKey: String?
+        get() = when (this) {
+            Pdf -> "pdf"
+            Image -> "image"
+            Video -> "video"
+            Audio -> "audio"
+            Html -> "html"
+            Text -> "text"
+            Zip -> "zip"
+            else -> null
+        }
+
     companion object {
         fun classify(fileName: String?, mimeType: String?): FileKind {
             val mime = mimeType.orEmpty().lowercase(Locale.ROOT)

@@ -199,6 +199,8 @@ data class ElearningFile(
  * @property hiddenByNumberOfSections Whether hidden due to section limit.
  * @property userVisible Whether the section is visible to the current user.
  * @property availabilityInfo Information about availability restrictions.
+ * @property component The plugin that owns this section, when delegated (e.g. "mod_subsection").
+ * @property itemId For a delegated section, the owning module instance id it belongs to.
  * @property modules List of modules (activities) in this section.
  */
 @Serializable
@@ -221,6 +223,10 @@ data class ElearningCourseSection(
     val userVisible: Boolean? = null,
     @SerialName("availabilityinfo")
     val availabilityInfo: String? = null,
+    @SerialName("component")
+    val component: String? = null,
+    @SerialName("itemid")
+    val itemId: Int? = null,
     @SerialName("modules")
     val modules: List<ElearningCourseModule> = emptyList()
 )

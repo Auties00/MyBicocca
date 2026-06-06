@@ -21,7 +21,6 @@ import androidx.compose.material.icons.outlined.School
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
-import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -55,6 +54,7 @@ import it.attendance100.mybicocca.ui.screen.elearning.component.HomeFilterBar
 import it.attendance100.mybicocca.ui.screen.elearning.component.NotebookCard
 import it.attendance100.mybicocca.domain.model.elearning.course.CourseFilter
 import it.attendance100.mybicocca.ui.screen.elearning.state.ElearningOneShotEvent
+import it.attendance100.mybicocca.ui.screen.elearning.state.InitialFetchState
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.addCourse.AddCourseSheet
 import it.attendance100.mybicocca.ui.screen.elearning.theme.LocalCourseAccentPalette
 import it.attendance100.mybicocca.ui.screen.elearning.theme.ProvideCourseAccentPalette
@@ -83,6 +83,7 @@ fun ElearningScreen(
     val syncStatus by viewModel.syncStatus.collectAsStateWithLifecycle()
     val filter by viewModel.filter.collectAsStateWithLifecycle()
     val studyYears by viewModel.availableStudyYears.collectAsStateWithLifecycle()
+    val initialFetch by viewModel.initialFetch.collectAsStateWithLifecycle()
 
     val snackbar = LocalAppSnackbarController.current
     val coroutineScope = rememberCoroutineScope()
@@ -107,11 +108,15 @@ fun ElearningScreen(
     ProvideCourseAccentPalette {
         Box(modifier = modifier.fillMaxSize()) {
             Column(modifier = Modifier.fillMaxSize()) {
-                HomeFilterBar(
-                    selected = filter,
-                    studyYears = studyYears,
-                    onSelect = viewModel::setFilter,
-                )
+                // Filter bar appears only once there is cached data to filter; during the
+                // first load or a cold-cache error the whole tab is the loading/error state.
+                if (initialFetch is InitialFetchState.Settled) {
+                    HomeFilterBar(
+                        selected = filter,
+                        studyYears = studyYears,
+                        onSelect = viewModel::setFilter,
+                    )
+                }
 
                 PullToRefreshBox(
                     isRefreshing = syncStatus is SyncStatus.Refreshing,
@@ -119,31 +124,36 @@ fun ElearningScreen(
                     state = pullState,
                     modifier = Modifier.fillMaxSize(),
                 ) {
-                    val data = visibleCourses
-                    val failure = syncStatus as? SyncStatus.Failed
-                    when {
-                        data is Loadable.Loaded && data.value.isNotEmpty() -> CourseList(
-                            groups = data.value,
-                            listState = listState,
-                            onOpenCourse = viewModel::openCourse,
-                            onOpenDeadline = viewModel::openDeadline,
-                            onToggleGroupFavourite = viewModel::toggleGroupFavourite,
-                        )
-                        failure != null -> RefreshableEmpty {
-                            ErrorEmptyState(
-                                cause = failure.cause,
-                                onRetry = viewModel::pullToRefresh,
-                                modifier = Modifier.fillMaxSize(),
-                            )
-                        }
-                        data is Loadable.Loaded -> RefreshableEmpty {
-                            EmptyStateForCurrentFilter(
-                                filterActive = filter !is CourseFilter.All,
-                                modifier = Modifier.fillMaxSize(),
-                            )
-                        }
-                        else -> RefreshableEmpty {
+                    when (val initial = initialFetch) {
+                        InitialFetchState.InProgress -> RefreshableEmpty {
                             ElearningLoadingState(modifier = Modifier.fillMaxSize())
+                        }
+                        is InitialFetchState.Failed -> RefreshableEmpty {
+                            ErrorEmptyState(
+                                cause = initial.cause,
+                                modifier = Modifier.fillMaxSize(),
+                            )
+                        }
+                        InitialFetchState.Settled -> {
+                            val data = visibleCourses
+                            when {
+                                data is Loadable.Loaded && data.value.isNotEmpty() -> CourseList(
+                                    groups = data.value,
+                                    listState = listState,
+                                    onOpenCourse = viewModel::openCourse,
+                                    onOpenDeadline = viewModel::openDeadline,
+                                    onToggleGroupFavourite = viewModel::toggleGroupFavourite,
+                                )
+                                data is Loadable.Loaded -> RefreshableEmpty {
+                                    EmptyStateForCurrentFilter(
+                                        filterActive = filter !is CourseFilter.All,
+                                        modifier = Modifier.fillMaxSize(),
+                                    )
+                                }
+                                else -> RefreshableEmpty {
+                                    ElearningLoadingState(modifier = Modifier.fillMaxSize())
+                                }
+                            }
                         }
                     }
                 }
@@ -302,10 +312,11 @@ private fun RefreshableEmpty(content: @Composable () -> Unit) {
     }
 }
 
+// No explicit retry action: the state sits inside the PullToRefreshBox, so the pull
+// gesture is the retry.
 @Composable
 private fun ErrorEmptyState(
     cause: Throwable,
-    onRetry: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     EmptyState(
@@ -313,11 +324,6 @@ private fun ErrorEmptyState(
         title = "Sincronizzazione non riuscita",
         body = cause.friendlyMessage(),
         modifier = modifier,
-        action = {
-            FilledTonalButton(onClick = onRetry) {
-                Text("Riprova")
-            }
-        },
     )
 }
 
@@ -326,5 +332,5 @@ private fun Throwable.friendlyMessage(): String = when (this) {
     is ConnectException -> "Rete non disponibile. Controlla la connessione e riprova."
     is SocketTimeoutException -> "Timeout di rete. Riprova tra un momento."
     is IOException -> "Errore di rete. Riprova tra un momento."
-    else -> "Si è verificato un errore imprevisto. Riprova."
+    else -> "Si è verificato un errore imprevisto"
 }

@@ -36,6 +36,7 @@ fun AttachmentTile(
     onOpen: () -> Unit,
     isLast: Boolean,
     modifier: Modifier = Modifier,
+    isFirst: Boolean = false,
 ) {
     val scheme = MaterialTheme.colorScheme
     val extension = file.fileName.substringAfterLast('.', missingDelimiterValue = "")
@@ -45,7 +46,7 @@ fun AttachmentTile(
         modifier = modifier.fillMaxWidth(),
         color = scheme.surfaceContainer,
         contentColor = scheme.onSurface,
-        shape = segmentShape(isFirst = false, isLast = isLast),
+        shape = segmentShape(isFirst = isFirst, isLast = isLast),
     ) {
         Row(
             modifier = Modifier.padding(start = 12.dp, end = 14.dp, top = 12.dp, bottom = 12.dp),

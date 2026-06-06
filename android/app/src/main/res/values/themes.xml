@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.MyBicocca" parent="android:Theme.Material.Light.NoActionBar">
+    <!-- AppCompat parent (not platform Material): MyBicoccaActivity is an AppCompatActivity
+         so AppCompatDelegate.setApplicationLocales can apply in-app locales pre-Android 13. -->
+    <style name="Theme.MyBicocca" parent="Theme.AppCompat.Light.NoActionBar">
         <item name="android:windowBackground">@color/launcher_background</item>
         <item name="android:statusBarColor">@color/launcher_background</item>
         <item name="android:windowLightStatusBar">false</item>

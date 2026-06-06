@@ -745,7 +745,7 @@ private fun Throwable.friendlyMessage(): String = when (this) {
 
     is SocketTimeoutException -> "Timeout di rete. Riprova tra un momento."
     is IOException -> "Errore di rete. Riprova tra un momento."
-    else -> "Si è verificato un errore imprevisto. Riprova."
+    else -> "Si è verificato un errore imprevisto"
 }
 
 private fun StudyPlanType.label(): String = when (this) {

@@ -1,7 +1,9 @@
 package it.attendance100.mybicocca.ui.screen.elearning.subscreen.fileViewer.component
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.detectTransformGestures
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.calculateZoom
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -12,6 +14,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.selection.SelectionContainer
+import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -22,6 +25,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
@@ -36,6 +40,7 @@ import dev.snipme.highlights.Highlights
 import dev.snipme.highlights.model.BoldHighlight
 import dev.snipme.highlights.model.ColorHighlight
 import dev.snipme.highlights.model.SyntaxLanguage
+import dev.snipme.highlights.model.SyntaxTheme
 import dev.snipme.highlights.model.SyntaxThemes
 import it.attendance100.mybicocca.R
 import kotlinx.coroutines.Dispatchers
@@ -43,10 +48,11 @@ import kotlinx.coroutines.withContext
 import java.io.File
 import java.util.Locale
 
-// IntelliJ-flavored read-only code view: Darcula highlighting (Highlights engine),
-// JetBrains Mono, line-number gutter, shared horizontal scroll for long lines, pinch
-// zoom. Rendering one Text per line inside a LazyColumn keeps multi-thousand-line
-// sources virtualized instead of laying out one giant paragraph.
+// Read-only code view themed with the app's palette: the page surface, JetBrains Mono, a
+// line-number gutter, and syntax colours mapped onto the Material scheme (keyword = primary,
+// string = tertiary, …). One Text per line inside a LazyColumn keeps long sources virtualized.
+// Single-finger drags scroll (vertically through lines, horizontally through long lines); a
+// two-finger pinch scales the font without stealing those drags.
 @Composable
 fun CodeViewerContent(
     localPath: String,
@@ -54,9 +60,12 @@ fun CodeViewerContent(
     darkTheme: Boolean,
     modifier: Modifier = Modifier,
 ) {
-    val lines by produceState<List<AnnotatedString>?>(initialValue = null, localPath, darkTheme) {
+    val scheme = MaterialTheme.colorScheme
+    val syntaxTheme = remember(scheme) { appSyntaxTheme(scheme) }
+
+    val lines by produceState<List<AnnotatedString>?>(initialValue = null, localPath, syntaxTheme) {
         value = withContext(Dispatchers.Default) {
-            runCatching { highlightFile(localPath, fileName, darkTheme) }.getOrNull()
+            runCatching { highlightFile(localPath, fileName, syntaxTheme) }.getOrNull()
         }
     }
 
@@ -72,18 +81,29 @@ fun CodeViewerContent(
     val fontSize = (13 * fontScale).sp
     val lineHeight = (18 * fontScale).sp
     val gutterWidth = (12 + 9 * current.size.toString().length).dp
-    val background = if (darkTheme) Color(0xFF2B2B2B) else Color(0xFFFDFDFD)
-    val gutterColor = if (darkTheme) Color(0xFF606366) else Color(0xFFADADAD)
-    val codeColor = if (darkTheme) Color(0xFFA9B7C6) else Color(0xFF080808)
+    val codeColor = scheme.onSurface
+    val gutterColor = scheme.onSurfaceVariant.copy(alpha = 0.6f)
 
     SelectionContainer {
         LazyColumn(
             modifier = modifier
                 .fillMaxSize()
-                .background(background)
+                .background(scheme.surface)
+                // Pinch-to-zoom that does NOT consume single-finger drags, so the LazyColumn and
+                // the per-line horizontal scroll still pan the code that doesn't fit.
                 .pointerInput(Unit) {
-                    detectTransformGestures { _, _, zoom, _ ->
-                        fontScale = (fontScale * zoom).coerceIn(0.6f, 2.5f)
+                    awaitEachGesture {
+                        awaitFirstDown(requireUnconsumed = false)
+                        do {
+                            val event = awaitPointerEvent()
+                            if (event.changes.count { it.pressed } >= 2) {
+                                val zoom = event.calculateZoom()
+                                if (zoom != 1f) {
+                                    fontScale = (fontScale * zoom).coerceIn(0.6f, 3f)
+                                    event.changes.forEach { it.consume() }
+                                }
+                            }
+                        } while (event.changes.any { it.pressed })
                     }
                 },
         ) {
@@ -120,12 +140,29 @@ fun CodeViewerContent(
     }
 }
 
+// A syntax theme built from the app's Material scheme so the code view matches the rest of the
+// app instead of a stock IDE palette. Only the colours are overridden on a preset base.
+private fun appSyntaxTheme(scheme: ColorScheme): SyntaxTheme {
+    fun rgb(color: Color) = color.toArgb() and 0x00FFFFFF
+    return SyntaxThemes.darcula(darkMode = false).copy(
+        code = rgb(scheme.onSurface),
+        keyword = rgb(scheme.primary),
+        string = rgb(scheme.tertiary),
+        literal = rgb(scheme.secondary),
+        comment = rgb(scheme.onSurfaceVariant.copy(alpha = 0.7f)),
+        metadata = rgb(scheme.secondary),
+        multilineComment = rgb(scheme.onSurfaceVariant.copy(alpha = 0.7f)),
+        mark = rgb(scheme.primary),
+        punctuation = rgb(scheme.onSurfaceVariant),
+    )
+}
+
 // Cap pathological files: beyond this the tail renders unhighlighted rather than
 // freezing the regex pass.
 private const val MAX_HIGHLIGHT_CHARS = 512 * 1024
 private const val MAX_FILE_CHARS = 2 * 1024 * 1024
 
-private fun highlightFile(localPath: String, fileName: String, darkTheme: Boolean): List<AnnotatedString> {
+private fun highlightFile(localPath: String, fileName: String, theme: SyntaxTheme): List<AnnotatedString> {
     var text = File(localPath).readText()
     if (text.length > MAX_FILE_CHARS) {
         text = text.take(MAX_FILE_CHARS) + "\n… (file troncato)"
@@ -138,7 +175,7 @@ private fun highlightFile(localPath: String, fileName: String, darkTheme: Boolea
     val highlights = Highlights.Builder()
         .code(text)
         .language(language)
-        .theme(SyntaxThemes.darcula(darkMode = darkTheme))
+        .theme(theme)
         .build()
         .getHighlights()
     val annotated = buildAnnotatedString {

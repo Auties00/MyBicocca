@@ -17,4 +17,6 @@ data class CourseSectionEntity(
     val name: String,
     val summary: String?,
     val visible: Boolean,
+    val component: String?,
+    @ColumnInfo(name = "item_id") val itemId: Int?,
 )

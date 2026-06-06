@@ -9,7 +9,6 @@ import androidx.compose.foundation.gestures.rememberScrollableState
 import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -18,14 +17,13 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsTopHeight
-import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
@@ -52,11 +50,9 @@ import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -65,17 +61,16 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -104,28 +99,34 @@ import it.attendance100.mybicocca.ui.component.feedback.LocalAppSnackbarControll
 import it.attendance100.mybicocca.ui.navigation.AppRoute
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.courseDetail.component.AnnouncementsCard
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.courseDetail.component.AssignmentRow
+import it.attendance100.mybicocca.ui.screen.elearning.subscreen.courseDetail.component.CollapsingHeaderScaffold
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.courseDetail.component.CourseHero
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.courseDetail.component.CourseTabBar
+import it.attendance100.mybicocca.ui.screen.elearning.subscreen.courseDetail.component.CourseTabBarBreathingRoom
+import it.attendance100.mybicocca.ui.screen.elearning.subscreen.courseDetail.component.ExpandableGroupCard
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.courseDetail.component.ForumRow
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.courseDetail.component.QuizRow
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.courseDetail.component.SectionTitle
-import it.attendance100.mybicocca.ui.screen.elearning.subscreen.courseDetail.component.SectionsList
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.courseDetail.component.SyllabusContent
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.courseDetail.component.UpNextCard
+import it.attendance100.mybicocca.ui.screen.elearning.subscreen.courseDetail.component.sectionCards
+import it.attendance100.mybicocca.ui.screen.elearning.subscreen.courseDetail.component.stackShape
+import it.attendance100.mybicocca.ui.screen.elearning.subscreen.courseDetail.component.visiblePageSlice
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.courseDetail.state.CollapsingHeaderState
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.courseDetail.state.ContinuePlayable
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.courseDetail.state.CourseDetailOneShotEvent
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.courseDetail.state.CourseTab
+import it.attendance100.mybicocca.ui.screen.elearning.subscreen.courseDetail.state.LinkTarget
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.courseDetail.state.PickedContinueWatching
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.courseDetail.state.UpNextItem
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.courseDetail.subscreen.folderContents.FolderContentsSheet
+import it.attendance100.mybicocca.ui.screen.elearning.subscreen.courseDetail.subscreen.linkSheet.LinkSheet
 import it.attendance100.mybicocca.ui.screen.elearning.theme.CourseDetailTheme
 import it.attendance100.mybicocca.ui.screen.elearning.theme.heroShapesFor
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import java.time.Instant
-import kotlin.math.roundToInt
 
 @Composable
 fun CourseDetailActions(viewModel: CourseDetailViewModel = hiltViewModel()) {
@@ -145,8 +146,8 @@ fun CourseDetailActions(viewModel: CourseDetailViewModel = hiltViewModel()) {
 fun CourseDetailScreen(
     courseId: Int,
     // Height of the global top bar. The page draws edge to edge behind the (see-through) bar
-    // and re-applies this as list contentPadding, so content scrolls visibly through the bar
-    // region instead of being clipped at its bottom edge.
+    // and re-applies this as the collapsing column's top inset, so content scrolls visibly
+    // through the bar region instead of being clipped at its bottom edge.
     topBarInset: Dp = 0.dp,
     onProvideTitle: (String?) -> Unit = {},
     onProvideActions: ((@Composable () -> Unit)?) -> Unit = {},
@@ -156,7 +157,7 @@ fun CourseDetailScreen(
     onOpenDiscussion: (DiscussionId) -> Unit = {},
     onOpenResource: (String) -> Unit = {},
     onOpenVideo: (cmId: Int, title: String) -> Unit = { _, _ -> },
-    onOpenFile: (AppRoute.FileViewer) -> Unit = {},
+    onOpenFile: (AppRoute.FileViewer, forceChooser: Boolean) -> Unit = { _, _ -> },
     viewModel: CourseDetailViewModel = hiltViewModel(),
 ) {
     val context = LocalContext.current
@@ -170,6 +171,7 @@ fun CourseDetailScreen(
     val completion by viewModel.completion.collectAsStateWithLifecycle()
     val selectedTab by viewModel.selectedTab.collectAsStateWithLifecycle()
     val expanded by viewModel.expandedSections.collectAsStateWithLifecycle()
+    val expandedQuizGroups by viewModel.expandedQuizGroups.collectAsStateWithLifecycle()
     val syncStatus by viewModel.syncStatus.collectAsStateWithLifecycle()
     val initialFetchInProgress by viewModel.initialFetchInProgress.collectAsStateWithLifecycle()
     val videoProgress by viewModel.videoProgressByCmId.collectAsStateWithLifecycle()
@@ -179,6 +181,8 @@ fun CourseDetailScreen(
 
     // cmId of the folder module whose file list is showing in the picker sheet.
     var folderPickCmId by remember { mutableStateOf<Int?>(null) }
+    // The mod/url link whose open/copy sheet is showing, or null.
+    var linkTarget by remember { mutableStateOf<LinkTarget?>(null) }
 
     // Publish the favourite toggle up to the shell so the global top bar can morph it during the
     // back/forward transition (the local bar that normally shows it is hidden mid-morph). The
@@ -205,6 +209,7 @@ fun CourseDetailScreen(
                         )
                     }
                 }
+                is CourseDetailOneShotEvent.OpenLink -> linkTarget = LinkTarget(event.title, event.url)
                 is CourseDetailOneShotEvent.OpenFile -> onOpenFile(
                     AppRoute.FileViewer(
                         fileName = event.fileName,
@@ -212,6 +217,7 @@ fun CourseDetailScreen(
                         mimeType = event.mimeType,
                         sizeBytes = event.sizeBytes,
                     ),
+                    event.forceChooser,
                 )
                 is CourseDetailOneShotEvent.OpenFolder -> folderPickCmId = event.cmId
                 is CourseDetailOneShotEvent.RefreshFailed ->
@@ -223,43 +229,51 @@ fun CourseDetailScreen(
     CourseDetailTheme(courseId = courseIdValue) {
         val scheme = MaterialTheme.colorScheme
         val pullState = rememberPullToRefreshState()
-        val pullScope = rememberCoroutineScope()
+        val scope = rememberCoroutineScope()
         // Pull-to-refresh indicator stays only while the user-pull dismiss animation runs;
         // the shapes-loading indicator picks up afterwards (or on cold open).
         var pullIndicatorVisible by remember { mutableStateOf(false) }
 
-        // Standard collapsing-header pattern: hero + tab bar + pager form one column that the
-        // nested-scroll connection below translates up before any tab list scrolls (and back down
-        // once the active list is at its top again). The tab bar therefore pins purely off header
-        // geometry — page content height can never drag it around — and every tab page owns a
-        // real LazyListState, so per-tab scroll positions are kept by the framework for free.
+        // Collapsing-header pattern: hero + tab bar + pager form one column that the
+        // nested-scroll connection below translates up before any tab list scrolls (and back
+        // down once the active list is at its top again). CollapsingHeaderScaffold owns the
+        // geometry — the tab bar pins purely off header travel, so page content height can
+        // never drag it around — and every tab page owns a real LazyListState, so per-tab
+        // scroll positions are kept by the framework for free.
         val density = LocalDensity.current
         val tabBarMorphPx = remember(density) { with(density) { TAB_BAR_MORPH_DISTANCE.toPx() } }
         val header = rememberSaveable(tabBarMorphPx, saver = CollapsingHeaderState.saver(tabBarMorphPx)) {
             CollapsingHeaderState(tabBarMorphPx)
         }
-        var tabBarHeightPx by remember { mutableIntStateOf(0) }
+        // Stable identity: the bar folds this into draw-phase lambdas, so it must not change
+        // across recompositions.
+        val pinProgress = remember(header) { { header.pinProgress } }
 
         // Roughly the bottom of the hero's headline; the bar title fades in past this.
         val titleHideThresholdPx = remember(density) { with(density) { 120.dp.toPx() } }
         val titleHidden by remember(header) {
-            derivedStateOf { header.collapsedPx >= titleHideThresholdPx }
+            derivedStateOf { header.offsetPx >= titleHideThresholdPx }
         }
+        // The bar-region cover below fades in over the last stretch before the title
+        // threshold, so hero content dims smoothly instead of popping out of the bar region.
+        val titleCoverRampPx = remember(density) { with(density) { 20.dp.toPx() } }
 
-        // One pager drives both the swipeable tab content and the tab bar's indicator; the
-        // SavedStateHandle-backed selectedTab stays the source of truth so the tab survives
-        // process death (tab clicks land there first, then animate the pager from here).
+        // One pager drives both the swipeable tab content and the tab bar's indicator, and it
+        // is the single motion source of truth: taps animate it directly, and each new call
+        // preempts the in-flight animation through the scroll mutex, so rapid taps always land
+        // on the last tab. Routing taps through selectedTab instead (the previous shape) let
+        // the settledPage sync re-emit an intermediate page mid-cancellation and revert the
+        // newest tap. The SavedStateHandle-backed selectedTab only persists the choice so the
+        // tab survives process death.
         val pagerState = rememberPagerState(initialPage = selectedTab.ordinal) { CourseTab.entries.size }
-        // Sync the VM from settledPage, not currentPage: a multi-page animateScrollToPage walks
-        // through every intermediate page, and writing those back to selectedTab restarts the
-        // animating LaunchedEffect below, cancelling the animation mid-flight.
         LaunchedEffect(pagerState, viewModel) {
             snapshotFlow { pagerState.settledPage }
                 .collect { page -> viewModel.selectTab(CourseTab.entries[page]) }
         }
-        LaunchedEffect(selectedTab) {
-            if (pagerState.currentPage != selectedTab.ordinal) {
-                pagerState.animateScrollToPage(selectedTab.ordinal)
+        val goToTab: (CourseTab) -> Unit = remember(scope, pagerState, viewModel) {
+            { tab ->
+                viewModel.selectTab(tab)
+                scope.launch { pagerState.animateScrollToPage(tab.ordinal) }
             }
         }
         // One saveable list state per tab: swiping back to a tab restores exactly where it was.
@@ -307,7 +321,7 @@ fun CourseDetailScreen(
                 onRefresh = {
                     pullIndicatorVisible = true
                     viewModel.pullToRefresh()
-                    pullScope.launch {
+                    scope.launch {
                         delay(PULL_INDICATOR_DISMISS_DELAY_MS)
                         pullIndicatorVisible = false
                     }
@@ -327,7 +341,7 @@ fun CourseDetailScreen(
                 },
             ) {
                 val details = detailsLoadable.valueOrNull()
-                val hasFullData = details != null && details.sections.isNotEmpty()
+                val fullDetails = details?.takeIf { it.sections.isNotEmpty() }
                 val continueWatching = remember(details, completion, videoProgress, continueWatchingThumbnailUrl) {
                     details?.let { pickContinueWatching(it, completion, videoProgress, continueWatchingThumbnailUrl) }
                 }
@@ -335,131 +349,125 @@ fun CourseDetailScreen(
                     viewModel.resolveContinueWatchingThumbnail(continueWatching?.module?.cmId)
                 }
 
-                var heroHeightPx by remember { mutableIntStateOf(0) }
-                val headerSpacingPx = with(density) { HEADER_SPACING.toPx() }
-                // No collapsing while there is nothing below the hero to scroll; pull-to-refresh
-                // still works through the (otherwise idle) root scrollable.
-                val collapseRangePx = if (hasFullData) heroHeightPx + headerSpacingPx else 0f
-                SideEffect { header.updateCollapseRange(collapseRangePx) }
-
-                BoxWithConstraints(
+                CollapsingHeaderScaffold(
+                    header = header,
+                    topInset = topBarInset,
+                    spacing = HEADER_SPACING,
+                    pinnedBarOverlap = CourseTabBarBreathingRoom,
                     modifier = Modifier
                         .fillMaxSize()
                         .nestedScroll(nestedScrollConnection)
                         .scrollable(headerDragState, Orientation.Vertical),
-                ) {
-                    // Pages are sized for the pinned state (viewport below the pinned bar): while
-                    // the header is still expanded the column simply extends past the bottom edge
-                    // and slides up into place as it collapses. Fixed page bounds are what keep
-                    // the bar steady no matter how short a tab's content is.
-                    val pagerHeight = (maxHeight - topBarInset - HEADER_SPACING -
-                            with(density) { tabBarHeightPx.toDp() }).coerceAtLeast(0.dp)
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            // Measure with unbounded height: the column is taller than the
-                            // viewport while the hero is expanded, and coercing it would shrink
-                            // the pager below pagerHeight, leaving dead space once collapsed.
-                            .wrapContentHeight(align = Alignment.Top, unbounded = true)
-                            .padding(top = topBarInset)
-                            .offset { IntOffset(0, -header.collapsedPx.roundToInt()) },
-                        verticalArrangement = Arrangement.spacedBy(HEADER_SPACING),
-                    ) {
+                    hero = {
                         val refreshing = syncStatus is SyncStatus.Refreshing
                         val shapesSpinning = initialFetchInProgress ||
                                 (refreshing && !pullIndicatorVisible)
-                        Box(modifier = Modifier.onSizeChanged { heroHeightPx = it.height }) {
-                            CourseHero(
-                                details = details,
-                                continueWatching = continueWatching?.playable,
-                                shapes = heroShapes,
-                                isLoading = shapesSpinning,
-                                onResume = {
-                                    continueWatching?.module?.let { openModule(it, viewModel) }
-                                },
-                                onGoToLesson = {
-                                    viewModel.selectTab(CourseTab.Content)
-                                    continueWatching?.let { picked ->
-                                        if (picked.sectionId !in expanded) {
-                                            viewModel.toggleSection(picked.sectionId)
-                                        }
+                        CourseHero(
+                            details = details,
+                            continueWatching = continueWatching?.playable,
+                            shapes = heroShapes,
+                            isLoading = shapesSpinning,
+                            onResume = {
+                                continueWatching?.module?.let { openModule(it, viewModel) }
+                            },
+                            onGoToLesson = {
+                                goToTab(CourseTab.Content)
+                                continueWatching?.let { picked ->
+                                    if (picked.sectionId !in expanded) {
+                                        viewModel.toggleSection(picked.sectionId)
                                     }
-                                },
-                            )
-                        }
-                        if (hasFullData && details != null) {
-                            CourseTabBar(
-                                pagerState = pagerState,
-                                onSelect = viewModel::selectTab,
-                                pinProgress = { header.pinProgress },
-                                modifier = Modifier.onSizeChanged { tabBarHeightPx = it.height },
-                            )
-                            HorizontalPager(
-                                state = pagerState,
-                                verticalAlignment = Alignment.Top,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(pagerHeight),
-                            ) { page ->
-                                val pageModifier = Modifier.fillMaxSize()
-                                // Empty/loading states center inside the slice of the page that
-                                // is on screen while the hero is still expanded, so they are
-                                // visible without scrolling.
-                                val emptyModifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(
-                                        (pagerHeight - with(density) { heroHeightPx.toDp() })
-                                            .coerceAtLeast(240.dp),
-                                    )
-                                when (CourseTab.entries[page]) {
-                                    CourseTab.Syllabus -> SyllabusContent(
-                                        details = details,
-                                        listState = pageListStates[page],
-                                        modifier = pageModifier,
-                                        emptyModifier = emptyModifier,
-                                    )
-                                    CourseTab.Content -> ContentPage(
-                                        details = details,
-                                        expanded = expanded,
-                                        completion = completion,
-                                        videoProgress = videoProgress,
-                                        onToggleSection = viewModel::toggleSection,
-                                        onModuleClick = { openModule(it, viewModel) },
-                                        listState = pageListStates[page],
-                                        modifier = pageModifier,
-                                        emptyModifier = emptyModifier,
-                                    )
-                                    CourseTab.Quiz -> QuizzesPage(
-                                        quizzesLoadable = quizzesLoadable,
-                                        details = details,
-                                        completion = completion,
-                                        onClick = { viewModel.emitOpenQuiz(it.value) },
-                                        listState = pageListStates[page],
-                                        modifier = pageModifier,
-                                        emptyModifier = emptyModifier,
-                                    )
-                                    CourseTab.Assignments -> AssignmentsPage(
-                                        assignmentsLoadable = assignmentsLoadable,
-                                        onClick = { viewModel.emitOpenAssignment(it.value) },
-                                        listState = pageListStates[page],
-                                        modifier = pageModifier,
-                                        emptyModifier = emptyModifier,
-                                    )
-                                    CourseTab.Forum -> ForumsPage(
-                                        forumsLoadable = forumsLoadable,
-                                        latestAnnouncement = latestAnnouncement,
-                                        onClick = { viewModel.emitOpenForum(it.value) },
-                                        onOpenDiscussion = { viewModel.emitOpenDiscussion(it) },
-                                        listState = pageListStates[page],
-                                        modifier = pageModifier,
-                                        emptyModifier = emptyModifier,
-                                    )
                                 }
+                            },
+                        )
+                    },
+                    bar = if (fullDetails == null) null else ({
+                        CourseTabBar(
+                            pagerState = pagerState,
+                            onSelect = goToTab,
+                            pinProgress = pinProgress,
+                        )
+                    }),
+                    pages = if (fullDetails == null) null else ({
+                        HorizontalPager(
+                            state = pagerState,
+                            verticalAlignment = Alignment.Top,
+                            modifier = Modifier.fillMaxSize(),
+                        ) { page ->
+                            val pageModifier = Modifier.fillMaxSize()
+                            // Empty/loading states center inside the slice of the page that is
+                            // actually on screen, tracking the header as it collapses.
+                            val emptyModifier = Modifier
+                                .fillMaxWidth()
+                                .visiblePageSlice(header)
+                            when (CourseTab.entries[page]) {
+                                CourseTab.Syllabus -> SyllabusContent(
+                                    details = fullDetails,
+                                    listState = pageListStates[page],
+                                    modifier = pageModifier,
+                                    emptyModifier = emptyModifier,
+                                )
+                                CourseTab.Content -> ContentPage(
+                                    details = fullDetails,
+                                    expanded = expanded,
+                                    completion = completion,
+                                    videoProgress = videoProgress,
+                                    onToggleSection = viewModel::toggleSection,
+                                    onModuleClick = { openModule(it, viewModel) },
+                                    onModuleLongClick = { openModule(it, viewModel, forceChooser = true) },
+                                    listState = pageListStates[page],
+                                    modifier = pageModifier,
+                                    emptyModifier = emptyModifier,
+                                )
+                                CourseTab.Quiz -> QuizzesPage(
+                                    quizzesLoadable = quizzesLoadable,
+                                    details = fullDetails,
+                                    completion = completion,
+                                    expandedGroups = expandedQuizGroups,
+                                    onToggleGroup = viewModel::toggleQuizGroup,
+                                    onClick = { viewModel.emitOpenQuiz(it.value) },
+                                    listState = pageListStates[page],
+                                    modifier = pageModifier,
+                                    emptyModifier = emptyModifier,
+                                )
+                                CourseTab.Assignments -> AssignmentsPage(
+                                    assignmentsLoadable = assignmentsLoadable,
+                                    onClick = { viewModel.emitOpenAssignment(it.value) },
+                                    listState = pageListStates[page],
+                                    modifier = pageModifier,
+                                    emptyModifier = emptyModifier,
+                                )
+                                CourseTab.Forum -> ForumsPage(
+                                    forumsLoadable = forumsLoadable,
+                                    latestAnnouncement = latestAnnouncement,
+                                    onClick = { viewModel.emitOpenForum(it.value) },
+                                    onOpenDiscussion = { viewModel.emitOpenDiscussion(it) },
+                                    listState = pageListStates[page],
+                                    modifier = pageModifier,
+                                    emptyModifier = emptyModifier,
+                                )
                             }
                         }
-                    }
-                }
+                    }),
+                )
             }
+
+            // Opaque cover over the bar region once the header is pinned past the title
+            // threshold. The global bar only goes opaque after the title publication
+            // round-trips through the shell — one frame late on the first frame back from a
+            // sub-page — while this cover reads the header offset in the draw phase, so the
+            // hero's bottom slice (continue-watching card, accent shapes) can never flash
+            // through the see-through bar when the page comes back restored to pinned.
+            val coverColor = scheme.surfaceContainer
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(topBarInset)
+                    .drawBehind {
+                        val alpha = ((header.offsetPx - titleHideThresholdPx + titleCoverRampPx) /
+                                titleCoverRampPx).coerceIn(0f, 1f)
+                        if (alpha > 0f) drawRect(color = coverColor, alpha = alpha)
+                    },
+            )
 
             // Soft fade under the status bar so scrolling content doesn't collide with the system
             // icons while it travels through the see-through bar region. Same hue as the page
@@ -498,23 +506,57 @@ fun CourseDetailScreen(
                 onDismiss = { folderPickCmId = null },
             )
         }
+
+        linkTarget?.let { target ->
+            LinkSheet(
+                title = target.title,
+                url = target.url,
+                onDismiss = { linkTarget = null },
+            )
+        }
     }
 }
 
-private fun openModule(module: CourseModule, viewModel: CourseDetailViewModel) {
+private fun openModule(
+    module: CourseModule,
+    viewModel: CourseDetailViewModel,
+    forceChooser: Boolean = false,
+) {
     val kalvidresCmId = module.kalvidresCmIdOrNull()
     // Only entries with a real pluginfile payload can go to the in-app viewer; "url"-typed
     // contents are external links that stay on the browser path.
     val fileContents = module.contents.filter { it.fileUrl != null && it.type != "url" }
+    // A page / webpage-bundle entry point: prefer index.html, else any .html content. Bundled
+    // image assets sit at a deeper filepath, so the entry at "/" wins.
+    val htmlEntry = fileContents.firstOrNull {
+        it.fileName.equals("index.html", ignoreCase = true)
+    } ?: fileContents.firstOrNull {
+        it.fileName?.endsWith(".html", ignoreCase = true) == true || it.mimeType == "text/html"
+    }
     when {
         module.type == ModuleType.Quiz ->
             module.instanceId?.let { viewModel.emitOpenQuiz(it) }
         module.type == ModuleType.Assign ->
             module.instanceId?.let { viewModel.emitOpenAssignment(it) }
+        // mod_forum only — hsuforum (Open Forum) instance ids live in a different table, so it
+        // must NOT be routed here; it falls through to browser-open below.
         module.type == ModuleType.Forum ->
             module.instanceId?.let { viewModel.emitOpenForum(it) }
         kalvidresCmId != null ->
             viewModel.emitOpenVideo(kalvidresCmId, module.name)
+        // Subsection placeholders render inline; tapping the (now non-existent) row is a no-op.
+        module.type == ModuleType.Subsection -> Unit
+        // Pages and webpage-style resources render their HTML in-app instead of bouncing to the
+        // browser (and a Moodle mobile login wall). index.html reports a null mimetype, so pass
+        // text/html explicitly for correct viewer classification, titled by the module name.
+        (module.type == ModuleType.Page || module.type == ModuleType.Resource) && htmlEntry != null ->
+            viewModel.emitOpenFile(
+                fileName = module.name,
+                fileUrl = htmlEntry.fileUrl.orEmpty(),
+                mimeType = "text/html",
+                sizeBytes = htmlEntry.sizeBytes,
+                forceChooser = forceChooser,
+            )
         module.type == ModuleType.Folder && fileContents.isNotEmpty() ->
             viewModel.emitOpenFolder(module.cmId)
         module.type == ModuleType.Resource && fileContents.size > 1 ->
@@ -526,7 +568,16 @@ private fun openModule(module: CourseModule, viewModel: CourseDetailViewModel) {
                 fileUrl = content.fileUrl.orEmpty(),
                 mimeType = content.mimeType,
                 sizeBytes = content.sizeBytes,
+                forceChooser = forceChooser,
             )
+        }
+        // mod/url: open the RESOLVED external target (core_course_get_contents already
+        // resolved it server-side, variables included) via the link sheet — not the
+        // internal mod/url/view.php page in module.url, which would need a Moodle login.
+        module.type == ModuleType.Url -> {
+            val resolved = module.contents.firstOrNull { it.type == "url" }?.fileUrl
+                ?: module.url
+            resolved?.takeIf { it.isNotBlank() }?.let { viewModel.emitOpenLink(module.name, it) }
         }
         else ->
             module.url?.takeIf { it.isNotBlank() }?.let { viewModel.emitOpenResource(it) }
@@ -541,6 +592,7 @@ private fun ContentPage(
     videoProgress: Map<Int, VideoProgress>,
     onToggleSection: (Int) -> Unit,
     onModuleClick: (CourseModule) -> Unit,
+    onModuleLongClick: (CourseModule) -> Unit,
     listState: LazyListState,
     modifier: Modifier = Modifier,
     emptyModifier: Modifier = Modifier,
@@ -556,18 +608,23 @@ private fun ContentPage(
         LazyColumn(
             state = listState,
             modifier = modifier,
-            contentPadding = PaddingValues(top = 12.dp, bottom = LIST_BOTTOM_PADDING),
+            contentPadding = PaddingValues(
+                start = 16.dp,
+                end = 16.dp,
+                top = 16.dp,
+                bottom = LIST_BOTTOM_PADDING + 4.dp,
+            ),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            item {
-                SectionsList(
-                    sections = details.sections,
-                    expanded = expanded,
-                    completion = completion,
-                    videoProgress = videoProgress,
-                    onToggleSection = onToggleSection,
-                    onModuleClick = onModuleClick,
-                )
-            }
+            sectionCards(
+                sections = details.sections,
+                expanded = expanded,
+                completion = completion,
+                videoProgress = videoProgress,
+                onToggleSection = onToggleSection,
+                onModuleClick = onModuleClick,
+                onModuleLongClick = onModuleLongClick,
+            )
         }
     }
 }
@@ -577,6 +634,8 @@ private fun QuizzesPage(
     quizzesLoadable: Loadable<List<Quiz>>,
     details: CourseDetails?,
     completion: Map<Int, CompletionState>,
+    expandedGroups: Set<Int>,
+    onToggleGroup: (Int) -> Unit,
     onClick: (QuizId) -> Unit,
     listState: LazyListState,
     modifier: Modifier = Modifier,
@@ -596,42 +655,58 @@ private fun QuizzesPage(
             } else {
                 // Real courses ship up to ~100 quizzes with heavily repeated names
                 // ("Esercizio 1.2", "Esercizi da svolgere" ×12); the section a quiz lives
-                // in is what gives the row its identity, so the list mirrors course order
-                // grouped by section instead of the cache's flat alphabetical order.
+                // in is what gives the row its identity, so quizzes fold into the same
+                // expandable section cards as the Contenuti tab, in course order.
                 val groups = remember(list, details) { groupQuizzesBySection(list, details) }
                 val tracked = list.count { completion[it.cmId]?.isTracked == true }
                 val done = list.count { completion[it.cmId]?.isCompleted == true }
                 LazyColumn(
                     state = listState,
                     modifier = modifier,
-                    contentPadding = PaddingValues(top = 12.dp, bottom = LIST_BOTTOM_PADDING),
-                    verticalArrangement = Arrangement.spacedBy(2.dp),
+                    contentPadding = PaddingValues(
+                        start = 16.dp,
+                        end = 16.dp,
+                        top = 16.dp,
+                        bottom = LIST_BOTTOM_PADDING + 4.dp,
+                    ),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     if (list.size >= 2 && tracked >= list.size / 2) {
                         item { QuizProgressCard(done = done, total = list.size) }
                     }
-                    groups.forEachIndexed { index, group ->
-                        if (group.title != null) {
-                            item {
-                                SectionTitle(
-                                    title = "${group.title} · ${group.quizzes.size}",
-                                    mark = QuizSectionMarks[index % QuizSectionMarks.size],
-                                )
-                            }
-                        }
-                        items(group.quizzes) { quiz ->
-                            Box(modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)) {
-                                QuizRow(
-                                    quiz = quiz,
-                                    completed = completion[quiz.cmId]?.isCompleted == true,
-                                    onClick = { onClick(quiz.id) },
-                                )
+                    itemsIndexed(groups, key = { _, group -> group.key }) { index, group ->
+                        ExpandableGroupCard(
+                            ordinal = index + 1,
+                            title = group.title ?: "Quiz del corso",
+                            subtitle = quizGroupSubtitle(group.quizzes, completion),
+                            expanded = group.key in expandedGroups,
+                            onToggle = { onToggleGroup(group.key) },
+                        ) {
+                            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                                group.quizzes.forEachIndexed { rowIndex, quiz ->
+                                    QuizRow(
+                                        quiz = quiz,
+                                        shape = stackShape(rowIndex, group.quizzes.size),
+                                        completed = completion[quiz.cmId]?.isCompleted == true,
+                                        onClick = { onClick(quiz.id) },
+                                    )
+                                }
                             }
                         }
                     }
                 }
             }
         }
+    }
+}
+
+private fun quizGroupSubtitle(quizzes: List<Quiz>, completion: Map<Int, CompletionState>): String {
+    val done = quizzes.count { completion[it.cmId]?.isCompleted == true }
+    val base = "${quizzes.size} quiz"
+    return when {
+        done == 0 -> base
+        done == 1 -> "$base · 1 completato"
+        else -> "$base · $done completati"
     }
 }
 
@@ -642,9 +717,7 @@ private fun QuizProgressCard(done: Int, total: Int) {
     Surface(
         shape = RoundedCornerShape(22.dp),
         color = scheme.surfaceContainerLow,
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 4.dp),
+        modifier = Modifier.fillMaxWidth(),
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -672,15 +745,20 @@ private fun QuizProgressCard(done: Int, total: Int) {
 }
 
 private data class QuizSectionGroup(
+    // Stable expansion/list key: the owning section id, or QUIZ_GROUP_LEFTOVER_KEY for the
+    // synthetic group of quizzes whose cmId matches no section module.
+    val key: Int,
     val title: String?,
     val quizzes: List<Quiz>,
 )
 
-private val QuizSectionMarks = listOf("✦", "❀", "✸", "✿")
+private const val QUIZ_GROUP_LEFTOVER_KEY = -1
 
 private fun groupQuizzesBySection(quizzes: List<Quiz>, details: CourseDetails?): List<QuizSectionGroup> {
     val sections = details?.sections.orEmpty()
-    if (sections.isEmpty()) return listOf(QuizSectionGroup(title = null, quizzes = quizzes))
+    if (sections.isEmpty()) {
+        return listOf(QuizSectionGroup(key = QUIZ_GROUP_LEFTOVER_KEY, title = null, quizzes = quizzes))
+    }
     val byCmId = quizzes.filter { it.cmId != null }.associateBy { it.cmId }
     val grouped = mutableListOf<QuizSectionGroup>()
     val seen = mutableSetOf<QuizId>()
@@ -689,6 +767,7 @@ private fun groupQuizzesBySection(quizzes: List<Quiz>, details: CourseDetails?):
         if (inSection.isNotEmpty()) {
             inSection.forEach { seen += it.id }
             grouped += QuizSectionGroup(
+                key = section.id,
                 title = section.name.takeIf { it.isNotBlank() } ?: "Sezione ${section.sectionNumber}",
                 quizzes = inSection,
             )
@@ -697,12 +776,12 @@ private fun groupQuizzesBySection(quizzes: List<Quiz>, details: CourseDetails?):
     val leftover = quizzes.filterNot { it.id in seen }
     if (leftover.isNotEmpty()) {
         grouped += QuizSectionGroup(
+            key = QUIZ_GROUP_LEFTOVER_KEY,
             title = if (grouped.isEmpty()) null else "Altri quiz",
             quizzes = leftover,
         )
     }
-    // A single group adds header noise without disambiguating anything — drop the title.
-    return if (grouped.size == 1) listOf(grouped.first().copy(title = null)) else grouped
+    return grouped
 }
 
 @Composable
@@ -728,11 +807,18 @@ private fun AssignmentsPage(
             }
             val now = Instant.now()
             val next = pickNextDueAssignment(values, now)
+            // One flat run of cards in deadline order; deadline-less hand-ins close the list.
+            val sorted = values.sortedWith(compareBy(nullsLast()) { it.dueDate })
             LazyColumn(
                 state = listState,
                 modifier = modifier,
-                contentPadding = PaddingValues(top = 12.dp, bottom = LIST_BOTTOM_PADDING),
-                verticalArrangement = Arrangement.spacedBy(2.dp),
+                contentPadding = PaddingValues(
+                    start = 16.dp,
+                    end = 16.dp,
+                    top = 16.dp,
+                    bottom = LIST_BOTTOM_PADDING + 4.dp,
+                ),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 if (next != null) {
                     item {
@@ -744,61 +830,19 @@ private fun AssignmentsPage(
                                 onClick = { onClick(next.id) },
                             ),
                             now = now,
-                            onSubmit = { onClick(next.id) },
-                            onViewBrief = { onClick(next.id) },
                         )
                     }
                 }
-                groupAssignments(values, now).forEach { group ->
-                    item {
-                        SectionTitle(title = "${group.title} · ${group.items.size}", mark = group.mark)
-                    }
-                    items(group.items) { a ->
-                        Box(modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)) {
-                            AssignmentRow(assignment = a, now = now, onClick = { onClick(a.id) })
-                        }
-                    }
+                items(sorted, key = { it.id.value }) { a ->
+                    AssignmentRow(
+                        assignment = a,
+                        now = now,
+                        onClick = { onClick(a.id) },
+                    )
                 }
             }
         }
     }
-}
-
-private data class AssignmentGroup(
-    val key: String,
-    val title: String,
-    val mark: String,
-    val items: List<Assignment>,
-)
-
-// Open work first (soonest deadline on top, deadline-less hand-ins after), then what was
-// already handed in, then deadlines that slipped by — dead work goes last.
-private fun groupAssignments(assignments: List<Assignment>, now: Instant): List<AssignmentGroup> {
-    val open = mutableListOf<Assignment>()
-    val handedIn = mutableListOf<Assignment>()
-    val expired = mutableListOf<Assignment>()
-    for (a in assignments) {
-        val status = a.submissionStatus
-        when {
-            status is SubmissionStatus.Submitted || status is SubmissionStatus.Graded -> handedIn += a
-            a.dueDate != null && a.dueDate.isBefore(now) -> expired += a
-            else -> open += a
-        }
-    }
-    open.sortWith(compareBy(nullsLast()) { it.dueDate })
-    handedIn.sortWith(compareByDescending { it.submittedAtOrNull() ?: Instant.EPOCH })
-    expired.sortWith(compareByDescending { it.dueDate })
-    return buildList {
-        if (open.isNotEmpty()) add(AssignmentGroup("open", "Da consegnare", "✦", open))
-        if (handedIn.isNotEmpty()) add(AssignmentGroup("done", "Consegnati", "❀", handedIn))
-        if (expired.isNotEmpty()) add(AssignmentGroup("expired", "Scaduti", "✸", expired))
-    }
-}
-
-private fun Assignment.submittedAtOrNull(): Instant? = when (val s = submissionStatus) {
-    is SubmissionStatus.Submitted -> s.submittedAt
-    is SubmissionStatus.Graded -> s.submittedAt
-    else -> null
 }
 
 @Composable

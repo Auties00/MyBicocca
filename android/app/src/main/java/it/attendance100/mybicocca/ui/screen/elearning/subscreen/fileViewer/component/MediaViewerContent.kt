@@ -17,7 +17,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -29,8 +33,12 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.media3.common.MediaItem
+import androidx.media3.common.Player
+import androidx.media3.common.VideoSize
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
+import it.attendance100.mybicocca.ui.screen.elearning.subscreen.videoPlayer.player.LocalPipController
+import it.attendance100.mybicocca.ui.screen.elearning.subscreen.videoPlayer.player.PipState
 import androidx.media3.ui.compose.PlayerSurface
 import androidx.media3.ui.compose.SURFACE_TYPE_SURFACE_VIEW
 import androidx.media3.ui.compose.material3.buttons.PlayPauseButton
@@ -73,6 +81,34 @@ fun MediaViewerContent(
         }
     }
 
+    // Picture-in-Picture: publish play state + aspect so leaving the app (or the chrome's PiP
+    // button) pops the video out, like the lesson player. In PiP the controls hide.
+    val pipController = LocalPipController.current
+    val inPip by pipController.isInPip
+    var isPlaying by remember { mutableStateOf(player.isPlaying) }
+    var aspectN by remember { mutableIntStateOf(16) }
+    var aspectD by remember { mutableIntStateOf(9) }
+    DisposableEffect(player) {
+        val listener = object : Player.Listener {
+            override fun onIsPlayingChanged(playing: Boolean) { isPlaying = playing }
+            override fun onVideoSizeChanged(videoSize: VideoSize) {
+                if (videoSize.width > 0 && videoSize.height > 0) {
+                    aspectN = videoSize.width
+                    aspectD = videoSize.height
+                }
+            }
+        }
+        player.addListener(listener)
+        onDispose { player.removeListener(listener) }
+    }
+    // Both video and audio register for auto-PiP-on-leave; audio just uses the default aspect.
+    LaunchedEffect(isPlaying, aspectN, aspectD) {
+        pipController.setActive(PipState(aspectN, aspectD, isPlaying))
+    }
+    DisposableEffect(Unit) {
+        onDispose { pipController.setActive(null) }
+    }
+
     Column(modifier = modifier.fillMaxSize()) {
         Box(
             modifier = Modifier
@@ -110,7 +146,9 @@ fun MediaViewerContent(
                 }
             }
         }
-        MediaControls(player = player)
+        if (!inPip) {
+            MediaControls(player = player)
+        }
     }
 }
 

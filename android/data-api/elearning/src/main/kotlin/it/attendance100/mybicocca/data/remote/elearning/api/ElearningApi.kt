@@ -33,10 +33,16 @@ import kotlinx.serialization.json.Json
  *   [ElearningAuthApi.login] will install one via Moodle's `Set-Cookie` response
  *   naturally. The cookie is fixed for the lifetime of this instance; account switches
  *   should construct a new [ElearningApi].
+ * @param language Moodle langpack code (e.g. `"it"`, `"en"`) sent as
+ *   `moodlewssettinglang` with every web service request. It selects the language of
+ *   Moodle UI strings in responses and the language picked by server-side filters
+ *   (e.g. multilang) where the site applies them. Can be changed later via [language].
+ *   Defaults to [ElearningAbstractApi.DEFAULT_LANGUAGE].
  * @param httpClientConfig Optional configuration block for the underlying HTTP client.
  */
 class ElearningApi(
     moodleSessionCookie: String? = null,
+    language: String = ElearningAbstractApi.DEFAULT_LANGUAGE,
     httpClientConfig: HttpClientConfig<*>.() -> Unit = {},
 ) : AutoCloseable {
     /**
@@ -90,6 +96,21 @@ class ElearningApi(
         install(ContentNegotiation) {
             json(json)
         }
+    }
+
+    /**
+     * The Moodle langpack code sent as `moodlewssettinglang` with every web service
+     * request. Stored as a client attribute ([ElearningAttributes.Language]) shared by
+     * all API classes; assigning a new value affects every subsequent request, so
+     * callers can follow runtime locale changes without rebuilding the client.
+     */
+    var language: String
+        get() = client.attributes.getOrNull(ElearningAttributes.Language)
+            ?: ElearningAbstractApi.DEFAULT_LANGUAGE
+        set(value) = client.attributes.put(ElearningAttributes.Language, value)
+
+    init {
+        this.language = language
     }
 
     /**

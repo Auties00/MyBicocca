@@ -1,18 +1,34 @@
 package it.attendance100.mybicocca.ui.screen.elearning.subscreen.fileViewer
 
-import android.content.ActivityNotFoundException
-import android.content.Context
-import android.content.Intent
-import android.net.Uri
-import android.webkit.MimeTypeMap
+import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Close
+import androidx.compose.material.icons.outlined.PictureInPictureAlt
+import androidx.compose.material.icons.outlined.Share
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.runtime.LaunchedEffect
-import androidx.core.content.FileProvider
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.SyncStatus
@@ -22,7 +38,6 @@ import it.attendance100.mybicocca.ui.screen.elearning.subscreen.fileViewer.compo
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.fileViewer.component.HtmlViewerContent
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.fileViewer.component.ImageViewerContent
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.fileViewer.component.MediaViewerContent
-import it.attendance100.mybicocca.ui.screen.elearning.subscreen.fileViewer.component.OfficeViewerContent
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.fileViewer.component.PdfViewerContent
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.fileViewer.component.UnknownFileContent
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.fileViewer.component.ViewerError
@@ -30,14 +45,17 @@ import it.attendance100.mybicocca.ui.screen.elearning.subscreen.fileViewer.compo
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.fileViewer.component.ZipViewerContent
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.fileViewer.state.FileKind
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.fileViewer.state.FileViewerOneShotEvent
-import it.attendance100.mybicocca.ui.screen.elearning.subscreen.fileViewer.state.OfficeApp
+import it.attendance100.mybicocca.ui.screen.elearning.subscreen.videoPlayer.player.LocalPipController
 import kotlinx.coroutines.flow.collectLatest
-import java.io.File
 import java.util.Locale
 
+// Opens an in-app file with a Custom-Tab-style chrome: a top bar with the file name, a close
+// (✕), a share action, and — for video — a Picture-in-Picture button. In PiP the chrome (and
+// the video's own controls) collapse to just the video.
 @Composable
 fun FileViewerScreen(
     onOpenFile: (AppRoute.FileViewer) -> Unit,
+    onClose: () -> Unit = {},
     viewModel: FileViewerViewModel,
 ) {
     val context = LocalContext.current
@@ -47,6 +65,8 @@ fun FileViewerScreen(
     val mediaUri by viewModel.mediaUri.collectAsStateWithLifecycle()
     val downloadStatus by viewModel.downloadStatus.collectAsStateWithLifecycle()
     val zipEntries by viewModel.zipEntries.collectAsStateWithLifecycle()
+    val pipController = LocalPipController.current
+    val inPip by pipController.isInPip
 
     LaunchedEffect(viewModel) {
         viewModel.oneShotEvents.collectLatest { event ->
@@ -66,6 +86,12 @@ fun FileViewerScreen(
                     }
                 }
 
+                is FileViewerOneShotEvent.ShareFile -> {
+                    if (!shareFile(context, event.localPath, event.fileName, event.mimeType)) {
+                        snackbar.showError("Impossibile condividere il file")
+                    }
+                }
+
                 is FileViewerOneShotEvent.OpenExtractedFile -> onOpenFile(
                     AppRoute.FileViewer(
                         fileName = event.fileName,
@@ -78,7 +104,89 @@ fun FileViewerScreen(
         }
     }
 
-    when (val kind = viewModel.kind) {
+    val kind = viewModel.kind
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.surface),
+    ) {
+        if (!inPip) {
+            FileViewerChrome(
+                fileName = viewModel.fileName,
+                onClose = onClose,
+                onShare = viewModel::shareFile,
+                // Available for every file; only media auto-enters PiP when you leave the app.
+                onPip = { pipController.enterPipNow() },
+            )
+        }
+        Box(modifier = Modifier.fillMaxWidth().weight(1f)) {
+            FileContent(
+                kind = kind,
+                viewModel = viewModel,
+                localPath = localPath,
+                mediaUri = mediaUri,
+                downloadStatus = downloadStatus,
+                zipEntries = zipEntries,
+            )
+        }
+    }
+}
+
+@Composable
+private fun FileViewerChrome(
+    fileName: String,
+    onClose: () -> Unit,
+    onShare: () -> Unit,
+    onPip: (() -> Unit)?,
+) {
+    val scheme = MaterialTheme.colorScheme
+    Surface(color = scheme.surfaceContainer, contentColor = scheme.onSurface) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .statusBarsPadding()
+                // status bar + 8dp gap + 56dp row to match the global top bar's height.
+                .padding(top = 8.dp)
+                .height(56.dp)
+                .padding(start = 4.dp, end = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            IconButton(onClick = onClose) {
+                Icon(Icons.Outlined.Close, contentDescription = "Chiudi")
+            }
+            Text(
+                text = fileName,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = scheme.onSurface,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(start = 4.dp, end = 8.dp),
+            )
+            if (onPip != null) {
+                IconButton(onClick = onPip) {
+                    Icon(Icons.Outlined.PictureInPictureAlt, contentDescription = "Picture-in-picture")
+                }
+            }
+            IconButton(onClick = onShare) {
+                Icon(Icons.Outlined.Share, contentDescription = "Condividi")
+            }
+        }
+    }
+}
+
+@Composable
+private fun FileContent(
+    kind: FileKind,
+    viewModel: FileViewerViewModel,
+    localPath: Loadable<String>,
+    mediaUri: Loadable<String>,
+    downloadStatus: SyncStatus,
+    zipEntries: Loadable<List<it.attendance100.mybicocca.ui.screen.elearning.subscreen.fileViewer.state.ZipEntryItem>>,
+) {
+    when (kind) {
         FileKind.Pdf -> LocalFileGate(localPath, downloadStatus, viewModel.sizeBytes, viewModel::retry) { path ->
             PdfViewerContent(localPath = path)
         }
@@ -120,15 +228,9 @@ fun FileViewerScreen(
             }
         }
 
-        is FileKind.Office -> OfficeViewerContent(
-            app = kind.app,
-            fileName = viewModel.fileName,
-            sizeBytes = viewModel.sizeBytes,
-            onOpenInOffice = viewModel::openInOffice,
-            onInstallOffice = { launchPlayStore(context, kind.app.packageName) },
-            onOpenWithOtherApp = viewModel::openWithExternalApp,
-        )
-
+        // Office (install prompt / app) is intercepted by the shell and never navigates here.
+        // Unknown only reaches here defensively: generic hand-off.
+        is FileKind.Office,
         FileKind.Unknown -> UnknownFileContent(
             fileName = viewModel.fileName,
             sizeBytes = viewModel.sizeBytes,
@@ -161,47 +263,6 @@ private fun LocalFileGate(
                 modifier = Modifier.fillMaxSize(),
             )
         }
-    }
-}
-
-// Microsoft's documented deep link: "<protocol>:ofv|u|<url>" forces view-only mode and
-// lets the Office app download the (tokenized) URL itself. Target the package explicitly
-// so a rogue app registering the scheme can't intercept the token-bearing URL.
-private fun launchOfficeUri(context: Context, uri: String, app: OfficeApp): Boolean {
-    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(uri))
-        .setPackage(app.packageName)
-        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-    return runCatching { context.startActivity(intent) }.isSuccess
-}
-
-private fun launchPlayStore(context: Context, packageName: String): Boolean {
-    val market = Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=$packageName"))
-        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-    val web = Intent(
-        Intent.ACTION_VIEW,
-        Uri.parse("https://play.google.com/store/apps/details?id=$packageName"),
-    ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-    return runCatching { context.startActivity(market) }
-        .recoverCatching { context.startActivity(web) }
-        .isSuccess
-}
-
-private fun launchExternalViewer(context: Context, localPath: String, mimeType: String?): Boolean {
-    val file = File(localPath)
-    val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
-    val resolvedMime = mimeType
-        ?: MimeTypeMap.getSingleton().getMimeTypeFromExtension(
-            file.extension.lowercase(Locale.ROOT),
-        )
-        ?: "*/*"
-    val intent = Intent(Intent.ACTION_VIEW)
-        .setDataAndType(uri, resolvedMime)
-        .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK)
-    return try {
-        context.startActivity(intent)
-        true
-    } catch (_: ActivityNotFoundException) {
-        false
     }
 }
 

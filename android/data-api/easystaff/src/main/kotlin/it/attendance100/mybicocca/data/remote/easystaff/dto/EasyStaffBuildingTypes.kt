@@ -72,10 +72,16 @@ data class EasyStaffRoom(
  * @param googleMapsLink The URL for the Google Maps iframe or external navigation link.
  * @param interactive360Link The URL for the 360-degree interactive panoramic view of the room.
  * @param description A brief textual description of the room's intended use or characteristics.
+ * Line breaks from the source markup are preserved.
  * @param capacity The maximum number of students the room can accommodate.
  * @param roomType The category of the room (e.g., "Aula Magna", "Laboratorio Informatica").
  * @param floor The numerical floor level, where 0 represents the ground floor (Piano Terra).
  * @param isAccessible Indicates whether the room is officially marked as accessible for individuals with disabilities.
+ * @param accessibilityNotes Free-form accessibility notes ("Note accessibilità"), e.g. internal
+ * steps, amphitheater layout, or instructions for booking an accessible table. List entries from
+ * the source markup are rendered as bulleted lines; null when the field is absent.
+ * @param isInclusionValidated Whether the room is marked as validated by the university's
+ * "Spazio B.Inclusion" accessibility service.
  * @param equipment A list of available facilities and tools found within the room.
  */
 data class EasyStaffRoomDetails(
@@ -90,6 +96,8 @@ data class EasyStaffRoomDetails(
     val roomType: String?,
     val floor: Int?,
     val isAccessible: Boolean,
+    val accessibilityNotes: String?,
+    val isInclusionValidated: Boolean,
     val equipment: List<Esse3RoomEquipment>
 )
 

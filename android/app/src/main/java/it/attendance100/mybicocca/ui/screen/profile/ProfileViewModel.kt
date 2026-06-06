@@ -27,7 +27,7 @@ import it.attendance100.mybicocca.domain.usecase.transcript.ObserveTranscriptRow
 import it.attendance100.mybicocca.domain.usecase.transcript.ObserveTranscriptStatsUseCase
 import it.attendance100.mybicocca.domain.usecase.transcript.RefreshTranscriptUseCase
 import it.attendance100.mybicocca.ui.screen.profile.state.DocumentEvent
-import it.attendance100.mybicocca.util.NetworkMonitor
+import it.attendance100.mybicocca.core.os.NetworkMonitor
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -194,7 +194,7 @@ class ProfileViewModel @Inject constructor(
                     _events.send(DocumentEvent.OpenPdf(bytes, certificate.fileName()))
                 },
                 onFailure = {
-                    _events.send(DocumentEvent.ShowMessage("Impossibile scaricare il certificato. Riprova."))
+                    _events.send(DocumentEvent.ShowMessage("Impossibile scaricare il certificato"))
                 },
             )
             _downloadingCertificates.update { it - certificate.id }

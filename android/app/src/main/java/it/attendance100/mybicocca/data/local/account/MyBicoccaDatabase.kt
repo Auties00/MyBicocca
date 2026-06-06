@@ -90,7 +90,7 @@ import it.attendance100.mybicocca.data.local.internship.SavedOpportunityEntity
         MapRoomSyncStateEntity::class,
         SavedOpportunityEntity::class,
     ],
-    version = 18,
+    version = 19,
     exportSchema = false,
 )
 abstract class MyBicoccaDatabase : RoomDatabase() {

@@ -167,11 +167,11 @@ class EasyStaffBuildingsApi(
     }
 
     private fun parseRoomDetails(doc: Document, card: Element): EasyStaffRoomDetails? {
-        val headerToNodeMap = card.select(".custom-color-bold")
-            .associate { it.text().cleanText() to it.siblingNodes().lastOrNull()}
+        val headerToElementMap = card.select(".custom-color-bold")
+            .associateBy { it.text().cleanText() }
 
         fun extractText(label: String): String? {
-            val node = headerToNodeMap[label]
+            val node = headerToElementMap[label]?.siblingNodes()?.lastOrNull()
             return if(node is TextNode) {
                 node.text()
                     .cleanText()
@@ -181,8 +181,36 @@ class EasyStaffBuildingsApi(
             }
         }
 
+        // Renders every node following the field's header span, preserving the source line
+        // structure: text nodes keep their embedded newlines (TextNode.text() would collapse
+        // them) and <ul> lists become bulleted lines. Used for free-form fields like
+        // "Descrizione" and "Note accessibilità" whose content spans multiple lines/elements.
+        fun extractMultilineText(label: String): String? {
+            val header = headerToElementMap[label] ?: return null
+            val rendered = buildString {
+                header.siblingNodes().forEach { node ->
+                    when {
+                        node is TextNode -> append(node.wholeText)
+                        node is Element && node.tagName() == "br" -> append('\n')
+                        node is Element && node.tagName() == "ul" -> node.select("li").forEach { item ->
+                            append('\n')
+                            append("• ")
+                            append(item.text().cleanText())
+                        }
+                        node is Element -> append(node.text().cleanText())
+                    }
+                }
+            }
+            return rendered.lines()
+                .map { it.trim() }
+                .joinToString("\n")
+                .replace(Regex("\n{3,}"), "\n\n")
+                .trim()
+                .takeIf { it.isNotBlank() && !it.equals("Dato mancante", ignoreCase = true) }
+        }
+
         fun extractLink(label: String): String? {
-            val node = headerToNodeMap[label]
+            val node = headerToElementMap[label]?.siblingNodes()?.lastOrNull()
             return if(node != null && node.hasAttr("href")) {
                 node.attr("href")
             } else {
@@ -209,9 +237,14 @@ class EasyStaffBuildingsApi(
         val googleMapsLink = extractLink("Google Maps")
             ?.let { parseRoomMapsLink(doc, it) }
 
-        val interactive360Link = extractLink("Immagine interattiva 360°")
+        // The 360° tour is rendered as an unlabeled anchor around the room image (the labeled
+        // "Immagine interattiva 360°" field no longer appears in the markup), so the anchor's
+        // href is the primary source and the legacy labeled field is kept as a fallback.
+        val interactive360Link = card.selectFirst("a[href*=images360]")
+            ?.attr("href")
+            ?: extractLink("Immagine interattiva 360°")
 
-        val description = extractText("Descrizione")
+        val description = extractMultilineText("Descrizione")
 
         val capacity = extractText("Capacità")
             ?.let { parseRoomCapacity(it) }
@@ -224,6 +257,11 @@ class EasyStaffBuildingsApi(
 
         val accessibility = extractText("Accessibile")
         val isAccessible = parseRoomAccessibility(accessibility)
+
+        val accessibilityNotes = extractMultilineText("Note accessibilità")
+
+        // The field's content is just a badge image, so its presence is the signal.
+        val isInclusionValidated = headerToElementMap.containsKey("Validata da Spazio B.Inclusion")
 
         val equipment = extractLink("Attrezzature")
             ?.let { parseRoomEquipment(card, it) }
@@ -241,6 +279,8 @@ class EasyStaffBuildingsApi(
             roomType = roomType,
             floor = floor,
             isAccessible = isAccessible,
+            accessibilityNotes = accessibilityNotes,
+            isInclusionValidated = isInclusionValidated,
             equipment = equipment
         )
     }

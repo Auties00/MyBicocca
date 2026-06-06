@@ -50,6 +50,12 @@ abstract class ElearningAbstractApi(
          * Expected length of a valid Moodle web service token.
          */
         const val WS_TOKEN_LENGTH = 32
+
+        /**
+         * Moodle langpack code sent as `moodlewssettinglang` when the client has no
+         * [ElearningAttributes.Language] attribute configured (see [ElearningApi.language]).
+         */
+        const val DEFAULT_LANGUAGE = "en"
     }
 
     /**
@@ -75,7 +81,10 @@ abstract class ElearningAbstractApi(
             append("wstoken", wsToken)
             append("moodlewssettingfilter", "true")
             append("moodlewssettingfileurl", "true")
-            append("moodlewssettinglang", "en_us")
+            append(
+                "moodlewssettinglang",
+                client.attributes.getOrNull(ElearningAttributes.Language) ?: DEFAULT_LANGUAGE,
+            )
             requestArgs.writeAdditionalData(this)
         }.build()
 

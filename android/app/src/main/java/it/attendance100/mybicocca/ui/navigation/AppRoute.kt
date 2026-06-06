@@ -40,24 +40,6 @@ sealed interface AppRoute : NavKey {
     @Serializable data object Settings : AppRoute {
         override val appTitle = AppTitle.SubPage("Impostazioni")
     }
-    @Serializable data object SettingsAppearance : AppRoute {
-        override val appTitle = AppTitle.SubPage("Aspetto")
-    }
-    @Serializable data object SettingsGeneral : AppRoute {
-        override val appTitle = AppTitle.SubPage("Generale")
-    }
-    @Serializable data object SettingsBehaviour : AppRoute {
-        override val appTitle = AppTitle.SubPage("Comportamento")
-    }
-    @Serializable data object SettingsSecurity : AppRoute {
-        override val appTitle = AppTitle.SubPage("Sicurezza")
-    }
-    @Serializable data object SettingsDeveloper : AppRoute {
-        override val appTitle = AppTitle.SubPage("Sviluppatore")
-    }
-    @Serializable data object AppInfo : AppRoute {
-        override val appTitle = AppTitle.SubPage("Info App")
-    }
 
     // Registry (Segreterie) sub-screens.
     @Serializable
@@ -146,7 +128,15 @@ sealed interface AppRoute : NavKey {
         override val appTitle get() = AppTitle.SubPage("")
         override val extendsBehindTopBar get() = true
     }
-    @Serializable data class QuizDetail(val quizId: Int, val courseId: Int) : AppRoute {
+    // The overview is a modal sheet (QuizDetailSheet); this route is the full-screen attempt /
+    // review, entered with exactly one action set so its view model knows what to open.
+    @Serializable data class QuizDetail(
+        val quizId: Int,
+        val courseId: Int,
+        val startNew: Boolean = false,
+        val resumeAttemptId: Int? = null,
+        val reviewAttemptId: Int? = null,
+    ) : AppRoute {
         override val appTitle get() = AppTitle.SubPage("Quiz")
     }
     @Serializable data class AssignmentDetail(val assignId: Int, val courseId: Int) : AppRoute {

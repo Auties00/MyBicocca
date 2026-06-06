@@ -357,8 +357,8 @@ private fun ActionRow(
     val scheme = MaterialTheme.colorScheme
     val context = LocalContext.current
     val dark = isSystemInDarkTheme()
-    val infoBg = if (dark) scheme.primaryContainer else scheme.primary
-    val infoFg = if (dark) scheme.onPrimaryContainer else scheme.onPrimary
+    val directionsBg = if (dark) scheme.primaryContainer else scheme.primary
+    val directionsFg = if (dark) scheme.onPrimaryContainer else scheme.onPrimary
 
     Row(
         modifier = Modifier
@@ -367,15 +367,15 @@ private fun ActionRow(
         horizontalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         // Directions button
-        FilledTonalButton(
+        Button(
             onClick = { context.openBuildingInMaps(building) },
             modifier = Modifier
                 .weight(1f)
                 .height(48.dp),
             shape = ButtonGroupDefaults.connectedLeadingButtonShape,
-            colors = ButtonDefaults.filledTonalButtonColors(
-                containerColor = scheme.surfaceContainerHighest,
-                contentColor = scheme.onSurface,
+            colors = ButtonDefaults.buttonColors(
+                containerColor = directionsBg,
+                contentColor = directionsFg,
             ),
         ) {
             Icon(
@@ -388,15 +388,15 @@ private fun ActionRow(
         }
 
         // Info button
-        Button(
+        FilledTonalButton(
             onClick = onShowInfo,
             modifier = Modifier
                 .weight(1f)
                 .height(48.dp),
             shape = ButtonGroupDefaults.connectedTrailingButtonShape,
-            colors = ButtonDefaults.buttonColors(
-                containerColor = infoBg,
-                contentColor = infoFg,
+            colors = ButtonDefaults.filledTonalButtonColors(
+                containerColor = scheme.surfaceContainerHighest,
+                contentColor = scheme.onSurface,
             ),
         ) {
             Icon(

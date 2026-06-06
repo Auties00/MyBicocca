@@ -1,162 +1,152 @@
 package it.attendance100.mybicocca.ui.screen.elearning.subscreen.fileViewer.component
 
 import android.graphics.Bitmap
+import android.graphics.Color
 import android.graphics.pdf.PdfRenderer
-import android.net.Uri
-import android.os.Build
 import android.os.ParcelFileDescriptor
-import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
-import androidx.pdf.PdfDocument
-import androidx.pdf.SandboxedPdfLoader
-import androidx.pdf.compose.PdfViewer
-import androidx.pdf.compose.PdfViewerState
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.foundation.layout.BoxWithConstraints
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import me.saket.telephoto.zoomable.rememberZoomableState
+import me.saket.telephoto.zoomable.zoomable
+import java.io.Closeable
 import java.io.File
 
-// androidx.pdf renders in a sandboxed process and brings selection/search/link taps, but
-// its backport floor is API 28. Below that (and if the sandboxed loader fails at runtime)
-// a plain PdfRenderer page list takes over — no text selection, but the document shows.
+// In-app PDF viewer built on the platform PdfRenderer (no third-party dependency): a vertical
+// list of pages, each rendered to a fit-to-width bitmap on demand. PdfRenderer only allows one
+// page open at a time, so renders are serialized through a mutex; off-screen pages drop their
+// bitmaps with the LazyColumn item, keeping memory bounded for long documents.
 @Composable
 fun PdfViewerContent(localPath: String, modifier: Modifier = Modifier) {
-    if (Build.VERSION.SDK_INT >= 28) {
-        ModernPdfViewer(localPath = localPath, modifier = modifier)
-    } else {
-        LegacyPdfViewer(localPath = localPath, modifier = modifier)
-    }
-}
-
-@RequiresApi(28)
-@Composable
-private fun ModernPdfViewer(localPath: String, modifier: Modifier = Modifier) {
-    val context = LocalContext.current
-    var document by remember(localPath) { mutableStateOf<PdfDocument?>(null) }
-    var loadFailed by remember(localPath) { mutableStateOf(false) }
-
-    LaunchedEffect(localPath) {
-        runCatching { SandboxedPdfLoader(context).openDocument(Uri.fromFile(File(localPath))) }
-            .onSuccess { document = it }
-            .onFailure { loadFailed = true }
-    }
+    val document = remember(localPath) { runCatching { PdfDocument(localPath) }.getOrNull() }
     DisposableEffect(document) {
-        onDispose { runCatching { (document as? AutoCloseable)?.close() } }
+        onDispose { document?.close() }
     }
 
-    val current = document
-    when {
-        current != null -> {
-            val state = remember { PdfViewerState() }
-            PdfViewer(
-                pdfDocument = current,
-                state = state,
-                modifier = modifier.fillMaxSize(),
+    if (document == null || document.pageCount == 0) {
+        Box(
+            modifier = modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.surfaceContainer),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(
+                text = "Impossibile aprire il PDF.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
-        loadFailed -> LegacyPdfViewer(localPath = localPath, modifier = modifier)
-        else -> ViewerLoading(modifier = modifier)
-    }
-}
-
-@Composable
-private fun LegacyPdfViewer(localPath: String, modifier: Modifier = Modifier) {
-    // PdfRenderer allows a single open page at a time, so all page renders funnel
-    // through one mutex.
-    val session = remember(localPath) {
-        runCatching {
-            val descriptor = ParcelFileDescriptor.open(File(localPath), ParcelFileDescriptor.MODE_READ_ONLY)
-            LegacyPdfSession(PdfRenderer(descriptor), Mutex())
-        }.getOrNull()
-    }
-    DisposableEffect(session) {
-        onDispose { runCatching { session?.renderer?.close() } }
-    }
-    if (session == null) {
-        ViewerError(message = "Impossibile aprire il PDF.", modifier = modifier)
         return
     }
 
-    BoxWithConstraints(modifier = modifier.fillMaxSize()) {
-        // Render at 1.5x layout width so mild platform scaling doesn't blur the text.
-        val targetWidthPx = (constraints.maxWidth * 1.5f).toInt().coerceAtMost(2048)
+    val density = LocalDensity.current
+    BoxWithConstraints(
+        modifier = modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.surfaceContainerHigh),
+    ) {
+        // Render a touch above container width for crispness, capped to keep bitmaps sane.
+        val widthPx = with(density) { (maxWidth.toPx() * 1.5f).toInt() }.coerceIn(1, 2400)
         LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(MaterialTheme.colorScheme.surfaceContainerHighest),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(12.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            items(count = session.renderer.pageCount, key = { it }) { index ->
-                LegacyPdfPage(session = session, pageIndex = index, targetWidthPx = targetWidthPx)
+            items(document.pageCount, key = { it }) { index ->
+                PdfPage(document = document, index = index, widthPx = widthPx)
             }
         }
     }
 }
 
-private class LegacyPdfSession(
-    val renderer: PdfRenderer,
-    val renderLock: Mutex,
-)
-
 @Composable
-private fun LegacyPdfPage(session: LegacyPdfSession, pageIndex: Int, targetWidthPx: Int) {
-    val bitmap by produceState<Bitmap?>(initialValue = null, session, pageIndex, targetWidthPx) {
-        value = withContext(Dispatchers.IO) {
-            session.renderLock.withLock {
-                runCatching {
-                    session.renderer.openPage(pageIndex).use { page ->
-                        val height = (targetWidthPx.toFloat() / page.width * page.height).toInt()
-                        Bitmap.createBitmap(targetWidthPx, height, Bitmap.Config.ARGB_8888).also {
-                            // Pdf pages are transparent by default; render over white.
-                            it.eraseColor(android.graphics.Color.WHITE)
-                            page.render(it, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
-                        }
-                    }
-                }.getOrNull()
-            }
-        }
+private fun PdfPage(document: PdfDocument, index: Int, widthPx: Int) {
+    val scheme = MaterialTheme.colorScheme
+    var page by remember(index, widthPx) { mutableStateOf<ImageBitmap?>(null) }
+    LaunchedEffect(index, widthPx) {
+        page = runCatching { document.renderPage(index, widthPx).asImageBitmap() }.getOrNull()
     }
-    val current = bitmap
-    if (current != null) {
+    val bitmap = page
+    if (bitmap != null) {
+        // telephoto's zoomable gives pinch + double-tap zoom and pan per page; at min zoom it
+        // forwards vertical drags to the LazyColumn so paging between pages still works.
+        val zoomState = rememberZoomableState()
         Image(
-            bitmap = current.asImageBitmap(),
-            contentDescription = "Pagina ${pageIndex + 1}",
+            bitmap = bitmap,
+            contentDescription = "Pagina ${index + 1}",
+            contentScale = ContentScale.Fit,
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 4.dp),
+                .aspectRatio(bitmap.width.toFloat() / bitmap.height.toFloat())
+                .zoomable(zoomState),
         )
     } else {
-        // Hold an A4-ish slot while the page renders so the scrollbar doesn't jump.
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 4.dp)
-                .aspectRatio(1f / 1.414f)
-                .background(Color.White),
-        )
+                // A4 portrait until the real page lands.
+                .aspectRatio(0.707f)
+                .background(scheme.surfaceContainerHighest, RoundedCornerShape(4.dp)),
+            contentAlignment = Alignment.Center,
+        ) {
+            CircularProgressIndicator(modifier = Modifier.size(28.dp))
+        }
+    }
+}
+
+private class PdfDocument(path: String) : Closeable {
+    private val descriptor = ParcelFileDescriptor.open(File(path), ParcelFileDescriptor.MODE_READ_ONLY)
+    private val renderer = PdfRenderer(descriptor)
+    private val mutex = Mutex()
+
+    val pageCount: Int = renderer.pageCount
+
+    suspend fun renderPage(index: Int, widthPx: Int): Bitmap = withContext(Dispatchers.IO) {
+        mutex.withLock {
+            renderer.openPage(index).use { page ->
+                val heightPx = (widthPx * page.height.toFloat() / page.width).toInt().coerceAtLeast(1)
+                val bitmap = Bitmap.createBitmap(widthPx, heightPx, Bitmap.Config.ARGB_8888)
+                bitmap.eraseColor(Color.WHITE)
+                page.render(bitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
+                bitmap
+            }
+        }
+    }
+
+    override fun close() {
+        runCatching { renderer.close() }
+        runCatching { descriptor.close() }
     }
 }

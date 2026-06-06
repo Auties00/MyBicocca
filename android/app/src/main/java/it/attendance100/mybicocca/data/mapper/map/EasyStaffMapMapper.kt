@@ -31,7 +31,10 @@ internal fun EasyStaffRoomOccupationEvent.toDomain(): RoomScheduleEntry = RoomSc
 
 internal fun EasyStaffRoomDetails.toDomain(): MapRoomDetail = MapRoomDetail(
     floor = floor,
+    capacity = capacity,
     isAccessible = isAccessible,
+    accessibilityNotes = accessibilityNotes,
+    isInclusionValidated = isInclusionValidated,
     roomType = roomType,
     interactive360Url = interactive360Link,
     address = address,

@@ -12,10 +12,14 @@ plugins {
 
 // Google Maps key — kept out of VCS in local.properties (already git-ignored). Falls back to
 // an empty string so the project still builds without it (the map tiles just render blank).
-val mapsApiKey: String = Properties().apply {
+val localProperties: Properties = Properties().apply {
     val f = rootProject.file("local.properties")
     if (f.exists()) f.inputStream().use { load(it) }
-}.getProperty("MAPS_API_KEY", "")
+}
+val mapsApiKey: String = localProperties.getProperty("MAPS_API_KEY", "")
+// Map id whose cloud styles (light + dark, configured in the Cloud console) replace the bundled
+// legacy JSON map styles. Optional: blank keeps the JSON fallback.
+val mapsMapId: String = localProperties.getProperty("MAPS_MAP_ID", "")
 
 // Android config
 android {
@@ -44,6 +48,8 @@ android {
 
         // Injected into the Google Maps <meta-data> in the manifest.
         manifestPlaceholders["MAPS_API_KEY"] = mapsApiKey
+        // Read at runtime by the map screen to opt into cloud-based styling.
+        buildConfigField("String", "MAPS_MAP_ID", "\"$mapsMapId\"")
     }
 
     buildFeatures {
@@ -203,11 +209,8 @@ dependencies {
     implementation("androidx.media3:media3-session:$media3")
     implementation("androidx.media3:media3-ui-compose-material3:$media3")
 
-    // In-app file viewer (elearning course files).
-    // androidx.pdf needs API 28+ at runtime (manifest overrideLibrary + Build.VERSION gate);
-    // a plain PdfRenderer fallback covers 25-27.
-    implementation("androidx.pdf:pdf-compose:1.0.0-alpha18")
-    implementation("androidx.pdf:pdf-document-service:1.0.0-alpha18")
+    // In-app file viewer (elearning course files). PDFs are not rendered in-app — they open in
+    // the device's default reader via ACTION_VIEW, so no PDF library is bundled.
     // telephoto: zoom/pan + sub-sampling for image files (Coil 2 flavor).
     implementation("me.saket.telephoto:zoomable-image-coil:0.19.0")
     implementation("io.coil-kt:coil-gif:2.7.0")

@@ -75,31 +75,6 @@ class StudyPlanRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun getActivityYearByCodeForCareer(careerId: CareerId): Map<String, StudyYear> {
-        val cachedActivities = activitiesCache[careerId]?.takeIf { it.isFresh() }?.activities
-        val cachedProgram = programCache[careerId]?.takeIf { it.isFresh() }?.program
-        if (cachedActivities != null && cachedProgram != null) {
-            return cachedProgram.toYearByCode() + cachedActivities.toYearByCode()
-        }
-        val mutex = mutexes.computeIfAbsent(careerId) { Mutex() }
-        return mutex.withLock {
-            val career = activeCareer(careerId)
-            coroutineScope {
-                val activitiesDeferred = async { loadActivitiesUnlocked(careerId) }
-                val programDeferred = async {
-                    if (career == null) null else loadProgramUnlocked(careerId, career)
-                }
-                val activities = activitiesDeferred.await()
-                val program = programDeferred.await()
-                val planMap = activities.toYearByCode()
-                val programMap = program?.toYearByCode() ?: emptyMap()
-                // Personal plan overlays the program so the student's actual chosen
-                // year wins on collisions; entries unique to the program are kept.
-                programMap + planMap
-            }
-        }
-    }
-
     override suspend fun getStudyPlan(careerId: CareerId): StudyPlan? {
         val plansApi = sessionManager.esse3().plans
         val header = plansApi.getStudentPlanHeaders(studentId = careerId.value).pickBest() ?: return null
@@ -384,17 +359,6 @@ class StudyPlanRepositoryImpl @Inject constructor(
         programCache[careerId] = CachedProgram(program = program, cachedAtMs = nowMs())
         return program
     }
-
-    private fun List<Esse3StudyPlanActivity>.toYearByCode(): Map<String, StudyYear> = this
-        .mapNotNull { a ->
-            val code = a.activityTranscriptCode?.takeIf { it.isNotBlank() } ?: return@mapNotNull null
-            code to (a.courseYear?.let(::StudyYear) ?: StudyYear.Unknown)
-        }
-        .toMap()
-
-    private fun EasyStaffStudyProgram.toYearByCode(): Map<String, StudyYear> = years
-        .flatMap { y -> y.subjects.map { s -> s.code to StudyYear(y.year) } }
-        .toMap()
 
     private suspend fun fetchEsse3Plan(
         plansApi: Esse3PlansApi,

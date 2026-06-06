@@ -8,6 +8,7 @@ import it.attendance100.mybicocca.data.local.elearning.course.CourseSyllabusEnti
 import it.attendance100.mybicocca.data.local.elearning.course.EnrolledCourseEntity
 import it.attendance100.mybicocca.data.local.elearning.sync.ElearningJson
 import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningActivityCompletionStatus
+import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningCourseModule
 import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningCoursePublicInfo
 import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningCourseSection
 import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningEnrolledCourse
@@ -21,29 +22,40 @@ import it.attendance100.mybicocca.domain.model.elearning.course.CourseStaffMembe
 import it.attendance100.mybicocca.domain.model.elearning.course.CourseStaffRole
 import it.attendance100.mybicocca.domain.model.elearning.course.CourseSyllabusPointer
 import it.attendance100.mybicocca.domain.model.elearning.course.EnrolledCourse
-import it.attendance100.mybicocca.domain.model.elearning.deadline.Deadline
 import it.attendance100.mybicocca.domain.model.elearning.course.ModuleContent
+import it.attendance100.mybicocca.domain.model.elearning.course.ModuleDate
 import it.attendance100.mybicocca.domain.model.elearning.course.ModuleType
 import it.attendance100.mybicocca.domain.model.elearning.course.ProgrammeSection
 import it.attendance100.mybicocca.domain.model.elearning.course.Semester
 import it.attendance100.mybicocca.domain.model.elearning.course.SyllabusInfo
+import it.attendance100.mybicocca.domain.model.elearning.deadline.Deadline
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.ListSerializer
-import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Element
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset
+import java.util.Locale
 
 @Serializable
 internal data class ModuleContentJson(
     val type: String? = null,
     val fileName: String? = null,
+    val filePath: String? = null,
     val fileUrl: String? = null,
     val mimeType: String? = null,
     val sizeBytes: Long? = null,
     val timeModifiedMs: Long? = null,
+)
+
+@Serializable
+internal data class ModuleDateJson(
+    val label: String? = null,
+    val timestampMs: Long,
+    val dataId: String? = null,
 )
 
 @Serializable
@@ -84,9 +96,9 @@ internal fun ElearningEnrolledCourse.toEntity(accountId: AccountId, sortOrder: I
     EnrolledCourseEntity(
         accountId = accountId.value,
         courseId = id,
-        shortName = shortName,
-        fullName = fullName,
-        displayName = displayName ?: fullName,
+        shortName = shortName.stripMlang(),
+        fullName = fullName.stripMlang(),
+        displayName = (displayName ?: fullName).stripMlang(),
         idNumber = identificationNumber?.takeIf { it.isNotBlank() },
         summary = summary,
         courseImageUrl = courseImageUrl,
@@ -133,9 +145,11 @@ internal fun ElearningCourseSection.toEntity(accountId: AccountId, courseId: Int
         courseId = courseId,
         sectionId = id,
         sectionNumber = sectionNumber ?: 0,
-        name = name,
+        name = name.stripMlang(),
         summary = summary,
         visible = visible != 0,
+        component = component,
+        itemId = itemId,
     )
 
 internal fun List<ElearningCourseSection>.toModuleEntities(
@@ -149,15 +163,17 @@ internal fun List<ElearningCourseSection>.toModuleEntities(
                 ModuleContentJson(
                     type = it.type,
                     fileName = it.fileName,
+                    filePath = it.filePath,
                     fileUrl = it.fileUrl,
                     mimeType = it.mimeType,
                     sizeBytes = it.fileSize,
                     timeModifiedMs = it.timeModifiedTimestamp?.toMillisOrNull(),
                 )
             }
-            val dueAtMs = module.dates.orEmpty()
-                .firstOrNull { it.label?.contains("due", ignoreCase = true) == true }
-                ?.timestamp?.toMillisOrNull()
+            val dates = module.dates.orEmpty().mapNotNull {
+                val ms = it.timestamp?.toMillisOrNull() ?: return@mapNotNull null
+                ModuleDateJson(label = it.label, timestampMs = ms, dataId = it.dataId)
+            }
             result += CourseModuleEntity(
                 accountId = accountId.value,
                 courseId = courseId,
@@ -165,19 +181,43 @@ internal fun List<ElearningCourseSection>.toModuleEntities(
                 sectionId = section.id,
                 sortOrder = index,
                 instanceId = module.instanceId,
-                name = module.name,
+                name = module.name.stripMlang(),
                 modName = module.moduleName,
+                typeLabel = module.modulePluralName?.takeIf { it.isNotBlank() },
                 description = module.description,
                 url = module.url,
                 iconUrl = module.moduleIconUrl,
-                visible = module.visible != 0 && module.userVisible != false,
-                dueAtMs = dueAtMs,
+                // Teacher-visibility only. A module gated for this user (uservisible=false) is
+                // kept and rendered locked, not dropped — see CourseModule.accessible.
+                visible = module.visible != 0,
+                accessible = module.userVisible != false,
+                availabilityInfo = module.availabilityInfo?.takeIf { it.isNotBlank() },
+                onCoursePage = module.visibleOnCoursePage != 0,
+                indent = module.indent ?: 0,
+                afterLink = module.afterLinkHtml.htmlToPlainTextOrNull(),
+                linkedSectionId = module.linkedSectionId(),
+                datesJson = if (dates.isEmpty()) null else ElearningJson.encodeToString(dates),
                 contentsJson = if (contents.isEmpty()) null else ElearningJson.encodeToString(contents),
             )
         }
     }
     return result
 }
+
+// A mod_subsection placeholder module points at its content section via customdata, e.g.
+// {"sectionid":"333817"}. customData is a JSON string (sometimes the literal "" when empty).
+private fun ElearningCourseModule.linkedSectionId(): Int? {
+    val raw = customData ?: return null
+    return runCatching {
+        val element = ElearningJson.parseToJsonElement(raw)
+        (element as? JsonObject)?.get("sectionid")?.jsonPrimitive?.content?.toIntOrNull()
+    }.getOrNull()
+}
+
+private fun String?.htmlToPlainTextOrNull(): String? =
+    this?.takeIf { it.isNotBlank() }
+        ?.let { Jsoup.parseBodyFragment(it).text().trim() }
+        ?.takeIf { it.isNotBlank() }
 
 internal fun CourseSectionEntity.toDomain(modules: List<CourseModuleEntity>): CourseSection {
     val sectionModules = modules.filter { it.sectionId == sectionId }
@@ -189,6 +229,8 @@ internal fun CourseSectionEntity.toDomain(modules: List<CourseModuleEntity>): Co
         name = name,
         summary = summary,
         visible = visible,
+        component = component,
+        itemId = itemId,
         modules = sectionModules,
     )
 }
@@ -202,10 +244,22 @@ internal fun CourseModuleEntity.toDomain(): CourseModule {
         ModuleContent(
             type = it.type,
             fileName = it.fileName,
+            filePath = it.filePath,
             fileUrl = it.fileUrl,
             mimeType = it.mimeType,
             sizeBytes = it.sizeBytes,
             timeModified = it.timeModifiedMs?.let(Instant::ofEpochMilli),
+        )
+    }
+    val dates = datesJson?.let { json ->
+        runCatching {
+            ElearningJson.decodeFromString(ListSerializer(ModuleDateJson.serializer()), json)
+        }.getOrNull()
+    }.orEmpty().map {
+        ModuleDate(
+            label = it.label,
+            instant = Instant.ofEpochMilli(it.timestampMs),
+            dataId = it.dataId,
         )
     }
     return CourseModule(
@@ -213,13 +267,20 @@ internal fun CourseModuleEntity.toDomain(): CourseModule {
         instanceId = instanceId,
         name = name,
         type = ModuleType.fromRaw(modName),
+        typeLabel = typeLabel,
         description = description,
         url = url,
         iconUrl = iconUrl,
         visible = visible,
+        accessible = accessible,
+        availabilityInfo = availabilityInfo,
+        onCoursePage = onCoursePage,
+        indent = indent,
+        afterLink = afterLink,
+        linkedSectionId = linkedSectionId,
         contents = contents,
         completion = null,
-        dueAt = dueAtMs?.let(Instant::ofEpochMilli),
+        dates = dates,
     )
 }
 
@@ -506,6 +567,42 @@ internal fun ActivityCompletionEntity.toDomain(): CompletionState =
         isAutomatic = isAutomatic,
         isTracked = isTracked,
     )
+
+// Course/module names arrive with multilang2 {mlang} markup unresolved even with
+// moodlewssettingfilter=true: names go through format_string (headings), which the site's
+// multilang filter doesn't cover, and no WS parameter can override that. The official Moodle
+// app has the same problem and ships a client-side filter (moodleapp src/addons/filter/
+// multilang2); this mirrors its semantics — comma-separated language lists per block, blocks
+// matching the wanted language kept, all others removed, text outside blocks preserved.
+// Wanted language order: app language, the dedicated "other" block, English, then the first
+// block's language as a last resort so a name never collapses to nothing. NOTE: closing braces
+// must stay escaped — Android's ICU regex engine rejects the bare `}` the JVM tolerates, and
+// the failure crashes this class's static init.
+private val MlangBlock = Regex(
+    """\{\s*mlang\s+([a-z0-9_-]+(?:\s*,\s*[a-z0-9_-]+)*)\s*\}(.*?)\{\s*mlang\s*\}""",
+    setOf(RegexOption.IGNORE_CASE, RegexOption.DOT_MATCHES_ALL),
+)
+
+internal fun String.stripMlang(): String {
+    if (!contains("mlang", ignoreCase = true)) return this
+    val firstBlock = MlangBlock.find(this) ?: return this
+    val appLanguage = normalizeMlangCode(Locale.getDefault().language)
+    val firstBlockLanguage = normalizeMlangCode(firstBlock.groupValues[1].substringBefore(','))
+    for (wanted in listOf(appLanguage, "other", "en", firstBlockLanguage).distinct()) {
+        var matched = false
+        val result = MlangBlock.replace(this) { block ->
+            val languages = block.groupValues[1].split(',').map(::normalizeMlangCode)
+            // A block tagged with a parent language (e.g. "en") also serves variants ("en-us").
+            val blockMatches = languages.any { it == wanted || wanted.startsWith("$it-") }
+            if (blockMatches) matched = true
+            if (blockMatches) block.groupValues[2] else ""
+        }
+        if (matched) return result.trim()
+    }
+    return this
+}
+
+private fun normalizeMlangCode(code: String): String = code.trim().lowercase().replace('_', '-')
 
 private fun Long?.toMillisOrNull(): Long? = this?.takeIf { it > 0 }?.let { it * 1000L }
 

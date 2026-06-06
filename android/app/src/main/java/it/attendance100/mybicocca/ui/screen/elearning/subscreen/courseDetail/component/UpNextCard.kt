@@ -1,6 +1,5 @@
 package it.attendance100.mybicocca.ui.screen.elearning.subscreen.courseDetail.component
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -16,7 +15,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -24,7 +23,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.material3.Text
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -40,8 +38,7 @@ import java.time.Instant
 fun UpNextCard(
     item: UpNextItem,
     now: Instant,
-    onSubmit: () -> Unit = item.onClick,
-    onViewBrief: () -> Unit = item.onClick,
+    onOpen: () -> Unit = item.onClick,
     modifier: Modifier = Modifier,
 ) {
     val scheme = MaterialTheme.colorScheme
@@ -49,9 +46,8 @@ fun UpNextCard(
     Surface(
         shape = RoundedCornerShape(28.dp),
         color = scheme.tertiaryContainer,
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp),
+        // Horizontal padding comes from the host list's content padding.
+        modifier = modifier.fillMaxWidth(),
     ) {
         Box(modifier = Modifier.padding(18.dp)) {
             Box(
@@ -72,7 +68,7 @@ fun UpNextCard(
             )
             Column {
                 Text(
-                    text = "✦ $countdown",
+                    text = countdown,
                     color = scheme.tertiary,
                     fontSize = 10.sp,
                     fontWeight = FontWeight.Bold,
@@ -98,48 +94,27 @@ fun UpNextCard(
                     )
                 }
                 Spacer(Modifier.height(14.dp))
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                Surface(
+                    shape = CircleShape,
+                    color = scheme.onTertiaryContainer,
+                    modifier = Modifier.clickable(onClick = onOpen),
                 ) {
-                    Surface(
-                        shape = CircleShape,
-                        color = scheme.onTertiaryContainer,
-                        modifier = Modifier.clickable(onClick = onSubmit),
+                    Row(
+                        modifier = Modifier.padding(horizontal = 22.dp, vertical = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
-                        Row(
-                            modifier = Modifier.padding(horizontal = 22.dp, vertical = 12.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        ) {
-                            Icon(
-                                imageVector = Icons.Filled.Add,
-                                contentDescription = null,
-                                tint = scheme.tertiaryContainer,
-                                modifier = Modifier.size(18.dp),
-                            )
-                            Text(
-                                text = "Consegna",
-                                color = scheme.tertiaryContainer,
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 14.sp,
-                            )
-                        }
-                    }
-                    Surface(
-                        shape = CircleShape,
-                        color = scheme.tertiaryContainer,
-                        border = BorderStroke(1.5.dp, scheme.onTertiaryContainer),
-                        modifier = Modifier
-                            .clip(CircleShape)
-                            .clickable(onClick = onViewBrief),
-                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                            contentDescription = null,
+                            tint = scheme.tertiaryContainer,
+                            modifier = Modifier.size(18.dp),
+                        )
                         Text(
                             text = "Apri",
-                            color = scheme.onTertiaryContainer,
-                            fontWeight = FontWeight.SemiBold,
-                            fontSize = 13.sp,
-                            modifier = Modifier.padding(horizontal = 18.dp, vertical = 12.dp),
+                            color = scheme.tertiaryContainer,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 14.sp,
                         )
                     }
                 }

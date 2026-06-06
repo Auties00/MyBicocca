@@ -129,6 +129,30 @@ class FileViewerViewModel @AssistedInject constructor(
         }
     }
 
+    // Downloads the file if needed, then asks the UI to open the system share sheet.
+    fun shareFile() {
+        viewModelScope.launch {
+            val path = when (val loaded = _localPath.value) {
+                is Loadable.Loaded -> loaded.value
+                Loadable.NotYetLoaded -> {
+                    val url = key.fileUrl ?: return@launch
+                    _downloadStatus.value = SyncStatus.Refreshing
+                    runCatching { downloadCourseFile(url, key.fileName) }
+                        .onSuccess {
+                            _localPath.value = Loadable.Loaded(it)
+                            _downloadStatus.value = SyncStatus.Idle
+                        }
+                        .onFailure { cause ->
+                            _downloadStatus.value = SyncStatus.Failed(cause)
+                            oneShotChannel.trySend(FileViewerOneShotEvent.DownloadFailed(cause))
+                        }
+                        .getOrNull() ?: return@launch
+                }
+            }
+            oneShotChannel.trySend(FileViewerOneShotEvent.ShareFile(path, key.fileName, mimeType))
+        }
+    }
+
     fun openZipEntry(entry: ZipEntryItem) {
         val zipPath = (_localPath.value as? Loadable.Loaded)?.value ?: return
         viewModelScope.launch {

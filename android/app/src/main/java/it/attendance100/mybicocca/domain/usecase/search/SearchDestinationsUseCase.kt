@@ -93,32 +93,15 @@ class SearchDestinationsUseCase @Inject constructor() {
                 listOf("chat", "conversazioni", "messaggio"),
             ),
             Entry(
+                // Appearance, language, app lock and app info all live inside the Settings
+                // page now, so their search terms resolve here.
                 SearchDestination.Settings, "Impostazioni", null,
-                listOf("preferenze", "opzioni", "configurazione"),
-            ),
-            Entry(
-                SearchDestination.SettingsAppearance, "Aspetto", "Impostazioni",
-                listOf("tema", "colori", "tema scuro", "dark mode"),
-            ),
-            Entry(
-                SearchDestination.SettingsGeneral, "Generale", "Impostazioni",
-                emptyList(),
-            ),
-            Entry(
-                SearchDestination.SettingsBehaviour, "Comportamento", "Impostazioni",
-                listOf("notifiche", "vibrazione"),
-            ),
-            Entry(
-                SearchDestination.SettingsSecurity, "Sicurezza", "Impostazioni",
-                listOf("biometria", "impronta", "blocco"),
-            ),
-            Entry(
-                SearchDestination.SettingsDeveloper, "Sviluppatore", "Impostazioni",
-                listOf("debug", "developer"),
-            ),
-            Entry(
-                SearchDestination.AppInfo, "Info App", null,
-                listOf("informazioni", "versione", "about"),
+                listOf(
+                    "preferenze", "opzioni", "configurazione",
+                    "tema", "colori", "tema scuro", "dark mode", "aspetto",
+                    "lingua", "biometria", "impronta", "blocco", "sicurezza",
+                    "versione", "informazioni", "about", "licenze", "github",
+                ),
             ),
         )
     }

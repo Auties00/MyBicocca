@@ -14,12 +14,6 @@ fun SearchDestination.toAppRoute(activeCareerId: CareerId?): AppRoute? = when (t
 
     SearchDestination.Profile -> AppRoute.Profile
     SearchDestination.Settings -> AppRoute.Settings
-    SearchDestination.SettingsAppearance -> AppRoute.SettingsAppearance
-    SearchDestination.SettingsGeneral -> AppRoute.SettingsGeneral
-    SearchDestination.SettingsBehaviour -> AppRoute.SettingsBehaviour
-    SearchDestination.SettingsSecurity -> AppRoute.SettingsSecurity
-    SearchDestination.SettingsDeveloper -> AppRoute.SettingsDeveloper
-    SearchDestination.AppInfo -> AppRoute.AppInfo
     SearchDestination.Taxes -> AppRoute.Taxes
     SearchDestination.ExamResults -> AppRoute.ExamResults
     SearchDestination.BookedExams -> AppRoute.BookedExams

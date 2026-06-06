@@ -60,24 +60,15 @@ fun ForumHeader(
                     modifier = Modifier.size(28.dp),
                 )
             }
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = "✦ ${headerEyebrow(forum.type).uppercase()}",
-                    color = accent,
-                    fontSize = 10.sp,
-                    fontWeight = FontWeight.Bold,
-                    letterSpacing = 1.2.sp,
-                )
-                Spacer(Modifier.height(4.dp))
-                Text(
-                    text = forum.name,
-                    style = MaterialTheme.typography.headlineSmall,
-                    color = scheme.onSurface,
-                    fontWeight = FontWeight.Bold,
-                    lineHeight = 28.sp,
-                    letterSpacing = (-0.3).sp,
-                )
-            }
+            Text(
+                text = forum.name,
+                style = MaterialTheme.typography.headlineSmall,
+                color = scheme.onSurface,
+                fontWeight = FontWeight.Bold,
+                lineHeight = 28.sp,
+                letterSpacing = (-0.3).sp,
+                modifier = Modifier.weight(1f),
+            )
         }
         val intro = forum.intro?.let(::stripHeaderIntro)
         if (!intro.isNullOrBlank()) {
@@ -104,15 +95,6 @@ private fun headerIcon(type: ForumType): ImageVector = when (type) {
     ForumType.News -> Icons.Outlined.Campaign
     ForumType.QandA -> Icons.AutoMirrored.Outlined.HelpOutline
     else -> Icons.Outlined.Forum
-}
-
-private fun headerEyebrow(type: ForumType): String = when (type) {
-    ForumType.News -> "Bacheca avvisi"
-    ForumType.QandA -> "Domande e risposte"
-    ForumType.EachUser -> "Una discussione per studente"
-    ForumType.SingleSimple -> "Discussione singola"
-    ForumType.BlogLike -> "Formato blog"
-    else -> "Forum del corso"
 }
 
 private fun stripHeaderIntro(html: String): String =

@@ -1,7 +1,9 @@
 package it.attendance100.mybicocca.ui.navigation
 
 import android.Manifest
+import android.content.Intent
 import android.content.pm.PackageManager
+import androidx.core.net.toUri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.EnterExitState
@@ -14,7 +16,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
@@ -52,6 +53,8 @@ import androidx.navigation3.ui.NavDisplay
 import coil.imageLoader
 import coil.request.ImageRequest
 import coil.size.Size
+import it.attendance100.mybicocca.domain.model.search.SearchDestination
+import it.attendance100.mybicocca.domain.model.search.SearchResult
 import it.attendance100.mybicocca.ui.component.bar.BottomBarItem
 import it.attendance100.mybicocca.ui.component.bar.MyBicoccaBottomBar
 import it.attendance100.mybicocca.ui.component.bar.MyBicoccaTopBar
@@ -68,20 +71,28 @@ import it.attendance100.mybicocca.ui.screen.calendar.CalendarViewModel
 import it.attendance100.mybicocca.ui.screen.calendar.subscreen.teacherDetail.TeacherDetailScreen
 import it.attendance100.mybicocca.ui.screen.elearning.ElearningScreen
 import it.attendance100.mybicocca.ui.screen.elearning.ElearningViewModel
-import it.attendance100.mybicocca.ui.screen.elearning.subscreen.assignmentDetail.AssignmentDetailScreen
-import it.attendance100.mybicocca.ui.screen.elearning.subscreen.assignmentDetail.AssignmentDetailViewModel
+import it.attendance100.mybicocca.ui.screen.elearning.subscreen.assignmentDetail.AssignmentDetailSheet
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.conversationDetail.ConversationDetailScreen
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.conversationDetail.ConversationDetailViewModel
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.courseDetail.CourseDetailScreen
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.courseDetail.CourseDetailViewModel
-import it.attendance100.mybicocca.ui.screen.elearning.subscreen.fileViewer.FileViewerScreen
-import it.attendance100.mybicocca.ui.screen.elearning.subscreen.fileViewer.FileViewerViewModel
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.discussionDetail.DiscussionDetailScreen
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.discussionDetail.DiscussionDetailViewModel
+import it.attendance100.mybicocca.data.local.settings.FileOpenChoice
+import it.attendance100.mybicocca.ui.screen.elearning.subscreen.fileViewer.ExternalFileLauncher
+import it.attendance100.mybicocca.ui.screen.elearning.subscreen.fileViewer.FileOpenPreferenceViewModel
+import it.attendance100.mybicocca.ui.screen.elearning.subscreen.fileViewer.FileViewerScreen
+import it.attendance100.mybicocca.ui.screen.elearning.subscreen.fileViewer.FileViewerViewModel
+import it.attendance100.mybicocca.ui.screen.elearning.subscreen.fileViewer.isPackageInstalled
+import it.attendance100.mybicocca.ui.screen.elearning.subscreen.fileViewer.state.FileKind
+import it.attendance100.mybicocca.ui.screen.elearning.subscreen.fileViewer.state.OfficeApp
+import it.attendance100.mybicocca.ui.screen.elearning.subscreen.fileViewer.subscreen.officeOpen.OfficeOpenSheet
+import it.attendance100.mybicocca.ui.screen.elearning.subscreen.fileViewer.subscreen.openChooser.FileOpenChooserSheet
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.forumDetail.ForumDetailScreen
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.forumDetail.ForumDetailViewModel
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.messaging.MessagingScreen
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.quizDetail.QuizDetailScreen
+import it.attendance100.mybicocca.ui.screen.elearning.subscreen.quizDetail.QuizDetailSheet
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.quizDetail.QuizDetailViewModel
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.videoPlayer.VideoPlayerScreen
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.videoPlayer.VideoPlayerViewModel
@@ -99,38 +110,28 @@ import it.attendance100.mybicocca.ui.screen.registry.subscreen.bookedExams.Booke
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.degreeAward.DegreeAwardScreen
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.examResults.ExamResultsScreen
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.examResults.ExamResultsViewModel
-import it.attendance100.mybicocca.ui.screen.registry.subscreen.isee.IseeScreen
-import it.attendance100.mybicocca.ui.screen.registry.subscreen.refunds.RefundsScreen
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.internships.InternshipsScreen
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.internships.subscreen.saved.SavedOpportunitiesScreen
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.isee.IseeScreen
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.procedures.ProceduresScreen
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.procedures.subscreen.courseChange.CourseChangeScreen
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.procedures.subscreen.enrollmentExtension.EnrollmentExtensionScreen
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.questionnaires.QuestionnairesScreen
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.questionnaires.QuestionnairesViewModel
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.questionnaires.subscreen.compilation.QuestionnaireCompilationScreen
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.questionnaires.subscreen.compilation.QuestionnaireCompilationViewModel
-import it.attendance100.mybicocca.ui.screen.registry.subscreen.procedures.ProceduresScreen
-import it.attendance100.mybicocca.ui.screen.registry.subscreen.procedures.subscreen.courseChange.CourseChangeScreen
-import it.attendance100.mybicocca.ui.screen.registry.subscreen.procedures.subscreen.enrollmentExtension.EnrollmentExtensionScreen
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.refunds.RefundsScreen
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.reservations.ReservationsScreen
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.studyPlan.StudyPlanScreen
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.studyPlanEdit.StudyPlanEditScreen
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.taxDetail.TaxDetailScreen
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.taxes.TaxesScreen
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.taxes.TaxesViewModel
-import it.attendance100.mybicocca.domain.model.search.SearchDestination
-import it.attendance100.mybicocca.domain.model.search.SearchResult
 import it.attendance100.mybicocca.ui.screen.search.SearchOverlay
 import it.attendance100.mybicocca.ui.screen.search.SearchViewModel
 import it.attendance100.mybicocca.ui.screen.settings.SettingsScreen
-import it.attendance100.mybicocca.ui.screen.settings.subscreen.appInfo.AppInfoScreen
-import it.attendance100.mybicocca.ui.screen.settings.subscreen.loginManager.LoginManagerScreen
-import it.attendance100.mybicocca.ui.screen.settings.subscreen.settingsAppearance.SettingsAppearanceScreen
-import it.attendance100.mybicocca.ui.screen.settings.subscreen.settingsBehaviour.SettingsBehaviourScreen
-import it.attendance100.mybicocca.ui.screen.settings.subscreen.settingsDeveloper.SettingsDeveloperScreen
-import it.attendance100.mybicocca.ui.screen.settings.subscreen.settingsGeneral.SettingsGeneralScreen
-import it.attendance100.mybicocca.ui.screen.settings.subscreen.settingsSecurity.SettingsSecurityScreen
 import kotlinx.coroutines.launch
 
-@Suppress("AssignedValueIsNeverRead")
 @OptIn(ExperimentalSharedTransitionApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun MainShell(
@@ -204,8 +205,9 @@ fun MainShell(
     val currentRoute = backStack.lastOrNull() as? AppRoute
     val isOnSubPage = currentRoute?.isSubPage == true
     val subPageTitle = (currentRoute?.appTitle as? AppTitle.SubPage)?.title
-    // Video playback is immersive: the chrome is fully hidden and the page goes edge to edge.
-    val immersive = currentRoute is AppRoute.VideoPlayback
+    // Video playback and the file viewer are immersive: the global chrome is hidden and the
+    // page goes edge to edge (the file viewer draws its own Custom-Tab-style top bar).
+    val immersive = currentRoute is AppRoute.VideoPlayback || currentRoute is AppRoute.FileViewer
 
     val motion = MaterialTheme.motionScheme
     val enterTransition = remember(motion) { defaultEnterTransition(motion) }
@@ -221,10 +223,52 @@ fun MainShell(
     //    predictive-back gesture is scrubbing it, which a commit-time spring could never track.
     //  - searchProgress: the search field open/close, scrubbed by the bar's own predictive-back
     //    handler. Search is page-only, so the two never both drive the morph at the same time.
-    val navProgress = remember { mutableFloatStateOf(0f) }
+    // Seeded from the restored back stack: after an activity recreation (process death, or
+    // a config change not declared in the manifest, e.g. fontScale/density) the stack can
+    // come back with a sub-page already on top and NO transition — the TabRoot entry
+    // (which publishes this fraction) never composes, so a 0f initial would leave the bar
+    // collapsed on a sub-page.
+    val navProgress = remember { mutableFloatStateOf(if (isOnSubPage) 1f else 0f) }
     val searchProgress = remember { Animatable(0f) }
 
     var showAccountSwitcher by remember { mutableStateOf(false) }
+    // The Office install prompt — only shown when the matching Microsoft app is missing.
+    var officeFile by remember { mutableStateOf<Pair<OfficeApp, AppRoute.FileViewer>?>(null) }
+    // External hand-off (download + ACTION_VIEW): PDFs go to the default reader, Office to the
+    // installed app, and any file the user chose to open externally.
+    var externalFile by remember { mutableStateOf<AppRoute.FileViewer?>(null) }
+    // The in-app/external chooser for a file type with no remembered choice (or a long-press).
+    var chooserFile by remember { mutableStateOf<AppRoute.FileViewer?>(null) }
+    // The quiz overview is a modal sheet shown over the current screen; starting, resuming, or
+    // reviewing an attempt dismisses it and pushes the full-screen attempt/review route.
+    var quizSheet by remember { mutableStateOf<AppRoute.QuizDetail?>(null) }
+    // The compito (assignment) detail is a modal sheet over the current screen.
+    var assignmentSheet by remember { mutableStateOf<AppRoute.AssignmentDetail?>(null) }
+
+    val fileOpenViewModel: FileOpenPreferenceViewModel = hiltViewModel()
+    val fileOpenChoices by fileOpenViewModel.choices.collectAsStateWithLifecycle()
+
+    // Decides how a tapped file opens. In-app-capable kinds honour a remembered choice or, when
+    // none (or on a long-press), show the chooser. Unknown has no in-app viewer so it hands off;
+    // Office opens in its app when installed, else shows the install prompt.
+    val openFile: (AppRoute.FileViewer, Boolean) -> Unit = { route, forceChooser ->
+        when (val kind = FileKind.classify(route.fileName, route.mimeType)) {
+            is FileKind.Office ->
+                if (isPackageInstalled(context, kind.app.packageName)) externalFile = route
+                else officeFile = kind.app to route
+            FileKind.Unknown -> externalFile = route
+            else -> {
+                val remembered = kind.preferenceKey?.let { fileOpenChoices[it] }
+                when {
+                    forceChooser || remembered == null -> chooserFile = route
+                    remembered == FileOpenChoice.InApp -> backStack.add(route)
+                    remembered == FileOpenChoice.External -> externalFile = route
+                }
+            }
+        }
+    }
+    // Non-long-press adapter for callers that don't carry a chooser flag (nested zip viewer).
+    val openFileSimple: (AppRoute.FileViewer) -> Unit = { openFile(it, false) }
     var searchActive by rememberSaveable { mutableStateOf(false) }
     // Query and dictation live in the SearchViewModel (the query is SavedStateHandle-backed
     // there); the shell only owns the open/closed flag that drives the bar morph.
@@ -428,19 +472,15 @@ fun MainShell(
                                                                 )
                                                             },
                                                             onOpenAssignment = { courseId, assignmentId ->
-                                                                backStack.add(
-                                                                    AppRoute.AssignmentDetail(
-                                                                        assignId = assignmentId.value,
-                                                                        courseId = courseId.value
-                                                                    ),
+                                                                assignmentSheet = AppRoute.AssignmentDetail(
+                                                                    assignId = assignmentId.value,
+                                                                    courseId = courseId.value,
                                                                 )
                                                             },
                                                             onOpenQuiz = { courseId, quizId ->
-                                                                backStack.add(
-                                                                    AppRoute.QuizDetail(
-                                                                        quizId = quizId.value,
-                                                                        courseId = courseId.value
-                                                                    ),
+                                                                quizSheet = AppRoute.QuizDetail(
+                                                                    quizId = quizId.value,
+                                                                    courseId = courseId.value,
                                                                 )
                                                             },
                                                         )
@@ -569,7 +609,9 @@ fun MainShell(
                                         SubPage(topInset) { IseeScreen(viewModel = taxesViewModel) }
                                     }
                                     entry<AppRoute.Refunds> { SubPage(topInset) { RefundsScreen() } }
-                                    entry<AppRoute.Settings> { SubPage(topInset) { SettingsScreen() } }
+                                    entry<AppRoute.Settings> {
+                                        SubPage(topInset) { SettingsScreen() }
+                                    }
                                     entry<AppRoute.StudyPlan> {
                                         SubPage(topInset) {
                                             StudyPlanScreen(
@@ -631,8 +673,6 @@ fun MainShell(
                                         SubPage(topInset) { SavedOpportunitiesScreen() }
                                     }
                                     entry<AppRoute.DegreeAward> { SubPage(topInset) { DegreeAwardScreen() } }
-                                    entry<AppRoute.AppInfo> { SubPage(topInset) { AppInfoScreen() } }
-                                    entry<AppRoute.LoginManager> { SubPage(topInset) { LoginManagerScreen() } }
                                     entry<AppRoute.Messaging> { SubPage(topInset) { MessagingScreen() } }
 
                                     // First-level with arguments.
@@ -673,19 +713,15 @@ fun MainShell(
                                                 onProvideTitle = { subPageTitleOverride = it },
                                                 onProvideActions = { subPageActions = it },
                                                 onOpenAssignment = { id ->
-                                                    backStack.add(
-                                                        AppRoute.AssignmentDetail(
-                                                            assignId = id.value,
-                                                            courseId = key.courseId
-                                                        )
+                                                    assignmentSheet = AppRoute.AssignmentDetail(
+                                                        assignId = id.value,
+                                                        courseId = key.courseId,
                                                     )
                                                 },
                                                 onOpenQuiz = { id ->
-                                                    backStack.add(
-                                                        AppRoute.QuizDetail(
-                                                            quizId = id.value,
-                                                            courseId = key.courseId
-                                                        )
+                                                    quizSheet = AppRoute.QuizDetail(
+                                                        quizId = id.value,
+                                                        courseId = key.courseId,
                                                     )
                                                 },
                                                 onOpenForum = { id ->
@@ -710,7 +746,7 @@ fun MainShell(
                                                         )
                                                     )
                                                 },
-                                                onOpenFile = { route -> backStack.add(route) },
+                                                onOpenFile = openFile,
                                             )
                                         }
                                     }
@@ -719,10 +755,12 @@ fun MainShell(
                                             hiltViewModel<FileViewerViewModel, FileViewerViewModel.Factory>(
                                                 creationCallback = { it.create(key) },
                                             )
-                                        SubPage(topInset) {
+                                        SubPage(topInset, immersive = true) {
                                             FileViewerScreen(
-                                                // Zip entries re-dispatch through a nested viewer.
-                                                onOpenFile = { route -> backStack.add(route) },
+                                                // Zip entries re-dispatch through a nested viewer
+                                                // (or the office/external hand-off, via the shell).
+                                                onOpenFile = openFileSimple,
+                                                onClose = { backStack.removeLastOrNull() },
                                                 viewModel = vm,
                                             )
                                         }
@@ -757,19 +795,7 @@ fun MainShell(
                                             QuizDetailScreen(
                                                 quizId = key.quizId,
                                                 courseId = key.courseId,
-                                                viewModel = vm
-                                            )
-                                        }
-                                    }
-                                    entry<AppRoute.AssignmentDetail> { key ->
-                                        val vm =
-                                            hiltViewModel<AssignmentDetailViewModel, AssignmentDetailViewModel.Factory>(
-                                                creationCallback = { it.create(key) },
-                                            )
-                                        SubPage(topInset) {
-                                            AssignmentDetailScreen(
-                                                assignId = key.assignId,
-                                                courseId = key.courseId,
+                                                onExit = { backStack.removeLastOrNull() },
                                                 viewModel = vm
                                             )
                                         }
@@ -833,13 +859,6 @@ fun MainShell(
                                     entry<AppRoute.TeacherDetail> { key ->
                                         SubPage(topInset) { TeacherDetailScreen(teacherCode = key.teacherCode) }
                                     }
-
-                                    // Settings sub-pages.
-                                    entry<AppRoute.SettingsAppearance> { SubPage(topInset) { SettingsAppearanceScreen() } }
-                                    entry<AppRoute.SettingsGeneral> { SubPage(topInset) { SettingsGeneralScreen() } }
-                                    entry<AppRoute.SettingsBehaviour> { SubPage(topInset) { SettingsBehaviourScreen() } }
-                                    entry<AppRoute.SettingsSecurity> { SubPage(topInset) { SettingsSecurityScreen() } }
-                                    entry<AppRoute.SettingsDeveloper> { SubPage(topInset) { SettingsDeveloperScreen() } }
                                 },
                             )
                         }
@@ -919,7 +938,88 @@ fun MainShell(
                 AccountSwitcherSheet(
                     onDismiss = { showAccountSwitcher = false },
                     onOpenProfile = { backStack.add(AppRoute.Profile) },
+                    onOpenSettings = { backStack.add(AppRoute.Settings) },
                     viewModel = accountViewModel,
+                )
+            }
+
+            officeFile?.let { (app, route) ->
+                OfficeOpenSheet(
+                    app = app,
+                    route = route,
+                    onDismiss = { officeFile = null },
+                )
+            }
+
+            externalFile?.let { route ->
+                ExternalFileLauncher(
+                    route = route,
+                    onFinished = { externalFile = null },
+                )
+            }
+
+            chooserFile?.let { route ->
+                val kind = remember(route) { FileKind.classify(route.fileName, route.mimeType) }
+                FileOpenChooserSheet(
+                    fileName = route.fileName,
+                    sizeBytes = route.sizeBytes,
+                    kind = kind,
+                    onChoose = { choice, remember ->
+                        kind.preferenceKey?.takeIf { remember }?.let { fileOpenViewModel.remember(it, choice) }
+                        chooserFile = null
+                        when (choice) {
+                            FileOpenChoice.InApp -> backStack.add(route)
+                            FileOpenChoice.External -> externalFile = route
+                        }
+                    },
+                    onDismiss = { chooserFile = null },
+                )
+            }
+
+            quizSheet?.let { route ->
+                QuizDetailSheet(
+                    quizId = route.quizId,
+                    courseId = route.courseId,
+                    onDismiss = { quizSheet = null },
+                    onStartAttempt = {
+                        quizSheet = null
+                        backStack.add(route.copy(startNew = true))
+                    },
+                    onResumeAttempt = { attemptId ->
+                        quizSheet = null
+                        backStack.add(route.copy(resumeAttemptId = attemptId))
+                    },
+                    onReviewAttempt = { attemptId ->
+                        quizSheet = null
+                        backStack.add(route.copy(reviewAttemptId = attemptId))
+                    },
+                )
+            }
+
+            assignmentSheet?.let { route ->
+                AssignmentDetailSheet(
+                    assignId = route.assignId,
+                    courseId = route.courseId,
+                    onOpenFile = { fileName, fileUrl, mimeType, sizeBytes ->
+                        openFile(
+                            AppRoute.FileViewer(
+                                fileName = fileName,
+                                fileUrl = fileUrl,
+                                mimeType = mimeType,
+                                sizeBytes = sizeBytes,
+                            ),
+                            false,
+                        )
+                    },
+                    onOpenPage = { url ->
+                        runCatching {
+                            context.startActivity(
+                                Intent(Intent.ACTION_VIEW, url.toUri())
+                                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+                            )
+                        }
+                    },
+                    onDismiss = { assignmentSheet = null },
                 )
             }
         }

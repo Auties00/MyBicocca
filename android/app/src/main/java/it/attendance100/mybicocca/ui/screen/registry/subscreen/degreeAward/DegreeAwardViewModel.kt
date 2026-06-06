@@ -191,7 +191,7 @@ class DegreeAwardViewModel @Inject constructor(
 }
 
 private fun Throwable.friendlyMessage(): String {
-    val raw = message ?: return "Operazione non riuscita. Riprova."
+    val raw = message ?: return "Operazione non riuscita"
     return when {
         raw.contains("Security failed", ignoreCase = true) ||
             raw.contains("profilo", ignoreCase = true) ->

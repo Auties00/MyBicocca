@@ -5,5 +5,5 @@ import it.attendance100.mybicocca.manager.UnlockResult
 fun UnlockResult.errorMessage(): String? = when (this) {
     UnlockResult.Success -> null
     UnlockResult.WrongPassword -> "Password errata"
-    UnlockResult.Error -> "Impossibile verificare. Riprova."
+    UnlockResult.Error -> "Impossibile verificare"
 }
