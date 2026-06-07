@@ -35,6 +35,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -63,7 +64,9 @@ import it.attendance100.mybicocca.ui.screen.elearning.theme.LocalCourseAccentPal
 import it.attendance100.mybicocca.ui.screen.elearning.theme.ProvideCourseAccentPalette
 import it.attendance100.mybicocca.ui.screen.elearning.theme.accentFor
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 import java.io.IOException
 import java.net.ConnectException
 import java.net.SocketTimeoutException
@@ -121,6 +124,21 @@ fun ElearningScreen(
 
     val pullState = rememberPullToRefreshState()
     val listState = rememberLazyListState()
+
+    // After a course is added, the ViewModel drops any hiding filter and emits the course id;
+    // wait for its group to materialise in the (possibly just re-filtered) list, then scroll to it.
+    LaunchedEffect(listState) {
+        viewModel.revealCourse.collect { courseId ->
+            val index = withTimeoutOrNull(4_000) {
+                snapshotFlow {
+                    (visibleCourses as? Loadable.Loaded)?.value
+                        ?.indexOfFirst { group -> group.editions.any { it.id == courseId } }
+                        ?: -1
+                }.first { it >= 0 }
+            }
+            if (index != null && index >= 0) listState.animateScrollToItem(index)
+        }
+    }
 
     ProvideCourseAccentPalette {
         Box(modifier = modifier.fillMaxSize()) {
@@ -196,10 +214,11 @@ fun ElearningScreen(
                     snackbar.showError("Iscrizione non riuscita", cause)
                 }
             },
-            onEnrolSucceeded = { name ->
+            onEnrolSucceeded = { courseId, name ->
                 coroutineScope.launch {
                     snackbar.showInfo("Iscritto a $name")
                 }
+                viewModel.revealEnrolledCourse(courseId)
             },
             onRequireSignIn = {
                 addSheetVisible = false

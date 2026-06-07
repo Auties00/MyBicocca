@@ -11,10 +11,9 @@ import it.attendance100.mybicocca.domain.usecase.account.ObserveActiveAccountUse
 import it.attendance100.mybicocca.domain.usecase.elearning.catalog.LoadElearningCatalogUseCase
 import it.attendance100.mybicocca.domain.usecase.elearning.catalog.SearchElearningCatalogUseCase
 import it.attendance100.mybicocca.domain.usecase.elearning.course.EnrolIntoCourseUseCase
-import it.attendance100.mybicocca.ui.screen.elearning.subscreen.addCourse.state.AddCourseLevel
+import it.attendance100.mybicocca.domain.usecase.elearning.course.ObserveEnrolledCoursesUseCase
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.addCourse.state.AddCourseOneShotEvent
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.addCourse.state.CatalogStackEntry
-import it.attendance100.mybicocca.ui.screen.elearning.subscreen.addCourse.state.CourseItem
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.addCourse.state.EnrolmentStatus
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
@@ -41,6 +40,7 @@ import javax.inject.Inject
 @HiltViewModel
 class AddCourseViewModel @Inject constructor(
     observeActiveAccount: ObserveActiveAccountUseCase,
+    observeEnrolledCourses: ObserveEnrolledCoursesUseCase,
     private val loadCatalog: LoadElearningCatalogUseCase,
     private val searchCatalog: SearchElearningCatalogUseCase,
     private val enrolIntoCourse: EnrolIntoCourseUseCase,
@@ -50,6 +50,19 @@ class AddCourseViewModel @Inject constructor(
         .map { it?.id }
         .distinctUntilChanged()
 
+    // Courses the user is already subscribed to (from the local Moodle cache). Surfaced so the
+    // catalog shows them as "Enrolled" instead of offering a re-subscribe the API would reject.
+    // Eager so it is already populated by the time the catalog finishes loading (and the user can
+    // tap) — otherwise a tap in the brief subscription warm-up would see an empty set and re-enrol.
+    private val enrolledCourseIds: StateFlow<Set<CourseId>> = activeAccountId
+        .flatMapLatest { accountId ->
+            if (accountId == null) flowOf(emptySet())
+            else observeEnrolledCourses(accountId).map { loadable ->
+                (loadable as? Loadable.Loaded)?.value?.mapTo(HashSet()) { it.id }.orEmpty()
+            }
+        }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, emptySet())
+
     private val _catalog = MutableStateFlow<Loadable<ElearningCatalog>>(Loadable.NotYetLoaded)
     val catalog: StateFlow<Loadable<ElearningCatalog>> = _catalog.asStateFlow()
 
@@ -58,8 +71,21 @@ class AddCourseViewModel @Inject constructor(
 
     val searchQuery = MutableStateFlow("")
 
-    private val _enrolment = MutableStateFlow<Map<CourseId, EnrolmentStatus>>(emptyMap())
-    val enrolment: StateFlow<Map<CourseId, EnrolmentStatus>> = _enrolment.asStateFlow()
+    // Transient statuses driven by the user's own enrol taps this session.
+    private val _localEnrolment = MutableStateFlow<Map<CourseId, EnrolmentStatus>>(emptyMap())
+
+    // Effective status per course. Server enrolment is authoritative and wins: a course that is
+    // already joined always shows "Enrolled", even if a stale local tap left it Failed/InProgress —
+    // otherwise the row would offer a re-enrol the API rejects. Local statuses only surface for
+    // courses not (yet) in the server set: in-progress / just-enrolled / failed taps this session.
+    val enrolment: StateFlow<Map<CourseId, EnrolmentStatus>> =
+        combine(enrolledCourseIds, _localEnrolment) { enrolled, local ->
+            if (enrolled.isEmpty()) local
+            else HashMap<CourseId, EnrolmentStatus>(enrolled.size + local.size).apply {
+                putAll(local)
+                enrolled.forEach { put(it, EnrolmentStatus.Enrolled) }
+            }
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyMap())
 
     private val oneShotChannel = Channel<AddCourseOneShotEvent>(Channel.BUFFERED)
     val oneShotEvents: Flow<AddCourseOneShotEvent> = oneShotChannel.receiveAsFlow()
@@ -107,41 +133,30 @@ class AddCourseViewModel @Inject constructor(
     }
 
     fun enrol(courseId: CourseId, courseName: String) {
-        val current = _enrolment.value[courseId]
-        if (current == EnrolmentStatus.InProgress || current == EnrolmentStatus.Enrolled) return
-        _enrolment.update { it + (courseId to EnrolmentStatus.InProgress) }
+        // Short-circuit (haptic only, no request) when already subscribed on the server or a tap is
+        // already in flight. Both sources are read directly/synchronously — NOT via the combined
+        // `enrolment` flow, whose .value lags _localEnrolment, so two fast taps would otherwise both
+        // pass this guard and fire duplicate enrol requests.
+        if (courseId in enrolledCourseIds.value) return
+        val local = _localEnrolment.value[courseId]
+        if (local == EnrolmentStatus.InProgress || local == EnrolmentStatus.Enrolled) return
+        _localEnrolment.update { it + (courseId to EnrolmentStatus.InProgress) }
         viewModelScope.launch {
             val accountId = activeAccountId.first()
             if (accountId == null) {
-                _enrolment.update { it + (courseId to EnrolmentStatus.Idle) }
+                _localEnrolment.update { it + (courseId to EnrolmentStatus.Idle) }
                 oneShotChannel.trySend(AddCourseOneShotEvent.RequireSignIn)
                 return@launch
             }
             runCatching { enrolIntoCourse(accountId, courseId) }
                 .onSuccess {
-                    _enrolment.update { it + (courseId to EnrolmentStatus.Enrolled) }
+                    _localEnrolment.update { it + (courseId to EnrolmentStatus.Enrolled) }
                     oneShotChannel.trySend(AddCourseOneShotEvent.EnrolSucceeded(courseId, courseName))
                 }
                 .onFailure { cause ->
-                    _enrolment.update { it + (courseId to EnrolmentStatus.Failed) }
+                    _localEnrolment.update { it + (courseId to EnrolmentStatus.Failed) }
                     oneShotChannel.trySend(AddCourseOneShotEvent.EnrolFailed(courseId, cause))
                 }
         }
     }
-
-    val level: StateFlow<AddCourseLevel?> = combine(_catalog, _stack, _enrolment) { catalog, stack, enrolment ->
-        val cat = (catalog as? Loadable.Loaded)?.value ?: return@combine null
-        if (stack.isEmpty()) {
-            AddCourseLevel.Root(cat.sections)
-        } else {
-            val node = stack.last().node
-            AddCourseLevel.Inside(
-                node = node,
-                children = node.children,
-                courses = node.courses.map { course ->
-                    CourseItem(course, enrolment[course.id] ?: EnrolmentStatus.Idle)
-                },
-            )
-        }
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 }

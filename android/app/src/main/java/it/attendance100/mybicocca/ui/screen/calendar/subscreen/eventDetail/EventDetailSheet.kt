@@ -34,10 +34,9 @@ import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
+import it.attendance100.mybicocca.ui.component.modal.PredictiveModalBottomSheet
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -71,16 +70,14 @@ fun EventDetailSheet(
     onOpenCourse: (CourseId) -> Unit,
     onDismiss: () -> Unit,
 ) {
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val cancelled = event.status == EventStatus.CANCELLED
     val scheme = MaterialTheme.colorScheme
 
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        sheetState = sheetState,
+    PredictiveModalBottomSheet(
+        onDismiss = onDismiss,
         shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
-        containerColor = scheme.surfaceContainerLow,
-    ) {
+        modalColor = scheme.surfaceContainerLow,
+    ) { _, _ ->
         Column(
             modifier = Modifier
                 .fillMaxWidth()

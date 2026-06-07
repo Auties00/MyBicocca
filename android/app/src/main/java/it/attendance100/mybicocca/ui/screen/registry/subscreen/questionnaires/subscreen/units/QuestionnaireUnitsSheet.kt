@@ -24,7 +24,6 @@ import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -56,7 +55,7 @@ fun QuestionnaireUnitsSheet(
 ) {
     val scheme = MaterialTheme.colorScheme
 
-    ModalBottomSheet(onDismissRequest = onDismiss) {
+    it.attendance100.mybicocca.ui.component.modal.PredictiveModalBottomSheet(onDismiss = onDismiss) { _, _ ->
         Column(
             modifier = Modifier
                 .fillMaxWidth()

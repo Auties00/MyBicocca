@@ -13,7 +13,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -307,14 +306,12 @@ fun MapScreen(
     }
 
     if (detailModalBuilding != null) {
-        val modalState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-        ModalBottomSheet(
-            onDismissRequest = { viewModel.clearSelection() },
-            sheetState = modalState,
-            // No scrim: the sheet coexists with the map (the camera centers the selected building
-            // above it), so dimming the map behind it would defeat the point.
+        it.attendance100.mybicocca.ui.component.modal.PredictiveModalBottomSheet(
+            onDismiss = { viewModel.clearSelection() },
+            // No scrim: the camera centers the building in the area the sheet doesn't cover, so
+            // dimming the map behind it would defeat the point.
             scrimColor = Color.Transparent,
-        ) {
+        ) { _, _ ->
             BuildingDetailSheet(
                 building = detailModalBuilding,
                 rooms = rooms,

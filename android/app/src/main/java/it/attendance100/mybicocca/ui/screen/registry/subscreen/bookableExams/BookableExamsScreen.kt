@@ -26,7 +26,6 @@ import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
@@ -201,15 +200,12 @@ fun BookableExamsScreen(
     }
 
     if (sheetTarget != null) {
-        val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
         val isSubmitting = sheetAction is BookingActionState.InProgress
         val sheetHeight = LocalConfiguration.current.screenHeightDp.dp * 0.67f
-        ModalBottomSheet(
-            onDismissRequest = { if (!isSubmitting) sheetViewModel.close() },
-            sheetState = sheetState,
-            contentWindowInsets = { WindowInsets(0) },
+        it.attendance100.mybicocca.ui.component.modal.PredictiveModalBottomSheet(
+            onDismiss = { if (!isSubmitting) sheetViewModel.close() },
             shape = RoundedCornerShape(topStart = 40.dp, topEnd = 40.dp),
-        ) {
+        ) { _, _ ->
             BookingSheetContent(
                 target = sheetTarget!!,
                 detail = sheetDetail,

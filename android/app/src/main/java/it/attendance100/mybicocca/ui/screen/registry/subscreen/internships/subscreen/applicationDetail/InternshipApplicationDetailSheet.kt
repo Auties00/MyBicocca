@@ -70,7 +70,7 @@ fun InternshipApplicationDetailSheet(
 ) {
     val scheme = MaterialTheme.colorScheme
 
-    ModalBottomSheet(onDismissRequest = onDismiss) {
+    it.attendance100.mybicocca.ui.component.modal.PredictiveModalBottomSheet(onDismiss = onDismiss) { _, _ ->
         Column(
             modifier = Modifier
                 .fillMaxWidth()

@@ -35,6 +35,7 @@ fun PredictiveModalBottomSheet(
     onDismiss: () -> Unit,
     modalColor: Color = MaterialTheme.colorScheme.surfaceContainerLow,
     shape: Shape = BottomSheetDefaults.ExpandedShape,
+    scrimColor: Color = BottomSheetDefaults.ScrimColor,
     duration: Int = 400,
     sizeDuration: Int = duration,
     content: @Composable (closeTransition: Transition<Boolean>, progress: Float) -> Unit
@@ -48,6 +49,7 @@ fun PredictiveModalBottomSheet(
         sheetState = sheetState,
         shape = shape,
         containerColor = modalColor,
+        scrimColor = scrimColor,
     ) {
         PredictiveBackHandler { progress ->
             try {

@@ -41,7 +41,6 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -89,7 +88,6 @@ fun BookedExamDetailSheet(
     onDownloadCertificate: (BookedExam) -> Unit,
     onDismiss: () -> Unit,
 ) {
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val scheme = MaterialTheme.colorScheme
     val context = LocalContext.current
 
@@ -101,12 +99,11 @@ fun BookedExamDetailSheet(
     }
     val countdown = remember(booking.examDateTime, today) { booking.countdownLabel(today) }
 
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        sheetState = sheetState,
+    it.attendance100.mybicocca.ui.component.modal.PredictiveModalBottomSheet(
+        onDismiss = onDismiss,
         shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
-        containerColor = scheme.surfaceContainerLow,
-    ) {
+        modalColor = scheme.surfaceContainerLow,
+    ) { _, _ ->
         Column(
             modifier = Modifier
                 .fillMaxWidth()

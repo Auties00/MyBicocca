@@ -18,9 +18,8 @@ import androidx.compose.material.icons.outlined.PlayCircleOutline
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
+import it.attendance100.mybicocca.ui.component.modal.PredictiveModalBottomSheet
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -42,8 +41,7 @@ fun FolderContentsSheet(
     onOpenContent: (ModuleContent) -> Unit,
     onDismiss: () -> Unit,
 ) {
-    val sheetState = rememberModalBottomSheetState()
-    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState) {
+    PredictiveModalBottomSheet(onDismiss = onDismiss) { _, _ ->
         Column(modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)) {
             Text(
                 text = title,
