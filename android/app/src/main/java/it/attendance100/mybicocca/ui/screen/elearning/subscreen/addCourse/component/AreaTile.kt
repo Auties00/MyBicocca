@@ -127,6 +127,11 @@ fun AreaTile(
                 }
             }
             is AreaTileVisual.CustomImage -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.White.copy(alpha = 0.7f))
+                )
                 Image(
                     painter = painterResource(id = visual.drawableRes),
                     contentDescription = null,
@@ -136,7 +141,7 @@ fun AreaTile(
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .background(Color.Black.copy(alpha = 0.45f))
+                        .background(Color.Black.copy(alpha = 0.2f))
                 )
             }
         }
@@ -208,7 +213,7 @@ private fun AreaTilePreview() {
                 )
                 AreaTile(
                     label = "Bicocca Academy",
-                    visual = AreaTileVisual.CustomImage(R.drawable.elearning_bicoccaacademy),
+                    visual = AreaTileVisual.CustomImage(R.drawable.elearning_bicoccaaccademy),
                     onClick = {},
                 )
                 AreaTile(

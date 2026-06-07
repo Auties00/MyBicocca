@@ -59,6 +59,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.domain.model.elearning.catalog.CatalogCourse
 import it.attendance100.mybicocca.domain.model.elearning.catalog.CatalogSearchHit
@@ -402,13 +403,21 @@ private fun RootGrid(
                     nameLower.contains("scienze della formazione") -> AreaTileVisual.CustomColor(androidx.compose.ui.graphics.Color(0xFFCE2992))
                     nameLower.contains("di scienze") || nameLower == "area scienze" || nameLower == "scienze" -> AreaTileVisual.CustomColor(androidx.compose.ui.graphics.Color(0xFF0D733C))
                     nameLower.contains("sociologica") || nameLower.contains("sociologia") -> AreaTileVisual.CustomColor(androidx.compose.ui.graphics.Color(0xFFF29420))
-                    nameLower.contains("bicocca academy") || nameLower.contains("bicoccaacademy") -> AreaTileVisual.CustomImage(it.attendance100.mybicocca.R.drawable.elearning_bicoccaacademy)
-                    nameLower.contains("scuola di dottorato") -> AreaTileVisual.CustomImage(it.attendance100.mybicocca.R.drawable.elearning_scuoladottorato)
-                    nameLower.contains("formazione insegnanti") -> AreaTileVisual.CustomImage(it.attendance100.mybicocca.R.drawable.elearning_formazioneinsegnanti)
-                    nameLower.contains("scuole di specializzazione") || nameLower.contains("scuola di specializzazione") -> AreaTileVisual.CustomImage(it.attendance100.mybicocca.R.drawable.elearning_scuolespecializzazione)
-                    nameLower.contains("bbetween") -> AreaTileVisual.CustomImage(it.attendance100.mybicocca.R.drawable.elearning_bbetween)
-                    nameLower.contains("formazione tutor") -> AreaTileVisual.CustomImage(it.attendance100.mybicocca.R.drawable.elearning_formazionetutor)
-                    nameLower.contains("idoneità linguistica") || nameLower.contains("idoneita' linguistica") -> AreaTileVisual.CustomImage(it.attendance100.mybicocca.R.drawable.elearning_idoling)
+                    nameLower.contains("bicocca academy") || nameLower.contains("bicoccaacademy") -> AreaTileVisual.CustomImage(
+                        R.drawable.elearning_bicoccaaccademy
+                    )
+
+                    nameLower.contains("scuola di dottorato") -> AreaTileVisual.CustomImage(R.drawable.elearning_scuoladottorato)
+                    nameLower.contains("formazione insegnanti") -> AreaTileVisual.CustomImage(R.drawable.elearning_formazioneinsegnanti)
+                    nameLower.contains("scuole di specializzazione") || nameLower.contains("scuola di specializzazione") -> AreaTileVisual.CustomImage(
+                        R.drawable.elearning_scuolespecializzazione
+                    )
+
+                    nameLower.contains("bbetween") -> AreaTileVisual.CustomImage(R.drawable.elearning_bbetween)
+                    nameLower.contains("formazione tutor") -> AreaTileVisual.CustomImage(R.drawable.elearning_formazionetutor)
+                    nameLower.contains("idoneità linguistica") || nameLower.contains("idoneita' linguistica") -> AreaTileVisual.CustomImage(
+                        R.drawable.elearning_idoling
+                    )
                     nameLower.contains("altre attività formative") || nameLower.contains("altre attivita") -> AreaTileVisual.CustomColor(androidx.compose.ui.graphics.Color(0xFFB9BBBD))
                     else -> AreaTileVisual.Default(palette.accentFor(node.id))
                 }
