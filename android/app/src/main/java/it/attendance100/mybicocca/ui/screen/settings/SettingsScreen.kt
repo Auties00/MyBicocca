@@ -9,6 +9,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Description
+import androidx.compose.material.icons.outlined.FileOpen
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.Palette
@@ -29,6 +30,7 @@ import it.attendance100.mybicocca.ui.screen.settings.component.SettingsEntrySect
 import it.attendance100.mybicocca.ui.screen.settings.state.SettingsEntry
 import it.attendance100.mybicocca.ui.screen.settings.state.SettingsEntryGroup
 import it.attendance100.mybicocca.ui.screen.settings.subscreen.appInfo.AppInfoSheet
+import it.attendance100.mybicocca.ui.screen.settings.subscreen.fileAssociations.FileAssociationsSheet
 import it.attendance100.mybicocca.ui.screen.settings.subscreen.language.LanguageSheet
 import it.attendance100.mybicocca.ui.screen.settings.subscreen.language.currentAppLanguageLabel
 import it.attendance100.mybicocca.ui.screen.settings.subscreen.settingsAppearance.SettingsAppearanceSheet
@@ -47,6 +49,7 @@ fun SettingsScreen() {
     var showAppearanceSheet by remember { mutableStateOf(false) }
     var showLanguageSheet by remember { mutableStateOf(false) }
     var showSecuritySheet by remember { mutableStateOf(false) }
+    var showFileAssocSheet by remember { mutableStateOf(false) }
     var showAppInfoSheet by remember { mutableStateOf(false) }
 
     // Refreshes when the sheet closes; a language change also recreates the activity anyway.
@@ -67,6 +70,12 @@ fun SettingsScreen() {
                         "Blocco app e privacy",
                         Icons.Outlined.Lock,
                         onClick = { showSecuritySheet = true }),
+                    SettingsEntry(
+                        "file_open",
+                        "Apertura file",
+                        "App predefinite per tipo di file",
+                        Icons.Outlined.FileOpen,
+                        onClick = { showFileAssocSheet = true }),
                 ),
             ),
             scheme.primaryContainer, scheme.onPrimaryContainer,
@@ -131,6 +140,10 @@ fun SettingsScreen() {
 
     if (showSecuritySheet) {
         SettingsSecuritySheet(onDismiss = { showSecuritySheet = false })
+    }
+
+    if (showFileAssocSheet) {
+        FileAssociationsSheet(onDismiss = { showFileAssocSheet = false })
     }
 
     if (showAppInfoSheet) {

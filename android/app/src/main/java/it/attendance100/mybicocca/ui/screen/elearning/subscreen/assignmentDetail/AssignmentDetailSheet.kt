@@ -16,13 +16,13 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.Assignment
+import androidx.compose.material.icons.automirrored.rounded.OpenInNew
 import androidx.compose.material.icons.automirrored.rounded.Send
 import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.EmojiEvents
 import androidx.compose.material.icons.outlined.EventBusy
 import androidx.compose.material.icons.outlined.Repeat
 import androidx.compose.material.icons.outlined.Schedule
-import androidx.compose.material.icons.rounded.OpenInNew
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -66,10 +66,10 @@ import java.util.Locale
 fun AssignmentDetailSheet(
     assignId: Int,
     courseId: Int,
-    onOpenFile: (fileName: String, fileUrl: String, mimeType: String?, sizeBytes: Long?) -> Unit,
+    onOpenFile: (fileName: String, fileUrl: String, mimeType: String?, sizeBytes: Long?, forceChooser: Boolean) -> Unit,
     onOpenPage: (url: String) -> Unit,
     onDismiss: () -> Unit,
-    viewModel: AssignmentDetailViewModel = hiltViewModel<AssignmentDetailViewModel, AssignmentDetailViewModel.Factory>(
+    @Suppress("DEPRECATION") viewModel: AssignmentDetailViewModel = hiltViewModel<AssignmentDetailViewModel, AssignmentDetailViewModel.Factory>(
         key = "assign-sheet-$assignId",
         creationCallback = { it.create(AppRoute.AssignmentDetail(assignId = assignId, courseId = courseId)) },
     ),
@@ -113,7 +113,7 @@ fun AssignmentDetailSheet(
 @Composable
 private fun AssignmentSheetContent(
     assignment: Assignment,
-    onOpenFile: (String, String, String?, Long?) -> Unit,
+    onOpenFile: (String, String, String?, Long?, Boolean) -> Unit,
     onOpenPage: (String) -> Unit,
 ) {
     val scheme = MaterialTheme.colorScheme
@@ -241,7 +241,7 @@ private fun AssignmentSheetContent(
 @Composable
 private fun AttachmentList(
     files: List<Assignment.AttachmentRef>,
-    onOpenFile: (String, String, String?, Long?) -> Unit,
+    onOpenFile: (String, String, String?, Long?, Boolean) -> Unit,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
         files.forEachIndexed { index, file ->
@@ -250,7 +250,26 @@ private fun AttachmentList(
                 isFirst = index == 0,
                 isLast = index == files.lastIndex,
                 onOpen = {
-                    file.fileUrl?.let { onOpenFile(file.fileName, it, file.mimeType, file.sizeBytes) }
+                    file.fileUrl?.let {
+                        onOpenFile(
+                            file.fileName,
+                            it,
+                            file.mimeType,
+                            file.sizeBytes,
+                            false
+                        )
+                    }
+                },
+                onLongOpen = {
+                    file.fileUrl?.let {
+                        onOpenFile(
+                            file.fileName,
+                            it,
+                            file.mimeType,
+                            file.sizeBytes,
+                            true
+                        )
+                    }
                 },
             )
         }
@@ -279,7 +298,7 @@ private fun ActionButton(assignment: Assignment, now: Instant, onClick: () -> Un
         Text(label, fontWeight = FontWeight.SemiBold)
         Spacer(Modifier.width(8.dp))
         Icon(
-            imageVector = if (submit) Icons.AutoMirrored.Rounded.Send else Icons.Rounded.OpenInNew,
+            imageVector = if (submit) Icons.AutoMirrored.Rounded.Send else Icons.AutoMirrored.Rounded.OpenInNew,
             contentDescription = null,
             modifier = Modifier.size(20.dp),
         )

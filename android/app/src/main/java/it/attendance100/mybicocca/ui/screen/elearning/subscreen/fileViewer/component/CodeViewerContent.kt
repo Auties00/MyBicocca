@@ -14,12 +14,18 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.selection.SelectionContainer
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.WrapText
+import androidx.compose.material.icons.outlined.Download
+import androidx.compose.material.icons.outlined.Share
 import androidx.compose.material3.ColorScheme
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -30,8 +36,8 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -53,11 +59,14 @@ import java.util.Locale
 // string = tertiary, …). One Text per line inside a LazyColumn keeps long sources virtualized.
 // Single-finger drags scroll (vertically through lines, horizontally through long lines); a
 // two-finger pinch scales the font without stealing those drags.
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun CodeViewerContent(
     localPath: String,
     fileName: String,
     darkTheme: Boolean,
+    onShare: () -> Unit,
+    onDownload: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val scheme = MaterialTheme.colorScheme
@@ -84,59 +93,82 @@ fun CodeViewerContent(
     val codeColor = scheme.onSurface
     val gutterColor = scheme.onSurfaceVariant.copy(alpha = 0.6f)
 
-    SelectionContainer {
-        LazyColumn(
-            modifier = modifier
-                .fillMaxSize()
-                .background(scheme.surface)
-                // Pinch-to-zoom that does NOT consume single-finger drags, so the LazyColumn and
-                // the per-line horizontal scroll still pan the code that doesn't fit.
-                .pointerInput(Unit) {
-                    awaitEachGesture {
-                        awaitFirstDown(requireUnconsumed = false)
-                        do {
-                            val event = awaitPointerEvent()
-                            if (event.changes.count { it.pressed } >= 2) {
-                                val zoom = event.calculateZoom()
-                                if (zoom != 1f) {
-                                    fontScale = (fontScale * zoom).coerceIn(0.6f, 3f)
-                                    event.changes.forEach { it.consume() }
+    var wordWrap by remember { mutableStateOf(false) }
+
+    Box(modifier = modifier.fillMaxSize()) {
+        SelectionContainer {
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(scheme.surface)
+                    // Pinch-to-zoom that does NOT consume single-finger drags, so the LazyColumn and
+                    // the per-line horizontal scroll still pan the code that doesn't fit.
+                    .pointerInput(Unit) {
+                        awaitEachGesture {
+                            awaitFirstDown(requireUnconsumed = false)
+                            do {
+                                val event = awaitPointerEvent()
+                                if (event.changes.count { it.pressed } >= 2) {
+                                    val zoom = event.calculateZoom()
+                                    if (zoom != 1f) {
+                                        fontScale = (fontScale * zoom).coerceIn(0.6f, 3f)
+                                        event.changes.forEach { it.consume() }
+                                    }
                                 }
-                            }
-                        } while (event.changes.any { it.pressed })
+                            } while (event.changes.any { it.pressed })
+                        }
+                    },
+            ) {
+                itemsIndexed(current) { index, line ->
+                    Row {
+                        Text(
+                            text = "${index + 1}",
+                            fontFamily = mono,
+                            fontSize = fontSize,
+                            lineHeight = lineHeight,
+                            color = gutterColor,
+                            textAlign = TextAlign.End,
+                            modifier = Modifier
+                                .width(gutterWidth)
+                                .padding(end = 8.dp),
+                        )
+                        Text(
+                            text = line,
+                            fontFamily = mono,
+                            fontSize = fontSize,
+                            lineHeight = lineHeight,
+                            color = codeColor,
+                            softWrap = wordWrap,
+                            modifier = if (wordWrap) Modifier.padding(end = 16.dp)
+                            else Modifier
+                                .horizontalScroll(hScroll)
+                                .padding(end = 16.dp),
+                        )
                     }
-                },
-        ) {
-            itemsIndexed(current) { index, line ->
-                Row {
-                    Text(
-                        text = "${index + 1}",
-                        fontFamily = mono,
-                        fontSize = fontSize,
-                        lineHeight = lineHeight,
-                        color = gutterColor,
-                        textAlign = TextAlign.End,
-                        modifier = Modifier
-                            .width(gutterWidth)
-                            .padding(end = 8.dp),
-                    )
-                    Text(
-                        text = line,
-                        fontFamily = mono,
-                        fontSize = fontSize,
-                        lineHeight = lineHeight,
-                        color = codeColor,
-                        softWrap = false,
-                        modifier = Modifier
-                            .horizontalScroll(hScroll)
-                            .padding(end = 16.dp),
-                    )
+                }
+                item {
+                    // Extra bottom padding so the last line isn't hidden behind the action bar.
+                    Box(modifier = Modifier.padding(bottom = 88.dp))
                 }
             }
-            item {
-                Box(modifier = Modifier.padding(bottom = 32.dp))
-            }
         }
+        ViewerBottomBar(
+            ViewerAction(
+                icon = Icons.Outlined.Download,
+                label = "Scarica",
+                onClick = onDownload,
+            ),
+            ViewerAction(
+                icon = Icons.Outlined.Share,
+                label = "Condividi",
+                onClick = onShare,
+            ),
+            ViewerAction(
+                icon = Icons.AutoMirrored.Outlined.WrapText,
+                label = if (wordWrap) "Disabilita a capo" else "Abilita a capo",
+                onClick = { wordWrap = !wordWrap },
+            ),
+        )
     }
 }
 
@@ -162,7 +194,11 @@ private fun appSyntaxTheme(scheme: ColorScheme): SyntaxTheme {
 private const val MAX_HIGHLIGHT_CHARS = 512 * 1024
 private const val MAX_FILE_CHARS = 2 * 1024 * 1024
 
-private fun highlightFile(localPath: String, fileName: String, theme: SyntaxTheme): List<AnnotatedString> {
+private fun highlightFile(
+    localPath: String,
+    fileName: String,
+    theme: SyntaxTheme
+): List<AnnotatedString> {
     var text = File(localPath).readText()
     if (text.length > MAX_FILE_CHARS) {
         text = text.take(MAX_FILE_CHARS) + "\n… (file troncato)"
@@ -189,6 +225,7 @@ private fun highlightFile(localPath: String, fileName: String, theme: SyntaxThem
                     start,
                     end,
                 )
+
                 is BoldHighlight -> addStyle(SpanStyle(fontWeight = FontWeight.Bold), start, end)
             }
         }

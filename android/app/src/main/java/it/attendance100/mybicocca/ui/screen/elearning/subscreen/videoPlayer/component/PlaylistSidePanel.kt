@@ -178,9 +178,13 @@ private fun PlaylistRow(item: VideoPlayerPlaylistItem, onClick: () -> Unit) {
                 Spacer(Modifier.height(6.dp))
                 LinearProgressIndicator(
                     progress = { item.progressFraction },
-                    modifier = Modifier.fillMaxWidth().height(4.dp).clip(RoundedCornerShape(2.dp)),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(4.dp)
+                        .clip(RoundedCornerShape(2.dp)),
                     color = scheme.primary,
                     trackColor = scheme.surfaceContainerHigh,
+                    drawStopIndicator = {},
                 )
             }
         }

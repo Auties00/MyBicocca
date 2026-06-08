@@ -12,11 +12,16 @@ sealed interface FileViewerOneShotEvent {
     // Share the downloaded file via the Android share sheet (FileProvider + ACTION_SEND).
     data class ShareFile(val localPath: String, val fileName: String, val mimeType: String?) : FileViewerOneShotEvent
 
-    // A zip entry was extracted; navigate to a nested viewer for it.
+    // A zip entry was extracted; navigate to a nested viewer for it. forceChooser is set by a
+    // long-press on the entry, to re-show the in-app/external chooser even when remembered.
     data class OpenExtractedFile(
         val fileName: String,
         val localPath: String,
         val mimeType: String?,
         val sizeBytes: Long?,
+        val forceChooser: Boolean = false,
     ) : FileViewerOneShotEvent
+
+    // File successfully written to Downloads or Gallery
+    data object FileSaved : FileViewerOneShotEvent
 }

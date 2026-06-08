@@ -12,16 +12,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.outlined.Article
-import androidx.compose.material.icons.automirrored.outlined.InsertDriveFile
 import androidx.compose.material.icons.automirrored.outlined.OpenInNew
-import androidx.compose.material.icons.outlined.Description
-import androidx.compose.material.icons.outlined.FolderZip
-import androidx.compose.material.icons.outlined.Image
-import androidx.compose.material.icons.outlined.Movie
-import androidx.compose.material.icons.outlined.MusicNote
 import androidx.compose.material.icons.outlined.OpenInFull
-import androidx.compose.material.icons.outlined.PictureAsPdf
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ButtonGroupDefaults
@@ -31,7 +23,6 @@ import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -45,7 +36,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -87,7 +77,7 @@ fun FileOpenChooserSheet(
                     contentAlignment = Alignment.Center,
                 ) {
                     Icon(
-                        imageVector = kind.icon(),
+                        imageVector = kind.openChooserIcon(),
                         contentDescription = null,
                         tint = MaterialTheme.colorScheme.onPrimaryContainer,
                         modifier = Modifier.size(52.dp),
@@ -109,7 +99,10 @@ fun FileOpenChooserSheet(
                     shape = MaterialTheme.shapes.extraLarge,
                 ) {
                     Text(
-                        text = listOfNotNull(kind.typeLabel(), formatSize(sizeBytes)).joinToString(" · "),
+                        text = listOfNotNull(
+                            kind.openChooserLabel(),
+                            formatSize(sizeBytes)
+                        ).joinToString(" · "),
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
@@ -188,28 +181,6 @@ fun FileOpenChooserSheet(
             }
         }
     }
-}
-
-private fun FileKind.icon(): ImageVector = when (this) {
-    FileKind.Pdf -> Icons.Outlined.PictureAsPdf
-    FileKind.Image -> Icons.Outlined.Image
-    FileKind.Video -> Icons.Outlined.Movie
-    FileKind.Audio -> Icons.Outlined.MusicNote
-    FileKind.Html -> Icons.AutoMirrored.Outlined.Article
-    FileKind.Text -> Icons.Outlined.Description
-    FileKind.Zip -> Icons.Outlined.FolderZip
-    else -> Icons.AutoMirrored.Outlined.InsertDriveFile
-}
-
-private fun FileKind.typeLabel(): String = when (this) {
-    FileKind.Pdf -> "PDF"
-    FileKind.Image -> "Immagine"
-    FileKind.Video -> "Video"
-    FileKind.Audio -> "Audio"
-    FileKind.Html -> "Pagina web"
-    FileKind.Text -> "Documento di testo"
-    FileKind.Zip -> "Archivio"
-    else -> "File"
 }
 
 private fun formatSize(bytes: Long?): String? = when {

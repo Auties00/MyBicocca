@@ -3,7 +3,6 @@ package it.attendance100.mybicocca.ui.navigation
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
-import androidx.core.net.toUri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.EnterExitState
@@ -41,6 +40,7 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
+import androidx.core.net.toUri
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
@@ -53,6 +53,7 @@ import androidx.navigation3.ui.NavDisplay
 import coil.imageLoader
 import coil.request.ImageRequest
 import coil.size.Size
+import it.attendance100.mybicocca.data.local.settings.FileOpenChoice
 import it.attendance100.mybicocca.domain.model.search.SearchDestination
 import it.attendance100.mybicocca.domain.model.search.SearchResult
 import it.attendance100.mybicocca.ui.component.bar.BottomBarItem
@@ -78,7 +79,6 @@ import it.attendance100.mybicocca.ui.screen.elearning.subscreen.courseDetail.Cou
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.courseDetail.CourseDetailViewModel
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.discussionDetail.DiscussionDetailScreen
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.discussionDetail.DiscussionDetailViewModel
-import it.attendance100.mybicocca.data.local.settings.FileOpenChoice
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.fileViewer.ExternalFileLauncher
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.fileViewer.FileOpenPreferenceViewModel
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.fileViewer.FileViewerScreen
@@ -267,8 +267,6 @@ fun MainShell(
             }
         }
     }
-    // Non-long-press adapter for callers that don't carry a chooser flag (nested zip viewer).
-    val openFileSimple: (AppRoute.FileViewer) -> Unit = { openFile(it, false) }
     var searchActive by rememberSaveable { mutableStateOf(false) }
     // Query and dictation live in the SearchViewModel (the query is SavedStateHandle-backed
     // there); the shell only owns the open/closed flag that drives the bar morph.
@@ -765,8 +763,9 @@ fun MainShell(
                                         SubPage(topInset, immersive = true) {
                                             FileViewerScreen(
                                                 // Zip entries re-dispatch through a nested viewer
-                                                // (or the office/external hand-off, via the shell).
-                                                onOpenFile = openFileSimple,
+                                                // (or the office/external hand-off, via the shell);
+                                                // a long-press on an entry re-shows the chooser.
+                                                onOpenFile = openFile,
                                                 onClose = { backStack.removeLastOrNull() },
                                                 viewModel = vm,
                                             )
@@ -1007,7 +1006,7 @@ fun MainShell(
                 AssignmentDetailSheet(
                     assignId = route.assignId,
                     courseId = route.courseId,
-                    onOpenFile = { fileName, fileUrl, mimeType, sizeBytes ->
+                    onOpenFile = { fileName, fileUrl, mimeType, sizeBytes, forceChooser ->
                         openFile(
                             AppRoute.FileViewer(
                                 fileName = fileName,
@@ -1015,7 +1014,7 @@ fun MainShell(
                                 mimeType = mimeType,
                                 sizeBytes = sizeBytes,
                             ),
-                            false,
+                            forceChooser,
                         )
                     },
                     onOpenPage = { url ->

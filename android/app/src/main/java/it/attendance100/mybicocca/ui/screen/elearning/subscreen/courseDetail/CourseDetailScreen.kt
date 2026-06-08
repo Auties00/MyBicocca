@@ -508,12 +508,13 @@ fun CourseDetailScreen(
             FolderContentsSheet(
                 title = folderModule.name,
                 contents = folderModule.contents.filter { it.fileUrl != null && it.type != "url" },
-                onOpenContent = { content ->
+                onOpenContent = { content, forceChooser ->
                     viewModel.emitOpenFile(
                         fileName = content.fileName ?: folderModule.name,
                         fileUrl = content.fileUrl.orEmpty(),
                         mimeType = content.mimeType,
                         sizeBytes = content.sizeBytes,
+                        forceChooser = forceChooser,
                     )
                 },
                 onDismiss = { folderPickCmId = null },
@@ -716,9 +717,9 @@ private fun QuizzesPage(
 private fun quizGroupSubtitle(quizzes: List<Quiz>, completion: Map<Int, CompletionState>): String {
     val done = quizzes.count { completion[it.cmId]?.isCompleted == true }
     val base = "${quizzes.size} quiz"
-    return when {
-        done == 0 -> base
-        done == 1 -> "$base · 1 completato"
+    return when (done) {
+        0 -> base
+        1 -> "$base · 1 completato"
         else -> "$base · $done completati"
     }
 }

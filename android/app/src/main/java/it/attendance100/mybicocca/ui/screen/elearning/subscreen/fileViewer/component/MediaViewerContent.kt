@@ -11,7 +11,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.MusicNote
+import androidx.compose.material.icons.outlined.PictureInPictureAlt
+import androidx.compose.material.icons.outlined.Share
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -37,8 +40,6 @@ import androidx.media3.common.Player
 import androidx.media3.common.VideoSize
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
-import it.attendance100.mybicocca.ui.screen.elearning.subscreen.videoPlayer.player.LocalPipController
-import it.attendance100.mybicocca.ui.screen.elearning.subscreen.videoPlayer.player.PipState
 import androidx.media3.ui.compose.PlayerSurface
 import androidx.media3.ui.compose.SURFACE_TYPE_SURFACE_VIEW
 import androidx.media3.ui.compose.material3.buttons.PlayPauseButton
@@ -48,6 +49,8 @@ import androidx.media3.ui.compose.material3.indicator.PositionAndDurationText
 import androidx.media3.ui.compose.material3.indicator.ProgressSlider
 import androidx.media3.ui.compose.modifiers.resizeWithContentScale
 import androidx.media3.ui.compose.state.rememberPresentationState
+import it.attendance100.mybicocca.ui.screen.elearning.subscreen.videoPlayer.player.LocalPipController
+import it.attendance100.mybicocca.ui.screen.elearning.subscreen.videoPlayer.player.PipState
 
 // mp4/audio resources play straight off the tokenized pluginfile URL — the endpoint
 // honors Range requests, so seeking works without downloading the file first. Local
@@ -58,6 +61,7 @@ fun MediaViewerContent(
     mediaUri: String,
     isVideo: Boolean,
     fileName: String,
+    onShare: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
@@ -125,7 +129,11 @@ fun MediaViewerContent(
                     modifier = Modifier.resizeWithContentScale(ContentScale.Fit, presentation.videoSizeDp),
                 )
                 if (presentation.coverSurface) {
-                    Box(modifier = Modifier.fillMaxSize().background(Color.Black))
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(Color.Black)
+                    )
                 }
             } else {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -147,14 +155,18 @@ fun MediaViewerContent(
             }
         }
         if (!inPip) {
-            MediaControls(player = player)
+            MediaControls(
+                player = player,
+                onPip = { pipController.enterPipNow() },
+                onShare = onShare
+            )
         }
     }
 }
 
 @androidx.annotation.OptIn(UnstableApi::class)
 @Composable
-private fun MediaControls(player: ExoPlayer) {
+private fun MediaControls(player: ExoPlayer, onPip: () -> Unit, onShare: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -172,6 +184,12 @@ private fun MediaControls(player: ExoPlayer) {
             SeekForwardButton(player = player)
             Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.CenterEnd) {
                 PositionAndDurationText(player = player)
+            }
+            IconButton(onClick = onPip) {
+                Icon(Icons.Outlined.PictureInPictureAlt, contentDescription = "Picture-in-picture")
+            }
+            IconButton(onClick = onShare) {
+                Icon(Icons.Outlined.Share, contentDescription = "Condividi")
             }
         }
     }

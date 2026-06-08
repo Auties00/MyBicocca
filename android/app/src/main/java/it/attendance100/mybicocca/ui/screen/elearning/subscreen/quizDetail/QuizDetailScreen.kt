@@ -1,10 +1,14 @@
 package it.attendance100.mybicocca.ui.screen.elearning.subscreen.quizDetail
 
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.PredictiveBackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -26,7 +30,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -47,31 +50,27 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.pulltorefresh.PullToRefreshBox
-import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import it.attendance100.mybicocca.core.state.Loadable
+import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import it.attendance100.mybicocca.core.state.valueOrNull
 import it.attendance100.mybicocca.domain.model.elearning.course.CourseId
 import it.attendance100.mybicocca.domain.model.elearning.quiz.AttemptQuestion
 import it.attendance100.mybicocca.domain.model.elearning.quiz.AttemptReview
-import it.attendance100.mybicocca.domain.model.elearning.quiz.AttemptState
-import it.attendance100.mybicocca.domain.model.elearning.quiz.BestGrade
 import it.attendance100.mybicocca.domain.model.elearning.quiz.Quiz
 import it.attendance100.mybicocca.domain.model.elearning.quiz.QuizAttempt
 import it.attendance100.mybicocca.ui.component.feedback.LocalAppSnackbarController
@@ -82,11 +81,11 @@ import it.attendance100.mybicocca.ui.screen.elearning.subscreen.quizDetail.ext.p
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.quizDetail.state.AttemptUiState
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.quizDetail.state.QuizDetailOneShotEvent
 import it.attendance100.mybicocca.ui.screen.elearning.theme.CourseDetailTheme
-import java.time.Duration
-import java.time.Instant
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.launch
+import java.time.Duration
+import java.time.Instant
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -94,7 +93,13 @@ fun QuizDetailScreen(
     quizId: Int,
     courseId: Int,
     onExit: () -> Unit = {},
-    viewModel: QuizDetailViewModel = hiltViewModel(),
+    viewModel: QuizDetailViewModel = hiltViewModel(
+        checkNotNull(
+            LocalViewModelStoreOwner.current
+        ) {
+            "No ViewModelStoreOwner was provided via LocalViewModelStoreOwner"
+        }, null
+    ),
 ) {
     val snackbar = LocalAppSnackbarController.current
     LaunchedEffect(viewModel) {
@@ -137,7 +142,7 @@ fun QuizDetailScreen(
                     val forward = transitionGoesForward(initialState, targetState)
                     val direction = if (forward) 1 else -1
                     (slideInHorizontally { it / 4 * direction } + fadeIn()) togetherWith
-                        (slideOutHorizontally { -it / 4 * direction } + fadeOut())
+                            (slideOutHorizontally { -it / 4 * direction } + fadeOut())
                 },
                 label = "quiz-detail-state",
                 modifier = Modifier.fillMaxSize(),
@@ -193,6 +198,7 @@ private fun AttemptUiState.contentKey(): String = when (this) {
 private fun transitionGoesForward(from: AttemptUiState, to: AttemptUiState): Boolean = when {
     to is AttemptUiState.InProgress && from is AttemptUiState.InProgress ->
         to.page.pageIndex >= from.page.pageIndex
+
     to == AttemptUiState.Idle -> false
     else -> true
 }
@@ -207,6 +213,7 @@ private fun CenteredLoading() {
 
 // ---------- In-progress attempt ----------
 
+@Suppress("AssignedValueIsNeverRead")
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun AttemptContent(
@@ -217,13 +224,24 @@ private fun AttemptContent(
 ) {
     val scheme = MaterialTheme.colorScheme
     var confirmSubmit by remember { mutableStateOf(false) }
+    var confirmClose by remember { mutableStateOf(false) }
+    val backProgress = remember { Animatable(0f) }
 
-    // Leaving the attempt saves the draft: students abandon mid-quiz constantly
-    // (28 of 78 real attempts surveyed were paused in progress).
-    BackHandler {
-        viewModel.onSaveDraft()
-        viewModel.closeAttempt()
+    // Scrub the current page right+out during the gesture; on commit the normal AnimatedContent
+    // backward slide takes over. Previous page content isn't prefetched (server-side paging),
+    // so we can't seek to it — the visual dismiss of the current page is the gesture feedback.
+    PredictiveBackHandler(enabled = state.page.pageIndex > 0) { progress ->
+        try {
+            progress.collect { event -> backProgress.snapTo(event.progress) }
+            backProgress.snapTo(0f)
+            viewModel.onSaveDraft()
+            viewModel.loadPage(state.page.pageIndex - 1)
+        } catch (_: CancellationException) {
+            backProgress.animateTo(0f, spring(stiffness = Spring.StiffnessMediumLow))
+        }
     }
+
+    BackHandler(enabled = state.page.pageIndex == 0) { confirmClose = true }
 
     val totalPages = remember(attempt?.layout) { attempt?.layout.totalPagesFromLayout() }
     val pageIndex = state.page.pageIndex
@@ -232,8 +250,26 @@ private fun AttemptContent(
     // quizzes keep the wavy bar in the header instead.
     val showDots = totalPages != null && totalPages in 2..MAX_PAGE_DOTS
 
-    Column(modifier = Modifier.fillMaxSize()) {
-        Column(modifier = Modifier.padding(start = 20.dp, top = 14.dp, end = 20.dp, bottom = 8.dp)) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .graphicsLayer {
+                val p = backProgress.value
+                val scale = 1f - 0.08f * p
+                scaleX = scale
+                scaleY = scale
+                translationX = size.width * 0.12f * p
+                alpha = 1f - 0.3f * p
+            },
+    ) {
+        Column(
+            modifier = Modifier.padding(
+                start = 20.dp,
+                top = 14.dp,
+                end = 20.dp,
+                bottom = 8.dp
+            )
+        ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(modifier = Modifier.weight(1f)) {
                     if (quiz != null) {
@@ -330,6 +366,28 @@ private fun AttemptContent(
             },
             dismissButton = {
                 TextButton(onClick = { confirmSubmit = false }) { Text("Annulla") }
+            },
+        )
+    }
+
+    if (confirmClose) {
+        AlertDialog(
+            onDismissRequest = { confirmClose = false },
+            title = { Text("Chiudere il quiz?") },
+            text = { Text("Il tentativo rimarrà in sospeso e potrai riprenderlo in seguito.") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        confirmClose = false
+                        viewModel.onSaveDraft()
+                        viewModel.closeAttempt()
+                    },
+                ) {
+                    Text("Chiudi")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { confirmClose = false }) { Text("Annulla") }
             },
         )
     }
@@ -455,7 +513,9 @@ private fun QuizWizardBottomBar(
                     targetState = isLast,
                     transitionSpec = {
                         (slideInHorizontally(spatialOffsetSpec) { it / 3 } + fadeIn(effectsFloatSpec)) togetherWith
-                            (slideOutHorizontally(spatialOffsetSpec) { -it / 3 } + fadeOut(effectsFloatSpec))
+                                (slideOutHorizontally(spatialOffsetSpec) { -it / 3 } + fadeOut(
+                                    effectsFloatSpec
+                                ))
                     },
                     label = "quizActionLabel",
                 ) { last ->
@@ -600,9 +660,12 @@ private fun ReviewGradeHero(review: AttemptReview, questions: List<AttemptQuesti
         val grade = review.gradeFormatted?.toDoubleOrNull()
         if (grade != null || review.gradeFormatted != null) {
             Spacer(Modifier.height(6.dp))
-            Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(
+                verticalAlignment = Alignment.Bottom,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
                 Text(
-                    text = grade?.let(::formatGradeValue) ?: review.gradeFormatted.orEmpty(),
+                    text = grade?.let(::formatGradeValue) ?: review.gradeFormatted,
                     color = scheme.onSurface,
                     fontWeight = FontWeight.Black,
                     fontSize = 44.sp,
@@ -642,4 +705,3 @@ private fun ReviewGradeHero(review: AttemptReview, questions: List<AttemptQuesti
     }
 }
 
-private const val PULL_INDICATOR_DISMISS_DELAY_MS = 350L

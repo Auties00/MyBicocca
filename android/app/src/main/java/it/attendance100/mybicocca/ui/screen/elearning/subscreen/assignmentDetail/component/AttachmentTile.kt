@@ -1,6 +1,8 @@
 package it.attendance100.mybicocca.ui.screen.elearning.subscreen.assignmentDetail.component
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -21,6 +23,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -29,24 +32,31 @@ import it.attendance100.mybicocca.domain.model.elearning.assignment.Assignment
 import java.util.Locale
 
 // A file as a connected segment in the plan compiler's course-tile language: leading
-// extension chip, name with the size as caption, and a trailing download knob slot.
+// extension chip, name with the size as caption, and a trailing download knob slot. A
+// long-press ([onLongOpen]) re-shows the in-app/external chooser even when a choice was
+// already remembered, mirroring the long-press on a course content row.
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun AttachmentTile(
     file: Assignment.AttachmentRef,
     onOpen: () -> Unit,
+    onLongOpen: () -> Unit,
     isLast: Boolean,
     modifier: Modifier = Modifier,
     isFirst: Boolean = false,
 ) {
     val scheme = MaterialTheme.colorScheme
+    val shape = segmentShape(isFirst = isFirst, isLast = isLast)
     val extension = file.fileName.substringAfterLast('.', missingDelimiterValue = "")
         .uppercase(Locale.ITALIAN).take(4).ifBlank { "FILE" }
     Surface(
-        onClick = onOpen,
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(shape)
+            .combinedClickable(onClick = onOpen, onLongClick = onLongOpen),
         color = scheme.surfaceContainer,
         contentColor = scheme.onSurface,
-        shape = segmentShape(isFirst = isFirst, isLast = isLast),
+        shape = shape,
     ) {
         Row(
             modifier = Modifier.padding(start = 12.dp, end = 14.dp, top = 12.dp, bottom = 12.dp),

@@ -8,7 +8,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.InsertDriveFile
-import androidx.compose.material3.Button
+import androidx.compose.material.icons.automirrored.outlined.OpenInNew
+import androidx.compose.material.icons.outlined.Share
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -19,12 +21,14 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import java.util.Locale
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun UnknownFileContent(
     fileName: String,
     sizeBytes: Long?,
     downloading: Boolean,
     onOpenWith: () -> Unit,
+    onShare: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -59,14 +63,21 @@ fun UnknownFileContent(
                 textAlign = TextAlign.Center,
                 modifier = Modifier.padding(top = 8.dp),
             )
-            Button(
+        }
+        ViewerBottomBar(
+            primary = ViewerAction(
+                icon = Icons.AutoMirrored.Outlined.OpenInNew,
+                label = if (downloading) "Download in corso…" else "Apri con",
                 onClick = onOpenWith,
                 enabled = !downloading,
-                modifier = Modifier.padding(top = 8.dp),
-            ) {
-                Text(if (downloading) "Download in corso…" else "Apri con un'altra app")
-            }
-        }
+            ),
+            ViewerAction(
+                icon = Icons.Outlined.Share,
+                label = "Condividi",
+                onClick = onShare,
+                enabled = !downloading,
+            ),
+        )
     }
 }
 

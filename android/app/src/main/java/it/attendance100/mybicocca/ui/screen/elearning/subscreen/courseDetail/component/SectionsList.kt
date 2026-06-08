@@ -26,12 +26,12 @@ import androidx.compose.material.icons.automirrored.outlined.HelpOutline
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.outlined.Archive
 import androidx.compose.material.icons.outlined.Book
 import androidx.compose.material.icons.outlined.Description
 import androidx.compose.material.icons.outlined.EventAvailable
 import androidx.compose.material.icons.outlined.Extension
 import androidx.compose.material.icons.outlined.Folder
+import androidx.compose.material.icons.outlined.FolderZip
 import androidx.compose.material.icons.outlined.Forum
 import androidx.compose.material.icons.outlined.Groups
 import androidx.compose.material.icons.outlined.Image
@@ -57,6 +57,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -397,6 +398,7 @@ private fun ModuleRow(
         color = scheme.surfaceContainerLowest,
         modifier = Modifier
             .fillMaxWidth()
+            .clip(shape)
             .combinedClickable(onClick = onClick, onLongClick = onLongClick),
     ) {
         Row(
@@ -532,7 +534,7 @@ private fun CourseModule.resourceIcon(): ImageVector {
     val mime = contents.firstOrNull()?.mimeType.orEmpty()
     return when {
         mime.contains("pdf") -> Icons.Outlined.PictureAsPdf
-        mime.contains("zip") || mime.contains("compressed") -> Icons.Outlined.Archive
+        mime.contains("zip") || mime.contains("compressed") -> Icons.Outlined.FolderZip
         mime.startsWith("image") -> Icons.Outlined.Image
         mime.startsWith("video") -> Icons.Filled.PlayArrow
         else -> Icons.Outlined.Description

@@ -206,6 +206,7 @@ dependencies {
     // In-app file viewer (elearning course files). PDFs are not rendered in-app — they open in
     // the device's default reader via ACTION_VIEW, so no PDF library is bundled.
     // telephoto: zoom/pan + sub-sampling for image files (Coil 2 flavor).
+    implementation("me.saket.telephoto:zoomable:0.19.0")
     implementation("me.saket.telephoto:zoomable-image-coil:0.19.0")
     implementation("io.coil-kt:coil-gif:2.7.0")
     implementation("io.coil-kt:coil-svg:2.7.0")

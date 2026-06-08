@@ -1,6 +1,7 @@
 package it.attendance100.mybicocca.ui.screen.elearning.subscreen.courseDetail.subscreen.folderContents
 
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -18,7 +19,6 @@ import androidx.compose.material.icons.outlined.PlayCircleOutline
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import it.attendance100.mybicocca.ui.component.modal.PredictiveModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -29,20 +29,27 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import it.attendance100.mybicocca.domain.model.elearning.course.ModuleContent
+import it.attendance100.mybicocca.ui.component.modal.PredictiveModalBottomSheet
 import java.util.Locale
 
 // Folder modules (and the rare multi-file resource) hold several files; this sheet picks
-// one before handing off to the file viewer.
+// one before handing off to the file viewer. A long-press re-shows the in-app/external chooser
+// for that file even when a choice was already remembered (forceChooser), mirroring the
+// long-press on a single-file module row.
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FolderContentsSheet(
     title: String,
     contents: List<ModuleContent>,
-    onOpenContent: (ModuleContent) -> Unit,
+    onOpenContent: (content: ModuleContent, forceChooser: Boolean) -> Unit,
     onDismiss: () -> Unit,
 ) {
     PredictiveModalBottomSheet(onDismiss = onDismiss) { _, _ ->
-        Column(modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 16.dp)
+        ) {
             Text(
                 text = title,
                 fontWeight = FontWeight.SemiBold,
@@ -53,19 +60,24 @@ fun FolderContentsSheet(
             )
             LazyColumn {
                 itemsIndexed(contents) { _, content ->
-                    FileRow(content = content, onClick = { onOpenContent(content); onDismiss() })
+                    FileRow(
+                        content = content,
+                        onClick = { onOpenContent(content, false); onDismiss() },
+                        onLongClick = { onOpenContent(content, true); onDismiss() },
+                    )
                 }
             }
         }
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun FileRow(content: ModuleContent, onClick: () -> Unit) {
+private fun FileRow(content: ModuleContent, onClick: () -> Unit, onLongClick: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick)
+            .combinedClickable(onClick = onClick, onLongClick = onLongClick)
             .padding(horizontal = 24.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(16.dp),

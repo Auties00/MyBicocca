@@ -111,9 +111,10 @@ fun OfficeOpenSheet(
                     else snackbar.showError("Nessuna app installata può aprire questo file")
                 }
 
-                // Zip extraction and sharing never run from the office hand-off.
+                // Zip extraction, sharing, and saves never run from the office hand-off.
                 is FileViewerOneShotEvent.OpenExtractedFile,
-                is FileViewerOneShotEvent.ShareFile -> Unit
+                is FileViewerOneShotEvent.ShareFile,
+                FileViewerOneShotEvent.FileSaved -> Unit
             }
         }
     }

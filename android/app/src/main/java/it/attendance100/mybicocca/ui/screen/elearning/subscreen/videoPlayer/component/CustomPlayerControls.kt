@@ -47,6 +47,14 @@ fun CustomPlayerControls(
             }
     }
 
+    // Seek while dragging so the video follows the thumb in real time.
+    LaunchedEffect(sliderState, sliderProgress) {
+        snapshotFlow { sliderState.isDragging to sliderState.value }
+            .collect { (dragging, value) ->
+                if (dragging) sliderProgress.updateCurrentPositionProgress(value)
+            }
+    }
+
     SideEffect {
         sliderState.onValueChangeFinished = {
             sliderProgress.updateCurrentPositionProgress(sliderState.value)
