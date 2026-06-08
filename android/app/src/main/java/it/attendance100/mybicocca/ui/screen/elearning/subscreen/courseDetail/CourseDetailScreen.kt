@@ -55,6 +55,7 @@ import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
@@ -70,6 +71,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -113,6 +115,7 @@ import it.attendance100.mybicocca.ui.screen.elearning.subscreen.courseDetail.com
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.courseDetail.component.sectionCards
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.courseDetail.component.stackShape
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.courseDetail.component.visiblePageSlice
+import it.attendance100.mybicocca.ui.screen.elearning.subscreen.courseDetail.ext.containsRenderableHtml
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.courseDetail.state.CollapsingHeaderState
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.courseDetail.state.ContinuePlayable
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.courseDetail.state.CourseDetailOneShotEvent
@@ -288,7 +291,7 @@ fun CourseDetailScreen(
         // One saveable list state per tab: swiping back to a tab restores exactly where it was.
         val pageListStates = CourseTab.entries.map { tab -> key(tab) { rememberLazyListState() } }
 
-        val nestedScrollConnection = remember(header) {
+        val nestedScrollConnection = remember(header, scope) {
             object : NestedScrollConnection {
                 // Scrolling up collapses the header before the active list moves...
                 override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset =
@@ -302,6 +305,29 @@ fun CourseDetailScreen(
                     source: NestedScrollSource,
                 ): Offset =
                     if (available.y > 0f) Offset(0f, header.drag(available.y)) else Offset.Zero
+
+                override suspend fun onPreFling(available: Velocity): Velocity {
+                    val offset = header.offsetPx
+                    if (offset > 0f && offset < header.collapseRangePx) {
+                        scope.launch { header.snap(available.y) }
+                    }
+                    return Velocity.Zero
+                }
+
+                override suspend fun onPostFling(
+                    consumed: Velocity,
+                    available: Velocity
+                ): Velocity {
+                    val offset = header.offsetPx
+                    if (offset > 0f && offset < header.collapseRangePx) {
+                        // The list was flung upward and its overflow momentum partially expanded
+                        // the hero. Snap back based on what the list actually consumed: if it
+                        // scrolled upward (consumed.y < 0), force-collapse; otherwise snap to
+                        // the nearest endpoint using whatever velocity is still available.
+                        header.snap(if (consumed.y < 0f) -500f else available.y)
+                    }
+                    return Velocity.Zero
+                }
             }
         }
         // Drags starting on the hero or the tab bar (which are not scrollables themselves) still
@@ -350,6 +376,7 @@ fun CourseDetailScreen(
                 },
             ) {
                 val details = detailsLoadable.valueOrNull()
+                val currentDetails by rememberUpdatedState(details)
                 val fullDetails = details?.takeIf { it.sections.isNotEmpty() }
                 val continueWatching = remember(details, completion, videoProgress, continueWatchingThumbnailUrl) {
                     details?.let { pickContinueWatching(it, completion, videoProgress, continueWatchingThumbnailUrl) }
@@ -377,14 +404,37 @@ fun CourseDetailScreen(
                             continueWatching = continueWatching?.playable,
                             shapes = heroShapes,
                             isLoading = shapesSpinning,
+                            scrollFraction = {
+                                val range = header.collapseRangePx
+                                if (range > 0f) header.offsetPx / range else 0f
+                            },
                             onResume = {
                                 continueWatching?.module?.let { openModule(it, viewModel) }
                             },
                             onGoToLesson = {
-                                goToTab(CourseTab.Content)
-                                continueWatching?.let { picked ->
-                                    if (picked.sectionId !in expanded) {
-                                        viewModel.toggleSection(picked.sectionId)
+                                val picked = continueWatching
+                                if (picked != null) {
+                                    scope.launch {
+                                        viewModel.selectTab(CourseTab.Content)
+                                        val collapseJob = launch { header.collapse() }
+                                        pagerState.animateScrollToPage(CourseTab.Content.ordinal)
+                                        collapseJob.join()
+                                        if (picked.sectionId !in expanded) {
+                                            viewModel.toggleSection(picked.sectionId)
+                                        }
+                                        val sections = currentDetails?.sections ?: return@launch
+                                        val visibleSections = sections.filter { s ->
+                                            s.visible && !s.isSubsectionChild &&
+                                                    (s.summary?.containsRenderableHtml() == true ||
+                                                            s.modules.any { it.visible && it.onCoursePage })
+                                        }
+                                        val idx =
+                                            visibleSections.indexOfFirst { it.id == picked.sectionId }
+                                        if (idx >= 0) {
+                                            pageListStates[CourseTab.Content.ordinal].animateScrollToItem(
+                                                idx
+                                            )
+                                        }
                                     }
                                 }
                             },
@@ -619,6 +669,12 @@ private fun ContentPage(
             modifier = emptyModifier,
         )
     } else {
+        val lastSeenCmId = remember(videoProgress) {
+            videoProgress.values
+                .filter { !it.completed && it.progressFraction > 0.01f }
+                .maxByOrNull { it.lastUpdatedAt }
+                ?.cmId
+        }
         LazyColumn(
             state = listState,
             modifier = modifier,
@@ -635,6 +691,7 @@ private fun ContentPage(
                 expanded = expanded,
                 completion = completion,
                 videoProgress = videoProgress,
+                lastSeenCmId = lastSeenCmId,
                 onToggleSection = onToggleSection,
                 onModuleClick = onModuleClick,
                 onModuleLongClick = onModuleLongClick,

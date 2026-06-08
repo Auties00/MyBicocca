@@ -46,6 +46,7 @@ import androidx.compose.material.icons.outlined.Storage
 import androidx.compose.material.icons.outlined.Videocam
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.LinearWavyProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -91,6 +92,7 @@ fun LazyListScope.sectionCards(
     expanded: Set<Int>,
     completion: Map<Int, CompletionState>,
     videoProgress: Map<Int, VideoProgress>,
+    lastSeenCmId: Int?,
     onToggleSection: (Int) -> Unit,
     onModuleClick: (CourseModule) -> Unit,
     onModuleLongClick: (CourseModule) -> Unit,
@@ -114,6 +116,7 @@ fun LazyListScope.sectionCards(
             expanded = section.id in expanded,
             completion = completion,
             videoProgress = videoProgress,
+            lastSeenCmId = lastSeenCmId,
             resolveSubsection = resolveSubsection,
             onToggle = { onToggleSection(section.id) },
             onModuleClick = onModuleClick,
@@ -136,6 +139,7 @@ private fun SectionCard(
     expanded: Boolean,
     completion: Map<Int, CompletionState>,
     videoProgress: Map<Int, VideoProgress>,
+    lastSeenCmId: Int?,
     resolveSubsection: (CourseModule) -> CourseSection?,
     onToggle: () -> Unit,
     onModuleClick: (CourseModule) -> Unit,
@@ -166,6 +170,7 @@ private fun SectionCard(
             blocks = blocks,
             completion = completion,
             videoProgress = videoProgress,
+            lastSeenCmId = lastSeenCmId,
             onModuleClick = onModuleClick,
             onModuleLongClick = onModuleLongClick,
         )
@@ -179,6 +184,7 @@ private fun SectionBlocks(
     blocks: List<ContentBlock>,
     completion: Map<Int, CompletionState>,
     videoProgress: Map<Int, VideoProgress>,
+    lastSeenCmId: Int?,
     onModuleClick: (CourseModule) -> Unit,
     onModuleLongClick: (CourseModule) -> Unit,
 ) {
@@ -190,6 +196,7 @@ private fun SectionBlocks(
                     group = block,
                     completion = completion,
                     videoProgress = videoProgress,
+                    lastSeenCmId = lastSeenCmId,
                     onModuleClick = onModuleClick,
                     onModuleLongClick = onModuleLongClick,
                 )
@@ -197,6 +204,7 @@ private fun SectionBlocks(
                     block = block,
                     completion = completion,
                     videoProgress = videoProgress,
+                    lastSeenCmId = lastSeenCmId,
                     onModuleClick = onModuleClick,
                     onModuleLongClick = onModuleLongClick,
                 )
@@ -241,6 +249,7 @@ private fun SubsectionBlock(
     block: ContentBlock.Subsection,
     completion: Map<Int, CompletionState>,
     videoProgress: Map<Int, VideoProgress>,
+    lastSeenCmId: Int?,
     onModuleClick: (CourseModule) -> Unit,
     onModuleLongClick: (CourseModule) -> Unit,
 ) {
@@ -304,6 +313,7 @@ private fun SubsectionBlock(
                         blocks = block.blocks,
                         completion = completion,
                         videoProgress = videoProgress,
+                        lastSeenCmId = lastSeenCmId,
                         onModuleClick = onModuleClick,
                         onModuleLongClick = onModuleLongClick,
                     )
@@ -318,6 +328,7 @@ private fun GroupBlock(
     group: ContentBlock.Group,
     completion: Map<Int, CompletionState>,
     videoProgress: Map<Int, VideoProgress>,
+    lastSeenCmId: Int?,
     onModuleClick: (CourseModule) -> Unit,
     onModuleLongClick: (CourseModule) -> Unit,
 ) {
@@ -356,6 +367,7 @@ private fun GroupBlock(
                 shape = stackShape(index, group.modules.size),
                 progress = module.kalvidresCmIdOrNull()?.let { videoProgress[it] },
                 done = completion[module.cmId]?.isCompleted == true,
+                isLastSeen = module.kalvidresCmIdOrNull() == lastSeenCmId,
                 onClick = { onModuleClick(module) },
                 onLongClick = { onModuleLongClick(module) },
             )
@@ -370,6 +382,7 @@ private fun ModuleRow(
     shape: Shape,
     progress: VideoProgress?,
     done: Boolean,
+    isLastSeen: Boolean = false,
     onClick: () -> Unit,
     onLongClick: () -> Unit,
 ) {
@@ -423,7 +436,10 @@ private fun ModuleRow(
                 )
                 Spacer(Modifier.height(1.dp))
                 Text(
-                    text = restriction?.let { "🔒 $it" } ?: moduleMeta(module, progress),
+                    text = restriction?.let { "🔒 $it" } ?: moduleMeta(
+                        module,
+                        progress
+                    ), // TODO use icon instead of emoji
                     style = MaterialTheme.typography.labelSmall,
                     color = when {
                         locked -> scheme.onSurfaceVariant
@@ -444,12 +460,28 @@ private fun ModuleRow(
                     )
                 }
                 if (watchingFraction != null) {
-                    LinearWavyProgressIndicator(
-                        progress = { watchingFraction },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 6.dp),
-                    )
+                    if (isLastSeen) {
+                        LinearWavyProgressIndicator(
+                            progress = { watchingFraction },
+                            stopSize = 0.dp,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 6.dp),
+                            trackColor = scheme.surfaceContainerHigh,
+                        )
+                    } else {
+                        LinearProgressIndicator(
+                            progress = { watchingFraction },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 6.dp)
+                                .height(4.dp)
+                                .clip(RoundedCornerShape(2.dp)),
+                            color = scheme.primary,
+                            trackColor = scheme.surfaceContainerHigh,
+                            drawStopIndicator = {},
+                        )
+                    }
                 }
             }
         }

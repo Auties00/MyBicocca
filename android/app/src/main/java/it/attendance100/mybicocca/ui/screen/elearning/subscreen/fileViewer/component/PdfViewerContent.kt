@@ -51,6 +51,8 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.createBitmap
+import it.attendance100.mybicocca.data.local.settings.PdfPagerOrientation
+import it.attendance100.mybicocca.data.local.settings.PdfThemeMode
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -61,8 +63,6 @@ import org.intellij.lang.annotations.Language
 import java.io.Closeable
 import java.io.File
 
-enum class PdfThemeMode { System, Light, Dark }
-enum class PdfPagerOrientation { Vertical, Horizontal }
 
 @Language("AGSL")
 const val SmartInvertShader = """
@@ -100,10 +100,14 @@ const val SmartInvertShader = """
 @Composable
 fun PdfViewerContent(
     localPath: String,
+    themeMode: PdfThemeMode,
+    orientation: PdfPagerOrientation,
+    onThemeModeChange: (PdfThemeMode) -> Unit,
+    onOrientationChange: (PdfPagerOrientation) -> Unit,
     onShare: () -> Unit,
     onDownload: () -> Unit,
     onPip: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     val document = remember(localPath) { runCatching { PdfDocument(localPath) }.getOrNull() }
     DisposableEffect(document) {
@@ -128,9 +132,6 @@ fun PdfViewerContent(
 
     val density = LocalDensity.current
     val pagerState = rememberPagerState(pageCount = { document.pageCount })
-
-    var themeMode by remember { mutableStateOf(PdfThemeMode.System) }
-    var orientation by remember { mutableStateOf(PdfPagerOrientation.Vertical) }
 
     BoxWithConstraints(
         modifier = modifier
@@ -209,21 +210,25 @@ fun PdfViewerContent(
                 },
                 label = "Cambia tema",
                 onClick = {
-                    themeMode = when (themeMode) {
-                        PdfThemeMode.System -> PdfThemeMode.Light
-                        PdfThemeMode.Light -> PdfThemeMode.Dark
-                        PdfThemeMode.Dark -> PdfThemeMode.System
-                    }
+                    onThemeModeChange(
+                        when (themeMode) {
+                            PdfThemeMode.System -> PdfThemeMode.Light
+                            PdfThemeMode.Light -> PdfThemeMode.Dark
+                            PdfThemeMode.Dark -> PdfThemeMode.System
+                        }
+                    )
                 },
             ),
             ViewerAction(
                 icon = if (orientation == PdfPagerOrientation.Vertical) Icons.Outlined.SwapVert else Icons.Outlined.SwapHoriz,
                 label = "Cambia direzione",
                 onClick = {
-                    orientation = if (orientation == PdfPagerOrientation.Vertical)
-                        PdfPagerOrientation.Horizontal
-                    else
-                        PdfPagerOrientation.Vertical
+                    onOrientationChange(
+                        if (orientation == PdfPagerOrientation.Vertical)
+                            PdfPagerOrientation.Horizontal
+                        else
+                            PdfPagerOrientation.Vertical
+                    )
                 },
             ),
             ViewerAction(

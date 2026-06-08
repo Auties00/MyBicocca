@@ -193,6 +193,8 @@ private fun FileContent(
     val context = LocalContext.current
     val snackbar = LocalAppSnackbarController.current
     val scope = rememberCoroutineScope()
+    val pdfThemeMode by viewModel.pdfThemeMode.collectAsStateWithLifecycle()
+    val pdfOrientation by viewModel.pdfOrientation.collectAsStateWithLifecycle()
 
     // Saving to the public Downloads/Pictures dirs needs WRITE_EXTERNAL_STORAGE on API < 29;
     // Q+ writes through MediaStore scoped storage and needs no permission. Hold the requested
@@ -226,6 +228,10 @@ private fun FileContent(
         FileKind.Pdf -> LocalFileGate(localPath, downloadStatus, viewModel.sizeBytes, viewModel::retry) { path ->
             PdfViewerContent(
                 localPath = path,
+                themeMode = pdfThemeMode,
+                orientation = pdfOrientation,
+                onThemeModeChange = viewModel::setPdfThemeMode,
+                onOrientationChange = viewModel::setPdfOrientation,
                 onShare = viewModel::shareFile,
                 onDownload = { saveWithPermission(viewModel::saveToDownloads) },
                 onPip = { pipController.enterPipNow() },

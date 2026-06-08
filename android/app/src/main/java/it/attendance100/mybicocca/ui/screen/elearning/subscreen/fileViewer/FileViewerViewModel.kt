@@ -16,6 +16,9 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.SyncStatus
+import it.attendance100.mybicocca.data.local.settings.PdfPagerOrientation
+import it.attendance100.mybicocca.data.local.settings.PdfThemeMode
+import it.attendance100.mybicocca.data.local.settings.PdfViewerSettingsStore
 import it.attendance100.mybicocca.domain.usecase.elearning.file.DownloadCourseFileUseCase
 import it.attendance100.mybicocca.domain.usecase.elearning.file.GetAuthenticatedFileUrlUseCase
 import it.attendance100.mybicocca.ui.navigation.AppRoute
@@ -26,9 +29,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -40,6 +45,7 @@ class FileViewerViewModel @AssistedInject constructor(
     @ApplicationContext private val context: Context,
     private val downloadCourseFile: DownloadCourseFileUseCase,
     private val getAuthenticatedFileUrl: GetAuthenticatedFileUrlUseCase,
+    private val pdfViewerSettings: PdfViewerSettingsStore,
 ) : ViewModel() {
 
     @AssistedFactory
@@ -51,6 +57,20 @@ class FileViewerViewModel @AssistedInject constructor(
     val mimeType: String? = key.mimeType
     val sizeBytes: Long? = key.sizeBytes
     val kind: FileKind = FileKind.classify(key.fileName, key.mimeType)
+
+    val pdfThemeMode: StateFlow<PdfThemeMode> = pdfViewerSettings.themeMode
+        .stateIn(viewModelScope, SharingStarted.Eagerly, PdfThemeMode.System)
+
+    val pdfOrientation: StateFlow<PdfPagerOrientation> = pdfViewerSettings.orientation
+        .stateIn(viewModelScope, SharingStarted.Eagerly, PdfPagerOrientation.Vertical)
+
+    fun setPdfThemeMode(mode: PdfThemeMode) {
+        viewModelScope.launch { pdfViewerSettings.setThemeMode(mode) }
+    }
+
+    fun setPdfOrientation(orientation: PdfPagerOrientation) {
+        viewModelScope.launch { pdfViewerSettings.setOrientation(orientation) }
+    }
 
     // Absolute path of the local copy, for kinds that render from disk.
     private val _localPath = MutableStateFlow<Loadable<String>>(Loadable.NotYetLoaded)

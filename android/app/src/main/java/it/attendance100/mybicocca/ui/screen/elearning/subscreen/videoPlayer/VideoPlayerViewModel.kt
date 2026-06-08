@@ -2,33 +2,33 @@ package it.attendance100.mybicocca.ui.screen.elearning.subscreen.videoPlayer
 
 import android.content.ComponentName
 import android.content.Context
+import android.net.Uri
 import androidx.annotation.OptIn
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import android.net.Uri
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.MimeTypes
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
-import androidx.media3.common.TrackSelectionParameters
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import com.google.common.util.concurrent.MoreExecutors
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedFactory
+import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
-import it.attendance100.mybicocca.data.remote.elearning.api.ElearningKalturaApi
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.SyncStatus
 import it.attendance100.mybicocca.core.state.valueOrNull
+import it.attendance100.mybicocca.data.remote.elearning.api.ElearningKalturaApi
 import it.attendance100.mybicocca.domain.model.account.AccountId
 import it.attendance100.mybicocca.domain.model.elearning.course.CourseDetails
 import it.attendance100.mybicocca.domain.model.elearning.course.CourseId
-import it.attendance100.mybicocca.domain.model.elearning.course.CourseModule
-import it.attendance100.mybicocca.domain.model.elearning.course.ModuleType
 import it.attendance100.mybicocca.domain.model.elearning.course.kalvidresCmIdOrNull
 import it.attendance100.mybicocca.domain.model.elearning.video.VideoProgress
 import it.attendance100.mybicocca.domain.model.elearning.video.VideoStream
@@ -38,6 +38,7 @@ import it.attendance100.mybicocca.domain.usecase.elearning.course.ObserveCourseD
 import it.attendance100.mybicocca.domain.usecase.elearning.video.ObserveCourseVideoProgressUseCase
 import it.attendance100.mybicocca.domain.usecase.elearning.video.ResolveVideoStreamUseCase
 import it.attendance100.mybicocca.domain.usecase.elearning.video.SaveVideoProgressUseCase
+import it.attendance100.mybicocca.ui.navigation.AppRoute
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.videoPlayer.player.VideoPlaybackService
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.videoPlayer.state.VideoPlayerOneShotEvent
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.videoPlayer.state.VideoPlayerPlaylistItem
@@ -60,10 +61,6 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import dagger.assisted.Assisted
-import dagger.assisted.AssistedFactory
-import dagger.assisted.AssistedInject
-import it.attendance100.mybicocca.ui.navigation.AppRoute
 
 @OptIn(ExperimentalCoroutinesApi::class, UnstableApi::class)
 @HiltViewModel(assistedFactory = VideoPlayerViewModel.Factory::class)
@@ -346,6 +343,10 @@ class VideoPlayerViewModel @AssistedInject constructor(
         progress: Map<Int, VideoProgress>,
         currentCmId: Int,
     ): List<VideoPlayerPlaylistItem> {
+        val lastSeenCmId = progress.values
+            .filter { !it.completed && it.progressFraction > 0.01f }
+            .maxByOrNull { it.lastUpdatedAt }
+            ?.cmId
         val items = mutableListOf<VideoPlayerPlaylistItem>()
         for (section in details.sections) {
             if (!section.visible) continue
@@ -361,6 +362,7 @@ class VideoPlayerViewModel @AssistedInject constructor(
                     progressFraction = p?.progressFraction ?: 0f,
                     completed = p?.completed == true,
                     isCurrent = videoCmId == currentCmId,
+                    isLastSeen = videoCmId == lastSeenCmId,
                 )
             }
         }

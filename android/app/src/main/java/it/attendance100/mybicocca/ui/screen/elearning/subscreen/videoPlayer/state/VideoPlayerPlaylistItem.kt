@@ -7,4 +7,5 @@ data class VideoPlayerPlaylistItem(
     val progressFraction: Float,
     val completed: Boolean,
     val isCurrent: Boolean,
+    val isLastSeen: Boolean,
 )

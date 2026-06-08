@@ -26,10 +26,12 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.PlayCircleOutline
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.LinearWavyProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -129,6 +131,7 @@ private fun PanelContent(
     }
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun PlaylistRow(item: VideoPlayerPlaylistItem, onClick: () -> Unit) {
     val scheme = MaterialTheme.colorScheme
@@ -176,16 +179,25 @@ private fun PlaylistRow(item: VideoPlayerPlaylistItem, onClick: () -> Unit) {
             }
             if (item.progressFraction > 0f && !item.completed) {
                 Spacer(Modifier.height(6.dp))
-                LinearProgressIndicator(
-                    progress = { item.progressFraction },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(4.dp)
-                        .clip(RoundedCornerShape(2.dp)),
-                    color = scheme.primary,
-                    trackColor = scheme.surfaceContainerHigh,
-                    drawStopIndicator = {},
-                )
+                if (item.isLastSeen) {
+                    LinearWavyProgressIndicator(
+                        progress = { item.progressFraction },
+                        stopSize = 0.dp,
+                        modifier = Modifier.fillMaxWidth(),
+                        trackColor = scheme.surfaceContainerHigh,
+                    )
+                } else {
+                    LinearProgressIndicator(
+                        progress = { item.progressFraction },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(4.dp)
+                            .clip(RoundedCornerShape(2.dp)),
+                        color = scheme.primary,
+                        trackColor = scheme.surfaceContainerHigh,
+                        drawStopIndicator = {},
+                    )
+                }
             }
         }
     }

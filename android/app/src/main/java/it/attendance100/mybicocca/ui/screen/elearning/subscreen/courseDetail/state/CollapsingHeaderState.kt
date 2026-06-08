@@ -1,5 +1,7 @@
 package it.attendance100.mybicocca.ui.screen.elearning.subscreen.courseDetail.state
 
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.tween
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -34,6 +36,30 @@ class CollapsingHeaderState(private val morphDistancePx: Float) {
             return ((offsetPx - (collapseRangePx - morphDistancePx)) / morphDistancePx)
                 .coerceIn(0f, 1f)
         }
+
+    suspend fun collapse(durationMs: Int = 500) {
+        val from = offsetPx
+        val to = collapseRangePx
+        if (from >= to) return
+        Animatable(from).animateTo(to, animationSpec = tween(durationMs)) {
+            collapsedPx = value
+        }
+    }
+
+    // Snaps to fully open or fully collapsed. velocityY is in px/s (positive = downward);
+    // near-zero velocity snaps to whichever end is closer.
+    suspend fun snap(velocityY: Float = 0f, durationMs: Int = 250) {
+        val target = when {
+            velocityY > 100f -> 0f
+            velocityY < -100f -> collapseRangePx
+            else -> if (offsetPx < collapseRangePx / 2f) 0f else collapseRangePx
+        }
+        val from = collapsedPx
+        if (from == target) return
+        Animatable(from).animateTo(target, animationSpec = tween(durationMs)) {
+            collapsedPx = value
+        }
+    }
 
     fun updateCollapseRange(rangePx: Float) {
         collapseRangePx = rangePx.coerceAtLeast(0f)
