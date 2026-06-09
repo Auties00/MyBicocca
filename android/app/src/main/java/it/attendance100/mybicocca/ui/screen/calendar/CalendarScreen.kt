@@ -16,29 +16,34 @@ import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.ime
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
+import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.State
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import it.attendance100.mybicocca.core.state.SyncStatus
 import it.attendance100.mybicocca.core.state.valueOrNull
-import it.attendance100.mybicocca.domain.model.calendar.CalendarEvent
 import it.attendance100.mybicocca.domain.model.elearning.course.CourseId
 import it.attendance100.mybicocca.ui.component.feedback.LocalAppSnackbarController
 import it.attendance100.mybicocca.ui.screen.calendar.component.CalendarSegmentedControl
@@ -52,7 +57,10 @@ import it.attendance100.mybicocca.ui.screen.calendar.state.CalendarViewMode
 import it.attendance100.mybicocca.ui.screen.calendar.subscreen.eventDetail.EventDetailSheet
 import it.attendance100.mybicocca.ui.screen.calendar.subscreen.monthAgenda.MonthAgendaSheet
 import it.attendance100.mybicocca.ui.screen.calendar.theme.ProvideEventPalette
+import java.time.Instant
+import java.time.ZoneId
 
+@Suppress("AssignedValueIsNeverRead")
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun CalendarScreen(
@@ -68,7 +76,13 @@ fun CalendarScreen(
     onProvideFilterToggle: ((() -> Unit)?) -> Unit = {},
     onOpenCourse: (CourseId) -> Unit = {},
     bottomNavBarPadding: PaddingValues,
-    viewModel: CalendarViewModel = hiltViewModel(),
+    viewModel: CalendarViewModel = hiltViewModel(
+        checkNotNull(
+            LocalViewModelStoreOwner.current
+        ) {
+            "No ViewModelStoreOwner was provided via LocalViewModelStoreOwner"
+        }, null
+    ),
 ) {
     val viewMode by viewModel.viewMode.collectAsStateWithLifecycle()
     val selectedDay by viewModel.selectedDay.collectAsStateWithLifecycle()
@@ -93,6 +107,7 @@ fun CalendarScreen(
                     message = "Sincronizzazione del calendario non riuscita",
                     cause = event.cause,
                 )
+
                 CalendarOneShotEvent.RequireSignIn -> Unit
             }
         }
@@ -111,127 +126,171 @@ fun CalendarScreen(
 
     var monthSheetSize by remember { mutableStateOf(IntSize.Zero) }
     var timelineZoom by rememberSaveable { mutableFloatStateOf(TIMELINE_ZOOM_DEFAULT) }
+    var showDatePicker by rememberSaveable { mutableStateOf(false) }
+
+    if (showDatePicker) {
+        val datePickerState = rememberDatePickerState(
+            initialSelectedDateMillis = selectedDay.atStartOfDay(ZoneId.of("UTC")).toInstant()
+                .toEpochMilli()
+        )
+
+        DatePickerDialog(
+            onDismissRequest = { showDatePicker = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    datePickerState.selectedDateMillis?.let { millis ->
+                        val date =
+                            Instant.ofEpochMilli(millis).atZone(ZoneId.of("UTC")).toLocalDate()
+                        viewModel.selectDay(date)
+                    }
+                    showDatePicker = false
+                }) {
+                    Text("OK")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDatePicker = false }) {
+                    Text("Annulla")
+                }
+            }
+        ) {
+            DatePicker(state = datePickerState)
+        }
+    }
 
     ProvideEventPalette {
-    Box(modifier = modifier.fillMaxSize()) {
-        PullToRefreshBox(
-            isRefreshing = syncStatus is SyncStatus.Refreshing,
-            onRefresh = viewModel::pullToRefresh,
-            state = pullState,
-            modifier = Modifier.fillMaxSize(),
-        ) {
-            Column(modifier = Modifier.fillMaxSize()) {
-                Spacer(Modifier.height(16.dp))
-                CalendarSegmentedControl(
-                    viewMode = viewMode,
-                    selectedDay = selectedDay,
-                    weekStart = weekStart,
-                    selectedMonth = selectedMonth,
-                    onSelect = viewModel::selectViewMode,
-                )
-                Spacer(Modifier.height(16.dp))
+        Box(modifier = modifier.fillMaxSize()) {
+            PullToRefreshBox(
+                isRefreshing = syncStatus is SyncStatus.Refreshing,
+                onRefresh = viewModel::pullToRefresh,
+                state = pullState,
+                modifier = Modifier.fillMaxSize(),
+            ) {
+                Column(modifier = Modifier.fillMaxSize()) {
+                    Spacer(Modifier.height(16.dp))
+                    CalendarSegmentedControl(
+                        viewMode = viewMode,
+                        selectedDay = selectedDay,
+                        weekStart = weekStart,
+                        selectedMonth = selectedMonth,
+                        onSelect = { mode ->
+                            if (mode == viewMode) {
+                                showDatePicker = true
+                            } else {
+                                viewModel.selectViewMode(mode)
+                            }
+                        },
+                    )
+                    Spacer(Modifier.height(16.dp))
 
-                val viewSpatial = MaterialTheme.motionScheme.defaultSpatialSpec<IntOffset>()
-                val viewEffects = MaterialTheme.motionScheme.defaultEffectsSpec<Float>()
-                AnimatedContent(
-                    targetState = viewMode,
-                    transitionSpec = {
-                        val forward = targetState.ordinal > initialState.ordinal
-                        val dir = if (forward) 1 else -1
-                        (slideInHorizontally(viewSpatial) { it * dir / 6 } + fadeIn(viewEffects)) togetherWith
-                            (slideOutHorizontally(viewSpatial) { -it * dir / 6 } + fadeOut(viewEffects))
-                    },
-                    label = "calendar_view_transition",
-                    modifier = Modifier.fillMaxSize()
-                ) { mode ->
-                    when (mode) {
-                        CalendarViewMode.DAY -> DayView(
-                            selectedDay = selectedDay,
-                            eventsByDay = eventsByDay,
-                            onSelectDay = viewModel::selectDay,
-                            onEventClick = { viewModel.openEventDetail(it.id) },
-                            modifier = Modifier.fillMaxSize(),
-                            zoom = timelineZoom,
-                            onZoomChange = { timelineZoom = it },
-                        )
-                        CalendarViewMode.WEEK -> WeekView(
-                            weekStart = weekStart,
-                            eventsByDay = eventsByDay,
-                            onSelectDay = viewModel::selectDay,
-                            onEventClick = { viewModel.openEventDetail(it.id) },
-                            modifier = Modifier.fillMaxSize(),
-                            zoom = timelineZoom,
-                            onZoomChange = { timelineZoom = it },
-                        )
-                        CalendarViewMode.MONTH -> MonthView(
-                            yearMonth = selectedMonth,
-                            selectedDay = selectedDay,
-                            eventsByDay = eventsByDay,
-                            onSelectDay = viewModel::selectDay,
-                            onSelectMonth = viewModel::selectMonth,
-                            onEventClick = { viewModel.openEventDetail(it.id) },
-                            onMonthSheetSizeChanged = { monthSheetSize = it },
-                            modifier = Modifier.fillMaxSize(),
-                        )
+                    val viewSpatial = MaterialTheme.motionScheme.defaultSpatialSpec<IntOffset>()
+                    val viewEffects = MaterialTheme.motionScheme.defaultEffectsSpec<Float>()
+                    AnimatedContent(
+                        targetState = viewMode,
+                        transitionSpec = {
+                            val forward = targetState.ordinal > initialState.ordinal
+                            val dir = if (forward) 1 else -1
+                            (slideInHorizontally(viewSpatial) { it * dir / 6 } + fadeIn(viewEffects)) togetherWith
+                                    (slideOutHorizontally(viewSpatial) { -it * dir / 6 } + fadeOut(
+                                        viewEffects
+                                    ))
+                        },
+                        label = "calendar_view_transition",
+                        modifier = Modifier.fillMaxSize()
+                    ) { mode ->
+                        when (mode) {
+                            CalendarViewMode.DAY -> DayView(
+                                selectedDay = selectedDay,
+                                eventsByDay = eventsByDay,
+                                onSelectDay = viewModel::selectDay,
+                                onEventClick = { viewModel.openEventDetail(it.id) },
+                                modifier = Modifier.fillMaxSize(),
+                                zoom = timelineZoom,
+                                onZoomChange = { timelineZoom = it },
+                            )
+
+                            CalendarViewMode.WEEK -> WeekView(
+                                weekStart = weekStart,
+                                eventsByDay = eventsByDay,
+                                onSelectDay = viewModel::selectDay,
+                                onEventClick = { viewModel.openEventDetail(it.id) },
+                                modifier = Modifier.fillMaxSize(),
+                                zoom = timelineZoom,
+                                onZoomChange = { timelineZoom = it },
+                            )
+
+                            CalendarViewMode.MONTH -> MonthView(
+                                yearMonth = selectedMonth,
+                                selectedDay = selectedDay,
+                                eventsByDay = eventsByDay,
+                                onSelectDay = viewModel::selectDay,
+                                onSelectMonth = viewModel::selectMonth,
+                                onEventClick = { viewModel.openEventDetail(it.id) },
+                                onMonthSheetSizeChanged = { monthSheetSize = it },
+                                modifier = Modifier.fillMaxSize(),
+                            )
+                        }
                     }
                 }
             }
-        }
 
-        val keyboardOpen = androidx.compose.foundation.layout.WindowInsets.ime
-            .asPaddingValues()
-            .calculateBottomPadding() > 0.dp
+            val keyboardOpen = androidx.compose.foundation.layout.WindowInsets.ime
+                .asPaddingValues()
+                .calculateBottomPadding() > 0.dp
 
-        // The agenda sheet and the FAB both draw in their own Popup window, which neither the
-        // pager nor a covering sub-page/search overlay can clip — so they bleed on top of other
-        // content unless we hide them ourselves. Two conditions must hold: this is the visible
-        // tab (isActive — the shell keeps every tab composed) AND TabRoot is fully on top, i.e.
-        // no sub-page push/pop or search open is in flight (coverProgress ~ 0). The latter
-        // catches the transition window in both directions and during predictive back.
-        val chromeVisible = isActive && (coverProgress?.value ?: 0f) < 0.01f
+            // The agenda sheet and the FAB both draw in their own Popup window, which neither the
+            // pager nor a covering sub-page/search overlay can clip — so they bleed on top of other
+            // content unless we hide them ourselves. Two conditions must hold: this is the visible
+            // tab (isActive — the shell keeps every tab composed) AND TabRoot is fully on top, i.e.
+            // no sub-page push/pop or search open is in flight (coverProgress ~ 0). The latter
+            // catches the transition window in both directions and during predictive back.
+            val chromeVisible = isActive && (coverProgress?.value ?: 0f) < 0.01f
 
-        if (chromeVisible && agendaPresence > 0.01f && !keyboardOpen) {
-            MonthAgendaSheet(
-                selectedDay = selectedDay,
-                events = (eventsByDay[selectedDay] ?: emptyList()),
-                onEventClick = { viewModel.openEventDetail(it.id) },
-                elearningCoursesFor = { it.activityCode?.let(coursesByActivityCode::get).orEmpty() },
-                onOpenCourse = onOpenCourse,
-                progress = agendaProgress,
-                presence = agendaPresence,
-                bottomNavBarPadding = bottomNavBarPadding,
-                sheetHeight = monthSheetSize.height
-            )
-        }
-
-        if (chromeVisible && !keyboardOpen) {
-            androidx.compose.runtime.key(agendaPresence > 0.01f) {
-                TodayFab(
-                    viewMode = viewMode,
+            if (chromeVisible && agendaPresence > 0.01f && !keyboardOpen) {
+                MonthAgendaSheet(
                     selectedDay = selectedDay,
-                    weekStart = weekStart,
-                    selectedMonth = selectedMonth,
-                    agendaProgress = agendaProgress.value,
+                    events = (eventsByDay[selectedDay] ?: emptyList()),
+                    onEventClick = { viewModel.openEventDetail(it.id) },
+                    elearningCoursesFor = {
+                        it.activityCode?.let(coursesByActivityCode::get).orEmpty()
+                    },
+                    onOpenCourse = onOpenCourse,
+                    progress = agendaProgress,
+                    presence = agendaPresence,
                     bottomNavBarPadding = bottomNavBarPadding,
-                    onJumpToToday = { viewModel.selectDay(java.time.LocalDate.now()) },
+                    sheetHeight = monthSheetSize.height
+                )
+            }
+
+            if (chromeVisible && !keyboardOpen) {
+                androidx.compose.runtime.key(agendaPresence > 0.01f) {
+                    TodayFab(
+                        viewMode = viewMode,
+                        selectedDay = selectedDay,
+                        weekStart = weekStart,
+                        selectedMonth = selectedMonth,
+                        agendaProgress = agendaProgress.value,
+                        bottomNavBarPadding = bottomNavBarPadding,
+                        onJumpToToday = { viewModel.selectDay(java.time.LocalDate.now()) },
+                    )
+                }
+            }
+
+            // Event detail bottom sheet — open iff selectedEventId resolves to a known event.
+            val selected = remember(selectedEventId, monthEventsLoadable, dayEventsLoadable) {
+                val id = selectedEventId ?: return@remember null
+                monthEventsLoadable.valueOrNull()?.firstOrNull { it.id == id }
+                    ?: dayEventsLoadable.valueOrNull()?.firstOrNull { it.id == id }
+            }
+            if (selected != null) {
+                EventDetailSheet(
+                    event = selected,
+                    elearningCourses = selected.activityCode?.let(coursesByActivityCode::get)
+                        .orEmpty(),
+                    onOpenCourse = onOpenCourse,
+                    onDismiss = viewModel::closeEventDetail,
                 )
             }
         }
-
-        // Event detail bottom sheet — open iff selectedEventId resolves to a known event.
-        val selected = remember(selectedEventId, monthEventsLoadable, dayEventsLoadable) {
-            val id = selectedEventId ?: return@remember null
-            monthEventsLoadable.valueOrNull()?.firstOrNull { it.id == id }
-                ?: dayEventsLoadable.valueOrNull()?.firstOrNull { it.id == id }
-        }
-        if (selected != null) {
-            EventDetailSheet(
-                event = selected,
-                elearningCourses = selected.activityCode?.let(coursesByActivityCode::get).orEmpty(),
-                onOpenCourse = onOpenCourse,
-                onDismiss = viewModel::closeEventDetail,
-            )
-        }
-    }
     }
 }
