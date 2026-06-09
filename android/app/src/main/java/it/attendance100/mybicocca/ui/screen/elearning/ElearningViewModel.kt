@@ -10,6 +10,7 @@ import it.attendance100.mybicocca.domain.model.elearning.course.CourseFilter
 import it.attendance100.mybicocca.domain.model.elearning.course.CourseId
 import it.attendance100.mybicocca.domain.model.elearning.course.EnrolledCourse
 import it.attendance100.mybicocca.domain.model.elearning.course.EnrolledCourseGroup
+import it.attendance100.mybicocca.domain.model.elearning.course.courseCode
 import it.attendance100.mybicocca.domain.model.elearning.deadline.Deadline
 import it.attendance100.mybicocca.domain.model.studyplan.StudyYear
 import it.attendance100.mybicocca.domain.usecase.account.ObserveActiveAccountUseCase
@@ -40,6 +41,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 import javax.inject.Inject
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -111,6 +113,10 @@ class ElearningViewModel @Inject constructor(
     private val oneShotChannel = Channel<ElearningOneShotEvent>(Channel.BUFFERED)
     val oneShotEvents: Flow<ElearningOneShotEvent> = oneShotChannel.receiveAsFlow()
 
+    // Emits a course id the list should animate-scroll to, after it has just been added.
+    private val revealCourseChannel = Channel<CourseId>(Channel.BUFFERED)
+    val revealCourse: Flow<CourseId> = revealCourseChannel.receiveAsFlow()
+
     init {
         viewModelScope.launch {
             activeAccountId.filterNotNull().distinctUntilChanged().collect { id ->
@@ -166,6 +172,31 @@ class ElearningViewModel @Inject constructor(
             runRefresh(accountId, force = true)
         }
     }
+
+    // Called after a course is enrolled from the Add-course sheet. The enrol use case already
+    // force-refreshes Room, so we just wait for the course to land in the local cache, drop a
+    // filter that would hide it down to "Tutti", then signal the list to scroll to it.
+    fun revealEnrolledCourse(courseId: CourseId) {
+        viewModelScope.launch {
+            val course = withTimeoutOrNull(4_000) {
+                rawCourses
+                    .map { loadable ->
+                        (loadable as? Loadable.Loaded)?.value?.firstOrNull { it.id == courseId }
+                    }
+                    .filterNotNull()
+                    .first()
+            } ?: return@launch
+            if (!course.isVisibleUnder(filter.value)) setCourseFilter(CourseFilter.All)
+            revealCourseChannel.trySend(courseId)
+        }
+    }
+
+    private fun EnrolledCourse.isVisibleUnder(filter: CourseFilter): Boolean =
+        !hidden && when (filter) {
+            CourseFilter.All -> true
+            CourseFilter.Favourites -> isFavourite
+            is CourseFilter.ByYear -> courseCode().courseYear == filter.year
+        }
 
     private suspend fun runRefresh(accountId: AccountId, force: Boolean) {
         _syncStatus.value = SyncStatus.Refreshing

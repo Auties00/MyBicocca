@@ -40,6 +40,7 @@ fun PredictiveModalBottomSheet(
     onDismiss: () -> Unit,
     modalColor: Color = MaterialTheme.colorScheme.surfaceContainerLow,
     shape: Shape = BottomSheetDefaults.ExpandedShape,
+    scrimColor: Color = BottomSheetDefaults.ScrimColor,
     duration: Int = 400,
     sizeDuration: Int = duration,
     // Veto for swipe/scrim dismissal: return false to keep the sheet (it springs back
@@ -86,6 +87,7 @@ fun PredictiveModalBottomSheet(
         },
         shape = shape,
         containerColor = modalColor,
+        scrimColor = scrimColor,
     ) {
         PredictiveBackHandler { progress ->
             try {

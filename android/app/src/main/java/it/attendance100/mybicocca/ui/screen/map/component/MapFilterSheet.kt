@@ -10,7 +10,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -26,7 +25,7 @@ fun MapFilterSheet(
     onClear: () -> Unit,
     onDismiss: () -> Unit,
 ) {
-    ModalBottomSheet(onDismissRequest = onDismiss) {
+    it.attendance100.mybicocca.ui.component.modal.PredictiveModalBottomSheet(onDismiss = onDismiss) { _, _ ->
         Column(
             modifier = Modifier
                 .fillMaxWidth()

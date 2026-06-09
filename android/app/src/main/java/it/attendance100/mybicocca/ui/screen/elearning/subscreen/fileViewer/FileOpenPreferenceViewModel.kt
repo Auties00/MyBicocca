@@ -23,4 +23,10 @@ class FileOpenPreferenceViewModel @Inject constructor(
     fun remember(kind: String, choice: FileOpenChoice) {
         viewModelScope.launch { store.setChoice(kind, choice) }
     }
+
+    // Drops a remembered choice so the chooser is shown again next time (the "Chiedi ogni
+    // volta" pick in the file-associations settings).
+    fun forget(kind: String) {
+        viewModelScope.launch { store.clearChoice(kind) }
+    }
 }

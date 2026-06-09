@@ -50,16 +50,14 @@ fun NewDiscussionSheet(
     onDismiss: () -> Unit,
 ) {
     val scheme = MaterialTheme.colorScheme
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     var subject by rememberSaveable { mutableStateOf("") }
     var message by rememberSaveable { mutableStateOf("") }
     val canSubmit = subject.isNotBlank() && message.isNotBlank() && !creating
 
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        sheetState = sheetState,
-        containerColor = scheme.surfaceContainerLow,
-    ) {
+    it.attendance100.mybicocca.ui.component.modal.PredictiveModalBottomSheet(
+        onDismiss = onDismiss,
+        modalColor = scheme.surfaceContainerLow,
+    ) { _, _ ->
         Column(
             modifier = Modifier
                 .padding(horizontal = 20.dp)

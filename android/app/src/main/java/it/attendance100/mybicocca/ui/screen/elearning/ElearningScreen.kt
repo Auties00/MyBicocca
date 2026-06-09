@@ -13,6 +13,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.CloudOff
@@ -29,32 +30,33 @@ import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.SyncStatus
 import it.attendance100.mybicocca.domain.model.elearning.assignment.AssignmentId
+import it.attendance100.mybicocca.domain.model.elearning.course.CourseFilter
 import it.attendance100.mybicocca.domain.model.elearning.course.CourseId
-import it.attendance100.mybicocca.domain.model.elearning.course.EnrolledCourse
 import it.attendance100.mybicocca.domain.model.elearning.course.EnrolledCourseGroup
 import it.attendance100.mybicocca.domain.model.elearning.course.courseCode
 import it.attendance100.mybicocca.domain.model.elearning.deadline.Deadline
 import it.attendance100.mybicocca.domain.model.elearning.quiz.QuizId
-import it.attendance100.mybicocca.ui.component.button.RetryButton
 import it.attendance100.mybicocca.ui.component.feedback.EmptyState
 import it.attendance100.mybicocca.ui.component.feedback.LocalAppSnackbarController
-import it.attendance100.mybicocca.ui.component.feedback.friendlyMessage
 import it.attendance100.mybicocca.ui.screen.elearning.component.CardEdition
 import it.attendance100.mybicocca.ui.screen.elearning.component.HomeFilterBar
 import it.attendance100.mybicocca.ui.screen.elearning.component.NotebookCard
-import it.attendance100.mybicocca.domain.model.elearning.course.CourseFilter
 import it.attendance100.mybicocca.ui.screen.elearning.state.ElearningOneShotEvent
 import it.attendance100.mybicocca.ui.screen.elearning.state.InitialFetchState
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.addCourse.AddCourseSheet
@@ -62,8 +64,18 @@ import it.attendance100.mybicocca.ui.screen.elearning.theme.LocalCourseAccentPal
 import it.attendance100.mybicocca.ui.screen.elearning.theme.ProvideCourseAccentPalette
 import it.attendance100.mybicocca.ui.screen.elearning.theme.accentFor
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
+import java.io.IOException
+import java.net.ConnectException
+import java.net.SocketTimeoutException
+import java.net.UnknownHostException
+import java.time.Instant
+import java.time.temporal.ChronoUnit
 
+
+@Suppress("AssignedValueIsNeverRead")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ElearningScreen(
@@ -75,7 +87,13 @@ fun ElearningScreen(
     onOpenAssignment: (CourseId, AssignmentId) -> Unit = { _, _ -> },
     onOpenQuiz: (CourseId, QuizId) -> Unit = { _, _ -> },
     onRequireSignIn: () -> Unit = {},
-    viewModel: ElearningViewModel = hiltViewModel(),
+    viewModel: ElearningViewModel = hiltViewModel(
+        checkNotNull(
+            LocalViewModelStoreOwner.current
+        ) {
+            "No ViewModelStoreOwner was provided via LocalViewModelStoreOwner"
+        }, null
+    ),
 ) {
     val visibleCourses by viewModel.visibleCourses.collectAsStateWithLifecycle()
     val syncStatus by viewModel.syncStatus.collectAsStateWithLifecycle()
@@ -93,7 +111,11 @@ fun ElearningScreen(
         viewModel.oneShotEvents.collectLatest { event ->
             when (event) {
                 is ElearningOneShotEvent.OpenCourse -> onOpenCourse(event.courseId)
-                is ElearningOneShotEvent.OpenAssignment -> onOpenAssignment(event.courseId, event.assignmentId)
+                is ElearningOneShotEvent.OpenAssignment -> onOpenAssignment(
+                    event.courseId,
+                    event.assignmentId
+                )
+
                 is ElearningOneShotEvent.OpenQuiz -> onOpenQuiz(event.courseId, event.quizId)
                 ElearningOneShotEvent.RequireSignIn -> onRequireSignIn()
             }
@@ -102,6 +124,21 @@ fun ElearningScreen(
 
     val pullState = rememberPullToRefreshState()
     val listState = rememberLazyListState()
+
+    // After a course is added, the ViewModel drops any hiding filter and emits the course id;
+    // wait for its group to materialise in the (possibly just re-filtered) list, then scroll to it.
+    LaunchedEffect(listState) {
+        viewModel.revealCourse.collect { courseId ->
+            val index = withTimeoutOrNull(4_000) {
+                snapshotFlow {
+                    (visibleCourses as? Loadable.Loaded)?.value
+                        ?.indexOfFirst { group -> group.editions.any { it.id == courseId } }
+                        ?: -1
+                }.first { it >= 0 }
+            }
+            if (index != null && index >= 0) listState.animateScrollToItem(index)
+        }
+    }
 
     ProvideCourseAccentPalette {
         Box(modifier = modifier.fillMaxSize()) {
@@ -126,29 +163,31 @@ fun ElearningScreen(
                         InitialFetchState.InProgress -> RefreshableEmpty {
                             ElearningLoadingState(modifier = Modifier.fillMaxSize())
                         }
+
                         is InitialFetchState.Failed -> RefreshableEmpty {
                             ErrorEmptyState(
                                 cause = initial.cause,
-                                onRetry = viewModel::pullToRefresh,
                                 modifier = Modifier.fillMaxSize(),
                             )
                         }
+
                         InitialFetchState.Settled -> {
-                            val data = visibleCourses
-                            when {
-                                data is Loadable.Loaded && data.value.isNotEmpty() -> CourseList(
+                            when (val data = visibleCourses) {
+                                is Loadable.Loaded if data.value.isNotEmpty() -> CourseList(
                                     groups = data.value,
                                     listState = listState,
                                     onOpenCourse = viewModel::openCourse,
                                     onOpenDeadline = viewModel::openDeadline,
                                     onToggleGroupFavourite = viewModel::toggleGroupFavourite,
                                 )
-                                data is Loadable.Loaded -> RefreshableEmpty {
+
+                                is Loadable.Loaded -> RefreshableEmpty {
                                     EmptyStateForCurrentFilter(
                                         filterActive = filter !is CourseFilter.All,
                                         modifier = Modifier.fillMaxSize(),
                                     )
                                 }
+
                                 else -> RefreshableEmpty {
                                     ElearningLoadingState(modifier = Modifier.fillMaxSize())
                                 }
@@ -175,10 +214,11 @@ fun ElearningScreen(
                     snackbar.showError("Iscrizione non riuscita", cause)
                 }
             },
-            onEnrolSucceeded = { name ->
+            onEnrolSucceeded = { courseId, name ->
                 coroutineScope.launch {
                     snackbar.showInfo("Iscritto a $name")
                 }
+                viewModel.revealEnrolledCourse(courseId)
             },
             onRequireSignIn = {
                 addSheetVisible = false
@@ -216,56 +256,69 @@ private fun CourseList(
     onOpenDeadline: (Deadline) -> Unit,
     onToggleGroupFavourite: (EnrolledCourseGroup, Boolean) -> Unit,
 ) {
-    LazyColumn(
-        state = listState,
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(bottom = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+    Box(
+        Modifier
+            .fillMaxSize()
+            .padding(horizontal = 16.dp)
+            .clip(RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp))
     ) {
-        items(items = groups, key = { it.editions.first().id.value }) { group ->
-            val accentPalette = LocalCourseAccentPalette.current
-            val groupKey = group.sharedCode ?: group.latest.id.value
-            var activeEditionId by rememberSaveable(groupKey) {
-                mutableStateOf(group.latest.id.value)
-            }
-            // If the active id is no longer in the editions list (a year just
-            // dropped out of the filter), fall back to the latest edition.
-            val resolvedActiveId = group.editions
-                .firstOrNull { it.id.value == activeEditionId }
-                ?.id
-                ?: group.latest.id
-            val active = group.editions.first { it.id == resolvedActiveId }
-            val cardEditions = group.editions.map { e ->
-                val code = e.courseCode()
-                CardEdition(
-                    id = e.id,
-                    yearLabel = code.periodLabel ?: "Trasversale",
-                    accent = accentPalette.accentFor(e.id),
-                    academicYear = code.academicYear,
+        LazyColumn(
+            state = listState,
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(bottom = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            items(
+                items = groups,
+                key = { it.editions.first().id.value }
+            ) { group ->
+                val accentPalette = LocalCourseAccentPalette.current
+                val groupKey = group.sharedCode ?: group.latest.id.value
+                var activeEditionId by rememberSaveable(groupKey) { mutableIntStateOf(group.latest.id.value) }
+
+                // If the active id is no longer in the editions list (a year just
+                // dropped out of the filter), fall back to the latest edition.
+                val resolvedActiveId = group.editions
+                    .firstOrNull { it.id.value == activeEditionId }
+                    ?.id
+                    ?: group.latest.id
+                val active = group.editions.first { it.id == resolvedActiveId }
+                val cardEditions = group.editions.map { e ->
+                    val code = e.courseCode()
+                    CardEdition(
+                        id = e.id,
+                        yearLabel = code.periodLabel ?: "Trasversale",
+                        accent = accentPalette.accentFor(e.id),
+                        academicYear = code.academicYear,
+                    )
+                }
+
+                // Only if it's due in the future or within 2 weeks in the past
+                val validDeadlines =
+                    active.deadlines.filter { it.dueAt > Instant.now().minus(14, ChronoUnit.DAYS) }
+
+                NotebookCard(
+                    title = active.fullName,
+                    code = active.idNumber?.takeIf { it.isNotBlank() },
+                    editions = cardEditions,
+                    activeEditionId = active.id,
+                    isFavourite = group.isFavourite,
+                    deadlines = validDeadlines,
+                    onClick = { onOpenCourse(active.id) },
+                    onSelectEdition = { id -> activeEditionId = id.value },
+                    onToggleFavourite = { fav -> onToggleGroupFavourite(group, fav) },
+                    onDeadlineClick = onOpenDeadline,
+                    modifier = Modifier
+                        .animateItem(
+                            fadeInSpec = tween(durationMillis = 260),
+                            fadeOutSpec = tween(durationMillis = 220),
+                            placementSpec = spring(
+                                dampingRatio = Spring.DampingRatioMediumBouncy,
+                                stiffness = Spring.StiffnessLow,
+                            ),
+                        ),
                 )
             }
-            NotebookCard(
-                title = active.fullName,
-                code = active.idNumber?.takeIf { it.isNotBlank() },
-                editions = cardEditions,
-                activeEditionId = active.id,
-                isFavourite = group.isFavourite,
-                deadlines = active.deadlines,
-                onClick = { onOpenCourse(active.id) },
-                onSelectEdition = { id -> activeEditionId = id.value },
-                onToggleFavourite = { fav -> onToggleGroupFavourite(group, fav) },
-                onDeadlineClick = onOpenDeadline,
-                modifier = Modifier
-                    .animateItem(
-                        fadeInSpec = tween(durationMillis = 260),
-                        fadeOutSpec = tween(durationMillis = 220),
-                        placementSpec = spring(
-                            dampingRatio = Spring.DampingRatioMediumBouncy,
-                            stiffness = Spring.StiffnessLow,
-                        ),
-                    )
-                    .padding(horizontal = 16.dp),
-            )
         }
     }
 }
@@ -282,6 +335,7 @@ private fun EmptyStateForCurrentFilter(
             body = "Cambia filtro per vedere altri corsi.",
             modifier = modifier,
         )
+
         else -> EmptyState(
             icon = Icons.Outlined.School,
             title = "Nessun corso",
@@ -312,10 +366,11 @@ private fun RefreshableEmpty(content: @Composable () -> Unit) {
     }
 }
 
+// No explicit retry action: the state sits inside the PullToRefreshBox, so the pull
+// gesture is the retry.
 @Composable
 private fun ErrorEmptyState(
     cause: Throwable,
-    onRetry: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     EmptyState(
@@ -323,6 +378,14 @@ private fun ErrorEmptyState(
         title = "Sincronizzazione non riuscita",
         body = cause.friendlyMessage(),
         modifier = modifier,
-        action = { RetryButton(onClick = onRetry) },
     )
+}
+
+private fun Throwable.friendlyMessage(): String = when (this) {
+    is UnknownHostException,
+    is ConnectException -> "Rete non disponibile. Controlla la connessione e riprova."
+
+    is SocketTimeoutException -> "Timeout di rete. Riprova tra un momento."
+    is IOException -> "Errore di rete. Riprova tra un momento."
+    else -> "Si è verificato un errore imprevisto"
 }

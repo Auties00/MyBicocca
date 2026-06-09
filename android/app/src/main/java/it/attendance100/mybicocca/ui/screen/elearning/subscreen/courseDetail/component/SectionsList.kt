@@ -26,12 +26,12 @@ import androidx.compose.material.icons.automirrored.outlined.HelpOutline
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.outlined.Archive
 import androidx.compose.material.icons.outlined.Book
 import androidx.compose.material.icons.outlined.Description
 import androidx.compose.material.icons.outlined.EventAvailable
 import androidx.compose.material.icons.outlined.Extension
 import androidx.compose.material.icons.outlined.Folder
+import androidx.compose.material.icons.outlined.FolderZip
 import androidx.compose.material.icons.outlined.Forum
 import androidx.compose.material.icons.outlined.Groups
 import androidx.compose.material.icons.outlined.Image
@@ -46,6 +46,7 @@ import androidx.compose.material.icons.outlined.Storage
 import androidx.compose.material.icons.outlined.Videocam
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.LinearWavyProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -57,6 +58,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -90,6 +92,7 @@ fun LazyListScope.sectionCards(
     expanded: Set<Int>,
     completion: Map<Int, CompletionState>,
     videoProgress: Map<Int, VideoProgress>,
+    lastSeenCmId: Int?,
     onToggleSection: (Int) -> Unit,
     onModuleClick: (CourseModule) -> Unit,
     onModuleLongClick: (CourseModule) -> Unit,
@@ -113,6 +116,7 @@ fun LazyListScope.sectionCards(
             expanded = section.id in expanded,
             completion = completion,
             videoProgress = videoProgress,
+            lastSeenCmId = lastSeenCmId,
             resolveSubsection = resolveSubsection,
             onToggle = { onToggleSection(section.id) },
             onModuleClick = onModuleClick,
@@ -135,6 +139,7 @@ private fun SectionCard(
     expanded: Boolean,
     completion: Map<Int, CompletionState>,
     videoProgress: Map<Int, VideoProgress>,
+    lastSeenCmId: Int?,
     resolveSubsection: (CourseModule) -> CourseSection?,
     onToggle: () -> Unit,
     onModuleClick: (CourseModule) -> Unit,
@@ -165,6 +170,7 @@ private fun SectionCard(
             blocks = blocks,
             completion = completion,
             videoProgress = videoProgress,
+            lastSeenCmId = lastSeenCmId,
             onModuleClick = onModuleClick,
             onModuleLongClick = onModuleLongClick,
         )
@@ -178,6 +184,7 @@ private fun SectionBlocks(
     blocks: List<ContentBlock>,
     completion: Map<Int, CompletionState>,
     videoProgress: Map<Int, VideoProgress>,
+    lastSeenCmId: Int?,
     onModuleClick: (CourseModule) -> Unit,
     onModuleLongClick: (CourseModule) -> Unit,
 ) {
@@ -189,6 +196,7 @@ private fun SectionBlocks(
                     group = block,
                     completion = completion,
                     videoProgress = videoProgress,
+                    lastSeenCmId = lastSeenCmId,
                     onModuleClick = onModuleClick,
                     onModuleLongClick = onModuleLongClick,
                 )
@@ -196,6 +204,7 @@ private fun SectionBlocks(
                     block = block,
                     completion = completion,
                     videoProgress = videoProgress,
+                    lastSeenCmId = lastSeenCmId,
                     onModuleClick = onModuleClick,
                     onModuleLongClick = onModuleLongClick,
                 )
@@ -240,6 +249,7 @@ private fun SubsectionBlock(
     block: ContentBlock.Subsection,
     completion: Map<Int, CompletionState>,
     videoProgress: Map<Int, VideoProgress>,
+    lastSeenCmId: Int?,
     onModuleClick: (CourseModule) -> Unit,
     onModuleLongClick: (CourseModule) -> Unit,
 ) {
@@ -303,6 +313,7 @@ private fun SubsectionBlock(
                         blocks = block.blocks,
                         completion = completion,
                         videoProgress = videoProgress,
+                        lastSeenCmId = lastSeenCmId,
                         onModuleClick = onModuleClick,
                         onModuleLongClick = onModuleLongClick,
                     )
@@ -317,6 +328,7 @@ private fun GroupBlock(
     group: ContentBlock.Group,
     completion: Map<Int, CompletionState>,
     videoProgress: Map<Int, VideoProgress>,
+    lastSeenCmId: Int?,
     onModuleClick: (CourseModule) -> Unit,
     onModuleLongClick: (CourseModule) -> Unit,
 ) {
@@ -355,6 +367,7 @@ private fun GroupBlock(
                 shape = stackShape(index, group.modules.size),
                 progress = module.kalvidresCmIdOrNull()?.let { videoProgress[it] },
                 done = completion[module.cmId]?.isCompleted == true,
+                isLastSeen = module.kalvidresCmIdOrNull() == lastSeenCmId,
                 onClick = { onModuleClick(module) },
                 onLongClick = { onModuleLongClick(module) },
             )
@@ -369,6 +382,7 @@ private fun ModuleRow(
     shape: Shape,
     progress: VideoProgress?,
     done: Boolean,
+    isLastSeen: Boolean = false,
     onClick: () -> Unit,
     onLongClick: () -> Unit,
 ) {
@@ -397,6 +411,7 @@ private fun ModuleRow(
         color = scheme.surfaceContainerLowest,
         modifier = Modifier
             .fillMaxWidth()
+            .clip(shape)
             .combinedClickable(onClick = onClick, onLongClick = onLongClick),
     ) {
         Row(
@@ -421,7 +436,10 @@ private fun ModuleRow(
                 )
                 Spacer(Modifier.height(1.dp))
                 Text(
-                    text = restriction?.let { "🔒 $it" } ?: moduleMeta(module, progress),
+                    text = restriction?.let { "🔒 $it" } ?: moduleMeta(
+                        module,
+                        progress
+                    ), // TODO use icon instead of emoji
                     style = MaterialTheme.typography.labelSmall,
                     color = when {
                         locked -> scheme.onSurfaceVariant
@@ -442,12 +460,28 @@ private fun ModuleRow(
                     )
                 }
                 if (watchingFraction != null) {
-                    LinearWavyProgressIndicator(
-                        progress = { watchingFraction },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 6.dp),
-                    )
+                    if (isLastSeen) {
+                        LinearWavyProgressIndicator(
+                            progress = { watchingFraction },
+                            stopSize = 0.dp,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 6.dp),
+                            trackColor = scheme.surfaceContainerHigh,
+                        )
+                    } else {
+                        LinearProgressIndicator(
+                            progress = { watchingFraction },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 6.dp)
+                                .height(4.dp)
+                                .clip(RoundedCornerShape(2.dp)),
+                            color = scheme.primary,
+                            trackColor = scheme.surfaceContainerHigh,
+                            drawStopIndicator = {},
+                        )
+                    }
                 }
             }
         }
@@ -532,7 +566,7 @@ private fun CourseModule.resourceIcon(): ImageVector {
     val mime = contents.firstOrNull()?.mimeType.orEmpty()
     return when {
         mime.contains("pdf") -> Icons.Outlined.PictureAsPdf
-        mime.contains("zip") || mime.contains("compressed") -> Icons.Outlined.Archive
+        mime.contains("zip") || mime.contains("compressed") -> Icons.Outlined.FolderZip
         mime.startsWith("image") -> Icons.Outlined.Image
         mime.startsWith("video") -> Icons.Filled.PlayArrow
         else -> Icons.Outlined.Description

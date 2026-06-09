@@ -30,12 +30,14 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import it.attendance100.mybicocca.ui.component.shape.OrganicShapes
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.courseDetail.state.ContinuePlayable
 
@@ -109,10 +111,15 @@ private fun ThumbnailBlock(
     ) {
         if (thumbnailUrl != null) {
             AsyncImage(
-                model = thumbnailUrl,
+                model = ImageRequest.Builder(LocalContext.current)
+                    .data(thumbnailUrl)
+                    .crossfade(true)
+                    .build(),
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxWidth().aspectRatio(16f / 10f),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .aspectRatio(16f / 10f),
             )
         } else {
             Box(

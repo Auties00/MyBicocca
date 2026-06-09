@@ -31,7 +31,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -64,10 +63,9 @@ fun LinkSheet(
     val scope = rememberCoroutineScope()
     val host = remember(url) { prettyHost(url) }
 
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        sheetState = rememberModalBottomSheetState(),
-    ) {
+    it.attendance100.mybicocca.ui.component.modal.PredictiveModalBottomSheet(
+        onDismiss = onDismiss,
+    ) { _, _ ->
         Column(modifier = Modifier.fillMaxWidth()) {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,

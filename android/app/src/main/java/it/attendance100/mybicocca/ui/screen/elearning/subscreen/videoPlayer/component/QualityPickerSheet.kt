@@ -30,8 +30,7 @@ fun QualityPickerSheet(
     onSelect: (VideoVariant?) -> Unit,
     onDismiss: () -> Unit,
 ) {
-    val sheetState = rememberModalBottomSheetState()
-    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState) {
+    it.attendance100.mybicocca.ui.component.modal.PredictiveModalBottomSheet(onDismiss = onDismiss) { _, _ ->
         Column(modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)) {
             Text(
                 text = "Qualità",

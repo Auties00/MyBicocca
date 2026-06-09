@@ -1,6 +1,12 @@
 package it.attendance100.mybicocca.ui.screen.elearning.subscreen.fileViewer
 
+import android.content.ContentValues
 import android.content.Context
+import android.media.MediaScannerConnection
+import android.os.Build
+import android.os.Environment
+import android.provider.MediaStore
+import androidx.annotation.RequiresApi
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.assisted.Assisted
@@ -10,6 +16,9 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.SyncStatus
+import it.attendance100.mybicocca.data.local.settings.PdfPagerOrientation
+import it.attendance100.mybicocca.data.local.settings.PdfThemeMode
+import it.attendance100.mybicocca.data.local.settings.PdfViewerSettingsStore
 import it.attendance100.mybicocca.domain.usecase.elearning.file.DownloadCourseFileUseCase
 import it.attendance100.mybicocca.domain.usecase.elearning.file.GetAuthenticatedFileUrlUseCase
 import it.attendance100.mybicocca.ui.navigation.AppRoute
@@ -20,9 +29,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -34,6 +45,7 @@ class FileViewerViewModel @AssistedInject constructor(
     @ApplicationContext private val context: Context,
     private val downloadCourseFile: DownloadCourseFileUseCase,
     private val getAuthenticatedFileUrl: GetAuthenticatedFileUrlUseCase,
+    private val pdfViewerSettings: PdfViewerSettingsStore,
 ) : ViewModel() {
 
     @AssistedFactory
@@ -45,6 +57,20 @@ class FileViewerViewModel @AssistedInject constructor(
     val mimeType: String? = key.mimeType
     val sizeBytes: Long? = key.sizeBytes
     val kind: FileKind = FileKind.classify(key.fileName, key.mimeType)
+
+    val pdfThemeMode: StateFlow<PdfThemeMode> = pdfViewerSettings.themeMode
+        .stateIn(viewModelScope, SharingStarted.Eagerly, PdfThemeMode.System)
+
+    val pdfOrientation: StateFlow<PdfPagerOrientation> = pdfViewerSettings.orientation
+        .stateIn(viewModelScope, SharingStarted.Eagerly, PdfPagerOrientation.Vertical)
+
+    fun setPdfThemeMode(mode: PdfThemeMode) {
+        viewModelScope.launch { pdfViewerSettings.setThemeMode(mode) }
+    }
+
+    fun setPdfOrientation(orientation: PdfPagerOrientation) {
+        viewModelScope.launch { pdfViewerSettings.setOrientation(orientation) }
+    }
 
     // Absolute path of the local copy, for kinds that render from disk.
     private val _localPath = MutableStateFlow<Loadable<String>>(Loadable.NotYetLoaded)
@@ -74,8 +100,10 @@ class FileViewerViewModel @AssistedInject constructor(
 
     private fun load() {
         when (kind) {
-            // Office is hand-off only — nothing to fetch until the user taps the button.
-            is FileKind.Office -> Unit
+            // Office is hand-off only: no eager download. But if a local path was supplied
+            // (e.g. a zip-extracted file), cache it so openWithExternalApp/openInOffice
+            // can hand it off without a download trip.
+            is FileKind.Office -> key.localPath?.let { _localPath.value = Loadable.Loaded(it) }
             FileKind.Video, FileKind.Audio -> resolveMediaUri()
             else -> ensureLocalFile()
         }
@@ -108,23 +136,7 @@ class FileViewerViewModel @AssistedInject constructor(
     // this may have to fetch the file first.
     fun openWithExternalApp() {
         viewModelScope.launch {
-            val path = when (val loaded = _localPath.value) {
-                is Loadable.Loaded -> loaded.value
-                Loadable.NotYetLoaded -> {
-                    val url = key.fileUrl ?: return@launch
-                    _downloadStatus.value = SyncStatus.Refreshing
-                    runCatching { downloadCourseFile(url, key.fileName) }
-                        .onSuccess {
-                            _localPath.value = Loadable.Loaded(it)
-                            _downloadStatus.value = SyncStatus.Idle
-                        }
-                        .onFailure { cause ->
-                            _downloadStatus.value = SyncStatus.Failed(cause)
-                            oneShotChannel.trySend(FileViewerOneShotEvent.DownloadFailed(cause))
-                        }
-                        .getOrNull() ?: return@launch
-                }
-            }
+            val path = resolveLocalPath() ?: return@launch
             oneShotChannel.trySend(FileViewerOneShotEvent.OpenWithExternalApp(path, mimeType))
         }
     }
@@ -132,28 +144,74 @@ class FileViewerViewModel @AssistedInject constructor(
     // Downloads the file if needed, then asks the UI to open the system share sheet.
     fun shareFile() {
         viewModelScope.launch {
-            val path = when (val loaded = _localPath.value) {
-                is Loadable.Loaded -> loaded.value
-                Loadable.NotYetLoaded -> {
-                    val url = key.fileUrl ?: return@launch
-                    _downloadStatus.value = SyncStatus.Refreshing
-                    runCatching { downloadCourseFile(url, key.fileName) }
-                        .onSuccess {
-                            _localPath.value = Loadable.Loaded(it)
-                            _downloadStatus.value = SyncStatus.Idle
-                        }
-                        .onFailure { cause ->
-                            _downloadStatus.value = SyncStatus.Failed(cause)
-                            oneShotChannel.trySend(FileViewerOneShotEvent.DownloadFailed(cause))
-                        }
-                        .getOrNull() ?: return@launch
-                }
-            }
+            val path = resolveLocalPath() ?: return@launch
             oneShotChannel.trySend(FileViewerOneShotEvent.ShareFile(path, key.fileName, mimeType))
         }
     }
 
-    fun openZipEntry(entry: ZipEntryItem) {
+    // Returns the local file path, downloading if necessary. Returns null and emits
+    // DownloadFailed if the download fails; returns null silently if there is no URL.
+    // Also handles zip-extracted files that have key.localPath but no key.fileUrl.
+    private suspend fun resolveLocalPath(): String? {
+        return when (val loaded = _localPath.value) {
+            is Loadable.Loaded -> loaded.value
+            Loadable.NotYetLoaded -> {
+                key.localPath?.also { _localPath.value = Loadable.Loaded(it) }
+                    ?: run {
+                        val url = key.fileUrl ?: return null
+                        _downloadStatus.value = SyncStatus.Refreshing
+                        runCatching { downloadCourseFile(url, key.fileName) }
+                            .onSuccess {
+                                _localPath.value = Loadable.Loaded(it)
+                                _downloadStatus.value = SyncStatus.Idle
+                            }
+                            .onFailure { cause ->
+                                _downloadStatus.value = SyncStatus.Failed(cause)
+                                oneShotChannel.trySend(FileViewerOneShotEvent.DownloadFailed(cause))
+                            }
+                            .getOrNull()
+                    }
+            }
+        }
+    }
+
+    fun saveToDownloads() {
+        viewModelScope.launch {
+            val path = (_localPath.value as? Loadable.Loaded)?.value ?: return@launch
+            withContext(Dispatchers.IO) {
+                runCatching {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                        saveViaMediaStoreDownloads(path)
+                    } else {
+                        saveLegacyDownloads(path)
+                    }
+                }
+            }.fold(
+                onSuccess = { oneShotChannel.trySend(FileViewerOneShotEvent.FileSaved) },
+                onFailure = { oneShotChannel.trySend(FileViewerOneShotEvent.DownloadFailed(it)) },
+            )
+        }
+    }
+
+    fun saveToGallery() {
+        viewModelScope.launch {
+            val path = (_localPath.value as? Loadable.Loaded)?.value ?: return@launch
+            withContext(Dispatchers.IO) {
+                runCatching {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                        saveViaMediaStoreImages(path)
+                    } else {
+                        saveLegacyGallery(path)
+                    }
+                }
+            }.fold(
+                onSuccess = { oneShotChannel.trySend(FileViewerOneShotEvent.FileSaved) },
+                onFailure = { oneShotChannel.trySend(FileViewerOneShotEvent.DownloadFailed(it)) },
+            )
+        }
+    }
+
+    fun openZipEntry(entry: ZipEntryItem, forceChooser: Boolean = false) {
         val zipPath = (_localPath.value as? Loadable.Loaded)?.value ?: return
         viewModelScope.launch {
             runCatching { extractZipEntry(zipPath, entry) }
@@ -164,11 +222,72 @@ class FileViewerViewModel @AssistedInject constructor(
                             localPath = extracted,
                             mimeType = null,
                             sizeBytes = entry.sizeBytes,
+                            forceChooser = forceChooser,
                         ),
                     )
                 }
                 .onFailure { oneShotChannel.trySend(FileViewerOneShotEvent.DownloadFailed(it)) }
         }
+    }
+
+    @RequiresApi(Build.VERSION_CODES.Q)
+    private fun saveViaMediaStoreDownloads(localPath: String) {
+        val resolver = context.contentResolver
+        val values = ContentValues().apply {
+            put(MediaStore.Downloads.DISPLAY_NAME, fileName)
+            put(MediaStore.Downloads.MIME_TYPE, mimeType ?: "application/octet-stream")
+            put(MediaStore.Downloads.IS_PENDING, 1)
+        }
+        val uri = resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values)
+            ?: error("Impossibile creare voce nel MediaStore")
+        try {
+            resolver.openOutputStream(uri)!!.use { out ->
+                File(localPath).inputStream().use { it.copyTo(out) }
+            }
+            values.clear()
+            values.put(MediaStore.Downloads.IS_PENDING, 0)
+            resolver.update(uri, values, null, null)
+        } catch (e: Exception) {
+            resolver.delete(uri, null, null)
+            throw e
+        }
+    }
+
+    private fun saveLegacyDownloads(localPath: String) {
+        val dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+        dir.mkdirs()
+        File(localPath).copyTo(File(dir, fileName), overwrite = true)
+    }
+
+    @RequiresApi(Build.VERSION_CODES.Q)
+    private fun saveViaMediaStoreImages(localPath: String) {
+        val resolver = context.contentResolver
+        val values = ContentValues().apply {
+            put(MediaStore.Images.Media.DISPLAY_NAME, fileName)
+            put(MediaStore.Images.Media.MIME_TYPE, mimeType ?: "image/jpeg")
+            put(MediaStore.Images.Media.IS_PENDING, 1)
+        }
+        val uri = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values)
+            ?: error("Impossibile creare voce nella galleria")
+        try {
+            resolver.openOutputStream(uri)!!.use { out ->
+                File(localPath).inputStream().use { it.copyTo(out) }
+            }
+            values.clear()
+            values.put(MediaStore.Images.Media.IS_PENDING, 0)
+            resolver.update(uri, values, null, null)
+        } catch (e: Exception) {
+            resolver.delete(uri, null, null)
+            throw e
+        }
+    }
+
+    private fun saveLegacyGallery(localPath: String) {
+        val dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
+        dir.mkdirs()
+        val target = File(dir, fileName)
+        File(localPath).copyTo(target, overwrite = true)
+        MediaScannerConnection.scanFile(context, arrayOf(target.absolutePath), null, null)
     }
 
     private fun ensureLocalFile() {

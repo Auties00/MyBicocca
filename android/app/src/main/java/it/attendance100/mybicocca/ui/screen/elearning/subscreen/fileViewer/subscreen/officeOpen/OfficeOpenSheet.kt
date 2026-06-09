@@ -29,10 +29,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -113,17 +111,17 @@ fun OfficeOpenSheet(
                     else snackbar.showError("Nessuna app installata può aprire questo file")
                 }
 
-                // Zip extraction and sharing never run from the office hand-off.
+                // Zip extraction, sharing, and saves never run from the office hand-off.
                 is FileViewerOneShotEvent.OpenExtractedFile,
-                is FileViewerOneShotEvent.ShareFile -> Unit
+                is FileViewerOneShotEvent.ShareFile,
+                FileViewerOneShotEvent.FileSaved -> Unit
             }
         }
     }
 
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        sheetState = rememberModalBottomSheetState(),
-    ) {
+    it.attendance100.mybicocca.ui.component.modal.PredictiveModalBottomSheet(
+        onDismiss = onDismiss,
+    ) { _, _ ->
         Column(modifier = Modifier.fillMaxWidth()) {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,

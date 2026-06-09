@@ -2,6 +2,7 @@ package it.attendance100.mybicocca.ui.screen.elearning.subscreen.courseDetail.co
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
@@ -52,6 +53,7 @@ fun CourseHero(
     onResume: () -> Unit,
     onGoToLesson: () -> Unit,
     modifier: Modifier = Modifier,
+    scrollFraction: () -> Float = { 0f },
 ) {
     val scheme = MaterialTheme.colorScheme
     val enrolled = details?.enrolled
@@ -59,6 +61,7 @@ fun CourseHero(
     val rotationLarge = rememberShapeRotation(isLoading, periodMs = 8_000, direction = 1f)
     val rotationMedium = rememberShapeRotation(isLoading, periodMs = 5_500, direction = -1f)
     val rotationSmall = rememberShapeRotation(isLoading, periodMs = 3_500, direction = 1f)
+    val easing = remember { CubicBezierEasing(0.25f, 0.1f, 0.25f, 1f) }
 
     Box(
         modifier = modifier
@@ -69,36 +72,45 @@ fun CourseHero(
             // text column is too short on its own to reach the shapes' resting offsets.
             .heightIn(min = 280.dp),
     ) {
+        // Big
         Box(
             modifier = Modifier
                 .align(Alignment.TopEnd)
                 .offset(x = 30.dp, y = (-10).dp)
                 .size(240.dp)
                 .graphicsLayer {
-                    alpha = 0.22f
-                    rotationZ = rotationLarge
+                    val sf = scrollFraction()
+                    alpha = 0.22f * (0.7f + 0.3f * (1 - sf.coerceIn(0f, 1f)))
+                    rotationZ = rotationLarge + sf * 40f
+                    translationY += sf * 500f
                 }
                 .background(scheme.tertiary, shapes.large),
         )
+        // Medium
         Box(
             modifier = Modifier
                 .align(Alignment.CenterStart)
                 .offset(x = (-40).dp, y = 60.dp)
                 .size(160.dp)
                 .graphicsLayer {
-                    alpha = 0.18f
-                    rotationZ = rotationMedium
+                    val sf = scrollFraction()
+                    alpha = 0.18f * (0.7f + 0.3f * (1 - sf.coerceIn(0f, 1f)))
+                    rotationZ = rotationMedium + sf * -55f
+                    translationY += sf * 420f
                 }
                 .background(scheme.primary, shapes.medium),
         )
+        // Small
         Box(
             modifier = Modifier
                 .align(Alignment.CenterEnd)
                 .offset(x = (-24).dp, y = 60.dp)
                 .size(74.dp)
                 .graphicsLayer {
-                    alpha = 0.28f
-                    rotationZ = rotationSmall
+                    val sf = scrollFraction()
+                    alpha = 0.28f * (0.7f + 0.3f * (1 - sf.coerceIn(0f, 1f)))
+                    rotationZ = rotationSmall + sf * 75f
+                    translationY += sf * 570f
                 }
                 .background(scheme.secondary, shapes.small),
         )
@@ -128,7 +140,7 @@ fun CourseHero(
             AnimatedVisibility(
                 visible = details?.sections?.isNotEmpty() == true,
                 enter = fadeIn(tween(400, delayMillis = 150)) +
-                    expandVertically(tween(500, easing = FastOutSlowInEasing)),
+                        expandVertically(tween(500, easing = FastOutSlowInEasing)),
                 exit = fadeOut(tween(150)) + shrinkVertically(tween(250)),
             ) {
                 Column {
@@ -144,10 +156,14 @@ fun CourseHero(
 
                     if (continueWatching != null) {
                         Spacer(Modifier.height(22.dp))
+
                         ContinueWatchingCard(
                             item = continueWatching,
                             onResume = onResume,
                             onGoToLesson = onGoToLesson,
+                            modifier = Modifier.graphicsLayer {
+                                alpha = easing.transform((1 - scrollFraction()).coerceIn(0f, 1f))
+                            },
                         )
                     }
                 }

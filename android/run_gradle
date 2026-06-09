@@ -1,0 +1,1 @@
+to run gradle, use `gradle :app:compileDebugKotlin --console=plain 2>&1 | Select-String -Pattern "^e:|: error:|BUILD SUCCESSFUL|BUILD FAILED" | Select-Object -Last 50` or anything similar
