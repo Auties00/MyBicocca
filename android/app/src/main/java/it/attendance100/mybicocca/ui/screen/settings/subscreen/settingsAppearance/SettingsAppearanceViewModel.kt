@@ -6,6 +6,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import it.attendance100.mybicocca.data.local.settings.AppearanceSettingsStore
 import it.attendance100.mybicocca.data.local.settings.ThemeMode
 import it.attendance100.mybicocca.ui.theme.AppTheme
+import it.attendance100.mybicocca.ui.theme.BadgeCardTheme
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
@@ -23,11 +24,18 @@ class SettingsAppearanceViewModel @Inject constructor(
     val themeMode: StateFlow<ThemeMode> = store.themeMode
         .stateIn(viewModelScope, SharingStarted.Eagerly, ThemeMode.System)
 
+    val badgeCardTheme: StateFlow<BadgeCardTheme> = store.badgeCardTheme
+        .stateIn(viewModelScope, SharingStarted.Eagerly, BadgeCardTheme.Default)
+
     fun setAppTheme(theme: AppTheme) {
         viewModelScope.launch { store.setAppTheme(theme) }
     }
 
     fun setThemeMode(mode: ThemeMode) {
         viewModelScope.launch { store.setThemeMode(mode) }
+    }
+
+    fun setBadgeCardTheme(theme: BadgeCardTheme) {
+        viewModelScope.launch { store.setBadgeCardTheme(theme) }
     }
 }

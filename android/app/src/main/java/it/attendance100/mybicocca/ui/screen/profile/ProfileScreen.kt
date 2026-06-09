@@ -55,6 +55,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import java.util.Locale
 
+@Suppress("AssignedValueIsNeverRead")
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun ProfileScreen(
@@ -81,6 +82,7 @@ fun ProfileScreen(
     val titlesLoadable by viewModel.titles.collectAsStateWithLifecycle()
     val certificatesLoadable by viewModel.certificates.collectAsStateWithLifecycle()
     val downloadingCertificates by viewModel.downloadingCertificates.collectAsStateWithLifecycle()
+    val badgeCardTheme by viewModel.badgeCardTheme.collectAsStateWithLifecycle()
 
     val stats = statsLoadable.valueOrNull()
     val rollup = rollupLoadable.valueOrNull()
@@ -153,6 +155,7 @@ fun ProfileScreen(
                                     photoFile = photoFile,
                                     enabled = true,
                                     modifier = Modifier.fillMaxWidth(),
+                                    theme = badgeCardTheme,
                                 )
                             }
                         }

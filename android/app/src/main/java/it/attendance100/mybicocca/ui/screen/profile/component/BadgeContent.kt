@@ -24,7 +24,6 @@ import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalTextStyle
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -60,14 +59,11 @@ import it.attendance100.mybicocca.domain.model.career.Career
 import it.attendance100.mybicocca.domain.model.career.CareerId
 import it.attendance100.mybicocca.domain.model.career.CareerStatus
 import it.attendance100.mybicocca.ui.component.card.DitheredTexture
-import it.attendance100.mybicocca.ui.theme.BadgeSignatureBoxColorRed
-import it.attendance100.mybicocca.ui.theme.BadgeSignatureBoxColorRed2
-import it.attendance100.mybicocca.ui.theme.BadgeSignatureBoxColorWhite
-import it.attendance100.mybicocca.ui.theme.BadgeSignatureBoxColorWhite2
-import it.attendance100.mybicocca.ui.theme.BadgeWhiteDrawableColor
+import it.attendance100.mybicocca.ui.theme.BadgeCardColors
+import it.attendance100.mybicocca.ui.theme.BadgeCardTheme
 import it.attendance100.mybicocca.ui.theme.BicoccaTheme
-import it.attendance100.mybicocca.ui.theme.OnBackgroundColor
 import it.attendance100.mybicocca.ui.theme.PreviewBgLowest
+import it.attendance100.mybicocca.ui.theme.colors
 import java.io.File
 import java.time.Instant
 import java.util.Locale
@@ -85,15 +81,14 @@ private fun String.titleCase(): String {
 fun BadgeFront(
     account: Account?,
     career: Career? = null,
-    textColor: Color = OnBackgroundColor,
+    colors: BadgeCardColors,
     touchX: Float = 0.5f,
     touchY: Float = 0.5f,
-    whiteBadge: Boolean,
     badgeParallax: Boolean = true,
 ) {
     val scale = .8
     val height = 52
-    val drawableColor = if (whiteBadge) BadgeWhiteDrawableColor else textColor
+    val drawableColor = colors.content
     val movementCoeff = if (badgeParallax) 30 else 0
 
     Box(
@@ -168,7 +163,7 @@ fun BadgeFront(
                     .height((scale * 52).dp)
                     .clip(RoundedCornerShape(corner = CornerSize((scale * 9.5).dp))),
                 colorFilter = ColorFilter.tint(
-                    if (whiteBadge) Color.Red.copy(alpha = 0.1f) else Color(0xFFFFAD42),
+                    colors.chipTint,
                     blendMode = BlendMode.Multiply,
                 ),
             )
@@ -189,7 +184,7 @@ fun BadgeFront(
                 BasicText(
                     text = (account?.displayName ?: "Studente").uppercase(),
                     style = LocalTextStyle.current.copy(
-                        color = textColor,
+                        color = drawableColor,
                         fontWeight = FontWeight.Bold,
                         letterSpacing = 2.sp,
                     ),
@@ -202,7 +197,7 @@ fun BadgeFront(
                 )
                 if (career?.matricola != null) Text(
                     text = career.matricola,
-                    color = textColor.copy(alpha = 0.8f),
+                    color = drawableColor.copy(alpha = 0.8f),
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Medium,
                     letterSpacing = 1.5.sp,
@@ -219,10 +214,9 @@ fun BadgeFront(
 fun BadgeBack(
     account: Account?,
     photoFile: File? = null,
-    textColor: Color = MaterialTheme.colorScheme.onBackground,
+    colors: BadgeCardColors,
     touchX: Float = 0.5f,
     touchY: Float = 0.5f,
-    whiteBadge: Boolean,
     hazeState: HazeState,
     badgeParallax: Boolean = true,
 ) {
@@ -230,13 +224,11 @@ fun BadgeBack(
         val fontFamily = FontFamily(
             Font(R.font.mrs_saint_delafield_regular, FontWeight.Medium),
         )
-        val drawableColor = if (whiteBadge) BadgeWhiteDrawableColor else textColor
+        val drawableColor = colors.content
         val movementCoeff = if (badgeParallax) 30 else 0
 
-        val signatureBgCol =
-            if (whiteBadge) BadgeSignatureBoxColorWhite else BadgeSignatureBoxColorRed
-        val signatureBgCol2 =
-            if (whiteBadge) BadgeSignatureBoxColorWhite2 else BadgeSignatureBoxColorRed2
+        val signatureBgCol = colors.signatureBox
+        val signatureBgCol2 = colors.signatureStripe
 
         DitheredTexture()
 
@@ -333,11 +325,7 @@ fun BadgeBack(
                     .hazeEffect(state = hazeState, style = HazeMaterials.regular())
                     .fillMaxWidth()
                     .height(55.dp)
-                    .background(
-                        (if (whiteBadge) BadgeSignatureBoxColorWhite else Color(0xFF000000)).copy(
-                            alpha = 0.95f
-                        )
-                    ),
+                    .background(colors.magneticStripe),
             )
 
             Spacer(modifier = Modifier.weight(1f))
@@ -363,7 +351,7 @@ fun BadgeBack(
                         Text(
                             modifier = Modifier.padding(top = 10.dp),
                             text = "Signature",
-                            color = textColor,
+                            color = drawableColor,
                             fontSize = 10.sp,
                             fontWeight = FontWeight.Medium,
                         )
@@ -409,7 +397,7 @@ fun BadgeBack(
                                 text = account?.displayName?.titleCase() ?: "",
                                 style = LocalTextStyle.current.copy(
                                     fontSize = 28.sp,
-                                    color = if (whiteBadge) textColor else Color.Black,
+                                    color = colors.signatureText,
                                     lineHeight = 15.sp,
                                     fontFamily = fontFamily,
                                 ),
@@ -452,7 +440,7 @@ fun BadgeBack(
                     Text(
                         modifier = Modifier.offset(y = 5.dp),
                         text = "Email",
-                        color = textColor,
+                        color = drawableColor,
                         fontSize = 10.sp,
                         fontWeight = FontWeight.Medium,
                     )
@@ -461,7 +449,7 @@ fun BadgeBack(
                         // so only append the domain when it's a bare local part.
                         text = account?.username?.let { if (it.contains('@')) it else "$it@campus.unimib.it" }
                             ?: "",
-                        color = textColor,
+                        color = drawableColor,
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Medium,
                     )
@@ -540,7 +528,7 @@ private fun BadgeFrontDarkModePreview() {
             BadgeFront(
                 account = account,
                 career = career,
-                whiteBadge = false,
+                colors = BadgeCardTheme.Default.colors(dark = true),
                 badgeParallax = false
             )
         }
@@ -584,7 +572,7 @@ private fun BadgeBackDarkModePreview() {
             BadgeBack(
                 account = account,
                 photoFile = null,
-                whiteBadge = false,
+                colors = BadgeCardTheme.Default.colors(dark = true),
                 hazeState = remember { HazeState() },
                 badgeParallax = false
             )

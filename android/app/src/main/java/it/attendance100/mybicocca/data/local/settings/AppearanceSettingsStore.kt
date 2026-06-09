@@ -5,6 +5,7 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import it.attendance100.mybicocca.ui.theme.AppTheme
+import it.attendance100.mybicocca.ui.theme.BadgeCardTheme
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
@@ -33,6 +34,11 @@ class AppearanceSettingsStore @Inject constructor(
         AppTheme.entries.firstOrNull { it.name == stored } ?: AppTheme.Default
     }
 
+    val badgeCardTheme: Flow<BadgeCardTheme> = dataStore.data.map { prefs ->
+        val stored = prefs[BADGE_CARD_THEME_KEY]
+        BadgeCardTheme.entries.firstOrNull { it.name == stored } ?: BadgeCardTheme.Default
+    }
+
     suspend fun setThemeMode(mode: ThemeMode) {
         dataStore.edit { prefs ->
             prefs[THEME_MODE_KEY] = when (mode) {
@@ -47,9 +53,14 @@ class AppearanceSettingsStore @Inject constructor(
         dataStore.edit { prefs -> prefs[APP_THEME_KEY] = theme.name }
     }
 
+    suspend fun setBadgeCardTheme(theme: BadgeCardTheme) {
+        dataStore.edit { prefs -> prefs[BADGE_CARD_THEME_KEY] = theme.name }
+    }
+
     private companion object {
         val THEME_MODE_KEY = stringPreferencesKey("appearance_theme_mode")
         val APP_THEME_KEY = stringPreferencesKey("appearance_app_theme")
+        val BADGE_CARD_THEME_KEY = stringPreferencesKey("appearance_badge_card_theme")
         const val SYSTEM = "system"
         const val LIGHT = "light"
         const val DARK = "dark"

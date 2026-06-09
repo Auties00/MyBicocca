@@ -3,8 +3,10 @@ package it.attendance100.mybicocca.ui.screen.profile
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import it.attendance100.mybicocca.core.os.NetworkMonitor
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.SyncStatus
+import it.attendance100.mybicocca.data.local.settings.AppearanceSettingsStore
 import it.attendance100.mybicocca.domain.model.account.Account
 import it.attendance100.mybicocca.domain.model.career.Career
 import it.attendance100.mybicocca.domain.model.career.CareerId
@@ -27,7 +29,7 @@ import it.attendance100.mybicocca.domain.usecase.transcript.ObserveTranscriptRow
 import it.attendance100.mybicocca.domain.usecase.transcript.ObserveTranscriptStatsUseCase
 import it.attendance100.mybicocca.domain.usecase.transcript.RefreshTranscriptUseCase
 import it.attendance100.mybicocca.ui.screen.profile.state.DocumentEvent
-import it.attendance100.mybicocca.core.os.NetworkMonitor
+import it.attendance100.mybicocca.ui.theme.BadgeCardTheme
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -61,10 +63,16 @@ class ProfileViewModel @Inject constructor(
     private val getAcademicTitles: GetAcademicTitlesUseCase,
     private val getCertificates: GetCertificatesUseCase,
     private val downloadCertificate: DownloadCertificateUseCase,
+    appearanceSettingsStore: AppearanceSettingsStore,
     networkMonitor: NetworkMonitor,
 ) : ViewModel() {
 
     val isOnline: StateFlow<Boolean> = networkMonitor.isOnline
+
+    // Visual style for the flippable student ID badge. Read-only here; the setter lives in
+    // SettingsAppearanceViewModel where the appearance UI will wire it up.
+    val badgeCardTheme: StateFlow<BadgeCardTheme> = appearanceSettingsStore.badgeCardTheme
+        .stateIn(viewModelScope, SharingStarted.Eagerly, BadgeCardTheme.Default)
 
     val account: StateFlow<Account?> = observeActiveAccount()
         .stateIn(viewModelScope, SharingStarted.Eagerly, null)
@@ -213,7 +221,7 @@ class ProfileViewModel @Inject constructor(
         return "$base$suffix.pdf"
     }
 
-    private suspend fun loadPrerequisites(rows: List<TranscriptRow>) {
+    private fun loadPrerequisites(rows: List<TranscriptRow>) {
         val careerId = activeCareerId.value ?: return
         val pending = rows.filter { it.state != TranscriptRowState.Passed }
         val known = _prerequisiteStatuses.value
@@ -226,7 +234,7 @@ class ProfileViewModel @Inject constructor(
     private fun launchPrerequisiteFetch(careerId: CareerId, activityChoiceId: Long) {
         viewModelScope.launch {
             val status = getPrerequisiteStatus(careerId, activityChoiceId)
-            _prerequisiteStatuses.value = _prerequisiteStatuses.value + (activityChoiceId to status)
+            _prerequisiteStatuses.value += (activityChoiceId to status)
         }
     }
 

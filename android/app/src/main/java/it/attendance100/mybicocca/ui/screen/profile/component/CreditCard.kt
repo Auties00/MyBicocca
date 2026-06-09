@@ -16,7 +16,6 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.wrapContentSize
@@ -41,16 +40,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.coerceAtLeast
 import androidx.compose.ui.unit.dp
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.hazeSource
-import it.attendance100.mybicocca.ui.theme.BadgeCardColorDark
-import it.attendance100.mybicocca.ui.theme.BadgeCardColorLight
+import it.attendance100.mybicocca.ui.theme.BadgeCardColors
 import kotlinx.coroutines.launch
 import kotlin.math.abs
 import kotlin.math.cos
@@ -75,18 +70,6 @@ private val partialChromaticColors = listOf(
 const val CreditCardAspectRatio = 1.6111112f
 val CreditCardHorizontalInset = 16.dp
 
-// Gap between the bottom of the top bar and the top of the floating student card, shared by the
-// shell overlay (which positions the card) and the profile content (which reserves space for it).
-val ProfileCardTopGap = 20.dp
-
-// Height the card occupies when laid out full-width with [horizontalInset] on each side.
-// Derived from the screen width so the floating overlay and the content padding stay in sync.
-@Composable
-fun creditCardHeight(horizontalInset: Dp = CreditCardHorizontalInset): Dp {
-    val widthDp = LocalConfiguration.current.screenWidthDp.dp
-    return ((widthDp - horizontalInset * 2) / CreditCardAspectRatio).coerceAtLeast(0.dp)
-}
-
 // Draggable / tappable 3D flip card. rotationY accumulates freely; a flick (short, fast drag)
 // or a half-card drag commits a 180° turn, otherwise it snaps back to the nearest face.
 // A rotation-vector sensor adds a subtle parallax offset (tiltX/tiltY) layered on top of the
@@ -94,11 +77,11 @@ fun creditCardHeight(horizontalInset: Dp = CreditCardHorizontalInset): Dp {
 @Composable
 fun CreditCard(
     modifier: Modifier = Modifier,
-    frontContent: @Composable (touchX: Float, touchY: Float, whiteBadge: Boolean, hazeState: HazeState) -> Unit,
-    backContent: @Composable (touchX: Float, touchY: Float, whiteBadge: Boolean, hazeState: HazeState) -> Unit,
+    frontContent: @Composable (touchX: Float, touchY: Float, colors: BadgeCardColors, hazeState: HazeState) -> Unit,
+    backContent: @Composable (touchX: Float, touchY: Float, colors: BadgeCardColors, hazeState: HazeState) -> Unit,
+    colors: BadgeCardColors,
     accentColor: Color,
     isChromatic: Boolean = false,
-    whiteBadge: Boolean = false,
     enabled: Boolean = true,
     sensorsEnabled: Boolean = true,
 ) {
@@ -279,7 +262,7 @@ fun CreditCard(
                 content = if (isBack) backContent else frontContent,
                 background = accentColor,
                 isChromatic = isChromatic,
-                whiteBadge = whiteBadge,
+                cardColors = colors,
                 touchX = animatedTouchX + tiltX,
                 touchY = animatedTouchY + tiltY,
                 hazeState = hazeState,
@@ -293,28 +276,20 @@ private fun CardFace(
     modifier: Modifier = Modifier,
     background: Color = Color.White,
     isChromatic: Boolean = false,
-    whiteBadge: Boolean = false,
+    cardColors: BadgeCardColors,
     touchX: Float = 0.5f,
     touchY: Float = 0.5f,
     hazeState: HazeState,
-    content: @Composable (touchX: Float, touchY: Float, whiteBadge: Boolean, hazeState: HazeState) -> Unit,
+    content: @Composable (touchX: Float, touchY: Float, colors: BadgeCardColors, hazeState: HazeState) -> Unit,
 ) {
-    // Pre-refactor badge red (deep red in dark, bright red in light) instead of the lightened
-    // Material primary, so the chromatic face reads as the original ID card in both modes.
-    val primaryColor = when {
-        whiteBadge -> Color.White
-        isSystemInDarkTheme() -> BadgeCardColorDark
-        else -> BadgeCardColorLight
-    }
-
     Box(modifier = modifier) {
         Card(
             modifier = Modifier
                 .clip(shape = RoundedCornerShape(size = 20.dp))
                 .aspectRatio(CreditCardAspectRatio),
-            colors = CardDefaults.cardColors(containerColor = if (isChromatic) primaryColor else background),
+            colors = CardDefaults.cardColors(containerColor = if (isChromatic) cardColors.container else background),
         ) {
-            content(touchX, touchY, whiteBadge, hazeState)
+            content(touchX, touchY, cardColors, hazeState)
         }
         if (isChromatic) {
             Canvas(
