@@ -3,12 +3,11 @@ package it.attendance100.mybicocca.data.mapper.exam
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3AcknowledgmentOfReceipt
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3ExamSessionEnrollment
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3ExamSessionTranscript
-import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3ExamSessionWithDetails
+import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3GraduationTypeCode
 import it.attendance100.mybicocca.domain.model.exam.AcknowledgmentStatus
 import it.attendance100.mybicocca.domain.model.exam.BookedExam
 import it.attendance100.mybicocca.domain.model.exam.ExamBooking
 import it.attendance100.mybicocca.domain.model.exam.ExamCall
-import it.attendance100.mybicocca.domain.model.exam.ExamCallDetail
 import it.attendance100.mybicocca.domain.model.exam.ExamCallKey
 import it.attendance100.mybicocca.domain.model.exam.ExamCallType
 import it.attendance100.mybicocca.domain.model.exam.ExamEnrollmentWindow
@@ -50,44 +49,14 @@ fun Esse3ExamSessionTranscript.toDomain(): ExamCall? {
         state = state,
         stateDescription = stateDescription,
         callType = callTypeCode.toCallType(),
+        examType = graduationTypeCode.toExamType(),
         isReserved = reservedFlag == 1,
         matId = matId,
-    )
-}
-
-fun Esse3ExamSessionWithDetails.toDomain(): ExamCallDetail? {
-    val cdsId = courseOfStudyId ?: return null
-    val adId = activityId ?: return null
-    val appId = callId ?: return null
-    val call = ExamCall(
-        key = ExamCallKey(cdsId, adId, appId),
-        examCallId = examCallId,
-        activityChoiceId = null,
-        activityCode = activityCode,
-        activityDescription = activityDescription,
-        courseOfStudyDescription = courseOfStudyDescription,
-        callDescription = callDescription,
-        callDate = callStartDate.parseDate(),
-        callTime = graduationTime.parseTime(),
-        enrollmentWindow = ExamEnrollmentWindow(
-            opensAt = enrollmentStartDate.parseDate(),
-            closesAt = enrollmentEndDate.parseDate(),
-        ),
-        enrolledNumber = enrolledNumber,
-        state = state,
-        stateDescription = stateDescription,
-        callType = callTypeCode.toCallType(),
-        isReserved = reservedFlag == 1,
-        matId = null,
-    )
-    val president = if (presidentName != null || presidentSurname != null || presidentId != null) {
-        ExamExaminer(id = presidentId, name = presidentName, surname = presidentSurname)
-    } else null
-    return ExamCallDetail(
-        call = call,
-        notes = notes,
-        president = president,
-        bookingTypeDescription = bookingManagementTypeDescription,
+        notes = notes?.takeIf { it.isNotBlank() },
+        president = if (presidentName != null || presidentSurname != null || presidentId != null) {
+            ExamExaminer(id = presidentId, name = presidentName, surname = presidentSurname)
+        } else null,
+        bookingTypeDescription = bookingManagementTypeDescription?.takeIf { it.isNotBlank() },
     )
 }
 
@@ -171,6 +140,11 @@ fun Esse3ExamSessionEnrollment.toBookedExam(): BookedExam? {
         bookingDate = insertionDate.parseDateTime(),
         cancellableUntil = enrollmentEndDate.parseDate(),
         studentNote = studentNote?.takeIf { it.isNotBlank() },
+        // Interpret the outcome only once it is published — see BookedExam.grade. An
+        // un-published row carries superatoFlg=0, which toExamGrade would map to NotPassed.
+        grade = if (publicationId != null) outcome.toExamGrade() else ExamGrade.Unknown,
+        outcomePublished = publicationId != null,
+        publishedNote = publicNote?.takeIf { it.isNotBlank() },
     )
 }
 
@@ -202,4 +176,12 @@ private fun String?.toExamType(): ExamType = when (this?.trim()?.uppercase()) {
     "SOC" -> ExamType.WrittenAndOralJoint
     "SOS" -> ExamType.WrittenAndOralSeparate
     else -> ExamType.Unknown
+}
+
+private fun Esse3GraduationTypeCode?.toExamType(): ExamType = when (this) {
+    Esse3GraduationTypeCode.Written -> ExamType.Written
+    Esse3GraduationTypeCode.Oral -> ExamType.Oral
+    Esse3GraduationTypeCode.WrittenOralConsecutive -> ExamType.WrittenAndOralJoint
+    Esse3GraduationTypeCode.WrittenOralSimultaneous -> ExamType.WrittenAndOralSeparate
+    is Esse3GraduationTypeCode.Unknown, null -> ExamType.Unknown
 }

@@ -43,7 +43,6 @@ class Esse3Api(httpClientConfig: HttpClientConfig<*>.() -> Unit = {}) : AutoClos
     val teachers = Esse3TeachersApi(client, json)
     val badgeImport = Esse3BadgeImportApi(client, json)
     val countries = Esse3CountriesApi(client, json)
-    val internships = Esse3InternshipsApi(client, json)
     val questionnaires = Esse3QuestionnairesApi(client, json)
     val competitions = Esse3CompetitionsApi(client, json)
     val tuitionFees = Esse3TuitionFeesApi(client, json)

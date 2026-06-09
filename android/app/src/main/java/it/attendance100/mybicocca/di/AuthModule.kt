@@ -5,6 +5,8 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import io.ktor.client.plugins.HttpTimeout
+import it.attendance100.mybicocca.data.observability.HttpMetrics
+import it.attendance100.mybicocca.data.remote.affluences.api.AffluencesApi
 import it.attendance100.mybicocca.data.remote.easystaff.api.EasyStaffApi
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -29,6 +31,14 @@ object AuthModule {
             socketTimeoutMillis = HTTP_TIMEOUT_MS
             requestTimeoutMillis = HTTP_TIMEOUT_MS
         }
+        install(HttpMetrics)
+    }
+
+    // The browser-like User-Agent the app API requires is set inside AffluencesApi itself.
+    @Provides
+    @Singleton
+    fun provideAffluencesApi(): AffluencesApi = AffluencesApi {
+        install(HttpMetrics)
     }
 
     private const val HTTP_TIMEOUT_MS = 30_000L

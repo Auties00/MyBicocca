@@ -2,6 +2,7 @@ package it.attendance100.mybicocca.data.auth
 
 import io.ktor.client.plugins.HttpTimeout
 import io.ktor.http.Cookie
+import it.attendance100.mybicocca.data.observability.HttpMetrics
 import it.attendance100.mybicocca.data.remote.esse3.scraper.api.Esse3Api as Esse3LegacyApi
 import it.attendance100.mybicocca.data.remote.esse3.scraper.api.Esse3AuthApi as Esse3LegacyAuthApi
 import javax.inject.Inject
@@ -25,6 +26,7 @@ class Esse3LegacyApiFactory @Inject constructor() {
                 socketTimeoutMillis = TIMEOUT_MS
                 requestTimeoutMillis = TIMEOUT_MS
             }
+            install(HttpMetrics)
         }
 
     fun create(sessionCookies: List<Cookie>): Esse3LegacyApi =
@@ -34,6 +36,7 @@ class Esse3LegacyApiFactory @Inject constructor() {
                 socketTimeoutMillis = TIMEOUT_MS
                 requestTimeoutMillis = TIMEOUT_MS
             }
+            install(HttpMetrics)
         }
 
     private companion object {

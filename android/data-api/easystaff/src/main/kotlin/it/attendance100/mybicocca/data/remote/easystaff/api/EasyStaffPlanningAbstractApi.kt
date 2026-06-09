@@ -19,7 +19,6 @@ import io.ktor.utils.io.jvm.javaio.toInputStream
 import it.attendance100.mybicocca.data.remote.common.exception.ApiRequestException
 import it.attendance100.mybicocca.data.remote.common.util.buildUrl
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningPortal
-import it.attendance100.mybicocca.data.remote.easystaff.exception.EasyStaffPlanningException
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
@@ -37,8 +36,8 @@ import java.time.format.DateTimeFormatter
  * The Portale Planning backend is a separate JSON service hosted alongside the Agenda Web
  * endpoints. Every request targets a specific booking portal, identified through the
  * `X-CLIENTE` header. Error responses carry a `{"message": "<key>", "data": [...]}` envelope
- * which is translated into [EasyStaffPlanningException]; unparsable error bodies become
- * [ApiRequestException].
+ * whose key (e.g. `reservation_not_found`) becomes the [ApiRequestException] message;
+ * unparsable error bodies fall back to the default message.
  *
  * @param client The shared [HttpClient] instance for making HTTP requests
  * @param json The shared [Json] instance for decoding responses
@@ -105,8 +104,7 @@ abstract class EasyStaffPlanningAbstractApi(
      * @param queryParams Query parameters to append to the URL
      * @param headers Additional headers to send with the request
      * @return The deserialized response body
-     * @throws EasyStaffPlanningException When the server rejects the request with a structured error
-     * @throws ApiRequestException When the server rejects the request without a structured error
+     * @throws ApiRequestException When the server rejects the request
      */
     protected suspend inline fun <reified T> executeGet(
         portal: EasyStaffPlanningPortal?,
@@ -131,8 +129,7 @@ abstract class EasyStaffPlanningAbstractApi(
      * @param body The request body, serialized as JSON
      * @param queryParams Query parameters to append to the URL
      * @return The deserialized response body
-     * @throws EasyStaffPlanningException When the server rejects the request with a structured error
-     * @throws ApiRequestException When the server rejects the request without a structured error
+     * @throws ApiRequestException When the server rejects the request
      */
     protected suspend inline fun <reified T> executePost(
         portal: EasyStaffPlanningPortal,
@@ -169,8 +166,7 @@ abstract class EasyStaffPlanningAbstractApi(
      * @param path The request path (relative to [PLANNING_BASE_URL])
      * @param queryParams Query parameters to append to the URL
      * @return The raw response body
-     * @throws EasyStaffPlanningException When the server rejects the request with a structured error
-     * @throws ApiRequestException When the server rejects the request without a structured error
+     * @throws ApiRequestException When the server rejects the request
      */
     protected suspend fun executeGetBytes(
         portal: EasyStaffPlanningPortal,
@@ -205,9 +201,7 @@ abstract class EasyStaffPlanningAbstractApi(
      * @param T The JSON type to deserialize the response into
      * @param response The HTTP response to process
      * @return The deserialized response body
-     * @throws EasyStaffPlanningException When the response carries a structured error
-     * @throws ApiRequestException When the response status is not successful and the body is
-     * not a structured error
+     * @throws ApiRequestException When the response status is not successful
      */
     @OptIn(ExperimentalSerializationApi::class)
     protected suspend inline fun <reified T> decodeOrThrow(response: HttpResponse): T {
@@ -218,20 +212,20 @@ abstract class EasyStaffPlanningAbstractApi(
     }
 
     /**
-     * Translates an error response into the most specific exception possible.
+     * Translates an error response into an [ApiRequestException].
      *
-     * The Portale Planning API reports errors as `{"message": "<key>", "data": [...]}`.
+     * The Portale Planning API reports errors as `{"message": "<key>", "data": [...]}`; when
+     * the body matches that envelope the key becomes the exception message.
      *
      * @param response The failed HTTP response
-     * @throws EasyStaffPlanningException When the body matches the structured error envelope
-     * @throws ApiRequestException Otherwise
+     * @throws ApiRequestException Always
      */
     protected suspend fun throwApiError(response: HttpResponse): Nothing {
         val errorObject = runCatching { json.parseToJsonElement(response.bodyAsText()) }
             .getOrNull() as? JsonObject
         val errorKey = (errorObject?.get("message") as? JsonPrimitive)?.contentOrNull
         if (!errorKey.isNullOrBlank()) {
-            throw EasyStaffPlanningException(errorKey, response.status.value)
+            throw ApiRequestException(response.status.value, errorKey)
         }
         throw ApiRequestException(response.status.value)
     }

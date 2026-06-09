@@ -8,7 +8,6 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -28,6 +27,7 @@ import androidx.compose.material3.SnackbarVisuals
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
@@ -38,7 +38,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalAccessibilityManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import it.attendance100.mybicocca.BuildConfig
 import kotlinx.coroutines.delay
 import java.io.IOException
 import java.net.ConnectException
@@ -51,7 +50,6 @@ enum class AppSnackbarSeverity { Info, Error }
 internal data class AppSnackbarVisuals(
     override val message: String,
     val severity: AppSnackbarSeverity,
-    val detail: String? = null,
     override val actionLabel: String? = null,
     override val withDismissAction: Boolean = false,
     override val duration: SnackbarDuration =
@@ -72,14 +70,9 @@ class AppSnackbarController internal constructor() {
     suspend fun showError(message: String, cause: Throwable? = null) {
         val friendly = cause?.friendlyShortReason()
         val title = if (friendly != null) "$message · $friendly" else message
-        val detail = if (BuildConfig.DEBUG) cause?.debugDetail() else null
         hostState.currentSnackbarData?.dismiss()
         hostState.showSnackbar(
-            AppSnackbarVisuals(
-                message = title,
-                severity = AppSnackbarSeverity.Error,
-                detail = detail,
-            ),
+            AppSnackbarVisuals(message = title, severity = AppSnackbarSeverity.Error),
         )
     }
 }
@@ -119,20 +112,47 @@ fun AppSnackbarHost(
         modifier = modifier.padding(contentPadding),
         contentAlignment = Alignment.BottomCenter,
     ) {
-        AnimatedContent(
-            targetState = current,
-            transitionSpec = {
-                (slideInVertically(initialOffsetY = { it + 32 }) + fadeIn()) togetherWith
-                    (slideOutVertically(targetOffsetY = { it + 32 }) + fadeOut())
-            },
-            label = "app_snackbar_animation",
-        ) { data ->
-            if (data != null) {
-                AppSnackbarSurface(data = data)
-            } else {
-                // Empty placeholder during exit; AnimatedContent retains the leaving child.
-                Box(Modifier.size(0.dp))
-            }
+        SnackbarTransition(current = current)
+    }
+}
+
+// Scopes the app snackbar to one surface: content inside raises messages on a LOCAL
+// controller whose host overlays the bottom of THIS content, within its bounds —
+// contextual feedback instead of one app-root host (which a modal window would cover
+// anyway, sheets being their own windows). Where LocalAppSnackbarController is read
+// picks the context: inside the scope targets this surface, outside targets the screen.
+@Composable
+fun SnackbarScope(
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit,
+) {
+    val controller = rememberAppSnackbarController()
+    CompositionLocalProvider(LocalAppSnackbarController provides controller) {
+        Box(modifier) {
+            content()
+            AppSnackbarHost(
+                controller = controller,
+                modifier = Modifier.align(Alignment.BottomCenter),
+            )
+        }
+    }
+}
+
+@Composable
+private fun SnackbarTransition(current: SnackbarData?) {
+    AnimatedContent(
+        targetState = current,
+        transitionSpec = {
+            (slideInVertically(initialOffsetY = { it + 32 }) + fadeIn()) togetherWith
+                (slideOutVertically(targetOffsetY = { it + 32 }) + fadeOut())
+        },
+        label = "app_snackbar_animation",
+    ) { data ->
+        if (data != null) {
+            AppSnackbarSurface(data = data)
+        } else {
+            // Empty placeholder during exit; AnimatedContent retains the leaving child.
+            Box(Modifier.size(0.dp))
         }
     }
 }
@@ -181,25 +201,13 @@ private fun AppSnackbarSurface(data: SnackbarData) {
                 tint = accent,
                 modifier = Modifier.size(22.dp),
             )
-            Column(
+            Text(
+                text = data.visuals.message,
+                style = MaterialTheme.typography.bodyMedium,
+                color = onContainer,
+                fontWeight = FontWeight.Medium,
                 modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(2.dp),
-            ) {
-                Text(
-                    text = data.visuals.message,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = onContainer,
-                    fontWeight = FontWeight.Medium,
-                )
-                val detail = visuals?.detail
-                if (!detail.isNullOrBlank()) {
-                    Text(
-                        text = detail,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = onContainer.copy(alpha = 0.7f),
-                    )
-                }
-            }
+            )
         }
     }
 }
@@ -232,21 +240,3 @@ private fun Throwable.friendlyShortReason(): String? = when (this) {
     else -> null
 }
 
-// Engineer-facing detail line; emitted only when BuildConfig.DEBUG is true.
-private fun Throwable.debugDetail(): String {
-    val parts = buildList {
-        val name = this@debugDetail::class.simpleName
-        if (!name.isNullOrBlank()) add(name)
-        message?.takeIf { it.isNotBlank() }?.let { add(it) }
-        cause?.let { c ->
-            val cn = c::class.simpleName
-            val cm = c.message?.takeIf { it.isNotBlank() }
-            when {
-                cn != null && cm != null -> add("caused by $cn: $cm")
-                cn != null -> add("caused by $cn")
-                cm != null -> add("caused by: $cm")
-            }
-        }
-    }
-    return parts.joinToString(" · ")
-}

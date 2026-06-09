@@ -2,12 +2,19 @@ package it.attendance100.mybicocca.data.repository
 
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.data.auth.SessionManager
+import it.attendance100.mybicocca.data.local.settings.DeviceIdentityStore
+import it.attendance100.mybicocca.data.location.DeviceLocationProvider
 import it.attendance100.mybicocca.data.mapper.attendance.toDomain
+import it.attendance100.mybicocca.data.mapper.attendance.toOutcome
 import it.attendance100.mybicocca.data.mapper.calendar.normalizeSubjectName
 import it.attendance100.mybicocca.data.remote.easystaff.api.EasyStaffApi
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffAttendanceRecord
+import it.attendance100.mybicocca.domain.model.attendance.AttendanceModuleRef
 import it.attendance100.mybicocca.domain.model.attendance.ClassroomAttendance
 import it.attendance100.mybicocca.domain.model.attendance.CourseAttendance
+import it.attendance100.mybicocca.domain.model.attendance.OpenAttendanceSession
+import it.attendance100.mybicocca.domain.model.attendance.PresenceMarkOutcome
+import it.attendance100.mybicocca.domain.model.attendance.PresenceScan
 import it.attendance100.mybicocca.domain.model.attendance.SessionAttendance
 import it.attendance100.mybicocca.domain.model.career.Career
 import it.attendance100.mybicocca.domain.model.career.CareerId
@@ -37,7 +44,14 @@ class AttendanceRepositoryImpl @Inject constructor(
     private val studyPlanRepository: StudyPlanRepository,
     private val transcriptRepository: TranscriptRepository,
     private val elearningCourseRepository: ElearningCourseRepository,
+    private val deviceIdentityStore: DeviceIdentityStore,
+    private val locationProvider: DeviceLocationProvider,
 ) : AttendanceRepository {
+
+    // Attendance modules discovered on the last getPendingCourses pass, reused to
+    // resolve which course a scanned QR's session belongs to (the QR carries only sessid).
+    @Volatile
+    private var cachedModules: List<AttendanceModuleRef> = emptyList()
 
     override suspend fun getPendingCourses(careerId: CareerId): List<CourseAttendance> = coroutineScope {
         val planDeferred = async { studyPlanRepository.getStudyPlan(careerId) }
@@ -82,9 +96,10 @@ class AttendanceRepositoryImpl @Inject constructor(
         // Only the current academic year's course editions carry a live session register.
         val academicYearPrefix = "%02d%02d".format(academicYear % 100, (academicYear + 1) % 100)
 
-        seeds
+        val courses = seeds
             .map { seed ->
                 async {
+                    val edition = loadEditionAttendance(enrolled, seed, academicYearPrefix)
                     CourseAttendance(
                         name = seed.name,
                         code = seed.code,
@@ -93,12 +108,16 @@ class AttendanceRepositoryImpl @Inject constructor(
                         credits = seed.credits,
                         teacherName = seed.teacherName,
                         classroomAttendance = matchBadgeRecord(badgeRecords, seed),
-                        sessionAttendance = loadSessionAttendance(enrolled, seed, academicYearPrefix),
+                        sessionAttendance = edition.sessions,
+                        attendanceModules = edition.modules,
                     )
                 }
             }
             .awaitAll()
             .sortedWith(compareBy({ it.year.value }, { it.semester.ordinal }, { it.name }))
+
+        cachedModules = courses.flatMap { it.attendanceModules }.distinctBy { it.courseModuleId }
+        courses
     }
 
     // One pending-course candidate before attendance enrichment. The plan is the
@@ -185,12 +204,17 @@ class AttendanceRepositoryImpl @Inject constructor(
         .maxByOrNull { it.requirementProgressPercentage }
         ?.toDomain()
 
-    private suspend fun loadSessionAttendance(
+    private data class EditionAttendance(
+        val modules: List<AttendanceModuleRef>,
+        val sessions: List<SessionAttendance>,
+    )
+
+    private suspend fun loadEditionAttendance(
         enrolled: List<EnrolledCourse>,
         seed: CourseSeed,
         academicYearPrefix: String,
-    ): List<SessionAttendance> {
-        val code = seed.code ?: return emptyList()
+    ): EditionAttendance {
+        val code = seed.code ?: return EditionAttendance(emptyList(), emptyList())
         // Moodle course idnumbers follow "<aa>-<courseYear>-<esse3Code>[-T<turno>]"
         // (e.g. "2526-3-E3101Q123", "2425-2-E3101Q103-T1").
         val editions = enrolled.mapNotNull { course ->
@@ -202,15 +226,101 @@ class AttendanceRepositoryImpl @Inject constructor(
             course
         }
         // Prefer the plain edition over per-turno splits.
-        val edition = editions.minByOrNull { it.idNumber?.length ?: Int.MAX_VALUE } ?: return emptyList()
+        val edition = editions.minByOrNull { it.idNumber?.length ?: Int.MAX_VALUE }
+            ?: return EditionAttendance(emptyList(), emptyList())
         return runCatching {
             val (api, token) = sessionManager.elearning()
-            api.attendance.getAttendanceModules(token, edition.id.value).mapNotNull { module ->
+            val modules = api.attendance.getAttendanceModules(token, edition.id.value)
+            val refs = modules.map { AttendanceModuleRef(edition.id.value, it.id, it.name) }
+            val sessions = modules.mapNotNull { module ->
                 runCatching { api.attendance.getAttendanceSummary(token, edition.id.value, module.id) }
                     .getOrNull()
                     ?.toDomain(module.name)
             }
-        }.getOrDefault(emptyList())
+            EditionAttendance(refs, sessions)
+        }.getOrDefault(EditionAttendance(emptyList(), emptyList()))
+    }
+
+    override suspend fun getOpenSessions(
+        modules: List<AttendanceModuleRef>,
+    ): List<OpenAttendanceSession> {
+        if (modules.isEmpty()) return emptyList()
+        val (api, token) = sessionManager.elearning()
+        return modules.flatMap { module ->
+            runCatching {
+                api.attendance.getMarkableSessions(token, module.courseId, module.courseModuleId)
+                    .map { it.toDomain(module) }
+            }.getOrDefault(emptyList())
+        }
+    }
+
+    override suspend fun markSession(
+        module: AttendanceModuleRef,
+        sessionId: String,
+        statusId: String?,
+        password: String?,
+    ): PresenceMarkOutcome = runCatching {
+        val (api, token) = sessionManager.elearning()
+        api.attendance.markSession(
+            wsToken = token,
+            courseId = module.courseId,
+            moduleId = module.courseModuleId,
+            sessionId = sessionId,
+            statusId = statusId ?: DEFAULT_STATUS_ID,
+            studentPass = password,
+        ).toOutcome()
+    }.getOrElse { PresenceMarkOutcome.Failed("Registrazione non riuscita") }
+
+    override suspend fun registerPresence(
+        scan: PresenceScan,
+        careerId: CareerId,
+    ): PresenceMarkOutcome = when (scan) {
+        is PresenceScan.SessionLink -> registerSessionLink(scan.sessionId, scan.password)
+        is PresenceScan.LessonCode -> registerLessonCode(careerId, scan.code)
+        is PresenceScan.Unrecognized -> PresenceMarkOutcome.Failed("Codice non riconosciuto")
+    }
+
+    // A scanned attendance session carries only its id, so resolve which of the
+    // student's attendance modules owns it (by listing each one's open sessions)
+    // before marking it.
+    private suspend fun registerSessionLink(
+        sessionId: String,
+        password: String?,
+    ): PresenceMarkOutcome {
+        val modules = resolveModules()
+        if (modules.isEmpty()) {
+            return PresenceMarkOutcome.NotOpen("Nessun corso con registro presenze trovato")
+        }
+        val target = runCatching { getOpenSessions(modules) }.getOrDefault(emptyList())
+            .firstOrNull { it.sessionId == sessionId }
+            ?: return PresenceMarkOutcome.NotOpen("La sessione non è aperta o non è tra i tuoi corsi")
+        return markSession(target.module, sessionId, target.statuses.firstOrNull()?.id, password)
+    }
+
+    private suspend fun registerLessonCode(
+        careerId: CareerId,
+        lessonCode: String,
+    ): PresenceMarkOutcome {
+        val matricola = activeCareer(careerId)?.matricola
+            ?: return PresenceMarkOutcome.Failed("Matricola non disponibile")
+        val deviceId = deviceIdentityStore.deviceId()
+        val location = locationProvider.lastKnownLatLong()
+        return runCatching {
+            easyStaffApi.attendance.certifyAttendance(
+                studentId = matricola,
+                lessonCode = lessonCode,
+                deviceToken = deviceId,
+                longitude = location?.second ?: 0.0,
+                latitude = location?.first ?: 0.0,
+            ).toOutcome()
+        }.getOrElse { PresenceMarkOutcome.Failed("Registrazione non riuscita") }
+    }
+
+    private suspend fun resolveModules(): List<AttendanceModuleRef> {
+        cachedModules.takeIf { it.isNotEmpty() }?.let { return it }
+        val careerId = sessionManager.activeAccount.value?.academic?.selectedCareerId ?: return emptyList()
+        runCatching { getPendingCourses(careerId) }
+        return cachedModules
     }
 
     private fun currentYearOfStudy(
@@ -235,6 +345,10 @@ class AttendanceRepositoryImpl @Inject constructor(
 
     private companion object {
         val COURSE_ID_NUMBER_REGEX = Regex("^(\\d{4})-(\\d+)-(.+)$")
+
+        // mod_attendance overrides this to the highest status server-side for
+        // auto-assign sessions, so any non-empty value works as a fallback.
+        const val DEFAULT_STATUS_ID = "1"
 
         fun academicYearOf(today: LocalDate): Int =
             if (today.monthValue >= 9) today.year else today.year - 1

@@ -89,6 +89,7 @@ fun BuildingsListSheet(
     onOpen360: (String, String) -> Unit,
     onBack: () -> Unit,
     onDismiss: () -> Unit,
+    onRetryRooms: (() -> Unit)? = null,
 ) {
     PredictiveModalBottomSheet(
         onDismiss = onDismiss,
@@ -151,6 +152,7 @@ fun BuildingsListSheet(
                         daySchedule = daySchedule,
                         syncStatus = syncStatus,
                         onRoomClick = onRoomClick,
+                        onRetry = onRetryRooms,
                     )
 
                     else -> RoomDetailPage(
@@ -347,7 +349,8 @@ private fun DetailRow(
     }
 }
 
-// Connected button pair, same scheme as the calendar event detail's action row.
+// Connected button pair, same scheme as the calendar event detail's action row. Directions
+// leads on the tonal; the primary Info trails on the brand fill.
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun ActionRow(
@@ -357,8 +360,8 @@ private fun ActionRow(
     val scheme = MaterialTheme.colorScheme
     val context = LocalContext.current
     val dark = isSystemInDarkTheme()
-    val directionsBg = if (dark) scheme.primaryContainer else scheme.primary
-    val directionsFg = if (dark) scheme.onPrimaryContainer else scheme.onPrimary
+    val infoBg = if (dark) scheme.primaryContainer else scheme.primary
+    val infoFg = if (dark) scheme.onPrimaryContainer else scheme.onPrimary
 
     Row(
         modifier = Modifier
@@ -366,7 +369,7 @@ private fun ActionRow(
             .padding(top = 2.dp),
         horizontalArrangement = Arrangement.spacedBy(4.dp),
     ) {
-        // Directions button
+        // Directions button (secondary, leads)
         FilledTonalButton(
             onClick = { context.openBuildingInMaps(building) },
             modifier = Modifier
@@ -387,7 +390,7 @@ private fun ActionRow(
             Text("Indicazioni", fontWeight = FontWeight.SemiBold)
         }
 
-        // Info button
+        // Info button (primary, trails)
         Button(
             onClick = onShowInfo,
             modifier = Modifier
@@ -395,8 +398,8 @@ private fun ActionRow(
                 .height(48.dp),
             shape = ButtonGroupDefaults.connectedTrailingButtonShape,
             colors = ButtonDefaults.buttonColors(
-                containerColor = directionsBg,
-                contentColor = directionsFg,
+                containerColor = infoBg,
+                contentColor = infoFg,
             ),
         ) {
             Icon(

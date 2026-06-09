@@ -23,7 +23,8 @@ import it.attendance100.mybicocca.domain.model.tax.TaxInvoice
 import it.attendance100.mybicocca.domain.model.tax.TaxStatus
 import it.attendance100.mybicocca.ui.component.shape.DynamicCard
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.taxes.formatTaxDate
-import it.attendance100.mybicocca.ui.screen.registry.subscreen.taxes.state.TaxesSharedElement
+import it.attendance100.mybicocca.ui.screen.registry.theme.RegistryAccent
+import it.attendance100.mybicocca.ui.screen.registry.theme.registryAccent
 
 @Composable
 fun TaxInvoiceCard(
@@ -62,14 +63,12 @@ fun TaxInvoiceCard(
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = scheme.onSurface,
-                    modifier = Modifier.taxSharedListElement(taxId, TaxesSharedElement.InvoiceNumber),
                 )
                 Text(
                     text = formatCurrency(invoice.amount),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = scheme.onSurface,
-                    modifier = Modifier.taxSharedListElement(taxId, TaxesSharedElement.Amount),
                 )
             }
 
@@ -81,7 +80,6 @@ fun TaxInvoiceCard(
                 color = scheme.onSurface,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.taxSharedListElement(taxId, TaxesSharedElement.Description),
             )
 
             Spacer(Modifier.height(16.dp))
@@ -109,8 +107,7 @@ fun TaxInvoiceCard(
                     style = MaterialTheme.typography.labelSmall,
                     fontWeight = FontWeight.Bold,
                     textAlign = TextAlign.End,
-                    color = invoice.statusColor(scheme.error, scheme.onSurfaceVariant),
-                    modifier = Modifier.taxSharedListElement(taxId, TaxesSharedElement.Status),
+                    color = invoice.statusColor(registryAccent(RegistryAccent.Success), scheme.error, scheme.onSurfaceVariant),
                 )
             }
         }
@@ -124,10 +121,8 @@ private fun TaxInvoice.statusLabel(): String = when (status) {
     TaxStatus.CANCELED -> "Annullata"
 }
 
-private fun TaxInvoice.statusColor(error: Color, muted: Color): Color = when (status) {
-    TaxStatus.PAID -> PaidGreen
+private fun TaxInvoice.statusColor(success: Color, error: Color, muted: Color): Color = when (status) {
+    TaxStatus.PAID -> success
     TaxStatus.PENDING, TaxStatus.EXPIRED -> error
     TaxStatus.CANCELED -> muted
 }
-
-private val PaidGreen = Color(0xFF4CAF50)

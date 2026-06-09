@@ -5,18 +5,13 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import it.attendance100.mybicocca.domain.model.search.DictationEvent
-import it.attendance100.mybicocca.domain.model.search.SearchAssistantStatus
 import it.attendance100.mybicocca.domain.model.search.SearchHistoryEntry
 import it.attendance100.mybicocca.domain.model.search.SearchResult
-import it.attendance100.mybicocca.domain.model.search.SearchSuggestion
 import it.attendance100.mybicocca.domain.usecase.account.ObserveActiveAccountUseCase
 import it.attendance100.mybicocca.domain.usecase.search.AddSearchHistoryEntryUseCase
 import it.attendance100.mybicocca.domain.usecase.search.ClearSearchHistoryUseCase
 import it.attendance100.mybicocca.domain.usecase.search.DictateUseCase
-import it.attendance100.mybicocca.domain.usecase.search.EnsureSearchAssistantReadyUseCase
 import it.attendance100.mybicocca.domain.usecase.search.GlobalSearchUseCase
-import it.attendance100.mybicocca.domain.usecase.search.InterpretQueryUseCase
-import it.attendance100.mybicocca.domain.usecase.search.ObserveSearchAssistantStatusUseCase
 import it.attendance100.mybicocca.domain.usecase.search.ObserveSearchHistoryUseCase
 import it.attendance100.mybicocca.domain.usecase.search.RemoveSearchHistoryEntryUseCase
 import kotlinx.coroutines.Dispatchers
@@ -45,12 +40,9 @@ class SearchViewModel @Inject constructor(
     observeActiveAccount: ObserveActiveAccountUseCase,
     globalSearch: GlobalSearchUseCase,
     observeSearchHistory: ObserveSearchHistoryUseCase,
-    observeAssistantStatus: ObserveSearchAssistantStatusUseCase,
     private val addHistoryEntry: AddSearchHistoryEntryUseCase,
     private val removeHistoryEntry: RemoveSearchHistoryEntryUseCase,
     private val clearHistoryEntries: ClearSearchHistoryUseCase,
-    private val ensureAssistantReady: EnsureSearchAssistantReadyUseCase,
-    private val interpretQuery: InterpretQueryUseCase,
     private val dictate: DictateUseCase,
 ) : ViewModel() {
 
@@ -84,15 +76,6 @@ class SearchViewModel @Inject constructor(
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STATE_KEEP_ALIVE_MS), emptyList())
 
-    val assistantStatus: StateFlow<SearchAssistantStatus> = observeAssistantStatus()
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STATE_KEEP_ALIVE_MS), SearchAssistantStatus.Unavailable)
-
-    private val _aiSuggestion = MutableStateFlow<SearchSuggestion?>(null)
-    val aiSuggestion: StateFlow<SearchSuggestion?> = _aiSuggestion.asStateFlow()
-
-    private val _aiLoading = MutableStateFlow(false)
-    val aiLoading: StateFlow<Boolean> = _aiLoading.asStateFlow()
-
     private val _dictating = MutableStateFlow(false)
     val dictating: StateFlow<Boolean> = _dictating.asStateFlow()
 
@@ -101,32 +84,19 @@ class SearchViewModel @Inject constructor(
     private val _soundLevel = MutableStateFlow(0f)
     val soundLevel: StateFlow<Float> = _soundLevel.asStateFlow()
 
-    private var aiJob: Job? = null
     private var dictationJob: Job? = null
 
     fun setQuery(value: String) {
         savedState[KEY_QUERY] = value
-        // Typing invalidates the previous submit's AI card.
-        aiJob?.cancel()
-        _aiLoading.value = false
-        _aiSuggestion.value = null
     }
 
-    // IME search action: persist the query and, when on-device AI is around, interpret it.
+    // IME search action: persist the query to history.
     fun submit() {
         val q = query.value.trim()
         if (q.isEmpty()) return
         commitToHistory()
-        if (assistantStatus.value != SearchAssistantStatus.Available) return
-        aiJob?.cancel()
-        aiJob = viewModelScope.launch {
-            _aiLoading.value = true
-            runCatching { _aiSuggestion.value = interpretQuery(q) }
-            _aiLoading.value = false
-        }
     }
 
-    // Result taps save the query without re-triggering the AI pass.
     fun commitToHistory() {
         val q = query.value.trim()
         if (q.isEmpty()) return
@@ -142,10 +112,6 @@ class SearchViewModel @Inject constructor(
     fun clearHistory() {
         val accountId = activeAccount.value?.id ?: return
         viewModelScope.launch { clearHistoryEntries(accountId) }
-    }
-
-    fun downloadAssistant() {
-        viewModelScope.launch { runCatching { ensureAssistantReady() } }
     }
 
     // Caller must hold RECORD_AUDIO. Partials stream straight into the query so results
@@ -185,9 +151,6 @@ class SearchViewModel @Inject constructor(
     // Called when the search overlay closes: reset transient state but keep history.
     fun reset() {
         stopDictation()
-        aiJob?.cancel()
-        _aiLoading.value = false
-        _aiSuggestion.value = null
         savedState[KEY_QUERY] = ""
     }
 

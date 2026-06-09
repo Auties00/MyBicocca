@@ -26,4 +26,11 @@ data class BookedExam(
     // cancelling the booking up to this date.
     val cancellableUntil: LocalDate?,
     val studentNote: String?,
+    // Outcome of a past appello, carried inline by /prenotazioni. Only meaningful once
+    // the teacher has published it: the same row reports superatoFlg=0 before publication,
+    // which would read as "non superato", so the grade is interpreted ONLY when
+    // outcomePublished is true (pubblId present) — otherwise it stays Unknown.
+    val grade: ExamGrade = ExamGrade.Unknown,
+    val outcomePublished: Boolean = false,
+    val publishedNote: String? = null,
 )

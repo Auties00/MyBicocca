@@ -36,7 +36,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import it.attendance100.mybicocca.manager.UnlockResult
+import it.attendance100.mybicocca.domain.model.security.UnlockResult
 import it.attendance100.mybicocca.ui.component.input.PasswordTextField
 
 /**

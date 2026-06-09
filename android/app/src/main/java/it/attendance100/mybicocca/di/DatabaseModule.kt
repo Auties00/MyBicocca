@@ -9,6 +9,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import it.attendance100.mybicocca.data.local.account.AccountDao
 import it.attendance100.mybicocca.data.local.account.MyBicoccaDatabase
+import it.attendance100.mybicocca.data.local.appointment.AppointmentReservationDao
 import it.attendance100.mybicocca.data.local.calendar.CalendarDao
 import it.attendance100.mybicocca.data.local.calendar.CalendarSyncStateDao
 import it.attendance100.mybicocca.data.local.elearning.assignment.AssignmentDao
@@ -21,7 +22,7 @@ import it.attendance100.mybicocca.data.local.elearning.message.MessageDao
 import it.attendance100.mybicocca.data.local.elearning.quiz.QuizDao
 import it.attendance100.mybicocca.data.local.elearning.sync.ElearningSyncStateDao
 import it.attendance100.mybicocca.data.local.elearning.video.VideoProgressDao
-import it.attendance100.mybicocca.data.local.internship.SavedOpportunityDao
+import it.attendance100.mybicocca.data.local.library.LibraryReservationDao
 import it.attendance100.mybicocca.data.local.map.MapBuildingDao
 import it.attendance100.mybicocca.data.local.map.MapRoomDao
 import it.attendance100.mybicocca.data.local.map.MapRoomSyncStateDao
@@ -97,7 +98,12 @@ object DatabaseModule {
     fun provideMapRoomSyncStateDao(db: MyBicoccaDatabase): MapRoomSyncStateDao = db.mapRoomSyncStateDao()
 
     @Provides
-    fun provideSavedOpportunityDao(db: MyBicoccaDatabase): SavedOpportunityDao = db.savedOpportunityDao()
+    fun provideAppointmentReservationDao(db: MyBicoccaDatabase): AppointmentReservationDao =
+        db.appointmentReservationDao()
+
+    @Provides
+    fun provideLibraryReservationDao(db: MyBicoccaDatabase): LibraryReservationDao =
+        db.libraryReservationDao()
 
     private const val DATABASE_NAME = "mybicocca.db"
 }

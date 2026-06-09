@@ -456,16 +456,20 @@ private fun ExtendedProgrammeList(parts: List<ProgrammeSection>) {
                         )
                     }
                     Column(modifier = Modifier.weight(1f).padding(top = 18.dp)) {
-                        Text(
-                            text = cleanProgrammeTitle(part.title),
-                            color = scheme.onSurface,
-                            fontWeight = FontWeight.ExtraBold,
-                            fontSize = 20.sp,
-                            lineHeight = 22.sp,
-                            letterSpacing = (-0.4).sp,
-                            overflow = TextOverflow.Ellipsis,
-                            style = TightTextStyle,
-                        )
+                        // Headerless programmes parse as a single untitled section.
+                        val title = cleanProgrammeTitle(part.title)
+                        if (title.isNotBlank()) {
+                            Text(
+                                text = title,
+                                color = scheme.onSurface,
+                                fontWeight = FontWeight.ExtraBold,
+                                fontSize = 20.sp,
+                                lineHeight = 22.sp,
+                                letterSpacing = (-0.4).sp,
+                                overflow = TextOverflow.Ellipsis,
+                                style = TightTextStyle,
+                            )
+                        }
                         if (part.items.isNotEmpty()) {
                             Spacer(Modifier.height(5.dp))
                             Text(

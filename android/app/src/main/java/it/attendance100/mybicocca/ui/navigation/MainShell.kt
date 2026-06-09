@@ -48,6 +48,8 @@ import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDe
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
+import androidx.navigation3.runtime.NavKey
+import androidx.navigation3.scene.SinglePaneSceneStrategy
 import androidx.navigation3.ui.LocalNavAnimatedContentScope
 import androidx.navigation3.ui.NavDisplay
 import coil.imageLoader
@@ -71,7 +73,7 @@ import it.attendance100.mybicocca.ui.screen.calendar.CalendarViewModel
 import it.attendance100.mybicocca.ui.screen.calendar.subscreen.teacherDetail.TeacherDetailScreen
 import it.attendance100.mybicocca.ui.screen.elearning.ElearningScreen
 import it.attendance100.mybicocca.ui.screen.elearning.ElearningViewModel
-import it.attendance100.mybicocca.ui.screen.elearning.subscreen.assignmentDetail.AssignmentDetailSheet
+import it.attendance100.mybicocca.ui.screen.elearning.subscreen.assignmentDetail.AssignmentDetailPage
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.conversationDetail.ConversationDetailScreen
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.conversationDetail.ConversationDetailViewModel
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.courseDetail.CourseDetailScreen
@@ -91,7 +93,7 @@ import it.attendance100.mybicocca.ui.screen.elearning.subscreen.forumDetail.Foru
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.forumDetail.ForumDetailViewModel
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.messaging.MessagingScreen
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.quizDetail.QuizDetailScreen
-import it.attendance100.mybicocca.ui.screen.elearning.subscreen.quizDetail.QuizDetailSheet
+import it.attendance100.mybicocca.ui.screen.elearning.subscreen.quizDetail.QuizDetailPage
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.quizDetail.QuizDetailViewModel
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.videoPlayer.VideoPlayerScreen
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.videoPlayer.VideoPlayerViewModel
@@ -101,31 +103,55 @@ import it.attendance100.mybicocca.ui.screen.map.subscreen.room360.Room360Screen
 import it.attendance100.mybicocca.ui.screen.profile.ProfileScreen
 import it.attendance100.mybicocca.ui.screen.profile.ProfileViewModel
 import it.attendance100.mybicocca.ui.screen.registry.RegistryScreen
-import it.attendance100.mybicocca.ui.screen.registry.subscreen.attendance.AttendanceScreen
-import it.attendance100.mybicocca.ui.screen.registry.subscreen.bookableExams.BookableExamsScreen
-import it.attendance100.mybicocca.ui.screen.registry.subscreen.bookableExams.BookableExamsViewModel
-import it.attendance100.mybicocca.ui.screen.registry.subscreen.bookedExams.BookedExamsScreen
-import it.attendance100.mybicocca.ui.screen.registry.subscreen.bookedExams.BookedExamsViewModel
-import it.attendance100.mybicocca.ui.screen.registry.subscreen.degreeAward.DegreeAwardScreen
-import it.attendance100.mybicocca.ui.screen.registry.subscreen.examResults.ExamResultsScreen
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.attendance.AttendancePage
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.attendance.AttendanceViewModel
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.appelli.AppelliPage
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.appelli.BookedExamsViewModel
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.booking.BookableExamsViewModel
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.certificates.CertificatesPage
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.certificates.CertificatesViewModel
+import it.attendance100.mybicocca.core.state.valueOrNull
+import it.attendance100.mybicocca.ui.navigation.scene.BottomSheetSceneStrategy
+import it.attendance100.mybicocca.ui.navigation.scene.SheetHeaderSpec
+import it.attendance100.mybicocca.ui.navigation.scene.sheetEntry
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.enrollments.EnrollmentsTimelinePage
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.enrollments.EnrollmentsViewModel
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.enrollments.enrollmentsHeaderSubtitle
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.enrollments.ext.academicYearLabel
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.enrollments.ext.courseYearLabel
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.enrollments.ext.statusLabel
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.enrollments.subscreen.yearDetail.EnrollmentDetailPage
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.examResults.ExamResultsPage
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.examResults.ExamResultsViewModel
-import it.attendance100.mybicocca.ui.screen.registry.subscreen.internships.InternshipsScreen
-import it.attendance100.mybicocca.ui.screen.registry.subscreen.internships.subscreen.saved.SavedOpportunitiesScreen
-import it.attendance100.mybicocca.ui.screen.registry.subscreen.isee.IseeScreen
-import it.attendance100.mybicocca.ui.screen.registry.subscreen.procedures.ProceduresScreen
-import it.attendance100.mybicocca.ui.screen.registry.subscreen.procedures.subscreen.courseChange.CourseChangeScreen
-import it.attendance100.mybicocca.ui.screen.registry.subscreen.procedures.subscreen.enrollmentExtension.EnrollmentExtensionScreen
-import it.attendance100.mybicocca.ui.screen.registry.subscreen.questionnaires.QuestionnairesScreen
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.isee.IseeDeclarationsPage
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.isee.IseeDetailPage
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.isee.iseeDetailSubtitle
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.isee.iseeDetailTitle
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.isee.iseeHeaderSubtitle
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.appointments.AppointmentsPage
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.appointments.AppointmentsViewModel
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.library.LibraryPage
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.library.LibraryViewModel
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.questionnaires.QuestionnairesPage
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.questionnaires.QuestionnairesViewModel
-import it.attendance100.mybicocca.ui.screen.registry.subscreen.questionnaires.subscreen.compilation.QuestionnaireCompilationScreen
-import it.attendance100.mybicocca.ui.screen.registry.subscreen.questionnaires.subscreen.compilation.QuestionnaireCompilationViewModel
-import it.attendance100.mybicocca.ui.screen.registry.subscreen.refunds.RefundsScreen
-import it.attendance100.mybicocca.ui.screen.registry.subscreen.reservations.ReservationsScreen
-import it.attendance100.mybicocca.ui.screen.registry.subscreen.studyPlan.StudyPlanScreen
-import it.attendance100.mybicocca.ui.screen.registry.subscreen.studyPlanEdit.StudyPlanEditScreen
-import it.attendance100.mybicocca.ui.screen.registry.subscreen.taxDetail.TaxDetailScreen
-import it.attendance100.mybicocca.ui.screen.registry.subscreen.taxes.TaxesScreen
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.refunds.RefundDetailPage
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.refunds.RefundsListPage
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.refunds.RefundsViewModel
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.refunds.refundHeaderSubtitle
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.refunds.refundHeaderTitle
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.refunds.refundKey
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.refunds.refundsHeaderSubtitle
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.studyPlan.StudyPlanPage
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.studyPlan.StudyPlanViewModel
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.taxes.TaxesPage
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.taxes.taxesHeaderSubtitle
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.taxes.TaxesViewModel
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.titles.TitleDetailPage
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.titles.TitlesListPage
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.titles.TitlesViewModel
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.titles.headline
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.titles.headlineSubtitle
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.titles.titlesHeaderSubtitle
 import it.attendance100.mybicocca.ui.screen.search.SearchOverlay
 import it.attendance100.mybicocca.ui.screen.search.SearchViewModel
 import it.attendance100.mybicocca.ui.screen.settings.SettingsScreen
@@ -186,11 +212,21 @@ fun MainShell(
     // Hoisted so the compilation sub-page can refresh the questionnaire list after a
     // confirmed submission (questionnaires are not cached to Room).
     val questionnairesViewModel: QuestionnairesViewModel = hiltViewModel()
+    // Hoisted so the whole Appuntamenti modal (reservations + booking wizard) shares one
+    // owner; opened as a shell sheet rather than a back-stack route.
+    val appointmentsViewModel: AppointmentsViewModel = hiltViewModel()
+    val libraryViewModel: LibraryViewModel = hiltViewModel()
+    // Hoisted so the sheet entries share one VM that outlives the sheet, like the other
+    // shell-scoped sheet ViewModels above.
+    val enrollmentsViewModel: EnrollmentsViewModel = hiltViewModel()
+    val titlesViewModel: TitlesViewModel = hiltViewModel()
+    val certificatesViewModel: CertificatesViewModel = hiltViewModel()
+    val refundsViewModel: RefundsViewModel = hiltViewModel()
+    val attendanceViewModel: AttendanceViewModel = hiltViewModel()
+    val studyPlanViewModel: StudyPlanViewModel = hiltViewModel()
     // Hoisted so the transcript refresh (kicked off in the VM's init) starts on shell load,
     // not when the Profile sub-page is first opened — the stats/badge are then already warm.
     val profileViewModel: ProfileViewModel = hiltViewModel()
-    // Used for search deep-link routing (toAppRoute needs the active career id).
-    val profileCareer by profileViewModel.activeCareer.collectAsStateWithLifecycle()
 
     // Unified search: one ViewModel feeds both the bar's text field and the full-screen
     // overlay body, so it is hoisted at shell level like the tab ViewModels above.
@@ -202,6 +238,16 @@ fun MainShell(
     // list -> detail shared-element morph seek with the predictive-back gesture.
     val backStack = rememberNavBackStack(AppRoute.TabRoot)
     val currentRoute = backStack.lastOrNull() as? AppRoute
+
+    // Multi-page modal sheets ride this same back stack as overlay scenes (see SheetRoute /
+    // BottomSheetSceneStrategy). pop(n) closes or steps a sheet by removing n trailing entries.
+    val bottomSheetStrategy = remember {
+        BottomSheetSceneStrategy<NavKey>(pop = { count -> repeat(count) { backStack.removeLastOrNull() } })
+    }
+
+    val presenceDeepLinkViewModel: PresenceDeepLinkViewModel = hiltViewModel()
+    val pendingPresenceScan by presenceDeepLinkViewModel.pending.collectAsStateWithLifecycle()
+
     val isOnSubPage = currentRoute?.isSubPage == true
     val subPageTitle = (currentRoute?.appTitle as? AppTitle.SubPage)?.title
     // Video playback and the file viewer are immersive: the global chrome is hidden and the
@@ -238,11 +284,21 @@ fun MainShell(
     var externalFile by remember { mutableStateOf<AppRoute.FileViewer?>(null) }
     // The in-app/external chooser for a file type with no remembered choice (or a long-press).
     var chooserFile by remember { mutableStateOf<AppRoute.FileViewer?>(null) }
-    // The quiz overview is a modal sheet shown over the current screen; starting, resuming, or
-    // reviewing an attempt dismisses it and pushes the full-screen attempt/review route.
-    var quizSheet by remember { mutableStateOf<AppRoute.QuizDetail?>(null) }
-    // The compito (assignment) detail is a modal sheet over the current screen.
-    var assignmentSheet by remember { mutableStateOf<AppRoute.AssignmentDetail?>(null) }
+
+    // An Affluences confirm/cancel email link opened in the app: open the Biblioteca sheet so its
+    // snackbar shows the result of the action the ViewModel is running.
+    LaunchedEffect(Unit) {
+        libraryViewModel.openSheetRequests.collect {
+            if (backStack.lastOrNull() != SheetRoute.Library) backStack.add(SheetRoute.Library)
+        }
+    }
+    // A mod_attendance QR scanned outside the app lands here: surface the presenze
+    // sheet so its ViewModel can run the marking flow on the pending link.
+    LaunchedEffect(pendingPresenceScan) {
+        if (pendingPresenceScan != null && backStack.lastOrNull() != SheetRoute.Attendance) {
+            backStack.add(SheetRoute.Attendance)
+        }
+    }
 
     val fileOpenViewModel: FileOpenPreferenceViewModel = hiltViewModel()
     val fileOpenChoices by fileOpenViewModel.choices.collectAsStateWithLifecycle()
@@ -387,6 +443,7 @@ fun MainShell(
                                 backStack = backStack,
                                 onBack = { backStack.removeLastOrNull() },
                                 modifier = Modifier.fillMaxSize(),
+                                sceneStrategies = listOf(bottomSheetStrategy, SinglePaneSceneStrategy()),
                                 entryDecorators = listOf(
                                     rememberSaveableStateHolderNavEntryDecorator(),
                                     rememberViewModelStoreNavEntryDecorator(),
@@ -479,15 +536,19 @@ fun MainShell(
                                                                 )
                                                             },
                                                             onOpenAssignment = { courseId, assignmentId ->
-                                                                assignmentSheet = AppRoute.AssignmentDetail(
-                                                                    assignId = assignmentId.value,
-                                                                    courseId = courseId.value,
+                                                                backStack.add(
+                                                                    SheetRoute.AssignmentDetail(
+                                                                        assignId = assignmentId.value,
+                                                                        courseId = courseId.value,
+                                                                    )
                                                                 )
                                                             },
                                                             onOpenQuiz = { courseId, quizId ->
-                                                                quizSheet = AppRoute.QuizDetail(
-                                                                    quizId = quizId.value,
-                                                                    courseId = courseId.value,
+                                                                backStack.add(
+                                                                    SheetRoute.QuizDetail(
+                                                                        quizId = quizId.value,
+                                                                        courseId = courseId.value,
+                                                                    )
                                                                 )
                                                             },
                                                         )
@@ -513,53 +574,44 @@ fun MainShell(
                                                             taxesViewModel = taxesViewModel,
                                                             examResultsViewModel = examResultsViewModel,
                                                             isActive = isActive,
-                                                            onOpenBookedExams = {
-                                                                backStack.add(
-                                                                    AppRoute.BookedExams
-                                                                )
+                                                            onOpenAppelli = {
+                                                                backStack.add(SheetRoute.Appelli)
                                                             },
-                                                            onOpenBookableExams = {
-                                                                backStack.add(
-                                                                    AppRoute.BookableExams
-                                                                )
+                                                            onOpenTaxes = {
+                                                                backStack.add(SheetRoute.Taxes)
                                                             },
-                                                            onOpenTaxes = { backStack.add(AppRoute.Taxes) },
-                                                            onOpenIsee = { backStack.add(AppRoute.Isee) },
+                                                            onOpenIsee = {
+                                                                backStack.add(SheetRoute.Isee)
+                                                            },
                                                             onOpenRefunds = {
-                                                                backStack.add(AppRoute.Refunds)
+                                                                backStack.add(SheetRoute.Refunds)
                                                             },
                                                             onOpenExamResults = {
-                                                                backStack.add(AppRoute.ExamResults)
+                                                                backStack.add(SheetRoute.ExamResults)
                                                             },
                                                             onOpenStudyPlan = {
-                                                                backStack.add(
-                                                                    AppRoute.StudyPlan
-                                                                )
+                                                                backStack.add(SheetRoute.StudyPlan)
                                                             },
                                                             onOpenQuestionnaires = {
-                                                                backStack.add(
-                                                                    AppRoute.Questionnaires
-                                                                )
+                                                                backStack.add(SheetRoute.Questionnaires)
                                                             },
-                                                            onOpenProcedures = {
-                                                                backStack.add(
-                                                                    AppRoute.Procedures
-                                                                )
+                                                            onOpenAppointments = {
+                                                                backStack.add(SheetRoute.Appointments)
+                                                            },
+                                                            onOpenLibrary = {
+                                                                backStack.add(SheetRoute.Library)
                                                             },
                                                             onOpenAttendance = {
-                                                                backStack.add(
-                                                                    AppRoute.Attendance
-                                                                )
+                                                                backStack.add(SheetRoute.Attendance)
                                                             },
-                                                            onOpenInternships = {
-                                                                backStack.add(
-                                                                    AppRoute.Internships
-                                                                )
+                                                            onOpenEnrollments = {
+                                                                backStack.add(SheetRoute.Enrollments)
                                                             },
-                                                            onOpenDegreeAward = {
-                                                                backStack.add(
-                                                                    AppRoute.DegreeAward
-                                                                )
+                                                            onOpenTitles = {
+                                                                backStack.add(SheetRoute.Titles)
+                                                            },
+                                                            onOpenCertificates = {
+                                                                backStack.add(SheetRoute.Certificates)
                                                             },
                                                             onProvideFilterToggle = onProvideFilterToggle,
                                                         )
@@ -576,110 +628,23 @@ fun MainShell(
                                                 viewModel = profileViewModel,
                                                 // Deep-link from a libretto course to its bookable
                                                 // appelli: arm the focus on the shell-scoped bookable
-                                                // VM, switch to the Servizi tab, then push the bookable-
-                                                // exams sub-page which consumes the focus, scrolls to
-                                                // the course group and lets the user pick an appello.
+                                                // VM, land on the Servizi tab behind, then open the
+                                                // Appelli sheet, which enters its booking flow on the
+                                                // pending focus, scrolls to the exam section and lets
+                                                // the user pick an appello.
                                                 onOpenAppelli = { courseKey ->
                                                     bookableExamsViewModel.requestFocus(courseKey)
                                                     scope.launch {
                                                         pagerState.scrollToPage(ShellTab.Registry.ordinal)
                                                     }
-                                                    backStack.add(AppRoute.BookableExams)
+                                                    backStack.add(SheetRoute.Appelli)
                                                 },
                                             )
                                         }
                                     }
-                                    // Esami and Tasse are launched from the Registry dashboard cards.
-                                    // Hosted here (not inside the Registry pager) so they page with
-                                    // predictive back like every other sub-page.
-                                    entry<AppRoute.BookedExams> {
-                                        SubPage(topInset) {
-                                            BookedExamsScreen(bookedViewModel = bookedExamsViewModel)
-                                        }
-                                    }
-                                    entry<AppRoute.BookableExams> {
-                                        SubPage(topInset) {
-                                            BookableExamsScreen(bookableViewModel = bookableExamsViewModel)
-                                        }
-                                    }
-                                    entry<AppRoute.Taxes> {
-                                        SubPage(topInset) {
-                                            TaxesScreen(
-                                                viewModel = taxesViewModel,
-                                                onOpenDetail = { chargeId ->
-                                                    backStack.add(AppRoute.TaxDetail(chargeId = chargeId))
-                                                },
-                                            )
-                                        }
-                                    }
-                                    entry<AppRoute.Isee> {
-                                        SubPage(topInset) { IseeScreen(viewModel = taxesViewModel) }
-                                    }
-                                    entry<AppRoute.Refunds> { SubPage(topInset) { RefundsScreen() } }
                                     entry<AppRoute.Settings> {
                                         SubPage(topInset) { SettingsScreen() }
                                     }
-                                    entry<AppRoute.StudyPlan> {
-                                        SubPage(topInset) {
-                                            StudyPlanScreen(
-                                                onOpenEdit = { studentId, choiceRegulationId, schemaId, planId ->
-                                                    backStack.add(
-                                                        AppRoute.StudyPlanEdit(
-                                                            studentId = studentId,
-                                                            choiceRegulationId = choiceRegulationId,
-                                                            schemaId = schemaId,
-                                                            planId = planId,
-                                                        )
-                                                    )
-                                                },
-                                            )
-                                        }
-                                    }
-                                    entry<AppRoute.ExamResults> { SubPage(topInset) { ExamResultsScreen(viewModel = examResultsViewModel) } }
-                                    entry<AppRoute.Attendance> { SubPage(topInset) { AttendanceScreen() } }
-                                    entry<AppRoute.Questionnaires> {
-                                        SubPage(topInset) {
-                                            QuestionnairesScreen(
-                                                viewModel = questionnairesViewModel,
-                                                onStartCompilation = { activity, detail, unit ->
-                                                    backStack.add(
-                                                        AppRoute.QuestionnaireCompilation(
-                                                            activityChoiceId = detail.activityChoiceId,
-                                                            questionnaireId = detail.questionnaireId ?: return@QuestionnairesScreen,
-                                                            questionnaireConfigId = detail.questionnaireConfigId ?: return@QuestionnairesScreen,
-                                                            anonymous = detail.anonymous,
-                                                            tags = unit.tags,
-                                                            activityName = activity.activityName,
-                                                            lecturerName = unit.lecturerName,
-                                                            partitionName = unit.partitionName,
-                                                        )
-                                                    )
-                                                },
-                                            )
-                                        }
-                                    }
-                                    entry<AppRoute.Reservations> { SubPage(topInset) { ReservationsScreen() } }
-                                    entry<AppRoute.Procedures> {
-                                        SubPage(topInset) {
-                                            ProceduresScreen(
-                                                onOpenCourseChange = { backStack.add(AppRoute.CourseChange) },
-                                                onOpenEnrollmentExtension = { backStack.add(AppRoute.EnrollmentExtension) },
-                                            )
-                                        }
-                                    }
-                                    entry<AppRoute.CourseChange> { SubPage(topInset) { CourseChangeScreen() } }
-                                    entry<AppRoute.EnrollmentExtension> { SubPage(topInset) { EnrollmentExtensionScreen() } }
-                                    entry<AppRoute.Internships> {
-                                        SubPage(topInset) {
-                                            InternshipsScreen(
-                                                onOpenSaved = { backStack.add(AppRoute.SavedOpportunities) },
-                                            )
-                                        }
-                                    }
-                                    entry<AppRoute.SavedOpportunities> {
-                                        SubPage(topInset) { SavedOpportunitiesScreen() }
-                                    }
-                                    entry<AppRoute.DegreeAward> { SubPage(topInset) { DegreeAwardScreen() } }
                                     entry<AppRoute.Messaging> { SubPage(topInset) { MessagingScreen() } }
 
                                     // First-level with arguments.
@@ -688,22 +653,6 @@ fun MainShell(
                                             Room360Screen(
                                                 url = key.url,
                                                 roomName = key.roomName
-                                            )
-                                        }
-                                    }
-                                    entry<AppRoute.QuestionnaireCompilation> { key ->
-                                        val vm =
-                                            hiltViewModel<QuestionnaireCompilationViewModel, QuestionnaireCompilationViewModel.Factory>(
-                                                creationCallback = { it.create(key) },
-                                            )
-                                        SubPage(topInset) {
-                                            QuestionnaireCompilationScreen(
-                                                viewModel = vm,
-                                                onFinished = {
-                                                    backStack.removeLastOrNull()
-                                                    // The submission flipped this unit's server-side state.
-                                                    questionnairesViewModel.refresh()
-                                                },
                                             )
                                         }
                                     }
@@ -720,15 +669,19 @@ fun MainShell(
                                                 onProvideTitle = { subPageTitleOverride = it },
                                                 onProvideActions = { subPageActions = it },
                                                 onOpenAssignment = { id ->
-                                                    assignmentSheet = AppRoute.AssignmentDetail(
-                                                        assignId = id.value,
-                                                        courseId = key.courseId,
+                                                    backStack.add(
+                                                        SheetRoute.AssignmentDetail(
+                                                            assignId = id.value,
+                                                            courseId = key.courseId,
+                                                        )
                                                     )
                                                 },
                                                 onOpenQuiz = { id ->
-                                                    quizSheet = AppRoute.QuizDetail(
-                                                        quizId = id.value,
-                                                        courseId = key.courseId,
+                                                    backStack.add(
+                                                        SheetRoute.QuizDetail(
+                                                            quizId = id.value,
+                                                            courseId = key.courseId,
+                                                        )
                                                     )
                                                 },
                                                 onOpenForum = { id ->
@@ -772,27 +725,8 @@ fun MainShell(
                                             )
                                         }
                                     }
-                                    entry<AppRoute.TaxDetail> { key ->
-                                        SubPage(topInset) {
-                                            TaxDetailScreen(
-                                                chargeId = key.chargeId,
-                                                viewModel = taxesViewModel
-                                            )
-                                        }
-                                    }
 
                                     // Deeper sub-pages.
-                                    entry<AppRoute.StudyPlanEdit> { key ->
-                                        SubPage(topInset) {
-                                            StudyPlanEditScreen(
-                                                studentId = key.studentId,
-                                                choiceRegulationId = key.choiceRegulationId,
-                                                schemaId = key.schemaId,
-                                                planId = key.planId,
-                                                onClose = { backStack.removeLastOrNull() },
-                                            )
-                                        }
-                                    }
                                     entry<AppRoute.QuizDetail> { key ->
                                         val vm =
                                             hiltViewModel<QuizDetailViewModel, QuizDetailViewModel.Factory>(
@@ -866,6 +800,307 @@ fun MainShell(
                                     entry<AppRoute.TeacherDetail> { key ->
                                         SubPage(topInset) { TeacherDetailScreen(teacherCode = key.teacherCode) }
                                     }
+
+                                    // --- Modal bottom-sheet pages: rendered as overlay sheets over the
+                                    // current tab by BottomSheetSceneStrategy, grouped by metadata "group". ---
+                                    entry<SheetRoute.Enrollments>(
+                                        metadata = sheetEntry("enrollments") {
+                                            val history by enrollmentsViewModel.history
+                                                .collectAsStateWithLifecycle()
+                                            SheetHeaderSpec(
+                                                title = "Iscrizioni",
+                                                subtitle = history.valueOrNull()?.let(::enrollmentsHeaderSubtitle),
+                                            )
+                                        },
+                                    ) {
+                                        EnrollmentsTimelinePage(
+                                            viewModel = enrollmentsViewModel,
+                                            onOpenDetail = { id ->
+                                                backStack.add(SheetRoute.EnrollmentDetail(id.value))
+                                            },
+                                        )
+                                    }
+                                    entry<SheetRoute.EnrollmentDetail>(
+                                        metadata = sheetEntry("enrollments") {
+                                            // Resolved from live VM history against the top key, so an evicted
+                                            // year (e.g. a career switch) gracefully shows no header.
+                                            val top = backStack.lastOrNull() as? SheetRoute.EnrollmentDetail
+                                            val history by enrollmentsViewModel.history
+                                                .collectAsStateWithLifecycle()
+                                            top?.let { k ->
+                                                history.valueOrNull()?.years
+                                                    ?.firstOrNull { it.id.value == k.enrollmentId }
+                                            }?.let { enrollment ->
+                                                SheetHeaderSpec(
+                                                    title = "Iscrizione ${enrollment.academicYearLabel()}",
+                                                    subtitle = "${enrollment.courseYearLabel()} · ${enrollment.statusLabel()}",
+                                                )
+                                            }
+                                        },
+                                    ) { key ->
+                                        val history by enrollmentsViewModel.history
+                                            .collectAsStateWithLifecycle()
+                                        val enrollment = history.valueOrNull()?.years
+                                            ?.firstOrNull { it.id.value == key.enrollmentId }
+                                        // The year can be evicted under an open detail: fall back to the
+                                        // timeline instead of rendering a stale snapshot.
+                                        LaunchedEffect(enrollment == null) {
+                                            if (enrollment == null) backStack.removeLastOrNull()
+                                        }
+                                        if (enrollment != null) {
+                                            EnrollmentDetailPage(enrollment = enrollment)
+                                        }
+                                    }
+                                    entry<SheetRoute.Titles>(
+                                        metadata = sheetEntry("titles") {
+                                            val titles by titlesViewModel.titles
+                                                .collectAsStateWithLifecycle()
+                                            SheetHeaderSpec(
+                                                title = "Titoli",
+                                                subtitle = titles.valueOrNull()?.let(::titlesHeaderSubtitle),
+                                            )
+                                        },
+                                    ) {
+                                        TitlesListPage(
+                                            viewModel = titlesViewModel,
+                                            onOpenDetail = { id -> backStack.add(SheetRoute.TitleDetail(id)) },
+                                        )
+                                    }
+                                    entry<SheetRoute.TitleDetail>(
+                                        metadata = sheetEntry("titles") {
+                                            val top = backStack.lastOrNull() as? SheetRoute.TitleDetail
+                                            val titles by titlesViewModel.titles
+                                                .collectAsStateWithLifecycle()
+                                            top?.let { k ->
+                                                titles.valueOrNull()?.firstOrNull { it.id == k.titleId }
+                                            }?.let { title ->
+                                                SheetHeaderSpec(
+                                                    title = title.headline(),
+                                                    subtitle = title.headlineSubtitle(),
+                                                )
+                                            }
+                                        },
+                                    ) { key ->
+                                        val titles by titlesViewModel.titles
+                                            .collectAsStateWithLifecycle()
+                                        val title = titles.valueOrNull()
+                                            ?.firstOrNull { it.id == key.titleId }
+                                        LaunchedEffect(title == null) {
+                                            if (title == null) backStack.removeLastOrNull()
+                                        }
+                                        if (title != null) TitleDetailPage(title = title)
+                                    }
+                                    entry<SheetRoute.Certificates>(
+                                        metadata = sheetEntry("certificates"),
+                                    ) {
+                                        CertificatesPage(viewModel = certificatesViewModel)
+                                    }
+                                    entry<SheetRoute.Refunds>(
+                                        metadata = sheetEntry("refunds") {
+                                            val refunds by refundsViewModel.refunds
+                                                .collectAsStateWithLifecycle()
+                                            SheetHeaderSpec(
+                                                title = "Rimborsi",
+                                                subtitle = refunds.valueOrNull()?.let(::refundsHeaderSubtitle),
+                                            )
+                                        },
+                                    ) {
+                                        RefundsListPage(
+                                            viewModel = refundsViewModel,
+                                            onOpenDetail = { key -> backStack.add(SheetRoute.RefundDetail(key)) },
+                                        )
+                                    }
+                                    entry<SheetRoute.RefundDetail>(
+                                        metadata = sheetEntry("refunds") {
+                                            val top = backStack.lastOrNull() as? SheetRoute.RefundDetail
+                                            val refunds by refundsViewModel.refunds
+                                                .collectAsStateWithLifecycle()
+                                            top?.let { k ->
+                                                refunds.valueOrNull()?.firstOrNull { it.refundKey() == k.refundKey }
+                                            }?.let { refund ->
+                                                SheetHeaderSpec(
+                                                    title = refundHeaderTitle(refund),
+                                                    subtitle = refundHeaderSubtitle(refund),
+                                                )
+                                            }
+                                        },
+                                    ) { key ->
+                                        val refunds by refundsViewModel.refunds
+                                            .collectAsStateWithLifecycle()
+                                        val refund = refunds.valueOrNull()
+                                            ?.firstOrNull { it.refundKey() == key.refundKey }
+                                        LaunchedEffect(refund == null) {
+                                            if (refund == null) backStack.removeLastOrNull()
+                                        }
+                                        if (refund != null) RefundDetailPage(refund = refund)
+                                    }
+                                    entry<SheetRoute.Isee>(
+                                        metadata = sheetEntry("isee") {
+                                            val state by taxesViewModel.isee
+                                                .collectAsStateWithLifecycle()
+                                            val declarations = state.valueOrNull()
+                                                ?.filter { it.isee != null && it.academicYearEnrollmentId != null }
+                                            SheetHeaderSpec(
+                                                title = "ISEE",
+                                                subtitle = declarations?.let(::iseeHeaderSubtitle),
+                                            )
+                                        },
+                                    ) {
+                                        IseeDeclarationsPage(
+                                            viewModel = taxesViewModel,
+                                            onOpenDetail = { year -> backStack.add(SheetRoute.IseeDetail(year)) },
+                                        )
+                                    }
+                                    entry<SheetRoute.IseeDetail>(
+                                        metadata = sheetEntry("isee") {
+                                            val top = backStack.lastOrNull() as? SheetRoute.IseeDetail
+                                            val state by taxesViewModel.isee
+                                                .collectAsStateWithLifecycle()
+                                            top?.let { k ->
+                                                state.valueOrNull()?.firstOrNull { it.academicYearEnrollmentId == k.year }
+                                            }?.let { declaration ->
+                                                SheetHeaderSpec(
+                                                    title = iseeDetailTitle(declaration),
+                                                    subtitle = iseeDetailSubtitle(declaration),
+                                                )
+                                            }
+                                        },
+                                    ) { key ->
+                                        val state by taxesViewModel.isee
+                                            .collectAsStateWithLifecycle()
+                                        val declaration = state.valueOrNull()
+                                            ?.firstOrNull { it.academicYearEnrollmentId == key.year }
+                                        LaunchedEffect(declaration == null) {
+                                            if (declaration == null) backStack.removeLastOrNull()
+                                        }
+                                        if (declaration != null) IseeDetailPage(declaration = declaration)
+                                    }
+                                    entry<SheetRoute.ExamResults>(
+                                        metadata = sheetEntry("examResults"),
+                                    ) {
+                                        ExamResultsPage(viewModel = examResultsViewModel)
+                                    }
+                                    entry<SheetRoute.Taxes>(
+                                        metadata = sheetEntry("taxes") {
+                                            val state by taxesViewModel.invoices
+                                                .collectAsStateWithLifecycle()
+                                            SheetHeaderSpec(
+                                                title = "Tasse",
+                                                subtitle = state.valueOrNull()?.let(::taxesHeaderSubtitle),
+                                            )
+                                        },
+                                    ) {
+                                        TaxesPage(viewModel = taxesViewModel)
+                                    }
+                                    entry<SheetRoute.QuizDetail>(
+                                        metadata = sheetEntry("quiz"),
+                                    ) { key ->
+                                        QuizDetailPage(
+                                            quizId = key.quizId,
+                                            courseId = key.courseId,
+                                            onStartAttempt = {
+                                                backStack.removeLastOrNull()
+                                                backStack.add(
+                                                    AppRoute.QuizDetail(
+                                                        quizId = key.quizId,
+                                                        courseId = key.courseId,
+                                                        startNew = true,
+                                                    )
+                                                )
+                                            },
+                                            onResumeAttempt = { attemptId ->
+                                                backStack.removeLastOrNull()
+                                                backStack.add(
+                                                    AppRoute.QuizDetail(
+                                                        quizId = key.quizId,
+                                                        courseId = key.courseId,
+                                                        resumeAttemptId = attemptId,
+                                                    )
+                                                )
+                                            },
+                                            onReviewAttempt = { attemptId ->
+                                                backStack.removeLastOrNull()
+                                                backStack.add(
+                                                    AppRoute.QuizDetail(
+                                                        quizId = key.quizId,
+                                                        courseId = key.courseId,
+                                                        reviewAttemptId = attemptId,
+                                                    )
+                                                )
+                                            },
+                                        )
+                                    }
+                                    entry<SheetRoute.AssignmentDetail>(
+                                        metadata = sheetEntry("assignment"),
+                                    ) { key ->
+                                        AssignmentDetailPage(
+                                            assignId = key.assignId,
+                                            courseId = key.courseId,
+                                            onOpenFile = { fileName, fileUrl, mimeType, sizeBytes ->
+                                                openFile(
+                                                    AppRoute.FileViewer(
+                                                        fileName = fileName,
+                                                        fileUrl = fileUrl,
+                                                        mimeType = mimeType,
+                                                        sizeBytes = sizeBytes,
+                                                    ),
+                                                    false,
+                                                )
+                                            },
+                                            onOpenPage = { url ->
+                                                runCatching {
+                                                    context.startActivity(
+                                                        Intent(Intent.ACTION_VIEW, url.toUri())
+                                                            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+                                                    )
+                                                }
+                                            },
+                                        )
+                                    }
+                                    entry<SheetRoute.Attendance>(
+                                        metadata = sheetEntry("attendance"),
+                                    ) {
+                                        AttendancePage(viewModel = attendanceViewModel)
+                                    }
+                                    entry<SheetRoute.Appelli>(
+                                        metadata = sheetEntry("appelli"),
+                                    ) {
+                                        AppelliPage(
+                                            bookableViewModel = bookableExamsViewModel,
+                                            viewModel = bookedExamsViewModel,
+                                        )
+                                    }
+                                    entry<SheetRoute.StudyPlan>(
+                                        metadata = sheetEntry("studyPlan"),
+                                    ) {
+                                        StudyPlanPage(viewModel = studyPlanViewModel)
+                                    }
+                                    entry<SheetRoute.Questionnaires>(
+                                        metadata = sheetEntry("questionnaires"),
+                                    ) {
+                                        QuestionnairesPage(viewModel = questionnairesViewModel)
+                                    }
+                                    entry<SheetRoute.Appointments>(
+                                        metadata = sheetEntry("appointments"),
+                                    ) {
+                                        AppointmentsPage(
+                                            viewModel = appointmentsViewModel,
+                                            onOpenPdf = { path, name ->
+                                                backStack.add(
+                                                    AppRoute.FileViewer(
+                                                        fileName = name,
+                                                        localPath = path,
+                                                        mimeType = "application/pdf",
+                                                    )
+                                                )
+                                            },
+                                        )
+                                    }
+                                    entry<SheetRoute.Library>(
+                                        metadata = sheetEntry("library"),
+                                    ) {
+                                        LibraryPage(viewModel = libraryViewModel)
+                                    }
                                 },
                             )
                         }
@@ -893,10 +1128,33 @@ fun MainShell(
                         }
 
                         fun openDestination(destination: SearchDestination) {
-                            destination.toShellTab()?.let { target ->
-                                scope.launch { pagerState.scrollToPage(target.ordinal) }
-                                closeSearch()
-                            } ?: destination.toAppRoute(profileCareer?.id)?.let(::openSubPage)
+                            when (val landing = destination.toLanding()) {
+                                is SearchLanding.Tab -> {
+                                    scope.launch { pagerState.scrollToPage(landing.tab.ordinal) }
+                                    closeSearch()
+                                }
+
+                                is SearchLanding.SubPage -> openSubPage(landing.route)
+
+                                // Sheets land on their owning tab like a tab hit, then
+                                // animate in over it.
+                                is SearchLanding.Sheet -> {
+                                    scope.launch { pagerState.scrollToPage(landing.hostTab.ordinal) }
+                                    closeSearch()
+                                    when (landing.sheet) {
+                                        ShellSheet.StudyPlan -> backStack.add(SheetRoute.StudyPlan)
+                                        ShellSheet.Attendance -> backStack.add(SheetRoute.Attendance)
+                                        ShellSheet.Enrollments -> backStack.add(SheetRoute.Enrollments)
+                                        ShellSheet.Titles -> backStack.add(SheetRoute.Titles)
+                                        ShellSheet.Certificates -> backStack.add(SheetRoute.Certificates)
+                                        ShellSheet.BookedExams -> backStack.add(SheetRoute.Appelli)
+                                        ShellSheet.ExamResults -> backStack.add(SheetRoute.ExamResults)
+                                        ShellSheet.Questionnaires -> backStack.add(SheetRoute.Questionnaires)
+                                        ShellSheet.Appointments -> backStack.add(SheetRoute.Appointments)
+                                        ShellSheet.Taxes -> backStack.add(SheetRoute.Taxes)
+                                    }
+                                }
+                            }
                         }
 
                         SearchOverlay(
@@ -931,10 +1189,6 @@ fun MainShell(
                                     // Libretto exam hits land on the Profile page, which renders the libretto.
                                     is SearchResult.TranscriptEntry -> openSubPage(AppRoute.Profile)
                                 }
-                            },
-                            onOpenDestination = { destination ->
-                                searchViewModel.commitToHistory()
-                                openDestination(destination)
                             },
                         )
                     }
@@ -983,52 +1237,17 @@ fun MainShell(
                 )
             }
 
-            quizSheet?.let { route ->
-                QuizDetailSheet(
-                    quizId = route.quizId,
-                    courseId = route.courseId,
-                    onDismiss = { quizSheet = null },
-                    onStartAttempt = {
-                        quizSheet = null
-                        backStack.add(route.copy(startNew = true))
-                    },
-                    onResumeAttempt = { attemptId ->
-                        quizSheet = null
-                        backStack.add(route.copy(resumeAttemptId = attemptId))
-                    },
-                    onReviewAttempt = { attemptId ->
-                        quizSheet = null
-                        backStack.add(route.copy(reviewAttemptId = attemptId))
-                    },
-                )
-            }
 
-            assignmentSheet?.let { route ->
-                AssignmentDetailSheet(
-                    assignId = route.assignId,
-                    courseId = route.courseId,
-                    onOpenFile = { fileName, fileUrl, mimeType, sizeBytes ->
-                        openFile(
-                            AppRoute.FileViewer(
-                                fileName = fileName,
-                                fileUrl = fileUrl,
-                                mimeType = mimeType,
-                                sizeBytes = sizeBytes,
-                            ),
-                            false,
-                        )
-                    },
-                    onOpenPage = { url ->
-                        runCatching {
-                            context.startActivity(
-                                Intent(Intent.ACTION_VIEW, url.toUri())
-                                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
-                            )
-                        }
-                    },
-                    onDismiss = { assignmentSheet = null },
-                )
-            }
+
+
+
+
+
+
+
+
+
+
         }
     }
 }

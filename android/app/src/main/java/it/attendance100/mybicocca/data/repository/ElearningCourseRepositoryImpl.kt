@@ -16,7 +16,6 @@ import it.attendance100.mybicocca.data.mapper.elearning.toEntity
 import it.attendance100.mybicocca.data.mapper.elearning.toModuleEntities
 import it.attendance100.mybicocca.data.mapper.elearning.toStaffEntities
 import it.attendance100.mybicocca.data.mapper.elearning.toSyllabusEntity
-import it.attendance100.mybicocca.data.repository.demo.DemoCourse
 import it.attendance100.mybicocca.di.ApplicationScope
 import it.attendance100.mybicocca.domain.model.account.AccountId
 import it.attendance100.mybicocca.domain.model.elearning.course.CompletionState
@@ -34,7 +33,6 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import java.util.concurrent.ConcurrentHashMap
@@ -68,10 +66,8 @@ class ElearningCourseRepositoryImpl @Inject constructor(
             val deadlinesByCourse: Map<Int, List<Deadline>> = deadlineRows
                 .mapNotNull { it.toDomain() }
                 .groupBy { it.courseId.value }
-            // TEMPORARY: prepend the content-types demo course (see DemoCourse).
-            val demo = if (DemoCourse.ENABLED) listOf(DemoCourse.enrolled) else emptyList()
             Loadable.Loaded(
-                demo + rows.map { row -> row.toDomain(deadlinesByCourse[row.courseId].orEmpty()) }
+                rows.map { row -> row.toDomain(deadlinesByCourse[row.courseId].orEmpty()) }
             ) as Loadable<List<EnrolledCourse>>
         }.flowOn(Dispatchers.Default)
 
@@ -79,10 +75,6 @@ class ElearningCourseRepositoryImpl @Inject constructor(
         accountId: AccountId,
         courseId: CourseId,
     ): Flow<Loadable<CourseDetails>> {
-        // TEMPORARY: serve the demo course's details from memory (see DemoCourse).
-        if (DemoCourse.ENABLED && courseId.value == DemoCourse.DEMO_COURSE_ID) {
-            return flowOf(Loadable.Loaded(DemoCourse.details))
-        }
         val acc = accountId.value
         val cid = courseId.value
         val enrolledFlow = courseDao.observeEnrolledOne(acc, cid)
@@ -108,10 +100,6 @@ class ElearningCourseRepositoryImpl @Inject constructor(
         accountId: AccountId,
         courseId: CourseId,
     ): Flow<Map<Int, CompletionState>> {
-        // TEMPORARY: demo course completion comes from memory (see DemoCourse).
-        if (DemoCourse.ENABLED && courseId.value == DemoCourse.DEMO_COURSE_ID) {
-            return flowOf(DemoCourse.completion)
-        }
         return courseDao.observeCompletion(accountId.value, courseId.value)
             .map { rows -> rows.associate { it.cmId to it.toDomain() } }
             .flowOn(Dispatchers.Default)
@@ -212,8 +200,6 @@ class ElearningCourseRepositoryImpl @Inject constructor(
         courseId: CourseId,
         force: Boolean,
     ) {
-        // TEMPORARY: the demo course has no server counterpart; never refresh it.
-        if (DemoCourse.ENABLED && courseId.value == DemoCourse.DEMO_COURSE_ID) return
         val key = DetailKey(accountId, courseId)
         val deferred = detailsInFlight.computeIfAbsent(key) {
             scope.async(start = CoroutineStart.LAZY) {

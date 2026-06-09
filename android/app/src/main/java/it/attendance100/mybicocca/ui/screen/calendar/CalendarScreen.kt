@@ -40,7 +40,11 @@ import it.attendance100.mybicocca.core.state.SyncStatus
 import it.attendance100.mybicocca.core.state.valueOrNull
 import it.attendance100.mybicocca.domain.model.calendar.CalendarEvent
 import it.attendance100.mybicocca.domain.model.elearning.course.CourseId
-import it.attendance100.mybicocca.ui.component.feedback.LocalAppSnackbarController
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.CloudOff
+import it.attendance100.mybicocca.ui.component.button.RetryButton
+import it.attendance100.mybicocca.ui.component.feedback.EmptyState
+import it.attendance100.mybicocca.ui.component.feedback.friendlyMessage
 import it.attendance100.mybicocca.ui.screen.calendar.component.CalendarSegmentedControl
 import it.attendance100.mybicocca.ui.screen.calendar.component.DayView
 import it.attendance100.mybicocca.ui.screen.calendar.component.MonthView
@@ -81,18 +85,15 @@ fun CalendarScreen(
     val selectedEventId by viewModel.selectedEventId.collectAsStateWithLifecycle()
     val coursesByActivityCode by viewModel.coursesByActivityCode.collectAsStateWithLifecycle()
 
-    val snackbar = LocalAppSnackbarController.current
-
     // No filter chips in v1; clear any registration the previous tab left when we become active.
     LaunchedEffect(isActive) { if (isActive) onProvideFilterToggle(null) }
 
     LaunchedEffect(Unit) {
         viewModel.oneShotEvents.collect { event ->
             when (event) {
-                is CalendarOneShotEvent.RefreshFailed -> snackbar.showError(
-                    message = "Sincronizzazione del calendario non riuscita",
-                    cause = event.cause,
-                )
+                // The failure is rendered as a centered error state below (driven by syncStatus);
+                // no transient snackbar.
+                is CalendarOneShotEvent.RefreshFailed -> Unit
                 CalendarOneShotEvent.RequireSignIn -> Unit
             }
         }
@@ -120,6 +121,15 @@ fun CalendarScreen(
             state = pullState,
             modifier = Modifier.fillMaxSize(),
         ) {
+            val failure = syncStatus as? SyncStatus.Failed
+            if (failure != null) {
+                EmptyState(
+                    icon = Icons.Outlined.CloudOff,
+                    title = "Sincronizzazione del calendario non riuscita",
+                    body = failure.cause.friendlyMessage(),
+                    action = { RetryButton(onClick = viewModel::pullToRefresh) },
+                )
+            } else {
             Column(modifier = Modifier.fillMaxSize()) {
                 Spacer(Modifier.height(16.dp))
                 CalendarSegmentedControl(
@@ -175,6 +185,7 @@ fun CalendarScreen(
                         )
                     }
                 }
+            }
             }
         }
 

@@ -6,6 +6,7 @@ import android.animation.ObjectAnimator.ofFloat
 import android.animation.ObjectAnimator.ofInt
 import android.annotation.SuppressLint
 import android.app.PictureInPictureParams
+import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import android.util.Rational
@@ -33,6 +34,10 @@ import dagger.hilt.android.AndroidEntryPoint
 import it.attendance100.mybicocca.core.os.LocalDeviceType
 import it.attendance100.mybicocca.core.os.ProvideHapticManager
 import it.attendance100.mybicocca.core.os.getDeviceType
+import it.attendance100.mybicocca.data.deeplink.LibraryActionKind
+import it.attendance100.mybicocca.data.deeplink.LibraryDeepLinkAction
+import it.attendance100.mybicocca.data.deeplink.PendingLibraryAction
+import it.attendance100.mybicocca.data.deeplink.PendingPresenceScan
 import it.attendance100.mybicocca.data.auth.SessionManager
 import it.attendance100.mybicocca.data.local.settings.AppearanceSettingsStore
 import it.attendance100.mybicocca.data.local.settings.SecuritySettingsStore
@@ -67,6 +72,12 @@ class MyBicoccaActivity : AppCompatActivity() {
     @Inject
     lateinit var appearanceSettingsStore: AppearanceSettingsStore
 
+    @Inject
+    lateinit var pendingPresenceScan: PendingPresenceScan
+
+    @Inject
+    lateinit var pendingLibraryAction: PendingLibraryAction
+
     private val pipController = object : PipController {
         private var state: PipState? = null
         val inPip = mutableStateOf(false)
@@ -93,6 +104,9 @@ class MyBicoccaActivity : AppCompatActivity() {
         val splashScreen = installSplashScreen()
 
         super.onCreate(savedInstanceState)
+
+        captureAttendanceDeepLink(intent)
+        captureLibraryDeepLink(intent)
 
         // Animate the splash screen to transition to the app's content
         splashScreen.setOnExitAnimationListener { provider -> provider.animateExitAndRemove() }
@@ -150,6 +164,34 @@ class MyBicoccaActivity : AppCompatActivity() {
                 }
             }
         }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        captureAttendanceDeepLink(intent)
+        captureLibraryDeepLink(intent)
+    }
+
+    // A mod_attendance QR opened from outside resolves to this activity; hand the raw
+    // link to the shared holder so the attendance screen can run the marking flow.
+    private fun captureAttendanceDeepLink(intent: Intent) {
+        if (intent.action != Intent.ACTION_VIEW) return
+        val uri = intent.data ?: return
+        if (uri.host == "elearning.unimib.it" && uri.path?.contains("mod/attendance/attendance.php") == true) {
+            pendingPresenceScan.submit(uri.toString())
+        }
+    }
+
+    // An Affluences reservation cancellation email link opened from outside resolves here; parse the
+    // reservationToken and hand it to the shared holder for the Biblioteca flow.
+    private fun captureLibraryDeepLink(intent: Intent) {
+        if (intent.action != Intent.ACTION_VIEW) return
+        val uri = intent.data ?: return
+        if (uri.host?.contains("affluences.com") != true) return
+        val token = uri.getQueryParameter("reservationToken") ?: return
+        if (!uri.path.orEmpty().contains("/reservation/cancel")) return
+        pendingLibraryAction.submit(LibraryDeepLinkAction(LibraryActionKind.Cancel, token))
     }
 
     override fun onUserLeaveHint() {

@@ -47,8 +47,10 @@ import it.attendance100.mybicocca.domain.model.elearning.course.EnrolledCourseGr
 import it.attendance100.mybicocca.domain.model.elearning.course.courseCode
 import it.attendance100.mybicocca.domain.model.elearning.deadline.Deadline
 import it.attendance100.mybicocca.domain.model.elearning.quiz.QuizId
+import it.attendance100.mybicocca.ui.component.button.RetryButton
 import it.attendance100.mybicocca.ui.component.feedback.EmptyState
 import it.attendance100.mybicocca.ui.component.feedback.LocalAppSnackbarController
+import it.attendance100.mybicocca.ui.component.feedback.friendlyMessage
 import it.attendance100.mybicocca.ui.screen.elearning.component.CardEdition
 import it.attendance100.mybicocca.ui.screen.elearning.component.HomeFilterBar
 import it.attendance100.mybicocca.ui.screen.elearning.component.NotebookCard
@@ -61,10 +63,6 @@ import it.attendance100.mybicocca.ui.screen.elearning.theme.ProvideCourseAccentP
 import it.attendance100.mybicocca.ui.screen.elearning.theme.accentFor
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
-import java.io.IOException
-import java.net.ConnectException
-import java.net.SocketTimeoutException
-import java.net.UnknownHostException
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -131,6 +129,7 @@ fun ElearningScreen(
                         is InitialFetchState.Failed -> RefreshableEmpty {
                             ErrorEmptyState(
                                 cause = initial.cause,
+                                onRetry = viewModel::pullToRefresh,
                                 modifier = Modifier.fillMaxSize(),
                             )
                         }
@@ -313,11 +312,10 @@ private fun RefreshableEmpty(content: @Composable () -> Unit) {
     }
 }
 
-// No explicit retry action: the state sits inside the PullToRefreshBox, so the pull
-// gesture is the retry.
 @Composable
 private fun ErrorEmptyState(
     cause: Throwable,
+    onRetry: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     EmptyState(
@@ -325,13 +323,6 @@ private fun ErrorEmptyState(
         title = "Sincronizzazione non riuscita",
         body = cause.friendlyMessage(),
         modifier = modifier,
+        action = { RetryButton(onClick = onRetry) },
     )
-}
-
-private fun Throwable.friendlyMessage(): String = when (this) {
-    is UnknownHostException,
-    is ConnectException -> "Rete non disponibile. Controlla la connessione e riprova."
-    is SocketTimeoutException -> "Timeout di rete. Riprova tra un momento."
-    is IOException -> "Errore di rete. Riprova tra un momento."
-    else -> "Si è verificato un errore imprevisto"
 }

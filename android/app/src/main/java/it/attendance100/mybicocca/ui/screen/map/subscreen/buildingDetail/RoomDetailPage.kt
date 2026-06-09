@@ -53,8 +53,8 @@ import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.domain.model.map.MapRoom
 import it.attendance100.mybicocca.domain.model.map.MapRoomDetail
 import it.attendance100.mybicocca.domain.model.map.RoomScheduleEntry
-import it.attendance100.mybicocca.ui.screen.map.component.rememberMinDurationLoading
-import it.attendance100.mybicocca.ui.screen.map.component.SheetLoadingIndicator
+import it.attendance100.mybicocca.ui.component.feedback.rememberMinDurationLoading
+import it.attendance100.mybicocca.ui.component.modal.SheetLoadingIndicator
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
@@ -278,44 +278,15 @@ private fun RoomActionRow(
         modifier = Modifier.fillMaxWidth().padding(top = 2.dp),
         horizontalArrangement = Arrangement.spacedBy(4.dp),
     ) {
-        Button(
-            onClick = {
-                runCatching {
-                    context.startActivity(
-                        Intent(Intent.ACTION_VIEW, Uri.parse(BOOKING_URL))
-                            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
-                    )
-                }
-            },
-            modifier = Modifier
-                .weight(3f)
-                .height(48.dp),
-            shape = ButtonGroupDefaults.connectedLeadingButtonShape,
-            colors = ButtonDefaults.buttonColors(
-                containerColor = bookingBg,
-                contentColor = bookingFg,
-            ),
-        ) {
-            Icon(
-                imageVector = Icons.Outlined.EventAvailable,
-                contentDescription = null,
-                modifier = Modifier.size(20.dp),
-            )
-            Text(
-                text = "Prenota",
-                fontWeight = FontWeight.SemiBold,
-                modifier = Modifier.padding(start = 8.dp),
-            )
-        }
         FilledTonalButton(
             onClick = { interactive360Url?.let { onOpen360(it, roomName) } },
             enabled = interactive360Url != null,
             modifier = Modifier
                 .weight(1f)
                 .height(48.dp),
-            shape = ButtonGroupDefaults.connectedTrailingButtonShape,
+            shape = ButtonGroupDefaults.connectedLeadingButtonShape,
             colors = ButtonDefaults.filledTonalButtonColors(
-                containerColor = scheme.surfaceContainerHigh,
+                containerColor = scheme.surfaceContainerHighest,
                 contentColor = scheme.onSurface,
             ),
             // Quarter-row slot: the default 24dp horizontal padding wouldn't fit the content.
@@ -330,6 +301,35 @@ private fun RoomActionRow(
                 text = "VR",
                 fontWeight = FontWeight.SemiBold,
                 modifier = Modifier.padding(start = 6.dp),
+            )
+        }
+        Button(
+            onClick = {
+                runCatching {
+                    context.startActivity(
+                        Intent(Intent.ACTION_VIEW, Uri.parse(BOOKING_URL))
+                            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+                    )
+                }
+            },
+            modifier = Modifier
+                .weight(3f)
+                .height(48.dp),
+            shape = ButtonGroupDefaults.connectedTrailingButtonShape,
+            colors = ButtonDefaults.buttonColors(
+                containerColor = bookingBg,
+                contentColor = bookingFg,
+            ),
+        ) {
+            Icon(
+                imageVector = Icons.Outlined.EventAvailable,
+                contentDescription = null,
+                modifier = Modifier.size(20.dp),
+            )
+            Text(
+                text = "Prenota",
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier.padding(start = 8.dp),
             )
         }
     }

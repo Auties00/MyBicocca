@@ -367,7 +367,7 @@ private fun RemainingTimePill(start: Instant, limitSeconds: Long) {
     }
 }
 
-// The app's connected button pair (see StudyPlanEditScreen/EventDetailSheet): an
+// The app's connected button pair (see StudyPlanEditPage/EventDetailSheet): an
 // icon-only tonal back that springs in past the first page, and the primary action
 // morphing between Avanti and Consegna on the last page.
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)

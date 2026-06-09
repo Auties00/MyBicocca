@@ -59,32 +59,27 @@ import java.time.format.DateTimeFormatter
 import java.util.Locale
 
 // The compito (assignment) detail as a modal, in the app's detail-sheet language (see
-// QuizDetailSheet / BookedExamDetailSheet): icon-badged header with a status chip, a column of
+// QuizDetailSheet / BookedExamDetailPage): icon-badged header with a status chip, a column of
 // IconRows for the dates and facts, instructions / your-submission / feedback sections, and a
 // single pinned action that hands off to e-learning (submission isn't supported in-app).
+// The compito (assignment) detail as a single sheet entry: BottomSheetSceneStrategy owns the
+// container; this is just the scrollable detail body (it has no pager — one page).
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AssignmentDetailSheet(
+fun AssignmentDetailPage(
     assignId: Int,
     courseId: Int,
     onOpenFile: (fileName: String, fileUrl: String, mimeType: String?, sizeBytes: Long?) -> Unit,
     onOpenPage: (url: String) -> Unit,
-    onDismiss: () -> Unit,
     viewModel: AssignmentDetailViewModel = hiltViewModel<AssignmentDetailViewModel, AssignmentDetailViewModel.Factory>(
         key = "assign-sheet-$assignId",
         creationCallback = { it.create(AppRoute.AssignmentDetail(assignId = assignId, courseId = courseId)) },
     ),
 ) {
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val assignmentLoadable by viewModel.assignment.collectAsStateWithLifecycle()
 
     CourseDetailTheme(courseId = remember(courseId) { CourseId(courseId) }) {
-        ModalBottomSheet(
-            onDismissRequest = onDismiss,
-            sheetState = sheetState,
-            shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-        ) {
+        run {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()

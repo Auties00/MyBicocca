@@ -1,12 +1,7 @@
 package it.attendance100.mybicocca.ui.screen.auth
 
 import androidx.activity.compose.BackHandler
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
@@ -29,14 +24,10 @@ import androidx.compose.foundation.text.LocalAutofillHighlightColor
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowUpward
-import androidx.compose.material.icons.outlined.ErrorOutline
 import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.Person
-import androidx.compose.material.icons.outlined.WifiOff
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -83,8 +74,6 @@ import it.attendance100.mybicocca.ui.component.input.PasswordTextField
 import it.attendance100.mybicocca.ui.screen.auth.state.AuthEvent
 import it.attendance100.mybicocca.ui.theme.BicoccaTheme
 import it.attendance100.mybicocca.ui.theme.BicoccaWordmarkAccent
-import it.attendance100.mybicocca.ui.theme.PreviewBgDark
-import it.attendance100.mybicocca.ui.theme.PreviewBgLowest
 import kotlinx.coroutines.launch
 
 // Initial-login entry: lives inside AppRoot's NavDisplay.
@@ -164,7 +153,7 @@ private fun AuthScreenBody(
     val username by viewModel.username.collectAsStateWithLifecycle()
     val password by viewModel.password.collectAsStateWithLifecycle()
     val inflight by viewModel.inflight.collectAsStateWithLifecycle()
-    val error by viewModel.error.collectAsStateWithLifecycle()
+    val fieldsInError by viewModel.credentialsRejected.collectAsStateWithLifecycle()
 
     val scope = rememberCoroutineScope()
 
@@ -177,13 +166,16 @@ private fun AuthScreenBody(
                     autofillManager?.commit()
                     onSignedIn(event.account, event.requiresCareerPick)
                 }
+
+                is AuthEvent.Failed -> {
+                    snackbarHostState.currentSnackbarData?.dismiss()
+                    snackbarHostState.showSnackbar(event.reason.toMessage())
+                }
             }
         }
     }
 
     if (onCancel != null && interceptBack) BackHandler(enabled = !inflight) { onCancel() }
-
-    val fieldsInError = error is SignInFailure.BadCredentials
 
     Box(modifier = modifier) {
         val autofillColorHighlight = BicoccaWordmarkAccent.copy(alpha = 0.1f)
@@ -239,8 +231,6 @@ private fun AuthScreenBody(
                     leadingIcon = { Icon(Icons.Outlined.Lock, contentDescription = null) },
                     modifier = Modifier.fillMaxWidth(),
                 )
-
-                AuthFailureCard(failure = error)
 
                 Spacer(Modifier.height(24.dp))
                 val (accediInteractionSource, accediShape) = rememberPressShrink()
@@ -368,28 +358,18 @@ private fun AlternativeLoginButtonPreview() {
     }
 }
 
-@Preview(showBackground = true, backgroundColor = PreviewBgLowest)
-@Composable
-private fun AuthFailureCardBadCredentialsPreview() {
-    BicoccaTheme(dark = true) {
-        AuthFailureCard(failure = SignInFailure.BadCredentials)
-    }
-}
+// User-visible snackbar copy for a failed sign-in. NoConnection covers both a dead
+// local network and an unreachable/down backend (both surface as IOException), so the
+// copy must not assert it's the user's fault — it offers retry-later as an alternative.
+private fun SignInFailure.toMessage(): String = when (this) {
+    is SignInFailure.BadCredentials ->
+        "Credenziali non valide. Controlla username e password."
 
-@Preview(showBackground = true, backgroundColor = PreviewBgDark)
-@Composable
-private fun AuthFailureCardNoConnectionPreview() {
-    BicoccaTheme(dark = true) {
-        AuthFailureCard(failure = SignInFailure.NoConnection)
-    }
-}
+    is SignInFailure.NoConnection ->
+        "Impossibile raggiungere il server. Controlla la connessione o riprova più tardi."
 
-@Preview(showBackground = true, backgroundColor = PreviewBgLowest)
-@Composable
-private fun AuthFailureCardUnknownPreview() {
-    BicoccaTheme(dark = true) {
-        AuthFailureCard(failure = SignInFailure.Unknown)
-    }
+    is SignInFailure.Unknown ->
+        "Accesso non riuscito. Riprova tra qualche istante."
 }
 
 private val AlternativeLoginPressedColor = Color(0xFF0066CC)
@@ -439,69 +419,5 @@ private fun AlternativeLoginButton(
         )
         Spacer(Modifier.width(12.dp))
         Text(label)
-    }
-}
-
-@Composable
-private fun AuthFailureCard(failure: SignInFailure?) {
-    AnimatedVisibility(
-        visible = failure != null,
-        enter = fadeIn() + expandVertically(),
-        exit = fadeOut() + shrinkVertically(),
-    ) {
-        val (icon, title, body) = when (failure) {
-            is SignInFailure.BadCredentials -> Triple(
-                Icons.Outlined.ErrorOutline,
-                "Credenziali non valide",
-                "Controlla username e password e riprova.",
-            )
-
-            is SignInFailure.NoConnection -> Triple(
-                Icons.Outlined.WifiOff,
-                "Connessione non disponibile",
-                "Controlla la rete e riprova.",
-            )
-
-            is SignInFailure.Unknown, null -> Triple(
-                Icons.Outlined.ErrorOutline,
-                "Accesso non riuscito",
-                "Si è verificato un errore imprevisto. Riprova tra qualche istante.",
-            )
-        }
-        Column {
-            Spacer(Modifier.height(12.dp))
-            Card(
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.errorContainer,
-                ),
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                Row(
-                    verticalAlignment = Alignment.Top,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    modifier = Modifier.padding(14.dp),
-                ) {
-                    Icon(
-                        imageVector = icon,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onErrorContainer,
-                        modifier = Modifier.size(20.dp),
-                    )
-                    Column {
-                        Text(
-                            text = title,
-                            style = MaterialTheme.typography.titleSmall,
-                            color = MaterialTheme.colorScheme.onErrorContainer,
-                        )
-                        Spacer(Modifier.height(2.dp))
-                        Text(
-                            text = body,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onErrorContainer,
-                        )
-                    }
-                }
-            }
-        }
     }
 }

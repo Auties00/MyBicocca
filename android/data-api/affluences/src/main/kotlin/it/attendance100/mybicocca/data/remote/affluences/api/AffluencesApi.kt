@@ -121,6 +121,15 @@ class AffluencesApi(
     val reservations = AffluencesReservationApi(client, json)
 
     /**
+     * API for the personal "my reservations" account flow.
+     *
+     * Provides device check-in, the email-validation handshake, and listing the reservations made
+     * with a validated email across booking channels. Shares the main client and adds the mobile
+     * app headers per request.
+     */
+    val account = AffluencesAccountApi(client, json)
+
+    /**
      * Closes the underlying HTTP client and releases resources.
      *
      * After calling this method, the API instance should not be used.

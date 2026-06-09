@@ -1,0 +1,243 @@
+package it.attendance100.mybicocca.ui.screen.registry.subscreen.appointments.component
+
+import androidx.browser.customtabs.CustomTabsIntent
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.AlternateEmail
+import androidx.compose.material.icons.outlined.CalendarMonth
+import androidx.compose.material.icons.outlined.EventBusy
+import androidx.compose.material.icons.outlined.LocationOn
+import androidx.compose.material.icons.outlined.Videocam
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ButtonGroupDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.core.net.toUri
+import it.attendance100.mybicocca.domain.model.appointment.AppointmentReservation
+import it.attendance100.mybicocca.ui.component.card.DetailFactCard
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.appointments.ext.decodeQrDataUrl
+import java.time.format.DateTimeFormatter
+import java.util.Locale
+
+private val FullDateFormat = DateTimeFormatter.ofPattern("EEEE d MMMM yyyy", Locale.ITALIAN)
+private val TimeFormat = DateTimeFormatter.ofPattern("HH:mm")
+
+// Management page for one desk booking, hosted inside the Appuntamenti sheet pager (the sheet
+// header carries the title): check-in QR, reservation code, recap rows, then PDF download and
+// cancellation pinned at the bottom.
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+internal fun ReservationDetailPage(
+    reservation: AppointmentReservation,
+    isCancelling: Boolean,
+    onCancel: (AppointmentReservation) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val scheme = MaterialTheme.colorScheme
+    val context = LocalContext.current
+
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .heightIn(max = 720.dp)
+            .padding(horizontal = 24.dp)
+            .padding(bottom = 24.dp),
+    ) {
+        Column(
+            modifier = Modifier
+                .weight(1f, fill = false)
+                .verticalScroll(rememberScrollState()),
+        ) {
+            val qr = remember(reservation.qrCodeDataUrl) {
+                reservation.qrCodeDataUrl?.let(::decodeQrDataUrl)
+            }
+            if (qr != null) {
+                Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                    // The QR stays on white in both themes so scanners read it reliably.
+                    Surface(shape = MaterialTheme.shapes.extraLarge, color = Color.White) {
+                        Image(
+                            bitmap = qr,
+                            contentDescription = "QR di check-in",
+                            modifier = Modifier
+                                .padding(16.dp)
+                                .size(200.dp),
+                        )
+                    }
+                }
+                Spacer(Modifier.height(12.dp))
+            }
+
+            Text(
+                text = "Codice ${reservation.code}",
+                style = MaterialTheme.typography.bodySmall,
+                fontFamily = FontFamily.Monospace,
+                fontWeight = FontWeight.SemiBold,
+                color = scheme.onSurfaceVariant,
+                modifier = Modifier.align(Alignment.CenterHorizontally),
+            )
+
+            Spacer(Modifier.height(24.dp))
+
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                DetailFactCard(
+                    icon = Icons.Outlined.CalendarMonth,
+                    label = "APPUNTAMENTO",
+                    value = buildString {
+                        append(
+                            reservation.start.format(FullDateFormat)
+                                .replaceFirstChar { it.titlecase(Locale.ITALIAN) },
+                        )
+                        append(" · ore ")
+                        append(reservation.start.format(TimeFormat))
+                    },
+                )
+                if (reservation.webConferenceUrl != null) {
+                    DetailFactCard(
+                        icon = Icons.Outlined.Videocam,
+                        label = "MODALITÀ",
+                        value = "In videoconferenza",
+                    )
+                } else {
+                    DetailFactCard(
+                        icon = Icons.Outlined.LocationOn,
+                        label = "LUOGO",
+                        value = listOfNotNull(reservation.areaName, reservation.areaAddress)
+                            .joinToString(" · ")
+                            .ifBlank { "Sede da definire" },
+                    )
+                }
+                DetailFactCard(
+                    icon = Icons.Outlined.AlternateEmail,
+                    label = "EMAIL DI PRENOTAZIONE",
+                    value = reservation.email,
+                )
+            }
+
+            Spacer(Modifier.height(24.dp))
+        }
+
+        ActionRow(
+            webConferenceUrl = reservation.webConferenceUrl,
+            isCancelling = isCancelling,
+            onJoinCall = {
+                reservation.webConferenceUrl?.let { url ->
+                    CustomTabsIntent.Builder().setShowTitle(true).build()
+                        .launchUrl(context, url.toUri())
+                }
+            },
+            // Requests the cancel; the hosting sheet shows the in-sheet confirm page.
+            onCancel = { onCancel(reservation) },
+        )
+    }
+}
+
+// When the appointment is a video call: a connected pair — the wider brand half joins the
+// call (same style the PDF button used), the error-tinted half cancels. Otherwise just the
+// full-width cancel button stands alone.
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+private fun ActionRow(
+    webConferenceUrl: String?,
+    isCancelling: Boolean,
+    onJoinCall: () -> Unit,
+    onCancel: () -> Unit,
+) {
+    val scheme = MaterialTheme.colorScheme
+    val dark = isSystemInDarkTheme()
+    val joinBg = if (dark) scheme.primaryContainer else scheme.primary
+    val joinFg = if (dark) scheme.onPrimaryContainer else scheme.onPrimary
+    val hasCall = webConferenceUrl != null
+
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        // Secondary "Annulla" leads on the neutral tonal; the primary "Partecipa" trails on the
+        // brand fill (when there's a call). With no call, Annulla stands alone.
+        FilledTonalButton(
+            onClick = onCancel,
+            enabled = !isCancelling,
+            modifier = Modifier
+                .weight(1f)
+                .height(56.dp),
+            shape = if (hasCall) {
+                ButtonGroupDefaults.connectedLeadingButtonShape
+            } else {
+                ButtonDefaults.filledTonalShape
+            },
+            colors = ButtonDefaults.filledTonalButtonColors(
+                containerColor = scheme.surfaceContainerHighest,
+                contentColor = scheme.onSurface,
+                disabledContainerColor = scheme.surfaceContainerHighest.copy(alpha = 0.55f),
+                disabledContentColor = scheme.onSurface.copy(alpha = 0.55f),
+            ),
+        ) {
+            if (isCancelling) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(20.dp),
+                    strokeWidth = 2.5.dp,
+                    color = scheme.onSurface,
+                )
+            } else {
+                Icon(
+                    imageVector = Icons.Outlined.EventBusy,
+                    contentDescription = null,
+                    modifier = Modifier.size(20.dp),
+                )
+                Spacer(Modifier.width(8.dp))
+                Text("Annulla", fontWeight = FontWeight.SemiBold)
+            }
+        }
+        if (hasCall) {
+            Button(
+                onClick = onJoinCall,
+                enabled = !isCancelling,
+                modifier = Modifier
+                    .weight(1.4f)
+                    .height(56.dp),
+                shape = ButtonGroupDefaults.connectedTrailingButtonShape,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = joinBg,
+                    contentColor = joinFg,
+                ),
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.Videocam,
+                    contentDescription = null,
+                    modifier = Modifier.size(20.dp),
+                )
+                Spacer(Modifier.width(8.dp))
+                Text("Partecipa", fontWeight = FontWeight.SemiBold)
+            }
+        }
+    }
+}

@@ -30,20 +30,23 @@ class AuthViewModel @Inject constructor(
     private val _inflight = MutableStateFlow(false)
     val inflight: StateFlow<Boolean> = _inflight.asStateFlow()
 
-    private val _error = MutableStateFlow<SignInFailure?>(null)
-    val error: StateFlow<SignInFailure?> = _error.asStateFlow()
+    // Persistent field-highlight: the username/password outlines stay red after a
+    // rejected login until the user edits a field. The failure message itself is a
+    // one-shot snackbar (AuthEvent.Failed), not state.
+    private val _credentialsRejected = MutableStateFlow(false)
+    val credentialsRejected: StateFlow<Boolean> = _credentialsRejected.asStateFlow()
 
     private val _events = Channel<AuthEvent>(Channel.BUFFERED)
     val events: Flow<AuthEvent> = _events.receiveAsFlow()
 
     fun setUsername(value: String) {
         _username.value = value
-        clearError()
+        _credentialsRejected.value = false
     }
 
     fun setPassword(value: String) {
         _password.value = value
-        clearError()
+        _credentialsRejected.value = false
     }
 
     fun submit() {
@@ -51,7 +54,7 @@ class AuthViewModel @Inject constructor(
         if (_username.value.isBlank() || _password.value.isBlank()) return
         viewModelScope.launch {
             _inflight.value = true
-            clearError()
+            _credentialsRejected.value = false
             val result = signIn(_username.value, _password.value)
             _inflight.value = false
             when (result) {
@@ -60,7 +63,8 @@ class AuthViewModel @Inject constructor(
                     _events.send(AuthEvent.SignedIn(result.account, result.requiresCareerPick))
                 }
                 is SignInResult.Failure -> {
-                    _error.value = result.reason
+                    _credentialsRejected.value = result.reason is SignInFailure.BadCredentials
+                    _events.send(AuthEvent.Failed(result.reason))
                 }
             }
         }
@@ -69,10 +73,6 @@ class AuthViewModel @Inject constructor(
     fun reset() {
         _username.value = ""
         _password.value = ""
-        clearError()
-    }
-
-    private fun clearError() {
-        _error.value = null
+        _credentialsRejected.value = false
     }
 }

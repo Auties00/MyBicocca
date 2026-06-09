@@ -20,9 +20,9 @@ import it.attendance100.mybicocca.domain.usecase.questionnaire.GetPreviousQuesti
 import it.attendance100.mybicocca.domain.usecase.questionnaire.GetQuestionnaireSummaryUseCase
 import it.attendance100.mybicocca.domain.usecase.questionnaire.SaveQuestionnairePageUseCase
 import it.attendance100.mybicocca.domain.usecase.questionnaire.StartQuestionnaireUseCase
-import it.attendance100.mybicocca.ui.navigation.AppRoute
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.questionnaires.subscreen.compilation.state.QuestionAnswerState
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.questionnaires.subscreen.compilation.state.QuestionnaireCompilationEvent
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.questionnaires.subscreen.compilation.state.QuestionnaireCompilationRequest
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.questionnaires.subscreen.compilation.state.QuestionnaireCompilationStep
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -39,7 +39,7 @@ import kotlinx.coroutines.launch
 // session (start -> pages -> summary -> confirm) lives and dies with this ViewModel.
 @HiltViewModel(assistedFactory = QuestionnaireCompilationViewModel.Factory::class)
 class QuestionnaireCompilationViewModel @AssistedInject constructor(
-    @Assisted private val key: AppRoute.QuestionnaireCompilation,
+    @Assisted private val key: QuestionnaireCompilationRequest,
     private val observeActiveAccount: ObserveActiveAccountUseCase,
     private val startQuestionnaire: StartQuestionnaireUseCase,
     private val savePage: SaveQuestionnairePageUseCase,
@@ -51,13 +51,15 @@ class QuestionnaireCompilationViewModel @AssistedInject constructor(
 
     @AssistedFactory
     interface Factory {
-        fun create(key: AppRoute.QuestionnaireCompilation): QuestionnaireCompilationViewModel
+        fun create(key: QuestionnaireCompilationRequest): QuestionnaireCompilationViewModel
     }
 
+    val anonymous: Boolean get() = key.anonymous
+
+    // Display facets for the hosting sheet's pinned header.
     val activityName: String get() = key.activityName
     val lecturerName: String? get() = key.lecturerName
     val partitionName: String? get() = key.partitionName
-    val anonymous: Boolean get() = key.anonymous
 
     private val _step =
         MutableStateFlow<QuestionnaireCompilationStep>(QuestionnaireCompilationStep.Starting)
@@ -91,6 +93,20 @@ class QuestionnaireCompilationViewModel @AssistedInject constructor(
         if (_step.value is QuestionnaireCompilationStep.StartFailed) start()
     }
 
+    // Discard an in-progress compilation. The VM is sheet-hosted and keyed per unit, so it
+    // outlives the compiler page: leaving without confirming must not replay the stale
+    // session or answers on the next open. Esse3 never resumes drafts, so the abandoned
+    // server session is simply dropped and a fresh one is started.
+    fun reset() {
+        session = null
+        lastPage = null
+        lastPageIndex = 0
+        _answers.value = emptyMap()
+        _invalidQuestionIds.value = emptySet()
+        _working.value = false
+        start()
+    }
+
     fun selectOption(question: QuestionnaireQuestion, option: QuestionnaireOption) {
         val state = _answers.value[question.id] ?: QuestionAnswerState()
         val selected = when (val kind = question.kind) {
@@ -102,7 +118,8 @@ class QuestionnaireCompilationViewModel @AssistedInject constructor(
                 else -> state.selectedOptionIds + option.id
             }
 
-            else -> setOf(option.id)
+            // Re-tapping the selected option clears it, so single-choice answers can be undone.
+            else -> if (option.id in state.selectedOptionIds) emptySet() else setOf(option.id)
         }
         _answers.value = _answers.value + (question.id to state.copy(selectedOptionIds = selected))
         _invalidQuestionIds.value = _invalidQuestionIds.value - question.id

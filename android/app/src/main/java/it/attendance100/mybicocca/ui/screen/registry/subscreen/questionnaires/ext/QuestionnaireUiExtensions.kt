@@ -8,21 +8,6 @@ import java.util.Locale
 val QuestionnaireActivity.displayName: String
     get() = activityName.toDisplayCase()
 
-val QuestionnaireActivity.detailLine: String
-    get() = buildList {
-        activityCode?.takeIf { it.isNotBlank() }?.let(::add)
-        add("${credits.toCompactString()} CFU")
-        attendanceYear?.let { add("${it}/${it + 1}") }
-    }.joinToString(" · ")
-
-val QuestionnaireActivityStatus.label: String
-    get() = when (this) {
-        QuestionnaireActivityStatus.Completed -> "Compilato"
-        QuestionnaireActivityStatus.PartiallyCompleted -> "Parziale"
-        QuestionnaireActivityStatus.ToCompile -> "Da compilare"
-        QuestionnaireActivityStatus.ConfigurationError -> "Non disponibile"
-    }
-
 val QuestionnaireActivityStatus.pending: Boolean
     get() = this == QuestionnaireActivityStatus.ToCompile ||
         this == QuestionnaireActivityStatus.PartiallyCompleted
@@ -32,6 +17,3 @@ fun String.toDisplayCase(): String = trim()
     .joinToString(" ") { word ->
         word.lowercase(Locale.ITALIAN).replaceFirstChar { it.titlecase(Locale.ITALIAN) }
     }
-
-private fun Float.toCompactString(): String =
-    if (this % 1f == 0f) toInt().toString() else toString()

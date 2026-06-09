@@ -90,7 +90,8 @@ fun BookedExamCard(
         onClick = onClick,
         interactionSource = interactionSource,
         modifier = modifier.fillMaxWidth(),
-        color = scheme.surfaceContainerLow,
+        // One step above the sheet's surfaceContainerLow so the card reads on it.
+        color = scheme.surfaceContainer,
         shape = RoundedCornerShape(corner),
     ) {
         Column {

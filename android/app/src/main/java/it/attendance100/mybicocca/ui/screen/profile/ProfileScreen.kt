@@ -19,14 +19,11 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -35,24 +32,15 @@ import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.valueOrNull
 import it.attendance100.mybicocca.domain.model.transcript.TranscriptStats
 import it.attendance100.mybicocca.ui.component.SectionHeader
-import it.attendance100.mybicocca.ui.component.feedback.LocalAppSnackbarController
 import it.attendance100.mybicocca.ui.component.feedback.StatusBar
-import it.attendance100.mybicocca.ui.screen.profile.component.CertificatesSection
-import it.attendance100.mybicocca.ui.screen.profile.component.EnrollmentsEntryCard
 import it.attendance100.mybicocca.ui.screen.profile.component.GradeTrendChart
 import it.attendance100.mybicocca.ui.screen.profile.component.ProgressStatCard
 import it.attendance100.mybicocca.ui.screen.profile.component.SkeletonProfileContent
 import it.attendance100.mybicocca.ui.screen.profile.component.StatCard
 import it.attendance100.mybicocca.ui.screen.profile.component.StudentCard
-import it.attendance100.mybicocca.ui.screen.profile.component.TitlesSection
-import it.attendance100.mybicocca.ui.screen.profile.state.DocumentEvent
-import it.attendance100.mybicocca.ui.screen.profile.subscreen.enrollments.EnrollmentsSheet
 import it.attendance100.mybicocca.ui.screen.profile.subscreen.examsByYear.ExamValueMode
 import it.attendance100.mybicocca.ui.screen.profile.subscreen.examsByYear.ExamsByYearSheet
 import it.attendance100.mybicocca.ui.screen.profile.subscreen.hypotheticalGrade.HypotheticalGradeSheet
-import it.attendance100.mybicocca.ui.screen.registry.subscreen.taxes.openPdfDocument
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.launch
 import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
@@ -78,31 +66,10 @@ fun ProfileScreen(
     val account by viewModel.account.collectAsStateWithLifecycle()
     val activeCareer by viewModel.activeCareer.collectAsStateWithLifecycle()
     val photoFile by viewModel.photoFile.collectAsStateWithLifecycle()
-    val titlesLoadable by viewModel.titles.collectAsStateWithLifecycle()
-    val certificatesLoadable by viewModel.certificates.collectAsStateWithLifecycle()
-    val downloadingCertificates by viewModel.downloadingCertificates.collectAsStateWithLifecycle()
 
     val stats = statsLoadable.valueOrNull()
     val rollup = rollupLoadable.valueOrNull()
     val rows = rowsLoadable.valueOrNull().orEmpty()
-    val titles = titlesLoadable.valueOrNull().orEmpty()
-    val certificates = certificatesLoadable.valueOrNull().orEmpty()
-
-    val snackbar = LocalAppSnackbarController.current
-    val scope = rememberCoroutineScope()
-    val context = LocalContext.current
-
-    LaunchedEffect(viewModel) {
-        viewModel.events.collectLatest { event ->
-            when (event) {
-                is DocumentEvent.ShowMessage -> scope.launch { snackbar.showInfo(event.message) }
-                is DocumentEvent.OpenPdf -> scope.launch {
-                    runCatching { openPdfDocument(context, event.bytes, event.fileName) }
-                        .onFailure { snackbar.showInfo("Nessuna app per aprire i PDF.") }
-                }
-            }
-        }
-    }
 
     // First-load gate is the Room snapshot itself: NotYetLoaded means Room hasn't emitted yet,
     // so we show the skeleton. A refresh over already-loaded data keeps the content on screen.
@@ -112,8 +79,6 @@ fun ProfileScreen(
     var calculatorWeighted by remember { mutableStateOf<Boolean?>(null) }
     // Which exams-by-year modal is open (passed-exam grades vs acquired credits), or null.
     var examsModal by remember { mutableStateOf<ExamValueMode?>(null) }
-    // Whether the annual-enrollment ("Iscrizioni") timeline sheet is open.
-    var showEnrollments by remember { mutableStateOf(false) }
 
     Box(modifier) {
         PullToRefreshBox(
@@ -159,14 +124,6 @@ fun ProfileScreen(
 
                         item {
                             SectionHeader(
-                                title = "Carriera",
-                                modifier = Modifier.padding(bottom = 12.dp),
-                            )
-                            EnrollmentsEntryCard(onClick = { showEnrollments = true })
-                        }
-
-                        item {
-                            SectionHeader(
                                 title = "Statistiche",
                                 modifier = Modifier.padding(bottom = 12.dp),
                             )
@@ -185,30 +142,6 @@ fun ProfileScreen(
                                 modifier = Modifier.padding(bottom = 12.dp),
                             )
                             GradeTrendChart(rows = rows)
-                        }
-
-                        if (titles.isNotEmpty()) {
-                            item {
-                                SectionHeader(
-                                    title = "Titoli",
-                                    modifier = Modifier.padding(bottom = 12.dp),
-                                )
-                                TitlesSection(titles = titles)
-                            }
-                        }
-
-                        if (certificates.isNotEmpty()) {
-                            item {
-                                SectionHeader(
-                                    title = "Certificati",
-                                    modifier = Modifier.padding(bottom = 12.dp),
-                                )
-                                CertificatesSection(
-                                    certificates = certificates,
-                                    downloading = downloadingCertificates,
-                                    onDownload = viewModel::download,
-                                )
-                            }
                         }
                     }
                 }
@@ -234,10 +167,6 @@ fun ProfileScreen(
             onOpenAppelli = onOpenAppelli,
             onDismiss = { examsModal = null },
         )
-    }
-
-    if (showEnrollments) {
-        EnrollmentsSheet(onDismiss = { showEnrollments = false })
     }
 }
 

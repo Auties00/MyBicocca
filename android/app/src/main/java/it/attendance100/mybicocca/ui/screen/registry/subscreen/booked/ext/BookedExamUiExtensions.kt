@@ -2,8 +2,10 @@ package it.attendance100.mybicocca.ui.screen.registry.subscreen.booked.ext
 
 import it.attendance100.mybicocca.domain.model.exam.BookedExam
 import it.attendance100.mybicocca.domain.model.exam.ExamCallType
+import it.attendance100.mybicocca.domain.model.exam.ExamGrade
 import it.attendance100.mybicocca.domain.model.exam.ExamType
 import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 import java.util.Locale
 
@@ -12,6 +14,16 @@ import java.util.Locale
 // title case ("Metodi Algebrici per l'Informatica", "Affidabilità").
 fun BookedExam.displayTitle(): String =
     activityDescription?.takeIf { it.isNotBlank() }?.let { italianTitleCase(it) } ?: "Esame"
+
+// Passate subtitle: when the appello was sat, with a hint while the outcome is still
+// missing. "Sostenuto il 24 feb 2026" / "Sostenuto il 24 feb 2026 · in attesa di esito".
+fun BookedExam.sittingLabel(): String? {
+    val date = examDateTime?.toLocalDate() ?: return null
+    val sat = "Sostenuto il ${date.format(SittingDateFormat)}"
+    return if (outcomePublished || grade != ExamGrade.Unknown) sat else "$sat · in attesa di esito"
+}
+
+private val SittingDateFormat = DateTimeFormatter.ofPattern("d MMM yyyy", Locale.ITALIAN)
 
 fun BookedExam.countdownLabel(today: LocalDate): String? {
     val examDate = examDateTime?.toLocalDate() ?: return null

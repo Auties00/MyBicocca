@@ -5,7 +5,6 @@ import it.attendance100.mybicocca.domain.model.exam.BookExamRequest
 import it.attendance100.mybicocca.domain.model.exam.BookedExam
 import it.attendance100.mybicocca.domain.model.exam.ExamBooking
 import it.attendance100.mybicocca.domain.model.exam.ExamCall
-import it.attendance100.mybicocca.domain.model.exam.ExamCallDetail
 import it.attendance100.mybicocca.domain.model.exam.ExamCallKey
 import it.attendance100.mybicocca.domain.model.exam.ExamResult
 
@@ -14,9 +13,10 @@ import it.attendance100.mybicocca.domain.model.exam.ExamResult
 // on a fresh fetch is preferable to acting on stale state. See project_booking_no_cache.md.
 interface ExamRepository {
 
+    // Carries everything the booking sheet renders (notes, president, booking mode):
+    // the per-appello detail endpoint costs 1.7-4s cold server-side, while the list
+    // response already includes those fields for free. See project_booking_detail_redundant.md.
     suspend fun getExamCalls(careerId: CareerId): List<ExamCall>
-
-    suspend fun getExamCallDetail(careerId: CareerId, key: ExamCallKey): ExamCallDetail
 
     suspend fun bookExam(
         careerId: CareerId,

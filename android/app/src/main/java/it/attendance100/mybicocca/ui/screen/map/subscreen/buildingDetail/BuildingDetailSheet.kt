@@ -24,6 +24,7 @@ import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.CloudOff
 import androidx.compose.material.icons.outlined.Groups
 import androidx.compose.material.icons.outlined.LocationOn
 import androidx.compose.material3.Button
@@ -54,10 +55,13 @@ import it.attendance100.mybicocca.domain.model.map.MapBuilding
 import it.attendance100.mybicocca.domain.model.map.MapRoom
 import it.attendance100.mybicocca.domain.model.map.MapRoomDetail
 import it.attendance100.mybicocca.domain.model.map.RoomScheduleEntry
+import it.attendance100.mybicocca.ui.component.button.RetryButton
+import it.attendance100.mybicocca.ui.component.feedback.friendlyMessage
+import it.attendance100.mybicocca.ui.component.feedback.rememberMinDurationLoading
 import it.attendance100.mybicocca.ui.component.shimmer.ShimmerCircle
 import it.attendance100.mybicocca.ui.screen.map.component.label
-import it.attendance100.mybicocca.ui.screen.map.component.rememberMinDurationLoading
-import it.attendance100.mybicocca.ui.screen.map.component.SheetLoadingIndicator
+import it.attendance100.mybicocca.ui.component.modal.SheetLoadingIndicator
+import it.attendance100.mybicocca.ui.component.modal.SheetMessage
 import it.attendance100.mybicocca.ui.component.modal.SheetPagerHeader
 import it.attendance100.mybicocca.ui.component.modal.sheetPageTransform
 import it.attendance100.mybicocca.ui.screen.map.ext.buildingDisplayName
@@ -85,6 +89,7 @@ fun BuildingDetailSheet(
     onOpen360: (String, String) -> Unit,
     modifier: Modifier = Modifier,
     onBack: (() -> Unit)? = null,
+    onRetryRooms: (() -> Unit)? = null,
 ) {
     val context = LocalContext.current
     val scheduleMap = (daySchedule as? Loadable.Loaded)?.value
@@ -122,6 +127,7 @@ fun BuildingDetailSheet(
                     syncStatus = syncStatus,
                     onRoomClick = onRoomClick,
                     onDirections = { context.openBuildingInMaps(building) },
+                    onRetry = onRetryRooms,
                 )
             } else {
                 RoomDetailPage(
@@ -149,11 +155,13 @@ internal fun BuildingPageBody(
     onRoomClick: (MapRoom) -> Unit,
     modifier: Modifier = Modifier,
     onDirections: (() -> Unit)? = null,
+    onRetry: (() -> Unit)? = null,
 ) {
     // Snapshot "now" each time the schedule lands so free/busy is computed against fresh data.
     val now = remember(daySchedule) { LocalDateTime.now() }
     val scheduleMap = (daySchedule as? Loadable.Loaded)?.value
     val roomList = (rooms as? Loadable.Loaded)?.value
+    val failure = syncStatus as? SyncStatus.Failed
 
     val statusLoading = daySchedule is Loadable.NotYetLoaded
     // The shimmer drives an infinite animation — only materialize it while its placeholders
@@ -181,6 +189,13 @@ internal fun BuildingPageBody(
     // here instead of letting the modal snap to the new size.
     Column(modifier = modifier.fillMaxWidth().animateContentSize(animationSpec = sizeSpec)) {
         when {
+            roomList.isNullOrEmpty() && failure != null -> SheetMessage(
+                icon = Icons.Outlined.CloudOff,
+                title = "Caricamento aule non riuscito",
+                body = failure.cause.friendlyMessage(),
+                action = onRetry?.let { { RetryButton(onClick = it) } },
+            )
+
             showLoading -> SheetLoadingIndicator(label = "Caricamento aule…")
 
             roomList.isNullOrEmpty() -> Text(

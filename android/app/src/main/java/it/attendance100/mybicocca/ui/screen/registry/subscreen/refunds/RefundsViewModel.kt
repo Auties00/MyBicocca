@@ -51,12 +51,6 @@ class RefundsViewModel @Inject constructor(
         viewModelScope.launch { fetch(careerId) }
     }
 
-    fun pullToRefresh() {
-        val careerId = activeCareerId.value ?: return
-        _refunds.value = Loadable.NotYetLoaded
-        viewModelScope.launch { fetch(careerId) }
-    }
-
     private suspend fun fetch(careerId: CareerId) {
         if (!refreshMutex.tryLock()) return
         try {

@@ -4,7 +4,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -12,7 +11,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -23,6 +21,7 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material.icons.outlined.CloudOff
 import androidx.compose.material.icons.outlined.EventBusy
+import androidx.compose.material.icons.outlined.HistoryEdu
 import androidx.compose.material.icons.outlined.WarningAmber
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -39,6 +38,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -51,24 +51,26 @@ import it.attendance100.mybicocca.domain.model.transcript.CourseAttempt
 import it.attendance100.mybicocca.domain.model.transcript.CourseDetail
 import it.attendance100.mybicocca.domain.model.transcript.PrerequisiteStatus
 import it.attendance100.mybicocca.domain.model.transcript.TranscriptRow
-import it.attendance100.mybicocca.ui.component.modal.PredictiveModalBottomSheet
+import it.attendance100.mybicocca.ui.component.button.RetryButton
+import it.attendance100.mybicocca.ui.component.feedback.EmptyState
 import it.attendance100.mybicocca.ui.screen.registry.state.RegistryBadgeTone
 import it.attendance100.mybicocca.ui.screen.registry.theme.registryBadgeTone
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
-private val PassedGreen = androidx.compose.ui.graphics.Color(0xFF1FA84B)
+private val PassedGreen = Color(0xFF1FA84B)
 private val FullDateFormat = DateTimeFormatter.ofPattern("d MMMM yyyy", Locale.ITALIAN)
 
-// Nested sheet (opened on top of the libretto modal) with everything we have on one
-// course: summary, exam outcome if passed, propedeuticità, the attempt timeline, and
-// a bottom CTA to its appelli. `onOpenAppelli` is the cross-screen deep-link entry.
+// Body page for a single libretto course, hosted as the depth-1 page of the exams sheet's
+// in-sheet pager. The course name/code ride the sheet's morphing header, so this page renders
+// only the outcome, propedeuticità, the attempt cards (or empty state), and the bottom appelli
+// CTA. Detail is fetched lazily and is NOT cached (live fetch, throws -> SyncStatus.Failed).
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-fun CourseDetailSheet(
+fun CourseDetailPage(
     row: TranscriptRow,
     onOpenAppelli: (courseKey: String) -> Unit,
-    onDismiss: () -> Unit,
+    modifier: Modifier = Modifier,
     viewModel: CourseDetailViewModel = hiltViewModel(),
 ) {
     val detail by viewModel.detail.collectAsStateWithLifecycle()
@@ -78,89 +80,38 @@ fun CourseDetailSheet(
         viewModel.load(activityChoiceId = row.id, alreadyPassed = row.passed)
     }
 
-    PredictiveModalBottomSheet(
-        onDismiss = onDismiss,
-        sizeDuration = 500,
-    ) { _, _ ->
-        Column(
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 20.dp),
+    ) {
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 20.dp),
+                .heightIn(min = 120.dp, max = 480.dp),
         ) {
-            CourseHeader(row = row)
-            Spacer(Modifier.height(16.dp))
-
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(min = 120.dp)
-                    .weight(1f, fill = false),
-            ) {
-                when (val data = detail) {
-                    Loadable.NotYetLoaded -> when (val status = syncStatus) {
-                        is SyncStatus.Failed -> DetailError(
-                            onRetry = { viewModel.retry(row.id, row.passed) },
-                        )
-                        else -> Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .heightIn(min = 160.dp),
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            LoadingIndicator(modifier = Modifier.size(52.dp))
-                        }
-                    }
-
-                    is Loadable.Loaded -> CourseBody(
-                        row = row,
-                        detail = data.value,
-                        scrollable = true,
+            when (val data = detail) {
+                Loadable.NotYetLoaded -> when (val status = syncStatus) {
+                    is SyncStatus.Failed -> DetailError(
+                        onRetry = { viewModel.retry(row.id, row.passed) },
                     )
+                    else -> Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(min = 160.dp),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        LoadingIndicator(modifier = Modifier.size(52.dp))
+                    }
                 }
+
+                is Loadable.Loaded -> CourseBody(row = row, detail = data.value)
             }
-
-            Spacer(Modifier.height(12.dp))
-            AppelliButton(row = row, detail = (detail as? Loadable.Loaded)?.value, onOpenAppelli = onOpenAppelli)
-            Spacer(Modifier.height(8.dp))
         }
-    }
-}
 
-@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
-@Composable
-private fun CourseHeader(row: TranscriptRow) {
-    val scheme = MaterialTheme.colorScheme
-    Column {
-        Text(
-            text = row.activityName,
-            style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.Bold,
-            color = scheme.onSurface,
-        )
+        Spacer(Modifier.height(12.dp))
+        AppelliButton(row = row, detail = (detail as? Loadable.Loaded)?.value, onOpenAppelli = onOpenAppelli)
         Spacer(Modifier.height(8.dp))
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            row.activityCode?.let { InfoChip(it) }
-            InfoChip(creditsLabel(row.credits))
-            InfoChip(if (row.courseYear <= 0) "Prerequisiti" else "Anno ${row.courseYear}")
-            row.examType?.let { InfoChip(it) }
-            InfoChip(stateLabel(row))
-        }
-    }
-}
-
-@Composable
-private fun InfoChip(text: String) {
-    val scheme = MaterialTheme.colorScheme
-    Surface(
-        color = scheme.surfaceContainerHighest,
-        shape = RoundedCornerShape(100),
-    ) {
-        Text(
-            text = text,
-            style = MaterialTheme.typography.labelMedium,
-            color = scheme.onSurfaceVariant,
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-        )
     }
 }
 
@@ -168,13 +119,11 @@ private fun InfoChip(text: String) {
 private fun CourseBody(
     row: TranscriptRow,
     detail: CourseDetail,
-    scrollable: Boolean,
 ) {
-    val scrollModifier = if (scrollable) Modifier.verticalScroll(rememberScrollState()) else Modifier
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .then(scrollModifier),
+            .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         if (row.passed) OutcomeCard(row = row)
@@ -186,13 +135,28 @@ private fun CourseBody(
 
         if (detail.attempts.isNotEmpty()) {
             SectionLabel("Prove sostenute")
-            detail.attempts.forEach { attempt -> AttemptRow(attempt = attempt) }
+            // Each prova is its own segmented card, same group language as the exam list.
+            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                detail.attempts.forEachIndexed { index, attempt ->
+                    AttemptCard(
+                        attempt = attempt,
+                        isFirst = index == 0,
+                        isLast = index == detail.attempts.lastIndex,
+                    )
+                }
+            }
         } else if (!row.passed) {
-            Text(
-                text = "Nessuna prova registrata per questo insegnamento.",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(360.dp),
+            ) {
+                EmptyState(
+                    icon = Icons.Outlined.HistoryEdu,
+                    title = "Nessuna prova registrata",
+                    body = "Non risultano prove registrate per questo insegnamento.",
+                )
+            }
         }
     }
 }
@@ -268,48 +232,63 @@ private fun PrerequisiteWarning() {
     }
 }
 
+// Segmented M3E group: 28dp corners cap the group's ends, 6dp where cards touch.
 @Composable
-private fun AttemptRow(attempt: CourseAttempt) {
+private fun AttemptCard(
+    attempt: CourseAttempt,
+    isFirst: Boolean,
+    isLast: Boolean,
+) {
     val scheme = MaterialTheme.colorScheme
     val outcome = attempt.bestOutcome
     val passed = outcome?.passed == true
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp)),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    val shape = RoundedCornerShape(
+        topStart = if (isFirst) 28.dp else 6.dp,
+        topEnd = if (isFirst) 28.dp else 6.dp,
+        bottomStart = if (isLast) 28.dp else 6.dp,
+        bottomEnd = if (isLast) 28.dp else 6.dp,
+    )
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = shape,
+        color = scheme.surfaceContainer,
     ) {
-        Box(
-            modifier = Modifier
-                .size(10.dp)
-                .clip(CircleShape)
-                .background(if (passed) PassedGreen else scheme.outlineVariant),
-        )
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = attempt.callDate?.format(FullDateFormat)?.replaceFirstChar { it.uppercase() }
-                    ?: attempt.sessionDescription
-                    ?: "Prova",
-                style = MaterialTheme.typography.bodyMedium,
-                color = scheme.onSurface,
+        Row(
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(10.dp)
+                    .clip(CircleShape)
+                    .background(if (passed) PassedGreen else scheme.outlineVariant),
             )
-            val subtitle = attempt.statusDescription ?: attempt.sessionDescription
-            subtitle?.let {
+            Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = it,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = scheme.onSurfaceVariant,
+                    text = attempt.callDate?.format(FullDateFormat)?.replaceFirstChar { it.uppercase() }
+                        ?: attempt.sessionDescription
+                        ?: "Prova",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = scheme.onSurface,
+                )
+                val subtitle = attempt.statusDescription ?: attempt.sessionDescription
+                subtitle?.let {
+                    Text(
+                        text = it,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = scheme.onSurfaceVariant,
+                    )
+                }
+            }
+            attemptOutcomeLabel(outcome)?.let { label ->
+                Text(
+                    text = label,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = if (passed) scheme.onSurface else scheme.onSurfaceVariant,
                 )
             }
-        }
-        attemptOutcomeLabel(outcome)?.let { label ->
-            Text(
-                text = label,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = if (passed) scheme.onSurface else scheme.onSurfaceVariant,
-            )
         }
     }
 }
@@ -337,7 +316,7 @@ private fun AppelliButton(
             shape = RoundedCornerShape(100),
             colors = ButtonDefaults.buttonColors(
                 containerColor = scheme.primary,
-                contentColor = androidx.compose.ui.graphics.Color.White,
+                contentColor = Color.White,
             ),
         ) {
             Icon(
@@ -418,19 +397,8 @@ private fun DetailError(onRetry: () -> Unit) {
             textAlign = TextAlign.Center,
         )
         Spacer(Modifier.height(12.dp))
-        FilledTonalButton(onClick = onRetry) { Text("Riprova") }
+        RetryButton(onClick = onRetry)
     }
-}
-
-private fun creditsLabel(value: Float): String {
-    val asInt = value.toInt()
-    val text = if (value == asInt.toFloat()) asInt.toString() else "%.1f".format(value)
-    return "$text CFU"
-}
-
-private fun stateLabel(row: TranscriptRow): String = when {
-    row.passed -> "Superato"
-    else -> "Da sostenere"
 }
 
 private fun gradeLabel(row: TranscriptRow): String = when {

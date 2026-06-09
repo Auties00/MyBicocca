@@ -14,9 +14,10 @@ enum class SearchDestination {
     BookedExams,
     StudyPlan,
     Attendance,
-    Internships,
     Questionnaires,
-    DegreeAward,
-    Reservations,
+    Appointments,
+    Enrollments,
+    Titles,
+    Certificates,
     Messaging,
 }

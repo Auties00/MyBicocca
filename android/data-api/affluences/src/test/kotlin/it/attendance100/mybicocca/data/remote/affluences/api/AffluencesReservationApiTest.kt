@@ -18,8 +18,6 @@ class AffluencesReservationApiTest : AffluencesTestBase() {
         private val DATE_REGEX = Regex("""\d{4}-\d{2}-\d{2}""")
     }
 
-    // The booking filters drive most read tests: they expose the open days, hours, and
-    // resources the other endpoints expect as input
     private suspend fun firstResourceTypeFilters(): AffluencesResourceTypeFilters {
         val info = api.reservations.getReservationInfo(CENTRAL_LIBRARY_ID)
         assertTrue(info.types.isNotEmpty(), "The central library should have bookable resource types")
@@ -136,10 +134,6 @@ class AffluencesReservationApiTest : AffluencesTestBase() {
         assertEquals(resourceId, status.resource.resourceId, "Resource detail should match the requested resource")
         assertEquals(CENTRAL_LIBRARY_ID, status.resource.siteUuid, "Resource should belong to the central library")
     }
-
-    // The write endpoints are exercised against the live server with payloads the backend
-    // deterministically rejects: this covers request serialization, the call path, and error
-    // translation without ever creating a real booking
 
     @Test
     suspend fun createReservationWithInvalidEmailThrows() {

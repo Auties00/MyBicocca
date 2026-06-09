@@ -54,12 +54,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import it.attendance100.mybicocca.domain.model.search.SearchDestination
 import it.attendance100.mybicocca.domain.model.search.SearchResult
 import it.attendance100.mybicocca.domain.model.search.SearchResultCategory
 import it.attendance100.mybicocca.ui.component.bar.fadeThroughExpanded
 import it.attendance100.mybicocca.ui.component.feedback.EmptyState
-import it.attendance100.mybicocca.ui.screen.search.component.SearchAiCard
 import it.attendance100.mybicocca.ui.screen.search.component.SearchHistoryRow
 import it.attendance100.mybicocca.ui.screen.search.component.SearchResultRow
 import it.attendance100.mybicocca.ui.screen.search.subscreen.dictation.DictationDialog
@@ -80,14 +78,11 @@ fun SearchOverlay(
     subPageProgress: Float,
     topInset: Dp,
     onOpenResult: (SearchResult) -> Unit,
-    onOpenDestination: (SearchDestination) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val query by viewModel.query.collectAsStateWithLifecycle()
     val results by viewModel.results.collectAsStateWithLifecycle()
     val history by viewModel.history.collectAsStateWithLifecycle()
-    val aiSuggestion by viewModel.aiSuggestion.collectAsStateWithLifecycle()
-    val aiLoading by viewModel.aiLoading.collectAsStateWithLifecycle()
     val dictating by viewModel.dictating.collectAsStateWithLifecycle()
     val soundLevel by viewModel.soundLevel.collectAsStateWithLifecycle()
 
@@ -220,18 +215,6 @@ fun SearchOverlay(
                         }
                     }
                 } else {
-                    if (aiLoading || aiSuggestion != null) {
-                        item(key = "ai-card") {
-                            SearchAiCard(
-                                loading = aiLoading,
-                                suggestion = aiSuggestion,
-                                onOpenTarget = {
-                                    aiSuggestion?.target?.let(onOpenDestination)
-                                },
-                                modifier = Modifier.padding(top = 8.dp),
-                            )
-                        }
-                    }
                     if (results.isEmpty()) {
                         item(key = "no-results") {
                             Box(Modifier.fillParentMaxSize()) {

@@ -4,9 +4,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import it.attendance100.mybicocca.data.local.settings.SecuritySettingsStore
-import it.attendance100.mybicocca.manager.AppLockManager
-import it.attendance100.mybicocca.manager.AppLockVerifier
-import it.attendance100.mybicocca.manager.UnlockResult
+import it.attendance100.mybicocca.domain.model.security.UnlockResult
+import it.attendance100.mybicocca.domain.usecase.security.UnlockAppUseCase
+import it.attendance100.mybicocca.domain.usecase.security.VerifyAppLockPasswordUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -18,8 +18,8 @@ import javax.inject.Inject
 @HiltViewModel
 class SettingsSecurityViewModel @Inject constructor(
     private val store: SecuritySettingsStore,
-    private val verifier: AppLockVerifier,
-    private val appLockManager: AppLockManager,
+    private val verifyAppLockPassword: VerifyAppLockPasswordUseCase,
+    private val unlockApp: UnlockAppUseCase,
 ) : ViewModel() {
 
     val enabled: StateFlow<Boolean> = store.appLockEnabled
@@ -34,14 +34,12 @@ class SettingsSecurityViewModel @Inject constructor(
     private val _verifying = MutableStateFlow(false)
     val verifying: StateFlow<Boolean> = _verifying.asStateFlow()
 
-    /**
-     * Commits the master toggle after the change has been authorized. Treated as an unlock so
-     * enabling the lock doesn't immediately re-challenge the user who just authenticated.
-     */
+    // Commits the master toggle after the change has been authorized. Treated as an unlock so
+    // enabling the lock doesn't immediately re-challenge the user who just authenticated.
     fun setEnabled(enabled: Boolean) {
         viewModelScope.launch {
             store.setAppLockEnabled(enabled)
-            appLockManager.unlock()
+            unlockApp()
         }
     }
 
@@ -53,12 +51,12 @@ class SettingsSecurityViewModel @Inject constructor(
         viewModelScope.launch { store.setSecureScreenEnabled(enabled) }
     }
 
-    /** Password-fallback authorization for the toggle. */
+    // Password-fallback authorization for the toggle.
     fun verifyPassword(password: String, onResult: (UnlockResult) -> Unit) {
         if (_verifying.value) return
         viewModelScope.launch {
             _verifying.value = true
-            val result = verifier.verifyPassword(password)
+            val result = verifyAppLockPassword(password)
             _verifying.value = false
             onResult(result)
         }

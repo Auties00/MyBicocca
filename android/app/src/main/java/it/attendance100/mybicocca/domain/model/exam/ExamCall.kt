@@ -18,8 +18,18 @@ data class ExamCall(
     val state: String?,
     val stateDescription: String?,
     val callType: ExamCallType,
+    val examType: ExamType,
     val isReserved: Boolean,
     val matId: Long?,
+    val notes: String?,
+    val president: ExamExaminer?,
+    val bookingTypeDescription: String?,
+)
+
+data class ExamExaminer(
+    val id: Long?,
+    val name: String?,
+    val surname: String?,
 )
 
 data class ExamEnrollmentWindow(

@@ -33,7 +33,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.ui.component.shape.DynamicCard
-import it.attendance100.mybicocca.ui.screen.registry.subscreen.taxes.state.TaxesSharedElement
 import it.attendance100.mybicocca.ui.theme.BicoccaWordmarkAccent
 import java.text.NumberFormat
 import java.time.LocalDate
@@ -75,7 +74,6 @@ data class InvoiceItem(
 fun Invoice(
     invoice: InvoiceData,
     modifier: Modifier = Modifier,
-    sharedTaxId: Long? = null,
 ) {
     DynamicCard(
         topSliceRes = R.drawable.border_outer,
@@ -96,7 +94,7 @@ fun Invoice(
                     .fillMaxWidth()
                     .padding(horizontal = 24.dp),
             ) {
-                TicketHeader(invoice, sharedTaxId)
+                TicketHeader(invoice)
 
                 DashedDivider()
 
@@ -134,7 +132,6 @@ fun Invoice(
                     value = formatCurrency(invoice.amount),
                     isLarge = true,
                     verticalPadding = 6.dp,
-                    valueModifier = Modifier.taxSharedDetailElement(sharedTaxId, TaxesSharedElement.Amount),
                 )
 
                 Spacer(modifier = Modifier.height(24.dp))
@@ -147,7 +144,6 @@ fun Invoice(
                     text = invoice.description,
                     fontWeight = FontWeight.Bold,
                     fontSize = 18.sp,
-                    modifier = Modifier.taxSharedDetailElement(sharedTaxId, TaxesSharedElement.Description),
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -165,7 +161,7 @@ fun Invoice(
 }
 
 @Composable
-private fun TicketHeader(invoice: InvoiceData, sharedTaxId: Long?) {
+private fun TicketHeader(invoice: InvoiceData) {
     val isDarkMode = isSystemInDarkTheme()
 
     Row(
@@ -195,7 +191,6 @@ private fun TicketHeader(invoice: InvoiceData, sharedTaxId: Long?) {
                 color = if (invoice.paymentDate != null) Color.Unspecified else MaterialTheme.colorScheme.primary,
                 textAlign = TextAlign.End,
                 fontWeight = if (invoice.paymentDate != null) FontWeight.Normal else FontWeight.Black,
-                modifier = Modifier.taxSharedDetailElement(sharedTaxId, TaxesSharedElement.Status),
             )
             Spacer(modifier = Modifier.height(32.dp))
 
@@ -203,7 +198,6 @@ private fun TicketHeader(invoice: InvoiceData, sharedTaxId: Long?) {
                 text = "Fattura ${invoice.invoiceNumber}",
                 fontWeight = FontWeight.Bold,
                 fontSize = 20.sp,
-                modifier = Modifier.taxSharedDetailElement(sharedTaxId, TaxesSharedElement.InvoiceNumber),
             )
         }
     }

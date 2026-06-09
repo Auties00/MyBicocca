@@ -15,11 +15,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.FilledTonalIconButton
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -51,6 +47,7 @@ import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.SyncStatus
 import it.attendance100.mybicocca.core.state.valueOrNull
 import it.attendance100.mybicocca.domain.model.elearning.course.CourseId
+import it.attendance100.mybicocca.ui.component.button.RetryButton
 import it.attendance100.mybicocca.ui.screen.elearning.theme.LocalCourseAccentPalette
 import it.attendance100.mybicocca.ui.screen.elearning.theme.ProvideCourseAccentPalette
 import it.attendance100.mybicocca.ui.screen.elearning.theme.accentFor
@@ -252,12 +249,7 @@ private fun VideoSurface(
                         color = Color.White,
                         style = MaterialTheme.typography.titleMedium,
                     )
-                    FilledTonalIconButton(onClick = onRetry) {
-                        Icon(
-                            imageVector = Icons.Outlined.Refresh,
-                            contentDescription = "Riprova",
-                        )
-                    }
+                    RetryButton(onClick = onRetry)
                 }
             }
             showBufferingIndicator -> {

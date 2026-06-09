@@ -10,7 +10,7 @@ This module provides type-safe API clients for integrating with the university's
 
 | Module      | Platform                                                                       | Description                                                |
 |-------------|--------------------------------------------------------------------------------|------------------------------------------------------------|
-| `esse3`     | [Segreterie OnLine](https://s3w.si.unimib.it)                                  | Student administration (grades, exams, taxes, internships) |
+| `esse3`     | [Segreterie OnLine](https://s3w.si.unimib.it)                                  | Student administration (grades, exams, taxes)              |
 | `elearning` | [Moodle](https://elearning.unimib.it)                                          | E-learning platform (courses, assignments, quizzes)        |
 | `easystaff` | [Agenda Web](https://gestioneorari.didattica.unimib.it)                        | Scheduling system (lessons, exams, rooms)                  |
 | `bicoccapp` | [BicoccApp](https://play.google.com/store/apps/details?id=it.bicoccapp.unimib) | Official app backend API                                   |
@@ -108,7 +108,6 @@ api.close()
 | `career`         | Libretto, study plan, evaluations |
 | `exams`          | Sessions, reservations, results   |
 | `taxes`          | Bills, payments, receipts         |
-| `internships`    | Search, applications, companies   |
 | `questionnaires` | Course evaluations, surveys       |
 
 ### ElearningApi

@@ -9,4 +9,6 @@ data class SessionAttendance(
     val recordedPercentage: Double?,
     val totalSessions: Int?,
     val overallPercentage: Double?,
+    val pointsLabel: String? = null,
+    val bestPossiblePercentage: Double? = null,
 )

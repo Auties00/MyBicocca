@@ -6,6 +6,7 @@ plugins {
     id("com.google.devtools.ksp")
     id("com.google.dagger.hilt.android")
     id("org.jetbrains.kotlin.plugin.serialization")
+    id("com.google.gms.google-services")
 }
 
 // Android config
@@ -86,6 +87,7 @@ dependencies {
     // Data API modules
     implementation("it.attendance100.mybicocca.data.remote:esse3:1.0")
     implementation("it.attendance100.mybicocca.data.remote:easystaff:1.0")
+    implementation("it.attendance100.mybicocca.data.remote:affluences:1.0")
     implementation("it.attendance100.mybicocca.data.remote:elearning:1.0")
     // Legacy Esse3 web-scrape client (Shibboleth SAML cookie session) for the
     // Struts (.do) flows with no REST surface, e.g. certificati / autocertificazioni.
@@ -163,10 +165,8 @@ dependencies {
     // Kotlinx Serialization (for Room type converters)
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.1")
 
-    // ML Kit GenAI (Gemini Nano on supported devices): search-query interpretation + dictation.
-    // Both self-gate at runtime — unsupported devices fall back to deterministic search and
-    // the platform SpeechRecognizer.
-    implementation("com.google.mlkit:genai-prompt:1.0.0-beta2")
+    // ML Kit GenAI (Gemini Nano on supported devices): voice dictation. Self-gates at
+    // runtime — unsupported devices fall back to the platform SpeechRecognizer.
     implementation("com.google.mlkit:genai-speech-recognition:1.0.0-alpha1")
 
     // Jsoup — HTML parsing of the syllabus htmlContent the Moodle public-info
@@ -177,6 +177,13 @@ dependencies {
     // Ktor
     implementation("io.ktor:ktor-io:3.3.3")
     implementation("io.ktor:ktor-client-core:3.3.3")
+
+    // Firebase Performance Monitoring — live HTTP-request timing. We instrument requests
+    // manually through the HttpMetrics Ktor plugin, so the firebase-perf Gradle plugin
+    // (build-time auto-instrumentation) is intentionally NOT applied: it doesn't catch
+    // Ktor calls anyway, and its AGP support lags this project's AGP.
+    implementation(platform("com.google.firebase:firebase-bom:34.4.0"))
+    implementation("com.google.firebase:firebase-perf")
 
     // Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
@@ -220,4 +227,12 @@ dependencies {
 
     // Device Type detection for UI adaptations
     implementation("androidx.compose.material3:material3-window-size-class:1.4.0")
+
+    // CameraX + ML Kit barcode — in-app QR scanner for "Rileva presenza".
+    val cameraX = "1.4.2"
+    implementation("androidx.camera:camera-core:$cameraX")
+    implementation("androidx.camera:camera-camera2:$cameraX")
+    implementation("androidx.camera:camera-lifecycle:$cameraX")
+    implementation("androidx.camera:camera-view:$cameraX")
+    implementation("com.google.mlkit:barcode-scanning:17.3.0")
 }

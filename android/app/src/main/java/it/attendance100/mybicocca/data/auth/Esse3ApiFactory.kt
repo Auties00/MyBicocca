@@ -4,6 +4,7 @@ import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.defaultRequest
 import io.ktor.client.request.header
 import it.attendance100.mybicocca.data.local.credentials.AccountCredentials
+import it.attendance100.mybicocca.data.observability.HttpMetrics
 import it.attendance100.mybicocca.data.remote.esse3.api.Esse3Api
 import java.util.Base64
 import javax.inject.Inject
@@ -32,6 +33,7 @@ class Esse3ApiFactory @Inject constructor() {
             this.refresh = refresh
             this.onReauthRequired = onReauthRequired
         }
+        install(HttpMetrics)
     }
 
     private companion object {

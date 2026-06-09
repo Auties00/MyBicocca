@@ -43,13 +43,12 @@ class SearchDestinationsUseCase @Inject constructor() {
                 listOf("segreterie", "segreteria", "sportello"),
             ),
             Entry(
-                // Libretto/carriera and titoli/certificati moved into the Profile page, so their
-                // search terms live here.
+                // Libretto/carriera stats live in the Profile page, so their search terms
+                // resolve here.
                 SearchDestination.Profile, "Profilo", null,
                 listOf(
                     "account", "media", "statistiche", "matricola",
                     "carriera", "libretto", "esami sostenuti", "crediti", "cfu",
-                    "titoli", "certificati", "autodichiarazioni", "autocertificazione",
                 ),
             ),
             Entry(
@@ -73,20 +72,24 @@ class SearchDestinationsUseCase @Inject constructor() {
                 listOf("frequenza", "frequenze", "presenza"),
             ),
             Entry(
-                SearchDestination.Internships, "Stage", "Servizi",
-                listOf("tirocini", "tirocinio", "internship"),
-            ),
-            Entry(
                 SearchDestination.Questionnaires, "Questionari", "Servizi",
                 listOf("questionario", "valutazione didattica"),
             ),
             Entry(
-                SearchDestination.DegreeAward, "Conseguimento Titolo", "Servizi",
-                listOf("laurea", "tesi", "titolo", "conseguimento"),
+                SearchDestination.Appointments, "Appuntamenti", "Servizi",
+                listOf("appuntamento", "sportello", "prenotazione", "ritiro badge", "pergamena"),
             ),
             Entry(
-                SearchDestination.Reservations, "Prenotazioni", "Servizi",
-                listOf("prenotazione", "appuntamenti"),
+                SearchDestination.Enrollments, "Iscrizioni", "Servizi",
+                listOf("iscrizione", "rinnovo", "rinnovo iscrizione", "immatricolazione"),
+            ),
+            Entry(
+                SearchDestination.Titles, "Titoli", "Servizi",
+                listOf("titoli di studio", "maturità", "diploma"),
+            ),
+            Entry(
+                SearchDestination.Certificates, "Certificati", "Servizi",
+                listOf("certificato", "autodichiarazioni", "autocertificazione"),
             ),
             Entry(
                 SearchDestination.Messaging, "Messaggi", "E-learning",

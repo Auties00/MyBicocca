@@ -14,9 +14,10 @@ import it.attendance100.mybicocca.domain.usecase.account.ObserveActiveAccountUse
 import it.attendance100.mybicocca.domain.usecase.studyplan.GetStudyPathUseCase
 import it.attendance100.mybicocca.domain.usecase.studyplan.GetStudyPlanPrintUseCase
 import it.attendance100.mybicocca.domain.usecase.studyplan.GetStudyPlanUseCase
-import it.attendance100.mybicocca.domain.usecase.studyplan.IsStudyPlanEditableUseCase
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.studyPlan.state.StudyPlanEvent
+import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -38,12 +39,13 @@ import kotlin.coroutines.cancellation.CancellationException
 class StudyPlanViewModel @Inject constructor(
     private val getStudyPlan: GetStudyPlanUseCase,
     private val getStudyPath: GetStudyPathUseCase,
-    private val isStudyPlanEditable: IsStudyPlanEditableUseCase,
     private val getStudyPlanPrint: GetStudyPlanPrintUseCase,
     observeActiveAccount: ObserveActiveAccountUseCase,
 ) : ViewModel() {
 
-    private val activeCareerId: StateFlow<CareerId?> = observeActiveAccount()
+    // Exposed for the no-plan entry: the edit route needs a studentId (== careerId)
+    // even when there's no plan to take it from.
+    val activeCareerId: StateFlow<CareerId?> = observeActiveAccount()
         .map { it?.academic?.selectedCareerId }
         .distinctUntilChanged()
         .stateIn(viewModelScope, SharingStarted.Eagerly, null)
@@ -84,13 +86,6 @@ class StudyPlanViewModel @Inject constructor(
         viewModelScope.launch { fetch(careerId) }
     }
 
-    fun pullToRefresh() {
-        val careerId = activeCareerId.value ?: return
-        _plan.value = Loadable.NotYetLoaded
-        _studyPath.value = Loadable.NotYetLoaded
-        viewModelScope.launch { fetch(careerId) }
-    }
-
     fun printPlan() {
         val careerId = activeCareerId.value ?: return
         val planId = _plan.value.valueOrNull()?.planId ?: return
@@ -110,51 +105,30 @@ class StudyPlanViewModel @Inject constructor(
         }
     }
 
-    // Selecting a different path option means recompiling the plan against the chosen
-    // schema and POSTing it to /piani/{stuId} — the same mutating endpoint the plan
-    // editor uses. It is only ever reachable when a window is open AND >1 distinct option
-    // exists (UI-gated) and re-checked here.
-    //
-    // TODO: wire the real submit once it can be exercised on a multi-percorso account.
-    //  The flow is: getStudyPlanDraft(careerId, planId=null, regsceId, schemaId) to build
-    //  the rules for the picked schema (pre-selecting mandatory + carry-over activities),
-    //  then submitStudyPlan(careerId, rules) which POSTs Esse3PostPlanBody(type="S",
-    //  state="P", cancelValidPlanFlag=true, activity=[...]) to /piani/{stuId}. Left as a
-    //  read-only preview for now to avoid a destructive POST during testing.
-    fun chooseStudyPath(schemaId: Long) {
-        val path = _studyPath.value.valueOrNull() ?: return
-        if (!path.choiceAvailable) return
-        if (path.options.none { it.schemaId == schemaId }) return
-        if (_actionInProgress.value) return
-        viewModelScope.launch {
-            _events.send(
-                StudyPlanEvent.ShowMessage("Il cambio percorso non è ancora disponibile in app.")
-            )
-        }
-    }
-
     private suspend fun fetch(careerId: CareerId) {
         if (!refreshMutex.tryLock()) return
         try {
             _syncStatus.value = SyncStatus.Refreshing
-            runCatching { getStudyPlan(careerId) }.fold(
-                onSuccess = { plan ->
-                    _plan.value = Loadable.Loaded(plan)
-                    _syncStatus.value = SyncStatus.Idle
-                    // Secondary: a failed window lookup must not surface as a page error,
-                    // it just keeps the edit action disabled. Debug builds force the edit
-                    // action on so the editor can be exercised outside compilation windows.
-                    _editable.value = BuildConfig.DEBUG || (plan?.choiceRegulationId?.let { regulationId ->
-                        runCatching { isStudyPlanEditable(regulationId) }.getOrDefault(false)
-                    } ?: false)
-                },
-                onFailure = { cause -> _syncStatus.value = SyncStatus.Failed(cause) },
-            )
-            // Secondary stream: the path section degrades to "non disponibile" on failure
-            // rather than failing the whole page.
-            _studyPath.value = Loadable.Loaded(
-                runCatching { getStudyPath(careerId) }.getOrNull()
-            )
+            coroutineScope {
+                // Plan and path fan out together so the sheet paints once, complete —
+                // the path must never pop in after the header is already on screen.
+                // A failed path lookup degrades silently (Loaded(null)) rather than
+                // failing the page; only the plan call drives syncStatus.
+                val pathDeferred = async { runCatching { getStudyPath(careerId) }.getOrNull() }
+                runCatching { getStudyPlan(careerId) }.fold(
+                    onSuccess = { plan ->
+                        _plan.value = Loadable.Loaded(plan)
+                        _syncStatus.value = SyncStatus.Idle
+                    },
+                    onFailure = { cause -> _syncStatus.value = SyncStatus.Failed(cause) },
+                )
+                val path = pathDeferred.await()
+                _studyPath.value = Loadable.Loaded(path)
+                // The compilation-window state already rides on the path lookup — no
+                // separate call. Debug builds force the edit action on so the editor
+                // can be exercised outside compilation windows.
+                _editable.value = BuildConfig.DEBUG || path?.editingOpen == true
+            }
         } finally {
             refreshMutex.unlock()
         }

@@ -454,23 +454,49 @@ data class AffluencesReservationRequest(
 )
 
 /**
- * Result of creating or confirming a reservation.
+ * Result of creating a reservation (`POST /reserve/{resource}`), verified against live data.
  *
- * The success shape could not be fully verified against live data (verification would create a
- * real booking); all fields are therefore optional and unrecognized fields are ignored.
+ * For sites that require email confirmation (the common case, e.g. the Bicocca libraries), the
+ * reservation is created in a pending state: [userValidation] is `true`, [authToken] is null, and
+ * the user must confirm it through the link sent to their email. There is no in-app confirmation
+ * code — the confirmation token lives only in that email — so [reservationId] cannot be used to
+ * confirm the booking programmatically.
  *
- * @property reservationToken The token identifying the reservation, used to confirm it.
+ * When the device/email is already trusted, the server skips confirmation: [userValidation] is
+ * `false` and an [authToken] is returned.
+ *
+ * @property reservationId The numeric identifier of the created reservation.
+ * @property authToken The session token returned when the booking did not need email confirmation,
+ * or null when confirmation is still required.
+ * @property userValidation Whether the user must still confirm the reservation (via the email link).
+ * @property ticketPayload The ticket payload, when the site issues one; shape is site-defined.
+ * @property personCount The number of people the reservation was created for.
+ * @property email The email address the reservation was created with.
+ * @property success The server status key (e.g. `reservation_confirm_request_send`).
  * @property successMessage The localized success message.
- * @property showMessage Whether the server intends [successMessage] to be shown to the user.
+ * @property cancellationToken The token authorizing cancellation, when the server returns one
+ * (null on creation; the cancellation link is normally delivered by email).
  */
 @Serializable
 data class AffluencesReservationResult(
-    @SerialName("reservationToken")
-    val reservationToken: String? = null,
+    @SerialName("reservation_id")
+    val reservationId: Int? = null,
+    @SerialName("auth_token")
+    val authToken: String? = null,
+    @SerialName("user_validation")
+    val userValidation: Boolean? = null,
+    @SerialName("ticket_payload")
+    val ticketPayload: JsonElement? = null,
+    @SerialName("person_count")
+    val personCount: Int? = null,
+    @SerialName("email")
+    val email: String? = null,
+    @SerialName("success")
+    val success: String? = null,
     @SerialName("successMessage")
     val successMessage: String? = null,
-    @SerialName("showMessage")
-    val showMessage: Boolean? = null
+    @SerialName("cancellation_token")
+    val cancellationToken: String? = null
 )
 
 /**
@@ -509,6 +535,43 @@ data class AffluencesReservationValidation(
 data class AffluencesReservationCancellation(
     @SerialName("successMessage")
     val successMessage: String? = null
+)
+
+/**
+ * The reservation a cancellation token refers to, as returned by `GET /cancelReservation/{token}`.
+ * The token is the `reservationToken` carried by the confirmation/cancellation links emailed to
+ * the user.
+ *
+ * @property reservationDay The day of the reservation, as a `dd/MM/yyyy` date string.
+ * @property startTime The start, as an `HH'h'mm` string (e.g. `10h30`).
+ * @property endTime The end, as an `HH'h'mm` string.
+ * @property duration The duration, as an `HH'h'mm` string (e.g. `01h00`).
+ * @property siteName The display name of the site the reservation belongs to.
+ * @property resourceName The display name of the booked resource (e.g. `Posto 12`).
+ * @property state The reservation state (e.g. `upcomming`, `past`).
+ * @property cancellable Whether the reservation can still be cancelled.
+ * @property staticTimeSlot Whether the resource uses fixed time slots.
+ */
+@Serializable
+data class AffluencesReservationToCancel(
+    @SerialName("reservation_day")
+    val reservationDay: String? = null,
+    @SerialName("start_time")
+    val startTime: String? = null,
+    @SerialName("end_time")
+    val endTime: String? = null,
+    @SerialName("duration")
+    val duration: String? = null,
+    @SerialName("site_name")
+    val siteName: String? = null,
+    @SerialName("resource_name")
+    val resourceName: String? = null,
+    @SerialName("state")
+    val state: String? = null,
+    @SerialName("cancellable")
+    val cancellable: Boolean = false,
+    @SerialName("static_time_slot")
+    val staticTimeSlot: Boolean = false
 )
 
 /**

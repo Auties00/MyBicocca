@@ -12,6 +12,7 @@ import it.attendance100.mybicocca.data.remote.affluences.dto.AffluencesReservati
 import it.attendance100.mybicocca.data.remote.affluences.dto.AffluencesReservationRequest
 import it.attendance100.mybicocca.data.remote.affluences.dto.AffluencesReservationResult
 import it.attendance100.mybicocca.data.remote.affluences.dto.AffluencesReservationSiteInfo
+import it.attendance100.mybicocca.data.remote.affluences.dto.AffluencesReservationToCancel
 import it.attendance100.mybicocca.data.remote.affluences.dto.AffluencesReservationValidation
 import it.attendance100.mybicocca.data.remote.affluences.dto.AffluencesResourceEmailPolicy
 import it.attendance100.mybicocca.data.remote.affluences.dto.AffluencesResourceForms
@@ -285,13 +286,11 @@ class AffluencesReservationApi(
     /**
      * Retrieves the reservation a cancellation email token refers to.
      *
-     * The shape of this payload depends on the reservation and could not be verified against
-     * live data, so it is exposed raw.
-     *
-     * @param emailToken The cancellation token received by email
-     * @return The raw reservation payload
+     * @param emailToken The cancellation token received by email (the `reservationToken` carried
+     * by the confirmation/cancellation links)
+     * @return The reservation the token refers to
      */
-    suspend fun getReservationToCancel(emailToken: String): JsonObject =
+    suspend fun getReservationToCancel(emailToken: String): AffluencesReservationToCancel =
         executeGet(
             baseUrl = RESERVATION_API_URL,
             path = "/cancelReservation/$emailToken"

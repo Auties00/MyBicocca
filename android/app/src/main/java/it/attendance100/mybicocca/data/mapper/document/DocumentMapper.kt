@@ -9,7 +9,9 @@ import it.attendance100.mybicocca.domain.model.document.AcademicTitle
 import it.attendance100.mybicocca.domain.model.document.BadgeBlobId
 import it.attendance100.mybicocca.domain.model.document.BadgeId
 import it.attendance100.mybicocca.domain.model.document.StudentBadge
+import it.attendance100.mybicocca.domain.model.document.TitleAttribute
 import it.attendance100.mybicocca.domain.model.document.TitleCategory
+import it.attendance100.mybicocca.domain.model.document.TitleField
 import it.attendance100.mybicocca.domain.model.document.TitleStatus
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -47,65 +49,122 @@ fun Esse3PersonTitles.toAcademicTitles(): List<AcademicTitle> =
         italianTitle.map { it.toAcademicTitle() } +
         foreignTitle.map { it.toAcademicTitle() }
 
-private fun Esse3HighSchoolDiplomaPerson.toAcademicTitle(): AcademicTitle =
-    AcademicTitle(
+private fun Esse3HighSchoolDiplomaPerson.toAcademicTitle(): AcademicTitle {
+    val cumLaude = (cumLaudeFlag ?: 0) == 1
+    return AcademicTitle(
+        id = "sup-${id ?: personId.orEmpty()}",
         category = TitleCategory.HighSchool,
-        typeDescription = higherTitleTypesDescription?.trim()?.takeIf { it.isNotEmpty() },
-        subject = null,
-        institution = schoolName?.trim()?.takeIf { it.isNotEmpty() },
         status = italianTitleStatusCode.toTitleStatus(),
-        year = highSchoolGraduationYear,
+        typeDescription = higherTitleTypesDescription.clean(),
+        subject = null,
+        institution = (schoolName ?: schoolDescription).clean(),
+        country = deliveryNationDescription.clean(),
+        year = highSchoolGraduationYear?.toString(),
         grade = formatGrade(grade, maxGrade),
-        cumLaude = (cumLaudeFlag ?: 0) == 1,
-        country = deliveryNationDescription?.trim()?.takeIf { it.isNotEmpty() },
+        cumLaude = cumLaude,
         valueDeclarationFiled = (valueDeclarationFlag ?: 0) == 1,
+        attributes = buildList {
+            put(TitleField.GraduationYear, highSchoolGraduationYear?.toString())
+            put(TitleField.AwardDate, formatDate(highSchoolGraduationDate))
+            put(TitleField.Institution, (schoolName ?: schoolDescription).clean())
+            put(TitleField.City, schoolMunicipalityDescription.clean())
+            put(TitleField.Province, schoolMunicipalityAbbreviation.clean())
+            put(TitleField.Country, deliveryNationDescription.clean())
+            put(TitleField.InstitutionCode, schoolMiurCode.clean())
+            put(TitleField.Language, teachingLanguageDescription.clean())
+            put(TitleField.DepositType, depositTypesDescription.clean())
+            putFlag(TitleField.ValueDeclaration, valueDeclarationFlag)
+            putFlag(TitleField.Evaluated, evaluatedFlag?.toInt())
+        },
     )
+}
 
-private fun Esse3ItalianTitlePerson.toAcademicTitle(): AcademicTitle =
-    AcademicTitle(
+private fun Esse3ItalianTitlePerson.toAcademicTitle(): AcademicTitle {
+    val academicYear = p06AcademicYearDescription.clean() ?: academicYearTitleAward?.toString()
+    return AcademicTitle(
+        id = "titit-${italianTitleId ?: personId.orEmpty()}",
         category = TitleCategory.Italian,
-        typeDescription = italianTitleTypesDescription?.trim()?.takeIf { it.isNotEmpty() },
-        subject = (vDecodeTitleTypeCodeDescription ?: courseOfStudyDescription)
-            ?.trim()?.takeIf { it.isNotEmpty() },
-        institution = p06UniversitiesDescription?.trim()?.takeIf { it.isNotEmpty() },
-        status = italianTitleStatusFrom(italianTitleStatesDescription),
-        year = academicYearTitleAward,
-        grade = formatGrade(grade, baseGrade?.toFloat()),
-        cumLaude = (cumLaude ?: 0) == 1,
+        status = italianTitleStatusCode.toTitleStatus(),
+        typeDescription = italianTitleTypesDescription.clean(),
+        subject = (vDecodeTitleTypeCodeDescription ?: courseOfStudyDescription).clean(),
+        institution = p06UniversitiesDescription.clean(),
         country = null,
-        valueDeclarationFiled = false,
-    )
-
-private fun Esse3ForeignTitlePerson.toAcademicTitle(): AcademicTitle =
-    AcademicTitle(
-        category = TitleCategory.Foreign,
-        typeDescription = titleStatusTypesDescription?.trim()?.takeIf { it.isNotEmpty() },
-        subject = foreignCourseOfStudy?.trim()?.takeIf { it.isNotEmpty() },
-        institution = (p06SiteDescription ?: universityDescription ?: p01ForeignTestDescription)
-            ?.trim()?.takeIf { it.isNotEmpty() },
-        status = foreignTitleStatusCode.toTitleStatus(),
-        year = academicYearAwardId?.toInt(),
+        year = academicYear,
         grade = formatGrade(grade, baseGrade?.toFloat()),
         cumLaude = (cumLaude ?: 0) == 1,
-        country = p01NationDescription?.trim()?.takeIf { it.isNotEmpty() },
-        valueDeclarationFiled = (valueDeclarationFlag ?: 0) == 1,
+        valueDeclarationFiled = false,
+        attributes = buildList {
+            put(TitleField.AcademicYear, academicYear)
+            put(TitleField.AwardDate, formatDate(titleDeliveryDate))
+            put(TitleField.Session, session.clean())
+            put(TitleField.AchievementYears, achievementYearsNumber?.let { "$it" })
+            putGrade(TitleField.GradeAverage, gradesAverage)
+            put(TitleField.Credits, credits?.let { formatNumber(it) })
+            put(TitleField.Institution, p06UniversitiesDescription.clean())
+            putFlag(TitleField.SameUniversity, sameUniversityFlag?.toInt())
+            put(TitleField.InstitutionCode, p06UniversitiesIstatCode.clean())
+            put(TitleField.Language, languageDescription.clean())
+            put(TitleField.ThesisTitle, thesisTitle.clean())
+            put(TitleField.StudyPath, studyPath.clean())
+            put(TitleField.DepositType, depositTypesDescription.clean())
+            putFlag(TitleField.Evaluated, evaluatedFlag)
+        },
     )
+}
+
+private fun Esse3ForeignTitlePerson.toAcademicTitle(): AcademicTitle {
+    val academicYear = p06TeachingActivityDescription.clean() ?: academicYearAwardId?.toString()
+    val institution = (p06SiteDescription ?: universityDescription ?: p01ForeignTestDescription).clean()
+    return AcademicTitle(
+        id = "titstra-${foreignTitleId ?: personId.orEmpty()}",
+        category = TitleCategory.Foreign,
+        status = foreignTitleStatusCode.toTitleStatus(),
+        typeDescription = titleStatusTypesDescription.clean(),
+        subject = foreignCourseOfStudy.clean(),
+        institution = institution,
+        country = p01NationDescription.clean(),
+        year = academicYear,
+        grade = formatGrade(grade, baseGrade?.toFloat()),
+        cumLaude = (cumLaude ?: 0) == 1,
+        valueDeclarationFiled = (valueDeclarationFlag ?: 0) == 1,
+        attributes = buildList {
+            put(TitleField.AcademicYear, academicYear)
+            put(TitleField.AwardDate, formatDate(titleDeliveryDate))
+            put(TitleField.DurationYears, durationYears?.let { "$it" })
+            put(TitleField.Institution, institution)
+            put(TitleField.City, deliveryForeignCity.clean())
+            put(TitleField.Country, p01NationDescription.clean())
+            put(TitleField.Language, teachingLanguageDescription.clean())
+            put(TitleField.EquivalentPath, equivalentPath.clean())
+            put(TitleField.DepositType, depositTypesDescription.clean())
+            putFlag(TitleField.ValueDeclaration, valueDeclarationFlag)
+            putFlag(TitleField.Evaluated, evaluatedFlag?.toInt())
+            putFlag(TitleField.Recognized, equivalentTitleFlag?.toInt())
+        },
+    )
+}
+
+// buildList helpers: append a row only when the value is meaningfully present.
+private fun MutableList<TitleAttribute>.put(field: TitleField, value: String?) {
+    value?.trim()?.takeIf { it.isNotEmpty() }?.let { add(TitleAttribute(field, it)) }
+}
+
+// Esse3 0/1 flags: a non-null flag becomes an explicit Sì/No row.
+private fun MutableList<TitleAttribute>.putFlag(field: TitleField, flag: Int?) {
+    if (flag != null) add(TitleAttribute(field, if (flag != 0) "Sì" else "No"))
+}
+
+private fun MutableList<TitleAttribute>.putGrade(field: TitleField, value: Float?) {
+    value?.takeIf { it > 0f }?.let { add(TitleAttribute(field, formatNumber(it))) }
+}
+
+private fun String?.clean(): String? = this?.trim()?.takeIf { it.isNotEmpty() }
 
 // Esse3 status code: C = Conseguito (awarded), I = In ipotesi (hypothesised).
 private fun String?.toTitleStatus(): TitleStatus = when (this?.trim()?.uppercase()) {
     "C" -> TitleStatus.Awarded
     "I" -> TitleStatus.Hypothesised
     else -> TitleStatus.Unknown
-}
-
-// Italian titles only carry the localized description (e.g. "Conseguito", "In ipotesi").
-private fun italianTitleStatusFrom(description: String?): TitleStatus {
-    val text = description?.trim()?.lowercase() ?: return TitleStatus.Unknown
-    return when {
-        text.startsWith("conseg") -> TitleStatus.Awarded
-        text.contains("ipotesi") -> TitleStatus.Hypothesised
-        else -> TitleStatus.Unknown
-    }
 }
 
 private fun formatGrade(grade: Float?, base: Float?): String? {
@@ -118,6 +177,8 @@ private fun formatGrade(grade: Float?, base: Float?): String? {
 private fun Float.formatTrimmed(): String =
     if (this % 1f == 0f) toInt().toString() else toString()
 
+private fun formatNumber(value: Float): String = value.formatTrimmed()
+
 // Esse3 dates are dd/MM/yyyy, sometimes with a trailing time; strip it and tolerate failure.
 private val ESSE3_DATE_FORMAT = DateTimeFormatter.ofPattern("dd/MM/yyyy")
 
@@ -126,3 +187,8 @@ private fun String?.toEsse3LocalDate(): LocalDate? {
         ?.substringBefore('T')?.substringBefore(' ') ?: return null
     return runCatching { LocalDate.parse(datePart, ESSE3_DATE_FORMAT) }.getOrNull()
 }
+
+// Re-format to a clean dd/MM/yyyy (drops the "00:00:00" tail Esse3 attaches), keeping the raw
+// string when it doesn't parse.
+private fun formatDate(raw: String?): String? =
+    raw.toEsse3LocalDate()?.format(ESSE3_DATE_FORMAT) ?: raw.clean()

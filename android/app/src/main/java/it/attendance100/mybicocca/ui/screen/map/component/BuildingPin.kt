@@ -15,6 +15,20 @@ import kotlin.math.acos
 // bottom-center to match the symbol's iconAnchor("bottom"); idle vs selected differ in size/colour.
 object BuildingPin {
 
+    private const val HEAD_IDLE_DP = 36f
+    private const val HEAD_SELECTED_DP = 46f
+    private const val TAIL_IDLE_DP = 9f
+    private const val TAIL_SELECTED_DP = 12f
+    private const val BORDER_DP = 2f
+    private const val SHADOW_DP = 3f
+
+    // Distance in px from the symbol's bottom anchor (the geographic point, where the tip sits) up
+    // to the SELECTED head's center. Centering this — not the anchor — puts the visible head in the
+    // middle of the map viewport. Geometry mirrors render(): height − headCenterFromTop =
+    // (head + tail + 2·pad) − (pad + head/2) = head/2 + tail + pad, with pad = shadow + border.
+    fun selectedHeadCenterOffset(density: Float): Float =
+        (HEAD_SELECTED_DP / 2f + TAIL_SELECTED_DP + SHADOW_DP + BORDER_DP) * density
+
     fun render(
         density: Float,
         code: String?,
@@ -23,10 +37,10 @@ object BuildingPin {
         textColor: Int,
         selected: Boolean,
     ): Bitmap {
-        val headDp = if (selected) 46f else 36f
-        val tailDp = if (selected) 12f else 9f
-        val borderDp = 2f
-        val shadowDp = 3f
+        val headDp = if (selected) HEAD_SELECTED_DP else HEAD_IDLE_DP
+        val tailDp = if (selected) TAIL_SELECTED_DP else TAIL_IDLE_DP
+        val borderDp = BORDER_DP
+        val shadowDp = SHADOW_DP
 
         val head = headDp * density
         val tail = tailDp * density

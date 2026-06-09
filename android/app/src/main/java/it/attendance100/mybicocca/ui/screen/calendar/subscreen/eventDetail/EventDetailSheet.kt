@@ -125,31 +125,31 @@ fun EventDetailContent(
         }
         Spacer(Modifier.height(24.dp))
 
-        Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-            IconRow(
-                icon = if (event is CalendarEvent.Exam) Icons.Outlined.Quiz else Icons.Outlined.School,
-                label = "ATTIVITÀ",
-                value = activityLabel(event),
+        // Collected up front so each card knows whether it caps the segmented group.
+        val rows = buildList {
+            add(
+                Triple(
+                    if (event is CalendarEvent.Exam) Icons.Outlined.Quiz else Icons.Outlined.School,
+                    "ATTIVITÀ",
+                    activityLabel(event),
+                ),
             )
-            IconRow(
-                icon = Icons.Outlined.Schedule,
-                label = "ORARIO",
-                value = orarioValue(event),
-            )
-            val location = event.locationLine()
-            if (location.isNotBlank()) {
-                IconRow(
-                    icon = Icons.Outlined.LocationOn,
-                    label = "LUOGO",
-                    value = location,
-                )
+            add(Triple(Icons.Outlined.Schedule, "ORARIO", orarioValue(event)))
+            event.locationLine().takeIf { it.isNotBlank() }?.let {
+                add(Triple(Icons.Outlined.LocationOn, "LUOGO", it))
             }
-            val people = event.peopleLine()
-            if (people.isNotBlank()) {
-                IconRow(
-                    icon = Icons.Outlined.Person,
-                    label = if (event is CalendarEvent.Exam) "COMMISSIONE" else "DOCENTE",
-                    value = people,
+            event.peopleLine().takeIf { it.isNotBlank() }?.let {
+                add(Triple(Icons.Outlined.Person, if (event is CalendarEvent.Exam) "COMMISSIONE" else "DOCENTE", it))
+            }
+        }
+        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            rows.forEachIndexed { index, (icon, label, value) ->
+                IconRowCard(
+                    icon = icon,
+                    label = label,
+                    value = value,
+                    isFirst = index == 0,
+                    isLast = index == rows.lastIndex,
                 )
             }
         }
@@ -217,43 +217,61 @@ private fun StatusChip(cancelled: Boolean, inProgress: Boolean, minutesLeft: Int
     )
 }
 
+// List flavor of the segmented M3E group language used by the map sheets: 28dp corners cap the
+// group's outer edges, 6dp where rows touch.
 @Composable
-private fun IconRow(icon: ImageVector, label: String, value: String) {
+private fun IconRowCard(icon: ImageVector, label: String, value: String, isFirst: Boolean, isLast: Boolean) {
     val scheme = MaterialTheme.colorScheme
-    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-        Surface(
-            shape = RoundedCornerShape(14.dp),
-            color = scheme.surfaceContainerHigh,
-            tonalElevation = 0.dp,
-            modifier = Modifier.size(44.dp),
+    val shape = RoundedCornerShape(
+        topStart = if (isFirst) 28.dp else 6.dp,
+        topEnd = if (isFirst) 28.dp else 6.dp,
+        bottomStart = if (isLast) 28.dp else 6.dp,
+        bottomEnd = if (isLast) 28.dp else 6.dp,
+    )
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = shape,
+        color = scheme.surfaceContainer,
+    ) {
+        Row(
+            modifier = Modifier.padding(14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            Box(contentAlignment = Alignment.Center) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = null,
-                    tint = scheme.onSurfaceVariant,
-                    modifier = Modifier.size(22.dp),
+            Surface(
+                shape = RoundedCornerShape(14.dp),
+                color = scheme.surfaceContainerHigh,
+                tonalElevation = 0.dp,
+                modifier = Modifier.size(44.dp),
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = null,
+                        tint = scheme.onSurfaceVariant,
+                        modifier = Modifier.size(22.dp),
+                    )
+                }
+            }
+            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text(
+                    text = label,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = scheme.onSurfaceVariant,
+                    fontWeight = FontWeight.SemiBold,
+                )
+                Text(
+                    text = value,
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = scheme.onSurface,
                 )
             }
-        }
-        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Text(
-                text = label,
-                style = MaterialTheme.typography.labelSmall,
-                color = scheme.onSurfaceVariant,
-                fontWeight = FontWeight.SemiBold,
-            )
-            Text(
-                text = value,
-                style = MaterialTheme.typography.bodyLarge,
-                color = scheme.onSurface,
-            )
         }
     }
 }
 
-// "Apri corso" leads when the event's course exists in elearning, with "Mappa" as the
-// tonal trailing action; without a course, "Mappa" takes the primary slot alone.
+// "Apri corso" is the primary trailing action when the event's course exists in elearning, with
+// "Mappa" as the tonal leading action; without a course, "Mappa" takes the primary slot alone.
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun ActionRow(onOpenCourse: (() -> Unit)?, onMap: () -> Unit) {
@@ -288,12 +306,31 @@ private fun ActionRow(onOpenCourse: (() -> Unit)?, onMap: () -> Unit) {
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(4.dp),
     ) {
+        FilledTonalButton(
+            onClick = onMap,
+            modifier = Modifier
+                .weight(1f)
+                .height(56.dp),
+            shape = ButtonGroupDefaults.connectedLeadingButtonShape,
+            colors = ButtonDefaults.filledTonalButtonColors(
+                containerColor = scheme.surfaceContainerHighest,
+                contentColor = scheme.onSurface,
+            ),
+        ) {
+            Icon(
+                imageVector = Icons.Outlined.LocationOn,
+                contentDescription = null,
+                modifier = Modifier.size(20.dp),
+            )
+            Spacer(Modifier.width(8.dp))
+            Text("Mappa", fontWeight = FontWeight.SemiBold)
+        }
         Button(
             onClick = onOpenCourse,
             modifier = Modifier
                 .weight(1.4f)
                 .height(56.dp),
-            shape = ButtonGroupDefaults.connectedLeadingButtonShape,
+            shape = ButtonGroupDefaults.connectedTrailingButtonShape,
             colors = ButtonDefaults.buttonColors(
                 containerColor = primaryBg,
                 contentColor = primaryFg,
@@ -306,25 +343,6 @@ private fun ActionRow(onOpenCourse: (() -> Unit)?, onMap: () -> Unit) {
             )
             Spacer(Modifier.width(8.dp))
             Text("Apri corso", fontWeight = FontWeight.SemiBold)
-        }
-        FilledTonalButton(
-            onClick = onMap,
-            modifier = Modifier
-                .weight(1f)
-                .height(56.dp),
-            shape = ButtonGroupDefaults.connectedTrailingButtonShape,
-            colors = ButtonDefaults.filledTonalButtonColors(
-                containerColor = scheme.surfaceContainerHigh,
-                contentColor = scheme.onSurface,
-            ),
-        ) {
-            Icon(
-                imageVector = Icons.Outlined.LocationOn,
-                contentDescription = null,
-                modifier = Modifier.size(20.dp),
-            )
-            Spacer(Modifier.width(8.dp))
-            Text("Mappa", fontWeight = FontWeight.SemiBold)
         }
     }
 }

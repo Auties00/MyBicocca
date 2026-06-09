@@ -15,4 +15,5 @@ data class CourseAttendance(
     val teacherName: String?,
     val classroomAttendance: ClassroomAttendance?,
     val sessionAttendance: List<SessionAttendance>,
+    val attendanceModules: List<AttendanceModuleRef> = emptyList(),
 )

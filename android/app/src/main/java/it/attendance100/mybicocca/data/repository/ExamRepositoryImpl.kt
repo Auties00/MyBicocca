@@ -1,7 +1,6 @@
 package it.attendance100.mybicocca.data.repository
 
 import it.attendance100.mybicocca.data.auth.SessionManager
-import it.attendance100.mybicocca.data.mapper.exam.ESSE3_DATE
 import it.attendance100.mybicocca.data.mapper.exam.toBookedExam
 import it.attendance100.mybicocca.data.mapper.exam.toDomain
 import it.attendance100.mybicocca.data.mapper.exam.toExamResult
@@ -14,7 +13,6 @@ import it.attendance100.mybicocca.domain.model.exam.BookExamRequest
 import it.attendance100.mybicocca.domain.model.exam.BookedExam
 import it.attendance100.mybicocca.domain.model.exam.ExamBooking
 import it.attendance100.mybicocca.domain.model.exam.ExamCall
-import it.attendance100.mybicocca.domain.model.exam.ExamCallDetail
 import it.attendance100.mybicocca.domain.model.exam.ExamCallKey
 import it.attendance100.mybicocca.domain.model.exam.ExamResult
 import it.attendance100.mybicocca.domain.repository.ExamRepository
@@ -22,7 +20,6 @@ import io.ktor.utils.io.ByteReadChannel
 import io.ktor.utils.io.jvm.javaio.toInputStream
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import java.time.LocalDate
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -33,28 +30,18 @@ class ExamRepositoryImpl @Inject constructor(
 
     override suspend fun getExamCalls(careerId: CareerId): List<ExamCall> {
         val career = requireCareer(careerId)
+        // Also asks for the booking-sheet fields (note, presidente*, tipoGestPrenDes) so the
+        // modal needs no per-appello detail GET — that endpoint costs 1.7-4s cold per appello
+        // server-side and nothing (actor pinning, fields projection) avoids it. Verified live:
+        // the list returns them all. See scripts/esse3_booking_benchmark.py.
         val dtos = sessionManager.esse3().transcript.getRecordBookExamCalls(
             matId = career.enrollmentTraitId,
             q = Esse3BookableExamFilter.AppelliPrenotabiliEFuturi,
             order = "+dataInizioApp",
-            optionalFields = "dataInizioApp,oraEsa,dataInizioIscr,dataFineIscr",
+            optionalFields = "dataInizioApp,oraEsa,dataInizioIscr,dataFineIscr,tipoEsaCod," +
+                "note,presidenteNome,presidenteCognome,presidenteId,tipoGestPrenDes",
         )
         return withContext(Dispatchers.Default) { dtos.mapNotNull { it.toDomain() } }
-    }
-
-    override suspend fun getExamCallDetail(
-        careerId: CareerId,
-        key: ExamCallKey,
-    ): ExamCallDetail {
-        requireCareer(careerId)
-        val dto = sessionManager.esse3().examsCalendar.getExamCall(
-            courseOfStudyId = key.courseOfStudyId,
-            activityId = key.activityId,
-            callId = key.callId.toLong(),
-        )
-        return withContext(Dispatchers.Default) {
-            dto.toDomain() ?: error("Esse3 returned an exam call without identity keys.")
-        }
     }
 
     override suspend fun bookExam(
@@ -86,18 +73,22 @@ class ExamRepositoryImpl @Inject constructor(
         val career = requireCareer(careerId)
         // Empirically verified against the live server:
         //  - attoreCod=STU avoids the implicit-actor lookup, ~4× faster cold
-        //  - filter on dataOraTurno (combined date+time), NOT dataEsa (often blank)
-        //  - optionalFields requests the UI-needed fields not in the default response
-        //  - order server-side avoids client re-sort
-        val today = LocalDate.now().format(ESSE3_DATE)
+        //  - NO date filter: the full booking history (future + past) comes back in one
+        //    call (72 rows / back to 2023 for a 3rd-year student), so the modal can split
+        //    it into Attive (upcoming) and Passate (already sat) without a second request.
+        //  - order DESC on dataOraTurno: most-recent first, which is the Passate order; the
+        //    Attive section re-sorts ascending client-side.
+        //  - the outcome fields (esito/pubblId/notaPubbl) ride along so a past appello shows
+        //    its grade without hitting the esiti endpoint. esito carries superatoFlg=0 even
+        //    before publication, so the mapper only trusts it when pubblId is set.
         val dtos = sessionManager.esse3().transcript.getBookingsByMatId(
             matId = career.enrollmentTraitId,
             actorCode = "STU",
-            filter = "dataOraTurno=ge=$today",
-            order = "+dataOraTurno",
+            order = "-dataOraTurno",
             // tipoAppCod (prova parziale/finale) and dataFineIscr (cancellation deadline)
             // are optional too — verified live: they only come back when requested.
-            optionalFields = "adStuDes,desAppello,aulaDes,edificioDes,dataInizioApp,dataOraTurno,tipoEsaCod,tipoAppCod,dataFineIscr",
+            optionalFields = "adStuDes,desAppello,aulaDes,edificioDes,dataInizioApp,dataOraTurno," +
+                "tipoEsaCod,tipoAppCod,dataFineIscr,esito,pubblId,notaPubbl",
         )
         return withContext(Dispatchers.Default) { dtos.mapNotNull { it.toBookedExam() } }
     }

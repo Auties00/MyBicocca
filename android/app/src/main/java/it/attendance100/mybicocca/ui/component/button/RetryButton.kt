@@ -1,0 +1,28 @@
+package it.attendance100.mybicocca.ui.component.button
+
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+
+// Standard retry action for error states: expressive press morph on the brand fill.
+// White is explicit per the brand-red rule: onPrimary flips to black-on-red in dark mode.
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+fun RetryButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
+    Button(
+        onClick = onClick,
+        modifier = modifier,
+        shapes = ButtonDefaults.shapes(),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = MaterialTheme.colorScheme.primary,
+            contentColor = Color.White,
+        ),
+    ) {
+        Text("Riprova")
+    }
+}

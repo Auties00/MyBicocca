@@ -38,8 +38,9 @@ import kotlinx.coroutines.sync.Mutex
 import javax.inject.Inject
 import kotlin.coroutines.cancellation.CancellationException
 
-// Hoisted in MainShell so the parallel fetch starts on shell load and the list / detail /
-// ISEE screens all read the same in-memory result (no Room cache — see TaxRepository).
+// Hoisted in MainShell so the parallel fetch starts on shell load and the list / detail
+// screens and the ISEE sheet all read the same in-memory result (no Room cache — see
+// TaxRepository).
 @HiltViewModel
 class TaxesViewModel @Inject constructor(
     private val getTaxInvoices: GetTaxInvoicesUseCase,
@@ -95,7 +96,7 @@ class TaxesViewModel @Inject constructor(
             coroutineScope {
                 launch {
                     // Resolve to empty (not stuck NotYetLoaded) on failure so the ISEE
-                    // screen shows its empty state rather than an endless spinner.
+                    // sheet shows its empty state rather than an endless spinner.
                     runCatching { getIseeDeclarations(careerId) }.fold(
                         onSuccess = { _isee.value = Loadable.Loaded(it) },
                         onFailure = { _isee.value = Loadable.Loaded(emptyList()) },

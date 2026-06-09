@@ -288,7 +288,13 @@ internal fun ElearningCoursePublicInfo.toSyllabusEntity(
     accountId: AccountId,
     courseId: Int,
 ): CourseSyllabusEntity? {
-    val primary = syllabus.firstOrNull() ?: return null
+    // Tabs are one-per-language ("it", "en"). Prefer the tab matching the app language,
+    // fall back to English, then to whatever the page lists first.
+    val appLanguage = Locale.getDefault().language.lowercase()
+    val primary = syllabus.firstOrNull { it.language.equals(appLanguage, ignoreCase = true) }
+        ?: syllabus.firstOrNull { it.language.equals("en", ignoreCase = true) }
+        ?: syllabus.firstOrNull()
+        ?: return null
     val info = buildSyllabusInfo(primary.fields, metadata)
     val blob = SyllabusBlobJson(
         fields = primary.fields.map { SyllabusFieldJson(it.title, it.htmlContent) },
@@ -384,7 +390,13 @@ private fun buildSyllabusInfo(
         language = metadata.language?.takeIf { it.isNotBlank() }
             ?: pickText("lingua", "language"),
         level = matchCourseLevel(metadata.degreeType ?: pickText("livello", "tipologia di corso"))?.name,
-        semester = matchSemester(metadata.period ?: pickText("periodo", "semestre", "ciclo"))?.name,
+        // The metadata sidebar "Periodo" and the "Periodo di erogazione dell'insegnamento"
+        // field each can carry detail the other lacks — match on both combined.
+        semester = matchSemester(
+            listOfNotNull(metadata.period, pickText("periodo", "semestre", "ciclo", "semester"))
+                .joinToString(" ")
+                .takeIf { it.isNotBlank() },
+        )?.name,
         disciplinarySector = metadata.disciplinarySector,
         objectives = pickText("obiettivi", "aims"),
         summary = pickText("contenuti sintetici", "contents", "syllabus"),
@@ -407,20 +419,21 @@ private fun buildSyllabusInfo(
     )
 }
 
-// "Programma esteso" comes in two common shapes:
+// "Programma esteso" comes in three common shapes in the wild:
 //   1. <p><strong>Header</strong><br>item<br>item</p><p><strong>Header2</strong>...
 //   2. <ol><li><p>Header</p></li></ol>  with items in sibling <ul><li> blocks
+//   3. bare <ol>/<ul>/<p> blocks with no header at all (the most frequent one)
 //
 // Strategy: walk children top-to-bottom, treat <strong>/<h*> openings as section
-// headers, and accumulate any <li> / <br>-separated text as items.
+// headers, and accumulate any <li> / <br>-separated text as items. Items seen
+// before any header flush as a single untitled section instead of being dropped.
 private fun parseProgrammeSections(body: Element): List<ProgrammeSectionJson> {
     val sections = mutableListOf<ProgrammeSectionJson>()
     var currentTitle: String? = null
     val currentItems = mutableListOf<String>()
     fun flush() {
-        val title = currentTitle ?: return
-        if (currentItems.isNotEmpty() || title.isNotBlank()) {
-            sections += ProgrammeSectionJson(title = title, items = currentItems.toList())
+        if (currentItems.isNotEmpty()) {
+            sections += ProgrammeSectionJson(title = currentTitle.orEmpty(), items = currentItems.toList())
         }
         currentItems.clear()
     }
@@ -432,14 +445,12 @@ private fun parseProgrammeSections(body: Element): List<ProgrammeSectionJson> {
                 if (strong != null && strong.text().isNotBlank()) {
                     flush()
                     currentTitle = strong.text().trim()
-                    val rest = node.html()
-                        .substringAfter("</strong>", "")
-                        .substringAfter("</b>", "")
-                    if (rest.isNotBlank()) {
-                        Jsoup.parseBodyFragment(rest).body().splitOnBreaks()
-                            .filter { it.isNotBlank() }
-                            .forEach { currentItems += it }
-                    }
+                    // Drop the header element and keep the rest of the paragraph as items.
+                    // (String surgery on html() lost the items whenever the header was a
+                    // lone <strong> — the tail never contained the chained </b> delimiter.)
+                    val rest = node.clone()
+                    rest.selectFirst("strong, b")?.remove()
+                    rest.splitOnBreaks().filter { it.isNotBlank() }.forEach { currentItems += it }
                 } else {
                     node.splitOnBreaks().filter { it.isNotBlank() }.forEach { currentItems += it }
                 }
@@ -458,7 +469,7 @@ private fun parseProgrammeSections(body: Element): List<ProgrammeSectionJson> {
         }
     }
     flush()
-    return sections.filter { it.items.isNotEmpty() }
+    return sections
 }
 
 // Splits an element's content on `<br>` tags into a list of trimmed text lines.

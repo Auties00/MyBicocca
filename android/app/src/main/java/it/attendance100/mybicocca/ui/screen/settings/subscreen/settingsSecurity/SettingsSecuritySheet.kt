@@ -40,7 +40,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import it.attendance100.mybicocca.core.os.DeviceType
 import it.attendance100.mybicocca.core.os.LocalDeviceType
 import it.attendance100.mybicocca.core.os.rememberHapticManager
-import it.attendance100.mybicocca.manager.UnlockResult
+import it.attendance100.mybicocca.domain.model.security.UnlockResult
 import it.attendance100.mybicocca.ui.component.input.PasswordTextField
 import it.attendance100.mybicocca.ui.component.modal.PredictiveModalBottomSheet
 import it.attendance100.mybicocca.ui.screen.lock.BiometricCapability

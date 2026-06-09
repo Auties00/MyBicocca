@@ -700,6 +700,13 @@ sealed interface EasyStaffPlanningFieldType {
     data object TextArea : EasyStaffPlanningFieldType
 
     /**
+     * A phone number input. The web front-end renders it as an international phone picker,
+     * submitting the formatted number.
+     */
+    @Serializable
+    data object Phone : EasyStaffPlanningFieldType
+
+    /**
      * A checkbox, used for consent fields like the GDPR privacy policy.
      */
     @Serializable
@@ -756,14 +763,29 @@ sealed interface EasyStaffPlanningFieldPosition {
 }
 
 /**
+ * Represents a selectable option of a booking form field.
+ *
+ * @property value The submission value of the option (e.g. "PSI"), sent as the field value
+ * when the option is chosen.
+ * @property label The display label of the option (e.g. "Area Psicologica").
+ */
+@Serializable
+data class EasyStaffPlanningFieldOption(
+    val value: String,
+    val label: String
+)
+
+/**
  * Represents a field of the dynamic booking form of a service.
  *
  * @property id The numeric identifier of the field.
  * @property label The display label of the field (e.g. "Cognome e Nome").
  * @property code The submission key of the field (e.g. "cognome_nome").
  * @property type The input type of the field.
- * @property values The predefined values of the field: the options of a select, or the
- * information URL of a consent checkbox. Null for free inputs.
+ * @property values The predefined values of the field: for selects, the options to choose
+ * from (submissions send [EasyStaffPlanningFieldOption.value]); for consent checkboxes, a
+ * single option whose value is the information URL, possibly relative to the backend storage
+ * root. Null for free inputs.
  * @property defaultValue The pre-filled value of the field, or null when none.
  * @property placeholder The placeholder text of the field, or null when none.
  * @property primary Whether the field is the primary booking key of the portal (the email
@@ -794,7 +816,7 @@ data class EasyStaffPlanningFormField(
 
     @SerialName("valori")
     @Serializable(with = FieldValuesSerializer::class)
-    val values: List<String>? = null,
+    val values: List<EasyStaffPlanningFieldOption>? = null,
 
     @SerialName("predefinito")
     @Serializable(with = TolerantStringSerializer::class)

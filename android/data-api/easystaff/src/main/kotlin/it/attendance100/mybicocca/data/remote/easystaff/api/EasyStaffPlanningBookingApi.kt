@@ -244,8 +244,8 @@ class EasyStaffPlanningBookingApi(
      * @param reservationCode The code of the reservation
      * @param primaryValue The primary value (email address) the reservation is keyed by
      * @return The managed reservation
-     * @throws it.attendance100.mybicocca.data.remote.easystaff.exception.EasyStaffPlanningException
-     * With key `not_found` when the reservation does not exist
+     * @throws it.attendance100.mybicocca.data.remote.common.exception.ApiRequestException
+     * With message `not_found` when the reservation does not exist
      */
     suspend fun getReservation(
         reservationCode: String,
@@ -264,8 +264,8 @@ class EasyStaffPlanningBookingApi(
      * @param reservationCode The code of the reservation
      * @param primaryValue The primary value (email address) the reservation is keyed by
      * @return The numeric identifier of the booked service
-     * @throws it.attendance100.mybicocca.data.remote.easystaff.exception.EasyStaffPlanningException
-     * With key `reservation_not_found` when the reservation does not exist
+     * @throws it.attendance100.mybicocca.data.remote.common.exception.ApiRequestException
+     * With message `reservation_not_found` when the reservation does not exist
      */
     suspend fun getReservationServiceId(
         reservationCode: String,

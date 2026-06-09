@@ -84,9 +84,11 @@ fun buildRegistryDeadlines(
             )
         }
 
-    // Exams the student has already booked.
+    // Exams the student has booked. getBookings now also returns the full past register,
+    // so keep only the upcoming ones here — a sat appello is not a deadline.
     bookings.asSequence()
         .mapNotNull { booking -> booking.examDateTime?.toLocalDate()?.let { it to booking } }
+        .filter { (date, _) -> !date.isBefore(today) }
         .forEach { (date, booking) ->
             deadlines += RegistryDeadline(
                 date = date,

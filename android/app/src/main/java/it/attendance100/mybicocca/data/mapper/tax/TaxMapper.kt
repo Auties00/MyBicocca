@@ -73,19 +73,27 @@ internal fun Esse3Refunds.toRefund(): Refund = Refund(
     invoiceId = invoiceId,
     academicYear = academicYearId?.toInt(),
     amount = invoiceAmount ?: paidAmount,
+    description = (mav1Description ?: mav2Description)?.takeIf { it.isNotBlank() },
     reasonCode = refundReasonCode?.takeIf { it.isNotBlank() },
     mandateNumber = refundMandateNumber?.takeIf { it.isNotBlank() },
     refunded = refundedFlag == 1,
     note = refundNote?.takeIf { it.isNotBlank() },
+    collectedBy = collectedBy?.takeIf { it.isNotBlank() },
     issueDate = issuanceDate.toEsse3LocalDate(),
+    processingDate = processingDate.toEsse3LocalDate(),
     paymentDate = paymentDate.toEsse3LocalDate(),
     creditDate = creditDate.toEsse3LocalDate(),
 )
 
+// Esse3 encodes "no ISEE presented" as 99999999 (the max contribution band acts as
+// infinite income), not as a missing field — erase the sentinel so null really means
+// no declaration on file for that year.
+private const val ISEE_NOT_DECLARED = 99_999_999.0
+
 internal fun Esse3EnrollmentForTuition.toIseeDeclaration(): IseeDeclaration = IseeDeclaration(
     academicYearEnrollmentId = academicYearEnrollmentId,
     courseDescription = courseOfStudyDescription,
-    isee = isee,
+    isee = isee?.takeIf { it < ISEE_NOT_DECLARED },
     iseeThreshold = iseeThreshold,
     exemptionDescription = description,
 )

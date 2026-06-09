@@ -5,8 +5,11 @@ import dagger.Module
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import it.attendance100.mybicocca.data.repository.AccountRepositoryImpl
+import it.attendance100.mybicocca.data.repository.AppLockRepositoryImpl
+import it.attendance100.mybicocca.data.repository.AppointmentRepositoryImpl
 import it.attendance100.mybicocca.data.repository.AttendanceRepositoryImpl
 import it.attendance100.mybicocca.data.repository.CalendarRepositoryImpl
+import it.attendance100.mybicocca.data.repository.ConnectivityRepositoryImpl
 import it.attendance100.mybicocca.data.repository.ElearningAssignmentRepositoryImpl
 import it.attendance100.mybicocca.data.repository.ElearningBadgeRepositoryImpl
 import it.attendance100.mybicocca.data.repository.ElearningCatalogRepositoryImpl
@@ -18,18 +21,20 @@ import it.attendance100.mybicocca.data.repository.ElearningMessageRepositoryImpl
 import it.attendance100.mybicocca.data.repository.ElearningQuizRepositoryImpl
 import it.attendance100.mybicocca.data.repository.EnrollmentRepositoryImpl
 import it.attendance100.mybicocca.data.repository.FakeExamRepository
-import it.attendance100.mybicocca.data.repository.InternshipRepositoryImpl
+import it.attendance100.mybicocca.data.repository.LibraryRepositoryImpl
 import it.attendance100.mybicocca.data.repository.MapRepositoryImpl
 import it.attendance100.mybicocca.data.repository.QuestionnaireRepositoryImpl
-import it.attendance100.mybicocca.data.repository.SavedOpportunityRepositoryImpl
 import it.attendance100.mybicocca.data.repository.SearchHistoryRepositoryImpl
 import it.attendance100.mybicocca.data.repository.StudyPlanRepositoryImpl
 import it.attendance100.mybicocca.data.repository.TaxRepositoryImpl
 import it.attendance100.mybicocca.data.repository.TranscriptRepositoryImpl
 import it.attendance100.mybicocca.data.repository.VideoPlaybackRepositoryImpl
 import it.attendance100.mybicocca.domain.repository.AccountRepository
+import it.attendance100.mybicocca.domain.repository.AppLockRepository
+import it.attendance100.mybicocca.domain.repository.AppointmentRepository
 import it.attendance100.mybicocca.domain.repository.AttendanceRepository
 import it.attendance100.mybicocca.domain.repository.CalendarRepository
+import it.attendance100.mybicocca.domain.repository.ConnectivityRepository
 import it.attendance100.mybicocca.domain.repository.ElearningAssignmentRepository
 import it.attendance100.mybicocca.domain.repository.ElearningBadgeRepository
 import it.attendance100.mybicocca.domain.repository.ElearningCatalogRepository
@@ -41,10 +46,9 @@ import it.attendance100.mybicocca.domain.repository.ElearningMessageRepository
 import it.attendance100.mybicocca.domain.repository.ElearningQuizRepository
 import it.attendance100.mybicocca.domain.repository.EnrollmentRepository
 import it.attendance100.mybicocca.domain.repository.ExamRepository
-import it.attendance100.mybicocca.domain.repository.InternshipRepository
+import it.attendance100.mybicocca.domain.repository.LibraryRepository
 import it.attendance100.mybicocca.domain.repository.MapRepository
 import it.attendance100.mybicocca.domain.repository.QuestionnaireRepository
-import it.attendance100.mybicocca.domain.repository.SavedOpportunityRepository
 import it.attendance100.mybicocca.domain.repository.SearchHistoryRepository
 import it.attendance100.mybicocca.domain.repository.StudyPlanRepository
 import it.attendance100.mybicocca.domain.repository.TaxRepository
@@ -62,7 +66,15 @@ abstract class RepositoryModule {
 
     @Binds
     @Singleton
+    abstract fun bindAppLockRepository(impl: AppLockRepositoryImpl): AppLockRepository
+
+    @Binds
+    @Singleton
     abstract fun bindCalendarRepository(impl: CalendarRepositoryImpl): CalendarRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindConnectivityRepository(impl: ConnectivityRepositoryImpl): ConnectivityRepository
 
     @Binds
     @Singleton
@@ -131,10 +143,6 @@ abstract class RepositoryModule {
 
     @Binds
     @Singleton
-    abstract fun bindInternshipRepository(impl: InternshipRepositoryImpl): InternshipRepository
-
-    @Binds
-    @Singleton
     abstract fun bindMapRepository(impl: MapRepositoryImpl): MapRepository
 
     @Binds
@@ -147,5 +155,9 @@ abstract class RepositoryModule {
 
     @Binds
     @Singleton
-    abstract fun bindSavedOpportunityRepository(impl: SavedOpportunityRepositoryImpl): SavedOpportunityRepository
+    abstract fun bindAppointmentRepository(impl: AppointmentRepositoryImpl): AppointmentRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindLibraryRepository(impl: LibraryRepositoryImpl): LibraryRepository
 }

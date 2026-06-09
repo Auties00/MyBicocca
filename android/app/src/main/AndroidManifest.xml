@@ -9,9 +9,17 @@
   <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
   <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
   <uses-permission android:name="android.permission.RECORD_AUDIO" />
+  <!-- Scanning the lesson QR code when registering presence. -->
+  <uses-permission android:name="android.permission.CAMERA" />
+  <!-- EasyBadge presence certification attaches the device's coordinates. -->
+  <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+  <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
   <uses-permission
           android:name="android.permission.WRITE_EXTERNAL_STORAGE"
           android:maxSdkVersion="29" />
+
+  <uses-feature android:name="android.hardware.camera.any" android:required="false" />
+  <uses-feature android:name="android.hardware.location" android:required="false" />
 
   <queries>
     <intent>
@@ -22,7 +30,7 @@
     <package android:name="com.microsoft.office.powerpoint" />
   </queries>
 
-  <uses-sdk tools:overrideLibrary="com.google.mlkit.genai.prompt,com.google.mlkit.genai.speechrecognition,com.google.mlkit.genai.common" />
+  <uses-sdk tools:overrideLibrary="com.google.mlkit.genai.speechrecognition,com.google.mlkit.genai.common" />
 
   <application
       android:name=".MyBicoccaApplication"
@@ -42,12 +50,33 @@
     <activity
         android:name="it.attendance100.mybicocca.MyBicoccaActivity"
         android:exported="true"
+        android:launchMode="singleTask"
         android:supportsPictureInPicture="true"
         android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|keyboardHidden|locale|layoutDirection|uiMode"
         android:theme="@style/Theme.MyBicocca.AnimatedSplash">
       <intent-filter>
         <action android:name="android.intent.action.MAIN" />
         <category android:name="android.intent.category.LAUNCHER" />
+      </intent-filter>
+      <!-- Scanning a mod_attendance QR outside the app opens it here. Not autoVerified
+           (we can't host assetlinks on elearning.unimib.it), so Android offers MyBicocca
+           in the chooser rather than claiming the link silently. -->
+      <intent-filter android:label="@string/app_name">
+        <action android:name="android.intent.action.VIEW" />
+        <category android:name="android.intent.category.DEFAULT" />
+        <category android:name="android.intent.category.BROWSABLE" />
+        <data android:scheme="https" android:host="elearning.unimib.it"
+            android:path="/mod/attendance/attendance.php" />
+        <data android:scheme="http" />
+      </intent-filter>
+      <!-- Affluences reservation cancellation links emailed after a library booking. Not
+           autoVerified (we don't own affluences.com), so Android offers MyBicocca in the chooser. -->
+      <intent-filter android:label="@string/app_name">
+        <action android:name="android.intent.action.VIEW" />
+        <category android:name="android.intent.category.DEFAULT" />
+        <category android:name="android.intent.category.BROWSABLE" />
+        <data android:scheme="https" android:host="affluences.com"
+            android:pathPrefix="/it/reservation/cancel" />
       </intent-filter>
     </activity>
 

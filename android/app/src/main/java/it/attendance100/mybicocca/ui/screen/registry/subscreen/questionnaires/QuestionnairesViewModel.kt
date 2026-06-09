@@ -69,12 +69,6 @@ class QuestionnairesViewModel @Inject constructor(
         viewModelScope.launch { fetch(careerId) }
     }
 
-    fun pullToRefresh() {
-        val careerId = activeCareerId.value ?: return
-        _activities.value = Loadable.NotYetLoaded
-        viewModelScope.launch { fetch(careerId) }
-    }
-
     fun openActivity(activity: QuestionnaireActivity) {
         _selectedActivity.value = activity
         fetchDetail(activity)

@@ -1,6 +1,7 @@
 package it.attendance100.mybicocca.data.auth
 
 import io.ktor.client.plugins.HttpTimeout
+import it.attendance100.mybicocca.data.observability.HttpMetrics
 import it.attendance100.mybicocca.data.remote.elearning.api.ElearningApi
 import java.util.Locale
 import javax.inject.Inject
@@ -19,6 +20,7 @@ class ElearningApiFactory @Inject constructor() {
                 socketTimeoutMillis = HTTP_TIMEOUT_MS
                 requestTimeoutMillis = HTTP_TIMEOUT_MS
             }
+            install(HttpMetrics)
         }
 
     // Maps the app locale onto the langpacks elearning.unimib.it actually ships;

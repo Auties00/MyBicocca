@@ -8,9 +8,6 @@ import it.attendance100.mybicocca.core.state.SyncStatus
 import it.attendance100.mybicocca.domain.model.account.Account
 import it.attendance100.mybicocca.domain.model.career.Career
 import it.attendance100.mybicocca.domain.model.career.CareerId
-import it.attendance100.mybicocca.domain.model.document.AcademicTitle
-import it.attendance100.mybicocca.domain.model.document.Certificate
-import it.attendance100.mybicocca.domain.model.document.CertificateId
 import it.attendance100.mybicocca.domain.model.transcript.GradeRollup
 import it.attendance100.mybicocca.domain.model.transcript.PrerequisiteStatus
 import it.attendance100.mybicocca.domain.model.transcript.TranscriptRow
@@ -18,18 +15,13 @@ import it.attendance100.mybicocca.domain.model.transcript.TranscriptRowState
 import it.attendance100.mybicocca.domain.model.transcript.TranscriptStats
 import it.attendance100.mybicocca.domain.usecase.account.GetUserPhotoUseCase
 import it.attendance100.mybicocca.domain.usecase.account.ObserveActiveAccountUseCase
-import it.attendance100.mybicocca.domain.usecase.document.DownloadCertificateUseCase
-import it.attendance100.mybicocca.domain.usecase.document.GetAcademicTitlesUseCase
-import it.attendance100.mybicocca.domain.usecase.document.GetCertificatesUseCase
 import it.attendance100.mybicocca.domain.usecase.transcript.GetPrerequisiteStatusUseCase
 import it.attendance100.mybicocca.domain.usecase.transcript.ObserveGradeRollupUseCase
 import it.attendance100.mybicocca.domain.usecase.transcript.ObserveTranscriptRowsUseCase
 import it.attendance100.mybicocca.domain.usecase.transcript.ObserveTranscriptStatsUseCase
+import it.attendance100.mybicocca.domain.usecase.connectivity.ObserveConnectivityUseCase
 import it.attendance100.mybicocca.domain.usecase.transcript.RefreshTranscriptUseCase
-import it.attendance100.mybicocca.ui.screen.profile.state.DocumentEvent
-import it.attendance100.mybicocca.core.os.NetworkMonitor
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -41,9 +33,7 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.io.File
 import javax.inject.Inject
@@ -58,13 +48,11 @@ class ProfileViewModel @Inject constructor(
     private val refreshTranscript: RefreshTranscriptUseCase,
     private val getPrerequisiteStatus: GetPrerequisiteStatusUseCase,
     private val getUserPhoto: GetUserPhotoUseCase,
-    private val getAcademicTitles: GetAcademicTitlesUseCase,
-    private val getCertificates: GetCertificatesUseCase,
-    private val downloadCertificate: DownloadCertificateUseCase,
-    networkMonitor: NetworkMonitor,
+    observeConnectivity: ObserveConnectivityUseCase,
 ) : ViewModel() {
 
-    val isOnline: StateFlow<Boolean> = networkMonitor.isOnline
+    val isOnline: StateFlow<Boolean> = observeConnectivity()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(KEEP_ALIVE_MS), true)
 
     val account: StateFlow<Account?> = observeActiveAccount()
         .stateIn(viewModelScope, SharingStarted.Eagerly, null)
@@ -138,22 +126,6 @@ class ProfileViewModel @Inject constructor(
     val prerequisiteStatuses: StateFlow<Map<Long, PrerequisiteStatus>> =
         _prerequisiteStatuses.asStateFlow()
 
-    // Titoli + certificati surfaced at the bottom of the profile. Secondary streams: any
-    // failure resolves to Loaded(emptyList()) so the documents sections simply hide and the
-    // main profile error/refresh state is never affected.
-    private val _titles = MutableStateFlow<Loadable<List<AcademicTitle>>>(Loadable.NotYetLoaded)
-    val titles: StateFlow<Loadable<List<AcademicTitle>>> = _titles.asStateFlow()
-
-    private val _certificates = MutableStateFlow<Loadable<List<Certificate>>>(Loadable.NotYetLoaded)
-    val certificates: StateFlow<Loadable<List<Certificate>>> = _certificates.asStateFlow()
-
-    // Ids currently being downloaded, so each row can show its own progress spinner.
-    private val _downloadingCertificates = MutableStateFlow<Set<CertificateId>>(emptySet())
-    val downloadingCertificates: StateFlow<Set<CertificateId>> = _downloadingCertificates.asStateFlow()
-
-    private val _events = Channel<DocumentEvent>(Channel.BUFFERED)
-    val events = _events.receiveAsFlow()
-
     init {
         viewModelScope.launch {
             activeCareerId.filterNotNull().distinctUntilChanged().collect { id ->
@@ -165,52 +137,6 @@ class ProfileViewModel @Inject constructor(
                 if (loadable is Loadable.Loaded) loadPrerequisites(loadable.value)
             }
         }
-        viewModelScope.launch {
-            activeCareerId.filterNotNull().collect { fetchDocuments(it) }
-        }
-    }
-
-    // Titoli + certificati fetch. Both are secondary and degrade to empty on failure, so a
-    // network/SAML error simply hides the sections rather than blanking the profile.
-    private suspend fun fetchDocuments(careerId: CareerId) {
-        runCatching { getAcademicTitles(careerId) }.fold(
-            onSuccess = { _titles.value = Loadable.Loaded(it) },
-            onFailure = { _titles.value = Loadable.Loaded(emptyList()) },
-        )
-        runCatching { getCertificates() }.fold(
-            onSuccess = { _certificates.value = Loadable.Loaded(it) },
-            onFailure = { _certificates.value = Loadable.Loaded(emptyList()) },
-        )
-    }
-
-    // Downloads a certificate PDF and emits a one-shot OpenPdf event for the UI to open it.
-    // Guards against double-taps via the per-id downloading set.
-    fun download(certificate: Certificate) {
-        if (certificate.id in _downloadingCertificates.value) return
-        viewModelScope.launch {
-            _downloadingCertificates.update { it + certificate.id }
-            runCatching { downloadCertificate(certificate.id) }.fold(
-                onSuccess = { bytes ->
-                    _events.send(DocumentEvent.OpenPdf(bytes, certificate.fileName()))
-                },
-                onFailure = {
-                    _events.send(DocumentEvent.ShowMessage("Impossibile scaricare il certificato"))
-                },
-            )
-            _downloadingCertificates.update { it - certificate.id }
-        }
-    }
-
-    // Sanitizes the description into a stable .pdf file name for the cache + viewer.
-    private fun Certificate.fileName(): String {
-        val base = description.ifBlank { "certificato" }
-            .replace(Regex("[^A-Za-z0-9 _-]"), "")
-            .trim()
-            .replace(Regex("\\s+"), "_")
-            .take(80)
-            .ifBlank { "certificato" }
-        val suffix = solarYear?.let { "_$it" }.orEmpty()
-        return "$base$suffix.pdf"
     }
 
     private suspend fun loadPrerequisites(rows: List<TranscriptRow>) {

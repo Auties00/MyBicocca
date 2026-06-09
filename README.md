@@ -49,12 +49,6 @@ MyBicocca brings together:
 - Access MAV/PagoPA payment documents
 - Download payment receipts
 
-### Internships
-- Search internship and stage opportunities
-- View company profiles
-- Save interesting opportunities
-- Track your applications
-
 ### Campus
 - Interactive campus map
 - Find buildings, departments, and facilities

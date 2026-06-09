@@ -63,7 +63,7 @@ import it.attendance100.mybicocca.ui.screen.elearning.subscreen.quizDetail.state
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.quizDetail.state.ReviewMark
 
 // Renders one parsed question, both while answering and in read-only review, as a
-// connected segment group in the plan-compiler language (see StudyPlanEditScreen):
+// connected segment group in the plan-compiler language (see StudyPlanEditPage):
 // a header tile carrying the prompt, one connected tile per choice with a morphing
 // selection knob, free-text/cloze fields in a closing tile, and review notes
 // appended as closing segments. Every interaction emits the FULL field map for the

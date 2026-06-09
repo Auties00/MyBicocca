@@ -50,8 +50,10 @@ import it.attendance100.mybicocca.data.local.transcript.TranscriptRowEntity
 import it.attendance100.mybicocca.data.local.transcript.TranscriptStatsEntity
 import it.attendance100.mybicocca.data.local.transcript.TranscriptSyncStateDao
 import it.attendance100.mybicocca.data.local.transcript.TranscriptSyncStateEntity
-import it.attendance100.mybicocca.data.local.internship.SavedOpportunityDao
-import it.attendance100.mybicocca.data.local.internship.SavedOpportunityEntity
+import it.attendance100.mybicocca.data.local.appointment.AppointmentReservationDao
+import it.attendance100.mybicocca.data.local.appointment.AppointmentReservationEntity
+import it.attendance100.mybicocca.data.local.library.LibraryReservationDao
+import it.attendance100.mybicocca.data.local.library.LibraryReservationEntity
 
 @Database(
     entities = [
@@ -88,9 +90,10 @@ import it.attendance100.mybicocca.data.local.internship.SavedOpportunityEntity
         MapBuildingEntity::class,
         MapRoomEntity::class,
         MapRoomSyncStateEntity::class,
-        SavedOpportunityEntity::class,
+        AppointmentReservationEntity::class,
+        LibraryReservationEntity::class,
     ],
-    version = 20,
+    version = 27,
     exportSchema = false,
 )
 abstract class MyBicoccaDatabase : RoomDatabase() {
@@ -115,5 +118,7 @@ abstract class MyBicoccaDatabase : RoomDatabase() {
     abstract fun mapRoomDao(): MapRoomDao
     abstract fun mapRoomSyncStateDao(): MapRoomSyncStateDao
 
-    abstract fun savedOpportunityDao(): SavedOpportunityDao
+    abstract fun appointmentReservationDao(): AppointmentReservationDao
+
+    abstract fun libraryReservationDao(): LibraryReservationDao
 }

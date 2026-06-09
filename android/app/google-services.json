@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "10476063685",
+    "project_id": "mybicocca-d862b",
+    "storage_bucket": "mybicocca-d862b.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:10476063685:android:ca61b4b7903a1c928219ac",
+        "android_client_info": {
+          "package_name": "it.attendance100.mybicocca"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCRXg8929uzOjQx14u4LOBJ2swmIBOb0Rw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

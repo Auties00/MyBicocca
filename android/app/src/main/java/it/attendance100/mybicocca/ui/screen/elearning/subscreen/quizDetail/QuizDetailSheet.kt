@@ -78,11 +78,12 @@ import java.util.Locale
 // Level 0 is the overview (facts + start/resume); "Storico" pushes level 1, the full list of
 // attempts, each tappable to review (finished) or resume (in progress). The sheet never hosts
 // the quiz-taking itself — that navigates to the full-screen attempt/review.
+// The quiz overview as a single sheet entry: BottomSheetSceneStrategy owns the container; this
+// keeps its own two-level (overview <-> Storico) pager and morphing header.
 @Composable
-fun QuizDetailSheet(
+fun QuizDetailPage(
     quizId: Int,
     courseId: Int,
-    onDismiss: () -> Unit,
     onStartAttempt: () -> Unit,
     onResumeAttempt: (attemptId: Int) -> Unit,
     onReviewAttempt: (attemptId: Int) -> Unit,
@@ -96,10 +97,7 @@ fun QuizDetailSheet(
     val bestGradeLoadable by viewModel.bestGrade.collectAsStateWithLifecycle()
 
     CourseDetailTheme(courseId = remember(courseId) { CourseId(courseId) }) {
-        PredictiveModalBottomSheet(
-            onDismiss = onDismiss,
-            sizeDuration = 500,
-        ) { _, _ ->
+        run {
             val quiz = quizLoadable.valueOrNull()
             val attempts = attemptsLoadable.valueOrNull().orEmpty().filterNot { it.previewMode }
             val bestGrade = bestGradeLoadable.valueOrNull()

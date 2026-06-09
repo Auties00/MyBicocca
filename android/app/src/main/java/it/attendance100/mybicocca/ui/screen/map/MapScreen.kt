@@ -1,11 +1,22 @@
 package it.attendance100.mybicocca.ui.screen.map
 
+import android.graphics.PointF
+import androidx.compose.animation.core.Animatable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Apartment
+import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.ExtendedFloatingActionButton
@@ -18,6 +29,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -30,6 +42,7 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -41,11 +54,9 @@ import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import com.google.gson.JsonPrimitive
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.domain.model.map.BuildingCode
-import it.attendance100.mybicocca.ui.component.feedback.LocalAppSnackbarController
 import it.attendance100.mybicocca.ui.screen.map.component.BuildingPin
 import it.attendance100.mybicocca.ui.screen.map.component.MapFilterSheet
 import it.attendance100.mybicocca.ui.screen.map.ext.splitLegacyAlias
-import it.attendance100.mybicocca.ui.screen.map.state.MapOneShotEvent
 import it.attendance100.mybicocca.ui.screen.map.subscreen.buildingDetail.BuildingDetailSheet
 import it.attendance100.mybicocca.ui.screen.map.subscreen.buildingsList.BuildingsListSheet
 import it.attendance100.mybicocca.ui.screen.map.theme.MapPalette
@@ -55,11 +66,14 @@ import it.attendance100.mybicocca.ui.screen.map.theme.resolveBicoccaStyleJson
 import it.attendance100.mybicocca.ui.theme.AppTheme
 import it.attendance100.mybicocca.ui.theme.LocalAppTheme
 import it.attendance100.mybicocca.ui.theme.LocalDarkTheme
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import org.maplibre.android.MapLibre
-import org.maplibre.android.camera.CameraUpdate
 import org.maplibre.android.camera.CameraUpdateFactory
 import org.maplibre.android.geometry.LatLng
+import org.maplibre.android.geometry.LatLngBounds
 import org.maplibre.android.maps.MapLibreMap
 import org.maplibre.android.maps.MapView
 import org.maplibre.android.maps.Style
@@ -68,18 +82,99 @@ import org.maplibre.android.plugins.annotation.SymbolManager
 import org.maplibre.android.plugins.annotation.SymbolOptions
 import org.maplibre.android.style.layers.Property
 import kotlin.coroutines.resume
-import kotlin.math.cos
+import kotlin.math.PI
+import kotlin.math.atan
+import kotlin.math.exp
+import kotlin.math.ln
+import kotlin.math.log2
 import kotlin.math.pow
+import kotlin.math.tan
 import android.graphics.Color as AndroidColor
 
 // Campus center (Piazza dell'Ateneo Nuovo). The offline pmtiles extract covers the Milan area, so
-// minZoom is kept city-level rather than the globe — you can't pan off the bundled tiles.
+// minZoom is kept city-level rather than the globe.
 private val BICOCCA = LatLng(45.5160, 9.2120)
+
+// Coverage of the bundled extract — the exact --bbox passed to `pmtiles extract` (also recorded
+// in basemap.pmtiles' v3 header). Update if the asset is ever re-extracted.
+private const val EXTRACT_WEST = 9.05
+private const val EXTRACT_EAST = 9.70
+private const val EXTRACT_SOUTH = 45.40
+private const val EXTRACT_NORTH = 45.75
+
+// Normalized web-mercator world coordinates ([0,1], y grows southward) — the space the camera
+// bounds are fit in, so "half a viewport" is an exact span at any latitude.
+private fun mercatorX(longitude: Double): Double = (longitude + 180.0) / 360.0
+
+private fun longitudeFromMercatorX(x: Double): Double = x * 360.0 - 180.0
+
+private fun mercatorY(latitude: Double): Double {
+    val rad = Math.toRadians(latitude)
+    return (1.0 - ln(tan(PI / 4 + rad / 2)) / PI) / 2.0
+}
+
+private fun latitudeFromMercatorY(y: Double): Double =
+    Math.toDegrees(2.0 * atan(exp(PI * (1.0 - 2.0 * y))) - PI / 2.0)
+
+private val EXTRACT_X_MIN = mercatorX(EXTRACT_WEST)
+private val EXTRACT_X_MAX = mercatorX(EXTRACT_EAST)
+private val EXTRACT_Y_MIN = mercatorY(EXTRACT_NORTH)
+private val EXTRACT_Y_MAX = mercatorY(EXTRACT_SOUTH)
+
+// The extract's bbox inset so that constraining the camera TARGET to it keeps the VISIBLE
+// viewport on tiled ground. Insets are in normalized-mercator units; the vertical pair is
+// asymmetric because the visible strip excludes the area behind the floating bar. If the
+// viewport outgrows the extract on an axis (transiently possible mid-resize — the min-zoom
+// floor prevents it in steady state), that axis pins to the midpoint of its inset range.
+private fun viewportFitBounds(
+    westInset: Double,
+    eastInset: Double,
+    northInset: Double,
+    southInset: Double,
+): LatLngBounds {
+    val xMin = EXTRACT_X_MIN + westInset
+    val xMax = EXTRACT_X_MAX - eastInset
+    val xMid = (EXTRACT_X_MIN + EXTRACT_X_MAX) / 2
+    val yMin = EXTRACT_Y_MIN + northInset
+    val yMax = EXTRACT_Y_MAX - southInset
+    val yMid = (yMin + yMax) / 2
+    return LatLngBounds.from(
+        latitudeFromMercatorY(if (yMin <= yMax) yMin else yMid),
+        longitudeFromMercatorX(if (xMin <= xMax) xMax else xMid),
+        latitudeFromMercatorY(if (yMin <= yMax) yMax else yMid),
+        longitudeFromMercatorX(if (xMin <= xMax) xMin else xMid),
+    )
+}
+
+// Physical px spanned by the full mercator world at the CURRENT zoom, measured through the live
+// projection (two probe points half a view apart). Self-consistent with whatever pixel/density
+// conventions the renderer applies internally — unlike camera padding or a 512·2^zoom constant,
+// it cannot drift from what is actually on screen. Requires bearing/tilt locked (they are).
+private fun MapLibreMap.worldPixelsAtCurrentZoom(): Double {
+    val x = width / 2f
+    val north = projection.fromScreenLocation(PointF(x, height * 0.25f))
+    val south = projection.fromScreenLocation(PointF(x, height * 0.75f))
+    return height * 0.5 / (mercatorY(south.latitude) - mercatorY(north.latitude))
+}
+
+// Latitude the camera target must aim at so that `latitude` lands on screen row `focalY`: the
+// target itself always projects to the view's vertical center, so offset it by the mercator
+// span between the center and focalY.
+private fun MapLibreMap.targetLatitudeFor(latitude: Double, focalY: Double, worldPx: Double): Double =
+    latitudeFromMercatorY(mercatorY(latitude) + (height / 2.0 - focalY) / worldPx)
+
+private fun MapLibreMap.targetLongitudeFor(longitude: Double, focalX: Double, worldPx: Double): Double =
+    longitudeFromMercatorX(mercatorX(longitude) + (width / 2.0 - focalX) / worldPx)
 
 private const val MIN_ZOOM = 10.0
 private const val CAMPUS_ZOOM = 15.5
 private const val BUILDING_ZOOM = 17.0
 private const val MAX_ZOOM = 19.0
+
+// A uniform margin inset on every side of the visible viewport before the building is centered in
+// it, so the pin never sits flush against the app bar / sheet edge. Symmetric, so it leaves the
+// center untouched in the normal case; it only bites when an axis is nearly fully covered.
+private val VIEWPORT_PADDING = 16.dp
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -88,7 +183,8 @@ fun MapScreen(
     // True only while this is the visible tab — see CalendarScreen for the pager-cache rationale.
     isActive: Boolean = true,
     // The shell's content insets (top = floating app bar + status bar, bottom = nav bar). The map
-    // renders edge-to-edge behind the top bar, so we feed the top inset to the map's padding.
+    // renders edge-to-edge behind the top bar; the top inset bounds the visible strip the camera
+    // framing math centers content in.
     contentInsets: PaddingValues = PaddingValues(),
     onProvideFilterToggle: ((() -> Unit)?) -> Unit = {},
     onOpenRoom360: (String, String) -> Unit = { _, _ -> },
@@ -99,8 +195,22 @@ fun MapScreen(
     ),
 ) {
     val density = LocalDensity.current
+    val layoutDirection = LocalLayoutDirection.current
     val context = LocalContext.current
-    val snackbar = LocalAppSnackbarController.current
+
+    // The shell ends the map view at the nav bar's TOP edge (MainShell pads the map page by the
+    // bottom inset), while the floating app bar overlays the map. So the user-visible viewport is
+    // the map view minus the top inset — every camera framing computation centers content in that
+    // strip. The bottom inset (bottomBarPx) is the gap between the map view's bottom and the screen
+    // bottom, i.e. the slice of the detail sheet that hangs BELOW the map and so covers none of it.
+    val startInsetPx = with(density) { contentInsets.calculateStartPadding(layoutDirection).roundToPx() }
+    val endInsetPx = with(density) { contentInsets.calculateEndPadding(layoutDirection).roundToPx() }
+    val topInsetPx = with(density) { contentInsets.calculateTopPadding().roundToPx() }
+    val bottomBarPx = with(density) { contentInsets.calculateBottomPadding().roundToPx() }
+    val viewportPaddingPx = with(density) { VIEWPORT_PADDING.roundToPx() }
+    // The selected pin is anchored at its bottom tip; this is how far its head center sits above
+    // that anchor, so centering can target the head (what reads as "the pin"), not the tip below it.
+    val pinHeadCenterOffsetPx = BuildingPin.selectedHeadCenterOffset(density.density)
 
     val buildings by viewModel.buildings.collectAsStateWithLifecycle()
     val allBuildings by viewModel.allBuildings.collectAsStateWithLifecycle()
@@ -116,14 +226,8 @@ fun MapScreen(
     var showBuildingsList by remember { mutableStateOf(false) }
     LaunchedEffect(isActive) { if (isActive) onProvideFilterToggle { showFilterSheet = true } }
 
-    LaunchedEffect(Unit) {
-        viewModel.oneShotEvents.collect { event ->
-            when (event) {
-                is MapOneShotEvent.RefreshFailed ->
-                    snackbar.showError("Impossibile aggiornare le aule", event.cause)
-            }
-        }
-    }
+    // Room refresh failures surface as an in-sheet error state in the building detail / buildings
+    // list sheets (driven by syncStatus + retryRooms), not a transient snackbar over the map.
 
     // Base-map palette: the brand uses its exact hand-tuned hexes; every other palette (Material
     // You, Oceano, Bosco) derives map colors from its M3 scheme so the map tracks the theme.
@@ -161,9 +265,73 @@ fun MapScreen(
             isLogoEnabled = false
             isAttributionEnabled = false
         }
-        map.setMinZoomPreference(MIN_ZOOM)
-        map.setMaxZoomPreference(MAX_ZOOM)
+        // No camera padding anywhere — its internal px/dp conversion proved unreliable in this
+        // SDK. All framing is plain camera targets, offset with the calibrated mercator scale.
         map.moveCamera(CameraUpdateFactory.newLatLngZoom(BICOCCA, CAMPUS_ZOOM))
+        val campusWorldPx = map.worldPixelsAtCurrentZoom()
+        val visibleWidthPx = (map.width - startInsetPx - endInsetPx).coerceAtLeast(1f).toDouble()
+        val visibleHeightPx = (map.height - topInsetPx).coerceAtLeast(1f).toDouble()
+
+        // Floor the zoom where the visible strip (full width x between-bar height) would
+        // outgrow the extract — past that, vertical fitting has no solution.
+        val campusZoom = map.cameraPosition.zoom
+        map.setMinZoomPreference(
+            maxOf(
+                MIN_ZOOM,
+                campusZoom + log2(visibleWidthPx / (campusWorldPx * (EXTRACT_X_MAX - EXTRACT_X_MIN))),
+                campusZoom + log2(visibleHeightPx / (campusWorldPx * (EXTRACT_Y_MAX - EXTRACT_Y_MIN))),
+            ),
+        )
+        map.setMaxZoomPreference(MAX_ZOOM)
+
+        // Initial framing: campus centered in the strip below the floating bar.
+        val initialFocalX = (startInsetPx + map.width - endInsetPx) / 2.0
+        val initialFocalY = (topInsetPx + map.height) / 2.0
+        map.moveCamera(
+            CameraUpdateFactory.newLatLng(
+                LatLng(
+                    map.targetLatitudeFor(BICOCCA.latitude, initialFocalY, campusWorldPx),
+                    map.targetLongitudeFor(BICOCCA.longitude, initialFocalX, campusWorldPx),
+                ),
+            ),
+        )
+
+        // Keep the VISIBLE map inside the extract, not just the camera target: MapLibre's bounds
+        // API clamps the center only, which leaves half a viewport free to slide past the bbox
+        // (the void shows mostly vertically — screens are tall and the extract is short, while
+        // horizontally the bbox-intersecting tiles overshoot far enough to hide it). The target
+        // bounds are re-inset on every zoom change; vertically asymmetric, so panning stops
+        // where the data edge meets the app bar's bottom (north) or the view's bottom (south).
+        var fitZoom = Double.NaN
+        var fitBounds: LatLngBounds? = null
+        fun refitCameraBounds() {
+            val zoom = map.cameraPosition.zoom
+            if (zoom == fitZoom) return
+            fitZoom = zoom
+            val worldPx = map.worldPixelsAtCurrentZoom()
+            val bounds = viewportFitBounds(
+                westInset = (map.width / 2.0 - startInsetPx) / worldPx,
+                eastInset = (map.width / 2.0 - endInsetPx) / worldPx,
+                northInset = (map.height / 2.0 - topInsetPx) / worldPx,
+                southInset = map.height / 2.0 / worldPx,
+            )
+            fitBounds = bounds
+            map.setLatLngBoundsForCameraTarget(bounds)
+        }
+        map.addOnCameraMoveListener { refitCameraBounds() }
+        map.addOnCameraIdleListener {
+            refitCameraBounds()
+            // A zoom-out tightens the bounds under the camera. Ongoing gestures self-correct on
+            // their next frame, but one that ENDS outside needs an explicit ease back in.
+            val bounds = fitBounds ?: return@addOnCameraIdleListener
+            val target = map.cameraPosition.target ?: return@addOnCameraIdleListener
+            val easedLat = target.latitude.coerceIn(bounds.latitudeSouth, bounds.latitudeNorth)
+            val easedLon = target.longitude.coerceIn(bounds.longitudeWest, bounds.longitudeEast)
+            if (easedLat != target.latitude || easedLon != target.longitude) {
+                map.animateCamera(CameraUpdateFactory.newLatLng(LatLng(easedLat, easedLon)))
+            }
+        }
+        refitCameraBounds()
 
         val styleJson = resolveBicoccaStyleJson(context)
         val style = suspendCancellableCoroutine<Style> { cont ->
@@ -190,12 +358,6 @@ fun MapScreen(
     // Recolor the live style to the active palette — in place, no reload, so theme changes are
     // instant. POI icons keep Protomaps' own colors.
     LaunchedEffect(palette, mapStyle) { mapStyle?.applyBicoccaPalette(palette) }
-
-    // Top inset goes to the map padding (keeps the camera target below the floating bar). The
-    // detail sheet is NOT fed as bottom padding — the camera is shifted instead (below).
-    val topInsetPx = with(density) { contentInsets.calculateTopPadding().roundToPx() }
-    val bottomBarPx = with(density) { contentInsets.calculateBottomPadding().roundToPx() }
-    LaunchedEffect(libreMap, topInsetPx) { libreMap?.setPadding(0, topInsetPx, 0, 0) }
 
     // Build/refresh the pin symbols whenever the pin set or the pin colors (theme) change. Each
     // building registers two bitmaps (idle + selected) and a symbol; selection just swaps the icon.
@@ -239,62 +401,89 @@ fun MapScreen(
     // Selections made from inside the buildings list sheet stay in that sheet's pager — the
     // standalone detail modal (and its camera centering) only reacts to pin taps.
     val detailModalBuilding = if (showBuildingsList) null else selectedBuilding
-    var sheetHeightPx by remember { mutableIntStateOf(0) }
 
-    // Center the selected building in the area the sheet doesn't cover. The target is moved south
-    // by half the covered height so the building lands above the sheet without bottom padding. The
-    // full lat/lng centering runs ONCE per selection; later sheet resizes only nudge vertically by
-    // the height delta, so the map never shifts horizontally when the modal content loads.
+    // How much of the MAP the detail sheet covers, in map-local px. The sheet is a full-screen
+    // dialog whose surface runs to the screen bottom, so the slice over the map = its whole
+    // surface height minus the slice hanging below the map view (the bottom-nav gap = bottomBarPx).
+    // The surface is measured as ONE node below, and a height is window-agnostic — so this needs
+    // no cross-window position math. 0 = not measured yet (the sheet hasn't laid out for this pick).
+    var sheetSurfaceHeightPx by remember { mutableIntStateOf(0) }
+    val modalState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    // Drive the camera's entrance on the sheet's OWN motion curve so the two glide in together,
+    // instead of a fixed-duration fly that finishes out of step with the modal.
+    val entranceSpec = MaterialTheme.motionScheme.defaultSpatialSpec<Float>()
+
+    // Frame the tapped building in the VISIBLE viewport — the part of the map with nothing drawn
+    // over it: the status bar + floating app bar cap the top, the detail sheet caps the bottom,
+    // side insets cap the width, and a uniform 16dp margin insets all four. The FAB is ignored.
+    // All map-local px (0,0 = the map's top-left = the window's top-left — the map is edge to edge).
+    //
+    // ONE per-frame moveCamera driven by smooth inputs, so the camera NEVER snaps (no animateCamera
+    // to interrupt): an `entrance` spring (0..1) interpolates zoom + pan from the current camera to
+    // the framed target on the sheet's motion curve; past 1 the same loop keeps re-deriving the
+    // framed target from the LIVE cover, so it rides the sheet's own animateContentSize (rooms
+    // landing, room-page swaps) frame for frame. The building stays centered in the strip it leaves.
     LaunchedEffect(detailModalBuilding, libreMap) {
         val map = libreMap ?: return@LaunchedEffect
         val building = detailModalBuilding ?: return@LaunchedEffect
-        // Mercator latitude degrees per screen pixel at this latitude/zoom (256dp world at zoom 0).
-        val worldWidthPx = 256.0 * density.density * 2.0.pow(BUILDING_ZOOM)
-        val latitudePerPixel = 360.0 * cos(Math.toRadians(building.point.latitude)) / worldWidthPx
-        var lastCoverPx = -1
 
-        suspend fun animate(update: CameraUpdate) = suspendCancellableCoroutine<Unit> { cont ->
-            map.animateCamera(update, object : MapLibreMap.CancelableCallback {
-                override fun onFinish() { if (cont.isActive) cont.resume(Unit) }
-                override fun onCancel() { if (cont.isActive) cont.resume(Unit) }
-            })
+        // Discard the previous pick's measurement; the keyed sheet re-measures for THIS building,
+        // and we wait for its first report before framing so we never frame against a stale cover.
+        sheetSurfaceHeightPx = 0
+
+        fun coverOrNull(): Int? =
+            if (sheetSurfaceHeightPx <= 0) null else (sheetSurfaceHeightPx - bottomBarPx).coerceAtLeast(0)
+
+        // Camera target that lands the building at the center of the 16dp-inset visible viewport at
+        // `zoom`. worldPx (px spanned by the full mercator world) is calibrated live then rescaled
+        // to `zoom` — mercator scale is exactly 2^zoom — so the px offset from the view center to
+        // the focal point converts to a target with no padding/unit guesswork. The inset is
+        // symmetric, so it never moves the center; if it over-shrinks an axis the focal pins to
+        // that axis's near edge (the margin) rather than inverting.
+        fun framedTarget(coverPx: Int, zoom: Double): LatLng {
+            val left = startInsetPx + viewportPaddingPx
+            val right = map.width - endInsetPx - viewportPaddingPx
+            val top = topInsetPx + viewportPaddingPx
+            val bottom = map.height - coverPx - viewportPaddingPx
+            val focalX = ((left + right) / 2.0).coerceAtLeast(left.toDouble())
+            // Center the pin's HEAD, not its anchor tip: drop the focal point below the strip
+            // center by the head offset, clamped back into the strip when it is too short to fit it.
+            val focalY = ((top + bottom) / 2.0 + pinHeadCenterOffsetPx)
+                .coerceIn(top.toDouble(), maxOf(top.toDouble(), bottom.toDouble()))
+            val worldPx = map.worldPixelsAtCurrentZoom() * 2.0.pow(zoom - map.cameraPosition.zoom)
+            return LatLng(
+                map.targetLatitudeFor(building.point.latitude, focalY, worldPx),
+                map.targetLongitudeFor(building.point.longitude, focalX, worldPx),
+            )
         }
 
-        snapshotFlow { (sheetHeightPx - bottomBarPx).coerceAtLeast(0) }.collect { coverPx ->
-            when {
-                coverPx == 0 -> Unit
-                lastCoverPx < 0 -> {
-                    lastCoverPx = coverPx
-                    animate(
-                        CameraUpdateFactory.newLatLngZoom(
-                            LatLng(
-                                building.point.latitude - coverPx / 2.0 * latitudePerPixel,
-                                building.point.longitude,
-                            ),
-                            BUILDING_ZOOM,
-                        ),
-                    )
-                }
-                coverPx != lastCoverPx -> {
-                    // Re-center on the building shifted for the new cover. Longitude is held fixed,
-                    // so the map never drifts horizontally when the sheet content resizes; zoom is
-                    // left untouched (newLatLng, not newLatLngZoom).
-                    lastCoverPx = coverPx
-                    animate(
-                        CameraUpdateFactory.newLatLng(
-                            LatLng(
-                                building.point.latitude - coverPx / 2.0 * latitudePerPixel,
-                                building.point.longitude,
-                            ),
-                        ),
-                    )
-                }
+        // Hold off until the sheet has reported its size at least once for THIS building.
+        snapshotFlow { coverOrNull() }.filterNotNull().first()
+
+        val startZoom = map.cameraPosition.zoom
+        val startTarget = map.cameraPosition.target
+            ?: LatLng(building.point.latitude, building.point.longitude)
+        val entrance = Animatable(0f)
+        launch { entrance.animateTo(1f, entranceSpec) }
+
+        snapshotFlow { entrance.value to (coverOrNull() ?: 0) }
+            .collect { (progress, cover) ->
+                val p = progress.toDouble()
+                val framed = framedTarget(cover, BUILDING_ZOOM)
+                val target = LatLng(
+                    startTarget.latitude + (framed.latitude - startTarget.latitude) * p,
+                    startTarget.longitude + (framed.longitude - startTarget.longitude) * p,
+                )
+                val zoom = startZoom + (BUILDING_ZOOM - startZoom) * p
+                map.moveCamera(CameraUpdateFactory.newLatLngZoom(target, zoom))
             }
-        }
     }
 
     Box(modifier = modifier.fillMaxSize()) {
-        AndroidView(factory = { mapView }, modifier = Modifier.fillMaxSize())
+        AndroidView(
+            factory = { mapView },
+            modifier = Modifier.fillMaxSize(),
+        )
 
         ExtendedFloatingActionButton(
             onClick = { showBuildingsList = true },
@@ -307,26 +496,46 @@ fun MapScreen(
     }
 
     if (detailModalBuilding != null) {
-        val modalState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
         ModalBottomSheet(
             onDismissRequest = { viewModel.clearSelection() },
             sheetState = modalState,
-            // No scrim: the sheet coexists with the map (the camera centers the selected building
+            // No scrim: the sheet coexists with the map (the camera frames the selected building
             // above it), so dimming the map behind it would defeat the point.
             scrimColor = Color.Transparent,
+            // Own the whole surface so a SINGLE node measures it end to end: no default handle and
+            // no auto inset padding, so the measured column below IS the sheet surface — from its
+            // top down to the screen bottom. `sheetSurfaceHeightPx - bottomBarPx` is then exactly
+            // how much of the map the sheet covers, with zero cross-window position math.
+            dragHandle = null,
+            contentWindowInsets = { WindowInsets(0) },
         ) {
-            BuildingDetailSheet(
-                building = detailModalBuilding,
-                rooms = rooms,
-                daySchedule = daySchedule,
-                syncStatus = syncStatus,
-                selectedRoom = selectedRoom,
-                roomDetail = roomDetail,
-                onRoomClick = viewModel::selectRoom,
-                onCloseRoom = viewModel::clearRoomSelection,
-                onOpen360 = onOpenRoom360,
-                modifier = Modifier.onSizeChanged { sheetHeightPx = it.height },
-            )
+            val navBottomPx = WindowInsets.navigationBars.getBottom(density)
+            // key(code) recreates the measured node on an in-place A->B selection swap, so
+            // onSizeChanged is guaranteed to re-fire even when B lays out at A's exact height
+            // (a bare state reset could otherwise wait forever on a callback that never comes).
+            key(detailModalBuilding.code) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .onSizeChanged { sheetSurfaceHeightPx = it.height },
+                ) {
+                    BottomSheetDefaults.DragHandle(modifier = Modifier.align(Alignment.CenterHorizontally))
+                    BuildingDetailSheet(
+                        building = detailModalBuilding,
+                        rooms = rooms,
+                        daySchedule = daySchedule,
+                        syncStatus = syncStatus,
+                        selectedRoom = selectedRoom,
+                        roomDetail = roomDetail,
+                        onRoomClick = viewModel::selectRoom,
+                        onCloseRoom = viewModel::clearRoomSelection,
+                        onOpen360 = onOpenRoom360,
+                        onRetryRooms = viewModel::retryRooms,
+                    )
+                    // Keep content clear of the system nav bar; counted in the measured surface.
+                    Spacer(modifier = Modifier.height(with(density) { navBottomPx.toDp() }))
+                }
+            }
         }
     }
 
@@ -348,6 +557,7 @@ fun MapScreen(
                 showBuildingsList = false
                 viewModel.clearSelection()
             },
+            onRetryRooms = viewModel::retryRooms,
         )
     }
 

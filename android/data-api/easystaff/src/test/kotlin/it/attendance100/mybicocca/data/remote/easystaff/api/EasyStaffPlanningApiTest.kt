@@ -1,5 +1,6 @@
 package it.attendance100.mybicocca.data.remote.easystaff.api
 
+import it.attendance100.mybicocca.data.remote.common.exception.ApiRequestException
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningArea
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningFieldPosition
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningFieldType
@@ -8,7 +9,6 @@ import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningLog
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningMonthSchedule
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningPortal
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningService
-import it.attendance100.mybicocca.data.remote.easystaff.exception.EasyStaffPlanningException
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -29,6 +29,7 @@ class EasyStaffPlanningApiTest : EasyStaffTestBase() {
         private const val TEST_EMAIL = "mybicocca.apitest@example.com"
         private const val TEST_NAME = "MYBICOCCA TEST AUTOMATICO"
         private const val TEST_NOTE = "Prenotazione di test automatica, annullata immediatamente. Si prega di ignorare."
+        private const val TEST_PHONE = "+39 333 0000000"
         private const val UPDATED_TEST_NOTE = "Prenotazione di test automatica (aggiornata), annullata immediatamente. Si prega di ignorare."
     }
 
@@ -305,8 +306,8 @@ class EasyStaffPlanningApiTest : EasyStaffTestBase() {
                 primaryValue = TEST_EMAIL
             )
         }.exceptionOrNull()
-        val planningError = assertInstanceOf<EasyStaffPlanningException>(error, "Bogus codes should be reported as EasyStaffPlanningException")
-        assertEquals("not_found", planningError.errorKey, "Error key should identify the missing reservation")
+        val planningError = assertInstanceOf<ApiRequestException>(error, "Bogus codes should be reported as ApiRequestException")
+        assertEquals("not_found", planningError.message, "Error message should identify the missing reservation")
     }
 
     @Test
@@ -317,8 +318,8 @@ class EasyStaffPlanningApiTest : EasyStaffTestBase() {
                 primaryValue = TEST_EMAIL
             )
         }.exceptionOrNull()
-        val planningError = assertInstanceOf<EasyStaffPlanningException>(error, "Bogus codes should be reported as EasyStaffPlanningException")
-        assertEquals("reservation_not_found", planningError.errorKey, "Error key should identify the missing reservation")
+        val planningError = assertInstanceOf<ApiRequestException>(error, "Bogus codes should be reported as ApiRequestException")
+        assertEquals("reservation_not_found", planningError.message, "Error message should identify the missing reservation")
     }
 
     // Exercises the full anonymous lifecycle the way the web front-end rolls back an
@@ -409,7 +410,8 @@ class EasyStaffPlanningApiTest : EasyStaffTestBase() {
         field.position == EasyStaffPlanningFieldPosition.Gdpr -> null
         field.type == EasyStaffPlanningFieldType.Email -> TEST_EMAIL
         field.type == EasyStaffPlanningFieldType.TextArea -> TEST_NOTE
-        field.type == EasyStaffPlanningFieldType.Select -> field.values?.firstOrNull()
+        field.type == EasyStaffPlanningFieldType.Select -> field.values?.firstOrNull()?.value
+        field.type == EasyStaffPlanningFieldType.Phone -> TEST_PHONE
         field.type == EasyStaffPlanningFieldType.Checkbox -> "true"
         else -> TEST_NAME
     }

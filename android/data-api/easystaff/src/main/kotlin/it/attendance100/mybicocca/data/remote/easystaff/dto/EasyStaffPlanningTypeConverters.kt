@@ -211,26 +211,38 @@ object SuspensionPolicySerializer : KSerializer<EasyStaffPlanningSuspensionPolic
 }
 
 /**
- * Decodes the values of a form field, which can be null, a JSON array of options, or a single
- * string (e.g. the privacy policy URL of the GDPR checkbox). Single strings decode to a
- * single-element list.
+ * Decodes the values of a form field, which can be null, a JSON object mapping submission
+ * values to display labels (the options of a select), a JSON array of plain options, or a
+ * single string (e.g. the privacy policy URL of the GDPR checkbox). Plain options and single
+ * strings decode to options whose value and label coincide.
+ *
+ * Values are always serialized back as a value-to-label JSON object.
  */
-object FieldValuesSerializer : KSerializer<List<String>?> {
-    override val descriptor = ListSerializer(TolerantStringSerializer).descriptor
+object FieldValuesSerializer : KSerializer<List<EasyStaffPlanningFieldOption>?> {
+    private val delegate = MapSerializer(String.serializer(), String.serializer())
+    override val descriptor = delegate.descriptor
 
-    override fun serialize(encoder: Encoder, value: List<String>?) {
-        ListSerializer(TolerantStringSerializer).serialize(encoder, value.orEmpty())
+    override fun serialize(encoder: Encoder, value: List<EasyStaffPlanningFieldOption>?) {
+        delegate.serialize(encoder, value.orEmpty().associate { it.value to it.label })
     }
 
-    override fun deserialize(decoder: Decoder): List<String>? {
+    override fun deserialize(decoder: Decoder): List<EasyStaffPlanningFieldOption>? {
         val jsonDecoder = decoder as? JsonDecoder
             ?: return null
         return when (val element = jsonDecoder.decodeJsonElement()) {
-            is JsonArray -> element.mapNotNull { (it as? JsonPrimitive)?.contentOrNull }
+            is JsonObject -> element.entries.mapNotNull { (key, value) ->
+                (value as? JsonPrimitive)?.contentOrNull
+                    ?.let { EasyStaffPlanningFieldOption(value = key, label = it) }
+            }
+
+            is JsonArray -> element.mapNotNull { item ->
+                (item as? JsonPrimitive)?.contentOrNull
+                    ?.let { EasyStaffPlanningFieldOption(value = it, label = it) }
+            }
 
             is JsonPrimitive -> element.contentOrNull
                 ?.takeUnless { it.isBlank() }
-                ?.let { listOf(it) }
+                ?.let { listOf(EasyStaffPlanningFieldOption(value = it, label = it)) }
 
             else -> null
         }
@@ -423,6 +435,7 @@ object EasyStaffPlanningFieldTypeSerializer : KSerializer<EasyStaffPlanningField
     private const val LBL_EMAIL = "email"
     private const val LBL_TEXT = "text"
     private const val LBL_TEXT_AREA = "textarea"
+    private const val LBL_PHONE = "tel"
     private const val LBL_CHECKBOX = "checkbox"
     private const val LBL_SELECT = "select"
 
@@ -433,6 +446,7 @@ object EasyStaffPlanningFieldTypeSerializer : KSerializer<EasyStaffPlanningField
             is EasyStaffPlanningFieldType.Email -> LBL_EMAIL
             is EasyStaffPlanningFieldType.Text -> LBL_TEXT
             is EasyStaffPlanningFieldType.TextArea -> LBL_TEXT_AREA
+            is EasyStaffPlanningFieldType.Phone -> LBL_PHONE
             is EasyStaffPlanningFieldType.Checkbox -> LBL_CHECKBOX
             is EasyStaffPlanningFieldType.Select -> LBL_SELECT
             is EasyStaffPlanningFieldType.Other -> value.value
@@ -445,6 +459,7 @@ object EasyStaffPlanningFieldTypeSerializer : KSerializer<EasyStaffPlanningField
             LBL_EMAIL -> EasyStaffPlanningFieldType.Email
             LBL_TEXT -> EasyStaffPlanningFieldType.Text
             LBL_TEXT_AREA -> EasyStaffPlanningFieldType.TextArea
+            LBL_PHONE -> EasyStaffPlanningFieldType.Phone
             LBL_CHECKBOX -> EasyStaffPlanningFieldType.Checkbox
             LBL_SELECT -> EasyStaffPlanningFieldType.Select
             else -> EasyStaffPlanningFieldType.Other(stringValue)

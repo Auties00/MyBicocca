@@ -4,11 +4,10 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -16,7 +15,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 
-// Arch-shaped leading date block shared by the booked exam card, its detail hero
+// Rounded-rectangle leading date block shared by the booked exam card, its detail hero
 // and the booking flow.
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -32,7 +31,7 @@ fun ExamDateBadge(
         verticalArrangement = Arrangement.Center,
         modifier = modifier
             .size(size)
-            .clip(MaterialShapes.Arch.toShape())
+            .clip(RoundedCornerShape(14.dp))
             .background(scheme.primaryContainer),
     ) {
         Text(
