@@ -3,6 +3,7 @@ package it.attendance100.mybicocca.ui.screen.account.subscreen.accountSwitcher
 import android.annotation.SuppressLint
 import androidx.activity.compose.PredictiveBackHandler
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ContentTransform
 import androidx.compose.animation.EnterExitState
 import androidx.compose.animation.ExperimentalAnimationApi
@@ -14,8 +15,10 @@ import androidx.compose.animation.core.animateDp
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.rememberTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Arrangement
@@ -82,6 +85,7 @@ import it.attendance100.mybicocca.ui.screen.account.subscreen.accountSwitcher.co
 import it.attendance100.mybicocca.ui.screen.account.subscreen.accountSwitcher.component.ProfileCard
 import it.attendance100.mybicocca.ui.screen.account.subscreen.accountSwitcher.component.RemoveSwipeBackground
 import it.attendance100.mybicocca.ui.screen.account.subscreen.accountSwitcher.component.SwipeToRemoveBox
+import it.attendance100.mybicocca.ui.screen.account.subscreen.accountSwitcher.component.UndoRemovalBar
 import it.attendance100.mybicocca.ui.screen.auth.AuthScreenSheetContent
 import it.attendance100.mybicocca.ui.screen.auth.AuthViewModel
 import it.attendance100.mybicocca.ui.theme.BicoccaTheme
@@ -94,22 +98,6 @@ import java.time.Instant
 private val CardShape = RoundedCornerShape(28.dp)
 private const val ADD_ACCOUNT_KEY = "__add_account__"
 
-/**
- * Modal bottom sheet for switching between saved accounts and their careers.
- *
- * Two scenes share the sheet through a seekable AnimatedContent: the account roster and an
- * in-sheet login for adding another account. The roster shows profile cards active-first —
- * the active card expands its careers inline — followed by an "Aggiungi un altro account"
- * tile, with swipe-to-remove on every card, the active one included: removal signs the
- * account out immediately and is confirmed by a snackbar, with no undo.
- * Entering add-account slides the roster away and stretches the content to nearly
- * full screen height; while it is open the sheet refuses to hide, so back (or a dismiss
- * request) exits login mode first. Predictive back scrubs whichever transition applies —
- * the login-to-roster scene change, or from the roster the sheet content's own collapse —
- * in step with the gesture. The login scene resets its form when it leaves, signing in
- * returns to the roster unless a career pick is required, and the profile/settings
- * shortcuts delegate upstream before closing the sheet.
- */
 @Suppress("LABEL_NAME_CLASH")
 @SuppressLint("ConfigurationScreenWidthHeight")
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
@@ -130,6 +118,7 @@ fun AccountSwitcherSheet(
     val accounts by viewModel.accounts.collectAsStateWithLifecycle()
     val active by viewModel.activeAccount.collectAsStateWithLifecycle()
     val photos by viewModel.photos.collectAsStateWithLifecycle()
+    val pending by viewModel.pendingRemoval.collectAsStateWithLifecycle()
     val inflight by authViewModel.inflight.collectAsStateWithLifecycle()
 
     val scope = rememberCoroutineScope()
@@ -167,6 +156,9 @@ fun AccountSwitcherSheet(
     val ordered = remember(accounts, activeId) {
         accounts.sortedByDescending { it.id == activeId }
     }
+    var lastRemovedName by remember { mutableStateOf("") }
+    LaunchedEffect(pending) { pending?.let { lastRemovedName = it.displayName } }
+
     val configuration = LocalConfiguration.current
     val screenHeight = configuration.screenHeightDp.dp
     val maxListHeight = screenHeight * 0.68f
@@ -317,6 +309,8 @@ fun AccountSwitcherSheet(
                                 ordered = ordered,
                                 activeId = activeId,
                                 photos = photos,
+                                pending = pending,
+                                lastRemovedName = lastRemovedName,
                                 maxListHeight = maxListHeight,
                                 motion = motion,
                                 onOpenDetails = { onOpenProfile(); close() },
@@ -325,7 +319,8 @@ fun AccountSwitcherSheet(
                                 onSelectCareer = { id, careerId ->
                                     viewModel.selectAccountCareer(id, careerId)
                                 },
-                                onRemove = { account -> viewModel.signOut(account.id) },
+                                onRequestRemove = { viewModel.requestRemove(it) },
+                                onUndoRemove = { viewModel.undoRemove() },
                                 onAddAccount = { isAddingAccount = true },
                             )
                         }
@@ -342,25 +337,22 @@ fun AccountSwitcherSheet(
     }
 }
 
-/**
- * Roster scene of the switcher: an "Account" header with a settings shortcut and the
- * height-capped account list (active card first, each wrapped in swipe-to-remove, the
- * add-account tile last). Removal is immediate — the swiped card slides off and the
- * survivors animate into their new slots when the account list updates.
- */
 @Composable
 private fun AccountsScene(
     modifier: Modifier,
     ordered: List<Account>,
     activeId: AccountId?,
     photos: Map<AccountId, File?>,
+    pending: Account?,
+    lastRemovedName: String,
     maxListHeight: Dp,
     motion: MotionScheme,
     onOpenDetails: () -> Unit,
     onOpenSettings: () -> Unit,
     onSwitchAccount: (AccountId) -> Unit,
     onSelectCareer: (AccountId, CareerId) -> Unit,
-    onRemove: (Account) -> Unit,
+    onRequestRemove: (Account) -> Unit,
+    onUndoRemove: () -> Unit,
     onAddAccount: () -> Unit,
 ) {
     Column(
@@ -394,29 +386,38 @@ private fun AccountsScene(
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             items(ordered, key = { it.id.value }) { account ->
-                SwipeToRemoveBox(
-                    onConfirmRemove = { onRemove(account) },
-                    background = { armed, revealed ->
-                        RemoveSwipeBackground(
-                            armed = armed,
-                            revealed = revealed,
-                            shape = CardShape,
-                        )
-                    },
+                val isPending = pending?.id == account.id
+
+                AnimatedVisibility(
+                    visible = !isPending,
+                    enter = expandVertically(motion.defaultSpatialSpec()) + fadeIn(motion.defaultEffectsSpec()),
+                    exit = shrinkVertically(motion.defaultSpatialSpec()) + fadeOut(motion.defaultEffectsSpec()),
                     modifier = Modifier.animateItem(
                         fadeInSpec = motion.defaultEffectsSpec(),
                         fadeOutSpec = motion.defaultEffectsSpec(),
                         placementSpec = motion.defaultSpatialSpec(),
                     ),
                 ) {
-                    ProfileCard(
-                        account = account,
-                        isActive = account.id == activeId,
-                        photo = photos[account.id],
-                        onOpenDetails = onOpenDetails,
-                        onSwitchAccount = { onSwitchAccount(account.id) },
-                        onSelectCareer = { careerId -> onSelectCareer(account.id, careerId) },
-                    )
+                    SwipeToRemoveBox(
+                        pendingRemoval = isPending,
+                        onConfirmRemove = { onRequestRemove(account) },
+                        background = { armed, revealed ->
+                            RemoveSwipeBackground(
+                                armed = armed,
+                                revealed = revealed,
+                                shape = CardShape,
+                            )
+                        },
+                    ) {
+                        ProfileCard(
+                            account = account,
+                            isActive = account.id == activeId,
+                            photo = photos[account.id],
+                            onOpenDetails = onOpenDetails,
+                            onSwitchAccount = { onSwitchAccount(account.id) },
+                            onSelectCareer = { careerId -> onSelectCareer(account.id, careerId) },
+                        )
+                    }
                 }
             }
 
@@ -430,6 +431,19 @@ private fun AccountsScene(
             }
         }
 
+        AnimatedVisibility(
+            visible = pending != null,
+            enter = slideInVertically(motion.defaultSpatialSpec()) { it } + fadeIn(motion.defaultEffectsSpec()),
+            exit = slideOutVertically(motion.defaultSpatialSpec()) { it } + fadeOut(motion.defaultEffectsSpec()) + shrinkVertically(
+                tween(delayMillis = 300)
+            ),
+        ) {
+            UndoRemovalBar(
+                displayName = lastRemovedName,
+                onUndo = onUndoRemove,
+                modifier = Modifier.padding(top = 12.dp),
+            )
+        }
     }
 }
 
@@ -472,6 +486,7 @@ private fun AccountsScenePreviewContent() {
                     academicYearEnrollmentId = 1,
                     studentNumber = "123456",
                     description = "Informatica",
+//                    academicYear = Instant.now().get(ChronoField.YEAR),
                     academicYear = 2026,
                     status = CareerStatus.ACTIVE
                 )
@@ -497,13 +512,16 @@ private fun AccountsScenePreviewContent() {
             ordered = listOf(account),
             activeId = account.id,
             photos = emptyMap(),
+            pending = null,
+            lastRemovedName = "",
             maxListHeight = 600.dp,
             motion = MaterialTheme.motionScheme,
             onOpenDetails = {},
             onOpenSettings = {},
             onSwitchAccount = {},
             onSelectCareer = { _, _ -> },
-            onRemove = {},
+            onRequestRemove = {},
+            onUndoRemove = {},
             onAddAccount = {}
         )
     }
