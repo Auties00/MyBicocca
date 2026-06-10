@@ -10,9 +10,11 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 
-// Forward/back page transition for in-sheet navigation (edifici list -> building -> room):
-// a soft horizontal push with a synchronized sheet-height morph. Scoped to
-// AnimatedContentTransitionScope because `using` is a member of the transitionSpec scope.
+/**
+ * Forward/back page transition for in-sheet navigation (e.g. buildings list -> building ->
+ * room): a soft horizontal push with a synchronized sheet-height morph. Scoped to
+ * [AnimatedContentTransitionScope] because `using` is a member of the transitionSpec scope.
+ */
 fun AnimatedContentTransitionScope<*>.sheetPageTransform(forward: Boolean): ContentTransform =
     (fadeIn(tween(280, delayMillis = 40)) + slideInHorizontally(tween(350)) { if (forward) it / 8 else -it / 8 })
         .togetherWith(fadeOut(tween(180)) + slideOutHorizontally(tween(350)) { if (forward) -it / 8 else it / 8 })

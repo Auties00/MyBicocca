@@ -7,12 +7,14 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import it.attendance100.mybicocca.domain.model.library.LibraryCrowd
 
-// Status greens/ambers/reds for the occupancy indicators — fixed (not theme) so "how busy" reads
-// the same in light and dark.
 private val OccupancyLow = Color(0xFF2E9E55)
 private val OccupancyMid = Color(0xFFE0A100)
 private val OccupancyHigh = Color(0xFFD3302F)
 
+/**
+ * Status green/amber/red for the occupancy indicators — constant rather than theme-derived so
+ * "how busy" reads the same in light and dark.
+ */
 fun occupancyColor(percentage: Int): Color = when {
     percentage < 40 -> OccupancyLow
     percentage < 75 -> OccupancyMid
@@ -31,7 +33,7 @@ fun crowdLabel(crowd: LibraryCrowd): String = when (crowd) {
     LibraryCrowd.Dense -> "Molto affollata"
 }
 
-// "30 min" / "1 h" / "1 h 30".
+/** Formats a duration as "30 min", "1 h" or "1 h 30". */
 fun durationLabel(minutes: Int): String {
     val hours = minutes / 60
     val rest = minutes % 60
@@ -42,7 +44,7 @@ fun durationLabel(minutes: Int): String {
     }
 }
 
-// Check-in QRs arrive as "data:image/png;base64,…" data URLs.
+/** Decodes a check-in QR delivered as a "data:image/png;base64,…" data URL. */
 fun decodeQrDataUrl(dataUrl: String): ImageBitmap? = runCatching {
     val encoded = dataUrl.substringAfter("base64,", missingDelimiterValue = "")
         .takeIf { it.isNotBlank() } ?: return null

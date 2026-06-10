@@ -32,10 +32,12 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
-// The reveal behind a profile card while it is swiped left. The trash-style icon grows in as
-// the card is dragged, then springs to full size with a slight overshoot once the commit
-// threshold is crossed — at which point the zone turns vivid and a "Rimuovi" label slides in.
-// Driven by primitive booleans because [SwipeToRemoveBox] tracks its own gesture state.
+/**
+ * The reveal behind a profile card while it is swiped left. The trash-style icon grows in
+ * as the card is dragged, then springs to full size with a slight overshoot once the commit
+ * threshold is crossed — at which point the zone turns vivid and a "Rimuovi" label slides
+ * in. Driven by primitive booleans because [SwipeToRemoveBox] tracks its own gesture state.
+ */
 @Composable
 fun RemoveSwipeBackground(
     armed: Boolean,

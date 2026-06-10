@@ -5,6 +5,11 @@ import it.attendance100.mybicocca.domain.model.questionnaire.QuestionnaireActivi
 import it.attendance100.mybicocca.domain.repository.QuestionnaireRepository
 import javax.inject.Inject
 
+/**
+ * Loads the libretto activities that have VAL_DID evaluation questionnaires attached,
+ * live from Esse3, for the questionnaires sub-screen in the registry tab. Throws on
+ * failure.
+ */
 class GetQuestionnaireActivitiesUseCase @Inject constructor(
     private val repository: QuestionnaireRepository,
 ) {

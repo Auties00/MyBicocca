@@ -6,6 +6,12 @@ import androidx.room.Transaction
 import androidx.room.Upsert
 import kotlinx.coroutines.flow.Flow
 
+/**
+ * Room access to the per-account gradebook cache: per-course grade items (in gradebook
+ * order) and the cross-course total overview (sorted by course name). Refreshes go
+ * through the `replace*` transactions so observers see one atomic swap;
+ * `clearAllForAccount` wipes both tables on sign-out.
+ */
 @Dao
 interface GradeDao {
 

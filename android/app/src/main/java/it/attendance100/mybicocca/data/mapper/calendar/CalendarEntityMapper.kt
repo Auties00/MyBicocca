@@ -8,11 +8,19 @@ import it.attendance100.mybicocca.domain.model.calendar.EventLocation
 import it.attendance100.mybicocca.domain.model.calendar.EventStatus
 import it.attendance100.mybicocca.domain.model.career.CareerId
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.LocalTime
 
+/** Separator used to persist string lists (teacher names) in a single text column. */
 private const val LIST_DELIMITER = "\n"
 
-internal fun CalendarEvent.toEntity(): CalendarEventEntity {
+/**
+ * Maps a domain event to its Room row, or null for events that are never materialized: only
+ * lessons and exams are stored in calendar_events, while the other sources (deadlines,
+ * appointments, library seats) are merged in at observe time from their own feature stores,
+ * which remain their single source of truth.
+ */
+internal fun CalendarEvent.toEntity(): CalendarEventEntity? {
     val (discriminator, extras) = when (this) {
         is CalendarEvent.Lesson -> CalendarEventDiscriminator.LESSON to EntityExtras(
             subjectCode = subjectCode,
@@ -20,9 +28,15 @@ internal fun CalendarEvent.toEntity(): CalendarEventEntity {
             cfu = cfu,
         )
         is CalendarEvent.Exam -> CalendarEventDiscriminator.EXAM to EntityExtras(
-            examinersCsv = examiners.joinToString(LIST_DELIMITER).takeIf { it.isNotEmpty() },
             examTypeLabel = examTypeLabel,
+            bookingPosition = bookingPosition,
+            bookedAt = bookedAt?.toString(),
+            cancellableUntil = cancellableUntil?.toString(),
         )
+        is CalendarEvent.AssignmentDeadline,
+        is CalendarEvent.Appointment,
+        is CalendarEvent.LibraryReservation,
+        -> return null
     }
     return CalendarEventEntity(
         id = id.value,
@@ -43,11 +57,19 @@ internal fun CalendarEvent.toEntity(): CalendarEventEntity {
         subjectCode = extras.subjectCode,
         teachersCsv = extras.teachersCsv,
         cfu = extras.cfu,
-        examinersCsv = extras.examinersCsv,
         examTypeLabel = extras.examTypeLabel,
+        bookingPosition = extras.bookingPosition,
+        bookedAt = extras.bookedAt,
+        cancellableUntil = extras.cancellableUntil,
     )
 }
 
+/**
+ * Rehydrates a Room row into the domain subtype its discriminator selects. Defensive on
+ * purpose: rows with unparseable date/time columns or an unknown discriminator yield null
+ * and are dropped from the stream instead of crashing it, and an unrecognized status falls
+ * back to confirmed.
+ */
 internal fun CalendarEventEntity.toDomain(): CalendarEvent? {
     val location = if (room != null || building != null || mapsUrl != null) {
         EventLocation(room = room, building = building, mapsUrl = mapsUrl)
@@ -87,8 +109,10 @@ internal fun CalendarEventEntity.toDomain(): CalendarEvent? {
             status = statusEnum,
             notes = notes,
             activityCode = activityCode,
-            examiners = examinersCsv?.split(LIST_DELIMITER).orEmpty().filter { it.isNotBlank() },
             examTypeLabel = examTypeLabel,
+            bookingPosition = bookingPosition,
+            bookedAt = bookedAt?.let { runCatching { LocalDateTime.parse(it) }.getOrNull() },
+            cancellableUntil = cancellableUntil?.let { runCatching { LocalDate.parse(it) }.getOrNull() },
         )
         else -> null
     }
@@ -98,6 +122,8 @@ private data class EntityExtras(
     val subjectCode: String? = null,
     val teachersCsv: String? = null,
     val cfu: Int? = null,
-    val examinersCsv: String? = null,
     val examTypeLabel: String? = null,
+    val bookingPosition: Int? = null,
+    val bookedAt: String? = null,
+    val cancellableUntil: String? = null,
 )

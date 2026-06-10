@@ -43,6 +43,22 @@ import java.io.File
 private val CardShape = RoundedCornerShape(28.dp)
 private val CareerShape = RoundedCornerShape(18.dp)
 
+/**
+ * One account in the switcher roster: avatar, display name and username, plus — for the
+ * active account only — its careers as nested sub-cards, with AnimatedVisibility smoothing
+ * the expand/collapse as the active flag moves between cards.
+ *
+ * Active = filled chip on `surfaceContainerHigh`; inactive = the modal's own background
+ * color (`surfaceContainerLow`, which is what ModalBottomSheet uses by default) with a
+ * hairline `outlineVariant` border, matching the "Aggiungi un altro account" tile so the
+ * two outlined slots feel like one family. Both halves animate together when the active
+ * selection swaps so the colors keep up with the list's placement slide.
+ *
+ * Tapping the card opens the profile page when active and switches the active account in
+ * place when inactive; the career sub-cards are nested clickables that consume their own
+ * gesture, so the card-level tap only fires on the header. Tapping the already-selected
+ * career is a deliberate no-op — only a different career triggers a switch.
+ */
 @Composable
 fun ProfileCard(
     account: Account,
@@ -58,11 +74,6 @@ fun ProfileCard(
     val careers = account.academic.careers.sortedByDescending { it.status.isSelectable }
     val selectedCareerId = account.academic.selectedCareerId
 
-    // Active = filled chip on `surfaceContainerHigh`; inactive = the modal's own background
-    // color (`surfaceContainerLow`, which is what ModalBottomSheet uses by default) with a
-    // hairline `outlineVariant` border, matching the "Aggiungi un altro account" tile so the
-    // two outlined slots feel like one family. Both halves animate together when the active
-    // selection swaps so the colors keep up with the LazyColumn placement slide.
     val containerColor by animateColorAsState(
         targetValue = if (isActive) scheme.surfaceContainerHigh else scheme.surfaceContainerLow,
         animationSpec = motion.defaultEffectsSpec(),
@@ -79,9 +90,6 @@ fun ProfileCard(
         label = "ProfileCardElevation",
     )
 
-    // Tapping the card itself: active -> open the profile page (and close the sheet upstream);
-    // inactive -> just switch the active account in place. The careers underneath are nested
-    // clickables that consume their own gesture, so this fallback only fires on the header.
     Surface(
         onClick = if (isActive) onOpenDetails else onSwitchAccount,
         shape = CardShape,
@@ -93,8 +101,6 @@ fun ProfileCard(
         Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp)) {
             ProfileHeader(account = account, isActive = isActive, photo = photo)
 
-            // Careers only render for the active account. AnimatedVisibility makes the
-            // expand/collapse smooth when the active flag flips between cards.
             AnimatedVisibility(
                 visible = isActive,
                 enter = expandVertically(motion.defaultSpatialSpec()) + fadeIn(motion.defaultEffectsSpec()),
@@ -107,8 +113,6 @@ fun ProfileCard(
                             CareerSubCard(
                                 career = career,
                                 selected = career.id == selectedCareerId,
-                                // Tapping the already-active career is a no-op per design;
-                                // only a different career triggers a switch.
                                 onClick = {
                                     if (career.id != selectedCareerId) onSelectCareer(career.id)
                                 },
@@ -121,6 +125,12 @@ fun ProfileCard(
     }
 }
 
+/**
+ * Avatar (slightly larger when active), display name and username. Inactive accounts get a
+ * non-interactive unfilled radio dot as the "switch to me" affordance — the whole card
+ * handles the click — while the active card needs no trailing glyph because the filled
+ * background and career slot already read as the selected state.
+ */
 @Composable
 private fun ProfileHeader(
     account: Account,
@@ -157,13 +167,9 @@ private fun ProfileHeader(
                 overflow = TextOverflow.Ellipsis,
             )
         }
-        // Inactive accounts get an unfilled radio dot as the "switch to me" affordance; the
-        // active card needs no trailing glyph because the filled background + carriera slot
-        // already read as the selected state.
         if (!isActive) {
             RadioButton(
                 selected = false,
-                // The whole card handles the click; the radio is a visual indicator only.
                 onClick = null,
                 colors = RadioButtonDefaults.colors(
                     unselectedColor = scheme.outline,
@@ -173,6 +179,11 @@ private fun ProfileHeader(
     }
 }
 
+/**
+ * One career under the active account: description, matricola and academic year, with a
+ * status chip for noteworthy statuses. Selected = primary container plus a trailing check;
+ * selectable = neutral container; ended careers sit muted and disabled.
+ */
 @Composable
 private fun CareerSubCard(
     career: Career,
@@ -221,7 +232,7 @@ private fun CareerSubCard(
                     horizontalArrangement = Arrangement.spacedBy(6.dp),
                 ) {
                     Text(
-                        text = "Matricola ${career.matricola} · A.A. ${career.academicYear}",
+                        text = "Matricola ${career.studentNumber} · A.A. ${career.academicYear}",
                         style = MaterialTheme.typography.bodySmall,
                         color = supportColor,
                         maxLines = 1,
@@ -260,6 +271,7 @@ private fun StatusChip(label: String, active: Boolean) {
     }
 }
 
+/** Chip copy for statuses worth flagging; null (regular active or unknown) renders no chip. */
 private fun statusLabel(status: CareerStatus): String? = when (status) {
     CareerStatus.ACTIVE -> null
     CareerStatus.SUSPENDED -> "Sospesa"

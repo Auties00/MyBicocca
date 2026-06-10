@@ -37,10 +37,11 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import it.attendance100.mybicocca.core.os.LocalPipController
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.SyncStatus
 import it.attendance100.mybicocca.ui.component.feedback.LocalAppSnackbarController
-import it.attendance100.mybicocca.ui.navigation.AppRoute
+import it.attendance100.mybicocca.ui.navigation.route.AppRoute
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.fileViewer.component.CodeViewerContent
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.fileViewer.component.HtmlViewerContent
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.fileViewer.component.ImageViewerContent
@@ -49,17 +50,26 @@ import it.attendance100.mybicocca.ui.screen.elearning.subscreen.fileViewer.compo
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.fileViewer.component.UnknownFileContent
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.fileViewer.component.ViewerError
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.fileViewer.component.ViewerLoading
+import it.attendance100.mybicocca.ui.component.file.FileKind
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.fileViewer.component.ZipViewerContent
-import it.attendance100.mybicocca.ui.screen.elearning.subscreen.fileViewer.state.FileKind
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.fileViewer.state.FileViewerOneShotEvent
-import it.attendance100.mybicocca.ui.screen.elearning.subscreen.videoPlayer.player.LocalPipController
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import java.util.Locale
 
-// Opens an in-app file with a Custom-Tab-style chrome: a top bar with the file name and a
-// close (✕). All viewer-specific actions (share, download, PiP, …) live in each viewer's own
-// bottom action bar so the chrome stays minimal and consistent. In PiP the chrome collapses.
+/**
+ * Full-screen in-app viewer for a course file, with a Custom-Tab-style chrome: a top bar with
+ * the file name and a close (✕). All viewer-specific actions (share, download, PiP, …) live in
+ * each viewer's own bottom action bar so the chrome stays minimal and consistent. In PiP the
+ * chrome collapses, leaving only the content.
+ *
+ * The body routes on [FileViewerViewModel.kind] to the per-kind viewer (pdf, image, media, html,
+ * code, zip, generic hand-off). Viewers that render from disk are gated on the download: a
+ * loading indicator (captioned with the expected size) while the fetch runs, an error state with
+ * retry on failure. One-shot events from the ViewModel drive intent launches (office protocol,
+ * external app, share sheet), result snackbars, and — via [onOpenFile] — nested viewers for
+ * zip-extracted entries.
+ */
 @Composable
 fun FileViewerScreen(
     onOpenFile: (AppRoute.FileViewer, forceChooser: Boolean) -> Unit,
@@ -145,6 +155,10 @@ fun FileViewerScreen(
     }
 }
 
+/**
+ * Top bar of the viewer: close button plus single-line file name on a surface container,
+ * sized as status bar inset + 8dp gap + 56dp row to match the global top bar's height.
+ */
 @Composable
 private fun FileViewerChrome(
     fileName: String,
@@ -156,7 +170,6 @@ private fun FileViewerChrome(
             modifier = Modifier
                 .fillMaxWidth()
                 .statusBarsPadding()
-                // status bar + 8dp gap + 56dp row to match the global top bar's height.
                 .padding(top = 8.dp)
                 .height(56.dp)
                 .padding(start = 4.dp, end = 16.dp),
@@ -180,6 +193,18 @@ private fun FileViewerChrome(
     }
 }
 
+/**
+ * Routes a [FileKind] to its viewer composable and wires the per-viewer actions.
+ *
+ * Saving to the public Downloads/Pictures directories needs WRITE_EXTERNAL_STORAGE on API < 29,
+ * while Q+ writes through MediaStore scoped storage and needs no permission: the requested save
+ * is held and runs once the grant resolves. Share and open-with use a FileProvider on the cache
+ * dir, so they never need the permission.
+ *
+ * Office kinds are intercepted by the shell (hand-off sheet / install prompt) and never navigate
+ * here; the Office branch exists only defensively and falls back to the generic hand-off content
+ * together with [FileKind.Unknown].
+ */
 @Composable
 private fun FileContent(
     kind: FileKind,
@@ -196,10 +221,6 @@ private fun FileContent(
     val pdfThemeMode by viewModel.pdfThemeMode.collectAsStateWithLifecycle()
     val pdfOrientation by viewModel.pdfOrientation.collectAsStateWithLifecycle()
 
-    // Saving to the public Downloads/Pictures dirs needs WRITE_EXTERNAL_STORAGE on API < 29;
-    // Q+ writes through MediaStore scoped storage and needs no permission. Hold the requested
-    // save and run it once the grant resolves. (Share / open-with use a FileProvider on the
-    // cache dir, so they never need this.)
     var pendingSave by remember { mutableStateOf<(() -> Unit)?>(null) }
     val storagePermissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission(),
@@ -291,8 +312,6 @@ private fun FileContent(
             }
         }
 
-        // Office (install prompt / app) is intercepted by the shell and never navigates here.
-        // Unknown only reaches here defensively: generic hand-off.
         is FileKind.Office,
         FileKind.Unknown -> UnknownFileContent(
             fileName = viewModel.fileName,
@@ -304,8 +323,10 @@ private fun FileContent(
     }
 }
 
-// Renders the download lifecycle around a viewer that needs the resolved value:
-// spinner while the fetch runs, error + retry on failure, content once loaded.
+/**
+ * Renders the download lifecycle around a viewer that needs the resolved value:
+ * spinner while the fetch runs, error + retry on failure, content once loaded.
+ */
 @Composable
 private fun LocalFileGate(
     value: Loadable<String>,

@@ -29,6 +29,11 @@ import java.time.YearMonth
 import javax.inject.Inject
 import javax.inject.Singleton
 
+/**
+ * Booking against the Portale Planning information-desks API (reached through the EasyStaff
+ * client). Catalog, availability and forms are read live; the only persistent state is the
+ * device-local Room reservation store, written on booking and pruned on refresh/cancel.
+ */
 @Singleton
 class AppointmentRepositoryImpl @Inject constructor(
     private val easyStaffApi: EasyStaffApi,
@@ -40,12 +45,15 @@ class AppointmentRepositoryImpl @Inject constructor(
     override suspend fun getServices(): List<AppointmentService> =
         desks.getServices().map { it.toAppointmentService() }
 
+    /**
+     * Lists the publicly visible areas offering the service. The filtered area listing embeds
+     * the constraints of every service bookable at each area, so the requested service's entry
+     * is picked out of it.
+     */
     override suspend fun getOfferings(serviceId: Int): List<AppointmentOffering> =
         desks.getAreas(serviceId)
             .filterNot { it.publicHidden }
             .mapNotNull { area ->
-                // The filtered listing embeds the constraints of every service bookable at
-                // the area; pick the requested one.
                 area.services.firstOrNull { it.id == serviceId }
                     ?.let { toAppointmentOffering(area, it) }
             }
@@ -69,6 +77,12 @@ class AppointmentRepositoryImpl @Inject constructor(
     override suspend fun getBookingForm(serviceId: Int): AppointmentForm =
         desks.getServiceForm(serviceId).toAppointmentForm()
 
+    /**
+     * Books in two steps with hold semantics: the create call places a provisional hold, the
+     * confirm call finalizes it. The user already reviewed everything in-app, so the hold is
+     * confirmed immediately; if confirming fails the hold is force-deleted so the slot is not
+     * left blocked. The finalized reservation is then persisted in the device-local store.
+     */
     override suspend fun bookAppointment(
         service: AppointmentService,
         offering: AppointmentOffering,
@@ -98,8 +112,6 @@ class AppointmentRepositoryImpl @Inject constructor(
             )
         )
 
-        // The hold is provisional until confirmed; the user already reviewed everything
-        // in-app, so finalize immediately and roll the hold back if that fails.
         val entryId = result.entryId
         if (entryId != null) {
             try {
@@ -127,12 +139,16 @@ class AppointmentRepositoryImpl @Inject constructor(
     override fun observeReservations(): Flow<List<AppointmentReservation>> =
         reservationDao.observeAll().map { entities -> entities.map { it.toDomain() } }
 
+    /**
+     * Prunes the local store: long-past appointments are dropped without re-validation (the
+     * portal keeps no useful state for them and the list should only show what's actionable),
+     * the rest are looked up on the portal and forgotten locally when cancelled elsewhere or
+     * never finalized. Any other failure (network, server hiccup) keeps the local copy.
+     */
     override suspend fun refreshReservations() {
         val now = LocalDateTime.now(CampusZone)
         for (entity in reservationDao.getAll()) {
             val reservation = entity.toDomain()
-            // Long-past appointments are dropped instead of re-validated: the portal keeps
-            // no useful state for them and the list should only show what's actionable.
             if (reservation.end.isBefore(now.minusDays(1))) {
                 reservationDao.delete(reservation.code)
                 continue
@@ -140,19 +156,20 @@ class AppointmentRepositoryImpl @Inject constructor(
             try {
                 desks.getReservation(reservation.code, reservation.email)
             } catch (cause: Exception) {
-                // Cancelled elsewhere (or never finalized): forget it locally. Anything
-                // else (network, server hiccup) keeps the local copy.
                 if (!cause.isReservationGone()) throw cause
                 reservationDao.delete(reservation.code)
             }
         }
     }
 
+    /**
+     * Deletes the booking on the portal (authorized by code + email) and then locally. A
+     * booking already gone server-side still proceeds with the local cleanup.
+     */
     override suspend fun cancelReservation(reservation: AppointmentReservation) {
         try {
             desks.deleteReservation(reservation.code, reservation.email)
         } catch (cause: Exception) {
-            // Already gone server-side: just proceed with the local cleanup.
             if (!cause.isReservationGone()) throw cause
         }
         reservationDao.delete(reservation.code)
@@ -161,22 +178,28 @@ class AppointmentRepositoryImpl @Inject constructor(
     override suspend fun getReservationPdf(entryId: Int): ByteArray =
         desks.getReservationPdf(entryId)
 
-    // The data-api exception types aren't on :app's compile classpath, so — same as
-    // SessionManager — sniff the stable error key instead of type-checking. The planning
-    // ApiRequestException carries the backend key ("not_found" from the manage endpoint,
-    // "reservation_not_found" from the info endpoint) as its message.
+    /**
+     * Detects "this reservation does not exist on the portal". The data-api exception types
+     * aren't on :app's compile classpath, so — same as SessionManager — the stable error key is
+     * sniffed rather than type-checked: the planning ApiRequestException carries the backend
+     * key ("not_found" from the manage endpoint, "reservation_not_found" from the info
+     * endpoint) as its message.
+     */
     private fun Throwable.isReservationGone(): Boolean {
         val message = message?.lowercase().orEmpty()
         return "not_found" in message
     }
 
+    /**
+     * Collects the non-blank values of one form section, keyed by field code. The GDPR consent
+     * is validated client-side but never submitted.
+     */
     private fun sectionValues(
         form: AppointmentForm,
         values: Map<String, String>,
         section: AppointmentFormSection,
     ): Map<String, String> =
         form.fields.asSequence()
-            // The GDPR consent is validated client-side but never submitted.
             .filterNot { it is AppointmentFormField.Consent }
             .filter { it.section == section }
             .mapNotNull { field -> values[field.code]?.takeIf { it.isNotBlank() }?.let { field.code to it } }

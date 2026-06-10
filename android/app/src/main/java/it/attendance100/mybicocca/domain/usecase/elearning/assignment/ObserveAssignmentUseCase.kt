@@ -8,6 +8,10 @@ import it.attendance100.mybicocca.domain.repository.ElearningAssignmentRepositor
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
+/**
+ * Streams one cached assignment, backing the assignment detail sheet; emits not-yet-loaded
+ * while the assignment is absent from the cache.
+ */
 class ObserveAssignmentUseCase @Inject constructor(
     private val repository: ElearningAssignmentRepository,
 ) {

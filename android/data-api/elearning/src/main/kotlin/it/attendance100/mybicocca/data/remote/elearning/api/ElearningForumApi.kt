@@ -92,4 +92,123 @@ class ElearningForumApi(
             ElearningAddForumPostRequest(postId, subject, message, options)
         )
     }
+
+    /**
+     * Edits an existing post. Omitted fields are left unchanged; omit attachment options to
+     * keep the post's current attachments.
+     */
+    suspend fun updatePost(
+        wsToken: String,
+        postId: Int,
+        subject: String? = null,
+        message: String? = null,
+        options: List<ElearningDiscussionOption>? = null
+    ): ElearningForumStatusResponse {
+        return executeAuthenticatedRequest(
+            wsToken,
+            ElearningUpdateForumPostRequest(postId, subject, message, options)
+        )
+    }
+
+    /**
+     * Deletes a post the user owns (or otherwise has permission to delete).
+     */
+    suspend fun deletePost(wsToken: String, postId: Int): ElearningForumStatusResponse {
+        return executeAuthenticatedRequest(wsToken, ElearningDeleteForumPostRequest(postId))
+    }
+
+    /**
+     * Fetches a single post by id, e.g. to refresh it after an edit.
+     */
+    suspend fun getDiscussionPost(wsToken: String, postId: Int): ElearningGetForumDiscussionPostResponse {
+        return executeAuthenticatedRequest(wsToken, ElearningGetForumDiscussionPostRequest(postId))
+    }
+
+    /**
+     * Checks whether the user can start a new discussion in the forum (optionally for a group).
+     */
+    suspend fun canAddDiscussion(
+        wsToken: String,
+        forumId: Int,
+        groupId: Int? = null
+    ): ElearningCanAddDiscussionResponse {
+        return executeAuthenticatedRequest(
+            wsToken,
+            ElearningCanAddDiscussionRequest(forumId, groupId)
+        )
+    }
+
+    /**
+     * Logs that the user viewed a forum (server-side read tracking).
+     */
+    suspend fun markForumViewed(wsToken: String, forumId: Int): ElearningForumStatusResponse {
+        return executeAuthenticatedRequest(wsToken, ElearningViewForumRequest(forumId))
+    }
+
+    /**
+     * Logs that the user viewed a discussion, marking its posts read.
+     */
+    suspend fun markDiscussionViewed(wsToken: String, discussionId: Int): ElearningForumStatusResponse {
+        return executeAuthenticatedRequest(wsToken, ElearningViewForumDiscussionRequest(discussionId))
+    }
+
+    /**
+     * Subscribes to or unsubscribes from a single discussion.
+     */
+    suspend fun setDiscussionSubscription(
+        wsToken: String,
+        forumId: Int,
+        discussionId: Int,
+        subscribed: Boolean
+    ): ElearningForumDiscussionStateResponse {
+        return executeAuthenticatedRequest(
+            wsToken,
+            ElearningSetDiscussionSubscriptionRequest(forumId, discussionId, subscribed)
+        )
+    }
+
+    /**
+     * Stars or unstars (favourites) a discussion.
+     */
+    suspend fun toggleFavourite(
+        wsToken: String,
+        discussionId: Int,
+        starred: Boolean
+    ): ElearningForumDiscussionStateResponse {
+        return executeAuthenticatedRequest(
+            wsToken,
+            ElearningToggleForumFavouriteRequest(discussionId, starred)
+        )
+    }
+
+    /**
+     * Prepares a draft file area seeded with an existing post's attachments, so attachments can
+     * be added/removed before [updatePost]. The returned draft id is also accepted by
+     * [it.attendance100.mybicocca.data.remote.elearning.api.ElearningFileApi.uploadToDraftArea].
+     */
+    suspend fun prepareDraftAreaForPost(
+        wsToken: String,
+        postId: Int,
+        draftItemId: Int? = null
+    ): ElearningPrepareDraftAreaResponse {
+        return executeAuthenticatedRequest(
+            wsToken,
+            ElearningPrepareDraftAreaForPostRequest(postId = postId, draftItemId = draftItemId)
+        )
+    }
+
+    /**
+     * Fetches the groups the user belongs to in a course, to choose a target group when posting
+     * to a group-mode forum. [userId] defaults to `0`, which resolves to the authenticated user.
+     */
+    suspend fun getCourseUserGroups(
+        wsToken: String,
+        courseId: Int,
+        userId: Int = 0
+    ): ElearningGetCourseUserGroupsResponse {
+        return executeAuthenticatedRequest(
+            wsToken,
+            ElearningGetCourseUserGroupsRequest(courseId, userId)
+        )
+    }
 }

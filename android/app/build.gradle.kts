@@ -86,12 +86,10 @@ ksp {
 dependencies {
     // Data API modules
     implementation("it.attendance100.mybicocca.data.remote:esse3:1.0")
+    implementation("it.attendance100.mybicocca.data.remote:esse3-scraper:1.0") // Legacy Esse3 web-scrape client (Shibboleth SAML cookie session) for the flows with no REST surface(autocertificazioni)
     implementation("it.attendance100.mybicocca.data.remote:easystaff:1.0")
     implementation("it.attendance100.mybicocca.data.remote:affluences:1.0")
     implementation("it.attendance100.mybicocca.data.remote:elearning:1.0")
-    // Legacy Esse3 web-scrape client (Shibboleth SAML cookie session) for the
-    // Struts (.do) flows with no REST surface, e.g. certificati / autocertificazioni.
-    implementation("it.attendance100.mybicocca.data.remote:esse3-scraper:1.0")
 
     // Android
     implementation("androidx.core:core-ktx:1.17.0")
@@ -144,8 +142,7 @@ dependencies {
     implementation("androidx.compose.material:material-icons-extended-android:1.7.8")
     implementation("io.coil-kt:coil-compose:2.7.0")
 
-    // Navigation 3. runtime = NavKey/NavBackStack, ui = NavDisplay,
-    // lifecycle-viewmodel-navigation3 = rememberViewModelStoreNavEntryDecorator for VM scoping.
+    // Navigation 3
     implementation("androidx.navigation3:navigation3-runtime:1.1.0")
     implementation("androidx.navigation3:navigation3-ui:1.1.0")
     implementation("androidx.lifecycle:lifecycle-viewmodel-navigation3:2.10.0")
@@ -165,23 +162,17 @@ dependencies {
     // Kotlinx Serialization (for Room type converters)
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.1")
 
-    // ML Kit GenAI (Gemini Nano on supported devices): voice dictation. Self-gates at
-    // runtime — unsupported devices fall back to the platform SpeechRecognizer.
+    // ML Kit GenAI (Gemini Nano on supported devices): voice dictation.
     implementation("com.google.mlkit:genai-speech-recognition:1.0.0-alpha1")
 
-    // Jsoup — HTML parsing of the syllabus htmlContent the Moodle public-info
-    // scrape gives us. Data-api ships it as `implementation`, so we need our own
-    // explicit dep to use it in the app's mappers.
+    // HTML parsing of the syllabus htmlContent the Moodle public-info scrape gives us.
     implementation("org.jsoup:jsoup:1.18.3")
 
     // Ktor
     implementation("io.ktor:ktor-io:3.3.3")
     implementation("io.ktor:ktor-client-core:3.3.3")
 
-    // Firebase Performance Monitoring — live HTTP-request timing. We instrument requests
-    // manually through the HttpMetrics Ktor plugin, so the firebase-perf Gradle plugin
-    // (build-time auto-instrumentation) is intentionally NOT applied: it doesn't catch
-    // Ktor calls anyway, and its AGP support lags this project's AGP.
+    // Firebase Performance Monitoring
     implementation(platform("com.google.firebase:firebase-bom:34.4.0"))
     implementation("com.google.firebase:firebase-perf")
 
@@ -191,33 +182,25 @@ dependencies {
     // Shimmer effect for loading screens
     implementation("com.valentinilk.shimmer:compose-shimmer:1.3.3")
 
-    // MapLibre — campus map. Renders Protomaps offline vector tiles (.pmtiles, native since
-    // SDK 11.8.0) inside a Compose AndroidView, recolored at runtime to the active theme.
-    // Replaces Google Maps (maps-compose): no per-load billing, fully offline, and — unlike the
-    // Google road-detail "Surface" feature — no zoom-17 palette flip. annotation-v9 = SymbolManager
-    // for the building pins (BuildingMarker rasterized to a bitmap icon).
+    // MapLibre
     implementation("org.maplibre.gl:android-sdk:13.2.0")
     implementation("org.maplibre.gl:android-plugin-annotation-v9:3.0.2")
 
     // Email validation
     implementation(platform("androidx.compose:compose-bom:2026.03.01"))
 
-    // Media3 — Kaltura video playback in elearning. Compose-native UI (1.10+),
-    // no PlayerView/AndroidView interop.
+    // Media3
     val media3 = "1.10.1"
     implementation("androidx.media3:media3-exoplayer:$media3")
     implementation("androidx.media3:media3-exoplayer-hls:$media3")
     implementation("androidx.media3:media3-session:$media3")
     implementation("androidx.media3:media3-ui-compose-material3:$media3")
 
-    // In-app file viewer (elearning course files). PDFs are not rendered in-app — they open in
-    // the device's default reader via ACTION_VIEW, so no PDF library is bundled.
-    // telephoto: zoom/pan + sub-sampling for image files (Coil 2 flavor).
+    // In-app file viewer (elearning course files)
     implementation("me.saket.telephoto:zoomable:0.19.0")
     implementation("me.saket.telephoto:zoomable-image-coil:0.19.0")
     implementation("io.coil-kt:coil-gif:2.7.0")
     implementation("io.coil-kt:coil-svg:2.7.0")
-    // Syntax highlighting for the code viewer (Darcula theme).
     implementation("dev.snipme:highlights:1.1.0")
 
     // Splash Screen
@@ -229,7 +212,7 @@ dependencies {
     // Device Type detection for UI adaptations
     implementation("androidx.compose.material3:material3-window-size-class:1.4.0")
 
-    // CameraX + ML Kit barcode — in-app QR scanner for "Rileva presenza".
+    // CameraX + ML Kit barcode
     val cameraX = "1.4.2"
     implementation("androidx.camera:camera-core:$cameraX")
     implementation("androidx.camera:camera-camera2:$cameraX")

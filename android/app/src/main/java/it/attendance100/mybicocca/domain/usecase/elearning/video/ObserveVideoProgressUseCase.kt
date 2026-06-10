@@ -6,6 +6,10 @@ import it.attendance100.mybicocca.domain.repository.VideoPlaybackRepository
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
+/**
+ * Streams the locally saved playback progress of one video so the video player can resume from
+ * the last position; emits null while the video has never been played.
+ */
 class ObserveVideoProgressUseCase @Inject constructor(
     private val repository: VideoPlaybackRepository,
 ) {

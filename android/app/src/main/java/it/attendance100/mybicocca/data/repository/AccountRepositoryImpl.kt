@@ -17,15 +17,21 @@ import java.io.File
 import javax.inject.Inject
 import javax.inject.Singleton
 
+/**
+ * Thin adapter exposing SessionManager's account state and operations as the domain repository
+ * contract, plus a local file cache for Esse3 profile photos.
+ */
 @Singleton
 class AccountRepositoryImpl @Inject constructor(
     @ApplicationContext private val context: Context,
     private val sessionManager: SessionManager,
 ) : AccountRepository {
 
-    override val activeAccount: Flow<Account?> = sessionManager.activeAccount
-    override val accounts: Flow<List<Account>> = sessionManager.accounts
-    override val events: Flow<AccountEvent> = sessionManager.events
+    override fun observeActiveAccount(): Flow<Account?> = sessionManager.activeAccount
+
+    override fun observeAccounts(): Flow<List<Account>> = sessionManager.accounts
+
+    override fun observeEvents(): Flow<AccountEvent> = sessionManager.events
 
     override suspend fun signIn(username: String, password: String): SignInResult =
         sessionManager.signIn(username, password)
@@ -42,9 +48,11 @@ class AccountRepositoryImpl @Inject constructor(
     override suspend fun refreshCareers(accountId: AccountId) =
         sessionManager.refreshCareers(accountId)
 
-    // Streams the photo bytes directly to a cacheDir file so they never sit on
-    // the JVM heap. Subsequent calls hit the existing file; Coil keys its memory
-    // cache on the file path so the decoded bitmap survives recomposition.
+    /**
+     * Streams the photo bytes directly into a cacheDir file so they never sit on the JVM heap,
+     * and returns the file path; an existing non-empty file is reused without a network call.
+     * Coil keys its memory cache on the path, so the decoded bitmap survives recomposition.
+     */
     override suspend fun getUserPhoto(accountId: AccountId): String {
         val file = File(context.cacheDir, "$AVATAR_DIR/${accountId.value}.bin")
         if (file.exists() && file.length() > 0) return file.absolutePath

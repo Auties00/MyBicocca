@@ -36,6 +36,13 @@ import androidx.compose.ui.unit.sp
 import com.valentinilk.shimmer.shimmer
 import kotlinx.coroutines.launch
 
+/**
+ * Statistic tile: a small caption pinned at the top and a bold value pushed to the bottom,
+ * so the value lines up with the progress bar of a sibling [ProgressStatCard]. An optional
+ * trailing icon button shares the value row and sits vertically centered on it; taps play
+ * a springy scale-and-wiggle on the icon. [isLoading] swaps the value and icon for shimmer
+ * blocks.
+ */
 @Composable
 fun StatCard(
     modifier: Modifier = Modifier,
@@ -81,8 +88,6 @@ fun StatCard(
                 .padding(top = 12.dp, bottom = 16.dp)
                 .fillMaxWidth()
                 .fillMaxHeight(),
-            // Title pinned to the top, value + button pushed to the bottom so they line up with
-            // the progress bar in the sibling ProgressStatCard (which sits 16dp from the bottom).
             verticalArrangement = Arrangement.SpaceBetween,
         ) {
             Text(
@@ -91,8 +96,6 @@ fun StatCard(
                 fontSize = 12.sp,
                 maxLines = 2,
             )
-            // Value and the icon button share one Row so the calculator sits vertically centered
-            // on the grade rather than bottom-aligned beside it.
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,

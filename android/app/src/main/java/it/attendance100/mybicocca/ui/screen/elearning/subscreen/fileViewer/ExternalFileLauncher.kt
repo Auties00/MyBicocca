@@ -23,12 +23,18 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.SyncStatus
 import it.attendance100.mybicocca.ui.component.feedback.LocalAppSnackbarController
-import it.attendance100.mybicocca.ui.navigation.AppRoute
+import it.attendance100.mybicocca.ui.navigation.route.AppRoute
 
-// Opens a file in the device's default app instead of an in-app viewer page: downloads the
-// (tokenized) file through the same path the viewer uses, then fires ACTION_VIEW via
-// FileProvider. Used for PDFs, which no longer have a bundled renderer. Shows only a brief
-// download spinner; dismisses itself once the system app is launched.
+/**
+ * Opens a file in the device's default app, without any in-app viewer page: the file-viewer
+ * ViewModel downloads the (tokenized) file on init through the same path the in-app viewers use,
+ * and the moment the local copy is ready it is fired at the system via ACTION_VIEW + FileProvider.
+ * Backs the "external" half of the in-app/external open choice.
+ *
+ * The only chrome is a small progress dialog (ignoring outside taps) while the download runs;
+ * the launcher dismisses itself once the system app is launched, when no app can open the file,
+ * or when the download fails (with an error snackbar).
+ */
 @Composable
 fun ExternalFileLauncher(
     route: AppRoute.FileViewer,
@@ -43,8 +49,6 @@ fun ExternalFileLauncher(
     val localPath by viewModel.localPath.collectAsStateWithLifecycle()
     val downloadStatus by viewModel.downloadStatus.collectAsStateWithLifecycle()
 
-    // The view model downloads the file on init; hand it to the system viewer the moment the
-    // local copy is ready, then dismiss.
     LaunchedEffect(localPath) {
         val path = (localPath as? Loadable.Loaded)?.value ?: return@LaunchedEffect
         if (!launchExternalViewer(context, path, route.mimeType)) {

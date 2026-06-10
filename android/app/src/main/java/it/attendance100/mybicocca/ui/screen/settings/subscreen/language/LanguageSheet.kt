@@ -28,21 +28,23 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.core.os.LocaleListCompat
 import it.attendance100.mybicocca.core.os.rememberHapticManager
-import it.attendance100.mybicocca.ui.component.agsl.DeformingFlagBox
-import it.attendance100.mybicocca.ui.component.agsl.WavingSelectionWrapper
 import it.attendance100.mybicocca.ui.component.button.MorphKnob
 import it.attendance100.mybicocca.ui.component.directory.SegmentedTile
-import it.attendance100.mybicocca.ui.component.flags.FlagFrame
-import it.attendance100.mybicocca.ui.component.flags.ItalyFlag
-import it.attendance100.mybicocca.ui.component.flags.UkUsaFlag
-import it.attendance100.mybicocca.ui.component.flags.WorldFlag
 import it.attendance100.mybicocca.ui.component.modal.PredictiveModalBottomSheet
+import it.attendance100.mybicocca.ui.screen.settings.subscreen.language.component.DeformingFlagBox
+import it.attendance100.mybicocca.ui.screen.settings.subscreen.language.component.FlagFrame
+import it.attendance100.mybicocca.ui.screen.settings.subscreen.language.component.ItalyFlag
+import it.attendance100.mybicocca.ui.screen.settings.subscreen.language.component.UkUsaFlag
+import it.attendance100.mybicocca.ui.screen.settings.subscreen.language.component.WavingSelectionWrapper
+import it.attendance100.mybicocca.ui.screen.settings.subscreen.language.component.WorldFlag
 
 private const val LOCALE_SYSTEM = "system"
 
-// Each option pairs the locale with its custom-drawn flag (World / Italy / UK·USA split), shown
-// on the tile's leading edge — there is no chip glyph or two-letter mark anymore. Keeping the
-// flag here means a new language is a single list entry, with no parallel `when` to update.
+/**
+ * Pairs a locale with its label and the custom-drawn flag (World / Italy / UK·USA split) shown
+ * on the tile's leading edge. Keeping the flag here means a new language is a single list
+ * entry, with no parallel `when` to update.
+ */
 private data class LanguageOption(
     val code: String,
     val label: String,
@@ -55,19 +57,22 @@ private val LANGUAGE_OPTIONS = listOf(
     LanguageOption("en", "English", flag = { UkUsaFlag(Modifier.fillMaxSize()) }),
 )
 
-// Label of the language the app is currently running with, for the settings tile subtitle.
+/** Label of the language the app is currently running with, for the settings tile subtitle. */
 fun currentAppLanguageLabel(context: Context): String {
     val current = currentAppLanguage(context)
     return LANGUAGE_OPTIONS.first { it.code == current }.label
 }
 
-// Language picker as a modal in the app's expressive language: a connected segmented card of
-// neutral tiles — selection lives in the trailing MorphKnob (circle morphing to sunny on the
-// motion-scheme springs), not in a container wash, like the Piano di Studi picks. Each tile
-// leads with its custom flag, which ripples on the AGSL waving shader the moment it becomes the
-// active selection (Android 13+). The locale lands as a configuration change (the activity
-// declares locale|layoutDirection), so the app re-localizes in place and the sheet stays open
-// on the new selection instead of being torn down. Header text follows the edifici sheet style.
+/**
+ * The language picker, shown as a modal bottom sheet in the app's expressive language: a
+ * connected segmented card of neutral tiles — selection lives in the trailing [MorphKnob]
+ * (circle morphing to sunny on the motion-scheme springs), not in a container wash, like the
+ * Piano di Studi picks. Each tile leads with its custom flag, which ripples on the AGSL waving
+ * shader the moment it becomes the active selection (Android 13+). The locale lands as a
+ * configuration change (the activity declares locale|layoutDirection), so the app re-localizes
+ * in place and the sheet stays open on the new selection rather than being torn down. Header
+ * text follows the edifici sheet style.
+ */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun LanguageSheet(onDismiss: () -> Unit) {
@@ -129,9 +134,11 @@ fun LanguageSheet(onDismiss: () -> Unit) {
     }
 }
 
-// The leading flag: a static frame on Android < 13, an AGSL waving ripple that fires once on
-// selection from Tiramisu onward. The [width] modifier sets the footprint; the 3:2 FlagFrame
-// derives its own height.
+/**
+ * The leading flag: a static frame on Android < 13, an AGSL waving ripple that fires once on
+ * selection from Tiramisu onward. The caller's width modifier sets the footprint; the 3:2
+ * [FlagFrame] derives its own height.
+ */
 @Composable
 private fun LanguageFlag(
     option: LanguageOption,

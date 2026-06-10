@@ -1,5 +1,14 @@
 package it.attendance100.mybicocca.domain.model.elearning.course
 
+/**
+ * The Moodle activity/resource plugin a course module is an instance of, including the
+ * Bicocca-specific plugins observed on the site. Distinct values keep each module kind's
+ * identity in the course content list (icon, label, tap behaviour); unrecognized plugins
+ * collapse to [Other] and render as a generic activity row.
+ *
+ * @property raw The Moodle plugin name as reported in the course-contents web service
+ * `modname` field.
+ */
 enum class ModuleType(val raw: String) {
     Resource("resource"),
     Url("url"),
@@ -19,11 +28,13 @@ enum class ModuleType(val raw: String) {
     Feedback("feedback"),
     H5p("h5pactivity"),
     Kalvidres("kalvidres"),
-    // Bicocca-specific / less common types that previously collapsed to Other and lost
-    // their identity (rendered as a generic "Attività" row). See the e-learning content audit.
     Wooclap("wooclap"),
-    // Moodle "Open Forum" plugin — forum-shaped but its instance ids live in mod_hsuforum,
-    // NOT mod_forum, so it must never be routed to the in-app forum screens.
+
+    /**
+     * The Moodle "Open Forum" plugin. Forum-shaped, but its instance ids live in
+     * mod_hsuforum rather than mod_forum, so it must never be routed to the in-app
+     * forum screens.
+     */
     HsuForum("hsuforum"),
     Lti("lti"),
     Reservation("reservation"),
@@ -32,8 +43,11 @@ enum class ModuleType(val raw: String) {
     Database("data"),
     Attendance("attendance"),
     Scheduler("scheduler"),
-    // A placeholder module whose real content is a separate section linked via
-    // customdata.sectionid; rendered inline rather than as an activity row.
+
+    /**
+     * A placeholder module whose real content is a separate section linked via
+     * customdata.sectionid; rendered inline rather than as an activity row.
+     */
     Subsection("subsection"),
     Other("other");
 

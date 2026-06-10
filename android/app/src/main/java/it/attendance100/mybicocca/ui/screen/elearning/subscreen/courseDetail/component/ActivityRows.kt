@@ -51,6 +51,12 @@ import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 import java.util.Locale
 
+/**
+ * Card for one assignment on the Compiti tab: a calendar-style due-date tile anchors the row,
+ * followed by the name and a status line (due/submitted/draft wording, tinted error when
+ * overdue and tertiary when due soon), and capped by a grade chip, submitted badge or draft
+ * badge depending on the submission status. A faded organic blob decorates the corner.
+ */
 @Composable
 fun AssignmentRow(
     assignment: DomainAssignment,
@@ -123,8 +129,11 @@ fun AssignmentRow(
     }
 }
 
-// Calendar-tile anchor: real course data repeats the same assignment name many times
-// ("Consegna esercizi laboratorio" x7), so the date has to carry the row's identity.
+/**
+ * Calendar-tile anchor: real course data repeats the same assignment name many times
+ * ("Consegna esercizi laboratorio" ×7), so the date has to carry the row's identity. A missing
+ * deadline — surprisingly common (18 of 42 real assignments surveyed) — renders as "∞".
+ */
 @Composable
 private fun DueDateTile(due: Instant?, overdue: Boolean, dueSoon: Boolean) {
     val scheme = MaterialTheme.colorScheme
@@ -146,7 +155,6 @@ private fun DueDateTile(due: Instant?, overdue: Boolean, dueSoon: Boolean) {
         contentAlignment = Alignment.Center,
     ) {
         if (due == null) {
-            // No deadline at all — surprisingly common (18 of 42 real assignments surveyed).
             Text(
                 text = "∞",
                 color = fg.copy(alpha = 0.75f),
@@ -159,16 +167,17 @@ private fun DueDateTile(due: Instant?, overdue: Boolean, dueSoon: Boolean) {
                     text = DayFmt.format(due),
                     color = fg,
                     fontWeight = FontWeight.Black,
-                    fontSize = 20.sp,
-                    lineHeight = 20.sp,
+                    fontSize = 21.sp,
+                    lineHeight = 22.sp,
                     letterSpacing = (-0.5).sp,
                 )
                 Text(
                     text = MonthFmt.format(due).uppercase().trimEnd('.'),
-                    color = fg.copy(alpha = 0.75f),
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 8.5.sp,
-                    letterSpacing = 1.2.sp,
+                    color = fg.copy(alpha = 0.85f),
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 10.sp,
+                    lineHeight = 10.sp,
+                    letterSpacing = 0.6.sp,
                 )
             }
         }
@@ -213,11 +222,18 @@ private fun DraftBadge() {
     }
 }
 
-// Real Bicocca data: quizzes are self-assessment batteries (221/222 surveyed allow unlimited
-// attempts, almost none have open/close windows), so the row's identity is completion state,
-// not deadlines. Completion comes from the course module completion map keyed by cmId.
-// Rows render inside the tab's expandable section cards, so they sit on surfaceContainerLowest
-// with the stacked-run shape the caller assigns — mirroring ModuleRow, not standalone cards.
+/**
+ * Row for one quiz inside the Quiz tab's expandable section cards: an organic-shape badge
+ * whose icon and color encode the state (locked/scheduled/completed/available), the quiz name,
+ * and a status line composing open/close dates, time limit and single-attempt notes.
+ *
+ * Real Bicocca data: quizzes are self-assessment batteries (221/222 surveyed allow unlimited
+ * attempts, almost none have open/close windows), so the row's identity is completion state,
+ * not deadlines. Completion comes from the course module completion map keyed by cmId. Rows
+ * render inside the tab's expandable section cards, so they sit on surfaceContainerLowest with
+ * the stacked-run shape the caller assigns — mirroring the Contenuti module rows, not
+ * standalone cards.
+ */
 @Composable
 fun QuizRow(
     quiz: Quiz,
@@ -302,9 +318,13 @@ fun QuizRow(
     }
 }
 
-// The news "Avvisi" forum renders as AnnouncementsCard, so this row covers the remaining
-// types: student forums, Q&A and per-turno teacher boards. Empty forums (common: topic
-// forums teachers pre-create and never use) drop to low emphasis.
+/**
+ * Row for one forum on the Forum tab: a type-keyed organic badge (Q&A gets the secondary
+ * accent, others the primary), the forum name, and a one-line intro or type label. The news
+ * "Avvisi" forum renders as [AnnouncementsCard], so this row covers the remaining types:
+ * student forums, Q&A and per-turno teacher boards. Empty forums (common: topic forums
+ * teachers pre-create and never use) drop to low emphasis.
+ */
 @Composable
 fun ForumRow(
     forum: Forum,
@@ -367,31 +387,14 @@ fun ForumRow(
                     overflow = TextOverflow.Ellipsis,
                 )
             }
-            if (!isEmpty) {
-                DiscussionCountChip(count = forum.discussionCount)
-            }
         }
     }
 }
 
-@Composable
-private fun DiscussionCountChip(count: Int) {
-    val scheme = MaterialTheme.colorScheme
-    Box(
-        modifier = Modifier
-            .clip(OrganicShapes.Cookie)
-            .background(scheme.primaryContainer)
-            .padding(horizontal = 12.dp, vertical = 8.dp),
-    ) {
-        Text(
-            text = count.coerceAtMost(999).toString(),
-            color = scheme.onPrimaryContainer,
-            fontWeight = FontWeight.ExtraBold,
-            fontSize = 13.sp,
-        )
-    }
-}
-
+/**
+ * Row for one gradebook item: name, optional activity-type subtitle, and a cookie-shaped grade
+ * chip preferring the server-formatted grade over a raw grade/max pair.
+ */
 @Composable
 fun GradeRow(
     item: GradeItem,
@@ -494,13 +497,13 @@ private fun dueLabel(now: Instant, due: Instant): String {
     val zone = ZoneId.systemDefault()
     val days = ChronoUnit.DAYS.between(now.atZone(zone).toLocalDate(), due.atZone(zone).toLocalDate())
     return when {
-        days < 0L -> "Scaduto il ${DateFmt.format(due)}"
-        days == 0L -> "Scade oggi alle ${TimeFmt.format(due)}"
-        days == 1L -> "Scade domani alle ${TimeFmt.format(due)}"
-        days <= 14L -> "Scade tra $days giorni"
-        else -> "Scadenza ${DateFmt.format(due)}"
+        days < 0L -> "Scaduto ${dayCount(-days)} fa"
+        days == 0L -> "Scade oggi"
+        else -> "Scade tra ${dayCount(days)}"
     }
 }
+
+private fun dayCount(days: Long): String = if (days == 1L) "1 giorno" else "$days giorni"
 
 private fun quizStatusLabel(quiz: Quiz, completed: Boolean, now: Instant): String {
     val open = quiz.timeOpen
@@ -559,7 +562,7 @@ private fun forumTypeIcon(type: ForumType): ImageVector = when (type) {
     else -> Icons.Outlined.Forum
 }
 
-// Forum intros arrive as Moodle HTML; one collapsed line is enough for the row subtitle.
+/** Forum intros arrive as Moodle HTML; one collapsed line is enough for the row subtitle. */
 private fun stripIntro(html: String): String =
     html.replace(Regex("<[^>]*>"), " ")
         .replace("&nbsp;", " ")

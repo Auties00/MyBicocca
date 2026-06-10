@@ -22,7 +22,7 @@ import it.attendance100.mybicocca.ui.screen.registry.subscreen.appointments.ext.
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.appointments.ext.displayName
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.appointments.ext.durationLabel
 
-// The bookable desks inside one macro section: tapping one opens its booking wizard.
+/** The bookable desks inside one macro section, one segmented tile each with the desk's icon and duration; tapping one starts its booking wizard. */
 @Composable
 internal fun TypesPage(
     services: List<AppointmentService>,

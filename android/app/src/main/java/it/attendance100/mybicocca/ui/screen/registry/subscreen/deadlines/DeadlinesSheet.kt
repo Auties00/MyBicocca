@@ -18,6 +18,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.CloudOff
 import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -35,7 +36,12 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import it.attendance100.mybicocca.ui.component.button.RetryButton
+import it.attendance100.mybicocca.ui.component.feedback.friendlyMessage
+import it.attendance100.mybicocca.ui.component.feedback.rememberMinDurationLoading
 import it.attendance100.mybicocca.ui.component.modal.PredictiveModalBottomSheet
+import it.attendance100.mybicocca.ui.component.modal.SheetLoadingIndicator
+import it.attendance100.mybicocca.ui.component.modal.SheetMessage
 import it.attendance100.mybicocca.ui.screen.registry.state.DeadlineUrgency
 import it.attendance100.mybicocca.ui.screen.registry.state.RegistryDeadline
 import java.time.LocalDate
@@ -46,15 +52,33 @@ import java.util.Locale
 private val MonthFormat = DateTimeFormatter.ofPattern("MMM", Locale.ITALIAN)
 private val NextFormat = DateTimeFormatter.ofPattern("d MMM", Locale.ITALIAN)
 
-// Scadenzario: the deadline spine rendered as a vertical timeline inside a modal sheet,
-// opened from the Scadenze header. Tapping an entry routes to the owning sub-screen.
+/**
+ * Scadenzario: the registry deadline spine rendered as a vertical timeline inside a modal
+ * sheet, opened from the Scadenze banner. Each entry pairs a big date column with a ringed
+ * node on a continuous connector rail and a tappable card (accented kicker + relative
+ * label, title, optional detail); tapping routes to the owning sub-screen and dismisses
+ * the sheet. A count summary sits under the "Scadenzario" title once data settles.
+ *
+ * The spine merges several live feature streams (outcomes, taxes, bookings, calls), so the
+ * sheet waits for ALL of them behind one loading state instead of showing a partial list:
+ * loading holds a minimum-duration indicator so quick fetches don't flash it (already
+ * loaded data renders instantly), a failure that arrives before the spine materializes
+ * surfaces an error page with retry — instead of a loading state that can never complete —
+ * and a settled empty spine shows the empty copy.
+ */
 @Composable
 fun DeadlinesSheet(
     deadlines: List<RegistryDeadline>,
+    loading: Boolean,
+    failure: Throwable?,
+    onRetry: () -> Unit,
     onDismiss: () -> Unit,
 ) {
     val scheme = MaterialTheme.colorScheme
     val today = remember { LocalDate.now() }
+
+    val showLoading = rememberMinDurationLoading(loading = loading)
+    val settled = !loading && !showLoading
 
     PredictiveModalBottomSheet(
         onDismiss = onDismiss,
@@ -74,25 +98,31 @@ fun DeadlinesSheet(
                     letterSpacing = (-0.9).sp,
                     color = scheme.onSurface,
                 )
-                Text(
-                    text = buildAnnotatedString {
-                        if (deadlines.isEmpty()) {
-                            append("Nessuna scadenza nei prossimi 30 giorni")
-                        } else {
-                            withStyle(SpanStyle(color = scheme.primary, fontWeight = FontWeight.Bold)) {
-                                append(if (deadlines.size == 1) "1 scadenza" else "${deadlines.size} scadenze")
+                if (settled) {
+                    Text(
+                        text = buildAnnotatedString {
+                            if (deadlines.isEmpty()) {
+                                append("Nessuna scadenza nei prossimi 30 giorni")
+                            } else {
+                                withStyle(SpanStyle(color = scheme.primary, fontWeight = FontWeight.Bold)) {
+                                    append(if (deadlines.size == 1) "1 scadenza" else "${deadlines.size} scadenze")
+                                }
+                                append(" nei prossimi 30 giorni")
                             }
-                            append(" nei prossimi 30 giorni")
-                        }
-                    },
-                    fontSize = 13.5.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = scheme.onSurfaceVariant,
-                )
+                        },
+                        fontSize = 13.5.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = scheme.onSurfaceVariant,
+                    )
+                }
             }
 
-            if (deadlines.isEmpty()) {
-                Box(
+            when {
+                failure != null && loading -> SheetError(cause = failure, onRetry = onRetry)
+
+                !settled -> SheetLoadingIndicator(label = "Caricamento scadenze…")
+
+                deadlines.isEmpty() -> Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(180.dp)
@@ -105,8 +135,8 @@ fun DeadlinesSheet(
                         color = scheme.onSurfaceVariant,
                     )
                 }
-            } else {
-                Column(
+
+                else -> Column(
                     modifier = Modifier
                         .weight(1f, fill = false)
                         .verticalScroll(rememberScrollState())
@@ -130,6 +160,23 @@ fun DeadlinesSheet(
 }
 
 @Composable
+private fun SheetError(cause: Throwable, onRetry: () -> Unit) {
+    SheetMessage(
+        icon = Icons.Outlined.CloudOff,
+        title = "Caricamento non riuscito",
+        body = cause.friendlyMessage(),
+        action = { RetryButton(onClick = onRetry) },
+    )
+}
+
+/**
+ * One timeline entry: the date column, the node rail — a continuous connector carrying a
+ * ringed node (soft outer glow, accent ring, surface centre) at the card's top, stopping at
+ * the node rather than trailing off for the last event — and the tappable card. The node
+ * and kicker accent follows the active palette — the primary accent for urgent items, a
+ * muted neutral for the rest — so urgent deadlines pop in whichever theme is selected.
+ */
+@Composable
 private fun TimelineEvent(
     deadline: RegistryDeadline,
     today: LocalDate,
@@ -137,8 +184,6 @@ private fun TimelineEvent(
     onClick: () -> Unit,
 ) {
     val scheme = MaterialTheme.colorScheme
-    // Node/kicker accent follows the active palette: the primary accent for urgent items, a muted
-    // neutral for the rest — so urgent deadlines pop in whichever theme is selected.
     val accent =
         if (deadline.urgency == DeadlineUrgency.Urgent) scheme.primary else scheme.onSurfaceVariant
 
@@ -147,7 +192,6 @@ private fun TimelineEvent(
             .fillMaxWidth()
             .height(IntrinsicSize.Min),
     ) {
-        // Date column.
         Column(
             modifier = Modifier
                 .width(46.dp)
@@ -170,21 +214,18 @@ private fun TimelineEvent(
             )
         }
 
-        // Node rail: continuous connector with a ringed node at the card's top.
         Box(
             modifier = Modifier
                 .width(24.dp)
                 .fillMaxHeight(),
             contentAlignment = Alignment.TopCenter,
         ) {
-            // For the last event the connector stops at the node rather than trailing off.
             Box(
                 modifier = Modifier
                     .width(3.dp)
                     .then(if (isLast) Modifier.height(26.dp) else Modifier.fillMaxHeight())
                     .background(scheme.outlineVariant),
             )
-            // Ringed node: soft outer glow, 4.dp accent border, surface centre.
             Box(
                 modifier = Modifier
                     .padding(top = 14.dp)
@@ -210,7 +251,6 @@ private fun TimelineEvent(
             }
         }
 
-        // Card.
         Surface(
             onClick = onClick,
             modifier = Modifier
@@ -268,10 +308,13 @@ private fun TimelineEvent(
     }
 }
 
+/**
+ * Relative wording for the card kicker: cutoff dates read "Entro N giorni", plain events
+ * read "Tra N giorni", and both degrade to "Scaduta" once past.
+ */
 private fun relativeLabel(today: LocalDate, date: LocalDate, byDeadline: Boolean): String {
     val days = ChronoUnit.DAYS.between(today, date)
     return if (byDeadline) {
-        // A cutoff to act by.
         when {
             days < 0L -> "Scaduta"
             days == 0L -> "Entro oggi"
@@ -288,5 +331,5 @@ private fun relativeLabel(today: LocalDate, date: LocalDate, byDeadline: Boolean
     }
 }
 
-// Formats the soonest deadline for the header summary ("prossima il 2 giu").
+/** Formats the soonest deadline for the banner summary ("prossima il 2 giu"). */
 fun nextDeadlineLabel(date: LocalDate): String = date.format(NextFormat)

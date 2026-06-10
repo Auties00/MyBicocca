@@ -26,7 +26,9 @@ import it.attendance100.mybicocca.ui.screen.calendar.state.TIMELINE_WINDOW_START
 import kotlin.math.abs
 
 internal val TimelineGutterWidth = 38.dp
-internal val TimelineMinuteHeightDefault = 1.0.dp        // 60dp per hour
+
+/** Base vertical scale at zoom 1: one dp per minute, so an hour spans 60dp. */
+internal val TimelineMinuteHeightDefault = 1.0.dp
 internal val TimelineWindowStart = TIMELINE_WINDOW_START_MINUTE
 internal val TimelineWindowEnd = TIMELINE_WINDOW_END_MINUTE
 
@@ -34,11 +36,15 @@ internal const val TIMELINE_ZOOM_MIN = 0.55f
 internal const val TIMELINE_ZOOM_MAX = 1.5f
 internal const val TIMELINE_ZOOM_DEFAULT = 1.0f
 
-// Odd-hour labels and grid lines fade in as zoom increases through this range.
-// Below START → α = 0 (hidden); above END → α = 1 (fully visible).
-private const val ODD_HOUR_ALPHA_START = 0.6f   // zoom ≈ 0.6 → 36 dp/hr
-private const val ODD_HOUR_ALPHA_END = 0.85f  // zoom ≈ 0.85 → 51 dp/hr
+private const val ODD_HOUR_ALPHA_START = 0.6f
+private const val ODD_HOUR_ALPHA_END = 0.85f
 
+/**
+ * Alpha for odd-hour labels and grid lines: they fade in linearly as the minute height
+ * grows through the [ODD_HOUR_ALPHA_START]..[ODD_HOUR_ALPHA_END] dp range (roughly 36 to
+ * 51 dp per hour) — hidden when the timeline is zoomed out far enough that hourly
+ * markings would crowd, fully visible once there is room for all of them.
+ */
 internal fun oddHourAlphaFor(minuteHeight: Dp): Float =
     ((minuteHeight.value - ODD_HOUR_ALPHA_START) / (ODD_HOUR_ALPHA_END - ODD_HOUR_ALPHA_START))
         .coerceIn(0f, 1f)
@@ -46,8 +52,11 @@ internal fun oddHourAlphaFor(minuteHeight: Dp): Float =
 internal fun minuteHeightFor(zoom: Float): Dp =
     (TimelineMinuteHeightDefault.value * zoom).dp
 
-internal fun timelineHeightFor(minuteHeight: Dp): Dp =
-    ((TimelineWindowEnd - TimelineWindowStart) * minuteHeight.value).dp
+/** Total grid height of a timeline [window] (exact start/end minutes) at the given scale. */
+internal fun timelineHeightFor(
+    minuteHeight: Dp,
+    window: IntRange = TimelineWindowStart..TimelineWindowEnd,
+): Dp = ((window.last - window.first) * minuteHeight.value).dp
 
 /**
  * Detects a vertical two-finger pinch and calls [onZoom] with the new zoom level,
@@ -83,20 +92,27 @@ internal fun Modifier.verticalPinchZoom(
     }
 }
 
+/**
+ * Hour-label gutter beside a timeline: one "HH" label per hour of [window], each vertically
+ * centered on its grid line, with odd hours sharing the zoom-dependent fade of the grid.
+ * The window must be the same one the adjacent events layer renders with, so the labels
+ * land exactly on its grid lines.
+ */
 @Composable
 internal fun HourGutterColumn(
     modifier: Modifier = Modifier,
     minuteHeight: Dp = TimelineMinuteHeightDefault,
+    window: IntRange = TimelineWindowStart..TimelineWindowEnd,
 ) {
     val scheme = MaterialTheme.colorScheme
     val pxPerMinute = with(LocalDensity.current) { minuteHeight.toPx() }
-    val totalHeight = timelineHeightFor(minuteHeight)
+    val totalHeight = timelineHeightFor(minuteHeight, window)
     val oddAlpha = oddHourAlphaFor(minuteHeight)
     Layout(
         modifier = modifier.width(TimelineGutterWidth),
         content = {
-            val firstHour = TimelineWindowStart / 60
-            val lastHour = TimelineWindowEnd / 60
+            val firstHour = window.first / 60
+            val lastHour = window.last / 60
             for (h in firstHour..lastHour) {
                 Text(
                     text = "%02d".format(h % 24),
@@ -119,7 +135,7 @@ internal fun HourGutterColumn(
             measurables.forEach { m ->
                 val hour = m.layoutId as Int
                 val placeable = m.measure(Constraints())
-                val y = ((hour * 60 - TimelineWindowStart) * pxPerMinute).toInt() - placeable.height / 2
+                val y = ((hour * 60 - window.first) * pxPerMinute).toInt() - placeable.height / 2
                 placeable.place(
                     x = (width - placeable.width) / 2,
                     y = y.coerceAtLeast(0),
@@ -129,12 +145,18 @@ internal fun HourGutterColumn(
     }
 }
 
+/**
+ * Current-time marker: a horizontal line across the timeline with a filled dot anchored at
+ * its leading edge, positioned against [windowStartMinute] — the same window start the
+ * caller's event grid uses, so the line always sits on the true current minute.
+ */
 internal fun DrawScope.drawNowIndicator(
     nowMinute: Int,
+    windowStartMinute: Int,
     pxPerMinute: Float,
     color: Color,
 ) {
-    val y = (nowMinute - TimelineWindowStart) * pxPerMinute
+    val y = (nowMinute - windowStartMinute) * pxPerMinute
     val thumbRadius = 4.dp.toPx()
     drawLine(
         color = color,

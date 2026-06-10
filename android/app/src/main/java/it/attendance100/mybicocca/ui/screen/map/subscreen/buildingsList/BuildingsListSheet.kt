@@ -71,9 +71,12 @@ import it.attendance100.mybicocca.ui.screen.map.ext.splitLegacyAlias
 import it.attendance100.mybicocca.ui.screen.map.subscreen.buildingDetail.BuildingPageBody
 import it.attendance100.mybicocca.ui.screen.map.subscreen.buildingDetail.RoomDetailPage
 
-// Edifici sheet: a single modal hosting a pinned morphing header over a three-level body
-// pager (list -> building -> room). "Informazioni" pushes the building page in place; the
-// header itself never swaps, it morphs (back button slides in, title/subtitle crossfade).
+/**
+ * Edifici sheet: a single modal hosting a pinned morphing header over a three-level body
+ * pager (list -> building -> room). "Informazioni" pushes the building page in place; the
+ * header itself never swaps, it morphs (back button slides in, title/subtitle crossfade).
+ * System back walks the pager up one level before dismissing the sheet.
+ */
 @Composable
 fun BuildingsListSheet(
     buildings: List<MapBuilding>,
@@ -86,7 +89,6 @@ fun BuildingsListSheet(
     onShowInfo: (BuildingCode) -> Unit,
     onRoomClick: (MapRoom) -> Unit,
     onCloseRoom: () -> Unit,
-    onOpen360: (String, String) -> Unit,
     onBack: () -> Unit,
     onDismiss: () -> Unit,
     onRetryRooms: (() -> Unit)? = null,
@@ -99,7 +101,6 @@ fun BuildingsListSheet(
         val scheduleMap = (daySchedule as? Loadable.Loaded)?.value
         val detailTitle = detailBuilding?.let { buildingDisplayName(it) }
 
-        // System back walks the pager up one level before dismissing the sheet.
         BackHandler(enabled = detailBuilding != null) {
             if (selectedRoom != null) onCloseRoom() else onBack()
         }
@@ -160,7 +161,6 @@ fun BuildingsListSheet(
                         detail = roomDetail,
                         todayEntries = scheduleMap?.get(room.code.value)
                             ?: if (scheduleMap != null) emptyList() else null,
-                        onOpen360 = onOpen360,
                     )
                 }
             }
@@ -174,7 +174,7 @@ private fun pageDepth(page: Pair<MapBuilding?, MapRoom?>): Int = when {
     else -> 2
 }
 
-// Headerless list body: the sheet's morphing header carries the "Edifici / n sedi" text.
+/** Headerless list body: the sheet's morphing header carries the "Edifici / n sedi" text. */
 @Composable
 private fun BuildingsListPage(
     buildings: List<MapBuilding>,
@@ -206,8 +206,10 @@ private fun BuildingsListPage(
     }
 }
 
-// Segmented M3E group: 28dp corners cap the group's ends, 6dp where rows touch; the expanded
-// row morphs to a fully rounded standalone card and rises one tonal step.
+/**
+ * Segmented M3E group: 28dp corners cap the group's ends, 6dp where rows touch; the expanded
+ * row morphs to a fully rounded standalone card and rises one tonal step.
+ */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun BuildingRow(
@@ -349,8 +351,11 @@ private fun DetailRow(
     }
 }
 
-// Connected button pair, same scheme as the calendar event detail's action row. Directions
-// leads on the tonal; the primary Info trails on the brand fill.
+/**
+ * Connected button pair, same scheme as the calendar event detail's action row: the
+ * secondary directions button leads on the tonal, the primary "Informazioni" trails on the
+ * brand fill.
+ */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun ActionRow(
@@ -369,7 +374,6 @@ private fun ActionRow(
             .padding(top = 2.dp),
         horizontalArrangement = Arrangement.spacedBy(4.dp),
     ) {
-        // Directions button (secondary, leads)
         FilledTonalButton(
             onClick = { context.openBuildingInMaps(building) },
             modifier = Modifier
@@ -390,7 +394,6 @@ private fun ActionRow(
             Text("Indicazioni", fontWeight = FontWeight.SemiBold)
         }
 
-        // Info button (primary, trails)
         Button(
             onClick = onShowInfo,
             modifier = Modifier

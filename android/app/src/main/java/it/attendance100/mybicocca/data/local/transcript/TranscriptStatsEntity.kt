@@ -4,6 +4,11 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
+/**
+ * Room cache of the career-level libretto aggregates (credits, averages, exam counts).
+ * One row per career, keyed by `career_id`, upserted on each transcript sync alongside
+ * the rows.
+ */
 @Entity(tableName = "transcript_stats")
 data class TranscriptStatsEntity(
     @PrimaryKey @ColumnInfo(name = "career_id") val careerId: Long,

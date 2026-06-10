@@ -9,8 +9,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 
-// Standard retry action for error states: expressive press morph on the brand fill.
-// White is explicit per the brand-red rule: onPrimary flips to black-on-red in dark mode.
+/**
+ * The standard retry action shared by error states across the app: expressive press morph on
+ * the brand fill. White is explicit per the brand-red rule: onPrimary flips to black-on-red in
+ * dark mode.
+ */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun RetryButton(onClick: () -> Unit, modifier: Modifier = Modifier) {

@@ -10,8 +10,10 @@ import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
 
-// Star-of-petals polygon: alternates between an outer and inner radius around the bbox.
-// Mirrors petal(n, inner, outer) from the Botanical course design.
+/**
+ * Star-of-petals polygon: alternates between an outer and inner radius around the bounding
+ * box. Mirrors petal(n, inner, outer) from the Botanical course design.
+ */
 class PetalShape(
     private val petals: Int,
     private val inner: Float,
@@ -36,7 +38,7 @@ class PetalShape(
     }
 }
 
-// Smoothed cookie: r(θ) = 1 − dip · (1 − cos(n·θ)) / 2 — gentle lobes, no spikes.
+/** Smoothed cookie: r(θ) = 1 − dip · (1 − cos(n·θ)) / 2 — gentle lobes, no spikes. */
 class SmoothCookieShape(
     private val lobes: Int,
     private val dip: Float,
@@ -61,8 +63,10 @@ class SmoothCookieShape(
     }
 }
 
-// Catalog of named shapes used across the elearning surfaces. Names match the JSX so
-// porting individual elements stays mechanical.
+/**
+ * Catalog of named shapes used across the elearning surfaces. Names match the JSX design
+ * source so porting individual elements stays mechanical.
+ */
 object OrganicShapes {
     val Cookie: Shape = PetalShape(petals = 12, inner = 0.86f)
     val Sunny: Shape = PetalShape(petals = 8, inner = 0.78f)

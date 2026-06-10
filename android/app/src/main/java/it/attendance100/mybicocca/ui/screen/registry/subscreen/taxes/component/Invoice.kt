@@ -33,6 +33,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.ui.component.shape.DynamicCard
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.taxes.state.InvoiceData
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.taxes.state.InvoiceItem
 import it.attendance100.mybicocca.ui.theme.BicoccaWordmarkAccent
 import java.text.NumberFormat
 import java.time.LocalDate
@@ -50,26 +52,12 @@ private fun formatFullDate(date: LocalDate, locale: Locale): String {
 
 val DividerColor = Color(0xFF555555)
 
-data class InvoiceData(
-    val id: String,
-    val invoiceNumber: String,
-    val description: String,
-    val expiryDate: LocalDate,
-    val amount: Double,
-    val modalita: String,
-    val bulletinCode: String? = null,
-    val items: List<InvoiceItem> = emptyList(),
-    val paymentDate: LocalDate? = null,
-    val rptStatus: String? = null,
-)
-
-data class InvoiceItem(
-    val year: String,
-    val installment: String,
-    val description: String,
-    val amount: Double,
-)
-
+/**
+ * A fattura rendered as a paper receipt: a double-bordered ticket card (sliced drawables via
+ * DynamicCard, Bicocca wordmark stroke) headed by the university logo and the paid date — or
+ * an oversized brand-red "Non pagata" — with dashed tear lines separating the notice/RPT/
+ * expiry/total info section from the per-item tax breakdown.
+ */
 @Composable
 fun Invoice(
     invoice: InvoiceData,
@@ -102,7 +90,6 @@ fun Invoice(
                 SectionTitle("Informazioni")
 
                 InfoRow(label = "Codice Avviso", value = invoice.bulletinCode ?: "-", verticalPadding = 6.dp)
-                InfoRow(label = "Stato RPT", value = invoice.rptStatus ?: "-", verticalPadding = 6.dp)
                 InfoRow(label = "Modalità", value = invoice.modalita, verticalPadding = 6.dp)
 
                 Row(

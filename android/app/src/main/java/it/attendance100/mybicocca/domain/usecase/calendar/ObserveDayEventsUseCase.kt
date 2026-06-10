@@ -8,6 +8,10 @@ import kotlinx.coroutines.flow.Flow
 import java.time.LocalDate
 import javax.inject.Inject
 
+/**
+ * Streams the merged calendar events of a single day from the local cache. Backs the
+ * calendar tab's day timeline for the currently selected day.
+ */
 class ObserveDayEventsUseCase @Inject constructor(
     private val repository: CalendarRepository,
 ) {

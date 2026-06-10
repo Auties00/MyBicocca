@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.onConsumedWindowInsetsChanged
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
@@ -42,6 +43,7 @@ import androidx.compose.runtime.FloatState
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -78,13 +80,15 @@ private enum class BarMode { PAGE, SUB_PAGE, SEARCH }
 
 private const val MaxBackProgress = 0.9f
 
-// Pill heights, shared so the shell can compute where the pill's bottom edge lands (the floating
-// student card on Profilo floats just below it). Every page/sub-page — Profilo included — uses the
-// same collapsed bar height. [PillTopGap] is the constant gap between the status bar and the pill.
+/**
+ * Collapsed pill height, identical on every page and sub-page (Profilo included). Exposed
+ * together with [PillTopGap] so shell code can compute where the pill's bottom edge lands —
+ * floating elements like Profilo's student card hang just below it.
+ */
 internal val PillCollapsedHeight = 56.dp
-internal val PillTopGap = 8.dp
 
-// Fade-through morph helpers live in BarMorph.kt (same package) — shared with the search overlay.
+/** The constant gap between the status bar and the collapsed pill. */
+internal val PillTopGap = 8.dp
 
 @Composable
 private fun MorphIcon(
@@ -101,11 +105,56 @@ private fun MorphIcon(
     )
 }
 
+/**
+ * The single morphing top bar for the whole shell. Three modes share one surface — the
+ * collapsed search pill on a tab page, the full-width sub-page header, and the open search
+ * field. The bar height stays constant; only the chrome (corners, padding, title) morphs along
+ * a 0..1 progress, taken as whichever of [navProgress] and [searchProgress] is further along
+ * (the two never overlap in practice). Sub-page mode outranks search, because a search result
+ * can push a sub-page while search stays alive underneath — popping back then lands on the
+ * still-open search view. For the same reason the bar's own predictive-back handler (which
+ * scrubs the search collapse) is disabled while a sub-page sits on top: back must pop the page,
+ * not collapse the search underneath it.
+ *
+ * Title handoff: the wordmark and the sub-page title share one alignment anchor whose
+ * horizontal bias lerps from center (collapsed) to start (expanded), so the sub-page title
+ * travels to exactly where the wordmark sits as the bar collapses. Combined with the
+ * fade-through ramp (the outgoing text is gone before the incoming one appears), the swap reads
+ * as one title transforming into the other rather than two independent labels.
+ *
+ * Search follows the M3 search view: the IME search action submits the query but keeps the
+ * results visible (only the keyboard dismisses), and clearing the field restores focus and
+ * brings the keyboard back if it was dismissed by scrolling or submitting — clearing implies
+ * retyping (both calls are no-ops when the field is already focused with the IME up).
+ *
+ * The bar's status-bar spacer is the raw inset minus whatever ancestors consumed: while the
+ * offline band covers the status bar (its host consumes the covered share), the spacer shrinks
+ * in lockstep so the band pushes the pill down cleanly instead of stacking on a stale inset.
+ *
+ * @param navProgress sub-page coverage, driven by the NavDisplay transition in MainShell (seeks
+ *   with the predictive-back gesture); never animated by the bar itself, so it stays in sync
+ *   with the page slide.
+ * @param searchProgress search open/close progress — the one driver this bar animates itself
+ *   and scrubs with its own predictive-back handler.
+ * @param trailingActions the active sub-page's trailing action (e.g. a favourite star), hoisted
+ *   up so the global bar can render it during the morph — the per-screen local bar that owns it
+ *   is hard-hidden mid-morph, so without this the action would vanish instantly instead of
+ *   morphing.
+ * @param globalAlpha render opacity for the whole bar. At 0 the layer is additionally shifted
+ *   off-screen: alpha alone keeps the bar hit-testable above the page (swallowing taps meant
+ *   for content such as immersive player chrome), while translating it away removes it from hit
+ *   testing and keeps the measured height — and thus the scaffold top inset other sub-pages
+ *   rely on mid-transition — stable.
+ * @param transparentBackground true while the active sub-page draws its content behind the bar
+ *   and hasn't published a runtime title yet: the expanded background melts away (an alpha-only
+ *   fade of the same hue, so it dissolves in place and fades back in over scrolled content for
+ *   the runtime-title handoff), leaving only the back/action buttons floating on top. The pill
+ *   background always returns as the progress collapses, so the morph back to a tab page is
+ *   unaffected.
+ */
 @Composable
 fun MyBicoccaTopBar(
-    // Sub-page coverage, driven by the NavDisplay transition in MainShell (seeks with the gesture).
     navProgress: FloatState,
-    // Search field open/close, scrubbed below by this bar's own predictive-back handler.
     searchProgress: Animatable<Float, *>,
     canNavigateBack: Boolean,
     subPageTitle: String?,
@@ -116,15 +165,8 @@ fun MyBicoccaTopBar(
     modifier: Modifier = Modifier,
     onFilterToggle: (() -> Unit)? = null,
     filterActive: Boolean = false,
-    // The active sub-page's trailing action (e.g. a favourite star), hoisted up so the global
-    // bar can render it during the morph — the per-screen local bar that owns it is hard-hidden
-    // mid-morph, so without this the action would vanish instantly instead of morphing.
     trailingActions: (@Composable () -> Unit)? = null,
     globalAlpha: Float = 1f,
-    // True while the active sub-page draws its content behind the bar and hasn't published a
-    // runtime title yet: the expanded background melts away so the page shows through, with
-    // only the back/action buttons floating on top. The pill background always returns as p
-    // collapses, so the morph back to a tab page is unaffected.
     transparentBackground: Boolean = false,
 ) {
     val scheme = MaterialTheme.colorScheme
@@ -133,8 +175,6 @@ fun MyBicoccaTopBar(
     val focusManager = LocalFocusManager.current
 
     val isSubPage = canNavigateBack && subPageTitle != null
-    // Sub-page outranks search: a result can push a sub-page while search stays alive
-    // underneath, so popping back lands on the still-open search view.
     val mode = when {
         isSubPage -> BarMode.SUB_PAGE
         searchState.active -> BarMode.SEARCH
@@ -151,8 +191,6 @@ fun MyBicoccaTopBar(
     val motion = MaterialTheme.motionScheme
     val barSpec = remember(motion) { motion.defaultSpatialSpec<Float>() }
 
-    // Only the search half is animated here; sub-page coverage rides navProgress (the NavDisplay
-    // transition) so it stays in sync with the page slide and the predictive-back gesture.
     LaunchedEffect(searchState.active) {
         val target = if (searchState.active) 1f else 0f
         if (searchProgress.value != target) {
@@ -160,8 +198,6 @@ fun MyBicoccaTopBar(
         }
     }
 
-    // Disabled while a sub-page sits on top of search — back must pop the page (NavDisplay's
-    // own predictive back), not scrub the search collapse underneath it.
     PredictiveBackHandler(enabled = searchState.active && !isSubPage) { backProgress ->
         try {
             keyboardController?.hide()
@@ -179,16 +215,12 @@ fun MyBicoccaTopBar(
         if (searchState.active) focusRequester.requestFocus()
     }
 
-    // The chrome morphs on whichever driver is further along; the two never overlap in practice.
     val p = maxOf(navProgress.floatValue, searchProgress.value)
     val cornerRadius = lerp(32.dp, 0.dp, p)
-    // The bar height is constant; only the chrome (corners, padding, title) morphs with p.
     val pillHeight = PillCollapsedHeight
 
     val outerHorizontalPadding = lerp(20.dp, 0.dp, p)
     val outerTopPadding = lerp(8.dp, 0.dp, p)
-    // Alpha-only fade (same hue) so the bg dissolves in place when the page scrolls back to
-    // the top, and the runtime-title handoff fades it back in over the scrolled content.
     val expandedColor by animateColorAsState(
         targetValue = if (transparentBackground) {
             scheme.surfaceContainer.copy(alpha = 0f)
@@ -203,27 +235,25 @@ fun MyBicoccaTopBar(
         p,
     )
 
-    val statusBarHeight = with(LocalDensity.current) {
-        WindowInsets.statusBars.getTop(this).toDp()
+    val density = LocalDensity.current
+    var consumedStatusBarPx by remember { mutableIntStateOf(0) }
+    val statusBarHeight = with(density) {
+        (WindowInsets.statusBars.getTop(this) - consumedStatusBarPx).coerceAtLeast(0).toDp()
     }
     val outerStatusBarHeight = lerp(statusBarHeight, 0.dp, p)
     val innerStatusBarHeight = lerp(0.dp, statusBarHeight + PillTopGap, p)
 
     Column(
         modifier = modifier
+            .onConsumedWindowInsetsChanged { consumedStatusBarPx = it.getTop(density) }
             .fillMaxWidth()
             .graphicsLayer {
                 alpha = globalAlpha
-                // Alpha 0 alone keeps the bar hit-testable, and Scaffold layers it above the
-                // page — on the immersive video route the invisible bar swallowed the taps
-                // meant for the player chrome. Shifting the layer off-screen removes it from
-                // hit testing while the measured height (and thus the scaffold top inset
-                // other sub-pages rely on mid-transition) stays stable.
                 if (globalAlpha == 0f) translationY = -size.height
             },
     ) {
-        Spacer(Modifier.height(outerStatusBarHeight)) // System bar padding
-        Spacer(Modifier.height(outerTopPadding)) // Extra top padding
+        Spacer(Modifier.height(outerStatusBarHeight))
+        Spacer(Modifier.height(outerTopPadding))
 
         Surface(
             modifier = Modifier
@@ -236,7 +266,6 @@ fun MyBicoccaTopBar(
             Column {
                 Spacer(Modifier.height(innerStatusBarHeight))
 
-                // Pill
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -266,16 +295,8 @@ fun MyBicoccaTopBar(
                         modifier = Modifier
                             .weight(1f)
                             .fillMaxSize(),
-                        // One shared anchor lerps the title's horizontal position from start
-                        // (p=1, sub-page) to center (p=0, page), so the sub-page title travels
-                        // to exactly where the wordmark sits as the bar collapses. Both children
-                        // inherit this alignment, which is what makes the swap read as one title
-                        // transforming into the other rather than two independent labels.
                         contentAlignment = BiasAlignment(horizontalBias = -p, verticalBias = -1f),
                     ) {
-                        // Material "fade through": the outgoing text fades out before the
-                        // incoming one fades in (handoff at the midpoint), so they are never
-                        // composited on top of each other — no smeared text-on-text.
                         WordmarkContent(
                             alpha = fadeThroughCollapsed(p),
                             Modifier.padding(top = 17.dp)
@@ -291,8 +312,6 @@ fun MyBicoccaTopBar(
                             BarMode.SEARCH -> SearchFieldContent(
                                 query = searchState.query,
                                 onQueryChange = searchState.onQueryChange,
-                                // M3 search view: submitting commits the query and dismisses
-                                // the keyboard but keeps the results visible.
                                 onImeSearch = {
                                     searchState.onSubmit()
                                     keyboardController?.hide()
@@ -316,9 +335,6 @@ fun MyBicoccaTopBar(
                         onMicClick = searchState.onMicClick,
                         onClearText = {
                             searchState.onQueryChange("")
-                            // Clearing implies retyping: restore focus and bring the keyboard
-                            // back if it was dismissed by scrolling or submitting. Both calls
-                            // are no-ops when the field is already focused with the IME up.
                             focusRequester.requestFocus()
                             keyboardController?.show()
                         },
@@ -330,6 +346,13 @@ fun MyBicoccaTopBar(
     }
 }
 
+/**
+ * Single click target with two glyphs handed off by fade-through + scale: the search icon owns
+ * the collapsed (PAGE) state, the back arrow the expanded (SUB_PAGE / SEARCH) state. Only one
+ * is visible at a time (they swap at the midpoint) and each shrinks as it leaves / grows as it
+ * arrives, so the change reads as a morph instead of a stacked cross-fade. Keeping one
+ * IconButton as the hit target also avoids overlapping-touch ambiguity mid-morph.
+ */
 @Composable
 private fun LeadingSlot(
     mode: BarMode,
@@ -345,11 +368,6 @@ private fun LeadingSlot(
         BarMode.SUB_PAGE -> onBackClick
         BarMode.SEARCH -> onCloseSearch
     }
-    // Single click target, two glyphs handed off by fade-through + scale: the search icon owns
-    // the collapsed (PAGE) state, the back arrow the expanded (SUB_PAGE / SEARCH) state. Only
-    // one is visible at a time (they swap at the midpoint) and each shrinks as it leaves /
-    // grows as it arrives, so the change reads as a morph instead of a stacked cross-fade.
-    // Keeping one IconButton as the hit target also avoids overlapping-touch ambiguity mid-morph.
     IconButton(onClick = onClick, modifier = modifier.size(40.dp)) {
         Box(contentAlignment = Alignment.Center) {
             MorphIcon(
@@ -369,12 +387,14 @@ private fun LeadingSlot(
 }
 
 
+/**
+ * Horizontal position comes from the parent's shared alignment anchor; the passed modifier owns
+ * the collapse/expand fade-through alpha + scale. sharedElement = true makes this the landing
+ * target for the splash wordmark's flight (the shared-bounds modifier is applied inside the
+ * wordmark component itself) and is inert once that startup transition has settled.
+ */
 @Composable
 private fun WordmarkContent(alpha: Float, modifier: Modifier = Modifier) {
-    // Horizontal position comes from the parent's shared BiasAlignment; the passed modifier owns
-    // the collapse/expand fade-through alpha + scale. sharedElement = true makes this the landing
-    // target for the splash wordmark's flight (the shared-bounds modifier is applied inside the
-    // component, outside this one) and is inert once that startup transition has settled.
     MyBicoccaWordmark(
         fontSize = 21.sp,
         sharedElement = true,
@@ -382,11 +402,14 @@ private fun WordmarkContent(alpha: Float, modifier: Modifier = Modifier) {
     )
 }
 
+/**
+ * The morphing sub-page title. Its start inset matches the local sub-page top bar so the alpha
+ * handoff at full expansion doesn't shift the title; position otherwise comes from the parent's
+ * shared alignment anchor.
+ */
 @Composable
 private fun SubPageTitleContent(title: String, alpha: Float, modifier: Modifier = Modifier) {
     val scheme = MaterialTheme.colorScheme
-    // start=4dp inset matches the local sub-page top bar so the alpha handoff at p=1 doesn't
-    // shift the title. Position otherwise comes from the parent's shared BiasAlignment.
     Crossfade(
         targetState = title,
         label = "sub-page-title",
@@ -406,6 +429,11 @@ private fun SubPageTitleContent(title: String, alpha: Float, modifier: Modifier 
     }
 }
 
+/**
+ * The bare search field. It keeps a local TextFieldValue mirror of the hoisted query string:
+ * programmatic writes (history insert, dictation transcripts) land with the cursor at the end,
+ * ready for typing, while user edits pass through with their own selection untouched.
+ */
 @Composable
 private fun SearchFieldContent(
     query: String,
@@ -415,9 +443,6 @@ private fun SearchFieldContent(
     alpha: Float,
 ) {
     val scheme = MaterialTheme.colorScheme
-    // Local TextFieldValue mirror of the hoisted query string: programmatic writes (history
-    // insert, dictation transcripts) land with the cursor at the end, ready for typing;
-    // user edits pass through with their own selection untouched.
     var fieldValue by remember { mutableStateOf(TextFieldValue(query, TextRange(query.length))) }
     if (fieldValue.text != query) {
         fieldValue = TextFieldValue(query, TextRange(query.length))
@@ -456,9 +481,19 @@ private fun SearchFieldContent(
     }
 }
 
-// One app-wide placeholder — search is unified, not scoped to the visible tab.
+/** One app-wide placeholder — search is unified, not scoped to the visible tab. */
 private const val SearchPlaceholder = "Cerca in MyBicocca"
 
+/**
+ * Same fade-through + scale handoff as [LeadingSlot]: the avatar (collapsed/PAGE) is always
+ * composed — it reserves the slot's 40dp width and morphs into the expanded action. On a
+ * sub-page that is the screen's own [trailingActions] if any (a composable that captures its
+ * entry-scoped ViewModel, wrapped so it fades/scales through like the icons), else the filter
+ * toggle; on search, per the M3 search view, a mic while the field is empty (the dictation
+ * entry point) and clear once there's text, sharing one hit target. Only one variant is visible
+ * at a time, and only the one matching the current [mode] is clickable so the faded-out one
+ * can't intercept taps.
+ */
 @Composable
 private fun TrailingSlot(
     mode: BarMode,
@@ -475,11 +510,6 @@ private fun TrailingSlot(
     modifier: Modifier = Modifier,
 ) {
     val scheme = MaterialTheme.colorScheme
-    // Same fade-through + scale handoff as the leading slot: the avatar (collapsed/PAGE) is
-    // always composed — it reserves the slot's 40dp width and morphs into the expanded action
-    // (the screen's own action if any, else filter on a sub-page, clear on search). Only one is
-    // visible at a time, and only the variant matching the current `mode` is clickable so the
-    // faded-out one can't intercept taps.
     Box(contentAlignment = Alignment.Center, modifier = modifier) {
         AvatarSlot(
             photo = photo,
@@ -490,8 +520,6 @@ private fun TrailingSlot(
         when (mode) {
             BarMode.PAGE -> Unit
             BarMode.SUB_PAGE -> when {
-                // The screen's own action (provided as a composable that captures its
-                // entry-scoped ViewModel). Wrapped so it fades/scales through like the icons.
                 trailingActions != null -> Box(
                     modifier = Modifier.graphicsLayer {
                         fadeThroughLayer(fadeThroughExpanded(p), minScale = 0.6f)
@@ -515,8 +543,6 @@ private fun TrailingSlot(
                 else -> Unit
             }
 
-            // M3 search view: mic while the field is empty (dictation entry point), clear once
-            // there's text. Same single-hit-target + dual-glyph handoff as the leading slot.
             BarMode.SEARCH -> {
                 val micAlpha by animateFloatAsState(
                     targetValue = if (searchQueryEmpty) 1f else 0f,

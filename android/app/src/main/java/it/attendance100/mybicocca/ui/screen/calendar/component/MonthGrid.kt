@@ -45,6 +45,13 @@ import java.time.YearMonth
 import java.time.format.TextStyle
 import java.util.Locale
 
+/**
+ * Seven-column grid of a single month under a Mon–Sun initials header. Each day cell is a
+ * heat map of how booked the day is — the heavier the scheduled hours, the stronger the
+ * brand tint — with a red dot marking days that hold an exam, a strong ring around the
+ * selected day and a softer one around today. Leading cells before the month's first day
+ * stay blank.
+ */
 @Composable
 fun MonthGrid(
     yearMonth: YearMonth,
@@ -63,7 +70,6 @@ fun MonthGrid(
             .fillMaxWidth()
             .padding(horizontal = 14.dp),
     ) {
-        // Day-of-week header (Mon..Sun).
         Row(
             modifier = Modifier.fillMaxWidth().height(20.dp),
             horizontalArrangement = Arrangement.spacedBy(4.dp),
@@ -175,6 +181,7 @@ private val WeekHeaderDays: List<DayOfWeek> = listOf(
 
 private const val MonthCellAspectRatio = 1f / 1.05f
 
+/** Buckets of a day's total scheduled hours, driving the strength of the heat-map tint. */
 private enum class BusyLevel { NONE, LIGHT, MODERATE, HEAVY, FULL }
 
 private fun busyLevelOf(events: List<CalendarEvent>): BusyLevel {
@@ -188,6 +195,7 @@ private fun busyLevelOf(events: List<CalendarEvent>): BusyLevel {
     }
 }
 
+/** Base of the heat tint: brand primary in light theme, the softer primary container in dark. */
 @Composable
 private fun busyAccent(): Color {
     val scheme = MaterialTheme.colorScheme
@@ -207,6 +215,7 @@ private fun busyBackground(level: BusyLevel): Color {
     }
 }
 
+/** Day-number color: flips to the on-accent color at the two strongest tints, where onSurface would lose contrast. */
 @Composable
 private fun busyForeground(level: BusyLevel): Color {
     val scheme = MaterialTheme.colorScheme
@@ -217,6 +226,10 @@ private fun busyForeground(level: BusyLevel): Color {
     }
 }
 
+/**
+ * "Leggenda" caption over the light-to-full heat gradient bar with its hour-bucket labels,
+ * explaining the tint scale of the month grid's day cells.
+ */
 @Composable
 fun MonthBusyLegend(modifier: Modifier = Modifier) {
     val scheme = MaterialTheme.colorScheme

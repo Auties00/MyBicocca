@@ -8,6 +8,12 @@ import it.attendance100.mybicocca.domain.repository.AppointmentRepository
 import java.time.LocalDateTime
 import javax.inject.Inject
 
+/**
+ * Books the chosen slot when the user confirms the "Appuntamenti" booking flow. Creates and
+ * finalizes the reservation on Portale Planning and persists it in the device-local Room
+ * store, then returns it for the confirmation page. The values map holds the form input keyed
+ * by field code and must include the primary email field.
+ */
 class BookAppointmentUseCase @Inject constructor(
     private val repository: AppointmentRepository,
 ) {

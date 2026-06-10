@@ -58,23 +58,33 @@ import it.attendance100.mybicocca.ui.component.modal.SheetOutcome
 import it.attendance100.mybicocca.ui.component.modal.SheetResultPage
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.taxes.TaxesViewModel
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.taxes.component.Invoice
-import it.attendance100.mybicocca.ui.screen.registry.subscreen.taxes.component.InvoiceData
-import it.attendance100.mybicocca.ui.screen.registry.subscreen.taxes.component.InvoiceItem
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.taxes.component.PagoPaInvoice
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.taxes.openExternalUrl
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.taxes.openPdfDocument
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.taxes.state.InvoiceData
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.taxes.state.InvoiceItem
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.taxes.state.TaxEvent
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.taxes.theme.PagoPaColor
+import it.attendance100.mybicocca.ui.theme.LocalIsOnline
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 
-// Full-screen hero detail: the tapped fattura grows from its row in the Tasse modal (origin =
-// its bounds in absolute SCREEN px) to a true edge-to-edge page, over the modal and the status
-// bar. Hosted in its own full-screen Dialog window (decorFitsSystemWindows = false ⇒ anchored at
-// screen 0,0), so the screen-space origin maps straight into the layer. One progress spring
-// drives a graphicsLayer container transform (scale + translate the full-size page down onto the
-// row), read in the draw phase so it stays smooth, plus a scrim fade and a content cross-fade.
-// Back / ✕ reverse the morph before dismissing.
+/**
+ * Full-screen hero detail: the tapped fattura grows from its row in the Tasse modal ([origin]
+ * = its bounds in absolute SCREEN px) to a true edge-to-edge page, over the modal and the
+ * status bar. Hosted in its own full-screen Dialog window (decorFitsSystemWindows = false ⇒
+ * anchored at screen 0,0, with the window's actual on-screen offset still captured in case an
+ * OEM insets it), so the screen-space origin maps straight into the layer. One progress
+ * spring drives a graphicsLayer container transform — the full-size page scaled + translated
+ * down onto the row, anchored top-left — read in the draw phase so it stays smooth, plus a
+ * scrim fade and a content fade held until the page has visibly started expanding, so the
+ * early tiny-scaled frames read as the row rather than a shrunken page. Back / ✕ reverse the
+ * morph before dismissing.
+ *
+ * The rendered fattura is re-derived live from the invoice list by id, so a background
+ * refresh updates the open detail in place (the opening snapshot is the fallback if it gets
+ * evicted). pagoPA action outcomes replace the detail with a result page until dismissed.
+ */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun TaxDetailOverlay(
@@ -85,8 +95,6 @@ fun TaxDetailOverlay(
 ) {
     val invoicesState by viewModel.invoices.collectAsStateWithLifecycle()
     val actionInProgress by viewModel.actionInProgress.collectAsStateWithLifecycle()
-    // Re-derive live from the list by id so a background refresh updates the open detail in
-    // place; fall back to the snapshot we opened with if it gets evicted.
     val live = (invoicesState as? Loadable.Loaded)?.value?.firstOrNull { it.id == invoice.id } ?: invoice
 
     val spec = MaterialTheme.motionScheme.defaultSpatialSpec<Float>()
@@ -114,7 +122,6 @@ fun TaxDetailOverlay(
     ) {
         Box {
             val context = LocalContext.current
-            // The outcome of a print/open/pay action, shown as a dedicated result page.
             var outcome by remember { mutableStateOf<SheetOutcome?>(null) }
             LaunchedEffect(viewModel) {
                 viewModel.events.collect { event ->
@@ -130,9 +137,6 @@ fun TaxDetailOverlay(
             BackHandler(enabled = outcome != null) { outcome = null }
 
             val view = LocalView.current
-            // The Dialog window should sit at screen (0,0) (decorFitsSystemWindows = false), but
-            // capture its actual on-screen offset so the screen-space origin still maps correctly
-            // if an OEM insets it.
             var windowOffset by remember { mutableStateOf(Offset.Zero) }
 
             Box(
@@ -144,7 +148,6 @@ fun TaxDetailOverlay(
                         windowOffset = Offset(loc[0].toFloat(), loc[1].toFloat())
                     },
             ) {
-                // Scrim darkens the surroundings as the page grows; fully covered at full screen.
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -152,8 +155,6 @@ fun TaxDetailOverlay(
                         .background(Color.Black),
                 )
 
-                // The page is laid out full-screen, then a graphicsLayer scales + translates it
-                // down onto the row at progress 0 (anchored top-left) and back up to fill at 1.
                 Surface(
                     modifier = Modifier
                         .fillMaxSize()
@@ -174,8 +175,6 @@ fun TaxDetailOverlay(
                         },
                     color = MaterialTheme.colorScheme.surfaceContainerLow,
                 ) {
-                    // Content fades in after the page has started expanding, so the early
-                    // tiny-scaled frames read as the row, not a shrunken page.
                     val contentModifier = Modifier.graphicsLayer {
                         alpha = ((progress.value - 0.15f) / 0.85f).coerceIn(0f, 1f)
                     }
@@ -205,6 +204,11 @@ fun TaxDetailOverlay(
     }
 }
 
+/**
+ * The detail page proper: a close bar with the fattura number over the receipt ticket, the
+ * pagoPA success receipt when paid, and the pagoPA actions — pay, print notice, print
+ * receipt, check payment status — each gated by the invoice's status and pagoPA capabilities.
+ */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun DetailContent(
@@ -218,6 +222,7 @@ private fun DetailContent(
     modifier: Modifier = Modifier,
 ) {
     val payable = invoice.status == TaxStatus.PENDING || invoice.status == TaxStatus.EXPIRED
+    val isOnline = LocalIsOnline.current
 
     Column(
         modifier = modifier
@@ -262,7 +267,7 @@ private fun DetailContent(
             if (payable && invoice.pagoPaImmediate) {
                 Button(
                     onClick = onPay,
-                    enabled = !actionInProgress,
+                    enabled = !actionInProgress && isOnline,
                     colors = ButtonDefaults.buttonColors(containerColor = PagoPaColor, contentColor = Color.White),
                     modifier = Modifier.fillMaxWidth().height(52.dp),
                 ) { Text("Paga con pagoPA") }
@@ -270,14 +275,14 @@ private fun DetailContent(
             if (payable && invoice.pagoPaNotice) {
                 FilledTonalButton(
                     onClick = onPrintNotice,
-                    enabled = !actionInProgress,
+                    enabled = !actionInProgress && isOnline,
                     modifier = Modifier.fillMaxWidth().height(52.dp),
                 ) { Text("Stampa avviso pagoPA") }
             }
             if (invoice.status == TaxStatus.PAID && invoice.pagoPaEnabled) {
                 FilledTonalButton(
                     onClick = onPrintReceipt,
-                    enabled = !actionInProgress,
+                    enabled = !actionInProgress && isOnline,
                     modifier = Modifier.fillMaxWidth().height(52.dp),
                 ) { Text("Stampa quietanza") }
             }
@@ -292,8 +297,11 @@ private fun DetailContent(
     }
 }
 
-// Full-screen result view shown over the fattura detail: a back bar carrying the outcome title
-// above the shared result page. Back / the page button return to the detail, not close the overlay.
+/**
+ * Full-screen result view shown over the fattura detail after a pagoPA action: a back bar
+ * above the shared result page. Back / the page button return to the detail, not close the
+ * overlay.
+ */
 @Composable
 private fun TaxResultContent(
     outcome: SheetOutcome,
@@ -338,5 +346,4 @@ private fun TaxInvoice.toInvoiceData(): InvoiceData = InvoiceData(
         )
     },
     paymentDate = paymentDate,
-    rptStatus = iuv,
 )

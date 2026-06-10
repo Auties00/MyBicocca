@@ -7,6 +7,11 @@ import it.attendance100.mybicocca.domain.repository.TranscriptRepository
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
+/**
+ * Streams the Room-computed grade rollup (running sums over passed, graded exams) for
+ * the profile screen's hypothetical-grade calculator, which recomputes averages per
+ * keystroke from these aggregates.
+ */
 class ObserveGradeRollupUseCase @Inject constructor(
     private val repository: TranscriptRepository,
 ) {

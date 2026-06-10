@@ -8,11 +8,13 @@ import android.graphics.RectF
 import android.graphics.Typeface
 import kotlin.math.acos
 
-// Renders the campus building pin to a Bitmap for use as a MapLibre symbol icon. MapLibre has no
-// Composable-marker equivalent (unlike google-maps-compose's MarkerComposable), so the pin — a
-// circular head whose sides run tangentially into a bottom tip, matching the old PinShape — is
-// rasterized here with Canvas. Colors come from the active theme (ARGB ints). The tip sits at
-// bottom-center to match the symbol's iconAnchor("bottom"); idle vs selected differ in size/colour.
+/**
+ * Renders the campus building pin to a [Bitmap] for use as a MapLibre symbol icon. MapLibre
+ * has no Composable-marker equivalent (unlike google-maps-compose's MarkerComposable), so the
+ * pin — a circular head whose sides run tangentially into a bottom tip — is rasterized here
+ * with [Canvas]. Colors come from the active theme (ARGB ints). The tip sits at bottom-center
+ * to match the symbol's `iconAnchor("bottom")`; idle vs selected differ in size/colour.
+ */
 object BuildingPin {
 
     private const val HEAD_IDLE_DP = 36f
@@ -22,13 +24,21 @@ object BuildingPin {
     private const val BORDER_DP = 2f
     private const val SHADOW_DP = 3f
 
-    // Distance in px from the symbol's bottom anchor (the geographic point, where the tip sits) up
-    // to the SELECTED head's center. Centering this — not the anchor — puts the visible head in the
-    // middle of the map viewport. Geometry mirrors render(): height − headCenterFromTop =
-    // (head + tail + 2·pad) − (pad + head/2) = head/2 + tail + pad, with pad = shadow + border.
+    /**
+     * Distance in px from the symbol's bottom anchor (the geographic point, where the tip
+     * sits) up to the SELECTED head's center. Centering this — not the anchor — puts the
+     * visible head in the middle of the map viewport. Geometry mirrors [render]: height −
+     * headCenterFromTop = (head + tail + 2·pad) − (pad + head/2) = head/2 + tail + pad, with
+     * pad = shadow + border.
+     */
     fun selectedHeadCenterOffset(density: Float): Float =
         (HEAD_SELECTED_DP / 2f + TAIL_SELECTED_DP + SHADOW_DP + BORDER_DP) * density
 
+    /**
+     * Canvas-on-Bitmap is software-rendered, so `setShadowLayer` draws the drop shadow
+     * directly. A null [code] draws a simple filled square standing in for the apartment
+     * glyph instead of the head text.
+     */
     fun render(
         density: Float,
         code: String?,
@@ -63,7 +73,6 @@ object BuildingPin {
             close()
         }
 
-        // Canvas-on-Bitmap is software-rendered, so setShadowLayer draws the drop shadow directly.
         val fill = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             color = containerColor
             setShadowLayer(shadowDp * density, 0f, 1.5f * density, 0x55000000)
@@ -85,7 +94,6 @@ object BuildingPin {
             val fm = tp.fontMetrics
             canvas.drawText(code, cx, cy - (fm.ascent + fm.descent) / 2f, tp)
         } else {
-            // Icon-less buildings: a simple filled square stands in for the apartment glyph.
             val s = radius * 0.55f
             canvas.drawRect(cx - s, cy - s, cx + s, cy + s, Paint(Paint.ANTI_ALIAS_FLAG).apply { color = textColor })
         }

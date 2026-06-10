@@ -5,6 +5,11 @@ import it.attendance100.mybicocca.domain.model.elearning.course.CourseId
 import it.attendance100.mybicocca.domain.repository.VideoPlaybackRepository
 import javax.inject.Inject
 
+/**
+ * Persists the current playback position as the video player runs and when it pauses or
+ * closes. Once playback passes the completion threshold the video is flagged watched and the
+ * completion is mirrored to the e-learning platform.
+ */
 class SaveVideoProgressUseCase @Inject constructor(
     private val repository: VideoPlaybackRepository,
 ) {

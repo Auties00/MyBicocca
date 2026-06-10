@@ -39,6 +39,13 @@ private val SegmentSpacing = 2.dp
 private val OuterCornerRadius = 24.dp
 private val InnerCornerRadius = 6.dp
 
+/**
+ * Course-home filter bar: a horizontally scrollable connected toggle group with "Tutti",
+ * "Preferiti", and one segment per available study year. Segments share an outer pill
+ * silhouette — large corners on the group's ends, tight corners between neighbours — and
+ * exactly one is always checked; the checked segment fills with the brand colour (its container
+ * in dark mode) and gains a leading check glyph.
+ */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun HomeFilterBar(

@@ -25,7 +25,6 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.SyncStatus
 import it.attendance100.mybicocca.core.state.valueOrNull
-import it.attendance100.mybicocca.data.remote.elearning.api.ElearningKalturaApi
 import it.attendance100.mybicocca.domain.model.account.AccountId
 import it.attendance100.mybicocca.domain.model.elearning.course.CourseDetails
 import it.attendance100.mybicocca.domain.model.elearning.course.CourseId
@@ -38,7 +37,7 @@ import it.attendance100.mybicocca.domain.usecase.elearning.course.ObserveCourseD
 import it.attendance100.mybicocca.domain.usecase.elearning.video.ObserveCourseVideoProgressUseCase
 import it.attendance100.mybicocca.domain.usecase.elearning.video.ResolveVideoStreamUseCase
 import it.attendance100.mybicocca.domain.usecase.elearning.video.SaveVideoProgressUseCase
-import it.attendance100.mybicocca.ui.navigation.AppRoute
+import it.attendance100.mybicocca.ui.navigation.route.AppRoute
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.videoPlayer.player.VideoPlaybackService
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.videoPlayer.state.VideoPlayerOneShotEvent
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.videoPlayer.state.VideoPlayerPlaylistItem
@@ -62,6 +61,24 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
+/**
+ * Drives course video playback through a [MediaController] bound to [VideoPlaybackService], so
+ * the actual ExoPlayer lives in a foreground media-session service and audio keeps running when
+ * the app is backgrounded, with a system media notification.
+ *
+ * Data streams: [player] (the connected controller, null until the session binds),
+ * [currentStream] (resolved Kaltura stream for the current video), [currentCmId], [playlist]
+ * (every visible kalvidres module of the course annotated with per-video progress), and
+ * [progressByCmId] (saved positions from Room). Sync status: [syncStatus] tracks stream
+ * resolution. One-shot: [oneShotEvents] for resolve and playback failures.
+ *
+ * Actions: [selectVideo], [selectQuality], [retry].
+ *
+ * Playback progress is persisted on a fixed tick while playing and flushed on pause, switch,
+ * end (marked completed) and [onCleared]; a video that ends auto-advances to the next playlist
+ * entry. Media items carry their notification metadata directly from the resolved stream model,
+ * whose thumbnail URL becomes the artwork.
+ */
 @OptIn(ExperimentalCoroutinesApi::class, UnstableApi::class)
 @HiltViewModel(assistedFactory = VideoPlayerViewModel.Factory::class)
 class VideoPlayerViewModel @AssistedInject constructor(
@@ -128,8 +145,10 @@ class VideoPlayerViewModel @AssistedInject constructor(
     private var playerListener: Player.Listener? = null
     private var progressTickerJob: Job? = null
 
-    // Bumped each time loadAndPlay starts a fresh playback; the background queue-expansion
-    // checks it after every suspend point so a user-driven navigation aborts stale work.
+    /**
+     * Bumped each time [loadAndPlay] starts a fresh playback; the background queue expansion
+     * checks it after every suspend point so a user-driven navigation aborts stale work.
+     */
     private var queueGeneration: Long = 0L
     private var queueExpansionJob: Job? = null
     private val resolvedStreamCache = mutableMapOf<Int, VideoStream>()
@@ -138,14 +157,18 @@ class VideoPlayerViewModel @AssistedInject constructor(
         bindMediaController()
     }
 
+    /** Switches playback to another playlist video, flushing the outgoing video's progress first. */
     fun selectVideo(cmId: Int) {
         if (cmId == _currentCmId.value && _currentStream.value is Loadable.Loaded) return
-        // Flush progress for the outgoing video before switching.
         flushCurrentProgress()
         _currentCmId.value = cmId
         loadAndPlay(cmId)
     }
 
+    /**
+     * Constrains track selection to the picked variant's resolution; a null variant clears the
+     * constraint and restores adaptive quality.
+     */
     fun selectQuality(variant: VideoVariant?) {
         val controller = _player.value ?: return
         val params = controller.trackSelectionParameters
@@ -179,6 +202,13 @@ class VideoPlayerViewModel @AssistedInject constructor(
         )
     }
 
+    /**
+     * Wires player callbacks to the ViewModel: an ended video is marked completed and playback
+     * auto-advances, play/pause toggles the progress ticker, media-item transitions that
+     * originate outside the screen (auto-advance, notification prev/next) realign [currentCmId]
+     * and [currentStream] with whatever the player moved to, and playback errors surface as
+     * one-shot events.
+     */
     private fun attachListener(controller: MediaController) {
         val listener = object : Player.Listener {
             override fun onPlaybackStateChanged(playbackState: Int) {
@@ -195,7 +225,6 @@ class VideoPlayerViewModel @AssistedInject constructor(
             override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
                 val newCmId = mediaItem?.mediaId?.toIntOrNull() ?: return
                 if (newCmId == _currentCmId.value) return
-                // Auto-advance / notification skip — keep VM state aligned with the player.
                 flushCurrentProgress()
                 _currentCmId.value = newCmId
                 resolvedStreamCache[newCmId]?.let { _currentStream.value = Loadable.Loaded(it) }
@@ -209,6 +238,12 @@ class VideoPlayerViewModel @AssistedInject constructor(
         controller.addListener(listener)
     }
 
+    /**
+     * Resolves the video's stream and starts playing it, resuming from the saved position when
+     * the video is not yet completed. Resolution waits for an active account because the stream
+     * lookup needs the session. On success the playlist queue expansion kicks off in the
+     * background.
+     */
     private fun loadAndPlay(cmId: Int) {
         val controller = _player.value ?: return
         queueExpansionJob?.cancel()
@@ -216,7 +251,6 @@ class VideoPlayerViewModel @AssistedInject constructor(
         viewModelScope.launch {
             _syncStatus.value = SyncStatus.Refreshing
             _currentStream.value = Loadable.NotYetLoaded
-            // Wait until an account is active — resolveVideoStream needs the session.
             activeAccountId.filterNotNull().first()
             runCatching { resolveVideoStream(cmId) }
                 .onSuccess { stream ->
@@ -241,9 +275,12 @@ class VideoPlayerViewModel @AssistedInject constructor(
         }
     }
 
-    // Resolves every other playlist item in the background and inserts them around the
-    // current item via addMediaItems, so the system notification gets a full queue with
-    // working prev/next without blocking the initial play call.
+    /**
+     * Resolves every other playlist item in the background and inserts them around the current
+     * item via addMediaItems, so the system notification gets a full queue with working
+     * prev/next without blocking the initial play call. [generation] is re-checked after every
+     * suspend point so the expansion silently aborts when a newer playback supersedes it.
+     */
     private fun launchQueueExpansion(generation: Long, currentCmId: Int): Job = viewModelScope.launch {
         val controller = _player.value ?: return@launch
         val items = playlist.first { it.isNotEmpty() }
@@ -325,9 +362,7 @@ class VideoPlayerViewModel @AssistedInject constructor(
         val metadata = MediaMetadata.Builder()
             .setTitle(playlistItem?.title ?: "Video del corso")
             .setArtist(playlistItem?.sectionName)
-            .setArtworkUri(
-                Uri.parse(ElearningKalturaApi.thumbnailUrl(stream.kalturaEntryId, stream.partnerId))
-            )
+            .setArtworkUri(Uri.parse(stream.thumbnailUrl))
             .setMediaType(MediaMetadata.MEDIA_TYPE_VIDEO)
             .build()
         return MediaItem.Builder()
@@ -338,6 +373,10 @@ class VideoPlayerViewModel @AssistedInject constructor(
             .build()
     }
 
+    /**
+     * Flattens the course's visible sections into the ordered video playlist. The last-seen
+     * marker goes to the most recently updated video that is started but not completed.
+     */
     private fun buildPlaylist(
         details: CourseDetails,
         progress: Map<Int, VideoProgress>,
@@ -369,6 +408,11 @@ class VideoPlayerViewModel @AssistedInject constructor(
         return items
     }
 
+    /**
+     * Flushes the final progress and tears playback down. Releasing the controller alone would
+     * leave the ExoPlayer in [VideoPlaybackService] running; stop + clear pushes the session
+     * idle so the service can tear down.
+     */
     override fun onCleared() {
         flushCurrentProgress()
         progressTickerJob?.cancel()
@@ -376,8 +420,6 @@ class VideoPlayerViewModel @AssistedInject constructor(
         val controller = _player.value
         if (controller != null) {
             playerListener?.let { controller.removeListener(it) }
-            // Releasing the controller alone leaves the ExoPlayer in VideoPlaybackService
-            // running — stop+clear pushes the session idle so the service can tear down.
             runCatching {
                 controller.stop()
                 controller.clearMediaItems()

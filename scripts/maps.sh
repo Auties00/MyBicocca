@@ -1,0 +1,1 @@
+pmtiles extract https://build.protomaps.com/20260610.pmtiles app/src/main/assets/map/basemap.pmtiles --bbox=9.189,45.491,9.653,45.710 --maxzoom=14 --download-threads=8

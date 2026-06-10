@@ -13,15 +13,12 @@ import androidx.compose.material.icons.outlined.CoPresent
 import androidx.compose.material.icons.outlined.CurrencyExchange
 import androidx.compose.material.icons.outlined.Description
 import androidx.compose.material.icons.outlined.EventAvailable
-import androidx.compose.material.icons.outlined.Explore
 import androidx.compose.material.icons.outlined.Grading
-import androidx.compose.material.icons.outlined.HowToReg
 import androidx.compose.material.icons.outlined.LocalLibrary
 import androidx.compose.material.icons.outlined.Payments
 import androidx.compose.material.icons.outlined.Savings
 import androidx.compose.material.icons.outlined.School
 import androidx.compose.material.icons.outlined.SupportAgent
-import androidx.compose.material.icons.outlined.Work
 import androidx.compose.material.icons.outlined.WorkspacePremium
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -32,6 +29,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import it.attendance100.mybicocca.core.state.Loadable
+import it.attendance100.mybicocca.core.state.SyncStatus
 import it.attendance100.mybicocca.core.state.valueOrNull
 import it.attendance100.mybicocca.ui.screen.registry.component.RegistryServiceSection
 import it.attendance100.mybicocca.ui.screen.registry.component.ScadenzeHeader
@@ -48,10 +47,20 @@ import it.attendance100.mybicocca.ui.screen.registry.subscreen.examResults.ExamR
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.taxes.TaxesViewModel
 import java.time.LocalDate
 
-// Landing of the Registry (Segreterie) tab: a pinned "Scadenze" banner that opens the
-// scadenzario timeline, over a directory of services grouped into connected segmented
-// cards. Live status badges (open exam calls, new outcomes, tax position) and the
-// deadline spine are both derived from the same in-memory feature streams.
+/**
+ * Landing of the Registry (Segreterie) tab: a pinned "Scadenze" banner over a scrollable
+ * directory of Esse3 services grouped into connected segmented cards, one icon-chip accent
+ * hue per group (see [serviceAccents]). Tapping the banner opens the scadenzario timeline
+ * sheet; tapping a row routes to the owning service sheet.
+ *
+ * The banner summary and the deadline spine derive from the in-memory streams of four
+ * feature ViewModels (bookings, exam calls, invoices, exam results). The spine counts as
+ * loading until every stream has delivered — a partial merge would read as "fewer
+ * deadlines" rather than "still loading" — and the summary line covers the loading,
+ * failure, empty and urgent-count states. The banner stays pinned above the directory;
+ * only the sections scroll. [isActive] is true only while this is the visible tab — see
+ * CalendarScreen for the pager-cache rationale.
+ */
 @Composable
 fun RegistryScreen(
     bookedExamsViewModel: BookedExamsViewModel,
@@ -72,7 +81,6 @@ fun RegistryScreen(
     onOpenTitles: () -> Unit,
     onOpenCertificates: () -> Unit,
     modifier: Modifier = Modifier,
-    // True only while this is the visible tab — see CalendarScreen for the pager-cache rationale.
     isActive: Boolean = true,
     onProvideFilterToggle: ((() -> Unit)?) -> Unit = {},
 ) {
@@ -82,15 +90,23 @@ fun RegistryScreen(
     val examCalls by bookableExamsViewModel.examCalls.collectAsStateWithLifecycle()
     val invoices by taxesViewModel.invoices.collectAsStateWithLifecycle()
     val examResults by examResultsViewModel.results.collectAsStateWithLifecycle()
+    val bookingsSync by bookedExamsViewModel.syncStatus.collectAsStateWithLifecycle()
+    val examCallsSync by bookableExamsViewModel.syncStatus.collectAsStateWithLifecycle()
+    val invoicesSync by taxesViewModel.syncStatus.collectAsStateWithLifecycle()
+    val examResultsSync by examResultsViewModel.syncStatus.collectAsStateWithLifecycle()
 
     val bookingList = bookings.valueOrNull().orEmpty()
     val examCallList = examCalls.valueOrNull().orEmpty()
     val invoiceList = invoices.valueOrNull().orEmpty()
     val resultList = examResults.valueOrNull().orEmpty()
 
+    val deadlinesLoading = listOf(bookings, examCalls, invoices, examResults)
+        .any { it is Loadable.NotYetLoaded }
+    val deadlinesFailure = listOf(bookingsSync, examCallsSync, invoicesSync, examResultsSync)
+        .firstNotNullOfOrNull { (it as? SyncStatus.Failed)?.cause }
+
     val today = remember { LocalDate.now() }
 
-    // Deadlines (scadenzario spine + header summary).
     val deadlines = remember(resultList, invoiceList, bookingList, examCallList) {
         buildRegistryDeadlines(
             today = today,
@@ -105,6 +121,8 @@ fun RegistryScreen(
     }
     val urgentCount = deadlines.count { it.isUrgent() }
     val headerSummary = when {
+        deadlinesLoading && deadlinesFailure != null -> "Sincronizzazione non riuscita"
+        deadlinesLoading -> "Caricamento in corso…"
         deadlines.isEmpty() -> "Nessuna scadenza imminente"
         urgentCount == 0 -> "Prossima il ${nextDeadlineLabel(deadlines.first().date)}"
         else -> {
@@ -113,7 +131,6 @@ fun RegistryScreen(
         }
     }
 
-    // One section per directory group; each gets its own icon-chip accent (see serviceAccents()).
     val sections = listOf(
         RegistryServiceGroup(
             name = "Didattica",
@@ -152,20 +169,10 @@ fun RegistryScreen(
                 RegistryService("refunds", "Rimborsi", "Importi e mandati", Icons.Outlined.CurrencyExchange, onClick = onOpenRefunds),
             ),
         ),
-        RegistryServiceGroup(
-            name = "Opportunità",
-            caption = "Esperienze e nuove occasioni",
-            services = listOf(
-                RegistryService("internships", "Tirocini e stage", "Ricerca e gestione stage", Icons.Outlined.Work, onClick = {}),
-                RegistryService("opportunities", "Opportunità", "Bandi, borse e mobilità", Icons.Outlined.Explore, onClick = {}),
-                RegistryService("admissions", "Ammissioni", "Concorsi e graduatorie", Icons.Outlined.HowToReg, onClick = {}),
-            ),
-        ),
     )
 
     var showDeadlines by remember { mutableStateOf(false) }
 
-    // The Scadenze banner stays pinned above the directory; only the sections scroll.
     Column(modifier = modifier.fillMaxSize()) {
         ScadenzeHeader(
             summary = headerSummary,
@@ -194,6 +201,14 @@ fun RegistryScreen(
     if (showDeadlines) {
         DeadlinesSheet(
             deadlines = deadlines,
+            loading = deadlinesLoading,
+            failure = deadlinesFailure,
+            onRetry = {
+                if (bookingsSync is SyncStatus.Failed) bookedExamsViewModel.refresh()
+                if (examCallsSync is SyncStatus.Failed) bookableExamsViewModel.refresh()
+                if (invoicesSync is SyncStatus.Failed) taxesViewModel.refresh()
+                if (examResultsSync is SyncStatus.Failed) examResultsViewModel.refresh()
+            },
             onDismiss = { showDeadlines = false },
         )
     }

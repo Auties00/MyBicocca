@@ -29,10 +29,21 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
-// Percorso-first plan wizard: step zero picks the schema (= percorso/orientamento/
-// profilo/part-time tuple) when the regulation offers any, then the schema's rules
-// follow grouped by course year, one step per year. Edited drafts are cached per
-// schema so flipping between percorsi never loses picks.
+/**
+ * Backs the percorso-first plan wizard: step zero picks the schema (= percorso/
+ * orientamento/profilo/part-time tuple) when the regulation offers any, then the
+ * schema's rules follow grouped by course year, one step per year. Edited drafts are
+ * cached per schema so flipping between percorsi never loses picks.
+ *
+ * Streams: [path] and [rules] carry the percorso alternatives and the editable rule
+ * groups; [selectedSchemaId] is the schema the rules are compiled against;
+ * [currentSegment] records the wizard step in view across config changes; [syncStatus]
+ * tracks the rules fetch; [submitting] and [submitError] track the submission; [events]
+ * carries the one-shot submitted notification.
+ *
+ * Actions: [selectSchema], [loadSelectedRules], [toggleCourse], [setSegment], [submit],
+ * [refresh], [reset], plus [hasChanges] for the hosting sheet's dismiss decision.
+ */
 @HiltViewModel(assistedFactory = StudyPlanEditViewModel.Factory::class)
 class StudyPlanEditViewModel @AssistedInject constructor(
     @Assisted private val key: StudyPlanEditRequest,
@@ -46,17 +57,23 @@ class StudyPlanEditViewModel @AssistedInject constructor(
         fun create(key: StudyPlanEditRequest): StudyPlanEditViewModel
     }
 
-    // CareerId and Esse3 stuId are the same identifier.
+    /** CareerId and Esse3 stuId are the same identifier. */
     private val careerId = CareerId(key.studentId)
 
-    // The percorso alternatives backing step zero. Loaded(null) = lookup failed — the
-    // wizard degrades to rules-only against the route's schema.
     private val _path = MutableStateFlow<Loadable<StudyPath?>>(Loadable.NotYetLoaded)
+
+    /**
+     * The percorso alternatives backing step zero. Loaded(null) = lookup failed — the
+     * wizard degrades to rules-only against the request's schema.
+     */
     val path: StateFlow<Loadable<StudyPath?>> = _path.asStateFlow()
 
-    // The schema the rules are compiled against: the student's current one from the
-    // route, or null when the career has no plan yet and nothing was picked.
     private val _selectedSchemaId = MutableStateFlow(key.schemaId.takeIf { it > 0 })
+
+    /**
+     * The schema the rules are compiled against: the student's current one from the
+     * request, or null when the career has no plan yet and nothing was picked.
+     */
     val selectedSchemaId: StateFlow<Long?> = _selectedSchemaId.asStateFlow()
 
     private val _rules = MutableStateFlow<Loadable<List<EditableRule>>>(Loadable.NotYetLoaded)
@@ -65,22 +82,26 @@ class StudyPlanEditViewModel @AssistedInject constructor(
     private val _syncStatus = MutableStateFlow<SyncStatus>(SyncStatus.Idle)
     val syncStatus: StateFlow<SyncStatus> = _syncStatus.asStateFlow()
 
-    // The wizard segment in view: PATH_SEGMENT for the percorso step, otherwise the
-    // choiceId of the single rule the page shows.
     private val _currentSegment = MutableStateFlow(PATH_SEGMENT)
+
+    /**
+     * The wizard segment in view: [PATH_SEGMENT] for the percorso step, otherwise the
+     * choiceId of the single rule the page shows.
+     */
     val currentSegment: StateFlow<Long> = _currentSegment.asStateFlow()
 
     private val _submitting = MutableStateFlow(false)
     val submitting: StateFlow<Boolean> = _submitting.asStateFlow()
 
-    // Submit failures stay visible in the bottom bar until the next attempt or edit.
     private val _submitError = MutableStateFlow<String?>(null)
+
+    /** Submit failures stay visible until the next attempt or edit clears them. */
     val submitError: StateFlow<String?> = _submitError.asStateFlow()
 
     private val _events = Channel<StudyPlanEditEvent>(Channel.BUFFERED)
     val events: Flow<StudyPlanEditEvent> = _events.receiveAsFlow()
 
-    // Edited drafts parked per schema so switching back restores the picks.
+    /** Edited drafts parked per schema so switching back restores the picks. */
     private val draftCache = mutableMapOf<Long, List<EditableRule>>()
     private val loadMutex = Mutex()
 
@@ -92,9 +113,11 @@ class StudyPlanEditViewModel @AssistedInject constructor(
         loadPath()
     }
 
-    // Discard an in-progress compilation. The VM is sheet-hosted and outlives the editor
-    // page, so leaving without submitting must not replay old picks, segment, or parked
-    // drafts on the next open.
+    /**
+     * Discards an in-progress compilation. The ViewModel is sheet-hosted and outlives
+     * the editor page, so leaving without submitting must not replay old picks, segment,
+     * or parked drafts on the next open.
+     */
     fun reset() {
         draftCache.clear()
         _rules.value = Loadable.NotYetLoaded
@@ -105,47 +128,60 @@ class StudyPlanEditViewModel @AssistedInject constructor(
         loadPath()
     }
 
+    /**
+     * In the rules-only flow (no percorso step to defer behind) the rules load right
+     * away; with a percorso step the fetch waits for Avanti via [loadSelectedRules], and
+     * nothing is preselected (not even the student's current schema) — picking the
+     * percorso is an explicit, mandatory act, so Avanti stays disabled until a
+     * deliberate choice is made.
+     */
     private fun loadPath() {
         viewModelScope.launch {
             val path = runCatching { getStudyPath(careerId) }.getOrNull()
             _path.value = Loadable.Loaded(path)
-            // Rules-only flow (no percorso step to defer behind): load right away.
-            // With a percorso step the fetch waits for Avanti via loadSelectedRules.
             val options = path?.options.orEmpty()
             if (options.isEmpty()) {
                 _selectedSchemaId.value?.let { loadDraft(it, useCache = false) }
             } else {
-                // Picking the percorso is an explicit, mandatory act: nothing is
-                // preselected (not even the student's current schema), so Avanti stays
-                // disabled until a deliberate choice is made.
                 _selectedSchemaId.value = null
             }
         }
     }
 
+    /**
+     * Parks the edits of the schema being left so they survive coming back, then swaps
+     * the selection. The fetch is deferred to Avanti; only a parked draft restores
+     * instantly.
+     */
     fun selectSchema(schemaId: Long) {
         if (_submitting.value) return
         val previous = _selectedSchemaId.value
         if (previous == schemaId) return
-        // Park the edits of the schema being left so they survive coming back.
         if (previous != null) {
             _rules.value.valueOrNull()?.let { draftCache[previous] = it }
         }
         _submitError.value = null
         _selectedSchemaId.value = schemaId
-        // The fetch is deferred to Avanti; only a parked draft restores instantly.
         val cached = draftCache[schemaId]
         _rules.value = if (cached != null) Loadable.Loaded(cached) else Loadable.NotYetLoaded
         _syncStatus.value = SyncStatus.Idle
     }
 
-    // The deferred half of selectSchema: the percorso page calls this when the user
-    // advances, so picks that never leave the page never hit the network.
+    /**
+     * The deferred half of [selectSchema]: the percorso page calls this when the user
+     * advances, so picks that never leave the page never hit the network.
+     */
     fun loadSelectedRules() {
         val schemaId = _selectedSchemaId.value ?: return
         loadDraft(schemaId, useCache = true)
     }
 
+    /**
+     * Fetches the schema's editable rules. A queued load can be stale (schema re-picked
+     * meanwhile) or already satisfied by the load that held the lock before it, and the
+     * fetched draft may target a schema no longer selected — results only publish while
+     * their schema is still the selection, though they always land in the draft cache.
+     */
     private fun loadDraft(schemaId: Long, useCache: Boolean) {
         if (useCache) {
             draftCache[schemaId]?.let {
@@ -156,8 +192,6 @@ class StudyPlanEditViewModel @AssistedInject constructor(
         }
         viewModelScope.launch {
             loadMutex.withLock {
-                // A queued load can be stale (schema re-picked meanwhile) or already
-                // satisfied by the load that held the lock before it.
                 if (_selectedSchemaId.value != schemaId) return@withLock
                 if (useCache && draftCache.containsKey(schemaId)) {
                     _rules.value = Loadable.Loaded(draftCache.getValue(schemaId))
@@ -175,8 +209,6 @@ class StudyPlanEditViewModel @AssistedInject constructor(
                     )
                 }.fold(
                     onSuccess = { rules ->
-                        // The draft may be for a stale schema if the user re-picked while
-                        // loading; only publish when still selected.
                         if (_selectedSchemaId.value == schemaId) {
                             _rules.value = Loadable.Loaded(rules)
                             _syncStatus.value = SyncStatus.Idle
@@ -193,6 +225,11 @@ class StudyPlanEditViewModel @AssistedInject constructor(
         }
     }
 
+    /**
+     * Flips a course pick. The same activity can appear under several rules — a second
+     * selection elsewhere is blocked, and the rule's own credit cap is respected;
+     * mandatory courses never toggle.
+     */
     fun toggleCourse(ruleChoiceId: Long, courseChoiceId: Long) {
         _submitError.value = null
         val current = _rules.value.valueOrNull() ?: return
@@ -204,8 +241,6 @@ class StudyPlanEditViewModel @AssistedInject constructor(
                         if (course.choiceId != courseChoiceId) return@inner course
                         if (course.isMandatory) return@inner course
                         if (!course.isSelected) {
-                            // The same activity can appear under several rules — block a
-                            // second selection, and respect the rule's credit cap.
                             val selectedElsewhere = current.any { other ->
                                 other.choiceId != ruleChoiceId &&
                                     other.courses.any { it.code == course.code && it.isSelected }
@@ -223,6 +258,12 @@ class StudyPlanEditViewModel @AssistedInject constructor(
         _currentSegment.value = segment
     }
 
+    /**
+     * Sends the compiled plan to Esse3. On success the submitted drafts are dropped and
+     * the path reloads — the ViewModel is sheet-hosted and outlives the editor page, so
+     * a later session must start from the server's fresh plan rather than replaying
+     * stale picks as pending changes.
+     */
     fun submit() {
         val rules = _rules.value.valueOrNull() ?: return
         if (rules.isEmpty() || _submitting.value) return
@@ -233,9 +274,6 @@ class StudyPlanEditViewModel @AssistedInject constructor(
             runCatching { submitStudyPlan(careerId, rules, chosen) }.fold(
                 onSuccess = {
                     _events.trySend(StudyPlanEditEvent.Submitted(submittedMessage(chosen)))
-                    // The VM is sheet-hosted and outlives the editor page: drop the
-                    // now-submitted drafts so a later session starts from the server's
-                    // fresh plan instead of replaying stale picks as pending changes.
                     draftCache.clear()
                     _rules.value = Loadable.NotYetLoaded
                     _currentSegment.value = PATH_SEGMENT
@@ -262,7 +300,7 @@ class StudyPlanEditViewModel @AssistedInject constructor(
         return _path.value.valueOrNull()?.options?.firstOrNull { it.schemaId == schemaId }
     }
 
-    // What the student should expect next depends on the schema's approval flavour.
+    /** What the student should expect next depends on the schema's approval flavour. */
     private fun submittedMessage(chosen: StudyPathOption?): String = when (chosen?.approval) {
         PlanApprovalType.Automatic -> "Piano inviato: l'approvazione è automatica."
         PlanApprovalType.AutomaticIfCompliant ->
@@ -272,7 +310,7 @@ class StudyPlanEditViewModel @AssistedInject constructor(
     }
 
     companion object {
-        // Sentinel segment for the percorso step; rule choiceIds are always positive.
+        /** Sentinel segment for the percorso step; rule choiceIds are always positive. */
         const val PATH_SEGMENT = -1L
     }
 }

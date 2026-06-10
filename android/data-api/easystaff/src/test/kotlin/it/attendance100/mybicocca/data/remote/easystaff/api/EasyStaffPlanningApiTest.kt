@@ -21,11 +21,14 @@ import java.time.YearMonth
 
 class EasyStaffPlanningApiTest : EasyStaffTestBase() {
     companion object {
-        // Cap the services scanned for availability to keep the suite fast
+        /** Caps the services scanned for availability to keep the suite fast. */
         private const val MAX_AVAILABILITY_COMBOS = 10
 
-        // Clearly-marked synthetic identity: the write test creates a provisional hold that
-        // is force-deleted before ever being confirmed, mirroring the web front-end rollback
+        /**
+         * Clearly-marked synthetic identity for the write test, which creates a provisional
+         * hold that is force-deleted before ever being confirmed, mirroring the web front-end
+         * rollback.
+         */
         private const val TEST_EMAIL = "mybicocca.apitest@example.com"
         private const val TEST_NAME = "MYBICOCCA TEST AUTOMATICO"
         private const val TEST_NOTE = "Prenotazione di test automatica, annullata immediatamente. Si prega di ignorare."
@@ -36,7 +39,7 @@ class EasyStaffPlanningApiTest : EasyStaffTestBase() {
     private val informationDesks get() = api.planning.informationDesks
     private val studyRooms get() = api.planning.studyRooms
 
-    // A service/area pair with at least one bookable day, discovered once per class
+    /** A service/area pair with at least one bookable day, discovered once per class. */
     private data class AvailabilityCombo(
         val service: EasyStaffPlanningService,
         val area: EasyStaffPlanningArea,
@@ -322,9 +325,13 @@ class EasyStaffPlanningApiTest : EasyStaffTestBase() {
         assertEquals("reservation_not_found", planningError.message, "Error message should identify the missing reservation")
     }
 
-    // Exercises the full anonymous lifecycle the way the web front-end rolls back an
-    // abandoned booking session: the provisional hold is created, inspected, edited, and
-    // force-deleted without ever being confirmed, so no real appointment is registered
+    /**
+     * Exercises the full anonymous lifecycle the way the web front-end rolls back an
+     * abandoned booking session: the provisional hold is created, inspected, edited, and
+     * force-deleted without ever being confirmed (even when an assertion fails), so no real
+     * appointment is registered. The booked slot is the last free slot of the farthest open
+     * day, to minimize interference with real users.
+     */
     @Test
     suspend fun reservationStoreUpdateDeleteRoundTrip() {
         val combo = findAvailabilityCombo()
@@ -334,7 +341,6 @@ class EasyStaffPlanningApiTest : EasyStaffTestBase() {
         val form = informationDesks.getServiceForm(service.id)
         assumeTrue(form.any { it.primary }, "The booking form has no primary field, cannot test the reservation lifecycle")
 
-        // Book the last free slot of the farthest open day to minimize interference with real users
         val day = monthSchedule.days.keys.max()
         val daySchedule = informationDesks.getDaySchedule(
             serviceId = service.id,
@@ -396,7 +402,6 @@ class EasyStaffPlanningApiTest : EasyStaffTestBase() {
                 assertTrue(update.success, "The reservation update should succeed")
             }
         } finally {
-            // Always roll back the provisional hold, even when an assertion above fails
             val deletion = informationDesks.deleteReservation(
                 reservationCode = reservationCode,
                 primaryValue = TEST_EMAIL,

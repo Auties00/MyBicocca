@@ -2,8 +2,10 @@ package it.attendance100.mybicocca.ui.screen.registry.subscreen.questionnaires.s
 
 import it.attendance100.mybicocca.domain.model.questionnaire.QuestionnairePage
 
-// The wizard's position. Pages are server-driven (branching), so there is no known
-// total — index is only a display counter.
+/**
+ * The wizard's position. Pages are server-driven (branching), so there is no known total
+ * — [Page.index] is only a display counter.
+ */
 sealed interface QuestionnaireCompilationStep {
     data object Starting : QuestionnaireCompilationStep
     data class StartFailed(val cause: Throwable) : QuestionnaireCompilationStep

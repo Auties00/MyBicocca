@@ -20,6 +20,14 @@ import it.attendance100.mybicocca.ui.screen.calendar.ext.visibleWeekDays
 import it.attendance100.mybicocca.ui.screen.calendar.state.layoutDay
 import java.time.LocalDate
 
+/**
+ * Event-card layer of the week timeline: one custom layout hosts seven day columns, each
+ * event card framed from its minute range and lane fractions scaled into its day's
+ * column width. The vertical window is [window], shared with the hour gutter and pre-fitted
+ * to every loaded event, so all seven columns sit on one scale and nothing lands outside the
+ * drawn area; hourly grid lines draw behind with odd hours fading at low zoom, and the now
+ * indicator appears when the visible week contains today.
+ */
 @Composable
 fun WeekEventsLayer(
     weekStart: LocalDate,
@@ -27,14 +35,15 @@ fun WeekEventsLayer(
     onEventClick: (CalendarEvent) -> Unit,
     modifier: Modifier = Modifier,
     minuteHeight: Dp = TimelineMinuteHeightDefault,
+    window: IntRange = TimelineWindowStart..TimelineWindowEnd,
 ) {
     val scheme = MaterialTheme.colorScheme
     val days = remember(weekStart) { visibleWeekDays(weekStart) }
     val now by rememberCurrentTime()
     val today = now.toLocalDate()
     val pxPerMinute = with(LocalDensity.current) { minuteHeight.toPx() }
-    val perDay = remember(days, eventsByDay) {
-        days.associateWith { layoutDay(eventsByDay[it].orEmpty()) }
+    val perDay = remember(days, eventsByDay, window) {
+        days.associateWith { layoutDay(eventsByDay[it].orEmpty(), window) }
     }
     val gridColor = scheme.outline.copy(alpha = 0.5f)
     val nowColor = scheme.primary
@@ -43,13 +52,13 @@ fun WeekEventsLayer(
     Layout(
         modifier = modifier
             .fillMaxWidth()
-            .height(timelineHeightFor(minuteHeight))
+            .height(timelineHeightFor(minuteHeight, window))
             .drawBehind {
                 val width = size.width
-                val firstLineMinute = ((TimelineWindowStart + 59) / 60) * 60
+                val firstLineMinute = ((window.first + 59) / 60) * 60
                 var minute = firstLineMinute
-                while (minute <= TimelineWindowEnd) {
-                    val y = (minute - TimelineWindowStart) * pxPerMinute
+                while (minute <= window.last) {
+                    val y = (minute - window.first) * pxPerMinute
                     val effectiveAlpha = if ((minute / 60) % 2 != 0) oddGridAlpha else 1f
                     if (effectiveAlpha > 0f) {
                         drawLine(
@@ -63,8 +72,8 @@ fun WeekEventsLayer(
                 }
                 if (today in days) {
                     val nm = now.toLocalTime().let { it.hour * 60 + it.minute }
-                    if (nm in TimelineWindowStart..TimelineWindowEnd) {
-                        drawNowIndicator(nm, pxPerMinute, nowColor)
+                    if (nm in window) {
+                        drawNowIndicator(nm, window.first, pxPerMinute, nowColor)
                     }
                 }
             },
@@ -85,7 +94,7 @@ fun WeekEventsLayer(
     ) { measurables, constraints ->
         val totalWidth = constraints.maxWidth
         val columnWidth = totalWidth / days.size
-        val height = ((TimelineWindowEnd - TimelineWindowStart) * pxPerMinute).toInt()
+        val height = ((window.last - window.first) * pxPerMinute).toInt()
 
         data class Positioned(val placeable: androidx.compose.ui.layout.Placeable, val x: Int, val y: Int)
         val positioned = mutableListOf<Positioned>()
@@ -102,7 +111,7 @@ fun WeekEventsLayer(
                         ),
                     )
                     val x = tag.dayIndex * columnWidth + (columnWidth * tag.fracStart).toInt() + 1
-                    val y = ((tag.startMin - TimelineWindowStart) * pxPerMinute).toInt() + 1
+                    val y = ((tag.startMin - window.first) * pxPerMinute).toInt() + 1
                     positioned += Positioned(p, x, y)
                 }
             }

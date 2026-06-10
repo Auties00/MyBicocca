@@ -9,10 +9,13 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 
-// Enrolled courses keyed by their activity code (the idNumber base segment, shared with
-// the calendar's plan-derived activityCode), so an event can resolve its course editions
-// with a plain map lookup. Editions are sorted best-first: latest academic year, then
-// visible before hidden, then the base course before its streams.
+/**
+ * Streams the enrolled courses keyed by their activity code (the idNumber base
+ * segment, shared with the calendar's plan-derived activityCode), so a calendar event
+ * can resolve its course editions with a plain map lookup. Editions are sorted
+ * best-first: latest academic year, then visible before hidden, then the base course
+ * before its streams.
+ */
 class ObserveCoursesByActivityCodeUseCase @Inject constructor(
     private val repository: ElearningCourseRepository,
 ) {

@@ -13,6 +13,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
+/**
+ * Decorative list-section heading: a tertiary-tinted, letter-spaced uppercase label led by a
+ * small ornament glyph, with an optional italic subtitle underneath.
+ */
 @Composable
 fun SectionTitle(
     title: String,

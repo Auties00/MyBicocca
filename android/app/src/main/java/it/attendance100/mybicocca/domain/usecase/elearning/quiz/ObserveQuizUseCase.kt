@@ -8,6 +8,10 @@ import it.attendance100.mybicocca.domain.repository.ElearningQuizRepository
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
+/**
+ * Streams one cached quiz, backing the quiz detail sheet's header and rules summary; emits
+ * not-yet-loaded while the quiz is absent from the cache.
+ */
 class ObserveQuizUseCase @Inject constructor(
     private val repository: ElearningQuizRepository,
 ) {

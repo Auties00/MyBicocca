@@ -8,18 +8,17 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.Immutable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.graphics.vector.ImageVector
 
-@Immutable
-data class BottomBarItem<T>(
-    val key: T,
-    val label: String,
-    val icon: ImageVector,
-)
-
+/**
+ * The app's main tab bar. In light theme the selection indicator is the brand primary with
+ * onPrimary (white) iconography; in dark theme it switches to the primary-container role pair,
+ * sidestepping the black-on-red pairing dark schemes give onPrimary.
+ *
+ * [translationY] is applied in the graphics layer so the shell can slide the whole bar
+ * off-screen without triggering relayout of the content around it.
+ */
 @Composable
 fun <T> MyBicoccaBottomBar(
     items: List<BottomBarItem<T>>,

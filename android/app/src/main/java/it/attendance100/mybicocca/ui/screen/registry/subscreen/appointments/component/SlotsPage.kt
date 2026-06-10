@@ -27,7 +27,12 @@ import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.ui.component.feedback.EmptyState
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.appointments.AppointmentsViewModel
 
-// Wizard step 1: pick a day and time from the live availability, then continue to the form.
+/**
+ * Booking wizard step 1: pick a day and time from the live availability via [SlotPicker],
+ * then continue to the form. Until the setup lands it shows the loading/error status body, a
+ * plain message when the desk has no bookable offering, and a full empty-state page when the
+ * whole booking horizon holds no open dates (mirroring the other sub-modal error pages).
+ */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 internal fun SlotsPage(
@@ -61,7 +66,6 @@ internal fun SlotsPage(
 
     val noAvailability by viewModel.noAvailability.collectAsStateWithLifecycle()
     if (noAvailability) {
-        // The whole booking horizon is empty: mirror the other sub-modal error pages.
         Box(
             modifier = modifier
                 .fillMaxWidth()

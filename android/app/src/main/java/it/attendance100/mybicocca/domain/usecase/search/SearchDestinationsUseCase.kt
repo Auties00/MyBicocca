@@ -6,8 +6,11 @@ import it.attendance100.mybicocca.domain.model.search.SearchDestination
 import it.attendance100.mybicocca.domain.model.search.SearchResult
 import javax.inject.Inject
 
-// Scores every navigable page against the query. Titles mirror the app-bar titles; aliases
-// are the words students actually type ("voti" -> Esiti, "pagopa" -> Tasse).
+/**
+ * Scores every navigable page against the query. Titles mirror the app-bar titles; aliases
+ * are the words students actually type ("voti" -> Esiti, "pagopa" -> Tasse) — bilingual
+ * where students mix English ("dark mode").
+ */
 class SearchDestinationsUseCase @Inject constructor() {
 
     operator fun invoke(query: String): List<SearchResult.Destination> =
@@ -25,6 +28,11 @@ class SearchDestinationsUseCase @Inject constructor() {
     )
 
     private companion object {
+        /**
+         * Catalog notes: libretto/carriera statistics live in the Profile page, so those
+         * search terms resolve to [SearchDestination.Profile]; the Settings-prefixed
+         * destinations open the settings modal already on the matching page.
+         */
         val Entries = listOf(
             Entry(
                 SearchDestination.TabCalendar, "Calendario", null,
@@ -43,8 +51,6 @@ class SearchDestinationsUseCase @Inject constructor() {
                 listOf("segreterie", "segreteria", "sportello"),
             ),
             Entry(
-                // Libretto/carriera stats live in the Profile page, so their search terms
-                // resolve here.
                 SearchDestination.Profile, "Profilo", null,
                 listOf(
                     "account", "media", "statistiche", "matricola",
@@ -53,7 +59,7 @@ class SearchDestinationsUseCase @Inject constructor() {
             ),
             Entry(
                 SearchDestination.Taxes, "Tasse", "Servizi",
-                listOf("pagamenti", "pagopa", "isee", "bollettini", "rette", "fatture"),
+                listOf("pagamenti", "pagopa", "bollettini", "rette", "fatture"),
             ),
             Entry(
                 SearchDestination.ExamResults, "Esiti", "Servizi",
@@ -92,19 +98,44 @@ class SearchDestinationsUseCase @Inject constructor() {
                 listOf("certificato", "autodichiarazioni", "autocertificazione"),
             ),
             Entry(
-                SearchDestination.Messaging, "Messaggi", "E-learning",
-                listOf("chat", "conversazioni", "messaggio"),
+                SearchDestination.Library, "Biblioteca", "Servizi",
+                listOf("biblioteche", "sala studio", "posto biblioteca", "posto studio", "affluences"),
             ),
             Entry(
-                // Appearance, language, app lock and app info all live inside the Settings
-                // page now, so their search terms resolve here.
+                SearchDestination.Refunds, "Rimborsi", "Servizi",
+                listOf("rimborso", "restituzione"),
+            ),
+            Entry(
+                SearchDestination.Isee, "ISEE", "Servizi",
+                listOf("isee", "indicatore situazione economica", "fascia", "reddito"),
+            ),
+            Entry(
                 SearchDestination.Settings, "Impostazioni", null,
-                listOf(
-                    "preferenze", "opzioni", "configurazione",
-                    "tema", "colori", "tema scuro", "dark mode", "aspetto",
-                    "lingua", "biometria", "impronta", "blocco", "sicurezza",
-                    "versione", "informazioni", "about", "licenze", "github",
-                ),
+                listOf("preferenze", "opzioni", "configurazione", "settings"),
+            ),
+            Entry(
+                SearchDestination.SettingsAppearance, "Aspetto", "Impostazioni",
+                listOf("tema", "colori", "tema scuro", "tema chiaro", "dark mode", "colore dinamico"),
+            ),
+            Entry(
+                SearchDestination.SettingsSecurity, "Sicurezza", "Impostazioni",
+                listOf("biometria", "impronta", "blocco", "sblocco", "fingerprint"),
+            ),
+            Entry(
+                SearchDestination.SettingsLanguage, "Lingua", "Impostazioni",
+                listOf("language", "italiano", "english", "traduzione"),
+            ),
+            Entry(
+                SearchDestination.SettingsFileAssociations, "Associazioni file", "Impostazioni",
+                listOf("apri con", "app predefinita", "file pdf", "lettore pdf"),
+            ),
+            Entry(
+                SearchDestination.SettingsLicenses, "Licenze", "Impostazioni",
+                listOf("open source", "librerie", "licenza"),
+            ),
+            Entry(
+                SearchDestination.SettingsAppInfo, "Info app", "Impostazioni",
+                listOf("versione", "informazioni", "about", "github"),
             ),
         )
     }

@@ -5,6 +5,12 @@ import it.attendance100.mybicocca.domain.model.exam.ExamCallKey
 import it.attendance100.mybicocca.domain.repository.ExamRepository
 import javax.inject.Inject
 
+/**
+ * Downloads the attendance certificate PDF (attestato di presenza) for a sat exam,
+ * triggered from the booked-exams modal in the registry tab. Esse3 serves it only once
+ * the outcome is published and responds 422 before that. Returns the raw PDF bytes and
+ * throws on failure.
+ */
 class GetPresenceCertificateUseCase @Inject constructor(
     private val repository: ExamRepository,
 ) {

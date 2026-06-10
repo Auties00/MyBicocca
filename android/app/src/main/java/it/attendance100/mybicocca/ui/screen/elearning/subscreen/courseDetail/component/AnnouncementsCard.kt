@@ -39,9 +39,14 @@ import it.attendance100.mybicocca.ui.component.shape.OrganicShapes
 import it.attendance100.mybicocca.ui.component.shimmer.ShimmerBox
 import it.attendance100.mybicocca.ui.component.time.relativeTimeLabel
 
-// Hero card for the course's read-only "Avvisi" forum. Teacher announcements are the
-// highest-value forum content (exam rooms, results, cancellations), so the latest one is
-// surfaced inline instead of hiding behind a generic row.
+/**
+ * Hero card for the course's read-only "Avvisi" forum: a tertiary-container card with organic
+ * blob decor, the forum name and announcement count, and an inline block for the latest
+ * announcement (relative time, attachment marker, subject, message preview, author) that
+ * shimmers while loading and opens the discussion directly. Teacher announcements are the
+ * highest-value forum content (exam rooms, results, cancellations), so the latest one is
+ * surfaced inline rather than hiding behind a generic row.
+ */
 @Composable
 fun AnnouncementsCard(
     forum: Forum,

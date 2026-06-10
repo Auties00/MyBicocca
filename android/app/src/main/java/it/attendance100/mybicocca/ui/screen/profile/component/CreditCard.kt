@@ -70,27 +70,33 @@ private val partialChromaticColors = listOf(
     Color.Magenta.copy(alpha = 0.12f),
 )
 
-// Card geometry, shared so callers that must reserve / position the card (the floating
-// shell overlay, the profile content clearance, the skeleton) all derive the same height.
+/**
+ * Card geometry shared with layout code that must reserve or position the card's
+ * footprint, so it derives the same proportions the face itself is drawn with.
+ */
 const val CreditCardAspectRatio = 1.6111112f
 val CreditCardHorizontalInset = 16.dp
 
-// Gap between the bottom of the top bar and the top of the floating student card, shared by the
-// shell overlay (which positions the card) and the profile content (which reserves space for it).
+/** Vertical gap reserved between the bottom of the top bar and the top of the student card. */
 val ProfileCardTopGap = 20.dp
 
-// Height the card occupies when laid out full-width with [horizontalInset] on each side.
-// Derived from the screen width so the floating overlay and the content padding stay in sync.
+/**
+ * Height the card occupies when laid out full width with [horizontalInset] on each side,
+ * derived from the screen width so space can be reserved before the card is placed.
+ */
 @Composable
 fun creditCardHeight(horizontalInset: Dp = CreditCardHorizontalInset): Dp {
     val widthDp = LocalConfiguration.current.screenWidthDp.dp
     return ((widthDp - horizontalInset * 2) / CreditCardAspectRatio).coerceAtLeast(0.dp)
 }
 
-// Draggable / tappable 3D flip card. rotationY accumulates freely; a flick (short, fast drag)
-// or a half-card drag commits a 180° turn, otherwise it snaps back to the nearest face.
-// A rotation-vector sensor adds a subtle parallax offset (tiltX/tiltY) layered on top of the
-// touch-driven offset so the art shifts as the device moves.
+/**
+ * Draggable, tappable 3D flip card. Horizontal drags accumulate rotation freely; a flick
+ * (a short, fast drag) or a half-card-width drag commits a 180-degree turn, anything less
+ * snaps back to the nearest face, and a tap flips toward the touched half. A
+ * rotation-vector sensor adds a subtle parallax offset layered on top of the touch-driven
+ * one so the face art shifts as the device moves.
+ */
 @Composable
 fun CreditCard(
     modifier: Modifier = Modifier,
@@ -288,6 +294,12 @@ fun CreditCard(
     }
 }
 
+/**
+ * One face of the flip card: the content card plus, in the chromatic finish, two
+ * multiply-blended iridescent gradients that track the touch point. The chromatic face
+ * fills with the dedicated badge red — deep in dark theme, bright in light — rather than
+ * the Material primary, so it reads as the physical university ID card in both modes.
+ */
 @Composable
 private fun CardFace(
     modifier: Modifier = Modifier,
@@ -299,8 +311,6 @@ private fun CardFace(
     hazeState: HazeState,
     content: @Composable (touchX: Float, touchY: Float, whiteBadge: Boolean, hazeState: HazeState) -> Unit,
 ) {
-    // Pre-refactor badge red (deep red in dark, bright red in light) instead of the lightened
-    // Material primary, so the chromatic face reads as the original ID card in both modes.
     val primaryColor = when {
         whiteBadge -> Color.White
         isSystemInDarkTheme() -> BadgeCardColorDark

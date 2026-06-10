@@ -8,6 +8,10 @@ import it.attendance100.mybicocca.domain.repository.ElearningForumRepository
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
+/**
+ * Streams a course's cached forums, sorted by name, for the forum section of the course detail
+ * screen. Hot Room flow; pair with the course-forums refresh for network updates.
+ */
 class ObserveCourseForumsUseCase @Inject constructor(
     private val repository: ElearningForumRepository,
 ) {

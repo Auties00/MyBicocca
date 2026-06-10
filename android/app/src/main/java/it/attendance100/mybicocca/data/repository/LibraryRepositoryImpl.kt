@@ -38,6 +38,18 @@ import java.time.LocalTime
 import javax.inject.Inject
 import javax.inject.Singleton
 
+/**
+ * Affluences-backed implementation of the library repository.
+ *
+ * Catalog and availability read straight from the Affluences API: the bookable libraries are
+ * the children of the Bicocca root site, and status, timetable, zones, constraints, seats, and
+ * agreements come from the per-site live-data, week-timetable, and reservation endpoints.
+ * Reservations sync from the account "my reservations" endpoint into the Room cache the UI
+ * reads. The account session — per-install device api key minted via check-in, plus the auth
+ * token and e-mail of the validated address — lives in the encrypted account store. data-api
+ * exception types are not on the app classpath, so failures are recognized by sniffing stable
+ * error keys in exception messages.
+ */
 @Singleton
 class LibraryRepositoryImpl @Inject constructor(
     private val api: AffluencesApi,
@@ -51,8 +63,6 @@ class LibraryRepositoryImpl @Inject constructor(
     init {
         appScope.launch { linkedEmail.value = accountStore.email() }
     }
-
-    // --- Catalog + booking ---
 
     override suspend fun getLibraries(): List<Library> =
         api.sites.getChildren(LIBRARY_ROOT_ID).map { it.toLibrary() }.filter { it.bookable }
@@ -88,6 +98,12 @@ class LibraryRepositoryImpl @Inject constructor(
     override suspend fun getAgreements(libraryId: String): List<LibraryAgreement> =
         api.reservations.getAgreements(libraryId).map { it.toAgreement() }
 
+    /**
+     * Creates the reservation authenticated as the logged-in mobile-app account — device api key
+     * plus session token, like the "my reservations" calls — so the server recognizes the
+     * trusted device/e-mail and confirms immediately, with no e-mail-validation step. A
+     * best-effort re-sync then pulls the new booking into the cache.
+     */
     override suspend fun bookSeat(
         library: Library,
         zone: LibraryZone,
@@ -99,9 +115,6 @@ class LibraryRepositoryImpl @Inject constructor(
         note: String?,
     ): String? {
         val endTime = LocalDateTime.of(date, startTime).plusMinutes(durationMinutes.toLong()).toLocalTime()
-        // Authenticate the booking with the account session: the server recognizes the logged-in
-        // user and confirms the reservation immediately, so there's no email-validation step.
-        val authToken = accountStore.authToken()
         val result = api.reservations.createReservation(
             resourceId = seat.resourceId,
             email = email,
@@ -110,14 +123,12 @@ class LibraryRepositoryImpl @Inject constructor(
             endTime = endTime,
             personCount = 1,
             note = note,
-            authorization = authToken?.let { "Bearer $it" },
+            accountApiKey = accountStore.apiKey(),
+            accountAuthToken = accountStore.authToken(),
         )
-        // Pull the new booking into the cache.
         runCatching { refreshReservations() }
         return result.reservationId?.toString()
     }
-
-    // --- Account ---
 
     override fun observeLinkedEmail(): Flow<String?> = linkedEmail.asStateFlow()
 
@@ -130,12 +141,16 @@ class LibraryRepositoryImpl @Inject constructor(
         return request.requestUuid ?: error("Missing request_uuid from validation request")
     }
 
+    /**
+     * Polls the validation request; the does_not_exist answer the server gives until the user
+     * opens the e-mailed link maps to a pending `false`. Once a token arrives, the session is
+     * stored and the reservation cache syncs.
+     */
     override suspend fun confirmEmailValidation(email: String, requestUuid: String): Boolean {
         val apiKey = ensureApiKey()
         val token = try {
             api.account.pollEmailValidation(apiKey, requestUuid).authToken
         } catch (cause: Exception) {
-            // Until the user opens the email link the server answers does_not_exist (HTTP 404).
             if (cause.isNotValidatedYet()) return false else throw cause
         }
         if (token.isNullOrBlank()) return false
@@ -151,25 +166,27 @@ class LibraryRepositoryImpl @Inject constructor(
         reservationDao.clear()
     }
 
-    // --- Reservations ---
-
     override fun observeReservations(): Flow<List<LibraryReservation>> =
         reservationDao.observeAll().map { entities -> entities.map { it.toDomain() } }
 
+    /**
+     * Mirrors the server's "my reservations" list into the Room cache, leaving cancelled
+     * bookings out so they are neither cached nor shown. An expired or rejected token drops the
+     * whole session — so the UI prompts a fresh login — and surfaces as
+     * [LibraryNotLoggedInException].
+     */
     override suspend fun refreshReservations() {
         val apiKey = accountStore.apiKey() ?: throw LibraryNotLoggedInException()
         val token = accountStore.authToken() ?: throw LibraryNotLoggedInException()
         val list = try {
             api.account.getMyReservations(apiKey, token)
         } catch (cause: Exception) {
-            // Token expired/invalid: drop the session so the UI prompts a fresh login.
             if (cause.isSessionExpired()) {
                 logout()
                 throw LibraryNotLoggedInException()
             }
             throw cause
         }
-        // Don't cache (or show) cancelled bookings.
         reservationDao.replaceAll(
             list.results
                 .filterNot { it.state == AffluencesReservationState.CANCELLED }
@@ -177,6 +194,10 @@ class LibraryRepositoryImpl @Inject constructor(
         )
     }
 
+    /**
+     * Cancels through the reservation's own cancellation token; a reservation already gone
+     * server-side counts as cancelled. Reservations without a token are left untouched.
+     */
     override suspend fun cancelReservation(reservation: LibraryReservation) {
         val token = reservation.cancellationToken ?: return
         runCatching { api.reservations.cancelReservation(token) }
@@ -184,6 +205,10 @@ class LibraryRepositoryImpl @Inject constructor(
         runCatching { refreshReservations() }
     }
 
+    /**
+     * Validates the presence code against the logged-in e-mail; an invalid-code answer maps to
+     * `false`, and a successful validation triggers a best-effort cache re-sync.
+     */
     override suspend fun verifyPresence(code: String): Boolean {
         val email = accountStore.email() ?: throw LibraryNotLoggedInException()
         return try {
@@ -195,12 +220,17 @@ class LibraryRepositoryImpl @Inject constructor(
         }
     }
 
+    /**
+     * Cancels with the reservation token carried by the e-mailed cancellation link; a
+     * reservation already gone server-side counts as cancelled.
+     */
     override suspend fun cancelByToken(token: String) {
         runCatching { api.reservations.cancelReservation(token) }
             .onFailure { if (!it.isReservationGone()) throw it }
         runCatching { refreshReservations() }
     }
 
+    /** Returns the stored device api key, registering the device via check-in once to mint it. */
     private suspend fun ensureApiKey(): String =
         accountStore.apiKey() ?: run {
             val checkin = api.account.checkIn(deviceId = accountStore.deviceId(), deviceLang = "it")
@@ -209,21 +239,23 @@ class LibraryRepositoryImpl @Inject constructor(
             key
         }
 
-    // data-api exception types aren't on :app's classpath, so sniff the stable error key in the
-    // message (same convention as elsewhere).
+    /** Detects the does_not_exist answer (HTTP 404) given until the e-mailed link is opened. */
     private fun Throwable.isNotValidatedYet(): Boolean =
         message?.lowercase()?.contains("does_not_exist") == true
 
+    /** Detects an expired or rejected auth token. */
     private fun Throwable.isSessionExpired(): Boolean {
         val message = message?.lowercase().orEmpty()
         return "missing_auth_token" in message || "401" in message || "unauthor" in message
     }
 
+    /** Detects a reservation that no longer exists server-side. */
     private fun Throwable.isReservationGone(): Boolean {
         val message = message?.lowercase().orEmpty()
         return "not_found" in message || "not found" in message
     }
 
+    /** Detects a rejected presence-validation code. */
     private fun Throwable.isInvalidCode(): Boolean =
         message?.lowercase()?.contains("invalid_validation_code") == true
 }

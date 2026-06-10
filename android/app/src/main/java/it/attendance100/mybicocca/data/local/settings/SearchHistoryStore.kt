@@ -14,9 +14,12 @@ import java.time.Instant
 import javax.inject.Inject
 import javax.inject.Singleton
 
-// Recent searches, most-recent-first, capped per account. DataStore (not Room) because this
-// is a tiny user-preference-shaped list with no relational queries — same shape as the other
-// settings stores, and it avoids a database migration.
+/**
+ * DataStore persistence of recent searches: one JSON-serialized, most-recent-first list
+ * per account, capped at [MAX_ENTRIES]. DataStore rather than Room because this is a tiny
+ * user-preference-shaped list with no relational queries — the same shape as the other
+ * settings stores, and it avoids a database migration.
+ */
 @Singleton
 class SearchHistoryStore @Inject constructor(
     private val dataStore: DataStore<Preferences>,
@@ -25,14 +28,23 @@ class SearchHistoryStore @Inject constructor(
     fun history(accountId: AccountId): Flow<List<SearchHistoryEntry>> =
         dataStore.data.map { prefs -> prefs[keyFor(accountId)]?.let(::deserialize).orEmpty() }
 
-    suspend fun add(accountId: AccountId, query: String) {
+    /**
+     * Inserts the trimmed query at the head, dropping any previous entry with the same
+     * text (case-insensitive) and trimming the list to [MAX_ENTRIES]. A null [pickedKey]
+     * preserves the pick already learned for this query — a bare submit must not erase it.
+     * Blank queries are ignored.
+     */
+    suspend fun add(accountId: AccountId, query: String, pickedKey: String? = null) {
         val trimmed = query.trim()
         if (trimmed.isEmpty()) return
         dataStore.edit { prefs ->
             val key = keyFor(accountId)
             val current = prefs[key]?.let(::deserialize).orEmpty()
+            val previousPick = current
+                .firstOrNull { it.query.equals(trimmed, ignoreCase = true) }
+                ?.pickedKey
             val updated = buildList {
-                add(SearchHistoryEntry(trimmed, Instant.now()))
+                add(SearchHistoryEntry(trimmed, Instant.now(), pickedKey ?: previousPick))
                 addAll(current.filterNot { it.query.equals(trimmed, ignoreCase = true) })
             }.take(MAX_ENTRIES)
             prefs[key] = serialize(updated)
@@ -52,19 +64,24 @@ class SearchHistoryStore @Inject constructor(
     }
 
     private fun serialize(entries: List<SearchHistoryEntry>): String =
-        Json.encodeToString(entries.map { StoredEntry(it.query, it.timestamp.toEpochMilli()) })
+        Json.encodeToString(entries.map { StoredEntry(it.query, it.timestamp.toEpochMilli(), it.pickedKey) })
 
+    /** Tolerates corrupt payloads by treating them as an empty history. */
     private fun deserialize(raw: String): List<SearchHistoryEntry> =
         runCatching {
             Json.decodeFromString<List<StoredEntry>>(raw)
-                .map { SearchHistoryEntry(it.query, Instant.ofEpochMilli(it.timestamp)) }
+                .map { SearchHistoryEntry(it.query, Instant.ofEpochMilli(it.timestamp), it.pickedKey) }
         }.getOrDefault(emptyList())
 
     private fun keyFor(accountId: AccountId) =
         stringPreferencesKey("search_history_${accountId.value}")
 
+    /**
+     * JSON wire shape of one entry; pickedKey defaults to null so payloads written without
+     * the field still deserialize.
+     */
     @Serializable
-    private data class StoredEntry(val query: String, val timestamp: Long)
+    private data class StoredEntry(val query: String, val timestamp: Long, val pickedKey: String? = null)
 
     private companion object {
         const val MAX_ENTRIES = 20

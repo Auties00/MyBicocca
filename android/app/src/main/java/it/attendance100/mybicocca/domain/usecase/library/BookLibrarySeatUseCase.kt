@@ -8,6 +8,11 @@ import java.time.LocalDate
 import java.time.LocalTime
 import javax.inject.Inject
 
+/**
+ * Submits the Biblioteca booking wizard: books the chosen seat slot for the logged-in account
+ * and returns the new reservation's identifier, when the server issues one. The booking is
+ * confirmed immediately — no e-mail step — and the cached reservation list re-syncs.
+ */
 class BookLibrarySeatUseCase @Inject constructor(
     private val repository: LibraryRepository,
 ) {

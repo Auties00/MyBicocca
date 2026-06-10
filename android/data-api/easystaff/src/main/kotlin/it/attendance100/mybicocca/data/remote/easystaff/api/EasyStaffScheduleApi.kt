@@ -122,13 +122,38 @@ class EasyStaffScheduleApi(
         subject: EasyStaffStudyProgramSubject,
         weekStartDate: LocalDate,
         language: EasyStaffLanguage = EasyStaffLanguage.ITALIAN
+    ): List<EasyStaffScheduleCell> =
+        getScheduleBySubjects(academicYear, listOf(subject), weekStartDate, language)
+
+    /**
+     * Gets the weekly schedule for multiple subjects in a single request.
+     *
+     * The `attivita[]` form parameter is an array on the EasyStaff side (the web portal
+     * multi-selects subjects into one grid), so one request returns the merged weekly
+     * grid for all the requested subjects. Verified against the live server: the merged
+     * cell set is identical to the union of per-subject requests, at a fraction of the
+     * round-trips. Each returned cell carries its subject code, so callers can attribute
+     * cells back to the requested subjects.
+     *
+     * @param academicYear The academic year
+     * @param subjects The subjects to include in the merged schedule
+     * @param weekStartDate The starting date for the schedule
+     * @param language The language for labels
+     * @return The merged weekly schedule as a list of schedule cells
+     */
+    suspend fun getScheduleBySubjects(
+        academicYear: EasyStaffAcademicYear,
+        subjects: List<EasyStaffStudyProgramSubject>,
+        weekStartDate: LocalDate,
+        language: EasyStaffLanguage = EasyStaffLanguage.ITALIAN
     ): List<EasyStaffScheduleCell> {
+        if (subjects.isEmpty()) return emptyList()
         val params = buildMap {
             put("view", listOf("easycourse"))
             put("form-type", listOf("attivita"))
             put("include", listOf("attivita"))
             put("anno", listOf(academicYear.value))
-            put("attivita[]", listOf(subject.code))
+            put("attivita[]", subjects.map { it.code })
             put("visualizzazione_orario", listOf("cal"))
             put("periodo_didattico", listOf(""))
             put("date", listOf(formatDate(weekStartDate)))

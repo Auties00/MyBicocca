@@ -26,6 +26,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 
+/**
+ * The player's top bar, laid over the video on a black-to-transparent gradient: back button,
+ * video title with its section as subtitle, then picture-in-picture, quality and playlist
+ * actions. PiP and quality stay disabled until a video is actually loaded; the playlist is
+ * always reachable.
+ */
 @Composable
 fun PlayerChrome(
     title: String,

@@ -8,6 +8,11 @@ import it.attendance100.mybicocca.domain.model.career.isSelectable
 import javax.inject.Inject
 import javax.inject.Singleton
 
+/**
+ * Diffs the cached career list against a freshly fetched Esse3 snapshot and reports the
+ * differences as account events: newly appeared selectable careers, a selected career that
+ * vanished from Esse3, or a selected career that stopped being selectable.
+ */
 @Singleton
 class CareerReconciler @Inject constructor() {
 

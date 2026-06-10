@@ -40,9 +40,13 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 
-// The expandable group-card chrome shared by the Contenuti, Quiz and Compiti tabs: ordinal
-// badge that morphs into an expressive polygon on expand, animated corners and chevron, and
-// a body column that only composes while expanded.
+/**
+ * The expandable group-card chrome shared by the Contenuti, Quiz and Compiti tabs: ordinal
+ * badge that morphs into an expressive polygon on expand, animated corners and chevron, and
+ * a body column that only composes while expanded. The number badge twirls as its container
+ * morphs from a quiet rounded square into an expressive polygon; the digit itself stays
+ * upright because only the backdrop rotates.
+ */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun ExpandableGroupCard(
@@ -66,8 +70,6 @@ fun ExpandableGroupCard(
         transitionSpec = { motion.defaultSpatialSpec() },
         label = "chevron",
     ) { if (it) 180f else 0f }
-    // The number badge twirls as its container morphs from a quiet rounded square into an
-    // expressive polygon; the digit itself stays upright because only the backdrop rotates.
     val badgeRotation by transition.animateFloat(
         transitionSpec = { motion.defaultSpatialSpec() },
         label = "badge-rotation",
@@ -153,7 +155,7 @@ fun ExpandableGroupCard(
     }
 }
 
-// MaterialShapes getters are @Composable in this material3 version, so the mapper is too.
+/** MaterialShapes getters are themselves @Composable, so this mapper has to be one too. */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun expandedBadgeShape(ordinal: Int): Shape = when (ordinal % 6) {
@@ -165,8 +167,10 @@ private fun expandedBadgeShape(ordinal: Int): Shape = when (ordinal % 6) {
     else -> MaterialShapes.Cookie6Sided
 }.toShape()
 
-// The signature M3 Expressive grouped-list silhouette: big corners cap the run,
-// small corners knit the inner seams together.
+/**
+ * The signature M3 Expressive grouped-list silhouette: big corners cap the run,
+ * small corners knit the inner seams together.
+ */
 fun stackShape(index: Int, count: Int): RoundedCornerShape {
     val big = 16.dp
     val small = 5.dp

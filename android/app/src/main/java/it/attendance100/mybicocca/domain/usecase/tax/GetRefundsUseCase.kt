@@ -5,6 +5,10 @@ import it.attendance100.mybicocca.domain.model.tax.Refund
 import it.attendance100.mybicocca.domain.repository.TaxRepository
 import javax.inject.Inject
 
+/**
+ * Loads the student's fee refunds ("rimborsi") when the registry "Rimborsi" sub-screen opens
+ * or is refreshed. Fetches live from Esse3.
+ */
 class GetRefundsUseCase @Inject constructor(
     private val repository: TaxRepository,
 ) {

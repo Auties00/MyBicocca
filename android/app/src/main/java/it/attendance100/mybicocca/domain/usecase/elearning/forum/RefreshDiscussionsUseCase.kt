@@ -5,6 +5,11 @@ import it.attendance100.mybicocca.domain.model.elearning.forum.ForumId
 import it.attendance100.mybicocca.domain.repository.ElearningForumRepository
 import javax.inject.Inject
 
+/**
+ * Syncs one page of a forum's discussions into the cache, for the forum sheet's list load and
+ * its load-more pagination. Returns how many discussions the page contained so the caller can
+ * tell whether more pages exist; throws on network failure.
+ */
 class RefreshDiscussionsUseCase @Inject constructor(
     private val repository: ElearningForumRepository,
 ) {

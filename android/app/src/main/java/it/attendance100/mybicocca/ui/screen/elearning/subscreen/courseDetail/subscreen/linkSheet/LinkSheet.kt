@@ -47,10 +47,16 @@ import androidx.core.net.toUri
 import it.attendance100.mybicocca.ui.component.feedback.LocalAppSnackbarController
 import kotlinx.coroutines.launch
 
-// Tapping a mod/url link opens this instead of leaving the app blindly: the user picks
-// whether to open the resolved target in the in-app browser or copy it. The url is the
-// fully-resolved external destination (Moodle resolves variables server-side), so no
-// Moodle session is needed to open it.
+/**
+ * Modal bottom sheet shown when a mod/url link is tapped, so the app never leaves blindly: a
+ * cookie-shaped link icon, the link title, a host pill, an "off-app" warning line, and a
+ * connected expressive button group pinned at the bottom — a leading "Apri" launching the
+ * Custom Tabs browser and a neutral tonal "Copia" copying the url, each confirming via
+ * snackbar and dismissing the sheet.
+ *
+ * The url is the fully-resolved external destination (Moodle resolves variables server-side),
+ * so no Moodle session is needed to open it.
+ */
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun LinkSheet(
@@ -123,7 +129,6 @@ fun LinkSheet(
 
             Spacer(Modifier.height(24.dp))
 
-            // Connected button group pinned at the bottom, same pattern as the office sheet.
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -158,8 +163,6 @@ fun LinkSheet(
                         .weight(1f)
                         .height(56.dp),
                     shape = ButtonGroupDefaults.connectedTrailingButtonShape,
-                    // Match the neutral trailing-button colour used by the other sheet action
-                    // groups (e.g. the calendar event modal's second button).
                     colors = ButtonDefaults.filledTonalButtonColors(
                         containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
                         contentColor = MaterialTheme.colorScheme.onSurface,

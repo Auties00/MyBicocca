@@ -14,6 +14,7 @@ import it.attendance100.mybicocca.domain.model.attendance.OpenAttendanceSession
 import it.attendance100.mybicocca.domain.model.attendance.PresenceMarkOutcome
 import it.attendance100.mybicocca.domain.model.attendance.SessionAttendance
 
+/** Maps an EasyBadge attendance-history record to the per-course classroom attendance. */
 fun EasyStaffAttendanceRecord.toDomain(): ClassroomAttendance = ClassroomAttendance(
     attendancePercentage = attendancePercentage,
     lessonsAttended = lessonsAttended,
@@ -26,6 +27,10 @@ fun EasyStaffAttendanceRecord.toDomain(): ClassroomAttendance = ClassroomAttenda
     },
 )
 
+/**
+ * Maps a Moodle mod_attendance summary to a session register, labeled with the attendance
+ * activity name it was read from.
+ */
 fun ElearningAttendanceSummary.toDomain(label: String): SessionAttendance = SessionAttendance(
     label = label,
     attendedSessions = attendedSessions,
@@ -36,6 +41,7 @@ fun ElearningAttendanceSummary.toDomain(label: String): SessionAttendance = Sess
     bestPossiblePercentage = maxPossiblePercentage,
 )
 
+/** Maps a markable Moodle session, binding it to the attendance activity it belongs to. */
 fun ElearningAttendanceMarkableSession.toDomain(module: AttendanceModuleRef): OpenAttendanceSession =
     OpenAttendanceSession(
         sessionId = sessionId,
@@ -44,6 +50,11 @@ fun ElearningAttendanceMarkableSession.toDomain(module: AttendanceModuleRef): Op
         statuses = statuses.map { AttendanceStatusOption(it.id, it.description) },
     )
 
+/**
+ * Translates the Moodle self-marking result into a user-facing outcome with Italian feedback.
+ * NotOpen reasons map to specific copy: "subnetwrong" means the student is outside the
+ * classroom network, "preventsharederror" that the network already recorded a presence.
+ */
 fun ElearningAttendanceMarkResult.toOutcome(): PresenceMarkOutcome = when (this) {
     is ElearningAttendanceMarkResult.Marked ->
         PresenceMarkOutcome.Recorded("Presenza registrata", statusDescription)
@@ -66,6 +77,11 @@ fun ElearningAttendanceMarkResult.toOutcome(): PresenceMarkOutcome = when (this)
         PresenceMarkOutcome.Failed("Registrazione non riuscita")
 }
 
+/**
+ * Translates the EasyBadge certification result into a user-facing outcome. The backend
+ * returns only a success flag plus a message, so a failure mentioning "codice" is classified
+ * as a wrong lesson code.
+ */
 fun EasyStaffCertifyAttendanceResult.toOutcome(): PresenceMarkOutcome = when {
     success -> PresenceMarkOutcome.Recorded(message.ifBlank { "Presenza registrata" })
     message.contains("codice", ignoreCase = true) -> PresenceMarkOutcome.WrongCredential(message)

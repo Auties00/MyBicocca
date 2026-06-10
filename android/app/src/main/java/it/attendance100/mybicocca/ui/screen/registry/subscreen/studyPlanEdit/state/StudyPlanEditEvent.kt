@@ -1,6 +1,7 @@
 package it.attendance100.mybicocca.ui.screen.registry.subscreen.studyPlanEdit.state
 
+/** One-shot effects of the plan-compiler wizard, consumed once and never replayed. */
 sealed interface StudyPlanEditEvent {
-    // message reflects the schema's approval flavour (automatic vs manual approval).
+    /** The plan was accepted; [message] reflects the schema's approval flavour (automatic vs manual). */
     data class Submitted(val message: String) : StudyPlanEditEvent
 }

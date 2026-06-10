@@ -15,13 +15,15 @@ class EasyStaffEventsApiTest : EasyStaffTestBase() {
         private const val MOCK_KEYWORD = "informatica"
     }
 
+    /**
+     * Today's events may legitimately be empty on weekends and holidays, so the test does not
+     * assert that any are returned.
+     */
     @Test
     suspend fun getTodayEvents() {
         val events = api.events.getTodayEvents()
         assertNotNull(events)
-        // Today's events might be empty on weekends/holidays
 
-        // Verify events if any exist
         val today = LocalDate.now()
         events.forEach { event ->
             validateEvent(event)
@@ -32,6 +34,10 @@ class EasyStaffEventsApiTest : EasyStaffTestBase() {
         }
     }
 
+    /**
+     * Today's events may legitimately be empty on weekends and holidays, so the test does not
+     * assert that any are returned.
+     */
     @Test
     suspend fun getTodayEventsWithBuilding() {
         val buildings = api.buildings.getBuildings()
@@ -41,21 +47,21 @@ class EasyStaffEventsApiTest : EasyStaffTestBase() {
 
         val events = api.events.getTodayEvents(buildings = listOf(building))
         assertNotNull(events)
-        // Today's events might be empty on weekends/holidays
 
-        // Verify events have valid properties
         events.forEach { event ->
             validateEvent(event)
         }
     }
 
+    /**
+     * The week's events may legitimately be empty, so the test does not assert that any are
+     * returned.
+     */
     @Test
     suspend fun getWeekEvents() {
         val events = api.events.getWeekEvents()
         assertNotNull(events)
-        // Weeks's events might be empty
 
-        // Verify events are within the week
         val today = LocalDate.now()
         events.forEach { event ->
             validateEvent(event)
@@ -84,7 +90,6 @@ class EasyStaffEventsApiTest : EasyStaffTestBase() {
         assertNotNull(events)
         assertTrue(events.isNotEmpty(), "Month events should not be empty")
 
-        // Verify events are within the month
         val today = LocalDate.now()
         val monthStart = today.withDayOfMonth(1)
         val monthEnd = today.withDayOfMonth(today.lengthOfMonth())
@@ -106,7 +111,6 @@ class EasyStaffEventsApiTest : EasyStaffTestBase() {
         assertNotNull(events)
         assertTrue(events.isNotEmpty(), "Event should not be empty")
 
-        // Verify events are within the date range
         events.forEach { event ->
             validateEvent(event)
             assertTrue(
@@ -126,7 +130,6 @@ class EasyStaffEventsApiTest : EasyStaffTestBase() {
         assertNotNull(events)
         assertTrue(events.isNotEmpty(), "Event should not be empty")
 
-        // Verify events have valid properties
         events.forEach { event ->
             validateEvent(event)
         }
@@ -147,7 +150,6 @@ class EasyStaffEventsApiTest : EasyStaffTestBase() {
         assertNotNull(events)
         assertTrue(events.isNotEmpty(), "Events should not be empty")
 
-        // Verify events have valid properties
         events.forEach { event ->
             validateEvent(event)
         }
@@ -159,13 +161,11 @@ class EasyStaffEventsApiTest : EasyStaffTestBase() {
         assertNotNull(eventTypes)
         assertTrue(eventTypes.isNotEmpty(), "Event types should not be empty")
 
-        // Verify each event type has valid properties
         eventTypes.forEach { eventType ->
             assertTrue(eventType.code > 0, "Event type ID should be positive")
             assertTrue(eventType.name.isNotBlank(), "Event type label should not be blank")
         }
 
-        // Verify event type IDs are unique
         val eventTypeIds = eventTypes.map { it.code }
         assertEquals(
             eventTypeIds.size,
@@ -191,11 +191,9 @@ class EasyStaffEventsApiTest : EasyStaffTestBase() {
             "Event starts after it ends: ${event.startDateTime} -> ${event.endDateTime}"
         )
 
-        // Verify event type has valid properties
         assertNotNull(event.eventType, "Event type should not be null")
         assertTrue(event.eventType.isNotBlank(), "Event type code should not be blank")
 
-        // Verify teachers list is not null (may be empty)
         assertNotNull(event.teachersList, "Teachers list should not be null")
         event.teachersList.forEach { teacher ->
             assertTrue(teacher.code != null || teacher.email != null, "Teacher code and email cannot be null at the same time")
@@ -203,7 +201,6 @@ class EasyStaffEventsApiTest : EasyStaffTestBase() {
             assertTrue(teacher.email == null || teacher.email.isNotBlank(), "Teacher email should not be blank if present")
         }
 
-        // Verify activities list is not null (may be empty)
         assertNotNull(event.activities, "Activities list should not be null")
     }
 }

@@ -38,11 +38,13 @@ import it.attendance100.mybicocca.ui.screen.registry.subscreen.titles.ext.icon
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.titles.ext.label
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.titles.ext.section
 
-// Headerless title detail page hosted inside the sheet pager (the hosting sheet provides the
-// morphing header): the populated fields grouped into icon-chip-headed cards with divider-
-// separated key/value rows — the same detail language as the Iscrizioni year detail. The grade
-// and status (promoted fields the mapper keeps off `attributes`) fold in as rows of the
-// Valutazione / Conseguimento sections so no data is dropped.
+/**
+ * Headerless title detail page hosted inside the sheet pager (the hosting sheet provides
+ * the morphing header): the populated fields grouped into icon-chip-headed cards with
+ * divider-separated key/value rows — the same detail language as the Iscrizioni year
+ * detail. The grade and status (promoted fields the mapper keeps off `attributes`) fold
+ * in as rows of the Valutazione / Conseguimento sections so no data is dropped.
+ */
 @Composable
 internal fun TitleDetailPage(
     title: AcademicTitle,
@@ -70,9 +72,11 @@ private data class DetailSectionData(
     val rows: List<Pair<String, String>>,
 )
 
-// Buckets the title's attribute rows into the fixed section order, then folds the promoted
-// grade (Valutazione) and status (Conseguimento) in at the head of their sections. Sections with
-// nothing to show are dropped.
+/**
+ * Buckets the title's attribute rows into the fixed section order, then folds the
+ * promoted grade (Valutazione) and status (Conseguimento) in at the head of their
+ * sections. Sections with nothing to show are dropped.
+ */
 private fun AcademicTitle.detailSections(): List<DetailSectionData> {
     val gradeRow = grade?.let { "Voto" to (if (cumLaude) "$it e lode" else it) }
     val statusRow = when (status) {
@@ -95,8 +99,10 @@ private fun AcademicTitle.detailSections(): List<DetailSectionData> {
     }
 }
 
-// One topic: an icon-chip header above a single tonal container holding the fields as
-// divider-separated key/value rows — identical to the Iscrizioni year detail.
+/**
+ * One topic: an icon-chip header above a single tonal container holding the fields as
+ * divider-separated key/value rows — identical to the Iscrizioni year detail.
+ */
 @Composable
 private fun DetailGroup(
     icon: ImageVector,

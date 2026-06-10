@@ -20,9 +20,12 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
-// One fact wrapped in its own card: an icon chip leads, label over value. The shared section
-// style across every booking/result detail sheet (esiti, appelli, segreterie, biblioteca) so
-// they all read as the same object.
+/**
+ * One fact wrapped in its own card: an icon chip leads, label over value. The shared section
+ * style across every booking/result detail sheet (esiti, appelli, segreterie, biblioteca) so
+ * they all read as the same object. [mono] renders the value in semibold monospace for
+ * code-like facts.
+ */
 @Composable
 fun DetailFactCard(
     icon: ImageVector,

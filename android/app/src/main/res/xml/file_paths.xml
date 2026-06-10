@@ -4,4 +4,6 @@
     <cache-path name="tax_docs" path="taxes/" />
     <!-- Downloaded elearning course files; shared when the user opens one in an external app. -->
     <cache-path name="elearning_files" path="elearning_files/" />
+    <!-- Downloaded certificate PDFs, cached per-certificate so they open without re-downloading. -->
+    <cache-path name="certificati" path="certificati/" />
 </paths>

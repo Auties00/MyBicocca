@@ -18,13 +18,18 @@ import it.attendance100.mybicocca.domain.model.questionnaire.QuestionnaireSummar
 import it.attendance100.mybicocca.domain.model.questionnaire.QuestionnaireUnit
 import java.util.Locale
 
+/**
+ * Maps a libretto row annotated with questionnaire status to the domain activity,
+ * decoding `linkState` (1 completed, 2 partially completed, 3 to compile, 4
+ * configuration error). Returns null for `linkState` 0 or absent — no questionnaires
+ * attached, nothing to show.
+ */
 fun Esse3TranscriptRowWithQuestionnaireStatus.toQuestionnaireActivity(): QuestionnaireActivity? {
     val status = when (linkState) {
         1 -> QuestionnaireActivityStatus.Completed
         2 -> QuestionnaireActivityStatus.PartiallyCompleted
         3 -> QuestionnaireActivityStatus.ToCompile
         4 -> QuestionnaireActivityStatus.ConfigurationError
-        // 0 / null = no questionnaires attached, nothing to show.
         else -> return null
     }
     return QuestionnaireActivity(
@@ -38,6 +43,10 @@ fun Esse3TranscriptRowWithQuestionnaireStatus.toQuestionnaireActivity(): Questio
     )
 }
 
+/**
+ * Maps the teaching-unit evaluation response to the domain activity questionnaires.
+ * Returns null when Esse3 omits the activity id, which makes the payload unusable.
+ */
 fun Esse3TeachingUnitWithQuestionnaire.toActivityQuestionnaires(): ActivityQuestionnaires? {
     val activityChoiceId = activityChoiceId ?: return null
     return ActivityQuestionnaires(
@@ -50,8 +59,13 @@ fun Esse3TeachingUnitWithQuestionnaire.toActivityQuestionnaires(): ActivityQuest
     )
 }
 
+/**
+ * Maps one teaching-unit row to a compilable questionnaire unit. Rows without the
+ * `tagsValdid` token resolve to null — that token is what the start-compilation call
+ * needs to target the unit, so a unit is useless without it. The partition label is
+ * hidden for code "N0", Esse3's marker for "no partitioning" rather than a real turno.
+ */
 private fun Esse3TeachingUnitLogStudyPlanWebList.toQuestionnaireUnit(): QuestionnaireUnit? {
-    // The tags token is what setNewSurvey needs to target this unit — useless without it.
     val tags = tagsValidationDid?.takeIf { it.isNotBlank() } ?: return null
     val unitName = teachingUnitDescription?.takeIf { it.isNotBlank() }
         ?: activityDescription?.takeIf { it.isNotBlank() }
@@ -63,7 +77,6 @@ private fun Esse3TeachingUnitLogStudyPlanWebList.toQuestionnaireUnit(): Question
     return QuestionnaireUnit(
         teachingUnitName = unitName,
         lecturerName = lecturer,
-        // "N0" is Esse3 for "no partitioning" — not a real turno, hide it.
         partitionName = domicilePartialDescription
             ?.takeIf { it.isNotBlank() && domicilePartialCode != "N0" },
         completed = linkState == 1,
@@ -71,6 +84,11 @@ private fun Esse3TeachingUnitLogStudyPlanWebList.toQuestionnaireUnit(): Question
     )
 }
 
+/**
+ * Maps a server questionnaire page to the domain page. A missing page id marks the
+ * server's end-of-questionnaire response, encoded as the negative end-page sentinel so
+ * `isEnd` holds for it.
+ */
 fun Esse3QuestionnairePage.toDomain(): QuestionnairePage {
     val id = pageId?.toLong() ?: END_PAGE_ID
     return QuestionnairePage(
@@ -87,6 +105,13 @@ fun Esse3QuestionnairePage.toDomain(): QuestionnairePage {
     )
 }
 
+/**
+ * Maps a server question (`applicazione`) to the domain question, decoding the format
+ * code into a question kind: "TL_DOM_DFS" single choice, "TL_DOM_OFS" scale,
+ * "TL_DOM_DFM" multi choice, "TL_DOM_LIB" free text. Unknown formats degrade to
+ * something answerable rather than disappearing. Saved option ids come from the
+ * compiled-answers list, where `quesitoId` is the id of the CHOSEN answer option.
+ */
 private fun Esse3Applications.toQuestion(): QuestionnaireQuestion? {
     val id = applicationId ?: return null
     val options = availableAnswers.mapNotNull { answer ->
@@ -107,7 +132,6 @@ private fun Esse3Applications.toQuestion(): QuestionnaireQuestion? {
             "TL_DOM_OFS" -> QuestionnaireQuestionKind.Scale
             "TL_DOM_DFM" -> QuestionnaireQuestionKind.MultiChoice(maxChoiceNumber)
             "TL_DOM_LIB" -> QuestionnaireQuestionKind.FreeText
-            // Unknown formats degrade to something answerable rather than disappearing.
             else -> if (options.size > 1) {
                 QuestionnaireQuestionKind.SingleChoice
             } else {
@@ -115,18 +139,18 @@ private fun Esse3Applications.toQuestion(): QuestionnaireQuestion? {
             }
         },
         options = options,
-        // In compiled answers, quesitoId is the id of the CHOSEN answer option.
         savedOptionIds = completeAnswers.mapNotNull { it.questionId?.toLong() }.toSet(),
         savedFreeText = completeAnswers
             .firstNotNullOfOrNull { it.freeText?.takeIf { text -> text.isNotBlank() } },
     )
 }
 
+/** Decodes the summary's string-typed `completeFlag` ("1" = complete). */
 fun Esse3QuestionnaireSummary.toDomain() = QuestionnaireSummary(
     complete = completeFlag == "1",
 )
 
-// Esse3 stores names in all caps ("VINCENZINA MESSINA"); render them as title case.
+/** Esse3 stores names in all caps ("VINCENZINA MESSINA"); rendered as title case. */
 private fun String.toDisplayCase(): String = trim()
     .split(Regex("\\s+"))
     .joinToString(" ") { word ->

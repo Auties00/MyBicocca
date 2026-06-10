@@ -4,6 +4,13 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.Index
 
+/**
+ * Cached attempt of the student at a quiz, account-scoped.
+ *
+ * Keyed by (account_id, attempt_id) with an index on (account_id, quiz_id) backing the
+ * per-quiz queries. The state is stored as the raw wire string, the layout as the raw
+ * slot-layout string with ",0" page-break markers, and timestamps as epoch milliseconds.
+ */
 @Entity(
     tableName = "elearning_quiz_attempts",
     primaryKeys = ["account_id", "attempt_id"],

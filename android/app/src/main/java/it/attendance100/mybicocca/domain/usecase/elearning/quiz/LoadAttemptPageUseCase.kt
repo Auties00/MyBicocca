@@ -6,6 +6,11 @@ import it.attendance100.mybicocca.domain.model.elearning.quiz.AttemptPage
 import it.attendance100.mybicocca.domain.repository.ElearningQuizRepository
 import javax.inject.Inject
 
+/**
+ * Loads one page of questions of an in-progress attempt from the e-learning platform as the
+ * student steps through the attempt wizard; also reconciles the cached attempt state. Throws
+ * on failure.
+ */
 class LoadAttemptPageUseCase @Inject constructor(
     private val repository: ElearningQuizRepository,
 ) {

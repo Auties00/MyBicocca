@@ -24,6 +24,19 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import javax.inject.Inject
 
+/**
+ * Backs the "Questionari" sheet: the VAL_DID course-evaluation activities of the active
+ * career plus the per-unit questionnaires of the activity being inspected.
+ *
+ * Streams: [activities] carries the fetched list as a [Loadable] with [syncStatus]
+ * tracking its refresh; [selectedActivity], [activityDetail] and [detailStatus] drive
+ * the units page for the open activity. A career switch clears the selection and
+ * reloads.
+ *
+ * Actions: [refresh] re-fetches the list; [openActivity] selects an activity and loads
+ * its questionnaires; [retryDetail] re-fetches them; [dismissActivity] cancels and
+ * clears the selection.
+ */
 @HiltViewModel
 class QuestionnairesViewModel @Inject constructor(
     private val getQuestionnaireActivities: GetQuestionnaireActivitiesUseCase,
@@ -42,8 +55,9 @@ class QuestionnairesViewModel @Inject constructor(
     private val _syncStatus = MutableStateFlow<SyncStatus>(SyncStatus.Idle)
     val syncStatus: StateFlow<SyncStatus> = _syncStatus.asStateFlow()
 
-    // Activity tapped to inspect its questionnaires — drives the units bottom sheet.
     private val _selectedActivity = MutableStateFlow<QuestionnaireActivity?>(null)
+
+    /** Activity tapped to inspect its questionnaires — drives the units page. */
     val selectedActivity: StateFlow<QuestionnaireActivity?> = _selectedActivity.asStateFlow()
 
     private val _activityDetail = MutableStateFlow<Loadable<ActivityQuestionnaires>>(Loadable.NotYetLoaded)

@@ -10,6 +10,12 @@ import dagger.hilt.components.SingletonComponent
 import it.attendance100.mybicocca.data.local.account.AccountDao
 import it.attendance100.mybicocca.data.local.account.MyBicoccaDatabase
 import it.attendance100.mybicocca.data.local.appointment.AppointmentReservationDao
+import it.attendance100.mybicocca.data.local.certificate.CertificateCacheDao
+import it.attendance100.mybicocca.data.local.document.DocumentCacheDao
+import it.attendance100.mybicocca.data.local.enrollment.EnrollmentCacheDao
+import it.attendance100.mybicocca.data.local.exam.ExamCacheDao
+import it.attendance100.mybicocca.data.local.questionnaire.QuestionnaireCacheDao
+import it.attendance100.mybicocca.data.local.tax.TaxCacheDao
 import it.attendance100.mybicocca.data.local.calendar.CalendarDao
 import it.attendance100.mybicocca.data.local.calendar.CalendarSyncStateDao
 import it.attendance100.mybicocca.data.local.elearning.assignment.AssignmentDao
@@ -18,7 +24,6 @@ import it.attendance100.mybicocca.data.local.elearning.course.CourseDao
 import it.attendance100.mybicocca.data.local.elearning.deadline.DeadlineDao
 import it.attendance100.mybicocca.data.local.elearning.forum.ForumDao
 import it.attendance100.mybicocca.data.local.elearning.grade.GradeDao
-import it.attendance100.mybicocca.data.local.elearning.message.MessageDao
 import it.attendance100.mybicocca.data.local.elearning.quiz.QuizDao
 import it.attendance100.mybicocca.data.local.elearning.sync.ElearningSyncStateDao
 import it.attendance100.mybicocca.data.local.elearning.video.VideoProgressDao
@@ -30,15 +35,20 @@ import it.attendance100.mybicocca.data.local.transcript.TranscriptDao
 import it.attendance100.mybicocca.data.local.transcript.TranscriptSyncStateDao
 import javax.inject.Singleton
 
+/** Provides the Room database and exposes each of its DAOs as an injectable. */
 @Module
 @InstallIn(SingletonComponent::class)
 object DatabaseModule {
 
+    /**
+     * Schema version bumps drop and recreate every table rather than running migrations,
+     * relying on all cached data being re-syncable from the university platforms. A shipped
+     * release whose users must keep local data across upgrades needs real migrations.
+     */
     @Provides
     @Singleton
     fun provideDatabase(@ApplicationContext context: Context): MyBicoccaDatabase =
         Room.databaseBuilder(context, MyBicoccaDatabase::class.java, DATABASE_NAME)
-            // TODO remove before first prod release
             .fallbackToDestructiveMigration(dropAllTables = true)
             .build()
 
@@ -68,9 +78,6 @@ object DatabaseModule {
 
     @Provides
     fun provideElearningGradeDao(db: MyBicoccaDatabase): GradeDao = db.elearningGradeDao()
-
-    @Provides
-    fun provideElearningMessageDao(db: MyBicoccaDatabase): MessageDao = db.elearningMessageDao()
 
     @Provides
     fun provideElearningBadgeDao(db: MyBicoccaDatabase): BadgeDao = db.elearningBadgeDao()
@@ -104,6 +111,26 @@ object DatabaseModule {
     @Provides
     fun provideLibraryReservationDao(db: MyBicoccaDatabase): LibraryReservationDao =
         db.libraryReservationDao()
+
+    @Provides
+    fun provideExamCacheDao(db: MyBicoccaDatabase): ExamCacheDao = db.examCacheDao()
+
+    @Provides
+    fun provideTaxCacheDao(db: MyBicoccaDatabase): TaxCacheDao = db.taxCacheDao()
+
+    @Provides
+    fun provideEnrollmentCacheDao(db: MyBicoccaDatabase): EnrollmentCacheDao = db.enrollmentCacheDao()
+
+    @Provides
+    fun provideQuestionnaireCacheDao(db: MyBicoccaDatabase): QuestionnaireCacheDao =
+        db.questionnaireCacheDao()
+
+    @Provides
+    fun provideDocumentCacheDao(db: MyBicoccaDatabase): DocumentCacheDao = db.documentCacheDao()
+
+    @Provides
+    fun provideCertificateCacheDao(db: MyBicoccaDatabase): CertificateCacheDao =
+        db.certificateCacheDao()
 
     private const val DATABASE_NAME = "mybicocca.db"
 }

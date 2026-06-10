@@ -3,6 +3,7 @@ package it.attendance100.mybicocca.data.mapper.transcript
 import it.attendance100.mybicocca.data.local.transcript.GradeRollupProjection
 import it.attendance100.mybicocca.data.local.transcript.TranscriptRowEntity
 import it.attendance100.mybicocca.data.local.transcript.TranscriptStatsEntity
+import it.attendance100.mybicocca.data.mapper.common.parseEsse3Date
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3State
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3TranscriptRow
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3TranscriptStats
@@ -12,19 +13,22 @@ import it.attendance100.mybicocca.domain.model.transcript.TranscriptRow
 import it.attendance100.mybicocca.domain.model.transcript.TranscriptRowState
 import it.attendance100.mybicocca.domain.model.transcript.TranscriptStats
 import java.time.LocalDate
-import java.time.format.DateTimeFormatter
 
-private val ESSE3_DATE = DateTimeFormatter.ofPattern("dd/MM/yyyy")
-
+/**
+ * Maps an Esse3 libretto row to its Room entity. Derived fields: the numeric grade
+ * counts only under evaluation mode "V" (voto); the exam date comes from `dataEsa`,
+ * a "dd/MM/yyyy HH:mm:ss" value of which only the date part is kept (re-encoded as
+ * ISO-8601 for sortable storage); `inStudyPlan` is true when the row is linked to a
+ * plan (`pianoId` set), which matches Esse3's `numAdPiano` count, or when it is a
+ * year-0 prerequisite — those carry no plan link but are still part of the path —
+ * while libretto rows that are neither (e.g. pending/extra activities) are excluded.
+ */
 fun Esse3TranscriptRow.toEntity(careerId: CareerId): TranscriptRowEntity {
     val mappedState = state.toDomain()
     val outcome = outcome
     val grade = outcome?.grade?.takeIf { outcome.evaluationModeCode.value == "V" }?.toInt()
     val cumLaude = outcome?.cumLaudeFlag == 1
-    // dataEsa comes as "dd/MM/yyyy HH:mm:ss"; keep only the date part.
-    val parsedDate = outcome?.graduationDate
-        ?.substringBefore(' ')
-        ?.let { runCatching { LocalDate.parse(it, ESSE3_DATE) }.getOrNull() }
+    val parsedDate = outcome?.graduationDate.parseEsse3Date()
     return TranscriptRowEntity(
         id = activityChoiceId,
         careerId = careerId.value,
@@ -37,9 +41,6 @@ fun Esse3TranscriptRow.toEntity(careerId: CareerId): TranscriptRowEntity {
         cumLaude = cumLaude,
         examDate = parsedDate?.toString(),
         academicYear = outcome?.academicYearSupervisorId ?: academicYearAttendanceId,
-        // In the study plan when linked to it (pianoId set) — matches Esse3's numAdPiano count.
-        // Year-0 prerequisites carry no plan link but are still part of the path, so keep them;
-        // libretto rows that are neither (e.g. pending/extra activities) are excluded.
         inStudyPlan = planId != null || courseYear <= 0,
         examType = graduationTypeDescription?.trim()?.takeIf { it.isNotEmpty() },
         bookableCallsCount = bookableCallsNumber ?: 0,
@@ -63,9 +64,15 @@ fun TranscriptRowEntity.toDomain(): TranscriptRow = TranscriptRow(
     bookableCallsCount = bookableCallsCount,
 )
 
+/**
+ * Maps Esse3's record-book stats to the Room stats entity. Averages pick the exam-scale
+ * (base 30) entry of each type — base 110 is the graduation-grade projection — where
+ * "A" = arithmetic and "P" = weighted (ponderata). The planned-exam count ("exams to
+ * take") uses the study-plan activity count (`numAdPiano`), falling back to the libretto
+ * activity count: the planned-STATE count (`numAdPianificate`) is unsuitable because it
+ * collapses to 0 once everything is passed/attended.
+ */
 fun Esse3TranscriptStats.toEntity(careerId: CareerId): TranscriptStatsEntity {
-    // Prefer the exam-scale (base 30) average; base 110 is the graduation-grade projection.
-    // "A" = arithmetic, "P" = weighted (ponderata).
     fun average(typeCode: String): Float? {
         val ofType = averages.filter { it.averageTypeCode.value == typeCode }
         return (ofType.firstOrNull { it.base == 30 } ?: ofType.firstOrNull())?.average
@@ -77,8 +84,6 @@ fun Esse3TranscriptStats.toEntity(careerId: CareerId): TranscriptStatsEntity {
         arithmeticAverage = average("A"),
         weightedAverage = average("P"),
         passedExamCount = passedTeachingActivityNumber ?: 0,
-        // "Exams to take" is the study-plan activity count (numAdPiano); the planned-STATE
-        // count (numAdPianificate) collapses to 0 once everything is passed/attended.
         plannedExamCount = studyPlanTeachingActivityNumber ?: bookletTeachingActivityNumber ?: 0,
         maxGrade = gradeGroup?.maxPoints ?: 30,
         cumLaudeAvailable = (gradeGroup?.cumLaudeFlag ?: 0) == 1,

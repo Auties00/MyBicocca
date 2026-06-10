@@ -7,14 +7,18 @@ import androidx.annotation.DrawableRes
 import org.xmlpull.v1.XmlPullParser
 import org.xmlpull.v1.XmlPullParserException
 
+/** The first path and viewport of a vector drawable — enough to rebuild its silhouette as a Compose Shape. */
 data class VectorDefinition(
     val pathData: String,
     val viewportWidth: Float,
     val viewportHeight: Float,
 )
 
-// Extracts the first <path android:pathData> and the <vector> viewport from a vector
-// drawable, so a Compose Shape can be derived from the same asset used for the background.
+/**
+ * Extracts the first `<path android:pathData>` and the `<vector>` viewport from a vector
+ * drawable, so a Compose Shape can be derived from the same asset used for the background.
+ * Only the first path matters for the slice silhouette; later paths are ignored.
+ */
 @SuppressLint("ResourceType")
 fun getVectorDefinition(context: Context, @DrawableRes resId: Int): VectorDefinition? {
     val parser = context.resources.getXml(resId)
@@ -33,7 +37,6 @@ fun getVectorDefinition(context: Context, @DrawableRes resId: Int): VectorDefini
                     }
 
                     "path" -> {
-                        // Only the first path matters for the slice silhouette.
                         if (pathData == null) {
                             pathData = getStringAttribute(context.resources, parser, "pathData")
                         }
@@ -59,8 +62,8 @@ private fun getFloatAttribute(resources: Resources, parser: XmlPullParser, name:
     return value.replace("dp", "").replace("sp", "").toFloatOrNull() ?: 0f
 }
 
+/** Android namespaces are tricky in compiled XML, so attributes are matched by bare name. */
 private fun getStringAttribute(resources: Resources, parser: XmlPullParser, name: String): String? {
-    // Android namespaces are tricky in compiled XML, so match by attribute name directly.
     for (i in 0 until parser.attributeCount) {
         if (parser.getAttributeName(i) == name) {
             return parser.getAttributeValue(i)

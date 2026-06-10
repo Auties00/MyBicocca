@@ -231,7 +231,9 @@ data class ElearningAssignment(
     @SerialName("timelimit")
     val timeLimitSeconds: Int? = null,
     @SerialName("submissionattachments")
-    val submissionAttachmentsEnabled: Int? = null
+    val submissionAttachmentsEnabled: Int? = null,
+    @SerialName("configs")
+    val configs: List<ElearningAssignmentConfig>? = null
 ) {
     /**
      * Whether the assignment is past its due date.
@@ -529,3 +531,164 @@ data class ElearningAssignmentAttachments(
     @SerialName("activity")
     val activityFiles: List<ElearningFile>? = null
 )
+
+/**
+ * A single submission/feedback plugin configuration entry returned in
+ * [ElearningAssignment.configs].
+ *
+ * Moodle reports each plugin setting as a flat `(plugin, subtype, name, value)` tuple, e.g.
+ * `("file", "assignsubmission", "maxfilesubmissions", "1")` or
+ * `("onlinetext", "assignsubmission", "enabled", "1")`. The settings relevant to building a
+ * submission editor are, for `subtype == "assignsubmission"`:
+ * - `file` / `enabled` — whether file submissions are accepted;
+ * - `file` / `maxfilesubmissions` — maximum number of files;
+ * - `file` / `maxsubmissionsizebytes` — maximum size per file;
+ * - `file` / `filetypeslist` — comma-separated accepted types (a mix of group names such as
+ *   `archive` / `image` and explicit extensions such as `.pdf`);
+ * - `onlinetext` / `enabled` — whether online text submissions are accepted.
+ *
+ * @property plugin The plugin identifier (e.g. `file`, `onlinetext`, `comments`).
+ * @property subtype The plugin subtype (`assignsubmission` or `assignfeedback`).
+ * @property name The setting name.
+ * @property value The setting value, always serialized as a string by Moodle.
+ */
+@Serializable
+data class ElearningAssignmentConfig(
+    @SerialName("plugin")
+    val plugin: String? = null,
+    @SerialName("subtype")
+    val subtype: String? = null,
+    @SerialName("name")
+    val name: String? = null,
+    @SerialName("value")
+    val value: String? = null
+)
+
+/**
+ * Request to save (create or update) the current user's submission as a draft.
+ *
+ * Mirrors `mod_assign_save_submission`. Plugin data is written only for the plugins that are
+ * actually enabled on the assignment — sending `onlinetext` data to a file-only assignment (or
+ * vice versa) makes Moodle reject the whole call with a `couldnotsavesubmission` warning.
+ *
+ * For file submissions, [filesDraftItemId] is the draft-area item id returned by
+ * [it.attendance100.mybicocca.data.remote.elearning.api.ElearningFileApi.uploadToDraftArea].
+ * For online text, [onlineTextDraftItemId] may be `0` when the text carries no embedded files.
+ *
+ * Note that on success Moodle returns an empty warnings array; a NON-empty warnings array (with
+ * an HTTP 200 status) signals failure. Callers should treat a non-empty result as an error — see
+ * [it.attendance100.mybicocca.data.remote.elearning.api.ElearningAssignApi.saveSubmission].
+ *
+ * @property assignmentId The assignment instance id.
+ * @property onlineText The HTML body for an online-text submission, or `null` to omit it.
+ * @property onlineTextFormat The text format (1 = HTML), used only when [onlineText] is non-null.
+ * @property onlineTextDraftItemId The editor draft-area item id, used only when [onlineText] is
+ *   non-null (`0` is acceptable for plain text with no embedded files).
+ * @property filesDraftItemId The draft-area item id holding the uploaded submission files, or
+ *   `null` to omit a file submission.
+ */
+@Serializable
+class ElearningSaveSubmissionRequest(
+    private val assignmentId: Int,
+    private val onlineText: String? = null,
+    private val onlineTextFormat: Int = 1,
+    private val onlineTextDraftItemId: Int = 0,
+    private val filesDraftItemId: Int? = null
+) : ElearningRequest<ElearningSaveSubmissionResponse> {
+    override val functionName = "mod_assign_save_submission"
+
+    override fun writeAdditionalData(formData: ParametersBuilder) {
+        formData.append("assignmentid", assignmentId.toString())
+        if (onlineText != null) {
+            formData.append("plugindata[onlinetext_editor][text]", onlineText)
+            formData.append("plugindata[onlinetext_editor][format]", onlineTextFormat.toString())
+            formData.append("plugindata[onlinetext_editor][itemid]", onlineTextDraftItemId.toString())
+        }
+        if (filesDraftItemId != null) {
+            formData.append("plugindata[files_filemanager]", filesDraftItemId.toString())
+        }
+    }
+}
+
+/**
+ * Response to [ElearningSaveSubmissionRequest]. An empty [warnings] list means success; a
+ * non-empty list describes why the save failed.
+ *
+ * @property warnings Warnings reported by Moodle (empty on success).
+ */
+@Serializable
+data class ElearningSaveSubmissionResponse(
+    @SerialName("items")
+    val warnings: List<ElearningResponseWarning> = emptyList()
+) : ElearningResponse
+
+/**
+ * Request to finalize the current user's draft submission for grading.
+ *
+ * Mirrors `mod_assign_submit_for_grading`. This is irreversible from the student side and
+ * notifies the grader, so it should be called only after an explicit user confirmation. When the
+ * assignment sets `requiresubmissionstatement`, [acceptSubmissionStatement] must be `true`.
+ *
+ * @property assignmentId The assignment instance id.
+ * @property acceptSubmissionStatement Whether the user accepted the submission statement.
+ */
+@Serializable
+class ElearningSubmitForGradingRequest(
+    private val assignmentId: Int,
+    private val acceptSubmissionStatement: Boolean
+) : ElearningRequest<ElearningSubmitForGradingResponse> {
+    override val functionName = "mod_assign_submit_for_grading"
+
+    override fun writeAdditionalData(formData: ParametersBuilder) {
+        formData.append("assignmentid", assignmentId.toString())
+        formData.append("acceptsubmissionstatement", if (acceptSubmissionStatement) "1" else "0")
+    }
+}
+
+/**
+ * Response to [ElearningSubmitForGradingRequest]. An empty [warnings] list means success.
+ *
+ * @property warnings Warnings reported by Moodle (empty on success).
+ */
+@Serializable
+data class ElearningSubmitForGradingResponse(
+    @SerialName("items")
+    val warnings: List<ElearningResponseWarning> = emptyList()
+) : ElearningResponse
+
+/**
+ * Request to remove (discard) the current user's submission, reverting it to an empty state.
+ *
+ * Mirrors `mod_assign_remove_submission`. Unlike the other assignment write calls this requires
+ * BOTH the assignment id and the user id — passing only the assignment id is rejected with an
+ * `invalidparameter` exception.
+ *
+ * @property assignmentId The assignment instance id (sent as `assignid`).
+ * @property userId The id of the user whose submission is removed (the current user).
+ */
+@Serializable
+class ElearningRemoveSubmissionRequest(
+    private val assignmentId: Int,
+    private val userId: Int
+) : ElearningRequest<ElearningRemoveSubmissionResponse> {
+    override val functionName = "mod_assign_remove_submission"
+
+    override fun writeAdditionalData(formData: ParametersBuilder) {
+        formData.append("assignid", assignmentId.toString())
+        formData.append("userid", userId.toString())
+    }
+}
+
+/**
+ * Response to [ElearningRemoveSubmissionRequest].
+ *
+ * @property status Whether the submission was removed.
+ * @property warnings Warnings reported by Moodle (empty on success).
+ */
+@Serializable
+data class ElearningRemoveSubmissionResponse(
+    @SerialName("status")
+    val status: Boolean = false,
+    @SerialName("warnings")
+    val warnings: List<ElearningResponseWarning> = emptyList()
+) : ElearningResponse

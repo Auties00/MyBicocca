@@ -4,6 +4,10 @@ import it.attendance100.mybicocca.domain.model.appointment.AppointmentOffering
 import it.attendance100.mybicocca.domain.repository.AppointmentRepository
 import javax.inject.Inject
 
+/**
+ * Loads the areas (and per-area constraints) where a selected service can be booked, for the
+ * location step of the "Appuntamenti" booking flow.
+ */
 class GetAppointmentOfferingsUseCase @Inject constructor(
     private val repository: AppointmentRepository,
 ) {

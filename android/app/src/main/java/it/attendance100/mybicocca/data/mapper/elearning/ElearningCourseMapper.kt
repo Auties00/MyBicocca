@@ -35,11 +35,16 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Element
+import org.jsoup.nodes.TextNode
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset
 import java.util.Locale
 
+/**
+ * JSON envelope for one bundled file/link of a module, stored as a list in the module
+ * entity's contents_json column. Timestamps are epoch milliseconds.
+ */
 @Serializable
 internal data class ModuleContentJson(
     val type: String? = null,
@@ -51,6 +56,11 @@ internal data class ModuleContentJson(
     val timeModifiedMs: Long? = null,
 )
 
+/**
+ * JSON envelope for one dated event of a module, stored as a list in the module
+ * entity's dates_json column. `timestampMs` is epoch milliseconds; `dataId` is
+ * Moodle's stable machine key for the date kind.
+ */
 @Serializable
 internal data class ModuleDateJson(
     val label: String? = null,
@@ -58,15 +68,22 @@ internal data class ModuleDateJson(
     val dataId: String? = null,
 )
 
+/** JSON envelope for one titled HTML section of the course sheet. */
 @Serializable
 internal data class SyllabusFieldJson(val title: String, val htmlContent: String)
 
+/** JSON envelope for one parsed extended-programme topic (title plus bullet items). */
 @Serializable
 internal data class ProgrammeSectionJson(
     val title: String,
     val items: List<String> = emptyList(),
 )
 
+/**
+ * JSON envelope for the structured facts extracted from the course sheet. `level` and
+ * `semester` store domain enum names; every field defaults so blobs written before a
+ * field existed still decode.
+ */
 @Serializable
 internal data class SyllabusInfoJson(
     val type: String? = null,
@@ -84,14 +101,25 @@ internal data class SyllabusInfoJson(
     val referenceMaterial: String? = null,
     val assessment: String? = null,
     val officeHours: String? = null,
+    val sustainableDevelopmentGoals: String? = null,
 )
 
+/**
+ * JSON envelope persisted in the syllabus entity's fields_json column: the sheet's raw
+ * fields plus the structured info extracted from them.
+ */
 @Serializable
 internal data class SyllabusBlobJson(
     val fields: List<SyllabusFieldJson> = emptyList(),
     val info: SyllabusInfoJson = SyllabusInfoJson(),
 )
 
+/**
+ * Maps one course of the Moodle user-courses web service into its cache row. Strips
+ * {mlang} markup from the names, blanks an empty idNumber to null, collapses nullable
+ * server booleans to false, normalizes epoch-second timestamps to milliseconds, and
+ * records the list position as the sort order.
+ */
 internal fun ElearningEnrolledCourse.toEntity(accountId: AccountId, sortOrder: Int): EnrolledCourseEntity =
     EnrolledCourseEntity(
         accountId = accountId.value,
@@ -116,6 +144,11 @@ internal fun ElearningEnrolledCourse.toEntity(accountId: AccountId, sortOrder: I
         sortOrder = sortOrder,
     )
 
+/**
+ * Maps a cached enrolled-course row to the domain model, attaching the course's
+ * deadlines from the deadline cache and converting epoch-millisecond columns to
+ * dates/instants.
+ */
 internal fun EnrolledCourseEntity.toDomain(deadlines: List<Deadline> = emptyList()): EnrolledCourse =
     EnrolledCourse(
         id = CourseId(courseId),
@@ -139,6 +172,11 @@ internal fun EnrolledCourseEntity.toDomain(deadlines: List<Deadline> = emptyList
         deadlines = deadlines,
     )
 
+/**
+ * Maps one section of the Moodle course-contents web service into its cache row,
+ * stripping {mlang} markup from the name and reading `visible` as the 0/1 flag Moodle
+ * ships.
+ */
 internal fun ElearningCourseSection.toEntity(accountId: AccountId, courseId: Int): CourseSectionEntity =
     CourseSectionEntity(
         accountId = accountId.value,
@@ -152,6 +190,16 @@ internal fun ElearningCourseSection.toEntity(accountId: AccountId, courseId: Int
         itemId = itemId,
     )
 
+/**
+ * Flattens the sections of the Moodle course-contents web service into module cache
+ * rows, recording each module's position within its section as the sort order. Bundled
+ * contents and dated events are packed into the JSON columns with epoch-second
+ * timestamps normalized to milliseconds; the `afterlink` HTML is reduced to plain
+ * text; subsection placeholders get their linked section id resolved from customdata.
+ * The `visible` column stores teacher-visibility only — a module gated for this user
+ * (uservisible false) is kept and rendered locked, not dropped, with the gate recorded
+ * in the `accessible` column.
+ */
 internal fun List<ElearningCourseSection>.toModuleEntities(
     accountId: AccountId,
     courseId: Int,
@@ -187,8 +235,6 @@ internal fun List<ElearningCourseSection>.toModuleEntities(
                 description = module.description,
                 url = module.url,
                 iconUrl = module.moduleIconUrl,
-                // Teacher-visibility only. A module gated for this user (uservisible=false) is
-                // kept and rendered locked, not dropped — see CourseModule.accessible.
                 visible = module.visible != 0,
                 accessible = module.userVisible != false,
                 availabilityInfo = module.availabilityInfo?.takeIf { it.isNotBlank() },
@@ -204,8 +250,11 @@ internal fun List<ElearningCourseSection>.toModuleEntities(
     return result
 }
 
-// A mod_subsection placeholder module points at its content section via customdata, e.g.
-// {"sectionid":"333817"}. customData is a JSON string (sometimes the literal "" when empty).
+/**
+ * Reads the content-section id a mod_subsection placeholder module points at via
+ * customdata, e.g. {"sectionid":"333817"}. customData is a JSON string (sometimes the
+ * literal "" when empty), so any parse failure yields null.
+ */
 private fun ElearningCourseModule.linkedSectionId(): Int? {
     val raw = customData ?: return null
     return runCatching {
@@ -219,6 +268,10 @@ private fun String?.htmlToPlainTextOrNull(): String? =
         ?.let { Jsoup.parseBodyFragment(it).text().trim() }
         ?.takeIf { it.isNotBlank() }
 
+/**
+ * Maps a cached section row to the domain model, picking its own modules out of the
+ * course's module rows by section id and restoring their sort order.
+ */
 internal fun CourseSectionEntity.toDomain(modules: List<CourseModuleEntity>): CourseSection {
     val sectionModules = modules.filter { it.sectionId == sectionId }
         .sortedBy { it.sortOrder }
@@ -235,6 +288,12 @@ internal fun CourseSectionEntity.toDomain(modules: List<CourseModuleEntity>): Co
     )
 }
 
+/**
+ * Maps a cached module row to the domain model, decoding the JSON contents/dates
+ * columns (defensively, dropping the blob on any decode failure) and resolving the
+ * module type from the stored plugin name. Completion is attached separately from the
+ * completion cache, so it maps as null here.
+ */
 internal fun CourseModuleEntity.toDomain(): CourseModule {
     val contents = contentsJson?.let { json ->
         runCatching {
@@ -284,12 +343,17 @@ internal fun CourseModuleEntity.toDomain(): CourseModule {
     )
 }
 
+/**
+ * Maps the course sheet of the public course page into its cache row, or null when
+ * the page exposes no sheet. Sheet tabs are one-per-language ("it", "en"); the tab
+ * matching the app language is preferred, falling back to English, then to whatever
+ * the page lists first. The chosen tab's fields and the structured info extracted from
+ * them are packed into the JSON blob column.
+ */
 internal fun ElearningCoursePublicInfo.toSyllabusEntity(
     accountId: AccountId,
     courseId: Int,
 ): CourseSyllabusEntity? {
-    // Tabs are one-per-language ("it", "en"). Prefer the tab matching the app language,
-    // fall back to English, then to whatever the page lists first.
     val appLanguage = Locale.getDefault().language.lowercase()
     val primary = syllabus.firstOrNull { it.language.equals(appLanguage, ignoreCase = true) }
         ?: syllabus.firstOrNull { it.language.equals("en", ignoreCase = true) }
@@ -309,6 +373,7 @@ internal fun ElearningCoursePublicInfo.toSyllabusEntity(
     )
 }
 
+/** Maps a cached syllabus row to the domain model by unpacking its JSON blob. */
 internal fun CourseSyllabusEntity.toDomain(): CourseSyllabusPointer {
     val blob = decodeSyllabusBlob(fieldsJson)
     val fields = blob.fields.map { CourseSyllabusPointer.SyllabusField(it.title, it.htmlContent) }
@@ -320,10 +385,12 @@ internal fun CourseSyllabusEntity.toDomain(): CourseSyllabusPointer {
     )
 }
 
-// Backwards-compatible decode: new shape is { "fields": [...], "info": {...} };
-// pre-refactor rows stored a bare `[{title,htmlContent}, ...]`. Try the new
-// shape first, fall back to the legacy list (info defaults to empty until the
-// next refresh re-writes the row).
+/**
+ * Decodes the syllabus blob, tolerating both layouts a row can hold: the composite
+ * { "fields": [...], "info": {...} } object and a bare `[{title,htmlContent}, ...]`
+ * field list. A bare-list row decodes with empty info until the next refresh
+ * re-writes it in the composite layout.
+ */
 private fun decodeSyllabusBlob(raw: String): SyllabusBlobJson {
     runCatching {
         return ElearningJson.decodeFromString(SyllabusBlobJson.serializer(), raw)
@@ -337,6 +404,10 @@ private fun decodeSyllabusBlob(raw: String): SyllabusBlobJson {
     return SyllabusBlobJson(fields = legacyFields, info = SyllabusInfoJson())
 }
 
+/**
+ * Maps the persisted info blob to the domain model, resolving the stored enum names
+ * leniently so an unknown name reads as absent rather than failing the row.
+ */
 private fun SyllabusInfoJson.toDomain(): SyllabusInfo = SyllabusInfo(
     type = type,
     credits = credits,
@@ -353,12 +424,17 @@ private fun SyllabusInfoJson.toDomain(): SyllabusInfo = SyllabusInfo(
     referenceMaterial = referenceMaterial,
     assessment = assessment,
     officeHours = officeHours,
+    sustainableDevelopmentGoals = sustainableDevelopmentGoals,
 )
 
-// Pull structured info out of (a) the Moodle metadata sidebar and (b) Jsoup-parsed
-// HTML of each syllabus field. Field titles are server-localized Italian/English,
-// so the dispatch matches on lowercase substrings — the localizations the Moodle
-// site actually uses today are exhaustive for the courses we care about.
+/**
+ * Pulls structured info out of (a) the Moodle metadata sidebar and (b) Jsoup-parsed
+ * HTML of each syllabus field. Field titles are server-localized Italian/English, so
+ * the dispatch matches on lowercase substrings covering the localizations the Moodle
+ * site uses. The metadata sidebar "Periodo" and the "Periodo di erogazione
+ * dell'insegnamento" field each can carry detail the other lacks, so the semester is
+ * matched on both combined.
+ */
 private fun buildSyllabusInfo(
     fields: List<it.attendance100.mybicocca.data.remote.elearning.dto.ElearningCourseSyllabusField>,
     metadata: it.attendance100.mybicocca.data.remote.elearning.dto.ElearningCoursePublicMetadata,
@@ -390,8 +466,6 @@ private fun buildSyllabusInfo(
         language = metadata.language?.takeIf { it.isNotBlank() }
             ?: pickText("lingua", "language"),
         level = matchCourseLevel(metadata.degreeType ?: pickText("livello", "tipologia di corso"))?.name,
-        // The metadata sidebar "Periodo" and the "Periodo di erogazione dell'insegnamento"
-        // field each can carry detail the other lacks — match on both combined.
         semester = matchSemester(
             listOfNotNull(metadata.period, pickText("periodo", "semestre", "ciclo", "semester"))
                 .joinToString(" ")
@@ -414,55 +488,183 @@ private fun buildSyllabusInfo(
             "assessment method",
             "modalità d'esame",
             "modalità di esame",
+            "verifica dell'apprendimento",
         ),
         officeHours = pickText("orario di ricevimento", "office hours", "ricevimento"),
+        sustainableDevelopmentGoals = pickText("sustainable development"),
     )
 }
 
-// "Programma esteso" comes in three common shapes in the wild:
-//   1. <p><strong>Header</strong><br>item<br>item</p><p><strong>Header2</strong>...
-//   2. <ol><li><p>Header</p></li></ol>  with items in sibling <ul><li> blocks
-//   3. bare <ol>/<ul>/<p> blocks with no header at all (the most frequent one)
-//
-// Strategy: walk children top-to-bottom, treat <strong>/<h*> openings as section
-// headers, and accumulate any <li> / <br>-separated text as items. Items seen
-// before any header flush as a single untitled section instead of being dropped.
+/**
+ * Parses the "programma esteso" HTML into titled topic sections. The shapes observed
+ * across the live course sheets:
+ *   1. `<p><strong>Header</strong><br>item<br>item</p>` blocks
+ *   2. a short plain `<p>` (or a one-item `<ol start=N>`) acting as the header of the
+ *      `<ul>`/`<ol>` that immediately follows it
+ *   3. bare `<ol>`/`<ul>`/`<p>` blocks with no header at all
+ *   4. `<li>` wrapping a topic title plus its own nested sub-list
+ *   5. run-in `<em>label.</em>` headers, literal markdown `**header**` lines typed as
+ *      plain text, and hard-wrapped prose where `<br>` is a soft line wrap, not an
+ *      item separator
+ *
+ * Strategy: walk children top-to-bottom, promote everything header-like to a section
+ * title (title-only sections are emitted so lone headings are never dropped),
+ * accumulate `<li>` / `<br>`-separated text as items keeping `<ol>` ordinals, and glue
+ * hard-wrapped continuation lines back onto the previous item. Specifics folded into
+ * the walk:
+ * - Bold opening a paragraph is a header; mid-paragraph bold is emphasis.
+ * - `<br>`-split lines drop hand-typed bullet markers (the app styles rows itself); a
+ *   lowercase-starting line after an unterminated one is a soft wrap and is re-joined.
+ * - Hand-typed dash outlines mark sub-items with "- " lines; the bare short lines
+ *   between them are the topic headers (e.g. "3 Metodi:" over "- metodi di istanza").
+ * - In still-headerless documents, lists whose items are long "Label: details" or
+ *   multi-sentence topic runs would read as one wall-of-text pill each, so every such
+ *   item becomes its own section; a list inside a titled section is its body.
+ * - A numbered topic typed as a one-item `<ol start=N>` right before its bullet list
+ *   becomes that list's header, keeping its ordinal.
+ */
 private fun parseProgrammeSections(body: Element): List<ProgrammeSectionJson> {
     val sections = mutableListOf<ProgrammeSectionJson>()
     var currentTitle: String? = null
+    var titlePending = false
     val currentItems = mutableListOf<String>()
+
     fun flush() {
-        if (currentItems.isNotEmpty()) {
+        if (currentItems.isNotEmpty() || titlePending) {
             sections += ProgrammeSectionJson(title = currentTitle.orEmpty(), items = currentItems.toList())
         }
         currentItems.clear()
+        titlePending = false
+    }
+
+    fun startSection(title: String) {
+        flush()
+        currentTitle = title.trim().trimEnd('.', ':', ';').trim()
+        titlePending = true
+    }
+
+    fun addLine(raw: String) {
+        val line = raw.trim()
+        if (line.isEmpty()) return
+        val continuation = line.first().isLowerCase() &&
+            currentItems.lastOrNull()?.last()?.let { it !in SentenceTerminals } == true
+        val text = line.replace(LeadingBulletRegex, "").trim()
+        if (text.isEmpty()) return
+        if (continuation) {
+            currentItems[currentItems.lastIndex] = "${currentItems.last()} $text"
+        } else {
+            currentItems += text
+        }
+    }
+
+    fun nextIsList(node: Element): Boolean =
+        node.nextElementSibling()?.tagName()?.lowercase() in ListTags
+
+    val dashOutline = body.children()
+        .filter { it.tagName().equals("p", ignoreCase = true) }
+        .flatMap { it.splitOnBreaks() }
+        .count { LeadingBulletRegex.containsMatchIn(it.trim()) } >= 2
+
+    fun appendListItems(list: Element) {
+        val ordered = list.tagName().equals("ol", ignoreCase = true)
+        val start = list.attr("start").toIntOrNull() ?: 1
+        list.select("> li").forEachIndexed { index, li ->
+            val text = li.text().trim()
+            if (text.isNotBlank()) {
+                currentItems += if (ordered) "${start + index}. $text" else text
+            }
+        }
     }
 
     body.children().forEach { node ->
         when (node.tagName().lowercase()) {
             "p" -> {
                 val strong = node.selectFirst("strong, b")
-                if (strong != null && strong.text().isNotBlank()) {
-                    flush()
-                    currentTitle = strong.text().trim()
-                    // Drop the header element and keep the rest of the paragraph as items.
-                    // (String surgery on html() lost the items whenever the header was a
-                    // lone <strong> — the tail never contained the chained </b> delimiter.)
-                    val rest = node.clone()
-                    rest.selectFirst("strong, b")?.remove()
-                    rest.splitOnBreaks().filter { it.isNotBlank() }.forEach { currentItems += it }
-                } else {
-                    node.splitOnBreaks().filter { it.isNotBlank() }.forEach { currentItems += it }
+                val emphasis = node.selectFirst("em, i")
+                when {
+                    strong != null && strong.text().isNotBlank() && node.opensWith(strong) -> {
+                        startSection(strong.text())
+                        val rest = node.clone()
+                        rest.selectFirst("strong, b")?.remove()
+                        addRunInBody(rest) { addLine(it) }
+                    }
+                    emphasis != null && node.opensWith(emphasis) && isRunInLabel(emphasis, node) -> {
+                        startSection(emphasis.text())
+                        val rest = node.clone()
+                        rest.selectFirst("em, i")?.remove()
+                        addRunInBody(rest) { addLine(it) }
+                    }
+                    else -> {
+                        val pieces = node.splitOnBreaks().filter { it.isNotBlank() }
+                        val first = pieces.firstOrNull()?.trim()
+                        val markdown = first?.let { MarkdownHeaderRegex.matchEntire(it) }
+                        when {
+                            markdown != null -> {
+                                startSection(markdown.groupValues[1])
+                                pieces.drop(1).forEach { addLine(it) }
+                            }
+                            dashOutline -> pieces.forEach { piece ->
+                                val line = piece.trim()
+                                if (!LeadingBulletRegex.containsMatchIn(line) && line.length <= 80) {
+                                    startSection(line)
+                                } else {
+                                    addLine(line)
+                                }
+                            }
+                            first != null && pieces.size == 1 && nextIsList(node) && isHeadingLike(first) ->
+                                startSection(first)
+                            else -> pieces.forEach { addLine(it) }
+                        }
+                    }
                 }
             }
-            "h1", "h2", "h3", "h4", "h5", "h6" -> {
-                flush()
-                currentTitle = node.text().trim()
-            }
+            "h1", "h2", "h3", "h4", "h5", "h6" -> startSection(node.text())
             "ul", "ol" -> {
-                node.select("> li").forEach { li ->
-                    val text = li.text().trim()
-                    if (text.isNotBlank()) currentItems += text
+                val items = node.select("> li")
+                val ordered = node.tagName().equals("ol", ignoreCase = true)
+                val start = node.attr("start").toIntOrNull() ?: 1
+                val loneLi = items.singleOrNull()
+                val plainLis = items.filter { it.select("> ul, > ol").isEmpty() }
+                val topicRun = currentTitle == null && plainLis.size >= 2 &&
+                    plainLis.sumOf { it.text().trim().length } / plainLis.size > 120
+                if (ordered && loneLi != null && nextIsList(node) &&
+                    loneLi.select("> ul, > ol").isEmpty() && loneLi.text().isNotBlank()
+                ) {
+                    startSection("$start. ${loneLi.text().trim()}")
+                } else {
+                    items.forEachIndexed { index, li ->
+                        val nested = li.select("> ul, > ol")
+                        if (nested.isNotEmpty()) {
+                            val own = li.clone().also { it.select("ul, ol").remove() }.text().trim()
+                            startSection(if (ordered) "${start + index}. $own" else own)
+                            nested.forEach { appendListItems(it) }
+                        } else {
+                            val text = li.text().trim()
+                            if (text.isBlank()) return@forEachIndexed
+                            if (topicRun) {
+                                val ordinal = if (ordered) "${start + index}. " else ""
+                                val colon = text.indexOf(':')
+                                val sentences = text.split(SentenceBoundaryRegex)
+                                when {
+                                    colon in 1..60 -> {
+                                        startSection(ordinal + text.take(colon))
+                                        topicItems(text.substring(colon + 1)).forEach { currentItems += it }
+                                    }
+                                    sentences.size >= 2 && sentences.first().length <= 80 -> {
+                                        startSection(ordinal + sentences.first())
+                                        topicItems(text.substring(sentences.first().length)).forEach { currentItems += it }
+                                    }
+                                    text.length <= 80 -> startSection(ordinal + text)
+                                    else -> {
+                                        startSection("")
+                                        topicItems(text).forEach { currentItems += it }
+                                    }
+                                }
+                            } else {
+                                currentItems += if (ordered) "${start + index}. $text" else text
+                            }
+                        }
+                    }
                 }
             }
             else -> Unit
@@ -472,16 +674,94 @@ private fun parseProgrammeSections(body: Element): List<ProgrammeSectionJson> {
     return sections
 }
 
-// Splits an element's content on `<br>` tags into a list of trimmed text lines.
+private val ListTags = setOf("ul", "ol")
+private val SentenceTerminals = setOf('.', '!', '?', ':', ';')
+private val LeadingBulletRegex = Regex("^[-–—•·]\\s*")
+private val MarkdownHeaderRegex = Regex("""^\*\*\s*([^*]+?)\s*(?:\*\*)?$""")
+
+/** True when the element is the first visible content of the paragraph. */
+private fun Element.opensWith(child: Element): Boolean =
+    childNodes().firstOrNull { it !is TextNode || it.text().isNotBlank() } === child
+
+/**
+ * Adds the body of a run-in-header paragraph: `<br>`-separated lines stay one item per
+ * line, but a single prose run is a sentence-separated topic list ("Matrici.
+ * Determinanti. ...") that would otherwise render as one wall-of-text row, so it is
+ * split at sentence boundaries.
+ */
+private inline fun addRunInBody(rest: Element, addLine: (String) -> Unit) {
+    val pieces = rest.splitOnBreaks().filter { it.isNotBlank() }
+    if (pieces.size == 1) {
+        pieces[0].split(SentenceBoundaryRegex).forEach { addLine(it) }
+    } else {
+        pieces.forEach { addLine(it) }
+    }
+}
+
+private val SentenceBoundaryRegex = Regex("(?<=[.!?])\\s+(?=[A-ZÀ-ÖØ-Þ0-9])")
+
+/**
+ * Splits the detail text of a topic-run `<li>` into items: one per sentence, with
+ * comma enumerations ("unione, intersezione, complementazione, ...") fanned out into
+ * separate items.
+ */
+private fun topicItems(detail: String): List<String> =
+    detail.split(SentenceBoundaryRegex)
+        .flatMap { sentence ->
+            val parts = splitTopLevelCommas(sentence)
+            if (parts.size >= 3) parts else listOf(sentence)
+        }
+        .map { it.trim() }
+        .filter { it.isNotEmpty() }
+
+/** Splits on commas/semicolons outside any bracket pair, so "(sintassi, semantica)" stays whole. */
+private fun splitTopLevelCommas(text: String): List<String> {
+    val pieces = mutableListOf<String>()
+    val current = StringBuilder()
+    var depth = 0
+    text.forEach { c ->
+        when {
+            c == '(' || c == '[' -> { depth++; current.append(c) }
+            c == ')' || c == ']' -> { depth = (depth - 1).coerceAtLeast(0); current.append(c) }
+            (c == ',' || c == ';') && depth == 0 -> { pieces += current.toString(); current.clear() }
+            else -> current.append(c)
+        }
+    }
+    pieces += current.toString()
+    return pieces
+}
+
+/**
+ * Recognizes run-in headers like `<em>Analisi vettoriale.</em>` prose...: short,
+ * punctuation-closed, and with actual content after the label — a fully-italic
+ * paragraph stays an item.
+ */
+private fun isRunInLabel(emphasis: Element, paragraph: Element): Boolean {
+    val label = emphasis.text().trim()
+    return label.length in 1..60 &&
+        (label.endsWith(".") || label.endsWith(":")) &&
+        paragraph.text().trim().length > label.length
+}
+
+/** Sentence-terminated or lowercase-starting paragraphs are prose/continuations, not titles. */
+private fun isHeadingLike(text: String): Boolean =
+    text.length <= 80 && text.last() !in HeadingForbiddenEndings && !text.first().isLowerCase()
+
+private val HeadingForbiddenEndings = setOf('.', ',', ';')
+
+/** Splits an element's content on `<br>` tags into a list of trimmed text lines. */
 private fun Element.splitOnBreaks(): List<String> {
     val pieces = html().split(Regex("<br\\s*/?>", RegexOption.IGNORE_CASE))
     return pieces.map { Jsoup.parseBodyFragment(it).body().text().trim() }
 }
 
-// Jsoup's text() collapses every line break, gluing the lines of a syllabus field together;
-// wholeText() instead keeps source newlines and renders <br> as "\n". Block tags contribute
-// no separator to it though, so close them off with explicit newlines first. Works on a
-// clone - the parsed elements are shared with the programme parser and must stay untouched.
+/**
+ * Extracts an element's text with line structure intact. Jsoup's text() collapses
+ * every line break, gluing the lines of a syllabus field together; wholeText() keeps
+ * source newlines and renders `<br>` as "\n", but block tags contribute no separator
+ * to it, so they are closed off with explicit newlines first. Works on a clone — the
+ * parsed elements are shared with the programme parser and must stay untouched.
+ */
 private fun Element.textWithNewlines(): String {
     val copy = clone()
     copy.select("p, div, li, tr, h1, h2, h3, h4, h5, h6").forEach { it.appendText("\n") }
@@ -519,6 +799,10 @@ private fun matchSemester(text: String?): Semester? {
     }
 }
 
+/**
+ * Flattens the role-grouped staff listing of the public course page into staff cache
+ * rows, numbering rows across the groups so the page order survives as the row index.
+ */
 internal fun ElearningCoursePublicInfo.toStaffEntities(
     accountId: AccountId,
     courseId: Int,
@@ -541,6 +825,7 @@ internal fun ElearningCoursePublicInfo.toStaffEntities(
     }
 }
 
+/** Maps a cached staff row to the domain model, resolving the role from its raw label. */
 internal fun CourseStaffEntity.toDomain(): CourseStaffMember =
     CourseStaffMember(
         userId = userId,
@@ -551,6 +836,11 @@ internal fun CourseStaffEntity.toDomain(): CourseStaffMember =
         profileUrl = profileUrl,
     )
 
+/**
+ * Maps one status of the Moodle activity-completion web service into its cache row.
+ * Moodle's `state` codes collapse to a boolean (2 = done, 3 = done-with-pass; 0 also
+ * means untracked) and `tracking` to the manual (1) / automatic (2) flags.
+ */
 internal fun ElearningActivityCompletionStatus.toEntity(
     accountId: AccountId,
     courseId: Int,
@@ -569,6 +859,7 @@ internal fun ElearningActivityCompletionStatus.toEntity(
     )
 }
 
+/** Maps a cached completion row to the domain model. */
 internal fun ActivityCompletionEntity.toDomain(): CompletionState =
     CompletionState(
         cmId = cmId,
@@ -579,21 +870,28 @@ internal fun ActivityCompletionEntity.toDomain(): CompletionState =
         isTracked = isTracked,
     )
 
-// Course/module names arrive with multilang2 {mlang} markup unresolved even with
-// moodlewssettingfilter=true: names go through format_string (headings), which the site's
-// multilang filter doesn't cover, and no WS parameter can override that. The official Moodle
-// app has the same problem and ships a client-side filter (moodleapp src/addons/filter/
-// multilang2); this mirrors its semantics — comma-separated language lists per block, blocks
-// matching the wanted language kept, all others removed, text outside blocks preserved.
-// Wanted language order: app language, the dedicated "other" block, English, then the first
-// block's language as a last resort so a name never collapses to nothing. NOTE: closing braces
-// must stay escaped — Android's ICU regex engine rejects the bare `}` the JVM tolerates, and
-// the failure crashes this class's static init.
+/**
+ * Matches one multilang2 block, capturing its comma-separated language list and its
+ * text. The closing braces must stay escaped — Android's ICU regex engine rejects the
+ * bare `}` the JVM tolerates, and the failure crashes this class's static init.
+ */
 private val MlangBlock = Regex(
     """\{\s*mlang\s+([a-z0-9_-]+(?:\s*,\s*[a-z0-9_-]+)*)\s*\}(.*?)\{\s*mlang\s*\}""",
     setOf(RegexOption.IGNORE_CASE, RegexOption.DOT_MATCHES_ALL),
 )
 
+/**
+ * Resolves multilang2 {mlang} markup in course/module names client-side. The markup
+ * arrives unresolved even with moodlewssettingfilter=true: names go through
+ * format_string (headings), which the site's multilang filter doesn't cover, and no
+ * WS parameter can override that. The official Moodle app has the same problem and
+ * ships a client-side filter (moodleapp src/addons/filter/multilang2); this mirrors
+ * its semantics — comma-separated language lists per block, blocks matching the
+ * wanted language kept, all others removed, text outside blocks preserved. A block
+ * tagged with a parent language (e.g. "en") also serves variants ("en-us"). Wanted
+ * language order: app language, the dedicated "other" block, English, then the first
+ * block's language as a last resort so a name never collapses to nothing.
+ */
 internal fun String.stripMlang(): String {
     if (!contains("mlang", ignoreCase = true)) return this
     val firstBlock = MlangBlock.find(this) ?: return this
@@ -603,7 +901,6 @@ internal fun String.stripMlang(): String {
         var matched = false
         val result = MlangBlock.replace(this) { block ->
             val languages = block.groupValues[1].split(',').map(::normalizeMlangCode)
-            // A block tagged with a parent language (e.g. "en") also serves variants ("en-us").
             val blockMatches = languages.any { it == wanted || wanted.startsWith("$it-") }
             if (blockMatches) matched = true
             if (blockMatches) block.groupValues[2] else ""
@@ -615,6 +912,7 @@ internal fun String.stripMlang(): String {
 
 private fun normalizeMlangCode(code: String): String = code.trim().lowercase().replace('_', '-')
 
+/** Converts a Moodle epoch-second timestamp to milliseconds, reading 0 as absent. */
 private fun Long?.toMillisOrNull(): Long? = this?.takeIf { it > 0 }?.let { it * 1000L }
 
 private fun Long.toLocalDate(): LocalDate =

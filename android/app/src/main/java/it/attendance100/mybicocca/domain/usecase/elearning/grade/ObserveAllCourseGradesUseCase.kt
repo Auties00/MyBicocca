@@ -7,6 +7,10 @@ import it.attendance100.mybicocca.domain.repository.ElearningGradeRepository
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
+/**
+ * Streams the course-total grades of every enrolled course hot from the local cache,
+ * for the cross-course grade overview in the e-learning tab.
+ */
 class ObserveAllCourseGradesUseCase @Inject constructor(
     private val repository: ElearningGradeRepository,
 ) {

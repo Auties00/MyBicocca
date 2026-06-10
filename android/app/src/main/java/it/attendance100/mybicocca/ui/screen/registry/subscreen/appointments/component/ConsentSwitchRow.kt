@@ -24,10 +24,14 @@ import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import it.attendance100.mybicocca.domain.model.appointment.AppointmentFormField
 
-// The GDPR consent, styled like the app's other memorable-choice rows (the elearning file
-// chooser's "Ricorda la scelta"): a clickable surface with a trailing switch. The reference to
-// the privacy notice is rendered inline as a red, tappable link. Stores "true"/"" in the
-// form values.
+/**
+ * The GDPR consent, styled like the app's other memorable-choice rows (the elearning file
+ * chooser's "Ricorda la scelta"): a clickable surface with a trailing switch, the privacy
+ * notice reference rendered inline as a red, tappable link. Stores "true"/"" in the form
+ * values. The backend ships an untranslated "gdpr_label" key, for which local copy is
+ * rendered with the notice reference as the inline link; custom labels are wrapped whole in
+ * the link.
+ */
 @Composable
 internal fun ConsentSwitchRow(
     field: AppointmentFormField.Consent,
@@ -43,8 +47,6 @@ internal fun ConsentSwitchRow(
         CustomTabsIntent.Builder().setShowTitle(true).build().launchUrl(context, url.toUri())
     }
 
-    // The backend ships an untranslated "gdpr_label" key; render our own copy with the notice
-    // reference as the inline link. Custom labels fall back to wrapping the whole label.
     val statement = buildAnnotatedString {
         if (field.label == "gdpr_label") {
             append("Ho letto ")

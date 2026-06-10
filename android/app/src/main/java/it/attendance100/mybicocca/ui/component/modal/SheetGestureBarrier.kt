@@ -9,11 +9,13 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.Velocity
 
-// Contains vertical gestures within a sheet page body so they never drag the sheet:
-// the content's scrollables keep working, their leftover scroll/fling is swallowed
-// before the sheet's nested-scroll connection can turn it into a dismissal, and plain
-// vertical drags on non-scrollable body areas are consumed in place. Applied below the
-// pinned header, it leaves the header (and drag handle) as the only swipe surface.
+/**
+ * Contains vertical gestures within a sheet page body so they never drag the sheet:
+ * the content's scrollables keep working, their leftover scroll/fling is swallowed
+ * before the sheet's nested-scroll connection can turn it into a dismissal, and plain
+ * vertical drags on non-scrollable body areas are consumed in place. Applied below the
+ * pinned header, it leaves the header (and drag handle) as the only swipe surface.
+ */
 fun Modifier.sheetBodyGestureBarrier(): Modifier = this
     .nestedScroll(SwallowLeftoverScrollConnection)
     .pointerInput(Unit) {

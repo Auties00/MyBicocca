@@ -37,18 +37,15 @@ class EasyStaffExamCalendarApiTest : EasyStaffTestBase() {
         )
         assertNotNull(results)
 
-        // Verify each exam if results are not empty
         results.forEach { exam ->
             validateExam(exam)
 
-            // Exam should be within the date range
             assertTrue(
                 !exam.date.isBefore(academicYear.toStartDate()) && !exam.date.isAfter(academicYear.toEndDate()),
                 "Exam date ${exam.date} should be within range $academicYear.toStartDate() - $academicYear.toEndDate()"
             )
         }
 
-        // Verify exams are sorted by date (ascending)
         for (i in 0 until results.size - 1) {
             assertTrue(
                 !results[i].date.isAfter(results[i + 1].date) ||
@@ -78,11 +75,9 @@ class EasyStaffExamCalendarApiTest : EasyStaffTestBase() {
         assertNotNull(results)
         assertTrue(results.isNotEmpty(), "Exams should not be empty")
 
-        // Verify each exam if results are not empty
         results.forEach { exam ->
             validateExam(exam)
 
-            // Exam should be within the date range
             assertTrue(
                 !exam.date.isBefore(academicYear.toStartDate()) && !exam.date.isAfter(academicYear.toEndDate()),
                 "Exam date ${exam.date} should be within range"
@@ -119,11 +114,9 @@ class EasyStaffExamCalendarApiTest : EasyStaffTestBase() {
         assertNotNull(results)
         assertTrue(results.isNotEmpty(), "Exams should not be empty")
 
-        // Verify each exam if results are not empty
         results.forEach { exam ->
             validateExam(exam)
 
-            // Exam should be within the date range
             assertTrue(
                 !exam.date.isBefore(academicYear.toStartDate()) && !exam.date.isAfter(academicYear.toEndDate()),
                 "Exam date ${exam.date} should be within range"
@@ -132,11 +125,9 @@ class EasyStaffExamCalendarApiTest : EasyStaffTestBase() {
     }
 
     private fun validateExam(exam: EasyStaffScheduledExam) {
-        // Verify basic exam properties
         assertTrue(exam.subjectName.isNotBlank(), "Exam subject name should not be blank")
         assertNotNull(exam.date, "Exam date should not be null")
 
-        // Verify date is reasonable (within academic year range)
         assertTrue(
             exam.date.year >= 2020,
             "Exam date ${exam.date} should be recent"
@@ -146,17 +137,13 @@ class EasyStaffExamCalendarApiTest : EasyStaffTestBase() {
             "Exam date ${exam.date} should not be too far in the future"
         )
 
-        // Verify time
         assertNotNull(exam.startTime, "Exam start time should not be null")
         assertNotNull(exam.endTime, "Exam end time should not be null")
 
-        // Verify room
         assertTrue(exam.room.isNotBlank(), "Room should not be blank")
 
-        // Verify building
         assertTrue(exam.building == null || exam.building.isNotBlank(), "Building should not be blank if present")
 
-        // Verify examiners (List<EasyStaffTeacher>)
         assertNotNull(exam.examiners, "Examiners should not be null")
         exam.examiners.forEach { teacher ->
             assertTrue(teacher.code != null || teacher.email != null, "Teacher code and email cannot be null at the same time")
@@ -164,13 +151,10 @@ class EasyStaffExamCalendarApiTest : EasyStaffTestBase() {
             assertTrue(teacher.email == null || teacher.email.isNotBlank(), "Teacher email should not be blank if present")
         }
 
-        // Verify exam type
         assertNotNull(exam.examType, "Exam type should not be null")
 
-        // Verify event ID
         assertTrue(exam.eventId.isNotBlank(), "Event ID should not be blank")
 
-        // Notes may be empty, so just check it's not null
         assertNotNull(exam.notes, "Notes should not be null")
     }
 }

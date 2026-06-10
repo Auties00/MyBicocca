@@ -11,13 +11,15 @@ import java.util.UUID
 
 class AffluencesAccountApiTest : AffluencesTestBase() {
     companion object {
-        // A stable, opaque device id for the integration runs — check-in just registers it.
+        /** A stable, opaque device id for the integration runs — check-in just registers it. */
         private const val TEST_DEVICE_ID = "mybicocca-integration-test"
     }
 
-    // Registers the device and returns the minted user-identifier (the api key the rest of the
-    // account flow gates on), like firstResourceTypeFilters() in the reservation tests. The other
-    // calls are exercised through their error paths, so no validation email is ever sent.
+    /**
+     * Registers the device and returns the minted user-identifier, the api key the rest of
+     * the account flow gates on. The remaining account calls are exercised through their
+     * error paths, so no validation email is ever sent.
+     */
     private suspend fun freshApiKey(): String {
         val apiKey = assertNotNull(
             api.account.checkIn(deviceId = TEST_DEVICE_ID).apiKey,
@@ -34,10 +36,12 @@ class AffluencesAccountApiTest : AffluencesTestBase() {
         assertTrue(apiKey.isNotBlank(), "The minted api key should not be blank")
     }
 
+    /**
+     * A malformed email is rejected before any mail is queued, so the test never triggers a
+     * real validation email.
+     */
     @Test
     suspend fun requestEmailValidationWithInvalidEmailThrows() {
-        // A malformed email is rejected before any mail is queued, mirroring
-        // createReservationWithInvalidEmailThrows on the reservation api.
         val apiKey = freshApiKey()
         val error = runCatching {
             api.account.requestEmailValidation(apiKey = apiKey, email = "not-an-email")
@@ -49,10 +53,12 @@ class AffluencesAccountApiTest : AffluencesTestBase() {
         assertTrue(affluencesError.errorMessage.isNotBlank(), "Error message should not be blank")
     }
 
+    /**
+     * Polling a request the user never confirmed (here, one that never existed) answers with
+     * the documented `does_not_exist` error rather than a session token.
+     */
     @Test
     suspend fun pollEmailValidationWithUnknownRequestReportsDoesNotExist() {
-        // Polling a request the user never confirmed (here, one that never existed) answers with the
-        // documented does_not_exist error rather than a session token.
         val apiKey = freshApiKey()
         val error = runCatching {
             api.account.pollEmailValidation(apiKey = apiKey, requestUuid = UUID.randomUUID().toString())

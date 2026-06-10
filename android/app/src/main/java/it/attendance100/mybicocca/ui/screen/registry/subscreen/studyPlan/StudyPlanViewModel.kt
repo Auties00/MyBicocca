@@ -3,7 +3,6 @@ package it.attendance100.mybicocca.ui.screen.registry.subscreen.studyPlan
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import it.attendance100.mybicocca.BuildConfig
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.SyncStatus
 import it.attendance100.mybicocca.core.state.valueOrNull
@@ -33,8 +32,20 @@ import kotlinx.coroutines.sync.Mutex
 import javax.inject.Inject
 import kotlin.coroutines.cancellation.CancellationException
 
-// Loadable<StudyPlan?>: Loaded(null) means the career genuinely has no plan, which is a
-// valid empty state distinct from "not yet fetched".
+/**
+ * Backs the "Percorso e piano" sheet with the active career's study plan and path.
+ *
+ * Streams: [plan] carries the fetched plan — Loaded(null) means the career genuinely has
+ * no plan, a valid empty state distinct from "not yet fetched"; [studyPath] carries the
+ * percorso facet independently so a path failure never blanks the course list;
+ * [syncStatus] tracks the in-flight refresh; [editable] gates the compiler entry;
+ * [actionInProgress] guards the print action; [events] carries one-shot effects (open
+ * the printed PDF, show a message) that never replay across rotation. A career switch
+ * triggers a reload automatically.
+ *
+ * Actions: [refresh] re-fetches plan and path together; [printPlan] fetches the plan PDF
+ * and emits it as an event.
+ */
 @HiltViewModel
 class StudyPlanViewModel @Inject constructor(
     private val getStudyPlan: GetStudyPlanUseCase,
@@ -43,8 +54,10 @@ class StudyPlanViewModel @Inject constructor(
     observeActiveAccount: ObserveActiveAccountUseCase,
 ) : ViewModel() {
 
-    // Exposed for the no-plan entry: the edit route needs a studentId (== careerId)
-    // even when there's no plan to take it from.
+    /**
+     * Exposed for the no-plan entry: the edit flow needs a studentId (== careerId) even
+     * when there's no plan to take it from.
+     */
     val activeCareerId: StateFlow<CareerId?> = observeActiveAccount()
         .map { it?.academic?.selectedCareerId }
         .distinctUntilChanged()
@@ -53,16 +66,20 @@ class StudyPlanViewModel @Inject constructor(
     private val _plan = MutableStateFlow<Loadable<StudyPlan?>>(Loadable.NotYetLoaded)
     val plan: StateFlow<Loadable<StudyPlan?>> = _plan.asStateFlow()
 
-    // The path section (percorso / orientamento / profilo / part-time). Independent of
-    // the plan stream: a path lookup failure must not blank the course list.
     private val _studyPath = MutableStateFlow<Loadable<StudyPath?>>(Loadable.NotYetLoaded)
+
+    /**
+     * The path section (percorso / orientamento / profilo / part-time). Independent of
+     * the plan stream: a path lookup failure must not blank the course list.
+     */
     val studyPath: StateFlow<Loadable<StudyPath?>> = _studyPath.asStateFlow()
 
     private val _syncStatus = MutableStateFlow<SyncStatus>(SyncStatus.Idle)
     val syncStatus: StateFlow<SyncStatus> = _syncStatus.asStateFlow()
 
-    // True while the compilation window for the plan's choice regulation is open.
     private val _editable = MutableStateFlow(false)
+
+    /** True while the compilation window for the plan's choice regulation is open. */
     val editable: StateFlow<Boolean> = _editable.asStateFlow()
 
     private val _actionInProgress = MutableStateFlow(false)
@@ -105,15 +122,18 @@ class StudyPlanViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Plan and path fan out together so the sheet paints once, complete — the path must
+     * never pop in after the header is already on screen. A failed path lookup degrades
+     * silently to Loaded(null) rather than failing the page; only the plan call drives
+     * [syncStatus]. The compilation-window state rides on the same path lookup, with no
+     * separate call.
+     */
     private suspend fun fetch(careerId: CareerId) {
         if (!refreshMutex.tryLock()) return
         try {
             _syncStatus.value = SyncStatus.Refreshing
             coroutineScope {
-                // Plan and path fan out together so the sheet paints once, complete —
-                // the path must never pop in after the header is already on screen.
-                // A failed path lookup degrades silently (Loaded(null)) rather than
-                // failing the page; only the plan call drives syncStatus.
                 val pathDeferred = async { runCatching { getStudyPath(careerId) }.getOrNull() }
                 runCatching { getStudyPlan(careerId) }.fold(
                     onSuccess = { plan ->
@@ -124,10 +144,7 @@ class StudyPlanViewModel @Inject constructor(
                 )
                 val path = pathDeferred.await()
                 _studyPath.value = Loadable.Loaded(path)
-                // The compilation-window state already rides on the path lookup — no
-                // separate call. Debug builds force the edit action on so the editor
-                // can be exercised outside compilation windows.
-                _editable.value = BuildConfig.DEBUG || path?.editingOpen == true
+                _editable.value = path?.editingOpen == true
             }
         } finally {
             refreshMutex.unlock()

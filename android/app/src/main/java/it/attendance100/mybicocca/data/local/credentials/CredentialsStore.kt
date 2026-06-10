@@ -10,12 +10,19 @@ import javax.inject.Inject
 import javax.inject.Named
 import javax.inject.Singleton
 
+/**
+ * Stores each account's university credentials in EncryptedSharedPreferences (keystore-backed),
+ * keyed by account id, so expired sessions can be re-established silently.
+ *
+ * The preferences are injected lazily because `EncryptedSharedPreferences.create()` runs
+ * keystore and Tink initialization that costs tens to hundreds of milliseconds, while this
+ * store is constructed on the cold-start main thread via SessionManager. Deferring creation to
+ * the first credential access — always on Dispatchers.IO — keeps it off the startup path;
+ * credentials never gate the first screen, which resolves the active account from DataStore
+ * and Room.
+ */
 @Singleton
 class CredentialsStore @Inject constructor(
-    // Lazy: EncryptedSharedPreferences.create() (keystore + Tink init, tens-to-hundreds of ms) is
-    // deferred to the first credential access on Dispatchers.IO below, instead of running when this is
-    // constructed — which happens on the cold-start main thread via SessionManager. Credentials never
-    // gate the first screen (the active account resolves from DataStore + Room), so they must not block startup.
     @Named(EncryptedPrefsName) private val prefs: Lazy<SharedPreferences>,
 ) {
 

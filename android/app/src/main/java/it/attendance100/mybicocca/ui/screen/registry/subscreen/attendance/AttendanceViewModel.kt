@@ -3,21 +3,16 @@ package it.attendance100.mybicocca.ui.screen.registry.subscreen.attendance
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import it.attendance100.mybicocca.BuildConfig
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.SyncStatus
-import it.attendance100.mybicocca.data.deeplink.PendingPresenceScan
-import it.attendance100.mybicocca.domain.model.attendance.ClassroomAttendance
-import it.attendance100.mybicocca.domain.model.attendance.ClassroomAttendanceStatus
 import it.attendance100.mybicocca.domain.model.attendance.CourseAttendance
 import it.attendance100.mybicocca.domain.model.attendance.PresenceMarkOutcome
-import it.attendance100.mybicocca.domain.model.attendance.SessionAttendance
 import it.attendance100.mybicocca.domain.model.career.CareerId
-import it.attendance100.mybicocca.domain.model.studyplan.Semester
-import it.attendance100.mybicocca.domain.model.studyplan.StudyYear
 import it.attendance100.mybicocca.domain.usecase.account.ObserveActiveAccountUseCase
+import it.attendance100.mybicocca.domain.usecase.attendance.ConsumePresenceScanUseCase
 import it.attendance100.mybicocca.domain.usecase.attendance.GetPendingAttendanceCoursesUseCase
 import it.attendance100.mybicocca.domain.usecase.attendance.MarkPresenceUseCase
+import it.attendance100.mybicocca.domain.usecase.attendance.ObservePendingPresenceScanUseCase
 import it.attendance100.mybicocca.domain.usecase.attendance.ParsePresenceScanUseCase
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.attendance.state.AttendanceEvent
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.attendance.state.MarkUiState
@@ -35,12 +30,27 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import javax.inject.Inject
 
+/**
+ * Owns the Presenze sheet: the pending-attendance course list for the active career and the
+ * presence-marking flow.
+ *
+ * Streams by role: [courses] is the data to render, [syncStatus] the independent refresh
+ * state, [markState] the lifecycle of a presence submission, and [events] one-shot requests
+ * to the UI. The course list is fetched on every active-career change. A presence QR scanned
+ * outside the app is observed from the pending-scan store and consumed on arrival: the
+ * ViewModel emits [AttendanceEvent.OpenRilevaSheet] and submits the payload immediately, so
+ * the UI lands directly on the in-flight progress page.
+ *
+ * Public actions: [refresh] re-fetches the course list, [submitScan] registers a scanned QR
+ * payload or typed lesson code, and [resetMarkState] rearms the marking flow.
+ */
 @HiltViewModel
 class AttendanceViewModel @Inject constructor(
     private val getPendingCourses: GetPendingAttendanceCoursesUseCase,
     private val markPresence: MarkPresenceUseCase,
     private val parseScan: ParsePresenceScanUseCase,
-    private val pendingPresenceScan: PendingPresenceScan,
+    observePendingPresenceScan: ObservePendingPresenceScanUseCase,
+    consumePresenceScan: ConsumePresenceScanUseCase,
     observeActiveAccount: ObserveActiveAccountUseCase,
 ) : ViewModel() {
 
@@ -68,8 +78,8 @@ class AttendanceViewModel @Inject constructor(
             activeCareerId.filterNotNull().collect { careerId -> fetch(careerId) }
         }
         viewModelScope.launch {
-            pendingPresenceScan.pending.filterNotNull().collect { raw ->
-                pendingPresenceScan.consume()
+            observePendingPresenceScan().filterNotNull().collect { raw ->
+                consumePresenceScan()
                 _events.send(AttendanceEvent.OpenRilevaSheet)
                 submitScan(raw)
             }
@@ -81,8 +91,10 @@ class AttendanceViewModel @Inject constructor(
         viewModelScope.launch { fetch(careerId) }
     }
 
-    // Handles both an in-app QR scan and a typed lesson code: the parser resolves
-    // which provider can register it.
+    /**
+     * Handles both an in-app QR scan and a typed lesson code: the parser resolves which
+     * provider can register it. A recorded outcome triggers a course-list refresh.
+     */
     fun submitScan(raw: String) {
         val careerId = activeCareerId.value
         if (careerId == null) {
@@ -107,9 +119,7 @@ class AttendanceViewModel @Inject constructor(
             _syncStatus.value = SyncStatus.Refreshing
             runCatching { getPendingCourses(careerId) }.fold(
                 onSuccess = { list ->
-                    _courses.value = Loadable.Loaded(
-                        if (BuildConfig.DEBUG) list + demoCourses() else list,
-                    )
+                    _courses.value = Loadable.Loaded(list)
                     _syncStatus.value = SyncStatus.Idle
                 },
                 onFailure = { cause -> _syncStatus.value = SyncStatus.Failed(cause) },
@@ -118,63 +128,4 @@ class AttendanceViewModel @Inject constructor(
             refreshMutex.unlock()
         }
     }
-
-    // DEBUG-only showcase courses covering the attendance UI states: no recordings at
-    // all, and recorded data on both sources; never present in release builds.
-    private fun demoCourses(): List<CourseAttendance> = listOf(
-        CourseAttendance(
-            name = "Demo · Nessuna rilevazione",
-            code = "DEMO-0",
-            year = StudyYear(1),
-            semester = Semester.Unknown,
-            credits = 6f,
-            teacherName = "Docente di prova",
-            classroomAttendance = null,
-            sessionAttendance = emptyList(),
-        ),
-        CourseAttendance(
-            name = "Demo · Frequenza registrata",
-            code = "DEMO-1",
-            year = StudyYear(1),
-            semester = Semester.Unknown,
-            credits = 8f,
-            teacherName = "Docente di prova",
-            classroomAttendance = ClassroomAttendance(
-                attendancePercentage = 82.0,
-                lessonsAttended = 18,
-                hoursCompleted = 44,
-                requirementProgressPercentage = 96.0,
-                status = ClassroomAttendanceStatus.Attending,
-            ),
-            sessionAttendance = listOf(
-                SessionAttendance(
-                    label = "Presenze LABORATORIO",
-                    attendedSessions = 7,
-                    recordedPercentage = 70.0,
-                    totalSessions = 12,
-                    overallPercentage = 58.0,
-                    pointsLabel = "14/24",
-                    bestPossiblePercentage = 91.0,
-                ),
-            ),
-        ),
-        CourseAttendance(
-            name = "Demo · Solo registro e-learning",
-            code = "DEMO-2",
-            year = StudyYear(2),
-            semester = Semester.Unknown,
-            credits = 6f,
-            teacherName = "Docente di prova",
-            classroomAttendance = null,
-            sessionAttendance = listOf(
-                SessionAttendance(
-                    label = "Presenze LEZIONE",
-                    attendedSessions = 3,
-                    recordedPercentage = 60.0,
-                    totalSessions = 10,
-                    overallPercentage = 30.0,
-                ),
-            ),
-        ),
-    )
 }

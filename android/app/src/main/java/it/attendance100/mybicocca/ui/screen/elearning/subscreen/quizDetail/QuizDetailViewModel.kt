@@ -44,12 +44,29 @@ import kotlinx.coroutines.launch
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
-import it.attendance100.mybicocca.ui.navigation.AppRoute
+import it.attendance100.mybicocca.ui.navigation.route.SheetRoute
 
+/**
+ * Drives the quiz detail sheet: the overview facts, the attempt history, and the full attempt
+ * lifecycle from start to review.
+ *
+ * Streams by role — data: [quiz], [attempts], and [bestGrade] observe the Room cache for the
+ * active account, while [attemptUi] is the live attempt state machine the sheet renders (idle,
+ * loading, in progress, submitting, reviewing); sync: [syncStatus] tracks the attempts refresh
+ * run on account activation and on [pullToRefresh]; one-shot: [oneShotEvents] carries attempt
+ * lifecycle markers and failures.
+ *
+ * Actions: [onStartAttempt] starts a server-side attempt and lands on its first page;
+ * [resumeAttempt] reopens an in-progress one; [loadPage] moves between server pages, with
+ * answers and flags accumulating across pages; [setAnswer] and [toggleFlag] mutate the live
+ * state; [onSaveDraft] persists answers without finishing; [onSubmit] finishes the attempt,
+ * refreshes the history, and flows straight into the review; [viewReview] opens a finished
+ * attempt's review; [closeAttempt] returns to idle.
+ */
 @OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel(assistedFactory = QuizDetailViewModel.Factory::class)
 class QuizDetailViewModel @AssistedInject constructor(
-    @Assisted private val key: AppRoute.QuizDetail,
+    @Assisted private val key: SheetRoute.QuizDetail,
     private val savedState: SavedStateHandle,
     observeActiveAccount: ObserveActiveAccountUseCase,
     private val observeQuiz: ObserveQuizUseCase,
@@ -65,7 +82,7 @@ class QuizDetailViewModel @AssistedInject constructor(
 
     @AssistedFactory
     interface Factory {
-        fun create(key: AppRoute.QuizDetail): QuizDetailViewModel
+        fun create(key: SheetRoute.QuizDetail): QuizDetailViewModel
     }
 
     private val quizId: QuizId = QuizId(key.quizId)
@@ -106,14 +123,6 @@ class QuizDetailViewModel @AssistedInject constructor(
             activeAccountId.filterNotNull().distinctUntilChanged().collect { id ->
                 runRefresh(id)
             }
-        }
-        // The overview lives in the sheet; this view model only ever backs the full-screen
-        // attempt/review, so it kicks off the requested action immediately. A base key (no
-        // action set, used by the sheet's own instance) leaves it idle.
-        when {
-            key.startNew -> onStartAttempt()
-            key.resumeAttemptId != null -> resumeAttempt(AttemptId(key.resumeAttemptId))
-            key.reviewAttemptId != null -> viewReview(AttemptId(key.reviewAttemptId))
         }
     }
 

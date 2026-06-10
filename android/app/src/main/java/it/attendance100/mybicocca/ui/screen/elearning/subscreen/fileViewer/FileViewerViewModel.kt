@@ -16,13 +16,16 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.SyncStatus
-import it.attendance100.mybicocca.data.local.settings.PdfPagerOrientation
-import it.attendance100.mybicocca.data.local.settings.PdfThemeMode
-import it.attendance100.mybicocca.data.local.settings.PdfViewerSettingsStore
+import it.attendance100.mybicocca.domain.model.settings.PdfPagerOrientation
+import it.attendance100.mybicocca.domain.model.settings.PdfThemeMode
 import it.attendance100.mybicocca.domain.usecase.elearning.file.DownloadCourseFileUseCase
 import it.attendance100.mybicocca.domain.usecase.elearning.file.GetAuthenticatedFileUrlUseCase
-import it.attendance100.mybicocca.ui.navigation.AppRoute
-import it.attendance100.mybicocca.ui.screen.elearning.subscreen.fileViewer.state.FileKind
+import it.attendance100.mybicocca.domain.usecase.settings.ObservePdfPagerOrientationUseCase
+import it.attendance100.mybicocca.domain.usecase.settings.ObservePdfThemeModeUseCase
+import it.attendance100.mybicocca.domain.usecase.settings.SetPdfPagerOrientationUseCase
+import it.attendance100.mybicocca.domain.usecase.settings.SetPdfThemeModeUseCase
+import it.attendance100.mybicocca.ui.component.file.FileKind
+import it.attendance100.mybicocca.ui.navigation.route.AppRoute
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.fileViewer.state.FileViewerOneShotEvent
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.fileViewer.state.ZipEntryItem
 import kotlinx.coroutines.Dispatchers
@@ -39,13 +42,37 @@ import kotlinx.coroutines.withContext
 import java.io.File
 import java.util.zip.ZipFile
 
+/**
+ * Backs one opened file: classifies it as a [FileKind], resolves the bytes the viewer needs, and
+ * executes every action a viewer offers (share, save, external hand-offs, archive browsing).
+ *
+ * Resolution depends on the kind: disk-rendering kinds download eagerly into [localPath];
+ * video/audio resolve [mediaUri] without downloading; Office kinds resolve nothing eagerly
+ * because they are hand-off only. Routes may also carry a ready local path (zip-extracted
+ * files), which short-circuits the download.
+ *
+ * Streams by role:
+ * - data: [localPath], [mediaUri], [zipEntries], plus the persisted PDF preferences
+ *   [pdfThemeMode] and [pdfOrientation], which flow through settings use cases (observe to read,
+ *   [setPdfThemeMode]/[setPdfOrientation] to write).
+ * - sync: [downloadStatus] for the file fetch.
+ * - one-shot: [oneShotEvents], consumed by the hosting UI to launch intents, show snackbars, and
+ *   open nested viewers.
+ *
+ * Public actions: [retry], [openInOffice], [openWithExternalApp], [shareFile],
+ * [saveToDownloads], [saveToGallery] (MediaStore on Q+, legacy public directories below), and
+ * [openZipEntry].
+ */
 @HiltViewModel(assistedFactory = FileViewerViewModel.Factory::class)
 class FileViewerViewModel @AssistedInject constructor(
     @Assisted private val key: AppRoute.FileViewer,
     @ApplicationContext private val context: Context,
     private val downloadCourseFile: DownloadCourseFileUseCase,
     private val getAuthenticatedFileUrl: GetAuthenticatedFileUrlUseCase,
-    private val pdfViewerSettings: PdfViewerSettingsStore,
+    observePdfThemeMode: ObservePdfThemeModeUseCase,
+    observePdfPagerOrientation: ObservePdfPagerOrientationUseCase,
+    private val setPdfThemeModeUseCase: SetPdfThemeModeUseCase,
+    private val setPdfPagerOrientationUseCase: SetPdfPagerOrientationUseCase,
 ) : ViewModel() {
 
     @AssistedFactory
@@ -58,27 +85,31 @@ class FileViewerViewModel @AssistedInject constructor(
     val sizeBytes: Long? = key.sizeBytes
     val kind: FileKind = FileKind.classify(key.fileName, key.mimeType)
 
-    val pdfThemeMode: StateFlow<PdfThemeMode> = pdfViewerSettings.themeMode
+    val pdfThemeMode: StateFlow<PdfThemeMode> = observePdfThemeMode()
         .stateIn(viewModelScope, SharingStarted.Eagerly, PdfThemeMode.System)
 
-    val pdfOrientation: StateFlow<PdfPagerOrientation> = pdfViewerSettings.orientation
+    val pdfOrientation: StateFlow<PdfPagerOrientation> = observePdfPagerOrientation()
         .stateIn(viewModelScope, SharingStarted.Eagerly, PdfPagerOrientation.Vertical)
 
     fun setPdfThemeMode(mode: PdfThemeMode) {
-        viewModelScope.launch { pdfViewerSettings.setThemeMode(mode) }
+        viewModelScope.launch { setPdfThemeModeUseCase(mode) }
     }
 
     fun setPdfOrientation(orientation: PdfPagerOrientation) {
-        viewModelScope.launch { pdfViewerSettings.setOrientation(orientation) }
+        viewModelScope.launch { setPdfPagerOrientationUseCase(orientation) }
     }
 
-    // Absolute path of the local copy, for kinds that render from disk.
     private val _localPath = MutableStateFlow<Loadable<String>>(Loadable.NotYetLoaded)
+
+    /** Absolute path of the local copy, for kinds that render from disk. */
     val localPath: StateFlow<Loadable<String>> = _localPath.asStateFlow()
 
-    // What the media player should play: the tokenized remote URL (pluginfile honors
-    // Range requests, so streaming + seeking works without a download) or a local path.
     private val _mediaUri = MutableStateFlow<Loadable<String>>(Loadable.NotYetLoaded)
+
+    /**
+     * What the media player should play: the tokenized remote URL (pluginfile honors Range
+     * requests, so streaming + seeking works without a download) or a local path.
+     */
     val mediaUri: StateFlow<Loadable<String>> = _mediaUri.asStateFlow()
 
     private val _downloadStatus = MutableStateFlow<SyncStatus>(SyncStatus.Idle)
@@ -98,21 +129,25 @@ class FileViewerViewModel @AssistedInject constructor(
         load()
     }
 
+    /**
+     * Office is hand-off only and never downloads eagerly — but a supplied local path (e.g. a
+     * zip-extracted file) is cached so [openWithExternalApp]/[openInOffice] can hand it off
+     * without a download trip.
+     */
     private fun load() {
         when (kind) {
-            // Office is hand-off only: no eager download. But if a local path was supplied
-            // (e.g. a zip-extracted file), cache it so openWithExternalApp/openInOffice
-            // can hand it off without a download trip.
             is FileKind.Office -> key.localPath?.let { _localPath.value = Loadable.Loaded(it) }
             FileKind.Video, FileKind.Audio -> resolveMediaUri()
             else -> ensureLocalFile()
         }
     }
 
-    // Office docs are opened through Microsoft's documented ms-* protocol handlers in
-    // forced view-only mode (ofv). The Office app downloads the URL itself, so it gets
-    // the tokenized variant; for zip-extracted local files the protocol can't help and
-    // the file goes out via FileProvider instead.
+    /**
+     * Opens the document through Microsoft's documented ms-* protocol handlers in forced
+     * view-only mode (ofv). The Office app downloads the URL itself, so it gets the tokenized
+     * variant; the protocol cannot help with zip-extracted local files, which go out via
+     * FileProvider.
+     */
     fun openInOffice() {
         val app = (kind as? FileKind.Office)?.app ?: return
         viewModelScope.launch {
@@ -132,8 +167,10 @@ class FileViewerViewModel @AssistedInject constructor(
         }
     }
 
-    // Hands the file to an external app. Office files are never downloaded eagerly, so
-    // this may have to fetch the file first.
+    /**
+     * Hands the file to an external app. Office files are never downloaded eagerly, so this may
+     * have to fetch the file first.
+     */
     fun openWithExternalApp() {
         viewModelScope.launch {
             val path = resolveLocalPath() ?: return@launch
@@ -141,7 +178,7 @@ class FileViewerViewModel @AssistedInject constructor(
         }
     }
 
-    // Downloads the file if needed, then asks the UI to open the system share sheet.
+    /** Downloads the file if needed, then asks the UI to open the system share sheet. */
     fun shareFile() {
         viewModelScope.launch {
             val path = resolveLocalPath() ?: return@launch
@@ -149,9 +186,11 @@ class FileViewerViewModel @AssistedInject constructor(
         }
     }
 
-    // Returns the local file path, downloading if necessary. Returns null and emits
-    // DownloadFailed if the download fails; returns null silently if there is no URL.
-    // Also handles zip-extracted files that have key.localPath but no key.fileUrl.
+    /**
+     * Returns the local file path, downloading if necessary. Returns null and emits
+     * [FileViewerOneShotEvent.DownloadFailed] if the download fails; returns null silently if
+     * there is no URL. Also handles zip-extracted files that have a local path but no URL.
+     */
     private suspend fun resolveLocalPath(): String? {
         return when (val loaded = _localPath.value) {
             is Loadable.Loaded -> loaded.value
@@ -358,11 +397,14 @@ class FileViewerViewModel @AssistedInject constructor(
             }
         }
 
+    /**
+     * Extracts one entry next to the archive, reusing a previous extraction when present. Zip
+     * entry names are attacker-controlled paths, so the target name is sanitized to a flat leaf:
+     * a `../` entry can never escape the cache directory.
+     */
     private suspend fun extractZipEntry(zipPath: String, entry: ZipEntryItem): String =
         withContext(Dispatchers.IO) {
             val targetDir = File(File(zipPath).parentFile, "extracted")
-            // Zip entry names are attacker-controlled paths; sanitize to a flat leaf so a
-            // "../" entry can never escape the cache directory.
             val leaf = entry.displayName.replace(Regex("""[\\/:*?"<>|]"""), "_").ifBlank { "file" }
             val target = File(targetDir, leaf)
             if (!target.exists() || target.length() == 0L) {

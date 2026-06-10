@@ -4,6 +4,11 @@ import androidx.room.Dao
 import androidx.room.Query
 import androidx.room.Upsert
 
+/**
+ * Room access to the per-career transcript sync bookkeeping. The account-wide delete
+ * resolves the account's careers through the `careers` table, mirroring the transcript
+ * tables' sign-out purge.
+ */
 @Dao
 interface TranscriptSyncStateDao {
 

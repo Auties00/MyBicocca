@@ -15,14 +15,21 @@ import java.util.concurrent.ConcurrentHashMap
 import javax.inject.Inject
 import javax.inject.Singleton
 
+/**
+ * File repository backed by the tokenized Moodle pluginfile endpoint and a cache
+ * directory under the app's private storage. Each URL gets its own cache folder named
+ * by a hash of the URL, holding the file under its sanitized original name; downloads
+ * stream through a temp file and are promoted atomically, so the existence check that
+ * implements the cache hit can never see a truncated file left by a death
+ * mid-download. One mutex per cache key makes concurrent requests for the same file
+ * share a single download while different files still download in parallel.
+ */
 @Singleton
 class ElearningFileRepositoryImpl @Inject constructor(
     @ApplicationContext private val context: Context,
     private val sessionManager: SessionManager,
 ) : ElearningFileRepository {
 
-    // One mutex per cache key so concurrent requests for the same file share a single
-    // download, while different files still download in parallel.
     private val downloadLocks = ConcurrentHashMap<String, Mutex>()
 
     override suspend fun downloadFile(fileUrl: String, fileName: String): String {
@@ -34,8 +41,6 @@ class ElearningFileRepositoryImpl @Inject constructor(
             file.parentFile?.mkdirs()
             val (api, token) = sessionManager.elearning()
             val channel = api.files.downloadFile(token, fileUrl)
-            // Stream to a sibling temp file first so a death mid-download never leaves a
-            // truncated file that the exists() check above would treat as a cache hit.
             val temp = File(file.parentFile, "${file.name}.part")
             withContext(Dispatchers.IO) {
                 channel.toInputStream().use { input ->
@@ -55,9 +60,11 @@ class ElearningFileRepositoryImpl @Inject constructor(
         return api.files.authenticatedFileUrl(token, fileUrl)
     }
 
-    // Keyed on the URL (not the name) so same-named files from different modules never
-    // collide; the original file name is kept as the leaf so renderers and external
-    // apps see the right extension.
+    /**
+     * Keyed on the URL (not the name) so same-named files from different modules never
+     * collide; the original file name is kept as the leaf so renderers and external
+     * apps see the right extension.
+     */
     private fun cacheKey(fileUrl: String): String {
         val digest = MessageDigest.getInstance("SHA-256").digest(fileUrl.toByteArray())
         return digest.joinToString("") { "%02x".format(it) }.take(16)

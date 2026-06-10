@@ -9,6 +9,7 @@ import it.attendance100.mybicocca.domain.model.map.MapBuilding
 import it.attendance100.mybicocca.domain.model.map.MapRoom
 import it.attendance100.mybicocca.domain.model.map.RoomCode
 
+/** Maps a building row to the domain; an unrecognized stored category degrades to OTHER. */
 internal fun MapBuildingEntity.toDomain(): MapBuilding = MapBuilding(
     code = BuildingCode(code),
     name = name,

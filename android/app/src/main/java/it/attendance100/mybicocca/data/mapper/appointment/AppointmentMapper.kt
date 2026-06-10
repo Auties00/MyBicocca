@@ -24,10 +24,13 @@ import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
 
-// Appointment times are local to the campuses; the backend speaks epoch seconds.
+/**
+ * Time zone appointment times are expressed in: they are local to the campuses, while the
+ * Portale Planning backend speaks epoch seconds.
+ */
 val CampusZone: ZoneId = ZoneId.of("Europe/Rome")
 
-// Consent-info documents may be referenced relative to the backend storage root.
+/** Storage root that consent-info documents may be referenced relative to. */
 private const val PolicyStorageBase = "https://gestioneorari.didattica.unimib.it/portaleplanningAPI/storage/"
 
 fun EasyStaffPlanningService.toAppointmentService() = AppointmentService(
@@ -76,12 +79,19 @@ fun EasyStaffPlanningDaySchedule.toAppointmentSlots(): List<AppointmentSlot> =
         }
         .sortedBy { it.start }
 
+/**
+ * Builds the domain form, dropping blocked fields: those are read-only values filled from a
+ * logged-in profile, and the anonymous flow has none to show.
+ */
 fun List<EasyStaffPlanningFormField>.toAppointmentForm() = AppointmentForm(
-    // Blocked fields are read-only values filled from a logged-in profile; the anonymous
-    // flow has none to show.
     fields = filterNot { it.blocked }.map { it.toAppointmentFormField() },
 )
 
+/**
+ * Maps one wire field to its typed domain counterpart. GDPR-positioned fields and checkboxes
+ * become the consent field (with the policy URL resolved against the storage root when
+ * relative); unknown input types degrade to plain text, which the backend accepts as a string.
+ */
 private fun EasyStaffPlanningFormField.toAppointmentFormField(): AppointmentFormField {
     val section = when (position) {
         EasyStaffPlanningFieldPosition.Service -> AppointmentFormSection.Service
@@ -133,7 +143,6 @@ private fun EasyStaffPlanningFormField.toAppointmentFormField(): AppointmentForm
             options = values.orEmpty().map { AppointmentFormOption(value = it.value, label = it.label) },
         )
 
-        // Unknown input types degrade to plain text, which the backend accepts as a string.
         else -> AppointmentFormField.Text(
             code = code,
             label = label,
@@ -144,6 +153,11 @@ private fun EasyStaffPlanningFormField.toAppointmentFormField(): AppointmentForm
     }
 }
 
+/**
+ * Builds the domain reservation from the booking response, denormalizing the service and
+ * offering the user picked. The appointment times prefer the authoritative values echoed by
+ * the backend and fall back to the picked slot.
+ */
 fun toAppointmentReservation(
     result: EasyStaffPlanningReservationResult,
     service: AppointmentService,
@@ -152,7 +166,6 @@ fun toAppointmentReservation(
     durationSeconds: Int,
     email: String,
 ): AppointmentReservation {
-    // Prefer the authoritative times echoed by the backend; fall back to the picked slot.
     val start = result.startTimeEpochSeconds?.toCampusDateTime() ?: slotStart
     val end = result.endTimeEpochSeconds?.toCampusDateTime()
         ?: slotStart.plusSeconds(durationSeconds.toLong())

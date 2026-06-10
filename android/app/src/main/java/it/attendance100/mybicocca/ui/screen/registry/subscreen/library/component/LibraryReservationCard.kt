@@ -16,8 +16,10 @@ private val DayOfMonthFormat = DateTimeFormatter.ofPattern("d")
 private val MonthFormat = DateTimeFormatter.ofPattern("MMM", Locale.ITALIAN)
 private val TimeFormat = DateTimeFormatter.ofPattern("HH:mm")
 
-// One synced seat booking, styled like the Appelli card: date tile, library + seat, tonal footer
-// (time + library location).
+/**
+ * One synced seat booking, styled like the Appelli card: date tile, library + seat, tonal footer
+ * (time + library location).
+ */
 @Composable
 fun LibraryReservationCard(
     reservation: LibraryReservation,

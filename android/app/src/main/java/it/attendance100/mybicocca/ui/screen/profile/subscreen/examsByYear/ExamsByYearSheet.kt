@@ -16,7 +16,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.PagerDefaults
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -45,7 +48,7 @@ import androidx.compose.ui.unit.sp
 import it.attendance100.mybicocca.domain.model.transcript.PrerequisiteStatus
 import it.attendance100.mybicocca.domain.model.transcript.TranscriptRow
 import it.attendance100.mybicocca.domain.model.transcript.TranscriptRowState
-import it.attendance100.mybicocca.ui.component.SegmentedSwitch
+import it.attendance100.mybicocca.ui.component.input.SegmentedSwitch
 import it.attendance100.mybicocca.ui.component.modal.PredictiveModalBottomSheet
 import it.attendance100.mybicocca.ui.component.modal.SheetPagerHeader
 import it.attendance100.mybicocca.ui.component.modal.sheetPageTransform
@@ -58,9 +61,19 @@ enum class ExamValueMode { Grade, Credits }
 
 private val PassedGreen = Color(0xFF1FA84B)
 
-// Libretto sheet: one modal hosting a pinned morphing header over a two-level body pager.
-// The root page is a swipeable Voti/Crediti view (the segmented switch drives the same pager);
-// tapping a course pushes its detail in place, the header morphing to the exam name/code.
+/**
+ * Libretto modal: a bottom sheet hosting a pinned morphing header over a two-level body.
+ * The root level pages between the grades (Voti) and credits (Crediti) views of the exams
+ * grouped by study-plan year — passed exams first within each year — with the segmented
+ * switch and swipes driving the same pager. Tapping a course pushes [CourseDetailPage] in
+ * place while the header morphs to the exam name and code.
+ *
+ * The header title and switch follow [PagerState.targetPage] so they track a swipe as soon
+ * as it commits rather than when the page settles. System back walks the detail level up
+ * to the list before dismissing the sheet, and the in-detail appelli action closes both
+ * the detail page and the modal before driving [onOpenAppelli], so the back stack lands on
+ * the appelli view.
+ */
 @Composable
 fun ExamsByYearSheet(
     rows: List<TranscriptRow>,
@@ -69,10 +82,8 @@ fun ExamsByYearSheet(
     onOpenAppelli: (courseKey: String) -> Unit,
     onDismiss: () -> Unit,
 ) {
-    // Which course's detail page is open (depth 1), or null at the list root.
     var detailRow by remember { mutableStateOf<TranscriptRow?>(null) }
 
-    // Grouped by year of the study plan (anno di corso), passed exams first within each year.
     val byYear = rows
         .sortedWith(
             compareBy(
@@ -90,12 +101,9 @@ fun ExamsByYearSheet(
         val pagerState = rememberPagerState(
             initialPage = if (initialMode == ExamValueMode.Grade) 0 else 1,
         ) { 2 }
-        // targetPage (not currentPage) so the header title and switch track the slide as soon
-        // as a swipe commits, instead of waiting for the page to settle.
         val mode = if (pagerState.targetPage == 0) ExamValueMode.Grade else ExamValueMode.Credits
         val current = detailRow
 
-        // System back walks the pager up to the list before dismissing the sheet.
         BackHandler(enabled = current != null) { detailRow = null }
 
         Column {
@@ -127,8 +135,6 @@ fun ExamsByYearSheet(
                     CourseDetailPage(
                         row = row,
                         onOpenAppelli = { courseKey ->
-                            // Close both the detail page and the libretto modal before driving
-                            // the cross-screen deep-link, so the back stack lands on the appelli.
                             detailRow = null
                             onDismiss()
                             onOpenAppelli(courseKey)
@@ -140,6 +146,13 @@ fun ExamsByYearSheet(
     }
 }
 
+/**
+ * Root level of the libretto sheet: the Voti/Crediti pager above the segmented switch.
+ * The pager snaps with a decelerating tween — a stiff critically-damped spring reads as a
+ * hard snap and the underdamped expressive spatial spec overshoots and wobbles at the
+ * edge — and runs without an overscroll effect, because leftover fling velocity at the
+ * page bound would stretch the content at the end of every swipe.
+ */
 @Composable
 private fun ExamsListPage(
     byYear: Map<Int, List<TranscriptRow>>,
@@ -151,9 +164,16 @@ private fun ExamsListPage(
 ) {
     val scope = rememberCoroutineScope()
 
+    val flingBehavior = PagerDefaults.flingBehavior(
+        state = pagerState,
+        snapAnimationSpec = tween(durationMillis = 350, easing = FastOutSlowInEasing),
+    )
+
     Column(modifier = modifier.fillMaxWidth()) {
         HorizontalPager(
             state = pagerState,
+            flingBehavior = flingBehavior,
+            overscrollEffect = null,
             modifier = Modifier
                 .fillMaxWidth()
                 .heightIn(max = 520.dp),
@@ -220,7 +240,13 @@ private fun YearLabel(year: Int) {
     )
 }
 
-// Segmented M3E group: 28dp corners cap each year group's ends, 6dp where cards touch.
+/**
+ * Exam row in a segmented year group: 28dp corners cap the group's ends, 6dp where cards
+ * touch. The leading icon is a green check when passed, a neutral clock when pending, or
+ * a compact warning badge — the registry Attention tone's soft container as fill with its
+ * onContainer glyph — only when the activity is pending and its propedeuticità check
+ * resolved to NotSatisfied. The trailing value shows the grade or the credits per [mode].
+ */
 @Composable
 private fun ExamCard(
     exam: TranscriptRow,
@@ -232,8 +258,6 @@ private fun ExamCard(
 ) {
     val scheme = MaterialTheme.colorScheme
     val passed = exam.state == TranscriptRowState.Passed
-    // Orange warning only when the activity is NOT passed AND its propedeuticità check came
-    // back NotSatisfied (esito != 1). Pending-but-prereqs-OK keeps the neutral clock icon.
     val prereqMissing = !passed && prerequisiteStatus == PrerequisiteStatus.NotSatisfied
     val warningTone = registryBadgeTone(RegistryBadgeTone.Attention)
     val shape = RoundedCornerShape(
@@ -257,8 +281,6 @@ private fun ExamCard(
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             if (prereqMissing) {
-                // Reuse the registry Attention token as a compact badge: the soft-orange
-                // container is the warning fill, the glyph rides the matching onContainer.
                 Box(
                     modifier = Modifier
                         .size(24.dp)

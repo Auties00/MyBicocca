@@ -10,9 +10,11 @@ import it.attendance100.mybicocca.ui.theme.BadgeWhiteDrawableColor
 import it.attendance100.mybicocca.ui.theme.OnBackgroundColor
 import java.io.File
 
-// The interactive student ID badge (flippable [CreditCard] bound to the front/back faces).
-// Extracted so it can be hosted either inline on the profile screen or as a shell-level
-// overlay that floats above the top bar.
+/**
+ * Interactive student ID badge: a flippable [CreditCard] in the chromatic finish, with
+ * [BadgeFront] (logo art, chip, holder name, matricola) and [BadgeBack] (magnetic stripe,
+ * signature box, photo, institutional email) bound to its faces.
+ */
 @Composable
 fun StudentCard(
     account: Account?,

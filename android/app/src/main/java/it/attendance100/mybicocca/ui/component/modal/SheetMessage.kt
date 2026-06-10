@@ -24,11 +24,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 
-// In-sheet empty/error/result state — the same visual language as the full-screen EmptyState
-// (cookie-shaped icon chip, headline title, body), sized for a modal sheet (wrap-content, not
-// fillMaxSize). The icon chip is neutral by default; pass [container]/[onContainer] for a
-// semantic tint (success/error/…). [action] is centered below; result pages pass a full-width
-// button group instead.
+/**
+ * In-sheet empty/error/result state — the same visual language as the full-screen EmptyState
+ * (cookie-shaped icon chip, headline title, body), sized for a modal sheet (wrap-content, not
+ * full-size). The icon chip is neutral by default; pass [container]/[onContainer] for a
+ * semantic tint (success/error/…). [action] is centered below; result pages pass a full-width
+ * button group instead.
+ */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun SheetMessage(

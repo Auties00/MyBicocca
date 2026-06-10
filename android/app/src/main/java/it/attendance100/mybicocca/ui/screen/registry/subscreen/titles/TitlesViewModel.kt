@@ -21,6 +21,15 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+/**
+ * Backs the "Titoli" sheet with the active career's academic titles.
+ *
+ * Streams: [titles] carries the fetched list as a [Loadable]; [syncStatus] tracks the
+ * in-flight refresh separately so stale data can stay on screen while it runs. A career
+ * switch triggers a reload automatically.
+ *
+ * Action: [refresh] re-fetches the titles.
+ */
 @HiltViewModel
 class TitlesViewModel @Inject constructor(
     observeActiveAccount: ObserveActiveAccountUseCase,

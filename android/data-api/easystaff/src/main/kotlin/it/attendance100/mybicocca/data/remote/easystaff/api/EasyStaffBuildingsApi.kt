@@ -166,6 +166,18 @@ class EasyStaffBuildingsApi(
             .mapNotNull { parseRoomDetails(doc, it)  }
     }
 
+    /**
+     * Parses one room showcase card into [EasyStaffRoomDetails].
+     *
+     * Markup quirks this relies on:
+     * - The card header carries the room's own identity, e.g.
+     *   `U6-22 con Podio<span><br>[U6-22]</span>`.
+     * - The 360° tour is rendered as an unlabeled anchor around the room image, so the
+     *   anchor's href is the primary source; a labeled "Immagine interattiva 360°" field
+     *   is used as a fallback when present.
+     * - The "Validata da Spazio B.Inclusion" field's content is just a badge image, so the
+     *   field's presence is the signal.
+     */
     private fun parseRoomDetails(doc: Document, card: Element): EasyStaffRoomDetails? {
         val headerToElementMap = card.select(".custom-color-bold")
             .associateBy { it.text().cleanText() }
@@ -181,10 +193,12 @@ class EasyStaffBuildingsApi(
             }
         }
 
-        // Renders every node following the field's header span, preserving the source line
-        // structure: text nodes keep their embedded newlines (TextNode.text() would collapse
-        // them) and <ul> lists become bulleted lines. Used for free-form fields like
-        // "Descrizione" and "Note accessibilità" whose content spans multiple lines/elements.
+        /**
+         * Renders every node following the field's header span, preserving the source line
+         * structure: text nodes keep their embedded newlines ([TextNode.text] would collapse
+         * them) and `<ul>` lists become bulleted lines. Used for free-form fields like
+         * "Descrizione" and "Note accessibilità" whose content spans multiple lines/elements.
+         */
         fun extractMultilineText(label: String): String? {
             val header = headerToElementMap[label] ?: return null
             val rendered = buildString {
@@ -218,7 +232,6 @@ class EasyStaffBuildingsApi(
             }
         }
 
-        // The card header carries the room's own identity, e.g. "U6-22 con Podio<span><br>[U6-22]</span>".
         val cardHeader = card.selectFirst(".attendance-course-name")
         val roomCode = cardHeader?.selectFirst("span")
             ?.text()
@@ -237,9 +250,6 @@ class EasyStaffBuildingsApi(
         val googleMapsLink = extractLink("Google Maps")
             ?.let { parseRoomMapsLink(doc, it) }
 
-        // The 360° tour is rendered as an unlabeled anchor around the room image (the labeled
-        // "Immagine interattiva 360°" field no longer appears in the markup), so the anchor's
-        // href is the primary source and the legacy labeled field is kept as a fallback.
         val interactive360Link = card.selectFirst("a[href*=images360]")
             ?.attr("href")
             ?: extractLink("Immagine interattiva 360°")
@@ -260,7 +270,6 @@ class EasyStaffBuildingsApi(
 
         val accessibilityNotes = extractMultilineText("Note accessibilità")
 
-        // The field's content is just a badge image, so its presence is the signal.
         val isInclusionValidated = headerToElementMap.containsKey("Validata da Spazio B.Inclusion")
 
         val equipment = extractLink("Attrezzature")

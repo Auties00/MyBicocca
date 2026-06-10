@@ -52,13 +52,23 @@ import kotlin.math.roundToInt
 
 private fun toPercentage(value: Float): String = "${(value * 100).roundToInt()}%"
 
-// Renders the oversized faded percentage behind the content; Offscreen compositing keeps the
-// low-alpha blend from compounding against the dither texture underneath.
+/**
+ * Fades the oversized backdrop percentage; Offscreen compositing applies the alpha to the
+ * flattened layer so the low-alpha fill cannot compound against what is drawn beneath it.
+ */
 private fun Modifier.screenBlend(alpha: Float): Modifier = graphicsLayer {
     this.alpha = alpha
     compositingStrategy = CompositingStrategy.Offscreen
 }
 
+/**
+ * Progress tile: a caption pinned at the top and a bold current/total count grouped with
+ * an optional progress bar at the bottom, matching the content alignment of a sibling
+ * [StatCard]. An oversized faded percentage leans behind the trailing edge and plays a
+ * springy scale-and-wiggle when the card is tapped. [backgroundProgressBar] fills the card
+ * body itself as the bar; [isLoading] swaps the count for a shimmer block and holds the
+ * progress at zero.
+ */
 @OptIn(ExperimentalTextApi::class)
 @Composable
 fun ProgressStatCard(
@@ -159,8 +169,6 @@ fun ProgressStatCard(
                 )
             }
 
-            // Title pinned to the top, value + progress bar grouped at the bottom — same content
-            // alignment as the sibling Media StatCard.
             Column(
                 modifier = Modifier
                     .padding(horizontal = 18.dp)

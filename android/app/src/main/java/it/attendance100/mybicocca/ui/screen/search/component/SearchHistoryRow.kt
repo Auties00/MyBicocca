@@ -28,11 +28,16 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 
-// One recent-search segment of the history group, per the M3 search view spec: history
-// glyph, the query, and an insert-without-searching arrow. Removal is a swipe: either
-// direction pulls the row off and reveals a delete glyph on errorContainer underneath.
-// The shape is supplied by the group (rounded outer edges, tight inner ones) and the
-// surfaceContainerLow fill sits one tonal step above the overlay's plain surface.
+/**
+ * One recent-search segment of the history group, per the M3 search view spec: history
+ * glyph, the query, and an insert-without-searching arrow that puts the text in the field
+ * uncommitted so it can be refined first. Removal is a swipe: either direction pulls the
+ * row off and reveals a delete glyph on errorContainer underneath, committing on release
+ * past the threshold — Room then drops the row, so the box never rests in a dismissed state
+ * long enough to need resetting. The shape is supplied by the group (rounded outer edges,
+ * tight inner ones) and the surfaceContainerLow fill sits one tonal step above the
+ * overlay's plain surface.
+ */
 @Composable
 fun SearchHistoryRow(
     query: String,
@@ -45,8 +50,6 @@ fun SearchHistoryRow(
     val scheme = MaterialTheme.colorScheme
     val dismissState = rememberSwipeToDismissBoxState(
         confirmValueChange = { value ->
-            // Removal is committed on release past the threshold; Room then drops the row,
-            // so the box never rests in a dismissed state long enough to need resetting.
             if (value != SwipeToDismissBoxValue.Settled) onRemove()
             true
         },
@@ -102,7 +105,6 @@ fun SearchHistoryRow(
                         .weight(1f)
                         .padding(horizontal = 16.dp),
                 )
-                // Puts the text in the field without committing, so it can be refined first.
                 IconButton(onClick = onInsert, modifier = Modifier.size(40.dp)) {
                     Icon(
                         imageVector = Icons.Outlined.NorthWest,

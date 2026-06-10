@@ -16,8 +16,11 @@ import com.valentinilk.shimmer.rememberShimmer
 import com.valentinilk.shimmer.shimmer
 import it.attendance100.mybicocca.ui.component.shimmer.ShimmerBox
 
-// First-load placeholder mirroring the profile layout: badge + 2x2 stat grid + Libretto tile.
-// One window-scoped shimmer instance drives a single coherent sweep across every block.
+/**
+ * First-load placeholder for the profile body: a section-header bar, a 2x2 grid of stat
+ * tiles, and one wide trailing tile. A single window-scoped shimmer instance drives every
+ * block so the sweep reads as one coherent pass.
+ */
 @Composable
 fun SkeletonProfileContent(
     modifier: Modifier = Modifier,
@@ -31,8 +34,6 @@ fun SkeletonProfileContent(
             .shimmer(shimmerInstance),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        // The student card itself is the floating shell overlay (see MainShell); the
-        // first-load placeholder only mirrors the sections that scroll beneath it.
         ShimmerBox(
             Modifier
                 .width(100.dp)

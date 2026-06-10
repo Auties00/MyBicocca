@@ -6,8 +6,11 @@ import kotlinx.coroutines.sync.withLock
 import javax.inject.Inject
 import javax.inject.Singleton
 
-// Per-account lock — prevents concurrent calls on the same account from triggering
-// duplicate auth dances when a session goes stale.
+/**
+ * Per-account suspend locks serializing session work, so concurrent calls on the same account
+ * cannot trigger duplicate authentication round-trips when a session goes stale. Mutexes are
+ * created on demand and dropped via [forget] when an account is removed.
+ */
 @Singleton
 class AccountKeyedMutexes @Inject constructor() {
 

@@ -6,6 +6,11 @@ import androidx.room.Transaction
 import androidx.room.Upsert
 import kotlinx.coroutines.flow.Flow
 
+/**
+ * Room access to the per-account deadline cache, soonest first. Refreshes go through
+ * `replaceForAccount`, which swaps the whole account's rows in one transaction so
+ * observers never see a half-written list.
+ */
 @Dao
 interface DeadlineDao {
 

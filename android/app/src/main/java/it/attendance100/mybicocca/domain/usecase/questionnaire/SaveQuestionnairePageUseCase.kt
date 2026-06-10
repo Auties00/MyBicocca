@@ -5,6 +5,12 @@ import it.attendance100.mybicocca.domain.model.questionnaire.QuestionnaireSessio
 import it.attendance100.mybicocca.domain.repository.QuestionnaireRepository
 import javax.inject.Inject
 
+/**
+ * Saves the student's answers for one page of an in-flight compilation, invoked by the
+ * compilation sub-screen before navigating onward. Saved pages exist only within the
+ * current compilation instance — Esse3 never resumes drafts across sessions. Throws on
+ * failure.
+ */
 class SaveQuestionnairePageUseCase @Inject constructor(
     private val repository: QuestionnaireRepository,
 ) {

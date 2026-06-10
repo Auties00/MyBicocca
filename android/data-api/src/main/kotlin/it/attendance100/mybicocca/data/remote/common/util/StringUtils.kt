@@ -11,6 +11,6 @@ package it.attendance100.mybicocca.data.remote.common.util
  * @return The cleaned string.
  */
 fun String.cleanText(): String =
-         replace("\u200b", "")  // Remove zero-width spaces
-        .replace("\u00a0", " ") // Normalize non-breaking spaces
+         replace("\u200b", "")
+        .replace("\u00a0", " ")
         .trim()

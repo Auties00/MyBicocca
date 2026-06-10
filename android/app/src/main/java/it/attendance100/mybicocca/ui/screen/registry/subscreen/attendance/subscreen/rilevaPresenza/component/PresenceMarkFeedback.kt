@@ -32,6 +32,7 @@ import it.attendance100.mybicocca.domain.model.attendance.PresenceMarkOutcome
 import it.attendance100.mybicocca.ui.component.button.PrimaryActionButton
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.attendance.ext.visual
 
+/** In-flight page of the rileva flow: a centered expressive loading indicator with a supporting label while the presence submission runs. */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun PresenceMarkingProgress(
@@ -55,6 +56,11 @@ fun PresenceMarkingProgress(
     }
 }
 
+/**
+ * Result page of the rileva flow: the outcome's tonal cookie-shaped icon badge pops in with a
+ * bouncy spring above the headline, an optional detail line (the recorded status or the
+ * provider message), and a full-width "Fatto" action that closes the flow.
+ */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun PresenceResultContent(

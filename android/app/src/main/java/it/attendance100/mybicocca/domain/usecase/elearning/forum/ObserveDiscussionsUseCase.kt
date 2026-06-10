@@ -8,6 +8,10 @@ import it.attendance100.mybicocca.domain.repository.ElearningForumRepository
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
+/**
+ * Streams a forum's cached discussions, pinned threads first and then by latest activity, for
+ * the forum sheet's discussion list and the course detail's forum previews. Hot Room flow.
+ */
 class ObserveDiscussionsUseCase @Inject constructor(
     private val repository: ElearningForumRepository,
 ) {

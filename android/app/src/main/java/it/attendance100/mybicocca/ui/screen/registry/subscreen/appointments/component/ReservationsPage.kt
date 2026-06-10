@@ -30,8 +30,12 @@ import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.domain.model.appointment.AppointmentReservation
 import it.attendance100.mybicocca.ui.component.feedback.EmptyState
 
-// Root page: the device's bookings (one card each) over a pinned "Prenota" footer that opens
-// the directory.
+/**
+ * Root page of the Appuntamenti sheet: this device's bookings, one [ReservationCard] each in
+ * a scrollable column, over a pinned brand-filled "Prenota" footer that opens the desk
+ * directory. With no bookings, the shared empty state renders height-bounded so it cannot
+ * stretch the sheet to full height (same treatment as the ISEE sheet).
+ */
 @Composable
 internal fun ReservationsPage(
     reservations: Loadable<List<AppointmentReservation>>,
@@ -47,8 +51,6 @@ internal fun ReservationsPage(
             .heightIn(max = 720.dp),
     ) {
         if (list.isEmpty()) {
-            // The shared full-screen EmptyState bounded so it can't stretch the sheet to full
-            // height — same treatment as the ISEE sheet.
             Box(
                 modifier = Modifier
                     .fillMaxWidth()

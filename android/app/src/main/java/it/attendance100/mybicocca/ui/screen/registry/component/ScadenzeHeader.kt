@@ -25,9 +25,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
-// Tappable "Scadenze" banner that opens the scadenzario sheet. Mirrors the design's
-// primary-container header: rounded notification tile, a title + summary line, and a
-// swipe-up affordance.
+/**
+ * Tappable "Scadenze" banner that opens the scadenzario sheet. Mirrors the design's
+ * primary-container header: a rounded notification tile leading, the bold title with the
+ * [summary] line beneath it, and a circular swipe-up affordance trailing.
+ */
 @Composable
 fun ScadenzeHeader(
     summary: String,

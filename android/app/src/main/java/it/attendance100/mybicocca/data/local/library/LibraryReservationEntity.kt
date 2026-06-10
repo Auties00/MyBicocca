@@ -4,8 +4,18 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
-// Offline cache of the server's "my reservations" list (the server is the source of truth; this is
-// kept only so bookings still show when offline). Keyed by the server reservation id.
+/**
+ * Offline cache row for one entry of the Affluences "my reservations" list. The server is the
+ * source of truth — the table exists only so bookings still show offline. Keyed by the server
+ * reservation id and not account-scoped: it mirrors the single linked Affluences e-mail session
+ * and is wiped on library logout.
+ *
+ * @property startEpochSeconds Reservation start, as epoch seconds of the UTC instant.
+ * @property endEpochSeconds Reservation end, as epoch seconds of the UTC instant.
+ * @property reservationCode Short human-readable code shown to the user; null when absent.
+ * @property cancellationToken Token authorizing cancellation calls; null when the server omits it.
+ * @property state Name of the domain reservation-state enum entry.
+ */
 @Entity(tableName = "library_reservation")
 data class LibraryReservationEntity(
     @PrimaryKey @ColumnInfo("reservation_id") val reservationId: Int,

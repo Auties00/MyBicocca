@@ -26,8 +26,12 @@ import androidx.compose.ui.unit.dp
 import it.attendance100.mybicocca.domain.model.appointment.AppointmentFormField
 import kotlinx.coroutines.delay
 
-// Renders the server-defined booking form fields (the GDPR consent is rendered separately by
-// the FormPage as a switch row). Values live in the ViewModel keyed by field code.
+/**
+ * Renders the server-defined booking form fields; values live in the ViewModel keyed by field
+ * code. Consent fields are skipped here — the FormPage renders the GDPR consent separately as
+ * a switch row. The field matching [autoFocusCode] grabs focus and raises the IME after a
+ * short delay that lets the sheet's page transition settle.
+ */
 @Composable
 internal fun BookingForm(
     fields: List<AppointmentFormField>,
@@ -40,7 +44,6 @@ internal fun BookingForm(
     val focusRequester = remember { FocusRequester() }
     LaunchedEffect(autoFocusCode) {
         if (autoFocusCode != null) {
-            // Let the sheet's page transition settle before grabbing focus / IME.
             delay(250)
             runCatching { focusRequester.requestFocus() }
         }
@@ -97,7 +100,6 @@ internal fun BookingForm(
                     onValueChange = onValueChange,
                 )
 
-                // The GDPR consent is hoisted out to a switch row in the FormPage.
                 is AppointmentFormField.Consent -> Unit
             }
         }

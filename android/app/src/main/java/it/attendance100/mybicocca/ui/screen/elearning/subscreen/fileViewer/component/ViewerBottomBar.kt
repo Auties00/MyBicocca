@@ -28,6 +28,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 
+/**
+ * One action of [ViewerBottomBar]. Depending on the layout the bar picks, [label] renders as
+ * button text or only as the icon's content description.
+ */
 data class ViewerAction(
     val icon: ImageVector,
     val label: String,
@@ -35,13 +39,16 @@ data class ViewerAction(
     val enabled: Boolean = true,
 )
 
-// Adaptive bottom action bar used by all file viewers. The layout scales with action count:
-//   1 action  → large extended FAB with label, centered
-//   2 actions → full-width connected button pair (secondary=tonal leading, primary=filled trailing)
-//   3+ actions → pill of icon buttons on the left + large square FAB on the right
-//
-// [primary] is the dominant action (Download / Save to gallery / Open With).
-// [secondary] are supporting actions (Share, theme toggle, PiP, …).
+/**
+ * Adaptive bottom action bar used by all file viewers, floating over the content at the bottom
+ * of the host Box. The layout scales with action count:
+ * - 1 action → large extended FAB with label, centered
+ * - 2 actions → full-width connected button pair (secondary = tonal leading, primary = filled trailing)
+ * - 3+ actions → pill of icon buttons on the left + large square FAB on the right
+ *
+ * [primary] is the dominant action (Download / Save to gallery / Open With); [secondary] are
+ * supporting actions (Share, theme toggle, PiP, …).
+ */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun BoxScope.ViewerBottomBar(

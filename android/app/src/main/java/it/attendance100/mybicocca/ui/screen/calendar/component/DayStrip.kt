@@ -29,6 +29,12 @@ import java.util.Locale
 
 private val ItalianLocale = Locale.ITALIAN
 
+/**
+ * One week as a row of seven equal-width cells, each a narrow weekday initial over the
+ * day number. Cells become individually tappable when [onSelect] is provided, and the
+ * optional leading spacer keeps the row aligned with a timeline's hour gutter. The strip
+ * paints no selection of its own — the day view overlays its own sliding highlight.
+ */
 @Composable
 fun DayStrip(
     weekStart: LocalDate,

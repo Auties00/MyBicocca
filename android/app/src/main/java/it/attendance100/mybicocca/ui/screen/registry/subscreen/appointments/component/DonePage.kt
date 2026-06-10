@@ -43,8 +43,12 @@ import java.util.Locale
 private val FullDateFormat = DateTimeFormatter.ofPattern("EEEE d MMMM yyyy", Locale.ITALIAN)
 private val TimeFormat = DateTimeFormatter.ofPattern("HH:mm")
 
-// Wizard step 3: the confirmation, with the reservation code and the check-in QR. "Fatto"
-// rewinds the sheet to the reservations list, where the new booking is already present.
+/**
+ * Booking wizard step 3, the confirmation: a cookie-shaped check hero over the booking recap,
+ * the reservation code in a tonal monospace chip and the check-in QR on a white surface.
+ * "Fatto" rewinds the sheet to the reservations list, where the new booking is already
+ * present.
+ */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 internal fun DonePage(

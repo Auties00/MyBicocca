@@ -8,6 +8,9 @@ import it.attendance100.mybicocca.domain.repository.ElearningQuizRepository
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
+/**
+ * Streams a course's cached quizzes, backing the activity rows of the course detail screen.
+ */
 class ObserveCourseQuizzesUseCase @Inject constructor(
     private val repository: ElearningQuizRepository,
 ) {

@@ -10,15 +10,18 @@ import javax.inject.Inject
 import javax.inject.Named
 import javax.inject.Singleton
 
-// Stores the Affluences "my reservations" account state: the per-install device id + api key
-// (minted via check-in) and, once the user validates an email, the session token + that email.
-// Sensitive (the token grants access to the user's bookings), so it lives in the encrypted prefs.
+/**
+ * Stores the Affluences "my reservations" account state: the per-install device id and api key
+ * minted via check-in and, once the user validates an e-mail address, the session token and
+ * that e-mail. The token grants access to the user's bookings, so everything lives in the
+ * encrypted preferences shared with the credential store.
+ */
 @Singleton
 class LibraryAccountStore @Inject constructor(
     @Named(CredentialsStore.EncryptedPrefsName) private val prefs: Lazy<SharedPreferences>,
 ) {
 
-    // Opaque device id sent on check-in; generated once and reused.
+    /** Opaque device id sent on check-in; generated once per install and reused. */
     suspend fun deviceId(): String = withContext(Dispatchers.IO) {
         val store = prefs.get()
         store.getString(KEY_DEVICE_ID, null) ?: UUID.randomUUID().toString().replace("-", "").take(16)

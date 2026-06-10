@@ -77,9 +77,15 @@ import com.google.mlkit.vision.barcode.BarcodeScanning
 import com.google.mlkit.vision.barcode.common.Barcode
 import com.google.mlkit.vision.common.InputImage
 
-// Full-screen QR scanner shown above the "Rileva presenza" sheet. Reports the
-// first decoded payload and dismisses; the sheet routes it through the same
-// marking flow as a typed code.
+/**
+ * Full-screen QR scanner shown above the "Rileva presenza" sheet: an edge-to-edge black
+ * dialog hosting the live camera preview under an animated corner-bracket reticle with a
+ * sweeping scan line, a bottom hint pill, and a top bar with close and manual-entry buttons;
+ * while camera permission is missing, a request body with a grant action takes the preview's
+ * place. Reports the first decoded payload (or a manually typed code) exactly once via
+ * [onResult] and dismisses; the sheet routes it through the same marking flow as a typed
+ * code.
+ */
 @OptIn(ExperimentalGetImage::class)
 @Composable
 fun QrScannerScreen(
@@ -180,10 +186,13 @@ fun QrScannerScreen(
     }
 }
 
-// Manual fallback for QR payloads that won't scan: the typed code goes through the
-// exact same marking flow as a decoded one. Follows the M3 dialog anatomy: hero icon
-// above the (then center-aligned) headline, supporting text, end-aligned text buttons —
-// container color, extra-large corners and typography come from AlertDialog itself.
+/**
+ * Manual fallback for QR payloads that won't scan: the typed code goes through the exact same
+ * marking flow as a decoded one. Follows the M3 dialog anatomy — hero icon above the (then
+ * center-aligned) headline, supporting text, end-aligned text buttons — with container color,
+ * extra-large corners and typography coming from AlertDialog itself. The field is the
+ * dialog's whole purpose, so it is focused (raising the IME) on entry.
+ */
 @Composable
 private fun ManualCodeDialog(
     title: String,
@@ -195,7 +204,6 @@ private fun ManualCodeDialog(
 ) {
     var code by remember { mutableStateOf("") }
     val focusRequester = remember { FocusRequester() }
-    // The field is the dialog's whole purpose: focus it (raising the IME) on entry.
     LaunchedEffect(Unit) { focusRequester.requestFocus() }
 
     AlertDialog(

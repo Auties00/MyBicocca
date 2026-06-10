@@ -6,6 +6,13 @@ import androidx.room.Transaction
 import androidx.room.Upsert
 import kotlinx.coroutines.flow.Flow
 
+/**
+ * Room access to the per-account e-learning course cache: the enrolled list plus each
+ * course's sections, modules, staff, syllabus and activity completion. `observe*`
+ * queries are the hot source behind the course repository's flows; `replace*`
+ * transactions implement the delete-then-insert refresh writes so observers see one
+ * atomic swap; `clearAllForAccount` wipes every course table on sign-out.
+ */
 @Dao
 interface CourseDao {
 

@@ -12,10 +12,13 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import javax.inject.Inject
 
-// Hidden-filtered, user-filtered, edition-grouped courses, derived purely from the local
-// cache + the persisted filter. The course year used for grouping and the year filter is
-// parsed from each course's idNumber (see CourseCode), so this never touches the network —
-// the list renders the instant Room emits.
+/**
+ * Streams the e-learning tab's course list: hidden-filtered, user-filtered,
+ * edition-grouped courses, derived purely from the local cache plus the persisted
+ * filter. The course year used for grouping and the year filter is parsed from each
+ * course's idNumber, so this never touches the network — the list renders the instant
+ * the local cache emits.
+ */
 class ObserveFilteredCoursesUseCase @Inject constructor(
     private val courseRepository: ElearningCourseRepository,
 ) {
@@ -26,6 +29,11 @@ class ObserveFilteredCoursesUseCase @Inject constructor(
         coursesLoadable.map { courses -> apply(courses, filter) }
     }
 
+    /**
+     * Filters and groups the cached courses. The unfiltered list sorts groups by the
+     * representative course year ascending with unmatched groups last; the stable sort
+     * preserves Moodle order within ties.
+     */
     private fun apply(
         courses: List<EnrolledCourse>,
         filter: CourseFilter,
@@ -43,8 +51,6 @@ class ObserveFilteredCoursesUseCase @Inject constructor(
 
         val groups = groupEditions(visible)
         return when (filter) {
-            // Sort by the group's representative course year ascending, unmatched groups
-            // last. Stable sort preserves Moodle order within ties.
             CourseFilter.All -> groups.sortedBy { group ->
                 group.latest.courseCode().courseYear?.value ?: Int.MAX_VALUE
             }
@@ -52,13 +58,18 @@ class ObserveFilteredCoursesUseCase @Inject constructor(
         }
     }
 
+    /**
+     * Groups courses into edition sets. Two editions belong to the same course when
+     * they share a parsed code OR an exact (whitespace-trimmed) name: Esse3 sometimes
+     * reissues a course under a new code across years while the name is unchanged, and
+     * occasionally rewords the name while keeping the code — neither key alone catches
+     * every edition, so both are unioned. Union-find makes the relation transitive: a
+     * chain A=code=B=name=C collapses into one group, and a course with neither a code
+     * nor a name simply stays on its own. Groups keep the first-appearance (Moodle)
+     * order; editions within a group are sorted latest-first by parsed academic year
+     * with year-less editions at the bottom.
+     */
     private fun groupEditions(courses: List<EnrolledCourse>): List<EnrolledCourseGroup> {
-        // Two editions belong to the same course when they share a parsed code OR an exact
-        // (whitespace-trimmed) name. Esse3 sometimes reissues a course under a new code
-        // across years while the name is unchanged, and occasionally rewords the name while
-        // keeping the code — neither key alone catches every edition, so we union both.
-        // Union-find makes the relation transitive: a chain A=code=B=name=C collapses into
-        // one group. A course with neither a code nor a name simply stays on its own.
         val parent = IntArray(courses.size) { it }
         fun find(index: Int): Int {
             var root = index
@@ -84,9 +95,6 @@ class ObserveFilteredCoursesUseCase @Inject constructor(
             }
         }
 
-        // Group by component, keeping the first-appearance (Moodle) order of each group.
-        // Editions within a group are sorted latest-first by parsed academic year; null
-        // years sort to the bottom of the edition list.
         val components = LinkedHashMap<Int, MutableList<EnrolledCourse>>()
         courses.forEachIndexed { i, course ->
             components.getOrPut(find(i)) { mutableListOf() } += course
@@ -96,8 +104,10 @@ class ObserveFilteredCoursesUseCase @Inject constructor(
         }
     }
 
-    // Latest academic year first; within a year the base course (no stream) precedes its
-    // streams, T1 before T2.
+    /**
+     * Latest academic year first; within a year the base course (no stream) precedes
+     * its streams, T1 before T2.
+     */
     private fun List<EnrolledCourse>.sortedByLatestEdition(): List<EnrolledCourse> =
         sortedWith(
             compareByDescending<EnrolledCourse> { it.courseCode().academicYear?.startYear ?: Int.MIN_VALUE }

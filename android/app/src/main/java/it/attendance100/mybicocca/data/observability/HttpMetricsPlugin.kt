@@ -10,22 +10,27 @@ import io.ktor.http.contentLength
 import io.ktor.http.contentType
 import io.ktor.http.encodedPath
 
-// Times every outgoing request and reports it to Firebase Performance Monitoring as an
-// HttpMetric. Installed into each data-api client via its httpClientConfig lambda, so it
-// covers Esse3 / Elearning / EasyStaff / Affluences uniformly without touching the libraries.
-//
-// Timing spans connect + send + time-to-first-byte (proceed() returns once response headers
-// arrive, not after the body is fully read). For these small-JSON APIs that is effectively the
-// request latency, which is what we want to track.
-//
-// Metrics never fail a real request: every Firebase call is guarded so a missing
-// google-services.json or an uninitialized SDK degrades to a no-op.
+/**
+ * Ktor client plugin that times every outgoing request and reports it to Firebase Performance
+ * Monitoring as an HttpMetric. Installed into each data-api client via its httpClientConfig
+ * lambda, so it covers Esse3 / Elearning / EasyStaff / Affluences uniformly without touching
+ * the libraries.
+ *
+ * Timing spans connect + send + time-to-first-byte (proceed() returns once response headers
+ * arrive, not after the body is fully read). For these small-JSON APIs that is effectively the
+ * request latency, which is what matters.
+ *
+ * Reported URLs are reduced to scheme + host + normalized path. Query and fragment are dropped
+ * because Moodle URLs carry the wstoken in the query (it must not leak to Firebase) and
+ * per-call params would explode Firebase's 100-URL-pattern cap; numeric and UUID path segments
+ * are collapsed to {id}/{uuid} for the same cap reason — Esse3's ID-heavy paths would otherwise
+ * mint a distinct pattern per resource.
+ *
+ * Metrics never fail a real request: every Firebase call is guarded so a missing
+ * google-services.json or an uninitialized SDK degrades to a no-op.
+ */
 val HttpMetrics = createClientPlugin("HttpMetrics") {
     on(Send) { request ->
-        // Strip query + fragment: Moodle URLs carry wstoken in the query (must not leak to
-        // Firebase) and per-call params would explode Firebase's 100-URL-pattern cap. Numeric
-        // and UUID path segments are collapsed to {id}/{uuid} for the same cap reason — Esse3's
-        // ID-heavy paths would otherwise mint a distinct pattern per resource.
         val path = normalizePath(request.url.encodedPath)
         val url = "${request.url.protocol.name}://${request.url.host}$path"
         val metric = runCatching {
@@ -54,8 +59,11 @@ private fun HttpMetric.record(response: HttpResponse) {
     }
 }
 
-// Collapses high-cardinality path segments so Firebase aggregates by route, not by resource.
-// Char-based on purpose: no top-level Regex val (ICU static-init crash risk in this codebase).
+/**
+ * Collapses high-cardinality path segments so Firebase aggregates by route, not by resource.
+ * Character-based on purpose: a top-level Regex val risks a static-init crash on Android, whose
+ * ICU regex engine rejects patterns the JVM tolerates.
+ */
 private fun normalizePath(encodedPath: String): String =
     encodedPath.split('/').joinToString("/") { segment ->
         when {
@@ -66,7 +74,7 @@ private fun normalizePath(encodedPath: String): String =
         }
     }
 
-// 8-4-4-4-12 hex, e.g. the Affluences library site UUIDs.
+/** 8-4-4-4-12 hex, e.g. the Affluences library site UUIDs. */
 private fun isUuid(segment: String): Boolean {
     if (segment.length != 36) return false
     segment.forEachIndexed { i, c ->

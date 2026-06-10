@@ -5,6 +5,10 @@ import it.attendance100.mybicocca.domain.model.document.StudentBadge
 import it.attendance100.mybicocca.domain.repository.DocumentRepository
 import javax.inject.Inject
 
+/**
+ * Loads the career's university card ("tessera") metadata from Esse3, or null when no card has
+ * been issued. Fetches live — never cached.
+ */
 class GetStudentBadgeUseCase @Inject constructor(
     private val repository: DocumentRepository,
 ) {

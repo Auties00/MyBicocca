@@ -19,8 +19,17 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 import javax.inject.Singleton
 
-// Owns the app-lock gate: a soft, local lock that hides the signed-in UI behind a biometric /
-// password challenge on cold start and after a configurable idle period.
+/**
+ * Owns the app-lock gate: a soft, local lock that hides the signed-in UI behind a biometric or
+ * password challenge on cold start and after a configurable idle period.
+ *
+ * [locked] is true only while the lock is enabled in Settings, an account is active, and the
+ * gate is armed. Arming happens in two ways: at construction when a session already exists —
+ * the persisted account id is read directly so a fresh sign-in later in the same process does
+ * not trip the cold-start arm — and on re-foregrounding once the background dwell time exceeds
+ * the configured timeout. The first foreground after process start is exempt from the timeout
+ * check, since cold-start arming is decided at construction.
+ */
 @Singleton
 class AppLockManager @Inject constructor(
     securityStore: SecuritySettingsStore,
@@ -47,8 +56,6 @@ class AppLockManager @Inject constructor(
         scope.launch {
             securityStore.lockTimeoutMinutes.collect { timeoutMillis = it * 60_000L }
         }
-        // Cold start: arm the gate if a session already existed at launch. Reading the persisted
-        // id directly keeps a *later* fresh sign-in from tripping this one-shot.
         scope.launch {
             if (activeAccountStore.activeAccountId.first() != null) armed.value = true
         }
@@ -59,7 +66,6 @@ class AppLockManager @Inject constructor(
 
     override fun onStart(owner: LifecycleOwner) {
         if (firstStart) {
-            // Cold-start foreground — arming is handled by the [init] block above.
             firstStart = false
             return
         }
@@ -73,9 +79,11 @@ class AppLockManager @Inject constructor(
         lastBackgroundedAt = SystemClock.elapsedRealtime()
     }
 
-    // Marks the user as verified and disarms the gate so [locked] drops to false. Called after a
-    // successful biometric/password unlock, and after the (already authenticated) Settings toggle
-    // so enabling the lock doesn't immediately re-challenge.
+    /**
+     * Marks the user as verified and disarms the gate so [locked] drops to false. Invoked after
+     * a successful biometric or password unlock, and after the already-authenticated Settings
+     * toggle so enabling the lock does not immediately re-challenge.
+     */
     fun unlock() {
         armed.value = false
     }

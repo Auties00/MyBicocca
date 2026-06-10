@@ -11,10 +11,16 @@ import org.jsoup.Jsoup
 import org.jsoup.nodes.Element
 import org.jsoup.nodes.TextNode
 
-// Turns the raw Moodle question HTML (from mod_quiz_get_attempt_data / _review) into a
-// renderable model. Detection is structural, not type-string based, so unseen qtypes that
-// reuse standard controls (radio rows, inline selects) still render; only genuinely
-// exotic ones (drag-drop, ...) fall back to read-only HTML.
+/**
+ * Turns the raw Moodle question HTML (from mod_quiz_get_attempt_data / _review) into a
+ * renderable model. Detection is structural, not type-string based, so unseen qtypes that
+ * reuse standard controls (radio rows, inline selects) still render; only genuinely
+ * exotic ones (drag-drop, ...) fall back to read-only HTML.
+ *
+ * Hidden inputs (sequencecheck, answerformat, ...) are captured as base fields because they
+ * must round-trip with every save or Moodle throws submissionoutofsequence. The flag field is
+ * deliberately excluded: it is user state, not answer payload.
+ */
 fun AttemptQuestion.parseQuestion(): ParsedQuestion {
     val doc = Jsoup.parseBodyFragment(html)
     doc.select(".accesshide").remove()
@@ -33,9 +39,6 @@ fun AttemptQuestion.parseQuestion(): ParsedQuestion {
         )
     }
 
-    // Hidden inputs (sequencecheck, answerformat, ...) must round-trip with every save or
-    // Moodle throws submissionoutofsequence. The flag field is deliberately excluded: it is
-    // user state, not answer payload.
     val baseFields = formulation.select("input[type=hidden][name]")
         .associate { it.attr("name") to it.attr("value") }
         .filterKeys { !it.endsWith(":flagged") }
@@ -109,15 +112,17 @@ private fun choiceLabelHtml(doc: Element, row: Element, input: Element): String 
     return label.html()
 }
 
-// Cloze (and gapselect-style) questions embed their controls inline in the question body.
-// Real Bicocca cloze HTML often has no div.qtext at all — the gaps sit in paragraphs
-// directly under the formulation — so the scan covers the whole formulation. Each control
-// is swapped for a sentinel text node, then the html is split back into text chunks
-// interleaved with the gaps in document order.
+/**
+ * Cloze (and gapselect-style) questions embed their controls inline in the question body.
+ * Real Bicocca cloze HTML often has no div.qtext at all — the gaps sit in paragraphs
+ * directly under the formulation — so the scan covers the whole formulation. Each control
+ * is swapped for a sentinel text node, then the html is split back into text chunks
+ * interleaved with the gaps in document order. A lone text input is left to the TextEntry
+ * parse, which reads better as a plain field below the prompt.
+ */
 private fun parseCloze(formulation: Element, slot: Int, baseFields: Map<String, String>): QuestionUiModel? {
     val controls = formulation.select("input[type=text], select")
     val hasMenus = controls.any { it.tagName() == "select" }
-    // A lone text input reads better as a plain TextEntry below the prompt.
     if (controls.isEmpty() || (!hasMenus && controls.size < 2)) return null
     formulation.select("input[type=hidden]").remove()
 

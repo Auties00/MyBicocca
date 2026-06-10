@@ -44,6 +44,19 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import javax.inject.Inject
 
+/**
+ * Backs the e-learning tab: enrolled-course groups from the Room cache, course filtering, and
+ * navigation into courses and deadline activities.
+ *
+ * Data streams: [visibleCourses] (filtered course groups), [filter] and [availableStudyYears]
+ * (filter bar), [initialFetch] (cold-cache lifecycle driving the full-screen loading/error
+ * swap). Sync status: [syncStatus]. One-shot: [oneShotEvents] (navigation and sign-in) and
+ * [revealCourse] (scroll-to-course signals).
+ *
+ * Actions: [setFilter], [toggleFavourite], [toggleGroupFavourite], [setHidden], [openCourse],
+ * [openDeadline], [requestAddCourse], [pullToRefresh], [revealEnrolledCourse]. A non-forced
+ * refresh runs automatically whenever the active account changes.
+ */
 @OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class ElearningViewModel @Inject constructor(
@@ -61,8 +74,10 @@ class ElearningViewModel @Inject constructor(
     val filter: StateFlow<CourseFilter> = observeCourseFilter()
         .stateIn(viewModelScope, SharingStarted.Eagerly, CourseFilter.All)
 
-    // Moodle enrolment is account-scoped, not career-scoped, and the course year now comes
-    // from each course's idNumber — so nothing here depends on the selected career.
+    /**
+     * Moodle enrolment is account-scoped, not career-scoped, and the course year derives from
+     * each course's idNumber — so nothing in this ViewModel depends on the selected career.
+     */
     private val activeAccountId: Flow<AccountId?> = observeActiveAccount()
         .map { it?.id }
         .distinctUntilChanged()
@@ -72,10 +87,12 @@ class ElearningViewModel @Inject constructor(
             .flatMapLatest { accountId -> observeAvailableStudyYears(accountId) }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
-    // Eagerly so Room is subscribed at VM construction. Combined with the VM being
-    // hoisted at MainShell, this means visibleCourses is already Loaded by the time
-    // the user picks the Elearning tab — no NotYetLoaded flash on first visit. The
-    // underlying transform is pure Room, so this never waits on the network.
+    /**
+     * Shared eagerly so Room is subscribed at ViewModel construction. Combined with the
+     * ViewModel being hoisted at MainShell, this means the stream is already Loaded by the time
+     * the user picks the e-learning tab — no NotYetLoaded flash on first visit. The underlying
+     * transform is pure Room, so this never waits on the network.
+     */
     val visibleCourses: StateFlow<Loadable<List<EnrolledCourseGroup>>> =
         activeAccountId
             .flatMapLatest { accountId ->
@@ -87,8 +104,10 @@ class ElearningViewModel @Inject constructor(
     private val _syncStatus = MutableStateFlow<SyncStatus>(SyncStatus.Idle)
     val syncStatus: StateFlow<SyncStatus> = _syncStatus.asStateFlow()
 
-    // Raw Room snapshot, pre-filter, so a filter that matches nothing is never mistaken
-    // for a cold cache.
+    /**
+     * Raw Room snapshot, pre-filter, so a filter that matches nothing is never mistaken for a
+     * cold cache.
+     */
     private val rawCourses: StateFlow<Loadable<List<EnrolledCourse>>> =
         activeAccountId
             .flatMapLatest { accountId ->
@@ -97,8 +116,10 @@ class ElearningViewModel @Inject constructor(
             }
             .stateIn(viewModelScope, SharingStarted.Eagerly, Loadable.NotYetLoaded)
 
-    // Drives the full-screen loading/error swap (filter bar hidden) until the cache is
-    // first populated. Once there is any cached course, the regular states take over.
+    /**
+     * Drives the full-screen loading/error swap (filter bar hidden) until the cache is first
+     * populated. Once there is any cached course, the regular states take over.
+     */
     val initialFetch: StateFlow<InitialFetchState> =
         combine(rawCourses, _syncStatus) { raw, sync ->
             when {
@@ -113,7 +134,7 @@ class ElearningViewModel @Inject constructor(
     private val oneShotChannel = Channel<ElearningOneShotEvent>(Channel.BUFFERED)
     val oneShotEvents: Flow<ElearningOneShotEvent> = oneShotChannel.receiveAsFlow()
 
-    // Emits a course id the list should animate-scroll to, after it has just been added.
+    /** Emits a course id the list should animate-scroll to, after it has just been added. */
     private val revealCourseChannel = Channel<CourseId>(Channel.BUFFERED)
     val revealCourse: Flow<CourseId> = revealCourseChannel.receiveAsFlow()
 
@@ -136,8 +157,10 @@ class ElearningViewModel @Inject constructor(
         }
     }
 
-    // Mirrors a favourite toggle to every edition of the group so per-edition
-    // Room state stays consistent with the group-level UI state.
+    /**
+     * Mirrors a favourite toggle to every edition of the group so per-edition Room state stays
+     * consistent with the group-level UI state.
+     */
     fun toggleGroupFavourite(group: EnrolledCourseGroup, favourite: Boolean) {
         viewModelScope.launch {
             val accountId = activeAccountId.filterNotNull().first()
@@ -158,6 +181,10 @@ class ElearningViewModel @Inject constructor(
         oneShotChannel.trySend(ElearningOneShotEvent.OpenCourse(courseId))
     }
 
+    fun requestAddCourse() {
+        oneShotChannel.trySend(ElearningOneShotEvent.OpenAddCourse)
+    }
+
     fun openDeadline(deadline: Deadline) {
         val event = when (deadline) {
             is Deadline.Assignment -> ElearningOneShotEvent.OpenAssignment(deadline.courseId, deadline.id)
@@ -173,9 +200,11 @@ class ElearningViewModel @Inject constructor(
         }
     }
 
-    // Called after a course is enrolled from the Add-course sheet. The enrol use case already
-    // force-refreshes Room, so we just wait for the course to land in the local cache, drop a
-    // filter that would hide it down to "Tutti", then signal the list to scroll to it.
+    /**
+     * Called after a course is enrolled from the add-course sheet. The enrol use case already
+     * force-refreshes Room, so this just waits for the course to land in the local cache, drops
+     * a filter that would hide it down to "Tutti", then signals the list to scroll to it.
+     */
     fun revealEnrolledCourse(courseId: CourseId) {
         viewModelScope.launch {
             val course = withTimeoutOrNull(4_000) {

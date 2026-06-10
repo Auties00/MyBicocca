@@ -11,15 +11,15 @@ import java.util.Locale
 
 private val DayFormat = DateTimeFormatter.ofPattern("d MMMM yyyy", Locale.ITALIAN)
 
-// "2024/2025" academic-year label.
+/** "2024/2025"-style academic-year label. */
 fun AnnualEnrollment.academicYearLabel(): String =
     "$academicYear/${academicYear + 1}"
 
-// "1° anno", "2° anno", …; falls back gracefully when the course year is missing.
+/** "1° anno", "2° anno", …; falls back gracefully when the course year is missing. */
 fun AnnualEnrollment.courseYearLabel(): String =
     if (courseYear > 0) "$courseYear° anno" else "Anno di corso n/d"
 
-// Italian status line for the node and detail header.
+/** Italian status line for the timeline row and the detail header. */
 fun AnnualEnrollment.statusLabel(): String = when (status) {
     EnrollmentStatus.Active -> "Attiva"
     EnrollmentStatus.Canceled -> "Annullata"
@@ -34,6 +34,7 @@ fun AnnualEnrollment.statusTone(): RegistryBadgeTone = when (status) {
     EnrollmentStatus.Unknown -> RegistryBadgeTone.Neutral
 }
 
+/** Italian enrollment-type label; unknown types fall back to the raw description. */
 fun AnnualEnrollment.typeLabel(): String = when (type) {
     EnrollmentType.InProgress -> "In corso"
     EnrollmentType.OutOfCourse -> "Fuori corso"
@@ -41,9 +42,12 @@ fun AnnualEnrollment.typeLabel(): String = when (type) {
     EnrollmentType.Unknown -> typeDescription ?: "Tipo n/d"
 }
 
-// Highlight chips shown on the timeline node. The plain "in corso / attiva" case yields no
-// chips (it's the default, conveyed by the green node), keeping the spine uncluttered; only
-// the situations a student needs to notice surface a badge.
+/**
+ * Highlight chips for the enrollment. The plain "in corso / attiva" case yields no chips
+ * — it is the default and keeping it badge-free leaves the list uncluttered; only the
+ * situations a student needs to notice (fuori corso, ripetente, sospesa, annullata,
+ * part-time, condizionata, attesa di laurea, esonero) surface a badge.
+ */
 fun AnnualEnrollment.badges(): List<EnrollmentBadge> {
     val out = mutableListOf<EnrollmentBadge>()
     when (type) {
@@ -79,4 +83,5 @@ fun AnnualEnrollment.badges(): List<EnrollmentBadge> {
     return out
 }
 
+/** "12 settembre 2024"-style Italian day label. */
 fun LocalDate.toEnrollmentDateLabel(): String = format(DayFormat)

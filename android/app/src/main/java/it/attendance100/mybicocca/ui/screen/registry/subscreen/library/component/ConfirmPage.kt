@@ -48,6 +48,7 @@ import androidx.core.net.toUri
 import it.attendance100.mybicocca.domain.model.library.LibraryAgreement
 import it.attendance100.mybicocca.domain.model.library.LibrarySeat
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.library.ext.durationLabel
+import it.attendance100.mybicocca.ui.theme.LocalIsOnline
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
@@ -56,7 +57,11 @@ import java.util.Locale
 private val FullDateFormat = DateTimeFormatter.ofPattern("EEEE d MMMM", Locale.ITALIAN)
 private val TimeFormat = DateTimeFormatter.ofPattern("HH:mm")
 
-// Wizard step 4: recap of the seat + the booking email, note and consent, then "Prenota".
+/**
+ * Wizard step 4: recap of library, zone, seat and slot, the booking email, an optional (or
+ * seat-required) note and the mandatory-consent switch, over a pinned "Prenota" submit button.
+ * The email is pinned to the institutional address so the booking syncs to the user's account.
+ */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 internal fun ConfirmPage(
@@ -112,7 +117,6 @@ internal fun ConfirmPage(
                         append(" · ${durationLabel(durationMinutes)}")
                     },
                 )
-                // Pinned to the institutional email so the booking syncs to the user's account.
                 IconRow(Icons.Outlined.AlternateEmail, "PRENOTI COME", email)
             }
 
@@ -140,7 +144,7 @@ internal fun ConfirmPage(
 
         Button(
             onClick = onSubmit,
-            enabled = canSubmit,
+            enabled = canSubmit && LocalIsOnline.current,
             shapes = ButtonDefaults.shapes(),
             modifier = Modifier
                 .fillMaxWidth()

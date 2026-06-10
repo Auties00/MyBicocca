@@ -37,6 +37,14 @@ import java.time.LocalDate
 import javax.inject.Inject
 import javax.inject.Singleton
 
+/**
+ * Network-only attendance implementation fanning out to three backends: the Esse3 study plan
+ * and transcript (which courses are pending), the EasyStaff EasyBadge attendance endpoints
+ * (classroom certifications, plus the no-auth GPS-based certify write), and Moodle
+ * mod_attendance read through the tool_mobile_get_content bridge (session registers, open
+ * sessions, and the self-mark write via the mobile_view_activity bridge — the dedicated
+ * mod_attendance_* web services are blocked server-side).
+ */
 @Singleton
 class AttendanceRepositoryImpl @Inject constructor(
     private val sessionManager: SessionManager,
@@ -48,11 +56,20 @@ class AttendanceRepositoryImpl @Inject constructor(
     private val locationProvider: DeviceLocationProvider,
 ) : AttendanceRepository {
 
-    // Attendance modules discovered on the last getPendingCourses pass, reused to
-    // resolve which course a scanned QR's session belongs to (the QR carries only sessid).
+    /**
+     * Attendance modules discovered on the last [getPendingCourses] pass, reused to resolve
+     * which course a scanned QR's session belongs to (the QR carries only sessid).
+     */
     @Volatile
     private var cachedModules: List<AttendanceModuleRef> = emptyList()
 
+    /**
+     * Builds the pending-course list by joining all sources concurrently. The plan is the
+     * page's backbone: a failure there surfaces as a sync error, while the enrichment sources
+     * (badge, elearning) degrade to "no data" instead. Only the current academic year's course
+     * editions carry a live session register, so Moodle editions are filtered by the year
+     * prefix of their idnumber.
+     */
     override suspend fun getPendingCourses(careerId: CareerId): List<CourseAttendance> = coroutineScope {
         val planDeferred = async { studyPlanRepository.getStudyPlan(careerId) }
         val plannedDeferred = async {
@@ -63,8 +80,6 @@ class AttendanceRepositoryImpl @Inject constructor(
         val badgeDeferred = async { loadBadgeRecords(careerId) }
         val enrolledDeferred = async { loadEnrolledCourses() }
 
-        // The plan is the page's backbone: a failure here must surface as a sync error.
-        // The enrichment sources (badge, elearning) degrade to "no data" instead.
         val plan = planDeferred.await()
         val planned = plannedDeferred.await()
         val transcriptRows = transcriptDeferred.await()
@@ -93,7 +108,6 @@ class AttendanceRepositoryImpl @Inject constructor(
 
         val badgeRecords = badgeDeferred.await()
         val enrolled = enrolledDeferred.await()
-        // Only the current academic year's course editions carry a live session register.
         val academicYearPrefix = "%02d%02d".format(academicYear % 100, (academicYear + 1) % 100)
 
         val courses = seeds
@@ -120,8 +134,10 @@ class AttendanceRepositoryImpl @Inject constructor(
         courses
     }
 
-    // One pending-course candidate before attendance enrichment. The plan is the
-    // primary source; the EasyStaff-planned list fills in semester and teacher.
+    /**
+     * One pending-course candidate before attendance enrichment. The plan is the primary
+     * source; the EasyStaff-planned list fills in semester and teacher.
+     */
     private data class CourseSeed(
         val name: String,
         val code: String?,
@@ -132,6 +148,10 @@ class AttendanceRepositoryImpl @Inject constructor(
         val teacherName: String?,
     )
 
+    /**
+     * Seeds the candidate list from the Esse3 personal plan; when no plan exists on Esse3 the
+     * EasyStaff-intersected planned list takes its place.
+     */
     private fun baseCourses(plan: StudyPlan?, planned: List<PlannedCourse>): List<CourseSeed> {
         val plannedByName = planned.associateBy { it.normalizedName }
 
@@ -153,14 +173,14 @@ class AttendanceRepositoryImpl @Inject constructor(
         if (planCourses.isNotEmpty()) {
             return planCourses.map { seedOf(it.name, it.code, it.credits, it.year) }
         }
-        // No personal plan on Esse3: fall back to the EasyStaff-intersected list.
         return planned.map { seedOf(it.name, null, it.cfu?.toFloat() ?: 0f, it.studyYear) }
     }
 
-    // "Up to the current semester": everything from earlier years, plus the current
-    // year's courses excluding second-semester ones while the first is ongoing.
-    // Unknowns lean towards inclusion — hiding a real course is worse than showing
-    // one a semester early.
+    /**
+     * "Up to the current semester": everything from earlier years, plus the current year's
+     * courses excluding second-semester ones while the first is ongoing. Unknowns lean towards
+     * inclusion — hiding a real course is worse than showing one a semester early.
+     */
     private fun isWithinCurrentPosition(
         year: StudyYear,
         semester: Semester,
@@ -173,16 +193,16 @@ class AttendanceRepositoryImpl @Inject constructor(
         return currentSemester == Semester.Second || semester != Semester.Second
     }
 
+    /** Tolerates a failed refresh: Room may still hold rows from a previous sync. */
     private suspend fun loadTranscriptRows(careerId: CareerId): List<TranscriptRow> {
-        // Tolerate a failed refresh: Room may still hold rows from a previous sync.
         runCatching { transcriptRepository.refresh(careerId) }
         return (transcriptRepository.observeRows(careerId).first() as? Loadable.Loaded)?.value.orEmpty()
     }
 
     private suspend fun loadBadgeRecords(careerId: CareerId): List<EasyStaffAttendanceRecord> {
-        val matricola = activeCareer(careerId)?.matricola ?: return emptyList()
+        val studentNumber = activeCareer(careerId)?.studentNumber ?: return emptyList()
         return runCatching {
-            easyStaffApi.attendance.getAttendanceHistory(matricola).flatMap { it.records }
+            easyStaffApi.attendance.getAttendanceHistory(studentNumber).flatMap { it.records }
         }.getOrDefault(emptyList())
     }
 
@@ -209,14 +229,18 @@ class AttendanceRepositoryImpl @Inject constructor(
         val sessions: List<SessionAttendance>,
     )
 
+    /**
+     * Resolves the Moodle edition of a seed course and reads its attendance registers. Moodle
+     * course idnumbers follow "aa-courseYear-esse3Code" with an optional "-T turno" suffix
+     * (e.g. "2526-3-E3101Q123", "2425-2-E3101Q103-T1"); the join matches the year prefix and
+     * the Esse3 activity code, preferring the plain edition over per-turno splits.
+     */
     private suspend fun loadEditionAttendance(
         enrolled: List<EnrolledCourse>,
         seed: CourseSeed,
         academicYearPrefix: String,
     ): EditionAttendance {
         val code = seed.code ?: return EditionAttendance(emptyList(), emptyList())
-        // Moodle course idnumbers follow "<aa>-<courseYear>-<esse3Code>[-T<turno>]"
-        // (e.g. "2526-3-E3101Q123", "2425-2-E3101Q103-T1").
         val editions = enrolled.mapNotNull { course ->
             val idNumber = course.idNumber ?: return@mapNotNull null
             val match = COURSE_ID_NUMBER_REGEX.matchEntire(idNumber) ?: return@mapNotNull null
@@ -225,7 +249,6 @@ class AttendanceRepositoryImpl @Inject constructor(
             if (!courseCode.substringBefore('-').equals(code, ignoreCase = true)) return@mapNotNull null
             course
         }
-        // Prefer the plain edition over per-turno splits.
         val edition = editions.minByOrNull { it.idNumber?.length ?: Int.MAX_VALUE }
             ?: return EditionAttendance(emptyList(), emptyList())
         return runCatching {
@@ -280,9 +303,10 @@ class AttendanceRepositoryImpl @Inject constructor(
         is PresenceScan.Unrecognized -> PresenceMarkOutcome.Failed("Codice non riconosciuto")
     }
 
-    // A scanned attendance session carries only its id, so resolve which of the
-    // student's attendance modules owns it (by listing each one's open sessions)
-    // before marking it.
+    /**
+     * A scanned attendance session carries only its id, so the marking resolves which of the
+     * student's attendance modules owns it (by listing each one's open sessions) first.
+     */
     private suspend fun registerSessionLink(
         sessionId: String,
         password: String?,
@@ -297,17 +321,21 @@ class AttendanceRepositoryImpl @Inject constructor(
         return markSession(target.module, sessionId, target.statuses.firstOrNull()?.id, password)
     }
 
+    /**
+     * Certifies through the no-auth EasyBadge endpoint, identified by matricola plus a stable
+     * device token and the last known GPS position (0/0 when unavailable).
+     */
     private suspend fun registerLessonCode(
         careerId: CareerId,
         lessonCode: String,
     ): PresenceMarkOutcome {
-        val matricola = activeCareer(careerId)?.matricola
+        val studentNumber = activeCareer(careerId)?.studentNumber
             ?: return PresenceMarkOutcome.Failed("Matricola non disponibile")
         val deviceId = deviceIdentityStore.deviceId()
         val location = locationProvider.lastKnownLatLong()
         return runCatching {
             easyStaffApi.attendance.certifyAttendance(
-                studentId = matricola,
+                studentId = studentNumber,
                 lessonCode = lessonCode,
                 deviceToken = deviceId,
                 longitude = location?.second ?: 0.0,
@@ -323,13 +351,16 @@ class AttendanceRepositoryImpl @Inject constructor(
         return cachedModules
     }
 
+    /**
+     * Esse3 stamps each libretto row with the academic year it is frequented in; the highest
+     * course year among the current academic year's rows is the current year of study, with
+     * the plan's deepest year as fallback.
+     */
     private fun currentYearOfStudy(
         rows: List<TranscriptRow>,
         academicYear: Int,
         plan: StudyPlan?,
     ): StudyYear {
-        // Esse3 stamps each libretto row with the academic year it is frequented in;
-        // the highest course year among this AA's rows is the current year of study.
         val fromTranscript = rows
             .filter { it.academicYear == academicYear }
             .maxOfOrNull { it.courseYear }
@@ -346,14 +377,16 @@ class AttendanceRepositoryImpl @Inject constructor(
     private companion object {
         val COURSE_ID_NUMBER_REGEX = Regex("^(\\d{4})-(\\d+)-(.+)$")
 
-        // mod_attendance overrides this to the highest status server-side for
-        // auto-assign sessions, so any non-empty value works as a fallback.
+        /**
+         * mod_attendance overrides this to the highest status server-side for auto-assign
+         * sessions, so any non-empty value works as a fallback.
+         */
         const val DEFAULT_STATUS_ID = "1"
 
         fun academicYearOf(today: LocalDate): Int =
             if (today.monthValue >= 9) today.year else today.year - 1
 
-        // Bicocca's first semester runs September to January, the second February to July.
+        /** Bicocca's first semester runs September to January, the second February to July. */
         fun semesterOf(today: LocalDate): Semester =
             if (today.monthValue in 2..8) Semester.Second else Semester.First
     }

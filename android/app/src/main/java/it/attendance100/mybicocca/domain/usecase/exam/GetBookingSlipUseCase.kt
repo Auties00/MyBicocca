@@ -5,6 +5,11 @@ import it.attendance100.mybicocca.domain.model.exam.ExamCallKey
 import it.attendance100.mybicocca.domain.repository.ExamRepository
 import javax.inject.Inject
 
+/**
+ * Downloads the booking slip PDF (statino di prenotazione) for a booked exam, triggered
+ * from the booked-exams modal in the registry tab. Available for any booking; returns
+ * the raw PDF bytes and throws on failure.
+ */
 class GetBookingSlipUseCase @Inject constructor(
     private val repository: ExamRepository,
 ) {

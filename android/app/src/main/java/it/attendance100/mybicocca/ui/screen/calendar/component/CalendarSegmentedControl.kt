@@ -44,6 +44,14 @@ private val ItalianLocale: Locale = Locale.ITALIAN
 private val IndicatorEasing = CubicBezierEasing(0.5f, 0.05f, 0.1f, 1f)
 private const val IndicatorDurationMs = 320
 
+/**
+ * Day/Week/Month switcher pinned above the calendar content: a pill-shaped container with
+ * three equal segments, each stacking an uppercase mode caption over a summary of the
+ * current selection — weekday and day number, the week's day span, the month name. A
+ * filled indicator slides under the active segment on an emphasized-deceleration curve;
+ * active content flips to the on-fill color while inactive segments stay muted, and dark
+ * theme swaps the brand fill for the softer primary container.
+ */
 @Composable
 fun CalendarSegmentedControl(
     viewMode: CalendarViewMode,

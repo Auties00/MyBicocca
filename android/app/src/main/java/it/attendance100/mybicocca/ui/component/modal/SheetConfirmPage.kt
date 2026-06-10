@@ -19,9 +19,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
-// In-sheet destructive-confirm page (replaces AlertDialog popups): body copy over the connected
-// action pair. Per the app convention the safe way out (keepLabel) is the brand primary and
-// trails on the right; the committing action (confirmLabel) is the neutral tonal and leads left.
+/**
+ * In-sheet destructive-confirm page, used where a popup AlertDialog would otherwise appear:
+ * body copy over the connected expressive action pair. The emphasized action is always the
+ * brand primary trailing on the right; by default that's the safe way out ([keepLabel]), with
+ * [confirmIsPrimary] the committing action takes the slot instead and the safe way out becomes
+ * the neutral tonal leading left.
+ */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun SheetConfirmPage(
@@ -31,11 +35,14 @@ fun SheetConfirmPage(
     modifier: Modifier = Modifier,
     confirmLabel: String = "Conferma",
     keepLabel: String = "Annulla",
+    confirmIsPrimary: Boolean = false,
 ) {
     val scheme = MaterialTheme.colorScheme
     val dark = isSystemInDarkTheme()
     val brandBg = if (dark) scheme.primaryContainer else scheme.primary
     val brandFg = if (dark) scheme.onPrimaryContainer else scheme.onPrimary
+    val (secondaryLabel, onSecondary) = if (confirmIsPrimary) keepLabel to onKeep else confirmLabel to onConfirm
+    val (primaryLabel, onPrimary) = if (confirmIsPrimary) confirmLabel to onConfirm else keepLabel to onKeep
 
     Column(modifier = modifier.fillMaxWidth()) {
         Text(
@@ -51,7 +58,7 @@ fun SheetConfirmPage(
             horizontalArrangement = Arrangement.spacedBy(4.dp),
         ) {
             FilledTonalButton(
-                onClick = onConfirm,
+                onClick = onSecondary,
                 modifier = Modifier
                     .weight(1f)
                     .height(56.dp),
@@ -61,17 +68,17 @@ fun SheetConfirmPage(
                     contentColor = scheme.onSurface,
                 ),
             ) {
-                Text(confirmLabel, fontWeight = FontWeight.SemiBold)
+                Text(secondaryLabel, fontWeight = FontWeight.SemiBold)
             }
             Button(
-                onClick = onKeep,
+                onClick = onPrimary,
                 modifier = Modifier
                     .weight(1.4f)
                     .height(56.dp),
                 shape = ButtonGroupDefaults.connectedTrailingButtonShape,
                 colors = ButtonDefaults.buttonColors(containerColor = brandBg, contentColor = brandFg),
             ) {
-                Text(keepLabel, fontWeight = FontWeight.SemiBold)
+                Text(primaryLabel, fontWeight = FontWeight.SemiBold)
             }
         }
     }

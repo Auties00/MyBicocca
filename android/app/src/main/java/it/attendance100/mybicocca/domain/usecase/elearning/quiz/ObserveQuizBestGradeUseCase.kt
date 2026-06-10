@@ -8,6 +8,10 @@ import it.attendance100.mybicocca.domain.repository.ElearningQuizRepository
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
+/**
+ * Streams the student's cached best grade for a quiz, shown as the headline result of the quiz
+ * detail sheet; the loaded value is null while no best grade is cached.
+ */
 class ObserveQuizBestGradeUseCase @Inject constructor(
     private val repository: ElearningQuizRepository,
 ) {

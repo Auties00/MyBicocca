@@ -1,14 +1,10 @@
 package it.attendance100.mybicocca.ui.screen.map.subscreen.buildingDetail
 
-import android.content.Intent
-import android.net.Uri
 import androidx.compose.animation.animateContentSize
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -23,17 +19,11 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.Accessible
 import androidx.compose.material.icons.outlined.Check
-import androidx.compose.material.icons.outlined.EventAvailable
 import androidx.compose.material.icons.outlined.Groups
 import androidx.compose.material.icons.outlined.Layers
 import androidx.compose.material.icons.outlined.MeetingRoom
 import androidx.compose.material.icons.outlined.Verified
-import androidx.compose.material.icons.outlined.Vrpano
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.ButtonGroupDefaults
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -44,7 +34,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntSize
@@ -60,28 +49,26 @@ import java.time.format.DateTimeFormatter
 
 private val TimeFormat: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm")
 
-// EasyStaff's "Prenotazione servizi" portal (AuleStudio) — the closest thing to a per-room
-// booking flow the university exposes.
-private const val BOOKING_URL =
-    "https://gestioneorari.didattica.unimib.it/portaleplanning/unimib-aulestudio/index.php"
-
-// Headerless room page hosted inside a sheet pager (the hosting sheet provides the morphing
-// header): everything EasyStaff knows about the room — floor, capacity, type, description,
-// accessibility (incl. notes and B.Inclusion validation), equipment, today's slots.
+/**
+ * Headerless room page hosted inside a sheet pager (the hosting sheet provides the morphing
+ * header): everything EasyStaff knows about the room — floor, capacity, type, description,
+ * accessibility (incl. notes and B.Inclusion validation), equipment, today's slots.
+ *
+ * The loading state is held for a beat so quick fetches don't flash it; the detail is never
+ * cached, so reopening a room re-fetches, and everything (buttons included) stays hidden
+ * until the data lands. The page may only grow/shrink vertically as the detail lands: the
+ * height change is animated here instead of letting the hosting modal snap to the new size.
+ */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 internal fun RoomDetailPage(
     room: MapRoom,
     detail: Loadable<MapRoomDetail?>,
     todayEntries: List<RoomScheduleEntry>?,
-    onOpen360: (String, String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val detailValue = (detail as? Loadable.Loaded)?.value
 
-    // Hold the loading state for a beat so quick fetches don't flash it. The detail is never
-    // cached, so reopening a room re-fetches; everything (buttons included) stays hidden until
-    // the data lands.
     val showLoading = rememberMinDurationLoading(loading = detail is Loadable.NotYetLoaded)
 
     val motion = MaterialTheme.motionScheme
@@ -90,8 +77,6 @@ internal fun RoomDetailPage(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            // The sheet may only grow/shrink vertically as the detail lands — animate the
-            // height change here instead of letting the modal snap to the new size.
             .animateContentSize(animationSpec = sizeSpec)
             .heightIn(max = 560.dp)
             .verticalScroll(rememberScrollState())
@@ -110,16 +95,11 @@ internal fun RoomDetailPage(
             detailValue?.equipment?.takeIf { it.isNotEmpty() }?.let { EquipmentSection(it) }
 
             TodaySchedule(entries = todayEntries)
-
-            RoomActionRow(
-                roomName = room.name,
-                interactive360Url = detailValue?.interactive360Url,
-                onOpen360 = onOpen360,
-            )
         }
     }
 }
 
+/** The freshly scraped values win; the cached room's floor and capacity only fill in when the detail lacks them. */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun RoomFeatures(room: MapRoom, detail: MapRoomDetail?) {
@@ -127,7 +107,6 @@ private fun RoomFeatures(room: MapRoom, detail: MapRoomDetail?) {
         horizontalArrangement = Arrangement.spacedBy(6.dp),
         verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
-        // The cached floor wins over the freshly scraped one only when the latter is missing.
         (detail?.floor ?: room.floor)?.let { floor ->
             FeaturePill(
                 icon = Icons.Outlined.Layers,
@@ -156,6 +135,7 @@ private fun SectionTitle(text: String) {
     )
 }
 
+/** The description renders multi-line as-is: the scraper preserves the source line structure. */
 @Composable
 private fun DescriptionSection(description: String) {
     val scheme = MaterialTheme.colorScheme
@@ -165,7 +145,6 @@ private fun DescriptionSection(description: String) {
             shape = RoundedCornerShape(20.dp),
             color = scheme.surfaceContainer,
         ) {
-            // Multi-line: the scraper preserves the source line structure.
             Text(
                 text = description,
                 style = MaterialTheme.typography.bodyMedium,
@@ -178,8 +157,10 @@ private fun DescriptionSection(description: String) {
     }
 }
 
-// Rendered only when there is something to say: the accessibility flag, the B.Inclusion
-// validation badge, or free-form notes (steps, amphitheater layout, accessible-table booking).
+/**
+ * Rendered only when there is something to say: the accessibility flag, the B.Inclusion
+ * validation badge, or free-form notes (steps, amphitheater layout, accessible-table booking).
+ */
 @Composable
 private fun AccessibilitySection(detail: MapRoomDetail) {
     val scheme = MaterialTheme.colorScheme
@@ -259,82 +240,11 @@ private fun EquipmentSection(equipment: List<String>) {
     }
 }
 
-// Connected button pair, colors mirroring the calendar event detail's action row: booking is
-// the highlighted action, the VR tour rides the tonal slot (enabled only when a tour exists).
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
-@Composable
-private fun RoomActionRow(
-    roomName: String,
-    interactive360Url: String?,
-    onOpen360: (String, String) -> Unit,
-) {
-    val scheme = MaterialTheme.colorScheme
-    val context = LocalContext.current
-    val dark = isSystemInDarkTheme()
-    val bookingBg = if (dark) scheme.primaryContainer else scheme.primary
-    val bookingFg = if (dark) scheme.onPrimaryContainer else scheme.onPrimary
-
-    Row(
-        modifier = Modifier.fillMaxWidth().padding(top = 2.dp),
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
-    ) {
-        FilledTonalButton(
-            onClick = { interactive360Url?.let { onOpen360(it, roomName) } },
-            enabled = interactive360Url != null,
-            modifier = Modifier
-                .weight(1f)
-                .height(48.dp),
-            shape = ButtonGroupDefaults.connectedLeadingButtonShape,
-            colors = ButtonDefaults.filledTonalButtonColors(
-                containerColor = scheme.surfaceContainerHighest,
-                contentColor = scheme.onSurface,
-            ),
-            // Quarter-row slot: the default 24dp horizontal padding wouldn't fit the content.
-            contentPadding = PaddingValues(horizontal = 8.dp),
-        ) {
-            Icon(
-                imageVector = Icons.Outlined.Vrpano,
-                contentDescription = null,
-                modifier = Modifier.size(20.dp),
-            )
-            Text(
-                text = "VR",
-                fontWeight = FontWeight.SemiBold,
-                modifier = Modifier.padding(start = 6.dp),
-            )
-        }
-        Button(
-            onClick = {
-                runCatching {
-                    context.startActivity(
-                        Intent(Intent.ACTION_VIEW, Uri.parse(BOOKING_URL))
-                            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
-                    )
-                }
-            },
-            modifier = Modifier
-                .weight(3f)
-                .height(48.dp),
-            shape = ButtonGroupDefaults.connectedTrailingButtonShape,
-            colors = ButtonDefaults.buttonColors(
-                containerColor = bookingBg,
-                contentColor = bookingFg,
-            ),
-        ) {
-            Icon(
-                imageVector = Icons.Outlined.EventAvailable,
-                contentDescription = null,
-                modifier = Modifier.size(20.dp),
-            )
-            Text(
-                text = "Prenota",
-                fontWeight = FontWeight.SemiBold,
-                modifier = Modifier.padding(start = 8.dp),
-            )
-        }
-    }
-}
-
+/**
+ * Today's slots sorted by start time, the in-progress one flipped to the error container.
+ * Idle entries sit on surfaceContainer to match the Descrizione/Accessibilità cards — bare
+ * surface reads near-black against the sheet container in dark mode.
+ */
 @Composable
 private fun TodaySchedule(entries: List<RoomScheduleEntry>?) {
     val scheme = MaterialTheme.colorScheme
@@ -355,8 +265,6 @@ private fun TodaySchedule(entries: List<RoomScheduleEntry>?) {
             val inProgress = !now.isBefore(entry.start) && now.isBefore(entry.end)
             Surface(
                 shape = RoundedCornerShape(12.dp),
-                // surfaceContainer to match the Descrizione/Accessibilità cards — bare surface
-                // reads near-black against the sheet container in dark mode.
                 color = if (inProgress) scheme.errorContainer else scheme.surfaceContainer,
                 contentColor = if (inProgress) scheme.onErrorContainer else scheme.onSurface,
             ) {

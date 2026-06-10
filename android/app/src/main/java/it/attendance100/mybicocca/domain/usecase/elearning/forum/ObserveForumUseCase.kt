@@ -8,6 +8,10 @@ import it.attendance100.mybicocca.domain.repository.ElearningForumRepository
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
+/**
+ * Streams one cached forum — title, type, and capability flags — for the forum sheet's header
+ * and its composer affordances. Hot Room flow.
+ */
 class ObserveForumUseCase @Inject constructor(
     private val repository: ElearningForumRepository,
 ) {

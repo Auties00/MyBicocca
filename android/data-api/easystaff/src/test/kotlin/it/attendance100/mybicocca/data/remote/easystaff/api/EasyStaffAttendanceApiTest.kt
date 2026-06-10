@@ -12,13 +12,15 @@ import org.junit.jupiter.api.Test
  */
 class EasyStaffAttendanceApiTest : EasyStaffTestBase() {
     companion object {
-        // Mock student ID - this is a test value and will likely fail on production
+        /** Synthetic student identifier, expected to be rejected by the production backend. */
         private const val MOCK_STUDENT_ID = "909697"
         private const val MOCK_LESSON_CODE = "TEST_LESSON"
         private const val MOCK_DEVICE_TOKEN = "TEST_DEVICE"
 
-        // Bicocca campus coordinates (roughly)
+        /** Approximate longitude of the Bicocca campus. */
         private const val MOCK_LONGITUDE = 9.2094
+
+        /** Approximate latitude of the Bicocca campus. */
         private const val MOCK_LATITUDE = 45.5175
     }
 

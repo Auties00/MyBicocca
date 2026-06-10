@@ -19,14 +19,19 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.Assignment
 import androidx.compose.material.icons.outlined.Apartment
+import androidx.compose.material.icons.outlined.Bolt
 import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Explore
 import androidx.compose.material.icons.outlined.History
 import androidx.compose.material.icons.outlined.HistoryEdu
+import androidx.compose.material.icons.outlined.MeetingRoom
+import androidx.compose.material.icons.outlined.Quiz
 import androidx.compose.material.icons.outlined.School
 import androidx.compose.material.icons.outlined.SearchOff
+import androidx.compose.material.icons.outlined.Today
 import androidx.compose.material.icons.outlined.WorkspacePremium
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -58,23 +63,57 @@ import it.attendance100.mybicocca.domain.model.search.SearchResult
 import it.attendance100.mybicocca.domain.model.search.SearchResultCategory
 import it.attendance100.mybicocca.ui.component.bar.fadeThroughExpanded
 import it.attendance100.mybicocca.ui.component.feedback.EmptyState
+import it.attendance100.mybicocca.ui.screen.search.component.DictationDialog
 import it.attendance100.mybicocca.ui.screen.search.component.SearchHistoryRow
 import it.attendance100.mybicocca.ui.screen.search.component.SearchResultRow
-import it.attendance100.mybicocca.ui.screen.search.subscreen.dictation.DictationDialog
+import it.attendance100.mybicocca.ui.screen.search.component.TopHitCard
 
-// Full-screen search body following the M3 search-view anatomy: the app bar above acts as
-// the header (surfaceContainer), a full-width outlineVariant divider marks the seam, and
-// this content area sits one tonal step below on plain surface — separation comes from the
-// tonal ladder, not shadows. Not a nav route: it rides the bar's own searchProgress, so the
-// predictive-back gesture that scrubs the bar collapse scrubs this overlay in lockstep.
+/**
+ * Full-screen global-search body following the M3 search-view anatomy: the app bar above
+ * acts as the header (surfaceContainer), a pinned full-width outlineVariant divider marks
+ * the seam (outline stays reserved for important boundaries like text fields), and this
+ * content area sits one tonal step below on plain surface — separation comes from the tonal
+ * ladder, not shadows. The opaque background plus a no-op clickable swallow taps meant for
+ * the hidden tab underneath.
+ *
+ * Not a nav route: it rides the bar's own search [progress], so the predictive-back gesture
+ * that scrubs the bar collapse scrubs this overlay in lockstep. The body fade-throughs over
+ * the upper half of the morph (the same ramp as the bar's expanded content) while growing
+ * down from under the bar, so it reads as unfolding out of the pill rather than popping in.
+ * [subPageProgress] is how far a sub-page covers the shell: search stays alive under a
+ * pushed sub-page — the overlay fades out for the push (and back in as the pop scrubs) but
+ * stays composed, so query, results and scroll position survive the round trip. At alpha 0
+ * the layer is also shifted off-screen, because transparency alone would leave it
+ * hit-testable above the settled sub-page; the shift drops it from hit testing while
+ * keeping it composed.
+ *
+ * A blank query shows the recent searches as one segmented group (or an empty state): a row
+ * tap re-runs the search, the trailing arrow inserts the text into the field uncommitted
+ * with the keyboard up — an invitation to refine — and a horizontal swipe removes a single
+ * row, survivors sliding into their new slots and group shapes. A vertical pull wipes the
+ * whole history through the pull-to-refresh machinery with a delete badge instead of a
+ * spinner; the wipe never arms while the keyboard is up, where a downward pull belongs to
+ * the IME's own dismiss gesture. A non-blank query shows ranked results grouped into
+ * category sections rendered as connected segmented groups (the registry directory's
+ * expressive list-group idiom); sections keep the category order and rows inside arrive
+ * already ranked. A clearly-winning first result — at least acronym-tier score with an
+ * unambiguous lead over the runner-up — gets the hero top-hit card above the sections, so
+ * it means "press and go" rather than another section; no matches render a dedicated empty
+ * state. The results list takes a top frame symmetric with the bottom inset (the first
+ * section header drops its own top spacing, and section spacing only sits between groups);
+ * the other states keep a tighter top since their items carry their own insets.
+ *
+ * The keyboard retracts as soon as the user starts browsing results (per M3), and when a
+ * dictation session ends it comes straight back up: the dictated text lands cursor-at-end
+ * in the field, ready to be refined by typing. The dictation dialog rides the ViewModel's
+ * dictating flag rather than a route, because the session can also end on its own (final
+ * transcript, recognizer timeout) and the dialog must follow it out.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SearchOverlay(
     viewModel: SearchViewModel,
     progress: Float,
-    // How far a sub-page covers the shell. Search can stay alive under a pushed sub-page:
-    // the overlay fades out for the push (and back in as the pop scrubs) but stays composed,
-    // so query, results and scroll position survive the round trip.
     subPageProgress: Float,
     topInset: Dp,
     onOpenResult: (SearchResult) -> Unit,
@@ -86,8 +125,6 @@ fun SearchOverlay(
     val dictating by viewModel.dictating.collectAsStateWithLifecycle()
     val soundLevel by viewModel.soundLevel.collectAsStateWithLifecycle()
 
-    // Rides the dictating flag rather than a route: the session can also end on its own
-    // (final transcript, recognizer timeout) and the dialog must follow it out.
     DictationDialog(
         visible = dictating,
         transcript = query,
@@ -97,13 +134,10 @@ fun SearchOverlay(
 
     val keyboard = LocalSoftwareKeyboardController.current
     val listState = rememberLazyListState()
-    // M3: the keyboard retracts as soon as the user starts browsing the results.
     LaunchedEffect(listState) {
         snapshotFlow { listState.isScrollInProgress }
             .collect { scrolling -> if (scrolling) keyboard?.hide() }
     }
-    // The dictated text lands cursor-at-end in the field (see SearchFieldContent); raising
-    // the keyboard right as the dialog leaves invites refining it by typing.
     var wasDictating by remember { mutableStateOf(false) }
     LaunchedEffect(dictating) {
         if (wasDictating && !dictating) keyboard?.show()
@@ -111,31 +145,18 @@ fun SearchOverlay(
     }
 
     val scheme = MaterialTheme.colorScheme
-    // Vertical pull on the history wipes it whole: the pull-to-refresh machinery with a
-    // delete badge instead of a spinner. Single rows go with a horizontal swipe.
     val pullState = rememberPullToRefreshState()
     Box(
         modifier = modifier
             .fillMaxSize()
             .graphicsLayer {
-                // Fade-through over the upper half of the morph (same ramp as the bar's
-                // expanded content) plus a subtle grow-down from under the bar, so the body
-                // reads as unfolding out of the pill rather than popping in. A covering
-                // sub-page fades it out symmetrically (and the predictive-back scrub fades
-                // it back in).
                 alpha = fadeThroughExpanded(progress) * (1f - subPageProgress)
-                // Alpha 0 alone would keep the overlay hit-testable above the settled
-                // sub-page; shifting the layer off-screen drops it from hit testing while
-                // keeping it composed, so list state survives.
                 if (alpha == 0f) translationY = size.height
                 transformOrigin = TransformOrigin(0.5f, 0f)
                 val scale = 0.96f + 0.04f * progress
                 scaleX = scale
                 scaleY = scale
             }
-            // Plain surface, one tonal step below the bar's surfaceContainer header. The
-            // opaque background plus the no-op clickable also swallow taps meant for the
-            // hidden tab underneath.
             .background(scheme.surface)
             .clickable(
                 indication = null,
@@ -147,12 +168,8 @@ fun SearchOverlay(
                 .fillMaxSize()
                 .padding(top = topInset),
         ) {
-            // Pinned seam between header and content — outlineVariant per the divider role
-            // (outline is reserved for important boundaries like text fields).
             HorizontalDivider(color = scheme.outlineVariant)
 
-            // While the keyboard is up, a downward pull is keyboard territory (the top-half
-            // dismiss gesture) — the wipe must not arm under it.
             val keyboardOpen = WindowInsets.ime.asPaddingValues().calculateBottomPadding() > 0.dp
             LazyColumn(
                 state = listState,
@@ -168,9 +185,6 @@ fun SearchOverlay(
                 contentPadding = PaddingValues(
                     start = 16.dp,
                     end = 16.dp,
-                    // Results get a frame symmetric with the bottom inset (the first section
-                    // header drops its own spacing — see below); other states keep the
-                    // tighter top since their items carry their own insets.
                     top = if (query.isNotBlank() && results.isNotEmpty()) 24.dp else 8.dp,
                     bottom = 24.dp,
                 ),
@@ -189,16 +203,12 @@ fun SearchOverlay(
                                     viewModel.setQuery(entry.query)
                                     viewModel.submit()
                                 },
-                                // Insert is an invitation to refine: cursor lands at the end
-                                // (field-side) and the keyboard comes up ready for typing.
                                 onInsert = {
                                     viewModel.setQuery(entry.query)
                                     keyboard?.show()
                                 },
                                 onRemove = { viewModel.removeFromHistory(entry.query) },
                                 modifier = Modifier
-                                    // Slides the survivors into their new slots (and group
-                                    // shapes) when a swiped row leaves.
                                     .animateItem()
                                     .padding(top = if (index == 0) 8.dp else GroupGap),
                             )
@@ -226,10 +236,26 @@ fun SearchOverlay(
                             }
                         }
                     } else {
-                        // Sections keep the category order; rows inside are already ranked.
-                        // Each section renders as a connected segmented group — the same
-                        // expressive list-group idiom as the Registry directory.
+                        val topHit = results.firstOrNull()?.takeIf { best ->
+                            best.score >= TopHitMinScore && (
+                                results.getOrNull(1)
+                                    ?.let { best.score - it.score >= TopHitMargin } != false
+                                )
+                        }
+                        if (topHit != null) {
+                            item(key = "top-hit") {
+                                TopHitCard(
+                                    icon = topHit.icon(),
+                                    title = topHit.title,
+                                    subtitle = topHit.subtitle,
+                                    query = query,
+                                    onClick = { onOpenResult(topHit) },
+                                )
+                            }
+                        }
+
                         val grouped = results
+                            .filterNot { it === topHit }
                             .groupBy { it.category }
                             .entries
                             .sortedBy { it.key.priority }
@@ -239,9 +265,7 @@ fun SearchOverlay(
                                     text = category.label(),
                                     modifier = Modifier.padding(
                                         start = 4.dp,
-                                        // Section spacing only BETWEEN groups; the first sits
-                                        // flush on the symmetric content frame above.
-                                        top = if (groupIndex == 0) 0.dp else 20.dp,
+                                        top = if (groupIndex == 0 && topHit == null) 0.dp else 20.dp,
                                         bottom = 8.dp,
                                     ),
                                 )
@@ -255,8 +279,10 @@ fun SearchOverlay(
                                     icon = result.icon(),
                                     title = result.title,
                                     subtitle = result.subtitle,
+                                    query = query,
                                     shape = groupItemShape(index, rows.size),
                                     onClick = { onOpenResult(result) },
+                                    accent = result is SearchResult.Action,
                                     modifier = Modifier.padding(top = if (index == 0) 0.dp else GroupGap),
                                 )
                             }
@@ -285,8 +311,12 @@ private fun SectionLabel(text: String, modifier: Modifier = Modifier) {
     )
 }
 
-// Pull-to-clear indicator: a delete badge descends and blooms with the drag, then arms
-// (errorContainer -> error) the moment the release would wipe the history.
+/**
+ * Pull-to-clear indicator: a delete badge descends from behind the seam and blooms with the
+ * drag — fading and scaling in, with overshoot past the threshold following the finger at
+ * half speed — then arms (errorContainer -> error) the moment a release would wipe the
+ * history.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun HistoryClearIndicator(
@@ -308,8 +338,6 @@ private fun HistoryClearIndicator(
             .graphicsLayer {
                 val f = state.distanceFraction
                 alpha = f.coerceIn(0f, 1f)
-                // From fully tucked behind the seam down to a resting offset; the overshoot
-                // past the threshold keeps following the finger at half speed.
                 val travel = size.height + 24.dp.toPx()
                 translationY = -size.height + travel * (f.coerceAtMost(1f) + (f - 1f).coerceAtLeast(0f) * 0.5f)
                 val scale = 0.7f + 0.3f * f.coerceAtMost(1f)
@@ -329,12 +357,14 @@ private fun HistoryClearIndicator(
     }
 }
 
-// Connected segmented group geometry: expressive outer corners on the group's first/last
-// edges, tight inner corners between siblings, hairline gaps instead of dividers.
 private val GroupOuterCorner = 20.dp
 private val GroupInnerCorner = 5.dp
 private val GroupGap = 2.dp
 
+/**
+ * Connected segmented-group geometry: expressive outer corners on the group's first/last
+ * edges, tight inner corners between siblings, hairline gaps instead of dividers.
+ */
 private fun groupItemShape(index: Int, count: Int): Shape {
     val top = if (index == 0) GroupOuterCorner else GroupInnerCorner
     val bottom = if (index == count - 1) GroupOuterCorner else GroupInnerCorner
@@ -342,19 +372,33 @@ private fun groupItemShape(index: Int, count: Int): Shape {
 }
 
 private fun SearchResultCategory.label(): String = when (this) {
+    SearchResultCategory.Action -> "Azioni"
     SearchResultCategory.Destination -> "Pagine"
     SearchResultCategory.Course -> "Corsi"
+    SearchResultCategory.Assignment -> "Compiti"
+    SearchResultCategory.Quiz -> "Quiz"
     SearchResultCategory.CalendarEvent -> "Calendario"
-    SearchResultCategory.Building -> "Edifici"
+    SearchResultCategory.Place -> "Luoghi"
     SearchResultCategory.TranscriptEntry -> "Carriera"
 }
 
 private fun SearchResult.icon(): ImageVector = when (this) {
+    is SearchResult.Action -> Icons.Outlined.Bolt
     is SearchResult.Destination -> Icons.Outlined.Explore
     is SearchResult.Course -> Icons.Outlined.School
+    is SearchResult.Assignment -> Icons.AutoMirrored.Outlined.Assignment
+    is SearchResult.Quiz -> Icons.Outlined.Quiz
     is SearchResult.CalendarEntry ->
         if (isExam) Icons.Outlined.HistoryEdu else Icons.Outlined.CalendarMonth
 
+    is SearchResult.CalendarDay -> Icons.Outlined.Today
     is SearchResult.Building -> Icons.Outlined.Apartment
+    is SearchResult.Room -> Icons.Outlined.MeetingRoom
     is SearchResult.TranscriptEntry -> Icons.Outlined.WorkspacePremium
 }
+
+/** Top-hit gate, score floor: the best result must reach at least acronym-tier strength. */
+private const val TopHitMinScore = 0.8
+
+/** Top-hit gate, required lead of the best result over the runner-up. */
+private const val TopHitMargin = 0.05

@@ -20,7 +20,11 @@ import it.attendance100.mybicocca.ui.screen.registry.subscreen.taxes.theme.PagoP
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.taxes.theme.PagoPaSecondaryColor
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.taxes.theme.pagoPaBackgroundColor
 
-// pagoPA "payment successful" receipt shown on the detail of a paid invoice.
+/**
+ * pagoPA "payment successful" receipt shown on the detail of a paid invoice: the same sliced
+ * ticket card as the fattura, washed in the pagoPA palette, with the pagoPA logo over the
+ * transaction-success message.
+ */
 @Composable
 fun PagoPaInvoice(modifier: Modifier = Modifier) {
     DynamicCard(

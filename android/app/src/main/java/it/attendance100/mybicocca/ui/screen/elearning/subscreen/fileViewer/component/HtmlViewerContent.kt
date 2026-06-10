@@ -23,6 +23,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
 
+/** Display theme of the html viewer, cycled by its bottom-bar action; not persisted. */
 enum class HtmlThemeMode(val label: String) {
     System("Sistema"),
     Light("Chiaro"),
@@ -31,6 +32,11 @@ enum class HtmlThemeMode(val label: String) {
     fun next(): HtmlThemeMode = entries[(ordinal + 1) % entries.size]
 }
 
+/**
+ * Injects dark-palette CSS overrides into the document head (or prepends them when no head
+ * exists): unconditionally for [HtmlThemeMode.Dark], behind a prefers-color-scheme media query
+ * for [HtmlThemeMode.System]; light mode returns the html untouched.
+ */
 private fun injectThemeCss(html: String, mode: HtmlThemeMode): String {
     if (mode == HtmlThemeMode.Light) return html
 
@@ -58,9 +64,16 @@ private fun injectThemeCss(html: String, mode: HtmlThemeMode): String {
     }
 }
 
-// Course html resources are mostly small standalone snippets; render them in a WebView
-// with JS off. The elearning base url lets same-host relative references resolve, though
-// token-protected sub-resources will simply not load — acceptable for these files.
+/**
+ * In-app viewer for course html resources — mostly small standalone snippets — rendered in a
+ * WebView with JavaScript off and zoom gestures on. The elearning base url lets same-host
+ * relative references resolve, though token-protected sub-resources will simply not load —
+ * acceptable for these files.
+ *
+ * Shows a loading state while the file is read. The bottom action bar offers download, share,
+ * open-in-browser, and a three-way theme cycle (system/light/dark) applied by injecting CSS
+ * into the document.
+ */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun HtmlViewerContent(
@@ -83,7 +96,6 @@ fun HtmlViewerContent(
         return
     }
 
-    // Reactively compute the final HTML string whenever the theme or file content changes
     val finalHtml = remember(current, themeMode) {
         injectThemeCss(current, themeMode)
     }

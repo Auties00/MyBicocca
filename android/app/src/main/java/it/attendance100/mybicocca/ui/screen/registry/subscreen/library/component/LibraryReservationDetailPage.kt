@@ -37,6 +37,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import it.attendance100.mybicocca.domain.model.library.LibraryReservation
 import it.attendance100.mybicocca.ui.component.card.DetailFactCard
+import it.attendance100.mybicocca.ui.theme.LocalIsOnline
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
@@ -44,8 +45,15 @@ import java.util.Locale
 private val FullDateFormat = DateTimeFormatter.ofPattern("EEEE d MMMM yyyy", Locale.ITALIAN)
 private val TimeFormat = DateTimeFormatter.ofPattern("HH:mm")
 
-// Management page for one synced booking: sectioned cards (code, details) over a connected action
-// group — "Verifica presenza" (gated to the check-in window) + "Annulla".
+/**
+ * Management page for one synced booking: sectioned fact cards (reservation code, library, seat,
+ * slot, note) over a connected action pair — "Verifica presenza", gated to the check-in window
+ * with an explanatory hint, and "Cancella", which routes through the host's in-sheet confirmation
+ * page.
+ *
+ * @param presenceWindowMinutes Minutes before the start when on-site validation opens
+ * (server-driven; 10 is the observed default).
+ */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 internal fun LibraryReservationDetailPage(
@@ -54,7 +62,6 @@ internal fun LibraryReservationDetailPage(
     onVerifyPresence: () -> Unit,
     onCancel: (LibraryReservation) -> Unit,
     modifier: Modifier = Modifier,
-    // Minutes before the start when on-site validation opens (server-driven; 10 is the observed default).
     presenceWindowMinutes: Int = 10,
 ) {
     val scheme = MaterialTheme.colorScheme
@@ -120,14 +127,15 @@ internal fun LibraryReservationDetailPage(
             canCancel = canCancel,
             isCancelling = isCancelling,
             onVerifyPresence = onVerifyPresence,
-            // Requests the cancel; the hosting sheet shows the in-sheet confirm page.
             onCancel = { onCancel(reservation) },
         )
     }
 }
 
-// Connected pair matching the map/buildings action style: the secondary Cancella leads on the
-// tonal; the primary Verifica presenza trails wide on the brand fill.
+/**
+ * Connected pair matching the map/buildings action style: the secondary "Cancella" leads on the
+ * tonal container; the primary "Verifica presenza" trails wide on the brand fill.
+ */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun ActionRow(
@@ -148,7 +156,7 @@ private fun ActionRow(
     ) {
         FilledTonalButton(
             onClick = onCancel,
-            enabled = canCancel && !isCancelling,
+            enabled = canCancel && !isCancelling && LocalIsOnline.current,
             modifier = Modifier
                 .weight(1f)
                 .height(52.dp),

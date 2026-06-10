@@ -3,6 +3,12 @@ package it.attendance100.mybicocca.domain.usecase.attendance
 import it.attendance100.mybicocca.domain.model.attendance.PresenceScan
 import javax.inject.Inject
 
+/**
+ * Classifies the raw text of a scanned presence QR for the "Presenze" marking flow: Moodle
+ * mod_attendance links (attendance.php with sessid + optional qrpass) become session links,
+ * URLs carrying a lesson-code parameter and bare codes become EasyBadge lesson codes, anything
+ * else is unrecognized. Pure parsing — no network or side effects.
+ */
 class ParsePresenceScanUseCase @Inject constructor() {
 
     operator fun invoke(raw: String): PresenceScan {

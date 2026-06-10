@@ -10,10 +10,14 @@ import it.attendance100.mybicocca.domain.model.tax.TaxStatus
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
 
+/** How pressing a deadline is; drives the timeline accent and the banner's urgent count. */
 enum class DeadlineUrgency { Urgent, Upcoming }
 
-// One entry on the scadenzario timeline. `kicker` is the short uppercase category
-// label (e.g. "Esiti"), `title` the headline, `detail` the supporting line.
+/**
+ * One entry on the scadenzario timeline. [kicker] is the short uppercase category label
+ * (e.g. "Esiti"), [title] the headline, [detail] the supporting line; [onClick] routes to
+ * the owning sub-screen.
+ */
 data class RegistryDeadline(
     val date: LocalDate,
     val kicker: String,
@@ -21,24 +25,41 @@ data class RegistryDeadline(
     val detail: String?,
     val urgency: DeadlineUrgency,
     val onClick: () -> Unit,
-    // true → the date is a cutoff to act by ("Entro N giorni"); false → an event that
-    // happens then ("Tra N giorni").
+    /**
+     * True when the date is a cutoff to act by ("Entro N giorni"); false when it is an
+     * event that happens then ("Tra N giorni").
+     */
     val byDeadline: Boolean = false,
 )
 
-// Anything due within this many days counts as "urgent" and drives the header badge.
+/** Anything due within this many days counts as urgent and feeds the banner's urgent count. */
 private const val URGENT_DAYS = 7L
 
-// Window the timeline looks ahead over ("prossimi 30 giorni" in the header). Overdue
-// items (a few days back) still surface so a missed acceptance / payment doesn't vanish.
+/** How far ahead the timeline looks ("prossimi 30 giorni" in the header copy). */
 private const val LOOK_AHEAD_DAYS = 30L
+
+/**
+ * Overdue items up to this many days back still surface, so a missed acceptance or
+ * payment doesn't silently vanish from the timeline.
+ */
 private const val LOOK_BACK_DAYS = 7L
 
 fun RegistryDeadline.isUrgent(): Boolean = urgency == DeadlineUrgency.Urgent
 
-// Collapses the four feature streams into a single chronological deadline spine.
-// Callbacks route each entry to the owning sub-screen. `today` is injected so the
-// computation stays pure and testable.
+/**
+ * Collapses the four feature streams into a single chronological deadline spine, clamped
+ * to the look-back/look-ahead window and sorted by date. [today] is injected so the
+ * computation stays pure and testable; the callbacks route each entry to its owning
+ * sub-screen. The sources, each mapped to one kicker:
+ * - exam outcomes still awaiting the student's accept/reject decision — the most
+ *   time-critical entries;
+ * - outstanding tuition instalments, where an expired instalment is always urgent
+ *   regardless of the date window;
+ * - upcoming booked-exam sittings — the bookings feed also carries the full past
+ *   register, and a sat appello is not a deadline;
+ * - booking windows about to close, collapsed to one entry per activity keeping the
+ *   soonest closing date.
+ */
 fun buildRegistryDeadlines(
     today: LocalDate,
     examResults: List<ExamResult>,
@@ -51,7 +72,6 @@ fun buildRegistryDeadlines(
 ): List<RegistryDeadline> {
     val deadlines = mutableListOf<RegistryDeadline>()
 
-    // Exam outcomes still awaiting accept/reject — the most time-critical item.
     examResults.asSequence()
         .filter { it.requiresStudentDecision(today) }
         .forEach { result ->
@@ -68,7 +88,6 @@ fun buildRegistryDeadlines(
             )
         }
 
-    // Outstanding tuition instalments.
     invoices.asSequence()
         .filter { it.status == TaxStatus.PENDING || it.status == TaxStatus.EXPIRED }
         .forEach { invoice ->
@@ -78,14 +97,11 @@ fun buildRegistryDeadlines(
                 kicker = "Tasse",
                 title = invoice.title,
                 detail = "${formatAmount(invoice.amount)} · PagoPA",
-                // An expired instalment is always urgent regardless of the date window.
                 urgency = if (invoice.status == TaxStatus.EXPIRED) DeadlineUrgency.Urgent else urgencyFor(today, due),
                 onClick = onOpenTaxes,
             )
         }
 
-    // Exams the student has booked. getBookings now also returns the full past register,
-    // so keep only the upcoming ones here — a sat appello is not a deadline.
     bookings.asSequence()
         .mapNotNull { booking -> booking.examDateTime?.toLocalDate()?.let { it to booking } }
         .filter { (date, _) -> !date.isBefore(today) }
@@ -103,7 +119,6 @@ fun buildRegistryDeadlines(
             )
         }
 
-    // Booking windows about to close — one entry per activity, soonest deadline kept.
     examCalls.asSequence()
         .mapNotNull { call -> call.enrollmentWindow.closesAt?.let { it to call } }
         .filter { (closes, _) -> !closes.isBefore(today) }

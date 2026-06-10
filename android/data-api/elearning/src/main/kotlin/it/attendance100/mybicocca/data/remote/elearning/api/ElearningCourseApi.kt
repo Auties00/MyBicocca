@@ -11,6 +11,9 @@ import org.jsoup.nodes.Element
 /**
  * API for course-related operations.
  *
+ * Enrollment is one-way: Moodle exposes no web service to unenroll from a course
+ * (see [MDL-30063](https://moodle.atlassian.net/browse/MDL-30063)).
+ *
  * @param client The shared [HttpClient] instance
  * @param json The shared [Json] instance
  */
@@ -215,9 +218,6 @@ class ElearningCourseApi(
                 ?.attr("abs:href")?.takeIf { it.isNotBlank() }
         )
     }
-
-    // There is no method to unenroll from a course
-    // https://moodle.atlassian.net/browse/MDL-30063
 }
 
 private fun parseCoursePublicMetadata(mainBox: Element): ElearningCoursePublicMetadata {

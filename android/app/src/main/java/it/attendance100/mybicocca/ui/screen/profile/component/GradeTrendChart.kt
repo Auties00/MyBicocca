@@ -52,8 +52,9 @@ import java.time.format.DateTimeFormatter
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
-// Grades run 18..30, with 30L (cum laude) one step above 30 as the top of the scale.
 private const val Y_MIN = 18f
+
+/** Top of the scale: one step above 30 so 30 e lode plots above a plain 30. */
 private const val Y_MAX = 31f
 
 private val tooltipDateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy")
@@ -65,7 +66,16 @@ private data class GradePoint(
     val gradeText: String,
 )
 
-// Line chart of accepted (passed, graded) exam grades in chronological order, on a 0..30L scale.
+/**
+ * Card-wrapped line chart of passed, graded exam results in chronological order on an
+ * 18..30L scale: a primary-colored line over a vertical gradient fill, a dot on every
+ * grade, and labeled reference grid lines at 18, 24, and 30L. Fewer than two points
+ * renders an explanatory placeholder instead of a chart. Tapping near a point's
+ * horizontal position selects it, drawing a donut highlight and anchoring a popup tooltip
+ * with the exam name, date, and grade; taps on empty chart area select nothing, the
+ * popup's outside-tap dismisses the tooltip, and the selection resets whenever the
+ * dataset changes.
+ */
 @Composable
 fun GradeTrendChart(
     rows: List<TranscriptRow>,
@@ -86,7 +96,6 @@ fun GradeTrendChart(
             .toList()
     }
 
-    // Index of the point whose tooltip is showing, or null. Reset whenever the dataset changes.
     var selectedIndex by remember(points) { mutableStateOf<Int?>(null) }
 
     Card(
@@ -140,10 +149,6 @@ fun GradeTrendChart(
                                     fun xAt(index: Int): Float =
                                         if (points.size == 1) leftPad + chartWidth / 2f
                                         else leftPad + chartWidth * index / (points.size - 1)
-                                    // Select the nearest point within range; a tap on empty chart area
-                                    // (no point nearby) selects nothing. Dismissing a shown tooltip by
-                                    // tapping a non-grade point or outside the card is handled by the
-                                    // Popup's outside-tap below.
                                     val nearest = points.indices.minByOrNull { abs(tap.x - xAt(it)) }
                                     selectedIndex = nearest?.takeIf { abs(tap.x - xAt(it)) <= 24.dp.toPx() }
                                 }
@@ -160,7 +165,6 @@ fun GradeTrendChart(
                             if (points.size == 1) leftPad + chartWidth / 2f
                             else leftPad + chartWidth * index / (points.size - 1)
 
-                        // Reference lines + Y labels across the 18..30L scale.
                         listOf(18f to "18", 24f to "24", Y_MAX to "30L").forEach { (value, label) ->
                             val y = yFor(value)
                             drawLine(
@@ -208,7 +212,6 @@ fun GradeTrendChart(
                             drawCircle(color = lineColor, radius = 3.5.dp.toPx(), center = Offset(xFor(index), yFor(point.value)))
                         }
 
-                        // Donut highlight on the selected point; the detail card is the Popup overlay.
                         selectedIndex?.let { index ->
                             val px = xFor(index)
                             val py = yFor(points[index].value)
@@ -255,9 +258,12 @@ fun GradeTrendChart(
     }
 }
 
-// Positions the grade tooltip centered above the selected point, clamped within the chart, and
-// flipped below the point when there isn't room above. Works off the chart's window origin plus the
-// point's local pixel coords, since the zero-size popup anchor only yields the chart's top-left.
+/**
+ * Positions the grade tooltip centered above the selected point, clamped within the chart,
+ * and flipped below the point when there is no room above. Works off the chart's window
+ * origin plus the point's local pixel coordinates, since the zero-size popup anchor only
+ * yields the chart's top-left.
+ */
 private class GradeTooltipPositionProvider(
     private val pointX: Int,
     private val pointY: Int,

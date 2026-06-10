@@ -31,10 +31,13 @@ import androidx.compose.ui.unit.dp
 import androidx.graphics.shapes.Morph
 import androidx.graphics.shapes.toPath
 
-// The app's selection knob (Piano di Studi language): a circle that morphs into the
-// sunny shape when checked, washing to the brand red with explicit white content.
-// `uncheckedIcon = null` leaves the resting circle empty — radio-like, for single-choice
-// pickers where "+" would wrongly read as "add".
+/**
+ * The app's selection knob (Piano di Studi language): a circle that morphs into the sunny shape
+ * when checked, washing to the brand red with explicit white content.
+ *
+ * [uncheckedIcon] = null leaves the resting circle empty — radio-like, for single-choice
+ * pickers where "+" would wrongly read as "add".
+ */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun MorphKnob(
@@ -75,7 +78,7 @@ fun MorphKnob(
     }
 }
 
-// Scales the normalized morph path up to the knob's actual size.
+/** Scales the normalized morph path up to the knob's actual size. */
 private class MorphPolygonShape(
     private val morph: Morph,
     private val progress: Float,

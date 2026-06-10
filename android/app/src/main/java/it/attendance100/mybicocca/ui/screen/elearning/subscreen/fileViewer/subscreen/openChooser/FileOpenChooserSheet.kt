@@ -40,29 +40,37 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import it.attendance100.mybicocca.data.local.settings.FileOpenChoice
-import it.attendance100.mybicocca.ui.screen.elearning.subscreen.fileViewer.state.FileKind
+import it.attendance100.mybicocca.domain.model.settings.FileOpenChoice
+import it.attendance100.mybicocca.ui.component.file.FileKind
+import it.attendance100.mybicocca.ui.component.file.openChooserIcon
+import it.attendance100.mybicocca.ui.component.file.openChooserLabel
 import java.util.Locale
 
-// Asks whether to open an in-app-capable file inside the app or hand it to an external app,
-// with an optional "remember this" so the choice sticks for that file type. Following the
-// app's hand-off-sheet language (LinkSheet / OfficeOpenSheet): a centered hero and a pinned
-// connected button pair.
+/**
+ * Asks whether to open an in-app-capable file inside the app or hand it to an external app,
+ * with an optional "remember this" switch so the choice sticks for that file type (a long-press
+ * on a file re-shows the chooser, as the switch's helper text explains).
+ *
+ * Follows the app's hand-off-sheet language (LinkSheet / OfficeOpenSheet): a centered hero
+ * shape with the per-kind icon, the file name, a kind + size chip, the remember toggle, and a
+ * pinned connected button pair — brand-filled "In app" leading with explicit white content
+ * (a theme-reactive onPrimary would flip dark in dark mode), tonal "Altra app" trailing.
+ *
+ * This is sheet CONTENT, not a sheet: it renders as a back-stack page (the FileOpenChooser
+ * sheet route) inside whatever sheet container the scene strategy provides — a sub-page of an
+ * already-open sheet, or its own standalone one.
+ */
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-fun FileOpenChooserSheet(
+fun FileOpenChooserContent(
     fileName: String,
     sizeBytes: Long?,
     kind: FileKind,
     onChoose: (choice: FileOpenChoice, remember: Boolean) -> Unit,
-    onDismiss: () -> Unit,
 ) {
     var rememberChoice by remember { mutableStateOf(false) }
 
-    it.attendance100.mybicocca.ui.component.modal.PredictiveModalBottomSheet(
-        onDismiss = onDismiss,
-    ) { _, _ ->
-        Column(modifier = Modifier.fillMaxWidth()) {
+    Column(modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)) {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier
@@ -152,8 +160,6 @@ fun FileOpenChooserSheet(
                         .weight(1.4f)
                         .height(56.dp),
                     shape = ButtonGroupDefaults.connectedLeadingButtonShape,
-                    // Brand fill: keep the content explicitly white so it stays readable on the
-                    // red surface in both themes (onPrimary would flip to dark in dark mode).
                     colors = ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.primary,
                         contentColor = Color.White,
@@ -179,7 +185,6 @@ fun FileOpenChooserSheet(
                     Text("Altra app", fontWeight = FontWeight.SemiBold)
                 }
             }
-        }
     }
 }
 

@@ -17,8 +17,10 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
-// Brand-fill primary action. White content is explicit per the brand-red rule:
-// onPrimary flips to black-on-red in dark mode.
+/**
+ * Brand-fill primary action with expressive press shapes and an optional leading icon. White
+ * content is explicit per the brand-red rule: onPrimary flips to black-on-red in dark mode.
+ */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun PrimaryActionButton(

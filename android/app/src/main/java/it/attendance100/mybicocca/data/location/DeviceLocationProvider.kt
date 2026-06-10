@@ -10,12 +10,17 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
 
+/**
+ * Best-effort access to the device's position. It never requests a fresh fix: it reads the last
+ * known location of the GPS, network and passive providers and returns the most recent one, or
+ * null without a location permission or prior fix. Callers treat the result as optional —
+ * EasyBadge attendance certification proceeds without it because the server validates the
+ * lesson code itself.
+ */
 @Singleton
 class DeviceLocationProvider @Inject constructor(
     @ApplicationContext private val context: Context,
 ) {
-    // Best-effort last known coordinates (lat, long); null without permission or fix.
-    // EasyBadge certification still proceeds without it — the server validates the code.
     @SuppressLint("MissingPermission")
     fun lastKnownLatLong(): Pair<Double, Double>? {
         if (!hasPermission()) return null

@@ -34,9 +34,12 @@ import it.attendance100.mybicocca.domain.model.library.LibraryReservation
 import it.attendance100.mybicocca.ui.component.feedback.EmptyState
 import it.attendance100.mybicocca.ui.component.modal.SheetLoadingIndicator
 
-// Landing: server-synced bookings over a pinned footer. Until the email is verified it shows a
-// verify empty state with a "Verifica" footer; once verified, the bookings (or their empty state)
-// with a "Prenota" footer. Mirrors the Appuntamenti reservations page.
+/**
+ * Landing page of the Biblioteca sheet: the server-synced bookings over a pinned footer button.
+ * Until the email is verified it shows a verify empty state with a "Verifica" footer; once
+ * verified, the scrollable bookings list (or its empty state, or the sheet loading indicator
+ * while the first sync runs) with a "Prenota" footer. Mirrors the Appuntamenti reservations page.
+ */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 internal fun HomePage(

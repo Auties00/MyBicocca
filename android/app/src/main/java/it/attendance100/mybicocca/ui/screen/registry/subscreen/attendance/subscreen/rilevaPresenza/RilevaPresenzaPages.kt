@@ -40,12 +40,14 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import it.attendance100.mybicocca.ui.component.button.PrimaryActionButton
+import it.attendance100.mybicocca.ui.theme.LocalIsOnline
 
-// The "rileva presenza" entry pages, hosted by the presenze sheet's pager: a chooser
-// split by provider — Lezione (EasyStaff, typed code) and Altre attività (e-learning,
-// QR scan with an in-scanner manual fallback) — plus the lesson-code entry. Progress
-// and outcome render via the shared PresenceMarkingProgress / PresenceResultContent.
-
+/**
+ * Entry page of the "rileva presenza" flow, hosted by the Presenze sheet's pager: a chooser
+ * split by provider, rendered as two tonal option cards — "Lezione" (EasyStaff, typed code)
+ * and "Altre attività" (e-learning, QR scan with an in-scanner manual fallback). Progress and
+ * outcome render via the shared PresenceMarkingProgress / PresenceResultContent pages.
+ */
 @Composable
 fun RilevaChooserPage(
     onLessonCode: () -> Unit,
@@ -124,6 +126,11 @@ private fun ChooserOption(
     }
 }
 
+/**
+ * Lesson-code entry page of the rileva flow: an auto-focused single-line field over a
+ * full-width "Registra presenza" action; submission needs a non-blank code and connectivity,
+ * and the IME's done action submits too.
+ */
 @Composable
 fun RilevaCodePage(onSubmit: (String) -> Unit) {
     var code by remember { mutableStateOf("") }
@@ -149,7 +156,7 @@ fun RilevaCodePage(onSubmit: (String) -> Unit) {
         PrimaryActionButton(
             text = "Registra presenza",
             onClick = { onSubmit(code.trim()) },
-            enabled = code.isNotBlank(),
+            enabled = code.isNotBlank() && LocalIsOnline.current,
             modifier = Modifier.fillMaxWidth(),
         )
     }

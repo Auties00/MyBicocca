@@ -12,10 +12,10 @@ import it.attendance100.mybicocca.domain.usecase.exam.CancelBookingUseCase
 import it.attendance100.mybicocca.domain.usecase.exam.GetBookingSlipUseCase
 import it.attendance100.mybicocca.domain.usecase.exam.GetBookingsUseCase
 import it.attendance100.mybicocca.domain.usecase.exam.GetPresenceCertificateUseCase
-import it.attendance100.mybicocca.ui.screen.registry.subscreen.booked.state.BookedEvent
-import it.attendance100.mybicocca.ui.screen.registry.subscreen.booked.state.CancelActionState
-import it.attendance100.mybicocca.ui.screen.registry.subscreen.booked.state.DocDownloadState
-import it.attendance100.mybicocca.ui.screen.registry.subscreen.booked.state.ExamDocument
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.appelli.state.BookedEvent
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.appelli.state.CancelActionState
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.appelli.state.DocDownloadState
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.appelli.state.ExamDocument
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -31,9 +31,22 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import javax.inject.Inject
 
-// Drives the main Esami screen: the exams the user has booked (Esami prenotati).
-// Loads independently of the bookable calls (see BookableExamsViewModel) so the
-// list shows as soon as bookings arrive, without waiting on the catalogue.
+/**
+ * Drives the booked-exams (prenotazioni) side of the Appelli sheet. Bookings come live from
+ * Esse3 on every fetch — no local cache — and load independently of the bookable calls (see
+ * BookableExamsViewModel), so the list shows as soon as bookings arrive without waiting on
+ * the catalogue. The active career is observed and each change triggers a refetch.
+ *
+ * Streams by role: [bookings] is the loadable booking list; [syncStatus] tracks the
+ * in-flight refresh separately so stale data keeps rendering; [cancelAction] and
+ * [docDownload] scope the per-booking spinners; [events] is the one-shot channel for
+ * cancellation outcomes, PDFs to open, and user-facing messages.
+ *
+ * Actions: [refresh] refetches for the active career (refreshes are mutex-guarded, so
+ * overlapping requests collapse into one); [cancel] cancels a booking, optimistically
+ * dropping the row before reconciling with the server; [downloadBookingSlip] and
+ * [downloadPresenceCertificate] fetch the corresponding PDF.
+ */
 @HiltViewModel
 class BookedExamsViewModel @Inject constructor(
     private val getBookings: GetBookingsUseCase,
@@ -88,8 +101,6 @@ class BookedExamsViewModel @Inject constructor(
                 .onSuccess {
                     _cancelAction.value = CancelActionState.Idle
                     _events.trySend(BookedEvent.CancellationSucceeded)
-                    // Optimistic: drop the cancelled row so it disappears immediately. The
-                    // bookable list re-includes it once its key is no longer booked.
                     val current = (_bookings.value as? Loadable.Loaded)?.value.orEmpty()
                     _bookings.value = Loadable.Loaded(current.filterNot { it.identityKey() == booking.identityKey() })
                     fetch(careerId)
@@ -143,9 +154,11 @@ class BookedExamsViewModel @Inject constructor(
     }
 }
 
-// Stable identity for a booking across refreshes — used for list keys and for matching
-// the in-progress cancellation. applicationListId/studentId disambiguate two bookings
-// that share an exam-call key (rare, but possible across careers).
+/**
+ * Stable identity for a booking across refreshes — used for list keys and for matching
+ * the in-flight cancellation. applicationListId/studentId disambiguate two bookings
+ * that share an exam-call key (rare, but possible across careers).
+ */
 internal fun BookedExam.identityKey(): String =
     "${key.courseOfStudyId}/${key.activityId}/${key.callId}/${applicationListId ?: studentId ?: 0}"
 
@@ -157,8 +170,11 @@ private fun ExamDocument.fileName(booking: BookedExam): String {
     }
 }
 
-// The attendance certificate 422s until the outcome is published; surface a clear,
-// actionable message instead of the raw server error.
+/**
+ * User-facing failure copy per document. Esse3 answers 422 for the presence certificate
+ * until the outcome is published, so it gets a clear "not yet available" message rather
+ * than the raw server error.
+ */
 private fun ExamDocument.errorMessage(cause: Throwable): String = when (this) {
     ExamDocument.BookingSlip -> "Impossibile scaricare lo statino di prenotazione. Riprova tra un momento."
     ExamDocument.PresenceCertificate ->

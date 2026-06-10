@@ -40,9 +40,13 @@ import it.attendance100.mybicocca.domain.model.security.UnlockResult
 import it.attendance100.mybicocca.ui.component.input.PasswordTextField
 
 /**
- * Full-screen gate shown over the signed-in UI while the app is locked. Auto-triggers the system
- * biometric sheet when biometrics are available; otherwise (or when the user taps "Usa password",
- * or after a biometric error/lockout) it shows the password fallback.
+ * Full-screen gate shown over the signed-in UI while the app is locked: a lock glyph,
+ * "App bloccata" and the active username, centered. Auto-presents the system biometric
+ * sheet whenever biometric mode applies — on first show and again on every "Sblocca" retry;
+ * otherwise (or when the user taps "Usa password", or after a biometric error, cancel or
+ * lockout) it falls back to a password field with inline error copy and a spinner in the
+ * submit button while verifying. Back must not reveal the content behind, so it sends the
+ * task to the background instead.
  *
  * Rendered as an opaque [Surface], which blocks touch propagation to the content behind it.
  */
@@ -69,7 +73,6 @@ fun AppLockScreen(viewModel: AppLockViewModel) {
         }
     }
 
-    // Auto-present the biometric sheet whenever we're in biometric mode (first show + retries).
     LaunchedEffect(usePassword, biometricTrigger) {
         if (!usePassword && capability == BiometricCapability.Available && activity != null) {
             promptBiometric(
@@ -78,13 +81,11 @@ fun AppLockScreen(viewModel: AppLockViewModel) {
                 subtitle = username.orEmpty(),
                 negativeButton = "Usa password",
                 onSuccess = viewModel::onBiometricSuccess,
-                // Negative button, cancel, or lockout to drop to the password fallback.
                 onError = { _, _ -> usePassword = true },
             )
         }
     }
 
-    // While locked, back must not reveal the content behind. We send the app to the background instead.
     BackHandler(enabled = true) { activity?.moveTaskToBack(true) }
 
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surface) {

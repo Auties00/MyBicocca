@@ -6,6 +6,10 @@ import androidx.room.Transaction
 import androidx.room.Upsert
 import kotlinx.coroutines.flow.Flow
 
+/**
+ * Room access to the quiz tables — quizzes, attempts, best grades and local draft answers;
+ * every query is account-scoped.
+ */
 @Dao
 interface QuizDao {
 
@@ -18,6 +22,10 @@ interface QuizDao {
 
     @Query("SELECT * FROM elearning_quizzes WHERE account_id = :accountId AND quiz_id = :quizId")
     fun observe(accountId: String, quizId: Int): Flow<QuizEntity?>
+
+    /** Account-wide stream feeding the unified search index. */
+    @Query("SELECT * FROM elearning_quizzes WHERE account_id = :accountId")
+    fun observeForAccount(accountId: String): Flow<List<QuizEntity>>
 
     @Query(
         "SELECT * FROM elearning_quiz_attempts " +

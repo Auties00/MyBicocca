@@ -43,6 +43,8 @@ import androidx.media3.ui.compose.PlayerSurface
 import androidx.media3.ui.compose.SURFACE_TYPE_SURFACE_VIEW
 import androidx.media3.ui.compose.modifiers.resizeWithContentScale
 import androidx.media3.ui.compose.state.rememberPresentationState
+import it.attendance100.mybicocca.core.os.LocalPipController
+import it.attendance100.mybicocca.core.os.PipState
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.SyncStatus
 import it.attendance100.mybicocca.core.state.valueOrNull
@@ -55,11 +57,21 @@ import it.attendance100.mybicocca.ui.screen.elearning.subscreen.videoPlayer.comp
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.videoPlayer.component.CustomPlayerControls
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.videoPlayer.component.PlayerChrome
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.videoPlayer.component.PlaylistSidePanel
-import it.attendance100.mybicocca.ui.screen.elearning.subscreen.videoPlayer.component.QualityPickerSheet
-import it.attendance100.mybicocca.ui.screen.elearning.subscreen.videoPlayer.player.LocalPipController
-import it.attendance100.mybicocca.ui.screen.elearning.subscreen.videoPlayer.player.PipState
+import it.attendance100.mybicocca.ui.screen.elearning.subscreen.videoPlayer.subscreen.qualityPicker.QualityPickerSheet
 import kotlinx.coroutines.delay
 
+/**
+ * Full-screen player for a course's Kaltura videos, forced into sensor landscape with the system
+ * bars hidden for the whole stay (orientation and bar behaviour are restored on exit).
+ *
+ * The video renders on a black canvas; a tap toggles the chrome overlay, which auto-hides after a
+ * few seconds of playback, and a double tap seeks ten seconds backwards/forwards depending on the
+ * screen half. The chrome is a top gradient bar (back, title, PiP, quality, playlist), centred
+ * skip-previous / play-pause / skip-next transport, and a bottom scrub bar tinted with the course
+ * accent. A right-hand side panel lists the course playlist, and a bottom sheet picks the stream
+ * quality. While composed it registers the active video with the app's PiP controller so the
+ * system can shrink it to a picture-in-picture window.
+ */
 @OptIn(UnstableApi::class)
 @Composable
 fun VideoPlayerScreen(
@@ -98,7 +110,6 @@ private fun VideoPlayerScreenContent(
     var chromeVisible by remember { mutableStateOf(true) }
 
     val currentPlayer = player
-    // Player.isPlaying isn't snapshot state — wrap it via a listener to stay in sync.
     val isPlaying = rememberPlayerIsPlaying(currentPlayer)
 
     LaunchedEffect(chromeVisible, isPlaying, playlistOpen, qualityOpen) {
@@ -216,6 +227,11 @@ private fun VideoPlayerScreenContent(
     }
 }
 
+/**
+ * The video surface plus its overlay states: a black cover while the surface has no frame to
+ * show, a centred white spinner while resolving or buffering, and an error message with a retry
+ * button when the stream could not be loaded.
+ */
 @OptIn(UnstableApi::class)
 @Composable
 private fun VideoSurface(
@@ -263,6 +279,10 @@ private fun VideoSurface(
     }
 }
 
+/**
+ * [Player.isPlaying] is not snapshot state, so it is bridged into Compose through a player
+ * listener that keeps a local state in sync.
+ */
 @Composable
 private fun rememberPlayerIsPlaying(player: Player?): Boolean {
     var isPlaying by remember(player) { mutableStateOf(player?.isPlaying == true) }
@@ -284,6 +304,7 @@ private fun rememberPlayerIsPlaying(player: Player?): Boolean {
     return isPlaying
 }
 
+/** Listener-backed bridge of the player's buffering state into Compose snapshot state. */
 @Composable
 private fun rememberPlayerIsBuffering(player: Player?): Boolean {
     var buffering by remember(player) {
@@ -307,6 +328,10 @@ private fun rememberPlayerIsBuffering(player: Player?): Boolean {
     return buffering
 }
 
+/**
+ * Holds the activity in sensor landscape with the system bars hidden (revealable by swipe) while
+ * in composition, restoring the previous orientation and bar behaviour on dispose.
+ */
 @Composable
 private fun ForceLandscapeImmersive(activity: Activity?) {
     DisposableEffect(activity) {

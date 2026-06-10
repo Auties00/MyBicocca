@@ -55,15 +55,18 @@ private val MonthTitleFormat = DateTimeFormatter.ofPattern("LLLL yyyy", Locale.I
 private val DayHeaderFormat = DateTimeFormatter.ofPattern("EEEE d MMMM", Locale.ITALIAN)
 private val TimeFormat = DateTimeFormatter.ofPattern("HH:mm")
 
-// Italian week, Monday-first. The narrow names collide (Mar/Mer both "M"), so they're fixed.
+/** Italian week, Monday-first. The narrow names collide (Mar/Mer both "M"), so the letters are fixed. */
 private val WeekdayLetters = listOf("L", "M", "M", "G", "V", "S", "D")
 
-// Rounded shape shared by the two grouping cards.
+/** Rounded shape shared by the calendar and time grouping cards. */
 private val PickerCardShape = RoundedCornerShape(32.dp)
 
-// Expressive day/time picker: a full monthly calendar grid whose bookable days read as tonal
-// circles and morph into a brand-filled squircle when picked, then a reveal "orari" card that
-// splits the day into Mattina / Pomeriggio bands of expressive time toggles — all live-fed.
+/**
+ * Expressive day/time picker: a full monthly calendar grid whose bookable days read as tonal
+ * circles and morph into a brand-filled squircle when picked, then a reveal "orari" card that
+ * splits the day into Mattina / Pomeriggio bands of expressive time toggles — all fed by live
+ * availability.
+ */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 internal fun SlotPicker(
@@ -85,7 +88,6 @@ internal fun SlotPicker(
     onSelectSlot: (AppointmentSlot) -> Unit,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        // Calendar card: month switcher over the bookable-day grid.
         PickerCard {
             MonthSwitcher(
                 month = month,
@@ -119,7 +121,6 @@ internal fun SlotPicker(
             }
         }
 
-        // Time card for the picked day.
         if (selectedDate != null) {
             PickerCard {
                 TimeCard(
@@ -136,7 +137,7 @@ internal fun SlotPicker(
     }
 }
 
-// Tonal surface that groups one picker step, content vertically stacked.
+/** Tonal surface that groups one picker step, content vertically stacked. */
 @Composable
 private fun PickerCard(content: @Composable () -> Unit) {
     Surface(
@@ -181,6 +182,7 @@ private fun MonthSwitcher(
             enabled = enabled && canGoToPreviousMonth,
             modifier = Modifier.size(44.dp),
             shapes = IconButtonDefaults.shapes(),
+            colors = monthNavColors(),
         ) {
             Icon(Icons.AutoMirrored.Rounded.KeyboardArrowLeft, contentDescription = "Mese precedente")
         }
@@ -190,14 +192,27 @@ private fun MonthSwitcher(
             enabled = enabled && canGoToNextMonth,
             modifier = Modifier.size(44.dp),
             shapes = IconButtonDefaults.shapes(),
+            colors = monthNavColors(),
         ) {
             Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, contentDescription = "Mese successivo")
         }
     }
 }
 
-// 7-column monthly grid. Bookable days are interactive tonal cells; every other day is an inert
-// muted number, so the month's real openings are legible at a glance.
+/**
+ * Brand-tinted month-nav chips: neutral container with a primary-red chevron, matching the
+ * picker's other accents (today ring, schedule icon).
+ */
+@Composable
+private fun monthNavColors() = IconButtonDefaults.filledTonalIconButtonColors(
+    containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+    contentColor = MaterialTheme.colorScheme.primary,
+)
+
+/**
+ * 7-column monthly grid. Bookable days are interactive tonal cells; every other day is an
+ * inert muted number, so the month's real openings are legible at a glance.
+ */
 @Composable
 private fun CalendarGrid(
     month: YearMonth,
@@ -250,8 +265,11 @@ private fun CalendarGrid(
     }
 }
 
-// One day in the grid. Bookable days morph circle -> brand-filled squircle on selection (M3
-// Expressive selection language); today carries a brand ring until it is the picked day.
+/**
+ * One day in the grid. Bookable days morph circle -> brand-filled squircle on selection (M3
+ * Expressive selection language); today carries a brand ring until it is the picked day. The
+ * brand-red fill carries explicit white content in both themes.
+ */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun DayCell(
@@ -279,7 +297,6 @@ private fun DayCell(
         animationSpec = motion.defaultEffectsSpec(),
         label = "day_cell_color",
     )
-    // Brand-red fill keeps explicit white content in both themes.
     val content = when {
         selected -> Color.White
         !available -> scheme.onSurfaceVariant.copy(alpha = 0.45f)
@@ -365,8 +382,10 @@ private fun TimeCard(
     }
 }
 
-// Slots split by part of day into icon-led bands; free slots morph round -> square when picked,
-// taken ones stay disabled so the day's real occupancy is visible at a glance.
+/**
+ * Slots split by part of day into icon-led bands; free slots morph round -> square when
+ * picked, taken ones stay disabled so the day's real occupancy is visible at a glance.
+ */
 @Composable
 private fun SlotGrid(
     slots: List<AppointmentSlot>,
@@ -388,6 +407,10 @@ private fun SlotGrid(
     }
 }
 
+/**
+ * One part-of-day band: an icon-led label over a fixed 3-column grid of equal-width time
+ * toggles, which reads as a tidy block whatever the slot count.
+ */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun SlotSection(
@@ -420,7 +443,6 @@ private fun SlotSection(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
-        // Fixed 3-column grid: equal-width time toggles read as a tidy block whatever the count.
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             slots.chunked(3).forEach { rowSlots ->
                 Row(
@@ -488,7 +510,7 @@ private fun ErrorRow(onRetry: () -> Unit) {
     }
 }
 
-// Month laid out Monday-first as weeks of nullable days; leading/trailing nulls pad the grid.
+/** Month laid out Monday-first as weeks of nullable days; leading/trailing nulls pad the grid. */
 private fun monthWeeks(month: YearMonth): List<List<LocalDate?>> {
     val length = month.lengthOfMonth()
     val leadingBlanks = month.atDay(1).dayOfWeek.value - 1

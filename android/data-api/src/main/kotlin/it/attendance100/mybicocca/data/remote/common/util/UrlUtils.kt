@@ -47,11 +47,9 @@ fun buildUrl(baseUrl: String, path: String, queryParams: Map<String, Any> = empt
  * @return The first matching parameter value, or null if none found
  */
 fun extractQueryParam(input: String, vararg paramNames: String): String? {
-    // Extract the query string portion
     val queryString = if (input.contains("?")) {
         input.substringAfter("?", "")
     } else {
-        // Assume it's already a query string
         input
     }
 

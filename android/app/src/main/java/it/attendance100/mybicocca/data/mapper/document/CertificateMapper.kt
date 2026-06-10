@@ -6,9 +6,11 @@ import it.attendance100.mybicocca.domain.model.document.Certificate
 import it.attendance100.mybicocca.domain.model.document.CertificateId
 import it.attendance100.mybicocca.domain.model.document.CertificateType
 
-// Maps the legacy-scrape self-certification DTO to the API-agnostic domain model. The
-// request path is carried opaquely inside CertificateId so the repository can hand it
-// straight back to the scraper for the PDF download.
+/**
+ * Maps the legacy-scrape self-certification DTO to the API-agnostic domain model. The request
+ * path is carried opaquely inside [CertificateId] so the repository can hand it straight back
+ * to the scraper for the PDF download.
+ */
 fun Esse3SelfCertification.toDomain(): Certificate = Certificate(
     id = CertificateId(requestPath),
     description = description,

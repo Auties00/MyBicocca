@@ -8,16 +8,20 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
 
-// Opens an external URL (e.g. the pagoPA payment portal redirect). Matches the
-// Intent.ACTION_VIEW idiom used elsewhere in the app (CourseDetailScreen).
+/**
+ * Opens an external URL (e.g. the pagoPA payment portal redirect) in the device's default
+ * handler, the Intent.ACTION_VIEW idiom used across the app.
+ */
 fun openExternalUrl(context: Context, url: String) {
     context.startActivity(
         Intent(Intent.ACTION_VIEW, Uri.parse(url)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
     )
 }
 
-// Writes the PDF bytes to the app cache and hands them to an external viewer via the
-// app FileProvider. The write happens off the main thread; the launch is on it.
+/**
+ * Writes the PDF bytes to the app cache and hands them to an external viewer via the app
+ * FileProvider. The write happens off the main thread; the launch is on it.
+ */
 suspend fun openPdfDocument(context: Context, bytes: ByteArray, fileName: String) {
     val file = withContext(Dispatchers.IO) {
         val dir = File(context.cacheDir, "taxes").apply { mkdirs() }

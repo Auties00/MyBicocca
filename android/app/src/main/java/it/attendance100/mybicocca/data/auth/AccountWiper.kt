@@ -7,7 +7,6 @@ import it.attendance100.mybicocca.data.local.elearning.badge.BadgeDao
 import it.attendance100.mybicocca.data.local.elearning.course.CourseDao
 import it.attendance100.mybicocca.data.local.elearning.forum.ForumDao
 import it.attendance100.mybicocca.data.local.elearning.grade.GradeDao
-import it.attendance100.mybicocca.data.local.elearning.message.MessageDao
 import it.attendance100.mybicocca.data.local.elearning.quiz.QuizDao
 import it.attendance100.mybicocca.data.local.elearning.sync.ElearningSyncStateDao
 import it.attendance100.mybicocca.data.local.transcript.TranscriptDao
@@ -16,6 +15,11 @@ import it.attendance100.mybicocca.domain.model.account.AccountId
 import javax.inject.Inject
 import javax.inject.Singleton
 
+/**
+ * Deletes every account-scoped cached row (calendar, elearning content, transcript, and their
+ * sync state) when an account is removed. Each table wipe is independent and best-effort, so a
+ * single failing DAO cannot keep the rest of the data from being cleared.
+ */
 @Singleton
 class AccountWiper @Inject constructor(
     private val calendarDao: CalendarDao,
@@ -25,7 +29,6 @@ class AccountWiper @Inject constructor(
     private val quizDao: QuizDao,
     private val forumDao: ForumDao,
     private val gradeDao: GradeDao,
-    private val messageDao: MessageDao,
     private val badgeDao: BadgeDao,
     private val elearningSyncStateDao: ElearningSyncStateDao,
     private val transcriptDao: TranscriptDao,
@@ -52,7 +55,6 @@ class AccountWiper @Inject constructor(
         runCatching { quizDao.clearAllForAccount(id) }
         runCatching { forumDao.clearAllForAccount(id) }
         runCatching { gradeDao.clearAllForAccount(id) }
-        runCatching { messageDao.clearAllForAccount(id) }
         runCatching { badgeDao.deleteForAccount(id) }
         runCatching { elearningSyncStateDao.deleteForAccount(id) }
     }

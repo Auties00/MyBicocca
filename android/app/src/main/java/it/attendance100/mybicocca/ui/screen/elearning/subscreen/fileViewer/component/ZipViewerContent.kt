@@ -39,10 +39,16 @@ import androidx.compose.ui.unit.dp
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.fileViewer.state.ZipEntryItem
 import java.util.Locale
 
-// Lists archive entries in-app; tapping one extracts it to cache and re-dispatches it
-// through a nested viewer, so a pdf inside a zip opens like any other pdf. A long-press
-// ([onLongOpenEntry]) re-shows the in-app/external chooser even when a choice was already
-// remembered, matching the long-press on a course content row.
+/**
+ * In-app archive viewer: a list of zip entries, each row showing a per-extension icon, the leaf
+ * name, and a folder + size meta line. Tapping an entry extracts it to cache and re-dispatches
+ * it through a nested viewer, so a pdf inside a zip opens like any other pdf; a long-press
+ * ([onLongOpenEntry]) re-shows the in-app/external chooser even when a choice was already
+ * remembered, matching the long-press on a course content row.
+ *
+ * Empty or unreadable archives render the error state. The bottom action bar offers download
+ * and share of the archive itself.
+ */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun ZipViewerContent(

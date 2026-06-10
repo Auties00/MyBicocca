@@ -35,7 +35,11 @@ import it.attendance100.mybicocca.ui.component.directory.SegmentedTile
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.appointments.state.AppointmentDirectorySection
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.appointments.ext.toDirectorySections
 
-// "Prenota" first page: the desk directory folded into its macro sections, one card each.
+/**
+ * First "Prenota" page: the desk directory folded into its macro sections, one segmented tile
+ * each with an accent icon chip and a chevron; shows the loading/error status body until the
+ * directory lands.
+ */
 @Composable
 internal fun SectionsPage(
     services: Loadable<List<AppointmentService>>,
@@ -106,6 +110,7 @@ private fun sectionIcon(name: String): ImageVector = when {
     else -> Icons.Outlined.SupportAgent
 }
 
+/** Centered in-sheet status body: an expressive loading indicator, or a failure message with a retry button. */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 internal fun SheetStatusBody(

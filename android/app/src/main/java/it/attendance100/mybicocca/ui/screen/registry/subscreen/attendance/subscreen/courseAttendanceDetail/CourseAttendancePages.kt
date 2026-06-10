@@ -8,7 +8,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.PagerDefaults
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -31,18 +34,29 @@ import androidx.compose.ui.unit.dp
 import it.attendance100.mybicocca.domain.model.attendance.ClassroomAttendance
 import it.attendance100.mybicocca.domain.model.attendance.CourseAttendance
 import it.attendance100.mybicocca.domain.model.attendance.SessionAttendance
-import it.attendance100.mybicocca.ui.component.SegmentedSwitch
+import it.attendance100.mybicocca.ui.component.input.SegmentedSwitch
 import it.attendance100.mybicocca.ui.component.feedback.EmptyState
 import it.attendance100.mybicocca.ui.screen.registry.theme.RegistryAccent
 import it.attendance100.mybicocca.ui.screen.registry.theme.registryAccent
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
-// The course page inside the presenze sheet: a swipable pager with one attendance tab
-// per source — "Lezioni" from the EasyStaff badge telemetry, plus one per Moodle session
-// register — driven by the same sliding segmented footer the esami sostenuti modal uses.
-// The hosting sheet's pinned header carries the course name; each tab is a single hero
-// ring with at most one supporting stat row beneath it.
+/**
+ * The course page inside the Presenze sheet: a swipable pager with one attendance tab per
+ * source — "Lezioni" from the EasyStaff badge telemetry, plus one per Moodle session register
+ * — driven by the same sliding segmented footer the esami sostenuti modal uses. The hosting
+ * sheet's pinned header carries the course name; each tab is a single hero ring with at most
+ * one supporting stat row beneath it.
+ *
+ * The pager body has a fixed height sized to the tab layout (every tab body is equally tall),
+ * so the sheet never resizes while swiping between sources. Page snapping uses a decelerating
+ * tween: a stiff critically-damped spring reads as a hard snap, while the expressive spatial
+ * spec is underdamped and overshoots, wobbling at the edge. Overscroll is disabled on the
+ * pager, since leftover fling velocity at the page bound would trigger the stretch effect and
+ * read as the content deforming at the end of every swipe. The segmented footer is always
+ * present, even with the single "Lezioni" tab — it is part of the page's identity, not just a
+ * switcher.
+ */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun CourseOverviewPage(course: CourseAttendance) {
@@ -50,18 +64,23 @@ fun CourseOverviewPage(course: CourseAttendance) {
     val pagerState = rememberPagerState { tabs.size }
     val scope = rememberCoroutineScope()
 
+    val flingBehavior = PagerDefaults.flingBehavior(
+        state = pagerState,
+        snapAnimationSpec = tween(durationMillis = 350, easing = FastOutSlowInEasing),
+    )
+
     Column(modifier = Modifier.fillMaxWidth()) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                // FIXED height, sized to the tab layout (every tab body is TAB_BODY_HEIGHT
-                // tall): the sheet never resizes while swiping between sources.
                 .height(420.dp)
                 .verticalScroll(rememberScrollState())
                 .padding(start = 24.dp, end = 24.dp, bottom = 16.dp),
         ) {
             HorizontalPager(
                 state = pagerState,
+                flingBehavior = flingBehavior,
+                overscrollEffect = null,
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.Top,
             ) { pageIndex ->
@@ -72,8 +91,6 @@ fun CourseOverviewPage(course: CourseAttendance) {
             }
         }
 
-        // Always present, even with the single "Lezioni" tab: the footer is part of the
-        // page's identity, not just a switcher.
         SegmentedSwitch(
             options = tabs.indices.toList(),
             selected = pagerState.targetPage.coerceIn(0, tabs.lastIndex),
@@ -89,12 +106,12 @@ private val TAB_BODY_HEIGHT = 400.dp
 private sealed interface AttendanceTab {
     val title: String
 
-    // EasyStaff in-classroom badge telemetry.
+    /** EasyStaff in-classroom badge telemetry. */
     data class Lezioni(val classroom: ClassroomAttendance?) : AttendanceTab {
         override val title: String get() = "Lezioni"
     }
 
-    // One Moodle mod_attendance session register.
+    /** One Moodle mod_attendance session register. */
     data class Register(override val title: String, val session: SessionAttendance) : AttendanceTab
 }
 
@@ -103,8 +120,7 @@ private fun CourseAttendance.attendanceTabs(): List<AttendanceTab> = buildList {
     sessionAttendance.forEach { add(AttendanceTab.Register(it.tabTitle(), it)) }
 }
 
-// Moodle register names arrive as "Presenze LABORATORIO": drop the prefix and
-// sentence-case what remains.
+/** Moodle register names arrive as "Presenze LABORATORIO": the prefix is dropped and what remains is sentence-cased. */
 private fun SessionAttendance.tabTitle(): String {
     val cleaned = label.trim()
         .let { if (it.startsWith("presenze", ignoreCase = true)) it.drop("presenze".length) else it }
@@ -114,8 +130,10 @@ private fun SessionAttendance.tabTitle(): String {
     return cleaned.ifBlank { "Sessioni" }
 }
 
-// EasyStaff path: the hero presence ring — green once the minimum frequenza for the
-// exam is met, yellow while still below it — with the minimum itself footnoted inside.
+/**
+ * EasyStaff tab: the hero presence ring — green once the minimum frequenza for the exam is
+ * met, yellow while still below it — with the minimum itself footnoted inside.
+ */
 @Composable
 private fun LezioniTabBody(classroom: ClassroomAttendance?) {
     if (classroom == null) {
@@ -143,9 +161,11 @@ private fun LezioniTabBody(classroom: ClassroomAttendance?) {
     }
 }
 
-// Moodle path: the ring rides the taken-sessions percentage. The register's raw total
-// (sessionstotal) is NOT shown: for group-based labs the module holds every turno's
-// sessions, so a perfect 10/10 attendance reads as a nonsensical 10/82 against it.
+/**
+ * Moodle tab: the ring rides the taken-sessions percentage. The register's raw total
+ * (sessionstotal) is NOT shown: for group-based labs the module holds every turno's sessions,
+ * so a perfect 10/10 attendance reads as a nonsensical 10/82 against it.
+ */
 @Composable
 private fun RegisterTabBody(session: SessionAttendance) {
     val recorded = session.recordedPercentage
@@ -176,24 +196,33 @@ private fun RegisterTabBody(session: SessionAttendance) {
     }
 }
 
-// Requirement gate on the ring stroke: requirementProgressPercentage is progress towards
-// the course's minimum attendance for the exam, so 100 means the requirement is met.
+/**
+ * Requirement gate on the ring stroke: requirementProgressPercentage is progress towards the
+ * course's minimum attendance for the exam, so 100 means the requirement is met.
+ */
 @Composable
 private fun ClassroomAttendance.requirementColor(): Color =
     if (requirementProgressPercentage >= 100.0) registryAccent(RegistryAccent.Success)
     else registryAccent(RegistryAccent.Warning)
 
-// EasyStaff exposes no minimum-attendance field, but conseguimento is frequenza measured
-// against it, so the threshold falls out as frequenza / conseguimento. Exact while the
-// requirement is unmet; once conseguimento saturates the bound degrades to the current
-// frequenza, which is still a true (if loose) "at most this" reading.
+/**
+ * EasyStaff exposes no minimum-attendance field, but conseguimento is frequenza measured
+ * against it, so the threshold falls out as frequenza / conseguimento. Exact while the
+ * requirement is unmet; once conseguimento saturates the bound degrades to the current
+ * frequenza, which is still a true (if loose) "at most this" reading.
+ */
 private fun ClassroomAttendance.minRequiredPercentage(): Int? {
     if (requirementProgressPercentage <= 0.0) return null
     return (attendancePercentage / requirementProgressPercentage * 100.0).roundToInt()
 }
 
-// The hero of a tab: a big wavy ring with the headline value at its centre, in the same
-// expressive language as the percorso editorial header but scaled up to own the page.
+/**
+ * The hero of a tab: a big wavy ring with the headline value at its centre, in the same
+ * expressive language as the percorso editorial header but scaled up to own the page. The
+ * stroke is thicker than the default so the ring reads as a border at this size, and the wave
+ * amplitude is pinned at full so the ring stays wavy even at 100% progress, where the default
+ * amplitude flattens it to a plain circle and loses the expressive border.
+ */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun AttendanceRing(
@@ -203,7 +232,6 @@ private fun AttendanceRing(
     color: Color,
     footnote: String? = null,
 ) {
-    // A thicker stroke than the default so the ring reads as a border at this size.
     val density = LocalDensity.current
     val stroke = remember(density) {
         Stroke(width = with(density) { 10.dp.toPx() }, cap = StrokeCap.Round)
@@ -216,8 +244,6 @@ private fun AttendanceRing(
             trackColor = MaterialTheme.colorScheme.surfaceContainerHighest,
             stroke = stroke,
             trackStroke = stroke,
-            // Keep the wave even at full progress — the default amplitude flattens the ring
-            // to a plain circle at 100%, which loses the expressive border.
             amplitude = { 1f },
         )
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -242,7 +268,7 @@ private fun AttendanceRing(
     }
 }
 
-// App-wide empty-state style, filling the tab's fixed height so the pager stays stable.
+/** App-wide empty-state style, filling the tab's fixed height so the pager stays stable. */
 @Composable
 private fun TabEmptyState(title: String, body: String) {
     Box(

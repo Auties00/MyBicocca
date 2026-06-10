@@ -14,8 +14,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
-// M3E loading state shared by modal sheets: the expressive contained indicator (morphing
-// shape riding a tonal container) with a short label beneath it.
+/**
+ * Loading state shared by modal sheets: the expressive contained indicator (morphing shape
+ * riding a tonal container) with a short label beneath it.
+ */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun SheetLoadingIndicator(

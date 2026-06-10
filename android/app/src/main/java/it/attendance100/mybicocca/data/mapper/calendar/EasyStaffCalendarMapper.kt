@@ -1,9 +1,7 @@
 package it.attendance100.mybicocca.data.mapper.calendar
 
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffBookingStatus
-import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffExamType
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffScheduleCell
-import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffScheduledExam
 import it.attendance100.mybicocca.domain.model.calendar.CalendarEvent
 import it.attendance100.mybicocca.domain.model.calendar.CalendarEventId
 import it.attendance100.mybicocca.domain.model.calendar.EventLocation
@@ -11,6 +9,13 @@ import it.attendance100.mybicocca.domain.model.calendar.EventSource
 import it.attendance100.mybicocca.domain.model.calendar.EventStatus
 import it.attendance100.mybicocca.domain.model.career.CareerId
 
+/**
+ * Maps an EasyStaff weekly-grid cell to a calendar lesson. Derived fields are computed here,
+ * at map time: the compact short label comes from the lesson name, the booking status
+ * collapses to confirmed/cancelled, and the curriculum path string becomes the event notes.
+ * The activity code is supplied by the caller, which resolves it from the study plan via the
+ * cell's EasyStaff subject code; the feed carries no credit information, so cfu stays null.
+ */
 internal fun EasyStaffScheduleCell.Lesson.toDomain(careerId: CareerId, activityCode: String?): CalendarEvent.Lesson =
     CalendarEvent.Lesson(
         id = CalendarEventId.of(EventSource.LESSON, id),
@@ -29,31 +34,7 @@ internal fun EasyStaffScheduleCell.Lesson.toDomain(careerId: CareerId, activityC
         cfu = null,
     )
 
-internal fun EasyStaffScheduledExam.toDomain(careerId: CareerId, activityCode: String?): CalendarEvent.Exam =
-    CalendarEvent.Exam(
-        id = CalendarEventId.of(EventSource.EXAM, eventId),
-        careerId = careerId,
-        date = date,
-        start = startTime,
-        end = endTime,
-        title = subjectName,
-        shortLabel = shortLabelFor(subjectName),
-        location = locationFrom(room, building, null),
-        status = if (isCancelled) EventStatus.CANCELLED else EventStatus.CONFIRMED,
-        notes = notes.takeIf { it.isNotBlank() },
-        activityCode = activityCode,
-        examiners = examiners.map { listOfNotNull(it.name, it.lastName).joinToString(" ").trim() }
-            .filter { it.isNotBlank() },
-        examTypeLabel = examTypeLabel(examType),
-    )
-
-private fun examTypeLabel(type: EasyStaffExamType): String? = when (type) {
-    EasyStaffExamType.Written -> "Scritto"
-    EasyStaffExamType.Oral -> "Orale"
-    EasyStaffExamType.OralAndWritten -> "Scritto e orale"
-    is EasyStaffExamType.Other -> type.value.takeIf { it.isNotBlank() }
-}
-
+/** Builds a location only when at least one component is usable, null otherwise. */
 private fun locationFrom(room: String?, building: String?, mapsUrl: String?): EventLocation? {
     if (room.isNullOrBlank() && building.isNullOrBlank() && mapsUrl.isNullOrBlank()) return null
     return EventLocation(

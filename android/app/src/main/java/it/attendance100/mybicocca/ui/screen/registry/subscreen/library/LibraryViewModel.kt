@@ -6,12 +6,11 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.SyncStatus
 import it.attendance100.mybicocca.core.state.valueOrNull
-import it.attendance100.mybicocca.data.deeplink.LibraryActionKind
-import it.attendance100.mybicocca.data.deeplink.LibraryDeepLinkAction
-import it.attendance100.mybicocca.data.deeplink.PendingLibraryAction
 import it.attendance100.mybicocca.domain.model.library.Library
+import it.attendance100.mybicocca.domain.model.library.LibraryActionKind
 import it.attendance100.mybicocca.domain.model.library.LibraryAgreement
 import it.attendance100.mybicocca.domain.model.library.LibraryBookingConstraints
+import it.attendance100.mybicocca.domain.model.library.LibraryDeepLinkAction
 import it.attendance100.mybicocca.domain.model.library.LibraryLiveStatus
 import it.attendance100.mybicocca.domain.model.library.LibraryReservation
 import it.attendance100.mybicocca.domain.model.library.LibrarySeat
@@ -24,6 +23,7 @@ import it.attendance100.mybicocca.domain.usecase.library.BookLibrarySeatUseCase
 import it.attendance100.mybicocca.domain.usecase.library.CancelLibraryBookingByTokenUseCase
 import it.attendance100.mybicocca.domain.usecase.library.CancelLibraryReservationUseCase
 import it.attendance100.mybicocca.domain.usecase.library.ConfirmLibraryEmailValidationUseCase
+import it.attendance100.mybicocca.domain.usecase.library.ConsumeLibraryActionUseCase
 import it.attendance100.mybicocca.domain.usecase.library.GetAvailableSeatsUseCase
 import it.attendance100.mybicocca.domain.usecase.library.GetLibrariesUseCase
 import it.attendance100.mybicocca.domain.usecase.library.GetLibraryAgreementsUseCase
@@ -34,10 +34,12 @@ import it.attendance100.mybicocca.domain.usecase.library.GetLibraryZonesUseCase
 import it.attendance100.mybicocca.domain.usecase.library.LogoutLibraryUseCase
 import it.attendance100.mybicocca.domain.usecase.library.ObserveLibraryLinkedEmailUseCase
 import it.attendance100.mybicocca.domain.usecase.library.ObserveLibraryReservationsUseCase
+import it.attendance100.mybicocca.domain.usecase.library.ObservePendingLibraryActionUseCase
 import it.attendance100.mybicocca.domain.usecase.library.RefreshLibraryReservationsUseCase
 import it.attendance100.mybicocca.domain.usecase.library.RequestLibraryEmailValidationUseCase
 import it.attendance100.mybicocca.domain.usecase.library.VerifyLibraryPresenceUseCase
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.library.state.LibraryEvent
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.library.state.LibraryLoginFeedback
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.library.state.LibraryLoginPhase
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.library.state.LibraryPage
 import kotlinx.coroutines.async
@@ -59,9 +61,34 @@ import java.time.LocalDateTime
 import java.time.LocalTime
 import javax.inject.Inject
 
-// Single owner of the Biblioteca modal: account login (email validation), the server-synced
-// bookings list (cached in Room for offline), the library directory with live occupancy, and the
-// per-seat booking wizard.
+/**
+ * Single owner of the Biblioteca modal: account login (email validation), the server-synced
+ * bookings list (cached in Room for offline), the library directory with live occupancy, and the
+ * per-seat booking wizard.
+ *
+ * Streams by role:
+ * - Navigation: [backStack] drives the sheet's in-page pager; [push]/[back]/[resetNavigation]
+ *   mutate it.
+ * - Data: [libraries], [reservations], [liveStatus], [weekHours], [zones], [constraints] and
+ *   [seats] as [Loadable]s, plus the wizard selections ([bookingLibrary], [selectedZone],
+ *   [selectedDate], [selectedDuration], [selectedStartTime], [selectedSeat], [note],
+ *   [consentAccepted]) and the login state ([linkedEmail], [institutionalEmail], [loginPhase],
+ *   [loginFeedback]).
+ * - Sync: one [SyncStatus] stream per fetch ([librariesStatus], [syncStatus], [detailStatus],
+ *   [zonesStatus], [constraintsStatus], [seatsStatus]), with [submitting] and [cancellingId]
+ *   flagging in-flight writes.
+ * - One-shot: [events] carries operation outcomes; [openSheetRequests] asks the host to present
+ *   the sheet when a deep link arrives.
+ *
+ * Public actions cover page navigation, the email-validation login steps, per-fetch
+ * refresh/retry, the wizard selections and submission, reservation cancellation, and on-site
+ * presence verification.
+ *
+ * The cancellation links that Bicocca libraries email for a reservation deep-link back into the
+ * app: pending actions are consumed through the observe/consume use cases, and each one requests
+ * the sheet to open and runs the cancellation with the link's reservation token
+ * ([handleDeepLink]).
+ */
 @HiltViewModel
 class LibraryViewModel @Inject constructor(
     private val getLibraries: GetLibrariesUseCase,
@@ -82,7 +109,8 @@ class LibraryViewModel @Inject constructor(
     private val logout: LogoutLibraryUseCase,
     private val cancelBookingByToken: CancelLibraryBookingByTokenUseCase,
     private val observeActiveAccount: ObserveActiveAccountUseCase,
-    private val pendingLibraryAction: PendingLibraryAction,
+    observePendingLibraryAction: ObservePendingLibraryActionUseCase,
+    consumeLibraryAction: ConsumeLibraryActionUseCase,
 ) : ViewModel() {
 
     private val _backStack = MutableStateFlow<List<LibraryPage>>(listOf(LibraryPage.Home))
@@ -97,9 +125,9 @@ class LibraryViewModel @Inject constructor(
     private val _librariesStatus = MutableStateFlow<SyncStatus>(SyncStatus.Idle)
     val librariesStatus: StateFlow<SyncStatus> = _librariesStatus.asStateFlow()
 
+    /** Concluded bookings are hidden — only what's still upcoming or in progress is actionable. */
     val reservations: StateFlow<Loadable<List<LibraryReservation>>> =
         observeReservations()
-            // Hide concluded bookings — only what's still upcoming or in progress is actionable.
             .map<List<LibraryReservation>, Loadable<List<LibraryReservation>>> { list ->
                 val now = LocalDateTime.now()
                 Loadable.Loaded(list.filter { it.end.isAfter(now) })
@@ -118,10 +146,10 @@ class LibraryViewModel @Inject constructor(
     private val _openSheetRequests = Channel<Unit>(Channel.BUFFERED)
     val openSheetRequests: Flow<Unit> = _openSheetRequests.receiveAsFlow()
 
-    // --- Login (email validation) ---
-
-    // Pinned to the institutional (Esse3/Elearning) email — not user-editable — so bookings and the
-    // account session always use the same address and therefore sync.
+    /**
+     * Pinned to the institutional (Esse3/Elearning) email — not user-editable — so bookings and
+     * the account session always use the same address and therefore sync.
+     */
     val institutionalEmail: StateFlow<String?> =
         observeActiveAccount().map { it?.username }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
@@ -129,9 +157,12 @@ class LibraryViewModel @Inject constructor(
     private val _loginPhase = MutableStateFlow(LibraryLoginPhase.EnterEmail)
     val loginPhase: StateFlow<LibraryLoginPhase> = _loginPhase.asStateFlow()
 
-    private var requestUuid: String? = null
+    private val _loginFeedback = MutableStateFlow<LibraryLoginFeedback?>(null)
 
-    // --- Library detail ---
+    /** Transient in-content feedback shown over the login form after a verify attempt. */
+    val loginFeedback: StateFlow<LibraryLoginFeedback?> = _loginFeedback.asStateFlow()
+
+    private var requestUuid: String? = null
 
     private val _detailStatus = MutableStateFlow<SyncStatus>(SyncStatus.Idle)
     val detailStatus: StateFlow<SyncStatus> = _detailStatus.asStateFlow()
@@ -141,8 +172,6 @@ class LibraryViewModel @Inject constructor(
 
     private val _weekHours = MutableStateFlow<Loadable<LibraryWeekHours>>(Loadable.NotYetLoaded)
     val weekHours: StateFlow<Loadable<LibraryWeekHours>> = _weekHours.asStateFlow()
-
-    // --- Booking session ---
 
     private val _bookingLibrary = MutableStateFlow<Library?>(null)
     val bookingLibrary: StateFlow<Library?> = _bookingLibrary.asStateFlow()
@@ -214,21 +243,19 @@ class LibraryViewModel @Inject constructor(
         viewModelScope.launch { fetchLibraries() }
         viewModelScope.launch { syncIfLoggedIn() }
         viewModelScope.launch {
-            pendingLibraryAction.pending.filterNotNull().collect { action ->
-                pendingLibraryAction.consume()
+            observePendingLibraryAction().filterNotNull().collect { action ->
+                consumeLibraryAction()
                 _openSheetRequests.send(Unit)
                 handleDeepLink(action)
             }
         }
     }
 
-    // Best-effort initial sync; the repo throws LibraryNotLoggedInException when there's no session.
+    /** Best-effort initial sync; the repository throws [LibraryNotLoggedInException] when there's no session. */
     private suspend fun syncIfLoggedIn() {
         runCatching { refreshReservations() }
             .onFailure { if (it !is LibraryNotLoggedInException) _events.send(LibraryEvent.SyncFailed(it)) }
     }
-
-    // --- Navigation ---
 
     private fun push(page: LibraryPage) { _backStack.value = _backStack.value + page }
 
@@ -257,10 +284,9 @@ class LibraryViewModel @Inject constructor(
 
     fun finishBooking() = resetNavigation()
 
-    // --- Login ---
-
     fun openLogin() {
         _loginPhase.value = LibraryLoginPhase.EnterEmail
+        _loginFeedback.value = null
         requestUuid = null
         push(LibraryPage.Login)
     }
@@ -284,6 +310,11 @@ class LibraryViewModel @Inject constructor(
         }
     }
 
+    /**
+     * On success the login page shows its in-content feedback panel and a reservations refresh
+     * starts, so the bookings are populated on return; navigation itself waits for
+     * [dismissLoginFeedback].
+     */
     fun verifyLogin() {
         val email = institutionalEmail.value?.trim().orEmpty()
         val uuid = requestUuid ?: return
@@ -294,11 +325,11 @@ class LibraryViewModel @Inject constructor(
             runCatching { confirmEmailValidation(email, uuid) }.fold(
                 onSuccess = { validated ->
                     if (validated) {
-                        _events.send(LibraryEvent.LoggedIn)
-                        if (_backStack.value.lastOrNull() == LibraryPage.Login) back()
+                        _loginFeedback.value = LibraryLoginFeedback.LoggedIn
+                        refresh()
                     } else {
                         _loginPhase.value = LibraryLoginPhase.AwaitingClick
-                        _events.send(LibraryEvent.LoginNotYetValidated)
+                        _loginFeedback.value = LibraryLoginFeedback.LinkNotOpened
                     }
                 },
                 onFailure = {
@@ -306,6 +337,18 @@ class LibraryViewModel @Inject constructor(
                     _events.send(LibraryEvent.LoginFailed(it))
                 },
             )
+        }
+    }
+
+    /**
+     * Called by the login page once its in-content feedback animation has played: a warning
+     * reverts to the form, a success pops the login page so the sheet returns to the bookings.
+     */
+    fun dismissLoginFeedback() {
+        val feedback = _loginFeedback.value ?: return
+        _loginFeedback.value = null
+        if (feedback == LibraryLoginFeedback.LoggedIn && _backStack.value.lastOrNull() == LibraryPage.Login) {
+            back()
         }
     }
 
@@ -372,8 +415,6 @@ class LibraryViewModel @Inject constructor(
         }
     }
 
-    // --- Library detail ---
-
     fun retryDetail() {
         currentDetailLibraryId()?.let(::loadDetail)
     }
@@ -402,8 +443,6 @@ class LibraryViewModel @Inject constructor(
             )
         }
     }
-
-    // --- Booking wizard ---
 
     fun startBooking(library: Library) {
         clearBookingSession()

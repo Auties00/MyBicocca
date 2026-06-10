@@ -10,6 +10,11 @@ import java.util.Base64
 import javax.inject.Inject
 import javax.inject.Singleton
 
+/**
+ * Builds authenticated Esse3 REST clients: every request carries the account's HTTP Basic
+ * credentials, the AuthRetry plugin re-establishes the session once on a 401 through the
+ * supplied callbacks, and HTTP timings are recorded.
+ */
 @Singleton
 class Esse3ApiFactory @Inject constructor() {
 

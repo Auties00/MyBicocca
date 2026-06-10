@@ -32,18 +32,18 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
@@ -54,6 +54,13 @@ import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
 
+/**
+ * Owns every authenticated session. Persists accounts and careers at sign-in, exposes the
+ * active-account and account-list streams, and builds, caches, and re-authenticates the
+ * per-platform API clients: Esse3 REST (HTTP Basic plus JWT), Moodle (wstoken plus
+ * `MoodleSession` cookie), and the legacy Esse3 web-SSO scrape session. Per-account auth work
+ * is serialized through [AccountKeyedMutexes]; each client cache is guarded by its own mutex.
+ */
 @OptIn(ExperimentalCoroutinesApi::class)
 @Singleton
 class SessionManager @Inject constructor(
@@ -70,25 +77,37 @@ class SessionManager @Inject constructor(
     @ApplicationScope private val scope: CoroutineScope,
 ) {
 
-    // MoodleSession is baked into ElearningApi at construction, so account switches
-    // require a fresh instance to avoid one account's cookie leaking into another's.
     private val elearningApiMutex = Mutex()
+
+    /**
+     * Single cached Moodle client. The `MoodleSession` cookie is baked into ElearningApi at
+     * construction, so each account switch builds a fresh instance — reusing one across
+     * accounts would leak one account's cookie into another's calls.
+     */
     private var elearningApi: ElearningApi? = null
     private var elearningApiAccountId: AccountId? = null
 
     private val esse3Apis = mutableMapOf<AccountId, Esse3Api>()
     private val esse3Mutex = Mutex()
 
-    // Legacy Esse3 web-SSO (scrape) session — established LAZILY on first certificati
-    // access and kept entirely independent of the REST esse3() / elearning() paths so a
-    // SAML failure here can never break sign-in. Cookies are minted once via SAML and
-    // cached (in-memory + SessionCache); the api re-logs in on expiry. Mirrors the
-    // elearningApi single-instance caching, but keyed per account.
+    /**
+     * Legacy Esse3 web-SSO (scrape) sessions, keyed per account. Each is established lazily on
+     * the first access of a feature that needs the scrape surface and kept entirely independent
+     * of the REST [esse3] / [elearning] paths, so a SAML failure here can never break sign-in.
+     * Cookies are minted once via SAML and cached both in memory and in [SessionCache]; the api
+     * re-logs in on expiry.
+     */
     private val esse3LegacyApis = mutableMapOf<AccountId, Esse3LegacyApi>()
     private val esse3LegacyMutex = Mutex()
 
-    private val _events = MutableSharedFlow<AccountEvent>(replay = 0, extraBufferCapacity = 16)
-    val events: Flow<AccountEvent> = _events.asSharedFlow()
+    /**
+     * Account lifecycle events for the single UI consumer. A buffered [Channel] rather than a
+     * replay-0 SharedFlow: it queues events emitted while nobody is collecting (app backgrounded,
+     * UI not yet attached) so a [AccountEvent.RequireReauth] or career change reaches the consumer
+     * when it subscribes instead of being silently dropped.
+     */
+    private val _events = Channel<AccountEvent>(Channel.BUFFERED)
+    val events: Flow<AccountEvent> = _events.receiveAsFlow()
 
     val activeAccount: StateFlow<Account?> = activeAccountStore.activeAccountId
         .flatMapLatest { id ->
@@ -110,21 +129,24 @@ class SessionManager @Inject constructor(
         }
     }
 
+    /**
+     * Runs the Esse3 and Moodle logins in parallel and persists the account on combined
+     * success; any failure closes both throwaway clients and is classified into a
+     * [SignInFailure] instead of being thrown.
+     *
+     * The Esse3 client is built before an account id exists, so its retry callbacks await the
+     * id through a deferred completed only after the account is persisted: a 401 during
+     * sign-in is bad credentials, not an expired session, and must never enter the silent
+     * refresh path. The Moodle client is likewise created up front and adopted as the cached
+     * instance once the account id is known.
+     */
     suspend fun signIn(username: String, password: String): SignInResult = coroutineScope {
         if (username.isBlank() || password.isBlank()) {
             return@coroutineScope SignInResult.Failure(SignInFailure.BadCredentials)
         }
 
-        // Students typically know themselves by the short username (e.g. `l.lupi3`)
-        // rather than the full `l.lupi3@campus.unimib.it`. Append the campus domain
-        // when missing so both Esse3 (HTTP Basic) and Elearning (SAML j_username)
-        // see the form they expect. An input that already contains `@` is passed
-        // through verbatim — staff/PhD addresses on other unimib subdomains keep
-        // working, and we never silently rewrite what the user typed.
         val normalizedUsername = normalizeUsername(username)
         val tempCredentials = AccountCredentials(normalizedUsername, password)
-        // accountId comes from the SAML identity, so the retry callbacks await it through
-        // this deferred — a 401 during signIn is bad credentials, not an expired session.
         val accountIdDeferred = CompletableDeferred<AccountId>()
         val esse3 = buildEsse3Api(accountIdDeferred, tempCredentials)
 
@@ -135,7 +157,6 @@ class SessionManager @Inject constructor(
                 session to careersDto
             }
         }
-        // accountId is unknown until login resolves; the api is adopted afterwards.
         val freshElearningApi = elearningApiFactory.create()
         val elearningDeferred = async {
             runCatching {
@@ -200,7 +221,6 @@ class SessionManager @Inject constructor(
         }
         activeAccountStore.set(accountId)
 
-        // Completes the signIn-time api's retry callbacks, which were awaiting accountId.
         accountIdDeferred.complete(accountId)
         esse3Mutex.withLock {
             esse3Apis.remove(accountId)?.close()
@@ -212,6 +232,12 @@ class SessionManager @Inject constructor(
         SignInResult.Success(account, requiresCareerPick = requiresPick)
     }
 
+    /**
+     * Removes the account everywhere: cached clients, credentials, session tokens,
+     * account-scoped Room data, and the account row itself. When the active account is the one
+     * removed, activation falls back to the most recently used remaining account, or to the
+     * signed-out state.
+     */
     suspend fun signOut(accountId: AccountId) {
         authMutexes.withLock(accountId) {
             esse3Mutex.withLock {
@@ -233,6 +259,7 @@ class SessionManager @Inject constructor(
         authMutexes.forget(accountId)
     }
 
+    /** Activates the given saved account and closes every other account's cached clients. */
     suspend fun switchAccount(accountId: AccountId) {
         accountDao.getById(accountId.value) ?: error("Account ${accountId.value} not found")
         esse3Mutex.withLock {
@@ -257,6 +284,10 @@ class SessionManager @Inject constructor(
         accountDao.updateSelectedCareer(accountId.value, careerId.value, System.currentTimeMillis())
     }
 
+    /**
+     * Re-fetches the careers from Esse3, replaces the cached set, stamps the last-synced time,
+     * and emits the reconciliation events. Serialized per account; throws on network failure.
+     */
     suspend fun refreshCareers(accountId: AccountId) {
         authMutexes.withLock(accountId) {
             val current = accountDao.getById(accountId.value) ?: return@withLock
@@ -276,26 +307,31 @@ class SessionManager @Inject constructor(
                 previous = previous,
                 current = refreshed.careers,
                 currentSelectedId = CareerId(current.account.selectedCareerId),
-            ).forEach(_events::tryEmit)
+            ).forEach { _events.trySend(it) }
         }
     }
 
+    /** Esse3 REST client for the active account, built and cached on first use. */
     suspend fun esse3(): Esse3Api {
         val active = activeAccount.value ?: error("No active account.")
         return esse3ForAccount(active.id)
     }
 
-    // Lazily establishes (or reuses) the legacy Esse3 web-SSO scrape session for the
-    // active account. On first use it reseeds from cached cookies if present, otherwise
-    // it runs the SAML login and caches the cookies. Independent of esse3() / elearning().
+    /**
+     * Legacy Esse3 web-SSO scrape session for the active account, established lazily: the
+     * first use reseeds from cached cookies when present and otherwise runs the SAML login and
+     * caches the resulting cookies. Independent of [esse3] and [elearning].
+     */
     suspend fun esse3Legacy(): Esse3LegacyApi {
         val active = activeAccount.value ?: error("No active account.")
         return esse3LegacyForAccount(active.id)
     }
 
-    // Forces a fresh SAML login for the active account's legacy session, discarding the
-    // cached cookies and scrape client. Call this after the scrape layer raises
-    // AuthenticationException (the session cookie died and Esse3 bounced to the IdP).
+    /**
+     * Forces a fresh SAML login for the active account's legacy session, discarding the cached
+     * cookies and scrape client. Intended for when the scrape layer raises its
+     * AuthenticationException — the session cookie died and Esse3 bounced to the IdP.
+     */
     suspend fun reauthEsse3Legacy(): Esse3LegacyApi {
         val active = activeAccount.value ?: error("No active account.")
         esse3LegacyMutex.withLock {
@@ -311,6 +347,10 @@ class SessionManager @Inject constructor(
         return esse3ForAccount(accountId).personalData.getPersonPhoto(row.account.personId)
     }
 
+    /**
+     * Moodle session for the active account: cached tokens are reused when present, otherwise
+     * a fresh login mints them.
+     */
     suspend fun elearning(): ElearningSession {
         val active = activeAccount.value ?: error("No active account.")
         val cached = sessionCache.read(active.id)
@@ -339,9 +379,11 @@ class SessionManager @Inject constructor(
         return ElearningSession(api, tokens.wsToken)
     }
 
+    /**
+     * Single-flighted per account under the auth mutexes, so concurrent callers share one SAML
+     * round-trip instead of each kicking off their own.
+     */
     private suspend fun esse3LegacyForAccount(accountId: AccountId): Esse3LegacyApi =
-        // Single-flight per account under authMutexes so two concurrent certificati
-        // calls don't each kick off a separate SAML round-trip.
         authMutexes.withLock(accountId) {
             esse3LegacyMutex.withLock { esse3LegacyApis[accountId] }?.let { return@withLock it }
 
@@ -363,6 +405,10 @@ class SessionManager @Inject constructor(
             api
         }
 
+    /**
+     * Builds and caches the REST client on first use; Esse3 server-side caching is enabled in
+     * the background as a best-effort optimization.
+     */
     private suspend fun esse3ForAccount(accountId: AccountId): Esse3Api = esse3Mutex.withLock {
         esse3Apis[accountId]?.let { return@withLock it }
         val creds = credentialsStore.read(accountId)
@@ -379,9 +425,12 @@ class SessionManager @Inject constructor(
         api
     }
 
-    // `lateinit` so the retry callback can reference the api itself; the lambda fires
-    // only on a real 401, by which time the field is populated. Post-signIn callers
-    // pass an already-completed deferred.
+    /**
+     * The local api variable is `lateinit` so the refresh callback can call back into the very
+     * client it belongs to; the lambda only fires on a real 401, by which time the field is
+     * assigned. Callers that already know the account pass an already-completed deferred,
+     * while sign-in completes it only once the account is persisted.
+     */
     private fun buildEsse3Api(
         accountIdDeferred: Deferred<AccountId>,
         credentials: AccountCredentials,
@@ -397,7 +446,7 @@ class SessionManager @Inject constructor(
             },
             onReauthRequired = { cause ->
                 accountIdDeferred.takeIfCompleted()?.let { accountId ->
-                    _events.tryEmit(AccountEvent.RequireReauth(accountId, cause))
+                    _events.trySend(AccountEvent.RequireReauth(accountId, cause))
                 }
             },
         )
@@ -487,7 +536,13 @@ class SessionManager @Inject constructor(
         const val STATE_KEEP_ALIVE_MS = 5_000L
         const val DEFAULT_USERNAME_DOMAIN = "campus.unimib.it"
 
-        /** Adds the campus domain when the user typed only the short form (no `@`). */
+        /**
+         * Appends the campus domain when the user typed only the short form (no `@`): students
+         * know themselves by the short username, while the Esse3 HTTP Basic login and the
+         * Elearning SAML `j_username` field expect the full e-mail form. Input that already
+         * contains `@` passes through verbatim, so staff and PhD addresses on other unimib
+         * subdomains keep working and what the user typed is never silently rewritten.
+         */
         fun normalizeUsername(raw: String): String {
             val trimmed = raw.trim()
             return if (trimmed.contains('@')) trimmed else "$trimmed@$DEFAULT_USERNAME_DOMAIN"
@@ -512,17 +567,20 @@ class SessionManager @Inject constructor(
             return SignInFailure.Unknown
         }
 
+        /**
+         * Walks the cause chain for the three stable bad-credential signatures: the
+         * "Status code: 401" line of an `Esse3Exception` multi-line message, the verbatim
+         * Esse3 `retErrMsg` mentioning "credenziali" when the login is refused, and the
+         * "missing form at step three" failure the Elearning SAML flow raises when the IdP
+         * rejects bad credentials by re-rendering the login page without the auto-submit form.
+         */
         private fun looksLikeBadCredentials(t: Throwable?): Boolean {
             var cur: Throwable? = t
             while (cur != null) {
                 val msg = cur.message
                 if (msg != null) {
-                    // Esse3Exception multi-line message: "Status code: 401" on its own line.
                     if ("Status code: 401" in msg) return true
-                    // Esse3 retErrMsg verbatim when login is refused.
                     if ("credenziali" in msg.lowercase()) return true
-                    // Elearning SAML rejects bad creds by re-rendering the login page
-                    // without the auto-submit form — the auth flow then bails out here.
                     if ("missing form at step three" in msg) return true
                 }
                 cur = cur.cause
@@ -539,13 +597,16 @@ class SessionManager @Inject constructor(
             return false
         }
 
-        // Esse3 web-SSO cookies serialized one per line as name\tvalue\tdomain\tpath.
-        // Only the fields needed to re-seed Esse3Api's cookie jar are kept; the cache is
-        // best-effort (a stale entry just triggers a fresh SAML login). Cookie name/value
-        // (JSESSIONID, _shibsession_*) never contain tabs or newlines.
         private const val COOKIE_FIELD_SEP = "\t"
         private const val COOKIE_RECORD_SEP = "\n"
 
+        /**
+         * Serializes the Esse3 web-SSO cookies one per line as
+         * `name\tvalue\tdomain\tpath` — only the fields needed to re-seed the scrape client's
+         * cookie jar. The persisted form is best-effort (a stale entry just triggers a fresh
+         * SAML login), and the cookie names and values involved (`JSESSIONID`,
+         * `_shibsession_*`) never contain tabs or newlines.
+         */
         fun serializeCookies(cookies: List<Cookie>): String? {
             if (cookies.isEmpty()) return null
             return cookies.joinToString(COOKIE_RECORD_SEP) { c ->
@@ -572,6 +633,7 @@ class SessionManager @Inject constructor(
     }
 }
 
+/** A ready-to-use Moodle client paired with the wstoken its web-service calls must carry. */
 data class ElearningSession(
     val api: ElearningApi,
     val wsToken: String,

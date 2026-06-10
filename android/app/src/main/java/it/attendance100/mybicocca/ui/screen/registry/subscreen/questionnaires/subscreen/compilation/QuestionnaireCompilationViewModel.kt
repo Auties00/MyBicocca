@@ -35,8 +35,22 @@ import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 
-// One instance per compilation: Esse3 never resumes drafts, so the whole server-side
-// session (start -> pages -> summary -> confirm) lives and dies with this ViewModel.
+/**
+ * Backs the questionnaire compiler, one instance per compilation: Esse3 never resumes
+ * drafts, so the whole server-side session (start -> pages -> summary -> confirm) lives
+ * and dies with this ViewModel. The request also exposes the display facets
+ * ([activityName], [lecturerName], [partitionName], [anonymous]) the hosting sheet's
+ * pinned header and summary copy read.
+ *
+ * Streams: [step] is the wizard's position (starting / start-failed / page / summary);
+ * [answers] holds the in-progress edits of the current page; [invalidQuestionIds] flags
+ * mandatory questions a blocked forward attempt left unanswered; [working] is true while
+ * a server round-trip (save / page move / confirm) is in flight; [events] carries the
+ * one-shot confirmed / missing-answers / failed effects.
+ *
+ * Actions: [selectOption], [setFreeText], [next], [back], [confirm], [retryStart] and
+ * [reset].
+ */
 @HiltViewModel(assistedFactory = QuestionnaireCompilationViewModel.Factory::class)
 class QuestionnaireCompilationViewModel @AssistedInject constructor(
     @Assisted private val key: QuestionnaireCompilationRequest,
@@ -56,7 +70,6 @@ class QuestionnaireCompilationViewModel @AssistedInject constructor(
 
     val anonymous: Boolean get() = key.anonymous
 
-    // Display facets for the hosting sheet's pinned header.
     val activityName: String get() = key.activityName
     val lecturerName: String? get() = key.lecturerName
     val partitionName: String? get() = key.partitionName
@@ -65,15 +78,17 @@ class QuestionnaireCompilationViewModel @AssistedInject constructor(
         MutableStateFlow<QuestionnaireCompilationStep>(QuestionnaireCompilationStep.Starting)
     val step: StateFlow<QuestionnaireCompilationStep> = _step.asStateFlow()
 
-    // True while a server round-trip (save / page move / confirm) is in flight.
     private val _working = MutableStateFlow(false)
+
+    /** True while a server round-trip (save / page move / confirm) is in flight. */
     val working: StateFlow<Boolean> = _working.asStateFlow()
 
     private val _answers = MutableStateFlow<Map<Long, QuestionAnswerState>>(emptyMap())
     val answers: StateFlow<Map<Long, QuestionAnswerState>> = _answers.asStateFlow()
 
-    // Mandatory questions left unanswered by the last "Avanti" attempt — highlighted in red.
     private val _invalidQuestionIds = MutableStateFlow<Set<Long>>(emptySet())
+
+    /** Mandatory questions left unanswered by the last "Avanti" attempt — highlighted in red. */
     val invalidQuestionIds: StateFlow<Set<Long>> = _invalidQuestionIds.asStateFlow()
 
     private val _events = Channel<QuestionnaireCompilationEvent>(Channel.BUFFERED)
@@ -81,7 +96,7 @@ class QuestionnaireCompilationViewModel @AssistedInject constructor(
 
     private var session: QuestionnaireSession? = null
 
-    // Cached so back-from-summary can restore the last page without a server fetch.
+    /** Cached so back-from-summary can restore the last page without a server fetch. */
     private var lastPage: QuestionnairePage? = null
     private var lastPageIndex: Int = 0
 
@@ -93,10 +108,12 @@ class QuestionnaireCompilationViewModel @AssistedInject constructor(
         if (_step.value is QuestionnaireCompilationStep.StartFailed) start()
     }
 
-    // Discard an in-progress compilation. The VM is sheet-hosted and keyed per unit, so it
-    // outlives the compiler page: leaving without confirming must not replay the stale
-    // session or answers on the next open. Esse3 never resumes drafts, so the abandoned
-    // server session is simply dropped and a fresh one is started.
+    /**
+     * Discards an in-progress compilation. The ViewModel is sheet-hosted and keyed per
+     * unit, so it outlives the compiler page: leaving without confirming must not replay
+     * the stale session or answers on the next open. Esse3 never resumes drafts, so the
+     * abandoned server session is simply dropped and a fresh one is started.
+     */
     fun reset() {
         session = null
         lastPage = null
@@ -107,6 +124,10 @@ class QuestionnaireCompilationViewModel @AssistedInject constructor(
         start()
     }
 
+    /**
+     * Flips an option pick, respecting the multi-choice selection cap. Re-tapping the
+     * selected option clears it, so single-choice answers can be undone.
+     */
     fun selectOption(question: QuestionnaireQuestion, option: QuestionnaireOption) {
         val state = _answers.value[question.id] ?: QuestionAnswerState()
         val selected = when (val kind = question.kind) {
@@ -118,7 +139,6 @@ class QuestionnaireCompilationViewModel @AssistedInject constructor(
                 else -> state.selectedOptionIds + option.id
             }
 
-            // Re-tapping the selected option clears it, so single-choice answers can be undone.
             else -> if (option.id in state.selectedOptionIds) emptySet() else setOf(option.id)
         }
         _answers.value = _answers.value + (question.id to state.copy(selectedOptionIds = selected))
@@ -163,12 +183,17 @@ class QuestionnaireCompilationViewModel @AssistedInject constructor(
         }
     }
 
+    /**
+     * Steps the wizard backwards. From the summary the last page restores from cache —
+     * it was saved before reaching the summary, and the in-memory answers are kept since
+     * the cached page's saved* fields are stale. From a page, the current answers save
+     * best-effort first: edits are kept when stepping back, but an incomplete page must
+     * not block backwards navigation.
+     */
     fun back() {
         if (_working.value) return
         when (val current = _step.value) {
             is QuestionnaireCompilationStep.Summary -> {
-                // The page was saved before reaching the summary; restore it from cache and
-                // keep the in-memory answers (the cached page's saved* fields are stale).
                 val page = lastPage ?: return
                 _step.value = QuestionnaireCompilationStep.Page(page = page, index = lastPageIndex)
             }
@@ -179,8 +204,6 @@ class QuestionnaireCompilationViewModel @AssistedInject constructor(
                 viewModelScope.launch {
                     _working.value = true
                     runCatching {
-                        // Best-effort: keep edits when stepping back, but an incomplete page
-                        // must not block backwards navigation.
                         runCatching { saveCurrentAnswers(session, current.page) }
                         val previous = getPreviousPage(session, current.page.id)
                         enterPage(previous, current.index - 1)
@@ -239,8 +262,8 @@ class QuestionnaireCompilationViewModel @AssistedInject constructor(
         }
     }
 
+    /** Seeds edits from what the server already has, so revisited pages show their answers. */
     private fun enterPage(page: QuestionnairePage, index: Int) {
-        // Seed edits from what the server already has, so revisited pages show their answers.
         _answers.value = page.questions().associate { question ->
             question.id to QuestionAnswerState(
                 selectedOptionIds = question.savedOptionIds,

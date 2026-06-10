@@ -27,7 +27,10 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import it.attendance100.mybicocca.domain.model.document.TitleCategory
 import it.attendance100.mybicocca.domain.model.document.TitleField
 
-// The detail page groups the title's attribute rows into these sections, rendered in this order.
+/**
+ * Sections the detail page groups a title's attribute rows into, rendered in declaration
+ * order.
+ */
 enum class TitleSection(val label: String) {
     Achievement("Conseguimento"),
     Evaluation("Valutazione"),
@@ -36,7 +39,7 @@ enum class TitleSection(val label: String) {
     Documentation("Documentazione"),
 }
 
-// Section header icon for the detail page's grouped cards (same icon-chip language as Iscrizioni).
+/** Section header icon for the detail page's grouped cards (same icon-chip language as Iscrizioni). */
 val TitleSection.icon: ImageVector
     get() = when (this) {
         TitleSection.Achievement -> Icons.Outlined.WorkspacePremium
@@ -46,6 +49,7 @@ val TitleSection.icon: ImageVector
         TitleSection.Documentation -> Icons.Outlined.Description
     }
 
+/** The detail-page section a field's row renders under. */
 val TitleField.section: TitleSection
     get() = when (this) {
         TitleField.AcademicYear,
@@ -102,8 +106,11 @@ val TitleField.icon: ImageVector
         TitleField.Recognized -> Icons.Outlined.Verified
     }
 
-// A couple of labels read differently for a school diploma vs a university title (the same
-// semantic field is an "Istituto" for the former and an "Ateneo" for the latter).
+/**
+ * Italian field label. A couple of labels read differently for a school diploma vs a
+ * university title: the same semantic field is an "Istituto" for the former and an
+ * "Ateneo" for the latter.
+ */
 fun TitleField.label(category: TitleCategory): String = when (this) {
     TitleField.AcademicYear -> "Anno accademico"
     TitleField.GraduationYear -> "Anno di maturità"

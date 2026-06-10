@@ -11,6 +11,13 @@ import it.attendance100.mybicocca.domain.model.elearning.grade.GradeItem
 import it.attendance100.mybicocca.domain.model.elearning.grade.GradeItemType
 import java.time.Instant
 
+/**
+ * Maps one row of the Moodle grade-items web service into its cache row, recording the
+ * gradebook position as the sort order. The name falls back to the activity module
+ * name when blank, the percentage is parsed out of Moodle's formatted "NN %" string
+ * (commas tolerated as decimal separators), and epoch-second timestamps are normalized
+ * to milliseconds.
+ */
 internal fun ElearningGradeItem.toEntity(
     accountId: AccountId,
     courseId: Int,
@@ -32,6 +39,7 @@ internal fun ElearningGradeItem.toEntity(
         sortOrder = sortOrder,
     )
 
+/** Maps a cached grade-item row to the domain model, resolving the item type from its raw value. */
 internal fun GradeItemEntity.toDomain(): GradeItem =
     GradeItem(
         id = itemId,
@@ -46,6 +54,12 @@ internal fun GradeItemEntity.toDomain(): GradeItem =
         gradedAt = gradedAtMs?.let(Instant::ofEpochMilli),
     )
 
+/**
+ * Maps one course total of the Moodle grades-overview web service into its cache row.
+ * The endpoint ships the grade as a formatted string plus a raw value and no course
+ * name, so the name is supplied by the caller (or stored empty) and the raw value is
+ * parsed to a number when possible.
+ */
 internal fun ElearningCourseGrade.toEntity(
     accountId: AccountId,
     courseName: String?,
@@ -59,6 +73,7 @@ internal fun ElearningCourseGrade.toEntity(
         gradeFormatted = grade,
     )
 
+/** Maps a cached course-grade overview row to the domain model. */
 internal fun CourseGradeOverviewEntity.toDomain(): CourseGradeOverview =
     CourseGradeOverview(
         courseId = CourseId(courseId),
@@ -68,7 +83,9 @@ internal fun CourseGradeOverviewEntity.toDomain(): CourseGradeOverview =
         gradeFormatted = gradeFormatted,
     )
 
+/** Parses Moodle's formatted percentage string ("87,50 %") to a number, null when malformed. */
 private fun String.parsePercent(): Double? =
     runCatching { trim().removeSuffix("%").trim().replace(',', '.').toDouble() }.getOrNull()
 
+/** Converts a Moodle epoch-second timestamp to milliseconds, reading 0 as absent. */
 private fun Long?.toMillisOrNullSec(): Long? = this?.takeIf { it > 0 }?.let { it * 1000L }

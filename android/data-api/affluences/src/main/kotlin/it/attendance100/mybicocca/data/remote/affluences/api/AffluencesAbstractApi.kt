@@ -50,6 +50,25 @@ abstract class AffluencesAbstractApi(
         const val RESERVATION_API_URL = "https://reservation.affluences.com/api"
 
         /**
+         * Name of the header carrying the per-install device api key minted by check-in.
+         */
+        const val USER_IDENTIFIER_HEADER = "user-identifier"
+
+        /**
+         * Fixed header set identifying the caller as the Affluences mobile app.
+         *
+         * The account-scoped endpoints gate on these headers rather than the user agent. Sending
+         * them (together with [USER_IDENTIFIER_HEADER] and a Bearer `auth_token`) on a reservation
+         * request makes it an authenticated booking, which the server confirms without the email
+         * validation step.
+         */
+        val MOBILE_APP_HEADERS: Map<String, String> = mapOf(
+            "x-app-version" to "202605190",
+            "x-device-type" to "android",
+            "x-service-name" to "mobile_app",
+        )
+
+        /**
          * Date format used by the Affluences APIs (yyyy-MM-dd).
          */
         private val DATE_FORMAT: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
@@ -196,7 +215,6 @@ abstract class AffluencesAbstractApi(
             }
 
             else -> {
-                // No structured error in the body, fall through to the generic exception
             }
         }
         throw ApiRequestException(response.status.value)

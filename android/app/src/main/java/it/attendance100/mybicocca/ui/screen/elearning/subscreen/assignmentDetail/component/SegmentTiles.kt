@@ -43,10 +43,10 @@ import androidx.graphics.shapes.Morph
 import androidx.graphics.shapes.toPath
 import it.attendance100.mybicocca.ui.component.text.HtmlBody
 
-// The connected-segment primitives this page borrows from the Piano di Studi compiler:
-// surfaceContainer tiles split by 2dp gaps with 20dp outer / 4dp inner corners, circle
-// status pills, and the circle-to-sunny knob.
-
+/**
+ * Corner treatment of the connected-segment tiles borrowed from the Piano di Studi compiler:
+ * 20dp where the group opens or closes, 4dp where segments touch across their 2dp gaps.
+ */
 internal fun segmentShape(isFirst: Boolean, isLast: Boolean): RoundedCornerShape {
     val large = 20.dp
     val small = 4.dp
@@ -58,6 +58,10 @@ internal fun segmentShape(isFirst: Boolean, isLast: Boolean): RoundedCornerShape
     )
 }
 
+/**
+ * Opening tile of a connected segment group: bold title with optional subtitle, an optional
+ * leading chip, and an optional trailing status pill.
+ */
 @Composable
 internal fun SegmentHeaderTile(
     title: String,
@@ -111,6 +115,7 @@ internal fun SegmentHeaderTile(
     }
 }
 
+/** Circle status pill for a segment tile, with an optional leading icon. */
 @Composable
 internal fun SegmentPill(
     label: String,
@@ -141,6 +146,7 @@ internal fun SegmentPill(
     }
 }
 
+/** Connected segment that renders an HTML body. */
 @Composable
 internal fun SegmentHtmlTile(
     html: String,
@@ -161,8 +167,10 @@ internal fun SegmentHtmlTile(
     }
 }
 
-// The Piano di Studi knob, repurposed as a milestone marker: a circle that morphs into
-// the sunny shape once the milestone is behind us.
+/**
+ * The Piano di Studi knob repurposed as a milestone marker: a circle that morphs into the
+ * sunny shape once the milestone is behind us.
+ */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 internal fun SegmentKnob(checked: Boolean, modifier: Modifier = Modifier) {
@@ -198,7 +206,7 @@ internal fun SegmentKnob(checked: Boolean, modifier: Modifier = Modifier) {
     }
 }
 
-// Scales the normalized morph path up to the knob's actual size.
+/** Scales the normalized morph path up to the knob's actual size. */
 private class MorphPolygonShape(
     private val morph: Morph,
     private val progress: Float,

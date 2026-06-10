@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.AlternateEmail
 import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material.icons.outlined.EventBusy
 import androidx.compose.material.icons.outlined.LocationOn
@@ -45,15 +44,20 @@ import androidx.core.net.toUri
 import it.attendance100.mybicocca.domain.model.appointment.AppointmentReservation
 import it.attendance100.mybicocca.ui.component.card.DetailFactCard
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.appointments.ext.decodeQrDataUrl
+import it.attendance100.mybicocca.ui.theme.LocalIsOnline
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
 private val FullDateFormat = DateTimeFormatter.ofPattern("EEEE d MMMM yyyy", Locale.ITALIAN)
 private val TimeFormat = DateTimeFormatter.ofPattern("HH:mm")
 
-// Management page for one desk booking, hosted inside the Appuntamenti sheet pager (the sheet
-// header carries the title): check-in QR, reservation code, recap rows, then PDF download and
-// cancellation pinned at the bottom.
+/**
+ * Management page for one desk booking, hosted inside the Appuntamenti sheet pager (the sheet
+ * header carries the title): check-in QR, reservation code, recap fact cards, then the action
+ * row pinned at the bottom. The QR stays on a white surface in both themes so scanners read
+ * it reliably. [onCancel] only requests the cancellation — the hosting sheet shows the
+ * in-sheet confirm page.
+ */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 internal fun ReservationDetailPage(
@@ -82,7 +86,6 @@ internal fun ReservationDetailPage(
             }
             if (qr != null) {
                 Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                    // The QR stays on white in both themes so scanners read it reliably.
                     Surface(shape = MaterialTheme.shapes.extraLarge, color = Color.White) {
                         Image(
                             bitmap = qr,
@@ -135,11 +138,6 @@ internal fun ReservationDetailPage(
                             .ifBlank { "Sede da definire" },
                     )
                 }
-                DetailFactCard(
-                    icon = Icons.Outlined.AlternateEmail,
-                    label = "EMAIL DI PRENOTAZIONE",
-                    value = reservation.email,
-                )
             }
 
             Spacer(Modifier.height(24.dp))
@@ -154,15 +152,16 @@ internal fun ReservationDetailPage(
                         .launchUrl(context, url.toUri())
                 }
             },
-            // Requests the cancel; the hosting sheet shows the in-sheet confirm page.
             onCancel = { onCancel(reservation) },
         )
     }
 }
 
-// When the appointment is a video call: a connected pair — the wider brand half joins the
-// call (same style the PDF button used), the error-tinted half cancels. Otherwise just the
-// full-width cancel button stands alone.
+/**
+ * Bottom action row. For video-call appointments, a connected pair where the neutral tonal
+ * "Annulla" leads and the wider brand-filled "Partecipa" trails; without a call, the cancel
+ * button stands alone at full width.
+ */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun ActionRow(
@@ -181,11 +180,9 @@ private fun ActionRow(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(4.dp),
     ) {
-        // Secondary "Annulla" leads on the neutral tonal; the primary "Partecipa" trails on the
-        // brand fill (when there's a call). With no call, Annulla stands alone.
         FilledTonalButton(
             onClick = onCancel,
-            enabled = !isCancelling,
+            enabled = !isCancelling && LocalIsOnline.current,
             modifier = Modifier
                 .weight(1f)
                 .height(56.dp),

@@ -10,10 +10,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import kotlinx.coroutines.delay
 
-// Holds a loading flag visible for at least minDurationMillis once it has been shown, so a
-// fast fetch doesn't flash the indicator for a frame or two. If the data is already there on
-// first composition (loading == false from the start) nothing is ever held — content renders
-// immediately.
+/**
+ * Holds a loading flag visible for at least [minDurationMillis] once it has been shown, so a
+ * fast fetch doesn't flash the indicator for a frame or two. If the data is already there on
+ * first composition (loading == false from the start) nothing is ever held — content renders
+ * immediately.
+ */
 @Composable
 fun rememberMinDurationLoading(loading: Boolean, minDurationMillis: Long = 600L): Boolean {
     var visible by remember { mutableStateOf(loading) }

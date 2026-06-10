@@ -4,6 +4,14 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.Index
 
+/**
+ * Cached row of the student's enrolled-course list, one per Moodle course per account.
+ * Keyed by (account_id, course_id); refreshes replace all rows of the account in one
+ * transaction. Names are stored with {mlang} markup already resolved. `sortOrder`
+ * preserves the order Moodle returned the courses in; `isFavourite` and `hidden` are
+ * device-local flags that survive refreshes via targeted UPDATEs. Timestamps are epoch
+ * milliseconds.
+ */
 @Entity(
     tableName = "elearning_enrolled_courses",
     primaryKeys = ["account_id", "course_id"],

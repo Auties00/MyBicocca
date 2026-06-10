@@ -168,7 +168,6 @@ class ElearningAuthApi(
                 put("index", 0)
                 put("methodname", "tool_mobile_get_public_config")
                 put("args", buildJsonObject {
-                    // Empty args
                 })
             })
         }
@@ -201,11 +200,10 @@ class ElearningAuthApi(
     }
 
     /**
-     * Terminates the user session and revokes all associated tokens.
-     * Client should clear local tokens regardless of response status.
+     * Terminates the user session. Server-side token revocation is not implemented: the call
+     * always reports success, and the client should clear local tokens regardless.
      */
     fun logout(): Boolean {
-        // TODO: Logout
         return true
     }
 }

@@ -31,8 +31,12 @@ import it.attendance100.mybicocca.ui.screen.registry.subscreen.attendance.ext.la
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.attendance.ext.tone
 import kotlin.math.roundToInt
 
-// One segment of the connected course stack: glanceable status only — the full
-// breakdown lives in the detail page opened on tap.
+/**
+ * One segment of the connected course stack: glanceable status only — the full breakdown
+ * lives in the detail page opened on tap. The leading badge carries the attendance
+ * percentage on a fill that ramps red -> orange -> green as it grows ("?" when nothing has
+ * been recorded yet); saturated ramp fills always carry white text, in dark mode too.
+ */
 @Composable
 fun AttendanceCourseCard(
     course: CourseAttendance,
@@ -55,8 +59,6 @@ fun AttendanceCourseCard(
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            // Leading badge: the attendance percentage on a fill that ramps red ->
-            // orange -> green as it grows; "?" when nothing has been recorded yet.
             val percent = course.attendancePercent()
             Box(
                 modifier = Modifier
@@ -72,7 +74,6 @@ fun AttendanceCourseCard(
                     text = percent?.let { "$it%" } ?: "?",
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.Bold,
-                    // Saturated ramp fills always carry white, in dark mode too.
                     color = if (percent != null) Color.White else scheme.onSurfaceVariant,
                     maxLines = 1,
                 )
@@ -110,14 +111,16 @@ fun AttendanceCourseCard(
     }
 }
 
-// The same percentage the caption leads with: classroom attendance first, then the
-// recorded-session percentage when only mod_attendance data exists.
+/**
+ * The same percentage the caption leads with: classroom attendance first, then the
+ * recorded-session percentage when only mod_attendance data exists.
+ */
 private fun CourseAttendance.attendancePercent(): Int? =
     classroomAttendance?.attendancePercentage?.roundToInt()
         ?: sessionAttendance.firstOrNull { it.recordedPercentage != null }
             ?.recordedPercentage?.roundToInt()
 
-// Continuous red -> orange -> green ramp following the percentage.
+/** Continuous red -> orange -> green ramp following the percentage. */
 private fun percentRampColor(fraction: Float): Color {
     val f = fraction.coerceIn(0f, 1f)
     val low = Color(0xFFD93025)

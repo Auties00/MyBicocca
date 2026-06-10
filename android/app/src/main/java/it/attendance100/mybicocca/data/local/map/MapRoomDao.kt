@@ -12,6 +12,13 @@ interface MapRoomDao {
     @Query("SELECT * FROM map_rooms WHERE building_code = :buildingCode ORDER BY name")
     fun observeForBuilding(buildingCode: String): Flow<List<MapRoomEntity>>
 
+    /**
+     * Streams every cached room across buildings, for the unified search index. Rooms hydrate
+     * as buildings are visited, so the result grows with use.
+     */
+    @Query("SELECT * FROM map_rooms ORDER BY name")
+    fun observeAll(): Flow<List<MapRoomEntity>>
+
     @Upsert
     suspend fun upsertAll(rows: List<MapRoomEntity>)
 

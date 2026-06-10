@@ -5,6 +5,10 @@ import it.attendance100.mybicocca.domain.repository.AppointmentRepository
 import java.time.LocalDate
 import javax.inject.Inject
 
+/**
+ * Loads the time slots of a chosen day, for the slot-picker step of the "Appuntamenti" booking
+ * flow. Always fetched live — slot occupancy is volatile.
+ */
 class GetAppointmentDaySlotsUseCase @Inject constructor(
     private val repository: AppointmentRepository,
 ) {

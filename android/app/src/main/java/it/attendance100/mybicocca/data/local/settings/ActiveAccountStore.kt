@@ -10,6 +10,11 @@ import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 import javax.inject.Singleton
 
+/**
+ * DataStore-backed pointer to the active account id; null means nobody is signed in. The
+ * session layer resolves this id against the Room account table to expose the active-account
+ * stream, and clears or repoints it on sign-out.
+ */
 @Singleton
 class ActiveAccountStore @Inject constructor(
     private val dataStore: DataStore<Preferences>,

@@ -47,6 +47,14 @@ import it.attendance100.mybicocca.ui.component.feedback.EmptyState
 import it.attendance100.mybicocca.ui.component.shape.OrganicShapes
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.courseDetail.state.StaffGridVariant
 
+/**
+ * Scheda tab page: the course syllabus rendered as a magazine-style column — an info tile
+ * (CFU/hours stat cards, language flag swatch, degree-level pips, a semester calendar strip),
+ * underlined prose sections (objectives, summary, prerequisites, teaching method, reference
+ * material, assessment, office hours, SDGs), the extended programme as numbered "PARTE" parts
+ * with topic pill clusters, and a two-column staff grid with organic-shape initial avatars.
+ * Shows an empty state when the course has no published syllabus.
+ */
 @Composable
 fun SyllabusContent(
     details: CourseDetails,
@@ -65,7 +73,7 @@ fun SyllabusContent(
     LazyColumn(
         state = listState,
         modifier = modifier,
-        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 14.dp, bottom = 28.dp),
+        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 28.dp),
         verticalArrangement = Arrangement.spacedBy(24.dp),
     ) {
         if (info.hasInfoTile) {
@@ -90,6 +98,7 @@ fun SyllabusContent(
         info.referenceMaterial?.let { item { SyllabusSection(title = "Materiale didattico", body = it) } }
         info.assessment?.let { item { SyllabusSection(title = "Verifica del profitto", body = it) } }
         info.officeHours?.let { item { SyllabusSection(title = "Orario di ricevimento", body = it) } }
+        info.sustainableDevelopmentGoals?.let { item { SyllabusSection(title = "Sustainable Development Goals", body = it) } }
 
         if (details.staff.isNotEmpty()) {
             item { StaffGrid(staff = details.staff) }
@@ -411,6 +420,11 @@ private fun SemesterCalendar(semester: Semester) {
     }
 }
 
+/**
+ * The "Programma esteso" block: one magazine-numbered entry per programme part, each with a
+ * topic-count line and a pill cluster of its items. Headerless programmes parse as a single
+ * untitled section, so a blank cleaned title simply skips the title row.
+ */
 @Composable
 private fun ExtendedProgrammeList(parts: List<ProgrammeSection>) {
     val scheme = MaterialTheme.colorScheme
@@ -456,7 +470,6 @@ private fun ExtendedProgrammeList(parts: List<ProgrammeSection>) {
                         )
                     }
                     Column(modifier = Modifier.weight(1f).padding(top = 18.dp)) {
-                        // Headerless programmes parse as a single untitled section.
                         val title = cleanProgrammeTitle(part.title)
                         if (title.isNotBlank()) {
                             Text(
@@ -491,8 +504,10 @@ private fun ExtendedProgrammeList(parts: List<ProgrammeSection>) {
     }
 }
 
-// Strips Compose's default font padding so visual text edges line up with the
-// layout box; the magazine PARTE/title/number column drifts visibly without it.
+/**
+ * Strips Compose's default font padding so visual text edges line up with the
+ * layout box; the magazine PARTE/title/number column drifts visibly without it.
+ */
 private val TightTextStyle = TextStyle(
     platformStyle = PlatformTextStyle(includeFontPadding = false),
     lineHeightStyle = LineHeightStyle(

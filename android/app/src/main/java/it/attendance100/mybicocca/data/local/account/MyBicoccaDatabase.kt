@@ -26,10 +26,6 @@ import it.attendance100.mybicocca.data.local.elearning.forum.PostEntity
 import it.attendance100.mybicocca.data.local.elearning.grade.CourseGradeOverviewEntity
 import it.attendance100.mybicocca.data.local.elearning.grade.GradeDao
 import it.attendance100.mybicocca.data.local.elearning.grade.GradeItemEntity
-import it.attendance100.mybicocca.data.local.elearning.message.ConversationEntity
-import it.attendance100.mybicocca.data.local.elearning.message.ConversationMemberEntity
-import it.attendance100.mybicocca.data.local.elearning.message.MessageDao
-import it.attendance100.mybicocca.data.local.elearning.message.MessageEntity
 import it.attendance100.mybicocca.data.local.elearning.quiz.QuizAttemptAnswerEntity
 import it.attendance100.mybicocca.data.local.elearning.quiz.QuizAttemptEntity
 import it.attendance100.mybicocca.data.local.elearning.quiz.QuizBestGradeEntity
@@ -54,7 +50,51 @@ import it.attendance100.mybicocca.data.local.appointment.AppointmentReservationD
 import it.attendance100.mybicocca.data.local.appointment.AppointmentReservationEntity
 import it.attendance100.mybicocca.data.local.library.LibraryReservationDao
 import it.attendance100.mybicocca.data.local.library.LibraryReservationEntity
+import it.attendance100.mybicocca.data.local.exam.BookedExamEntity
+import it.attendance100.mybicocca.data.local.exam.ExamCacheDao
+import it.attendance100.mybicocca.data.local.exam.ExamCallEntity
+import it.attendance100.mybicocca.data.local.exam.ExamResultEntity
+import it.attendance100.mybicocca.data.local.tax.IseeDeclarationEntity
+import it.attendance100.mybicocca.data.local.tax.RefundEntity
+import it.attendance100.mybicocca.data.local.tax.TaxCacheDao
+import it.attendance100.mybicocca.data.local.tax.TaxChargeItemEntity
+import it.attendance100.mybicocca.data.local.tax.TaxInvoiceEntity
+import it.attendance100.mybicocca.data.local.tax.TaxSummaryEntity
+import it.attendance100.mybicocca.data.local.enrollment.AnnualEnrollmentEntity
+import it.attendance100.mybicocca.data.local.enrollment.EnrollmentCacheDao
+import it.attendance100.mybicocca.data.local.questionnaire.ActivityQuestionnairesEntity
+import it.attendance100.mybicocca.data.local.questionnaire.QuestionnaireActivityEntity
+import it.attendance100.mybicocca.data.local.questionnaire.QuestionnaireCacheDao
+import it.attendance100.mybicocca.data.local.questionnaire.QuestionnaireUnitEntity
+import it.attendance100.mybicocca.data.local.document.AcademicTitleEntity
+import it.attendance100.mybicocca.data.local.document.BadgeImageEntity
+import it.attendance100.mybicocca.data.local.document.DocumentCacheDao
+import it.attendance100.mybicocca.data.local.document.StudentBadgeEntity
+import it.attendance100.mybicocca.data.local.document.TitleAttributeEntity
+import it.attendance100.mybicocca.data.local.certificate.CertificateCacheDao
+import it.attendance100.mybicocca.data.local.certificate.CertificateEntity
 
+/**
+ * The app's single Room database — the local source of truth every offline-first screen reads.
+ *
+ * Entity groups it hosts:
+ * - accounts and careers: the saved Esse3 identities behind multi-account support
+ * - calendar: merged events plus per-source sync state (EasyStaff lessons, Esse3 exams, and the
+ *   other calendar sources)
+ * - elearning: courses with sections/modules/staff/syllabi, activity completion, deadlines,
+ *   assignments, quizzes (attempts, answers, best grades), forums (discussions, posts), grades,
+ *   badges, video progress, and per-resource sync state
+ * - transcript: Esse3 exam rows and aggregate stats with sync state
+ * - map: campus buildings and rooms with sync state
+ * - reservations: appointment (Portale Planning) and library-seat (Affluences) bookings, stored
+ *   device-locally rather than per account
+ * - offline mirrors of the live-first registry features (exam booking, taxes, enrollment
+ *   history, questionnaires, badge/titles, certificates): the last successful read of each,
+ *   served only when the device has no network
+ *
+ * Most tables are scoped by account id and/or career id. Schema export is disabled, so there is
+ * no recorded schema history to validate incremental migrations against.
+ */
 @Database(
     entities = [
         AccountEntity::class,
@@ -78,9 +118,6 @@ import it.attendance100.mybicocca.data.local.library.LibraryReservationEntity
         PostEntity::class,
         GradeItemEntity::class,
         CourseGradeOverviewEntity::class,
-        ConversationEntity::class,
-        ConversationMemberEntity::class,
-        MessageEntity::class,
         BadgeEntity::class,
         ElearningSyncStateEntity::class,
         VideoProgressEntity::class,
@@ -92,8 +129,25 @@ import it.attendance100.mybicocca.data.local.library.LibraryReservationEntity
         MapRoomSyncStateEntity::class,
         AppointmentReservationEntity::class,
         LibraryReservationEntity::class,
+        BookedExamEntity::class,
+        ExamCallEntity::class,
+        ExamResultEntity::class,
+        TaxInvoiceEntity::class,
+        TaxChargeItemEntity::class,
+        TaxSummaryEntity::class,
+        IseeDeclarationEntity::class,
+        RefundEntity::class,
+        AnnualEnrollmentEntity::class,
+        QuestionnaireActivityEntity::class,
+        ActivityQuestionnairesEntity::class,
+        QuestionnaireUnitEntity::class,
+        StudentBadgeEntity::class,
+        AcademicTitleEntity::class,
+        TitleAttributeEntity::class,
+        BadgeImageEntity::class,
+        CertificateEntity::class,
     ],
-    version = 27,
+    version = 33,
     exportSchema = false,
 )
 abstract class MyBicoccaDatabase : RoomDatabase() {
@@ -109,7 +163,6 @@ abstract class MyBicoccaDatabase : RoomDatabase() {
     abstract fun elearningQuizDao(): QuizDao
     abstract fun elearningForumDao(): ForumDao
     abstract fun elearningGradeDao(): GradeDao
-    abstract fun elearningMessageDao(): MessageDao
     abstract fun elearningBadgeDao(): BadgeDao
     abstract fun elearningSyncStateDao(): ElearningSyncStateDao
     abstract fun elearningVideoProgressDao(): VideoProgressDao
@@ -121,4 +174,11 @@ abstract class MyBicoccaDatabase : RoomDatabase() {
     abstract fun appointmentReservationDao(): AppointmentReservationDao
 
     abstract fun libraryReservationDao(): LibraryReservationDao
+
+    abstract fun examCacheDao(): ExamCacheDao
+    abstract fun taxCacheDao(): TaxCacheDao
+    abstract fun enrollmentCacheDao(): EnrollmentCacheDao
+    abstract fun questionnaireCacheDao(): QuestionnaireCacheDao
+    abstract fun documentCacheDao(): DocumentCacheDao
+    abstract fun certificateCacheDao(): CertificateCacheDao
 }

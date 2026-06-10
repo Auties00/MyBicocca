@@ -28,10 +28,14 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import it.attendance100.mybicocca.core.state.valueOrNull
 import it.attendance100.mybicocca.domain.model.appointment.AppointmentFormField
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.appointments.AppointmentsViewModel
+import it.attendance100.mybicocca.ui.theme.LocalIsOnline
 
-// Wizard step 2: the dynamic form (consent hoisted to its own switch row), then the
-// Prenota / Indietro action pair. The sheet header carries the picked date and time, so there
-// is no recap card here.
+/**
+ * Booking wizard step 2: the dynamic form (the consent rendered as its own switch row below
+ * the fields), then the Indietro / Prenota action pair pinned at the bottom. The sheet header
+ * carries the picked date and time, so there is no recap card here; Prenota enables only once
+ * every field is satisfied and the device is online.
+ */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 internal fun FormPage(
@@ -88,7 +92,7 @@ internal fun FormPage(
     }
 }
 
-// Connected pair: tonal "Indietro" leads (1f), brand "Prenota" trails (1.4f).
+/** Connected pair: tonal "Indietro" leads (1f), brand-filled "Prenota" trails (1.4f) and shows the in-flight indicator while submitting. */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun ActionButtons(
@@ -120,7 +124,7 @@ private fun ActionButtons(
         }
         Button(
             onClick = onSubmit,
-            enabled = canSubmit,
+            enabled = canSubmit && LocalIsOnline.current,
             modifier = Modifier
                 .weight(1.4f)
                 .height(56.dp),
@@ -142,6 +146,11 @@ private fun ActionButtons(
     }
 }
 
+/**
+ * Whether the field's current value allows submitting: required consents must be accepted,
+ * email fields must parse as an address when required or primary (optional ones may stay
+ * blank), and any other required field must be non-blank.
+ */
 private fun AppointmentFormField.isSatisfiedBy(values: Map<String, String>): Boolean {
     val value = values[code].orEmpty()
     return when (this) {

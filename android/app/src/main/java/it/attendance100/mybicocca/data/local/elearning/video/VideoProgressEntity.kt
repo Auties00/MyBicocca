@@ -4,6 +4,11 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.Index
 
+/**
+ * Saved playback progress of a lecture video, account-scoped. Keyed by (account_id, cm_id) —
+ * one row per video per account — with an index on (account_id, course_id) backing the
+ * per-course queries; position, duration and the update timestamp are milliseconds.
+ */
 @Entity(
     tableName = "elearning_video_progress",
     primaryKeys = ["account_id", "cm_id"],

@@ -28,8 +28,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import it.attendance100.mybicocca.core.os.rememberHapticManager
 
-// A drill-down category inside an area: neutral grouped-list surface with an accent-tinted folder
-// chip, so categories read as containers while courses (accent enrol button) read as actions.
+/**
+ * A drill-down category inside an area: neutral grouped-list surface with an accent-tinted
+ * folder chip and a trailing chevron, so categories read as containers while courses (accent
+ * enrol button) read as actions. Taps give haptic feedback.
+ */
 @Composable
 fun CategoryRow(
     label: String,

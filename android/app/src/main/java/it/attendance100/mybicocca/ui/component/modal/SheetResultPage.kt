@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.ErrorOutline
 import androidx.compose.material.icons.outlined.Info
@@ -16,6 +17,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ButtonGroupDefaults
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -27,18 +29,20 @@ import androidx.compose.ui.unit.dp
 import it.attendance100.mybicocca.ui.component.button.PrimaryActionButton
 import it.attendance100.mybicocca.ui.component.feedback.friendlyMessage
 
-// The outcome of a completed in-sheet action, rendered as a dedicated result page instead of a
-// transient snackbar — the same cookie-icon empty-state visual as SheetMessage, with a pinned
-// action group below: a brand primary (Fine / Riprova) and, for a retriable error, a tonal
-// secondary (Chiudi).
-sealed interface SheetOutcome {
-    val title: String
-
-    data class Success(override val title: String, val body: String? = null) : SheetOutcome
-    data class Info(override val title: String, val body: String? = null) : SheetOutcome
-    data class Error(override val title: String, val cause: Throwable? = null, val body: String? = null) : SheetOutcome
-}
-
+/**
+ * Terminal result page for an in-sheet action: the same cookie-icon empty-state visual as
+ * SheetMessage, tinted by the outcome's severity, with a pinned action group below — a brand
+ * primary ("Fine", or "Riprova" for a retriable error) and, when retry is offered, a tonal
+ * "Chiudi" as the connected leading half of the pair. An Error without a body falls back to
+ * the friendly message derived from its cause.
+ *
+ * Brand-red fills keep explicit white content in the light scheme (onPrimary resolves to
+ * black-on-red in the dark scheme), and the retry button holds the brand fill while disabled
+ * mid-retry instead of dimming under its spinner.
+ *
+ * @param retryInProgress while true the "Riprova" button shows a spinner and both actions
+ * disable — the caller is performing (or deliberately holding a loading beat over) the retry.
+ */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun SheetResultPage(
@@ -46,11 +50,11 @@ fun SheetResultPage(
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
     onRetry: (() -> Unit)? = null,
+    retryInProgress: Boolean = false,
 ) {
     val scheme = MaterialTheme.colorScheme
     val dark = isSystemInDarkTheme()
     val brandBg = if (dark) scheme.primaryContainer else scheme.primary
-    // White is explicit per the brand-red rule: onPrimary flips to black-on-red in dark mode.
     val brandFg = if (dark) scheme.onPrimaryContainer else Color.White
 
     val icon: ImageVector
@@ -98,6 +102,7 @@ fun SheetResultPage(
             ) {
                 FilledTonalButton(
                     onClick = onDismiss,
+                    enabled = !retryInProgress,
                     modifier = Modifier
                         .weight(1f)
                         .height(56.dp),
@@ -111,13 +116,23 @@ fun SheetResultPage(
                 }
                 Button(
                     onClick = { onRetry?.invoke() },
+                    enabled = !retryInProgress,
                     modifier = Modifier
                         .weight(1.4f)
                         .height(56.dp),
                     shape = ButtonGroupDefaults.connectedTrailingButtonShape,
-                    colors = ButtonDefaults.buttonColors(containerColor = brandBg, contentColor = brandFg),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = brandBg,
+                        contentColor = brandFg,
+                        disabledContainerColor = brandBg,
+                        disabledContentColor = brandFg,
+                    ),
                 ) {
-                    Text("Riprova", fontWeight = FontWeight.SemiBold)
+                    if (retryInProgress) {
+                        LoadingIndicator(modifier = Modifier.size(24.dp), color = brandFg)
+                    } else {
+                        Text("Riprova", fontWeight = FontWeight.SemiBold)
+                    }
                 }
             }
         } else {

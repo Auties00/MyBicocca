@@ -27,6 +27,14 @@ import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.ui.compose.state.rememberProgressStateWithTickCount
 
+/**
+ * The bottom scrub bar, sitting on a transparent-to-black gradient: a course-accent slider over
+ * the full video duration with monospaced elapsed/total time labels underneath. The slider keeps
+ * the default thumb but draws its own track to drop the end-of-track stop dot. Progress tracking
+ * is event-driven (it pauses with the player rather than busy-polling), and dragging the thumb
+ * seeks the video in real time so the picture follows the scrub. Releasing the thumb counts as
+ * user activity for the chrome's auto-hide timer.
+ */
 @OptIn(UnstableApi::class)
 @Composable
 fun CustomPlayerControls(
@@ -35,7 +43,6 @@ fun CustomPlayerControls(
     onUserActivity: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    // Event-driven; pauses when the player isn't playing, no busy polling.
     val sliderProgress = rememberProgressStateWithTickCount(player, totalTickCount = SLIDER_TICK_COUNT)
 
     val sliderState = rememberSliderState(valueRange = 0f..1f)
@@ -47,7 +54,6 @@ fun CustomPlayerControls(
             }
     }
 
-    // Seek while dragging so the video follows the thumb in real time.
     LaunchedEffect(sliderState, sliderProgress) {
         snapshotFlow { sliderState.isDragging to sliderState.value }
             .collect { (dragging, value) ->
@@ -92,7 +98,6 @@ fun CustomPlayerControls(
             state = sliderState,
             enabled = sliderProgress.changingProgressEnabled,
             colors = sliderColors,
-            // Drop the end-of-track stop dot; keep the default thumb.
             track = { state ->
                 SliderDefaults.Track(
                     sliderState = state,

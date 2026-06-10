@@ -36,9 +36,16 @@ import it.attendance100.mybicocca.ui.screen.settings.subscreen.language.currentA
 import it.attendance100.mybicocca.ui.screen.settings.subscreen.settingsAppearance.SettingsAppearanceSheet
 import it.attendance100.mybicocca.ui.screen.settings.subscreen.settingsSecurity.SettingsSecuritySheet
 
-// Landing of Settings: a directory grouped into connected segmented cards, mirroring the
-// Registry tab's service directory style. Everything is handled in place — Aspetto, Lingua,
-// Sicurezza and About each open a modal sheet — so there are no sub-routes.
+/**
+ * Landing page of the settings feature: a scrollable directory grouped into connected segmented
+ * cards, mirroring the Registry tab's service directory style. Everything is handled in place —
+ * Aspetto, Lingua, Sicurezza, Apertura file and About each open a modal bottom sheet over the
+ * directory — so the screen has no sub-routes. Licenze hands off to the play-services
+ * [OssLicensesMenuActivity], which lists the bundled open-source libraries; the Privacy Policy
+ * entry is a placeholder that only acknowledges the tap with haptic feedback. The Lingua tile's
+ * subtitle shows the language the app is running with, re-read whenever its sheet closes (a
+ * language change also recreates the activity).
+ */
 @Suppress("AssignedValueIsNeverRead")
 @Composable
 fun SettingsScreen() {
@@ -52,10 +59,8 @@ fun SettingsScreen() {
     var showFileAssocSheet by remember { mutableStateOf(false) }
     var showAppInfoSheet by remember { mutableStateOf(false) }
 
-    // Refreshes when the sheet closes; a language change also recreates the activity anyway.
     val languageLabel = remember(showLanguageSheet) { currentAppLanguageLabel(context) }
 
-    // (group, iconChip container, iconChip onContainer) per section.
     val sections = listOf(
         Triple(
             SettingsEntryGroup(
@@ -91,7 +96,6 @@ fun SettingsScreen() {
                         "Versione, copyright e crediti",
                         Icons.Outlined.Info,
                         onClick = { showAppInfoSheet = true }),
-                    // No-op for now: just acknowledge the tap with haptic feedback.
                     SettingsEntry(
                         "privacy",
                         "Privacy Policy",
@@ -104,7 +108,6 @@ fun SettingsScreen() {
                         "Licenze open source delle librerie",
                         Icons.Outlined.Description,
                         onClick = {
-                        // Provided by play-services-oss-licenses; lists the bundled open-source libraries.
                         OssLicensesMenuActivity.setActivityTitle("Licenze open source")
                         context.startActivity(Intent(context, OssLicensesMenuActivity::class.java))
                     }),

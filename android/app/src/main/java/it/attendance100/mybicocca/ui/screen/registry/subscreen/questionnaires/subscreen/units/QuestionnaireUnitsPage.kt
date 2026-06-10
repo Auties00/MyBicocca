@@ -40,10 +40,14 @@ import it.attendance100.mybicocca.domain.model.questionnaire.QuestionnaireUnit
 import it.attendance100.mybicocca.ui.component.button.RetryButton
 import it.attendance100.mybicocca.ui.component.modal.SheetLoadingIndicator
 import it.attendance100.mybicocca.ui.component.modal.SheetMessage
+import it.attendance100.mybicocca.ui.theme.LocalIsOnline
 
-// In-sheet page listing the compilable questionnaires of one activity, one row per
-// teaching unit / lecturer / turno; the sheet's morphing header carries the activity
-// name. The unit choice is what targets the compilation.
+/**
+ * In-sheet page listing the compilable questionnaires of one activity, one row per
+ * teaching unit / lecturer / turno; the sheet's morphing header carries the activity
+ * name. The unit choice is what targets the compilation. Shows an error message with
+ * retry when the detail fetch failed and a loading indicator until it lands.
+ */
 @Composable
 fun QuestionnaireUnitsPage(
     detail: Loadable<ActivityQuestionnaires>,
@@ -70,6 +74,15 @@ fun QuestionnaireUnitsPage(
     }
 }
 
+/**
+ * Connected segment rows, one per unit: a person chip, the lecturer (or unit) name with
+ * the partition beneath, and the trailing action — a brand-filled "Compila" (red in
+ * light, primaryContainer in dark, the shared CTA scheme, enabled only online) while
+ * compilable, its outlined non-interactive same-red "Compilato" twin once done, or a
+ * plain "Non disponibile" note when the questionnaire ids are missing. The filled button
+ * stacks a transparent ghost of the longer "Compilato" label under "Compila" so both
+ * buttons share one width and stay aligned across rows.
+ */
 @Composable
 private fun UnitsList(
     detail: ActivityQuestionnaires,
@@ -80,6 +93,7 @@ private fun UnitsList(
     val brandBg = if (dark) scheme.primaryContainer else scheme.primary
     val brandFg = if (dark) scheme.onPrimaryContainer else scheme.onPrimary
     val compilable = detail.questionnaireId != null && detail.questionnaireConfigId != null
+    val isOnline = LocalIsOnline.current
 
     Column(
         modifier = Modifier
@@ -144,7 +158,6 @@ private fun UnitsList(
                     }
                     Spacer(Modifier.width(12.dp))
                     when {
-                        // Outlined twin of the Compila button: same brand red, non-interactive.
                         unit.completed -> OutlinedButton(
                             onClick = {},
                             enabled = false,
@@ -156,17 +169,14 @@ private fun UnitsList(
                             Text("Compilato")
                         }
 
-                        // Brand-filled action: red in light, primaryContainer in dark — the
-                        // shared CTA scheme.
                         compilable -> Button(
                             onClick = { onCompileUnit(detail, unit) },
+                            enabled = isOnline,
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = brandBg,
                                 contentColor = brandFg,
                             ),
                         ) {
-                            // Ghost of the longer "Compilato" label so both buttons share its
-                            // width and stay aligned across rows.
                             Box(contentAlignment = Alignment.Center) {
                                 Text("Compilato", color = Color.Transparent)
                                 Text("Compila")

@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 import javax.inject.Singleton
 
+/** Delegates to the process-wide lock gate ([AppLockManager]) and the password check ([AppLockVerifier]). */
 @Singleton
 class AppLockRepositoryImpl @Inject constructor(
     private val appLockManager: AppLockManager,

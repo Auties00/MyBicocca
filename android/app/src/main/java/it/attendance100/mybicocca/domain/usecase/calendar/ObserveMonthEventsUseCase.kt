@@ -8,6 +8,11 @@ import kotlinx.coroutines.flow.Flow
 import java.time.YearMonth
 import javax.inject.Inject
 
+/**
+ * Streams one month of merged calendar events from the local cache. Backs the calendar tab's
+ * month grid and agenda; the screen also collects the adjacent months through it so swiping
+ * between months never starts from an empty grid.
+ */
 class ObserveMonthEventsUseCase @Inject constructor(
     private val repository: CalendarRepository,
 ) {

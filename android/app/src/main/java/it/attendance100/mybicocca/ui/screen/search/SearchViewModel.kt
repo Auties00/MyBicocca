@@ -33,6 +33,16 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+/**
+ * Drives the global search overlay for the active account and career.
+ *
+ * [query] is user input, kept in [SavedStateHandle] so it survives process death. [results]
+ * runs the matcher off the main thread on a debounced, trimmed copy of the query and
+ * restarts whenever the account or career changes; [history] follows the active account.
+ * [dictating] and [soundLevel] mirror a running dictation session. Actions persist
+ * submitted queries and tapped results to history, remove single entries or clear them
+ * all, and start/stop dictation.
+ */
 @OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
 @HiltViewModel
 class SearchViewModel @Inject constructor(
@@ -46,7 +56,6 @@ class SearchViewModel @Inject constructor(
     private val dictate: DictateUseCase,
 ) : ViewModel() {
 
-    // Search text is user input — SavedStateHandle so it survives process death.
     val query: StateFlow<String> = savedState.getStateFlow(KEY_QUERY, "")
 
     private val activeAccount = observeActiveAccount()
@@ -79,9 +88,12 @@ class SearchViewModel @Inject constructor(
     private val _dictating = MutableStateFlow(false)
     val dictating: StateFlow<Boolean> = _dictating.asStateFlow()
 
-    // Mic input level (0..1) while dictating, for the dialog's audio-reactive visuals.
-    // Engines that can't measure it never emit, so this just stays at rest.
     private val _soundLevel = MutableStateFlow(0f)
+
+    /**
+     * Mic input level (0..1) while dictating, for the dialog's audio-reactive visuals.
+     * Engines that can't measure it never emit, so this just stays at rest.
+     */
     val soundLevel: StateFlow<Float> = _soundLevel.asStateFlow()
 
     private var dictationJob: Job? = null
@@ -90,7 +102,7 @@ class SearchViewModel @Inject constructor(
         savedState[KEY_QUERY] = value
     }
 
-    // IME search action: persist the query to history.
+    /** IME search action — commits the current query to history. */
     fun submit() {
         val q = query.value.trim()
         if (q.isEmpty()) return
@@ -104,6 +116,17 @@ class SearchViewModel @Inject constructor(
         viewModelScope.launch { addHistoryEntry(accountId, q) }
     }
 
+    /**
+     * Records the (query, result key) pair when a result is tapped: the adaptive memory that
+     * makes the same query rank the same pick first next time.
+     */
+    fun commitPick(result: SearchResult) {
+        val q = query.value.trim()
+        if (q.isEmpty()) return
+        val accountId = activeAccount.value?.id ?: return
+        viewModelScope.launch { addHistoryEntry(accountId, q, result.key) }
+    }
+
     fun removeFromHistory(historyQuery: String) {
         val accountId = activeAccount.value?.id ?: return
         viewModelScope.launch { removeHistoryEntry(accountId, historyQuery) }
@@ -114,8 +137,10 @@ class SearchViewModel @Inject constructor(
         viewModelScope.launch { clearHistoryEntries(accountId) }
     }
 
-    // Caller must hold RECORD_AUDIO. Partials stream straight into the query so results
-    // update live while the user is still speaking.
+    /**
+     * Caller must hold RECORD_AUDIO. Partial transcripts stream straight into the query so
+     * results update live while the user is still speaking.
+     */
     fun startDictation() {
         if (_dictating.value) return
         dictationJob = viewModelScope.launch {
@@ -140,7 +165,7 @@ class SearchViewModel @Inject constructor(
         }
     }
 
-    // Ends the session keeping whatever was heard so far.
+    /** Ends the dictation session, keeping whatever was heard so far. */
     fun stopDictation() {
         dictationJob?.cancel()
         dictationJob = null
@@ -148,7 +173,7 @@ class SearchViewModel @Inject constructor(
         _soundLevel.value = 0f
     }
 
-    // Called when the search overlay closes: reset transient state but keep history.
+    /** Invoked when the search overlay closes: clears transient state but keeps history. */
     fun reset() {
         stopDictation()
         savedState[KEY_QUERY] = ""

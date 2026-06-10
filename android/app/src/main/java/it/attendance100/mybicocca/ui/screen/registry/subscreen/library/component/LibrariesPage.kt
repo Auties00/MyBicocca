@@ -19,7 +19,11 @@ import it.attendance100.mybicocca.ui.component.button.RetryButton
 import it.attendance100.mybicocca.ui.component.modal.SheetLoadingIndicator
 import it.attendance100.mybicocca.ui.component.modal.SheetMessage
 
-// "Prenota" sub-page: the bookable libraries. The modal header already names it, so no section title.
+/**
+ * "Prenota" sub-page: the bookable libraries as a scrollable column of [LibraryCard]s, with
+ * loading, error-with-retry and empty states. The modal header already names the page, so it
+ * renders no section title of its own.
+ */
 @Composable
 internal fun LibrariesPage(
     libraries: Loadable<List<Library>>,

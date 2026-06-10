@@ -15,6 +15,11 @@ private val Context.settingsDataStore: DataStore<Preferences> by preferencesData
     name = "mybicocca_settings",
 )
 
+/**
+ * Provides the app's single Preferences DataStore (`mybicocca_settings`), shared by every
+ * settings store. The file-level property delegate guarantees the one-instance-per-file rule
+ * DataStore enforces at runtime.
+ */
 @Module
 @InstallIn(SingletonComponent::class)
 object DataStoreModule {

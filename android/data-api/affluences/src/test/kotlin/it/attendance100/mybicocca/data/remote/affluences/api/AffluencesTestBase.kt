@@ -7,10 +7,10 @@ import org.junit.jupiter.api.extension.ExtendWith
 @ExtendWith(AffluencesGlobalApiData::class)
 abstract class AffluencesTestBase {
     companion object {
-        // Root site of the Bicocca library system, used as the reference site across tests
+        /** Root site of the Bicocca library system, used as the reference site across tests. */
         const val ATENEO_LIBRARY_SLUG = "universita-bicocca-biblioteca-di-ateneo"
 
-        // Child site with booking enabled (seat zones), used by the reservation tests
+        /** Child site with booking enabled (seat zones), used by the reservation tests. */
         const val CENTRAL_LIBRARY_ID = "4912615d-501b-4c4e-a2a7-ccaec81c5429"
     }
 

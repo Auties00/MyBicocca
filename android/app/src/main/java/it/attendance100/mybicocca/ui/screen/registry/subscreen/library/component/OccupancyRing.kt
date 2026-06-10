@@ -15,8 +15,10 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.library.ext.occupancyColor
 
-// Compact occupancy gauge: a percentage arc colored by how busy the library is, with the value
-// in the middle. Used on the landing cards and the library detail header.
+/**
+ * Compact occupancy gauge: a percentage arc colored by how busy the library is, with the value
+ * in the middle. Sits on the library cards and the library detail header.
+ */
 @Composable
 fun OccupancyRing(
     percentage: Int,

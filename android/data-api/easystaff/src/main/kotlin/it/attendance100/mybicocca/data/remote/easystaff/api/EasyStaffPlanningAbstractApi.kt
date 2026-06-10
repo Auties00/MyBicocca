@@ -123,6 +123,9 @@ abstract class EasyStaffPlanningAbstractApi(
      * Executes a POST request with a JSON body against the Portale Planning API and returns
      * the response body as a deserialized JSON type.
      *
+     * Raw [JsonElement] bodies are encoded directly rather than handed to content negotiation,
+     * whose serializer guessing cannot resolve the internal JsonElement classes.
+     *
      * @param T The JSON type to deserialize the response into
      * @param portal The portal the request targets
      * @param path The request path (relative to [PLANNING_BASE_URL])
@@ -140,8 +143,6 @@ abstract class EasyStaffPlanningAbstractApi(
         val response = client.post(buildUrl(PLANNING_BASE_URL, path, queryParams)) {
             planningHeaders(portal)
             when (body) {
-                // Raw JSON bodies are encoded directly: the content negotiation serializer
-                // guessing cannot resolve the internal JsonElement classes
                 is JsonElement -> setBody(
                     TextContent(
                         json.encodeToString(JsonElement.serializer(), body),

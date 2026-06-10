@@ -13,23 +13,35 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import it.attendance100.mybicocca.core.search.matchHighlightRanges
 
-// One result segment of a category group. Tonal ladder: plain surface (overlay) ->
-// surfaceContainerLow (row) -> surfaceContainerHigh (leading icon bed).
+/**
+ * One result segment of a category group. Tonal ladder: plain surface (overlay) ->
+ * surfaceContainerLow (row) -> surfaceContainerHigh (leading icon bed). Action rows colour
+ * the icon bed with primaryContainer — the "this DOES something" cue.
+ */
 @Composable
 fun SearchResultRow(
     icon: ImageVector,
     title: String,
     subtitle: String?,
+    query: String,
     shape: Shape,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    accent: Boolean = false,
 ) {
     val scheme = MaterialTheme.colorScheme
     Surface(
@@ -45,13 +57,16 @@ fun SearchResultRow(
             Box(
                 modifier = Modifier
                     .size(40.dp)
-                    .background(scheme.surfaceContainerHigh, CircleShape),
+                    .background(
+                        if (accent) scheme.primaryContainer else scheme.surfaceContainerHigh,
+                        CircleShape,
+                    ),
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
                     imageVector = icon,
                     contentDescription = null,
-                    tint = scheme.onSurfaceVariant,
+                    tint = if (accent) scheme.onPrimaryContainer else scheme.onSurfaceVariant,
                     modifier = Modifier.size(22.dp),
                 )
             }
@@ -61,7 +76,7 @@ fun SearchResultRow(
                     .padding(start = 16.dp),
             ) {
                 Text(
-                    text = title,
+                    text = highlightedTitle(title, query, scheme.primary),
                     style = MaterialTheme.typography.bodyLarge,
                     color = scheme.onSurface,
                     maxLines = 1,
@@ -80,3 +95,26 @@ fun SearchResultRow(
         }
     }
 }
+
+/**
+ * Title text whose query-matched chars light up (bold + primary) so the user sees WHY the
+ * row matched — essential when typo and abbreviation tiers can surface non-obvious hits.
+ */
+@Composable
+fun highlightedTitle(title: String, query: String, highlightColor: Color): AnnotatedString =
+    remember(title, query, highlightColor) {
+        val ranges = if (query.isBlank()) null else matchHighlightRanges(query, title)
+        if (ranges.isNullOrEmpty()) {
+            AnnotatedString(title)
+        } else {
+            buildAnnotatedString {
+                append(title)
+                val style = SpanStyle(fontWeight = FontWeight.Bold, color = highlightColor)
+                for (range in ranges) {
+                    val start = range.first.coerceIn(0, title.length)
+                    val end = (range.last + 1).coerceIn(start, title.length)
+                    if (end > start) addStyle(style, start, end)
+                }
+            }
+        }
+    }

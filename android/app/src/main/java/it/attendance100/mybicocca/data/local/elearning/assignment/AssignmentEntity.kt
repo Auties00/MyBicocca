@@ -4,6 +4,16 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.Index
 
+/**
+ * Cached assignment of an e-learning course, account-scoped.
+ *
+ * Keyed by (account_id, assignment_id) — the Moodle mod_assign instance id — with an index on
+ * (account_id, course_id) backing the per-course queries. Timestamps are epoch milliseconds.
+ * Structured values are packed into JSON columns: [introFilesJson] holds a list of attachment
+ * references, [submissionStatusJson] the sealed submission-status envelope, and
+ * [submissionConfigJson] the static submission settings (enabled plugins, file limits,
+ * statement flag) parsed from the assignment's plugin configs — null until first synced.
+ */
 @Entity(
     tableName = "elearning_assignments",
     primaryKeys = ["account_id", "assignment_id"],
@@ -24,6 +34,6 @@ data class AssignmentEntity(
     @ColumnInfo(name = "max_attempts") val maxAttempts: Int?,
     @ColumnInfo(name = "allowed_extensions_csv") val allowedExtensionsCsv: String?,
     @ColumnInfo(name = "allow_drafts") val allowDrafts: Boolean,
-    // JSON-encoded SubmissionStatusJson (sealed)
     @ColumnInfo(name = "submission_status_json") val submissionStatusJson: String,
+    @ColumnInfo(name = "submission_config_json") val submissionConfigJson: String? = null,
 )

@@ -28,9 +28,12 @@ import it.attendance100.mybicocca.domain.model.enrollment.AnnualEnrollment
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.enrollments.ext.courseYearLabel
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.enrollments.ext.statusLabel
 
-// One academic year as a connected segmented row — same language as the Titoli / Certificati
-// directory lists: a circle icon chip, the year as headline, course year + status beneath, and a
-// chevron. 28dp corners cap the group's ends, 6dp where rows touch.
+/**
+ * One academic year as a connected segmented row — same language as the Titoli /
+ * Certificati directory lists: a circle icon chip, the year as headline, course year and
+ * status beneath, and a trailing chevron. 28dp corners cap the group's ends, 6dp where
+ * rows touch. Tapping opens the year's detail page.
+ */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun EnrollmentRow(

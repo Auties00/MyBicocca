@@ -5,20 +5,44 @@ import it.attendance100.mybicocca.domain.model.calendar.CalendarEvent
 const val TIMELINE_WINDOW_START_MINUTE = 8 * 60
 const val TIMELINE_WINDOW_END_MINUTE = 22 * 60
 
+/**
+ * Minimum placement height of a timeline block, in minutes: anything shorter renders too
+ * small to read or tap. Point events (deadlines) and very short slots are padded up to
+ * this for placement only — the card still shows the real times.
+ */
+private const val MIN_BLOCK_MINUTES = 24
+
+/**
+ * Arranges one day's events into lanes for a timeline column.
+ *
+ * Events are sorted by start and assigned greedily to the first lane free at their start
+ * minute (each lane tracks the highest end minute placed on it). Overlapping events are
+ * then grouped into clusters with a union-find pass — the start-sorted order lets overlap
+ * detection stop at the first event starting after the current one ends — and every
+ * member of a cluster receives an equal fraction of the column width, so a pair shares
+ * halves while an isolated event spans the full column.
+ *
+ * The vertical window starts from [window] — exact minutes, `first` the top and `last` the
+ * bottom of the grid; the 08:00–22:00 default covers lessons — and grows, snapped to whole
+ * hours, to whatever the day actually holds: deadlines sit at 23:59 and appointments can
+ * fall outside the default span. Callers sharing one hour gutter across several days pass
+ * the pre-fitted [timelineWindowFor] window so every column agrees on the scale.
+ */
 fun layoutDay(
     events: List<CalendarEvent>,
-    window: IntRange = TIMELINE_WINDOW_START_MINUTE until TIMELINE_WINDOW_END_MINUTE,
+    window: IntRange = TIMELINE_WINDOW_START_MINUTE..TIMELINE_WINDOW_END_MINUTE,
 ): DayLayout {
     if (events.isEmpty()) {
         return DayLayout(emptyList(), maxLane = 0, startMinute = window.first, endMinute = window.last)
     }
 
-    // Pre-compute minute ranges and sort by start.
     val sorted = events
         .map { it to it.minuteRange() }
         .sortedWith(compareBy({ it.second.first }, { it.second.second }))
 
-    // Lane assignment: laneEndMinute[i] = the highest end-minute placed on lane i so far.
+    val windowStart = minOf(window.first, sorted.minOf { it.second.first } / 60 * 60)
+    val windowEnd = maxOf(window.last, ((sorted.maxOf { it.second.second } + 59) / 60 * 60).coerceAtMost(24 * 60))
+
     val laneEndMinute = IntArray(events.size) { Int.MIN_VALUE }
     val placements = ArrayList<LaneInfo>(events.size)
     var maxLaneUsed = -1
@@ -41,7 +65,6 @@ fun layoutDay(
         placements += LaneInfo(event, start, end, picked)
     }
 
-    // Cluster: union-find by overlap.
     val parent = IntArray(placements.size) { it }
     fun find(i: Int): Int {
         var x = i
@@ -57,13 +80,11 @@ fun layoutDay(
     }
     for (i in placements.indices) {
         for (j in (i + 1) until placements.size) {
-            // sorted by start: if j starts after i ends, no further j overlaps i either
             if (placements[j].startMin >= placements[i].endMin) break
             union(i, j)
         }
     }
 
-    // For each cluster compute the max lane used (cluster width).
     val clusterMaxLane = HashMap<Int, Int>()
     val clusterId = HashMap<Int, Int>()
     var nextClusterId = 0
@@ -94,9 +115,30 @@ fun layoutDay(
     return DayLayout(
         items = items,
         maxLane = maxLaneUsed.coerceAtLeast(0),
-        startMinute = window.first,
-        endMinute = window.last,
+        startMinute = windowStart,
+        endMinute = windowEnd,
     )
+}
+
+/**
+ * Shared vertical window for every timeline surface currently on screen: the default
+ * 08:00–22:00 span grown, snapped to whole hours, to cover every loaded event. Day pages
+ * sit side by side in a pager and share one hour gutter, so the window must not vary per
+ * day — it is computed once over everything loaded, which can extend the span for days far
+ * from the visible one; a stable frame is worth the occasional extra hour of grid. Bounds
+ * are exact minutes: `first` is the top of the grid, `last` the bottom.
+ */
+fun timelineWindowFor(eventsByDay: Collection<List<CalendarEvent>>): IntRange {
+    var start = TIMELINE_WINDOW_START_MINUTE
+    var end = TIMELINE_WINDOW_END_MINUTE
+    eventsByDay.forEach { events ->
+        events.forEach { event ->
+            val (eventStart, eventEnd) = event.minuteRange()
+            if (eventStart < start) start = eventStart / 60 * 60
+            if (eventEnd > end) end = ((eventEnd + 59) / 60 * 60).coerceAtMost(24 * 60)
+        }
+    }
+    return start..end
 }
 
 private data class LaneInfo(
@@ -106,8 +148,16 @@ private data class LaneInfo(
     val lane: Int,
 )
 
+/**
+ * Placement minutes for the event, padded to [MIN_BLOCK_MINUTES]. A block whose padded
+ * end hits midnight (a 23:59 deadline) grows backwards from the end, preserving the
+ * minimum readable height.
+ */
 private fun CalendarEvent.minuteRange(): Pair<Int, Int> {
-    val s = start.hour * 60 + start.minute
-    val e = (end.hour * 60 + end.minute).coerceAtLeast(s + 1)
+    val s0 = start.hour * 60 + start.minute
+    val e = (end.hour * 60 + end.minute)
+        .coerceAtLeast(s0 + MIN_BLOCK_MINUTES)
+        .coerceAtMost(24 * 60)
+    val s = minOf(s0, e - MIN_BLOCK_MINUTES).coerceAtLeast(0)
     return s to e
 }

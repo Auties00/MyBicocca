@@ -13,8 +13,10 @@ import it.attendance100.mybicocca.domain.model.calendar.CalendarEventId
 import it.attendance100.mybicocca.domain.model.career.CareerId
 import it.attendance100.mybicocca.domain.model.elearning.course.EnrolledCourse
 import it.attendance100.mybicocca.domain.usecase.account.ObserveActiveAccountUseCase
+import it.attendance100.mybicocca.domain.usecase.calendar.IsCalendarMonthFreshUseCase
 import it.attendance100.mybicocca.domain.usecase.calendar.ObserveDayEventsUseCase
 import it.attendance100.mybicocca.domain.usecase.calendar.ObserveMonthEventsUseCase
+import it.attendance100.mybicocca.domain.usecase.calendar.ObserveMonthHydratedUseCase
 import it.attendance100.mybicocca.domain.usecase.calendar.PrefetchAdjacentMonthsUseCase
 import it.attendance100.mybicocca.domain.usecase.calendar.RefreshCalendarMonthUseCase
 import it.attendance100.mybicocca.domain.usecase.elearning.course.ObserveCoursesByActivityCodeUseCase
@@ -44,6 +46,26 @@ import java.time.LocalDate
 import java.time.YearMonth
 import javax.inject.Inject
 
+/**
+ * Backs the calendar tab: a unified schedule of lessons, booked exams, assignment
+ * deadlines, appointments and library reservations, read month-by-month from the local
+ * cache as the source of truth and refreshed per month on demand.
+ *
+ * Selection state — [viewMode], [selectedMonth], [selectedDay] and [selectedEventId] — is
+ * user input persisted through [SavedStateHandle] so it survives process death;
+ * [weekStart] derives from the selected day. Cached-data streams: [events] and
+ * [dayEvents] expose the visible month and day as [Loadable], so the UI can tell an
+ * unloaded cache from an empty one; [eventsByDay] merges the visible month with both
+ * neighbors so week and day views spanning month edges render seamlessly;
+ * [coursesByActivityCode] maps activity codes to the e-learning courses they resolve to.
+ * Sync state is independent of the data: [syncStatus] tracks the in-flight refresh,
+ * [initialLoading] flags a month awaiting its first-ever sync, and [oneShotEvents]
+ * delivers fire-exactly-once failures.
+ *
+ * A career or month change triggers a freshness-gated refresh plus an adjacent-month
+ * prefetch; [pullToRefresh] forces one. The select/shift methods move the visible
+ * day/week/month, and [openEventDetail]/[closeEventDetail] drive the detail sheet.
+ */
 @OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class CalendarViewModel @Inject constructor(
@@ -51,6 +73,8 @@ class CalendarViewModel @Inject constructor(
     observeActiveAccount: ObserveActiveAccountUseCase,
     private val observeMonthEvents: ObserveMonthEventsUseCase,
     private val observeDayEvents: ObserveDayEventsUseCase,
+    observeMonthHydrated: ObserveMonthHydratedUseCase,
+    private val isMonthFresh: IsCalendarMonthFreshUseCase,
     private val refreshMonth: RefreshCalendarMonthUseCase,
     private val prefetchAdjacent: PrefetchAdjacentMonthsUseCase,
     observeCoursesByActivityCode: ObserveCoursesByActivityCodeUseCase,
@@ -89,8 +113,10 @@ class CalendarViewModel @Inject constructor(
         .map { it?.id }
         .distinctUntilChanged()
 
-    // Elearning course editions keyed by activity code so the event detail can offer
-    // "Apri corso" when the event's course exists in elearning.
+    /**
+     * E-learning course editions keyed by university activity code, letting the event
+     * detail offer "Apri corso" whenever an event's course also exists on e-learning.
+     */
     val coursesByActivityCode: StateFlow<Map<String, List<EnrolledCourse>>> = activeAccountId
         .flatMapLatest { account ->
             if (account == null) flowOf(emptyMap())
@@ -136,6 +162,24 @@ class CalendarViewModel @Inject constructor(
     private val _syncStatus = MutableStateFlow<SyncStatus>(SyncStatus.Idle)
     val syncStatus: StateFlow<SyncStatus> = _syncStatus.asStateFlow()
 
+    /**
+     * True until the visible month completes its first-ever sync: the screen keeps the
+     * pull-to-refresh indicator pinned over the still-empty calendar. Gated on the
+     * persisted sync stamp — a cache snapshot, not a timing heuristic — so an
+     * already-synced month renders instantly even while a background refresh is in flight.
+     */
+    val initialLoading: StateFlow<Boolean> =
+        combine(
+            combine(activeCareerId, selectedMonth) { c, ym -> c to ym }
+                .flatMapLatest { (c, ym) ->
+                    if (c == null) flowOf(true)
+                    else observeMonthHydrated(c, ym)
+                },
+            _syncStatus,
+        ) { hydrated, status ->
+            !hydrated && status !is SyncStatus.Failed
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STATE_KEEP_ALIVE_MS), false)
+
     private val oneShotChannel = Channel<CalendarOneShotEvent>(Channel.BUFFERED)
     val oneShotEvents: Flow<CalendarOneShotEvent> = oneShotChannel.receiveAsFlow()
 
@@ -158,14 +202,14 @@ class CalendarViewModel @Inject constructor(
         savedState[KEY_MONTH] = yearMonth.toString()
     }
 
+    /** Selects [date], keeping the month aligned so [events] and [eventsByDay] always cover the selected day's month. */
     fun selectDay(date: LocalDate) {
         savedState[KEY_DAY] = date.toString()
-        // Keep month state aligned so events/eventsByDay covers the selected day's month.
         val ym = YearMonth.from(date)
         if (ym != selectedMonth.value) savedState[KEY_MONTH] = ym.toString()
     }
 
-    // Move selected day by N days, snapping the visible week/month to follow.
+    /** Moves the selected day by [deltaDays], the visible week and month snapping along. */
     fun shiftSelectedDay(deltaDays: Long) {
         selectDay(selectedDay.value.plusDays(deltaDays))
     }
@@ -189,8 +233,14 @@ class CalendarViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Awaits the month refresh unconditionally — TTL-fresh sources no-op inside — but
+     * raises the sync indicator only when network work is actually expected: swiping
+     * across already-fresh months must not flash the spinner.
+     */
     private suspend fun runRefresh(careerId: CareerId, yearMonth: YearMonth, force: Boolean) {
-        _syncStatus.value = SyncStatus.Refreshing
+        val showIndicator = force || runCatching { !isMonthFresh(careerId, yearMonth) }.getOrDefault(true)
+        if (showIndicator) _syncStatus.value = SyncStatus.Refreshing
         runCatching { refreshMonth(careerId, yearMonth, force) }
             .onSuccess { _syncStatus.value = SyncStatus.Idle }
             .onFailure {

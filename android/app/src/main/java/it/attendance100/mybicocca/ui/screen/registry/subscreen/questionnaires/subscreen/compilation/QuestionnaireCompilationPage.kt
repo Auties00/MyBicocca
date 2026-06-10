@@ -86,15 +86,27 @@ import it.attendance100.mybicocca.ui.screen.registry.subscreen.questionnaires.su
 import it.attendance100.mybicocca.ui.screen.registry.theme.RegistryAccent
 import it.attendance100.mybicocca.ui.screen.registry.theme.registryAccent
 import it.attendance100.mybicocca.ui.screen.registry.theme.registryBadgeTone
+import it.attendance100.mybicocca.ui.theme.LocalIsOnline
 
-// Questionnaire compiler in the Piano di Studi edit language, hosted as a page inside
-// the questionnaires sheet's pager: every question is a connected segment group (header
-// tile + answer tiles) with the circle-to-sunny morph knob for selection, and the app's
-// connected button pair at the bottom morphing Avanti into Conferma at the summary.
-// Pages are server-driven (branching, unknown total), so there are no page dots — the
-// bar alone steps the wizard. The VM is hoisted by the hosting sheet, which also owns
-// the leave-without-sending and confirm-submission pages (onExitAttempt /
-// onConfirmAttempt push them) plus the event-driven snackbars.
+/**
+ * Questionnaire compiler in the Piano di Studi edit language, hosted as a page inside
+ * the questionnaires sheet's pager: every question is a connected segment group (header
+ * tile + answer tiles) with the circle-to-sunny morph knob for selection, and the app's
+ * connected button pair at the bottom morphing Avanti into Conferma at the summary.
+ * Pages are server-driven (branching, unknown total), so there are no page dots — the
+ * bar alone steps the wizard. The ViewModel is hoisted by the hosting sheet, which also
+ * owns the leave-without-sending and confirm-submission pages (onExitAttempt /
+ * onConfirmAttempt push them) plus the event-driven outcome surfaces.
+ *
+ * Shows a loading indicator while the server session starts and an error message with
+ * retry when the start failed. Avanti is gated on the current page's mandatory questions
+ * being answered (the mandatory pills already flag which) and Conferma on the whole
+ * questionnaire being complete, so an incomplete page disables forward progress rather
+ * than bouncing. System back walks the wizard first; leaving from the first page bubbles
+ * up to the hosting sheet, which pushes its confirm page (Esse3 never resumes drafts),
+ * and while starting or start-failed there is nothing to lose, so the handler stays
+ * disabled and the sheet's own back handling closes the compiler directly.
+ */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun QuestionnaireCompilationPage(
@@ -113,10 +125,6 @@ fun QuestionnaireCompilationPage(
         else -> false
     }
 
-    // System back walks the wizard first; leaving from the first page bubbles up to the
-    // hosting sheet, which pushes its confirm page (Esse3 never resumes drafts). While
-    // starting or start-failed there is nothing to lose, so this handler stays disabled
-    // and the sheet's own back handling closes the compiler directly.
     BackHandler(enabled = !working && (canStepBack || step is QuestionnaireCompilationStep.Page)) {
         if (canStepBack) viewModel.back() else onExitAttempt()
     }
@@ -152,8 +160,6 @@ fun QuestionnaireCompilationPage(
                     }
                 },
                 label = "compilation-step",
-                // The steps fill a FIXED cap (same as the plan compiler's pager) so the
-                // wizard's height never jumps per page.
                 modifier = Modifier
                     .fillMaxWidth()
                     .heightIn(max = 500.dp),
@@ -177,9 +183,6 @@ fun QuestionnaireCompilationPage(
             }
 
             val summary = current as? QuestionnaireCompilationStep.Summary
-            // Avanti is gated on the current page's mandatory questions being answered (the
-            // mandatory pills already flag which); Conferma on the whole questionnaire being
-            // complete. So an incomplete page disables forward progress instead of bouncing.
             val currentPageComplete = (current as? QuestionnaireCompilationStep.Page)?.page?.let { page ->
                 page.paragraphs.all { paragraph ->
                     paragraph.questions.all { question ->
@@ -194,7 +197,7 @@ fun QuestionnaireCompilationPage(
                     summary != null -> CompilationAction.Confirm
                     else -> CompilationAction.Next
                 },
-                enabled = !working && (if (summary != null) summary.complete else currentPageComplete),
+                enabled = !working && (if (summary != null) summary.complete else currentPageComplete) && LocalIsOnline.current,
                 onBack = viewModel::back,
                 onPrimary = {
                     if (summary != null) onConfirmAttempt() else viewModel.next()
@@ -204,18 +207,25 @@ fun QuestionnaireCompilationPage(
     }
 }
 
-// What the hosting sheet's pinned header shows while the compiler is up: the unit being
-// evaluated as the title, with the partition (when present) as the subtitle.
+/**
+ * What the hosting sheet's pinned header shows while the compiler is up: the unit being
+ * evaluated as the title, with the partition (when present) as the subtitle.
+ */
 data class CompilationWizardHeader(val title: String, val subtitle: AnnotatedString?)
 
+/**
+ * Builds the compiler's per-step header. The unit (lecturer/turno) is what's being
+ * evaluated — the activity name is already the units page's title underneath — so page
+ * steps lead with it; the summary swaps in "Riepilogo" with a colored readiness status,
+ * and the starting / start-failed states keep the unit identity while the body tells the
+ * story.
+ */
 @Composable
 fun compilationWizardHeader(
     viewModel: QuestionnaireCompilationViewModel,
 ): CompilationWizardHeader {
     val step by viewModel.step.collectAsStateWithLifecycle()
 
-    // The unit (lecturer/turno) is what's being evaluated; the activity name is already
-    // the units page's title underneath.
     val unitTitle = viewModel.lecturerName ?: viewModel.activityName
 
     return when (val current = step) {
@@ -239,7 +249,6 @@ fun compilationWizardHeader(
             },
         )
 
-        // Starting / start-failed keep the unit identity while the body tells the story.
         else -> CompilationWizardHeader(
             title = unitTitle,
             subtitle = viewModel.partitionName?.takeIf { it.isNotBlank() }?.let(::AnnotatedString),
@@ -247,8 +256,10 @@ fun compilationWizardHeader(
     }
 }
 
-// Success green / warning orange for the inline status — neither exists as a Material
-// role, so they are fixed pairs picked per theme like the plan wizard's rule status.
+/**
+ * Success green / warning orange for the inline status — neither exists as a Material
+ * role, so they are fixed pairs picked per theme like the plan wizard's rule status.
+ */
 @Composable
 private fun compilationStatusColor(satisfied: Boolean): Color =
     if (satisfied) registryAccent(RegistryAccent.Success) else registryAccent(RegistryAccent.Warning)
@@ -311,9 +322,13 @@ private fun androidx.compose.foundation.lazy.LazyListScope.paragraphItems(
     }
 }
 
-// A question in the segment language: header tile with the mandatory pill, then one
-// connected tile per answer. Scale and free-text questions close the group with a
-// single input tile instead.
+/**
+ * A question in the segment language: header tile with the mandatory pill, then one
+ * connected tile per answer. Compact numeric scales (e.g. agreement 1..10) close the
+ * group with a single round-toggle tile and free-text questions with a single input tile
+ * instead, while a selected "Altro"-style option reveals its companion text tile, which
+ * then takes over the group's closing corners.
+ */
 @Composable
 private fun QuestionGroup(
     question: QuestionnaireQuestion,
@@ -330,7 +345,6 @@ private fun QuestionGroup(
         )
 
         when {
-            // Compact numeric scale (e.g. agreement 1..10) rendered as round toggles.
             question.kind == QuestionnaireQuestionKind.Scale &&
                 question.options.all { it.text.length <= 2 } -> ScaleTile(
                 question = question,
@@ -346,8 +360,6 @@ private fun QuestionGroup(
             )
 
             else -> {
-                // A selected "Altro"-style option reveals its companion text tile,
-                // which then takes over the group's closing corners.
                 val companionVisible = question.options.any {
                     it.requiresFreeText && it.id in state.selectedOptionIds
                 }
@@ -413,9 +425,11 @@ private fun QuestionHeaderTile(
     }
 }
 
-// The rule-pill language applied to a mandatory question: green with a check once it
-// has an answer, warning orange with an x while it doesn't, and the alert red after a
-// blocked "Avanti" attempt.
+/**
+ * The rule-pill language applied to a mandatory question: green with a check once it has
+ * an answer, warning orange with an x while it doesn't, and the alert red after a
+ * blocked "Avanti" attempt.
+ */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun MandatoryPill(answered: Boolean, invalid: Boolean) {
@@ -467,8 +481,10 @@ private fun MandatoryPill(answered: Boolean, invalid: Boolean) {
     }
 }
 
-// A connected answer tile: selection lives entirely in the trailing morph knob, the
-// tile itself doesn't change.
+/**
+ * A connected answer tile: selection lives entirely in the trailing morph knob, the tile
+ * itself doesn't change.
+ */
 @Composable
 private fun OptionTile(
     text: String,
@@ -506,8 +522,10 @@ private fun OptionTile(
     }
 }
 
-// The group's closing tile for compact numeric scales: round toggles that wash to the
-// brand red (explicit white content) plus the agreement anchors.
+/**
+ * The group's closing tile for compact numeric scales: round toggles that wash to the
+ * brand red (explicit white content) plus the agreement anchors.
+ */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun ScaleTile(
@@ -641,9 +659,14 @@ private fun SummaryContent(complete: Boolean, anonymous: Boolean) {
 
 private enum class CompilationAction { Next, Confirm, Working }
 
-// The app's connected button pair (see StudyPlanEditPage/EventDetailSheet): an
-// icon-only tonal back that springs in once the wizard can step backwards, and the
-// primary action morphing between Avanti, Conferma and the in-flight state.
+/**
+ * The app's connected button pair (see StudyPlanEditPage/EventDetailSheet): an icon-only
+ * tonal back that springs in once the wizard can step backwards, and one brand-filled
+ * primary action (red in light, primaryContainer in dark — the shared CTA scheme)
+ * morphing between Avanti, Conferma and the in-flight state, flattening its start
+ * corners when the back button joins the pair. Sheet-hosted, so the modal already clears
+ * the navigation bar.
+ */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun CompilationBottomBar(
@@ -664,7 +687,6 @@ private fun CompilationBottomBar(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            // Sheet-hosted: the modal already clears the navigation bar.
             .padding(start = 16.dp, end = 16.dp, top = 10.dp, bottom = 24.dp),
         horizontalArrangement = Arrangement.spacedBy(4.dp),
     ) {
@@ -693,8 +715,6 @@ private fun CompilationBottomBar(
             }
         }
 
-        // The primary action stays a full pill alone and flattens its start corners
-        // when the back button joins the pair.
         val startCorner by animateDpAsState(
             targetValue = if (backVisible) 8.dp else 28.dp,
             animationSpec = motion.defaultSpatialSpec(),
@@ -712,8 +732,6 @@ private fun CompilationBottomBar(
                 topEnd = 28.dp,
                 bottomEnd = 28.dp,
             ),
-            // Brand-filled forward action: red in light, primaryContainer in dark — the
-            // shared CTA scheme.
             colors = ButtonDefaults.buttonColors(
                 containerColor = brandBg,
                 contentColor = brandFg,
@@ -761,8 +779,10 @@ private fun CompilationBottomBar(
     }
 }
 
-// Mirror of the ViewModel's answer check so the pill (and the header status) flips as
-// the user answers.
+/**
+ * Mirror of the ViewModel's answer check so the pill (and the header status) flips as
+ * the user answers.
+ */
 private fun QuestionnaireQuestion.isAnswered(state: QuestionAnswerState): Boolean = when (kind) {
     QuestionnaireQuestionKind.FreeText -> state.freeText.isNotBlank()
     else -> state.selectedOptionIds.isNotEmpty() && state.selectedOptionIds.all { optionId ->

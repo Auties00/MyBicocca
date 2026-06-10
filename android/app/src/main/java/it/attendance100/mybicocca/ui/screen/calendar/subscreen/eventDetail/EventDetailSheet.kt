@@ -18,14 +18,14 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.Assignment
 import androidx.compose.material.icons.automirrored.outlined.MenuBook
+import androidx.compose.material.icons.outlined.Chair
+import androidx.compose.material.icons.outlined.ConfirmationNumber
+import androidx.compose.material.icons.outlined.EventBusy
 import androidx.compose.material.icons.outlined.LocationOn
 import androidx.compose.material.icons.outlined.Person
-import androidx.compose.material.icons.outlined.Quiz
 import androidx.compose.material.icons.outlined.Schedule
-import androidx.compose.material.icons.outlined.School
-import androidx.compose.material3.AssistChip
-import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ButtonGroupDefaults
@@ -55,19 +55,28 @@ import it.attendance100.mybicocca.domain.model.elearning.course.CourseId
 import it.attendance100.mybicocca.domain.model.elearning.course.EnrolledCourse
 import it.attendance100.mybicocca.ui.screen.calendar.ext.durationMinutes
 import it.attendance100.mybicocca.ui.screen.calendar.ext.formatTimeRange
-import it.attendance100.mybicocca.ui.screen.calendar.ext.isInProgress
+import it.attendance100.mybicocca.ui.screen.calendar.ext.isPointInTime
 import it.attendance100.mybicocca.ui.screen.calendar.ext.locationLine
-import it.attendance100.mybicocca.ui.screen.calendar.ext.minutesRemaining
 import it.attendance100.mybicocca.ui.screen.calendar.ext.peopleLine
-import it.attendance100.mybicocca.ui.screen.calendar.ext.rememberCurrentTime
 import it.attendance100.mybicocca.ui.screen.calendar.subscreen.coursePicker.CourseEditionPickerSheet
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 
+/**
+ * Modal bottom sheet showing one calendar event in full: the headline title with the kind
+ * label under it — struck through and dimmed when the event is cancelled — above
+ * [EventDetailContent]. Hosted in a predictive-back-aware sheet on the low surface tone,
+ * scrolling internally when the content outgrows the screen.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EventDetailSheet(
     event: CalendarEvent,
     elearningCourses: List<EnrolledCourse>,
     onOpenCourse: (CourseId) -> Unit,
+    onOpenAssignment: (assignmentId: Int, courseId: Int) -> Unit,
+    onOpenReservation: (CalendarEvent) -> Unit,
     onDismiss: () -> Unit,
 ) {
     val cancelled = event.status == EventStatus.CANCELLED
@@ -93,50 +102,70 @@ fun EventDetailSheet(
                 color = if (cancelled) scheme.onSurfaceVariant else scheme.onSurface,
                 textDecoration = if (cancelled) TextDecoration.LineThrough else TextDecoration.None,
             )
+            Spacer(Modifier.height(4.dp))
+            Text(
+                text = activityLabel(event),
+                style = MaterialTheme.typography.bodyMedium,
+                color = scheme.onSurfaceVariant,
+            )
             EventDetailContent(
                 event = event,
                 elearningCourses = elearningCourses,
                 onOpenCourse = onOpenCourse,
+                onOpenAssignment = onOpenAssignment,
+                onOpenReservation = onOpenReservation,
             )
         }
     }
 }
 
+/**
+ * Event body shared by the detail sheet and the agenda's inline expansion: a segmented
+ * group of icon info rows — time with a duration suffix, place, teacher, plus
+ * kind-specific rows such as the exam booking, its cancellation window or the library
+ * seat — followed by the action area. The rows are materialized up front so the first and
+ * last know to cap the group's outer corners.
+ *
+ * The primary action follows the event kind: deadlines open the assignment;
+ * reservation-backed events — booked exams, appointments, library seats — lead to their
+ * managing sheet, where the booking can be inspected or cancelled; lessons open their
+ * e-learning course when one matches, with the map demoted to the secondary slot. A
+ * single matching course edition navigates directly, several hand off to
+ * [CourseEditionPickerSheet]. Locations open externally through geo: URIs.
+ */
 @Composable
 fun EventDetailContent(
     event: CalendarEvent,
     elearningCourses: List<EnrolledCourse>,
     onOpenCourse: (CourseId) -> Unit,
+    onOpenAssignment: (assignmentId: Int, courseId: Int) -> Unit,
+    onOpenReservation: (CalendarEvent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val now by rememberCurrentTime()
-    val cancelled = event.status == EventStatus.CANCELLED
-    val inProgress = event.isInProgress(now)
     val context = LocalContext.current
     var showEditionPicker by remember { mutableStateOf(false) }
 
     Column(modifier = modifier) {
-        if (cancelled || inProgress) {
-            Spacer(Modifier.height(12.dp))
-            StatusChip(cancelled = cancelled, inProgress = inProgress, minutesLeft = event.minutesRemaining(now))
-        }
         Spacer(Modifier.height(24.dp))
 
-        // Collected up front so each card knows whether it caps the segmented group.
         val rows = buildList {
-            add(
-                Triple(
-                    if (event is CalendarEvent.Exam) Icons.Outlined.Quiz else Icons.Outlined.School,
-                    "ATTIVITÀ",
-                    activityLabel(event),
-                ),
-            )
             add(Triple(Icons.Outlined.Schedule, "ORARIO", orarioValue(event)))
             event.locationLine().takeIf { it.isNotBlank() }?.let {
                 add(Triple(Icons.Outlined.LocationOn, "LUOGO", it))
             }
             event.peopleLine().takeIf { it.isNotBlank() }?.let {
-                add(Triple(Icons.Outlined.Person, if (event is CalendarEvent.Exam) "COMMISSIONE" else "DOCENTE", it))
+                add(Triple(Icons.Outlined.Person, "DOCENTE", it))
+            }
+            if (event is CalendarEvent.Exam) {
+                bookingLine(event)?.let {
+                    add(Triple(Icons.Outlined.ConfirmationNumber, "PRENOTAZIONE", it))
+                }
+                event.cancellableUntil?.let {
+                    add(Triple(Icons.Outlined.EventBusy, "CANCELLABILE", "Entro il ${it.formatItalian()}"))
+                }
+            }
+            if (event is CalendarEvent.LibraryReservation) {
+                add(Triple(Icons.Outlined.Chair, "POSTO", event.seatName))
             }
         }
         Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
@@ -151,31 +180,49 @@ fun EventDetailContent(
             }
         }
 
-        Spacer(Modifier.height(24.dp))
-
-        ActionRow(
-            onOpenCourse = elearningCourses.takeIf { it.isNotEmpty() }?.let { courses ->
-                {
-                    // One edition opens straight away; multiple hand off to the picker.
-                    courses.singleOrNull()?.let { onOpenCourse(it.id) }
-                        ?: run { showEditionPicker = true }
-                }
-            },
-            onMap = {
-                val label = event.locationLine().takeIf { it.isNotBlank() }
+        val openMap: (() -> Unit)? = event.locationLine().takeIf { it.isNotBlank() }?.let { label ->
+            {
                 val url = event.location?.mapsUrl
                     ?.let { mapsUrlToGeoUri(it, label) }
-                    ?: label?.let { "geo:0,0?q=${Uri.encode(it)}" }
-                if (url != null) {
-                    runCatching {
-                        context.startActivity(
-                            Intent(Intent.ACTION_VIEW, Uri.parse(url))
-                                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
-                        )
-                    }
-                }
-            },
+                    ?: "geo:0,0?q=${Uri.encode(label)}"
+                context.openExternal(url)
+            }
+        }
+        val openCourse: (() -> Unit)? = elearningCourses.takeIf { it.isNotEmpty() }?.let { courses ->
+            {
+                courses.singleOrNull()?.let { onOpenCourse(it.id) }
+                    ?: run { showEditionPicker = true }
+            }
+        }
+
+        val goToReservation = EventAction(
+            icon = Icons.Outlined.ConfirmationNumber,
+            label = "Vai alla prenotazione",
+            onClick = { onOpenReservation(event) },
         )
+        val (primary, secondary) = when (event) {
+            is CalendarEvent.AssignmentDeadline -> EventAction(
+                icon = Icons.AutoMirrored.Outlined.Assignment,
+                label = "Apri compito",
+                onClick = { onOpenAssignment(event.assignmentId, event.courseId) },
+            ) to null
+            is CalendarEvent.Exam,
+            is CalendarEvent.LibraryReservation,
+            -> goToReservation to null
+            is CalendarEvent.Appointment ->
+                goToReservation to openMap?.let { EventAction(Icons.Outlined.LocationOn, "Mappa", it) }
+            is CalendarEvent.Lesson -> {
+                val map = openMap?.let { EventAction(Icons.Outlined.LocationOn, "Mappa", it) }
+                val course = openCourse?.let {
+                    EventAction(Icons.AutoMirrored.Outlined.MenuBook, "Apri corso", it)
+                }
+                if (course != null) course to map else map to null
+            }
+        }
+        if (primary != null) {
+            Spacer(Modifier.height(24.dp))
+            ActionRow(primary = primary, secondary = secondary)
+        }
     }
 
     if (showEditionPicker) {
@@ -190,32 +237,21 @@ fun EventDetailContent(
     }
 }
 
-@Composable
-private fun StatusChip(cancelled: Boolean, inProgress: Boolean, minutesLeft: Int) {
-    val scheme = MaterialTheme.colorScheme
-    val (label, fg, bg) = when {
-        cancelled -> Triple("Annullato", scheme.onErrorContainer, scheme.errorContainer)
-        inProgress -> Triple("In corso · $minutesLeft min", scheme.onTertiaryContainer, scheme.tertiaryContainer)
-        else -> Triple("", scheme.onSurface, scheme.surfaceContainerHigh)
+/** Opens [url] in an external handler, swallowing resolution failures. */
+private fun android.content.Context.openExternal(url: String) {
+    runCatching {
+        startActivity(
+            Intent(Intent.ACTION_VIEW, Uri.parse(url))
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+        )
     }
-    AssistChip(
-        onClick = {},
-        label = {
-            Text(
-                text = label,
-                fontWeight = FontWeight.SemiBold,
-            )
-        },
-        colors = AssistChipDefaults.assistChipColors(
-            containerColor = bg,
-            labelColor = fg,
-        ),
-        border = null,
-    )
 }
 
-// List flavor of the segmented M3E group language used by the map sheets: 28dp corners cap the
-// group's outer edges, 6dp where rows touch.
+/**
+ * One info row in the list flavor of the segmented M3E group language the map sheets use:
+ * 28dp corners cap the group's outer edges, 6dp where rows touch, an icon tile leading a
+ * label-over-value column.
+ */
 @Composable
 private fun IconRowCard(icon: ImageVector, label: String, value: String, isFirst: Boolean, isLast: Boolean) {
     val scheme = MaterialTheme.colorScheme
@@ -267,19 +303,28 @@ private fun IconRowCard(icon: ImageVector, label: String, value: String, isFirst
     }
 }
 
-// "Apri corso" is the primary trailing action when the event's course exists in elearning, with
-// "Mappa" as the tonal leading action; without a course, "Mappa" takes the primary slot alone.
+private data class EventAction(
+    val icon: ImageVector,
+    val label: String,
+    val onClick: () -> Unit,
+)
+
+/**
+ * Bottom action area: the kind-specific primary action fills the trailing brand slot of a
+ * connected button group, with the optional secondary as its tonal leading half. Alone,
+ * the primary spans the row as a single filled button.
+ */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-private fun ActionRow(onOpenCourse: (() -> Unit)?, onMap: () -> Unit) {
+private fun ActionRow(primary: EventAction, secondary: EventAction?) {
     val scheme = MaterialTheme.colorScheme
     val dark = isSystemInDarkTheme()
     val primaryBg = if (dark) scheme.primaryContainer else scheme.primary
     val primaryFg = if (dark) scheme.onPrimaryContainer else scheme.onPrimary
 
-    if (onOpenCourse == null) {
+    if (secondary == null) {
         Button(
-            onClick = onMap,
+            onClick = primary.onClick,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(56.dp),
@@ -289,12 +334,12 @@ private fun ActionRow(onOpenCourse: (() -> Unit)?, onMap: () -> Unit) {
             ),
         ) {
             Icon(
-                imageVector = Icons.Outlined.LocationOn,
+                imageVector = primary.icon,
                 contentDescription = null,
                 modifier = Modifier.size(20.dp),
             )
             Spacer(Modifier.width(8.dp))
-            Text("Mappa", fontWeight = FontWeight.SemiBold)
+            Text(primary.label, fontWeight = FontWeight.SemiBold)
         }
         return
     }
@@ -304,7 +349,7 @@ private fun ActionRow(onOpenCourse: (() -> Unit)?, onMap: () -> Unit) {
         horizontalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         FilledTonalButton(
-            onClick = onMap,
+            onClick = secondary.onClick,
             modifier = Modifier
                 .weight(1f)
                 .height(56.dp),
@@ -315,15 +360,15 @@ private fun ActionRow(onOpenCourse: (() -> Unit)?, onMap: () -> Unit) {
             ),
         ) {
             Icon(
-                imageVector = Icons.Outlined.LocationOn,
+                imageVector = secondary.icon,
                 contentDescription = null,
                 modifier = Modifier.size(20.dp),
             )
             Spacer(Modifier.width(8.dp))
-            Text("Mappa", fontWeight = FontWeight.SemiBold)
+            Text(secondary.label, fontWeight = FontWeight.SemiBold)
         }
         Button(
-            onClick = onOpenCourse,
+            onClick = primary.onClick,
             modifier = Modifier
                 .weight(1.4f)
                 .height(56.dp),
@@ -334,12 +379,12 @@ private fun ActionRow(onOpenCourse: (() -> Unit)?, onMap: () -> Unit) {
             ),
         ) {
             Icon(
-                imageVector = Icons.AutoMirrored.Outlined.MenuBook,
+                imageVector = primary.icon,
                 contentDescription = null,
                 modifier = Modifier.size(20.dp),
             )
             Spacer(Modifier.width(8.dp))
-            Text("Apri corso", fontWeight = FontWeight.SemiBold)
+            Text(primary.label, fontWeight = FontWeight.SemiBold)
         }
     }
 }
@@ -350,9 +395,15 @@ private fun activityLabel(event: CalendarEvent): String = when (event) {
         val type = event.examTypeLabel?.takeIf { it.isNotBlank() }
         if (type != null) "Esame · $type" else "Esame"
     }
+    is CalendarEvent.AssignmentDeadline -> "Consegna compito"
+    is CalendarEvent.Appointment ->
+        event.serviceGroup?.takeIf { it.isNotBlank() }?.let { "Appuntamento · $it" } ?: "Appuntamento"
+    is CalendarEvent.LibraryReservation -> "Posto in biblioteca"
 }
 
+/** Time-row value: "Entro le HH:MM" for point-in-time events, the range plus a compact duration suffix otherwise. */
 private fun orarioValue(event: CalendarEvent): String {
+    if (event.isPointInTime) return "Entro le ${event.formatTimeRange()}"
     val durMin = event.durationMinutes()
     val durLabel = when {
         durMin == 0 -> "istantaneo"
@@ -363,8 +414,24 @@ private fun orarioValue(event: CalendarEvent): String {
     return "${event.formatTimeRange()} · $durLabel"
 }
 
+/** Booking-row value composed from whichever facts the exam carries (position, booking date); null when it has none. */
+private fun bookingLine(event: CalendarEvent.Exam): String? {
+    val position = event.bookingPosition?.let { "Posizione $it" }
+    val booked = event.bookedAt?.let { "prenotato il ${it.toLocalDate().formatItalian()}" }
+    val line = listOfNotNull(position, booked).joinToString(" · ")
+    return line.takeIf { it.isNotBlank() }?.replaceFirstChar { it.uppercase() }
+}
+
+private val ItalianDate = DateTimeFormatter.ofPattern("d MMMM", Locale.ITALIAN)
+
+private fun LocalDate.formatItalian(): String = format(ItalianDate)
+
 private val MapsEmbedCoordRegex = Regex("!2d(-?\\d+\\.?\\d*)!3d(-?\\d+\\.?\\d*)")
 
+/**
+ * Translates a Google Maps embed URL into a labeled geo: URI by extracting its !2d/!3d
+ * coordinate pair; URLs without embedded coordinates pass through unchanged.
+ */
 private fun mapsUrlToGeoUri(rawUrl: String, label: String?): String {
     val match = MapsEmbedCoordRegex.find(rawUrl) ?: return rawUrl
     val lng = match.groupValues[1]

@@ -25,6 +25,17 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+/**
+ * Backs the "Iscrizioni" sheet with the active career's annual-enrollment history.
+ *
+ * Streams: [history] carries the fetched data as a [Loadable]; [syncStatus] tracks the
+ * in-flight refresh separately so stale data can stay on screen while it runs; [events]
+ * carries one-shot effects (opening the renewal web flow) that never replay across
+ * rotation. A career switch triggers a reload automatically.
+ *
+ * Actions: [refresh] re-fetches the history; [renew] resolves the Esse3 renewal URL and
+ * emits it as an event.
+ */
 @HiltViewModel
 class EnrollmentsViewModel @Inject constructor(
     observeActiveAccount: ObserveActiveAccountUseCase,
@@ -59,8 +70,11 @@ class EnrollmentsViewModel @Inject constructor(
         }
     }
 
-    // No student REST submission endpoint exists for annual re-enrollment, so renewal opens
-    // the official Esse3 web flow. Fired as a one-shot event so it never replays on rotation.
+    /**
+     * No student REST submission endpoint exists for annual re-enrollment, so renewal
+     * opens the official Esse3 web flow. Fired as a one-shot event so it never replays
+     * on rotation.
+     */
     fun renew() {
         viewModelScope.launch {
             val id = activeCareerId.filterNotNull().first()
@@ -79,6 +93,8 @@ class EnrollmentsViewModel @Inject constructor(
     }
 }
 
+/** One-shot effects of the enrollments sheet, consumed once and never replayed. */
 sealed interface EnrollmentEvent {
+    /** The Esse3 renewal web flow to open in an external browser. */
     data class OpenRenewalWeb(val url: String) : EnrollmentEvent
 }

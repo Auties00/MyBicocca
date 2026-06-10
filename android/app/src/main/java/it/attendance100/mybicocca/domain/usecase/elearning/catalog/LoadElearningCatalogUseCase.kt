@@ -4,6 +4,11 @@ import it.attendance100.mybicocca.domain.model.elearning.catalog.ElearningCatalo
 import it.attendance100.mybicocca.domain.repository.ElearningCatalogRepository
 import javax.inject.Inject
 
+/**
+ * Loads the bundled e-learning course catalog when the add-course modal opens, giving
+ * the enrolment browser its category tree. Throws if the bundled index cannot be read,
+ * which the modal surfaces as an in-place error with retry.
+ */
 class LoadElearningCatalogUseCase @Inject constructor(
     private val repository: ElearningCatalogRepository,
 ) {

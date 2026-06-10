@@ -5,6 +5,10 @@ import it.attendance100.mybicocca.domain.model.elearning.forum.DiscussionId
 import it.attendance100.mybicocca.domain.repository.ElearningForumRepository
 import javax.inject.Inject
 
+/**
+ * Syncs a discussion's full post tree into the cache when the forum sheet opens a thread.
+ * Throws on network failure.
+ */
 class RefreshPostsUseCase @Inject constructor(
     private val repository: ElearningForumRepository,
 ) {

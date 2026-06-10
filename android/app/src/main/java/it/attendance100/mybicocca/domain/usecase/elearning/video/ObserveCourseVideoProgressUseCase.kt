@@ -7,6 +7,10 @@ import it.attendance100.mybicocca.domain.repository.VideoPlaybackRepository
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
+/**
+ * Streams all saved video progress of a course keyed by course-module id, backing the
+ * continue-watching card and the per-video progress indicators of the course detail screen.
+ */
 class ObserveCourseVideoProgressUseCase @Inject constructor(
     private val repository: VideoPlaybackRepository,
 ) {

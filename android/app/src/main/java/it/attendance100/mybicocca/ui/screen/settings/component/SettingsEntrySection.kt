@@ -20,10 +20,12 @@ import it.attendance100.mybicocca.ui.component.directory.SegmentedIconChip
 import it.attendance100.mybicocca.ui.component.directory.SegmentedTile
 import it.attendance100.mybicocca.ui.screen.settings.state.SettingsEntryGroup
 
-// A settings group rendered as a connected segmented card, matching the Registry tab's
-// directory style: a header tile (name + caption) followed by one tile per entry. The shared
-// SegmentedTile primitives carry the layout; this only maps SettingsEntry → tile and supplies
-// the trailing element (a switch, or a chevron/link).
+/**
+ * A settings group rendered as a connected segmented card, matching the Registry tab's
+ * directory style: a header tile (name + caption) followed by one tile per entry. The shared
+ * [SegmentedTile] primitives carry the layout; this only maps [SettingsEntryGroup] entries to
+ * tiles and supplies the trailing element (a switch, or a chevron/link glyph).
+ */
 @Composable
 fun SettingsEntrySection(
     group: SettingsEntryGroup,

@@ -8,6 +8,12 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import kotlin.math.abs
 
+/**
+ * Sheet-scoped palette of deep, muted accents for the catalog's teaching areas — lighter in the
+ * dark variant for contrast on dark surfaces. An area's accent colours its tile and everything
+ * browsed beneath it; areas with an official brand colour bypass this palette, the rest hash
+ * into it.
+ */
 @Immutable
 data class AreaAccentPalette(val accents: List<Color>)
 
@@ -36,12 +42,14 @@ val DarkAreaAccentPalette = AreaAccentPalette(DarkAccents)
 
 val LocalAreaAccentPalette = staticCompositionLocalOf { LightAreaAccentPalette }
 
+/** Assigns a stable accent by hashing the area key into the accent list. */
 fun AreaAccentPalette.accentFor(key: String): Color {
     val n = accents.size
     val hash = key.hashCode()
     return accents[abs(hash % n)]
 }
 
+/** Installs the light or dark area-accent palette for the sheet's subtree. */
 @Composable
 fun ProvideAreaAccentPalette(
     dark: Boolean = isSystemInDarkTheme(),

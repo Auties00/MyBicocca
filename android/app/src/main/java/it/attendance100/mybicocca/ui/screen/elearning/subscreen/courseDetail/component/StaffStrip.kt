@@ -33,6 +33,12 @@ import it.attendance100.mybicocca.domain.model.elearning.course.CourseStaffMembe
 import it.attendance100.mybicocca.domain.model.elearning.course.CourseStaffRole
 import it.attendance100.mybicocca.ui.component.shape.OrganicShapes
 
+/**
+ * Horizontally scrolling strip of course staff tiles: each fixed-width tile shows an
+ * initials avatar on an organic shape (cycling four accent variants), the member's name and
+ * an Italian role label, with a faded blob echoing the avatar color in the corner. Renders
+ * nothing when the staff list is empty.
+ */
 @Composable
 fun StaffStrip(
     staff: List<CourseStaffMember>,

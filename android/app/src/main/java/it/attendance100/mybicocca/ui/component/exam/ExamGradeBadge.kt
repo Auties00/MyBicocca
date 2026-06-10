@@ -19,10 +19,15 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Dp
 import it.attendance100.mybicocca.domain.model.exam.ExamGrade
 
-// The grade as an expressive polygon: a sun for the lode, a soft burst for the full 30, a
-// cookie for any other passing grade, a clover for the idoneità, a plain circle for the
-// sober ones. Shared by Esiti and Prenotazioni > Passate so a grade reads the same wherever
-// it appears; color stays on the app's container roles.
+/**
+ * The grade as an expressive polygon: a sun for the lode, a soft burst for the full 30, a
+ * cookie for any other passing grade, a clover for the idoneità, a plain circle for the
+ * sober ones. Shared by Esiti and Prenotazioni > Passate so a grade reads the same wherever
+ * it appears; color stays on the app's container roles.
+ *
+ * @param showDenominator appends "/30" under the value, only for grades actually expressed
+ * out of thirty.
+ */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun ExamGradeBadge(
@@ -59,8 +64,10 @@ fun ExamGradeBadge(
     }
 }
 
-// "/30" only for the numeric grades actually expressed out of thirty; the lode (30L) and
-// the qualitative outcomes carry no denominator.
+/**
+ * "/30" only for the numeric grades actually expressed out of thirty; the lode (30L) and
+ * the qualitative outcomes carry no denominator.
+ */
 private fun ExamGrade.outOfThirtySymbol(): String? = when (this) {
     is ExamGrade.Numeric -> if (value in 18..30) "/30" else null
     else -> null
@@ -99,6 +106,7 @@ private fun ExamGrade.containerColors(): Pair<Color, Color> {
     }
 }
 
+/** Compact badge label: the numeric value, "30L" for the lode, abbreviated Italian outcomes otherwise. */
 fun ExamGrade.shortLabel(): String = when (this) {
     is ExamGrade.Numeric -> if (value >= 31) "30L" else value.toString()
     ExamGrade.Passed -> "Id."

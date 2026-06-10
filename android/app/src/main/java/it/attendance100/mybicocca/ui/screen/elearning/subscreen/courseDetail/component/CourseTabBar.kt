@@ -29,20 +29,30 @@ import androidx.compose.ui.util.lerp
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.courseDetail.state.CourseTab
 import kotlin.math.abs
 
-// The bar's resting top padding. It stays constant in layout; at full pin the scaffold slides
-// exactly this much under the global bar instead of the bar animating its padding away, which
-// would remeasure the bar — and through it the pager — on every frame of the morph.
+/**
+ * The bar's resting top padding. It stays constant in layout; at full pin the scaffold slides
+ * exactly this much under the global bar, rather than the bar animating its padding away,
+ * which would remeasure the bar — and through it the pager — on every frame of the morph.
+ */
 val CourseTabBarBreathingRoom = 14.dp
 
-// Tab strip that morphs with `pinProgress`: at 0 it is a row of full-width filled pills (each
-// cell weighted by its label so nothing truncates on narrow screens); at 1 the selection has
-// melted into an M3-expressive indicator under the active label. Every selection visual — the
-// resting pills, the moving selection, the label tints — derives from the pager's continuous
-// position and the pin progress, and is evaluated in the draw phase: swipes and the collapse
-// morph redraw the bar without recomposing or remeasuring it. The selection is drawn after
-// the resting pills, so it glides over them instead of vanishing underneath a neighbour cell
-// mid-swipe, and the labels tint by how much the selection covers them, so colors track the
-// finger instead of flipping on a timer at the midpoint.
+/**
+ * Tab strip that morphs with [pinProgress]: at 0 it is a row of full-width filled pills (each
+ * cell weighted by its label so nothing truncates on narrow screens); at 1 the selection has
+ * melted into an M3-expressive indicator under the active label.
+ *
+ * Every selection visual — the resting pills, the moving selection, the label tints — derives
+ * from the pager's continuous position and the pin progress, and is evaluated in the draw
+ * phase: swipes and the collapse morph redraw the bar without recomposing or remeasuring it.
+ * [pinProgress] is folded into cached draw-phase lambdas, so callers must pass a lambda whose
+ * identity is stable across recompositions. Cell geometry depends only on the bar's size and
+ * is resolved once per measure, not on every swipe frame, and selection semantics key off the
+ * settled page, which changes once per landed page, so nothing recomposes mid-swipe.
+ *
+ * The selection is drawn after the resting pills, so it glides over them rather than vanishing
+ * underneath a neighbour cell mid-swipe, and the labels tint by how much the selection covers
+ * them, so colors track the finger rather than flipping on a timer at the midpoint.
+ */
 @Composable
 fun CourseTabBar(
     pagerState: PagerState,
@@ -71,8 +81,6 @@ fun CourseTabBar(
             .padding(horizontal = 16.dp)
             .padding(top = CourseTabBarBreathingRoom, bottom = 8.dp)
             .drawWithCache {
-                // Cell geometry only depends on the bar's size — resolve it once per measure,
-                // not on every swipe frame.
                 val spacingPx = CellSpacing.toPx()
                 val weightSum = tabs.sumOf { tabWeight(it).toDouble() }.toFloat()
                 val available = size.width - spacingPx * (tabs.size - 1)
@@ -123,8 +131,6 @@ fun CourseTabBar(
         horizontalArrangement = Arrangement.spacedBy(CellSpacing),
     ) {
         tabs.forEachIndexed { index, tab ->
-            // settledPage only changes once per landed page, so the selection semantics don't
-            // recompose anything mid-swipe.
             val selected = pagerState.settledPage == index
             val labelColor = remember(
                 pagerState, pinProgress, inactiveLabel, activeLabelOnPill, activeLabelPinned,
@@ -164,8 +170,10 @@ private fun tabLabel(tab: CourseTab): String = when (tab) {
     CourseTab.Forum -> "Forum"
 }
 
-// Width share proportional to the label (plus constant slack) so the row fills the screen
-// while long labels like "Contenuti" still fit on compact widths.
+/**
+ * Width share proportional to the label (plus constant slack) so the row fills the screen
+ * while long labels like "Contenuti" still fit on compact widths.
+ */
 private fun tabWeight(tab: CourseTab): Float = tabLabel(tab).length + 4f
 
 private val CellShape = RoundedCornerShape(999.dp)

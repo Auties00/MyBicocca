@@ -13,6 +13,10 @@ import androidx.compose.ui.unit.sp
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.enrollments.state.EnrollmentBadge
 import it.attendance100.mybicocca.ui.screen.registry.theme.registryBadgeTone
 
+/**
+ * Pill-shaped micro chip for an enrollment badge: the label uppercased in an extra-bold
+ * letter-spaced micro size, filled with the badge's registry tone.
+ */
 @Composable
 fun EnrollmentBadgeChip(
     badge: EnrollmentBadge,

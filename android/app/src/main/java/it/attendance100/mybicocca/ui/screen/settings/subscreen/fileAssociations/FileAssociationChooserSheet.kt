@@ -36,16 +36,20 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import it.attendance100.mybicocca.data.local.settings.FileOpenChoice
+import it.attendance100.mybicocca.domain.model.settings.FileOpenChoice
+import it.attendance100.mybicocca.ui.component.file.FileKind
+import it.attendance100.mybicocca.ui.component.file.openChooserIcon
+import it.attendance100.mybicocca.ui.component.file.openChooserLabel
 import it.attendance100.mybicocca.ui.component.modal.PredictiveModalBottomSheet
-import it.attendance100.mybicocca.ui.screen.elearning.subscreen.fileViewer.state.FileKind
-import it.attendance100.mybicocca.ui.screen.elearning.subscreen.fileViewer.subscreen.openChooser.openChooserIcon
-import it.attendance100.mybicocca.ui.screen.elearning.subscreen.fileViewer.subscreen.openChooser.openChooserLabel
 
-// The settings sibling of FileOpenChooserSheet: a fileless chooser that sets the default for
-// a whole file kind. Same centered-hero language, but three picks instead of two — "In app",
-// "Altra app", and "Chiedi ogni volta" (which clears the saved default). The current default is
-// shown filled; [current] == null means no default is saved yet.
+/**
+ * The settings sibling of the file viewer's open chooser: a fileless modal sheet that sets the
+ * default for a whole file kind. Same centered-hero language — the kind's icon in a nine-sided
+ * cookie on primary-container over a title and explainer — but with three picks rather than
+ * two: a connected "In app" / "Altra app" button pair plus a full-width "Chiedi ogni volta"
+ * button that clears the saved default. The current default is shown filled; [current] == null
+ * means no default is saved yet.
+ */
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun FileAssociationChooserSheet(
@@ -135,8 +139,10 @@ fun FileAssociationChooserSheet(
     }
 }
 
-// One pick. The active default is brand-filled (white content, like the in-app hand-off) and
-// carries a check; the rest are tonal.
+/**
+ * One pick. The active default is brand-filled (explicit white content) and swaps its icon for
+ * a check; the rest are tonal.
+ */
 @Composable
 private fun ChoiceButton(
     label: String,

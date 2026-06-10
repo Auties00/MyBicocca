@@ -11,6 +11,12 @@ import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 import javax.inject.Singleton
 
+/**
+ * DataStore-backed persistence of the e-learning course-list filter, shared across
+ * accounts. The filter is stored as a compact string token ("all", "favourites",
+ * "year:&lt;n&gt;"); unknown or malformed tokens fall back to the unfiltered default so a
+ * schema change can never wedge the list.
+ */
 @Singleton
 class ElearningFilterStore @Inject constructor(
     private val dataStore: DataStore<Preferences>,

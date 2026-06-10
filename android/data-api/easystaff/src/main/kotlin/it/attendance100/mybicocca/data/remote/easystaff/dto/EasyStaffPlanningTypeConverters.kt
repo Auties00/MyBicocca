@@ -154,7 +154,10 @@ object EasyStaffPlanningTimeRangeSerializer : KSerializer<EasyStaffPlanningTimeR
     }
 }
 
-// PHP serializes empty associative arrays as [], so empty schedule maps arrive as JSON arrays
+/**
+ * Normalizes the empty-array shape PHP produces for empty associative arrays: empty schedule
+ * maps arrive as `[]` instead of `{}`, so empty JSON arrays are rewritten to empty objects.
+ */
 private fun emptyArrayAsObject(element: JsonElement): JsonElement =
     if (element is JsonArray && element.isEmpty()) JsonObject(emptyMap()) else element
 
@@ -292,8 +295,10 @@ object StringValuesMapSerializer : KSerializer<Map<String, String?>> {
     }
 }
 
-// Laravel reports each portal configuration group as an array of single-key objects;
-// folding them into one object lets the groups decode as regular classes
+/**
+ * Folds the array-of-single-key-objects shape Laravel reports for each portal configuration
+ * group into a single JSON object, so the groups can decode as regular classes.
+ */
 private fun foldSettingsGroup(element: JsonElement): JsonElement = when (element) {
     is JsonArray -> JsonObject(
         element.filterIsInstance<JsonObject>()

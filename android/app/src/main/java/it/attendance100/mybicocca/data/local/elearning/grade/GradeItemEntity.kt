@@ -4,6 +4,11 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.Index
 
+/**
+ * Cached gradebook row of a course, keyed by (account_id, course_id, item_id).
+ * Refreshes replace all rows of the course in one transaction; `sortOrder` preserves
+ * the gradebook's own row order. `gradedAtMs` is epoch milliseconds.
+ */
 @Entity(
     tableName = "elearning_grade_items",
     primaryKeys = ["account_id", "course_id", "item_id"],

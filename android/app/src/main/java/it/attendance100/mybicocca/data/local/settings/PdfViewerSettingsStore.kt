@@ -4,14 +4,17 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
+import it.attendance100.mybicocca.domain.model.settings.PdfPagerOrientation
+import it.attendance100.mybicocca.domain.model.settings.PdfThemeMode
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 import javax.inject.Singleton
 
-enum class PdfThemeMode { System, Light, Dark }
-enum class PdfPagerOrientation { Vertical, Horizontal }
-
+/**
+ * Persists the PDF viewer preferences (rendering theme and scroll axis) in the shared
+ * `mybicocca_settings` DataStore, both as stable lowercase strings.
+ */
 @Singleton
 class PdfViewerSettingsStore @Inject constructor(
     private val dataStore: DataStore<Preferences>,

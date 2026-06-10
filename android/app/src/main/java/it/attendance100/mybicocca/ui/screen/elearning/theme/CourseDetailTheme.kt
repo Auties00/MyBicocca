@@ -13,8 +13,12 @@ import androidx.compose.ui.graphics.luminance
 import it.attendance100.mybicocca.domain.model.elearning.course.CourseId
 import it.attendance100.mybicocca.ui.component.shape.OrganicShapes
 
-// Shared by the course detail screen and its activity sub-pages (assignment detail, ...)
-// so a course keeps the same accent identity across its whole navigation subtree.
+/**
+ * Material theme override for a course's navigation subtree: the primary/secondary/tertiary
+ * roles (and their containers) are rebuilt from the course's accent triple while the rest of
+ * the scheme passes through. Shared by the course detail screen and its activity sub-pages
+ * (assignment detail, ...) so a course keeps the same accent identity across the whole subtree.
+ */
 @Composable
 fun CourseDetailTheme(
     courseId: CourseId,
@@ -69,6 +73,7 @@ private fun Color.lerpTowards(target: Color, t: Float): Color =
         alpha = alpha,
     )
 
+/** Organic decoration shapes for one course, sized for layered hero/watermark use. */
 data class HeroShapeTriple(val large: Shape, val medium: Shape, val small: Shape)
 
 private val HERO_SHAPES = listOf(
@@ -80,6 +85,11 @@ private val HERO_SHAPES = listOf(
     OrganicShapes.SmoothCookie4,
 )
 
+/**
+ * Assigns a course its shape triple the same way accents are assigned: the course id picks
+ * evenly spaced entries from a fixed organic-shape list, so the choice is stable per course and
+ * the home card and detail hero draw matching decorations.
+ */
 fun heroShapesFor(courseId: CourseId): HeroShapeTriple {
     val n = HERO_SHAPES.size
     val base = ((courseId.value % n) + n) % n

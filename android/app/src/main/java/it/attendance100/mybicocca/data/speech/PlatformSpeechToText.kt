@@ -18,8 +18,15 @@ import kotlinx.coroutines.flow.flowOn
 import javax.inject.Inject
 import javax.inject.Singleton
 
-// Fallback dictation engine: the platform SpeechRecognizer (it-IT, streaming partials).
-// Used on devices without the on-device ML Kit model.
+/**
+ * Fallback dictation engine: the platform SpeechRecognizer (it-IT, streaming partials), used on
+ * devices without the on-device ML Kit model.
+ *
+ * The flow runs on the main dispatcher because SpeechRecognizer must be created and driven from
+ * the main thread. Recognition errors such as no-speech and no-match close the flow quietly so
+ * the search field keeps its text, and sound levels are squashed from the platform's roughly
+ * -2..10 dB range into 0..1 for the UI.
+ */
 @Singleton
 class PlatformSpeechToText @Inject constructor(
     @ApplicationContext private val context: Context,
@@ -46,12 +53,10 @@ class PlatformSpeechToText @Inject constructor(
             }
 
             override fun onError(error: Int) {
-                // No-speech / no-match end the session quietly; the field just keeps its text.
                 close()
             }
 
             override fun onRmsChanged(rmsdB: Float) {
-                // The platform reports roughly -2..10 dB; squash into 0..1 for the UI.
                 trySend(DictationEvent.SoundLevel(((rmsdB + 2f) / 12f).coerceIn(0f, 1f)))
             }
 
@@ -74,7 +79,6 @@ class PlatformSpeechToText @Inject constructor(
             recognizer.stopListening()
             recognizer.destroy()
         }
-        // SpeechRecognizer must be created and driven from the main thread.
     }.flowOn(Dispatchers.Main)
 
     private fun Bundle?.bestTranscript(): String? =

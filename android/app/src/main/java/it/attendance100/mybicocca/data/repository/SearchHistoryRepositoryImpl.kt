@@ -8,6 +8,10 @@ import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 import javax.inject.Singleton
 
+/**
+ * [SearchHistoryRepository] backed by the DataStore-based [SearchHistoryStore]; all
+ * semantics (ordering, dedup, cap, pick preservation) live in the store.
+ */
 @Singleton
 class SearchHistoryRepositoryImpl @Inject constructor(
     private val store: SearchHistoryStore,
@@ -16,7 +20,8 @@ class SearchHistoryRepositoryImpl @Inject constructor(
     override fun observeHistory(accountId: AccountId): Flow<List<SearchHistoryEntry>> =
         store.history(accountId)
 
-    override suspend fun add(accountId: AccountId, query: String) = store.add(accountId, query)
+    override suspend fun add(accountId: AccountId, query: String, pickedKey: String?) =
+        store.add(accountId, query, pickedKey)
 
     override suspend fun remove(accountId: AccountId, query: String) = store.remove(accountId, query)
 

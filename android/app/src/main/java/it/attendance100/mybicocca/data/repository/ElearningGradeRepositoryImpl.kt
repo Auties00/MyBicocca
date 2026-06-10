@@ -27,6 +27,16 @@ import java.util.concurrent.ConcurrentHashMap
 import javax.inject.Inject
 import javax.inject.Singleton
 
+/**
+ * Grade repository backed by the Moodle gradereport web services and the Room grade
+ * cache. Per-course rows come from the grade-items endpoint, filtered to the active
+ * account's own user entry; the cross-course overview comes from the course-grades
+ * endpoint. Refreshes are deduplicated per key through lazily-started
+ * application-scoped jobs (concurrent callers await the same fetch), gated by the
+ * per-scope staleness rows — per course for grade items, account-wide for the
+ * overview — unless forced, and re-stamped on success. Observe flows stream hot from
+ * Room off the main thread.
+ */
 @Singleton
 class ElearningGradeRepositoryImpl @Inject constructor(
     private val sessionManager: SessionManager,
@@ -83,12 +93,15 @@ class ElearningGradeRepositoryImpl @Inject constructor(
         deferred.await()
     }
 
+    /**
+     * Stores the overview rows with no course name — the endpoint doesn't carry names,
+     * which live in the enrolled-course cache for the UI to resolve.
+     */
     private suspend fun doRefreshAllCourseGrades(accountId: AccountId, force: Boolean) {
         if (!force && !isStale(accountId, ElearningSyncScope.ALL_COURSE_GRADES, 0)) return
         val account = sessionManager.activeAccount.value ?: error("No active account.")
         val (api, token) = sessionManager.elearning()
         val response = api.grades.getCourseGrades(token, account.learning.lmsUserId)
-        // Course names come from EnrolledCourse cache or course details — left null here; UI can resolve.
         val rows = response.grades.map { it.toEntity(accountId, courseName = null) }
         gradeDao.replaceAllCourseGrades(accountId.value, rows)
         stamp(accountId, ElearningSyncScope.ALL_COURSE_GRADES, 0)

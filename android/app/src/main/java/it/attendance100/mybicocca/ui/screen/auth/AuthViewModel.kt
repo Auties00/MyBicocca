@@ -16,6 +16,15 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+/**
+ * Drives the credential sign-in form shared by the full-screen login and the in-sheet
+ * add-account flow.
+ *
+ * Field values, [inflight] and [credentialsRejected] are separate [StateFlow]s; sign-in
+ * outcomes are one-shot [AuthEvent]s on [events]. [submit] drops re-entrant or blank
+ * submissions and clears the password on success; [reset] blanks the whole form so a
+ * retained instance can be reused by the next host.
+ */
 @HiltViewModel
 class AuthViewModel @Inject constructor(
     private val signIn: SignInUseCase,
@@ -30,10 +39,13 @@ class AuthViewModel @Inject constructor(
     private val _inflight = MutableStateFlow(false)
     val inflight: StateFlow<Boolean> = _inflight.asStateFlow()
 
-    // Persistent field-highlight: the username/password outlines stay red after a
-    // rejected login until the user edits a field. The failure message itself is a
-    // one-shot snackbar (AuthEvent.Failed), not state.
     private val _credentialsRejected = MutableStateFlow(false)
+
+    /**
+     * Persistent field-highlight: the username/password outlines stay red after a rejected
+     * login until the user edits a field. The failure message itself is a one-shot snackbar
+     * ([AuthEvent.Failed]), not state.
+     */
     val credentialsRejected: StateFlow<Boolean> = _credentialsRejected.asStateFlow()
 
     private val _events = Channel<AuthEvent>(Channel.BUFFERED)

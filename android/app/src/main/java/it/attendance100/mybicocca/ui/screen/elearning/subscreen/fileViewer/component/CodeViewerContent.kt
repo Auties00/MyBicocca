@@ -54,11 +54,17 @@ import kotlinx.coroutines.withContext
 import java.io.File
 import java.util.Locale
 
-// Read-only code view themed with the app's palette: the page surface, JetBrains Mono, a
-// line-number gutter, and syntax colours mapped onto the Material scheme (keyword = primary,
-// string = tertiary, …). One Text per line inside a LazyColumn keeps long sources virtualized.
-// Single-finger drags scroll (vertically through lines, horizontally through long lines); a
-// two-finger pinch scales the font without stealing those drags.
+/**
+ * Read-only code/text viewer themed with the app's palette: the page surface, JetBrains Mono, a
+ * line-number gutter, and syntax colours mapped onto the Material scheme (keyword = primary,
+ * string = tertiary, …). One Text per line inside a LazyColumn keeps long sources virtualized,
+ * and a trailing spacer keeps the last line clear of the action bar.
+ *
+ * Single-finger drags scroll — vertically through lines, horizontally through long lines — while
+ * a two-finger pinch scales the font without stealing those drags. Text is selectable. The
+ * bottom action bar offers download, share, and a word-wrap toggle (wrap replaces the horizontal
+ * scroll). A loading state shows while the file is read and highlighted off the main thread.
+ */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun CodeViewerContent(
@@ -101,8 +107,6 @@ fun CodeViewerContent(
                 modifier = Modifier
                     .fillMaxSize()
                     .background(scheme.surface)
-                    // Pinch-to-zoom that does NOT consume single-finger drags, so the LazyColumn and
-                    // the per-line horizontal scroll still pan the code that doesn't fit.
                     .pointerInput(Unit) {
                         awaitEachGesture {
                             awaitFirstDown(requireUnconsumed = false)
@@ -147,7 +151,6 @@ fun CodeViewerContent(
                     }
                 }
                 item {
-                    // Extra bottom padding so the last line isn't hidden behind the action bar.
                     Box(modifier = Modifier.padding(bottom = 88.dp))
                 }
             }
@@ -172,8 +175,10 @@ fun CodeViewerContent(
     }
 }
 
-// A syntax theme built from the app's Material scheme so the code view matches the rest of the
-// app instead of a stock IDE palette. Only the colours are overridden on a preset base.
+/**
+ * A syntax theme built from the app's Material scheme so the code view matches the rest of the
+ * app rather than a stock IDE palette. Only the colours are overridden on a preset base.
+ */
 private fun appSyntaxTheme(scheme: ColorScheme): SyntaxTheme {
     fun rgb(color: Color) = color.toArgb() and 0x00FFFFFF
     return SyntaxThemes.darcula(darkMode = false).copy(
@@ -189,8 +194,11 @@ private fun appSyntaxTheme(scheme: ColorScheme): SyntaxTheme {
     )
 }
 
-// Cap pathological files: beyond this the tail renders unhighlighted rather than
-// freezing the regex pass.
+/**
+ * Caps for pathological files: beyond [MAX_HIGHLIGHT_CHARS] the text renders unhighlighted
+ * rather than freezing the highlighter's regex pass; beyond [MAX_FILE_CHARS] it is truncated
+ * with a marker line.
+ */
 private const val MAX_HIGHLIGHT_CHARS = 512 * 1024
 private const val MAX_FILE_CHARS = 2 * 1024 * 1024
 
@@ -233,7 +241,7 @@ private fun highlightFile(
     return splitLines(annotated)
 }
 
-// AnnotatedString has no lines(); slice on \n offsets so the spans survive the split.
+/** AnnotatedString has no lines(); slice on newline offsets so the spans survive the split. */
 private fun splitLines(annotated: AnnotatedString): List<AnnotatedString> {
     val result = mutableListOf<AnnotatedString>()
     var start = 0
@@ -248,6 +256,10 @@ private fun splitLines(annotated: AnnotatedString): List<AnnotatedString> {
     return result
 }
 
+/**
+ * Maps a file extension to a highlighter grammar. Extensions without one (sql, asm, csv,
+ * json, …) fall back to [SyntaxLanguage.DEFAULT]: clean monospace, no highlighting.
+ */
 private fun languageFor(fileName: String): SyntaxLanguage =
     when (fileName.substringAfterLast('.', "").lowercase(Locale.ROOT)) {
         "java" -> SyntaxLanguage.JAVA
@@ -265,6 +277,5 @@ private fun languageFor(fileName: String): SyntaxLanguage =
         "go" -> SyntaxLanguage.GO
         "rs" -> SyntaxLanguage.RUST
         "dart" -> SyntaxLanguage.DART
-        // sql, m, asm, csv, json, … — no grammar in this engine; clean monospace fallback.
         else -> SyntaxLanguage.DEFAULT
     }

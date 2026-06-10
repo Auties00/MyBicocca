@@ -4,16 +4,18 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
-import it.attendance100.mybicocca.ui.theme.AppTheme
+import it.attendance100.mybicocca.domain.model.settings.AppTheme
+import it.attendance100.mybicocca.domain.model.settings.ThemeMode
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 import javax.inject.Singleton
 
-enum class ThemeMode { System, Light, Dark }
-
 /**
- * Persists the appearance preferences (theme mode). Backed by the shared `mybicocca_settings` DataStore, mirroring [SecuritySettingsStore].
+ * Persists the appearance preferences in the shared `mybicocca_settings` DataStore.
+ *
+ * [ThemeMode] is stored as a stable lowercase string, [AppTheme] by enum entry name with
+ * [AppTheme.Default] as the fallback for missing or unknown values.
  */
 @Singleton
 class AppearanceSettingsStore @Inject constructor(

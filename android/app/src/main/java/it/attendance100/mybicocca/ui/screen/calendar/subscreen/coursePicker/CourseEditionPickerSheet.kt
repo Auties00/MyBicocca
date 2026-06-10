@@ -33,9 +33,13 @@ import it.attendance100.mybicocca.domain.model.elearning.course.EnrolledCourse
 import it.attendance100.mybicocca.domain.model.elearning.course.courseCode
 import it.attendance100.mybicocca.ui.component.modal.PredictiveModalBottomSheet
 
-// Edition chooser for "Apri corso" when an event's activity code resolves to more than
-// one elearning course (base + streams, or multiple yearly editions). Header styled
-// after the profile's "Iscrizioni" sheet.
+/**
+ * Modal bottom sheet choosing which e-learning edition "Apri corso" should open when an
+ * event's activity code resolves to more than one course — the base course plus streams,
+ * or several yearly editions. A bold header counting the editions, styled after the
+ * profile's "Iscrizioni" sheet, sits over a grouped list of rows showing each edition's
+ * period label and full name; picking a row hands its course id to [onPick].
+ */
 @Composable
 fun CourseEditionPickerSheet(
     courses: List<EnrolledCourse>,
@@ -98,6 +102,11 @@ private fun Header(count: Int) {
     }
 }
 
+/**
+ * One pickable edition in the expressive grouped-list shape — large corners cap the
+ * group's ends, tight ones where rows touch — with an icon tile leading the period label
+ * over the course name.
+ */
 @Composable
 private fun EditionRow(
     course: EnrolledCourse,
@@ -106,7 +115,6 @@ private fun EditionRow(
     onClick: () -> Unit,
 ) {
     val scheme = MaterialTheme.colorScheme
-    // Expressive grouped-list shape: large outer corners on the group's ends, tight inner ones.
     val shape = RoundedCornerShape(
         topStart = if (isFirst) 20.dp else 6.dp,
         topEnd = if (isFirst) 20.dp else 6.dp,

@@ -24,6 +24,17 @@ import java.time.temporal.ChronoUnit
 private const val PAGER_ANCHOR = 5000
 private const val PAGER_COUNT = 10000
 
+/**
+ * Month mode of the calendar tab: a horizontally pageable month grid with the busy-level
+ * legend underneath. Paging is virtually unbounded — the pager anchors its first composed
+ * month at the middle page, so swiping reaches arbitrarily far in either direction;
+ * settling on a page reports the new month while external month changes animate the pager
+ * into place.
+ *
+ * The empty box filling the space left under the legend measures the region the month
+ * agenda sheet may occupy, reported through [onMonthSheetSizeChanged] so the sheet's
+ * collapsed height matches that free area exactly.
+ */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun MonthView(

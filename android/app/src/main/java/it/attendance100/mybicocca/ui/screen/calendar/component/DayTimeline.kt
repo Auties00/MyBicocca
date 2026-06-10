@@ -19,6 +19,19 @@ import it.attendance100.mybicocca.ui.screen.calendar.ext.rememberCurrentTime
 import it.attendance100.mybicocca.ui.screen.calendar.state.layoutDay
 import java.time.LocalDate
 
+/**
+ * Event-card layer of the day timeline: a custom layout that turns each laid-out event's
+ * minute range and lane fractions into a fixed card frame, one minute mapping to
+ * [minuteHeight]. Hourly grid lines draw behind the cards, odd hours fading out at low
+ * zoom, and the now indicator appears while [selectedDay] is today and the current minute
+ * sits inside the layout window. Small pixel gaps are carved between adjacent cards so
+ * lanes read as separate, and every card keeps a minimum tappable frame.
+ *
+ * The vertical window is [window], shared with the hour gutter and every other pager page so
+ * adjacent days and the labels all sit on one scale. [layoutDay] receives it and only grows
+ * it when this day's events spill past it — with a window pre-fitted to all loaded days they
+ * never do.
+ */
 @Composable
 fun DayEventsLayer(
     selectedDay: LocalDate,
@@ -26,8 +39,9 @@ fun DayEventsLayer(
     onEventClick: (CalendarEvent) -> Unit,
     modifier: Modifier = Modifier,
     minuteHeight: Dp = TimelineMinuteHeightDefault,
+    window: IntRange = TimelineWindowStart..TimelineWindowEnd,
 ) {
-    val layout = remember(events) { layoutDay(events) }
+    val layout = remember(events, window) { layoutDay(events, window) }
     val now by rememberCurrentTime()
     val scheme = MaterialTheme.colorScheme
     val gridColor = scheme.outline.copy(alpha = 0.5f)
@@ -41,7 +55,7 @@ fun DayEventsLayer(
 
     Layout(
         modifier = modifier
-            .height(timelineHeightFor(minuteHeight))
+            .height(timelineHeightFor(minuteHeight, window))
             .fillMaxWidth()
             .drawBehind {
                 val width = size.width
@@ -62,7 +76,7 @@ fun DayEventsLayer(
                 }
                 nowMinute?.let { nm ->
                     if (nm in layout.startMinute..layout.endMinute) {
-                        drawNowIndicator(nm, pxPerMinute, nowColor)
+                        drawNowIndicator(nm, layout.startMinute, pxPerMinute, nowColor)
                     }
                 }
             },

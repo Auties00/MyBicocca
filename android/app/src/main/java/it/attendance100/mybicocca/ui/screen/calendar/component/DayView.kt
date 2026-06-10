@@ -45,6 +45,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import it.attendance100.mybicocca.domain.model.calendar.CalendarEvent
 import it.attendance100.mybicocca.ui.screen.calendar.ext.weekStartFor
+import it.attendance100.mybicocca.ui.screen.calendar.state.timelineWindowFor
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
@@ -60,6 +61,19 @@ private const val STRIP_WINDOW_SIZE = 2 * STRIP_HALF_WINDOW + 1
 private val StripRowHeight = 60.dp
 private val CellGapDp = 2.dp
 
+/**
+ * Day mode of the calendar tab: a week-strip carousel header over an hour-gutter timeline
+ * whose day pages swipe through a virtually unbounded horizontal pager. Dragging a day
+ * page pulls the header strip along fractionally — crossing a week boundary slides the
+ * whole strip to the adjacent week — and tapping a strip day jumps the pager there.
+ * A vertical two-finger pinch rescales the timeline around the gesture's focal point,
+ * compensating the scroll offset so the content under the fingers stays anchored; [zoom]
+ * is hoisted so day and week modes share one scale.
+ *
+ * The pinch handler reads zoom through a mutable ref that is rewritten on every
+ * composition and synchronously during the gesture, because `pointerInput(Unit)` captures
+ * its lambda once and would otherwise see stale values between frames.
+ */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun DayView(
@@ -91,7 +105,8 @@ fun DayView(
     SideEffect { zoomRef.floatValue = zoom }
 
     val minuteHeight = minuteHeightFor(zoom)
-    val timelineH = timelineHeightFor(minuteHeight)
+    val window = remember(eventsByDay) { timelineWindowFor(eventsByDay.values) }
+    val timelineH = timelineHeightFor(minuteHeight, window)
     val scroll = rememberScrollState()
     val coroutineScope = rememberCoroutineScope()
 
@@ -113,7 +128,7 @@ fun DayView(
             modifier = Modifier
                 .fillMaxSize()
                 .verticalPinchZoom(currentZoom = { zoomRef.floatValue }) { newZoom, focalY, factor ->
-                    zoomRef.floatValue = newZoom  // sync immediately for the next gesture frame
+                    zoomRef.floatValue = newZoom
                     onZoomChange(newZoom)
                     val newOffset = ((scroll.value + focalY) * factor - focalY)
                         .roundToInt().coerceIn(0, scroll.maxValue)
@@ -122,7 +137,11 @@ fun DayView(
                 .verticalScroll(scroll)
                 .padding(start = 14.dp, end = 14.dp, bottom = 12.dp),
         ) {
-            HourGutterColumn(minuteHeight = minuteHeight, modifier = Modifier.height(timelineH))
+            HourGutterColumn(
+                minuteHeight = minuteHeight,
+                window = window,
+                modifier = Modifier.height(timelineH),
+            )
             HorizontalPager(
                 state = eventsPagerState,
                 modifier = Modifier
@@ -136,12 +155,20 @@ fun DayView(
                     events = eventsByDay[day].orEmpty(),
                     onEventClick = onEventClick,
                     minuteHeight = minuteHeight,
+                    window = window,
                 )
             }
         }
     }
 }
 
+/**
+ * Header strip that tracks the day pager continuously. A window of week strips around the
+ * current week renders unbounded inside a row translated so exactly one week fills the
+ * viewport; the week position interpolates only while the dragged day crosses a week
+ * boundary, so mid-week swipes keep the strip still. The selection pill travels
+ * cell-to-cell with the fractional page position, wrapping across week rows.
+ */
 @Composable
 private fun DayStripCarousel(
     eventsPagerState: PagerState,
@@ -245,10 +272,13 @@ private fun DayStripCarousel(
     }
 }
 
-// Lives outside DayStrip so a single pill can slide continuously across week boundaries
-// during a swipe — if each DayStrip rendered its own highlight, two pills would show
-// half-visible mid-transition. Transparent Text content mirrors DayStrip's cell Column so
-// the natural height matches the per-cell pill exactly regardless of font metrics.
+/**
+ * The sliding selection highlight, deliberately drawn outside [DayStrip] so a single pill
+ * can glide continuously across week boundaries during a swipe — per-strip highlights
+ * would show two half-visible pills mid-transition. Its content is transparent text
+ * mirroring a strip cell's column, so the pill's natural size matches the cells exactly
+ * regardless of font metrics.
+ */
 @Composable
 private fun HighlightPill(
     color: Color,

@@ -2,14 +2,15 @@ package it.attendance100.mybicocca.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// Light scheme
+/** The Bicocca brand red, primary of the default light scheme. */
 internal val PrimaryLight = Color(0xFFD81648)
 
-// Brand-fixed accent for the wordmark. The literal matches PrimaryLight by
-// design — both render the same brand red — but they live as separate
-// references because they have different theming contracts: PrimaryLight pairs
-// with PrimaryDark (pink) for the active Material scheme, while the wordmark
-// stays this red across both themes so the brand asset never shifts.
+/**
+ * Brand-fixed accent for the wordmark. It aliases [PrimaryLight] by design — both render the same
+ * brand red — but they live as separate references because they have different theming contracts:
+ * the scheme primaries are free to vary per palette and mode, while the wordmark keeps this exact
+ * red everywhere so the brand asset never shifts.
+ */
 val BicoccaWordmarkAccent = PrimaryLight
 internal val OnPrimaryLight = Color(0xFFFFFFFF)
 internal val PrimaryContainerLight = Color(0xFFFFD9DF)
@@ -29,7 +30,6 @@ internal val OnSurfaceVariantLight = Color(0xFF5C4B4E)
 internal val OutlineLight = Color(0xFF8E7C7F)
 internal val OutlineVariantLight = Color(0xFFDFCDCF)
 
-// Dark scheme
 internal val PrimaryDark = Color(0xFFD81648)
 internal val OnPrimaryDark = Color(0xff3d121a)
 internal val PrimaryContainerDark = Color(0xFF7A1530)
@@ -49,11 +49,13 @@ internal val OnSurfaceVariantDark = Color(0xFFB89398)
 internal val OutlineDark = Color(0xFF7C5A60)
 internal val OutlineVariantDark = Color(0xFF3A1B22)
 
-// Profile ID-card badge palette. The badge renders its own art over a chromatic
-// red face, so it carries fixed colors independent of the active Material scheme.
-// The card face is a saturated red in both modes (the post-refactor Material primary
-// lightened to pink in dark mode, which washed the badge out), so it's pinned to the
-// pre-refactor primary reds here rather than reading colorScheme.primary.
+/**
+ * Face color of the profile ID-card badge, opening the badge palette below. The badge renders its
+ * own art over a chromatic red face, so the whole group carries fixed colors independent of the
+ * active Material scheme: a scheme primary that lightens toward pink in dark mode would wash the
+ * badge out, so the face is pinned to a saturated red in both modes instead of reading
+ * `colorScheme.primary`.
+ */
 val BadgeCardColorLight = Color(0xFFF01D59)
 val BadgeCardColorDark = Color(0xFF9C0C35)
 val OnBackgroundColor = Color(0xFFFFF8F7)

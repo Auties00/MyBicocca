@@ -25,17 +25,20 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import it.attendance100.mybicocca.core.os.rememberHapticManager
-import it.attendance100.mybicocca.data.local.settings.FileOpenChoice
+import it.attendance100.mybicocca.domain.model.settings.FileOpenChoice
 import it.attendance100.mybicocca.ui.component.directory.SegmentedIconChip
 import it.attendance100.mybicocca.ui.component.directory.SegmentedTile
+import it.attendance100.mybicocca.ui.component.file.FileKind
+import it.attendance100.mybicocca.ui.component.file.openChooserIcon
+import it.attendance100.mybicocca.ui.component.file.openChooserLabel
 import it.attendance100.mybicocca.ui.component.modal.PredictiveModalBottomSheet
-import it.attendance100.mybicocca.ui.screen.elearning.subscreen.fileViewer.FileOpenPreferenceViewModel
-import it.attendance100.mybicocca.ui.screen.elearning.subscreen.fileViewer.state.FileKind
-import it.attendance100.mybicocca.ui.screen.elearning.subscreen.fileViewer.subscreen.openChooser.openChooserIcon
-import it.attendance100.mybicocca.ui.screen.elearning.subscreen.fileViewer.subscreen.openChooser.openChooserLabel
+import it.attendance100.mybicocca.ui.navigation.FileOpenPreferenceViewModel
 
-// The in-app-capable kinds the user can set a default for; the rest (Office, unknown) always
-// hand off, so they're not listed. Order mirrors the file-type survey: documents first.
+/**
+ * The in-app-capable kinds the user can set a default for; kinds that always hand off to
+ * another app (Office, unknown) are excluded. Order mirrors the file-type survey: documents
+ * first.
+ */
 private val FILE_ASSOCIATION_KINDS = listOf(
     FileKind.Pdf,
     FileKind.Image,
@@ -46,10 +49,15 @@ private val FILE_ASSOCIATION_KINDS = listOf(
     FileKind.Zip,
 )
 
-// "Apertura file" settings: one row per file kind showing its current default. Tapping a row
-// opens the generic chooser (FileAssociationChooserSheet) to set it to In app / Altra app, or
-// reset it to "Chiedi ogni volta". Backed by the same store as the real open chooser, so a
-// change here takes effect the next time a file of that kind is opened.
+/**
+ * The "Apertura file" settings page, shown as a modal bottom sheet: a connected segmented card
+ * with one row per supported file kind — its icon in a primary chip, its name, and the current
+ * default ("Apri in app" / "Apri con altra app" / "Chiedi ogni volta") as the subtitle. Tapping
+ * a row stacks a [FileAssociationChooserSheet] over this sheet to set the default to In app /
+ * Altra app or reset it to ask every time; a pick is persisted immediately through the store
+ * flow and the chooser closes. Backed by the same store as the open chooser shown when a file
+ * is actually opened, so a change here takes effect the next time a file of that kind opens.
+ */
 @Suppress("AssignedValueIsNeverRead")
 @Composable
 fun FileAssociationsSheet(onDismiss: () -> Unit) {
@@ -113,8 +121,6 @@ fun FileAssociationsSheet(onDismiss: () -> Unit) {
         }
     }
 
-    // Stacked over the list (same pattern the shell uses to show the chooser over a detail
-    // sheet). Picking applies immediately via the store flow and closes the chooser.
     editing?.let { kind ->
         FileAssociationChooserSheet(
             kind = kind,

@@ -13,7 +13,11 @@ private val DayMonthYearFmt = DateTimeFormatter
     .ofPattern("d MMM yyyy", Locale.ITALIAN)
     .withZone(ZoneId.systemDefault())
 
-// "adesso" → "x min fa" → "x ore fa" → "ieri" → "x giorni fa" → "12 nov" → "12 nov 2024"
+/**
+ * Compact Italian relative-time label, tiering with distance from [now]:
+ * "adesso" → "x min fa" → "x ore fa" → "ieri" → "x giorni fa" → "12 nov" → "12 nov 2024"
+ * (the year appears only once the instant falls outside the current year).
+ */
 fun relativeTimeLabel(instant: Instant, now: Instant = Instant.now()): String {
     val elapsed = Duration.between(instant, now)
     val minutes = elapsed.toMinutes()

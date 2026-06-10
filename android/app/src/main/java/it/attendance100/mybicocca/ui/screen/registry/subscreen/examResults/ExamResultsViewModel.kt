@@ -28,6 +28,20 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import javax.inject.Inject
 
+/**
+ * Drives the Esiti sheet: the published exam outcomes of the active career, fetched live
+ * from Esse3 and refetched whenever the career changes.
+ *
+ * Streams by role: [results] is the loadable outcome list; [syncStatus] tracks the
+ * in-flight refresh separately so stale data keeps rendering; [actionState] scopes the
+ * accept/reject spinner to the one outcome being acted on; [events] is the one-shot
+ * channel for accept/reject results.
+ *
+ * Actions: [refresh] refetches in place (refreshes are mutex-guarded, so overlapping
+ * requests collapse into one); [pullToRefresh] resets to the not-yet-loaded state first;
+ * [accept] and [reject] record the student's decision, optimistically dropping the
+ * acted-on outcome before reconciling with the server.
+ */
 @HiltViewModel
 class ExamResultsViewModel @Inject constructor(
     private val getExamResults: GetExamResultsUseCase,
@@ -92,8 +106,6 @@ class ExamResultsViewModel @Inject constructor(
                 _events.trySend(
                     if (accept) ExamResultEvent.AcceptSucceeded else ExamResultEvent.RejectSucceeded,
                 )
-                // Optimistic: drop the acted-on outcome so it leaves the eligible list,
-                // then reconcile with the server.
                 val current = (_results.value as? Loadable.Loaded)?.value.orEmpty()
                 _results.value = Loadable.Loaded(current.filterNot { it.applicationListId == applicationListId })
                 fetch(careerId)

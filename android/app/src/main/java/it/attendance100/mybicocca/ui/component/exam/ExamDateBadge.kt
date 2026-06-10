@@ -15,8 +15,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 
-// Rounded-rectangle leading date block shared by the booked exam card, its detail hero
-// and the booking flow.
+/**
+ * Rounded-rectangle leading date block shared by the booked exam card, its detail hero
+ * and the booking flow.
+ */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun ExamDateBadge(

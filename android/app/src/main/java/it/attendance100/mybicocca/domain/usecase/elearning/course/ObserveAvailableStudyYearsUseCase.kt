@@ -10,9 +10,12 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 
-// The distinct study years the student's currently-enrolled, non-hidden courses resolve to
-// via their idNumber (see CourseCode). Pure Room transform — no network. Unknown years are
-// excluded; they don't surface as a chip.
+/**
+ * Streams the distinct study years the account's non-hidden enrolled courses resolve
+ * to via their idNumber, sorted ascending, to populate the year filter chips on the
+ * e-learning tab. A pure local-cache transform with no network use; unknown years are
+ * excluded and never surface as a chip.
+ */
 class ObserveAvailableStudyYearsUseCase @Inject constructor(
     private val courseRepository: ElearningCourseRepository,
 ) {

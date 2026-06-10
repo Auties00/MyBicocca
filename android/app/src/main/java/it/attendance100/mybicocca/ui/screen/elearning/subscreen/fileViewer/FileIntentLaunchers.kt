@@ -6,15 +6,16 @@ import android.content.Intent
 import android.net.Uri
 import android.webkit.MimeTypeMap
 import androidx.core.content.FileProvider
-import it.attendance100.mybicocca.ui.screen.elearning.subscreen.fileViewer.state.OfficeApp
+import it.attendance100.mybicocca.ui.component.file.OfficeApp
 import java.io.File
 import java.util.Locale
 
-// Intent hand-offs shared by the viewer page and the office hand-off sheet.
-
-// Microsoft's documented deep link: "<protocol>:ofv|u|<url>" forces view-only mode and
-// lets the Office app download the (tokenized) URL itself. Target the package explicitly
-// so a rogue app registering the scheme can't intercept the token-bearing URL.
+/**
+ * Fires Microsoft's documented deep link — `<protocol>:ofv|u|<url>` — which forces view-only
+ * mode and lets the Office app download the (tokenized) URL itself. The intent targets the
+ * package explicitly so a rogue app registering the scheme can't intercept the token-bearing
+ * URL.
+ */
 internal fun launchOfficeUri(context: Context, uri: String, app: OfficeApp): Boolean {
     val intent = Intent(Intent.ACTION_VIEW, Uri.parse(uri))
         .setPackage(app.packageName)
@@ -37,7 +38,11 @@ internal fun launchPlayStore(context: Context, packageName: String): Boolean {
 internal fun isPackageInstalled(context: Context, packageName: String): Boolean =
     runCatching { context.packageManager.getPackageInfo(packageName, 0) }.isSuccess
 
-// Shares a downloaded file through the Android share sheet.
+/**
+ * Shares a downloaded file through the Android share sheet. The chooser is launched from the
+ * Activity context without FLAG_ACTIVITY_NEW_TASK: a new task would play a task-transition
+ * animation that shifts the viewer chrome.
+ */
 internal fun shareFile(context: Context, localPath: String, fileName: String, mimeType: String?): Boolean {
     val file = File(localPath)
     val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
@@ -49,8 +54,6 @@ internal fun shareFile(context: Context, localPath: String, fileName: String, mi
         .putExtra(Intent.EXTRA_STREAM, uri)
         .putExtra(Intent.EXTRA_TITLE, fileName)
         .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-    // Launched from the Activity context, so no FLAG_ACTIVITY_NEW_TASK: that would start the
-    // chooser in a new task and play a task-transition animation that shifts the viewer chrome.
     val chooser = Intent.createChooser(send, fileName)
     return runCatching { context.startActivity(chooser) }.isSuccess
 }

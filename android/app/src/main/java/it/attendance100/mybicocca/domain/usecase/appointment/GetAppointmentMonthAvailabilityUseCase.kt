@@ -5,6 +5,10 @@ import it.attendance100.mybicocca.domain.repository.AppointmentRepository
 import java.time.YearMonth
 import javax.inject.Inject
 
+/**
+ * Loads which days of a month still have free slots, as the user pages through the calendar of
+ * the "Appuntamenti" booking flow. Always fetched live — slot occupancy is volatile.
+ */
 class GetAppointmentMonthAvailabilityUseCase @Inject constructor(
     private val repository: AppointmentRepository,
 ) {

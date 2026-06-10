@@ -5,6 +5,14 @@ import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
 
+/**
+ * Row of the `accounts` table, one per student signed in on the device.
+ *
+ * The primary key is the app-generated account id (a UUID string). `record_user_id` holds the
+ * Esse3 login user id and carries a unique index, so a student signing in again maps onto the
+ * existing row instead of creating a duplicate. The `lms_*` columns mirror the Moodle site
+ * info captured at sign-in; the `*_at` columns are epoch milliseconds.
+ */
 @Entity(
     tableName = "accounts",
     indices = [Index(value = ["record_user_id"], unique = true)],

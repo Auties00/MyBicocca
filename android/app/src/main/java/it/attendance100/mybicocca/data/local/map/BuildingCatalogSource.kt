@@ -9,8 +9,11 @@ import kotlinx.serialization.json.Json
 import javax.inject.Inject
 import javax.inject.Singleton
 
-// The full campus building catalog, bundled as an app asset. This is the source of truth for
-// building coordinates: EasyStaff exposes no usable lat/lng, so the set is hand-curated.
+/**
+ * Reads the full campus building catalog bundled as the buildings.json app asset. The catalog is
+ * the source of truth for building coordinates: EasyStaff exposes no usable latitude/longitude,
+ * so the set is hand-curated.
+ */
 @Singleton
 class BuildingCatalogSource @Inject constructor(
     @ApplicationContext private val context: Context,
@@ -28,12 +31,31 @@ class BuildingCatalogSource @Inject constructor(
     }
 }
 
+/**
+ * Root of the bundled buildings.json document.
+ *
+ * @property version Catalog format version.
+ * @property buildings The catalogued buildings.
+ */
 @Serializable
 data class BuildingCatalogFile(
     val version: Int = 1,
     val buildings: List<BuildingCatalogDto> = emptyList(),
 )
 
+/**
+ * One building of the bundled catalog.
+ *
+ * @property code Building code (e.g. "U01"), unique in the catalog and doubling as the EasyStaff
+ * query key.
+ * @property name Display name.
+ * @property latitude Hand-curated pin latitude.
+ * @property longitude Hand-curated pin longitude.
+ * @property category Building-category name; unrecognized or absent values are treated as
+ * teaching buildings.
+ * @property address Street address; null when not catalogued.
+ * @property city Municipality; null when not catalogued.
+ */
 @Serializable
 data class BuildingCatalogDto(
     val code: String,

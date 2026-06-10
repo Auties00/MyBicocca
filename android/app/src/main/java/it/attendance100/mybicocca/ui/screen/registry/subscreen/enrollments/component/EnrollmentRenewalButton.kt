@@ -24,10 +24,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import it.attendance100.mybicocca.domain.model.enrollment.RenewalState
 
-// The sheet's footer action, always brand-filled: inert when already enrolled, tappable when
-// the renewal window is open. Brand red in light, primaryContainer in dark — the shared
-// footer-CTA scheme. There is no student REST submission path (confirmed against the OpenAPI
-// specs), so the renewal action honestly deep-links to the official Esse3 web flow.
+/**
+ * Footer action of the enrollments sheet, always brand-filled (brand red in light,
+ * primaryContainer in dark — the shared footer-CTA scheme): a tappable renewal button
+ * while the renewal window is open, an inert "already enrolled" confirmation once
+ * enrolled, and nothing when renewal does not apply. There is no student REST submission
+ * path (confirmed against the OpenAPI specs), so the renewal action honestly deep-links
+ * to the official Esse3 web flow.
+ */
 @Composable
 fun EnrollmentRenewalButton(
     state: RenewalState,

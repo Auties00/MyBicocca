@@ -7,12 +7,18 @@ import it.attendance100.mybicocca.domain.model.attendance.PresenceMarkOutcome
 import it.attendance100.mybicocca.domain.model.attendance.PresenceScan
 import it.attendance100.mybicocca.domain.model.career.CareerId
 
+/**
+ * Course attendance (Presenze): reads attendance signals across EasyStaff EasyBadge and Moodle
+ * mod_attendance, and writes presence self-markings. Network-only — no Room cache.
+ */
 interface AttendanceRepository {
 
-    // Study-plan courses not yet passed, up to the student's current year of
-    // study and semester, each enriched with the available attendance data.
-    // Live fetch, no local cache: attendance certifications change during the
-    // day and staleness would be misleading (same policy as exam bookings).
+    /**
+     * Study-plan courses not yet passed, up to the student's current year of study and
+     * semester, each enriched with the available attendance data. Live fetch, no local cache:
+     * attendance certifications change during the day and staleness would be misleading (the
+     * same policy applies to exam bookings).
+     */
     suspend fun getPendingCourses(careerId: CareerId): List<CourseAttendance>
 
     suspend fun getOpenSessions(modules: List<AttendanceModuleRef>): List<OpenAttendanceSession>

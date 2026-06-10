@@ -12,6 +12,7 @@ import it.attendance100.mybicocca.domain.model.map.BuildingCode
 import it.attendance100.mybicocca.domain.model.map.MapBuilding
 import it.attendance100.mybicocca.domain.model.map.MapRoom
 import it.attendance100.mybicocca.domain.model.map.MapRoomDetail
+import it.attendance100.mybicocca.domain.model.map.RoomCode
 import it.attendance100.mybicocca.domain.model.map.RoomScheduleEntry
 import it.attendance100.mybicocca.domain.usecase.map.LoadBuildingScheduleUseCase
 import it.attendance100.mybicocca.domain.usecase.map.LoadRoomDetailUseCase
@@ -28,16 +29,31 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 import java.time.LocalDate
 import javax.inject.Inject
 
+/**
+ * Backs the map tab: the campus building catalog read from the local cache as the source of
+ * truth (refreshed once at construction), plus the per-building data the detail sheets fetch
+ * on selection.
+ *
+ * [allBuildings] is the full catalog; [buildings] narrows it by [categoryFilter] for the map
+ * pins. Selecting a building drives three dependent streams — [selectedBuilding] resolves the
+ * code against the catalog, [rooms] streams its cached room list while a refresh runs, and
+ * [daySchedule] fetches today's occupation slots — while opening a room loads [roomDetail].
+ * [syncStatus] tracks the room refresh independently of the data, and a failed refresh also
+ * emits [MapOneShotEvent.RefreshFailed] through [oneShotEvents].
+ */
 @OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class MapViewModel @Inject constructor(
@@ -52,13 +68,12 @@ class MapViewModel @Inject constructor(
     private val _categoryFilter = MutableStateFlow<Set<BuildingCategory>>(emptySet())
     val categoryFilter: StateFlow<Set<BuildingCategory>> = _categoryFilter.asStateFlow()
 
-    // The full, unfiltered catalog — used by the "Visualizza edifici" list. (`buildings` below
-    // is the search/category-narrowed view used for map pins.)
+    /** The full, unfiltered catalog, used by the "Visualizza edifici" list. */
     val allBuildings: StateFlow<Loadable<List<MapBuilding>>> =
         observeBuildings()
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STATE_KEEP_ALIVE_MS), Loadable.NotYetLoaded)
 
-    // Pins to render: the full set narrowed by the category filter.
+    /** Pins to render: [allBuildings] narrowed by [categoryFilter]. */
     val buildings: StateFlow<Loadable<List<MapBuilding>>> =
         combine(allBuildings, _categoryFilter) { loadable, categories ->
             loadable.map { list -> list.filter { it.matches(categories) } }
@@ -76,9 +91,11 @@ class MapViewModel @Inject constructor(
             if (code == null) flowOf(Loadable.Loaded(emptyList())) else observeRooms(code)
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STATE_KEEP_ALIVE_MS), Loadable.NotYetLoaded)
 
-    // The selected building's live occupation slots for today, keyed by room code. Not cached —
-    // re-fetched on every selection so "free/busy now" stays trustworthy. null = fetch failed,
-    // which the UI distinguishes from "no events today" (= free all day).
+    /**
+     * The selected building's live occupation slots for today, keyed by room code. Not cached —
+     * re-fetched on every selection so "free/busy now" stays trustworthy. A null map means the
+     * fetch failed, which the UI distinguishes from "no events today" (= free all day).
+     */
     val daySchedule: StateFlow<Loadable<Map<String, List<RoomScheduleEntry>>?>> =
         _selectedBuildingCode.flatMapLatest { code ->
             if (code == null) {
@@ -95,7 +112,7 @@ class MapViewModel @Inject constructor(
     private val _selectedRoom = MutableStateFlow<MapRoom?>(null)
     val selectedRoom: StateFlow<MapRoom?> = _selectedRoom.asStateFlow()
 
-    // Rich, per-room detail fetched on demand when a room is opened (not cached).
+    /** Rich, per-room detail fetched on demand when a room is opened, never cached. */
     val roomDetail: StateFlow<Loadable<MapRoomDetail?>> =
         _selectedRoom.flatMapLatest { room ->
             if (room == null) {
@@ -141,6 +158,25 @@ class MapViewModel @Inject constructor(
         _selectedRoom.value = room
     }
 
+    /**
+     * Guided-search landing: selects the building, then opens the room as soon as its list
+     * hydrates ([selectBuilding] kicks off the refresh). Times out silently — the user is
+     * already on the right building, which is most of the journey — and the room is applied
+     * only while the building selection still matches, in case the user moved on during the
+     * wait.
+     */
+    fun selectRoomByCode(buildingCode: BuildingCode, roomCode: RoomCode) {
+        selectBuilding(buildingCode)
+        viewModelScope.launch {
+            val room = withTimeoutOrNull(ROOM_LOOKUP_TIMEOUT_MS) {
+                rooms
+                    .mapNotNull { loadable -> loadable.valueOrNull()?.firstOrNull { it.code == roomCode } }
+                    .first()
+            } ?: return@launch
+            if (_selectedBuildingCode.value == buildingCode) _selectedRoom.value = room
+        }
+    }
+
     fun clearRoomSelection() {
         _selectedRoom.value = null
     }
@@ -163,6 +199,7 @@ class MapViewModel @Inject constructor(
 
     private companion object {
         const val STATE_KEEP_ALIVE_MS = 5_000L
+        const val ROOM_LOOKUP_TIMEOUT_MS = 6_000L
     }
 }
 

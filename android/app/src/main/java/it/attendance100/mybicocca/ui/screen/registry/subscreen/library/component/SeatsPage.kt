@@ -39,8 +39,13 @@ import it.attendance100.mybicocca.domain.model.library.LibrarySeat
 import it.attendance100.mybicocca.domain.model.library.LibraryZoneColor
 import it.attendance100.mybicocca.ui.component.modal.SheetMessage
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.library.theme.zoneSwatch
+import it.attendance100.mybicocca.ui.theme.LocalIsOnline
 
-// Wizard step 3: pick the exact seat, or let the footer button auto-assign the first free one.
+/**
+ * Wizard step 3: pick the exact seat from the free ones — each row shows the zone swatch and a
+ * power-outlet badge — or let the pinned footer button auto-assign the first free seat. Shows an
+ * empty state when the chosen slot has no seats left.
+ */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 internal fun SeatsPage(
@@ -82,6 +87,7 @@ internal fun SeatsPage(
         val dark = isSystemInDarkTheme()
         Button(
             onClick = onAutoSelect,
+            enabled = LocalIsOnline.current,
             shapes = ButtonDefaults.shapes(),
             modifier = Modifier
                 .fillMaxWidth()

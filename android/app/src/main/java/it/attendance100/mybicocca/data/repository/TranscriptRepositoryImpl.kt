@@ -33,6 +33,14 @@ import java.util.concurrent.ConcurrentHashMap
 import javax.inject.Inject
 import javax.inject.Singleton
 
+/**
+ * Room-backed implementation of the transcript contract: the observe methods stream
+ * straight from the career-scoped Room tables (single source of truth) while [refresh]
+ * reconciles them with Esse3's record-book endpoints (`/libretti/{matId}/righe`,
+ * `/stats`, `/medie`) in one atomic swap. Refreshes are TTL-gated through the sync-state
+ * table and de-duplicated per career, so concurrent callers share a single in-flight
+ * sync. Per-activity detail bypasses Room entirely and is fetched live on demand.
+ */
 @Singleton
 class TranscriptRepositoryImpl @Inject constructor(
     private val sessionManager: SessionManager,
@@ -72,6 +80,14 @@ class TranscriptRepositoryImpl @Inject constructor(
         deferred.await()
     }
 
+    /**
+     * Fans out three concurrent live fetches: the attempt history (the primary fetch,
+     * whose failure propagates), the prerequisite check (skipped for passed activities
+     * because the endpoint responds 422 on them, and degraded to Unknown on any failure
+     * rather than surfacing a misleading warning), and a cheap single-row re-read that
+     * yields a fresh bookable-calls count without relying on a possibly-stale cached
+     * value.
+     */
     override suspend fun getCourseDetail(
         careerId: CareerId,
         activityChoiceId: Long,
@@ -82,19 +98,14 @@ class TranscriptRepositoryImpl @Inject constructor(
         val esse3 = sessionManager.esse3()
 
         return coroutineScope {
-            // Attempt history is the primary fetch — propagate its failure.
             val attemptsAsync = async {
                 esse3.transcript.getRecordBookRowTests(matId, activityChoiceId)
                     .map { it.toDomain() }
             }
-            // /prop 422s on passed activities, so only query it for pending ones; treat any
-            // failure as Unknown rather than surfacing a misleading warning.
             val prereqAsync = async {
                 if (alreadyPassed) PrerequisiteStatus.Unknown
                 else fetchPrerequisiteStatus(esse3, matId, activityChoiceId)
             }
-            // Re-read the single row for a fresh bookable-calls count (cheap; avoids relying
-            // on a possibly-stale cached value).
             val bookableAsync = async {
                 runCatching {
                     esse3.transcript.getRecordBookRow(matId, activityChoiceId).bookableCallsNumber
@@ -128,6 +139,11 @@ class TranscriptRepositoryImpl @Inject constructor(
         esse3.transcript.getCheckProposalRecordBookRow(matId, activityChoiceId).toDomain()
     }.getOrDefault(PrerequisiteStatus.Unknown)
 
+    /**
+     * Serves normalized passed-course names from the Room cache, triggering a
+     * best-effort refresh first when the cache is empty so first-run callers still get
+     * data.
+     */
     override suspend fun getPassedCourseNames(careerId: CareerId): Set<String> {
         val cached = dao.getPassedActivityNames(careerId.value)
         if (cached.isNotEmpty()) return cached.toNormalizedSet()
@@ -135,6 +151,12 @@ class TranscriptRepositoryImpl @Inject constructor(
         return dao.getPassedActivityNames(careerId.value).toNormalizedSet()
     }
 
+    /**
+     * Fetches rows, stats and averages concurrently and swaps them into Room in one
+     * transaction. The `/stats` endpoint returns an empty `medie` for some careers, so
+     * the averages also come from the dedicated endpoint (best-effort) and are merged
+     * into the stats when the inline ones are missing.
+     */
     private suspend fun doRefresh(careerId: CareerId, force: Boolean) {
         val career = activeCareer(careerId) ?: return
         val matId = career.enrollmentTraitId.takeIf { it > 0L } ?: return
@@ -144,8 +166,6 @@ class TranscriptRepositoryImpl @Inject constructor(
         val (rowsDto, statsDto, averagesDto) = coroutineScope {
             val rowsAsync = async { esse3.transcript.getRecordBookRows(matId) }
             val statsAsync = async { esse3.transcript.getRecordBookStats(matId) }
-            // The /stats endpoint returns an empty `medie` for some careers, so the averages
-            // come from the dedicated endpoint and are merged in below.
             val averagesAsync = async {
                 runCatching { esse3.transcript.getRecordBookAverages(matId) }.getOrDefault(emptyList())
             }

@@ -18,9 +18,10 @@ import it.attendance100.mybicocca.domain.model.attendance.PresenceMarkOutcome
 import it.attendance100.mybicocca.domain.model.studyplan.Semester
 import it.attendance100.mybicocca.domain.model.studyplan.StudyYear
 
-// Container/content/accent trio for a course's attendance status, in proper
-// MD3 tonal pairs (container + onContainer; accent is the base role for text
-// on plain surfaces).
+/**
+ * Container/content/accent trio for a course's attendance status, in proper MD3 tonal pairs
+ * (container + onContainer; accent is the base role for text on plain surfaces).
+ */
 data class StatusTone(
     val container: Color,
     val onContainer: Color,
@@ -44,7 +45,7 @@ fun ClassroomAttendanceStatus?.tone(): StatusTone {
     }
 }
 
-// Expressive shape-as-meaning: the badge silhouette tracks the status.
+/** Expressive shape-as-meaning: the badge silhouette tracks the status. */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 fun ClassroomAttendanceStatus?.badgePolygon(): RoundedPolygon = when (this) {
     ClassroomAttendanceStatus.Attending -> MaterialShapes.Sunny
@@ -65,10 +66,10 @@ fun Semester.label(): String? = when (this) {
     Semester.Unknown -> null
 }
 
-// Year-group header title; StudyYear(0) is the "not tied to a year" bucket.
+/** Year-group header title; StudyYear(0) is the "not tied to a year" bucket. */
 fun StudyYear.label(): String = if (value > 0) "$value° anno" else "Altri corsi"
 
-// Icon + tonal palette + headline for a presence-registration outcome.
+/** Icon + tonal palette + headline for a presence-registration outcome. */
 data class OutcomeVisual(
     val icon: ImageVector,
     val container: Color,

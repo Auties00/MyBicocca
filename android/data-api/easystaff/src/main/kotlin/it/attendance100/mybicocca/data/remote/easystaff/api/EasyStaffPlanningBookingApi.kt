@@ -51,7 +51,10 @@ class EasyStaffPlanningBookingApi(
          */
         val CAMPUS_TIME_ZONE: ZoneId = ZoneId.of("Europe/Rome")
 
-        // The write endpoints expect a JSON body, even when there is nothing to send
+        /**
+         * Body sent to write endpoints that carry no payload: they expect a JSON body even
+         * when there is nothing to send.
+         */
         private val EmptyJsonBody = JsonObject(emptyMap())
     }
 

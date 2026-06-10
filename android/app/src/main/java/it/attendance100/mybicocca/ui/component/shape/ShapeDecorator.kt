@@ -2,8 +2,15 @@ package it.attendance100.mybicocca.ui.component.shape
 
 import kotlin.random.Random
 
+/**
+ * Scatter layouts for decorative background shapes. A handful of hand-tuned anchor layouts
+ * (anchors deliberately bleed past the container, with fractions outside 0..1 and sizes above
+ * 1) are picked and jittered deterministically from a content id, so a given card keeps the
+ * same arrangement across recompositions and sessions while different cards look varied.
+ */
 object ShapeDecorations {
 
+    /** Where to draw one decoration, as fractions of the decorated container's size. */
     data class Placement(
         val centerXFraction: Float,
         val centerYFraction: Float,
@@ -52,6 +59,11 @@ object ShapeDecorations {
     )
 
 
+    /**
+     * Deterministic placements for [id]: the same id always yields the same layout and jitter.
+     * [salt] derives an alternate arrangement for the same id (e.g. two decorated areas on one
+     * card); [count] beyond the layout's anchors wraps around them.
+     */
     fun placementsFor(id: String, count: Int, salt: Int = 0): List<Placement> {
         val layoutIndex = (id.hashCode() + salt).mod(PREDEFINED_LAYOUTS.size)
         val random = Random(id.hashCode().toLong() * 31 + salt)

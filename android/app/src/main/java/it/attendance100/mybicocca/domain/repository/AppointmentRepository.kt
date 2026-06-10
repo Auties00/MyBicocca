@@ -11,9 +11,13 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.YearMonth
 
-// Catalog and availability are intentionally NOT cached — slot occupancy is volatile and a
-// stale grid sells slots that are already gone. Only reservations created from this device
-// are persisted (Room), because the portal is anonymous and has no server-side listing.
+/**
+ * Desk-appointment booking against the university's Portale Planning portal.
+ *
+ * Catalog and availability are deliberately NOT cached — slot occupancy is volatile and a
+ * stale grid sells slots that are already gone. Only reservations created from this device are
+ * persisted (Room), because the portal is anonymous and has no server-side listing.
+ */
 interface AppointmentRepository {
 
     suspend fun getServices(): List<AppointmentService>
@@ -36,8 +40,10 @@ interface AppointmentRepository {
 
     suspend fun getBookingForm(serviceId: Int): AppointmentForm
 
-    // Creates the hold, finalizes it server-side and persists the reservation locally.
-    // Values are keyed by field code and must include the primary (email) field.
+    /**
+     * Creates the hold, finalizes it server-side and persists the reservation locally.
+     * [values] are keyed by field code and must include the primary (email) field.
+     */
     suspend fun bookAppointment(
         service: AppointmentService,
         offering: AppointmentOffering,
@@ -48,8 +54,10 @@ interface AppointmentRepository {
 
     fun observeReservations(): Flow<List<AppointmentReservation>>
 
-    // Re-validates locally-saved reservations against the portal, dropping the ones that
-    // were cancelled elsewhere.
+    /**
+     * Re-validates locally-saved reservations against the portal, dropping the ones that were
+     * cancelled elsewhere.
+     */
     suspend fun refreshReservations()
 
     suspend fun cancelReservation(reservation: AppointmentReservation)

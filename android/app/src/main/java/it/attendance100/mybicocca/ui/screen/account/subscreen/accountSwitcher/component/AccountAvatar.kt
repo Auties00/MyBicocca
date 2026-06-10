@@ -21,6 +21,12 @@ import coil.request.ImageRequest
 import coil.size.Size
 import java.io.File
 
+/**
+ * Circular account photo, falling back to a person glyph on `surfaceContainerHighest` when
+ * no photo is available. The image request uses `Size.ORIGINAL` to match the key used by
+ * the shell-start preload, so the photo is already in Coil's memory cache here and renders
+ * without a placeholder frame.
+ */
 @Composable
 fun AccountAvatar(
     photo: File?,
@@ -37,8 +43,6 @@ fun AccountAvatar(
     ) {
         if (photo != null) {
             AsyncImage(
-                // Size.ORIGINAL matches the key used by the shell-start preload, so the photo
-                // is already in Coil's memory cache here and renders without a placeholder frame.
                 model = ImageRequest.Builder(LocalContext.current)
                     .data(photo)
                     .size(Size.ORIGINAL)

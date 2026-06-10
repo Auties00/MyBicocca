@@ -54,16 +54,16 @@ import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import com.google.gson.JsonPrimitive
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.domain.model.map.BuildingCode
+import it.attendance100.mybicocca.domain.model.settings.AppTheme
 import it.attendance100.mybicocca.ui.screen.map.component.BuildingPin
-import it.attendance100.mybicocca.ui.screen.map.component.MapFilterSheet
 import it.attendance100.mybicocca.ui.screen.map.ext.splitLegacyAlias
 import it.attendance100.mybicocca.ui.screen.map.subscreen.buildingDetail.BuildingDetailSheet
 import it.attendance100.mybicocca.ui.screen.map.subscreen.buildingsList.BuildingsListSheet
+import it.attendance100.mybicocca.ui.screen.map.subscreen.mapFilter.MapFilterSheet
 import it.attendance100.mybicocca.ui.screen.map.theme.MapPalette
 import it.attendance100.mybicocca.ui.screen.map.theme.applyBicoccaPalette
 import it.attendance100.mybicocca.ui.screen.map.theme.hidePois
 import it.attendance100.mybicocca.ui.screen.map.theme.resolveBicoccaStyleJson
-import it.attendance100.mybicocca.ui.theme.AppTheme
 import it.attendance100.mybicocca.ui.theme.LocalAppTheme
 import it.attendance100.mybicocca.ui.theme.LocalDarkTheme
 import kotlinx.coroutines.flow.filterNotNull
@@ -91,19 +91,24 @@ import kotlin.math.pow
 import kotlin.math.tan
 import android.graphics.Color as AndroidColor
 
-// Campus center (Piazza dell'Ateneo Nuovo). The offline pmtiles extract covers the Milan area, so
-// minZoom is kept city-level rather than the globe.
+/** Campus center (Piazza dell'Ateneo Nuovo): the initial camera target. */
 private val BICOCCA = LatLng(45.5160, 9.2120)
 
-// Coverage of the bundled extract — the exact --bbox passed to `pmtiles extract` (also recorded
-// in basemap.pmtiles' v3 header). Update if the asset is ever re-extracted.
-private const val EXTRACT_WEST = 9.05
-private const val EXTRACT_EAST = 9.70
-private const val EXTRACT_SOUTH = 45.40
-private const val EXTRACT_NORTH = 45.75
+/**
+ * Coverage of the bundled extract — the exact `--bbox` passed to `pmtiles extract`, also
+ * recorded in basemap.pmtiles' v3 header. Must stay in sync with the asset whenever it is
+ * re-extracted.
+ */
+private const val EXTRACT_WEST = 9.189
+private const val EXTRACT_EAST = 9.653
+private const val EXTRACT_SOUTH = 45.491
+private const val EXTRACT_NORTH = 45.710
 
-// Normalized web-mercator world coordinates ([0,1], y grows southward) — the space the camera
-// bounds are fit in, so "half a viewport" is an exact span at any latitude.
+/**
+ * Normalized web-mercator world coordinates (0..1, y grows southward) — the space the camera
+ * bounds are fit in, so "half a viewport" is an exact span at any latitude. [mercatorY],
+ * [longitudeFromMercatorX] and [latitudeFromMercatorY] share the same convention.
+ */
 private fun mercatorX(longitude: Double): Double = (longitude + 180.0) / 360.0
 
 private fun longitudeFromMercatorX(x: Double): Double = x * 360.0 - 180.0
@@ -121,11 +126,13 @@ private val EXTRACT_X_MAX = mercatorX(EXTRACT_EAST)
 private val EXTRACT_Y_MIN = mercatorY(EXTRACT_NORTH)
 private val EXTRACT_Y_MAX = mercatorY(EXTRACT_SOUTH)
 
-// The extract's bbox inset so that constraining the camera TARGET to it keeps the VISIBLE
-// viewport on tiled ground. Insets are in normalized-mercator units; the vertical pair is
-// asymmetric because the visible strip excludes the area behind the floating bar. If the
-// viewport outgrows the extract on an axis (transiently possible mid-resize — the min-zoom
-// floor prevents it in steady state), that axis pins to the midpoint of its inset range.
+/**
+ * The extract's bbox inset so that constraining the camera TARGET to it keeps the VISIBLE
+ * viewport on tiled ground. Insets are in normalized-mercator units; the vertical pair is
+ * asymmetric because the visible strip excludes the area behind the floating bar. If the
+ * viewport outgrows the extract on an axis (transiently possible mid-resize — the min-zoom
+ * floor prevents it in steady state), that axis pins to the midpoint of its inset range.
+ */
 private fun viewportFitBounds(
     westInset: Double,
     eastInset: Double,
@@ -146,10 +153,13 @@ private fun viewportFitBounds(
     )
 }
 
-// Physical px spanned by the full mercator world at the CURRENT zoom, measured through the live
-// projection (two probe points half a view apart). Self-consistent with whatever pixel/density
-// conventions the renderer applies internally — unlike camera padding or a 512·2^zoom constant,
-// it cannot drift from what is actually on screen. Requires bearing/tilt locked (they are).
+/**
+ * Physical px spanned by the full mercator world at the CURRENT zoom, measured through the
+ * live projection (two probe points half a view apart). Self-consistent with whatever
+ * pixel/density conventions the renderer applies internally — unlike camera padding or a
+ * 512·2^zoom constant, it cannot drift from what is actually on screen. Requires bearing/tilt
+ * locked (they are).
+ */
 private fun MapLibreMap.worldPixelsAtCurrentZoom(): Double {
     val x = width / 2f
     val north = projection.fromScreenLocation(PointF(x, height * 0.25f))
@@ -157,37 +167,112 @@ private fun MapLibreMap.worldPixelsAtCurrentZoom(): Double {
     return height * 0.5 / (mercatorY(south.latitude) - mercatorY(north.latitude))
 }
 
-// Latitude the camera target must aim at so that `latitude` lands on screen row `focalY`: the
-// target itself always projects to the view's vertical center, so offset it by the mercator
-// span between the center and focalY.
+/**
+ * Latitude the camera target must aim at so that [latitude] lands on screen row [focalY]: the
+ * target itself always projects to the view's vertical center, so it is offset by the
+ * mercator span between the center and [focalY]. [targetLongitudeFor] is the horizontal twin.
+ */
 private fun MapLibreMap.targetLatitudeFor(latitude: Double, focalY: Double, worldPx: Double): Double =
     latitudeFromMercatorY(mercatorY(latitude) + (height / 2.0 - focalY) / worldPx)
 
 private fun MapLibreMap.targetLongitudeFor(longitude: Double, focalX: Double, worldPx: Double): Double =
     longitudeFromMercatorX(mercatorX(longitude) + (width / 2.0 - focalX) / worldPx)
 
+/**
+ * Absolute zoom floor, kept city-level rather than the globe because the offline extract
+ * covers the Milan area only; map bring-up raises the effective floor further, to the zoom
+ * where the visible strip would outgrow the extract and vertical bounds fitting would have
+ * no solution.
+ */
 private const val MIN_ZOOM = 10.0
 private const val CAMPUS_ZOOM = 15.5
 private const val BUILDING_ZOOM = 17.0
 private const val MAX_ZOOM = 19.0
 
-// A uniform margin inset on every side of the visible viewport before the building is centered in
-// it, so the pin never sits flush against the app bar / sheet edge. Symmetric, so it leaves the
-// center untouched in the normal case; it only bites when an axis is nearly fully covered.
+/**
+ * A uniform margin inset on every side of the visible viewport before the building is centered
+ * in it, so the pin never sits flush against the app bar / sheet edge. Symmetric, so it leaves
+ * the center untouched in the normal case; it only bites when an axis is nearly fully covered.
+ */
 private val VIEWPORT_PADDING = 16.dp
 
+/**
+ * The map tab: the campus rendered edge-to-edge on MapLibre from the offline Protomaps pmtiles
+ * extract, one tappable pin per building from the bundled catalog, and a "Visualizza edifici"
+ * FAB in the bottom-end corner. Tapping a pin selects its building and opens a scrimless
+ * detail modal over the live map — dimming the map would defeat the camera framing the
+ * building above the sheet — while tapping bare map clears the selection. The FAB opens the
+ * buildings list sheet; selections made inside it stay in that sheet's pager, so the
+ * standalone detail modal (and its camera centering) reacts to pin taps only. The shell's
+ * filter affordance opens the category filter sheet, registered via [onProvideFilterToggle].
+ * Room refresh failures surface as in-sheet error states in the building detail / buildings
+ * list sheets (driven by sync status plus a retry action), never as a transient snackbar over
+ * the map.
+ *
+ * Theme reactivity: the brand theme paints the base map with its exact hand-tuned hexes, every
+ * other palette (Material You, Oceano, Bosco) derives map colors from its M3 scheme, and the
+ * live style is recolored in place — no reload — so theme switches are instant while POI icons
+ * keep Protomaps' own colors. Pin colors come from the M3 scheme (primary head, white text),
+ * not the map palette: each building registers two bitmaps (idle + selected) and a symbol, so
+ * reflecting the selection just swaps each symbol's icon.
+ *
+ * Camera framing uses no camera padding anywhere — its internal px/dp conversion is unreliable
+ * in this SDK — and no animateCamera flights that a later update would have to interrupt: all
+ * framing is plain camera targets offset with the mercator world-pixel scale calibrated
+ * through the live projection ([worldPixelsAtCurrentZoom]). Bring-up centers the campus in the
+ * strip below the floating bar and floors the zoom where the visible strip (full width ×
+ * between-bar height) would outgrow the extract. Pan bounds keep the VISIBLE map inside the
+ * extract, not just the camera target: MapLibre's bounds API clamps the center only, which
+ * leaves half a viewport free to slide past the bbox (the void shows mostly vertically —
+ * screens are tall and the extract is short, while horizontally the bbox-intersecting tiles
+ * overshoot far enough to hide it). The target bounds are re-inset on every zoom change via
+ * [viewportFitBounds], vertically asymmetric so panning stops where the data edge meets the
+ * app bar's bottom (north) or the view's bottom (south). A zoom-out tightens the bounds under
+ * the camera: ongoing gestures self-correct on their next frame, but one that ends outside
+ * gets an explicit ease back in.
+ *
+ * Sheet choreography: the tapped building is framed in the visible viewport — the part of the
+ * map with nothing drawn over it: the status bar + floating app bar cap the top, the detail
+ * sheet caps the bottom, side insets cap the width, and a uniform [VIEWPORT_PADDING] margin
+ * insets all four (the FAB is ignored) — in map-local px, where (0,0) is both the map's and
+ * the window's top-left because the map is edge to edge. How much of the map the sheet covers
+ * is its surface height minus the slice hanging below the map view (the bottom inset): the
+ * modal owns its whole surface (no default drag handle, no auto inset padding; the nav-bar
+ * spacer is part of the measured column), so ONE node measures the surface from its top down
+ * to the screen bottom and, a height being window-agnostic, no cross-window position math is
+ * needed. That node is keyed on the building code so an in-place A->B selection swap recreates
+ * it and onSizeChanged is guaranteed to re-fire even when B lays out at A's exact height — a
+ * bare state reset could otherwise wait forever on a callback that never comes — and each
+ * pick's framing waits for the sheet's first size report so it never runs against a stale
+ * cover. The drive is ONE per-frame moveCamera fed by smooth inputs, so the camera never
+ * snaps: an entrance spring (0..1) on the sheet's own motion curve — rather than a
+ * fixed-duration fly that would finish out of step with the modal — interpolates zoom and pan
+ * from the current camera to the framed target, and past 1 the same loop keeps re-deriving the
+ * target from the live cover, riding the sheet's animateContentSize (rooms landing, room-page
+ * swaps) frame for frame so the building stays centered in the strip the sheet leaves. The
+ * framed target rescales the calibrated world-pixel span by 2^Δzoom — mercator scale is
+ * exactly 2^zoom — so the px offset from the view center to the focal point converts to a
+ * camera target with no padding/unit guesswork. The focal point drops below the strip center
+ * by the selected pin's head-center offset so the head — what reads as "the pin" — is what
+ * lands centered, clamped back into the strip when it is too short to fit it; if the margin
+ * over-shrinks an axis, the focal point pins to that axis's near edge rather than inverting.
+ *
+ * @param isActive true only while this is the visible tab — see CalendarScreen for the
+ *   pager-cache rationale; the filter-sheet opener is (re)registered on each activation.
+ * @param contentInsets the shell's content insets: top = floating app bar + status bar, bottom
+ *   = nav bar. The map renders edge-to-edge behind the top bar, so the user-visible viewport
+ *   is the map view minus the top inset — every camera framing computation centers content in
+ *   that strip. The shell ends the map view at the nav bar's TOP edge, so the bottom inset is
+ *   the gap between the map view's bottom and the screen bottom, i.e. the slice of the detail
+ *   sheet that hangs BELOW the map and so covers none of it.
+ */
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun MapScreen(
     modifier: Modifier = Modifier,
-    // True only while this is the visible tab — see CalendarScreen for the pager-cache rationale.
     isActive: Boolean = true,
-    // The shell's content insets (top = floating app bar + status bar, bottom = nav bar). The map
-    // renders edge-to-edge behind the top bar; the top inset bounds the visible strip the camera
-    // framing math centers content in.
     contentInsets: PaddingValues = PaddingValues(),
     onProvideFilterToggle: ((() -> Unit)?) -> Unit = {},
-    onOpenRoom360: (String, String) -> Unit = { _, _ -> },
     viewModel: MapViewModel = hiltViewModel(
         checkNotNull(LocalViewModelStoreOwner.current) {
             "No ViewModelStoreOwner was provided via LocalViewModelStoreOwner"
@@ -198,18 +283,11 @@ fun MapScreen(
     val layoutDirection = LocalLayoutDirection.current
     val context = LocalContext.current
 
-    // The shell ends the map view at the nav bar's TOP edge (MainShell pads the map page by the
-    // bottom inset), while the floating app bar overlays the map. So the user-visible viewport is
-    // the map view minus the top inset — every camera framing computation centers content in that
-    // strip. The bottom inset (bottomBarPx) is the gap between the map view's bottom and the screen
-    // bottom, i.e. the slice of the detail sheet that hangs BELOW the map and so covers none of it.
     val startInsetPx = with(density) { contentInsets.calculateStartPadding(layoutDirection).roundToPx() }
     val endInsetPx = with(density) { contentInsets.calculateEndPadding(layoutDirection).roundToPx() }
     val topInsetPx = with(density) { contentInsets.calculateTopPadding().roundToPx() }
     val bottomBarPx = with(density) { contentInsets.calculateBottomPadding().roundToPx() }
     val viewportPaddingPx = with(density) { VIEWPORT_PADDING.roundToPx() }
-    // The selected pin is anchored at its bottom tip; this is how far its head center sits above
-    // that anchor, so centering can target the head (what reads as "the pin"), not the tip below it.
     val pinHeadCenterOffsetPx = BuildingPin.selectedHeadCenterOffset(density.density)
 
     val buildings by viewModel.buildings.collectAsStateWithLifecycle()
@@ -226,11 +304,6 @@ fun MapScreen(
     var showBuildingsList by remember { mutableStateOf(false) }
     LaunchedEffect(isActive) { if (isActive) onProvideFilterToggle { showFilterSheet = true } }
 
-    // Room refresh failures surface as an in-sheet error state in the building detail / buildings
-    // list sheets (driven by syncStatus + retryRooms), not a transient snackbar over the map.
-
-    // Base-map palette: the brand uses its exact hand-tuned hexes; every other palette (Material
-    // You, Oceano, Bosco) derives map colors from its M3 scheme so the map tracks the theme.
     val appTheme = LocalAppTheme.current
     val scheme = MaterialTheme.colorScheme
     val dark = LocalDarkTheme.current
@@ -240,7 +313,6 @@ fun MapScreen(
             else -> MapPalette.fromColorScheme(scheme, dark)
         }
     }
-    // Building-pin colors come from the M3 scheme (not the map palette) — primary head, white text.
     val pinIdleContainer = scheme.primary.toArgb()
     val pinSelContainer = scheme.primaryContainer.toArgb()
     val pinBorder = scheme.surface.toArgb()
@@ -252,8 +324,6 @@ fun MapScreen(
     var symbolManager by remember { mutableStateOf<SymbolManager?>(null) }
     val symbols = remember { mutableMapOf<String, Symbol>() }
 
-    // One-time map bring-up: await the map + style, configure gestures/zoom, install the symbol
-    // layer and the click handlers.
     LaunchedEffect(mapView) {
         val map = suspendCancellableCoroutine<MapLibreMap> { cont ->
             mapView.getMapAsync { cont.resume(it) }
@@ -265,15 +335,11 @@ fun MapScreen(
             isLogoEnabled = false
             isAttributionEnabled = false
         }
-        // No camera padding anywhere — its internal px/dp conversion proved unreliable in this
-        // SDK. All framing is plain camera targets, offset with the calibrated mercator scale.
         map.moveCamera(CameraUpdateFactory.newLatLngZoom(BICOCCA, CAMPUS_ZOOM))
         val campusWorldPx = map.worldPixelsAtCurrentZoom()
         val visibleWidthPx = (map.width - startInsetPx - endInsetPx).coerceAtLeast(1f).toDouble()
         val visibleHeightPx = (map.height - topInsetPx).coerceAtLeast(1f).toDouble()
 
-        // Floor the zoom where the visible strip (full width x between-bar height) would
-        // outgrow the extract — past that, vertical fitting has no solution.
         val campusZoom = map.cameraPosition.zoom
         map.setMinZoomPreference(
             maxOf(
@@ -284,7 +350,6 @@ fun MapScreen(
         )
         map.setMaxZoomPreference(MAX_ZOOM)
 
-        // Initial framing: campus centered in the strip below the floating bar.
         val initialFocalX = (startInsetPx + map.width - endInsetPx) / 2.0
         val initialFocalY = (topInsetPx + map.height) / 2.0
         map.moveCamera(
@@ -296,12 +361,6 @@ fun MapScreen(
             ),
         )
 
-        // Keep the VISIBLE map inside the extract, not just the camera target: MapLibre's bounds
-        // API clamps the center only, which leaves half a viewport free to slide past the bbox
-        // (the void shows mostly vertically — screens are tall and the extract is short, while
-        // horizontally the bbox-intersecting tiles overshoot far enough to hide it). The target
-        // bounds are re-inset on every zoom change; vertically asymmetric, so panning stops
-        // where the data edge meets the app bar's bottom (north) or the view's bottom (south).
         var fitZoom = Double.NaN
         var fitBounds: LatLngBounds? = null
         fun refitCameraBounds() {
@@ -321,8 +380,6 @@ fun MapScreen(
         map.addOnCameraMoveListener { refitCameraBounds() }
         map.addOnCameraIdleListener {
             refitCameraBounds()
-            // A zoom-out tightens the bounds under the camera. Ongoing gestures self-correct on
-            // their next frame, but one that ENDS outside needs an explicit ease back in.
             val bounds = fitBounds ?: return@addOnCameraIdleListener
             val target = map.cameraPosition.target ?: return@addOnCameraIdleListener
             val easedLat = target.latitude.coerceIn(bounds.latitudeSouth, bounds.latitudeNorth)
@@ -355,12 +412,8 @@ fun MapScreen(
         symbolManager = sm
     }
 
-    // Recolor the live style to the active palette — in place, no reload, so theme changes are
-    // instant. POI icons keep Protomaps' own colors.
     LaunchedEffect(palette, mapStyle) { mapStyle?.applyBicoccaPalette(palette) }
 
-    // Build/refresh the pin symbols whenever the pin set or the pin colors (theme) change. Each
-    // building registers two bitmaps (idle + selected) and a symbol; selection just swaps the icon.
     LaunchedEffect(buildings, symbolManager, mapStyle, pinIdleContainer, pinSelContainer, pinBorder) {
         val sm = symbolManager ?: return@LaunchedEffect
         val style = mapStyle ?: return@LaunchedEffect
@@ -387,7 +440,6 @@ fun MapScreen(
         }
     }
 
-    // Reflect the current selection by swapping each symbol's icon (idle/selected).
     LaunchedEffect(selectedBuilding, symbolManager) {
         val sm = symbolManager ?: return@LaunchedEffect
         if (symbols.isEmpty()) return@LaunchedEffect
@@ -398,56 +450,27 @@ fun MapScreen(
         sm.update(symbols.values.toList())
     }
 
-    // Selections made from inside the buildings list sheet stay in that sheet's pager — the
-    // standalone detail modal (and its camera centering) only reacts to pin taps.
     val detailModalBuilding = if (showBuildingsList) null else selectedBuilding
 
-    // How much of the MAP the detail sheet covers, in map-local px. The sheet is a full-screen
-    // dialog whose surface runs to the screen bottom, so the slice over the map = its whole
-    // surface height minus the slice hanging below the map view (the bottom-nav gap = bottomBarPx).
-    // The surface is measured as ONE node below, and a height is window-agnostic — so this needs
-    // no cross-window position math. 0 = not measured yet (the sheet hasn't laid out for this pick).
     var sheetSurfaceHeightPx by remember { mutableIntStateOf(0) }
     val modalState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    // Drive the camera's entrance on the sheet's OWN motion curve so the two glide in together,
-    // instead of a fixed-duration fly that finishes out of step with the modal.
     val entranceSpec = MaterialTheme.motionScheme.defaultSpatialSpec<Float>()
 
-    // Frame the tapped building in the VISIBLE viewport — the part of the map with nothing drawn
-    // over it: the status bar + floating app bar cap the top, the detail sheet caps the bottom,
-    // side insets cap the width, and a uniform 16dp margin insets all four. The FAB is ignored.
-    // All map-local px (0,0 = the map's top-left = the window's top-left — the map is edge to edge).
-    //
-    // ONE per-frame moveCamera driven by smooth inputs, so the camera NEVER snaps (no animateCamera
-    // to interrupt): an `entrance` spring (0..1) interpolates zoom + pan from the current camera to
-    // the framed target on the sheet's motion curve; past 1 the same loop keeps re-deriving the
-    // framed target from the LIVE cover, so it rides the sheet's own animateContentSize (rooms
-    // landing, room-page swaps) frame for frame. The building stays centered in the strip it leaves.
     LaunchedEffect(detailModalBuilding, libreMap) {
         val map = libreMap ?: return@LaunchedEffect
         val building = detailModalBuilding ?: return@LaunchedEffect
 
-        // Discard the previous pick's measurement; the keyed sheet re-measures for THIS building,
-        // and we wait for its first report before framing so we never frame against a stale cover.
         sheetSurfaceHeightPx = 0
 
         fun coverOrNull(): Int? =
             if (sheetSurfaceHeightPx <= 0) null else (sheetSurfaceHeightPx - bottomBarPx).coerceAtLeast(0)
 
-        // Camera target that lands the building at the center of the 16dp-inset visible viewport at
-        // `zoom`. worldPx (px spanned by the full mercator world) is calibrated live then rescaled
-        // to `zoom` — mercator scale is exactly 2^zoom — so the px offset from the view center to
-        // the focal point converts to a target with no padding/unit guesswork. The inset is
-        // symmetric, so it never moves the center; if it over-shrinks an axis the focal pins to
-        // that axis's near edge (the margin) rather than inverting.
         fun framedTarget(coverPx: Int, zoom: Double): LatLng {
             val left = startInsetPx + viewportPaddingPx
             val right = map.width - endInsetPx - viewportPaddingPx
             val top = topInsetPx + viewportPaddingPx
             val bottom = map.height - coverPx - viewportPaddingPx
             val focalX = ((left + right) / 2.0).coerceAtLeast(left.toDouble())
-            // Center the pin's HEAD, not its anchor tip: drop the focal point below the strip
-            // center by the head offset, clamped back into the strip when it is too short to fit it.
             val focalY = ((top + bottom) / 2.0 + pinHeadCenterOffsetPx)
                 .coerceIn(top.toDouble(), maxOf(top.toDouble(), bottom.toDouble()))
             val worldPx = map.worldPixelsAtCurrentZoom() * 2.0.pow(zoom - map.cameraPosition.zoom)
@@ -457,7 +480,6 @@ fun MapScreen(
             )
         }
 
-        // Hold off until the sheet has reported its size at least once for THIS building.
         snapshotFlow { coverOrNull() }.filterNotNull().first()
 
         val startZoom = map.cameraPosition.zoom
@@ -499,20 +521,11 @@ fun MapScreen(
         ModalBottomSheet(
             onDismissRequest = { viewModel.clearSelection() },
             sheetState = modalState,
-            // No scrim: the sheet coexists with the map (the camera frames the selected building
-            // above it), so dimming the map behind it would defeat the point.
             scrimColor = Color.Transparent,
-            // Own the whole surface so a SINGLE node measures it end to end: no default handle and
-            // no auto inset padding, so the measured column below IS the sheet surface — from its
-            // top down to the screen bottom. `sheetSurfaceHeightPx - bottomBarPx` is then exactly
-            // how much of the map the sheet covers, with zero cross-window position math.
             dragHandle = null,
             contentWindowInsets = { WindowInsets(0) },
         ) {
             val navBottomPx = WindowInsets.navigationBars.getBottom(density)
-            // key(code) recreates the measured node on an in-place A->B selection swap, so
-            // onSizeChanged is guaranteed to re-fire even when B lays out at A's exact height
-            // (a bare state reset could otherwise wait forever on a callback that never comes).
             key(detailModalBuilding.code) {
                 Column(
                     modifier = Modifier
@@ -529,10 +542,8 @@ fun MapScreen(
                         roomDetail = roomDetail,
                         onRoomClick = viewModel::selectRoom,
                         onCloseRoom = viewModel::clearRoomSelection,
-                        onOpen360 = onOpenRoom360,
                         onRetryRooms = viewModel::retryRooms,
                     )
-                    // Keep content clear of the system nav bar; counted in the measured surface.
                     Spacer(modifier = Modifier.height(with(density) { navBottomPx.toDp() }))
                 }
             }
@@ -551,7 +562,6 @@ fun MapScreen(
             onShowInfo = viewModel::selectBuilding,
             onRoomClick = viewModel::selectRoom,
             onCloseRoom = viewModel::clearRoomSelection,
-            onOpen360 = onOpenRoom360,
             onBack = viewModel::clearSelection,
             onDismiss = {
                 showBuildingsList = false
@@ -571,9 +581,12 @@ fun MapScreen(
     }
 }
 
-// MapLibre's MapView is an Android View with a manual lifecycle. Bind it to the composition: create
-// + catch up to the current lifecycle state (addObserver does not replay past events, so a View
-// added while already RESUMED must be started/resumed eagerly), then forward future events.
+/**
+ * MapLibre's MapView is an Android View with a manual lifecycle, bound here to the
+ * composition: create, catch up to the current lifecycle state (addObserver does not replay
+ * past events, so a View added while already RESUMED must be started/resumed eagerly), then
+ * forward future events.
+ */
 @Composable
 private fun rememberMapViewWithLifecycle(): MapView {
     val context = LocalContext.current

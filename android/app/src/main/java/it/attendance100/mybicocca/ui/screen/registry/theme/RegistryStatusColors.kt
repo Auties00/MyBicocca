@@ -6,10 +6,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
 import it.attendance100.mybicocca.ui.screen.registry.state.RegistryBadgeTone
 
-// Success / warning tones don't exist as Material color roles, and the brand error
-// container isn't wired into BicoccaTheme, so the registry directory carries its own
-// fixed status palette mirroring the design tokens. Light vs dark is read off the
-// active surface luminance so it tracks BicoccaTheme regardless of how dark was set.
+/**
+ * Container/on-container pair for one entry of the registry status palette. Success and
+ * warning tones don't exist as Material color roles, and the brand error container isn't
+ * wired into BicoccaTheme, so the registry carries its own fixed status palette mirroring
+ * the design tokens. Light vs dark is read off the active surface luminance so it tracks
+ * BicoccaTheme regardless of how dark mode was selected.
+ */
 data class RegistryStatusTone(
     val container: Color,
     val onContainer: Color,
@@ -35,6 +38,7 @@ private val OnInfoContainerLight = Color(0xFF001B3D)
 private val InfoContainerDark = Color(0xFF1B3A66)
 private val OnInfoContainerDark = Color(0xFFD5E3FF)
 
+/** Resolves a badge tone to its fixed container pair for the active light/dark surface. */
 @Composable
 fun registryBadgeTone(tone: RegistryBadgeTone): RegistryStatusTone {
     val scheme = MaterialTheme.colorScheme
@@ -63,10 +67,12 @@ fun registryBadgeTone(tone: RegistryBadgeTone): RegistryStatusTone {
     }
 }
 
-// Saturated success / warning accents (status dots, rings, "passed/paid" text) — the single
-// source for the "passed/paid = green, pending = amber" semantics several sheets render. Not
-// Material roles; fixed light/dark pairs picked off the active surface luminance, like the
-// container tones above.
+/**
+ * Saturated success / warning accents (status dots, rings, "passed/paid" text) — the single
+ * source for the "passed/paid = green, pending = amber" semantics several sheets render. Not
+ * Material roles; fixed light/dark pairs picked off the active surface luminance, like the
+ * container tones.
+ */
 enum class RegistryAccent { Success, Warning }
 
 private val SuccessAccentLight = Color(0xFF1E8E3E)
@@ -74,6 +80,7 @@ private val SuccessAccentDark = Color(0xFF6DD58C)
 private val WarningAccentLight = Color(0xFFE8710A)
 private val WarningAccentDark = Color(0xFFFFB868)
 
+/** Resolves an accent to its fixed saturated color for the active light/dark surface. */
 @Composable
 fun registryAccent(accent: RegistryAccent): Color {
     val dark = MaterialTheme.colorScheme.surface.luminance() < 0.5f

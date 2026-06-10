@@ -5,6 +5,10 @@ import it.attendance100.mybicocca.domain.model.elearning.course.CourseId
 import it.attendance100.mybicocca.domain.repository.VideoPlaybackRepository
 import javax.inject.Inject
 
+/**
+ * Marks a video as fully watched — for example when playback reaches the end — persisting the
+ * flag locally and mirroring the completion to the e-learning platform.
+ */
 class MarkVideoCompletedUseCase @Inject constructor(
     private val repository: VideoPlaybackRepository,
 ) {

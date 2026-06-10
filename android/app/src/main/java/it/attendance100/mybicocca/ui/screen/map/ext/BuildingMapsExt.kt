@@ -5,7 +5,10 @@ import android.content.Intent
 import android.net.Uri
 import it.attendance100.mybicocca.domain.model.map.MapBuilding
 
-// Opens the building pinned and labeled in the user's maps app.
+/**
+ * Opens the building pinned and labeled in the user's maps app through a geo: intent;
+ * devices without one swallow the tap.
+ */
 fun Context.openBuildingInMaps(building: MapBuilding) {
     val lat = building.point.latitude
     val lng = building.point.longitude
@@ -18,7 +21,7 @@ fun Context.openBuildingInMaps(building: MapBuilding) {
     }
 }
 
-// "ATLAS ex U1" -> "U1 - ATLAS"; sites without a legacy U-number keep their full name.
+/** "ATLAS ex U1" -> "U1 - ATLAS"; sites without a legacy U-number keep their full name. */
 fun buildingDisplayName(building: MapBuilding): String {
     val (name, legacyAlias) = splitLegacyAlias(building.name)
     return if (legacyAlias != null) "$legacyAlias - $name" else name

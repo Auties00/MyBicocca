@@ -1,7 +1,10 @@
 package it.attendance100.mybicocca.domain.model.enrollment
 
-// Esse3 staIscrCod: A = ATTIVA, X = ANNULLATA, S = SOSPESA. Unknown covers any code
-// the server may introduce that we don't recognise.
+/**
+ * Administrative state of an annual enrollment, from Esse3 `staIscrCod`:
+ * "A" = ATTIVA, "X" = ANNULLATA, "S" = SOSPESA. [Unknown] covers any code the server may
+ * introduce that is not recognised.
+ */
 enum class EnrollmentStatus {
     Active,
     Canceled,

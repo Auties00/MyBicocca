@@ -82,6 +82,16 @@ private val CREDITS = listOf(
     Credit("Federico Giarrusso", { }),
 )
 
+/**
+ * The settings About page, shown as a modal bottom sheet. A centered header stacks the app logo
+ * with the wordmark tucked up close beneath it, then the version (with a debug marker on debug
+ * builds) and the copyright span. Below, a connected segmented card offers three actions:
+ * "Check for Updates" (shows an inline spinner in the trailing slot; the check itself is a
+ * stubbed delay, and re-taps while one is in flight are ignored so checks never overlap),
+ * "What's New" (haptic-only placeholder), and "GitHub", which opens the repository in an in-app
+ * Custom Tab so the user stays inside the app. A "Credits" section lists the team as compact
+ * avatar rows.
+ */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun AppInfoSheet(onDismiss: () -> Unit) {
@@ -114,7 +124,6 @@ fun AppInfoSheet(onDismiss: () -> Unit) {
                     contentDescription = "Logo MyBicocca",
                     modifier = Modifier.size(168.dp),
                 )
-                // Pulled up so the wordmark tucks closer under the logo graphic.
                 MyBicoccaWordmark(
                     modifier = Modifier.offset(y = (-10).dp),
                     fontSize = 30.sp,
@@ -135,11 +144,10 @@ fun AppInfoSheet(onDismiss: () -> Unit) {
                     subtitle = "Cerca nuove versioni",
                     onClick = {
                         haptic.tap()
-                        // Guard the work, not the tap: stacking taps mustn't launch overlapping checks.
                         if (!isLoading) {
                             isLoading = true
                             scope.launch {
-                                delay(2000L) // TODO implement actual update checking logic
+                                delay(2000L)
                                 isLoading = false
                             }
                         }
@@ -184,7 +192,6 @@ fun AppInfoSheet(onDismiss: () -> Unit) {
                     subtitle = "Codice sorgente del progetto",
                     onClick = {
                         haptic.tap()
-                        // In-app browser (Custom Tab) instead of kicking the user to the system browser.
                         CustomTabsIntent.Builder().setShowTitle(true).build()
                             .launchUrl(context, GITHUB_URL.toUri())
                     },
@@ -221,7 +228,7 @@ fun AppInfoSheet(onDismiss: () -> Unit) {
     }
 }
 
-// The standard trailing chevron/link glyph for the action tiles.
+/** The standard trailing chevron/link glyph for the action tiles. */
 @Composable
 private fun TrailingGlyph(icon: ImageVector) {
     Spacer(Modifier.width(6.dp))
@@ -233,9 +240,12 @@ private fun TrailingGlyph(icon: ImageVector) {
     )
 }
 
-// Compact credit row: a circular avatar placeholder + the member's name. Kept separate from the
-// directory tiles because it is intentionally denser (smaller avatar/text, no trailing); it still
-// shares the connected-card [segmentedShape].
+/**
+ * Compact credit row: a circular avatar slot + the member's name. Kept separate from the
+ * directory tiles because it is intentionally denser (smaller avatar/text, no trailing); it
+ * still shares the connected-card [segmentedShape]. The avatar renders the credit's icon lambda
+ * inside a secondary-container circle, a slot meant to carry each member's photo.
+ */
 @Composable
 private fun CreditTile(
     credit: Credit,
@@ -253,7 +263,6 @@ private fun CreditTile(
             modifier = Modifier.padding(start = 12.dp, end = 14.dp, top = 8.dp, bottom = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            // TEMP placeholder avatar — replace each credit's icon lambda with the member's photo.
             Box(
                 modifier = Modifier
                     .size(40.dp)

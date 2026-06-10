@@ -4,6 +4,7 @@ import it.attendance100.mybicocca.domain.model.account.AccountId
 import it.attendance100.mybicocca.domain.repository.SearchHistoryRepository
 import javax.inject.Inject
 
+/** Empties the account's entire search history. */
 class ClearSearchHistoryUseCase @Inject constructor(
     private val repository: SearchHistoryRepository,
 ) {

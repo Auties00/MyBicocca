@@ -44,6 +44,19 @@ import it.attendance100.mybicocca.ui.screen.elearning.subscreen.courseDetail.sta
 import it.attendance100.mybicocca.ui.screen.elearning.theme.HeroShapeTriple
 import kotlin.math.floor
 
+/**
+ * Expanded header of the course detail page: year/period label, the course title set as an
+ * oversized two-tone headline (light italic head, brand-black tail), an instructor line, and
+ * the continue-watching card, over three per-course organic accent shapes.
+ *
+ * The shapes spin continuously while [isLoading] (the hero doubles as the page's loading
+ * indicator) and, driven by [scrollFraction] read inside graphicsLayer blocks, rotate, fade
+ * and translate downward as the header collapses — a parallax that costs no recomposition.
+ * The continue-watching card fades out on the same scroll curve. A minimum height keeps the
+ * background shapes inside the hero bounds during loading, when the text column is too short
+ * on its own to reach the shapes' resting offsets. The instructor/continue-watching block
+ * animates in only once the course has sections.
+ */
 @Composable
 fun CourseHero(
     details: CourseDetails?,
@@ -68,11 +81,8 @@ fun CourseHero(
             .fillMaxWidth()
             .padding(horizontal = 16.dp)
             .padding(top = 8.dp, bottom = 4.dp)
-            // Holds the background shapes inside the hero bounds during loading, when the
-            // text column is too short on its own to reach the shapes' resting offsets.
             .heightIn(min = 280.dp),
     ) {
-        // Big
         Box(
             modifier = Modifier
                 .align(Alignment.TopEnd)
@@ -86,7 +96,6 @@ fun CourseHero(
                 }
                 .background(scheme.tertiary, shapes.large),
         )
-        // Medium
         Box(
             modifier = Modifier
                 .align(Alignment.CenterStart)
@@ -100,7 +109,6 @@ fun CourseHero(
                 }
                 .background(scheme.primary, shapes.medium),
         )
-        // Small
         Box(
             modifier = Modifier
                 .align(Alignment.CenterEnd)
@@ -172,8 +180,10 @@ fun CourseHero(
     }
 }
 
-// Spins the hero shape continuously while loading, then carries it forward to the next
-// upright (multiple of 360°) instead of snapping back — avoids a visible reverse spin.
+/**
+ * Spins the hero shape continuously while loading, then carries it forward to the next
+ * upright (multiple of 360°) rather than snapping back — avoids a visible reverse spin.
+ */
 @Composable
 private fun rememberShapeRotation(
     isLoading: Boolean,

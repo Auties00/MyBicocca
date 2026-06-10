@@ -1,7 +1,15 @@
 package it.attendance100.mybicocca.domain.model.elearning.course
 
-// activeMonthIndices indexes into the 12-month academic strip starting at Sep
-// (0 = Sep, 11 = Aug), matching the strip the syllabus tile renders.
+/**
+ * Teaching period of a course, matched from the free-text "periodo" fields of the
+ * Moodle course sheet. Backs the semester strip on the syllabus info tile.
+ *
+ * @property activeMonthIndices Indices into the 12-month academic strip starting at
+ * September (0 = Sep, 11 = Aug) that the period covers, matching the strip the
+ * syllabus tile renders.
+ * @property title Italian display name of the period.
+ * @property rangeLabel Italian month-range caption shown under the title.
+ */
 enum class Semester(
     val activeMonthIndices: Set<Int>,
     val title: String,

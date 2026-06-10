@@ -3,6 +3,7 @@ package it.attendance100.mybicocca.data.repository
 import io.ktor.utils.io.jvm.javaio.toInputStream
 import it.attendance100.mybicocca.data.auth.SessionManager
 import it.attendance100.mybicocca.data.mapper.calendar.normalizeSubjectName
+import it.attendance100.mybicocca.data.mapper.common.Esse3DateFormat
 import it.attendance100.mybicocca.data.remote.easystaff.api.EasyStaffApi
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffAcademicYear
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffStudyProgram
@@ -44,11 +45,18 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import java.time.LocalDate
-import java.time.format.DateTimeFormatter
 import java.util.concurrent.ConcurrentHashMap
 import javax.inject.Inject
 import javax.inject.Singleton
 
+/**
+ * Live implementation of the study-plan contract over Esse3's plans, choice-rules and
+ * structure APIs plus EasyStaff's study-program catalog. Plan data is not persisted in
+ * Room: the only caching is a short in-memory TTL on the Esse3 activities, the EasyStaff
+ * program and their planned-courses intersection, which calendar/attendance poll
+ * frequently; a per-career mutex keeps concurrent intersection computations from
+ * duplicating work.
+ */
 @Singleton
 class StudyPlanRepositoryImpl @Inject constructor(
     private val sessionManager: SessionManager,
@@ -78,11 +86,15 @@ class StudyPlanRepositoryImpl @Inject constructor(
         }
     }
 
+    /**
+     * Resolves the best plan header (approved if present, else most recent) and loads
+     * its activities with `optionalFields=ALL` — the default response omits
+     * choiceFlag/courseYear/weight, which the study-plan page needs.
+     */
     override suspend fun getStudyPlan(careerId: CareerId): StudyPlan? {
         val plansApi = sessionManager.esse3().plans
         val header = plansApi.getStudentPlanHeaders(studentId = careerId.value).pickBest() ?: return null
         val planId = header.planId?.toLong() ?: return null
-        // ALL: the default response omits choiceFlag/courseYear/weight, which the page needs.
         val plan = plansApi.getStudentPlan(careerId.value, planId, optionalFields = "ALL")
         return StudyPlan(
             planId = planId,
@@ -100,18 +112,35 @@ class StudyPlanRepositoryImpl @Inject constructor(
         )
     }
 
+    /**
+     * Assembles the path configuration from the plan header and the choice regulation's
+     * schemas. The header is asked with `optionalFields=ALL` because the path
+     * descriptions on it (pdsSceDes, pdsDes, aptDes, ...) are optional fields Esse3
+     * omits by default. Only standard plans (tipoPiano = S) hang off a choice regulation
+     * with selectable schemas — individual plans have no percorso/orientamento choice —
+     * and with no plan at all, the active regulation for the career's course + cohort
+     * still allows a first compilation.
+     *
+     * Schemas, compilation windows and the public percorso catalog are fetched
+     * concurrently and all non-fatally: a path with no selectable alternatives still
+     * renders read-only. The catalog (also requested with ALL for the optional
+     * pds/orient/prof/apt/cond descriptions) is purely cosmetic — it fills names the
+     * schema response leaves blank, plus the teaching languages. Percorso and part-time
+     * live on the plan header, while orientamento and profilo are only carried on the
+     * schema, so those read from the student's current schema.
+     *
+     * Options keep schemas that are choosable today (exposed to students AND inside the
+     * schema's validity range); the current schema stays listed even when hidden or
+     * expired, so the student can re-confirm their own percorso. Schemas are then
+     * de-duplicated by path tuple — two that differ only by approval flavour (e.g. GGG
+     * vs GGG-A) are the same choice.
+     */
     override suspend fun getStudyPath(careerId: CareerId): StudyPath? = coroutineScope {
         val esse3 = sessionManager.esse3()
-        // Path descriptions on the header (pdsSceDes, pdsDes, aptDes, ...) are optional
-        // fields Esse3 omits by default.
         val header = esse3.plans
             .getStudentPlanHeaders(studentId = careerId.value, optionalFields = "ALL")
             .pickBest()
 
-        // Only standard plans (tipoPiano = S) hang off a choice regulation with selectable
-        // schemas. Individual plans have no percorso/orientamento choice. With no plan at
-        // all, the active regulation for the career's course + cohort still allows a
-        // first compilation.
         val regulationId: Long?
         val courseOfStudyId: Long?
         val academicYearOrderId: Long?
@@ -126,12 +155,9 @@ class StudyPlanRepositoryImpl @Inject constructor(
             academicYearOrderId = regulation.academicYearOrderId
         }
 
-        // Fetch schemas, windows and the percorso catalog concurrently; all non-fatal —
-        // a path with no selectable alternatives still renders read-only.
         val schemasDeferred = async {
             if (regulationId == null) emptyList()
             else runCatching {
-                // ALL: pds/orient/prof/apt/cond descriptions are optional fields.
                 esse3.choiceRules.getStudyPlanSchemas(regulationId, optionalFields = "ALL")
             }.getOrDefault(emptyList())
         }
@@ -139,8 +165,6 @@ class StudyPlanRepositoryImpl @Inject constructor(
             if (regulationId == null) false
             else runCatching { isPlanEditingOpen(regulationId) }.getOrDefault(false)
         }
-        // Public percorso catalog of the course/ordinamento: fills names the schema
-        // response leaves blank, plus the teaching languages. Purely cosmetic.
         val catalogDeferred = async {
             if (courseOfStudyId == null || academicYearOrderId == null) emptyMap()
             else runCatching {
@@ -154,8 +178,6 @@ class StudyPlanRepositoryImpl @Inject constructor(
 
         val currentSchema = header?.schemaId?.let { id -> schemas.firstOrNull { it.schemaId == id } }
 
-        // Percorso and part-time live on the plan header; orientamento and profilo are
-        // only carried on the schema, so read them from the student's current schema.
         val percorso = facet(
             code = header?.studyPlanChoiceCode ?: header?.studyPlanStudentCode,
             description = header?.studyPlanChoiceDescription ?: header?.studyPlanDescription
@@ -168,10 +190,6 @@ class StudyPlanRepositoryImpl @Inject constructor(
             description = header?.aptDescription ?: currentSchema?.aptDescription,
         )
 
-        // Choosable today = exposed to students AND inside the schema's validity range.
-        // The current schema stays listed even when hidden/expired, so the student can
-        // re-confirm their own percorso. De-duplicate by path tuple — two schemas that
-        // differ only by approval flavour (e.g. GGG vs GGG-A) are the same choice.
         val today = LocalDate.now()
         val currentTuple = currentSchema?.let(::pathTuple)
         val options = schemas
@@ -192,9 +210,12 @@ class StudyPlanRepositoryImpl @Inject constructor(
         )
     }
 
-    // With no plan there's no header pointing at the regulation — resolve it from the
-    // career's course and cohort instead. Several active regulations pick the newest
-    // ordinamento/revision; none found means compilation simply isn't offered.
+    /**
+     * Resolves the choice regulation for a career that has no plan (and therefore no
+     * header pointing at one) from the career's course and cohort. Among several active
+     * regulations the newest ordinamento/revision wins; none found means compilation
+     * simply is not offered.
+     */
     private suspend fun findRegulationForCareer(careerId: CareerId): Esse3ChoiceRegulation? {
         val career = activeCareer(careerId) ?: return null
         if (career.programId <= 0L) return null
@@ -227,8 +248,10 @@ class StudyPlanRepositoryImpl @Inject constructor(
                 .use { it.readBytes() }
         }
 
-    // Esse3 returns the whole choice tree; only activities the student actually has in
-    // plan (choiceFlag != 0) become courses.
+    /**
+     * Esse3 returns the whole choice tree; only activities the student actually has in
+     * plan (`choiceFlag != 0`) become courses.
+     */
     private fun Esse3StudyPlanActivity.toStudyPlanCourse(): StudyPlanCourse? {
         if (choiceFlag == 0) return null
         val courseId = activityChoiceId
@@ -247,8 +270,10 @@ class StudyPlanRepositoryImpl @Inject constructor(
         )
     }
 
-    // Path identity of a schema: the tuple that distinguishes a real choice. Schemas
-    // sharing this tuple are duplicates (typically approval-flavour variants).
+    /**
+     * Path identity of a schema: the tuple that distinguishes a real choice. Schemas
+     * sharing this tuple are duplicates (typically approval-flavour variants).
+     */
     private fun pathTuple(schema: Esse3PlanSchema): List<String?> = listOf(
         schema.studyPlanCode,
         schema.orientationCode?.takeIf { it.isNotBlank() },
@@ -287,14 +312,14 @@ class StudyPlanRepositoryImpl @Inject constructor(
         )
     }
 
-    // Schemas carry their own validity window, independent of the compilation windows.
+    /** Schemas carry their own validity window, independent of the compilation windows. */
     private fun Esse3PlanSchema.isValidOn(date: LocalDate): Boolean {
         val start = evaluationStartDate.parseEsse3Date()
         val end = evaluationEndDate.parseEsse3Date()
         return (start == null || !date.isBefore(start)) && (end == null || !date.isAfter(end))
     }
 
-    // A facet exists only when at least one of code/description carries text.
+    /** A facet exists only when at least one of code/description carries text. */
     private fun facet(code: String?, description: String?): StudyPathFacet? {
         val cleanCode = code?.takeIf { it.isNotBlank() }
         val cleanDesc = description?.takeIf { it.isNotBlank() }
@@ -302,6 +327,12 @@ class StudyPlanRepositoryImpl @Inject constructor(
         else StudyPathFacet(code = cleanCode, description = cleanDesc)
     }
 
+    /**
+     * Loads the schema's full rule tree and the existing plan's activities concurrently,
+     * then builds the editable rules sorted by course year and rule order. An activity
+     * can appear under multiple rules; once selected somewhere it must not auto-select
+     * again elsewhere, which the shared assigned-codes set enforces across rules.
+     */
     override suspend fun getStudyPlanDraft(
         careerId: CareerId,
         planId: Long?,
@@ -319,14 +350,18 @@ class StudyPlanRepositoryImpl @Inject constructor(
         }
         val schema = schemaDeferred.await()
 
-        // An activity can appear under multiple rules; once selected somewhere it must
-        // not auto-select again elsewhere.
         val assignedActivityCodes = mutableSetOf<String>()
         schema.choiceRules
             .mapNotNull { it.toEditableRule(existingActivities, assignedActivityCodes) }
             .sortedWith(compareBy({ it.courseYear }, { it.orderNumber }))
     }
 
+    /**
+     * POSTs the selected activities as a standard plan in proposed state, replacing the
+     * currently valid plan. The schema's approval flavour rides on `tipoRegsce`;
+     * `pdsSceCod` records the percorso choice only when compiling against a non-current
+     * schema — null keeps the server on the student's current percorso.
+     */
     override suspend fun submitStudyPlan(
         careerId: CareerId,
         rules: List<EditableRule>,
@@ -345,10 +380,6 @@ class StudyPlanRepositoryImpl @Inject constructor(
                 academicYearOfferActivityId = course.academicYearOfferId,
             )
         }
-        // Standard plan, proposed state; replaces the currently valid plan. The schema's
-        // approval flavour rides on tipoRegsce; pdsSceCod records the percorso choice
-        // only when compiling against a non-current schema — null keeps the server on
-        // the student's current percorso.
         val body = Esse3PostPlanBody(
             type = "S",
             state = "P",
@@ -365,16 +396,22 @@ class StudyPlanRepositoryImpl @Inject constructor(
         sessionManager.esse3().plans.postStudentPlan(careerId.value, body)
     }
 
+    /**
+     * Builds one editable rule from the schema's rule tree. The constraint unit follows
+     * `tipUnt`: BLK rules constrain how many picks are made, not how many CFU they
+     * weigh, and blocks map 1:1 onto activities here, so a block pick is an activity
+     * pick; mandatory rules have nothing to pick, so they always read in CFU even when
+     * the schema marks them BLK. Mandatory rules pre-select every activity; elsewhere an
+     * activity is pre-selected when the existing plan already contains it, it has not
+     * been claimed by another rule, and it still fits the rule's cap. Rules whose
+     * activities all fail to decode resolve to null.
+     */
     private fun Esse3ChoiceRuleSchemaWithDetails.toEditableRule(
         existingActivities: List<Esse3StudyPlanActivity>,
         assignedActivityCodes: MutableSet<String>,
     ): EditableRule? {
         val ruleChoiceId = choiceId ?: return null
         val isMandatory = choiceType == Esse3ChoiceType.Obligatory
-        // BLK rules constrain how many picks are made, not how many CFU they weigh.
-        // Blocks map 1:1 onto activities here, so a block pick is an activity pick.
-        // Mandatory rules have nothing to pick, so they always read in CFU even when
-        // the schema marks them BLK.
         val unit = when {
             isMandatory -> ChoiceConstraintUnit.Credits
             teachingUnitType == Esse3TeachingUnitType.Block -> ChoiceConstraintUnit.Activities
@@ -393,8 +430,6 @@ class StudyPlanRepositoryImpl @Inject constructor(
                     ChoiceConstraintUnit.Activities -> 1f
                 }
 
-                // Mandatory rules pre-select everything; otherwise pre-select what the
-                // existing plan already contains, while it still fits the rule's cap.
                 var isSelected = isMandatory
                 if (!isSelected && activityCode !in assignedActivityCodes) {
                     val isInExistingPlan = existingActivities.any { existing ->
@@ -479,6 +514,12 @@ class StudyPlanRepositoryImpl @Inject constructor(
         return programs.firstOrNull { it.code == code }
     }
 
+    /**
+     * Intersects the Esse3 plan activities with the EasyStaff program's subjects,
+     * joining by activity code first and by normalized name as fallback; the semester
+     * comes from the program's teaching periods, whose "S1"/"S2" codes are keyed by
+     * their opaque period id. The result is de-duplicated by EasyStaff subject code.
+     */
     private fun intersect(
         activities: List<Esse3StudyPlanActivity>,
         program: EasyStaffStudyProgram,
@@ -487,7 +528,6 @@ class StudyPlanRepositoryImpl @Inject constructor(
         val byCode: Map<String, EasyStaffStudyProgramSubject> = subjects.associateBy { it.code }
         val byName: Map<String, EasyStaffStudyProgramSubject> =
             subjects.associateBy { normalizeSubjectName(it.name) }
-        // EasyStaff period codes ("S1"/"S2") keyed by their opaque period id.
         val semesterByPeriodId: Map<String, Semester> = program.teachingPeriods.associate {
             it.id to when (it.code.uppercase()) {
                 "S1" -> Semester.First
@@ -535,16 +575,18 @@ class StudyPlanRepositoryImpl @Inject constructor(
     }
 }
 
+/**
+ * Picks the plan header to operate on: the approved one when present, else the one with
+ * the highest plan id (the most recent submission).
+ */
 private fun List<Esse3StudyPlanHeader>.pickBest(): Esse3StudyPlanHeader? {
     val approved = firstOrNull { it.state is Esse3State3.Approved }
     return approved ?: maxByOrNull { it.planId ?: Int.MIN_VALUE }
 }
 
-private val Esse3HeaderDateFormat = DateTimeFormatter.ofPattern("dd/MM/yyyy")
-
-// Esse3 emits DD/MM/YYYY, sometimes followed by a time component — keep the date part.
+/** Esse3 emits DD/MM/YYYY, sometimes followed by a time component; the date part wins. */
 private fun String?.parseEsse3Date(): LocalDate? = this?.take(10)?.let {
-    runCatching { LocalDate.parse(it, Esse3HeaderDateFormat) }.getOrNull()
+    runCatching { LocalDate.parse(it, Esse3DateFormat) }.getOrNull()
 }
 
 private fun currentAcademicYear(): EasyStaffAcademicYear {

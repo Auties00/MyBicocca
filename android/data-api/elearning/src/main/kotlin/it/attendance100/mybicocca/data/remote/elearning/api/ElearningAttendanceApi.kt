@@ -37,7 +37,7 @@ class ElearningAttendanceApi(
         private const val MOBILE_USER_FORM_METHOD = "mobile_user_form"
         private const val MOBILE_COMPONENT = "mod_attendance"
 
-        // Selects the "latest" (Ionic 5+) Angular templates the modern app expects.
+        /** Selects the "latest" (Ionic 5+) Angular templates the modern app expects. */
         private const val APP_VERSION_CODE = "45000"
 
         /**
@@ -46,12 +46,16 @@ class ElearningAttendanceApi(
          */
         private val TRANSLATE_KEY_REGEX = Regex("plugin\\.mod_attendance\\.(\\w+)")
 
-        // Captures every `sessid` a mobile view button exposes as a mark action;
-        // the plugin renders one only for sessions open for student self-marking.
+        /**
+         * Captures every `sessid` a mobile view button exposes as a mark action;
+         * the plugin renders one only for sessions open for student self-marking.
+         */
         private val SESSID_REGEX = Regex("sessid:\\s*(\\d+)")
 
-        // Plugin message keys (rendered inside <span class="messages"> as
-        // `plugin.mod_attendance.<key>`) that signal a marking attempt did not record.
+        /**
+         * Plugin message key signaling a marking attempt did not record; see
+         * [classifyMarkTemplate] for how these messages are rendered.
+         */
         private const val MESSAGE_WRONG_PASSWORD = "incorrectpasswordshort"
         private const val MESSAGE_SUBNET = "subnetwrong"
         private const val MESSAGE_SHARED_IP = "preventsharederror"
@@ -265,12 +269,18 @@ class ElearningAttendanceApi(
         return response.templates.firstOrNull()?.html
     }
 
-    // Reads the marking outcome from the returned mobile view template. The plugin
-    // renders any blocking condition as a `plugin.mod_attendance.<key>` message;
-    // otherwise a successful take_from_student drops the session's submit action
-    // (its `sessid` button) and surfaces the assigned status, so the absence of
-    // both a message and a remaining mark action for this session is the success
-    // signal (verified against mobile_view_page_latest.mustache + mobile.php).
+    /**
+     * Reads the marking outcome from the returned mobile view template, matching the plugin's
+     * `mobile_view_page_latest.mustache` + `mobile.php` behavior.
+     *
+     * The plugin renders any blocking condition as a `plugin.mod_attendance.<key>` message
+     * inside `<span class="messages">`; otherwise a successful take_from_student drops the
+     * session's submit action (its `sessid` button) and surfaces the assigned status, so the
+     * absence of both a message and a remaining mark action for this session is the success
+     * signal. When no blocking message is present but the mark action remains, the session
+     * was not matched (e.g. it closed between discovery and marking). The status assigned to
+     * a marked session is the trailing `<h3>` of its session item, after the group name.
+     */
     private fun classifyMarkTemplate(
         document: Document,
         sessionId: String
@@ -292,13 +302,9 @@ class ElearningAttendanceApi(
         val stillMarkable = SESSID_REGEX.findAll(document.html())
             .any { it.groupValues[1] == sessionId }
         if (stillMarkable) {
-            // No blocking message yet the mark action is still present: the session
-            // wasn't matched (e.g. it closed between discovery and marking).
             return ElearningAttendanceMarkResult.NotOpen(reason = null)
         }
 
-        // Marked: pick up the assigned status from a marked session row, when present.
-        // currentstatus is the trailing <h3> of a session item (after the group name).
         val statusText = document.select("ion-item h3")
             .map { it.text().trim() }
             .lastOrNull { it.isNotBlank() }

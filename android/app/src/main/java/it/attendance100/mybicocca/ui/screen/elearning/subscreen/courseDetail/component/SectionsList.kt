@@ -85,8 +85,14 @@ import java.time.format.DateTimeFormatter
 import java.util.Locale
 import kotlin.math.roundToInt
 
-// One LazyColumn item per section card, so long courses only compose the cards on screen
-// (the host list owns spacing and padding).
+/**
+ * Emits one LazyColumn item per section card, so long courses only compose the cards on
+ * screen (the host list owns spacing and padding).
+ *
+ * mod_subsection child sections are not top-level cards: they render inline under their
+ * placeholder module. A subsection module resolves to its child by the linked section id
+ * (customdata.sectionid) or, failing that, by the child's owning itemid.
+ */
 fun LazyListScope.sectionCards(
     sections: List<CourseSection>,
     expanded: Set<Int>,
@@ -97,9 +103,6 @@ fun LazyListScope.sectionCards(
     onModuleClick: (CourseModule) -> Unit,
     onModuleLongClick: (CourseModule) -> Unit,
 ) {
-    // mod_subsection child sections are not top-level cards: they render inline under their
-    // placeholder module. Resolve a subsection module to its child by the linked section id
-    // (customdata.sectionid) or, failing that, by the child's owning itemid.
     val children = sections.filter { it.isSubsectionChild }
     val childById = children.associateBy { it.id }
     val childByItemId = children.mapNotNull { c -> c.itemId?.let { it to c } }.toMap()
@@ -125,9 +128,11 @@ fun LazyListScope.sectionCards(
     }
 }
 
-// A section earns a card if it has a renderable summary or at least one module the student can
-// actually see (visible + on the course page). Sections that are wholly empty or hold only
-// stealth modules render to nothing and are dropped instead of showing a blank expandable card.
+/**
+ * A section earns a card if it has a renderable summary or at least one module the student can
+ * actually see (visible + on the course page). Sections that are wholly empty or hold only
+ * stealth modules render to nothing and are dropped rather than showing a blank expandable card.
+ */
 private fun CourseSection.isRenderable(): Boolean =
     summary?.containsRenderableHtml() == true ||
         modules.any { it.visible && it.onCoursePage }
@@ -177,8 +182,10 @@ private fun SectionCard(
     }
 }
 
-// Renders a run of content blocks; recurses for inlined subsections. Shared by the section
-// card body and the subsection expander so nesting renders identically.
+/**
+ * Renders a run of content blocks; recurses for inlined subsections. Shared by the section
+ * card body and the subsection expander so nesting renders identically.
+ */
 @Composable
 private fun SectionBlocks(
     blocks: List<ContentBlock>,
@@ -213,9 +220,11 @@ private fun SectionBlocks(
     }
 }
 
-// A teacher note (content label) rendered as real HTML so links stay tappable and lists keep
-// their structure — the previous plain-text flattening silently dropped ebook/Meet/GitHub
-// links and lesson syllabi.
+/**
+ * A teacher note (content label) rendered as real HTML so links stay tappable and lists keep
+ * their structure — flattening to plain text would silently drop ebook/Meet/GitHub links and
+ * lesson syllabi.
+ */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun HtmlCallout(html: String) {
@@ -242,7 +251,7 @@ private fun HtmlCallout(html: String) {
     }
 }
 
-// An inlined mod_subsection: a labelled expander that reveals the child section's own blocks.
+/** An inlined mod_subsection: a labelled expander that reveals the child section's own blocks. */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun SubsectionBlock(
@@ -375,6 +384,18 @@ private fun GroupBlock(
     }
 }
 
+/**
+ * Row for one module inside a section card: a type-family-colored badge, the name, a meta line,
+ * an optional description preview, and a watch-progress bar for partially watched videos (wavy
+ * for the most recently seen one, flat for the rest).
+ *
+ * A module that is teacher-visible but gated for this user shows the restriction reason in
+ * place of the usual meta, yet stays tappable (e.g. a password-protected Webex unlocks in the
+ * browser). The description preview surfaces lecture syllabi / deadlines stated in the body,
+ * kept as raw HTML so links stay tappable (forum deadlines, Meet/GitHub links), rendered
+ * compactly and line-limited so video syllabi don't bloat the row. Indentation honours the
+ * teacher's visual nesting; subsection placeholders carry indent on their children.
+ */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalFoundationApi::class)
 @Composable
 private fun ModuleRow(
@@ -392,19 +413,12 @@ private fun ModuleRow(
         ?.takeIf { !it.completed && it.progressFraction > 0.01f }
         ?.progressFraction
     val locked = !module.accessible
-    // Teacher-visible but gated for this user: show the restriction reason instead of the
-    // usual meta, but keep the row tappable (e.g. a password-protected Webex unlocks in the
-    // browser). A description preview surfaces lecture syllabi / deadlines stated in the body.
-    // Kept as raw HTML so links in the description stay tappable (forum deadlines, Meet/GitHub
-    // links). Rendered compactly and line-limited so video syllabi don't bloat the row.
     val descriptionHtml = remember(module) {
         module.description?.takeIf { it.containsRenderableHtml() }
     }
     val restriction = remember(module) {
         module.availabilityInfo?.htmlToPlainText()?.takeIf { it.isNotBlank() }
     }
-    // Subsection placeholders carry indent on their children; for normal rows honour the
-    // teacher's visual nesting.
     val indentPadding = (module.indent.coerceIn(0, 4) * 14).dp
     Surface(
         shape = shape,
@@ -439,7 +453,7 @@ private fun ModuleRow(
                     text = restriction?.let { "🔒 $it" } ?: moduleMeta(
                         module,
                         progress
-                    ), // TODO use icon instead of emoji
+                    ),
                     style = MaterialTheme.typography.labelSmall,
                     color = when {
                         locked -> scheme.onSurfaceVariant
@@ -573,6 +587,17 @@ private fun CourseModule.resourceIcon(): ImageVector {
     }
 }
 
+/**
+ * One-line meta label for a module row: an Italian type label enriched with watch progress,
+ * file type and size, file counts, or deadlines depending on the type.
+ *
+ * Deadlines read the module's typed due/open instants, which Moodle ships in dates[] keyed by
+ * dataId — so Italian-labelled deadlines ("Data limite:", "Chiuso:") surface where matching on
+ * English label substrings would drop them. For unknown types the server's plural label
+ * ("Open Forums", …) beats a flat "Attività". Forum unread counts (and similar afterlink
+ * badges) are worth surfacing; resource upload metadata is noise, so only forums carry the
+ * afterlink through.
+ */
 private fun moduleMeta(module: CourseModule, progress: VideoProgress?): String {
     val base = when {
         module.isVideo() -> when {
@@ -586,8 +611,6 @@ private fun moduleMeta(module: CourseModule, progress: VideoProgress?): String {
             val size = module.contents.sumOf { it.sizeBytes ?: 0L }.takeIf { it > 0 }?.let(::formatBytes)
             listOfNotNull(mimeLabel, size).joinToString(" · ")
         }
-        // Deadlines now come from dates[] keyed by dataId, so Italian-labelled deadlines
-        // ("Data limite:", "Chiuso:") surface where the old English-substring match dropped them.
         module.type == ModuleType.Quiz -> withDeadline("Quiz", module.dueAt)
         module.type == ModuleType.Assign -> withDeadlineOrOpen("Compito", module)
         module.type == ModuleType.Folder -> {
@@ -612,11 +635,8 @@ private fun moduleMeta(module: CourseModule, progress: VideoProgress?): String {
         module.type == ModuleType.Database -> "Database"
         module.type == ModuleType.Attendance -> "Presenze"
         module.type == ModuleType.Scheduler -> "Appuntamenti"
-        // Unknown type: prefer the server's plural label ("Open Forums", …) over a flat "Attività".
         else -> module.typeLabel?.takeIf { it.isNotBlank() } ?: "Attività"
     }
-    // Forum unread counts (and similar afterlink badges) are worth surfacing; resource upload
-    // metadata is noise, so only forums carry it through.
     val badge = module.afterLink
         ?.takeIf { module.type == ModuleType.Forum || module.type == ModuleType.HsuForum }
         ?.takeIf { it.length <= 30 }
@@ -631,7 +651,7 @@ private fun withDeadline(base: String, deadline: Instant?): String {
     return if (deadline.isBefore(Instant.now())) "$base · chiuso il $label" else "$base · entro il $label"
 }
 
-// Prefer a real deadline; fall back to the opening date when that's all the module exposes.
+/** Prefers a real deadline; falls back to the opening date when that's all the module exposes. */
 private fun withDeadlineOrOpen(base: String, module: CourseModule): String {
     module.dueAt?.let { return withDeadline(base, it) }
     val opens = module.opensAt ?: return base
@@ -649,8 +669,10 @@ private fun formatBytes(bytes: Long): String = when {
     }
 }
 
-// Subtitle like "26 video · 8 PDF · 1 quiz" — surveyed data shows PDFs and videos dominate,
-// so a type-aware summary tells students far more than a flat resource count.
+/**
+ * Subtitle like "26 video · 8 PDF · 1 quiz" — surveyed data shows PDFs and videos dominate,
+ * so a type-aware summary tells students far more than a flat resource count.
+ */
 private fun typeSummary(blocks: List<ContentBlock>): String {
     val modules = blocks.flatMap { (it as? ContentBlock.Group)?.modules ?: emptyList() }
     if (modules.isEmpty()) return "Nessuna risorsa"

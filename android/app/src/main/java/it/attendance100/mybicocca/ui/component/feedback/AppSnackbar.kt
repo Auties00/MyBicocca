@@ -56,6 +56,11 @@ internal data class AppSnackbarVisuals(
         if (actionLabel == null) SnackbarDuration.Short else SnackbarDuration.Indefinite,
 ) : SnackbarVisuals
 
+/**
+ * Raises the app's custom snackbars on a host. Messages are single-slot: showing a new one
+ * dismisses whatever is currently visible instead of queueing behind it. Errors can carry a
+ * [Throwable] cause, appended as a compact user-readable reason when one is recognizable.
+ */
 @Stable
 class AppSnackbarController internal constructor() {
     val hostState: SnackbarHostState = SnackbarHostState()
@@ -81,10 +86,20 @@ class AppSnackbarController internal constructor() {
 fun rememberAppSnackbarController(): AppSnackbarController =
     remember { AppSnackbarController() }
 
+/**
+ * Ambient snackbar controller. Where it is read picks the feedback surface: inside a
+ * [SnackbarScope] messages render over that surface, outside they target the screen-level host.
+ */
 val LocalAppSnackbarController = staticCompositionLocalOf<AppSnackbarController> {
     error("AppSnackbarController not installed. Wrap the screen tree with a controller provider.")
 }
 
+/**
+ * Renders [controller]'s current message as the app-styled snackbar (severity icon + tinted
+ * surface) with a bottom slide/fade transition. Because the snackbar surface is custom rather
+ * than the stock SnackbarHost, the host replicates the built-in auto-dismiss itself, honoring
+ * the visuals' duration and the accessibility-recommended timeout.
+ */
 @Composable
 fun AppSnackbarHost(
     controller: AppSnackbarController,
@@ -95,8 +110,6 @@ fun AppSnackbarHost(
     val current = hostState.currentSnackbarData
     val accessibility = LocalAccessibilityManager.current
 
-    // Replicates SnackbarHost's built-in auto-dismiss using the visuals' duration,
-    // since we render the snackbar ourselves (custom layout + slide animation).
     LaunchedEffect(current) {
         if (current != null) {
             val durationMs = current.visuals.duration.toMillisCompat(
@@ -116,11 +129,13 @@ fun AppSnackbarHost(
     }
 }
 
-// Scopes the app snackbar to one surface: content inside raises messages on a LOCAL
-// controller whose host overlays the bottom of THIS content, within its bounds —
-// contextual feedback instead of one app-root host (which a modal window would cover
-// anyway, sheets being their own windows). Where LocalAppSnackbarController is read
-// picks the context: inside the scope targets this surface, outside targets the screen.
+/**
+ * Scopes the app snackbar to one surface: content inside raises messages on a local
+ * controller whose host overlays the bottom of this content, within its bounds —
+ * contextual feedback instead of one app-root host (which a modal window would cover
+ * anyway, sheets being their own windows). Where [LocalAppSnackbarController] is read
+ * picks the context: inside the scope targets this surface, outside targets the screen.
+ */
 @Composable
 fun SnackbarScope(
     modifier: Modifier = Modifier,
@@ -138,6 +153,10 @@ fun SnackbarScope(
     }
 }
 
+/**
+ * Slide/fade between messages; the null state composes a zero-size placeholder so
+ * AnimatedContent retains the leaving snackbar while its exit plays.
+ */
 @Composable
 private fun SnackbarTransition(current: SnackbarData?) {
     AnimatedContent(
@@ -151,7 +170,6 @@ private fun SnackbarTransition(current: SnackbarData?) {
         if (data != null) {
             AppSnackbarSurface(data = data)
         } else {
-            // Empty placeholder during exit; AnimatedContent retains the leaving child.
             Box(Modifier.size(0.dp))
         }
     }
@@ -230,9 +248,10 @@ private fun SnackbarDuration.toMillisCompat(
     )
 }
 
-// Compact, user-readable category. Always shown in release builds — must not leak
-// internals (no class names, no stack traces). In debug, the full debugDetail is
-// shown on a second line so engineers can still diagnose.
+/**
+ * Compact, user-readable failure category appended to error messages. Shown in release
+ * builds — must not leak internals (no class names, no stack traces).
+ */
 private fun Throwable.friendlyShortReason(): String? = when (this) {
     is UnknownHostException, is ConnectException -> "rete non disponibile"
     is SocketTimeoutException -> "timeout di rete"

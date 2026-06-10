@@ -1,8 +1,10 @@
 package it.attendance100.mybicocca.data.repository
 
 import it.attendance100.mybicocca.data.auth.SessionManager
+import it.attendance100.mybicocca.data.local.questionnaire.QuestionnaireCacheDao
 import it.attendance100.mybicocca.data.mapper.questionnaire.toActivityQuestionnaires
 import it.attendance100.mybicocca.data.mapper.questionnaire.toDomain
+import it.attendance100.mybicocca.data.mapper.questionnaire.toEntity
 import it.attendance100.mybicocca.data.mapper.questionnaire.toQuestionnaireActivity
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3Answer
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3TagsList
@@ -19,23 +21,52 @@ import it.attendance100.mybicocca.domain.model.questionnaire.QuestionnaireTarget
 import it.attendance100.mybicocca.domain.repository.QuestionnaireRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.io.IOException
 import javax.inject.Inject
 import javax.inject.Singleton
 
+/**
+ * Live Esse3 implementation of the VAL_DID questionnaire contract. The whole compilation
+ * flow runs against the server's questionari endpoints scoped by the career's
+ * `stuId`/`matId`; every call passes the EV_VAL_DID compilation event, the value Bicocca
+ * configures for teaching evaluation. The two list reads write each success through to the
+ * offline questionnaire-list mirror ([QuestionnaireCacheDao]); the mirror is read back only
+ * when a live call fails with an [IOException] (no network), so the questionnaire lists stay
+ * readable offline. An offline read with no cached rows rethrows, surfacing the error state
+ * rather than a misleading empty list. Compilation is an interactive server-side session and
+ * is never cached — its actions are disabled offline.
+ */
 @Singleton
 class QuestionnaireRepositoryImpl @Inject constructor(
     private val sessionManager: SessionManager,
+    private val questionnaireCacheDao: QuestionnaireCacheDao,
 ) : QuestionnaireRepository {
 
+    /**
+     * Lists libretto rows with questionnaires using `questFilter=P`, which returns only
+     * activities whose evaluation questionnaires are (or were) reachable; rows whose
+     * evaluation window closed drop out server-side.
+     */
     override suspend fun getActivities(careerId: CareerId): List<QuestionnaireActivity> {
         val career = requireCareer(careerId)
-        // questFilter=P returns only activities whose evaluation questionnaires are (or
-        // were) reachable; rows whose evaluation window closed drop out server-side.
-        val dtos = sessionManager.esse3().questionnaires.getRecordBookQuestionnaires(
-            matId = career.enrollmentTraitId,
-            questionFilter = "P",
-        )
-        return withContext(Dispatchers.Default) { dtos.mapNotNull { it.toQuestionnaireActivity() } }
+        return try {
+            val dtos = sessionManager.esse3().questionnaires.getRecordBookQuestionnaires(
+                matId = career.enrollmentTraitId,
+                questionFilter = "P",
+            )
+            val activities = withContext(Dispatchers.Default) {
+                dtos.mapNotNull { it.toQuestionnaireActivity() }
+            }
+            questionnaireCacheDao.replaceActivities(
+                careerId.value,
+                activities.mapIndexed { index, activity -> activity.toEntity(careerId, index) },
+            )
+            activities
+        } catch (e: IOException) {
+            questionnaireCacheDao.getActivities(careerId.value)
+                .map { it.toDomain() }
+                .ifEmpty { throw e }
+        }
     }
 
     override suspend fun getActivityQuestionnaires(
@@ -43,12 +74,28 @@ class QuestionnaireRepositoryImpl @Inject constructor(
         activityChoiceId: Long,
     ): ActivityQuestionnaires {
         requireCareer(careerId)
-        val dto = sessionManager.esse3().questionnaires.getTeachingUnitQuestionnaireEvaluation(
-            activityChoiceId = activityChoiceId,
-            eventComponentId = EVENT_COMPONENT,
-        )
-        return dto.toActivityQuestionnaires()
-            ?: error("Esse3 returned teaching units without an activity id.")
+        return try {
+            val dto = sessionManager.esse3().questionnaires.getTeachingUnitQuestionnaireEvaluation(
+                activityChoiceId = activityChoiceId,
+                eventComponentId = EVENT_COMPONENT,
+            )
+            val questionnaires = dto.toActivityQuestionnaires()
+                ?: error("Esse3 returned teaching units without an activity id.")
+            questionnaireCacheDao.replaceActivityQuestionnaires(
+                careerId.value,
+                activityChoiceId,
+                questionnaires.toEntity(careerId),
+                questionnaires.units.mapIndexed { index, unit ->
+                    unit.toEntity(careerId, activityChoiceId, index)
+                },
+            )
+            questionnaires
+        } catch (e: IOException) {
+            val parent = questionnaireCacheDao
+                .getActivityQuestionnaires(careerId.value, activityChoiceId) ?: throw e
+            val units = questionnaireCacheDao.getUnits(careerId.value, activityChoiceId)
+            parent.toDomain(units.map { it.toDomain() })
+        }
     }
 
     override suspend fun startCompilation(
@@ -77,6 +124,11 @@ class QuestionnaireRepositoryImpl @Inject constructor(
         return QuestionnaireCompilationStart(session = session, firstPage = page.toDomain())
     }
 
+    /**
+     * Saves the page's answers, always sending `corpoRisposta`: the server rejects
+     * answers whose response body is absent or null (422 NO_TEXT), so choice answers
+     * must send an empty string.
+     */
     override suspend fun savePageAnswers(
         session: QuestionnaireSession,
         pageId: Long,
@@ -91,8 +143,6 @@ class QuestionnaireRepositoryImpl @Inject constructor(
                 Esse3Answer(
                     applicationId = answer.questionId.toInt(),
                     answerId = answer.optionId.toInt(),
-                    // The server rejects answers whose corpoRisposta is absent or null
-                    // (422 NO_TEXT) — choice answers must send an empty string.
                     responseBody = answer.freeText,
                 )
             },
@@ -155,8 +205,11 @@ class QuestionnaireRepositoryImpl @Inject constructor(
     }
 
     private companion object {
-        // The teaching-evaluation compilation event configured at Bicocca. With any other
-        // value the unitadidattiche endpoint silently returns null questionnaire ids.
+        /**
+         * The teaching-evaluation compilation event configured at Bicocca. With any
+         * other value the unitadidattiche endpoint silently returns null questionnaire
+         * ids.
+         */
         const val EVENT_COMPONENT = "EV_VAL_DID"
     }
 }

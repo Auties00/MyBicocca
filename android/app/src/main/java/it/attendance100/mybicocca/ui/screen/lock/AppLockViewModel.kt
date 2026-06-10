@@ -17,6 +17,13 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+/**
+ * Backs the app-lock gate. [locked] mirrors the domain lock state and [username] labels
+ * the lock screen with the active account; [verifying] is true while a password check is
+ * in flight, with re-entrant submissions dropped. [onBiometricSuccess] unlocks directly,
+ * while [verifyPassword] checks the fallback password, unlocks on success, and reports the
+ * outcome to the caller for inline error copy.
+ */
 @HiltViewModel
 class AppLockViewModel @Inject constructor(
     observeAppLock: ObserveAppLockUseCase,

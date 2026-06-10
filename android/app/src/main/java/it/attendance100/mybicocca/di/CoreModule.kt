@@ -8,6 +8,11 @@ import it.attendance100.mybicocca.core.time.StalePolicy
 import it.attendance100.mybicocca.data.local.elearning.sync.ElearningSyncScope
 import javax.inject.Singleton
 
+/**
+ * Provides cross-cutting configuration singletons: the cache staleness policy, with per-scope
+ * TTLs tuned to how quickly each e-learning source goes stale (quiz attempts in the sub-minute
+ * range, badges hourly, course content around ten minutes).
+ */
 @Module
 @InstallIn(SingletonComponent::class)
 abstract class CoreModule {
@@ -27,8 +32,6 @@ abstract class CoreModule {
                 ElearningSyncScope.ALL_COURSE_GRADES to 10 * 60_000L,
                 ElearningSyncScope.FORUM_DISCUSSIONS to 5 * 60_000L,
                 ElearningSyncScope.DISCUSSION_POSTS to 5 * 60_000L,
-                ElearningSyncScope.CONVERSATIONS to 60_000L,
-                ElearningSyncScope.CONVERSATION_MESSAGES to 60_000L,
                 ElearningSyncScope.QUIZ_ATTEMPTS to 30_000L,
                 ElearningSyncScope.BADGES to 60 * 60_000L,
             ),

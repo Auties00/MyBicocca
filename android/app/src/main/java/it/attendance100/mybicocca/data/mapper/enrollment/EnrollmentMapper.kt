@@ -1,5 +1,6 @@
 package it.attendance100.mybicocca.data.mapper.enrollment
 
+import it.attendance100.mybicocca.data.mapper.common.parseEsse3DateOrIso
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3AnnualEnrollment
 import it.attendance100.mybicocca.domain.model.enrollment.AnnualEnrollment
 import it.attendance100.mybicocca.domain.model.enrollment.EnrollmentId
@@ -7,9 +8,16 @@ import it.attendance100.mybicocca.domain.model.enrollment.EnrollmentStatus
 import it.attendance100.mybicocca.domain.model.enrollment.EnrollmentType
 import it.attendance100.mybicocca.domain.model.enrollment.PartTimeInfo
 import it.attendance100.mybicocca.domain.model.enrollment.SuspensionInfo
-import java.time.LocalDate
-import java.time.format.DateTimeFormatter
 
+/**
+ * Maps an Esse3 `IscrizioneAnnuale` row to the domain annual enrollment. Returns null
+ * when the academic year id is missing, since a year-less row cannot sit on the
+ * timeline. Derived fields: the row id falls back enrollment id → matId → academic
+ * year; flag pairs collapse into optional sub-objects (part-time, suspension) that are
+ * null when their flag is 0; "N" exemption codes and zero disability percentages are
+ * treated as absent; the degree class prefers the enrollment-specific code over the
+ * MURST one, while the description prefers MURST over the university-local label.
+ */
 internal fun Esse3AnnualEnrollment.toDomain(): AnnualEnrollment? {
     val year = academicYearEnrollmentId ?: return null
     return AnnualEnrollment(
@@ -38,7 +46,7 @@ internal fun Esse3AnnualEnrollment.toDomain(): AnnualEnrollment? {
             null
         },
         awaitingDegree = degreeAwardFlag == 1,
-        degreeAwardDate = degreeAwardDate.toEsse3LocalDate(),
+        degreeAwardDate = degreeAwardDate.parseEsse3DateOrIso(),
         studentTypeDescription = studentTypeDescription?.takeIf { it.isNotBlank() },
         exemptionDescription = exemptionTypeDescription
             ?.takeIf { it.isNotBlank() && exemptionTypeCode?.uppercase() != "N" },
@@ -64,23 +72,8 @@ internal fun Esse3AnnualEnrollment.toDomain(): AnnualEnrollment? {
         regulationCode = normCode?.takeIf { it.isNotBlank() },
         universityDescription = universityDescription?.takeIf { it.isNotBlank() },
         siteDescription = siteDescription?.takeIf { it.isNotBlank() },
-        enrollmentDate = enrollmentDate.toEsse3LocalDate(),
-        insertionDate = insertionDate.toEsse3LocalDate(),
-        modificationDate = modificationDate.toEsse3LocalDate(),
+        enrollmentDate = enrollmentDate.parseEsse3DateOrIso(),
+        insertionDate = insertionDate.parseEsse3DateOrIso(),
+        modificationDate = modificationDate.parseEsse3DateOrIso(),
     )
-}
-
-// Esse3 returns dates as dd/MM/yyyy, sometimes with a trailing " HH:mm:ss" to strip.
-private val ESSE3_DATE_PATTERNS = listOf(
-    DateTimeFormatter.ofPattern("dd/MM/yyyy"),
-    DateTimeFormatter.ISO_LOCAL_DATE,
-)
-
-private fun String?.toEsse3LocalDate(): LocalDate? {
-    val raw = this?.trim()?.takeIf { it.isNotEmpty() } ?: return null
-    val datePart = raw.substringBefore('T').substringBefore(' ')
-    for (formatter in ESSE3_DATE_PATTERNS) {
-        runCatching { return LocalDate.parse(datePart, formatter) }
-    }
-    return null
 }

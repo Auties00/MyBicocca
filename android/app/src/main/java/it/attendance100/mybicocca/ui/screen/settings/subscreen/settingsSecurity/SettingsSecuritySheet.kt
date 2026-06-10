@@ -48,7 +48,7 @@ import it.attendance100.mybicocca.ui.screen.lock.errorMessage
 import it.attendance100.mybicocca.ui.screen.lock.findFragmentActivity
 import it.attendance100.mybicocca.ui.screen.lock.promptBiometric
 import it.attendance100.mybicocca.ui.screen.lock.rememberBiometricCapability
-import it.attendance100.mybicocca.ui.screen.settings.subscreen.settingsSecurity.unlockpreview.UnlockPreview
+import it.attendance100.mybicocca.ui.screen.settings.subscreen.settingsSecurity.component.UnlockPreview
 import kotlin.math.roundToInt
 
 private fun timeoutLabel(minutes: Int): String = when (minutes) {
@@ -60,6 +60,17 @@ private fun timeoutLabel(minutes: Int): String = when (minutes) {
 
 private val TIMEOUT_STEPS = listOf(0, 1, 5, 10, 15, 30, 60, 240)
 
+/**
+ * The "Sicurezza" settings page, shown as a modal bottom sheet. The app-lock master toggle is a
+ * pair of side-by-side radio cells, each playing a looping [UnlockPreview] of what that state
+ * looks like (a mock phone launching the app into the lock gate vs straight into the calendar).
+ * Flipping the toggle requires proving identity first: a biometric prompt where available, with
+ * a password [AlertDialog] as fallback (and as the prompt's "Usa password" escape); only a
+ * successful authorization commits the change. While the lock is on, an inactivity-timeout
+ * slider and the "Schermo privato" switch (hide previews / block screenshots) reveal themselves
+ * beneath the cells. A caption explains when biometrics are unenrolled or unavailable and the
+ * password will be used.
+ */
 @Suppress("AssignedValueIsNeverRead")
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -178,7 +189,7 @@ fun SettingsSecuritySheet(
                 )
             } else if (capability == BiometricCapability.Unavailable) {
                 Text(
-                    text = "L'accesso biometrico non disponibile su questo dispositivo: verrà usata la password.",
+                    text = "L'accesso biometrico non è disponibile su questo dispositivo: verrà usata la password.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp),
@@ -237,6 +248,12 @@ fun SettingsSecuritySheet(
     }
 }
 
+/**
+ * The "Blocca quando inattivo" control: a discrete slider over [TIMEOUT_STEPS] with the active
+ * step's label trailing the title. Haptics tick once per discrete step crossing, not on every
+ * drag frame — [Slider] emits onValueChange continuously while dragging, which would be a
+ * haptic storm. The persisted value commits when the drag settles.
+ */
 @Composable
 private fun TimeoutSlider(
     timeoutMinutes: Int,
@@ -270,8 +287,6 @@ private fun TimeoutSlider(
         Slider(
             value = sliderPos,
             onValueChange = { newPos ->
-                // Tick once per discrete step crossing, not on every drag frame (Slider emits
-                // onValueChange continuously while dragging, which would be a haptic storm).
                 if (newPos.roundToInt()
                         .coerceIn(0, TIMEOUT_STEPS.lastIndex) != index
                 ) haptic.feather()
@@ -318,6 +333,11 @@ private fun SecureScreenRow(
     }
 }
 
+/**
+ * One of the two lock-state picks: the looping [UnlockPreview] for [targetEnabled] above a
+ * radio button and its label. Tapping the cell only acts when it is not already the active
+ * state, kicking off the authorization flow.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun FingerprintModeCell(

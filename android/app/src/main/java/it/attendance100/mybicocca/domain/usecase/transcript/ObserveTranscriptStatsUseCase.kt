@@ -7,6 +7,10 @@ import it.attendance100.mybicocca.domain.repository.TranscriptRepository
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
+/**
+ * Streams the career-level libretto aggregates (credits, averages, exam counts) from
+ * the Room cache for the profile screen's progress and averages cards.
+ */
 class ObserveTranscriptStatsUseCase @Inject constructor(
     private val repository: TranscriptRepository,
 ) {

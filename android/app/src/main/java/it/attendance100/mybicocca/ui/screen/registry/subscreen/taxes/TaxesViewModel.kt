@@ -38,9 +38,17 @@ import kotlinx.coroutines.sync.Mutex
 import javax.inject.Inject
 import kotlin.coroutines.cancellation.CancellationException
 
-// Hoisted in MainShell so the parallel fetch starts on shell load and the list / detail
-// screens and the ISEE sheet all read the same in-memory result (no Room cache — see
-// TaxRepository).
+/**
+ * Backs the whole tax feature: the Tasse list and detail plus the ISEE sheet. Hoisted in
+ * MainShell so the parallel fetch starts on shell load and every consumer reads the same
+ * in-memory result (no Room cache — see `TaxRepository`).
+ *
+ * [invoices] and [isee] are independent [Loadable] snapshots, [syncStatus] tracks the invoice
+ * fetch, [actionInProgress] gates the pagoPA actions and [events] emits their one-shot
+ * outcomes. [refresh] re-fetches both lists; [payInvoice], [printNotice], [printReceipt] and
+ * [checkPaymentStatus] run the pagoPA flows for one fattura; [invoice] looks one up in the
+ * current snapshot.
+ */
 @HiltViewModel
 class TaxesViewModel @Inject constructor(
     private val getTaxInvoices: GetTaxInvoicesUseCase,
@@ -61,6 +69,12 @@ class TaxesViewModel @Inject constructor(
     val invoices: StateFlow<Loadable<List<TaxInvoice>>> = _invoices.asStateFlow()
 
     private val _isee = MutableStateFlow<Loadable<List<IseeDeclaration>>>(Loadable.NotYetLoaded)
+
+    /**
+     * ISEE declarations are secondary to the invoices: a failed fetch resolves to an empty
+     * list (not a stuck [Loadable.NotYetLoaded]) so the ISEE sheet shows its empty state
+     * rather than an endless spinner, and never blanks the invoice list.
+     */
     val isee: StateFlow<Loadable<List<IseeDeclaration>>> = _isee.asStateFlow()
 
     private val _syncStatus = MutableStateFlow<SyncStatus>(SyncStatus.Idle)
@@ -92,11 +106,8 @@ class TaxesViewModel @Inject constructor(
         if (!refreshMutex.tryLock()) return
         try {
             _syncStatus.value = SyncStatus.Refreshing
-            // ISEE is secondary: its failure must not blank the invoice list.
             coroutineScope {
                 launch {
-                    // Resolve to empty (not stuck NotYetLoaded) on failure so the ISEE
-                    // sheet shows its empty state rather than an endless spinner.
                     runCatching { getIseeDeclarations(careerId) }.fold(
                         onSuccess = { _isee.value = Loadable.Loaded(it) },
                         onFailure = { _isee.value = Loadable.Loaded(emptyList()) },

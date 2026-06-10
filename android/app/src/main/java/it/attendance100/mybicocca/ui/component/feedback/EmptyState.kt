@@ -24,6 +24,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 
+/**
+ * Full-screen centered empty/error state shared across the app: a large cookie-shaped neutral
+ * icon chip over a headline title and body copy. Fills its parent and centers vertically, so
+ * it expects to own the whole content area (in-sheet states use SheetMessage instead). The
+ * optional [action] slot renders centered below the copy — error states pass the shared retry
+ * button there.
+ */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun EmptyState(

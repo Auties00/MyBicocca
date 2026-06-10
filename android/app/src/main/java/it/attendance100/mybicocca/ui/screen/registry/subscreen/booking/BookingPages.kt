@@ -63,17 +63,22 @@ import it.attendance100.mybicocca.ui.component.modal.SheetMessage
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.booking.state.BookingCourseGroup
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.booking.state.BookingTarget
 import it.attendance100.mybicocca.ui.component.feedback.friendlyMessage
+import it.attendance100.mybicocca.ui.theme.LocalIsOnline
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
-// The booking sub-flow rendered as a stack of sheet pages, hosted by AppelliSheet: the
-// bookable-exam calendar (ExamCalendarPage) -> one appello's detail (CallPage) -> the
-// confirm step (ConfirmPage). Each page is a self-contained body the host drives via the
-// BookingSheetViewModel; the host owns the modal chrome, header and pager transitions.
-
-// ---------- Root: sessions split by exam, dates as a mini calendar ----------
-
+/**
+ * Root page of the booking sub-flow hosted by AppelliPage — the flow runs as a stack of
+ * sheet pages ([ExamCalendarPage] -> [CallPage] -> [ConfirmPage]), each a self-contained body
+ * the host drives via the BookingSheetViewModel while owning the modal chrome, header and
+ * pager transitions itself.
+ *
+ * Shows every bookable exam as a card with a mini calendar of its appelli, swapping between
+ * the error, loading (held briefly so quick fetches don't flash it), empty and list states
+ * while animating its height as content lands. A pending deep-link focus scrolls the list to
+ * the matching exam section.
+ */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 internal fun ExamCalendarPage(
@@ -86,7 +91,6 @@ internal fun ExamCalendarPage(
     onOpenCall: (ExamCall) -> Unit,
 ) {
     val failure = syncStatus as? SyncStatus.Failed
-    // Hold the loading state for a beat so quick fetches don't flash it.
     val showLoading = rememberMinDurationLoading(loading = !loaded)
     val settled = loaded && !showLoading
 
@@ -119,6 +123,10 @@ internal fun ExamCalendarPage(
     }
 }
 
+/**
+ * Scrollable exam sections; a pending deep-link focus animates the list to the matching
+ * section and is then consumed — found or not — so it cannot keep re-scrolling.
+ */
 @Composable
 private fun ExamCalendarList(
     groups: List<BookingCourseGroup>,
@@ -129,8 +137,6 @@ private fun ExamCalendarList(
     val listState = rememberLazyListState()
     val today = remember { LocalDate.now() }
 
-    // Deep-link from the libretto course sheet: scroll to the matching exam section, then
-    // consume the request (found or not, so we don't keep re-scrolling).
     LaunchedEffect(pendingFocus, groups) {
         val key = pendingFocus ?: return@LaunchedEffect
         val index = groups.indexOfFirst { it.courseKey == key }
@@ -155,9 +161,11 @@ private fun ExamCalendarList(
     }
 }
 
-// One exam: its title over the calendar of its appelli. Date cells lead with the day
-// numeral and carry the call type as a tag; the container tone tells the enrollment
-// state at a glance (brand container = open, neutral = not yet, faded = closed).
+/**
+ * One exam: its title over the calendar of its appelli. Date cells lead with the day numeral
+ * and carry the call type as a tag; the container tone tells the enrollment state at a glance
+ * (brand container = open, neutral = not yet, faded = closed).
+ */
 @OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun ExamSection(
@@ -252,8 +260,10 @@ private fun CallDateCell(
     }
 }
 
-// Tiny exam-mode tag in the date cell; brand-filled on open cells, tonal otherwise.
-// Content on the brand red fill is explicit white — onPrimary flips dark in dark mode.
+/**
+ * Tiny exam-mode tag in the date cell; brand-filled on open cells, tonal otherwise. Content
+ * on the brand red fill is explicit white — onPrimary flips dark in dark mode.
+ */
 @Composable
 private fun ExamTypeTag(type: ExamType, status: WindowStatus) {
     val scheme = MaterialTheme.colorScheme
@@ -279,8 +289,13 @@ private fun ExamTypeTag(type: ExamType, status: WindowStatus) {
     }
 }
 
-// ---------- Sub-modal: appello detail ----------
-
+/**
+ * Detail page for one appello: a connected stack of fact rows (state, enrollment window,
+ * enrolled count, booking mode, president) over the call notes when present, with the Prenota
+ * action pinned at the bottom — or a short notice when the call cannot be booked. There is no
+ * hero recap: the pager header's subtitle already carries the exam mode, date and time of the
+ * tapped cell.
+ */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 internal fun CallPage(
@@ -302,8 +317,6 @@ internal fun CallPage(
                 .padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            // No hero recap here: the pager header's subtitle already carries the exam
-            // mode, date and time of the tapped cell.
             val facts = buildList {
                 call.stateDescription?.takeIf { it.isNotBlank() }?.let {
                     add(Triple(Icons.Outlined.Schedule, "Stato", it))
@@ -331,7 +344,6 @@ internal fun CallPage(
                 }
             }
             if (facts.isNotEmpty()) {
-                // Connected segmented rows, the registry idiom: 20dp caps, 6dp seams.
                 Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                     facts.forEachIndexed { index, (icon, label, value) ->
                         FactRow(
@@ -352,6 +364,7 @@ internal fun CallPage(
             BrandActionButton(
                 text = "Prenota",
                 onClick = onBook,
+                enabled = LocalIsOnline.current,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 24.dp),
@@ -367,6 +380,10 @@ internal fun CallPage(
     }
 }
 
+/**
+ * One row of the connected segmented stack, the registry idiom: 20dp corner caps at the
+ * group's ends, 6dp seams where rows touch.
+ */
 @Composable
 private fun FactRow(
     icon: ImageVector,
@@ -443,8 +460,10 @@ private fun NotesCard(notes: String) {
     }
 }
 
-// ---------- Sub-modal: confirm ----------
-
+/**
+ * Final step of the booking flow: an optional note field above the Conferma action, with a
+ * reminder that the booking stays cancellable until enrollment closes.
+ */
 @Composable
 internal fun ConfirmPage(
     submitting: Boolean,
@@ -487,7 +506,7 @@ internal fun ConfirmPage(
         BrandActionButton(
             text = "Conferma",
             onClick = { onConfirm(note.ifBlank { null }) },
-            enabled = !submitting,
+            enabled = !submitting && LocalIsOnline.current,
             loading = submitting,
             modifier = Modifier
                 .fillMaxWidth()
@@ -496,8 +515,10 @@ internal fun ConfirmPage(
     }
 }
 
-// Brand action pinned at the page bottom — primary in light, primaryContainer in dark
-// (the percorso footer scheme).
+/**
+ * Brand action pinned at the page bottom — primary in light, primaryContainer in dark (the
+ * percorso footer scheme); swaps its label for a loading indicator while submitting.
+ */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun BrandActionButton(
@@ -532,8 +553,6 @@ private fun BrandActionButton(
     }
 }
 
-// ---------- Shared bits ----------
-
 @Composable
 private fun SheetError(cause: Throwable, onRetry: () -> Unit) {
     SheetMessage(
@@ -558,8 +577,10 @@ private fun ExamCall.windowStatus(today: LocalDate): WindowStatus {
 internal fun ExamCall.title(): String =
     activityDescription?.takeIf { it.isNotBlank() } ?: "Esame"
 
-// "Esame scritto · 22 giu 2026, ore 14:00" — the appello sub-modal has no hero card,
-// so the header subtitle carries the whole when/how of the tapped cell.
+/**
+ * "Esame scritto · 22 giu 2026, ore 14:00" — the appello sub-modal has no hero card, so the
+ * header subtitle carries the whole when/how of the tapped cell.
+ */
 internal fun ExamCall.headerSubtitle(): String {
     val date = callDate?.format(ShortDateFormat)
     val time = callTime?.let { "ore ${it.format(TimeFormat)}" }
@@ -570,7 +591,7 @@ internal fun ExamCall.headerSubtitle(): String {
     return listOfNotNull(examType.longLabel(), moment).joinToString(" · ")
 }
 
-// Scritto & orale (joint or separate parts) reads as a single "unico" exam.
+/** Scritto & orale (joint or separate parts) reads as a single "unico" exam. */
 private fun ExamType.tagLabel(): String = when (this) {
     ExamType.Written -> "SCRITTO"
     ExamType.Oral -> "ORALE"

@@ -19,9 +19,10 @@ import it.attendance100.mybicocca.domain.usecase.transcript.GetPrerequisiteStatu
 import it.attendance100.mybicocca.domain.usecase.transcript.ObserveGradeRollupUseCase
 import it.attendance100.mybicocca.domain.usecase.transcript.ObserveTranscriptRowsUseCase
 import it.attendance100.mybicocca.domain.usecase.transcript.ObserveTranscriptStatsUseCase
-import it.attendance100.mybicocca.domain.usecase.connectivity.ObserveConnectivityUseCase
 import it.attendance100.mybicocca.domain.usecase.transcript.RefreshTranscriptUseCase
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -33,11 +34,26 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.io.File
 import javax.inject.Inject
 
+/**
+ * Drives the profile body: the signed-in student's identity plus the transcript-derived
+ * career statistics.
+ *
+ * Identity streams: [account], [activeCareer], and [photoFile]. Data streams, cache-backed
+ * and scoped to the active career: [stats], [gradeRollup], [transcriptRows], and the
+ * lazily filled [prerequisiteStatuses]. Sync streams: [syncStatus] with the derived
+ * [isRefreshing] and [errorMessage]. One-shot stream: [openCalculatorRequests].
+ *
+ * A non-forced transcript refresh runs whenever the active career changes. Actions:
+ * [refresh] forces a re-sync, [clearError] dismisses the failure message, and
+ * [requestHypotheticalCalculator] asks the visible profile body to open the
+ * hypothetical-average calculator.
+ */
 @OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class ProfileViewModel @Inject constructor(
@@ -48,11 +64,19 @@ class ProfileViewModel @Inject constructor(
     private val refreshTranscript: RefreshTranscriptUseCase,
     private val getPrerequisiteStatus: GetPrerequisiteStatusUseCase,
     private val getUserPhoto: GetUserPhotoUseCase,
-    observeConnectivity: ObserveConnectivityUseCase,
 ) : ViewModel() {
 
-    val isOnline: StateFlow<Boolean> = observeConnectivity()
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(KEEP_ALIVE_MS), true)
+    private val openCalculatorChannel = Channel<Unit>(Channel.BUFFERED)
+
+    /**
+     * Guided-search landing hook: each emission asks whichever profile body is on screen
+     * to open the hypothetical-average calculator sheet.
+     */
+    val openCalculatorRequests: Flow<Unit> = openCalculatorChannel.receiveAsFlow()
+
+    fun requestHypotheticalCalculator() {
+        openCalculatorChannel.trySend(Unit)
+    }
 
     val account: StateFlow<Account?> = observeActiveAccount()
         .stateIn(viewModelScope, SharingStarted.Eagerly, null)
@@ -92,7 +116,7 @@ class ProfileViewModel @Inject constructor(
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(KEEP_ALIVE_MS), Loadable.NotYetLoaded)
 
-    // Only study-plan activities are surfaced on the profile; supernumerary ones are dropped.
+    /** Transcript rows limited to study-plan activities; supernumerary ones are dropped. */
     val transcriptRows: StateFlow<Loadable<List<TranscriptRow>>> = activeCareerId
         .flatMapLatest { id ->
             if (id == null) {
@@ -119,10 +143,14 @@ class ProfileViewModel @Inject constructor(
         .map { status -> if (status is SyncStatus.Failed) "Impossibile aggiornare i dati" else null }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(KEEP_ALIVE_MS), null)
 
-    // Propedeuticità per not-yet-passed activity, keyed by activityChoiceId. Fanned out
-    // lazily once the rows are loaded; only the NotSatisfied ones drive the orange warning
-    // icon in the libretto list. /prop is skipped for passed rows (the endpoint 422s).
     private val _prerequisiteStatuses = MutableStateFlow<Map<Long, PrerequisiteStatus>>(emptyMap())
+
+    /**
+     * Propedeuticità per pending activity, keyed by activityChoiceId and fanned out lazily
+     * once the rows load. Only [PrerequisiteStatus.NotSatisfied] entries drive the warning
+     * badge in the exam list; passed rows are skipped because the prerequisite endpoint
+     * rejects them.
+     */
     val prerequisiteStatuses: StateFlow<Map<Long, PrerequisiteStatus>> =
         _prerequisiteStatuses.asStateFlow()
 

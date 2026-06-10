@@ -35,17 +35,21 @@ import java.time.LocalTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
-// The Affluences library-system root site; its children are the two bookable Bicocca libraries.
+/** The Affluences library-system root site; its children are the two bookable Bicocca libraries. */
 const val LIBRARY_ROOT_ID = "61aa6184-f707-4dbd-9acb-45ff4e20c6b7"
 
-// The Bicocca libraries publish times local to Europe/Rome; all wire date-time strings are in it.
+/** The Bicocca libraries publish times local to Europe/Rome; all wire date-time strings are in it. */
 val LibraryZoneId: ZoneId = ZoneId.of("Europe/Rome")
 
 private val DateFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd")
 private val DateTimeFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
 private val TimeFormat = DateTimeFormatter.ofPattern("HH:mm")
 
-// The children listing carries only a light status (open flag + occupancy), enough for cards.
+/**
+ * Maps a children-listing card to a library. The card carries only a light status (open flag
+ * plus occupancy), enough for the landing cards, and omits contact/address fields. It also
+ * omits the booking flag, which defaults to bookable — both Bicocca children accept booking.
+ */
 fun AffluencesSiteCard.toLibrary(): Library = Library(
     id = id,
     slug = slug,
@@ -58,7 +62,6 @@ fun AffluencesSiteCard.toLibrary(): Library = Library(
     phone = null,
     email = null,
     websiteUrl = null,
-    // Both Bicocca children accept booking; the card payload omits the flag, so trust the parent.
     bookable = booking?.hasBooking ?: true,
     liveStatus = status?.let { s ->
         LibraryLiveStatus(
@@ -71,7 +74,7 @@ fun AffluencesSiteCard.toLibrary(): Library = Library(
     },
 )
 
-// The richer per-site payload fills the contact/address fields the card lacks.
+/** Maps the richer per-site payload, which fills the contact and address fields the card lacks. */
 fun AffluencesSite.toLibrary(liveStatus: LibraryLiveStatus?): Library = Library(
     id = id,
     slug = slug,
@@ -88,13 +91,17 @@ fun AffluencesSite.toLibrary(liveStatus: LibraryLiveStatus?): Library = Library(
     liveStatus = liveStatus,
 )
 
+/**
+ * Maps live data to the full status. The forecast curve comes from the day bucket whose offset
+ * is today, falling back to the remaining-day list when that bucket is absent; entries without
+ * an hour range or occupancy are dropped, which also drops the bucket's leading whole-day
+ * summary entry.
+ */
 fun AffluencesLiveData.toLiveStatus(): LibraryLiveStatus = LibraryLiveStatus(
     isOpen = status.isOpen,
     statusText = if (status.isOpen) status.closingText else status.openingText,
     occupancyPercentage = liveAttendance?.occupancyPercentage,
     crowdLevel = liveAttendance?.flow?.toCrowd(),
-    // The today's-day bucket holds the full hourly curve; its first entry is the day overall
-    // (no hour range) so it is skipped. Fall back to the remaining-day list when absent.
     todayForecast = (forecasts.firstOrNull { it.todayOffset == 0 }?.forecasts ?: todayForecasts)
         .mapNotNull { slot ->
             val start = slot.hourRange.firstOrNull()?.let(::parseLocalTime) ?: return@mapNotNull null
@@ -111,6 +118,7 @@ fun AffluencesLiveData.toLiveStatus(): LibraryLiveStatus = LibraryLiveStatus(
         },
 )
 
+/** Maps the week timetable; opening ranges with unparseable times are dropped. */
 fun AffluencesWeekTimetable.toWeekHours(): LibraryWeekHours = LibraryWeekHours(
     days = entries.map { day ->
         LibraryDayHours(
@@ -125,6 +133,10 @@ fun AffluencesWeekTimetable.toWeekHours(): LibraryWeekHours = LibraryWeekHours(
     },
 )
 
+/**
+ * Maps a resource type to a zone; a blank description degrades to the generic "Posto" name and
+ * the zone color is recognized from keywords in the description.
+ */
 fun AffluencesResourceTypeInfo.toZone(): LibraryZone {
     val label = description?.trim().orEmpty()
     return LibraryZone(
@@ -136,12 +148,18 @@ fun AffluencesResourceTypeInfo.toZone(): LibraryZone {
     )
 }
 
+/** Maps the reservation filters; unparseable dates and hours are dropped. */
 fun AffluencesResourceTypeFilters.toConstraints(): LibraryBookingConstraints = LibraryBookingConstraints(
     openDays = openDays.mapNotNull { runCatching { LocalDate.parse(it, DateFormat) }.getOrNull() },
     openHours = openHours.mapNotNull(::parseLocalTime),
     durationsMinutes = durations,
 )
 
+/**
+ * Maps an available resource to a seat. The short name strips the trailing "- ..." note from the
+ * label, whose "presa elettrica" wording also signals the power outlet; slots default to a
+ * 60-minute granularity when the payload omits one.
+ */
 fun AffluencesAvailableResource.toSeat(): LibrarySeat {
     val displayName = resourceName?.trim().orEmpty()
     return LibrarySeat(
@@ -170,8 +188,12 @@ fun AffluencesAgreement.toAgreement(): LibraryAgreement = LibraryAgreement(
     mandatory = mandatoryConsent,
 )
 
-// --- Room cache (mirrors the server "my reservations" list) ---
-
+/**
+ * Maps a server reservation into its Room cache row; the cache mirrors the server's "my
+ * reservations" list. The wire reservation token is the short human-readable code shown to the
+ * user, distinct from the cancellation token; unparseable start/end instants degrade to epoch
+ * zero rather than dropping the row.
+ */
 fun AffluencesMyReservation.toEntity(): LibraryReservationEntity = LibraryReservationEntity(
     reservationId = reservationId,
     libraryName = siteName?.trim().orEmpty(),
@@ -185,6 +207,10 @@ fun AffluencesMyReservation.toEntity(): LibraryReservationEntity = LibraryReserv
     state = state.toDomainState().name,
 )
 
+/**
+ * Maps a cache row back to the domain; the cached epoch instants render as wall-clock times in
+ * the Europe/Rome site zone, and an unrecognized stored state degrades to the catch-all entry.
+ */
 fun LibraryReservationEntity.toDomain(): LibraryReservation = LibraryReservation(
     reservationId = reservationId,
     libraryName = libraryName,
@@ -198,7 +224,7 @@ fun LibraryReservationEntity.toDomain(): LibraryReservation = LibraryReservation
     state = runCatching { LibraryReservationState.valueOf(state) }.getOrDefault(LibraryReservationState.Other),
 )
 
-// Server datetimes are ISO-8601 UTC instants; cache the epoch and render in the site zone.
+/** Server datetimes are ISO-8601 UTC instants; the epoch is cached and rendered in the site zone. */
 private fun parseInstantSeconds(iso: String?): Long? =
     iso?.let { runCatching { Instant.parse(it).epochSecond }.getOrNull() }
 
@@ -231,7 +257,7 @@ private fun zoneColorOf(description: String): LibraryZoneColor {
     }
 }
 
-// Accepts both "HH:mm" slot strings and "yyyy-MM-dd HH:mm:ss" date-time strings.
+/** Accepts both "HH:mm" slot strings and "yyyy-MM-dd HH:mm:ss" date-time strings. */
 private fun parseLocalTime(value: String): LocalTime? = runCatching {
     if (value.length <= 5) LocalTime.parse(value, TimeFormat)
     else LocalDateTime.parse(value, DateTimeFormat).toLocalTime()

@@ -55,9 +55,11 @@ import kotlin.math.abs
 import kotlin.random.Random
 
 
-// A single edition rendered on the card's top tab strip. `id` lets the host
-// remember which tab is active across recomposition; `accent` is per-edition so
-// the active edition drives the card's coloring.
+/**
+ * A single edition rendered on the card's top tab strip. [id] lets the host remember which tab
+ * is active across recomposition; [accent] is per-edition so the active edition drives the
+ * card's colouring.
+ */
 data class CardEdition(
     val id: CourseId,
     val yearLabel: String,
@@ -65,6 +67,21 @@ data class CardEdition(
     val academicYear: AcademicYear?,
 )
 
+/**
+ * Course-group card styled like a tabbed notebook: a strip of per-edition year tabs sits above
+ * an accent-tinted hero box (title, monospace code, favourite star), followed by a lighter body
+ * box listing up to three upcoming deadlines with a "+N altre scadenze" overflow line. Tapping
+ * the hero opens the course; tabs switch the active edition, whose accent washes both boxes.
+ *
+ * Both boxes are watermarked with the course's organic shape triple, keyed off the active
+ * edition's id (what tapping the card opens) so a notebook and its detail screen share one
+ * visual identity. Watermark positions are seeded by the course code/title and stay stable per
+ * notebook; only the shapes and colour follow the active edition. The body gets roughly one
+ * watermark per two deadlines, so the box doesn't get noisy as the list grows.
+ *
+ * [forcedHeroPlacements] and [forcedBodyPlacements] override the seeded watermark layout, for
+ * previews.
+ */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun NotebookCard(
@@ -93,10 +110,6 @@ fun NotebookCard(
     val extra = (deadlines.size - visible.size).coerceAtLeast(0)
     val hasDeadlines = visible.isNotEmpty()
 
-    // Shape decoration: the same per-course triple the course detail hero draws, keyed off the
-    // active edition's id (what tapping the card opens) so a notebook and its detail screen share
-    // one visual identity. Positions stay stable per notebook; only the shapes + colour follow the
-    // active edition.
     val decorationId = code ?: title
     val heroTriple = remember(activeEdition.id) { heroShapesFor(activeEdition.id) }
     val decorShapes = remember(heroTriple) {
@@ -109,7 +122,6 @@ fun NotebookCard(
         ShapeDecorations.placementsFor(decorationId, count = 3, salt = 0)
     }
     val bodyPlacements = forcedBodyPlacements ?: remember(decorationId, deadlines.size) {
-        // Roughly one watermark per two deadlines, so the box doesn't get noisy as the list grows.
         val bodyCount = (deadlines.size + 1) / 2
         ShapeDecorations.placementsFor(decorationId, count = bodyCount, salt = 1)
     }
@@ -129,7 +141,6 @@ fun NotebookCard(
             RoundedCornerShape(16.dp)
         }
 
-        // Hero box
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -187,7 +198,6 @@ fun NotebookCard(
             val today = remember { LocalDate.now() }
             val bodyShape = RoundedCornerShape(bottomStart = 16.dp, bottomEnd = 16.dp)
 
-            // Deadlines box
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -231,7 +241,7 @@ fun NotebookCard(
     }
 }
 
-// Strength of the accent watermark over each box background. Tune to taste.
+/** Strength of the accent watermark over each box background. */
 private const val WatermarkTint = 0.18f
 
 /**
@@ -295,6 +305,10 @@ private fun YearTabStrip(
     }
 }
 
+/**
+ * Inactive tabs are shorter (recessed) and dimmed so the active edition visually "comes
+ * forward"; a single-edition card simply shows its one tab at full prominence.
+ */
 @Composable
 private fun YearTab(
     label: String,
@@ -303,9 +317,6 @@ private fun YearTab(
     active: Boolean,
     onClick: () -> Unit,
 ) {
-    // Inactive tabs are shorter (recessed) and dimmed so the active edition
-    // visually "comes forward". When the card has a single edition both
-    // values resolve to identical chrome to the pre-merge design.
     val verticalPad = if (active) 5.dp else 3.dp
     val bottomPad = if (active) 3.dp else 1.dp
     val alpha = if (active) 1f else 0.55f
@@ -341,6 +352,11 @@ private fun FavouriteStar(filled: Boolean, onClick: () -> Unit) {
     }
 }
 
+/**
+ * One deadline line: the title (stripped of any "type · " prefix) on the left, an italic
+ * urgency-graded due label on the right — red for today/overdue, emphasised within three days,
+ * muted otherwise.
+ */
 @Composable
 private fun DeadlineRow(
     deadline: Deadline,

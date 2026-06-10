@@ -44,7 +44,7 @@ private fun toDomainCareer(career: Esse3Career): Career = Career(
     programId = career.courseOfStudyId ?: 0L,
     easyStaffProgramCode = career.p06CourseOfStudyCode,
     academicYearEnrollmentId = career.academicYearEnrollmentId?.toLong() ?: 0L,
-    matricola = career.matricola.orEmpty(),
+    studentNumber = career.matricola.orEmpty(),
     description = career.p06CourseOfStudyDescription
         ?: career.studentStatesDescription
         ?: "",
@@ -52,6 +52,10 @@ private fun toDomainCareer(career: Esse3Career): Career = Career(
     status = mapCareerStatus(career.studentStatusCode),
 )
 
+/**
+ * Default selection policy: the selectable career with the most recent starting academic year;
+ * ended careers are considered only when no selectable one exists.
+ */
 private fun chooseDefaultSelectedCareer(careers: List<Career>): CareerId {
     val pool = careers.filter { it.status.isSelectable }
         .ifEmpty { careers }

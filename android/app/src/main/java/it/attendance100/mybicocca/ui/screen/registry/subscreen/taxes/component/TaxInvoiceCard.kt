@@ -26,6 +26,12 @@ import it.attendance100.mybicocca.ui.screen.registry.subscreen.taxes.formatTaxDa
 import it.attendance100.mybicocca.ui.screen.registry.theme.RegistryAccent
 import it.attendance100.mybicocca.ui.screen.registry.theme.registryAccent
 
+/**
+ * One fattura in the Tasse list: a ticket-styled card (sliced DynamicCard, brand stroke) with
+ * the invoice number and amount on the header row, the title beneath, and the expiry date
+ * opposite a color-coded status line (success green = paid, error red = due or expired,
+ * muted = cancelled).
+ */
 @Composable
 fun TaxInvoiceCard(
     invoice: TaxInvoice,

@@ -5,8 +5,14 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
+import androidx.room.Upsert
 import kotlinx.coroutines.flow.Flow
 
+/**
+ * Access to the saved accounts and their careers. List reads order by `last_used_at` so the
+ * most recently used account comes first; an account's career rows are replaced wholesale in a
+ * single transaction whenever a fresh Esse3 snapshot arrives.
+ */
 @Dao
 interface AccountDao {
 
@@ -26,7 +32,7 @@ interface AccountDao {
     @Query("SELECT * FROM accounts WHERE record_user_id = :recordUserId LIMIT 1")
     suspend fun findByRecordUserId(recordUserId: String): AccountWithCareers?
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Upsert
     suspend fun upsertAccount(account: AccountEntity)
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)

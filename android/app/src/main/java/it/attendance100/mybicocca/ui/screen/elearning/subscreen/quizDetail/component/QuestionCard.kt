@@ -62,13 +62,19 @@ import it.attendance100.mybicocca.ui.screen.elearning.subscreen.quizDetail.state
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.quizDetail.state.QuestionUiModel
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.quizDetail.state.ReviewMark
 
-// Renders one parsed question, both while answering and in read-only review, as a
-// connected segment group in the plan-compiler language (see StudyPlanEditPage):
-// a header tile carrying the prompt, one connected tile per choice with a morphing
-// selection knob, free-text/cloze fields in a closing tile, and review notes
-// appended as closing segments. Every interaction emits the FULL field map for the
-// slot (controls + hidden base fields), which is exactly the payload
-// mod_quiz_save_attempt / process_attempt expect.
+/**
+ * Renders one parsed question, both while answering and in read-only review, as a
+ * connected segment group in the plan-compiler language (see StudyPlanEditPage):
+ * a header tile carrying the prompt, one connected tile per choice with a morphing
+ * selection knob, free-text/cloze fields in a closing tile, and review notes
+ * appended as closing segments. Cloze carries its text inside its segments rather
+ * than the header prompt, and unsupported questions have no interactive body in
+ * review, which can leave the header to close the group on its own.
+ *
+ * Every interaction emits the FULL field map for the slot (controls + hidden base
+ * fields), which is exactly the payload mod_quiz_save_attempt / process_attempt
+ * expect.
+ */
 @Composable
 fun QuestionCard(
     question: AttemptQuestion,
@@ -81,8 +87,6 @@ fun QuestionCard(
     modifier: Modifier = Modifier,
 ) {
     val noteCount = if (readOnly) listOfNotNull(parsed.rightAnswerHtml, parsed.feedbackHtml).size else 0
-    // Unsupported questions have no interactive body in review, so the header may
-    // need to close the group on its own.
     val hasBody = parsed.model !is QuestionUiModel.Unsupported || !readOnly
     val bodyClosing = noteCount == 0
 
@@ -92,7 +96,6 @@ fun QuestionCard(
     ) {
         QuestionHeaderTile(
             question = question,
-            // Cloze carries its text inside the segments, not in the prompt.
             promptHtml = if (parsed.model is QuestionUiModel.Cloze) "" else parsed.model.promptHtml,
             flagged = flagged,
             readOnly = readOnly,
@@ -198,8 +201,10 @@ fun QuestionCard(
     }
 }
 
-// Header tile in the rule-group style: eyebrow row with the flag/verdict, then the
-// question formulation as the tile body.
+/**
+ * Header tile in the rule-group style: eyebrow row with the flag toggle (answering) or the
+ * verdict badge and score (review), then the question formulation as the tile body.
+ */
 @Composable
 private fun QuestionHeaderTile(
     question: AttemptQuestion,
@@ -257,7 +262,7 @@ private fun QuestionHeaderTile(
     }
 }
 
-// Middle segments keep flat 4dp corners; the group's last segment closes with 20dp.
+/** Middle segments keep flat 4dp corners; the group's last segment closes with 20dp. */
 private fun segmentShape(closing: Boolean): RoundedCornerShape = RoundedCornerShape(
     topStart = 4.dp,
     topEnd = 4.dp,
@@ -265,9 +270,11 @@ private fun segmentShape(closing: Boolean): RoundedCornerShape = RoundedCornerSh
     bottomEnd = if (closing) 20.dp else 4.dp,
 )
 
-// One connected tile per option. Like the plan compiler's course tiles, the tile
-// itself doesn't change on selection — the knob carries it. Review verdicts DO wash
-// the tile: the verdict must be loud.
+/**
+ * One connected tile per option. Like the plan compiler's course tiles, the tile
+ * itself doesn't change on selection — the knob carries it. Review verdicts DO wash
+ * the tile: the verdict must be loud.
+ */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun ChoiceTiles(
@@ -330,8 +337,10 @@ private fun ChoiceTiles(
     }
 }
 
-// The plan compiler's selection knob: a circle that morphs into the sunny shape
-// when checked.
+/**
+ * The plan compiler's selection knob: a circle that morphs into the sunny shape
+ * when checked.
+ */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun MorphKnob(
@@ -368,7 +377,7 @@ private fun MorphKnob(
     }
 }
 
-// Scales the normalized morph path up to the knob's actual size.
+/** Scales the normalized morph path up to the knob's actual size. */
 private class MorphPolygonShape(
     private val morph: Morph,
     private val progress: Float,
@@ -400,9 +409,12 @@ private fun BodyTile(
     }
 }
 
-// Cloze: text chunks flow vertically with their gaps inline-ish below each chunk.
-// Real Bicocca cloze questions are line-oriented (one gap per formula line), so the
-// linearized layout reads naturally.
+/**
+ * Cloze body: text chunks flow vertically with their gaps below each chunk. Real Bicocca cloze
+ * questions are line-oriented (one gap per formula line), so the linearized layout reads
+ * naturally. Every change emits all gap fields together, so partially-filled rows persist
+ * whole.
+ */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun ClozeContent(
@@ -416,7 +428,6 @@ private fun ClozeContent(
     fun currentValue(fieldName: String, initial: String): String =
         answerFields[fieldName] ?: initial
 
-    // Every gap field ships on each change, so partially-filled cloze rows persist whole.
     fun emit(changedField: String, newValue: String) {
         val gapFields = model.segments
             .filterIsInstance<ClozeSegment.TextGap>()

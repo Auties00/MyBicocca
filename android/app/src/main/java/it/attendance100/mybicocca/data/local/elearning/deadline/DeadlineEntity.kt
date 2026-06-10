@@ -4,6 +4,15 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.Index
 
+/**
+ * Cached assignment/quiz deadline harvested from the Moodle calendar web service,
+ * keyed by (account_id, event_id) — the calendar event id, which stays unique even
+ * when one activity carries several dated events. Refreshes replace all rows of the
+ * account in one transaction. `instanceId` holds the module instance id (assignment
+ * or quiz id), already translated from the course-module id the calendar exports in
+ * its `instance` field; `kind` discriminates which module table it points into.
+ * `dueAtMs` is epoch milliseconds.
+ */
 @Entity(
     tableName = "elearning_deadlines",
     primaryKeys = ["account_id", "event_id"],
@@ -21,6 +30,7 @@ data class DeadlineEntity(
     val title: String,
     @ColumnInfo(name = "due_at_ms") val dueAtMs: Long,
 ) {
+    /** The `kind` discriminator values, matching the Moodle module names. */
     object Kind {
         const val ASSIGNMENT = "assign"
         const val QUIZ = "quiz"

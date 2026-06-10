@@ -7,10 +7,12 @@ import it.attendance100.mybicocca.domain.model.elearning.catalog.CatalogNode
 import it.attendance100.mybicocca.domain.model.elearning.catalog.CatalogSection
 import it.attendance100.mybicocca.domain.model.elearning.catalog.ElearningCatalog
 
-// One browsable "page" of the catalog. Each level is fully self-contained (it carries the
-// data needed to render it) so a SeekableTransitionState can keep an outgoing page composed
-// while the stack underneath it has already been popped — equality/identity is by [key]
-// (depth + node id) so live enrolment-status updates never look like a navigation event.
+/**
+ * One browsable "page" of the catalog. Each level is fully self-contained (it carries the data
+ * needed to render it) so a SeekableTransitionState can keep an outgoing page composed while
+ * the stack underneath it has already been popped — equality/identity is by [key] (depth +
+ * node id) so live enrolment-status updates never look like a navigation event.
+ */
 @Immutable
 sealed class CatalogLevel(
     val key: String,
@@ -25,7 +27,7 @@ sealed class CatalogLevel(
         val node: CatalogNode,
         val areaTileId: String,
         val accent: Color,
-        // Names of the ancestors above this level, for the header breadcrumb.
+        /** Names of the ancestors above this level, for the header breadcrumb. */
         val ancestors: List<String>,
     ) : CatalogLevel(key = "n:${node.id}@$depth", depth = depth, title = node.name) {
         val children: List<CatalogNode> get() = node.children
@@ -36,8 +38,10 @@ sealed class CatalogLevel(
     override fun hashCode(): Int = key.hashCode()
 }
 
-// Flattens the navigation stack into the full chain of pages (root first, current last).
-// The chain is what lets the back gesture scrub from the current page to its parent.
+/**
+ * Flattens the navigation stack into the full chain of pages (root first, current last). The
+ * chain is what lets the back gesture scrub from the current page to its parent.
+ */
 fun buildCatalogLevels(
     catalog: ElearningCatalog,
     stack: List<CatalogStackEntry>,

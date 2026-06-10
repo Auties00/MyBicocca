@@ -34,8 +34,10 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.PathParser
 
-// A shape with a fixed-height top and bottom slice (driven by a vector path so the
-// edges can be scalloped/perforated like a ticket) and a stretched middle.
+/**
+ * A shape with a fixed-height top and bottom slice (driven by a vector path so the
+ * edges can be scalloped/perforated like a ticket) and a stretched middle.
+ */
 class ThreeSliceShape(
     private val topSliceHeightPx: Float,
     private val bottomSliceHeightPx: Float,
@@ -157,8 +159,12 @@ private fun ThreeSliceBackground(
     }
 }
 
-// A ticket/receipt-style card: scalloped top & bottom edges, a tinted stroke + fill drawn
-// from layered vector slices, and a content area inset past the slices.
+/**
+ * A ticket/receipt-style card: scalloped top and bottom edges, a tinted [stroke] + [fill]
+ * drawn from layered vector slices, and a [content] area inset past the slices. The clip
+ * shape is rebuilt from the same top/bottom drawables that paint the background, so the
+ * touch ripple and the artwork always share one silhouette.
+ */
 @Composable
 fun DynamicCard(
     topSliceRes: Int,

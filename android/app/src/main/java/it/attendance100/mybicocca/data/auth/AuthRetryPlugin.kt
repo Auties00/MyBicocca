@@ -9,20 +9,31 @@ import kotlinx.coroutines.withContext
 import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.CoroutineContext
 
+/**
+ * Configuration for the AuthRetry plugin: [refresh] re-establishes the session after an HTTP
+ * 401, [onReauthRequired] is invoked with the cause when the refresh itself fails.
+ */
 class AuthRetryConfig {
     var refresh: suspend () -> Unit = {}
     var onReauthRequired: (Throwable) -> Unit = {}
 }
 
-// Coroutine-context marker so calls made *inside* refresh (e.g. auth.login())
-// don't re-enter the retry path and recurse forever.
+/**
+ * Coroutine-context marker exempting requests issued from inside the refresh callback (e.g. a
+ * login call) from the retry path, which would otherwise recurse forever.
+ */
 private class AuthRefreshContext : AbstractCoroutineContextElement(Key) {
     companion object Key : CoroutineContext.Key<AuthRefreshContext>
 }
 
-// Per-request flag so a single failing call only retries once.
+/** Per-request flag so a single failing call retries at most once. */
 private val retryAttempted = AttributeKey<Unit>("authRetryAttempted")
 
+/**
+ * Ktor client plugin that retries a request once after an HTTP 401: it runs the configured
+ * refresh and replays the original call. When the refresh throws, the failure is reported
+ * through `onReauthRequired` and the original 401 response is returned to the caller.
+ */
 val AuthRetry = createClientPlugin("AuthRetry", ::AuthRetryConfig) {
     val refresh = pluginConfig.refresh
     val onReauthRequired = pluginConfig.onReauthRequired

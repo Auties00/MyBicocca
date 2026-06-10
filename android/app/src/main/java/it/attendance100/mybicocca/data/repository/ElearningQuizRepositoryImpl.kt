@@ -29,12 +29,28 @@ import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import java.util.concurrent.ConcurrentHashMap
 import javax.inject.Inject
 import javax.inject.Singleton
 
+/**
+ * Room-backed quiz repository on top of Moodle's mod_quiz web services.
+ *
+ * Quiz lists come from mod_quiz_get_quizzes_by_courses, attempts from
+ * mod_quiz_get_user_attempts plus a best-effort mod_quiz_get_user_best_grade, pages from
+ * mod_quiz_get_attempt_data, autosaves from mod_quiz_save_attempt, submission from
+ * mod_quiz_process_attempt and reviews from mod_quiz_get_attempt_review. Course refreshes are
+ * deduplicated through an in-flight map so concurrent callers await a single network pass, and
+ * are skipped while the per-course sync-state stamp is fresher than the staleness TTL unless
+ * forced.
+ *
+ * Draft answers are written to Room before the remote autosave so leaving an attempt never
+ * loses progress; submitting clears them. Attempt payloads returned by the start, page and
+ * review calls are upserted so the cached attempt state stays reconciled.
+ */
 @Singleton
 class ElearningQuizRepositoryImpl @Inject constructor(
     private val sessionManager: SessionManager,
@@ -54,6 +70,11 @@ class ElearningQuizRepositoryImpl @Inject constructor(
     override fun observe(accountId: AccountId, quizId: QuizId): Flow<Loadable<Quiz>> =
         quizDao.observe(accountId.value, quizId.value)
             .map { row -> if (row == null) Loadable.NotYetLoaded as Loadable<Quiz> else Loadable.Loaded(row.toDomain()) }
+            .flowOn(Dispatchers.Default)
+
+    override fun observeAllForAccount(accountId: AccountId): Flow<List<Quiz>> =
+        quizDao.observeForAccount(accountId.value)
+            .map { rows -> rows.map { it.toDomain() } }
             .flowOn(Dispatchers.Default)
 
     override fun observeAttempts(accountId: AccountId, quizId: QuizId): Flow<Loadable<List<QuizAttempt>>> =
@@ -103,7 +124,8 @@ class ElearningQuizRepositoryImpl @Inject constructor(
         quizDao.replaceAttempts(accountId.value, quizId.value, rows)
         runCatching {
             val best = api.quizzes.getUserBestGrade(token, quizId.value, null)
-            quizDao.upsertBestGrade(best.toEntity(accountId, quizId))
+            val quizMaxGrade = quizDao.observe(accountId.value, quizId.value).firstOrNull()?.maxGrade
+            quizDao.upsertBestGrade(best.toEntity(accountId, quizId, quizMaxGrade))
         }
         stamp(accountId, ElearningSyncScope.QUIZ_ATTEMPTS, quizId.value.toLong())
     }
@@ -128,7 +150,6 @@ class ElearningQuizRepositoryImpl @Inject constructor(
     ): AttemptPage {
         val (api, token) = sessionManager.elearning()
         val resp = api.quizzes.getAttemptData(token, attemptId.value, page, emptyList())
-        // Reconcile attempt state in cache.
         quizDao.upsertAttempts(listOf(resp.attempt.toEntity(accountId)))
         return resp.toDomain(attemptId, page)
     }
@@ -138,7 +159,6 @@ class ElearningQuizRepositoryImpl @Inject constructor(
         attemptId: AttemptId,
         answers: List<AttemptAnswer>,
     ) {
-        // Persist locally so navigation away doesn't lose progress.
         quizDao.upsertAnswers(answers.map { it.toEntity(accountId, attemptId) })
         val items = answers.toApiItems()
         val (api, token) = sessionManager.elearning()
@@ -150,6 +170,11 @@ class ElearningQuizRepositoryImpl @Inject constructor(
         )
     }
 
+    /**
+     * Does not refresh the attempt list itself — the quiz id is not derivable from the attempt
+     * id alone — so callers invoke refreshAttempts afterwards to surface the finished state and
+     * new best grade.
+     */
     override suspend fun submitAttempt(
         accountId: AccountId,
         attemptId: AttemptId,
@@ -167,8 +192,6 @@ class ElearningQuizRepositoryImpl @Inject constructor(
             preflightData = emptyList(),
         )
         quizDao.deleteAnswers(accountId.value, attemptId.value)
-        // Refresh attempts so UI reflects Finished state and best grade.
-        // We don't know the quizId from attemptId alone; the VM is expected to call refreshAttempts.
     }
 
     override suspend fun loadReview(accountId: AccountId, attemptId: AttemptId): AttemptReview {
@@ -182,6 +205,7 @@ class ElearningQuizRepositoryImpl @Inject constructor(
         quizDao.clearAllForAccount(accountId.value)
     }
 
+    /** Flattens the per-slot field maps into the flat name/value item list the wire expects. */
     private fun List<AttemptAnswer>.toApiItems(): List<ElearningAttemptDataItem> =
         flatMap { answer ->
             answer.fields.map { (name, value) -> ElearningAttemptDataItem(name = name, value = value) }

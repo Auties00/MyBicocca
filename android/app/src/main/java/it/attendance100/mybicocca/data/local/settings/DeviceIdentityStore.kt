@@ -10,8 +10,10 @@ import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
 
-// Stable per-install identifier sent as the EasyBadge `device_token` when
-// certifying presence. Generated once and persisted in the shared settings store.
+/**
+ * Stable per-install identifier sent as the EasyBadge `device_token` when certifying presence.
+ * Generated once and persisted in the shared settings DataStore.
+ */
 @Singleton
 class DeviceIdentityStore @Inject constructor(
     private val dataStore: DataStore<Preferences>,

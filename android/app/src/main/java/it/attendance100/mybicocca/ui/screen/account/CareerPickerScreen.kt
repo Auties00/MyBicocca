@@ -21,6 +21,13 @@ import it.attendance100.mybicocca.domain.model.career.Career
 import it.attendance100.mybicocca.domain.model.career.CareerId
 import it.attendance100.mybicocca.domain.model.career.isSelectable
 
+/**
+ * Full-screen career chooser, shown right after sign-in when the account carries multiple
+ * careers and needs a default. A greeting header tops a scrolling list split into an
+ * "Attive" section of tappable cards (selectable careers) and a "Concluse" section of
+ * disabled cards (ended ones); picking a card reports the [CareerId] so navigation can
+ * advance to the main shell.
+ */
 @Composable
 fun CareerPickerScreen(
     account: Account,
@@ -36,9 +43,9 @@ fun CareerPickerScreen(
                 .padding(horizontal = 16.dp, vertical = 24.dp),
         ) {
             item {
-                Text("Choose a career", style = MaterialTheme.typography.headlineSmall)
+                Text("Scegli una carriera", style = MaterialTheme.typography.headlineSmall)
                 Text(
-                    text = "Hi ${account.displayName}. You have multiple programs — pick the one to use as your default.",
+                    text = "Ciao ${account.displayName}. Hai più carriere: scegli quella da usare come predefinita.",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -47,7 +54,7 @@ fun CareerPickerScreen(
 
             if (selectable.isNotEmpty()) {
                 item {
-                    SectionLabel("Active")
+                    SectionLabel("Attive")
                 }
                 items(selectable, key = { it.id.value }) { career ->
                     CareerCard(career = career, onClick = { onPicked(career.id) })
@@ -58,7 +65,7 @@ fun CareerPickerScreen(
             if (history.isNotEmpty()) {
                 item {
                     Spacer(Modifier.height(16.dp))
-                    SectionLabel("History")
+                    SectionLabel("Concluse")
                 }
                 items(history, key = { it.id.value }) { career ->
                     CareerCard(career = career, onClick = null)
@@ -79,6 +86,11 @@ private fun SectionLabel(text: String) {
     )
 }
 
+/**
+ * Career summary card: description, matricola, academic year and status on three lines.
+ * A null [onClick] renders it disabled on the muted variant surface — the treatment for
+ * ended careers — while [selected] swaps the fill to the primary container.
+ */
 @Composable
 internal fun CareerCard(
     career: Career,
@@ -98,11 +110,11 @@ internal fun CareerCard(
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(
-                text = career.description.ifEmpty { "Career #${career.id.value}" },
+                text = career.description.ifEmpty { "Carriera n. ${career.id.value}" },
                 style = MaterialTheme.typography.titleMedium,
             )
             Text(
-                text = "Matricola ${career.matricola} · AY ${career.academicYear}",
+                text = "Matricola ${career.studentNumber} · A.A. ${career.academicYear}",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )

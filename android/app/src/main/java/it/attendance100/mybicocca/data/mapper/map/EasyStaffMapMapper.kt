@@ -10,6 +10,10 @@ import it.attendance100.mybicocca.domain.model.map.MapRoomDetail
 import it.attendance100.mybicocca.domain.model.map.RoomCode
 import it.attendance100.mybicocca.domain.model.map.RoomScheduleEntry
 
+/**
+ * Maps an EasyStaff room-listing entry to the domain; the floor is not part of the listing and
+ * is supplied separately, resolved from the room showcase.
+ */
 internal fun EasyStaffRoom.toDomain(buildingCode: BuildingCode, floor: Int?): MapRoom = MapRoom(
     code = RoomCode(code),
     buildingCode = buildingCode,
@@ -18,6 +22,10 @@ internal fun EasyStaffRoom.toDomain(buildingCode: BuildingCode, floor: Int?): Ma
     floor = floor,
 )
 
+/**
+ * Maps an occupation-grid event to a schedule entry; the teacher collapses to the first listed
+ * one's full name, and blank event types become null.
+ */
 internal fun EasyStaffRoomOccupationEvent.toDomain(): RoomScheduleEntry = RoomScheduleEntry(
     roomCode = RoomCode(roomCode),
     title = title,
@@ -29,6 +37,7 @@ internal fun EasyStaffRoomOccupationEvent.toDomain(): RoomScheduleEntry = RoomSc
     end = endDateTime,
 )
 
+/** Maps a room-showcase card to the room detail, rendering equipment as user-facing labels. */
 internal fun EasyStaffRoomDetails.toDomain(): MapRoomDetail = MapRoomDetail(
     floor = floor,
     capacity = capacity,
@@ -36,13 +45,12 @@ internal fun EasyStaffRoomDetails.toDomain(): MapRoomDetail = MapRoomDetail(
     accessibilityNotes = accessibilityNotes,
     isInclusionValidated = isInclusionValidated,
     roomType = roomType,
-    interactive360Url = interactive360Link,
     address = address,
     description = description,
     equipment = equipment.map { it.label() },
 )
 
-// User-facing equipment labels stay in Italian (mirrors the source labels EasyStaff parses).
+/** User-facing equipment labels stay in Italian, mirroring the source labels EasyStaff parses. */
 private fun Esse3RoomEquipment.label(): String = when (this) {
     Esse3RoomEquipment.FixedEquipment -> "Attrezzature fisse"
     Esse3RoomEquipment.MobileEquipment -> "Attrezzature mobili"

@@ -60,7 +60,7 @@ class AffluencesAccountApi(
                 deviceLang = deviceLang,
                 firebaseToken = firebaseToken
             ),
-            headers = MOBILE_HEADERS
+            headers = MOBILE_APP_HEADERS
         ).data
 
     /**
@@ -78,7 +78,7 @@ class AffluencesAccountApi(
             baseUrl = RESERVATION_API_URL,
             path = "/myreservations/token",
             body = AffluencesEmailTokenBody(email),
-            headers = MOBILE_HEADERS + (USER_IDENTIFIER_HEADER to apiKey)
+            headers = MOBILE_APP_HEADERS + (USER_IDENTIFIER_HEADER to apiKey)
         )
 
     /**
@@ -96,7 +96,7 @@ class AffluencesAccountApi(
             baseUrl = RESERVATION_API_URL,
             path = "/myreservations/token",
             queryParams = mapOf("request_uuid" to requestUuid),
-            headers = MOBILE_HEADERS + (USER_IDENTIFIER_HEADER to apiKey)
+            headers = MOBILE_APP_HEADERS + (USER_IDENTIFIER_HEADER to apiKey)
         )
 
     /**
@@ -110,20 +110,9 @@ class AffluencesAccountApi(
         executeGet(
             baseUrl = RESERVATION_API_URL,
             path = "/myreservations",
-            headers = MOBILE_HEADERS + mapOf(
+            headers = MOBILE_APP_HEADERS + mapOf(
                 USER_IDENTIFIER_HEADER to apiKey,
                 HttpHeaders.Authorization to "Bearer $authToken"
             )
         )
-
-    private companion object {
-        private const val USER_IDENTIFIER_HEADER = "user-identifier"
-
-        // The "my reservations" endpoints gate on these headers identifying the mobile app.
-        private val MOBILE_HEADERS = mapOf(
-            "x-app-version" to "202605190",
-            "x-device-type" to "android",
-            "x-service-name" to "mobile_app",
-        )
-    }
 }

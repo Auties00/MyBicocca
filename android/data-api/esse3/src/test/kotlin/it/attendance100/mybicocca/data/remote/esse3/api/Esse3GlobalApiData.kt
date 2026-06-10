@@ -67,7 +67,10 @@ object Esse3GlobalApiData : BeforeAllCallback, AutoCloseable {
         )
     }
 
-    // FIXME: Could fail if the user is not a STUDENT
+    /**
+     * Builds the student profile from the first career of the authenticated user. Requires a
+     * STUDENT account: other user types lack the career identifiers this reads.
+     */
     private suspend fun fetchStudentProfile(): Esse3StudentProfile {
         val careers = api.careers.getCareers()
         val career = careers.firstOrNull()

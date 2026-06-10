@@ -3,6 +3,11 @@ package it.attendance100.mybicocca.data.local.elearning.course
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 
+/**
+ * Cached completion status of one course activity, keyed by
+ * (account_id, course_id, cm_id). Rows are upserted rather than replaced so a partial
+ * completion fetch never erases known states; `completedAtMs` is epoch milliseconds.
+ */
 @Entity(
     tableName = "elearning_activity_completion",
     primaryKeys = ["account_id", "course_id", "cm_id"],

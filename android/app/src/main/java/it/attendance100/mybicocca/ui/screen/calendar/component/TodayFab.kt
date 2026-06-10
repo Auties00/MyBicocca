@@ -37,6 +37,17 @@ import java.time.YearMonth
 private val BottomEdgePadding = 16.dp
 private val EndEdgePadding = 16.dp
 
+/**
+ * "Vai a oggi" extended FAB of the calendar tab. It renders in its own popup window
+ * pinned to the bottom-end corner above the navigation bar, floating over every view mode
+ * without being clipped by their scrolling content; because a popup escapes all
+ * in-content covers, the caller decides when it may show at all.
+ *
+ * It appears — scale plus fade on the expressive motion scheme — only while the visible
+ * day, week or month excludes today, and in month mode it additionally shrinks and fades
+ * proportionally to [agendaProgress] so it gets out of the agenda sheet's way as the
+ * sheet expands.
+ */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun TodayFab(

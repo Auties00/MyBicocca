@@ -17,13 +17,11 @@ class EasyStaffBuildingsApiTest : EasyStaffTestBase() {
         assertNotNull(buildings)
         assertTrue(buildings.isNotEmpty(), "Buildings list should not be empty")
 
-        // Verify each building has valid properties
         buildings.forEach { building ->
             assertTrue(building.code.isNotBlank(), "Building code should not be blank")
             assertTrue(building.name.isNotBlank(), "Building name should not be blank")
         }
 
-        // Verify building codes are unique
         val buildingCodes = buildings.map { it.code }
         assertEquals(buildingCodes.size, buildingCodes.toSet().size, "Building codes should be unique")
     }
@@ -38,19 +36,16 @@ class EasyStaffBuildingsApiTest : EasyStaffTestBase() {
         assertNotNull(rooms)
         assertTrue(rooms.isNotEmpty(), "Rooms list should not be empty for building ${building.code}")
 
-        // Verify each room has valid properties
         rooms.forEach { room ->
             assertTrue(room.code.isNotBlank(), "Room code should not be blank")
             assertTrue(room.name.isNotBlank(), "Room name should not be blank")
 
-            // Verify capacity is present and reasonable (most rooms have capacity)
             if (room.capacity != null) {
                 assertTrue(room.capacity > 0, "Room capacity should be positive, got ${room.capacity}")
                 assertTrue(room.capacity < 2000, "Room capacity should be reasonable, got ${room.capacity}")
             }
         }
 
-        // Verify room codes are unique within a building
         val roomCodes = rooms.map { it.code }
         assertEquals(roomCodes.size, roomCodes.toSet().size, "Room codes should be unique within a building")
     }
@@ -64,7 +59,6 @@ class EasyStaffBuildingsApiTest : EasyStaffTestBase() {
         val rooms = api.buildings.getRooms(building)
         assertTrue(rooms.isNotEmpty(), "Rooms list should not be empty")
 
-        // Verify that at least some rooms have capacity data
         val roomsWithCapacity = rooms.filter { it.capacity != null }
         assertTrue(
             roomsWithCapacity.isNotEmpty(),
@@ -85,7 +79,6 @@ class EasyStaffBuildingsApiTest : EasyStaffTestBase() {
 
         assertNotNull(events)
 
-        // Verify each event in the building occupation
         events.forEach { event ->
             validateEvent(event)
         }
@@ -101,7 +94,6 @@ class EasyStaffBuildingsApiTest : EasyStaffTestBase() {
         assertNotNull(roomsDetails)
         assertTrue(roomsDetails.isNotEmpty(), "Rooms details list should not be empty")
 
-        // Verify room showcase details if any rooms are returned
         roomsDetails.forEach { roomDetails ->
             validateRoomDetails(roomDetails)
         }
@@ -122,7 +114,6 @@ class EasyStaffBuildingsApiTest : EasyStaffTestBase() {
         assertNotNull(roomsDetails)
         assertTrue(roomsDetails.isNotEmpty(), "Rooms details list should not be empty")
 
-        // Verify room showcase details if any rooms are returned
         roomsDetails.forEach { roomDetails ->
             validateRoomDetails(roomDetails)
         }
@@ -131,7 +122,6 @@ class EasyStaffBuildingsApiTest : EasyStaffTestBase() {
     private fun validateRoomDetails(roomDetails: EasyStaffRoomDetails) {
         assertTrue(roomDetails.name.isNotBlank(), "Room name should not be blank")
 
-        // Verify capacity is reasonable if present
         roomDetails.capacity?.let { capacity ->
             assertTrue(capacity > 0, "Capacity should be positive")
             assertTrue(capacity < 2000, "Capacity should be reasonable")
@@ -139,11 +129,9 @@ class EasyStaffBuildingsApiTest : EasyStaffTestBase() {
     }
 
     private fun validateEvent(event: EasyStaffRoomOccupationEvent) {
-        // Verify basic event properties
         assertTrue(event.id.isNotBlank(), "Event ID should not be blank")
         assertTrue(event.title.isNotBlank(), "Event title should not be blank")
 
-        // Verify date and time
         assertNotNull(event.date, "Event date should not be null")
         assertNotNull(event.startDateTime, "Event start time should not be null")
         assertNotNull(event.endDateTime, "Event end time should not be null")
@@ -152,15 +140,12 @@ class EasyStaffBuildingsApiTest : EasyStaffTestBase() {
             "Event start time should be before end time"
         )
 
-        // Verify room information
         assertTrue(event.roomName.isNotBlank(), "Room name should not be blank")
         assertTrue(event.roomCode.isNotBlank(), "Room code should not be blank")
 
-        // Verify building information
         assertTrue(event.buildingName.isNotBlank(), "Building name should not be blank")
         assertTrue(event.buildingCode.isNotBlank(), "Building code should not be blank")
 
-        // Verify event type (string label in room occupation events)
         assertTrue(event.eventType.isNotBlank(), "Event type should not be blank")
     }
 }

@@ -46,15 +46,24 @@ import it.attendance100.mybicocca.core.os.ProvideHapticManager
 import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.ui.theme.BicoccaTheme
 
+/**
+ * How an area tile paints itself: a hashed palette accent, an official brand colour, or
+ * full-bleed artwork.
+ */
 sealed interface AreaTileVisual {
     data class Default(val accent: Color) : AreaTileVisual
     data class CustomColor(val color: Color) : AreaTileVisual
     data class CustomImage(val drawableRes: Int) : AreaTileVisual
 }
 
-// Colour-coded entry tile for a top-level catalog area. The accent identity carries through the
-// rest of the browse flow; here it's the whole card, softened by a vertical sheen and a single
-// decorative orb so the grid reads as expressive rather than flat blocks.
+/**
+ * Colour-coded entry tile for a top-level catalog area. The accent identity carries through the
+ * rest of the browse flow; here it's the whole card, softened by a vertical sheen and a single
+ * decorative orb so the grid reads as expressive rather than flat blocks. Brand-coloured areas
+ * swap the orb for a white disc bearing the rotated university logo; artwork areas render the
+ * image full-bleed under a darkening gradient that keeps the label legible. Long labels are
+ * pre-broken onto two lines so titles wrap in balance, and taps give haptic feedback.
+ */
 @Composable
 fun AreaTile(
     label: String,
@@ -178,9 +187,6 @@ fun AreaTile(
                     )
                 }
 
-                // For long names that actually begin with "Area", break "Area" onto its own line.
-                // Match on the real prefix (case-insensitive) and strip exactly that prefix, preserving
-                // its original casing, so we never duplicate or mangle the word.
                 val formattedText = remember(label) {
                     insertNewlineAtTwoFifths(label)
                 }
@@ -202,38 +208,32 @@ fun AreaTile(
 }
 
 /**
- * Helper logic: Returns the string with a newline at ~2/5ths of the length
- * if it's over 20 characters.
+ * Pre-breaks a long tile label onto two lines: past 20 characters, the space nearest a target
+ * point early in the string (about two-sevenths of the way in) is replaced with a newline, so
+ * the first line stays shorter and the title reads balanced inside the tile. Short or
+ * space-free labels pass through unchanged.
  */
 fun insertNewlineAtTwoFifths(input: String): String {
-    // 1. Check if it's longer than like 20 characters
     if (input.length <= 20) return input
 
-    // 2. Find the target index (approx 2/5ths of the total length)
     val targetIndex = (input.length * 2) / 7
 
-    // 3. Find the closest spaces to the left and right of our target index
     val leftSpaceIndex = input.lastIndexOf(' ', targetIndex)
     val rightSpaceIndex = input.indexOf(' ', targetIndex)
 
-    // 4. Figure out which space is actually closer to the 2/5ths mark
     val bestSpaceIndex = when {
-        leftSpaceIndex == -1 && rightSpaceIndex == -1 -> -1 // No spaces exist at all
-        leftSpaceIndex == -1 -> rightSpaceIndex // Only spaces to the right
-        rightSpaceIndex == -1 -> leftSpaceIndex // Only spaces to the left
-        // Both exist, check which distance is smaller
+        leftSpaceIndex == -1 && rightSpaceIndex == -1 -> -1
+        leftSpaceIndex == -1 -> rightSpaceIndex
+        rightSpaceIndex == -1 -> leftSpaceIndex
         (targetIndex - leftSpaceIndex) <= (rightSpaceIndex - targetIndex) -> leftSpaceIndex
         else -> rightSpaceIndex
     }
 
-    // 5. If it's just one giant 20+ char word with no spaces, return original
     if (bestSpaceIndex == -1) return input
 
-    // 6. Replace that specific space with a newline
     return input.substring(0, bestSpaceIndex) + "\n" + input.substring(bestSpaceIndex + 1)
 }
 
-//@Preview(showBackground = true, widthDp = 440, name = "Light Mode")
 @Preview(
     showBackground = true,
     widthDp = 440,
@@ -243,10 +243,8 @@ fun insertNewlineAtTwoFifths(input: String): String {
 @Composable
 private fun AreaTilePreview() {
     BicoccaTheme(dark = isSystemInDarkTheme()) {
-        // 1. Creiamo una data class di supporto per contenere i dati della UI
         data class AreaData(val label: String, val visual: AreaTileVisual)
 
-        // 2. Creiamo la lista dei dati, non l'invocazione dei Composable
         val areas = listOf(
             AreaData(
                 label = "Area Economia e Statistica",

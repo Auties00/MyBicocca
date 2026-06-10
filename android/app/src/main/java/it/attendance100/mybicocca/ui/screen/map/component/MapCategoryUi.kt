@@ -10,6 +10,7 @@ import androidx.compose.material.icons.outlined.School
 import androidx.compose.ui.graphics.vector.ImageVector
 import it.attendance100.mybicocca.domain.model.map.BuildingCategory
 
+/** Italian user-facing name of the category, shown in filter chips and as the location fallback in sheet subtitles. */
 val BuildingCategory.label: String
     get() = when (this) {
         BuildingCategory.TEACHING -> "Didattica"
@@ -20,6 +21,7 @@ val BuildingCategory.label: String
         BuildingCategory.OTHER -> "Altro"
     }
 
+/** Outlined glyph paired with [label] in the category filter chips. */
 val BuildingCategory.icon: ImageVector
     get() = when (this) {
         BuildingCategory.TEACHING -> Icons.Outlined.School

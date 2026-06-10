@@ -20,8 +20,11 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import it.attendance100.mybicocca.domain.model.appointment.AppointmentService
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.appointments.state.AppointmentDirectorySection
 
-// The portal repeats the faculty grouping inside service names ("Didattica - Progest",
-// "Psicologia (Gestione Carriere)"); the section header already says it, so strip it.
+/**
+ * Service name with the faculty grouping stripped: the portal repeats it inside service names
+ * ("Didattica - Progest", "Psicologia (Gestione Carriere)"), and the section header already
+ * says it.
+ */
 val AppointmentService.displayName: String
     get() = name
         .removePrefix("Didattica - ")
@@ -34,6 +37,7 @@ private val TrailingCareerSuffix = Regex("""\s*\(Gestione [Cc]arriere\)$""")
 val AppointmentService.durationLabel: String
     get() = "Appuntamento di ${durationSeconds / 60} min"
 
+/** Directory icon picked by keyword match over the service name and group. */
 val AppointmentService.directoryIcon: ImageVector
     get() {
         val haystack = "$name ${group.orEmpty()}"
@@ -54,8 +58,7 @@ val AppointmentService.directoryIcon: ImageVector
         }
     }
 
-// The macro-section a portal group falls into, in a fixed order; unmatched groups fall into
-// "Altri sportelli". Single source for both the directory headers and a booking's subtitle.
+/** The macro sections in their fixed display order, each with its directory caption. */
 private val SectionCaptions = linkedMapOf(
     "Carriere studenti" to "Gestione della tua carriera",
     "Didattica" to "Sportelli dei corsi di studio",
@@ -63,6 +66,10 @@ private val SectionCaptions = linkedMapOf(
     "Altri sportelli" to "Orientamento, internazionale e altro",
 )
 
+/**
+ * The macro section a portal group (or service name) falls into; unmatched entries land in
+ * "Altri sportelli". Single source for both the directory headers and a booking's subtitle.
+ */
 fun sectionLabelOf(groupOrName: String): String = when {
     groupOrName.startsWith("Carriere Studenti", ignoreCase = true) -> "Carriere studenti"
     groupOrName.startsWith("Didattica", ignoreCase = true) -> "Didattica"
@@ -70,6 +77,7 @@ fun sectionLabelOf(groupOrName: String): String = when {
     else -> "Altri sportelli"
 }
 
+/** Folds the raw services into the ordered macro sections, dropping empty sections and sorting each by display name. */
 fun List<AppointmentService>.toDirectorySections(): List<AppointmentDirectorySection> {
     val byLabel = groupBy { sectionLabelOf(it.group ?: it.name) }
     return SectionCaptions.entries.mapNotNull { (label, caption) ->
@@ -78,7 +86,7 @@ fun List<AppointmentService>.toDirectorySections(): List<AppointmentDirectorySec
     }
 }
 
-// Check-in QRs arrive as "data:image/png;base64,…" data URLs.
+/** Decodes a check-in QR, which arrives as a "data:image/png;base64,…" data URL. */
 fun decodeQrDataUrl(dataUrl: String): ImageBitmap? = runCatching {
     val encoded = dataUrl.substringAfter("base64,", missingDelimiterValue = "")
         .takeIf { it.isNotBlank() } ?: return null

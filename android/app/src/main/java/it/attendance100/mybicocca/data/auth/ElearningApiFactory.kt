@@ -7,6 +7,10 @@ import java.util.Locale
 import javax.inject.Inject
 import javax.inject.Singleton
 
+/**
+ * Builds Moodle clients, optionally seeded with a `MoodleSession` cookie for the browser-session
+ * surfaces (file downloads, embedded web views).
+ */
 @Singleton
 class ElearningApiFactory @Inject constructor() {
 
@@ -23,8 +27,10 @@ class ElearningApiFactory @Inject constructor() {
             install(HttpMetrics)
         }
 
-    // Maps the app locale onto the langpacks elearning.unimib.it actually ships;
-    // anything that isn't Italian falls back to English.
+    /**
+     * Maps the device locale onto the langpacks elearning.unimib.it actually ships: Italian
+     * when the device is Italian, English for everything else.
+     */
     private fun moodleLanguage(): String =
         if (Locale.getDefault().language == "it") "it" else "en"
 

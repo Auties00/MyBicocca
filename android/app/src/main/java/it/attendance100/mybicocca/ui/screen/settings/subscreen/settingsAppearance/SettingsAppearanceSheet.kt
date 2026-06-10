@@ -32,10 +32,11 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import it.attendance100.mybicocca.core.os.LocalDeviceType
 import it.attendance100.mybicocca.core.os.rememberHapticManager
-import it.attendance100.mybicocca.data.local.settings.ThemeMode
-import it.attendance100.mybicocca.ui.component.SegmentedSwitch
+import it.attendance100.mybicocca.domain.model.settings.ThemeMode
+import it.attendance100.mybicocca.ui.component.input.SegmentedSwitch
 import it.attendance100.mybicocca.ui.component.modal.PredictiveModalBottomSheet
-import it.attendance100.mybicocca.ui.theme.AppTheme
+import it.attendance100.mybicocca.domain.model.settings.AppTheme
+import it.attendance100.mybicocca.ui.screen.settings.subscreen.settingsAppearance.component.AppThemePreviewItem
 import it.attendance100.mybicocca.ui.theme.BicoccaTheme
 import it.attendance100.mybicocca.ui.theme.isDynamicColorAvailable
 
@@ -47,9 +48,16 @@ private fun themeModeLabel(mode: ThemeMode): String = when (mode) {
     ThemeMode.Dark -> "Scuro"
 }
 
-// Appearance picker as a modal: the theme grid scrolls in the body while the
-// Sistema/Chiaro/Scuro switcher stays pinned to the bottom, mirroring the
-// libretto (CFU/voti) modal layout. Header text follows the edifici sheet style.
+/**
+ * The "Aspetto" settings page, shown as a modal bottom sheet: a two-per-row grid of palette
+ * candidates scrolls in the body while the Sistema/Chiaro/Scuro mode switcher stays pinned to
+ * the bottom in a pill container, mirroring the libretto (CFU/voti) modal layout. Each grid
+ * cell is a live mini-screen mockup rendered inside its own candidate palette, with previews
+ * resolved to the same light/dark mode the app is currently using; a lone last palette keeps
+ * its half-width slot. The Material You palette is only listed where dynamic color is
+ * available. Picks apply immediately through the ViewModel, retheming the whole app (and the
+ * sheet itself) in place. Header text follows the edifici sheet style.
+ */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun SettingsAppearanceSheet(
@@ -59,7 +67,6 @@ fun SettingsAppearanceSheet(
     val appTheme by viewModel.appTheme.collectAsStateWithLifecycle()
     val themeMode by viewModel.themeMode.collectAsStateWithLifecycle()
 
-    // Previews render in the same light/dark mode the app is currently using
     val dark = when (themeMode) {
         ThemeMode.System -> isSystemInDarkTheme()
         ThemeMode.Light -> false
@@ -116,7 +123,6 @@ fun SettingsAppearanceSheet(
                                 )
                             }
 
-                            // Lone trailing card
                             if (pair.size == 1) Spacer(Modifier.weight(1f))
                         }
                     }
@@ -143,6 +149,11 @@ fun SettingsAppearanceSheet(
     }
 }
 
+/**
+ * One selectable palette cell: the [AppThemePreviewItem] mockup wrapped in its own
+ * [BicoccaTheme] so it renders in the candidate palette, above a radio button and the palette's
+ * display name.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun PaletteCell(
@@ -170,7 +181,6 @@ private fun PaletteCell(
         ) {
             val currentDevice = LocalDeviceType.current
 
-            // Render the preview in its own palette
             BicoccaTheme(appTheme = appTheme, dark = dark) {
                 AppThemePreviewItem(
                     selected = selected,

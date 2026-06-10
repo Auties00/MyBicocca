@@ -4,6 +4,11 @@ import androidx.room.Dao
 import androidx.room.Query
 import androidx.room.Upsert
 
+/**
+ * Room access to the refresh timestamps backing the e-learning staleness checks.
+ * Repositories read a scope's state before fetching and upsert a fresh stamp after a
+ * successful write; deleting an account's rows forces every resource stale again.
+ */
 @Dao
 interface ElearningSyncStateDao {
 

@@ -57,20 +57,47 @@ import it.attendance100.mybicocca.ui.screen.calendar.subscreen.eventDetail.Event
 import it.attendance100.mybicocca.ui.screen.calendar.subscreen.monthAgenda.MonthAgendaSheet
 import it.attendance100.mybicocca.ui.screen.calendar.theme.ProvideEventPalette
 
+/**
+ * The calendar tab: the student's unified schedule — lessons, booked exams, assignment
+ * deadlines, segreteria appointments and library seat reservations — switchable between
+ * day, week and month layouts through the segmented control on top. Day and week are
+ * pinch-zoomable timelines sharing one zoom level; month is a busy-tinted grid with a
+ * draggable agenda sheet for the selected day. A "go to today" FAB floats whenever today
+ * is off-screen, mode changes slide the content horizontally toward the picked mode, and
+ * the whole tab is pull-to-refresh. Tapping any event opens its detail sheet, which shows
+ * whenever the selected event id resolves to an event in the loaded month or day data.
+ *
+ * A month's first-ever load renders the empty calendar with the refresh indicator pinned
+ * for the entire initial fetch (the same language as the e-learning tab), driven by
+ * [CalendarViewModel.initialLoading] on top of the plain refreshing status. A failed sync
+ * replaces the calendar with a centered error state and a retry button; refresh failures
+ * raise no transient snackbar.
+ *
+ * The agenda sheet and the FAB draw in their own popup windows, which no in-content cover
+ * can clip — they would bleed over anything composed above the tab — so the screen hides
+ * them itself: they show only while this is the visible tab, no shell chrome covers it,
+ * the keyboard is closed and the error state is not replacing the calendar.
+ *
+ * @param isActive true only while this is the visible tab. The shell keeps every tab
+ *   composed in its pager cache, so per-tab chrome must be claimed on each activation
+ *   rather than once on composition; the calendar offers no filter chrome and clears any
+ *   registration another tab left behind.
+ * @param coverProgress how far shell-level chrome covers the tab — the max of the
+ *   sub-page transition and the search-overlay open fraction, 0 when the tab root is
+ *   fully on top. Gating the popups on it hides them the instant a sub-page push/pop or a
+ *   search open begins, in both directions and during predictive back. Null means no
+ *   shell hosts the screen (previews) and counts as settled.
+ */
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun CalendarScreen(
     modifier: Modifier = Modifier,
-    // True only while this is the visible tab. The shell keeps all tabs composed (pager cache),
-    // so the filter chrome must be (re)claimed on activation rather than once on composition.
     isActive: Boolean = true,
-    // How far the tab is covered by shell-level chrome (max of the sub-page transition and the
-    // search overlay open fraction; 0 = TabRoot fully on top). The agenda/FAB popups live in
-    // their own window, which no in-content cover can clip; gating them on this hides them the
-    // instant a sub-page push/pop or a search open begins. null = no shell (preview) -> settled.
     coverProgress: State<Float>? = null,
     onProvideFilterToggle: ((() -> Unit)?) -> Unit = {},
     onOpenCourse: (CourseId) -> Unit = {},
+    onOpenAssignment: (assignmentId: Int, courseId: Int) -> Unit = { _, _ -> },
+    onOpenReservation: (CalendarEvent) -> Unit = {},
     bottomNavBarPadding: PaddingValues,
     viewModel: CalendarViewModel = hiltViewModel(),
 ) {
@@ -79,20 +106,18 @@ fun CalendarScreen(
     val selectedMonth by viewModel.selectedMonth.collectAsStateWithLifecycle()
     val weekStart by viewModel.weekStart.collectAsStateWithLifecycle()
     val syncStatus by viewModel.syncStatus.collectAsStateWithLifecycle()
+    val initialLoading by viewModel.initialLoading.collectAsStateWithLifecycle()
     val eventsByDay by viewModel.eventsByDay.collectAsStateWithLifecycle()
     val dayEventsLoadable by viewModel.dayEvents.collectAsStateWithLifecycle()
     val monthEventsLoadable by viewModel.events.collectAsStateWithLifecycle()
     val selectedEventId by viewModel.selectedEventId.collectAsStateWithLifecycle()
     val coursesByActivityCode by viewModel.coursesByActivityCode.collectAsStateWithLifecycle()
 
-    // No filter chips in v1; clear any registration the previous tab left when we become active.
     LaunchedEffect(isActive) { if (isActive) onProvideFilterToggle(null) }
 
     LaunchedEffect(Unit) {
         viewModel.oneShotEvents.collect { event ->
             when (event) {
-                // The failure is rendered as a centered error state below (driven by syncStatus);
-                // no transient snackbar.
                 is CalendarOneShotEvent.RefreshFailed -> Unit
                 CalendarOneShotEvent.RequireSignIn -> Unit
             }
@@ -116,7 +141,7 @@ fun CalendarScreen(
     ProvideEventPalette {
     Box(modifier = modifier.fillMaxSize()) {
         PullToRefreshBox(
-            isRefreshing = syncStatus is SyncStatus.Refreshing,
+            isRefreshing = syncStatus is SyncStatus.Refreshing || initialLoading,
             onRefresh = viewModel::pullToRefresh,
             state = pullState,
             modifier = Modifier.fillMaxSize(),
@@ -193,13 +218,8 @@ fun CalendarScreen(
             .asPaddingValues()
             .calculateBottomPadding() > 0.dp
 
-        // The agenda sheet and the FAB both draw in their own Popup window, which neither the
-        // pager nor a covering sub-page/search overlay can clip — so they bleed on top of other
-        // content unless we hide them ourselves. Two conditions must hold: this is the visible
-        // tab (isActive — the shell keeps every tab composed) AND TabRoot is fully on top, i.e.
-        // no sub-page push/pop or search open is in flight (coverProgress ~ 0). The latter
-        // catches the transition window in both directions and during predictive back.
-        val chromeVisible = isActive && (coverProgress?.value ?: 0f) < 0.01f
+        val chromeVisible = isActive && (coverProgress?.value ?: 0f) < 0.01f &&
+            syncStatus !is SyncStatus.Failed
 
         if (chromeVisible && agendaPresence > 0.01f && !keyboardOpen) {
             MonthAgendaSheet(
@@ -208,6 +228,8 @@ fun CalendarScreen(
                 onEventClick = { viewModel.openEventDetail(it.id) },
                 elearningCoursesFor = { it.activityCode?.let(coursesByActivityCode::get).orEmpty() },
                 onOpenCourse = onOpenCourse,
+                onOpenAssignment = onOpenAssignment,
+                onOpenReservation = onOpenReservation,
                 progress = agendaProgress,
                 presence = agendaPresence,
                 bottomNavBarPadding = bottomNavBarPadding,
@@ -229,7 +251,6 @@ fun CalendarScreen(
             }
         }
 
-        // Event detail bottom sheet — open iff selectedEventId resolves to a known event.
         val selected = remember(selectedEventId, monthEventsLoadable, dayEventsLoadable) {
             val id = selectedEventId ?: return@remember null
             monthEventsLoadable.valueOrNull()?.firstOrNull { it.id == id }
@@ -240,6 +261,8 @@ fun CalendarScreen(
                 event = selected,
                 elearningCourses = selected.activityCode?.let(coursesByActivityCode::get).orEmpty(),
                 onOpenCourse = onOpenCourse,
+                onOpenAssignment = onOpenAssignment,
+                onOpenReservation = onOpenReservation,
                 onDismiss = viewModel::closeEventDetail,
             )
         }

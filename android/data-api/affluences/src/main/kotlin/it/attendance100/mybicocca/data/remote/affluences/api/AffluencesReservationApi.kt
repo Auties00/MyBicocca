@@ -213,6 +213,11 @@ class AffluencesReservationApi(
      * or null for email-validated reservations
      * @param authorization The single sign-on credential (a SAML auth token or an OIDC id
      * token), sent as the `Authorization` header, or null for email-validated reservations
+     * @param accountApiKey The per-install device api key (see [AffluencesAccountApi.checkIn]), sent
+     * as `user-identifier`. Pair it with [accountAuthToken] to book as the logged-in account
+     * @param accountAuthToken The account session token (see [AffluencesAccountApi.pollEmailValidation]).
+     * When both this and [accountApiKey] are set, the reservation is created as the authenticated
+     * mobile-app user, so the server confirms it immediately without the email validation step
      * @return The result of the reservation
      */
     suspend fun createReservation(
@@ -228,7 +233,9 @@ class AffluencesReservationApi(
         userPhone: String? = null,
         userDeviceToken: String? = null,
         authType: String? = null,
-        authorization: String? = null
+        authorization: String? = null,
+        accountApiKey: String? = null,
+        accountAuthToken: String? = null
     ): AffluencesReservationResult =
         executePost(
             baseUrl = RESERVATION_API_URL,
@@ -249,6 +256,11 @@ class AffluencesReservationApi(
             headers = buildMap {
                 if (authorization != null) {
                     put(HttpHeaders.Authorization, authorization)
+                }
+                if (accountApiKey != null && accountAuthToken != null) {
+                    putAll(MOBILE_APP_HEADERS)
+                    put(USER_IDENTIFIER_HEADER, accountApiKey)
+                    put(HttpHeaders.Authorization, "Bearer $accountAuthToken")
                 }
             }
         )
@@ -340,7 +352,10 @@ class AffluencesReservationApi(
         )
 
     private companion object {
-        // POST /reservations/{token}/confirmation expects a JSON body, even if empty
+        /**
+         * Body for `POST /reservations/{token}/confirmation`, which expects a JSON body even
+         * when empty.
+         */
         private val EmptyJsonBody = emptyMap<String, String>()
     }
 }

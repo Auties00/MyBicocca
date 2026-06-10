@@ -9,11 +9,16 @@ import it.attendance100.mybicocca.domain.model.elearning.deadline.Deadline
 import it.attendance100.mybicocca.domain.model.elearning.quiz.QuizId
 import java.time.Instant
 
+/**
+ * Maps one event of the Moodle calendar web service into a deadline cache row, or null
+ * for events that aren't course-bound assignment/quiz deadlines. Despite the name, the
+ * exported `instance` is the course-module id; the course repository rewrites it to
+ * the real module instance id via batched assignment/quiz lookups before persisting.
+ * The due time prefers `timesort` over `timestart` and is normalized from epoch
+ * seconds to milliseconds.
+ */
 internal fun ElearningCalendarEvent.toDeadlineEntity(accountId: AccountId): DeadlineEntity? {
     val courseId = course?.id ?: return null
-    // Despite the name, the exported `instance` is the course-module id; the repository
-    // rewrites it to the real module instance id before persisting (see
-    // ElearningCourseRepositoryImpl.resolveDeadlineInstanceIds).
     val cmId = instance ?: return null
     val module = moduleName?.lowercase() ?: return null
     val kind = when (module) {
@@ -33,6 +38,10 @@ internal fun ElearningCalendarEvent.toDeadlineEntity(accountId: AccountId): Dead
     )
 }
 
+/**
+ * Maps a cached deadline row to the matching domain variant by its kind discriminator,
+ * or null for an unrecognized kind.
+ */
 internal fun DeadlineEntity.toDomain(): Deadline? = when (kind) {
     DeadlineEntity.Kind.ASSIGNMENT -> Deadline.Assignment(
         id = AssignmentId(instanceId),

@@ -30,12 +30,15 @@ import androidx.compose.ui.unit.dp
 import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.ui.component.button.MorphKnob
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.addCourse.state.EnrolmentStatus
+import it.attendance100.mybicocca.ui.theme.LocalIsOnline
 
-// Circular enrol affordance shared by the catalog and search rows. The four states cross-fade
-// in place: idle "+", in-progress spinner, enrolled = the app's MorphKnob check badge (same as
-// the language picker), failed "!" (tap to retry). An already enrolled course stays tappable for
-// haptic feedback but never re-fires a request (the ViewModel short-circuits it), so the only
-// state that ignores taps is the in-flight spinner.
+/**
+ * Circular enrol affordance shared by the catalog and search rows. The four states cross-fade
+ * in place: idle "+", in-progress spinner, enrolled = the app's [MorphKnob] check badge (same
+ * as the language picker), failed "!" (tap to retry). An already enrolled course stays tappable
+ * for haptic feedback but never re-fires a request (the ViewModel short-circuits it), so the
+ * only state that ignores taps is the in-flight spinner.
+ */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun CourseEnrolButton(
@@ -45,7 +48,7 @@ fun CourseEnrolButton(
     modifier: Modifier = Modifier,
 ) {
     val haptic = rememberHapticManager()
-    val enabled = status != EnrolmentStatus.InProgress
+    val enabled = status != EnrolmentStatus.InProgress && LocalIsOnline.current
     Box(
         modifier = modifier
             .size(38.dp)
@@ -63,7 +66,6 @@ fun CourseEnrolButton(
             label = "enrolStatus",
         ) { state ->
             when (state) {
-                // Same "joined" badge as the language settings modal.
                 EnrolmentStatus.Enrolled -> MorphKnob(checked = true, uncheckedIcon = null)
 
                 else -> StatusCircle(state = state, accent = accent)

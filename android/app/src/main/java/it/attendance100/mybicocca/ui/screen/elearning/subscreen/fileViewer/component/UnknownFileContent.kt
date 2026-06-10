@@ -21,6 +21,12 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import java.util.Locale
 
+/**
+ * Fallback content for files without an in-app preview: a centered document icon, the file name
+ * and size, and a note that no integrated preview exists. The bottom action bar offers open-with
+ * and share, both disabled — with the primary label switched to a download-in-progress message —
+ * while the file is being fetched.
+ */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun UnknownFileContent(

@@ -730,6 +730,309 @@ enum class ElearningDiscussionSortOrder(val id: Int) {
 }
 
 /**
+ * Request to update (edit) an existing forum post.
+ *
+ * Omitting [subject]/[message] leaves the corresponding field unchanged. When no
+ * `attachmentsid` option is supplied the post keeps its current attachments; to modify
+ * attachments, seed a draft area via [ElearningPrepareDraftAreaForPostRequest], adjust it,
+ * and pass its id as an `attachmentsid` option.
+ *
+ * @property postId The identifier of the post to update.
+ * @property subject The new subject, or null to keep the current one.
+ * @property message The new message body (HTML), or null to keep the current one.
+ * @property options Optional list of additional options (e.g. `attachmentsid`, `inlineattachmentsid`).
+ */
+@Serializable
+class ElearningUpdateForumPostRequest(
+    private val postId: Int,
+    private val subject: String? = null,
+    private val message: String? = null,
+    private val options: List<ElearningDiscussionOption>? = null
+) : ElearningRequest<ElearningForumStatusResponse> {
+    override val functionName = "mod_forum_update_discussion_post"
+
+    override fun writeAdditionalData(formData: ParametersBuilder) {
+        formData.append("postid", postId.toString())
+        subject?.let { formData.append("subject", it) }
+        message?.let { formData.append("message", it) }
+        options?.forEachIndexed { index, option ->
+            formData.append("options[$index][name]", option.name)
+            formData.append("options[$index][value]", option.value)
+        }
+    }
+}
+
+/**
+ * Request to delete a forum post.
+ *
+ * @property postId The identifier of the post to delete.
+ */
+@Serializable
+class ElearningDeleteForumPostRequest(
+    private val postId: Int
+) : ElearningRequest<ElearningForumStatusResponse> {
+    override val functionName = "mod_forum_delete_post"
+
+    override fun writeAdditionalData(formData: ParametersBuilder) {
+        formData.append("postid", postId.toString())
+    }
+}
+
+/**
+ * Request to log that the current user viewed a forum (clears the forum's unread tracking).
+ *
+ * @property forumId The identifier of the forum that was viewed.
+ */
+@Serializable
+class ElearningViewForumRequest(
+    private val forumId: Int
+) : ElearningRequest<ElearningForumStatusResponse> {
+    override val functionName = "mod_forum_view_forum"
+
+    override fun writeAdditionalData(formData: ParametersBuilder) {
+        formData.append("forumid", forumId.toString())
+    }
+}
+
+/**
+ * Request to log that the current user viewed a discussion (marks its posts read).
+ *
+ * @property discussionId The identifier of the discussion that was viewed.
+ */
+@Serializable
+class ElearningViewForumDiscussionRequest(
+    private val discussionId: Int
+) : ElearningRequest<ElearningForumStatusResponse> {
+    override val functionName = "mod_forum_view_forum_discussion"
+
+    override fun writeAdditionalData(formData: ParametersBuilder) {
+        formData.append("discussionid", discussionId.toString())
+    }
+}
+
+/**
+ * Generic `{ status, warnings }` response shared by the forum logging and mutation
+ * functions that report only success.
+ *
+ * @property status Whether the operation succeeded.
+ * @property warnings Any warnings generated during the request.
+ */
+@Serializable
+data class ElearningForumStatusResponse(
+    @SerialName("status")
+    val status: Boolean = true,
+    @SerialName("warnings")
+    val warnings: List<ElearningResponseWarning> = emptyList()
+) : ElearningResponse
+
+/**
+ * Request to fetch a single post by id (used to refresh one post after an edit).
+ *
+ * @property postId The identifier of the post to retrieve.
+ */
+@Serializable
+class ElearningGetForumDiscussionPostRequest(
+    private val postId: Int
+) : ElearningRequest<ElearningGetForumDiscussionPostResponse> {
+    override val functionName = "mod_forum_get_discussion_post"
+
+    override fun writeAdditionalData(formData: ParametersBuilder) {
+        formData.append("postid", postId.toString())
+    }
+}
+
+/**
+ * Response wrapping a single forum post.
+ *
+ * @property post The requested post.
+ * @property warnings Any warnings generated during the request.
+ */
+@Serializable
+data class ElearningGetForumDiscussionPostResponse(
+    @SerialName("post")
+    val post: ElearningForumPost,
+    @SerialName("warnings")
+    val warnings: List<ElearningResponseWarning> = emptyList()
+) : ElearningResponse
+
+/**
+ * Request to check whether the current user can start a new discussion in a forum.
+ *
+ * @property forumId The identifier of the forum.
+ * @property groupId Optional group identifier to check against (for group-mode forums).
+ */
+@Serializable
+class ElearningCanAddDiscussionRequest(
+    private val forumId: Int,
+    private val groupId: Int? = null
+) : ElearningRequest<ElearningCanAddDiscussionResponse> {
+    override val functionName = "mod_forum_can_add_discussion"
+
+    override fun writeAdditionalData(formData: ParametersBuilder) {
+        formData.append("forumid", forumId.toString())
+        groupId?.let { formData.append("groupid", it.toString()) }
+    }
+}
+
+/**
+ * Response describing whether the user can add a discussion and related allowances.
+ *
+ * @property status Whether the user can start a discussion in the forum (or group).
+ * @property canPinDiscussions Whether the user may pin discussions (teacher-only on most sites).
+ * @property canCreateAttachment Whether the user may attach files to new discussions.
+ * @property warnings Any warnings generated during the request.
+ */
+@Serializable
+data class ElearningCanAddDiscussionResponse(
+    @SerialName("status")
+    val status: Boolean = false,
+    @SerialName("canpindiscussions")
+    val canPinDiscussions: Boolean? = null,
+    @SerialName("cancreateattachment")
+    val canCreateAttachment: Boolean? = null,
+    @SerialName("warnings")
+    val warnings: List<ElearningResponseWarning> = emptyList()
+) : ElearningResponse
+
+/**
+ * Request to set the current user's subscription state for a single discussion.
+ *
+ * @property forumId The identifier of the forum the discussion belongs to.
+ * @property discussionId The identifier of the discussion to subscribe to or unsubscribe from.
+ * @property targetState The desired subscription state (`true` to subscribe).
+ */
+@Serializable
+class ElearningSetDiscussionSubscriptionRequest(
+    private val forumId: Int,
+    private val discussionId: Int,
+    private val targetState: Boolean
+) : ElearningRequest<ElearningForumDiscussionStateResponse> {
+    override val functionName = "mod_forum_set_subscription_state"
+
+    override fun writeAdditionalData(formData: ParametersBuilder) {
+        formData.append("forumid", forumId.toString())
+        formData.append("discussionid", discussionId.toString())
+        formData.append("targetstate", if (targetState) "1" else "0")
+    }
+}
+
+/**
+ * Request to toggle the favourite (starred) state of a discussion.
+ *
+ * @property discussionId The identifier of the discussion to star or unstar.
+ * @property targetState The desired starred state (`true` to star).
+ */
+@Serializable
+class ElearningToggleForumFavouriteRequest(
+    private val discussionId: Int,
+    private val targetState: Boolean
+) : ElearningRequest<ElearningForumDiscussionStateResponse> {
+    override val functionName = "mod_forum_toggle_favourite_state"
+
+    override fun writeAdditionalData(formData: ParametersBuilder) {
+        formData.append("discussionid", discussionId.toString())
+        formData.append("targetstate", if (targetState) "1" else "0")
+    }
+}
+
+/**
+ * Response returned by the subscription/favourite toggles, which echo the affected
+ * discussion's exporter. Only the fields the app reads back are modelled; the rest are
+ * ignored by the lenient JSON parser.
+ *
+ * @property id The discussion identifier.
+ * @property pinned Whether the discussion is pinned.
+ * @property locked Whether the discussion is locked.
+ * @property starred Whether the discussion is starred after the operation.
+ */
+@Serializable
+data class ElearningForumDiscussionStateResponse(
+    @SerialName("id")
+    val id: Int? = null,
+    @SerialName("pinned")
+    val pinned: Boolean? = null,
+    @SerialName("locked")
+    val locked: Boolean? = null,
+    @SerialName("starred")
+    val starred: Boolean? = null
+) : ElearningResponse
+
+/**
+ * Request to prepare a draft file area seeded with an existing post's attachments, so the
+ * attachments can be modified before an [ElearningUpdateForumPostRequest].
+ *
+ * @property postId The identifier of the post whose attachments are edited.
+ * @property area The file area to prepare (`"attachment"` for post attachments).
+ * @property draftItemId An existing draft id to reuse, or null to mint a new one.
+ */
+@Serializable
+class ElearningPrepareDraftAreaForPostRequest(
+    private val postId: Int,
+    private val area: String = "attachment",
+    private val draftItemId: Int? = null
+) : ElearningRequest<ElearningPrepareDraftAreaResponse> {
+    override val functionName = "mod_forum_prepare_draft_area_for_post"
+
+    override fun writeAdditionalData(formData: ParametersBuilder) {
+        formData.append("postid", postId.toString())
+        formData.append("area", area)
+        draftItemId?.let { formData.append("draftitemid", it.toString()) }
+    }
+}
+
+/**
+ * Response of [ElearningPrepareDraftAreaForPostRequest].
+ *
+ * @property draftItemId The id of the prepared draft area, pre-populated with existing files.
+ * @property files The files currently present in the draft area.
+ * @property warnings Any warnings generated during the request.
+ */
+@Serializable
+data class ElearningPrepareDraftAreaResponse(
+    @SerialName("draftitemid")
+    val draftItemId: Int,
+    @SerialName("files")
+    val files: List<ElearningFile> = emptyList(),
+    @SerialName("warnings")
+    val warnings: List<ElearningResponseWarning> = emptyList()
+) : ElearningResponse
+
+/**
+ * Request to fetch the groups the current user belongs to within a course, used to pick a
+ * target group when posting to a group-mode forum.
+ *
+ * @property courseId The identifier of the course.
+ * @property userId The identifier of the user whose groups are requested; `0` (the default)
+ *   resolves to the authenticated user server-side.
+ */
+@Serializable
+class ElearningGetCourseUserGroupsRequest(
+    private val courseId: Int,
+    private val userId: Int = 0
+) : ElearningRequest<ElearningGetCourseUserGroupsResponse> {
+    override val functionName = "core_group_get_course_user_groups"
+
+    override fun writeAdditionalData(formData: ParametersBuilder) {
+        formData.append("courseid", courseId.toString())
+        formData.append("userid", userId.toString())
+    }
+}
+
+/**
+ * Response containing the user's groups within a course.
+ *
+ * @property groups The groups the user belongs to.
+ * @property warnings Any warnings generated during the request.
+ */
+@Serializable
+data class ElearningGetCourseUserGroupsResponse(
+    @SerialName("groups")
+    val groups: List<ElearningUserGroup> = emptyList(),
+    @SerialName("warnings")
+    val warnings: List<ElearningResponseWarning> = emptyList()
+) : ElearningResponse
+
+/**
  * Serializer for [ElearningDiscussionSortOrder] that encodes/decodes as integers.
  */
 object ElearningDiscussionSortOrderSerializer : KSerializer<ElearningDiscussionSortOrder> {

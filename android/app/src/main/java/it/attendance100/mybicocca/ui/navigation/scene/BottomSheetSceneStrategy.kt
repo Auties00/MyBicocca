@@ -25,24 +25,18 @@ import it.attendance100.mybicocca.ui.component.modal.SheetPagerHeader
 import it.attendance100.mybicocca.ui.component.modal.sheetBodyGestureBarrier
 import it.attendance100.mybicocca.ui.component.modal.sheetPageTransform
 
-// A multi-page modal whose pages are real back-stack entries. A run of consecutive top-of-stack
-// entries that share the same `group` is rendered as ONE persistent bottom sheet: the top entry
-// is visible, the rest form the in-sheet back stack. Pushing/popping entries morphs the visible
-// page inside the same sheet (the sheet is never torn down between pages), reusing the app's
-// existing PredictiveModalBottomSheet container, SheetPagerHeader and sheetPageTransform.
-//
-// Mark each page with metadata = sheetEntry("<group>") { depth -> SheetHeaderSpec(...) } in the
-// entryProvider, then push the page's NavKey onto the app back stack to open / navigate it.
-
-// Per-page pinned header, resolved in composition so the title/subtitle can read live ViewModel
-// state (e.g. a "3 prenotazioni" counter). Return null to draw no header for that page — used by
-// single-entry sheets that render their own internal morphing header.
+/**
+ * Per-page pinned sheet header, resolved in composition so the title/subtitle can read live
+ * ViewModel state (e.g. a "3 prenotazioni" counter). A null spec draws no header for that page —
+ * used by single-entry sheets that render their own internal morphing header.
+ */
 data class SheetHeaderSpec(
     val title: String,
     val subtitle: CharSequence? = null,
     val onSubtitleClick: (() -> Unit)? = null,
 )
 
+/** Sheet-page metadata payload: the sheet [group] the page belongs to and its [header] resolver. */
 class SheetEntryOptions(
     val group: String,
     val header: @Composable (depth: Int) -> SheetHeaderSpec? = { null },
@@ -50,7 +44,11 @@ class SheetEntryOptions(
 
 const val SheetEntryMetadataKey: String = "it.attendance100.mybicocca.sheetEntry"
 
-// Metadata builder for entry<Route>(metadata = sheetEntry("group") { ... }) { ... }.
+/**
+ * Metadata builder marking an entry as a sheet page, for
+ * `entry<Route>(metadata = sheetEntry("group") { depth -> SheetHeaderSpec(...) }) { ... }`.
+ * Pushing the page's NavKey onto the app back stack then opens (or navigates within) its sheet.
+ */
 fun sheetEntry(
     group: String,
     header: @Composable (depth: Int) -> SheetHeaderSpec? = { null },
@@ -61,21 +59,34 @@ fun sheetEntry(
 private fun NavEntry<*>.sheetOptions(): SheetEntryOptions? =
     metadata[SheetEntryMetadataKey] as? SheetEntryOptions
 
-// Lets a single-entry sheet's content drive the container's swipe/scrim dismissal from its OWN
-// internal state — a mid-wizard gesture-lock and a dismiss veto that morphs a dismissal into a
-// confirm page ("uscire senza inviare?"). The scene owns the holder and reads it for its
-// PredictiveModalBottomSheet; the entry writes into it (via LocalSheetDismissControl). The back
-// GESTURE is still handled by the entry's own BackHandler, which wins while it's enabled.
+/**
+ * Lets a single-entry sheet's content drive the container's swipe/scrim dismissal from its OWN
+ * internal state — a mid-wizard gesture-lock and a dismiss veto that morphs a dismissal into a
+ * confirm page ("uscire senza inviare?"). The scene owns the holder and reads it for its
+ * PredictiveModalBottomSheet; the entry writes into it (via [LocalSheetDismissControl]). The back
+ * GESTURE is still handled by the entry's own BackHandler, which wins while it's enabled.
+ */
 @Stable
 class SheetDismissControl(val dismiss: () -> Unit) {
     var gesturesEnabled: Boolean by mutableStateOf(true)
     var confirmDismiss: () -> Boolean by mutableStateOf({ true })
 }
 
+/** Provided by the sheet scene around its page content; null when not hosted inside a sheet. */
 val LocalSheetDismissControl = staticCompositionLocalOf<SheetDismissControl?> { null }
 
+/**
+ * Renders multi-page modal sheets whose pages are real back-stack entries. A run of consecutive
+ * top-of-stack entries sharing the same metadata `group` (see [sheetEntry]) becomes ONE persistent
+ * bottom sheet: the top entry is the visible page, the rest form the in-sheet back stack.
+ * Pushing/popping entries morphs the visible page inside the same sheet — the sheet is never torn
+ * down between pages — reusing the app's PredictiveModalBottomSheet container, SheetPagerHeader
+ * and sheetPageTransform.
+ *
+ * [pop] removes `count` trailing entries from the app back stack: one for an in-sheet back step,
+ * the whole run for a dismissal.
+ */
 class BottomSheetSceneStrategy<T : Any>(
-    // Pops `count` entries off the app back stack: 1 for an in-sheet back, the run size for a dismiss.
     private val pop: (count: Int) -> Unit,
 ) : SceneStrategy<T> {
 
@@ -94,6 +105,14 @@ class BottomSheetSceneStrategy<T : Any>(
     }
 }
 
+/**
+ * The overlay scene for one sheet run: a PredictiveModalBottomSheet hosting the run's top entry,
+ * with in-sheet pages morphing via AnimatedContent and an optional pinned [SheetHeaderSpec]
+ * header. Back behaviour is depth-aware: on deeper pages the back gesture pops one entry, while
+ * at the root the handler is disabled so the gesture falls through to the sheet's own seekable
+ * swipe-close. The [SheetDismissControl] it provides lets single-entry wizard sheets close
+ * themselves (its dismiss maps to popping that one entry) once their own exit-confirm is accepted.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 private class BottomSheetScene<T : Any>(
     override val key: Any,
@@ -109,8 +128,6 @@ private class BottomSheetScene<T : Any>(
         val top = run.last()
         val depth = run.lastIndex
         val options = top.sheetOptions()
-        // Single-entry sheets (wizards) close themselves via control.dismiss() once their own
-        // exit-confirm is accepted; pop(1) removes the one sheet entry.
         val control = remember { SheetDismissControl(dismiss = { pop(1) }) }
 
         PredictiveModalBottomSheet(
@@ -118,8 +135,6 @@ private class BottomSheetScene<T : Any>(
             gesturesEnabled = control.gesturesEnabled,
             confirmDismiss = { control.confirmDismiss() },
         ) { _, _ ->
-            // In-sheet page back pops one entry. Disabled at the root so the gesture falls
-            // through to the sheet's own seekable swipe-close (PredictiveModalBottomSheet).
             BackHandler(enabled = depth > 0) { pop(1) }
 
             var prevDepth by remember { mutableIntStateOf(depth) }

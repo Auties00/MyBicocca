@@ -33,8 +33,12 @@ import it.attendance100.mybicocca.ui.screen.registry.state.RegistryBadge
 import it.attendance100.mybicocca.ui.screen.registry.state.RegistryServiceGroup
 import it.attendance100.mybicocca.ui.screen.registry.theme.registryBadgeTone
 
-// Outlined directory group: a soft container holding a header (name + caption) and a
-// list of service rows separated by hairlines that begin under the row text.
+/**
+ * Outlined directory group: a soft bordered container holding a header (name + caption)
+ * over the group's service rows. Every row carries a top hairline inset past the leading
+ * icon so it begins under the row text; the first hairline doubles as the separator
+ * between the group header and its content.
+ */
 @Composable
 fun ServiceGroupCard(
     group: RegistryServiceGroup,
@@ -65,8 +69,6 @@ fun ServiceGroupCard(
                 )
             }
             group.services.forEach { service ->
-                // Every row carries a top hairline (inset under the icon) — the first one
-                // doubles as the separator between the group header and its content.
                 HorizontalDivider(
                     modifier = Modifier.padding(start = 63.dp),
                     thickness = 1.5.dp,
@@ -148,8 +150,11 @@ private fun ServiceRow(
     }
 }
 
-// Fixed-width status pill — every badge occupies the same 86.dp slot so the rows align
-// down the column regardless of label length (matches the design's `width: 86px`).
+/**
+ * Fixed-width status pill: every badge occupies the same 86.dp slot (the design's
+ * `width: 86px`) so badges align down the column regardless of label length, with the
+ * label rendered uppercase and centered on the tone's container color.
+ */
 @Composable
 fun RegistryBadgePill(badge: RegistryBadge) {
     val tone = registryBadgeTone(badge.tone)

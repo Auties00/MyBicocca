@@ -51,8 +51,8 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.createBitmap
-import it.attendance100.mybicocca.data.local.settings.PdfPagerOrientation
-import it.attendance100.mybicocca.data.local.settings.PdfThemeMode
+import it.attendance100.mybicocca.domain.model.settings.PdfPagerOrientation
+import it.attendance100.mybicocca.domain.model.settings.PdfThemeMode
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -64,6 +64,11 @@ import java.io.Closeable
 import java.io.File
 
 
+/**
+ * AGSL shader for dark-theme page rendering on API 33+: a perception-aware "smart invert" that
+ * flips near-grayscale pixels (text, paper) to a dark palette while leaving saturated colors
+ * (figures, highlights) untouched, blending smoothly between the two by saturation.
+ */
 @Language("AGSL")
 const val SmartInvertShader = """
     uniform shader composable;
@@ -96,6 +101,18 @@ const val SmartInvertShader = """
     }
 """
 
+/**
+ * In-app PDF viewer: renders the document with the platform [PdfRenderer] into a vertical or
+ * horizontal pager — one zoomable page per item — with a floating "current / total" pill on top
+ * and the shared bottom action bar (download, share, theme cycle, pager-direction toggle,
+ * picture-in-picture). Shows an inline message when the document cannot be opened.
+ *
+ * [themeMode] and [orientation] are persisted preferences owned by the ViewModel; the action bar
+ * cycles/toggles them via the callbacks. Dark rendering keeps pages legible without re-rendering
+ * the bitmaps: the smart-invert runtime shader on API 33+, an approximating inversion
+ * ColorMatrix below. Pages render at 1.5x the viewport width (capped) so they stay sharp when
+ * zoomed.
+ */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun PdfViewerContent(
@@ -241,6 +258,10 @@ fun PdfViewerContent(
 }
 
 
+/**
+ * One pager page: renders the bitmap lazily (spinner placeholder until ready), makes it
+ * pinch/double-tap zoomable, and applies the dark-mode filter or shader when requested.
+ */
 @Composable
 private fun PdfPage(document: PdfDocument, index: Int, widthPx: Int, isDarkTheme: Boolean) {
     var page by remember(index, widthPx) { mutableStateOf<ImageBitmap?>(null) }
@@ -299,6 +320,11 @@ private fun PdfPage(document: PdfDocument, index: Int, widthPx: Int, isDarkTheme
     }
 }
 
+/**
+ * Closeable wrapper around [PdfRenderer]. Page rendering runs on the IO dispatcher and is
+ * serialized through a mutex because the renderer is not thread-safe; pages are rasterized onto
+ * a white background since PDF content assumes white paper.
+ */
 private class PdfDocument(path: String) : Closeable {
     private val descriptor =
         ParcelFileDescriptor.open(File(path), ParcelFileDescriptor.MODE_READ_ONLY)

@@ -4,6 +4,9 @@ import it.attendance100.mybicocca.domain.model.appointment.AppointmentForm
 import it.attendance100.mybicocca.domain.repository.AppointmentRepository
 import javax.inject.Inject
 
+/**
+ * Loads the booking form of a service, for the details step of the "Appuntamenti" booking flow.
+ */
 class GetAppointmentFormUseCase @Inject constructor(
     private val repository: AppointmentRepository,
 ) {

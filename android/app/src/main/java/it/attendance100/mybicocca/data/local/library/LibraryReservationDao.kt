@@ -24,7 +24,10 @@ interface LibraryReservationDao {
     @Query("DELETE FROM library_reservation WHERE reservation_id = :id")
     suspend fun delete(id: Int)
 
-    // Mirror the server list exactly: the server is the source of truth, this is just the cache.
+    /**
+     * Mirrors the server list exactly — clears and rewrites the whole cache in one transaction,
+     * since the server is the source of truth and this table is just the cache.
+     */
     @Transaction
     suspend fun replaceAll(reservations: List<LibraryReservationEntity>) {
         clear()

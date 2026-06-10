@@ -4,6 +4,14 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.Index
 
+/**
+ * Cached course-content module, one row per activity/resource, keyed by
+ * (account_id, course_id, cm_id) and ordered within its section by `sortOrder`.
+ * Refreshes replace all module rows of the course together with its sections in one
+ * transaction. `datesJson` and `contentsJson` hold the module's dated events and
+ * bundled files as JSON lists per the schemas in the course mapper (null when empty);
+ * `visible` is teacher-visibility while `accessible` is current-user access.
+ */
 @Entity(
     tableName = "elearning_course_modules",
     primaryKeys = ["account_id", "course_id", "cm_id"],
@@ -31,8 +39,6 @@ data class CourseModuleEntity(
     val indent: Int,
     @ColumnInfo(name = "after_link") val afterLink: String?,
     @ColumnInfo(name = "linked_section_id") val linkedSectionId: Int?,
-    // JSON-encoded List<ModuleDateJson> per ElearningJson schema
     @ColumnInfo(name = "dates_json") val datesJson: String?,
-    // JSON-encoded List<ModuleContentJson> per ElearningJson schema
     @ColumnInfo(name = "contents_json") val contentsJson: String?,
 )

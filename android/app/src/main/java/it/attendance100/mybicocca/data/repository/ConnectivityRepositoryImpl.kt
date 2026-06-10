@@ -12,10 +12,13 @@ import kotlinx.coroutines.flow.asStateFlow
 import javax.inject.Inject
 import javax.inject.Singleton
 
-// Default-network callback (not a per-NetworkRequest one) so onLost fires only when the
-// network the app actually routes through is gone with no replacement: losing Wi-Fi while
-// cellular is still up switches the default instead of reporting offline. Online means the
-// default network is VALIDATED, so a captive portal that hasn't been passed reads as offline.
+/**
+ * Tracks online state through a default-network callback (not a per-NetworkRequest one) so
+ * onLost fires only when the network the app actually routes through is gone with no
+ * replacement: losing Wi-Fi while cellular is still up switches the default without ever
+ * reporting offline. Online means the default network is VALIDATED, so a captive portal that
+ * hasn't been passed reads as offline.
+ */
 @Singleton
 class ConnectivityRepositoryImpl @Inject constructor(
     @ApplicationContext context: Context,

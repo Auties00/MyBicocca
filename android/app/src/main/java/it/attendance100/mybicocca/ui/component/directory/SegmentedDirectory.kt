@@ -24,11 +24,13 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
-// The connected-segmented-card primitives shared by every directory-style list in the app
-// (Settings, the Registry "servizi" directory, the About/Language sheets, …): a header tile,
-// a per-row tile, the leading icon chip, and the corner-shape rule. Outer corners of the group
-// are rounded (20dp), inner corners between rows are tight (4dp).
-
+/**
+ * The corner rule of the connected-segmented-card language shared by every directory-style list
+ * in the app (Settings, the Registry "servizi" directory, the About/Language sheets, …): outer
+ * corners of the group are rounded (20dp), inner corners between rows are tight (4dp). The
+ * companion primitives — [SegmentedHeaderTile], [SegmentedTile], [SegmentedIconChip] — all
+ * build on this shape.
+ */
 fun segmentedShape(isFirst: Boolean, isLast: Boolean): RoundedCornerShape {
     val large = 20.dp
     val small = 4.dp
@@ -40,7 +42,7 @@ fun segmentedShape(isFirst: Boolean, isLast: Boolean): RoundedCornerShape {
     )
 }
 
-// The group heading row: bold name + caption, with the group's top corners rounded.
+/** The heading row of a segmented group: bold name + caption, with the group's top corners rounded. */
 @Composable
 fun SegmentedHeaderTile(
     title: String,
@@ -77,7 +79,7 @@ fun SegmentedHeaderTile(
     }
 }
 
-// The leading rounded-square icon chip (tinted container + glyph) used by directory tiles.
+/** The leading rounded-square icon chip (tinted container + glyph) used by directory tiles. */
 @Composable
 fun SegmentedIconChip(
     icon: ImageVector,
@@ -103,10 +105,13 @@ fun SegmentedIconChip(
     }
 }
 
-// One connected-card row: an optional [leading] (icon chip / avatar / flag …), the title and an
-// optional subtitle, and an optional [trailing] (chevron / switch / knob / badge …). A non-null
-// [onClick] makes the row tappable. The trailing slot owns its own leading spacing so each caller
-// can reproduce its exact gap.
+/**
+ * One connected-card row: an optional [leading] slot (icon chip / avatar / flag …), the title
+ * and an optional subtitle, and an optional [trailing] slot (chevron / switch / knob / badge …).
+ * A non-null [onClick] makes the row tappable; [isFirst]/[isLast] place the row in the group's
+ * corner rule via [segmentedShape]. The trailing slot owns its own leading spacing so each
+ * caller can reproduce its exact gap.
+ */
 @Composable
 fun SegmentedTile(
     isFirst: Boolean,

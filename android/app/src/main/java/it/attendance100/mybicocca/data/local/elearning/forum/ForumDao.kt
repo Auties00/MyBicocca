@@ -6,6 +6,13 @@ import androidx.room.Transaction
 import androidx.room.Upsert
 import kotlinx.coroutines.flow.Flow
 
+/**
+ * Room access to the forum cache — forums, discussions, and posts — with every query scoped by
+ * account. The observe queries carry the display ordering (forums by name, discussions
+ * pinned-first then latest activity, posts chronological); the replace transactions swap a
+ * parent's children atomically on sync; the targeted updates back the optimistic favourite and
+ * mark-read writes; clearAllForAccount empties all three tables for an account.
+ */
 @Dao
 interface ForumDao {
 
@@ -41,6 +48,18 @@ interface ForumDao {
 
     @Upsert
     suspend fun upsertPosts(rows: List<PostEntity>)
+
+    @Query(
+        "UPDATE elearning_forum_discussions SET is_favourite = :favourite " +
+            "WHERE account_id = :accountId AND discussion_id = :discussionId"
+    )
+    suspend fun setDiscussionFavourite(accountId: String, discussionId: Int, favourite: Boolean)
+
+    @Query(
+        "UPDATE elearning_forum_discussions SET unread_count = 0 " +
+            "WHERE account_id = :accountId AND discussion_id = :discussionId"
+    )
+    suspend fun clearDiscussionUnread(accountId: String, discussionId: Int)
 
     @Query("DELETE FROM elearning_forums WHERE account_id = :accountId AND course_id = :courseId")
     suspend fun deleteForumsForCourse(accountId: String, courseId: Int)

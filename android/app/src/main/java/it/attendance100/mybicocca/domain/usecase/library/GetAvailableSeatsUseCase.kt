@@ -6,6 +6,10 @@ import java.time.LocalDate
 import java.time.LocalTime
 import javax.inject.Inject
 
+/**
+ * Searches a zone's free seats for a date and duration, optionally keeping only seats bookable
+ * at a chosen start time; backs the seat-picker step of the Biblioteca booking wizard.
+ */
 class GetAvailableSeatsUseCase @Inject constructor(
     private val repository: LibraryRepository,
 ) {

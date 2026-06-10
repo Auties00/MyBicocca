@@ -40,6 +40,18 @@ import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.time.Clock.System
 
+/**
+ * Course repository backed by the Moodle web services and the Room course cache.
+ * Enrolled courses come from the user-courses endpoint and are stored alongside the
+ * account's deadlines, which are paged out of the calendar action-events endpoint;
+ * course detail fans out concurrently to the course-contents, public-course-info and
+ * activity-completion endpoints, each tolerated to fail independently so one bad
+ * endpoint doesn't lose the others' data. Refreshes are deduplicated per key through
+ * lazily-started application-scoped jobs (concurrent callers await the same fetch,
+ * which also survives the caller's cancellation), gated by the per-scope staleness
+ * rows unless forced, and re-stamped on success. Observe flows combine the Room
+ * tables off the main thread.
+ */
 @Singleton
 class ElearningCourseRepositoryImpl @Inject constructor(
     private val sessionManager: SessionManager,
@@ -155,10 +167,14 @@ class ElearningCourseRepositoryImpl @Inject constructor(
         deadlineDao.replaceForAccount(accountId.value, resolveDeadlineInstanceIds(rows))
     }
 
-    // The calendar exporter puts the course-module id in `instance` ($cm->get('id') in
-    // event_exporter_base), but assignment/quiz rows and their detail screens are keyed by
-    // module instance ids. Translate via the batch list endpoints; drop what can't be resolved,
-    // since an unresolvable deadline couldn't be opened anyway.
+    /**
+     * Rewrites each deadline's instance id from the course-module id to the real
+     * module instance id. The calendar exporter puts the course-module id in
+     * `instance` ($cm->get('id') in event_exporter_base), but assignment/quiz rows and
+     * their detail screens are keyed by module instance ids; the translation goes
+     * through the batch assignment/quiz list endpoints, and rows that can't be
+     * resolved are dropped since an unresolvable deadline couldn't be opened anyway.
+     */
     private suspend fun resolveDeadlineInstanceIds(rows: List<DeadlineEntity>): List<DeadlineEntity> {
         val (api, token) = sessionManager.elearning()
         return coroutineScope {
@@ -252,7 +268,6 @@ class ElearningCourseRepositoryImpl @Inject constructor(
     ) {
         val (api, token) = sessionManager.elearning()
         api.completion.updateActivityCompletion(token, cmId, completed)
-        // Refresh completion states for the course to reconcile.
         runCatching {
             val statuses = api.completion.getActivitiesCompletionStatus(token, courseId.value, null)
             val rows = statuses.statuses.map { it.toEntity(accountId, courseId.value) }
@@ -260,8 +275,8 @@ class ElearningCourseRepositoryImpl @Inject constructor(
         }
     }
 
+    /** Local-only by design; Moodle's user-preference API would be best-effort at most. */
     override suspend fun setFavourite(accountId: AccountId, courseId: CourseId, favourite: Boolean) {
-        // Local-only; Moodle's user-pref API would be best-effort.
         courseDao.setFavourite(accountId.value, courseId.value, favourite)
     }
 

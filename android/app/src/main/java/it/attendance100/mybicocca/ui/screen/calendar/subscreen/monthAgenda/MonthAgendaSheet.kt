@@ -82,6 +82,28 @@ private val ItalianLocale = Locale.ITALIAN
 private const val SheetTopMargin = 64
 private const val ExpansionThreshold = 0.5f
 
+/**
+ * Bottom agenda companion of the month view: a popup-window sheet pinned to the bottom
+ * edge listing the selected day's events under an "OGGI"/"SELEZIONATO" date header with
+ * the event count, or a "Nessun impegno" placeholder when the day is free. Collapsed it
+ * fills the space measured under the month grid; dragging raises it to roughly four
+ * fifths of the screen while a second, full-window popup fades in a tap-to-dismiss scrim
+ * behind it. Releases snap fully open or closed on a fast fling or at half progress.
+ *
+ * While expanded, tapping a row toggles it open inline into the full
+ * [EventDetailContent]; while collapsed, the same tap opens the event detail sheet. The
+ * inline expansion resets whenever the sheet collapses or the day changes.
+ *
+ * Living in popup windows, the sheet escapes every in-content cover — the caller decides
+ * when it may show at all.
+ *
+ * @param progress caller-owned expansion fraction, 0 collapsed to 1 expanded; the sheet
+ *   drives it through drags and snap animations.
+ * @param presence how present month mode itself is, 0..1: the sheet fades with it and
+ *   slides off the bottom edge as it approaches 0.
+ * @param sheetHeight measured pixel height of the free region under the month grid that
+ *   the collapsed sheet should occupy.
+ */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun MonthAgendaSheet(
@@ -90,6 +112,8 @@ fun MonthAgendaSheet(
     onEventClick: (CalendarEvent) -> Unit,
     elearningCoursesFor: (CalendarEvent) -> List<EnrolledCourse>,
     onOpenCourse: (CourseId) -> Unit,
+    onOpenAssignment: (assignmentId: Int, courseId: Int) -> Unit,
+    onOpenReservation: (CalendarEvent) -> Unit,
     progress: Animatable<Float, *>,
     presence: Float,
     bottomNavBarPadding: PaddingValues,
@@ -153,6 +177,8 @@ fun MonthAgendaSheet(
             onEventClick = onEventClick,
             elearningCoursesFor = elearningCoursesFor,
             onOpenCourse = onOpenCourse,
+            onOpenAssignment = onOpenAssignment,
+            onOpenReservation = onOpenReservation,
             isSheetExpanded = isSheetExpanded,
             expandedEventId = expandedEventId,
             onToggleExpand = { id ->
@@ -183,6 +209,12 @@ fun MonthAgendaSheet(
     }
 }
 
+/**
+ * The agenda surface itself. Its height is imposed at measure time, interpolated between
+ * the collapsed and expanded bounds from [progressProvider] — read in the layout phase so
+ * drag frames re-measure without recomposing — while vertical drags feed the owner's
+ * progress through [onDragDelta]/[onDragStopped].
+ */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun AgendaSheetSurface(
@@ -192,6 +224,8 @@ private fun AgendaSheetSurface(
     onEventClick: (CalendarEvent) -> Unit,
     elearningCoursesFor: (CalendarEvent) -> List<EnrolledCourse>,
     onOpenCourse: (CourseId) -> Unit,
+    onOpenAssignment: (assignmentId: Int, courseId: Int) -> Unit,
+    onOpenReservation: (CalendarEvent) -> Unit,
     isSheetExpanded: Boolean,
     expandedEventId: CalendarEventId?,
     onToggleExpand: (CalendarEventId) -> Unit,
@@ -258,6 +292,8 @@ private fun AgendaSheetSurface(
                             isInlineExpanded = expandedEventId == e.id,
                             elearningCourses = elearningCoursesFor(e),
                             onOpenCourse = onOpenCourse,
+                            onOpenAssignment = onOpenAssignment,
+                            onOpenReservation = onOpenReservation,
                             onClick = {
                                 if (isSheetExpanded) onToggleExpand(e.id)
                                 else onEventClick(e)
@@ -341,9 +377,13 @@ private fun DateLabel(selectedDay: LocalDate, eventCount: Int, isToday: Boolean)
     }
 }
 
-// Segmented M3E group, same scheme as the edifici sheet: 28dp corners cap the group's ends,
-// 6dp where rows touch; the expanded row morphs to a fully rounded standalone card and rises
-// one tonal step. The event accent bar stays as the leading edge.
+/**
+ * One event of the agenda list, in the segmented M3E group scheme the edifici sheet uses:
+ * 28dp corners cap the group's ends, 6dp where rows touch. The expanded row morphs into a
+ * fully rounded standalone card, rises one tonal step and unfolds [EventDetailContent]
+ * under its header while the chevron flips; the event's accent bar stays as the leading
+ * edge throughout.
+ */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun AgendaRow(
@@ -353,6 +393,8 @@ private fun AgendaRow(
     isInlineExpanded: Boolean,
     elearningCourses: List<EnrolledCourse>,
     onOpenCourse: (CourseId) -> Unit,
+    onOpenAssignment: (assignmentId: Int, courseId: Int) -> Unit,
+    onOpenReservation: (CalendarEvent) -> Unit,
     onClick: () -> Unit,
 ) {
     val scheme = MaterialTheme.colorScheme
@@ -445,6 +487,8 @@ private fun AgendaRow(
                         event = event,
                         elearningCourses = elearningCourses,
                         onOpenCourse = onOpenCourse,
+                        onOpenAssignment = onOpenAssignment,
+                        onOpenReservation = onOpenReservation,
                         modifier = Modifier.padding(start = 13.dp, end = 16.dp, bottom = 16.dp),
                     )
                 }

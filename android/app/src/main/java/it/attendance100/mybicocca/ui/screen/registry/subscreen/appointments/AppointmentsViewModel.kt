@@ -45,10 +45,29 @@ import java.time.LocalDateTime
 import java.time.YearMonth
 import javax.inject.Inject
 
-// Single owner of the whole Appuntamenti modal: the reservations list, the bookable-desk
-// directory, the in-sheet navigation stack, and the per-service booking wizard (pick a slot
-// from the live grid, fill the dynamic form, confirm). One submit performs the hold and the
-// finalization, so abandoning earlier pages never leaves a dangling reservation.
+/**
+ * Single owner of the whole Appuntamenti modal: the reservations list, the bookable-desk
+ * directory, the in-sheet navigation stack, and the per-service booking wizard (pick a slot
+ * from the live grid, fill the dynamic form, confirm).
+ *
+ * Streams by role: [backStack] drives the in-sheet pager and [events] carries one-shot
+ * outcomes (cancellation, booking failure, PDF ready/failed). Directory and reservation data
+ * flow through [services] with [syncStatus], [reservations] hot from Room, and
+ * [cancellingCode] / [downloadingPdfCode] marking the item with an operation in flight. The
+ * booking-session streams ([bookingService], [offerings], [form], [setupStatus], [month],
+ * [monthAvailability], [availabilityStatus], [noAvailability], [selectedDate], [daySlots],
+ * [slotsStatus], [selectedSlot], [values], [submitting], [bookedReservation],
+ * [autoFocusFieldCode]) are meaningful only once a service has been picked and are cleared
+ * when the session ends.
+ *
+ * Public actions cover in-sheet navigation (opening pages, [back], [resetNavigation]),
+ * reservation management ([refresh], [cancel], [downloadPdf]) and the wizard itself (month
+ * paging, date/slot selection, retries, [setFieldValue], [submit]). One [submit] performs
+ * both the hold and the finalization, so abandoning earlier pages never leaves a dangling
+ * reservation. On creation the desk directory is fetched and the stored reservations are
+ * refreshed best-effort so bookings cancelled elsewhere disappear; offline, the local
+ * snapshot stays.
+ */
 @HiltViewModel
 class AppointmentsViewModel @Inject constructor(
     private val getServices: GetAppointmentServicesUseCase,
@@ -64,8 +83,9 @@ class AppointmentsViewModel @Inject constructor(
     private val observeActiveAccount: ObserveActiveAccountUseCase,
 ) : ViewModel() {
 
-    // In-sheet navigation. The current page is the stack's last entry; depth is its index.
     private val _backStack = MutableStateFlow<List<AppointmentsPage>>(listOf(AppointmentsPage.Reservations))
+
+    /** In-sheet navigation stack: the current page is the last entry and depth is its index. */
     val backStack: StateFlow<List<AppointmentsPage>> = _backStack.asStateFlow()
 
     private val _services = MutableStateFlow<Loadable<List<AppointmentService>>>(Loadable.NotYetLoaded)
@@ -74,7 +94,7 @@ class AppointmentsViewModel @Inject constructor(
     private val _syncStatus = MutableStateFlow<SyncStatus>(SyncStatus.Idle)
     val syncStatus: StateFlow<SyncStatus> = _syncStatus.asStateFlow()
 
-    // Bookings created from this device, hot from Room.
+    /** Bookings created from this device, hot from Room. */
     val reservations: StateFlow<Loadable<List<AppointmentReservation>>> =
         observeReservations()
             .map<List<AppointmentReservation>, Loadable<List<AppointmentReservation>>> { Loadable.Loaded(it) }
@@ -90,8 +110,6 @@ class AppointmentsViewModel @Inject constructor(
     val events: Flow<AppointmentsEvent> = _events.receiveAsFlow()
 
     private val refreshMutex = Mutex()
-
-    // --- Booking session: meaningful only once a service has been picked. ---
 
     private val _bookingService = MutableStateFlow<AppointmentService?>(null)
     val bookingService: StateFlow<AppointmentService?> = _bookingService.asStateFlow()
@@ -117,9 +135,13 @@ class AppointmentsViewModel @Inject constructor(
     private val _availabilityStatus = MutableStateFlow<SyncStatus>(SyncStatus.Idle)
     val availabilityStatus: StateFlow<SyncStatus> = _availabilityStatus.asStateFlow()
 
-    // True once the initial scan has walked the whole booking horizon without finding a single
-    // open day: the slot picker swaps to a full "no dates" error page instead of an empty grid.
     private val _noAvailability = MutableStateFlow(false)
+
+    /**
+     * True once the initial scan has walked the whole booking horizon without finding a single
+     * open day: the slot picker then shows a dedicated "no dates" error page where an empty
+     * grid would otherwise render.
+     */
     val noAvailability: StateFlow<Boolean> = _noAvailability.asStateFlow()
 
     private val _selectedDate = MutableStateFlow<LocalDate?>(null)
@@ -134,8 +156,9 @@ class AppointmentsViewModel @Inject constructor(
     private val _selectedSlot = MutableStateFlow<AppointmentSlot?>(null)
     val selectedSlot: StateFlow<AppointmentSlot?> = _selectedSlot.asStateFlow()
 
-    // Form values keyed by field code; consents store "true" when accepted.
     private val _values = MutableStateFlow<Map<String, String>>(emptyMap())
+
+    /** Form values keyed by field code; consents store "true" when accepted. */
     val values: StateFlow<Map<String, String>> = _values.asStateFlow()
 
     private val _submitting = MutableStateFlow(false)
@@ -144,9 +167,12 @@ class AppointmentsViewModel @Inject constructor(
     private val _bookedReservation = MutableStateFlow<AppointmentReservation?>(null)
     val bookedReservation: StateFlow<AppointmentReservation?> = _bookedReservation.asStateFlow()
 
-    // The first required text field the autofill couldn't pre-populate: the form focuses it
-    // and pops the keyboard so the user lands on the first thing they actually have to type.
     private val _autoFocusFieldCode = MutableStateFlow<String?>(null)
+
+    /**
+     * The first required text field the autofill could not pre-populate: the form focuses it
+     * and pops the keyboard so the user lands on the first thing they actually have to type.
+     */
     val autoFocusFieldCode: StateFlow<String?> = _autoFocusFieldCode.asStateFlow()
 
     val selectedOffering: AppointmentOffering?
@@ -165,12 +191,8 @@ class AppointmentsViewModel @Inject constructor(
 
     init {
         viewModelScope.launch { fetchServices() }
-        // Best-effort: drop reservations cancelled elsewhere. Offline is fine — the local
-        // snapshot stays.
         viewModelScope.launch { runCatching { refreshReservations() } }
     }
-
-    // --- Navigation ---
 
     private fun push(page: AppointmentsPage) {
         _backStack.value = _backStack.value + page
@@ -181,8 +203,10 @@ class AppointmentsViewModel @Inject constructor(
         if (_backStack.value.size > 1) _backStack.value = _backStack.value.dropLast(1)
     }
 
-    // Called when the sheet is dismissed: rewind to the root and forget the booking session
-    // so a re-open starts clean.
+    /**
+     * Rewinds to the root page and forgets the booking session so a re-open starts clean;
+     * invoked when the sheet is dismissed.
+     */
     fun resetNavigation() {
         _backStack.value = listOf(AppointmentsPage.Reservations)
         clearBookingSession()
@@ -228,8 +252,6 @@ class AppointmentsViewModel @Inject constructor(
         _bookedReservation.value = null
         _autoFocusFieldCode.value = null
     }
-
-    // --- Reservations list ---
 
     fun refresh() {
         viewModelScope.launch { fetchServices() }
@@ -283,8 +305,6 @@ class AppointmentsViewModel @Inject constructor(
         }
     }
 
-    // --- Booking wizard ---
-
     fun retrySetup() {
         _bookingService.value?.let { loadSetup(it.id) }
     }
@@ -316,6 +336,11 @@ class AppointmentsViewModel @Inject constructor(
         _values.value = _values.value + (code to value)
     }
 
+    /**
+     * Performs the booking — hold and finalization in one shot. On failure the selected day's
+     * slots are reloaded, since the chosen slot itself may be what made the booking fail, so
+     * the grid reflects what is still bookable.
+     */
     fun submit() {
         if (_submitting.value) return
         val service = _bookingService.value ?: return
@@ -340,8 +365,6 @@ class AppointmentsViewModel @Inject constructor(
                 },
                 onFailure = { cause ->
                     _events.send(AppointmentsEvent.BookingFailed(cause))
-                    // The chosen slot may be the reason it failed: reload the day so the
-                    // grid reflects what is still bookable.
                     _selectedDate.value?.let(::loadDaySlots)
                 },
             )
@@ -375,15 +398,17 @@ class AppointmentsViewModel @Inject constructor(
         }
     }
 
-    // Pre-populate the form from what we already know about the student: the campus email (the
-    // same address used on the booking portal), the full name / given name / surname, and the
-    // fiscal code. Matching is by the server label since the portal field codes are opaque.
+    /**
+     * Pre-populates the form from what is already known about the student: the campus email
+     * (the same address used on the booking portal), the full name / given name / surname,
+     * and the fiscal code. Matching is by the server label since the portal field codes are
+     * opaque. The surname is taken as the display name's last token and the given name(s) as
+     * the rest — imperfect for compound surnames, but a safe best-effort prefill.
+     */
     private suspend fun prefillFromAccount(form: AppointmentForm) {
         val account = observeActiveAccount().firstOrNull() ?: return
         val email = account.username.takeIf { it.contains('@') }
         val fullName = account.displayName.trim().takeIf { it.isNotEmpty() }
-        // displayName is "firstName lastName"; the last token is the surname, the rest the
-        // given name(s). Imperfect for compound surnames, but a safe best-effort prefill.
         val surname = fullName?.substringAfterLast(' ', missingDelimiterValue = "")?.takeIf { it.isNotBlank() }
         val given = fullName?.substringBeforeLast(' ', missingDelimiterValue = "")?.takeIf { it.isNotBlank() }
         val fiscalCode = account.academic.fiscalCode?.trim()?.uppercase()?.takeIf { it.isNotEmpty() }
@@ -421,6 +446,13 @@ class AppointmentsViewModel @Inject constructor(
         viewModelScope.launch { loadMonth(autoAdvance = false) }
     }
 
+    /**
+     * Loads the current month's availability. The current month is often already past the
+     * service's booking horizon, so with [autoAdvance] the scan hops forward to the first
+     * month that actually has open days rather than landing on an empty grid; only after the
+     * whole horizon is exhausted empty does [noAvailability] flip. The first open day is
+     * auto-selected when none is picked yet.
+     */
     private suspend fun loadMonth(autoAdvance: Boolean) {
         val service = _bookingService.value ?: return
         val offering = selectedOffering ?: return
@@ -440,15 +472,12 @@ class AppointmentsViewModel @Inject constructor(
                 _availabilityStatus.value = SyncStatus.Failed(cause)
                 return
             }
-            // The current month is often already past its horizon; hop forward to the
-            // first month that actually has days instead of showing an empty grid.
             if (autoAdvance && result.availableDays.isEmpty() && month < maxMonth) {
                 _month.value = month.plusMonths(1)
                 continue
             }
             _monthAvailability.value = Loadable.Loaded(result)
             _availabilityStatus.value = SyncStatus.Idle
-            // The autoAdvance loop only reaches here empty after exhausting the whole horizon.
             _noAvailability.value = autoAdvance && result.availableDays.isEmpty()
             if (_selectedDate.value == null) {
                 result.availableDays.firstOrNull()?.let(::selectDate)
@@ -457,6 +486,7 @@ class AppointmentsViewModel @Inject constructor(
         }
     }
 
+    /** Fetches the bookable slots for [date]; responses landing after the user has moved to another day are discarded as stale. */
     private fun loadDaySlots(date: LocalDate) {
         val service = _bookingService.value ?: return
         val offering = selectedOffering ?: return
@@ -472,7 +502,6 @@ class AppointmentsViewModel @Inject constructor(
                 )
             }.fold(
                 onSuccess = { slots ->
-                    // Ignore stale responses after the user moved to another day.
                     if (_selectedDate.value == date) {
                         _daySlots.value = Loadable.Loaded(slots)
                         _slotsStatus.value = SyncStatus.Idle
@@ -492,8 +521,7 @@ class AppointmentsViewModel @Inject constructor(
     }
 }
 
-// Free-text inputs the autofill can write into and the keyboard can focus (Select/Consent
-// are excluded).
+/** Free-text inputs the autofill can write into and the keyboard can focus; Select and Consent are excluded. */
 private val AppointmentFormField.isTextLike: Boolean
     get() = this is AppointmentFormField.Email ||
         this is AppointmentFormField.Text ||

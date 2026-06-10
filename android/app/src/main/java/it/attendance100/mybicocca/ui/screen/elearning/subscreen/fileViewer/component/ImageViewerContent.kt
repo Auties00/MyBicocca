@@ -27,9 +27,15 @@ import coil.decode.SvgDecoder
 import me.saket.telephoto.zoomable.coil.ZoomableAsyncImage
 import java.io.File
 
-// telephoto's ZoomableAsyncImage sub-samples huge bitmaps (scanned slides won't OOM)
-// and gives pinch/double-tap zoom. The dedicated loader adds gif + svg decoding on top
-// of the app default.
+/**
+ * In-app image viewer built on telephoto's [ZoomableAsyncImage], which sub-samples huge bitmaps
+ * (scanned slides won't OOM) and gives pinch/double-tap zoom. A dedicated Coil loader adds
+ * gif + svg decoding on top of the app default.
+ *
+ * The bottom action bar offers save-to-gallery, share, and a display-mode toggle between Fit
+ * (letterboxed, full image visible) and Crop (fills the screen, may be clipped); its icon shows
+ * the mode tapping switches to, and toggling resets the zoom state so each mode starts fresh.
+ */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun ImageViewerContent(
@@ -53,8 +59,6 @@ fun ImageViewerContent(
             .build()
     }
 
-    // true = Fit (letterboxed, full image visible); false = Crop (fills screen, may be clipped).
-    // Toggling resets the zoom state via key() so the user starts fresh in each mode.
     var fitToScreen by remember { mutableStateOf(true) }
 
     Box(modifier = modifier.fillMaxSize()) {
@@ -81,7 +85,6 @@ fun ImageViewerContent(
                 onClick = onShare,
             ),
             ViewerAction(
-                // Icon shows the mode you'll switch TO, so the user knows what tapping does.
                 icon = if (fitToScreen) Icons.Outlined.Fullscreen else Icons.Outlined.FitScreen,
                 label = if (fitToScreen) "Riempi schermo" else "Adatta immagine",
                 onClick = { fitToScreen = !fitToScreen },

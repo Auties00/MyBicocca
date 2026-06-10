@@ -1,8 +1,14 @@
 package it.attendance100.mybicocca.core.search
 
-// Jaro-Winkler similarity in [0, 1]. Chosen over Levenshtein for the search box: it is
-// prefix-weighted (users get the first characters right and typo mid-word) and returns a
-// normalized score that folds directly into the matcher's tiers.
+/**
+ * Jaro-Winkler similarity in 0..1.
+ *
+ * Chosen over plain edit distance for the search box because it is prefix-weighted: the
+ * Winkler bonus rewards up to four leading characters in common, matching how users type
+ * (first characters right, typos mid-word). The normalized score folds directly into
+ * [SearchMatcher]'s typo tier, where it ranks candidates that already passed the
+ * edit-distance admission gate. O(|a|·|b|) time.
+ */
 fun jaroWinkler(a: String, b: String): Double {
     if (a == b) return 1.0
     if (a.isEmpty() || b.isEmpty()) return 0.0
@@ -14,6 +20,52 @@ fun jaroWinkler(a: String, b: String): Double {
     return jaro + prefix * 0.1 * (1 - jaro)
 }
 
+/**
+ * Damerau-Levenshtein distance (optimal string alignment variant) capped at [max]: returns
+ * -1 as soon as the distance is provably above the cap, via a length-difference pre-check
+ * and a per-row minimum cutoff. The adjacent transposition ("hte" -> "the") counts as a
+ * single edit — the most common real typo class.
+ *
+ * Serves as the admission gate of [SearchMatcher]'s typo tier: an integer edit budget keyed
+ * on token length behaves predictably across lengths, where a single Jaro-Winkler floor is
+ * too lax on short tokens and too strict on long ones. O(|a|·|b|) time, O(|b|) space — the
+ * three DP rows are recycled.
+ */
+fun damerauLevenshtein(a: String, b: String, max: Int): Int {
+    if (a == b) return 0
+    if (max <= 0) return -1
+    val lenDiff = a.length - b.length
+    if (lenDiff > max || -lenDiff > max) return -1
+    var prevPrev: IntArray? = null
+    var prev = IntArray(b.length + 1) { it }
+    var current = IntArray(b.length + 1)
+    for (i in 1..a.length) {
+        current[0] = i
+        var rowMin = i
+        for (j in 1..b.length) {
+            val cost = if (a[i - 1] == b[j - 1]) 0 else 1
+            var d = minOf(prev[j] + 1, current[j - 1] + 1, prev[j - 1] + cost)
+            val pp = prevPrev
+            if (pp != null && i > 1 && j > 1 && a[i - 1] == b[j - 2] && a[i - 2] == b[j - 1]) {
+                d = minOf(d, pp[j - 2] + 1)
+            }
+            current[j] = d
+            if (d < rowMin) rowMin = d
+        }
+        if (rowMin > max) return -1
+        val recycled = prevPrev ?: IntArray(b.length + 1)
+        prevPrev = prev
+        prev = current
+        current = recycled
+    }
+    return prev[b.length].takeIf { it <= max } ?: -1
+}
+
+/**
+ * Jaro similarity: characters match when equal and within a window of half the longer
+ * string's length; the score averages the match ratio of each string with a transposition
+ * discount over the matched characters. Returns 0 when nothing matches.
+ */
 private fun jaro(a: String, b: String): Double {
     val window = (maxOf(a.length, b.length) / 2 - 1).coerceAtLeast(0)
     val aMatched = BooleanArray(a.length)

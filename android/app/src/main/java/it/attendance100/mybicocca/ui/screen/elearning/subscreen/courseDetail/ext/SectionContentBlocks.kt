@@ -5,14 +5,23 @@ import it.attendance100.mybicocca.domain.model.elearning.course.CourseSection
 import it.attendance100.mybicocca.domain.model.elearning.course.ModuleType
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.courseDetail.state.ContentBlock
 
-// Real courses use labels two ways (surveyed 458 labels across 37 courses): short ones with
-// no body ("Prima settimana", "VI Appello") head the modules that follow; ones carrying a real
-// description are content (lesson syllabi, links, exam rules). The old rule keyed purely on
-// name length and dropped the description, hiding multi-paragraph syllabi behind a 7-char
-// header. We now decide on the body: a label with a meaningful description is a Note (rendered
-// as rich HTML, links intact); a short bodyless label is a header.
+/** Maximum plain-text length for a bodyless label to count as a sub-header. */
 private const val HEADER_MAX_CHARS = 60
 
+/**
+ * Derives the section's render units: module runs grouped under label sub-headers, teacher
+ * notes, and inlined subsections, skipping modules the student can't see. Stealth modules
+ * (visibleoncoursepage=0) are reachable only through a link elsewhere; Moodle hides them from
+ * the course page and so does this.
+ *
+ * Real courses use mod_label two ways (surveyed 458 labels across 37 courses): short ones with
+ * no body ("Prima settimana", "VI Appello") head the modules that follow; ones carrying a real
+ * description are content (lesson syllabi, links, exam rules). The split keys on the body, not
+ * the name length: a label with a meaningful description is a [ContentBlock.Note] (rendered as
+ * rich HTML, links intact), a short bodyless label is a header, and a long bodyless name is
+ * itself the note (it may carry a link). Keying on name length alone would hide multi-paragraph
+ * syllabi behind a short header.
+ */
 fun CourseSection.contentBlocks(
     resolveSubsection: (CourseModule) -> CourseSection? = { null },
 ): List<ContentBlock> {
@@ -29,8 +38,6 @@ fun CourseSection.contentBlocks(
 
     for (module in modules) {
         if (!module.visible) continue
-        // Stealth modules (visibleoncoursepage=0) are reachable only through a link elsewhere;
-        // Moodle hides them from the course page and so do we.
         if (!module.onCoursePage) continue
 
         if (module.type == ModuleType.Subsection) {
@@ -55,18 +62,15 @@ fun CourseSection.contentBlocks(
             val descHtml = module.description?.takeIf { it.containsRenderableHtml() }
             val namePlain = module.name.htmlToPlainText().stripCopySuffix()
             when {
-                // Carries real body content -> rich note (preserves links / formatting).
                 descHtml != null -> {
                     flush()
                     title = null
                     blocks += ContentBlock.Note(descHtml)
                 }
-                // Short, bodyless -> section sub-header above the following modules.
                 namePlain.length in 1..HEADER_MAX_CHARS -> {
                     flush()
                     title = namePlain
                 }
-                // Long name, no description -> the name itself is the note (may carry a link).
                 module.name.containsRenderableHtml() || namePlain.isNotBlank() -> {
                     flush()
                     title = null
@@ -81,11 +85,14 @@ fun CourseSection.contentBlocks(
     return blocks
 }
 
+/** The section summary flattened to one plain-text line, or null when it has no visible text. */
 fun CourseSection.summaryPlainText(): String? =
     summary?.htmlToPlainText()?.takeIf { it.isNotBlank() }
 
-// Teachers duplicate activities and leave the default "(copia)"/"(copy)" suffixes behind;
-// they carry no meaning for students.
+/**
+ * Drops trailing "(copia)"/"(copy)" runs: teachers duplicate activities and leave the default
+ * suffixes behind, and they carry no meaning for students.
+ */
 fun String.stripCopySuffix(): String {
     var out = trim()
     val suffix = Regex("""\s*\((copia|copy)\)$""", RegexOption.IGNORE_CASE)
@@ -96,8 +103,10 @@ fun String.stripCopySuffix(): String {
     }
 }
 
-// Whether an HTML fragment is worth rendering as rich content: it has visible text, or it
-// carries a link / image / table that flattening to plain text would destroy.
+/**
+ * Whether an HTML fragment is worth rendering as rich content: it has visible text, or it
+ * carries a link / image / table that flattening to plain text would destroy.
+ */
 fun String.containsRenderableHtml(): Boolean {
     if (isBlank()) return false
     if (htmlToPlainText().isNotBlank()) return true
@@ -105,6 +114,7 @@ fun String.containsRenderableHtml(): Boolean {
     return "<a " in lower || "href=" in lower || "<img" in lower || "<table" in lower
 }
 
+/** Flattens HTML to plain text collapsed onto a single space-joined line. */
 fun String.htmlToPlainText(): String =
     android.text.Html.fromHtml(this, android.text.Html.FROM_HTML_MODE_COMPACT)
         .toString()

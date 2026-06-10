@@ -12,11 +12,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.FileDownload
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -31,10 +27,12 @@ import androidx.compose.ui.unit.sp
 import it.attendance100.mybicocca.domain.model.elearning.assignment.Assignment
 import java.util.Locale
 
-// A file as a connected segment in the plan compiler's course-tile language: leading
-// extension chip, name with the size as caption, and a trailing download knob slot. A
-// long-press ([onLongOpen]) re-shows the in-app/external chooser even when a choice was
-// already remembered, mirroring the long-press on a course content row.
+/**
+ * A file as a connected segment in the plan compiler's course-tile language: leading
+ * extension chip and name with the size as caption. Tapping the tile opens the file; a
+ * long-press ([onLongOpen]) re-shows the in-app/external chooser even when a choice was
+ * already remembered, mirroring the long-press on a course content row.
+ */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun AttachmentTile(
@@ -95,20 +93,6 @@ fun AttachmentTile(
                         color = scheme.onSurfaceVariant,
                     )
                 }
-            }
-            Spacer(Modifier.width(10.dp))
-            Box(
-                modifier = Modifier
-                    .size(32.dp)
-                    .background(scheme.surfaceContainerHighest, CircleShape),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    imageVector = Icons.Rounded.FileDownload,
-                    contentDescription = "Apri ${file.fileName}",
-                    tint = scheme.onSurfaceVariant,
-                    modifier = Modifier.size(16.dp),
-                )
             }
         }
     }

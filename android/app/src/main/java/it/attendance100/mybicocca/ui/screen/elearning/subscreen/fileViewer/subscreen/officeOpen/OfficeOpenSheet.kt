@@ -53,21 +53,36 @@ import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import it.attendance100.mybicocca.core.state.SyncStatus
 import it.attendance100.mybicocca.ui.component.feedback.LocalAppSnackbarController
-import it.attendance100.mybicocca.ui.navigation.AppRoute
+import it.attendance100.mybicocca.ui.navigation.route.AppRoute
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.fileViewer.FileViewerViewModel
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.fileViewer.launchExternalViewer
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.fileViewer.launchOfficeUri
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.fileViewer.launchPlayStore
+import it.attendance100.mybicocca.ui.component.file.OfficeApp
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.fileViewer.state.FileViewerOneShotEvent
-import it.attendance100.mybicocca.ui.screen.elearning.subscreen.fileViewer.state.OfficeApp
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import java.util.Locale
 
-// Office formats have no free native renderer on Android, so opening one is a hand-off,
-// not a viewing experience — hence a modal over the requesting screen instead of a page.
-// The document goes to Microsoft's app through their documented ms-* protocol in forced
-// view-only mode; when the app is missing, the primary action becomes a Play Store install.
+/**
+ * Hand-off sheet for Office documents. Office formats have no free native renderer on Android,
+ * so opening one is a hand-off, not a viewing experience — hence a modal over the requesting
+ * screen rather than a viewer page. The document goes to Microsoft's app through their
+ * documented ms-* protocol in forced view-only mode; when the app is missing, the primary
+ * action becomes a Play Store install, and the install check re-runs on resume so coming back
+ * from the store flips the CTA to "open". The secondary action downloads the file and hands it
+ * to any other app.
+ *
+ * Visually: a brand-colored hero shape with the family icon, the file name, a document-type +
+ * size chip, an explanatory line, and a pinned connected button pair in the app's shared
+ * sheet-action shape language (brand-filled leading, tonal trailing with an inline progress
+ * indicator while downloading).
+ *
+ * Reuses the file-viewer ViewModel, which owns the office hand-off paths (protocol launch, lazy
+ * download for the external-app fallback). It is keyed per file because the sheet lives in the
+ * shell's store, which would otherwise hand back the instance created for the first file.
+ * Zip-extraction, share, and save events never originate from this sheet and are ignored.
+ */
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun OfficeOpenSheet(
@@ -78,9 +93,6 @@ fun OfficeOpenSheet(
     val context = LocalContext.current
     val snackbar = LocalAppSnackbarController.current
     val scope = rememberCoroutineScope()
-    // FileViewerViewModel already owns the office hand-off paths (protocol launch, lazy
-    // download for the external-app fallback). Keyed per file: the sheet lives in the
-    // shell's store, which would otherwise hand back the VM created for the first file.
     val viewModel = hiltViewModel<FileViewerViewModel, FileViewerViewModel.Factory>(
         key = "office:${route.fileUrl ?: route.localPath ?: route.fileName}",
         creationCallback = { it.create(route) },
@@ -88,7 +100,6 @@ fun OfficeOpenSheet(
     val downloadStatus by viewModel.downloadStatus.collectAsStateWithLifecycle()
     val downloading = downloadStatus is SyncStatus.Refreshing
 
-    // Re-checked on resume so coming back from the Play Store flips the install CTA to "open".
     var installed by remember(app) { mutableStateOf(isInstalled(context, app)) }
     LifecycleResumeEffect(app) {
         installed = isInstalled(context, app)
@@ -111,7 +122,6 @@ fun OfficeOpenSheet(
                     else snackbar.showError("Nessuna app installata può aprire questo file")
                 }
 
-                // Zip extraction, sharing, and saves never run from the office hand-off.
                 is FileViewerOneShotEvent.OpenExtractedFile,
                 is FileViewerOneShotEvent.ShareFile,
                 FileViewerOneShotEvent.FileSaved -> Unit
@@ -137,7 +147,6 @@ fun OfficeOpenSheet(
                         .background(app.brandColor()),
                     contentAlignment = Alignment.Center,
                 ) {
-                    // Fixed brand fill -> fixed white content; onPrimary would flip in dark theme.
                     Icon(
                         imageVector = app.icon(),
                         contentDescription = null,
@@ -183,8 +192,6 @@ fun OfficeOpenSheet(
 
             Spacer(Modifier.height(24.dp))
 
-            // Connected button group (same shape language as the calendar event detail),
-            // pinned under the content like the libretto modal's mode switch.
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -267,7 +274,10 @@ private fun OfficeApp.heroShape() = when (this) {
     OfficeApp.PowerPoint -> MaterialShapes.Sunny
 }
 
-// Microsoft brand hues; fixed colors on neutral surfaces, so safe in both themes.
+/**
+ * Microsoft brand hues — fixed colors on neutral surfaces, safe in both themes. Content drawn
+ * on them must be explicit white: a theme-reactive onPrimary would flip dark in dark mode.
+ */
 private fun OfficeApp.brandColor() = when (this) {
     OfficeApp.Word -> Color(0xFF185ABD)
     OfficeApp.Excel -> Color(0xFF107C41)

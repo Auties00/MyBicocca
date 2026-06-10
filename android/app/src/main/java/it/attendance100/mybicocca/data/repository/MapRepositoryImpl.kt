@@ -29,6 +29,16 @@ import java.time.LocalDate
 import javax.inject.Inject
 import javax.inject.Singleton
 
+/**
+ * Map repository over the bundled building catalog (Room-seeded) and EasyStaff (rooms synced to
+ * Room per building; room detail and day schedules fetched live).
+ *
+ * The EasyStaff client parses responses on the caller's dispatcher (Jsoup over a multi-hundred-
+ * KB showcase page, JSON decoding of a full day of events), and these calls run in
+ * viewModelScope — the main thread, right while the detail modal animates in. Every remote call
+ * therefore hops to Dispatchers.Default for the fetch+parse+map pipeline; network suspension
+ * releases the worker, so only the parsing occupies it.
+ */
 @Singleton
 class MapRepositoryImpl @Inject constructor(
     private val easyStaffApi: EasyStaffApi,
@@ -51,27 +61,32 @@ class MapRepositoryImpl @Inject constructor(
             .map<List<MapRoom>, Loadable<List<MapRoom>>> { Loadable.Loaded(it) }
             .flowOn(Dispatchers.Default)
 
+    override fun observeAllRooms(): Flow<List<MapRoom>> =
+        roomDao.observeAll()
+            .map { rows -> rows.map { it.toDomain() } }
+            .flowOn(Dispatchers.Default)
+
+    /**
+     * Buildings come entirely from the bundled catalog — no remote call. The catalog is
+     * re-seeded on every launch so shipped edits to buildings.json take effect, and the write is
+     * guarded so a read failure never wipes an already-populated table.
+     */
     override suspend fun refreshBuildings() {
-        // Buildings come entirely from the bundled catalog (no remote call). Re-seeded on every
-        // launch so edits to buildings.json take effect; guarded so a read failure never wipes
-        // an already-populated table.
         val catalog = runCatching { buildingCatalog.load() }.getOrDefault(emptyList())
         if (catalog.isNotEmpty()) buildingDao.upsertAll(catalog.map { it.toEntity() })
     }
 
-    // The EasyStaff client parses responses on the caller's dispatcher (Jsoup over a multi-
-    // hundred-KB showcase page, JSON decoding of a full day of events), and these are invoked
-    // from viewModelScope — i.e. the main thread, right while the detail modal animates in.
-    // Every remote call below therefore hops to Dispatchers.Default for the fetch+parse+map
-    // pipeline; network suspension releases the worker, only the parsing occupies it.
-
+    /**
+     * Replaces the building's cached rooms from EasyStaff, skipping the fetch while the cached
+     * copy is fresh per the stale policy. One bulk showcase call resolves every room's floor up
+     * front — each card carries its own room code, so the mapping is unambiguous — and runs
+     * concurrently with the independent rooms call; floor resolution is best-effort, so a parse
+     * failure costs floors only.
+     */
     override suspend fun refreshRooms(buildingCode: BuildingCode) {
         if (!isRoomsStale(buildingCode)) return
         val building = EasyStaffBuilding(code = buildingCode.value, name = "")
         val rooms = withContext(Dispatchers.Default) {
-            // One bulk showcase call resolves every room's floor up front — each card carries its
-            // own room code, so the mapping is unambiguous, and it is independent of the rooms
-            // call, so the two run concurrently. Best-effort: a parse failure costs floors only.
             val floorByRoomCodeDeferred = async {
                 runCatching {
                     easyStaffApi.buildings.getRoomDetails(listOf(building))
@@ -89,11 +104,13 @@ class MapRepositoryImpl @Inject constructor(
         syncStateDao.upsertState(MapRoomSyncStateEntity(buildingCode.value, now()))
     }
 
+    /**
+     * Queries the showcase one room at a time, which makes the returned card unambiguously this
+     * room's — EasyStaff's room detail DTO carries no room identity of its own.
+     */
     override suspend fun loadRoomDetail(room: MapRoom): MapRoomDetail? {
         val building = EasyStaffBuilding(code = room.buildingCode.value, name = "")
         val easyRoom = EasyStaffRoom(code = room.code.value, name = room.name)
-        // Querying one room at a time makes the returned showcase card unambiguously this room's
-        // — EasyStaff's room detail DTO carries no room identity of its own.
         return withContext(Dispatchers.Default) {
             easyStaffApi.buildings.getRoomDetails(listOf(building), listOf(easyRoom))
                 .firstOrNull()

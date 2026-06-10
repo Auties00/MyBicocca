@@ -59,7 +59,6 @@ import it.attendance100.mybicocca.domain.model.account.LearningIdentity
 import it.attendance100.mybicocca.domain.model.career.Career
 import it.attendance100.mybicocca.domain.model.career.CareerId
 import it.attendance100.mybicocca.domain.model.career.CareerStatus
-import it.attendance100.mybicocca.ui.component.card.DitheredTexture
 import it.attendance100.mybicocca.ui.theme.BadgeSignatureBoxColorRed
 import it.attendance100.mybicocca.ui.theme.BadgeSignatureBoxColorRed2
 import it.attendance100.mybicocca.ui.theme.BadgeSignatureBoxColorWhite
@@ -79,8 +78,11 @@ private fun String.titleCase(): String {
     }
 }
 
-// Front face: layered MyBicocca logo art + EMV-style chip / contactless glyph, with the
-// holder name and matricola. Layers shift by (touch - 0.5) * movementCoeff for parallax.
+/**
+ * Front face of the student badge: layered MyBicocca logo art with an EMV-style chip and
+ * contactless glyph, the holder's name, and the matricola. Layers shift by
+ * (touch - 0.5) * movementCoeff for a parallax effect.
+ */
 @Composable
 fun BadgeFront(
     account: Account?,
@@ -200,8 +202,8 @@ fun BadgeFront(
                         minFontSize = 5.sp,
                     ),
                 )
-                if (career?.matricola != null) Text(
-                    text = career.matricola,
+                if (career?.studentNumber != null) Text(
+                    text = career.studentNumber,
                     color = textColor.copy(alpha = 0.8f),
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Medium,
@@ -212,8 +214,12 @@ fun BadgeFront(
     }
 }
 
-// Back face: magnetic stripe, signature box (cursive over ruled lines), grayscale photo,
-// and institutional email. Haze blur is sampled from the card's hazeSource.
+/**
+ * Back face of the student badge: magnetic stripe, signature box (cursive name over ruled
+ * lines), grayscale profile photo, and institutional email. Blur surfaces sample the haze
+ * source provided by the hosting card. The email line keeps the username as-is when it is
+ * already a full address and appends the campus domain when it is a bare local part.
+ */
 @OptIn(ExperimentalHazeMaterialsApi::class)
 @Composable
 fun BadgeBack(
@@ -327,7 +333,6 @@ fun BadgeBack(
 
         Column(modifier = Modifier.fillMaxSize()) {
             Spacer(modifier = Modifier.height(24.dp))
-            // Magnetic stripe
             Box(
                 modifier = Modifier
                     .hazeEffect(state = hazeState, style = HazeMaterials.regular())
@@ -457,8 +462,6 @@ fun BadgeBack(
                         fontWeight = FontWeight.Medium,
                     )
                     Text(
-                        // username may already be the full institutional email (the sign-in field),
-                        // so only append the domain when it's a bare local part.
                         text = account?.username?.let { if (it.contains('@')) it else "$it@campus.unimib.it" }
                             ?: "",
                         color = textColor,
@@ -471,6 +474,7 @@ fun BadgeBack(
     }
 }
 
+/** Picks the chip art from the account id hash so a given user always sees the same chip. */
 fun getChipDrawable(account: Account?): Int {
     val chips = listOf(
         R.drawable.chip1,
@@ -485,7 +489,6 @@ fun getChipDrawable(account: Account?): Int {
         R.drawable.chip10
     )
 
-    // Use the hash of the account ID to select a chip drawable, ensuring that the same user gets the same chip each time
     val index = account?.id?.value?.hashCode()?.rem(chips.size)?.let {
         if (it < 0) it + chips.size else it
     } ?: 0
@@ -525,7 +528,7 @@ private fun BadgeFrontDarkModePreview() {
         programId = 1L,
         easyStaffProgramCode = null,
         academicYearEnrollmentId = 1L,
-        matricola = "123456",
+        studentNumber = "123456",
         description = "Informatica",
         academicYear = 2023,
         status = CareerStatus.ACTIVE

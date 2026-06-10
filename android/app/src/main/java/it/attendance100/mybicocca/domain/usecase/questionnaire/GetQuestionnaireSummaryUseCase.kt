@@ -5,6 +5,11 @@ import it.attendance100.mybicocca.domain.model.questionnaire.QuestionnaireSummar
 import it.attendance100.mybicocca.domain.repository.QuestionnaireRepository
 import javax.inject.Inject
 
+/**
+ * Fetches the server-computed completion summary of an in-flight compilation, used by
+ * the compilation sub-screen after the end-marker page to decide whether the confirm
+ * action can be offered. Throws on failure.
+ */
 class GetQuestionnaireSummaryUseCase @Inject constructor(
     private val repository: QuestionnaireRepository,
 ) {

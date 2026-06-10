@@ -2,7 +2,10 @@ package it.attendance100.mybicocca.ui.screen.registry.subscreen.enrollments.stat
 
 import it.attendance100.mybicocca.ui.screen.registry.state.RegistryBadgeTone
 
-// A compact status chip shown on a timeline node (fuori corso, part-time, sospesa, …).
+/**
+ * A compact status descriptor for an enrollment year (fuori corso, part-time, sospesa,
+ * …), rendered as a toned chip.
+ */
 data class EnrollmentBadge(
     val label: String,
     val tone: RegistryBadgeTone,

@@ -13,12 +13,18 @@ import javax.inject.Inject
 import javax.inject.Named
 import javax.inject.Singleton
 
-// Persistence is best-effort: tokens are always recoverable via re-auth, so this cache
-// exists only to skip the SAML / login dance on warm starts and across rotations.
+/**
+ * In-memory plus encrypted-preferences cache of per-account session tokens. Persistence is
+ * best-effort: every token is recoverable through a fresh login, so the cache exists only to
+ * skip the SAML / login dance on warm starts and across process restarts.
+ *
+ * The preferences instance is shared with [CredentialsStore] and injected lazily; deferring
+ * `get()` to the first access — always on Dispatchers.IO — keeps the expensive
+ * `EncryptedSharedPreferences.create()` off the cold-start main thread. A single mutex
+ * serializes all reads and writes.
+ */
 @Singleton
 class SessionCache @Inject constructor(
-    // Lazy: shares the encrypted prefs with CredentialsStore; deferring get() to first access (always on
-    // Dispatchers.IO below) keeps EncryptedSharedPreferences.create() off the cold-start main thread.
     @Named(CredentialsStore.EncryptedPrefsName) private val prefs: Lazy<SharedPreferences>,
 ) {
 

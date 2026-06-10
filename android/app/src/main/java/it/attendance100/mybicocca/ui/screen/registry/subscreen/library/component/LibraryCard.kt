@@ -26,8 +26,10 @@ import coil.compose.AsyncImage
 import it.attendance100.mybicocca.domain.model.library.Library
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.library.ext.occupancyColor
 
-// A bookable library on the landing: photo banner, name, live open/closed status and an
-// occupancy ring. Tapping opens the library's rich detail page.
+/**
+ * A bookable library in the list: photo banner, name, live open/closed status and an occupancy
+ * ring. Tapping opens the library's rich detail page.
+ */
 @Composable
 fun LibraryCard(
     library: Library,

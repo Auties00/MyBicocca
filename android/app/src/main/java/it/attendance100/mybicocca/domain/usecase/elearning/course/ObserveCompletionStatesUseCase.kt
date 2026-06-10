@@ -7,6 +7,11 @@ import it.attendance100.mybicocca.domain.repository.ElearningCourseRepository
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
+/**
+ * Streams the per-activity completion states of a course, keyed by course-module id,
+ * hot from the local cache. Drives the checkmarks and progress indicators on the
+ * course detail screen.
+ */
 class ObserveCompletionStatesUseCase @Inject constructor(
     private val repository: ElearningCourseRepository,
 ) {

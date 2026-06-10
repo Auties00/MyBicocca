@@ -68,16 +68,21 @@ import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.domain.model.account.Account
 import it.attendance100.mybicocca.domain.model.account.SignInFailure
 import it.attendance100.mybicocca.ui.component.brand.MyBicoccaWordmark
-import it.attendance100.mybicocca.ui.component.button.rememberPressShrink
-import it.attendance100.mybicocca.ui.component.button.rememberPressShrinkShape
 import it.attendance100.mybicocca.ui.component.input.PasswordTextField
+import it.attendance100.mybicocca.ui.screen.auth.component.rememberPressShrink
+import it.attendance100.mybicocca.ui.screen.auth.component.rememberPressShrinkShape
 import it.attendance100.mybicocca.ui.screen.auth.state.AuthEvent
 import it.attendance100.mybicocca.ui.theme.BicoccaTheme
 import it.attendance100.mybicocca.ui.theme.BicoccaWordmarkAccent
+import it.attendance100.mybicocca.ui.theme.LocalIsOnline
 import kotlinx.coroutines.launch
 
-// Initial-login entry: lives inside AppRoot's NavDisplay.
-// Wraps the form body in a Scaffold + SnackbarHost.
+/**
+ * Full-screen sign-in with university credentials — the initial-login entry hosted in
+ * AppRoot's NavDisplay. Wraps the shared form body in a [Scaffold] with a [SnackbarHost]
+ * for failure messages, and lets the wordmark participate in the shared-element morph
+ * with the main shell's app bar.
+ */
 @Composable
 fun AuthScreen(
     onSignedIn: (account: Account, requiresCareerPick: Boolean) -> Unit,
@@ -107,8 +112,15 @@ fun AuthScreen(
     }
 }
 
-// In-sheet variant: rendered as the "login mode" scene of AccountSwitcherSheet's AnimatedContent.
-// interceptBack = false so the sheet's outer PredictiveBackHandler receives the back event first.
+/**
+ * In-sheet variant of the sign-in form, rendered as the "login mode" scene of
+ * AccountSwitcherSheet's AnimatedContent. Back is not intercepted here so the sheet's
+ * outer PredictiveBackHandler receives the event first; the wordmark stays static (no
+ * shared-element morph) and the snackbar host is drawn inside the sheet, where a system
+ * snackbar would otherwise sit behind the modal. [cancelPaddingProvider] and
+ * [cancelOpacityProvider] let the host animate the cancel button in sync with the sheet's
+ * scene transition.
+ */
 @Composable
 fun AuthScreenSheetContent(
     modifier: Modifier = Modifier,
@@ -138,6 +150,17 @@ fun AuthScreenSheetContent(
     }
 }
 
+/**
+ * The sign-in form itself: wordmark + tagline header, username/email and password fields
+ * with autofill semantics and a tinted autofill highlight, a brand-red submit button that
+ * swaps its label for a spinner while the request is in flight (and stays disabled while
+ * offline or with blank fields), then SPID/CIE alternatives under an "oppure" divider.
+ * The SPID/CIE buttons are intentional placeholders that only surface an availability
+ * notice. The column scrolls and pads above the IME so the keyboard never covers the
+ * fields, and rejected credentials keep both fields in their error state until edited.
+ * When [onCancel] is provided, an arrow-up outlined button is pinned to the top with
+ * padding/opacity driven by the host's transition providers.
+ */
 @Composable
 private fun AuthScreenBody(
     modifier: Modifier,
@@ -236,7 +259,8 @@ private fun AuthScreenBody(
                 val (accediInteractionSource, accediShape) = rememberPressShrink()
                 Button(
                     onClick = viewModel::submit,
-                    enabled = !inflight && username.isNotBlank() && password.isNotBlank(),
+                    enabled = !inflight && username.isNotBlank() && password.isNotBlank() &&
+                            LocalIsOnline.current,
                     interactionSource = accediInteractionSource,
                     shape = accediShape,
                     colors = ButtonDefaults.buttonColors(
@@ -277,7 +301,7 @@ private fun AuthScreenBody(
                 AlternativeLoginButton(
                     label = "Entra con SPID",
                     icon = painterResource(R.drawable.ic_spid),
-                    iconTint = Color.Unspecified, // keep the official SPID blue
+                    iconTint = Color.Unspecified,
                     enabled = !inflight,
                     onClick = {
                         scope.launch {
@@ -358,9 +382,11 @@ private fun AlternativeLoginButtonPreview() {
     }
 }
 
-// User-visible snackbar copy for a failed sign-in. NoConnection covers both a dead
-// local network and an unreachable/down backend (both surface as IOException), so the
-// copy must not assert it's the user's fault — it offers retry-later as an alternative.
+/**
+ * User-visible snackbar copy for a failed sign-in. NoConnection covers both a dead local
+ * network and an unreachable/down backend (both surface as IOException), so the copy must
+ * not assert it's the user's fault — it offers retry-later as an alternative.
+ */
 private fun SignInFailure.toMessage(): String = when (this) {
     is SignInFailure.BadCredentials ->
         "Credenziali non valide. Controlla username e password."
@@ -368,12 +394,21 @@ private fun SignInFailure.toMessage(): String = when (this) {
     is SignInFailure.NoConnection ->
         "Impossibile raggiungere il server. Controlla la connessione o riprova più tardi."
 
+    is SignInFailure.AlreadySignedIn ->
+        "Questo account è già presente sul dispositivo."
+
     is SignInFailure.Unknown ->
         "Accesso non riuscito. Riprova tra qualche istante."
 }
 
 private val AlternativeLoginPressedColor = Color(0xFF0066CC)
 
+/**
+ * Outlined SSO entry button (icon + label) that floods with the institutional SPID blue
+ * while pressed, inverting icon and text to white and shrinking slightly under the finger.
+ * Pass [Color.Unspecified] as [iconTint] to preserve a multicolor brand icon's intrinsic
+ * palette (the official SPID mark).
+ */
 @Composable
 private fun AlternativeLoginButton(
     label: String,

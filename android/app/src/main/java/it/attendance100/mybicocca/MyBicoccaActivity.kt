@@ -34,19 +34,20 @@ import dagger.hilt.android.AndroidEntryPoint
 import it.attendance100.mybicocca.core.os.LocalDeviceType
 import it.attendance100.mybicocca.core.os.ProvideHapticManager
 import it.attendance100.mybicocca.core.os.getDeviceType
-import it.attendance100.mybicocca.data.deeplink.LibraryActionKind
-import it.attendance100.mybicocca.data.deeplink.LibraryDeepLinkAction
-import it.attendance100.mybicocca.data.deeplink.PendingLibraryAction
-import it.attendance100.mybicocca.data.deeplink.PendingPresenceScan
-import it.attendance100.mybicocca.data.auth.SessionManager
-import it.attendance100.mybicocca.data.local.settings.AppearanceSettingsStore
-import it.attendance100.mybicocca.data.local.settings.SecuritySettingsStore
-import it.attendance100.mybicocca.data.local.settings.ThemeMode
+import it.attendance100.mybicocca.domain.model.library.LibraryActionKind
+import it.attendance100.mybicocca.domain.model.library.LibraryDeepLinkAction
+import it.attendance100.mybicocca.domain.model.settings.AppTheme
+import it.attendance100.mybicocca.domain.model.settings.ThemeMode
+import it.attendance100.mybicocca.domain.usecase.attendance.SubmitPresenceScanUseCase
+import it.attendance100.mybicocca.domain.usecase.library.SubmitLibraryActionUseCase
+import it.attendance100.mybicocca.domain.usecase.security.ObserveAppLockEnabledUseCase
+import it.attendance100.mybicocca.domain.usecase.security.ObserveSecureScreenUseCase
+import it.attendance100.mybicocca.domain.usecase.settings.ObserveAppThemeUseCase
+import it.attendance100.mybicocca.domain.usecase.settings.ObserveThemeModeUseCase
+import it.attendance100.mybicocca.core.os.LocalPipController
+import it.attendance100.mybicocca.core.os.PipController
+import it.attendance100.mybicocca.core.os.PipState
 import it.attendance100.mybicocca.ui.navigation.AppRoot
-import it.attendance100.mybicocca.ui.screen.elearning.subscreen.videoPlayer.player.LocalPipController
-import it.attendance100.mybicocca.ui.screen.elearning.subscreen.videoPlayer.player.PipController
-import it.attendance100.mybicocca.ui.screen.elearning.subscreen.videoPlayer.player.PipState
-import it.attendance100.mybicocca.ui.theme.AppTheme
 import it.attendance100.mybicocca.ui.theme.BicoccaTheme
 import it.attendance100.mybicocca.ui.theme.LocalAppTheme
 import it.attendance100.mybicocca.ui.theme.LocalDarkTheme
@@ -55,28 +56,40 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-// AppCompatActivity for two reasons: it extends FragmentActivity (required by
-// androidx.biometric's BiometricPrompt), and AppCompatDelegate.setApplicationLocales only
-// applies in-app locales to AppCompat activities on pre-Android-13 — with a plain
-// FragmentActivity the language switch there only took effect on the next launch.
-// Compose setContent, edge-to-edge, splash, PiP, and Hilt are unaffected.
+/**
+ * The single activity hosting the whole Compose app behind [AppRoot].
+ *
+ * It owns the pieces that must live at the window level: resolving the appearance preferences
+ * into the active theme, flagging the window secure while the app lock is enabled and the user
+ * opted in, animating the OS splash screen away, picture-in-picture for media playback, and
+ * translating externally-opened deep links (mod_attendance QR scans, Affluences reservation
+ * email links) into their domain hand-offs.
+ *
+ * It extends [AppCompatActivity] for two reasons: androidx.biometric's BiometricPrompt requires
+ * a FragmentActivity, and AppCompatDelegate.setApplicationLocales only applies in-app locales to
+ * AppCompat activities on pre-Android-13 — with a plain FragmentActivity the language switch
+ * there only took effect on the next launch.
+ */
 @AndroidEntryPoint
 class MyBicoccaActivity : AppCompatActivity() {
 
     @Inject
-    lateinit var sessionManager: SessionManager
+    lateinit var observeThemeMode: ObserveThemeModeUseCase
 
     @Inject
-    lateinit var securitySettingsStore: SecuritySettingsStore
+    lateinit var observeAppTheme: ObserveAppThemeUseCase
 
     @Inject
-    lateinit var appearanceSettingsStore: AppearanceSettingsStore
+    lateinit var observeAppLockEnabled: ObserveAppLockEnabledUseCase
 
     @Inject
-    lateinit var pendingPresenceScan: PendingPresenceScan
+    lateinit var observeSecureScreen: ObserveSecureScreenUseCase
 
     @Inject
-    lateinit var pendingLibraryAction: PendingLibraryAction
+    lateinit var submitPresenceScan: SubmitPresenceScanUseCase
+
+    @Inject
+    lateinit var submitLibraryAction: SubmitLibraryActionUseCase
 
     private val pipController = object : PipController {
         private var state: PipState? = null
@@ -86,7 +99,8 @@ class MyBicoccaActivity : AppCompatActivity() {
         }
 
         override fun currentState(): PipState? = state
-        // The button works for any file; auto-enter (onUserLeaveHint) needs playing media.
+
+        /** The explicit PiP button works for any file; auto-enter (onUserLeaveHint) needs playing media. */
         override fun enterPipNow(): Boolean = tryEnterPip(requirePlaying = false)
         override val isInPip get() = inPip
     }
@@ -108,17 +122,14 @@ class MyBicoccaActivity : AppCompatActivity() {
         captureAttendanceDeepLink(intent)
         captureLibraryDeepLink(intent)
 
-        // Animate the splash screen to transition to the app's content
         splashScreen.setOnExitAnimationListener { provider -> provider.animateExitAndRemove() }
 
         enableEdgeToEdge()
 
-        // Mark the window secure (hide from recents/app-switcher + block screenshots) only while the
-        // lock is active and the user opted in. Off by default, so screenshots stay allowed.
         lifecycleScope.launch {
             combine(
-                securitySettingsStore.appLockEnabled,
-                securitySettingsStore.secureScreenEnabled,
+                observeAppLockEnabled(),
+                observeSecureScreen(),
             ) { lockEnabled, secure -> lockEnabled && secure }
                 .distinctUntilChanged()
                 .collect { secure ->
@@ -131,8 +142,8 @@ class MyBicoccaActivity : AppCompatActivity() {
         }
 
         setContent {
-            val themeMode by appearanceSettingsStore.themeMode.collectAsStateWithLifecycle(ThemeMode.System)
-            val appTheme by appearanceSettingsStore.appTheme.collectAsStateWithLifecycle(AppTheme.Default)
+            val themeMode by observeThemeMode().collectAsStateWithLifecycle(ThemeMode.System)
+            val appTheme by observeAppTheme().collectAsStateWithLifecycle(AppTheme.Default)
             val dark = when (themeMode) {
                 ThemeMode.System -> isSystemInDarkTheme()
                 ThemeMode.Light -> false
@@ -145,7 +156,6 @@ class MyBicoccaActivity : AppCompatActivity() {
                     isAppearanceLightNavigationBars = !dark
                 }
             }
-
 
             val windowSizeClass = calculateWindowSizeClass(this)
             val deviceType = getDeviceType(windowSizeClass.widthSizeClass)
@@ -173,33 +183,41 @@ class MyBicoccaActivity : AppCompatActivity() {
         captureLibraryDeepLink(intent)
     }
 
-    // A mod_attendance QR opened from outside resolves to this activity; hand the raw
-    // link to the shared holder so the attendance screen can run the marking flow.
+    /**
+     * A mod_attendance QR opened from outside resolves to this activity; the raw link is handed
+     * to the Presenze flow, which runs the marking flow when its screen comes up.
+     */
     private fun captureAttendanceDeepLink(intent: Intent) {
         if (intent.action != Intent.ACTION_VIEW) return
         val uri = intent.data ?: return
         if (uri.host == "elearning.unimib.it" && uri.path?.contains("mod/attendance/attendance.php") == true) {
-            pendingPresenceScan.submit(uri.toString())
+            submitPresenceScan(uri.toString())
         }
     }
 
-    // An Affluences reservation cancellation email link opened from outside resolves here; parse the
-    // reservationToken and hand it to the shared holder for the Biblioteca flow.
+    /**
+     * An Affluences reservation cancellation email link opened from outside resolves here; the
+     * reservationToken is parsed out and handed to the Biblioteca flow.
+     */
     private fun captureLibraryDeepLink(intent: Intent) {
         if (intent.action != Intent.ACTION_VIEW) return
         val uri = intent.data ?: return
         if (uri.host?.contains("affluences.com") != true) return
         val token = uri.getQueryParameter("reservationToken") ?: return
         if (!uri.path.orEmpty().contains("/reservation/cancel")) return
-        pendingLibraryAction.submit(LibraryDeepLinkAction(LibraryActionKind.Cancel, token))
+        submitLibraryAction(LibraryDeepLinkAction(LibraryActionKind.Cancel, token))
     }
 
+    /** Auto-enters picture-in-picture only for playing media (video/audio), never for static files. */
     override fun onUserLeaveHint() {
         super.onUserLeaveHint()
-        // Auto-enter only for playing media (video/audio), never for static files.
         tryEnterPip(requirePlaying = true)
     }
 
+    /**
+     * Enters picture-in-picture using the content aspect ratio when known (media); a portrait
+     * default otherwise, so a document or image still pops out at a sensible size.
+     */
     private fun tryEnterPip(requirePlaying: Boolean): Boolean {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return false
 
@@ -207,8 +225,6 @@ class MyBicoccaActivity : AppCompatActivity() {
         if (requirePlaying && state?.isPlaying != true) return false
 
         return runCatching {
-            // Use the content aspect when known (media); a portrait default otherwise so a
-            // document/image still pops out at a sensible size.
             val ratio = if (state != null) {
                 Rational(
                     state.aspectNumerator.coerceAtLeast(1),
@@ -226,39 +242,21 @@ class MyBicoccaActivity : AppCompatActivity() {
     }
 }
 
-// Animates the splash screen exit
+/**
+ * Animates the OS splash screen away: the icon zooms out and fades while the background and
+ * branding image fade on a faster track, then the splash view is removed.
+ */
 private fun SplashScreenViewProvider.animateExitAndRemove() {
-    val iconDuration = 700L   // icon scale + fade
-    val chromeDuration = 500L // background fade + branding slide
+    val iconDuration = 700L
+    val chromeDuration = 500L
 
     val animators = buildList {
         val splashIconEndScale = 10f
-        add(
-            ofFloat(
-                iconView,
-                View.SCALE_X,
-                1f,
-                splashIconEndScale
-            ).lasting(iconDuration)
-        ) // The icon zooms out
+        add(ofFloat(iconView, View.SCALE_X, 1f, splashIconEndScale).lasting(iconDuration))
         add(ofFloat(iconView, View.SCALE_Y, 1f, splashIconEndScale).lasting(iconDuration))
-        add(
-            ofFloat(
-                iconView,
-                View.ALPHA,
-                1f,
-                0f
-            ).lasting(iconDuration)
-        )                   // The icon fades out
-        add(
-            ofInt(
-                view.background,
-                "alpha",
-                255,
-                0
-            ).lasting(chromeDuration)
-        )          // The background fades out
-        addAll(brandingExitAnimators(chromeDuration))                                                          // The branding image slides down and fades out
+        add(ofFloat(iconView, View.ALPHA, 1f, 0f).lasting(iconDuration))
+        add(ofInt(view.background, "alpha", 255, 0).lasting(chromeDuration))
+        addAll(brandingExitAnimators(chromeDuration))
     }
 
     AnimatorSet().apply {
@@ -269,6 +267,11 @@ private fun SplashScreenViewProvider.animateExitAndRemove() {
     }
 }
 
+/**
+ * Slide-down + fade animators for the splash branding image. The branding view has no public id,
+ * so it is looked up by the OS resource name; on devices where it cannot be resolved (or before
+ * Android 12, where there is no branding view) no animators are produced.
+ */
 @SuppressLint("DiscouragedApi")
 private fun SplashScreenViewProvider.brandingExitAnimators(durationMs: Long): List<Animator> {
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return emptyList()
@@ -277,17 +280,17 @@ private fun SplashScreenViewProvider.brandingExitAnimators(durationMs: Long): Li
         "splashscreen_branding_view",
         "id",
         "android"
-    ) // Identifier not available in api
+    )
 
     val brandingView =
         brandingId.takeIf { it != 0 }?.let { view.findViewById<View>(it) } ?: return emptyList()
 
-    val slideDownwardDistance = brandingView.height.toFloat() + 100f // 100px downwards
+    val slideDownwardDistance = brandingView.height.toFloat() + 100f
     return listOf(
         ofFloat(brandingView, View.ALPHA, 1f, 0f).lasting(durationMs),
         ofFloat(brandingView, View.TRANSLATION_Y, 0f, slideDownwardDistance).lasting(durationMs),
     )
 }
 
-// Sets an animator's duration inline so groups of animators can run at different speeds within one AnimatorSet
+/** Sets an animator's duration inline so groups of animators can run at different speeds within one AnimatorSet. */
 private fun Animator.lasting(durationMs: Long): Animator = apply { duration = durationMs }

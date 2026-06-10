@@ -45,6 +45,13 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.videoPlayer.state.VideoPlayerPlaylistItem
 
+/**
+ * The course playlist as a drawer sliding in from the right edge over a dimmed scrim (tapping the
+ * scrim dismisses). The header counts completed videos; each row shows the video title with its
+ * section, a check icon once completed, and a progress bar for started videos — wavy on the
+ * single video the user watched most recently, flat elsewhere. The currently playing row is
+ * highlighted in the primary container colour.
+ */
 @Composable
 fun PlaylistSidePanel(
     visible: Boolean,

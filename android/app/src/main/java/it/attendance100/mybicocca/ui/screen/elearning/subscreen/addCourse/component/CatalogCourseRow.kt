@@ -27,8 +27,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.addCourse.state.EnrolmentStatus
 
-// An enrollable course inside a category. Neutral grouped surface + accent book chip + the shared
-// enrol button on the right.
+/**
+ * An enrollable course inside a category: neutral grouped surface, accent book chip, name with
+ * shortened monospace code, and the shared enrol button on the right.
+ */
 @Composable
 fun CatalogCourseRow(
     name: String,
@@ -94,8 +96,10 @@ fun CatalogCourseRow(
     }
 }
 
-// Strip Moodle's "yyyy-s-" prefix (e.g. "2526-1-E1805M001" → "E1805M001"); the design keeps just
-// the academic code to keep the row scannable.
+/**
+ * Strips Moodle's "yyyy-s-" prefix (e.g. "2526-1-E1805M001" → "E1805M001"); the design keeps
+ * just the academic code to keep the row scannable.
+ */
 private fun String.shortCourseCode(): String {
     val regex = Regex("^\\d{4}-\\d-")
     return regex.replaceFirst(this, "")

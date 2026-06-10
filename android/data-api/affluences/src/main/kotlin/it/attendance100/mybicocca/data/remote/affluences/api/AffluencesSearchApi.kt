@@ -148,7 +148,7 @@ class AffluencesSearchApi(
         ).data.sites
 
     private companion object {
-        // POST /sites/filters expects a JSON body, even if empty
+        /** Body for `POST /sites/filters`, which expects a JSON body even when empty. */
         private val EmptyJsonBody = emptyMap<String, String>()
     }
 }

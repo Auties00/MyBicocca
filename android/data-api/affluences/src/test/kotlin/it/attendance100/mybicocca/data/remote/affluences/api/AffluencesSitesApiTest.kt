@@ -48,7 +48,6 @@ class AffluencesSitesApiTest : AffluencesTestBase() {
         val liveData = api.sites.getLiveData(ATENEO_LIBRARY_SLUG)
         assertNotNull(liveData.status, "Status should be present")
 
-        // Every forecast slot must cover a valid range and carry a valid occupancy when present
         val allSlots = liveData.todayForecasts + liveData.forecasts.flatMap { it.forecasts }
         allSlots.forEach { slot ->
             assertEquals(2, slot.hourRange.size, "Hour range should have a start and an end")
@@ -61,7 +60,6 @@ class AffluencesSitesApiTest : AffluencesTestBase() {
             }
         }
 
-        // Per-day forecasts must start from today and be ordered
         liveData.forecasts.forEachIndexed { index, day ->
             assertTrue(DATE_REGEX.matches(day.day), "Forecast day should be a date: ${day.day}")
             assertTrue(day.todayOffset >= 0, "Today offset should not be negative")
@@ -142,6 +140,10 @@ class AffluencesSitesApiTest : AffluencesTestBase() {
         }
     }
 
+    /**
+     * The `lastCheckin` checkpoint only filters out older messages, so the call must succeed
+     * even when it filters everything.
+     */
     @Test
     suspend fun getMessages() {
         val messages = api.sites.getMessages(ATENEO_LIBRARY_SLUG)
@@ -149,7 +151,6 @@ class AffluencesSitesApiTest : AffluencesTestBase() {
             assertFalse(message.contentHtml.isNullOrBlank(), "Message content should not be blank")
         }
 
-        // The checkpoint only filters out older messages, the call must still succeed
         val filteredMessages = api.sites.getMessages(ATENEO_LIBRARY_SLUG, lastCheckin = "2026-01-01T00:00:00Z")
         assertTrue(filteredMessages.size <= messages.size, "The checkpoint should not add messages")
     }

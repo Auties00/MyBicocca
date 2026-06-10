@@ -4,7 +4,6 @@ import android.content.Context
 import dagger.hilt.android.qualifiers.ApplicationContext
 import it.attendance100.mybicocca.domain.model.elearning.catalog.CatalogCourse
 import it.attendance100.mybicocca.domain.model.elearning.catalog.CatalogNode
-import it.attendance100.mybicocca.domain.model.elearning.catalog.CatalogSearchHit
 import it.attendance100.mybicocca.domain.model.elearning.catalog.CatalogSection
 import it.attendance100.mybicocca.domain.model.elearning.catalog.ElearningCatalog
 import it.attendance100.mybicocca.domain.model.elearning.course.CourseId
@@ -18,34 +17,21 @@ import kotlinx.serialization.json.Json
 import javax.inject.Inject
 import javax.inject.Singleton
 
+/**
+ * Catalog repository backed by the elearning_index.json asset bundled with the app —
+ * a pre-built snapshot of the Moodle category tree, so no network or account is
+ * involved. The asset is parsed off the main thread on first load and memoized for
+ * the process lifetime, with a mutex collapsing concurrent first loads into one parse.
+ */
 @Singleton
 class ElearningCatalogRepositoryImpl @Inject constructor(
     @ApplicationContext private val context: Context,
 ) : ElearningCatalogRepository {
 
-    @Volatile private var cached: Cached? = null
+    @Volatile private var cached: ElearningCatalog? = null
     private val loadMutex = Mutex()
 
-    override suspend fun load(): ElearningCatalog = ensureLoaded().catalog
-
-    override suspend fun search(query: String, limit: Int): List<CatalogSearchHit> {
-        val trimmed = query.trim()
-        if (trimmed.isEmpty()) return emptyList()
-        val state = ensureLoaded()
-        val needle = trimmed.lowercase()
-        return withContext(Dispatchers.Default) {
-            val results = ArrayList<CatalogSearchHit>(minOf(limit, 256))
-            for (entry in state.searchIndex) {
-                if (entry.haystack.contains(needle)) {
-                    results.add(CatalogSearchHit(entry.course, entry.path))
-                    if (results.size >= limit) break
-                }
-            }
-            results
-        }
-    }
-
-    private suspend fun ensureLoaded(): Cached {
+    override suspend fun load(): ElearningCatalog {
         cached?.let { return it }
         loadMutex.withLock {
             cached?.let { return it }
@@ -55,7 +41,7 @@ class ElearningCatalogRepositoryImpl @Inject constructor(
         }
     }
 
-    private fun build(): Cached {
+    private fun build(): ElearningCatalog {
         val parsed = context.assets.open(ASSET_PATH).use { stream ->
             JSON.decodeFromString(RawIndex.serializer(), stream.bufferedReader().readText())
         }
@@ -65,59 +51,8 @@ class ElearningCatalogRepositoryImpl @Inject constructor(
                 nodes = area.categories.map { it.toDomain(parentId = "root") },
             )
         }
-        val catalog = ElearningCatalog(sections = sections)
-        val index = buildSearchIndex(sections)
-        return Cached(catalog = catalog, searchIndex = index)
+        return ElearningCatalog(sections = sections)
     }
-
-    private fun buildSearchIndex(sections: List<CatalogSection>): List<SearchEntry> {
-        val out = ArrayList<SearchEntry>(20_000)
-        val crumbs = ArrayDeque<String>()
-        sections.forEach { section ->
-            section.nodes.forEach { node ->
-                crumbs.addLast(node.name)
-                collectInto(out, node, crumbs)
-                crumbs.removeLast()
-            }
-        }
-        return out
-    }
-
-    // Cross-listed courses legitimately appear under multiple breadcrumbs; emit
-    // one entry per occurrence so the search shows each provenance distinctly.
-    private fun collectInto(
-        out: MutableList<SearchEntry>,
-        node: CatalogNode,
-        crumbs: ArrayDeque<String>,
-    ) {
-        if (node.courses.isNotEmpty()) {
-            val path = crumbs.toList()
-            for (course in node.courses) {
-                val haystack = buildString(course.name.length + course.code.length + 1) {
-                    append(course.name)
-                    append(' ')
-                    append(course.code)
-                }.lowercase()
-                out.add(SearchEntry(course = course, path = path, haystack = haystack))
-            }
-        }
-        node.children.forEach { child ->
-            crumbs.addLast(child.name)
-            collectInto(out, child, crumbs)
-            crumbs.removeLast()
-        }
-    }
-
-    private data class Cached(
-        val catalog: ElearningCatalog,
-        val searchIndex: List<SearchEntry>,
-    )
-
-    private data class SearchEntry(
-        val course: CatalogCourse,
-        val path: List<String>,
-        val haystack: String,
-    )
 
     private companion object {
         const val ASSET_PATH = "elearning_index.json"
@@ -152,9 +87,11 @@ private data class RawCourse(
     val url: String,
 )
 
-// Synthesise a stable id by chaining ancestor names: category URLs are not
-// always present in the index, and the same name can occur under different
-// ancestors (e.g. "1° anno" under each programme).
+/**
+ * Maps an index node to the domain tree, synthesising a stable id by chaining
+ * ancestor names: category URLs are not always present in the index, and the same
+ * name can occur under different ancestors (e.g. "1° anno" under each programme).
+ */
 private fun RawNode.toDomain(parentId: String): CatalogNode {
     val id = "$parentId|$name"
     return CatalogNode(

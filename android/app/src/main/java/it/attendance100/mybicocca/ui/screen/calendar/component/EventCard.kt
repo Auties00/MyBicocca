@@ -42,10 +42,15 @@ import it.attendance100.mybicocca.ui.screen.calendar.ext.formatTimeRange
 import it.attendance100.mybicocca.ui.screen.calendar.ext.locationLine
 import it.attendance100.mybicocca.ui.screen.calendar.ext.rememberCurrentTime
 
+/** Content tiers an event card steps through as its frame shrinks, from full detail down to a bare dot. */
 enum class EventCardDensity { Full, Compact, Icon, Mini, Dot }
 
-// Decides density automatically from the parent's allotted size. Used by DayTimeline /
-// WeekTimeline where the card's pixel dimensions come from event duration + lane width.
+/**
+ * Timeline event card that adapts its content to the frame it is given: density is picked
+ * from the measured size, letting the same composable serve the day and week event layers
+ * where pixel dimensions come straight from event duration and lane width.
+ * [forcedDensity] bypasses the measurement for hosts that know their tier.
+ */
 @Composable
 fun EventCard(
     event: CalendarEvent,
@@ -67,6 +72,11 @@ private fun pickDensity(widthDp: Float, heightDp: Float): EventCardDensity = whe
     else -> EventCardDensity.Full
 }
 
+/**
+ * Card chrome shared by every density: a container tinted with the event's swatch behind
+ * a 3dp leading accent stripe. Cancelled events dim, gain a dashed accent border and
+ * strike their text through.
+ */
 @Composable
 private fun EventCardCore(
     event: CalendarEvent,
@@ -94,7 +104,6 @@ private fun EventCardCore(
             )
             .clickable(onClick = onClick),
     ) {
-        // Left accent stripe.
         Box(
             modifier = Modifier
                 .width(3.dp)
@@ -250,4 +259,7 @@ private fun CalendarEvent.activityLabelShort(): String = when (this) {
         val type = examTypeLabel?.takeIf { it.isNotBlank() }
         if (type != null) "Esame · $type" else "Esame"
     }
+    is CalendarEvent.AssignmentDeadline -> "Scadenza compito"
+    is CalendarEvent.Appointment -> "Appuntamento"
+    is CalendarEvent.LibraryReservation -> "Biblioteca"
 }

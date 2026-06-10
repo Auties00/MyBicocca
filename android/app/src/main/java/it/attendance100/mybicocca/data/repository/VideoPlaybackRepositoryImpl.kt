@@ -23,6 +23,18 @@ import kotlinx.coroutines.sync.withLock
 import javax.inject.Inject
 import javax.inject.Singleton
 
+/**
+ * Video playback repository on top of the e-learning platform's Kaltura (kalvidres)
+ * integration, with watch progress persisted in Room per account.
+ *
+ * Stream and entry-id resolution call the kalvidres module endpoints with one automatic
+ * re-authentication retry, since the Kaltura session can expire independently of the
+ * web-service token; streams are never cached because their URLs are session-scoped. Resolved
+ * entry ids are kept in a mutex-guarded in-memory map for the repository's lifetime so
+ * thumbnail lookups don't re-resolve the same module. When saved progress passes the
+ * completion threshold the row is flagged completed and the activity completion is mirrored to
+ * the platform best-effort — a mirror failure never breaks local playback state.
+ */
 @Singleton
 class VideoPlaybackRepositoryImpl @Inject constructor(
     private val sessionManager: SessionManager,
@@ -34,7 +46,7 @@ class VideoPlaybackRepositoryImpl @Inject constructor(
         val (api, _) = sessionManager.elearning()
         when (val result = api.kaltura.resolveVideoStreamForModule(cmId)) {
             is ElearningKalturaVideoStreamResponse.Success -> return result.toDomain(cmId)
-            ElearningKalturaVideoStreamResponse.RequiresReauth -> Unit // fall through to reauth + retry
+            ElearningKalturaVideoStreamResponse.RequiresReauth -> Unit
         }
 
         sessionManager.reauthElearning()
@@ -81,6 +93,11 @@ class VideoPlaybackRepositoryImpl @Inject constructor(
             .map { rows -> rows.associate { it.cmId to it.toDomain() } }
             .flowOn(Dispatchers.Default)
 
+    /**
+     * A non-positive incoming duration falls back to the stored one: the player reports an
+     * unset duration until the manifest fully loads, and periodic ticking saves must not reset
+     * a known duration back to zero. Completion is one-way — once flagged, later saves keep it.
+     */
     override suspend fun saveProgress(
         accountId: AccountId,
         courseId: CourseId,
@@ -90,8 +107,6 @@ class VideoPlaybackRepositoryImpl @Inject constructor(
     ) {
         val existing = videoProgressDao.getOnce(accountId.value, cmId)
         val alreadyCompleted = existing?.completed == true
-        // Player.duration is C.TIME_UNSET until the manifest fully loads; ticking saves
-        // would otherwise reset a known duration back to 0.
         val mergedDuration = durationMs.coerceAtLeast(0L)
             .takeIf { it > 0L }
             ?: existing?.durationMs
@@ -138,7 +153,7 @@ class VideoPlaybackRepositoryImpl @Inject constructor(
         videoProgressDao.deleteForAccount(accountId.value)
     }
 
-    // Best-effort: a Moodle completion failure must not break local playback state.
+    /** Best-effort: a platform completion failure must not break local playback state. */
     private suspend fun mirrorCompletionToMoodle(
         accountId: AccountId,
         courseId: CourseId,
@@ -155,10 +170,13 @@ class VideoPlaybackRepositoryImpl @Inject constructor(
     }
 
     private companion object {
+        /** Watched fraction past which a video counts as completed. */
         const val COMPLETION_FRACTION = 0.9
 
-        // Without an explicit size Kaltura serves its small default thumb, which gets upscaled
-        // and blurry in the full-width continue-watching card; 1280 covers high-density screens.
+        /**
+         * Without an explicit size Kaltura serves its small default thumb, which gets upscaled
+         * and blurry in the full-width continue-watching card; 1280 covers high-density screens.
+         */
         const val THUMBNAIL_WIDTH_PX = 1280
     }
 }

@@ -8,6 +8,12 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import it.attendance100.mybicocca.domain.model.elearning.course.CourseId
 
+/**
+ * Screen-scoped palette for the e-learning course cards: a list of saturated accents plus the
+ * tint strengths used to wash a card's hero and body surfaces with the active accent, the
+ * favourite-star colour, and the foreground for accent-filled chrome. The light and dark
+ * variants share the accent list and differ only in tint strengths and star colour.
+ */
 @Immutable
 data class CourseAccentPalette(
     val accents: List<Color>,
@@ -44,18 +50,27 @@ val DarkCourseAccentPalette = CourseAccentPalette(
 
 val LocalCourseAccentPalette = staticCompositionLocalOf { LightCourseAccentPalette }
 
+/**
+ * Assigns a course its accent: the course id picks a palette entry by modulo, so a course keeps
+ * the same colour everywhere it appears, across sessions, with no stored mapping.
+ */
 fun CourseAccentPalette.accentFor(courseId: CourseId): Color {
     val n = accents.size
     val idx = ((courseId.value % n) + n) % n
     return accents[idx]
 }
 
+/** Three accents for one course, used to recolour a full Material scheme on the course detail. */
 data class CourseAccentTriple(
     val primary: Color,
     val secondary: Color,
     val tertiary: Color,
 )
 
+/**
+ * Derives a course's accent triple from evenly spaced palette entries anchored at the same
+ * modulo pick as [accentFor], so the triple's primary matches the card accent.
+ */
 fun CourseAccentPalette.tripleFor(courseId: CourseId): CourseAccentTriple {
     val n = accents.size
     val base = ((courseId.value % n) + n) % n
@@ -66,6 +81,7 @@ fun CourseAccentPalette.tripleFor(courseId: CourseId): CourseAccentTriple {
     )
 }
 
+/** Installs the light or dark course-accent palette for the subtree. */
 @Composable
 fun ProvideCourseAccentPalette(
     dark: Boolean = isSystemInDarkTheme(),

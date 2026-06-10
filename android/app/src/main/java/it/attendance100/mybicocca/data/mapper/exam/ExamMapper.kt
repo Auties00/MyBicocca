@@ -1,5 +1,7 @@
 package it.attendance100.mybicocca.data.mapper.exam
 
+import it.attendance100.mybicocca.data.mapper.common.parseEsse3Date
+import it.attendance100.mybicocca.data.mapper.common.parseEsse3DateTime
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3AcknowledgmentOfReceipt
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3ExamSessionEnrollment
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3ExamSessionTranscript
@@ -18,15 +20,16 @@ import it.attendance100.mybicocca.domain.model.exam.ExamType
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.intOrNull
 import kotlinx.serialization.json.jsonPrimitive
-import java.time.LocalDate
-import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 
-internal val ESSE3_DATE = DateTimeFormatter.ofPattern("dd/MM/yyyy")
 private val ESSE3_TIME = DateTimeFormatter.ofPattern("HH:mm:ss")
-private val ESSE3_DATE_TIME = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")
 
+/**
+ * Maps a bookable-calls row from Esse3's record-book exam-call list to the domain exam
+ * call. Returns null when any component of the call's identity (cdsId/adId/appId) is
+ * missing, since such a row cannot be booked or correlated.
+ */
 fun Esse3ExamSessionTranscript.toDomain(): ExamCall? {
     val cdsId = courseOfStudyId ?: return null
     val adId = activityId ?: return null
@@ -39,11 +42,11 @@ fun Esse3ExamSessionTranscript.toDomain(): ExamCall? {
         activityDescription = activityDescription,
         courseOfStudyDescription = courseOfStudyDescription,
         callDescription = callDescription,
-        callDate = callStartDate.parseDate(),
+        callDate = callStartDate.parseEsse3Date(),
         callTime = graduationTime.parseTime(),
         enrollmentWindow = ExamEnrollmentWindow(
-            opensAt = enrollmentStartDate.parseDate(),
-            closesAt = enrollmentEndDate.parseDate(),
+            opensAt = enrollmentStartDate.parseEsse3Date(),
+            closesAt = enrollmentEndDate.parseEsse3Date(),
         ),
         enrolledNumber = enrolledNumber,
         state = state,
@@ -60,6 +63,10 @@ fun Esse3ExamSessionTranscript.toDomain(): ExamCall? {
     )
 }
 
+/**
+ * Maps a booking row to the lean booking handle (ids only), used where the full booked
+ * exam payload is not needed. Returns null when the call identity is incomplete.
+ */
 fun Esse3ExamSessionEnrollment.toDomain(): ExamBooking? {
     val cdsId = courseOfStudyId ?: return null
     val adId = activityId?.toLong() ?: return null
@@ -72,6 +79,14 @@ fun Esse3ExamSessionEnrollment.toDomain(): ExamBooking? {
     )
 }
 
+/**
+ * Maps a booking row with a published outcome to the domain exam result. The activity
+ * name prefers the libretto spelling (`adStuDes`) over the call description (`desAppello`)
+ * — Esse3 duplicates the name across both. The acknowledgment deadline comes from
+ * `dataRifEsitoStu`, a "DD/MM/YYYY HH:mm:ss" value whose time component is a fixed
+ * 23:59:59, so only the date part is kept. Returns null when the call identity is
+ * incomplete.
+ */
 fun Esse3ExamSessionEnrollment.toExamResult(): ExamResult? {
     val cdsId = courseOfStudyId ?: return null
     val adId = activityId?.toLong() ?: return null
@@ -82,15 +97,18 @@ fun Esse3ExamSessionEnrollment.toExamResult(): ExamResult? {
         publicationId = publicationId,
         activityDescription = studentActivityDescription?.takeIf { it.isNotBlank() }
             ?: examCallDescription,
-        examDateTime = shiftDateTime.parseDateTime(),
+        examDateTime = shiftDateTime.parseEsse3DateTime(),
         grade = outcome.toExamGrade(),
         acknowledgment = acknowledgmentOfReceipt.toAcknowledgmentStatus(),
         publishedNote = publicNote?.takeIf { it.isNotBlank() },
-        // dataRifEsitoStu comes back as "DD/MM/YYYY HH:mm:ss" — strip the time, it's always 23:59:59.
-        acknowledgmentDeadline = studentOutcomeReferenceDate.parseDateTime()?.toLocalDate(),
+        acknowledgmentDeadline = studentOutcomeReferenceDate.parseEsse3DateTime()?.toLocalDate(),
     )
 }
 
+/**
+ * Decodes Esse3's untyped `esito` object into a grade: absence and withdrawal flags win
+ * over the numeric grade, which wins over the bare pass/fail flag.
+ */
 private fun JsonObject?.toExamGrade(): ExamGrade {
     if (this == null) return ExamGrade.Unknown
     val votoEsa = this["votoEsa"]?.runCatching { jsonPrimitive.intOrNull }?.getOrNull()
@@ -116,6 +134,16 @@ private fun Esse3AcknowledgmentOfReceipt?.toAcknowledgmentStatus(): Acknowledgme
         is Esse3AcknowledgmentOfReceipt.Unknown, null -> AcknowledgmentStatus.Unknown
     }
 
+/**
+ * Maps a booking-history row to the domain booked exam. Esse3 duplicates information
+ * across fields, so validated dedup heuristics apply: the activity name prefers the
+ * libretto spelling (`adStuDes`) and falls back to the call description (`desAppello`),
+ * which usually repeats it; the exam mode comes from `tipoEsaCod`, which the DTO calls
+ * `graduationTypeCode`. The outcome is interpreted only once it is published — an
+ * unpublished row carries `superatoFlg=0`, which would otherwise decode as NotPassed —
+ * matching the contract documented on the domain model's grade property. Returns null
+ * when the call identity is incomplete.
+ */
 fun Esse3ExamSessionEnrollment.toBookedExam(): BookedExam? {
     val cdsId = courseOfStudyId ?: return null
     val adId = activityId?.toLong() ?: return null
@@ -128,30 +156,21 @@ fun Esse3ExamSessionEnrollment.toBookedExam(): BookedExam? {
         activityDescription = studentActivityDescription?.takeIf { it.isNotBlank() }
             ?: examCallDescription,
         examCallDescription = examCallDescription,
-        // tipoEsaCod — the DTO calls it graduationTypeCode, but it's the call's exam mode
         examType = graduationTypeCode.toExamType(),
         callType = callTypeCode.toCallType(),
-        examDateTime = shiftDateTime.parseDateTime(),
+        examDateTime = shiftDateTime.parseEsse3DateTime(),
         classroomDescription = classroomDescription?.takeIf { it.isNotBlank() },
         buildingDescription = buildingDescription?.takeIf { it.isNotBlank() },
         credits = teachingActivityWeight,
         examModeDescription = examTypeDescription?.takeIf { it.isNotBlank() },
         position = applicationPosition,
-        bookingDate = insertionDate.parseDateTime(),
-        cancellableUntil = enrollmentEndDate.parseDate(),
+        bookingDate = insertionDate.parseEsse3DateTime(),
+        cancellableUntil = enrollmentEndDate.parseEsse3Date(),
         studentNote = studentNote?.takeIf { it.isNotBlank() },
-        // Interpret the outcome only once it is published — see BookedExam.grade. An
-        // un-published row carries superatoFlg=0, which toExamGrade would map to NotPassed.
         grade = if (publicationId != null) outcome.toExamGrade() else ExamGrade.Unknown,
         outcomePublished = publicationId != null,
         publishedNote = publicNote?.takeIf { it.isNotBlank() },
     )
-}
-
-private fun String?.parseDate(): LocalDate? {
-    val raw = this?.trim()?.takeIf { it.isNotBlank() } ?: return null
-    val datePart = raw.substringBefore(' ')
-    return runCatching { LocalDate.parse(datePart, ESSE3_DATE) }.getOrNull()
 }
 
 private fun String?.parseTime(): LocalTime? {
@@ -159,10 +178,6 @@ private fun String?.parseTime(): LocalTime? {
     val timePart = raw.substringAfter(' ', missingDelimiterValue = "").ifBlank { raw }
     return runCatching { LocalTime.parse(timePart, ESSE3_TIME) }.getOrNull()
 }
-
-private fun String?.parseDateTime(): LocalDateTime? =
-    this?.trim()?.takeIf { it.isNotBlank() }
-        ?.let { runCatching { LocalDateTime.parse(it, ESSE3_DATE_TIME) }.getOrNull() }
 
 private fun String?.toCallType(): ExamCallType = when (this?.trim()?.uppercase()) {
     "PF" -> ExamCallType.Final

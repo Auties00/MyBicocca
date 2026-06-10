@@ -32,10 +32,13 @@ import it.attendance100.mybicocca.domain.model.elearning.course.ModuleContent
 import it.attendance100.mybicocca.ui.component.modal.PredictiveModalBottomSheet
 import java.util.Locale
 
-// Folder modules (and the rare multi-file resource) hold several files; this sheet picks
-// one before handing off to the file viewer. A long-press re-shows the in-app/external chooser
-// for that file even when a choice was already remembered (forceChooser), mirroring the
-// long-press on a single-file module row.
+/**
+ * Modal bottom sheet picking one file out of a folder module (or the rare multi-file resource)
+ * before handing off to the file viewer: the module name as header, then a lazy list of file
+ * rows with a type icon, name and formatted size. Tapping a row opens it and dismisses the
+ * sheet; a long-press re-shows the in-app/external chooser for that file even when a choice
+ * was already remembered (forceChooser), mirroring the long-press on a single-file module row.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FolderContentsSheet(

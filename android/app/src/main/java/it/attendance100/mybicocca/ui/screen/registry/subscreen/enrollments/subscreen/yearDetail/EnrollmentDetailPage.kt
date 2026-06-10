@@ -47,11 +47,14 @@ import it.attendance100.mybicocca.ui.screen.registry.subscreen.enrollments.ext.b
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.enrollments.ext.toEnrollmentDateLabel
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.enrollments.ext.typeLabel
 
-// Full breakdown for one academic year, as a headerless page inside the iscrizioni sheet
-// pager: the sheet's morphing header carries the year and status line. Each populated topic
-// is a grouped tonal block led by an icon chip, with the fields as divider-separated
-// key/value rows — sections appear only when they have content, so a clean career shows just
-// the essentials while a fuori-corso / part-time / suspended year reveals the extra fields.
+/**
+ * Full breakdown for one academic year, as a headerless page inside the iscrizioni sheet
+ * pager: the sheet's morphing header carries the year and status line. Badge chips lead
+ * when present, then each populated topic is a grouped tonal block led by an icon chip,
+ * with the fields as divider-separated key/value rows — sections appear only when they
+ * have content, so a clean career shows just the essentials while a fuori-corso /
+ * part-time / suspended year reveals the extra fields.
+ */
 @Composable
 fun EnrollmentDetailPage(
     enrollment: AnnualEnrollment,
@@ -206,9 +209,11 @@ fun EnrollmentDetailPage(
     }
 }
 
-// One topic: an icon-chip header above a single tonal container holding the fields as
-// divider-separated rows. The header sits outside the container so the eye groups the rows
-// under it without the title competing with the surface fill.
+/**
+ * One topic: an icon-chip header above a single tonal container holding the fields as
+ * divider-separated rows. The header sits outside the container so the eye groups the
+ * rows under it without the title competing with the surface fill.
+ */
 @Composable
 private fun DetailGroup(
     icon: ImageVector,

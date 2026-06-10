@@ -6,6 +6,7 @@ import it.attendance100.mybicocca.domain.repository.MapRepository
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
+/** Streams the campus buildings from the Room store for the map tab's pins and building list. */
 class ObserveBuildingsUseCase @Inject constructor(
     private val repository: MapRepository,
 ) {

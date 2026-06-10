@@ -34,7 +34,10 @@ import it.attendance100.mybicocca.ui.component.modal.SheetLoadingIndicator
 import it.attendance100.mybicocca.ui.component.modal.SheetMessage
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.library.theme.zoneSwatch
 
-// Wizard step 1: pick the seating zone.
+/**
+ * Wizard step 1: pick the seating zone. Each row carries the zone's color swatch and optional
+ * description; loading, error-with-retry and empty states render in place of the list.
+ */
 @Composable
 internal fun ZonesPage(
     zones: Loadable<List<LibraryZone>>,

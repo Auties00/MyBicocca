@@ -11,7 +11,10 @@ import org.junit.jupiter.api.assertNotNull
 
 class AffluencesSearchApiTest : AffluencesTestBase() {
     companion object {
-        // Identifier of the "Biblioteca universitaria" category, stable on the production backend
+        /**
+         * Identifier of the "Biblioteca universitaria" category, stable on the production
+         * backend.
+         */
         private const val UNIVERSITY_LIBRARY_CATEGORY_ID = 20
     }
 
@@ -56,9 +59,9 @@ class AffluencesSearchApiTest : AffluencesTestBase() {
         }
     }
 
+    /** The searched coordinates are those of the Bicocca campus. */
     @Test
     suspend fun searchSitesOnMap() {
-        // Search around the Bicocca campus
         val results = api.search.searchSitesOnMap(
             AffluencesSiteSearchRequest(
                 latitude = 45.518,

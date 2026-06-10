@@ -22,20 +22,31 @@ import androidx.navigation3.ui.LocalNavAnimatedContentScope
 import it.attendance100.mybicocca.ui.navigation.transitions.LocalRootSharedTransitionScope
 import it.attendance100.mybicocca.ui.theme.BicoccaWordmarkAccent
 
-// The two-colour "My"+"Bicocca" brand wordmark, shared by the splash, the login header and the
-// app bar. Rendering it through one composable is what lets the splash mark morph into whichever
-// destination follows: the same key ("mybicocca-wordmark") is used in all three, and they share
-// AppRoot's top-level NavDisplay scope (LocalRootSharedTransitionScope + LocalNavAnimatedContentScope),
-// so the morph rides Nav3's native entry transition — and scaleToBounds scales the glyphs.
+/** One key for every wordmark host, so any pair of them can hand the mark off as a shared element. */
 private const val WordmarkSharedKey = "mybicocca-wordmark"
 
-// Fixed-duration bounds animation, same rationale as TaxBoundsTransform: a default spring can
-// settle before a heavy destination (MainShell) has laid out its app-bar target, so the morph
-// reads as a snap. A fixed tween runs the morph the full way once the target resolves.
+/**
+ * Fixed-duration bounds animation for the wordmark flight: a default spring can settle before a
+ * heavy destination (MainShell) has laid out its app-bar target, making the morph read as a
+ * snap, whereas a fixed tween runs the morph the full way once the target resolves.
+ */
 private val WordmarkBoundsTransform = BoundsTransform { _, _ ->
     tween(durationMillis = 500, easing = FastOutSlowInEasing)
 }
 
+/**
+ * The two-colour "My"+"Bicocca" brand wordmark, shared by the splash, the login header and the
+ * app bar.
+ *
+ * With [sharedElement] = true the text registers a shared-bounds element under one app-wide key
+ * inside AppRoot's top-level NavDisplay scope, which is what lets the splash mark morph into
+ * whichever destination follows, riding Nav3's native entry transition with the glyphs scaling
+ * to the target bounds. In the app bar the animated scope resolves to the root NavDisplay (the
+ * app bar sits outside MainShell's inner NavDisplay), matching the splash/login entries. The
+ * scopes are read only while the morph is opted into, and when either is absent — previews, or
+ * any caller that doesn't opt in — the wordmark degrades to plain text, so it is never coupled
+ * to AppRoot.
+ */
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun MyBicoccaWordmark(
@@ -46,14 +57,8 @@ fun MyBicoccaWordmark(
 ) {
     val scheme = MaterialTheme.colorScheme
     val sharedScope = LocalRootSharedTransitionScope.current
-    // The top-level NavDisplay's AnimatedContentScope. In the app bar this resolves to the ROOT
-    // NavDisplay (the app bar sits outside MainShell's inner NavDisplay), matching the splash/login
-    // entries, so the wordmark morphs across the root entry transition. Read it only when the morph
-    // is actually active so the wordmark still renders as plain Text without a NavDisplay (@Preview).
     val avScope = if (sharedElement && sharedScope != null) LocalNavAnimatedContentScope.current else null
 
-    // Degrades to a plain Text when the scopes are absent (e.g. @Preview, or any caller that
-    // doesn't opt into the shared element), so the wordmark is never coupled to AppRoot.
     val sharedModifier = if (sharedScope != null && avScope != null) {
         with(sharedScope) {
             Modifier.sharedBounds(

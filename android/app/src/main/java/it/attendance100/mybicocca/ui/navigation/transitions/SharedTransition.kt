@@ -21,7 +21,13 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.layout.ContentScale
 
-// Modifier to apply shared element transition to a static/only scalable element
+/**
+ * Shared-element transition for visually static content that at most scales between the two
+ * states (icons, images): the element is drawn once and flown between its bounds. Content whose
+ * layout differs between the states should use [bicoccaSharedBounds]. A no-op when either scope
+ * is absent (outside a navigation transition, e.g. previews), so it is safe to apply
+ * unconditionally.
+ */
 @Composable
 @OptIn(ExperimentalSharedTransitionApi::class)
 fun Modifier.bicoccaSharedElement(
@@ -60,7 +66,12 @@ fun Modifier.bicoccaSharedElement(
 }
 
 
-// Modifier to apply shared bounds transition to a dynamic element
+/**
+ * Shared-bounds transition for dynamic content whose layout changes between the two states: each
+ * side keeps its own composition, cross-fading via [enter]/[exit] while the bounds morph and the
+ * content rescales per [resizeMode]. A no-op when either scope is absent, so it is safe to apply
+ * unconditionally.
+ */
 @Composable
 @OptIn(ExperimentalSharedTransitionApi::class)
 fun Modifier.bicoccaSharedBounds(

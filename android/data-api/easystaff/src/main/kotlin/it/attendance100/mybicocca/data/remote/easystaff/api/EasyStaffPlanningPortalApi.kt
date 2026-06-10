@@ -124,8 +124,11 @@ open class EasyStaffPlanningPortalApi(
             path = "/cliente/${portal.id}/primaria"
         )
 
-    // The list endpoints read their filters from the entry-filters cookie the web front-end
-    // persists; the value is the URL-encoded JSON of the selected filters
+    /**
+     * Builds the `entry-filters` cookie header the list endpoints read their filters from,
+     * mirroring the cookie the web front-end persists: its value is the URL-encoded JSON of
+     * the selected filters.
+     */
     private fun entryFilters(builder: JsonObjectBuilder.() -> Unit): Map<String, String> {
         val filters = buildJsonObject(builder)
         if (filters.isEmpty()) {

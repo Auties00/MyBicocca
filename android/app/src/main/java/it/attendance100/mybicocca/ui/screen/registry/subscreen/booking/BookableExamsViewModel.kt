@@ -21,9 +21,17 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import javax.inject.Inject
 
-// Drives the "Prenota un esame" modal: the bookable exam calls (Esami prenotabili).
-// Loads independently of the booked list (see BookedExamsViewModel); the screen
-// subtracts the booked keys to avoid offering an exam the user already booked.
+/**
+ * Drives the "Prenota un esame" modal: the bookable exam calls (Esami prenotabili), fetched
+ * live from Esse3 for the active career — never cached, since call availability is volatile.
+ * Loads independently of the booked list (`BookedExamsViewModel`); the screen subtracts the
+ * booked keys to avoid offering an exam the user already booked.
+ *
+ * [examCalls] is the list as a [Loadable] snapshot and [syncStatus] tracks the fetch;
+ * [pendingFocusCourseKey] carries a deep-link focus request into the list. [refresh]
+ * re-fetches in place, while [pullToRefresh] first resets the list to [Loadable.NotYetLoaded]
+ * so the UI falls back to its full loading state.
+ */
 @HiltViewModel
 class BookableExamsViewModel @Inject constructor(
     private val getExamCalls: GetExamCallsUseCase,
@@ -41,11 +49,15 @@ class BookableExamsViewModel @Inject constructor(
     private val _syncStatus = MutableStateFlow<SyncStatus>(SyncStatus.Idle)
     val syncStatus: StateFlow<SyncStatus> = _syncStatus.asStateFlow()
 
-    // Deep-link from the libretto course sheet: the course key (= ExamCall activityCode,
-    // see groupByCourse) the bookable list should scroll to and auto-expand on open. This
-    // VM is shell-scoped, so the signal survives the cross-tab navigation from Profile to
-    // the booked-exams sub-page where the sheet actually lives.
     private val _pendingFocusCourseKey = MutableStateFlow<String?>(null)
+
+    /**
+     * Deep-link from the libretto course sheet: the course key (an [ExamCall] activity code,
+     * the grouping key produced by `groupByCourse`) the bookable list should scroll to on
+     * open. This ViewModel is shell-scoped, so the signal set via [requestFocus] survives the
+     * cross-tab navigation from Profile to the booked-exams sub-page where the sheet actually
+     * lives; the list calls [consumeFocus] once it has handled the request.
+     */
     val pendingFocusCourseKey: StateFlow<String?> = _pendingFocusCourseKey.asStateFlow()
 
     fun requestFocus(courseKey: String) {

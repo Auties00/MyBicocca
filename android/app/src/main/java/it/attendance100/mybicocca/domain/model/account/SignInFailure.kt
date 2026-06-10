@@ -15,6 +15,9 @@ sealed interface SignInFailure {
     /** No usable network on either path (DNS failure, connection reset, etc.). */
     data object NoConnection : SignInFailure
 
+    /** The typed username belongs to an account that is already stored on this device. */
+    data object AlreadySignedIn : SignInFailure
+
     /** Anything else — backend outage, unexpected SSO response shape, server bug. */
     data object Unknown : SignInFailure
 }

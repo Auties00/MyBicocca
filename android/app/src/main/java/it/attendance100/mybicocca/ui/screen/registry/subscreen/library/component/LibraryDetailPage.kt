@@ -47,8 +47,11 @@ import java.util.Locale
 private val WeekdayFormat = DateTimeFormatter.ofPattern("EEEE", Locale.ITALIAN)
 private val TimeFormat = DateTimeFormatter.ofPattern("HH:mm")
 
-// One library's rich page: live occupancy, today's forecast, weekly hours and contacts, over a
-// pinned "Prenota un posto" button.
+/**
+ * One library's rich page: live occupancy header, today's forecast graph, weekly opening hours
+ * and contacts, over a pinned "Prenota un posto" button that enables once live data is loaded.
+ * Shows the sheet loading indicator while fetching and an error-with-retry state on failure.
+ */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 internal fun LibraryDetailPage(

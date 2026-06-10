@@ -75,12 +75,31 @@ import java.time.Instant
 import java.time.temporal.ChronoUnit
 
 
+/**
+ * E-learning tab: the student's Moodle course home.
+ *
+ * Renders one [NotebookCard] per course group in a vertical list under a [HomeFilterBar]
+ * (all / favourites / per study year), all wrapped in the screen-scoped course-accent palette,
+ * with an extended FAB that opens the [AddCourseSheet] catalog browser. The tab registers no
+ * shell filter toggle — filtering is inline.
+ *
+ * Until the local cache is first populated the whole tab is a full-screen loading or error view
+ * and the filter bar stays hidden; once settled, cached data keeps rendering while refreshes run
+ * behind pull-to-refresh, and empty results distinguish "no courses" from "nothing matches the
+ * current filter". Loading/empty/error views remain pull-refreshable, so the pull gesture
+ * doubles as the retry affordance.
+ *
+ * Enrol outcomes from the sheet surface as snackbars. After a successful enrolment the
+ * ViewModel drops any hiding filter and emits the course id; the screen waits for its group to
+ * materialise in the (possibly just re-filtered) list, then animate-scrolls to it. [isActive]
+ * is true only while this is the visible tab — see CalendarScreen for the pager-cache
+ * rationale.
+ */
 @Suppress("AssignedValueIsNeverRead")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ElearningScreen(
     modifier: Modifier = Modifier,
-    // True only while this is the visible tab — see CalendarScreen for the pager-cache rationale.
     isActive: Boolean = true,
     onProvideFilterToggle: ((() -> Unit)?) -> Unit = {},
     onOpenCourse: (CourseId) -> Unit = {},
@@ -118,6 +137,7 @@ fun ElearningScreen(
 
                 is ElearningOneShotEvent.OpenQuiz -> onOpenQuiz(event.courseId, event.quizId)
                 ElearningOneShotEvent.RequireSignIn -> onRequireSignIn()
+                ElearningOneShotEvent.OpenAddCourse -> addSheetVisible = true
             }
         }
     }
@@ -125,8 +145,6 @@ fun ElearningScreen(
     val pullState = rememberPullToRefreshState()
     val listState = rememberLazyListState()
 
-    // After a course is added, the ViewModel drops any hiding filter and emits the course id;
-    // wait for its group to materialise in the (possibly just re-filtered) list, then scroll to it.
     LaunchedEffect(listState) {
         viewModel.revealCourse.collect { courseId ->
             val index = withTimeoutOrNull(4_000) {
@@ -143,8 +161,6 @@ fun ElearningScreen(
     ProvideCourseAccentPalette {
         Box(modifier = modifier.fillMaxSize()) {
             Column(modifier = Modifier.fillMaxSize()) {
-                // Filter bar appears only once there is cached data to filter; during the
-                // first load or a cold-cache error the whole tab is the loading/error state.
                 if (initialFetch is InitialFetchState.Settled) {
                     HomeFilterBar(
                         selected = filter,
@@ -211,7 +227,7 @@ fun ElearningScreen(
             onDismiss = { addSheetVisible = false },
             onEnrolFailed = { cause ->
                 coroutineScope.launch {
-                    snackbar.showError("Iscrizione non riuscita", cause)
+                    snackbar.showError(enrolFailureMessage(cause))
                 }
             },
             onEnrolSucceeded = { courseId, name ->
@@ -226,6 +242,21 @@ fun ElearningScreen(
             },
         )
     }
+}
+
+/**
+ * The enrol failure carries a meaningful reason — the Moodle warning (e.g. an enrolment-key
+ * requirement or "self-enrolment disabled"), or a network error — so it is surfaced instead of
+ * a bare title the user can't act on.
+ */
+private fun enrolFailureMessage(cause: Throwable): String {
+    val reason = when (cause) {
+        is UnknownHostException, is ConnectException -> "rete non disponibile"
+        is SocketTimeoutException -> "timeout di rete"
+        is IOException -> "errore di rete"
+        else -> cause.message?.takeIf { it.isNotBlank() }
+    }
+    return if (reason != null) "Iscrizione non riuscita: $reason" else "Iscrizione non riuscita"
 }
 
 @Composable
@@ -248,6 +279,13 @@ private fun AddCourseFab(
     )
 }
 
+/**
+ * The course-group card list. Each group remembers its active edition tab; when the remembered
+ * edition is no longer in the editions list (a year just dropped out of the filter) the card
+ * falls back to the group's latest edition. Card deadlines are pruned to those due in the
+ * future or within the past two weeks. Items fade and spring into place as filtering reshuffles
+ * the list.
+ */
 @Composable
 private fun CourseList(
     groups: List<EnrolledCourseGroup>,
@@ -276,8 +314,6 @@ private fun CourseList(
                 val groupKey = group.sharedCode ?: group.latest.id.value
                 var activeEditionId by rememberSaveable(groupKey) { mutableIntStateOf(group.latest.id.value) }
 
-                // If the active id is no longer in the editions list (a year just
-                // dropped out of the filter), fall back to the latest edition.
                 val resolvedActiveId = group.editions
                     .firstOrNull { it.id.value == activeEditionId }
                     ?.id
@@ -293,7 +329,6 @@ private fun CourseList(
                     )
                 }
 
-                // Only if it's due in the future or within 2 weeks in the past
                 val validDeadlines =
                     active.deadlines.filter { it.dueAt > Instant.now().minus(14, ChronoUnit.DAYS) }
 
@@ -352,9 +387,11 @@ private fun ElearningLoadingState(modifier: Modifier = Modifier) {
     }
 }
 
-// Wraps a non-scrolling empty/error/loading view in a LazyColumn so the
-// surrounding PullToRefreshBox still receives nested-scroll gestures and the
-// user can pull to retry from these states.
+/**
+ * Wraps a non-scrolling empty/error/loading view in a LazyColumn so the surrounding
+ * PullToRefreshBox still receives nested-scroll gestures and the user can pull to retry from
+ * these states.
+ */
 @Composable
 private fun RefreshableEmpty(content: @Composable () -> Unit) {
     LazyColumn(modifier = Modifier.fillMaxSize()) {
@@ -366,8 +403,10 @@ private fun RefreshableEmpty(content: @Composable () -> Unit) {
     }
 }
 
-// No explicit retry action: the state sits inside the PullToRefreshBox, so the pull
-// gesture is the retry.
+/**
+ * Full-screen sync-failure state. No explicit retry action: the state sits inside the
+ * PullToRefreshBox, so the pull gesture is the retry.
+ */
 @Composable
 private fun ErrorEmptyState(
     cause: Throwable,

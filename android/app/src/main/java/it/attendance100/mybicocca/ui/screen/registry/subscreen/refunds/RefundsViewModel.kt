@@ -21,6 +21,11 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import javax.inject.Inject
 
+/**
+ * Backs the Rimborsi sheet: the active career's reimbursements fetched live from Esse3 (no
+ * local cache), sorted newest academic year first. [refunds] is the list as a [Loadable]
+ * snapshot, [syncStatus] tracks the fetch, and [refresh] re-fetches on demand.
+ */
 @HiltViewModel
 class RefundsViewModel @Inject constructor(
     private val getRefunds: GetRefundsUseCase,

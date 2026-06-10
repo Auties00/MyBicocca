@@ -17,16 +17,21 @@ private const val PMTILES_ASSET_PATH = "map/basemap.pmtiles"
 private const val STYLE_ASSET_PATH = "map/bicocca_style.json"
 private const val PMTILES_SOURCE_PLACEHOLDER = "pmtiles://asset://map/basemap.pmtiles"
 
-// MapLibre's Android asset:// file source ignores the byte-range that PMTiles' random access relies
-// on — it hands back the whole archive for every request — so reading the basemap straight from
-// assets aborts the native renderer with a zlib "incorrect header check". The local file:// source
-// does honor ranges, so copy the bundled archive into filesDir once and rewrite the style's source
-// url to point at the copy. Glyphs and the sprite are whole-file reads, so they stay on asset://.
+/**
+ * MapLibre's Android asset:// file source ignores the byte ranges that PMTiles' random access
+ * relies on — it hands back the whole archive for every request — so reading the basemap
+ * straight from assets aborts the native renderer with a zlib "incorrect header check". The
+ * local file:// source does honor ranges, so the bundled archive is copied into filesDir once
+ * and the style's source url is rewritten to point at the copy. Glyphs and the sprite are
+ * whole-file reads, so they stay on asset://.
+ *
+ * The copy is skipped when the on-disk file already matches the asset's length; openFd reports
+ * that length cheaply only because the archive is stored uncompressed
+ * (androidResources.noCompress).
+ */
 suspend fun resolveBicoccaStyleJson(context: Context): String = withContext(Dispatchers.IO) {
     val assets = context.assets
     val dest = File(context.filesDir, PMTILES_ASSET_PATH)
-    // openFd works only because the archive is stored uncompressed (androidResources.noCompress);
-    // it gives the asset's true length cheaply so we can skip the copy when it is already current.
     val assetLength = assets.openFd(PMTILES_ASSET_PATH).use { it.length }
     if (!dest.exists() || dest.length() != assetLength) {
         dest.parentFile?.mkdirs()
@@ -38,9 +43,12 @@ suspend fun resolveBicoccaStyleJson(context: Context): String = withContext(Disp
         .replace(PMTILES_SOURCE_PLACEHOLDER, "pmtiles://file://${dest.absolutePath}")
 }
 
-// Protomaps basemaps (v5 flavor) layer ids, grouped by the MapPalette role they take. Recoloring
-// these in place — rather than reloading the style — is what makes the map theme-reactive and,
-// unlike Google's cloud styling, free of the zoom-17 "Surface" flip (Protomaps has no such layer).
+/**
+ * Protomaps basemaps (v5 flavor) layer ids, grouped by the [MapPalette] role they take — this
+ * list and the sibling lists through [WATER_LABELS]. Recoloring these in place, rather than
+ * reloading the style, is what makes the map theme-reactive and, unlike Google's cloud
+ * styling, free of the zoom-17 "Surface" flip (Protomaps has no such layer).
+ */
 private val PARK_FILLS = listOf("landcover", "landuse_park", "landuse_urban_green", "landuse_zoo", "landuse_beach")
 private val URBAN_FILLS = listOf(
     "landuse_hospital", "landuse_industrial", "landuse_school", "landuse_aerodrome",
@@ -64,14 +72,19 @@ private val ROAD_LABELS = listOf("roads_labels_minor", "roads_labels_major")
 private val PLACE_LABELS = listOf("places_subplace", "places_region", "places_locality", "places_country")
 private val WATER_LABELS = listOf("water_waterway_label", "water_label_ocean", "water_label_lakes", "earth_label_islands")
 
-// Hide only the POI layer (icons + their labels). All other labels — place names, road labels,
-// water labels — remain visible. Call ONCE at style bring-up.
+/**
+ * Hides only the POI layer (icons + their labels). All other labels — place names, road
+ * labels, water labels — remain visible. Call ONCE at style bring-up.
+ */
 fun Style.hidePois() {
     (getLayer("pois") as? SymbolLayer)?.setProperties(PropertyFactory.visibility(Property.NONE))
 }
 
-// Recolor the live GL style to [palette]. Safe to call on every theme change — it mutates layer
-// paint in place (no setStyle), so there is no flash.
+/**
+ * Recolors the live GL style to [palette]. Safe to call on every theme change — it mutates
+ * layer paint in place (no setStyle), so there is no flash. Rail/transit lines stay hidden, as
+ * in the brand Bicocca style.
+ */
 fun Style.applyBicoccaPalette(palette: MapPalette) {
     val ground = palette.ground.toArgb()
     val urban = palette.urban.toArgb()
@@ -113,7 +126,6 @@ fun Style.applyBicoccaPalette(palette: MapPalette) {
     lines(ROAD_FILLS, road)
     lines(HIGHWAY_FILLS, highway)
     lines(HIGHWAY_CASINGS, highwayCasing)
-    // Transit off, like the original Bicocca style.
     (getLayer("roads_rail") as? LineLayer)?.setProperties(PropertyFactory.visibility(Property.NONE))
     labels(ROAD_LABELS, roadLabel)
     labels(PLACE_LABELS, label)

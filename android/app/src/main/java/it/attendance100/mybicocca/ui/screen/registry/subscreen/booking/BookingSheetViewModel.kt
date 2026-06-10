@@ -25,9 +25,17 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-// No detail fetch on open: the bookable-exams list response already carries every field
-// the sheet renders (notes, president, booking mode), while the per-appello detail
-// endpoint costs 1.7-4s cold server-side. The sheet is fully synchronous until Conferma.
+/**
+ * Drives the per-appello booking flow inside the Appelli sheet: which call the flow is open
+ * on ([target]), which page is showing ([step]) and the booking submission itself. There is
+ * no detail fetch on open — the bookable-exams list response already carries every field the
+ * sheet renders (notes, president, booking mode), while the per-appello detail endpoint costs
+ * 1.7-4s cold server-side — so the sheet is fully synchronous until Conferma.
+ *
+ * [bookingAction] tracks the in-flight submission and [events] emits the one-shot outcome for
+ * the host to surface. [open] and [close] bound the flow, [goToConfirm] and [goBackToInfo]
+ * move between its pages, and [confirmBooking] submits with the user's optional note.
+ */
 @HiltViewModel
 class BookingSheetViewModel @Inject constructor(
     private val bookExam: BookExamUseCase,

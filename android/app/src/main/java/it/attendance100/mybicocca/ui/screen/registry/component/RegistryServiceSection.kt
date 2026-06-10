@@ -27,9 +27,12 @@ import it.attendance100.mybicocca.ui.screen.registry.state.RegistryBadge
 import it.attendance100.mybicocca.ui.screen.registry.state.RegistryServiceGroup
 import it.attendance100.mybicocca.ui.screen.registry.theme.registryBadgeTone
 
-// A directory group rendered as a connected segmented card, via the shared SegmentedTile
-// primitives. This only maps RegistryService → tile and supplies the trailing element
-// (an optional status badge followed by a chevron/link).
+/**
+ * A directory group rendered as a connected segmented card via the shared SegmentedTile
+ * primitives: a header tile, then one tile per service with an accent icon chip leading
+ * and an optional status badge plus a chevron (or a link icon for external entries)
+ * trailing.
+ */
 @Composable
 fun RegistryServiceSection(
     group: RegistryServiceGroup,

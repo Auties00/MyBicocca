@@ -1,9 +1,8 @@
 package it.attendance100.mybicocca.ui.navigation
 
 import android.Manifest
-import android.content.Intent
 import android.content.pm.PackageManager
-import androidx.core.net.toUri
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.EnterExitState
@@ -45,18 +44,19 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
+import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
-import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.scene.SinglePaneSceneStrategy
 import androidx.navigation3.ui.LocalNavAnimatedContentScope
 import androidx.navigation3.ui.NavDisplay
 import coil.imageLoader
 import coil.request.ImageRequest
 import coil.size.Size
-import it.attendance100.mybicocca.domain.model.search.SearchDestination
-import it.attendance100.mybicocca.domain.model.search.SearchResult
+import it.attendance100.mybicocca.core.state.valueOrNull
+import it.attendance100.mybicocca.domain.model.calendar.CalendarEvent
+import it.attendance100.mybicocca.domain.model.settings.FileOpenChoice
 import it.attendance100.mybicocca.ui.component.bar.BottomBarItem
 import it.attendance100.mybicocca.ui.component.bar.MyBicoccaBottomBar
 import it.attendance100.mybicocca.ui.component.bar.MyBicoccaTopBar
@@ -64,9 +64,27 @@ import it.attendance100.mybicocca.ui.component.bar.TopBarSearchState
 import it.attendance100.mybicocca.ui.component.feedback.AppSnackbarHost
 import it.attendance100.mybicocca.ui.component.feedback.LocalAppSnackbarController
 import it.attendance100.mybicocca.ui.component.feedback.rememberAppSnackbarController
+import it.attendance100.mybicocca.ui.component.file.FileKind
+import it.attendance100.mybicocca.ui.component.file.OfficeApp
+import it.attendance100.mybicocca.ui.component.modal.PredictiveModalBottomSheet
+import it.attendance100.mybicocca.ui.navigation.route.AppRoute
+import it.attendance100.mybicocca.ui.navigation.route.AppTitle
+import it.attendance100.mybicocca.ui.navigation.route.SheetRoute
+import it.attendance100.mybicocca.ui.navigation.route.ShellTab
+import it.attendance100.mybicocca.ui.navigation.route.isSubPage
+import it.attendance100.mybicocca.ui.navigation.scene.BottomSheetSceneStrategy
+import it.attendance100.mybicocca.ui.navigation.scene.LocalSheetDismissControl
+import it.attendance100.mybicocca.ui.navigation.scene.SheetDismissControl
+import it.attendance100.mybicocca.ui.navigation.scene.SheetHeaderSpec
+import it.attendance100.mybicocca.ui.navigation.scene.sheetEntry
 import it.attendance100.mybicocca.ui.navigation.transitions.LocalAnimatedContentScope
 import it.attendance100.mybicocca.ui.navigation.transitions.LocalSharedTransitionScope
+import it.attendance100.mybicocca.ui.navigation.transitions.defaultEnterTransition
+import it.attendance100.mybicocca.ui.navigation.transitions.defaultExitTransition
+import it.attendance100.mybicocca.ui.navigation.transitions.defaultPopEnterTransition
+import it.attendance100.mybicocca.ui.navigation.transitions.defaultPopExitTransition
 import it.attendance100.mybicocca.ui.screen.account.AccountViewModel
+import it.attendance100.mybicocca.ui.screen.account.state.AccountEvent
 import it.attendance100.mybicocca.ui.screen.account.subscreen.accountSwitcher.AccountSwitcherSheet
 import it.attendance100.mybicocca.ui.screen.calendar.CalendarScreen
 import it.attendance100.mybicocca.ui.screen.calendar.CalendarViewModel
@@ -74,46 +92,31 @@ import it.attendance100.mybicocca.ui.screen.calendar.subscreen.teacherDetail.Tea
 import it.attendance100.mybicocca.ui.screen.elearning.ElearningScreen
 import it.attendance100.mybicocca.ui.screen.elearning.ElearningViewModel
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.assignmentDetail.AssignmentDetailPage
-import it.attendance100.mybicocca.ui.screen.elearning.subscreen.conversationDetail.ConversationDetailScreen
-import it.attendance100.mybicocca.ui.screen.elearning.subscreen.conversationDetail.ConversationDetailViewModel
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.courseDetail.CourseDetailScreen
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.courseDetail.CourseDetailViewModel
-import it.attendance100.mybicocca.ui.screen.elearning.subscreen.discussionDetail.DiscussionDetailScreen
-import it.attendance100.mybicocca.ui.screen.elearning.subscreen.discussionDetail.DiscussionDetailViewModel
-import it.attendance100.mybicocca.data.local.settings.FileOpenChoice
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.fileViewer.ExternalFileLauncher
-import it.attendance100.mybicocca.ui.screen.elearning.subscreen.fileViewer.FileOpenPreferenceViewModel
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.fileViewer.FileViewerScreen
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.fileViewer.FileViewerViewModel
-import it.attendance100.mybicocca.ui.screen.elearning.subscreen.fileViewer.state.FileKind
-import it.attendance100.mybicocca.ui.screen.elearning.subscreen.fileViewer.state.OfficeApp
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.fileViewer.subscreen.officeOpen.OfficeOpenSheet
-import it.attendance100.mybicocca.ui.screen.elearning.subscreen.fileViewer.subscreen.openChooser.FileOpenChooserSheet
-import it.attendance100.mybicocca.ui.screen.elearning.subscreen.forumDetail.ForumDetailScreen
-import it.attendance100.mybicocca.ui.screen.elearning.subscreen.forumDetail.ForumDetailViewModel
-import it.attendance100.mybicocca.ui.screen.elearning.subscreen.messaging.MessagingScreen
-import it.attendance100.mybicocca.ui.screen.elearning.subscreen.quizDetail.QuizDetailScreen
+import it.attendance100.mybicocca.ui.screen.elearning.subscreen.fileViewer.subscreen.openChooser.FileOpenChooserContent
+import it.attendance100.mybicocca.ui.screen.elearning.subscreen.forum.ForumSheetPage
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.quizDetail.QuizDetailPage
-import it.attendance100.mybicocca.ui.screen.elearning.subscreen.quizDetail.QuizDetailViewModel
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.videoPlayer.VideoPlayerScreen
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.videoPlayer.VideoPlayerViewModel
 import it.attendance100.mybicocca.ui.screen.map.MapScreen
 import it.attendance100.mybicocca.ui.screen.map.MapViewModel
-import it.attendance100.mybicocca.ui.screen.map.subscreen.room360.Room360Screen
 import it.attendance100.mybicocca.ui.screen.profile.ProfileScreen
 import it.attendance100.mybicocca.ui.screen.profile.ProfileViewModel
 import it.attendance100.mybicocca.ui.screen.registry.RegistryScreen
-import it.attendance100.mybicocca.ui.screen.registry.subscreen.attendance.AttendancePage
-import it.attendance100.mybicocca.ui.screen.registry.subscreen.attendance.AttendanceViewModel
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.appelli.AppelliPage
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.appelli.BookedExamsViewModel
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.appointments.AppointmentsPage
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.appointments.AppointmentsViewModel
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.attendance.AttendancePage
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.attendance.AttendanceViewModel
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.booking.BookableExamsViewModel
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.certificates.CertificatesPage
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.certificates.CertificatesViewModel
-import it.attendance100.mybicocca.core.state.valueOrNull
-import it.attendance100.mybicocca.ui.navigation.scene.BottomSheetSceneStrategy
-import it.attendance100.mybicocca.ui.navigation.scene.SheetHeaderSpec
-import it.attendance100.mybicocca.ui.navigation.scene.sheetEntry
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.enrollments.EnrollmentsTimelinePage
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.enrollments.EnrollmentsViewModel
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.enrollments.enrollmentsHeaderSubtitle
@@ -128,8 +131,6 @@ import it.attendance100.mybicocca.ui.screen.registry.subscreen.isee.IseeDetailPa
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.isee.iseeDetailSubtitle
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.isee.iseeDetailTitle
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.isee.iseeHeaderSubtitle
-import it.attendance100.mybicocca.ui.screen.registry.subscreen.appointments.AppointmentsPage
-import it.attendance100.mybicocca.ui.screen.registry.subscreen.appointments.AppointmentsViewModel
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.library.LibraryPage
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.library.LibraryViewModel
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.questionnaires.QuestionnairesPage
@@ -144,8 +145,8 @@ import it.attendance100.mybicocca.ui.screen.registry.subscreen.refunds.refundsHe
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.studyPlan.StudyPlanPage
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.studyPlan.StudyPlanViewModel
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.taxes.TaxesPage
-import it.attendance100.mybicocca.ui.screen.registry.subscreen.taxes.taxesHeaderSubtitle
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.taxes.TaxesViewModel
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.taxes.taxesHeaderSubtitle
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.titles.TitleDetailPage
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.titles.TitlesListPage
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.titles.TitlesViewModel
@@ -155,8 +156,48 @@ import it.attendance100.mybicocca.ui.screen.registry.subscreen.titles.titlesHead
 import it.attendance100.mybicocca.ui.screen.search.SearchOverlay
 import it.attendance100.mybicocca.ui.screen.search.SearchViewModel
 import it.attendance100.mybicocca.ui.screen.settings.SettingsScreen
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
+/**
+ * The signed-in shell: a Scaffold whose global chrome (morphing top bar, bottom tab bar, snackbar
+ * host) frames one Navigation3 NavDisplay. [AppRoute.TabRoot] is always the root entry and hosts
+ * the four-tab pager; full-screen sub-pages push over it, and modal sheets ([SheetRoute]) ride the
+ * SAME back stack as overlay scenes via [BottomSheetSceneStrategy], floating over the current
+ * page. Hosting the pager INSIDE the TabRoot entry puts a list ticket and its detail page in the
+ * same NavDisplay AnimatedContent, which is what makes list-to-detail shared-element morphs seek
+ * with the predictive-back gesture; a SharedTransitionLayout around the NavDisplay provides the
+ * scope.
+ *
+ * Tab selection always pops the sub-stack back to TabRoot first (switching — or re-tapping — a
+ * tab must never land deep on a stale sub-page) and then jumps the pager without scrolling
+ * through intermediate pages: all tabs stay composed, so the jump is a cheap show/hide. Settling
+ * on a different tab resets search and filter state. Two independent fractions drive the chrome
+ * morph — sub-page cover and search-field expansion — documented on `navProgress` below.
+ * Immersive destinations (video playback, file viewer) hide the global chrome entirely and draw
+ * their own.
+ *
+ * The full-screen search overlay is drawn after (over) the NavDisplay but under the Scaffold's
+ * top bar, so the bar's search field stays interactive above it; it rides the search fraction and
+ * is only composed while open or animating. Opening a hit commits the query and pick to the
+ * adaptive search memory, then plays the resulting [SearchNavStep] plan one step per beat so the
+ * user can watch the route unfold; plans made purely of page pushes keep the search overlay alive
+ * underneath (popping back restores query, results and scroll), while plans that switch tab or
+ * open a sheet close it.
+ *
+ * Tab and sheet ViewModels are hoisted at shell level so a sheet's pages share one owner that
+ * outlives the sheet and eager fetches start on shell load; sheet detail pages resolve their item
+ * from the live ViewModel stream against the top back-stack key, so an item evicted underneath an
+ * open detail (e.g. by a career switch) collapses the header and pops the page back to its list
+ * instead of rendering a stale snapshot.
+ *
+ * External entry points land here as well: an Affluences confirm/cancel email link opens the
+ * Biblioteca sheet so its snackbar can report the outcome, a mod_attendance QR scanned outside
+ * the app opens the Presenze sheet to run the marking flow, and a libretto course deep-links into
+ * exam booking by arming a focus request on the bookable-exams ViewModel, landing on the Servizi
+ * tab and opening the Appelli sheet over it — the sheet then enters its booking flow on the
+ * pending focus and scrolls to that exam's section.
+ */
 @OptIn(ExperimentalSharedTransitionApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun MainShell(
@@ -169,10 +210,13 @@ fun MainShell(
         }, null
     ),
 ) {
-    // One pager hosts all four tabs and keeps them composed (see beyondViewportPageCount below),
-    // so switching is instant. The pager state (saveable) is the source of truth for the selected
-    // tab; it lives here in the shell body (NOT inside the TabRoot entry) so it survives the
-    // entry being disposed/recomposed when a sub-page is on top.
+    /**
+     * Source of truth for the selected tab. One pager hosts all four tabs and keeps them composed
+     * (beyondViewportPageCount), so switching is instant; user swipe is disabled because Registry
+     * hosts its own pager and the map pans horizontally, leaving the bottom bar as the only page
+     * driver. The state lives here in the shell body (NOT inside the TabRoot entry) so it
+     * survives the entry being disposed and recomposed while a sub-page is on top.
+     */
     val pagerState = rememberPagerState(
         initialPage = ShellTab.Calendar.ordinal,
         pageCount = { ShellTab.entries.size },
@@ -181,8 +225,10 @@ fun MainShell(
     val tab = ShellTab.entries[pagerState.currentPage]
     val photo by accountViewModel.userPhoto.collectAsStateWithLifecycle()
 
-    // Warm Coil's cache for every stored account's avatar as soon as the shell loads, so the
-    // account switcher renders photos with no placeholder flash.
+    /**
+     * Every stored account's avatar, observed to warm Coil's cache as soon as the shell loads so
+     * the account switcher renders photos with no placeholder flash.
+     */
     val accountPhotos by accountViewModel.photos.collectAsStateWithLifecycle()
     val context = LocalContext.current
     LaunchedEffect(accountPhotos) {
@@ -203,55 +249,99 @@ fun MainShell(
     val mapViewModel: MapViewModel = hiltViewModel()
     val bookedExamsViewModel: BookedExamsViewModel = hiltViewModel()
     val bookableExamsViewModel: BookableExamsViewModel = hiltViewModel()
-    // Hoisted so the Segreterie landing can derive its status badges and the scadenzario
-    // deadline spine from the exam outcomes, and the Esiti sub-page shares the same fetch.
+
+    /**
+     * Hoisted so the Segreterie landing can derive its status badges and the scadenzario
+     * deadline spine from the exam outcomes, and the Esiti sub-page shares the same fetch.
+     */
     val examResultsViewModel: ExamResultsViewModel = hiltViewModel()
-    // Hoisted here so the tax fetch starts on shell load and the list / detail / ISEE
-    // destinations share one in-memory result (taxes are not cached to Room).
+
+    /**
+     * Hoisted so the tax fetch starts on shell load and the list / detail / ISEE destinations
+     * share one in-memory result (taxes are not cached to Room).
+     */
     val taxesViewModel: TaxesViewModel = hiltViewModel()
-    // Hoisted so the compilation sub-page can refresh the questionnaire list after a
-    // confirmed submission (questionnaires are not cached to Room).
+
+    /**
+     * Hoisted so the compilation sub-page can refresh the questionnaire list after a confirmed
+     * submission (questionnaires are not cached to Room).
+     */
     val questionnairesViewModel: QuestionnairesViewModel = hiltViewModel()
-    // Hoisted so the whole Appuntamenti modal (reservations + booking wizard) shares one
-    // owner; opened as a shell sheet rather than a back-stack route.
+
+    /**
+     * Hoisted so the whole Appuntamenti modal (reservations + booking wizard) shares one owner;
+     * opened as a shell sheet rather than a back-stack route.
+     */
     val appointmentsViewModel: AppointmentsViewModel = hiltViewModel()
     val libraryViewModel: LibraryViewModel = hiltViewModel()
-    // Hoisted so the sheet entries share one VM that outlives the sheet, like the other
-    // shell-scoped sheet ViewModels above.
+
+    /**
+     * "Vai alla prenotazione" on a calendar event: the managing page (appelli / appuntamenti /
+     * biblioteca) opens as a modal NESTED over the still-open event-detail sheet — its dialog
+     * window stacks above — rather than as a shell sheet that would replace it.
+     */
+    var calendarReservationEvent by remember { mutableStateOf<CalendarEvent?>(null) }
+
+    /**
+     * Hoisted so the sheet entries share one ViewModel that outlives the sheet, like the other
+     * shell-scoped sheet ViewModels.
+     */
     val enrollmentsViewModel: EnrollmentsViewModel = hiltViewModel()
     val titlesViewModel: TitlesViewModel = hiltViewModel()
     val certificatesViewModel: CertificatesViewModel = hiltViewModel()
     val refundsViewModel: RefundsViewModel = hiltViewModel()
     val attendanceViewModel: AttendanceViewModel = hiltViewModel()
     val studyPlanViewModel: StudyPlanViewModel = hiltViewModel()
-    // Hoisted so the transcript refresh (kicked off in the VM's init) starts on shell load,
-    // not when the Profile sub-page is first opened — the stats/badge are then already warm.
+
+    /**
+     * Hoisted so the transcript refresh (kicked off in the ViewModel's init) starts on shell
+     * load, not when the Profile sub-page is first opened — the stats/badge are already warm.
+     */
     val profileViewModel: ProfileViewModel = hiltViewModel()
 
-    // Unified search: one ViewModel feeds both the bar's text field and the full-screen
-    // overlay body, so it is hoisted at shell level like the tab ViewModels above.
+    /**
+     * Unified search: one ViewModel feeds both the bar's text field and the full-screen overlay
+     * body, so it is hoisted at shell level like the tab ViewModels.
+     */
     val searchViewModel: SearchViewModel = hiltViewModel()
 
-    // Navigation 3 back stack. TabRoot is always the root; sub-pages are pushed on top of it.
-    // The four tabs live in the pager hosted INSIDE the TabRoot entry, so a list ticket and a
-    // detail ticket are both inside NavDisplay's AnimatedContent — that is what makes the
-    // list -> detail shared-element morph seek with the predictive-back gesture.
     val backStack = rememberNavBackStack(AppRoute.TabRoot)
-    val currentRoute = backStack.lastOrNull() as? AppRoute
 
-    // Multi-page modal sheets ride this same back stack as overlay scenes (see SheetRoute /
-    // BottomSheetSceneStrategy). pop(n) closes or steps a sheet by removing n trailing entries.
+    /**
+     * The topmost full-screen destination — NOT `backStack.lastOrNull()`: a modal sheet
+     * ([SheetRoute]) rides this same stack as an overlay floating OVER its page, so the page
+     * underneath is still the current destination. Reading the last entry blindly would flip
+     * this to null whenever a sheet opens, dropping the page's title / actions / back arrow from
+     * the chrome (which sits dimmed behind the sheet) and animating them away.
+     */
+    val currentRoute = backStack.lastOrNull { it is AppRoute } as? AppRoute
+
+    /** Renders sheet pages as overlay scenes; pop(n) closes or steps a sheet by removing n trailing entries. */
     val bottomSheetStrategy = remember {
         BottomSheetSceneStrategy<NavKey>(pop = { count -> repeat(count) { backStack.removeLastOrNull() } })
     }
+
+    /**
+     * The file-open chooser inherits the sheet group of whatever entry sits beneath it, so it
+     * renders as a sub-page INSIDE an already-open sheet (same run) instead of stacking a second
+     * modal window on top. From a full screen the fallback group makes it its own sheet. The
+     * entryProvider re-evaluates on recomposition, so this tracks the stack live.
+     */
+    val chooserHostGroup = backStack
+        .indexOfLast { it is SheetRoute.FileOpenChooser }
+        .takeIf { it > 0 }
+        ?.let { sheetGroupOf(backStack[it - 1]) }
 
     val presenceDeepLinkViewModel: PresenceDeepLinkViewModel = hiltViewModel()
     val pendingPresenceScan by presenceDeepLinkViewModel.pending.collectAsStateWithLifecycle()
 
     val isOnSubPage = currentRoute?.isSubPage == true
     val subPageTitle = (currentRoute?.appTitle as? AppTitle.SubPage)?.title
-    // Video playback and the file viewer are immersive: the global chrome is hidden and the
-    // page goes edge to edge (the file viewer draws its own Custom-Tab-style top bar).
+
+    /**
+     * Video playback and the file viewer are immersive: the global chrome is hidden and the page
+     * goes edge to edge (the file viewer draws its own Custom-Tab-style top bar).
+     */
     val immersive = currentRoute is AppRoute.VideoPlayback || currentRoute is AppRoute.FileViewer
 
     val motion = MaterialTheme.motionScheme
@@ -260,40 +350,43 @@ fun MainShell(
     val popEnterTransition = remember(motion) { defaultPopEnterTransition(motion) }
     val popExitTransition = remember(motion) { defaultPopExitTransition(motion) }
 
-    // Two independent drivers feed the chrome morph; the bar / bottom bar combine them as max().
-    //  - navProgress: how far a sub-page covers the tab root (0 = on a tab, 1 = sub-page on top).
-    //    It is driven by the NavDisplay's OWN TabRoot<->sub-page transition (published from the
-    //    TabRoot entry below via animateFloat on that entry's transition), so the bar expand and
-    //    the bottom-bar slide-off seek in lockstep with the page slide — including while the
-    //    predictive-back gesture is scrubbing it, which a commit-time spring could never track.
-    //  - searchProgress: the search field open/close, scrubbed by the bar's own predictive-back
-    //    handler. Search is page-only, so the two never both drive the morph at the same time.
-    // Seeded from the restored back stack: after an activity recreation (process death, or
-    // a config change not declared in the manifest, e.g. fontScale/density) the stack can
-    // come back with a sub-page already on top and NO transition — the TabRoot entry
-    // (which publishes this fraction) never composes, so a 0f initial would leave the bar
-    // collapsed on a sub-page.
+    /**
+     * How far a sub-page covers the tab root (0 = on a tab, 1 = sub-page on top); one of the two
+     * independent drivers of the chrome morph, which consumers that must react to either cover —
+     * the bars, the calendar's popup chrome — combine with the search fraction as max(). It is
+     * driven by the NavDisplay's OWN TabRoot<->sub-page transition (published from the TabRoot
+     * entry via animateFloat on that entry's transition), so the bar expand and the bottom-bar
+     * slide-off seek in lockstep with the page slide — including while the predictive-back
+     * gesture is scrubbing it, which a commit-time spring could never track. Seeded from the
+     * restored back stack: after an activity recreation (process death, or a config change not
+     * declared in the manifest, e.g. fontScale/density) the stack can come back with a sub-page
+     * already on top and NO transition — the TabRoot entry (which publishes this fraction) never
+     * composes, so a 0f initial would leave the bar collapsed on a sub-page.
+     */
     val navProgress = remember { mutableFloatStateOf(if (isOnSubPage) 1f else 0f) }
+
+    /**
+     * The search field open/close fraction, scrubbed by the bar's own predictive-back handler.
+     * Search is page-only, so this and [navProgress] never both drive the morph at the same time.
+     */
     val searchProgress = remember { Animatable(0f) }
 
     var showAccountSwitcher by remember { mutableStateOf(false) }
-    // The Office install prompt — only shown when the matching Microsoft app is missing.
-    var officeFile by remember { mutableStateOf<Pair<OfficeApp, AppRoute.FileViewer>?>(null) }
-    // External hand-off (download + ACTION_VIEW): PDFs go to the default reader, Office to the
-    // installed app, and any file the user chose to open externally.
-    var externalFile by remember { mutableStateOf<AppRoute.FileViewer?>(null) }
-    // The in-app/external chooser for a file type with no remembered choice (or a long-press).
-    var chooserFile by remember { mutableStateOf<AppRoute.FileViewer?>(null) }
 
-    // An Affluences confirm/cancel email link opened in the app: open the Biblioteca sheet so its
-    // snackbar shows the result of the action the ViewModel is running.
+    /** The Office install prompt — only shown when the matching Microsoft app is missing. */
+    var officeFile by remember { mutableStateOf<Pair<OfficeApp, AppRoute.FileViewer>?>(null) }
+
+    /**
+     * External hand-off (download + ACTION_VIEW): PDFs go to the default reader, Office to the
+     * installed app, and any file the user chose to open externally.
+     */
+    var externalFile by remember { mutableStateOf<AppRoute.FileViewer?>(null) }
+
     LaunchedEffect(Unit) {
         libraryViewModel.openSheetRequests.collect {
             if (backStack.lastOrNull() != SheetRoute.Library) backStack.add(SheetRoute.Library)
         }
     }
-    // A mod_attendance QR scanned outside the app lands here: surface the presenze
-    // sheet so its ViewModel can run the marking flow on the pending link.
     LaunchedEffect(pendingPresenceScan) {
         if (pendingPresenceScan != null && backStack.lastOrNull() != SheetRoute.Attendance) {
             backStack.add(SheetRoute.Attendance)
@@ -303,43 +396,53 @@ fun MainShell(
     val fileOpenViewModel: FileOpenPreferenceViewModel = hiltViewModel()
     val fileOpenChoices by fileOpenViewModel.choices.collectAsStateWithLifecycle()
 
-    // Decides how a tapped file opens. In-app-capable kinds honour a remembered choice or, when
-    // none (or on a long-press), show the chooser. Unknown has no in-app viewer so it hands off;
-    // Office opens in its app when installed, else shows the install prompt.
+    /**
+     * Decides how a tapped file opens, including files re-dispatched from inside another viewer
+     * (e.g. zip entries). In-app-capable kinds honour a remembered choice or, when none (or on a
+     * long-press force), show the chooser — a back-stack sheet page that joins an already-open
+     * sheet as a sub-page, or opens as its own sheet from a full screen. Unknown kinds have no
+     * in-app viewer so they hand off externally. Office always goes through the hand-off sheet:
+     * there is no in-app viewer and ACTION_VIEW doesn't reliably open it, so the sheet opens the
+     * file directly in the Microsoft app via the documented ms-*:ofv protocol (offering install /
+     * another app as fallbacks).
+     */
     val openFile: (AppRoute.FileViewer, Boolean) -> Unit = { route, forceChooser ->
         when (val kind = FileKind.classify(route.fileName, route.mimeType)) {
-            // Office has no in-app viewer and ACTION_VIEW doesn't reliably open it, so always
-            // show the hand-off sheet: it opens the file directly in the Microsoft app via the
-            // documented ms-*:ofv protocol (and offers install / another app as fallbacks).
             is FileKind.Office -> officeFile = kind.app to route
             FileKind.Unknown -> externalFile = route
             else -> {
                 val remembered = kind.preferenceKey?.let { fileOpenChoices[it] }
                 when {
-                    forceChooser || remembered == null -> chooserFile = route
+                    forceChooser || remembered == null ->
+                        backStack.add(SheetRoute.FileOpenChooser(route))
                     remembered == FileOpenChoice.InApp -> backStack.add(route)
                     remembered == FileOpenChoice.External -> externalFile = route
                 }
             }
         }
     }
-    // Non-long-press adapter for callers that don't carry a chooser flag (nested zip viewer).
-    val openFileSimple: (AppRoute.FileViewer) -> Unit = { openFile(it, false) }
     var searchActive by rememberSaveable { mutableStateOf(false) }
-    // Query and dictation live in the SearchViewModel (the query is SavedStateHandle-backed
-    // there); the shell only owns the open/closed flag that drives the bar morph.
+
+    /**
+     * Query and dictation live in the SearchViewModel (the query is SavedStateHandle-backed
+     * there); the shell only owns the open/closed flag that drives the bar morph.
+     */
     val searchQuery by searchViewModel.query.collectAsStateWithLifecycle()
     val searchDictating by searchViewModel.dictating.collectAsStateWithLifecycle()
     var filterToggle by remember { mutableStateOf<(() -> Unit)?>(null) }
     var filterActive by remember { mutableStateOf(false) }
-    // Null = use the route's static title; non-null = sub-page is driving it at runtime.
+
+    /** Null = use the route's static title; non-null = the sub-page is driving it at runtime. */
     var subPageTitleOverride by remember { mutableStateOf<String?>(null) }
-    // The active sub-page's trailing action, hoisted so the global top bar can render it. The
-    // lambda is published by the screen and captures the screen's own ViewModel, so it stays
-    // correctly scoped even when invoked from the shell-level bar.
+
+    /**
+     * The active sub-page's trailing action, hoisted so the global top bar can render it. The
+     * lambda is published by the screen and captures the screen's own ViewModel, so it stays
+     * correctly scoped even when invoked from the shell-level bar.
+     */
     var subPageActions by remember { mutableStateOf<(@Composable () -> Unit)?>(null) }
 
-    // Reset search/filter only when the settled tab actually changes after first composition.
+    /** Guards the reset of search/filter state to actual settled-tab changes after first composition. */
     var prevPage by remember { mutableIntStateOf(pagerState.settledPage) }
     LaunchedEffect(pagerState.settledPage) {
         if (prevPage != pagerState.settledPage) {
@@ -352,13 +455,20 @@ fun MainShell(
         }
     }
 
-    // Dictation starts on mic tap once RECORD_AUDIO is granted; the system prompt fires on
-    // first use and starts listening immediately on grant.
+    /**
+     * Dictation starts on mic tap once RECORD_AUDIO is granted; the system prompt fires on first
+     * use and starts listening immediately on grant.
+     */
     val recordAudioLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission(),
     ) { granted -> if (granted) searchViewModel.startDictation() }
 
     val shellKeyboardController = LocalSoftwareKeyboardController.current
+
+    /**
+     * Wiring for the bar's search field. The mic tap hides the IME up front — voice replaces
+     * typing, and the keyboard would just sit under the dictation dialog.
+     */
     val searchState = TopBarSearchState(
         query = searchQuery,
         active = searchActive,
@@ -369,7 +479,6 @@ fun MainShell(
             if (!active) searchViewModel.reset()
         },
         onMicClick = {
-            // Voice replaces typing: the IME would just sit under the dictation dialog.
             shellKeyboardController?.hide()
             when {
                 searchDictating -> searchViewModel.stopDictation()
@@ -387,6 +496,24 @@ fun MainShell(
     }
 
     val snackbarController = rememberAppSnackbarController()
+
+    LaunchedEffect(accountViewModel, snackbarController) {
+        accountViewModel.events.collect { event ->
+            when (event) {
+                is AccountEvent.RequireReauth ->
+                    snackbarController.showError("La sessione è scaduta. Effettua di nuovo l'accesso.", event.cause)
+                is AccountEvent.SignedOut ->
+                    snackbarController.showInfo("Account rimosso")
+                is AccountEvent.NewCareerAvailable ->
+                    snackbarController.showInfo("Nuova carriera disponibile: ${event.career.description}")
+                is AccountEvent.SelectedCareerEnded ->
+                    snackbarController.showInfo("La carriera \"${event.career.description}\" è terminata")
+                is AccountEvent.SelectedCareerMissing ->
+                    snackbarController.showInfo("La carriera selezionata non è più disponibile")
+                is AccountEvent.Switched -> Unit
+            }
+        }
+    }
 
     CompositionLocalProvider(LocalAppSnackbarController provides snackbarController) {
         Box(
@@ -408,9 +535,6 @@ fun MainShell(
                         onFilterToggle = filterToggle,
                         filterActive = filterActive,
                         trailingActions = subPageActions,
-                        // Pages that draw behind the bar (course detail) keep it see-through
-                        // until they publish a runtime title — i.e. until their own hero
-                        // headline has scrolled past and the bar must take over as the header.
                         transparentBackground = currentRoute?.extendsBehindTopBar == true &&
                                 subPageTitleOverride == null,
                     )
@@ -420,11 +544,7 @@ fun MainShell(
                         items = bottomBarItems,
                         selected = tab,
                         onSelect = { selected ->
-                            // Always pop the sub-stack first — switching tabs (or re-tapping the
-                            // current tab) should land you at TabRoot, never deep on a sub-page.
                             while (backStack.size > 1) backStack.removeAt(backStack.lastIndex)
-                            // Instant jump (no scroll-through of intermediate pages); the pages are
-                            // already composed, so this is a cheap show/hide, not a rebuild.
                             scope.launch { pagerState.scrollToPage(selected.ordinal) }
                         },
                         translationY = maxOf(navProgress.floatValue, searchProgress.value) * 300f,
@@ -434,9 +554,6 @@ fun MainShell(
             ) { innerPadding ->
                 val topInset = innerPadding.calculateTopPadding()
                 Box(modifier = Modifier.fillMaxSize()) {
-                    // SharedTransitionLayout wraps the NavDisplay so shared elements can morph between
-                    // NavEntry instances. The tab pager is hosted inside the TabRoot entry (below) so its
-                    // list tickets share NavDisplay's AnimatedContent scope with the detail entry.
                     SharedTransitionLayout(modifier = Modifier.fillMaxSize()) {
                         CompositionLocalProvider(LocalSharedTransitionScope provides this) {
                             NavDisplay(
@@ -452,16 +569,22 @@ fun MainShell(
                                 popTransitionSpec = { popEnterTransition togetherWith popExitTransition },
                                 predictivePopTransitionSpec = { popEnterTransition togetherWith popExitTransition },
                                 entryProvider = entryProvider {
-                                    // Root: the four-tab pager. Bridges NavDisplay's AnimatedContentScope into
-                                    // the app's LocalAnimatedContentScope so list tickets can be true shared
-                                    // elements that seek into the detail entry.
                                     entry<AppRoute.TabRoot> {
+                                        /**
+                                         * NavDisplay's AnimatedContentScope for this entry, bridged into
+                                         * LocalAnimatedContentScope so the tabs' list tickets can be true
+                                         * shared elements that seek into the detail entry.
+                                         */
                                         val tabRootScope = LocalNavAnimatedContentScope.current
-                                        // Publish the bar/bottom-bar morph fraction off THIS entry's enter/exit.
-                                        // animateFloat rides the same (seekable) transition that slides the page
-                                        // and seeks the shared elements, so the chrome tracks the predictive-back
-                                        // gesture frame-for-frame. presence is 1 when TabRoot fully covers the
-                                        // screen and 0 once a sub-page has fully replaced it.
+
+                                        /**
+                                         * The bar/bottom-bar morph fraction published off THIS entry's
+                                         * enter/exit. animateFloat rides the same (seekable) transition that
+                                         * slides the page and seeks the shared elements, so the chrome tracks
+                                         * the predictive-back gesture frame-for-frame. Presence is 1 when
+                                         * TabRoot fully covers the screen and 0 once a sub-page has fully
+                                         * replaced it.
+                                         */
                                         val tabRootPresence = tabRootScope.transition.animateFloat(
                                             transitionSpec = { motion.defaultSpatialSpec() },
                                             label = "tabRootPresence",
@@ -473,10 +596,6 @@ fun MainShell(
                                         CompositionLocalProvider(
                                             LocalAnimatedContentScope provides tabRootScope,
                                         ) {
-                                            // All four tabs stay composed (beyondViewportPageCount = size - 1)
-                                            // so switching is instant. User swipe is disabled: Registry hosts
-                                            // its own pager and the map pans horizontally — the bottom bar
-                                            // drives page changes.
                                             HorizontalPager(
                                                 state = pagerState,
                                                 beyondViewportPageCount = ShellTab.entries.size - 1,
@@ -487,8 +606,8 @@ fun MainShell(
                                                 val isActive = page == pagerState.settledPage
                                                 val onProvideFilterToggle: ((() -> Unit)?) -> Unit =
                                                     { filterToggle = it }
-                                                // The map renders behind the floating top bar; other tabs
-                                                // inset under both bars.
+
+                                                /** The map renders behind the floating top bar; other tabs inset under both bars. */
                                                 val pagePadding = if (pageTab == ShellTab.Map) {
                                                     PaddingValues(bottom = innerPadding.calculateBottomPadding())
                                                 } else {
@@ -503,8 +622,6 @@ fun MainShell(
                                                         ShellTab.Calendar -> CalendarScreen(
                                                             viewModel = calendarViewModel,
                                                             isActive = isActive,
-                                                            // The calendar's popup-window chrome must hide
-                                                            // for BOTH covers: sub-page push and search open.
                                                             coverProgress = remember {
                                                                 derivedStateOf {
                                                                     maxOf(
@@ -520,6 +637,17 @@ fun MainShell(
                                                                         courseId.value
                                                                     )
                                                                 )
+                                                            },
+                                                            onOpenAssignment = { assignmentId, courseId ->
+                                                                backStack.add(
+                                                                    SheetRoute.AssignmentDetail(
+                                                                        assignId = assignmentId,
+                                                                        courseId = courseId,
+                                                                    )
+                                                                )
+                                                            },
+                                                            onOpenReservation = { event ->
+                                                                calendarReservationEvent = event
                                                             },
                                                             bottomNavBarPadding = innerPadding,
                                                         )
@@ -558,14 +686,6 @@ fun MainShell(
                                                             isActive = isActive,
                                                             contentInsets = innerPadding,
                                                             onProvideFilterToggle = onProvideFilterToggle,
-                                                            onOpenRoom360 = { url, roomName ->
-                                                                backStack.add(
-                                                                    AppRoute.Room360View(
-                                                                        url = url,
-                                                                        roomName = roomName
-                                                                    )
-                                                                )
-                                                            },
                                                         )
 
                                                         ShellTab.Registry -> RegistryScreen(
@@ -621,17 +741,10 @@ fun MainShell(
                                         }
                                     }
 
-                                    // First-level sub-pages (no arguments).
                                     entry<AppRoute.Profile> {
                                         SubPage(topInset) {
                                             ProfileScreen(
                                                 viewModel = profileViewModel,
-                                                // Deep-link from a libretto course to its bookable
-                                                // appelli: arm the focus on the shell-scoped bookable
-                                                // VM, land on the Servizi tab behind, then open the
-                                                // Appelli sheet, which enters its booking flow on the
-                                                // pending focus, scrolls to the exam section and lets
-                                                // the user pick an appello.
                                                 onOpenAppelli = { courseKey ->
                                                     bookableExamsViewModel.requestFocus(courseKey)
                                                     scope.launch {
@@ -645,17 +758,7 @@ fun MainShell(
                                     entry<AppRoute.Settings> {
                                         SubPage(topInset) { SettingsScreen() }
                                     }
-                                    entry<AppRoute.Messaging> { SubPage(topInset) { MessagingScreen() } }
 
-                                    // First-level with arguments.
-                                    entry<AppRoute.Room360View> { key ->
-                                        SubPage(topInset) {
-                                            Room360Screen(
-                                                url = key.url,
-                                                roomName = key.roomName
-                                            )
-                                        }
-                                    }
                                     entry<AppRoute.CourseDetail> { key ->
                                         val vm =
                                             hiltViewModel<CourseDetailViewModel, CourseDetailViewModel.Factory>(
@@ -686,15 +789,19 @@ fun MainShell(
                                                 },
                                                 onOpenForum = { id ->
                                                     backStack.add(
-                                                        AppRoute.ForumDetail(
+                                                        SheetRoute.Forum(
                                                             forumId = id.value,
-                                                            courseId = key.courseId
+                                                            courseId = key.courseId,
                                                         )
                                                     )
                                                 },
-                                                onOpenDiscussion = { id ->
+                                                onOpenDiscussion = { forumId, discussionId ->
                                                     backStack.add(
-                                                        AppRoute.DiscussionDetail(discussionId = id.value)
+                                                        SheetRoute.Forum(
+                                                            forumId = forumId.value,
+                                                            courseId = key.courseId,
+                                                            initialDiscussionId = discussionId.value,
+                                                        )
                                                     )
                                                 },
                                                 onOpenVideo = { cmId, title ->
@@ -715,74 +822,29 @@ fun MainShell(
                                             hiltViewModel<FileViewerViewModel, FileViewerViewModel.Factory>(
                                                 creationCallback = { it.create(key) },
                                             )
+
+                                        /**
+                                         * True when the viewer was opened from a modal sheet and sits directly
+                                         * above the sheet's entries. Predictive back cannot scrub into an
+                                         * overlay scene (the sheet is its own window), so in that layering back
+                                         * commits a plain pop instead — gesture and button both return cleanly
+                                         * to the sheet.
+                                         */
+                                        val overSheet by remember {
+                                            derivedStateOf {
+                                                backStack.getOrNull(backStack.lastIndex - 1) is SheetRoute
+                                            }
+                                        }
+                                        BackHandler(enabled = overSheet) { backStack.removeLastOrNull() }
                                         SubPage(topInset, immersive = true) {
                                             FileViewerScreen(
-                                                // Zip entries re-dispatch through a nested viewer
-                                                // (or the office/external hand-off, via the shell).
-                                                onOpenFile = openFileSimple,
+                                                onOpenFile = openFile,
                                                 onClose = { backStack.removeLastOrNull() },
                                                 viewModel = vm,
                                             )
                                         }
                                     }
 
-                                    // Deeper sub-pages.
-                                    entry<AppRoute.QuizDetail> { key ->
-                                        val vm =
-                                            hiltViewModel<QuizDetailViewModel, QuizDetailViewModel.Factory>(
-                                                creationCallback = { it.create(key) },
-                                            )
-                                        SubPage(topInset) {
-                                            QuizDetailScreen(
-                                                quizId = key.quizId,
-                                                courseId = key.courseId,
-                                                onExit = { backStack.removeLastOrNull() },
-                                                viewModel = vm
-                                            )
-                                        }
-                                    }
-                                    entry<AppRoute.ForumDetail> { key ->
-                                        val vm =
-                                            hiltViewModel<ForumDetailViewModel, ForumDetailViewModel.Factory>(
-                                                creationCallback = { it.create(key) },
-                                            )
-                                        SubPage(topInset) {
-                                            ForumDetailScreen(
-                                                forumId = key.forumId,
-                                                courseId = key.courseId,
-                                                onOpenDiscussion = { id ->
-                                                    backStack.add(
-                                                        AppRoute.DiscussionDetail(discussionId = id.value)
-                                                    )
-                                                },
-                                                viewModel = vm
-                                            )
-                                        }
-                                    }
-                                    entry<AppRoute.DiscussionDetail> { key ->
-                                        val vm =
-                                            hiltViewModel<DiscussionDetailViewModel, DiscussionDetailViewModel.Factory>(
-                                                creationCallback = { it.create(key) },
-                                            )
-                                        SubPage(topInset) {
-                                            DiscussionDetailScreen(
-                                                discussionId = key.discussionId,
-                                                viewModel = vm
-                                            )
-                                        }
-                                    }
-                                    entry<AppRoute.ConversationDetail> { key ->
-                                        val vm =
-                                            hiltViewModel<ConversationDetailViewModel, ConversationDetailViewModel.Factory>(
-                                                creationCallback = { it.create(key) },
-                                            )
-                                        SubPage(topInset) {
-                                            ConversationDetailScreen(
-                                                conversationId = key.conversationId,
-                                                viewModel = vm
-                                            )
-                                        }
-                                    }
                                     entry<AppRoute.VideoPlayback> { key ->
                                         val vm =
                                             hiltViewModel<VideoPlayerViewModel, VideoPlayerViewModel.Factory>(
@@ -801,8 +863,6 @@ fun MainShell(
                                         SubPage(topInset) { TeacherDetailScreen(teacherCode = key.teacherCode) }
                                     }
 
-                                    // --- Modal bottom-sheet pages: rendered as overlay sheets over the
-                                    // current tab by BottomSheetSceneStrategy, grouped by metadata "group". ---
                                     entry<SheetRoute.Enrollments>(
                                         metadata = sheetEntry("enrollments") {
                                             val history by enrollmentsViewModel.history
@@ -822,8 +882,6 @@ fun MainShell(
                                     }
                                     entry<SheetRoute.EnrollmentDetail>(
                                         metadata = sheetEntry("enrollments") {
-                                            // Resolved from live VM history against the top key, so an evicted
-                                            // year (e.g. a career switch) gracefully shows no header.
                                             val top = backStack.lastOrNull() as? SheetRoute.EnrollmentDetail
                                             val history by enrollmentsViewModel.history
                                                 .collectAsStateWithLifecycle()
@@ -842,8 +900,6 @@ fun MainShell(
                                             .collectAsStateWithLifecycle()
                                         val enrollment = history.valueOrNull()?.years
                                             ?.firstOrNull { it.id.value == key.enrollmentId }
-                                        // The year can be evicted under an open detail: fall back to the
-                                        // timeline instead of rendering a stale snapshot.
                                         LaunchedEffect(enrollment == null) {
                                             if (enrollment == null) backStack.removeLastOrNull()
                                         }
@@ -998,44 +1054,15 @@ fun MainShell(
                                         QuizDetailPage(
                                             quizId = key.quizId,
                                             courseId = key.courseId,
-                                            onStartAttempt = {
-                                                backStack.removeLastOrNull()
-                                                backStack.add(
-                                                    AppRoute.QuizDetail(
-                                                        quizId = key.quizId,
-                                                        courseId = key.courseId,
-                                                        startNew = true,
-                                                    )
-                                                )
-                                            },
-                                            onResumeAttempt = { attemptId ->
-                                                backStack.removeLastOrNull()
-                                                backStack.add(
-                                                    AppRoute.QuizDetail(
-                                                        quizId = key.quizId,
-                                                        courseId = key.courseId,
-                                                        resumeAttemptId = attemptId,
-                                                    )
-                                                )
-                                            },
-                                            onReviewAttempt = { attemptId ->
-                                                backStack.removeLastOrNull()
-                                                backStack.add(
-                                                    AppRoute.QuizDetail(
-                                                        quizId = key.quizId,
-                                                        courseId = key.courseId,
-                                                        reviewAttemptId = attemptId,
-                                                    )
-                                                )
-                                            },
                                         )
                                     }
-                                    entry<SheetRoute.AssignmentDetail>(
-                                        metadata = sheetEntry("assignment"),
+                                    entry<SheetRoute.Forum>(
+                                        metadata = sheetEntry("forum"),
                                     ) { key ->
-                                        AssignmentDetailPage(
-                                            assignId = key.assignId,
+                                        ForumSheetPage(
+                                            forumId = key.forumId,
                                             courseId = key.courseId,
+                                            initialDiscussionId = key.initialDiscussionId,
                                             onOpenFile = { fileName, fileUrl, mimeType, sizeBytes ->
                                                 openFile(
                                                     AppRoute.FileViewer(
@@ -1047,13 +1074,24 @@ fun MainShell(
                                                     false,
                                                 )
                                             },
-                                            onOpenPage = { url ->
-                                                runCatching {
-                                                    context.startActivity(
-                                                        Intent(Intent.ACTION_VIEW, url.toUri())
-                                                            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
-                                                    )
-                                                }
+                                        )
+                                    }
+                                    entry<SheetRoute.AssignmentDetail>(
+                                        metadata = sheetEntry("assignment"),
+                                    ) { key ->
+                                        AssignmentDetailPage(
+                                            assignId = key.assignId,
+                                            courseId = key.courseId,
+                                            onOpenFile = { fileName, fileUrl, mimeType, sizeBytes, forceChooser ->
+                                                openFile(
+                                                    AppRoute.FileViewer(
+                                                        fileName = fileName,
+                                                        fileUrl = fileUrl,
+                                                        mimeType = mimeType,
+                                                        sizeBytes = sizeBytes,
+                                                    ),
+                                                    forceChooser,
+                                                )
                                             },
                                         )
                                     }
@@ -1101,16 +1139,33 @@ fun MainShell(
                                     ) {
                                         LibraryPage(viewModel = libraryViewModel)
                                     }
+                                    entry<SheetRoute.FileOpenChooser>(
+                                        metadata = sheetEntry(chooserHostGroup ?: "fileChooser"),
+                                    ) { key ->
+                                        val kind = remember(key) {
+                                            FileKind.classify(key.file.fileName, key.file.mimeType)
+                                        }
+                                        FileOpenChooserContent(
+                                            fileName = key.file.fileName,
+                                            sizeBytes = key.file.sizeBytes,
+                                            kind = kind,
+                                            onChoose = { choice, rememberChoice ->
+                                                kind.preferenceKey
+                                                    ?.takeIf { rememberChoice }
+                                                    ?.let { fileOpenViewModel.remember(it, choice) }
+                                                backStack.removeLastOrNull()
+                                                when (choice) {
+                                                    FileOpenChoice.InApp -> backStack.add(key.file)
+                                                    FileOpenChoice.External -> externalFile = key.file
+                                                }
+                                            },
+                                        )
+                                    }
                                 },
                             )
                         }
                     }
 
-                    // Full-screen search body (M3 search view). Drawn AFTER the NavDisplay so it
-                    // covers the active tab, but still under the Scaffold's top bar — the bar's
-                    // search field stays interactive above it. It rides searchProgress, so the
-                    // predictive-back gesture that scrubs the bar collapse scrubs it in lockstep.
-                    // Composed only while open (or animating) to keep the idle tabs untouched.
                     if (searchActive || searchProgress.value > 0f) {
                         val keyboardController = LocalSoftwareKeyboardController.current
                         fun closeSearch() {
@@ -1119,42 +1174,15 @@ fun MainShell(
                             searchViewModel.reset()
                         }
 
-                        // Tab landings close search (the destination IS the page you asked
-                        // for); sub-page pushes keep it alive underneath, so popping back
-                        // returns to the search view with query, results and scroll intact.
-                        fun openSubPage(route: AppRoute) {
-                            keyboardController?.hide()
-                            backStack.add(route)
-                        }
-
-                        fun openDestination(destination: SearchDestination) {
-                            when (val landing = destination.toLanding()) {
-                                is SearchLanding.Tab -> {
-                                    scope.launch { pagerState.scrollToPage(landing.tab.ordinal) }
-                                    closeSearch()
-                                }
-
-                                is SearchLanding.SubPage -> openSubPage(landing.route)
-
-                                // Sheets land on their owning tab like a tab hit, then
-                                // animate in over it.
-                                is SearchLanding.Sheet -> {
-                                    scope.launch { pagerState.scrollToPage(landing.hostTab.ordinal) }
-                                    closeSearch()
-                                    when (landing.sheet) {
-                                        ShellSheet.StudyPlan -> backStack.add(SheetRoute.StudyPlan)
-                                        ShellSheet.Attendance -> backStack.add(SheetRoute.Attendance)
-                                        ShellSheet.Enrollments -> backStack.add(SheetRoute.Enrollments)
-                                        ShellSheet.Titles -> backStack.add(SheetRoute.Titles)
-                                        ShellSheet.Certificates -> backStack.add(SheetRoute.Certificates)
-                                        ShellSheet.BookedExams -> backStack.add(SheetRoute.Appelli)
-                                        ShellSheet.ExamResults -> backStack.add(SheetRoute.ExamResults)
-                                        ShellSheet.Questionnaires -> backStack.add(SheetRoute.Questionnaires)
-                                        ShellSheet.Appointments -> backStack.add(SheetRoute.Appointments)
-                                        ShellSheet.Taxes -> backStack.add(SheetRoute.Taxes)
-                                    }
-                                }
-                            }
+                        val searchNavHooks = remember {
+                            SearchNavHooks(
+                                selectCalendarDay = calendarViewModel::selectDay,
+                                openCalendarEvent = calendarViewModel::openEventDetail,
+                                selectBuilding = mapViewModel::selectBuilding,
+                                selectRoom = mapViewModel::selectRoomByCode,
+                                requestAddCourse = elearningViewModel::requestAddCourse,
+                                requestHypotheticalCalculator = profileViewModel::requestHypotheticalCalculator,
+                            )
                         }
 
                         SearchOverlay(
@@ -1163,31 +1191,40 @@ fun MainShell(
                             subPageProgress = navProgress.floatValue,
                             topInset = topInset,
                             onOpenResult = { result ->
-                                // Opening a hit is a successful search — persist the query.
-                                searchViewModel.commitToHistory()
-                                when (result) {
-                                    is SearchResult.Destination -> openDestination(result.destination)
+                                searchViewModel.commitPick(result)
 
-                                    is SearchResult.Course ->
-                                        openSubPage(AppRoute.CourseDetail(result.courseId.value))
+                                /**
+                                 * The guided steps to play. A switch to the tab already underneath
+                                 * is a no-op step; dropping it lets same-tab plans start their
+                                 * pushes at once.
+                                 */
+                                val plan = result.toNavPlan(searchNavHooks).filterNot { step ->
+                                    step is SearchNavStep.SwitchTab &&
+                                        step.tab == tab && backStack.size == 1
+                                }
+                                if (plan.all { it is SearchNavStep.PushPage }) {
+                                    keyboardController?.hide()
+                                } else {
+                                    closeSearch()
+                                }
+                                scope.launch {
+                                    plan.forEachIndexed { index, step ->
+                                        when (step) {
+                                            is SearchNavStep.SwitchTab -> {
+                                                while (backStack.size > 1) backStack.removeAt(backStack.lastIndex)
+                                                pagerState.scrollToPage(step.tab.ordinal)
+                                            }
 
-                                    // Land on the calendar with the hit's day selected and its
-                                    // detail sheet open.
-                                    is SearchResult.CalendarEntry -> {
-                                        calendarViewModel.selectDay(result.date)
-                                        calendarViewModel.openEventDetail(result.eventId)
-                                        scope.launch { pagerState.scrollToPage(ShellTab.Calendar.ordinal) }
-                                        closeSearch()
+                                            is SearchNavStep.PushPage -> backStack.add(step.route)
+                                            is SearchNavStep.PushSheet -> backStack.add(step.route)
+
+                                            SearchNavStep.OpenAccountSwitcher ->
+                                                showAccountSwitcher = true
+
+                                            is SearchNavStep.Run -> step.action()
+                                        }
+                                        if (index < plan.lastIndex) delay(SEARCH_NAV_STEP_DELAY_MS)
                                     }
-
-                                    is SearchResult.Building -> {
-                                        mapViewModel.selectBuilding(result.code)
-                                        scope.launch { pagerState.scrollToPage(ShellTab.Map.ordinal) }
-                                        closeSearch()
-                                    }
-
-                                    // Libretto exam hits land on the Profile page, which renders the libretto.
-                                    is SearchResult.TranscriptEntry -> openSubPage(AppRoute.Profile)
                                 }
                             },
                         )
@@ -1219,22 +1256,48 @@ fun MainShell(
                 )
             }
 
-            chooserFile?.let { route ->
-                val kind = remember(route) { FileKind.classify(route.fileName, route.mimeType) }
-                FileOpenChooserSheet(
-                    fileName = route.fileName,
-                    sizeBytes = route.sizeBytes,
-                    kind = kind,
-                    onChoose = { choice, remember ->
-                        kind.preferenceKey?.takeIf { remember }?.let { fileOpenViewModel.remember(it, choice) }
-                        chooserFile = null
-                        when (choice) {
-                            FileOpenChoice.InApp -> backStack.add(route)
-                            FileOpenChoice.External -> externalFile = route
+            calendarReservationEvent?.let { event ->
+                val dismiss = { calendarReservationEvent = null }
+
+                /**
+                 * Container contract of the nested reservation-management modal, mirroring
+                 * [BottomSheetSceneStrategy]: the page drives gesture locking / dismiss vetoes
+                 * through LocalSheetDismissControl, exactly as it does when hosted as a shell sheet.
+                 */
+                val control = remember { SheetDismissControl(dismiss = dismiss) }
+                PredictiveModalBottomSheet(
+                    onDismiss = dismiss,
+                    gesturesEnabled = control.gesturesEnabled,
+                    confirmDismiss = { control.confirmDismiss() },
+                ) { _, _ ->
+                    CompositionLocalProvider(LocalSheetDismissControl provides control) {
+                        when (event) {
+                            is CalendarEvent.Exam -> AppelliPage(
+                                bookableViewModel = bookableExamsViewModel,
+                                viewModel = bookedExamsViewModel,
+                            )
+
+                            is CalendarEvent.Appointment -> AppointmentsPage(
+                                viewModel = appointmentsViewModel,
+                                onOpenPdf = { path, name ->
+                                    backStack.add(
+                                        AppRoute.FileViewer(
+                                            fileName = name,
+                                            localPath = path,
+                                            mimeType = "application/pdf",
+                                        )
+                                    )
+                                },
+                            )
+
+                            is CalendarEvent.LibraryReservation -> LibraryPage(
+                                viewModel = libraryViewModel,
+                            )
+
+                            else -> Unit
                         }
-                    },
-                    onDismiss = { chooserFile = null },
-                )
+                    }
+                }
             }
 
 
@@ -1252,12 +1315,45 @@ fun MainShell(
     }
 }
 
-// Sub-page container: opaque surface that covers the tab pager, inset below the global top bar
-// (the bottom bar slides off on sub-pages). Immersive pages (video) go fully edge to edge;
-// extendBehindBar pages keep the opaque background but skip the top inset, scrolling their
-// content behind the see-through bar (they handle the inset themselves via contentPadding).
-// Bridges NavDisplay's AnimatedContentScope into LocalAnimatedContentScope so shared elements in
-// the page (e.g. the tax detail ticket) seek with the page transition.
+/**
+ * Sheet group of a back-stack key, mirroring the `sheetEntry(...)` literals in the entryProvider —
+ * keep the two in sync when adding a sheet entry. Used by the file-open chooser to join the sheet
+ * it was opened from.
+ */
+private fun sheetGroupOf(key: Any?): String? = when (key) {
+    SheetRoute.Enrollments, is SheetRoute.EnrollmentDetail -> "enrollments"
+    SheetRoute.Titles, is SheetRoute.TitleDetail -> "titles"
+    SheetRoute.Certificates -> "certificates"
+    SheetRoute.Refunds, is SheetRoute.RefundDetail -> "refunds"
+    SheetRoute.Isee, is SheetRoute.IseeDetail -> "isee"
+    SheetRoute.ExamResults -> "examResults"
+    SheetRoute.Taxes -> "taxes"
+    is SheetRoute.QuizDetail -> "quiz"
+    is SheetRoute.Forum -> "forum"
+    is SheetRoute.AssignmentDetail -> "assignment"
+    SheetRoute.Attendance -> "attendance"
+    SheetRoute.Appelli -> "appelli"
+    SheetRoute.StudyPlan -> "studyPlan"
+    SheetRoute.Questionnaires -> "questionnaires"
+    SheetRoute.Appointments -> "appointments"
+    SheetRoute.Library -> "library"
+    else -> null
+}
+
+/**
+ * Pause between guided-search navigation steps: long enough for the previous transition (tab
+ * landing, page slide, sheet rise) to read as its own beat, short enough to stay snappy.
+ */
+private const val SEARCH_NAV_STEP_DELAY_MS = 550L
+
+/**
+ * Sub-page container: an opaque surface that covers the tab pager, inset below the global top bar
+ * (the bottom bar slides off on sub-pages). Immersive pages (video) go fully edge to edge;
+ * [extendBehindBar] pages keep the opaque background but skip the top inset, scrolling their
+ * content behind the see-through bar (they handle the inset themselves via contentPadding). It
+ * also bridges NavDisplay's AnimatedContentScope into LocalAnimatedContentScope so shared
+ * elements in the page (e.g. the tax detail ticket) seek with the page transition.
+ */
 @Composable
 private fun SubPage(
     topInset: Dp,

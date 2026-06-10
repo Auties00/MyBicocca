@@ -49,12 +49,25 @@ import androidx.media3.ui.compose.material3.indicator.PositionAndDurationText
 import androidx.media3.ui.compose.material3.indicator.ProgressSlider
 import androidx.media3.ui.compose.modifiers.resizeWithContentScale
 import androidx.media3.ui.compose.state.rememberPresentationState
-import it.attendance100.mybicocca.ui.screen.elearning.subscreen.videoPlayer.player.LocalPipController
-import it.attendance100.mybicocca.ui.screen.elearning.subscreen.videoPlayer.player.PipState
+import it.attendance100.mybicocca.core.os.LocalPipController
+import it.attendance100.mybicocca.core.os.PipState
 
-// mp4/audio resources play straight off the tokenized pluginfile URL — the endpoint
-// honors Range requests, so seeking works without downloading the file first. Local
-// playback (zip-extracted media) goes through the same path with a file uri.
+/**
+ * In-app video/audio player backed by a Media3 ExoPlayer. Remote resources play straight off
+ * the tokenized pluginfile URL — the endpoint honors Range requests, so seeking works without
+ * downloading the file first; local playback (zip-extracted media) goes through the same path
+ * with a file uri.
+ *
+ * Video renders into a fitted player surface on black; audio shows a music-note hero with the
+ * file name. Below sits a transport bar: progress slider, seek/play-pause buttons, position
+ * text, picture-in-picture, and share. Playback pauses when the screen leaves the foreground —
+ * course material isn't background-listening content — and the player is released with the
+ * composition.
+ *
+ * Play state and video aspect ratio are published to the PiP controller, so leaving the app (or
+ * the PiP action) pops the video out like the lesson player; audio registers too, with the
+ * default aspect. In PiP the transport bar hides.
+ */
 @androidx.annotation.OptIn(UnstableApi::class)
 @Composable
 fun MediaViewerContent(
@@ -71,8 +84,6 @@ fun MediaViewerContent(
         player.prepare()
         player.playWhenReady = true
     }
-    // Course material isn't background-listening content: pause when the screen leaves
-    // the foreground, release with the composition.
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
@@ -85,8 +96,6 @@ fun MediaViewerContent(
         }
     }
 
-    // Picture-in-Picture: publish play state + aspect so leaving the app (or the chrome's PiP
-    // button) pops the video out, like the lesson player. In PiP the controls hide.
     val pipController = LocalPipController.current
     val inPip by pipController.isInPip
     var isPlaying by remember { mutableStateOf(player.isPlaying) }
@@ -105,7 +114,6 @@ fun MediaViewerContent(
         player.addListener(listener)
         onDispose { player.removeListener(listener) }
     }
-    // Both video and audio register for auto-PiP-on-leave; audio just uses the default aspect.
     LaunchedEffect(isPlaying, aspectN, aspectD) {
         pipController.setActive(PipState(aspectN, aspectD, isPlaying))
     }

@@ -3,6 +3,10 @@ package it.attendance100.mybicocca.data.local.elearning.quiz
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 
+/**
+ * Cached best grade of the student for a quiz, account-scoped. Keyed by (account_id, quiz_id)
+ * — at most one row per quiz per account.
+ */
 @Entity(
     tableName = "elearning_quiz_best_grade",
     primaryKeys = ["account_id", "quiz_id"],

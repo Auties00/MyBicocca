@@ -207,6 +207,8 @@ data class ElearningKalturaPlayableSource(
  * @property pixelHeight Frame height in pixels (`null` for audio-only flavors).
  * @property bitrateKbps Average bitrate in kilobits per second.
  * @property frameRateFps Frames per second.
+ * @property sizeBytesRaw File size as Kaltura serializes it: byte counts arrive as a quoted
+ *   string to dodge JS number-precision limits; [sizeBytes] exposes the parsed [Long].
  * @property sizeBytes File size in bytes; null if unknown or omitted by Kaltura.
  * @property fileExtension Container file extension (`"mp4"`, etc.).
  */
@@ -224,8 +226,6 @@ data class ElearningKalturaVideoVariant(
     val bitrateKbps: Int? = null,
     @SerialName("frameRate")
     val frameRateFps: Float? = null,
-    // Kaltura serializes byte counts as a quoted string to dodge JS number-precision
-    // limits; expose it as a Long via a derived property.
     @SerialName("sizeInBytes")
     internal val sizeBytesRaw: String? = null,
     @SerialName("fileExt")

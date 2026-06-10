@@ -5,8 +5,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import it.attendance100.mybicocca.domain.model.library.LibraryZoneColor
 
-// Accent swatch for a seating zone. The Bicocca zones are literally named by color, so the UI
-// honors that: a solid accent for the zone glyph and a low-alpha container for its surface.
+/**
+ * Accent swatch for a seating zone. The Bicocca zones are literally named by color, so the UI
+ * honors that: a solid accent for the zone glyph and a low-alpha container for its surface.
+ */
 data class ZoneSwatch(
     val accent: Color,
     val container: Color,

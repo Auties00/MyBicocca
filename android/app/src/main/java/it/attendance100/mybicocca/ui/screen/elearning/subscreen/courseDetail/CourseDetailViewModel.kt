@@ -61,8 +61,31 @@ import kotlinx.coroutines.launch
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
-import it.attendance100.mybicocca.ui.navigation.AppRoute
+import it.attendance100.mybicocca.ui.navigation.route.AppRoute
 
+/**
+ * Backs [CourseDetailScreen] for one course, bound to its navigation entry through assisted
+ * injection of the route key.
+ *
+ * Cached data streams (Room as source of truth, re-scoped when the active account changes):
+ * [details], [assignments], [quizzes], [forums], [latestAnnouncement], [gradeItems],
+ * [completion], [videoProgressByCmId], plus the derived [isFavourite].
+ *
+ * Sync state: [syncStatus] tracks the fan-out refresh of every course resource (details are
+ * the only refresh whose failure surfaces; the others fail silently), while
+ * [initialFetchInProgress] separately reports a fetch running with no useful cache.
+ * [continueWatchingThumbnailUrl] tracks the on-demand thumbnail resolution for the hero card.
+ *
+ * UI selection persisted in [SavedStateHandle] across process death: [selectedTab],
+ * [expandedSections], [expandedQuizGroups].
+ *
+ * One-shot events: [oneShotEvents] carries module-open requests (fed by the `emitOpen*`
+ * actions) and refresh failures; they fire exactly once and never replay.
+ *
+ * Public actions: [selectTab], [toggleSection], [toggleQuizGroup], [onSetActivityCompleted],
+ * [resolveContinueWatchingThumbnail], [pullToRefresh], [toggleFavourite], and the `emitOpen*`
+ * family used by the screen's module router.
+ */
 @OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel(assistedFactory = CourseDetailViewModel.Factory::class)
 class CourseDetailViewModel @AssistedInject constructor(
@@ -105,8 +128,10 @@ class CourseDetailViewModel @AssistedInject constructor(
         .map { it.toSet() }
         .stateIn(viewModelScope, SharingStarted.Eagerly, emptySet())
 
-    // The Quiz tab reuses the Contenuti expandable-card pattern but keys groups by section id
-    // independently, so expanding a quiz card never leaks into the Contenuti tab.
+    /**
+     * The Quiz tab reuses the Contenuti expandable-card pattern but keys groups by section id
+     * independently, so expanding a quiz card never leaks into the Contenuti tab.
+     */
     val expandedQuizGroups: StateFlow<Set<Int>> = savedState
         .getStateFlow(KEY_QUIZ_EXPANDED, emptyList<Int>())
         .map { it.toSet() }
@@ -140,16 +165,20 @@ class CourseDetailViewModel @AssistedInject constructor(
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STATE_KEEP_ALIVE_MS), Loadable.NotYetLoaded)
 
-    // The course's single read-only "Avvisi" forum, when it has one. Drives the announcements
-    // hero on the Forum tab.
+    /**
+     * The course's single read-only "Avvisi" forum, when it has one. Drives the announcements
+     * hero on the Forum tab.
+     */
     private val newsForumId: Flow<ForumId?> = forums
         .map { loadable ->
             (loadable as? Loadable.Loaded)?.value?.firstOrNull { it.type == ForumType.News }?.id
         }
         .distinctUntilChanged()
 
-    // Latest teacher announcement from the news forum. Independent stream from `forums`:
-    // the card renders forum metadata immediately and fills the preview when this lands.
+    /**
+     * Latest teacher announcement from the news forum. Independent stream from [forums]: the
+     * card renders forum metadata immediately and fills the preview when this lands.
+     */
     val latestAnnouncement: StateFlow<Loadable<Discussion?>> = activeAccountId
         .flatMapLatest { accountId ->
             if (accountId == null) return@flatMapLatest flowOf(Loadable.NotYetLoaded)
@@ -190,29 +219,41 @@ class CourseDetailViewModel @AssistedInject constructor(
     private val _syncStatus = MutableStateFlow<SyncStatus>(SyncStatus.Idle)
     val syncStatus: StateFlow<SyncStatus> = _syncStatus.asStateFlow()
 
-    // True only when this VM had to fetch from the network because Room had nothing useful
-    // cached. Distinct from `syncStatus`, which also fires for pull-to-refresh and for
-    // already-fresh refreshes that early-return inside the repo.
     private val _initialFetchInProgress = MutableStateFlow(false)
+
+    /**
+     * True only while a network fetch runs because Room had nothing useful cached: Room is
+     * snapshotted before the refresh kicks off, and a first emission that already has sections
+     * counts as a warm cache hit that keeps the loading visual off. Distinct from [syncStatus],
+     * which also fires for pull-to-refresh and for already-fresh refreshes that early-return
+     * inside the repository.
+     */
     val initialFetchInProgress: StateFlow<Boolean> = _initialFetchInProgress.asStateFlow()
 
-    private val _continueWatchingThumbnailUrl = MutableStateFlow<String?>(null)
-    val continueWatchingThumbnailUrl: StateFlow<String?> = _continueWatchingThumbnailUrl.asStateFlow()
+    private val _continueWatchingThumbnailUrl =
+        MutableStateFlow<Loadable<String?>>(Loadable.NotYetLoaded)
+
+    /**
+     * NotYetLoaded means resolution is in flight; Loaded carries the resolved url, which may be
+     * null when the video genuinely has no thumbnail.
+     */
+    val continueWatchingThumbnailUrl: StateFlow<Loadable<String?>> =
+        _continueWatchingThumbnailUrl.asStateFlow()
 
     private var continueWatchingThumbnailCmId: Int? = null
 
     private val oneShotChannel = Channel<CourseDetailOneShotEvent>(Channel.BUFFERED)
     val oneShotEvents: Flow<CourseDetailOneShotEvent> = oneShotChannel.receiveAsFlow()
 
-    // News forums refreshed during this VM's lifetime; refreshDiscussions has no stale-policy
-    // gate, so guard here against re-fetching on every forums emission.
+    /**
+     * News forums refreshed during this ViewModel's lifetime; refreshDiscussions has no
+     * stale-policy gate, so this guards against re-fetching on every forums emission.
+     */
     private val announcementRefreshed = mutableSetOf<Int>()
 
     init {
         viewModelScope.launch {
             activeAccountId.filterNotNull().distinctUntilChanged().collect { id ->
-                // Snapshot Room before kicking off refresh: if the first emission already
-                // has sections we're a warm cache hit and the loading visual stays off.
                 val snapshot = observeDetails(id, courseId).first()
                 val hadCache = snapshot is Loadable.Loaded &&
                     snapshot.value.sections.isNotEmpty()
@@ -251,14 +292,24 @@ class CourseDetailViewModel @AssistedInject constructor(
         }
     }
 
+    /**
+     * Resolves the continue-watching thumbnail for the given video cmId, deduplicating repeat
+     * requests for the same id and ignoring stale results after the target changes. A null
+     * cmId settles on "no thumbnail" rather than a perpetual loading state.
+     */
     fun resolveContinueWatchingThumbnail(cmId: Int?) {
         if (cmId == continueWatchingThumbnailCmId) return
         continueWatchingThumbnailCmId = cmId
-        _continueWatchingThumbnailUrl.value = null
-        if (cmId == null) return
+        if (cmId == null) {
+            _continueWatchingThumbnailUrl.value = Loadable.Loaded(null)
+            return
+        }
+        _continueWatchingThumbnailUrl.value = Loadable.NotYetLoaded
         viewModelScope.launch {
             val url = runCatching { getVideoThumbnailUrl(cmId) }.getOrNull()
-            if (continueWatchingThumbnailCmId == cmId) _continueWatchingThumbnailUrl.value = url
+            if (continueWatchingThumbnailCmId == cmId) {
+                _continueWatchingThumbnailUrl.value = Loadable.Loaded(url)
+            }
         }
     }
 
@@ -308,8 +359,8 @@ class CourseDetailViewModel @AssistedInject constructor(
         oneShotChannel.trySend(CourseDetailOneShotEvent.OpenForum(ForumId(id)))
     }
 
-    fun emitOpenDiscussion(id: DiscussionId) {
-        oneShotChannel.trySend(CourseDetailOneShotEvent.OpenDiscussion(id))
+    fun emitOpenDiscussion(forumId: ForumId, id: DiscussionId) {
+        oneShotChannel.trySend(CourseDetailOneShotEvent.OpenDiscussion(forumId, id))
     }
 
     fun emitOpenResource(url: String) {
@@ -349,6 +400,6 @@ class CourseDetailViewModel @AssistedInject constructor(
     }
 }
 
-// Pinned announcements can be old; "latest" means most recent activity regardless of pin.
+/** Pinned announcements can be old; "latest" means most recent activity regardless of pin. */
 private fun List<Discussion>.pickLatest(): Discussion? =
     maxByOrNull { it.timeModified ?: it.createdAt ?: java.time.Instant.EPOCH }

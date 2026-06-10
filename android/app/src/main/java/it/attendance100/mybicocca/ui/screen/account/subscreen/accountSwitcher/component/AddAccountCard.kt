@@ -25,15 +25,19 @@ import androidx.compose.ui.unit.dp
 
 private val CardShape = RoundedCornerShape(28.dp)
 
+/**
+ * "Aggiungi un altro account" tile closing the roster: a plus glyph on a primary-container
+ * disc beside the label. The fill matches the bottom sheet's own background
+ * (`surfaceContainerLow`) with an `outlineVariant` stroke, so the tile is visually
+ * identical to an inactive account tile — they form one "outlined slot" family below the
+ * filled active card.
+ */
 @Composable
 fun AddAccountCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val scheme = MaterialTheme.colorScheme
-    // Fill matches the bottom sheet's own background (`surfaceContainerLow`) with an
-    // outlineVariant stroke, so this tile is visually identical to an inactive account tile —
-    // they form one "outlined slot" family below the filled active card.
     Surface(
         onClick = onClick,
         shape = CardShape,

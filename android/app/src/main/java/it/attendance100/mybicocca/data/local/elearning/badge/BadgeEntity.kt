@@ -4,6 +4,11 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.Index
 
+/**
+ * Cached Moodle badge awarded to the account, keyed by (account_id, badge_id).
+ * `courseId` is null for site-wide badges, which is why per-course replacement matches
+ * it with IS rather than =. `issuedAtMs` is epoch milliseconds.
+ */
 @Entity(
     tableName = "elearning_badges",
     primaryKeys = ["account_id", "badge_id"],

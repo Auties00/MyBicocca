@@ -6,6 +6,10 @@ import it.attendance100.mybicocca.domain.repository.SearchHistoryRepository
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
+/**
+ * Streams the account's recent searches, most recent first, shown by the search overlay
+ * before the user types.
+ */
 class ObserveSearchHistoryUseCase @Inject constructor(
     private val repository: SearchHistoryRepository,
 ) {

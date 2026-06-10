@@ -73,9 +73,12 @@ import java.time.format.DateTimeFormatter
 
 private val StatusTimeFormat: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm")
 
-// Building detail content: a pinned morphing header over a two-level body pager
-// (room list <-> room detail). Hosted both by the standalone pin modal and as a page
-// inside the buildings list sheet (then onBack != null at the building level too).
+/**
+ * Building detail content: a pinned morphing header over a two-level body pager (room list
+ * <-> room detail). Hosted both by the standalone pin modal and as a page inside the
+ * buildings list sheet (which supplies [onBack] at the building level too). System back pops
+ * the room page before closing or dismissing anything above it.
+ */
 @Composable
 fun BuildingDetailSheet(
     building: MapBuilding,
@@ -86,7 +89,6 @@ fun BuildingDetailSheet(
     roomDetail: Loadable<MapRoomDetail?>,
     onRoomClick: (MapRoom) -> Unit,
     onCloseRoom: () -> Unit,
-    onOpen360: (String, String) -> Unit,
     modifier: Modifier = Modifier,
     onBack: (() -> Unit)? = null,
     onRetryRooms: (() -> Unit)? = null,
@@ -95,7 +97,6 @@ fun BuildingDetailSheet(
     val scheduleMap = (daySchedule as? Loadable.Loaded)?.value
     val buildingTitle = remember(building.name) { buildingDisplayName(building) }
 
-    // System back pops the room page before closing/dismissing anything above it.
     BackHandler(enabled = selectedRoom != null, onBack = onCloseRoom)
 
     Column(modifier = modifier.fillMaxWidth()) {
@@ -135,17 +136,26 @@ fun BuildingDetailSheet(
                     detail = roomDetail,
                     todayEntries = scheduleMap?.get(room.code.value)
                         ?: if (scheduleMap != null) emptyList() else null,
-                    onOpen360 = onOpen360,
                 )
             }
         }
     }
 }
 
-// Headerless room list: the hosting sheet provides the morphing header above the pager.
-// Rooms are split into one section per floor, each rendered as a two-column segmented grid.
-// A non-null onDirections pins an "Indicazioni" button below the (height-capped) grid, so it
-// stays reachable no matter how long the room list is.
+/**
+ * Headerless room list: the hosting sheet provides the morphing header above the pager. Rooms
+ * are split into one section per floor — floors ascending, rooms without a floor grouped last
+ * — each rendered as a two-column segmented grid. A non-null [onDirections] pins an
+ * "Indicazioni" button below the (height-capped) grid, so it stays reachable no matter how
+ * long the room list is.
+ *
+ * "Now" is snapshotted each time the schedule lands so free/busy is computed against fresh
+ * data. The loading state is held for a beat so quick fetches don't flash it (cached rooms
+ * skip it), and the status shimmer — an infinite animation — is materialized only while its
+ * placeholders are actually on screen, so an open sheet doesn't keep an always-on animation
+ * running. The body may only grow/shrink vertically as content lands: the height change is
+ * animated here instead of letting the hosting modal snap to the new size.
+ */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 internal fun BuildingPageBody(
@@ -157,24 +167,19 @@ internal fun BuildingPageBody(
     onDirections: (() -> Unit)? = null,
     onRetry: (() -> Unit)? = null,
 ) {
-    // Snapshot "now" each time the schedule lands so free/busy is computed against fresh data.
     val now = remember(daySchedule) { LocalDateTime.now() }
     val scheduleMap = (daySchedule as? Loadable.Loaded)?.value
     val roomList = (rooms as? Loadable.Loaded)?.value
     val failure = syncStatus as? SyncStatus.Failed
 
     val statusLoading = daySchedule is Loadable.NotYetLoaded
-    // The shimmer drives an infinite animation — only materialize it while its placeholders
-    // are actually on screen, so an open sheet doesn't keep an always-on animation running.
     val shimmerInstance = if (statusLoading) rememberShimmer(shimmerBounds = ShimmerBounds.Window) else null
 
-    // Hold the loading state for a beat so quick fetches don't flash it; cached rooms skip it.
     val showLoading = rememberMinDurationLoading(
         loading = rooms is Loadable.NotYetLoaded ||
             (roomList.isNullOrEmpty() && syncStatus is SyncStatus.Refreshing),
     )
 
-    // Floors ascending, rooms without a floor grouped last.
     val floorSections = remember(roomList) {
         roomList.orEmpty()
             .groupBy { it.floor }
@@ -185,8 +190,6 @@ internal fun BuildingPageBody(
     val motion = MaterialTheme.motionScheme
     val sizeSpec = remember(motion) { motion.defaultSpatialSpec<IntSize>() }
 
-    // The sheet may only grow/shrink vertically as content lands — animate the height change
-    // here instead of letting the modal snap to the new size.
     Column(modifier = modifier.fillMaxWidth().animateContentSize(animationSpec = sizeSpec)) {
         when {
             roomList.isNullOrEmpty() && failure != null -> SheetMessage(
@@ -226,8 +229,6 @@ internal fun BuildingPageBody(
                         items = floorRooms,
                         key = { _, room -> room.code.value },
                         span = { index, _ ->
-                            // An odd trailing room stretches across the full row, which also
-                            // caps both bottom corners of the section cleanly.
                             if (floorRooms.size % 2 == 1 && index == floorRooms.lastIndex) {
                                 GridItemSpan(maxLineSpan)
                             } else {
@@ -262,8 +263,10 @@ internal fun BuildingPageBody(
     }
 }
 
-// Same scheme as the buildings list's directions action: brand fill in light, primary
-// container in dark.
+/**
+ * Same scheme as the buildings list's directions action: brand fill in light, primary
+ * container in dark.
+ */
 @Composable
 private fun DirectionsButton(
     onClick: () -> Unit,
@@ -318,8 +321,15 @@ private fun FloorHeader(floor: Int?, roomCount: Int) {
     }
 }
 
-// Grid flavor of the segmented M3E group language used across the map sheets: 28dp corners cap
-// the section's outer corners, 6dp where cells touch. Tapping pushes the room page.
+/**
+ * Grid flavor of the segmented M3E group language used across the map sheets: 28dp corners
+ * cap the section's outer corners, 6dp where cells touch; the first and last grid rows take
+ * the outer caps, and since an odd trailing cell spans the full row (see the span lambda in
+ * the caller) the last row then starts at the cell itself. Tapping pushes the room page. The
+ * capacity count takes a fixed min width with end alignment so the icons stay in a column
+ * across cells regardless of the count's digit count, and the free/busy dot is stood in by a
+ * shimmer while the day's occupation grid loads.
+ */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun RoomCell(
@@ -346,8 +356,6 @@ private fun RoomCell(
         RoomStatus.Unknown -> null
     }
 
-    // First/last grid row of the section get the 28dp outer caps; an odd trailing cell spans
-    // the full row (see the span lambda in the caller), so "last row start" is itself.
     val lastRowStart = sectionSize - (if (sectionSize % 2 == 0) 2 else 1)
     val shape = RoundedCornerShape(
         topStart = if (sectionIndex == 0) 28.dp else 6.dp,
@@ -392,8 +400,6 @@ private fun RoomCell(
                             modifier = Modifier.size(16.dp),
                             tint = scheme.onSurfaceVariant,
                         )
-                        // Fixed min width + end alignment keeps the icons in a column across
-                        // cells regardless of the count's digit count.
                         Text(
                             text = "$capacity",
                             style = MaterialTheme.typography.labelMedium,
@@ -408,7 +414,6 @@ private fun RoomCell(
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                // Free/busy dot; a shimmer stands in while the day's occupation grid loads.
                 if (statusLoading && shimmer != null) {
                     ShimmerCircle(size = 8.dp, modifier = Modifier.shimmer(shimmer))
                 } else {

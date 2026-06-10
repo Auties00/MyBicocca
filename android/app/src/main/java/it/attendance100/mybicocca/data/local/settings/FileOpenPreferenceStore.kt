@@ -4,17 +4,19 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
+import it.attendance100.mybicocca.domain.model.settings.FileOpenChoice
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 import javax.inject.Singleton
 
-// Whether a (in-app-capable) file type opens inside the app or is handed to an external app.
-enum class FileOpenChoice { InApp, External }
-
-// Remembers, per file kind (image/video/audio/html/text/zip), how the user chose to open it.
-// A missing entry means "ask" — the chooser sheet is shown. Backed by the shared
-// `mybicocca_settings` DataStore, like the other settings stores.
+/**
+ * Persists the per-file-kind open choices in the shared `mybicocca_settings` DataStore.
+ *
+ * Each remembered kind (image/video/audio/html/text/zip…) is one `file_open_<kind>` string key
+ * holding a [FileOpenChoice] entry name; a kind with no key means "ask every time". Unknown
+ * stored values are skipped rather than surfaced.
+ */
 @Singleton
 class FileOpenPreferenceStore @Inject constructor(
     private val dataStore: DataStore<Preferences>,

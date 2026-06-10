@@ -26,6 +26,12 @@ import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.ui.compose.state.rememberPlayPauseButtonState
 
+/**
+ * The transport cluster floating at the centre of the video: a large play/pause toggle flanked by
+ * smaller skip-previous / skip-next buttons, each drawn as a translucent black circle with a white
+ * icon. Skip buttons grey out when there is no adjacent playlist video, and every press reports
+ * user activity so the chrome's auto-hide timer restarts.
+ */
 @OptIn(UnstableApi::class)
 @Composable
 fun CenterPlaybackControls(

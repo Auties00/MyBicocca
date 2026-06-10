@@ -34,6 +34,12 @@ import it.attendance100.mybicocca.ui.screen.elearning.subscreen.courseDetail.sta
 import java.time.Duration
 import java.time.Instant
 
+/**
+ * Tertiary-container callout for the nearest upcoming deadline: an uppercase countdown label
+ * ("TRA 2G 5H" / "SCADUTO"), the item title and optional subtitle, and a pill-shaped "Apri"
+ * action, over faded organic blob decor. Horizontal padding comes from the host list's
+ * content padding.
+ */
 @Composable
 fun UpNextCard(
     item: UpNextItem,
@@ -46,7 +52,6 @@ fun UpNextCard(
     Surface(
         shape = RoundedCornerShape(28.dp),
         color = scheme.tertiaryContainer,
-        // Horizontal padding comes from the host list's content padding.
         modifier = modifier.fillMaxWidth(),
     ) {
         Box(modifier = Modifier.padding(18.dp)) {

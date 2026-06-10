@@ -4,6 +4,7 @@ import it.attendance100.mybicocca.domain.model.account.AccountId
 import it.attendance100.mybicocca.domain.repository.SearchHistoryRepository
 import javax.inject.Inject
 
+/** Removes one query from the account's search history. */
 class RemoveSearchHistoryEntryUseCase @Inject constructor(
     private val repository: SearchHistoryRepository,
 ) {

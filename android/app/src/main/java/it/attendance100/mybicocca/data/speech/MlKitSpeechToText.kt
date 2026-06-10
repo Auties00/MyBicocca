@@ -18,8 +18,11 @@ import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import javax.inject.Singleton
 
-// On-device ML Kit GenAI dictation (Gemini-powered ASR). Only used when the model reports
-// AVAILABLE — availability is probed per session by the selector, never assumed.
+/**
+ * Search dictation backed by the on-device ML Kit GenAI recognizer (Gemini-powered ASR),
+ * configured for Italian. Only used when the model reports AVAILABLE — availability is probed
+ * per session by the selector, never assumed.
+ */
 @Singleton
 class MlKitSpeechToText @Inject constructor() : SpeechToText {
 
@@ -64,7 +67,7 @@ class MlKitSpeechToText @Inject constructor() : SpeechToText {
     }
 
     private companion object {
-        // ML Kit GenAI requires API 26; the app's minSdk is 25.
+        /** ML Kit GenAI requires API 26, one above the app's minSdk of 25. */
         const val MIN_SDK = 26
     }
 }

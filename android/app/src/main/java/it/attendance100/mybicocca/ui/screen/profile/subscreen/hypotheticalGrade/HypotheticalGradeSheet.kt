@@ -46,6 +46,14 @@ import java.util.Locale
 private const val MIN_PASSING_GRADE = 18
 private const val MAX_GRADE = 31
 
+/**
+ * Hypothetical-average calculator sheet: a stat card showing the current arithmetic or
+ * weighted average with an animated arrow to the projected value, a signed delta chip
+ * beneath it, and the grade input — plus an optional CFU input in weighted mode. The
+ * projection is an O(1) recompute over the pre-aggregated [GradeRollup]: one hypothetical
+ * entry added to the stored sums, one division. Out-of-range input is flagged inline and
+ * produces no projection.
+ */
 @Composable
 fun HypotheticalGradeSheet(
     rollup: GradeRollup?,
@@ -69,7 +77,6 @@ fun HypotheticalGradeSheet(
         val cfu = cfuText.toIntOrNull()
         val gradeValid = grade != null && grade in MIN_PASSING_GRADE..MAX_GRADE
 
-        // O(1) recompute from the pre-aggregated rollup — add one hypothetical entry, divide once.
         val current = if (isWeighted) currentWeighted else currentArithmetic
         val projected: Float? = when {
             rollup == null || grade == null || !gradeValid -> null
@@ -154,6 +161,7 @@ fun HypotheticalGradeSheet(
     }
 }
 
+/** Current average with a "→ projected" suffix that expands in once a projection exists. */
 @Composable
 private fun HypotheticalStatCard(
     modifier: Modifier = Modifier,
@@ -209,6 +217,10 @@ private fun HypotheticalStatCard(
     }
 }
 
+/**
+ * Signed delta chip — green for gains, red for losses — in a fixed-height slot so the
+ * layout does not shift as the chip appears and disappears.
+ */
 @Composable
 private fun DifferenceIndicator(
     modifier: Modifier = Modifier,

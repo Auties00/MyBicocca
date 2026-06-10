@@ -6,9 +6,15 @@ import androidx.room.Transaction
 import androidx.room.Upsert
 import kotlinx.coroutines.flow.Flow
 
+/**
+ * Room access to the career-scoped transcript cache: libretto rows, stats and the
+ * grade-rollup aggregate. Account-wide deletes resolve the account's careers through the
+ * `careers` table, so a sign-out purges every career's transcript in one statement.
+ */
 @Dao
 interface TranscriptDao {
 
+    /** Rows ordered chronologically by exam date (dateless rows last, then by id). */
     @Query(
         "SELECT * FROM transcript_rows WHERE career_id = :careerId " +
             "ORDER BY CASE WHEN exam_date IS NULL THEN 1 ELSE 0 END, exam_date ASC, id ASC"
@@ -18,6 +24,7 @@ interface TranscriptDao {
     @Query("SELECT * FROM transcript_stats WHERE career_id = :careerId")
     fun observeStats(careerId: Long): Flow<TranscriptStatsEntity?>
 
+    /** SQL-side aggregation over passed, numerically graded rows; one row or null. */
     @Query(
         "SELECT " +
             "COUNT(*) AS graded_exam_count, " +
@@ -59,6 +66,10 @@ interface TranscriptDao {
     )
     suspend fun deleteStatsForAccount(accountId: String)
 
+    /**
+     * Atomically swaps a career's cached transcript: rows are deleted and rewritten so
+     * activities removed server-side disappear, while the stats row is upserted.
+     */
     @Transaction
     suspend fun replaceAll(careerId: Long, rows: List<TranscriptRowEntity>, stats: TranscriptStatsEntity) {
         deleteRows(careerId)

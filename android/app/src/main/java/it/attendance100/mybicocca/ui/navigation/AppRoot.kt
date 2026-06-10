@@ -23,16 +23,31 @@ import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
 import it.attendance100.mybicocca.domain.model.account.Account
+import it.attendance100.mybicocca.ui.component.bar.ConnectivityBannerHost
+import it.attendance100.mybicocca.ui.navigation.route.RootPhase
+import it.attendance100.mybicocca.ui.navigation.route.RootRoute
+import it.attendance100.mybicocca.ui.navigation.route.toRootRoute
 import it.attendance100.mybicocca.ui.navigation.transitions.LocalRootSharedTransitionScope
 import it.attendance100.mybicocca.ui.screen.account.CareerPickerScreen
 import it.attendance100.mybicocca.ui.screen.auth.AuthScreen
 import it.attendance100.mybicocca.ui.screen.lock.AppLockScreen
 import it.attendance100.mybicocca.ui.screen.lock.AppLockViewModel
+import it.attendance100.mybicocca.ui.theme.LocalIsOnline
 
-// A top-level NavDisplay drives the auth / career-pick / main journey so the MyBicocca wordmark
-// morphs as a NATIVE Nav3 shared element (via LocalNavAnimatedContentScope) on login -> main. MainShell
-// keeps its own inner NavDisplay + SharedTransitionLayout for list -> detail morphs; the two
-// shared-transition scopes are independent (LocalRootSharedTransitionScope vs LocalSharedTransitionScope).
+/**
+ * Root composable of the whole UI: a top-level NavDisplay that cross-fades between login, career
+ * pick and the main shell as [RootViewModel] resolves the session phase. Driving the journey
+ * through a NavDisplay (rather than a plain AnimatedContent) is what lets the MyBicocca wordmark
+ * morph as a native Nav3 shared element (via LocalNavAnimatedContentScope) from the login header
+ * into the main app bar; [MainShell] keeps its own inner NavDisplay + SharedTransitionLayout for
+ * list-to-detail morphs, and the two shared-transition scopes are deliberately independent
+ * ([LocalRootSharedTransitionScope] vs the shell-level scope).
+ *
+ * The app-wide connectivity band wraps every phase (login included) and pushes the whole app
+ * below itself while offline, with LocalIsOnline gating network-dependent actions underneath.
+ * The biometric lock screen is a full-screen cover drawn above everything else, and only guards
+ * an established session (the signed-in phase).
+ */
 @Composable
 fun AppRoot(
     viewModel: RootViewModel = hiltViewModel(
@@ -52,24 +67,31 @@ fun AppRoot(
 ) {
     val phase by viewModel.phase.collectAsStateWithLifecycle()
     val locked by lockViewModel.locked.collectAsStateWithLifecycle()
+    val isOnline by viewModel.isOnline.collectAsStateWithLifecycle()
 
     Box(Modifier.fillMaxSize()) {
-        RootNavDisplay(phase = phase, viewModel = viewModel)
-        // The gate only guards an established session
+        ConnectivityBannerHost(isOnline = isOnline) {
+            CompositionLocalProvider(LocalIsOnline provides isOnline) {
+                RootNavDisplay(phase = phase, viewModel = viewModel)
+            }
+        }
         if (locked && phase is RootPhase.SignedIn) {
             AppLockScreen(viewModel = lockViewModel)
         }
     }
 }
 
+/**
+ * The phase-driven NavDisplay behind [AppRoot], composed only once the phase has resolved. The
+ * first non-loading phase seeds the single-entry back stack (the elvis fallback is unreachable);
+ * later phase changes replace that entry, each swap playing as a symmetric cross-fade. The
+ * career-pick account is retained past the phase change because the cast on [RootPhase] would
+ * turn null the moment the phase advances and blank the still-exiting career-pick entry.
+ */
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 private fun RootNavDisplay(phase: RootPhase, viewModel: RootViewModel) {
-    // The first non-Loading phase seeds the back stack; later phases flow through the LaunchedEffect.
-    // The elvis is unreachable (RootNavDisplay is only composed once the phase has resolved).
     val backStack = rememberNavBackStack(phase.toRootRoute() ?: RootRoute.Login)
-    // Retain the career-pick account across the exit transition: once the phase advances the cast
-    // would be null and blank the still-exiting entry.
     var careerPickAccount by remember { mutableStateOf<Account?>(null) }
     LaunchedEffect(phase) {
         (phase as? RootPhase.NeedsCareerPick)?.let { careerPickAccount = it.account }

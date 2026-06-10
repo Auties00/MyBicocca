@@ -5,6 +5,10 @@ import androidx.room.Query
 import androidx.room.Upsert
 import kotlinx.coroutines.flow.Flow
 
+/**
+ * Access to the device-local Portale Planning reservation store. Rows are keyed by the
+ * portal-issued reservation code; the observed listing is ordered by appointment start time.
+ */
 @Dao
 interface AppointmentReservationDao {
 

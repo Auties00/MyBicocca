@@ -8,6 +8,10 @@ import it.attendance100.mybicocca.domain.repository.ElearningGradeRepository
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
+/**
+ * Streams one course's gradebook rows hot from the local cache, in gradebook order,
+ * for the grades section of the course detail screen.
+ */
 class ObserveCourseGradeItemsUseCase @Inject constructor(
     private val repository: ElearningGradeRepository,
 ) {

@@ -6,6 +6,12 @@ import androidx.room.Transaction
 import androidx.room.Upsert
 import kotlinx.coroutines.flow.Flow
 
+/**
+ * Room access to the per-account badge cache, newest badges first. Refreshes go
+ * through `replaceForCourse`, which swaps only the rows of the refreshed scope —
+ * one course's badges, or the site-wide ones when `courseId` is null (the IS
+ * comparison makes the null scope match).
+ */
 @Dao
 interface BadgeDao {
 

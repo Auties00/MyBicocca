@@ -108,10 +108,10 @@ class AffluencesReservationApiTest : AffluencesTestBase() {
         assertNotNull(policy.filters, "Email filters should be present, even when empty")
     }
 
+    /** The central library resources have no custom form, but the call must still succeed. */
     @Test
     suspend fun getResourceForms() {
         val filters = firstResourceTypeFilters()
-        // The central library resources have no custom form, the call must still succeed
         api.reservations.getResourceForms(filters.resources.first().resourceId)
     }
 
@@ -174,22 +174,22 @@ class AffluencesReservationApiTest : AffluencesTestBase() {
         assertTrue(affluencesError.errorMessage.isNotBlank(), "Error message should not be blank")
     }
 
+    /** The backend rejects unknown tokens without a structured error body. */
     @Test
     suspend fun getReservationToCancelWithBogusTokenThrows() {
         val error = runCatching {
             api.reservations.getReservationToCancel("bogus-token")
         }.exceptionOrNull()
-        // The backend rejects unknown tokens without a structured error body
         val requestError = assertInstanceOf<ApiRequestException>(error, "Bogus tokens should be reported as ApiRequestException")
         assertTrue(requestError.statusCode >= 400, "Status code should be an error")
     }
 
+    /** The backend rejects unknown tokens without a structured error body. */
     @Test
     suspend fun cancelReservationWithBogusTokenThrows() {
         val error = runCatching {
             api.reservations.cancelReservation("bogus-token")
         }.exceptionOrNull()
-        // The backend rejects unknown tokens without a structured error body
         val requestError = assertInstanceOf<ApiRequestException>(error, "Bogus tokens should be reported as ApiRequestException")
         assertTrue(requestError.statusCode >= 400, "Status code should be an error")
     }

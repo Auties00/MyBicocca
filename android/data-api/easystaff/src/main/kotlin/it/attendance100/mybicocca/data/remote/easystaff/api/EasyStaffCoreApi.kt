@@ -86,7 +86,6 @@ class EasyStaffCoreApi(
             )
         )
 
-        // Extract JSON from JavaScript variable assignment
         val jsonString = extractJsonFromJsVariable(response, "elenco_docenti")
             ?: throw HtmlParsingException("Failed to parse teachers response")
 

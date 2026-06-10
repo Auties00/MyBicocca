@@ -35,7 +35,7 @@ import java.util.Locale
 
 private val DayOfWeekFormat = DateTimeFormatter.ofPattern("EEE", Locale.ITALIAN)
 
-// "Oggi" / "Domani" for the next two days, otherwise the capitalized weekday ("Gio").
+/** "Oggi" / "Domani" for the next two days, otherwise the capitalized Italian weekday ("Gio"). */
 fun relativeDayLabel(date: LocalDate): String {
     val today = LocalDate.now()
     return when (date) {
@@ -45,15 +45,20 @@ fun relativeDayLabel(date: LocalDate): String {
     }
 }
 
-// A footer entry (icon + label) for [BookingSummaryCard]'s tonal strip.
+/** A footer entry (icon + label) for [BookingSummaryCard]'s tonal strip; [muted] drops it to the outline tint. */
 data class BookingFooterEntry(
     val icon: ImageVector,
     val label: String,
     val muted: Boolean = false,
 )
 
-// Booking list card shared by the exam, segreterie and biblioteca lists: a leading date tile, a
-// title/subtitle, and a tonal "when & where" footer strip. Matches the booked-exam (Appelli) card.
+/**
+ * Booking list card shared by the exam, segreterie and biblioteca lists, so every booking reads
+ * as the same object: a leading date tile, title/subtitle, and a tonal "when & where" footer
+ * strip holding up to two [BookingFooterEntry] items pushed to opposite edges. Matches the
+ * booked-exam (Appelli) card. Press feedback is expressive — the corners tighten while the
+ * finger is down.
+ */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun BookingSummaryCard(
@@ -67,7 +72,6 @@ fun BookingSummaryCard(
 ) {
     val scheme = MaterialTheme.colorScheme
 
-    // Expressive press feedback: the corners tighten while the finger is down.
     val interactionSource = remember { MutableInteractionSource() }
     val pressed by interactionSource.collectIsPressedAsState()
     val corner by animateDpAsState(

@@ -3,31 +3,43 @@ package it.attendance100.mybicocca.ui.screen.settings.subscreen.settingsAppearan
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import it.attendance100.mybicocca.data.local.settings.AppearanceSettingsStore
-import it.attendance100.mybicocca.data.local.settings.ThemeMode
-import it.attendance100.mybicocca.ui.theme.AppTheme
+import it.attendance100.mybicocca.domain.model.settings.AppTheme
+import it.attendance100.mybicocca.domain.model.settings.ThemeMode
+import it.attendance100.mybicocca.domain.usecase.settings.ObserveAppThemeUseCase
+import it.attendance100.mybicocca.domain.usecase.settings.ObserveThemeModeUseCase
+import it.attendance100.mybicocca.domain.usecase.settings.SetAppThemeUseCase
+import it.attendance100.mybicocca.domain.usecase.settings.SetThemeModeUseCase
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+/**
+ * Backs the "Aspetto" settings sheet. Exposes the persisted appearance preferences as
+ * eagerly-shared streams — [appTheme] (the color palette) and [themeMode] (system/light/dark) —
+ * so the sheet's selection state and live previews track the values the whole app themes with.
+ * [setAppTheme] and [setThemeMode] persist a pick, which flows back through the streams.
+ */
 @HiltViewModel
 class SettingsAppearanceViewModel @Inject constructor(
-    private val store: AppearanceSettingsStore,
+    observeAppTheme: ObserveAppThemeUseCase,
+    observeThemeMode: ObserveThemeModeUseCase,
+    private val setAppThemeUseCase: SetAppThemeUseCase,
+    private val setThemeModeUseCase: SetThemeModeUseCase,
 ) : ViewModel() {
 
-    val appTheme: StateFlow<AppTheme> = store.appTheme
+    val appTheme: StateFlow<AppTheme> = observeAppTheme()
         .stateIn(viewModelScope, SharingStarted.Eagerly, AppTheme.Default)
 
-    val themeMode: StateFlow<ThemeMode> = store.themeMode
+    val themeMode: StateFlow<ThemeMode> = observeThemeMode()
         .stateIn(viewModelScope, SharingStarted.Eagerly, ThemeMode.System)
 
     fun setAppTheme(theme: AppTheme) {
-        viewModelScope.launch { store.setAppTheme(theme) }
+        viewModelScope.launch { setAppThemeUseCase(theme) }
     }
 
     fun setThemeMode(mode: ThemeMode) {
-        viewModelScope.launch { store.setThemeMode(mode) }
+        viewModelScope.launch { setThemeModeUseCase(mode) }
     }
 }

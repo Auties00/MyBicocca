@@ -7,6 +7,11 @@ import it.attendance100.mybicocca.domain.model.elearning.badge.Badge
 import it.attendance100.mybicocca.domain.model.elearning.course.CourseId
 import java.time.Instant
 
+/**
+ * Maps one badge of the Moodle user-badges web service into its cache row, preferring
+ * the issue date over the creation date and treating non-positive course ids as
+ * site-wide (null). Epoch-second timestamps are normalized to milliseconds.
+ */
 internal fun ElearningUserBadge.toEntity(accountId: AccountId): BadgeEntity =
     BadgeEntity(
         accountId = accountId.value,
@@ -18,6 +23,7 @@ internal fun ElearningUserBadge.toEntity(accountId: AccountId): BadgeEntity =
         courseId = courseId?.takeIf { it > 0 },
     )
 
+/** Maps a cached badge row to the domain model. */
 internal fun BadgeEntity.toDomain(): Badge =
     Badge(
         id = badgeId,
@@ -28,4 +34,5 @@ internal fun BadgeEntity.toDomain(): Badge =
         courseId = courseId?.let(::CourseId),
     )
 
+/** Converts a Moodle epoch-second timestamp to milliseconds, reading 0 as absent. */
 private fun Long?.toMillisOrNullSec(): Long? = this?.takeIf { it > 0 }?.let { it * 1000L }

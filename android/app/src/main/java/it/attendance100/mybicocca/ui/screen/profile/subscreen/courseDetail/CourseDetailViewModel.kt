@@ -19,10 +19,16 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-// Drives the libretto course-detail sheet. The detail (attempt history + propedeuticità)
-// is fetched lazily when a course is opened and is NOT cached — it follows the no-cache
-// pattern (live fetch, throws → SyncStatus.Failed). Keyed by activityChoiceId so reopening
-// a different course re-fetches; reopening the same one reuses the loaded value.
+/**
+ * Drives the libretto course-detail page: the attempt history and propedeuticità for one
+ * transcript row.
+ *
+ * Data stream: [detail]. Sync stream: [syncStatus] — the detail is fetched live when a
+ * course is opened and is not cached, so a throwing fetch surfaces as [SyncStatus.Failed].
+ * Actions: [load], keyed by activityChoiceId so opening a different course re-fetches
+ * while reopening the same one reuses the loaded value, and [retry], which forces the
+ * fetch. Responses arriving after another course was requested are discarded.
+ */
 @HiltViewModel
 class CourseDetailViewModel @Inject constructor(
     private val getCourseDetail: GetCourseDetailUseCase,
@@ -61,7 +67,6 @@ class CourseDetailViewModel @Inject constructor(
             _syncStatus.value = SyncStatus.Refreshing
             runCatching { getCourseDetail(careerId, activityChoiceId, alreadyPassed) }.fold(
                 onSuccess = { result ->
-                    // Guard against a stale response if the user reopened a different course.
                     if (loadedKey == activityChoiceId) {
                         _detail.value = Loadable.Loaded(result)
                         _syncStatus.value = SyncStatus.Idle

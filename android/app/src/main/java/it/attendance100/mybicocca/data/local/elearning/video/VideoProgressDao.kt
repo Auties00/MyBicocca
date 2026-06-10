@@ -6,6 +6,7 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import kotlinx.coroutines.flow.Flow
 
+/** Room access to saved video playback progress; every query is account-scoped. */
 @Dao
 interface VideoProgressDao {
 

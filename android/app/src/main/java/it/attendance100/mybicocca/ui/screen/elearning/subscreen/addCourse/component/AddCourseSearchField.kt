@@ -36,9 +36,11 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
-// Material 3 Expressive search pill: fully-rounded filled field, leading search glyph, and a
-// circular clear affordance that pops in only when there is a query. No outline — it reads as
-// a soft pill sitting on the sheet surface, consistent with the app's other inputs.
+/**
+ * Material 3 Expressive search pill: fully-rounded filled field, leading search glyph, and a
+ * circular clear affordance that pops in only when there is a query. No outline — it reads as
+ * a soft pill sitting on the sheet surface, consistent with the app's other inputs.
+ */
 @Composable
 fun AddCourseSearchField(
     query: String,

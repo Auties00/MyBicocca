@@ -8,6 +8,10 @@ import it.attendance100.mybicocca.domain.repository.ElearningForumRepository
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
+/**
+ * Streams a discussion's cached posts in chronological order for the forum sheet's thread page,
+ * which rebuilds the reply tree from each post's parent id. Hot Room flow.
+ */
 class ObservePostsUseCase @Inject constructor(
     private val repository: ElearningForumRepository,
 ) {

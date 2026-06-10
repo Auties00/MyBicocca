@@ -25,8 +25,11 @@ import java.time.format.DateTimeFormatter
 
 private val HourFormat = DateTimeFormatter.ofPattern("HH")
 
-// Today's hourly occupancy curve as a row of bars, each colored by how busy that hour is. The
-// bar nearest "now" is emphasized so the current moment stands out.
+/**
+ * Today's hourly occupancy curve as a row of bars, each colored by how busy that hour is. The
+ * bar covering the current hour renders at full opacity so "now" stands out, and hour ticks sit
+ * under every other bar to keep the axis readable.
+ */
 @Composable
 fun ForecastGraph(
     points: List<LibraryForecastPoint>,
@@ -36,7 +39,6 @@ fun ForecastGraph(
     if (points.isEmpty()) return
     val scheme = MaterialTheme.colorScheme
     val maxValue = (points.maxOf { it.occupancyPercentage }).coerceAtLeast(1)
-    // The bar covering the current hour, to highlight "now".
     val currentIndex = points.indexOfLast { it.time <= now }.takeIf { it >= 0 }
 
     Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -70,7 +72,6 @@ fun ForecastGraph(
                 }
             }
         }
-        // Hour ticks under every other bar to keep the axis readable.
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(4.dp),

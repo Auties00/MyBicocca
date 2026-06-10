@@ -20,6 +20,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import it.attendance100.mybicocca.ui.component.button.RetryButton
 
+/**
+ * Centered loading state shared by the viewers: the expressive loading indicator with an
+ * optional caption underneath (e.g. the expected download size).
+ */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun ViewerLoading(modifier: Modifier = Modifier, label: String? = null) {
@@ -38,6 +42,10 @@ fun ViewerLoading(modifier: Modifier = Modifier, label: String? = null) {
     }
 }
 
+/**
+ * Centered error state shared by the viewers: error icon, message, and the shared retry button
+ * when [onRetry] is provided.
+ */
 @Composable
 fun ViewerError(
     message: String,

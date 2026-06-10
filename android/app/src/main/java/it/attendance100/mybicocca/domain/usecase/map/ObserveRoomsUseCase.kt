@@ -7,6 +7,7 @@ import it.attendance100.mybicocca.domain.repository.MapRepository
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
+/** Streams a building's cached rooms from the Room store for the map tab's building detail. */
 class ObserveRoomsUseCase @Inject constructor(
     private val repository: MapRepository,
 ) {

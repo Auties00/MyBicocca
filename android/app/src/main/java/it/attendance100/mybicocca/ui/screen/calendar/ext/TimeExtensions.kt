@@ -12,8 +12,11 @@ import java.time.LocalDateTime
 import java.time.YearMonth
 import java.time.temporal.TemporalAdjusters
 
-// Recomposes every refreshIntervalMs with the current local datetime. Used by carousel
-// "X min rimasti", in-progress chips, and the timeline "now" line.
+/**
+ * Ticking clock: recomposes readers every [refreshIntervalMs] with the current local
+ * datetime. Drives whatever must track wall time — in-progress event styling,
+ * remaining-time copy and the timeline's now indicator.
+ */
 @Composable
 fun rememberCurrentTime(refreshIntervalMs: Long = 60_000L): State<LocalDateTime> {
     val state = remember { mutableStateOf(LocalDateTime.now()) }
@@ -26,16 +29,19 @@ fun rememberCurrentTime(refreshIntervalMs: Long = 60_000L): State<LocalDateTime>
     return state
 }
 
-// ISO Monday — design's day strip starts on Monday, omits Sunday.
+/** Monday on or before [date]: the calendar treats weeks as ISO, starting on Monday. */
 fun weekStartFor(date: LocalDate): LocalDate =
     date.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
 
-// Mon..Sun (7 days).
+/** The seven days, Monday through Sunday, of the week starting at [weekStart]. */
 fun visibleWeekDays(weekStart: LocalDate): List<LocalDate> =
     (0L..6L).map { weekStart.plusDays(it) }
 
-// 7-column month grid (Mon..Sun). Returns nullable cells so leading/trailing padding cells
-// outside the month appear as nulls — UI renders them as blanks.
+/**
+ * Cells of a Monday-first month grid. Days of the leading week that fall before the month
+ * come through as nulls the grid renders as blanks; the list stops at the month's last
+ * day, so a partial final week is simply shorter.
+ */
 fun monthGridCells(yearMonth: YearMonth): List<LocalDate?> {
     val first = yearMonth.atDay(1)
     val firstWeekStart = weekStartFor(first)

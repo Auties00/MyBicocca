@@ -40,8 +40,11 @@ import java.util.Locale
 private val FullDateFormat = DateTimeFormatter.ofPattern("EEEE d MMMM", Locale.ITALIAN)
 private val TimeFormat = DateTimeFormatter.ofPattern("HH:mm")
 
-// Final wizard step: the booking is confirmed on creation (the logged-in session authorizes it),
-// so this just acknowledges success.
+/**
+ * Final wizard step: a hero check over the booking recap. The booking is confirmed on creation
+ * (the logged-in session authorizes it), so this just acknowledges success; the pinned "Fatto"
+ * button closes the wizard.
+ */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 internal fun LibraryDonePage(
@@ -63,6 +66,7 @@ internal fun LibraryDonePage(
     ) {
         Column(
             modifier = Modifier
+                .fillMaxWidth()
                 .weight(1f, fill = false)
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 32.dp),

@@ -39,7 +39,6 @@ class EasyStaffScheduleApiTest : EasyStaffTestBase() {
         assertNotNull(cells)
         assertTrue(cells.isNotEmpty(), "Cells should not be empty")
 
-        // Verify cells are sorted (using Comparable implementation)
         for (i in 0 until cells.size - 1) {
             assertTrue(
                 cells[i] <= cells[i + 1],
@@ -47,7 +46,6 @@ class EasyStaffScheduleApiTest : EasyStaffTestBase() {
             )
         }
 
-        // Verify each cell
         cells.forEach { cell ->
             validateScheduleCell(cell)
         }
@@ -78,7 +76,6 @@ class EasyStaffScheduleApiTest : EasyStaffTestBase() {
         assertNotNull(cells)
         assertTrue(cells.isNotEmpty(), "Cells should not be empty")
 
-        // Verify each cell
         cells.forEach { cell ->
             validateScheduleCell(cell)
         }
@@ -105,7 +102,6 @@ class EasyStaffScheduleApiTest : EasyStaffTestBase() {
         val program = programs.first()
         val subject = program.years.flatMap { it.subjects }.first()
 
-        // Verify subject has valid properties
         assertTrue(subject.id.isNotBlank(), "Subject id should not be blank")
         assertTrue(subject.code.isNotBlank(), "Subject code should not be blank")
         assertTrue(subject.name.isNotBlank(), "Subject name should not be blank")
@@ -118,19 +114,16 @@ class EasyStaffScheduleApiTest : EasyStaffTestBase() {
         assertNotNull(cells)
         assertTrue(cells.isNotEmpty(), "Cells should not be empty")
 
-        // Verify each cell
         cells.forEach { cell ->
             validateScheduleCell(cell)
         }
     }
 
     private fun validateScheduleCell(cell: EasyStaffScheduleCell) {
-        // Verify type is present
         assertTrue(cell.type.isNotBlank(), "Cell type should not be blank")
 
         when (cell) {
             is EasyStaffScheduleCell.Lesson -> {
-                // Verify lesson-specific properties
                 assertTrue(cell.name.isNotBlank(), "Lesson name should not be blank")
                 assertNotNull(cell.date, "Lesson date should not be null")
                 assertNotNull(cell.startTime, "Lesson start time should not be null")
@@ -140,7 +133,6 @@ class EasyStaffScheduleApiTest : EasyStaffTestBase() {
                     "Lesson start time should be before end time"
                 )
 
-                // Verify duration is reasonable (15 min to 24 hours)
                 val durationMinutes = Duration.between(cell.startTime, cell.endTime).toMinutes()
                 assertTrue(
                     durationMinutes >= 15,
@@ -153,7 +145,6 @@ class EasyStaffScheduleApiTest : EasyStaffTestBase() {
             }
 
             is EasyStaffScheduleCell.Closure -> {
-                // Verify closure-specific properties
                 assertTrue(cell.name.isNotBlank(), "Closure name should not be blank")
                 assertNotNull(cell.date, "Closure date should not be null")
                 assertNotNull(cell.startTime, "Closure start time should not be null")
@@ -161,7 +152,6 @@ class EasyStaffScheduleApiTest : EasyStaffTestBase() {
             }
 
             is EasyStaffScheduleCell.Other -> {
-                // Log unknown cell types for debugging
                 println("Unknown cell type: ${cell.type}, rawFields: ${cell.rawFields}")
             }
         }

@@ -69,8 +69,13 @@ private val TimeFormat = DateTimeFormatter.ofPattern("HH:mm")
 private val WeekdayLetters = listOf("L", "M", "M", "G", "V", "S", "D")
 private val CardShape = RoundedCornerShape(28.dp)
 
-// Wizard step 2: pick the day, the duration and the start time. Start times are derived from the
-// live seat grid for the chosen day + duration, so they reflect real openings.
+/**
+ * Wizard step 2: pick the day (month calendar limited to bookable days), the duration and the
+ * start time, as stacked section cards over a pinned "Scegli il posto" footer that enables once
+ * a time is chosen. Start times are derived from the live seat grid for the chosen day +
+ * duration, so they reflect real openings; loading and error-with-retry states render in place
+ * of each section.
+ */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalLayoutApi::class)
 @Composable
 internal fun DateTimePage(
@@ -286,6 +291,7 @@ private fun CalendarSection(
                 enabled = enabled && month > minMonth,
                 modifier = Modifier.size(40.dp),
                 shapes = IconButtonDefaults.shapes(),
+                colors = monthNavColors(),
             ) { Icon(Icons.AutoMirrored.Rounded.KeyboardArrowLeft, contentDescription = "Mese precedente") }
             Spacer(Modifier.size(6.dp))
             FilledTonalIconButton(
@@ -293,6 +299,7 @@ private fun CalendarSection(
                 enabled = enabled && month < maxMonth,
                 modifier = Modifier.size(40.dp),
                 shapes = IconButtonDefaults.shapes(),
+                colors = monthNavColors(),
             ) { Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, contentDescription = "Mese successivo") }
         }
 
@@ -329,6 +336,16 @@ private fun CalendarSection(
         }
     }
 }
+
+/**
+ * Brand-tinted month-nav chips: neutral container with a primary-red chevron, matching the
+ * calendar's selected-day fill and today ring.
+ */
+@Composable
+private fun monthNavColors() = IconButtonDefaults.filledTonalIconButtonColors(
+    containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+    contentColor = MaterialTheme.colorScheme.primary,
+)
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
