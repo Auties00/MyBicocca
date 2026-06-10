@@ -836,6 +836,8 @@
     <string name="settings_oss_licenses_title">Licenze open source</string>
     <string name="settings_check_updates_title">Controlla Aggiornamenti</string>
     <string name="settings_check_updates_subtitle">Cerca nuove versioni</string>
+    <string name="settings_no_updates_found">Sei già all\'ultima versione</string>
+    <string name="settings_no_other_versions">Non ci sono ancora altre versioni!</string>
     <string name="settings_whats_new_title">Novità</string>
     <string name="settings_whats_new_subtitle">Leggi le novità dell\'ultima versione</string>
     <string name="settings_github_title">GitHub</string>

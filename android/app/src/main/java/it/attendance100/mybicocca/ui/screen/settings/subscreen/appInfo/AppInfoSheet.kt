@@ -4,6 +4,7 @@ import androidx.browser.customtabs.CustomTabsIntent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -53,6 +54,8 @@ import it.attendance100.mybicocca.ui.component.brand.MyBicoccaWordmark
 import it.attendance100.mybicocca.ui.component.directory.SegmentedIconChip
 import it.attendance100.mybicocca.ui.component.directory.SegmentedTile
 import it.attendance100.mybicocca.ui.component.directory.segmentedShape
+import it.attendance100.mybicocca.ui.component.feedback.AppSnackbarHost
+import it.attendance100.mybicocca.ui.component.feedback.rememberAppSnackbarController
 import it.attendance100.mybicocca.ui.component.modal.PredictiveModalBottomSheet
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -103,11 +106,15 @@ fun AppInfoSheet(onDismiss: () -> Unit) {
     val githubIcon = ImageVector.vectorResource(R.drawable.ic_github)
     val scope = rememberCoroutineScope()
     var isLoading by remember { mutableStateOf(false) }
+    val snackbar = rememberAppSnackbarController()
+    val noUpdatesMsg = stringResource(R.string.settings_no_updates_found)
+    val noVersionsMsg = stringResource(R.string.settings_no_other_versions)
 
     PredictiveModalBottomSheet(
         onDismiss = onDismiss,
         sizeDuration = 500,
     ) { _, _ ->
+        Box(Modifier.fillMaxWidth()) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -150,6 +157,7 @@ fun AppInfoSheet(onDismiss: () -> Unit) {
                             scope.launch {
                                 delay(2000L)
                                 isLoading = false
+                                snackbar.showInfo(noUpdatesMsg)
                             }
                         }
                     },
@@ -176,7 +184,10 @@ fun AppInfoSheet(onDismiss: () -> Unit) {
                     isLast = false,
                     title = stringResource(R.string.settings_whats_new_title),
                     subtitle = stringResource(R.string.settings_whats_new_subtitle),
-                    onClick = { haptic.tap() },
+                    onClick = {
+                        haptic.tap()
+                        scope.launch { snackbar.showInfo(noVersionsMsg) }
+                    },
                     leading = {
                         SegmentedIconChip(
                             Icons.Outlined.NewReleases,
@@ -225,6 +236,11 @@ fun AppInfoSheet(onDismiss: () -> Unit) {
                     )
                 }
             }
+        }
+            AppSnackbarHost(
+                controller = snackbar,
+                modifier = Modifier.align(Alignment.BottomCenter),
+            )
         }
     }
 }

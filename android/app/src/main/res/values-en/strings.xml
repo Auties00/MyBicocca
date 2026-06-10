@@ -835,6 +835,8 @@
     <string name="settings_oss_licenses_title">Open-source licences</string>
     <string name="settings_check_updates_title">Check for Updates</string>
     <string name="settings_check_updates_subtitle">Look for new versions</string>
+    <string name="settings_no_updates_found">You\'re up to date</string>
+    <string name="settings_no_other_versions">There are no other versions yet!</string>
     <string name="settings_whats_new_title">What\'s New</string>
     <string name="settings_whats_new_subtitle">Latest version highlights</string>
     <string name="settings_github_title">GitHub</string>
