@@ -16,6 +16,8 @@ import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.ime
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.CloudOff
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialTheme
@@ -23,25 +25,26 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.State
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.state.SyncStatus
 import it.attendance100.mybicocca.core.state.valueOrNull
 import it.attendance100.mybicocca.domain.model.calendar.CalendarEvent
 import it.attendance100.mybicocca.domain.model.elearning.course.CourseId
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.CloudOff
 import it.attendance100.mybicocca.ui.component.button.RetryButton
 import it.attendance100.mybicocca.ui.component.feedback.EmptyState
 import it.attendance100.mybicocca.ui.component.feedback.friendlyMessage
@@ -99,7 +102,13 @@ fun CalendarScreen(
     onOpenAssignment: (assignmentId: Int, courseId: Int) -> Unit = { _, _ -> },
     onOpenReservation: (CalendarEvent) -> Unit = {},
     bottomNavBarPadding: PaddingValues,
-    viewModel: CalendarViewModel = hiltViewModel(),
+    viewModel: CalendarViewModel = hiltViewModel(
+        checkNotNull(
+            LocalViewModelStoreOwner.current
+        ) {
+            "No ViewModelStoreOwner was provided via LocalViewModelStoreOwner"
+        }, null
+    ),
 ) {
     val viewMode by viewModel.viewMode.collectAsStateWithLifecycle()
     val selectedDay by viewModel.selectedDay.collectAsStateWithLifecycle()
@@ -139,133 +148,142 @@ fun CalendarScreen(
     var timelineZoom by rememberSaveable { mutableFloatStateOf(TIMELINE_ZOOM_DEFAULT) }
 
     ProvideEventPalette {
-    Box(modifier = modifier.fillMaxSize()) {
-        PullToRefreshBox(
-            isRefreshing = syncStatus is SyncStatus.Refreshing || initialLoading,
-            onRefresh = viewModel::pullToRefresh,
-            state = pullState,
-            modifier = Modifier.fillMaxSize(),
-        ) {
-            val failure = syncStatus as? SyncStatus.Failed
-            if (failure != null) {
-                EmptyState(
-                    icon = Icons.Outlined.CloudOff,
-                    title = "Sincronizzazione del calendario non riuscita",
-                    body = failure.cause.friendlyMessage(),
-                    action = { RetryButton(onClick = viewModel::pullToRefresh) },
-                )
-            } else {
-            Column(modifier = Modifier.fillMaxSize()) {
-                Spacer(Modifier.height(16.dp))
-                CalendarSegmentedControl(
-                    viewMode = viewMode,
-                    selectedDay = selectedDay,
-                    weekStart = weekStart,
-                    selectedMonth = selectedMonth,
-                    onSelect = viewModel::selectViewMode,
-                )
-                Spacer(Modifier.height(16.dp))
-
-                val viewSpatial = MaterialTheme.motionScheme.defaultSpatialSpec<IntOffset>()
-                val viewEffects = MaterialTheme.motionScheme.defaultEffectsSpec<Float>()
-                AnimatedContent(
-                    targetState = viewMode,
-                    transitionSpec = {
-                        val forward = targetState.ordinal > initialState.ordinal
-                        val dir = if (forward) 1 else -1
-                        (slideInHorizontally(viewSpatial) { it * dir / 6 } + fadeIn(viewEffects)) togetherWith
-                            (slideOutHorizontally(viewSpatial) { -it * dir / 6 } + fadeOut(viewEffects))
-                    },
-                    label = "calendar_view_transition",
-                    modifier = Modifier.fillMaxSize()
-                ) { mode ->
-                    when (mode) {
-                        CalendarViewMode.DAY -> DayView(
+        Box(modifier = modifier.fillMaxSize()) {
+            PullToRefreshBox(
+                isRefreshing = syncStatus is SyncStatus.Refreshing || initialLoading,
+                onRefresh = viewModel::pullToRefresh,
+                state = pullState,
+                modifier = Modifier.fillMaxSize(),
+            ) {
+                val failure = syncStatus as? SyncStatus.Failed
+                if (failure != null) {
+                    EmptyState(
+                        icon = Icons.Outlined.CloudOff,
+                        title = stringResource(R.string.calendar_sync_failed),
+                        body = failure.cause.friendlyMessage(),
+                        action = { RetryButton(onClick = viewModel::pullToRefresh) },
+                    )
+                } else {
+                    Column(modifier = Modifier.fillMaxSize()) {
+                        Spacer(Modifier.height(16.dp))
+                        CalendarSegmentedControl(
+                            viewMode = viewMode,
                             selectedDay = selectedDay,
-                            eventsByDay = eventsByDay,
-                            onSelectDay = viewModel::selectDay,
-                            onEventClick = { viewModel.openEventDetail(it.id) },
-                            modifier = Modifier.fillMaxSize(),
-                            zoom = timelineZoom,
-                            onZoomChange = { timelineZoom = it },
-                        )
-                        CalendarViewMode.WEEK -> WeekView(
                             weekStart = weekStart,
-                            eventsByDay = eventsByDay,
-                            onSelectDay = viewModel::selectDay,
-                            onEventClick = { viewModel.openEventDetail(it.id) },
-                            modifier = Modifier.fillMaxSize(),
-                            zoom = timelineZoom,
-                            onZoomChange = { timelineZoom = it },
+                            selectedMonth = selectedMonth,
+                            onSelect = viewModel::selectViewMode,
                         )
-                        CalendarViewMode.MONTH -> MonthView(
-                            yearMonth = selectedMonth,
-                            selectedDay = selectedDay,
-                            eventsByDay = eventsByDay,
-                            onSelectDay = viewModel::selectDay,
-                            onSelectMonth = viewModel::selectMonth,
-                            onEventClick = { viewModel.openEventDetail(it.id) },
-                            onMonthSheetSizeChanged = { monthSheetSize = it },
-                            modifier = Modifier.fillMaxSize(),
-                        )
+                        Spacer(Modifier.height(16.dp))
+
+                        val viewSpatial = MaterialTheme.motionScheme.defaultSpatialSpec<IntOffset>()
+                        val viewEffects = MaterialTheme.motionScheme.defaultEffectsSpec<Float>()
+                        AnimatedContent(
+                            targetState = viewMode,
+                            transitionSpec = {
+                                val forward = targetState.ordinal > initialState.ordinal
+                                val dir = if (forward) 1 else -1
+                                (slideInHorizontally(viewSpatial) { it * dir / 6 } + fadeIn(
+                                    viewEffects
+                                )) togetherWith
+                                        (slideOutHorizontally(viewSpatial) { -it * dir / 6 } + fadeOut(
+                                            viewEffects
+                                        ))
+                            },
+                            label = "calendar_view_transition",
+                            modifier = Modifier.fillMaxSize()
+                        ) { mode ->
+                            when (mode) {
+                                CalendarViewMode.DAY -> DayView(
+                                    selectedDay = selectedDay,
+                                    eventsByDay = eventsByDay,
+                                    onSelectDay = viewModel::selectDay,
+                                    onEventClick = { viewModel.openEventDetail(it.id) },
+                                    modifier = Modifier.fillMaxSize(),
+                                    zoom = timelineZoom,
+                                    onZoomChange = { timelineZoom = it },
+                                )
+
+                                CalendarViewMode.WEEK -> WeekView(
+                                    weekStart = weekStart,
+                                    eventsByDay = eventsByDay,
+                                    onSelectDay = viewModel::selectDay,
+                                    onEventClick = { viewModel.openEventDetail(it.id) },
+                                    modifier = Modifier.fillMaxSize(),
+                                    zoom = timelineZoom,
+                                    onZoomChange = { timelineZoom = it },
+                                )
+
+                                CalendarViewMode.MONTH -> MonthView(
+                                    yearMonth = selectedMonth,
+                                    selectedDay = selectedDay,
+                                    eventsByDay = eventsByDay,
+                                    onSelectDay = viewModel::selectDay,
+                                    onSelectMonth = viewModel::selectMonth,
+                                    onEventClick = { viewModel.openEventDetail(it.id) },
+                                    onMonthSheetSizeChanged = { monthSheetSize = it },
+                                    modifier = Modifier.fillMaxSize(),
+                                )
+                            }
+                        }
                     }
                 }
             }
-            }
-        }
 
-        val keyboardOpen = androidx.compose.foundation.layout.WindowInsets.ime
-            .asPaddingValues()
-            .calculateBottomPadding() > 0.dp
+            val keyboardOpen = androidx.compose.foundation.layout.WindowInsets.ime
+                .asPaddingValues()
+                .calculateBottomPadding() > 0.dp
 
-        val chromeVisible = isActive && (coverProgress?.value ?: 0f) < 0.01f &&
-            syncStatus !is SyncStatus.Failed
+            val chromeVisible = isActive && (coverProgress?.value ?: 0f) < 0.01f &&
+                    syncStatus !is SyncStatus.Failed
 
-        if (chromeVisible && agendaPresence > 0.01f && !keyboardOpen) {
-            MonthAgendaSheet(
-                selectedDay = selectedDay,
-                events = (eventsByDay[selectedDay] ?: emptyList()),
-                onEventClick = { viewModel.openEventDetail(it.id) },
-                elearningCoursesFor = { it.activityCode?.let(coursesByActivityCode::get).orEmpty() },
-                onOpenCourse = onOpenCourse,
-                onOpenAssignment = onOpenAssignment,
-                onOpenReservation = onOpenReservation,
-                progress = agendaProgress,
-                presence = agendaPresence,
-                bottomNavBarPadding = bottomNavBarPadding,
-                sheetHeight = monthSheetSize.height
-            )
-        }
-
-        if (chromeVisible && !keyboardOpen) {
-            androidx.compose.runtime.key(agendaPresence > 0.01f) {
-                TodayFab(
-                    viewMode = viewMode,
+            if (chromeVisible && agendaPresence > 0.01f && !keyboardOpen) {
+                MonthAgendaSheet(
                     selectedDay = selectedDay,
-                    weekStart = weekStart,
-                    selectedMonth = selectedMonth,
-                    agendaProgress = agendaProgress.value,
+                    events = (eventsByDay[selectedDay] ?: emptyList()),
+                    onEventClick = { viewModel.openEventDetail(it.id) },
+                    elearningCoursesFor = {
+                        it.activityCode?.let(coursesByActivityCode::get).orEmpty()
+                    },
+                    onOpenCourse = onOpenCourse,
+                    onOpenAssignment = onOpenAssignment,
+                    onOpenReservation = onOpenReservation,
+                    progress = agendaProgress,
+                    presence = agendaPresence,
                     bottomNavBarPadding = bottomNavBarPadding,
-                    onJumpToToday = { viewModel.selectDay(java.time.LocalDate.now()) },
+                    sheetHeight = monthSheetSize.height
+                )
+            }
+
+            if (chromeVisible && !keyboardOpen) {
+                androidx.compose.runtime.key(agendaPresence > 0.01f) {
+                    TodayFab(
+                        viewMode = viewMode,
+                        selectedDay = selectedDay,
+                        weekStart = weekStart,
+                        selectedMonth = selectedMonth,
+                        agendaProgress = agendaProgress.value,
+                        bottomNavBarPadding = bottomNavBarPadding,
+                        onJumpToToday = { viewModel.selectDay(java.time.LocalDate.now()) },
+                    )
+                }
+            }
+
+            val selected = remember(selectedEventId, monthEventsLoadable, dayEventsLoadable) {
+                val id = selectedEventId ?: return@remember null
+                monthEventsLoadable.valueOrNull()?.firstOrNull { it.id == id }
+                    ?: dayEventsLoadable.valueOrNull()?.firstOrNull { it.id == id }
+            }
+            if (selected != null) {
+                EventDetailSheet(
+                    event = selected,
+                    elearningCourses = selected.activityCode?.let(coursesByActivityCode::get)
+                        .orEmpty(),
+                    onOpenCourse = onOpenCourse,
+                    onOpenAssignment = onOpenAssignment,
+                    onOpenReservation = onOpenReservation,
+                    onDismiss = viewModel::closeEventDetail,
                 )
             }
         }
-
-        val selected = remember(selectedEventId, monthEventsLoadable, dayEventsLoadable) {
-            val id = selectedEventId ?: return@remember null
-            monthEventsLoadable.valueOrNull()?.firstOrNull { it.id == id }
-                ?: dayEventsLoadable.valueOrNull()?.firstOrNull { it.id == id }
-        }
-        if (selected != null) {
-            EventDetailSheet(
-                event = selected,
-                elearningCourses = selected.activityCode?.let(coursesByActivityCode::get).orEmpty(),
-                onOpenCourse = onOpenCourse,
-                onOpenAssignment = onOpenAssignment,
-                onOpenReservation = onOpenReservation,
-                onDismiss = viewModel::closeEventDetail,
-            )
-        }
-    }
     }
 }

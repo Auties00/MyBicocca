@@ -100,7 +100,7 @@ private fun TitlesListBody(
             action = { RetryButton(onClick = onRetry) },
         )
 
-        !settled || titles == null -> SheetLoadingIndicator(label = "Caricamento titoli…")
+        !settled -> SheetLoadingIndicator(label = "Caricamento titoli…")
 
         titles.isEmpty() -> SheetMessage(
             icon = Icons.Outlined.School,

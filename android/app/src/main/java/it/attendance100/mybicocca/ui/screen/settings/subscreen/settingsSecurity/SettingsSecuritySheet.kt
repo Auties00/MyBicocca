@@ -33,10 +33,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.os.DeviceType
 import it.attendance100.mybicocca.core.os.LocalDeviceType
 import it.attendance100.mybicocca.core.os.rememberHapticManager
@@ -50,13 +52,6 @@ import it.attendance100.mybicocca.ui.screen.lock.promptBiometric
 import it.attendance100.mybicocca.ui.screen.lock.rememberBiometricCapability
 import it.attendance100.mybicocca.ui.screen.settings.subscreen.settingsSecurity.component.UnlockPreview
 import kotlin.math.roundToInt
-
-private fun timeoutLabel(minutes: Int): String = when (minutes) {
-    0 -> "Immediatamente"
-    60 -> "1 ora"
-    240 -> "4 ore"
-    else -> "$minutes min"
-}
 
 private val TIMEOUT_STEPS = listOf(0, 1, 5, 10, 15, 30, 60, 240)
 
@@ -92,14 +87,25 @@ fun SettingsSecuritySheet(
     var passwordError by remember { mutableStateOf<String?>(null) }
     var authorizing by remember { mutableStateOf(false) }
 
+    val timeoutLabel: (Int) -> String = { minutes ->
+        when (minutes) {
+            0 -> context.getString(R.string.settings_security_timeout_immediately)
+            60 -> context.getString(R.string.settings_security_timeout_1hour)
+            240 -> context.getString(R.string.settings_security_timeout_4hours)
+            else -> "$minutes min"
+        }
+    }
+
     val startToggle: () -> Unit = {
         val target = !enabled
         if (capability == BiometricCapability.Available && activity != null) {
             promptBiometric(
                 activity = activity,
-                title = "Conferma identità",
-                subtitle = if (target) "Attiva il blocco app" else "Disattiva il blocco app",
-                negativeButton = "Usa password",
+                title = context.getString(R.string.settings_security_confirm_identity),
+                subtitle = if (target) context.getString(R.string.settings_security_enable_lock) else context.getString(
+                    R.string.settings_security_disable_lock
+                ),
+                negativeButton = context.getString(R.string.settings_security_use_password),
                 onSuccess = { viewModel.setEnabled(target) },
                 onError = { _, _ ->
                     pendingTarget = target
@@ -128,12 +134,12 @@ fun SettingsSecuritySheet(
         ) {
             Column(modifier = Modifier.padding(horizontal = 20.dp)) {
                 Text(
-                    text = "Sicurezza",
+                    text = stringResource(R.string.settings_security_sheet_title),
                     style = MaterialTheme.typography.titleLargeEmphasized,
                     fontWeight = FontWeight.SemiBold,
                 )
                 Text(
-                    text = "Blocco app",
+                    text = stringResource(R.string.settings_security_sheet_subtitle),
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -182,14 +188,14 @@ fun SettingsSecuritySheet(
 
             if (capability == BiometricCapability.NoneEnrolled) {
                 Text(
-                    text = "Nessun dato biometrico registrato su questo dispositivo: verrà usata la password.",
+                    text = stringResource(R.string.settings_security_biometric_unavailable),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp),
                 )
             } else if (capability == BiometricCapability.Unavailable) {
                 Text(
-                    text = "L'accesso biometrico non è disponibile su questo dispositivo: verrà usata la password.",
+                    text = stringResource(R.string.settings_security_biometric_not_available),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp),
@@ -217,10 +223,16 @@ fun SettingsSecuritySheet(
         }
         AlertDialog(
             onDismissRequest = { if (!authorizing) showPasswordDialog = false },
-            title = { Text(if (pendingTarget) "Attiva blocco app" else "Disattiva blocco app") },
+            title = {
+                Text(
+                    if (pendingTarget) stringResource(R.string.settings_security_enable_lock_dialog) else stringResource(
+                        R.string.settings_security_disable_lock_dialog
+                    )
+                )
+            },
             text = {
                 Column {
-                    Text("Inserisci la tua password per confermare.")
+                    Text(stringResource(R.string.settings_security_password_confirm_prompt))
                     Spacer(Modifier.height(12.dp))
                     PasswordTextField(
                         value = password,
@@ -236,13 +248,13 @@ fun SettingsSecuritySheet(
                 TextButton(
                     onClick = authorize,
                     enabled = !authorizing && password.isNotEmpty(),
-                ) { Text("Conferma") }
+                ) { Text(stringResource(R.string.common_confirm)) }
             },
             dismissButton = {
                 TextButton(
                     onClick = { showPasswordDialog = false },
                     enabled = !authorizing,
-                ) { Text("Annulla") }
+                ) { Text(stringResource(R.string.common_cancel)) }
             },
         )
     }
@@ -260,6 +272,8 @@ private fun TimeoutSlider(
     onTimeoutChange: (Int) -> Unit,
 ) {
     val haptic = rememberHapticManager()
+    val context = LocalContext.current
+
     var sliderPos by remember(timeoutMinutes) {
         mutableFloatStateOf(TIMEOUT_STEPS.indexOf(timeoutMinutes).coerceAtLeast(0).toFloat())
     }
@@ -270,16 +284,25 @@ private fun TimeoutSlider(
         inactiveTickColor = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.4f),
     )
 
+    val timeoutLabelFunc: (Int) -> String = { minutes ->
+        when (minutes) {
+            0 -> context.getString(R.string.settings_security_timeout_immediately)
+            60 -> context.getString(R.string.settings_security_timeout_1hour)
+            240 -> context.getString(R.string.settings_security_timeout_4hours)
+            else -> "$minutes min"
+        }
+    }
+
     Column(modifier = Modifier.fillMaxWidth()) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
-                text = "Blocca quando inattivo",
+                text = stringResource(R.string.settings_security_lock_inactive_title),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold,
                 modifier = Modifier.weight(1f),
             )
             Text(
-                text = timeoutLabel(TIMEOUT_STEPS[index]),
+                text = timeoutLabelFunc(TIMEOUT_STEPS[index]),
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -318,12 +341,12 @@ private fun SecureScreenRow(
     ) {
         Column(modifier = Modifier.weight(1f)) {
             Text(
-                text = "Schermo privato",
+                text = stringResource(R.string.settings_security_private_screen_title),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold,
             )
             Text(
-                text = "Nascondi l'app nelle anteprime e blocca gli screenshot",
+                text = stringResource(R.string.settings_security_private_screen_subtitle),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -371,7 +394,9 @@ private fun FingerprintModeCell(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 RadioButton(selected = selected, onClick = null)
                 Text(
-                    text = if (targetEnabled) "Attivo" else "Disattivato",
+                    text = if (targetEnabled) stringResource(R.string.settings_security_lock_active) else stringResource(
+                        R.string.settings_security_lock_inactive
+                    ),
                     style = MaterialTheme.typography.bodyMedium,
                     modifier = Modifier.padding(start = 4.dp),
                 )

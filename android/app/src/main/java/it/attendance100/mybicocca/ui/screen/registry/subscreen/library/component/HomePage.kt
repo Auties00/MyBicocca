@@ -27,8 +27,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.domain.model.library.LibraryReservation
 import it.attendance100.mybicocca.ui.component.feedback.EmptyState
@@ -57,12 +60,13 @@ internal fun HomePage(
             .fillMaxWidth()
             .heightIn(max = 720.dp),
     ) {
+        val context = LocalContext.current
         when {
             !loggedIn -> EmptyBox {
                 EmptyState(
                     icon = Icons.Outlined.MarkEmailRead,
-                    title = "Verifica la tua email",
-                    body = "Verifica la tua email istituzionale per vedere e prenotare i posti in biblioteca.",
+                    title = stringResource(R.string.library_verify_email),
+                    body = stringResource(R.string.library_verify_email_body),
                 )
             }
 
@@ -71,14 +75,17 @@ internal fun HomePage(
                     .fillMaxWidth()
                     .height(400.dp),
             ) {
-                SheetLoadingIndicator(label = "Sincronizzazione…", modifier = Modifier.align(Alignment.Center))
+                SheetLoadingIndicator(
+                    label = stringResource(R.string.library_syncing),
+                    modifier = Modifier.align(Alignment.Center)
+                )
             }
 
             bookings.isEmpty() -> EmptyBox {
                 EmptyState(
                     icon = Icons.AutoMirrored.Outlined.LibraryBooks,
-                    title = "Nessuna prenotazione",
-                    body = "Non hai ancora prenotato un posto in biblioteca. Tocca Prenota per farlo.",
+                    title = stringResource(R.string.library_no_bookings),
+                    body = stringResource(R.string.library_no_bookings_body),
                 )
             }
 
@@ -96,7 +103,7 @@ internal fun HomePage(
         }
 
         FooterButton(
-            label = if (loggedIn) "Prenota" else "Verifica",
+            label = if (loggedIn) stringResource(R.string.library_book) else context.getString(R.string.library_verify),
             icon = if (loggedIn) Icons.Outlined.EventSeat else Icons.Outlined.MarkEmailRead,
             onClick = if (loggedIn) onPrenota else onLogin,
             modifier = Modifier.padding(start = 24.dp, end = 24.dp, top = 12.dp, bottom = 24.dp),

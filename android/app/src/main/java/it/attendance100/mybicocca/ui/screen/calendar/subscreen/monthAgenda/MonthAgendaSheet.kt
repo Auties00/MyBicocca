@@ -50,6 +50,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntOffset
@@ -62,6 +63,7 @@ import androidx.compose.ui.util.lerp
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupPositionProvider
 import androidx.compose.ui.window.PopupProperties
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.domain.model.calendar.CalendarEvent
 import it.attendance100.mybicocca.domain.model.calendar.CalendarEventId
 import it.attendance100.mybicocca.domain.model.elearning.course.CourseId
@@ -272,7 +274,7 @@ private fun AgendaSheetSurface(
 
             if (events.isEmpty()) {
                 Text(
-                    text = "Nessun impegno",
+                    text = stringResource(R.string.calendar_no_events),
                     color = scheme.onSurfaceVariant,
                     fontSize = 12.sp,
                     modifier = Modifier.padding(vertical = 12.dp),
@@ -354,7 +356,7 @@ private fun DateLabel(selectedDay: LocalDate, eventCount: Int, isToday: Boolean)
     val scheme = MaterialTheme.colorScheme
     Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
         Text(
-            text = if (isToday) "OGGI" else "SELEZIONATO",
+            text = if (isToday) stringResource(R.string.agenda_date_today) else stringResource(R.string.agenda_date_selected),
             color = scheme.onSurfaceVariant,
             fontSize = 10.sp,
             fontWeight = FontWeight.SemiBold,
@@ -368,7 +370,10 @@ private fun DateLabel(selectedDay: LocalDate, eventCount: Int, isToday: Boolean)
             letterSpacing = (-0.2).sp,
         )
         Text(
-            text = if (eventCount == 1) "1 evento" else "$eventCount eventi",
+            text = if (eventCount == 1) stringResource(R.string.agenda_event_count_singular) else stringResource(
+                R.string.agenda_event_count_plural,
+                eventCount
+            ),
             color = scheme.onSurfaceVariant,
             fontSize = 11.sp,
             fontWeight = FontWeight.SemiBold,
@@ -475,7 +480,9 @@ private fun AgendaRow(
                     }
                     Icon(
                         imageVector = Icons.Outlined.KeyboardArrowDown,
-                        contentDescription = if (isInlineExpanded) "Comprimi" else "Espandi",
+                        contentDescription = if (isInlineExpanded) stringResource(R.string.agenda_collapse) else stringResource(
+                            R.string.agenda_expand
+                        ),
                         tint = scheme.onSurfaceVariant,
                         modifier = Modifier
                             .padding(start = 10.dp)

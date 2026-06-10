@@ -31,12 +31,12 @@ internal fun FileKind.openChooserIcon(): ImageVector = when (this) {
  * file-associations settings rows.
  */
 internal fun FileKind.openChooserLabel(): String = when (this) {
-    FileKind.Pdf -> "PDF"
-    FileKind.Image -> "Immagine"
-    FileKind.Video -> "Video"
-    FileKind.Audio -> "Audio"
-    FileKind.Html -> "Pagina web"
-    FileKind.Text -> "Documento di testo"
-    FileKind.Zip -> "Archivio"
-    else -> "File"
+    FileKind.Pdf -> "file_kind_pdf"
+    FileKind.Image -> "file_kind_image"
+    FileKind.Video -> "file_kind_video"
+    FileKind.Audio -> "file_kind_audio"
+    FileKind.Html -> "file_kind_html"
+    FileKind.Text -> "file_kind_text"
+    FileKind.Zip -> "file_kind_zip"
+    else -> "file_kind_generic"
 }

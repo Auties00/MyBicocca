@@ -23,8 +23,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.google.android.gms.oss.licenses.OssLicensesMenuActivity
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.ui.screen.settings.component.SettingsEntrySection
 import it.attendance100.mybicocca.ui.screen.settings.state.SettingsEntry
@@ -64,21 +66,31 @@ fun SettingsScreen() {
     val sections = listOf(
         Triple(
             SettingsEntryGroup(
-                name = "Preferenze",
-                caption = "Personalizza la tua esperienza",
+                name = stringResource(R.string.settings_preferences_title),
+                caption = stringResource(R.string.settings_preferences_subtitle),
                 entries = listOf(
-                    SettingsEntry("appearance", "Aspetto", "Tema e colori dell'app", Icons.Outlined.Palette, onClick = { showAppearanceSheet = true }),
-                    SettingsEntry("language", "Lingua", languageLabel, Icons.Outlined.Translate, onClick = { showLanguageSheet = true }),
+                    SettingsEntry(
+                        "appearance",
+                        stringResource(R.string.settings_appearance_title),
+                        stringResource(R.string.settings_appearance_subtitle),
+                        Icons.Outlined.Palette,
+                        onClick = { showAppearanceSheet = true }),
+                    SettingsEntry(
+                        "language",
+                        stringResource(R.string.settings_language_title),
+                        languageLabel,
+                        Icons.Outlined.Translate,
+                        onClick = { showLanguageSheet = true }),
                     SettingsEntry(
                         "app_lock",
-                        "Sicurezza",
-                        "Blocco app e privacy",
+                        stringResource(R.string.settings_security_title),
+                        stringResource(R.string.settings_security_subtitle),
                         Icons.Outlined.Lock,
                         onClick = { showSecuritySheet = true }),
                     SettingsEntry(
                         "file_open",
-                        "Apertura file",
-                        "App predefinite per tipo di file",
+                        stringResource(R.string.settings_file_opening_title),
+                        stringResource(R.string.settings_file_opening_subtitle),
                         Icons.Outlined.FileOpen,
                         onClick = { showFileAssocSheet = true }),
                 ),
@@ -87,28 +99,28 @@ fun SettingsScreen() {
         ),
         Triple(
             SettingsEntryGroup(
-                name = "Informazioni",
-                caption = "About MyBicocca",
+                name = stringResource(R.string.settings_information_title),
+                caption = stringResource(R.string.settings_information_subtitle),
                 entries = listOf(
                     SettingsEntry(
                         "about",
-                        "About",
-                        "Versione, copyright e crediti",
+                        stringResource(R.string.settings_about_title),
+                        stringResource(R.string.settings_about_subtitle),
                         Icons.Outlined.Info,
                         onClick = { showAppInfoSheet = true }),
                     SettingsEntry(
                         "privacy",
-                        "Privacy Policy",
-                        "Informativa sulla privacy",
+                        stringResource(R.string.settings_privacy_title),
+                        stringResource(R.string.settings_privacy_subtitle),
                         Icons.Outlined.PrivacyTip,
                         onClick = { haptic.tap() }),
                     SettingsEntry(
                         "license",
-                        "Licenze",
-                        "Licenze open source delle librerie",
+                        stringResource(R.string.settings_license_title),
+                        stringResource(R.string.settings_license_subtitle),
                         Icons.Outlined.Description,
                         onClick = {
-                        OssLicensesMenuActivity.setActivityTitle("Licenze open source")
+                            OssLicensesMenuActivity.setActivityTitle(context.getString(R.string.settings_oss_licenses_title))
                         context.startActivity(Intent(context, OssLicensesMenuActivity::class.java))
                     }),
                 ),

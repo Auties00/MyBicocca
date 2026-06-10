@@ -58,12 +58,14 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.domain.model.elearning.catalog.CatalogCourse
@@ -114,7 +116,13 @@ fun AddCourseSheet(
     onEnrolFailed: (Throwable) -> Unit,
     onEnrolSucceeded: (CourseId, String) -> Unit,
     onRequireSignIn: () -> Unit,
-    viewModel: AddCourseViewModel = hiltViewModel(),
+    viewModel: AddCourseViewModel = hiltViewModel(
+        checkNotNull(
+            LocalViewModelStoreOwner.current
+        ) {
+            "No ViewModelStoreOwner was provided via LocalViewModelStoreOwner"
+        }, null
+    ),
 ) {
     val catalog by viewModel.catalog.collectAsStateWithLifecycle()
     val catalogFailed by viewModel.catalogFailed.collectAsStateWithLifecycle()
@@ -372,7 +380,7 @@ private fun Header(
             IconButton(onClick = onBack) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
-                    contentDescription = "Indietro",
+                    contentDescription = stringResource(R.string.elearning_back),
                     tint = scheme.onSurface,
                 )
             }
@@ -393,9 +401,11 @@ private fun Header(
                     overflow = TextOverflow.Ellipsis,
                 )
                 val subtitle = when (level) {
-                    is CatalogLevel.Root -> "Seleziona un'area didattica"
+                    is CatalogLevel.Root -> stringResource(R.string.elearning_select_area)
                     is CatalogLevel.Inside ->
-                        (listOf("Aggiungi corso") + level.ancestors).joinToString(separator = "  ›  ")
+                        (listOf(stringResource(R.string.elearning_add_course)) + level.ancestors).joinToString(
+                            separator = "  ›  "
+                        )
                 }
                 Text(
                     text = subtitle,
@@ -444,7 +454,7 @@ private fun RootPage(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center,
             ) {
-                SheetLoadingIndicator(label = "Caricamento catalogo…")
+                SheetLoadingIndicator(label = stringResource(R.string.elearning_catalog_loading))
             }
 
             RootPageState.Error -> Box(
@@ -453,8 +463,8 @@ private fun RootPage(
             ) {
                 SheetMessage(
                     icon = Icons.Outlined.CloudOff,
-                    title = "Caricamento non riuscito",
-                    body = "Impossibile caricare il catalogo dei corsi.",
+                    title = stringResource(R.string.elearning_catalog_load_failed),
+                    body = stringResource(R.string.elearning_catalog_load_error),
                     action = { RetryButton(onClick = onRetry) },
                 )
             }
@@ -560,14 +570,17 @@ private fun InsideLevel(
     ) {
         if (children.isEmpty() && courses.isEmpty()) {
             item(key = "empty") {
-                EmptyHint(text = "Nessun contenuto in questa categoria.")
+                EmptyHint(text = stringResource(R.string.elearning_category_empty))
             }
         }
 
         if (children.isNotEmpty()) {
             if (showLabels) {
                 item(key = "label-categorie") {
-                    SectionLabel(title = "Categorie", modifier = Modifier.padding(start = 6.dp, top = 4.dp, bottom = 6.dp))
+                    SectionLabel(
+                        title = stringResource(R.string.elearning_categories),
+                        modifier = Modifier.padding(start = 6.dp, top = 4.dp, bottom = 6.dp)
+                    )
                 }
             }
             itemsIndexed(items = children, key = { _, it -> "c-${it.id}" }) { index, child ->
@@ -584,7 +597,10 @@ private fun InsideLevel(
         if (courses.isNotEmpty()) {
             if (showLabels) {
                 item(key = "label-insegnamenti") {
-                    SectionLabel(title = "Insegnamenti", modifier = Modifier.padding(start = 6.dp, top = 14.dp, bottom = 6.dp))
+                    SectionLabel(
+                        title = stringResource(R.string.elearning_courses),
+                        modifier = Modifier.padding(start = 6.dp, top = 14.dp, bottom = 6.dp)
+                    )
                 }
             }
             itemsIndexed(items = courses, key = { _, it -> "x-${it.id.value}" }) { index, course ->
@@ -621,7 +637,7 @@ private fun SearchResults(
     val palette = LocalAreaAccentPalette.current
     if (rows.isEmpty()) {
         Box(modifier = modifier, contentAlignment = Alignment.Center) {
-            EmptyHint(text = "Nessun corso trovato.")
+            EmptyHint(text = stringResource(R.string.common_no_results))
         }
         return
     }
@@ -693,11 +709,12 @@ private fun EmptyHint(text: String, modifier: Modifier = Modifier) {
     )
 }
 
+@Composable
 private fun searchPlaceholder(depth: Int): String = when (depth) {
-    0 -> "Cerca area, insegnamento, codice…"
-    1 -> "Cerca tipo, insegnamento, codice…"
-    2 -> "Cerca programma, insegnamento, codice…"
-    else -> "Cerca insegnamento, codice…"
+    0 -> stringResource(R.string.elearning_search_placeholder_area)
+    1 -> stringResource(R.string.elearning_search_placeholder_category)
+    2 -> stringResource(R.string.elearning_search_placeholder_subcategory)
+    else -> stringResource(R.string.elearning_search_placeholder_course)
 }
 
 /** The official-brand area colours; areas without one fall back to the hashed palette accent. */

@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.AlternateEmail
@@ -36,15 +35,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.LinkAnnotation
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextLinkStyles
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.withLink
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.domain.model.library.LibraryAgreement
 import it.attendance100.mybicocca.domain.model.library.LibrarySeat
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.library.ext.durationLabel
@@ -101,23 +101,32 @@ internal fun ConfirmPage(
                 .padding(horizontal = 24.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
+            val context = LocalContext.current
             Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
-                IconRow(Icons.Outlined.LocalLibrary, "BIBLIOTECA", "$libraryName · $zoneName")
+                IconRow(
+                    Icons.Outlined.LocalLibrary,
+                    context.getString(R.string.library_library),
+                    "$libraryName · $zoneName"
+                )
                 IconRow(
                     Icons.Outlined.Chair,
-                    "POSTO",
-                    seat.shortName + if (seat.hasPowerOutlet) " · presa elettrica" else "",
+                    context.getString(R.string.library_seat),
+                    seat.shortName + if (seat.hasPowerOutlet) " · ${context.getString(R.string.library_power_outlet)}" else "",
                 )
                 IconRow(
                     Icons.Outlined.CalendarMonth,
-                    "QUANDO",
+                    context.getString(R.string.library_when),
                     buildString {
                         append(date.format(FullDateFormat).replaceFirstChar { it.titlecase(Locale.ITALIAN) })
                         append(" · ${startTime.format(TimeFormat)}–${end.format(TimeFormat)}")
                         append(" · ${durationLabel(durationMinutes)}")
                     },
                 )
-                IconRow(Icons.Outlined.AlternateEmail, "PRENOTI COME", email)
+                IconRow(
+                    Icons.Outlined.AlternateEmail,
+                    context.getString(R.string.library_book_as),
+                    email
+                )
             }
 
             if (seat.noteRequired || seat.noteLabel != null) {
@@ -163,7 +172,11 @@ internal fun ConfirmPage(
                     color = if (dark) scheme.onPrimaryContainer else scheme.onPrimary,
                 )
             } else {
-                Text("Prenota", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                Text(
+                    stringResource(R.string.library_book),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold
+                )
             }
         }
     }
@@ -197,9 +210,9 @@ private fun ConsentRow(
     val linkStyles = TextLinkStyles(SpanStyle(color = scheme.primary, fontWeight = FontWeight.SemiBold))
 
     val statement = buildAnnotatedString {
-        append("Accetto le ")
+        append(context.getString(R.string.library_accept) + " ")
         val url = agreement.url
-        val label = agreement.name ?: "condizioni d'uso"
+        val label = agreement.name ?: context.getString(R.string.library_terms)
         if (url != null) {
             withLink(LinkAnnotation.Clickable("agreement", linkStyles) {
                 CustomTabsIntent.Builder().setShowTitle(true).build().launchUrl(context, url.toUri())

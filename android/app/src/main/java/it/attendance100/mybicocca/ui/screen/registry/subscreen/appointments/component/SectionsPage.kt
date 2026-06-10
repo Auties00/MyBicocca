@@ -12,28 +12,29 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.MenuBook
 import androidx.compose.material.icons.outlined.Inventory2
-import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material.icons.outlined.School
 import androidx.compose.material.icons.outlined.SupportAgent
+import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.SyncStatus
 import it.attendance100.mybicocca.domain.model.appointment.AppointmentService
 import it.attendance100.mybicocca.ui.component.button.RetryButton
 import it.attendance100.mybicocca.ui.component.directory.SegmentedIconChip
 import it.attendance100.mybicocca.ui.component.directory.SegmentedTile
-import it.attendance100.mybicocca.ui.screen.registry.subscreen.appointments.state.AppointmentDirectorySection
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.appointments.ext.toDirectorySections
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.appointments.state.AppointmentDirectorySection
 
 /**
  * First "Prenota" page: the desk directory folded into its macro sections, one segmented tile
@@ -52,7 +53,7 @@ internal fun SectionsPage(
         Loadable.NotYetLoaded -> SheetStatusBody(syncStatus = syncStatus, onRetry = onRetry, modifier = modifier)
 
         is Loadable.Loaded -> {
-            val sections = remember(services.value) { services.value.toDirectorySections() }
+            val sections = services.value.toDirectorySections()
             val scheme = MaterialTheme.colorScheme
             Column(
                 modifier = modifier
@@ -131,7 +132,7 @@ internal fun SheetStatusBody(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 Text(
-                    text = "Caricamento non riuscito.",
+                    text = stringResource(R.string.appointments_load_failed),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurface,
                 )

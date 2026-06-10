@@ -3,6 +3,7 @@ package it.attendance100.mybicocca.ui.screen.registry.subscreen.library.componen
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateIntAsState
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,11 +14,9 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -46,10 +45,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.foundation.isSystemInDarkTheme
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.SyncStatus
 import it.attendance100.mybicocca.domain.model.library.LibraryBookingConstraints
@@ -111,22 +112,27 @@ internal fun DateTimePage(
                 .padding(horizontal = 24.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
+            val context = LocalContext.current
             when (constraints) {
                 Loadable.NotYetLoaded -> when (constraintsStatus) {
                     is SyncStatus.Failed -> SheetMessage(
                         icon = Icons.Outlined.CalendarMonth,
-                        title = "Caricamento non riuscito",
-                        body = "Non è stato possibile caricare le disponibilità.",
+                        title = context.getString(R.string.common_error_title),
+                        body = context.getString(R.string.library_availability_loading_failed),
                         action = { RetryButton(onClick = onRetryConstraints) },
                     )
-                    else -> SheetLoadingIndicator(label = "Caricamento disponibilità…")
+
+                    else -> SheetLoadingIndicator(label = context.getString(R.string.library_availability_loading))
                 }
 
                 is Loadable.Loaded -> {
                     val openDays = constraints.value.openDays
-                    Card(icon = Icons.Outlined.CalendarMonth, title = "Giorno") {
+                    Card(
+                        icon = Icons.Outlined.CalendarMonth,
+                        title = context.getString(R.string.library_day)
+                    ) {
                         if (openDays.isEmpty()) {
-                            Message("Nessun giorno prenotabile per questa zona.")
+                            Message(context.getString(R.string.library_no_bookable_days))
                         } else {
                             CalendarSection(
                                 openDays = openDays,
@@ -138,7 +144,10 @@ internal fun DateTimePage(
                     }
 
                     if (constraints.value.durationsMinutes.isNotEmpty()) {
-                        Card(icon = Icons.Outlined.Timelapse, title = "Durata") {
+                        Card(
+                            icon = Icons.Outlined.Timelapse,
+                            title = context.getString(R.string.library_duration)
+                        ) {
                             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                 constraints.value.durationsMinutes.forEach { minutes ->
                                     ToggleButton(
@@ -155,7 +164,10 @@ internal fun DateTimePage(
                     }
 
                     if (selectedDate != null && selectedDuration != null) {
-                        Card(icon = Icons.Outlined.Schedule, title = "Orario di inizio") {
+                        Card(
+                            icon = Icons.Outlined.Schedule,
+                            title = context.getString(R.string.library_start_time)
+                        ) {
                             StartTimeSection(
                                 seats = seats,
                                 seatsStatus = seatsStatus,
@@ -186,10 +198,15 @@ internal fun DateTimePage(
                 contentColor = if (dark) scheme.onPrimaryContainer else scheme.onPrimary,
             ),
         ) {
-            Text("Scegli il posto", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+            Text(
+                stringResource(R.string.library_choose_seat),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold
+            )
         }
     }
 }
+
 
 @OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -202,6 +219,7 @@ private fun StartTimeSection(
     onSelectStartTime: (LocalTime) -> Unit,
     onRetry: () -> Unit,
 ) {
+    val context = LocalContext.current
     when (seats) {
         Loadable.NotYetLoaded -> when (seatsStatus) {
             is SyncStatus.Failed -> Row(
@@ -209,18 +227,19 @@ private fun StartTimeSection(
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 Text(
-                    "Caricamento orari non riuscito.",
+                    context.getString(R.string.library_times_loading_failed),
                     style = MaterialTheme.typography.bodyMedium,
                     modifier = Modifier.weight(1f),
                 )
                 RetryButton(onClick = onRetry)
             }
-            else -> SheetLoadingIndicator(label = "Caricamento orari…")
+
+            else -> SheetLoadingIndicator(label = context.getString(R.string.library_times_loading))
         }
 
         is Loadable.Loaded -> {
             if (availableStartTimes.isEmpty()) {
-                Message("Nessun orario disponibile in questa giornata.")
+                Message(context.getString(R.string.library_no_available_times))
             } else {
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     availableStartTimes.forEach { time ->
@@ -286,13 +305,19 @@ private fun CalendarSection(
                 color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.weight(1f),
             )
+            val context = LocalContext.current
             FilledTonalIconButton(
                 onClick = { if (month > minMonth) month = month.minusMonths(1) },
                 enabled = enabled && month > minMonth,
                 modifier = Modifier.size(40.dp),
                 shapes = IconButtonDefaults.shapes(),
                 colors = monthNavColors(),
-            ) { Icon(Icons.AutoMirrored.Rounded.KeyboardArrowLeft, contentDescription = "Mese precedente") }
+            ) {
+                Icon(
+                    Icons.AutoMirrored.Rounded.KeyboardArrowLeft,
+                    contentDescription = context.getString(R.string.library_previous_month)
+                )
+            }
             Spacer(Modifier.size(6.dp))
             FilledTonalIconButton(
                 onClick = { if (month < maxMonth) month = month.plusMonths(1) },
@@ -300,7 +325,12 @@ private fun CalendarSection(
                 modifier = Modifier.size(40.dp),
                 shapes = IconButtonDefaults.shapes(),
                 colors = monthNavColors(),
-            ) { Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, contentDescription = "Mese successivo") }
+            ) {
+                Icon(
+                    Icons.AutoMirrored.Rounded.KeyboardArrowRight,
+                    contentDescription = context.getString(R.string.library_next_month)
+                )
+            }
         }
 
         Row(modifier = Modifier.fillMaxWidth()) {
@@ -381,7 +411,11 @@ private fun DayCell(
         else -> scheme.onSurface
     }
 
-    Box(modifier = modifier.aspectRatio(1f).padding(3.dp), contentAlignment = Alignment.Center) {
+    Box(
+        modifier = modifier
+            .aspectRatio(1f)
+            .padding(3.dp), contentAlignment = Alignment.Center
+    ) {
         if (available) {
             Surface(
                 onClick = { onSelectDate(date) },

@@ -8,12 +8,12 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.FactCheck
+import androidx.compose.material.icons.automirrored.outlined.Grading
 import androidx.compose.material.icons.outlined.AccountTree
 import androidx.compose.material.icons.outlined.CoPresent
 import androidx.compose.material.icons.outlined.CurrencyExchange
 import androidx.compose.material.icons.outlined.Description
 import androidx.compose.material.icons.outlined.EventAvailable
-import androidx.compose.material.icons.outlined.Grading
 import androidx.compose.material.icons.outlined.LocalLibrary
 import androidx.compose.material.icons.outlined.Payments
 import androidx.compose.material.icons.outlined.Savings
@@ -27,8 +27,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.SyncStatus
 import it.attendance100.mybicocca.core.state.valueOrNull
@@ -38,13 +40,13 @@ import it.attendance100.mybicocca.ui.screen.registry.state.RegistryService
 import it.attendance100.mybicocca.ui.screen.registry.state.RegistryServiceGroup
 import it.attendance100.mybicocca.ui.screen.registry.state.buildRegistryDeadlines
 import it.attendance100.mybicocca.ui.screen.registry.state.isUrgent
-import it.attendance100.mybicocca.ui.screen.registry.theme.serviceAccents
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.appelli.BookedExamsViewModel
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.booking.BookableExamsViewModel
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.deadlines.DeadlinesSheet
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.deadlines.nextDeadlineLabel
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.examResults.ExamResultsViewModel
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.taxes.TaxesViewModel
+import it.attendance100.mybicocca.ui.screen.registry.theme.serviceAccents
 import java.time.LocalDate
 
 /**
@@ -121,52 +123,140 @@ fun RegistryScreen(
     }
     val urgentCount = deadlines.count { it.isUrgent() }
     val headerSummary = when {
-        deadlinesLoading && deadlinesFailure != null -> "Sincronizzazione non riuscita"
-        deadlinesLoading -> "Caricamento in corso…"
-        deadlines.isEmpty() -> "Nessuna scadenza imminente"
-        urgentCount == 0 -> "Prossima il ${nextDeadlineLabel(deadlines.first().date)}"
+        deadlinesLoading && deadlinesFailure != null -> stringResource(R.string.registry_sync_failed)
+        deadlinesLoading -> stringResource(R.string.common_loading)
+        deadlines.isEmpty() -> stringResource(R.string.registry_no_deadlines)
+        urgentCount == 0 -> stringResource(
+            R.string.registry_next_deadline,
+            nextDeadlineLabel(deadlines.first().date)
+        )
         else -> {
-            val urgent = if (urgentCount == 1) "1 urgente" else "$urgentCount urgenti"
-            "$urgent · prossima il ${nextDeadlineLabel(deadlines.first().date)}"
+            val urgent =
+                if (urgentCount == 1) stringResource(R.string.registry_one_urgent) else stringResource(
+                    R.string.registry_multiple_urgent,
+                    urgentCount
+                )
+            "$urgent · " + stringResource(
+                R.string.registry_next_deadline,
+                nextDeadlineLabel(deadlines.first().date)
+            )
         }
     }
 
     val sections = listOf(
         RegistryServiceGroup(
-            name = "Didattica",
-            caption = "Percorso, presenze ed esiti",
+            name = stringResource(R.string.registry_teaching),
+            caption = stringResource(R.string.registry_teaching_caption),
             services = listOf(
-                RegistryService("study_plan", "Percorso", "Percorso e piano di studi", Icons.Outlined.AccountTree, onClick = onOpenStudyPlan),
-                RegistryService("attendance", "Presenze", "Frequenze e rilevazioni", Icons.Outlined.CoPresent, onClick = onOpenAttendance),
-                RegistryService("exam_results", "Esiti", "Accetta o rifiuta i voti", Icons.Outlined.Grading, onClick = onOpenExamResults),
-                RegistryService("questionnaires", "Questionari", "Valutazione didattica", Icons.AutoMirrored.Outlined.FactCheck, onClick = onOpenQuestionnaires),
+                RegistryService(
+                    "study_plan",
+                    stringResource(R.string.registry_study_plan),
+                    stringResource(R.string.registry_study_plan_desc),
+                    Icons.Outlined.AccountTree,
+                    onClick = onOpenStudyPlan
+                ),
+                RegistryService(
+                    "attendance",
+                    stringResource(R.string.registry_attendance),
+                    stringResource(R.string.registry_attendance_desc),
+                    Icons.Outlined.CoPresent,
+                    onClick = onOpenAttendance
+                ),
+                RegistryService(
+                    "exam_results",
+                    stringResource(R.string.registry_exam_results),
+                    stringResource(R.string.registry_exam_results_desc),
+                    Icons.AutoMirrored.Outlined.Grading,
+                    onClick = onOpenExamResults
+                ),
+                RegistryService(
+                    "questionnaires",
+                    stringResource(R.string.registry_questionnaires),
+                    stringResource(R.string.registry_questionnaires_desc),
+                    Icons.AutoMirrored.Outlined.FactCheck,
+                    onClick = onOpenQuestionnaires
+                ),
             ),
         ),
         RegistryServiceGroup(
-            name = "Prenotazioni",
-            caption = "Appelli, sportelli e posti studio",
+            name = stringResource(R.string.registry_bookings),
+            caption = stringResource(R.string.registry_bookings_caption),
             services = listOf(
-                RegistryService("appelli", "Appelli", "Esami prenotati e prenotazione", Icons.Outlined.EventAvailable, onClick = onOpenAppelli),
-                RegistryService("appointments", "Segreterie", "Prenota uno sportello in segreteria", Icons.Outlined.SupportAgent, onClick = onOpenAppointments),
-                RegistryService("library", "Biblioteca", "Prenota un posto in biblioteca", Icons.Outlined.LocalLibrary, onClick = onOpenLibrary),
+                RegistryService(
+                    "appelli",
+                    stringResource(R.string.appelli_title),
+                    stringResource(R.string.appelli_desc),
+                    Icons.Outlined.EventAvailable,
+                    onClick = onOpenAppelli
+                ),
+                RegistryService(
+                    "appointments",
+                    stringResource(R.string.appointments_title),
+                    stringResource(R.string.appointments_desc),
+                    Icons.Outlined.SupportAgent,
+                    onClick = onOpenAppointments
+                ),
+                RegistryService(
+                    "library",
+                    stringResource(R.string.registry_library),
+                    stringResource(R.string.registry_library_desc),
+                    Icons.Outlined.LocalLibrary,
+                    onClick = onOpenLibrary
+                ),
             ),
         ),
         RegistryServiceGroup(
-            name = "Documenti",
-            caption = "Iscrizioni, titoli e certificati",
+            name = stringResource(R.string.registry_documents),
+            caption = stringResource(R.string.registry_documents_caption),
             services = listOf(
-                RegistryService("enrollments", "Iscrizioni", "Storico iscrizioni e rinnovo", Icons.Outlined.School, onClick = onOpenEnrollments),
-                RegistryService("titles", "Titoli", "Titoli di studio conseguiti", Icons.Outlined.WorkspacePremium, onClick = onOpenTitles),
-                RegistryService("certificates", "Certificati", "Autocertificazioni in PDF", Icons.Outlined.Description, onClick = onOpenCertificates),
+                RegistryService(
+                    "enrollments",
+                    stringResource(R.string.registry_enrollments),
+                    stringResource(R.string.registry_enrollments_desc),
+                    Icons.Outlined.School,
+                    onClick = onOpenEnrollments
+                ),
+                RegistryService(
+                    "titles",
+                    stringResource(R.string.registry_titles),
+                    stringResource(R.string.registry_titles_desc),
+                    Icons.Outlined.WorkspacePremium,
+                    onClick = onOpenTitles
+                ),
+                RegistryService(
+                    "certificates",
+                    stringResource(R.string.registry_certificates),
+                    stringResource(R.string.registry_certificates_desc),
+                    Icons.Outlined.Description,
+                    onClick = onOpenCertificates
+                ),
             ),
         ),
         RegistryServiceGroup(
-            name = "Tasse & agevolazioni",
-            caption = "La tua posizione amministrativa",
+            name = stringResource(R.string.registry_taxes),
+            caption = stringResource(R.string.registry_taxes_caption),
             services = listOf(
-                RegistryService("taxes", "Tasse", "Pagamenti e fatture", Icons.Outlined.Payments, onClick = onOpenTaxes),
-                RegistryService("isee", "ISEE", "Dichiarazioni e fasce", Icons.Outlined.Savings, onClick = onOpenIsee),
-                RegistryService("refunds", "Rimborsi", "Importi e mandati", Icons.Outlined.CurrencyExchange, onClick = onOpenRefunds),
+                RegistryService(
+                    "taxes",
+                    stringResource(R.string.registry_fees),
+                    stringResource(R.string.registry_fees_desc),
+                    Icons.Outlined.Payments,
+                    onClick = onOpenTaxes
+                ),
+                RegistryService(
+                    "isee",
+                    stringResource(R.string.registry_isee),
+                    stringResource(R.string.registry_isee_desc),
+                    Icons.Outlined.Savings,
+                    onClick = onOpenIsee
+                ),
+                RegistryService(
+                    "refunds",
+                    stringResource(R.string.registry_refunds),
+                    stringResource(R.string.registry_refunds_desc),
+                    Icons.Outlined.CurrencyExchange,
+                    onClick = onOpenRefunds
+                ),
             ),
         ),
     )

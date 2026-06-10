@@ -25,11 +25,11 @@ fun relativeTimeLabel(instant: Instant, now: Instant = Instant.now()): String {
     val days = elapsed.toDays()
     val zone = ZoneId.systemDefault()
     return when {
-        minutes < 1 -> "adesso"
-        minutes < 60 -> "$minutes min fa"
-        hours < 24 -> if (hours == 1L) "1 ora fa" else "$hours ore fa"
-        days == 1L -> "ieri"
-        days < 7 -> "$days giorni fa"
+        minutes < 1 -> "relative_time_now"
+        minutes < 60 -> "relative_time_minutes_ago|$minutes"
+        hours < 24 -> if (hours == 1L) "relative_time_one_hour_ago" else "relative_time_hours_ago|$hours"
+        days == 1L -> "relative_time_yesterday"
+        days < 7 -> "relative_time_days_ago|$days"
         instant.atZone(zone).year == now.atZone(zone).year -> DayMonthFmt.format(instant)
         else -> DayMonthYearFmt.format(instant)
     }

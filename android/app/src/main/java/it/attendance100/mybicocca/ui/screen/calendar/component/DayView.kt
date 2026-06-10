@@ -186,7 +186,7 @@ private fun DayStripCarousel(
     val weekPos by remember(anchorDay, anchorWeekStart) {
         derivedStateOf {
             val floorOffset = floor(dayPos.toDouble()).toInt()
-            val frac = (dayPos - floorOffset).toFloat().coerceIn(0f, 1f)
+            val frac = (dayPos - floorOffset).coerceIn(0f, 1f)
             val floorDay = anchorDay.plusDays((floorOffset - PAGER_ANCHOR).toLong())
             val ceilDay = floorDay.plusDays(1)
             val weekFloor = ChronoUnit.WEEKS.between(anchorWeekStart, weekStartFor(floorDay)).toInt()

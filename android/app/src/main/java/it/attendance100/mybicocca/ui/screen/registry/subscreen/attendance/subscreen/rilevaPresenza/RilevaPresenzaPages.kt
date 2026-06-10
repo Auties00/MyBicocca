@@ -35,10 +35,12 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.ui.component.button.PrimaryActionButton
 import it.attendance100.mybicocca.ui.theme.LocalIsOnline
 
@@ -61,16 +63,16 @@ fun RilevaChooserPage(
     ) {
         ChooserOption(
             icon = Icons.Outlined.Dialpad,
-            title = "Lezione",
-            subtitle = "Presenze in aula",
+            title = stringResource(R.string.attendance_lesson),
+            subtitle = stringResource(R.string.attendance_classroom_presence),
             container = MaterialTheme.colorScheme.primaryContainer,
             onContainer = MaterialTheme.colorScheme.onPrimaryContainer,
             onClick = onLessonCode,
         )
         ChooserOption(
             icon = Icons.Outlined.QrCodeScanner,
-            title = "Altre attività",
-            subtitle = "Presenze e-learning",
+            title = stringResource(R.string.attendance_other_activities),
+            subtitle = stringResource(R.string.attendance_elearning_presence),
             container = MaterialTheme.colorScheme.secondaryContainer,
             onContainer = MaterialTheme.colorScheme.onSecondaryContainer,
             onClick = onScanActivities,
@@ -147,14 +149,14 @@ fun RilevaCodePage(onSubmit: (String) -> Unit) {
             modifier = Modifier
                 .fillMaxWidth()
                 .focusRequester(focusRequester),
-            label = { Text("Codice lezione") },
+            label = { Text(stringResource(R.string.attendance_lesson_code)) },
             singleLine = true,
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
             keyboardActions = KeyboardActions(onDone = { if (code.isNotBlank()) onSubmit(code.trim()) }),
         )
         Spacer(Modifier.height(20.dp))
         PrimaryActionButton(
-            text = "Registra presenza",
+            text = stringResource(R.string.attendance_mark_presence),
             onClick = { onSubmit(code.trim()) },
             enabled = code.isNotBlank() && LocalIsOnline.current,
             modifier = Modifier.fillMaxWidth(),

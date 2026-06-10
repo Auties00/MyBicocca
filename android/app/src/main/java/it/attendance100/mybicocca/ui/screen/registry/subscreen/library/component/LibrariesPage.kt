@@ -11,7 +11,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.MeetingRoom
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.SyncStatus
 import it.attendance100.mybicocca.domain.model.library.Library
@@ -41,23 +43,25 @@ internal fun LibrariesPage(
             .padding(bottom = 24.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
+        val context = LocalContext.current
         when (libraries) {
             Loadable.NotYetLoaded -> when (librariesStatus) {
                 is SyncStatus.Failed -> SheetMessage(
                     icon = Icons.Outlined.MeetingRoom,
-                    title = "Caricamento non riuscito",
-                    body = "Non è stato possibile caricare le biblioteche.",
+                    title = context.getString(R.string.common_error_title),
+                    body = context.getString(R.string.library_libraries_loading_failed),
                     action = { RetryButton(onClick = onRetry) },
                 )
-                else -> SheetLoadingIndicator(label = "Caricamento biblioteche…")
+
+                else -> SheetLoadingIndicator(label = context.getString(R.string.library_libraries_loading))
             }
 
             is Loadable.Loaded -> {
                 if (libraries.value.isEmpty()) {
                     SheetMessage(
                         icon = Icons.Outlined.MeetingRoom,
-                        title = "Nessuna biblioteca",
-                        body = "Al momento non ci sono biblioteche prenotabili.",
+                        title = context.getString(R.string.library_no_libraries),
+                        body = context.getString(R.string.library_no_libraries_body),
                     )
                 } else {
                     libraries.value.forEach { library ->

@@ -1,5 +1,7 @@
 package it.attendance100.mybicocca.core.search
 
+import android.content.Context
+import it.attendance100.mybicocca.R
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.format.TextStyle
@@ -18,32 +20,38 @@ data class DateQueryMatch(
 )
 
 /**
- * Recognizes Italian date expressions inside a search query so "domani", "lunedì" or
- * "22/06" can land straight on that calendar day. Dictionary + regex only — full natural
- * language parsing is overkill for a search box. Operates on the normalized query, so
- * unaccented forms ("lunedi") match too.
+ * Recognizes date expressions inside a search query so "domani", "lunedì", "tomorrow",
+ * "monday" or "22/06" can land straight on that calendar day. Dictionary + regex only —
+ * full natural language parsing is overkill for a search box. Operates on the normalized
+ * query, so unaccented forms ("lunedi") match too.
  *
  * Three expression families are recognized, resolved relative to [today]:
- * - relative day words: "oggi", "domani", "dopodomani"
- * - weekday names, resolved to the next occurrence with today included — asking for
- *   "lunedì" on a Monday means today
+ * - relative day words: Italian ("oggi", "domani", "dopodomani") and English ("today", "tomorrow")
+ * - weekday names in Italian or English, resolved to the next occurrence with today included
  * - numeric dates, day/month separated by '/' or '.' with an optional 2- or 4-digit year;
  *   2-digit years are 2000-based, and a bare day/month already in the past resolves to
  *   next year's occurrence rather than the elapsed one
+ *
+ * Display labels are produced in [locale] (defaults to [Locale.getDefault]).
  */
-fun parseDateQuery(query: String, today: LocalDate): DateQueryMatch? {
+fun parseDateQuery(
+    query: String,
+    today: LocalDate,
+    context: Context,
+    locale: Locale = Locale.getDefault(),
+): DateQueryMatch? {
     val normalized = normalizeForSearch(query)
     if (normalized.isEmpty()) return null
 
     relativeDays[normalized]?.let { offset ->
         val date = today.plusDays(offset)
-        return DateQueryMatch(date, relativeLabels.getValue(normalized))
+        return DateQueryMatch(date, relativeLabel(offset, context))
     }
 
     weekdays[normalized]?.let { target ->
         val delta = (target.value - today.dayOfWeek.value + 7) % 7
         val date = today.plusDays(delta.toLong())
-        return DateQueryMatch(date, date.weekdayDateLabel())
+        return DateQueryMatch(date, date.weekdayDateLabel(locale))
     }
 
     NumericDate.matchEntire(normalized)?.let { match ->
@@ -58,34 +66,38 @@ fun parseDateQuery(query: String, today: LocalDate): DateQueryMatch? {
         }
         val date = runCatching { LocalDate.of(year, month, day) }.getOrNull() ?: return null
         val resolved = if (rawYear.isEmpty() && date.isBefore(today)) date.plusYears(1) else date
-        return DateQueryMatch(resolved, resolved.weekdayDateLabel())
+        return DateQueryMatch(resolved, resolved.weekdayDateLabel(locale))
     }
 
     return null
 }
 
-private fun LocalDate.weekdayDateLabel(): String {
-    val weekday = dayOfWeek.getDisplayName(TextStyle.FULL, Italian)
-        .replaceFirstChar { it.titlecase(Italian) }
-    val month = month.getDisplayName(TextStyle.FULL, Italian)
+private fun LocalDate.weekdayDateLabel(locale: Locale): String {
+    val weekday = dayOfWeek.getDisplayName(TextStyle.FULL, locale)
+        .replaceFirstChar { it.titlecase(locale) }
+    val month = month.getDisplayName(TextStyle.FULL, locale)
     return "$weekday $dayOfMonth $month"
 }
 
-private val Italian = Locale.ITALIAN
+private fun relativeLabel(offset: Long, context: Context): String =
+    when (offset) {
+        0L -> context.getString(R.string.relative_day_today)
+        1L -> context.getString(R.string.relative_day_tomorrow)
+        else -> context.getString(R.string.relative_day_after_tomorrow)
+    }
 
 private val relativeDays = mapOf(
+    // Italian
     "oggi" to 0L,
     "domani" to 1L,
     "dopodomani" to 2L,
-)
-
-private val relativeLabels = mapOf(
-    "oggi" to "Oggi",
-    "domani" to "Domani",
-    "dopodomani" to "Dopodomani",
+    // English
+    "today" to 0L,
+    "tomorrow" to 1L,
 )
 
 private val weekdays = mapOf(
+    // Italian
     "lunedi" to DayOfWeek.MONDAY,
     "martedi" to DayOfWeek.TUESDAY,
     "mercoledi" to DayOfWeek.WEDNESDAY,
@@ -93,6 +105,14 @@ private val weekdays = mapOf(
     "venerdi" to DayOfWeek.FRIDAY,
     "sabato" to DayOfWeek.SATURDAY,
     "domenica" to DayOfWeek.SUNDAY,
+    // English
+    "monday" to DayOfWeek.MONDAY,
+    "tuesday" to DayOfWeek.TUESDAY,
+    "wednesday" to DayOfWeek.WEDNESDAY,
+    "thursday" to DayOfWeek.THURSDAY,
+    "friday" to DayOfWeek.FRIDAY,
+    "saturday" to DayOfWeek.SATURDAY,
+    "sunday" to DayOfWeek.SUNDAY,
 )
 
 private val NumericDate = Regex("""(\d{1,2})[/.](\d{1,2})(?:[/.](\d{2}|\d{4}))?""")

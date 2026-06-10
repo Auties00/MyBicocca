@@ -26,7 +26,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.ui.component.button.MorphKnob
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.addCourse.state.EnrolmentStatus
@@ -88,7 +90,7 @@ private fun StatusCircle(state: EnrolmentStatus, accent: Color) {
         when (state) {
             EnrolmentStatus.Idle -> Icon(
                 imageVector = Icons.Outlined.Add,
-                contentDescription = "Iscriviti",
+                contentDescription = stringResource(R.string.elearning_enrol),
                 tint = Color.White,
                 modifier = Modifier.size(20.dp),
             )
@@ -101,7 +103,7 @@ private fun StatusCircle(state: EnrolmentStatus, accent: Color) {
 
             EnrolmentStatus.Failed -> Icon(
                 imageVector = Icons.Outlined.PriorityHigh,
-                contentDescription = "Riprova",
+                contentDescription = stringResource(R.string.common_retry),
                 tint = scheme.onErrorContainer,
                 modifier = Modifier.size(18.dp),
             )

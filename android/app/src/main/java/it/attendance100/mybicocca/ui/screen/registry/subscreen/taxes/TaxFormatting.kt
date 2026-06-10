@@ -18,8 +18,9 @@ fun LocalDate.formatTaxDate(): String = format(taxDateFormat)
 
 fun Throwable.taxFriendlyMessage(): String = when (this) {
     is UnknownHostException,
-    is ConnectException -> "Rete non disponibile. Controlla la connessione e riprova."
-    is SocketTimeoutException -> "Timeout di rete. Riprova tra un momento."
-    is IOException -> "Errore di rete. Riprova tra un momento."
-    else -> "Si è verificato un errore imprevisto"
+    is ConnectException -> "Network unavailable. Check connection and retry."
+
+    is SocketTimeoutException -> "Network timeout. Retry in a moment."
+    is IOException -> "Network error. Retry in a moment."
+    else -> "An unexpected error occurred"
 }

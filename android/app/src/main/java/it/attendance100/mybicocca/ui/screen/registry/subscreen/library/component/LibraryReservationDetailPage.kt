@@ -13,11 +13,11 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.Notes
 import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material.icons.outlined.Chair
 import androidx.compose.material.icons.outlined.ConfirmationNumber
 import androidx.compose.material.icons.outlined.LocalLibrary
-import androidx.compose.material.icons.outlined.Notes
 import androidx.compose.material.icons.outlined.QrCodeScanner
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -27,14 +27,16 @@ import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.domain.model.library.LibraryReservation
 import it.attendance100.mybicocca.ui.component.card.DetailFactCard
 import it.attendance100.mybicocca.ui.theme.LocalIsOnline
@@ -67,15 +69,21 @@ internal fun LibraryReservationDetailPage(
     val scheme = MaterialTheme.colorScheme
     val canCancel = reservation.cancellationToken != null
 
+    val context = LocalContext.current
     val now = remember(reservation) { LocalDateTime.now() }
     val windowStart = reservation.start.minusMinutes(presenceWindowMinutes.toLong())
     val tooEarly = now.isBefore(windowStart)
     val past = now.isAfter(reservation.end)
     val canVerify = !tooEarly && !past
     val presenceHint = when {
-        tooEarly -> "La verifica apre alle ${windowStart.format(TimeFormat)} ($presenceWindowMinutes min prima dell'inizio)."
-        past -> "Prenotazione conclusa."
-        else -> "Inquadra il QR in biblioteca o inserisci il codice."
+        tooEarly -> context.getString(
+            R.string.library_verification_opens,
+            windowStart.format(TimeFormat),
+            presenceWindowMinutes
+        )
+
+        past -> context.getString(R.string.library_booking_complete)
+        else -> context.getString(R.string.library_qr_or_code)
     }
 
     Column(
@@ -107,7 +115,7 @@ internal fun LibraryReservationDetailPage(
                     " · ${reservation.start.format(TimeFormat)}–${reservation.end.format(TimeFormat)}",
             )
             reservation.note?.let { note ->
-                DetailFactCard(Icons.Outlined.Notes, "NOTA", note)
+                DetailFactCard(Icons.AutoMirrored.Outlined.Notes, "NOTA", note)
             }
 
             Spacer(Modifier.height(4.dp))
@@ -169,7 +177,7 @@ private fun ActionRow(
             if (isCancelling) {
                 CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.5.dp, color = scheme.onSurface)
             } else {
-                Text("Cancella", fontWeight = FontWeight.SemiBold)
+                Text(stringResource(R.string.library_cancel), fontWeight = FontWeight.SemiBold)
             }
         }
         Button(
@@ -183,7 +191,7 @@ private fun ActionRow(
         ) {
             Icon(Icons.Outlined.QrCodeScanner, contentDescription = null, modifier = Modifier.size(20.dp))
             Spacer(Modifier.size(8.dp))
-            Text("Verifica presenza", fontWeight = FontWeight.SemiBold)
+            Text(stringResource(R.string.library_verify_presence), fontWeight = FontWeight.SemiBold)
         }
     }
 }

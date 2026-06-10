@@ -24,9 +24,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.core.os.LocaleListCompat
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.ui.component.button.MorphKnob
 import it.attendance100.mybicocca.ui.component.directory.SegmentedTile
@@ -51,6 +53,9 @@ private data class LanguageOption(
     val flag: @Composable () -> Unit,
 )
 
+// Note: These labels are used in the language picker and must be hardcoded since they're
+// used in @Composable functions that don't receive a Context parameter.
+// Internationalization of the language selector itself is handled through system locale changes.
 private val LANGUAGE_OPTIONS = listOf(
     LanguageOption(LOCALE_SYSTEM, "Sistema", flag = { WorldFlag(Modifier.fillMaxSize()) }),
     LanguageOption("it", "Italiano", flag = { ItalyFlag(Modifier.fillMaxSize()) }),
@@ -91,12 +96,12 @@ fun LanguageSheet(onDismiss: () -> Unit) {
                 .padding(bottom = 24.dp),
         ) {
             Text(
-                text = "Lingua",
+                text = stringResource(R.string.settings_language_sheet_title),
                 style = MaterialTheme.typography.titleLargeEmphasized,
                 fontWeight = FontWeight.SemiBold,
             )
             Text(
-                text = "Lingua dell'app",
+                text = stringResource(R.string.settings_language_sheet_subtitle),
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )

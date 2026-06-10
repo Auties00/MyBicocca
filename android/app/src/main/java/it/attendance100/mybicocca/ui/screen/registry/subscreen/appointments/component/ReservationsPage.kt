@@ -24,8 +24,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.domain.model.appointment.AppointmentReservation
 import it.attendance100.mybicocca.ui.component.feedback.EmptyState
@@ -59,8 +61,8 @@ internal fun ReservationsPage(
             ) {
                 EmptyState(
                     icon = Icons.AutoMirrored.Outlined.EventNote,
-                    title = "Nessun appuntamento",
-                    body = "Non hai ancora prenotato nessun appuntamento. Tocca Prenota per fissarne uno.",
+                    title = stringResource(R.string.appointments_no_appointments),
+                    body = stringResource(R.string.appointments_no_appointments_body),
                 )
             }
         } else {
@@ -106,6 +108,10 @@ private fun PrenotaButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
     ) {
         Icon(Icons.Outlined.EditCalendar, contentDescription = null, modifier = Modifier.size(20.dp))
         Spacer(Modifier.width(8.dp))
-        Text("Prenota", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+        Text(
+            stringResource(R.string.appointments_book_button),
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.SemiBold
+        )
     }
 }

@@ -42,10 +42,11 @@ fun ExternalFileLauncher(
 ) {
     val context = LocalContext.current
     val snackbar = LocalAppSnackbarController.current
-    val viewModel = hiltViewModel<FileViewerViewModel, FileViewerViewModel.Factory>(
-        key = route.fileUrl ?: route.localPath ?: route.fileName,
-        creationCallback = { it.create(route) },
-    )
+    @Suppress("DEPRECATION") val viewModel =
+        hiltViewModel<FileViewerViewModel, FileViewerViewModel.Factory>(
+            key = route.fileUrl ?: route.localPath ?: route.fileName,
+            creationCallback = { it.create(route) },
+        )
     val localPath by viewModel.localPath.collectAsStateWithLifecycle()
     val downloadStatus by viewModel.downloadStatus.collectAsStateWithLifecycle()
 

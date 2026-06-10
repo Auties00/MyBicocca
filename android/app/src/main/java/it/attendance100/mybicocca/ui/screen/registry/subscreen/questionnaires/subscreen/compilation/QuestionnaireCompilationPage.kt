@@ -15,8 +15,8 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -62,6 +62,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -71,6 +73,7 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.domain.model.questionnaire.QuestionnaireOption
 import it.attendance100.mybicocca.domain.model.questionnaire.QuestionnairePage
 import it.attendance100.mybicocca.domain.model.questionnaire.QuestionnaireParagraph
@@ -131,12 +134,12 @@ fun QuestionnaireCompilationPage(
 
     when (val current = step) {
         QuestionnaireCompilationStep.Starting ->
-            SheetLoadingIndicator(label = "Avvio questionario…")
+            SheetLoadingIndicator(label = stringResource(R.string.questionnaire_starting))
 
         is QuestionnaireCompilationStep.StartFailed -> SheetMessage(
             icon = Icons.Outlined.CloudOff,
-            title = "Impossibile iniziare",
-            body = "Il questionario non può essere avviato in questo momento",
+            title = stringResource(R.string.questionnaire_start_failed_title),
+            body = stringResource(R.string.questionnaire_start_failed_body),
             action = { RetryButton(onClick = viewModel::retryStart) },
         )
 
@@ -235,19 +238,25 @@ fun compilationWizardHeader(
                 ?.let { AnnotatedString(it.uppercase()) },
         )
 
-        is QuestionnaireCompilationStep.Summary -> CompilationWizardHeader(
-            title = "Riepilogo",
-            subtitle = buildAnnotatedString {
-                withStyle(
-                    SpanStyle(
-                        color = compilationStatusColor(satisfied = current.complete),
-                        fontWeight = FontWeight.SemiBold,
-                    ),
-                ) {
-                    append(if (current.complete) "PRONTO ALL'INVIO" else "RISPOSTE MANCANTI")
-                }
-            },
-        )
+        is QuestionnaireCompilationStep.Summary -> {
+            val context = LocalContext.current
+            CompilationWizardHeader(
+                title = context.getString(R.string.questionnaire_summary_title),
+                subtitle = buildAnnotatedString {
+                    withStyle(
+                        SpanStyle(
+                            color = compilationStatusColor(satisfied = current.complete),
+                            fontWeight = FontWeight.SemiBold,
+                        ),
+                    ) {
+                        append(
+                            if (current.complete) context.getString(R.string.questionnaire_summary_ready)
+                            else context.getString(R.string.questionnaire_summary_missing)
+                        )
+                    }
+                },
+            )
+        }
 
         else -> CompilationWizardHeader(
             title = unitTitle,
@@ -352,20 +361,24 @@ private fun QuestionGroup(
                 onSelectOption = onSelectOption,
             )
 
-            question.kind == QuestionnaireQuestionKind.FreeText -> FreeTextTile(
-                value = state.freeText,
-                onValueChange = onFreeTextChange,
-                placeholder = "Scrivi qui…",
-                minLines = 3,
-            )
+            question.kind == QuestionnaireQuestionKind.FreeText -> {
+                val context = LocalContext.current
+                FreeTextTile(
+                    value = state.freeText,
+                    onValueChange = onFreeTextChange,
+                    placeholder = context.getString(R.string.questionnaire_free_text_placeholder),
+                    minLines = 3,
+                )
+            }
 
             else -> {
+                val context = LocalContext.current
                 val companionVisible = question.options.any {
                     it.requiresFreeText && it.id in state.selectedOptionIds
                 }
                 question.options.forEachIndexed { index, option ->
                     OptionTile(
-                        text = option.text.ifBlank { "Altro" },
+                        text = option.text.ifBlank { context.getString(R.string.questionnaire_other_option) },
                         selected = option.id in state.selectedOptionIds,
                         isLast = index == question.options.lastIndex && !companionVisible,
                         onToggle = { onSelectOption(option) },
@@ -375,7 +388,7 @@ private fun QuestionGroup(
                     FreeTextTile(
                         value = state.freeText,
                         onValueChange = onFreeTextChange,
-                        placeholder = "Specifica…",
+                        placeholder = context.getString(R.string.questionnaire_free_text_specify),
                         minLines = 1,
                     )
                 }
@@ -472,7 +485,7 @@ private fun MandatoryPill(answered: Boolean, invalid: Boolean) {
             }
             Spacer(Modifier.width(4.dp))
             Text(
-                text = "Obbligatoria",
+                text = stringResource(R.string.questionnaire_mandatory),
                 style = MaterialTheme.typography.labelMedium,
                 fontWeight = FontWeight.SemiBold,
                 maxLines = 1,
@@ -568,13 +581,13 @@ private fun ScaleTile(
             Spacer(Modifier.height(8.dp))
             Row(modifier = Modifier.fillMaxWidth()) {
                 Text(
-                    text = "Per niente d'accordo",
+                    text = stringResource(R.string.questionnaire_scale_disagree),
                     style = MaterialTheme.typography.labelSmall,
                     color = scheme.onSurfaceVariant,
                     modifier = Modifier.weight(1f),
                 )
                 Text(
-                    text = "Del tutto d'accordo",
+                    text = stringResource(R.string.questionnaire_scale_agree),
                     style = MaterialTheme.typography.labelSmall,
                     color = scheme.onSurfaceVariant,
                     textAlign = TextAlign.End,
@@ -614,6 +627,7 @@ private fun FreeTextTile(
 @Composable
 private fun SummaryContent(complete: Boolean, anonymous: Boolean) {
     val scheme = MaterialTheme.colorScheme
+    val context = LocalContext.current
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -637,7 +651,8 @@ private fun SummaryContent(complete: Boolean, anonymous: Boolean) {
         }
         Spacer(Modifier.height(24.dp))
         Text(
-            text = if (complete) "Questionario completato" else "Mancano alcune risposte",
+            text = if (complete) context.getString(R.string.questionnaire_summary_complete)
+            else context.getString(R.string.questionnaire_summary_incomplete),
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.SemiBold,
             color = scheme.onSurface,
@@ -646,9 +661,9 @@ private fun SummaryContent(complete: Boolean, anonymous: Boolean) {
         Spacer(Modifier.height(8.dp))
         Text(
             text = when {
-                !complete -> "Torna indietro e rispondi alle domande obbligatorie prima di confermare."
-                anonymous -> "Conferma per inviare le risposte in forma anonima. Dopo la conferma non potrai più modificarle."
-                else -> "Conferma per inviare le risposte. Dopo la conferma non potrai più modificarle."
+                !complete -> context.getString(R.string.questionnaire_summary_incomplete_help)
+                anonymous -> context.getString(R.string.questionnaire_summary_anonymous_help)
+                else -> context.getString(R.string.questionnaire_summary_help)
             },
             style = MaterialTheme.typography.bodyMedium,
             color = scheme.onSurfaceVariant,
@@ -709,7 +724,7 @@ private fun CompilationBottomBar(
             ) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "Pagina precedente",
+                    contentDescription = stringResource(R.string.questionnaire_previous_page),
                     modifier = Modifier.size(20.dp),
                 )
             }
@@ -746,9 +761,13 @@ private fun CompilationBottomBar(
                 label = "compilationActionLabel",
             ) { target ->
                 Row(verticalAlignment = Alignment.CenterVertically) {
+                    val context = LocalContext.current
                     when (target) {
                         CompilationAction.Next -> {
-                            Text("Avanti", fontWeight = FontWeight.SemiBold)
+                            Text(
+                                context.getString(R.string.questionnaire_next),
+                                fontWeight = FontWeight.SemiBold
+                            )
                             Spacer(Modifier.width(8.dp))
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.ArrowForward,
@@ -758,7 +777,10 @@ private fun CompilationBottomBar(
                         }
 
                         CompilationAction.Confirm -> {
-                            Text("Conferma", fontWeight = FontWeight.SemiBold)
+                            Text(
+                                context.getString(R.string.questionnaire_confirm),
+                                fontWeight = FontWeight.SemiBold
+                            )
                             Spacer(Modifier.width(8.dp))
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.Send,
@@ -770,7 +792,10 @@ private fun CompilationBottomBar(
                         CompilationAction.Working -> {
                             LoadingIndicator(modifier = Modifier.size(24.dp), color = brandFg)
                             Spacer(Modifier.width(8.dp))
-                            Text("Invio in corso…", fontWeight = FontWeight.SemiBold)
+                            Text(
+                                context.getString(R.string.questionnaire_working),
+                                fontWeight = FontWeight.SemiBold
+                            )
                         }
                     }
                 }

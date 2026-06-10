@@ -1,6 +1,7 @@
 package it.attendance100.mybicocca.ui.screen.auth
 
 import androidx.activity.compose.BackHandler
+import androidx.annotation.StringRes
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -51,7 +52,9 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.platform.LocalAutofillManager
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentType
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
@@ -179,6 +182,7 @@ private fun AuthScreenBody(
     val fieldsInError by viewModel.credentialsRejected.collectAsStateWithLifecycle()
 
     val scope = rememberCoroutineScope()
+    val context = LocalContext.current
 
     val autofillManager = LocalAutofillManager.current
 
@@ -192,7 +196,7 @@ private fun AuthScreenBody(
 
                 is AuthEvent.Failed -> {
                     snackbarHostState.currentSnackbarData?.dismiss()
-                    snackbarHostState.showSnackbar(event.reason.toMessage())
+                    snackbarHostState.showSnackbar(context.getString(event.reason.toStringRes()))
                 }
             }
         }
@@ -217,7 +221,7 @@ private fun AuthScreenBody(
                 MyBicoccaWordmark(fontSize = 34.sp, sharedElement = morphWordmark)
                 Spacer(Modifier.height(8.dp))
                 Text(
-                    text = "Accedi con le tue credenziali di Ateneo",
+                    text = stringResource(R.string.auth_tagline),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center,
@@ -228,7 +232,7 @@ private fun AuthScreenBody(
                 OutlinedTextField(
                     value = username,
                     onValueChange = viewModel::setUsername,
-                    label = { Text("Username o Email") },
+                    label = { Text(stringResource(R.string.auth_username_label)) },
                     placeholder = { Text("m.rossi1") },
                     leadingIcon = { Icon(Icons.Outlined.Person, contentDescription = null) },
                     enabled = !inflight,
@@ -278,7 +282,7 @@ private fun AuthScreenBody(
                             color = MaterialTheme.colorScheme.onPrimary,
                         )
                     } else {
-                        Text("Accedi", color = Color.White)
+                        Text(stringResource(R.string.auth_sign_in_button), color = Color.White)
                     }
                 }
 
@@ -289,7 +293,7 @@ private fun AuthScreenBody(
                 ) {
                     HorizontalDivider(modifier = Modifier.weight(1f))
                     Text(
-                        text = "oppure",
+                        text = stringResource(R.string.common_or),
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(horizontal = 16.dp),
@@ -299,25 +303,25 @@ private fun AuthScreenBody(
                 Spacer(Modifier.height(28.dp))
 
                 AlternativeLoginButton(
-                    label = "Entra con SPID",
+                    labelRes = R.string.auth_spid_button,
                     icon = painterResource(R.drawable.ic_spid),
                     iconTint = Color.Unspecified,
                     enabled = !inflight,
                     onClick = {
                         scope.launch {
-                            snackbarHostState.showSnackbar("Accesso con SPID non ancora disponibile")
+                            snackbarHostState.showSnackbar(context.getString(R.string.auth_spid_unavailable))
                         }
                     },
                 )
                 Spacer(Modifier.height(12.dp))
                 AlternativeLoginButton(
-                    label = "Entra con CIE",
+                    labelRes = R.string.auth_cie_button,
                     icon = painterResource(R.drawable.ic_cie),
                     iconTint = MaterialTheme.colorScheme.onSurface,
                     enabled = !inflight,
                     onClick = {
                         scope.launch {
-                            snackbarHostState.showSnackbar("Accesso con CIE non ancora disponibile")
+                            snackbarHostState.showSnackbar(context.getString(R.string.auth_cie_unavailable))
                         }
                     },
                 )
@@ -349,7 +353,7 @@ private fun AuthScreenBody(
             ) {
                 Icon(
                     imageVector = Icons.Default.ArrowUpward,
-                    contentDescription = "Annulla",
+                    contentDescription = stringResource(R.string.common_cancel),
                 )
             }
         }
@@ -387,18 +391,18 @@ private fun AlternativeLoginButtonPreview() {
  * network and an unreachable/down backend (both surface as IOException), so the copy must
  * not assert it's the user's fault — it offers retry-later as an alternative.
  */
-private fun SignInFailure.toMessage(): String = when (this) {
+private fun SignInFailure.toStringRes(): Int = when (this) {
     is SignInFailure.BadCredentials ->
-        "Credenziali non valide. Controlla username e password."
+        R.string.auth_error_bad_credentials
 
     is SignInFailure.NoConnection ->
-        "Impossibile raggiungere il server. Controlla la connessione o riprova più tardi."
+        R.string.auth_error_no_connection
 
     is SignInFailure.AlreadySignedIn ->
-        "Questo account è già presente sul dispositivo."
+        R.string.auth_error_already_signed_in
 
     is SignInFailure.Unknown ->
-        "Accesso non riuscito. Riprova tra qualche istante."
+        R.string.auth_error_unknown
 }
 
 private val AlternativeLoginPressedColor = Color(0xFF0066CC)
@@ -411,12 +415,18 @@ private val AlternativeLoginPressedColor = Color(0xFF0066CC)
  */
 @Composable
 private fun AlternativeLoginButton(
-    label: String,
+    label: String? = null,
+    @StringRes labelRes: Int? = null,
     icon: Painter,
     iconTint: Color,
     enabled: Boolean,
     onClick: () -> Unit,
 ) {
+    val finalLabel = when {
+        label != null -> label
+        labelRes != null -> stringResource(labelRes)
+        else -> ""
+    }
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
 
@@ -453,6 +463,6 @@ private fun AlternativeLoginButton(
             tint = if (isPressed) Color.White else iconTint,
         )
         Spacer(Modifier.width(12.dp))
-        Text(label)
+        Text(finalLabel)
     }
 }

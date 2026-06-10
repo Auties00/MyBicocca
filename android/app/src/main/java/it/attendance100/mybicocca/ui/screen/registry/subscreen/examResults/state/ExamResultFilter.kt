@@ -15,6 +15,7 @@ enum class ExamResultFilter(val label: String) {
     Archived("Archiviati"),
 }
 
+
 fun ExamResult.examResultFilter(today: LocalDate): ExamResultFilter =
     if (requiresStudentDecision(today)) ExamResultFilter.Pending else ExamResultFilter.Archived
 

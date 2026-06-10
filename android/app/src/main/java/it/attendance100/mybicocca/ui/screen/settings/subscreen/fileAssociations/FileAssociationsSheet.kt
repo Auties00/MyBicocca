@@ -19,11 +19,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.domain.model.settings.FileOpenChoice
 import it.attendance100.mybicocca.ui.component.directory.SegmentedIconChip
@@ -62,6 +64,7 @@ private val FILE_ASSOCIATION_KINDS = listOf(
 @Composable
 fun FileAssociationsSheet(onDismiss: () -> Unit) {
     val haptic = rememberHapticManager()
+    val context = androidx.compose.ui.platform.LocalContext.current
     val viewModel: FileOpenPreferenceViewModel =
         hiltViewModel(checkNotNull(LocalViewModelStoreOwner.current) {
             "No ViewModelStoreOwner was provided via LocalViewModelStoreOwner"
@@ -77,12 +80,12 @@ fun FileAssociationsSheet(onDismiss: () -> Unit) {
                 .padding(bottom = 24.dp),
         ) {
             Text(
-                text = "Apertura file",
+                text = stringResource(R.string.settings_file_opening_title),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.SemiBold,
             )
             Text(
-                text = "App predefinite per tipo di file",
+                text = stringResource(R.string.settings_file_opening_subtitle),
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -94,7 +97,7 @@ fun FileAssociationsSheet(onDismiss: () -> Unit) {
                         isFirst = index == 0,
                         isLast = index == FILE_ASSOCIATION_KINDS.lastIndex,
                         title = kind.openChooserLabel(),
-                        subtitle = choices[kind.preferenceKey].associationLabel(),
+                        subtitle = choices[kind.preferenceKey].associationLabel(context),
                         onClick = {
                             haptic.tap()
                             editing = kind
@@ -137,8 +140,9 @@ fun FileAssociationsSheet(onDismiss: () -> Unit) {
     }
 }
 
-private fun FileOpenChoice?.associationLabel(): String = when (this) {
-    FileOpenChoice.InApp -> "Apri in app"
-    FileOpenChoice.External -> "Apri con altra app"
-    null -> "Chiedi ogni volta"
+private fun FileOpenChoice?.associationLabel(context: android.content.Context): String =
+    when (this) {
+        FileOpenChoice.InApp -> context.getString(R.string.settings_file_association_open_in_app)
+        FileOpenChoice.External -> context.getString(R.string.settings_file_association_open_external)
+        null -> context.getString(R.string.settings_file_association_ask)
 }

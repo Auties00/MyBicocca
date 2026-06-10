@@ -129,6 +129,7 @@ private fun percentRampColor(fraction: Float): Color {
     return if (f < 0.5f) lerp(low, mid, f / 0.5f) else lerp(mid, high, (f - 0.5f) / 0.5f)
 }
 
+@Composable
 private fun CourseAttendance.statusCaption(): String {
     classroomAttendance?.let {
         return "${it.status.label()} · ${it.lessonsAttended} lezioni · ${it.attendancePercentage.roundToInt()}%"

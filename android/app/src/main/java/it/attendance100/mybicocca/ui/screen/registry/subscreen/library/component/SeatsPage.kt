@@ -1,5 +1,6 @@
 package it.attendance100.mybicocca.ui.screen.registry.subscreen.library.component
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -13,7 +14,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.background
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Bolt
@@ -32,9 +32,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.domain.model.library.LibrarySeat
 import it.attendance100.mybicocca.domain.model.library.LibraryZoneColor
 import it.attendance100.mybicocca.ui.component.modal.SheetMessage
@@ -65,8 +68,8 @@ internal fun SeatsPage(
         if (seats.isEmpty()) {
             SheetMessage(
                 icon = Icons.Outlined.EventSeat,
-                title = "Nessun posto libero",
-                body = "Per questo orario non ci sono posti disponibili. Prova un altro orario o durata.",
+                title = stringResource(R.string.library_no_free_seats),
+                body = stringResource(R.string.library_no_free_seats_body),
             )
             return
         }
@@ -102,7 +105,7 @@ internal fun SeatsPage(
             Icon(Icons.Rounded.AutoAwesome, contentDescription = null, modifier = Modifier.size(20.dp))
             Spacer(Modifier.width(8.dp))
             Text(
-                "Scegli automaticamente",
+                stringResource(R.string.library_auto_select),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold,
             )
@@ -149,6 +152,7 @@ private fun SeatRow(seat: LibrarySeat, zoneColor: LibraryZoneColor, onClick: () 
                     overflow = TextOverflow.Ellipsis,
                 )
                 if (seat.hasPowerOutlet) {
+                    val context = LocalContext.current
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                         Icon(
                             imageVector = Icons.Outlined.Bolt,
@@ -157,7 +161,7 @@ private fun SeatRow(seat: LibrarySeat, zoneColor: LibraryZoneColor, onClick: () 
                             modifier = Modifier.size(14.dp),
                         )
                         Text(
-                            text = "Presa elettrica",
+                            text = context.getString(R.string.library_power_outlet),
                             style = MaterialTheme.typography.labelMedium,
                             color = scheme.onSurfaceVariant,
                         )

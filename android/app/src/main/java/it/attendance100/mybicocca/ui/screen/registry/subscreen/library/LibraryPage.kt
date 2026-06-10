@@ -10,24 +10,27 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.valueOrNull
 import it.attendance100.mybicocca.domain.model.library.LibraryReservation
 import it.attendance100.mybicocca.domain.model.library.LibraryZoneColor
 import it.attendance100.mybicocca.domain.model.library.isBookableAt
-import it.attendance100.mybicocca.ui.screen.registry.subscreen.attendance.subscreen.rilevaPresenza.component.QrScannerScreen
+import it.attendance100.mybicocca.ui.component.modal.SheetConfirmPage
 import it.attendance100.mybicocca.ui.component.modal.SheetOutcome
 import it.attendance100.mybicocca.ui.component.modal.SheetPagerHeader
-import it.attendance100.mybicocca.ui.component.modal.SheetConfirmPage
 import it.attendance100.mybicocca.ui.component.modal.SheetResultPage
 import it.attendance100.mybicocca.ui.component.modal.sheetPageTransform
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.attendance.subscreen.rilevaPresenza.component.QrScannerScreen
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.library.component.ConfirmPage
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.library.component.DateTimePage
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.library.component.HomePage
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.library.component.LibrariesPage
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.library.component.LibraryDetailPage
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.library.component.LibraryDonePage
-import it.attendance100.mybicocca.ui.screen.registry.subscreen.library.component.LibrariesPage
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.library.component.LibraryReservationDetailPage
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.library.component.LoginPage
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.library.component.SeatsPage
@@ -113,20 +116,50 @@ fun LibraryPage(
         val mandatoryAgreement = remember(agreements) { agreements.firstOrNull { it.mandatory } }
         val email = institutionalEmail.orEmpty()
 
+        val context = LocalContext.current
         LaunchedEffect(Unit) {
             viewModel.events.collect { event ->
                 when (event) {
-                    LibraryEvent.ReservationCancelled -> outcome = SheetOutcome.Success("Prenotazione annullata.")
-                    is LibraryEvent.CancelFailed -> outcome = SheetOutcome.Error("Annullamento non riuscito", event.cause)
-                    is LibraryEvent.BookingFailed -> outcome = SheetOutcome.Error("Prenotazione non riuscita", event.cause)
+                    LibraryEvent.ReservationCancelled -> outcome =
+                        SheetOutcome.Success(context.getString(R.string.library_reservation_cancelled))
+
+                    is LibraryEvent.CancelFailed -> outcome = SheetOutcome.Error(
+                        context.getString(R.string.library_cancellation_failed),
+                        event.cause
+                    )
+
+                    is LibraryEvent.BookingFailed -> outcome = SheetOutcome.Error(
+                        context.getString(R.string.library_booking_failed),
+                        event.cause
+                    )
                     is LibraryEvent.LoginEmailSent -> Unit
-                    is LibraryEvent.LoginRequestFailed -> outcome = SheetOutcome.Error("Invio non riuscito", event.cause)
-                    is LibraryEvent.LoginFailed -> outcome = SheetOutcome.Error("Accesso non riuscito", event.cause)
-                    is LibraryEvent.SyncFailed -> outcome = SheetOutcome.Error("Sincronizzazione non riuscita", event.cause)
-                    LibraryEvent.PresenceVerified -> outcome = SheetOutcome.Success("Presenza registrata.")
+                    is LibraryEvent.LoginRequestFailed -> outcome = SheetOutcome.Error(
+                        context.getString(R.string.library_send_failed),
+                        event.cause
+                    )
+
+                    is LibraryEvent.LoginFailed -> outcome = SheetOutcome.Error(
+                        context.getString(R.string.library_login_failed),
+                        event.cause
+                    )
+
+                    is LibraryEvent.SyncFailed -> outcome = SheetOutcome.Error(
+                        context.getString(R.string.library_sync_failed),
+                        event.cause
+                    )
+
+                    LibraryEvent.PresenceVerified -> outcome =
+                        SheetOutcome.Success(context.getString(R.string.library_presence_verified))
                     LibraryEvent.PresenceInvalidCode ->
-                        outcome = SheetOutcome.Error("Codice non valido", body = "Controlla il QR o il codice e riprova.")
-                    is LibraryEvent.PresenceFailed -> outcome = SheetOutcome.Error("Verifica non riuscita", event.cause)
+                        outcome = SheetOutcome.Error(
+                            context.getString(R.string.library_invalid_code),
+                            body = context.getString(R.string.library_invalid_code_body)
+                        )
+
+                    is LibraryEvent.PresenceFailed -> outcome = SheetOutcome.Error(
+                        context.getString(R.string.library_presence_failed),
+                        event.cause
+                    )
                 }
             }
         }
@@ -171,19 +204,26 @@ fun LibraryPage(
                 depth = displayDepth(display),
                 title = when (display) {
                     LibraryDisplay.Outcome -> ""
-                    LibraryDisplay.ConfirmCancel -> "Cancellare la prenotazione?"
+                    LibraryDisplay.ConfirmCancel -> stringResource(R.string.library_cancel_confirmation)
                     is LibraryDisplay.Page -> when (val current = display.page) {
-                        LibraryPage.Home -> "Biblioteca"
-                        LibraryPage.Login -> "Accedi"
-                        LibraryPage.Libraries -> "Biblioteche"
-                        is LibraryPage.ReservationDetail -> detailReservation?.libraryName ?: "Prenotazione"
+                        LibraryPage.Home -> stringResource(R.string.library_title)
+                        LibraryPage.Login -> stringResource(R.string.library_login)
+                        LibraryPage.Libraries -> stringResource(R.string.library_libraries)
+                        is LibraryPage.ReservationDetail -> detailReservation?.libraryName
+                            ?: stringResource(R.string.library_reservation)
                         is LibraryPage.LibraryDetail ->
-                            libraryList.firstOrNull { it.id == current.libraryId }?.name ?: "Biblioteca"
-                        LibraryPage.Zones -> bookingLibrary?.name ?: "Prenota"
-                        LibraryPage.DateTime -> selectedZone?.name ?: "Prenota"
-                        LibraryPage.Seats -> "Scegli il posto"
-                        LibraryPage.Confirm -> "Conferma"
-                        LibraryPage.Done -> "Confermato"
+                            libraryList.firstOrNull { it.id == current.libraryId }?.name
+                                ?: stringResource(R.string.library_title)
+
+                        LibraryPage.Zones -> bookingLibrary?.name
+                            ?: stringResource(R.string.library_book)
+
+                        LibraryPage.DateTime -> selectedZone?.name
+                            ?: stringResource(R.string.library_book)
+
+                        LibraryPage.Seats -> stringResource(R.string.library_choose_seat)
+                        LibraryPage.Confirm -> stringResource(R.string.common_confirm)
+                        LibraryPage.Done -> stringResource(R.string.library_confirmed)
                     }
                 },
                 subtitle = when (display) {
@@ -191,18 +231,22 @@ fun LibraryPage(
                     LibraryDisplay.ConfirmCancel -> pendingCancel?.libraryName
                     is LibraryDisplay.Page -> when (val current = display.page) {
                         LibraryPage.Home ->
-                            if (linkedEmail == null) "Accedi e prenota un posto"
+                            if (linkedEmail == null) stringResource(R.string.library_login_and_book)
                             else if (reservations !is Loadable.Loaded) null
-                            else if (reservationList.isEmpty()) "Nessuna prenotazione"
-                            else if (reservationList.size == 1) "1 prenotazione"
-                            else "${reservationList.size} prenotazioni"
-                        LibraryPage.Login -> "Verifica la tua email"
-                        LibraryPage.Libraries -> "Scegli dove prenotare"
-                        is LibraryPage.ReservationDetail -> "Dettagli prenotazione"
+                            else if (reservationList.isEmpty()) stringResource(R.string.library_no_bookings)
+                            else if (reservationList.size == 1) stringResource(R.string.library_one_booking)
+                            else stringResource(
+                                R.string.library_multiple_bookings,
+                                reservationList.size
+                            )
+
+                        LibraryPage.Login -> stringResource(R.string.library_verify_email)
+                        LibraryPage.Libraries -> stringResource(R.string.library_choose_library)
+                        is LibraryPage.ReservationDetail -> stringResource(R.string.library_reservation_details)
                         is LibraryPage.LibraryDetail ->
                             libraryList.firstOrNull { it.id == current.libraryId }?.secondaryName
-                        LibraryPage.Zones -> "Scegli una zona"
-                        LibraryPage.DateTime -> "Scegli giorno e orario"
+                        LibraryPage.Zones -> stringResource(R.string.library_choose_zone)
+                        LibraryPage.DateTime -> stringResource(R.string.library_choose_datetime)
                         LibraryPage.Seats -> slotRecap
                         LibraryPage.Confirm -> slotRecap
                         LibraryPage.Done -> bookingLibrary?.name
@@ -231,8 +275,10 @@ fun LibraryPage(
 
                     LibraryDisplay.ConfirmCancel -> pendingCancel?.let { reservation ->
                         SheetConfirmPage(
-                            body = "Stai per cancellare il posto in ${reservation.libraryName}. " +
-                                "Tornerà prenotabile da altri studenti.",
+                            body = stringResource(
+                                R.string.library_confirm_cancel,
+                                reservation.libraryName
+                            ),
                             onConfirm = {
                                 pendingCancel = null
                                 viewModel.cancel(reservation)
@@ -370,11 +416,6 @@ fun LibraryPage(
                     viewModel.verifyPresence(code)
                 },
                 onClose = { showScanner = false },
-                hint = "Inquadra il QR in biblioteca",
-                manualTitle = "Inserisci codice",
-                manualDescription = "Inserisci il codice di validazione mostrato in biblioteca.",
-                manualLabel = "Codice di validazione",
-                manualConfirm = "Verifica",
             )
         }
     }

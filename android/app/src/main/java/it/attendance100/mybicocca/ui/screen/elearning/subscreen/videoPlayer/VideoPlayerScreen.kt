@@ -35,8 +35,9 @@ import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.ui.compose.PlayerSurface
@@ -50,14 +51,14 @@ import it.attendance100.mybicocca.core.state.SyncStatus
 import it.attendance100.mybicocca.core.state.valueOrNull
 import it.attendance100.mybicocca.domain.model.elearning.course.CourseId
 import it.attendance100.mybicocca.ui.component.button.RetryButton
-import it.attendance100.mybicocca.ui.screen.elearning.theme.LocalCourseAccentPalette
-import it.attendance100.mybicocca.ui.screen.elearning.theme.ProvideCourseAccentPalette
-import it.attendance100.mybicocca.ui.screen.elearning.theme.accentFor
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.videoPlayer.component.CenterPlaybackControls
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.videoPlayer.component.CustomPlayerControls
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.videoPlayer.component.PlayerChrome
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.videoPlayer.component.PlaylistSidePanel
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.videoPlayer.subscreen.qualityPicker.QualityPickerSheet
+import it.attendance100.mybicocca.ui.screen.elearning.theme.LocalCourseAccentPalette
+import it.attendance100.mybicocca.ui.screen.elearning.theme.ProvideCourseAccentPalette
+import it.attendance100.mybicocca.ui.screen.elearning.theme.accentFor
 import kotlinx.coroutines.delay
 
 /**
@@ -78,10 +79,21 @@ fun VideoPlayerScreen(
     courseId: Int,
     cmId: Int,
     onBack: () -> Unit,
-    viewModel: VideoPlayerViewModel = hiltViewModel(),
+    viewModel: VideoPlayerViewModel = hiltViewModel(
+        checkNotNull(
+            LocalViewModelStoreOwner.current
+        ) {
+            "No ViewModelStoreOwner was provided via LocalViewModelStoreOwner"
+        }, null
+    ),
 ) {
     ProvideCourseAccentPalette {
-        VideoPlayerScreenContent(courseId = courseId, cmId = cmId, onBack = onBack, viewModel = viewModel)
+        VideoPlayerScreenContent(
+            courseId = courseId,
+            cmId = cmId,
+            onBack = onBack,
+            viewModel = viewModel
+        )
     }
 }
 
@@ -126,7 +138,13 @@ private fun VideoPlayerScreenContent(
             pipController.setActive(null)
             return@LaunchedEffect
         }
-        pipController.setActive(PipState(aspectNumerator = 16, aspectDenominator = 9, isPlaying = isPlaying))
+        pipController.setActive(
+            PipState(
+                aspectNumerator = 16,
+                aspectDenominator = 9,
+                isPlaying = isPlaying
+            )
+        )
     }
     DisposableEffect(Unit) {
         onDispose { pipController.setActive(null) }
@@ -139,9 +157,9 @@ private fun VideoPlayerScreenContent(
 
     val playerBuffering = rememberPlayerIsBuffering(currentPlayer)
     val showBufferingIndicator = currentPlayer == null ||
-        stream is Loadable.NotYetLoaded ||
-        syncStatus is SyncStatus.Refreshing ||
-        playerBuffering
+            stream is Loadable.NotYetLoaded ||
+            syncStatus is SyncStatus.Refreshing ||
+            playerBuffering
 
     Box(
         modifier = Modifier
@@ -246,17 +264,26 @@ private fun VideoSurface(
             PlayerSurface(
                 player = player,
                 surfaceType = SURFACE_TYPE_SURFACE_VIEW,
-                modifier = Modifier.resizeWithContentScale(ContentScale.Fit, presentation.videoSizeDp),
+                modifier = Modifier.resizeWithContentScale(
+                    ContentScale.Fit,
+                    presentation.videoSizeDp
+                ),
             )
             if (presentation.coverSurface) {
-                Box(modifier = Modifier.fillMaxSize().background(Color.Black))
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.Black)
+                )
             }
         }
 
         when {
             syncStatus is SyncStatus.Failed -> {
                 Column(
-                    modifier = Modifier.align(Alignment.Center).padding(24.dp),
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .padding(24.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
@@ -268,12 +295,14 @@ private fun VideoSurface(
                     RetryButton(onClick = onRetry)
                 }
             }
+
             showBufferingIndicator -> {
                 CircularProgressIndicator(
                     color = Color.White,
                     modifier = Modifier.align(Alignment.Center),
                 )
             }
+
             else -> Unit
         }
     }

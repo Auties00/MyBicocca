@@ -42,12 +42,12 @@ sealed interface AppRoute : NavKey {
 
     /** Profile page (with the libretto), reached from the avatar / account switcher. */
     @Serializable data object Profile : AppRoute {
-        override val appTitle = AppTitle.SubPage("Profilo")
+        override val appTitle = AppTitle.SubPage("screen_title_profile")
     }
 
     /** Settings page, reached from the account switcher; every section lives inline on it. */
     @Serializable data object Settings : AppRoute {
-        override val appTitle = AppTitle.SubPage("Impostazioni")
+        override val appTitle = AppTitle.SubPage("screen_title_settings")
     }
 
     /**
@@ -59,7 +59,7 @@ sealed interface AppRoute : NavKey {
         override val extendsBehindTopBar get() = true
     }
     @Serializable data class AssignmentDetail(val assignId: Int, val courseId: Int) : AppRoute {
-        override val appTitle get() = AppTitle.SubPage("Compito")
+        override val appTitle get() = AppTitle.SubPage("screen_title_assignment")
     }
     /**
      * In-app viewer for course files. Carries either a remote pluginfile URL (the common case,
@@ -89,6 +89,6 @@ sealed interface AppRoute : NavKey {
 
     /** Teacher detail page, reachable from multiple tabs. */
     @Serializable data class TeacherDetail(val teacherCode: String) : AppRoute {
-        override val appTitle get() = AppTitle.SubPage("Docente")
+        override val appTitle get() = AppTitle.SubPage("screen_title_teacher")
     }
 }

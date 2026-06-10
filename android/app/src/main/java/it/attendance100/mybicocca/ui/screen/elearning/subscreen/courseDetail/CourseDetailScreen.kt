@@ -69,6 +69,7 @@ import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -76,6 +77,7 @@ import androidx.core.net.toUri
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.SyncStatus
 import it.attendance100.mybicocca.core.state.valueOrNull
@@ -151,7 +153,10 @@ fun CourseDetailActions(
     IconButton(onClick = viewModel::toggleFavourite) {
         Icon(
             imageVector = if (favourite) Icons.Filled.Star else Icons.Outlined.StarBorder,
-            contentDescription = if (favourite) "Rimuovi dai preferiti" else "Aggiungi ai preferiti",
+            contentDescription = stringResource(
+                if (favourite) R.string.elearning_course_remove_from_favorites
+                else R.string.elearning_course_add_to_favorites
+            ),
             tint = if (favourite) scheme.tertiary else scheme.onSurface,
         )
     }
@@ -279,7 +284,10 @@ fun CourseDetailScreen(
                 )
                 is CourseDetailOneShotEvent.OpenFolder -> folderPickCmId = event.cmId
                 is CourseDetailOneShotEvent.RefreshFailed ->
-                    snackbar.showError("Sincronizzazione del corso non riuscita", event.cause)
+                    snackbar.showError(
+                        context.getString(R.string.elearning_course_sync_failed),
+                        event.cause
+                    )
             }
         }
     }
@@ -657,8 +665,8 @@ private fun ContentPage(
     if (details.sections.isEmpty()) {
         EmptyState(
             icon = Icons.AutoMirrored.Outlined.LibraryBooks,
-            title = "Nessun contenuto",
-            body = "I materiali del corso appariranno qui.",
+            title = stringResource(R.string.elearning_course_no_content),
+            body = stringResource(R.string.elearning_course_content_not_available),
             modifier = emptyModifier,
         )
     } else {
@@ -719,8 +727,8 @@ private fun QuizzesPage(
             if (list.isEmpty()) {
                 EmptyState(
                     icon = Icons.Outlined.Quiz,
-                    title = "Nessun quiz",
-                    body = "I quiz del corso appariranno qui.",
+                    title = stringResource(R.string.elearning_course_no_quiz),
+                    body = stringResource(R.string.elearning_course_quiz_not_available),
                     modifier = emptyModifier,
                 )
             } else {
@@ -873,8 +881,8 @@ private fun AssignmentsPage(
             if (values.isEmpty()) {
                 EmptyState(
                     icon = Icons.AutoMirrored.Outlined.Assignment,
-                    title = "Nessun compito",
-                    body = "I compiti assegnati nel corso appariranno qui.",
+                    title = stringResource(R.string.elearning_course_no_assignment),
+                    body = stringResource(R.string.elearning_course_assignment_not_available),
                     modifier = emptyModifier,
                 )
                 return
@@ -926,8 +934,8 @@ private fun ForumsPage(
             if (list.isEmpty()) {
                 EmptyState(
                     icon = Icons.Outlined.Forum,
-                    title = "Nessun forum",
-                    body = "Gli spazi di discussione del corso appariranno qui.",
+                    title = stringResource(R.string.elearning_course_no_forum),
+                    body = stringResource(R.string.elearning_course_forum_not_available),
                     modifier = emptyModifier,
                 )
                 return

@@ -1,5 +1,7 @@
 package it.attendance100.mybicocca.ui.screen.registry.subscreen.attendance.subscreen.courseAttendanceDetail
 
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -8,8 +10,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerDefaults
 import androidx.compose.foundation.pager.rememberPagerState
@@ -30,12 +30,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.domain.model.attendance.ClassroomAttendance
 import it.attendance100.mybicocca.domain.model.attendance.CourseAttendance
 import it.attendance100.mybicocca.domain.model.attendance.SessionAttendance
-import it.attendance100.mybicocca.ui.component.input.SegmentedSwitch
 import it.attendance100.mybicocca.ui.component.feedback.EmptyState
+import it.attendance100.mybicocca.ui.component.input.SegmentedSwitch
 import it.attendance100.mybicocca.ui.screen.registry.theme.RegistryAccent
 import it.attendance100.mybicocca.ui.screen.registry.theme.registryAccent
 import kotlinx.coroutines.launch
@@ -138,8 +140,8 @@ private fun SessionAttendance.tabTitle(): String {
 private fun LezioniTabBody(classroom: ClassroomAttendance?) {
     if (classroom == null) {
         TabEmptyState(
-            title = "Nessuna rilevazione in aula",
-            body = "EasyStaff non ha ancora registrato presenze per questo corso.",
+            title = stringResource(R.string.attendance_no_classroom_detection),
+            body = stringResource(R.string.attendance_easystaff_no_records),
         )
         return
     }
@@ -171,8 +173,8 @@ private fun RegisterTabBody(session: SessionAttendance) {
     val recorded = session.recordedPercentage
     if (recorded == null) {
         TabEmptyState(
-            title = "Nessuna rilevazione disponibile",
-            body = "Il registro non contiene ancora presenze registrate.",
+            title = stringResource(R.string.attendance_no_detection_available),
+            body = stringResource(R.string.attendance_register_no_records),
         )
         return
     }

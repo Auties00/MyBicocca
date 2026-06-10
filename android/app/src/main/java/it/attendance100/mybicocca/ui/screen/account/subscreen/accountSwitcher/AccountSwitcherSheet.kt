@@ -60,6 +60,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
@@ -67,6 +68,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.os.ProvideHapticManager
 import it.attendance100.mybicocca.domain.model.account.AcademicIdentity
 import it.attendance100.mybicocca.domain.model.account.Account
@@ -371,7 +373,7 @@ private fun AccountsScene(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
-                text = "Account",
+                text = stringResource(R.string.account_switcher_title),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface,
@@ -381,7 +383,7 @@ private fun AccountsScene(
             IconButton(onClick = onOpenSettings) {
                 Icon(
                     imageVector = Icons.Default.Settings,
-                    contentDescription = "Impostazioni",
+                    contentDescription = stringResource(R.string.account_switcher_settings),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }

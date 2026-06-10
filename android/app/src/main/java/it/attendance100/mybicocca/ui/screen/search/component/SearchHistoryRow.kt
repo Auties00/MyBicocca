@@ -48,7 +48,7 @@ fun SearchHistoryRow(
     modifier: Modifier = Modifier,
 ) {
     val scheme = MaterialTheme.colorScheme
-    val dismissState = rememberSwipeToDismissBoxState(
+    @Suppress("DEPRECATION") val dismissState = rememberSwipeToDismissBoxState(
         confirmValueChange = { value ->
             if (value != SwipeToDismissBoxValue.Settled) onRemove()
             true

@@ -22,9 +22,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.SyncStatus
 import it.attendance100.mybicocca.core.state.valueOrNull
@@ -130,12 +132,12 @@ private fun TimelinePage(
         when {
             failure != null && history == null -> SheetMessage(
                 icon = Icons.Outlined.CloudOff,
-                title = "Caricamento non riuscito",
-                body = "Impossibile caricare le iscrizioni.",
+                title = stringResource(R.string.enrollments_load_failed),
+                body = stringResource(R.string.enrollments_load_failed_body),
                 action = { RetryButton(onClick = onRetry) },
             )
 
-            !settled || history == null -> SheetLoadingIndicator(label = "Caricamento iscrizioni…")
+            !settled -> SheetLoadingIndicator(label = stringResource(R.string.enrollments_loading))
 
             else -> {
                 val hasFooter = history.renewal != RenewalState.NotApplicable
@@ -151,8 +153,8 @@ private fun TimelinePage(
                         item(key = "empty") {
                             SheetMessage(
                                 icon = Icons.Outlined.School,
-                                title = "Nessuna iscrizione",
-                                body = "Non risultano iscrizioni registrate.",
+                                title = stringResource(R.string.enrollments_none),
+                                body = stringResource(R.string.enrollments_none_body),
                             )
                         }
                     } else {

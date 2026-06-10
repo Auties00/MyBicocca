@@ -20,8 +20,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.domain.model.enrollment.RenewalState
 
 /**
@@ -59,7 +61,11 @@ fun EnrollmentRenewalButton(
             )
             Spacer(Modifier.size(8.dp))
             Text(
-                text = "Rinnova l'iscrizione ${state.academicYear}/${(state.academicYear + 1) % 100}",
+                text = stringResource(
+                    R.string.enrollments_renew_button,
+                    state.academicYear,
+                    (state.academicYear + 1) % 100
+                ),
                 fontWeight = FontWeight.Bold,
             )
         }
@@ -82,7 +88,11 @@ fun EnrollmentRenewalButton(
                 )
                 Spacer(Modifier.size(8.dp))
                 Text(
-                    text = "Iscritto per l'a.a. ${state.academicYear}/${(state.academicYear + 1) % 100}",
+                    text = stringResource(
+                        R.string.enrollments_enrolled_button,
+                        state.academicYear,
+                        (state.academicYear + 1) % 100
+                    ),
                     fontWeight = FontWeight.Bold,
                 )
             }

@@ -51,8 +51,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.ui.theme.LocalDarkTheme
 import kotlinx.coroutines.delay
 import kotlin.math.min
@@ -205,7 +207,7 @@ private fun ConnectivityBand(restored: Boolean, heightPx: Int) {
                 )
                 Spacer(Modifier.width(8.dp))
                 Text(
-                    text = if (online) "Di nuovo online" else "Sei offline",
+                    text = stringResource(if (online) R.string.connectivity_online else R.string.connectivity_offline),
                     style = MaterialTheme.typography.labelLarge,
                     color = Color.White,
                 )

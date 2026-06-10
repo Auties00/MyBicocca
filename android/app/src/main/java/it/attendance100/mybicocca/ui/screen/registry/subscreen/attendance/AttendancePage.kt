@@ -33,11 +33,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.SyncStatus
 import it.attendance100.mybicocca.core.state.valueOrNull
@@ -151,18 +153,18 @@ fun AttendancePage(
             SheetPagerHeader(
                 depth = page.depth,
                 title = when (page) {
-                    AttendancePage.Root -> "Presenze"
+                    AttendancePage.Root -> stringResource(R.string.attendance_title)
                     is AttendancePage.Course -> page.course.name
-                    AttendancePage.Rileva -> "Rileva presenza"
-                    AttendancePage.RilevaCode -> "Lezione"
-                    AttendancePage.RilevaProgress -> "Registrazione"
-                    AttendancePage.RilevaResult -> "Esito"
+                    AttendancePage.Rileva -> stringResource(R.string.attendance_rileva_title)
+                    AttendancePage.RilevaCode -> stringResource(R.string.attendance_lesson_title)
+                    AttendancePage.RilevaProgress -> stringResource(R.string.attendance_registration_title)
+                    AttendancePage.RilevaResult -> stringResource(R.string.attendance_result_title)
                 },
                 subtitle = when (page) {
                     AttendancePage.Root -> if (loaded) coursesSummary(courses.size) else null
                     is AttendancePage.Course -> page.course.teacherName
-                    AttendancePage.Rileva -> "Registra la tua presenza"
-                    AttendancePage.RilevaCode -> "Inserisci il codice della lezione"
+                    AttendancePage.Rileva -> stringResource(R.string.attendance_rileva_subtitle)
+                    AttendancePage.RilevaCode -> stringResource(R.string.attendance_lesson_code_subtitle)
                     AttendancePage.RilevaProgress, AttendancePage.RilevaResult -> null
                 },
                 onBack = when (page) {
@@ -309,12 +311,12 @@ private fun SheetBody(
         when {
             failure != null && courses.isEmpty() -> SheetError(cause = failure.cause, onRetry = onRetry)
 
-            !settled -> SheetLoadingIndicator(label = "Caricamento presenze…")
+            !settled -> SheetLoadingIndicator(label = stringResource(R.string.attendance_loading_presence))
 
             courses.isEmpty() -> SheetMessage(
                 icon = Icons.Outlined.CoPresent,
-                title = "Nessun corso da frequentare",
-                body = "Hai superato tutti i corsi previsti dal tuo piano fino a questo semestre.",
+                title = stringResource(R.string.attendance_no_courses),
+                body = stringResource(R.string.attendance_no_courses_body),
             )
 
             else -> CourseList(
@@ -357,7 +359,7 @@ private fun RilevaFooterButton(
             modifier = Modifier.size(20.dp),
         )
         Spacer(Modifier.width(8.dp))
-        Text("Rileva presenza", fontWeight = FontWeight.SemiBold)
+        Text(stringResource(R.string.attendance_mark_presence), fontWeight = FontWeight.SemiBold)
     }
 }
 
@@ -396,7 +398,7 @@ private fun CourseList(
 private fun SheetError(cause: Throwable, onRetry: () -> Unit) {
     SheetMessage(
         icon = Icons.Outlined.CloudOff,
-        title = "Caricamento non riuscito",
+        title = stringResource(R.string.attendance_load_failed),
         body = cause.friendlyMessage(),
         action = { RetryButton(onClick = onRetry) },
     )

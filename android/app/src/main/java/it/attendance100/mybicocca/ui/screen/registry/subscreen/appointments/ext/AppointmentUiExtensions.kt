@@ -14,9 +14,12 @@ import androidx.compose.material.icons.outlined.School
 import androidx.compose.material.icons.outlined.SupportAgent
 import androidx.compose.material.icons.outlined.Work
 import androidx.compose.material.icons.outlined.WorkspacePremium
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.domain.model.appointment.AppointmentService
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.appointments.state.AppointmentDirectorySection
 
@@ -35,7 +38,7 @@ val AppointmentService.displayName: String
 private val TrailingCareerSuffix = Regex("""\s*\(Gestione [Cc]arriere\)$""")
 
 val AppointmentService.durationLabel: String
-    get() = "Appuntamento di ${durationSeconds / 60} min"
+    @Composable get() = stringResource(R.string.appointments_duration, durationSeconds / 60)
 
 /** Directory icon picked by keyword match over the service name and group. */
 val AppointmentService.directoryIcon: ImageVector
@@ -60,29 +63,47 @@ val AppointmentService.directoryIcon: ImageVector
 
 /** The macro sections in their fixed display order, each with its directory caption. */
 private val SectionCaptions = linkedMapOf(
-    "Carriere studenti" to "Gestione della tua carriera",
-    "Didattica" to "Sportelli dei corsi di studio",
-    "Ritiri e consegne" to "Badge, pergamene e diplomi",
-    "Altri sportelli" to "Orientamento, internazionale e altro",
+    R.string.appointments_section_label_career to R.string.appointments_section_career,
+    R.string.appointments_section_label_teaching to R.string.appointments_section_teaching,
+    R.string.appointments_section_label_deliveries to R.string.appointments_section_deliveries,
+    R.string.appointments_section_label_other to R.string.appointments_section_other,
 )
 
 /**
  * The macro section a portal group (or service name) falls into; unmatched entries land in
  * "Altri sportelli". Single source for both the directory headers and a booking's subtitle.
  */
-fun sectionLabelOf(groupOrName: String): String = when {
-    groupOrName.startsWith("Carriere Studenti", ignoreCase = true) -> "Carriere studenti"
-    groupOrName.startsWith("Didattica", ignoreCase = true) -> "Didattica"
-    groupOrName.startsWith("Ritiro", ignoreCase = true) -> "Ritiri e consegne"
-    else -> "Altri sportelli"
+fun sectionLabelOf(groupOrName: String): Int = when {
+    groupOrName.startsWith(
+        "Carriere Studenti",
+        ignoreCase = true
+    ) -> R.string.appointments_section_label_career
+
+    groupOrName.startsWith(
+        "Didattica",
+        ignoreCase = true
+    ) -> R.string.appointments_section_label_teaching
+
+    groupOrName.startsWith(
+        "Ritiro",
+        ignoreCase = true
+    ) -> R.string.appointments_section_label_deliveries
+
+    else -> R.string.appointments_section_label_other
 }
 
 /** Folds the raw services into the ordered macro sections, dropping empty sections and sorting each by display name. */
+@Composable
 fun List<AppointmentService>.toDirectorySections(): List<AppointmentDirectorySection> {
     val byLabel = groupBy { sectionLabelOf(it.group ?: it.name) }
-    return SectionCaptions.entries.mapNotNull { (label, caption) ->
-        byLabel[label]?.takeIf { it.isNotEmpty() }
-            ?.let { AppointmentDirectorySection(label, caption, it.sortedBy { s -> s.displayName }) }
+    return SectionCaptions.entries.mapNotNull { (labelRes, captionRes) ->
+        byLabel[labelRes]?.takeIf { it.isNotEmpty() }
+            ?.let {
+                AppointmentDirectorySection(
+                    stringResource(labelRes),
+                    stringResource(captionRes),
+                    it.sortedBy { s -> s.displayName })
+            }
     }
 }
 

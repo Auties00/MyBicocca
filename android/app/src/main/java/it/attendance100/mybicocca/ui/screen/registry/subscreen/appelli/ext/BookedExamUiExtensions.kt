@@ -1,5 +1,8 @@
 package it.attendance100.mybicocca.ui.screen.registry.subscreen.appelli.ext
 
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.res.stringResource
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.domain.model.exam.BookedExam
 import it.attendance100.mybicocca.domain.model.exam.ExamCallType
 import it.attendance100.mybicocca.domain.model.exam.ExamGrade
@@ -14,29 +17,35 @@ import java.util.Locale
  * accented finals as a trailing apostrophe ("AFFIDABILITA'"). Renders them as Italian
  * title case ("Metodi Algebrici per l'Informatica", "Affidabilità").
  */
+@Composable
 fun BookedExam.displayTitle(): String =
-    activityDescription?.takeIf { it.isNotBlank() }?.let { italianTitleCase(it) } ?: "Esame"
+    activityDescription?.takeIf { it.isNotBlank() }?.let { italianTitleCase(it) } ?: stringResource(
+        R.string.appelli_exam
+    )
 
 /**
  * Subtitle for a sat (Passate) booking: when the appello was taken, with a hint while the
  * outcome is still missing. "Sostenuto il 24 feb 2026" / "Sostenuto il 24 feb 2026 · in
  * attesa di esito".
  */
+@Composable
 fun BookedExam.sittingLabel(): String? {
     val date = examDateTime?.toLocalDate() ?: return null
-    val sat = "Sostenuto il ${date.format(SittingDateFormat)}"
-    return if (outcomePublished || grade != ExamGrade.Unknown) sat else "$sat · in attesa di esito"
+    val sat = stringResource(R.string.appelli_taken_on, date.format(SittingDateFormat))
+    val awaiting = stringResource(R.string.appelli_awaiting_result)
+    return if (outcomePublished || grade != ExamGrade.Unknown) sat else "$sat · $awaiting"
 }
 
-private val SittingDateFormat = DateTimeFormatter.ofPattern("d MMM yyyy", Locale.ITALIAN)
+private val SittingDateFormat = DateTimeFormatter.ofPattern("d MMM yyyy", Locale.getDefault())
 
-/** Relative countdown to the appello: "Oggi", "Domani", "Tra N giorni" up to 60 days out, else null. */
+/** Relative countdown to the appello: "Today", "Tomorrow", "In N days" up to 60 days out, else null. */
+@Composable
 fun BookedExam.countdownLabel(today: LocalDate): String? {
     val examDate = examDateTime?.toLocalDate() ?: return null
     return when (val days = ChronoUnit.DAYS.between(today, examDate)) {
-        0L -> "Oggi"
-        1L -> "Domani"
-        in 2..60 -> "Tra $days giorni"
+        0L -> stringResource(R.string.relative_day_today)
+        1L -> stringResource(R.string.relative_day_tomorrow)
+        in 2..60 -> stringResource(R.string.relative_day_in_days, days)
         else -> null
     }
 }
@@ -45,17 +54,20 @@ fun BookedExam.countdownLabel(today: LocalDate): String? {
  * Card subtitle: the exam mode, flagged when the call is a partial ("Scritto (Parziale)").
  * A partial with no known mode still gets "Prova parziale".
  */
+@Composable
 fun BookedExam.examKindLabel(): String? {
     val base = examType.displayLabel()
-        ?: return if (callType == ExamCallType.Partial) "Prova parziale" else null
-    return if (callType == ExamCallType.Partial) "$base (Parziale)" else base
+        ?: return if (callType == ExamCallType.Partial) stringResource(R.string.appelli_partial_exam) else null
+    val partial = stringResource(R.string.appelli_partial_exam)
+    return if (callType == ExamCallType.Partial) "$base ($partial)" else base
 }
 
-/** Italian label for the exam mode; null when unknown. */
+/** Label for the exam mode; null when unknown. */
+@Composable
 fun ExamType.displayLabel(): String? = when (this) {
-    ExamType.Written -> "Scritto"
-    ExamType.Oral -> "Orale"
-    ExamType.WrittenAndOralJoint, ExamType.WrittenAndOralSeparate -> "Scritto e Orale"
+    ExamType.Written -> stringResource(R.string.appelli_type_written)
+    ExamType.Oral -> stringResource(R.string.appelli_type_oral)
+    ExamType.WrittenAndOralJoint, ExamType.WrittenAndOralSeparate -> stringResource(R.string.appelli_type_written_and_oral)
     ExamType.Unknown -> null
 }
 
@@ -63,19 +75,22 @@ fun ExamType.displayLabel(): String? = when (this) {
  * "Prova parziale" badge from tipoAppCod — finals are the norm, so only partials get
  * flagged. Suppressed when the desAppello qualifier from [examVariantLabel] already says it.
  */
+@Composable
 fun BookedExam.partialLabel(): String? {
     if (callType != ExamCallType.Partial) return null
     val variant = examVariantLabel()?.lowercase(Locale.ITALIAN)
     if (variant != null && ("parzial" in variant || "intermed" in variant)) return null
-    return "Prova parziale"
+    return stringResource(R.string.appelli_partial_exam)
 }
 
 /**
- * "N CFU" weight label. Esse3's pesoAd carries two optional decimals but is an integer for
+ * "N Credits" weight label. Esse3's pesoAd carries two optional decimals but is an integer for
  * every real course, so whole values drop the fraction.
  */
+@Composable
 fun BookedExam.creditsLabel(): String? = credits?.takeIf { it > 0 }?.let {
-    if (it % 1f == 0f) "${it.toInt()} CFU" else "$it CFU"
+    val valueStr = if (it % 1f == 0f) it.toInt().toString() else it.toString()
+    stringResource(R.string.appelli_credits, valueStr)
 }
 
 /**

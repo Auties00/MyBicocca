@@ -31,18 +31,21 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.SyncStatus
 import it.attendance100.mybicocca.core.state.valueOrNull
@@ -66,7 +69,6 @@ import it.attendance100.mybicocca.ui.screen.registry.subscreen.appelli.state.Can
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.appelli.state.DocDownloadState
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.appelli.state.groupByFilter
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.appelli.subscreen.bookedExamDetail.BookedExamDetailPage
-import it.attendance100.mybicocca.ui.theme.LocalIsOnline
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.booking.BookableExamsViewModel
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.booking.BookingSheetViewModel
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.booking.CallPage
@@ -74,12 +76,13 @@ import it.attendance100.mybicocca.ui.screen.registry.subscreen.booking.ConfirmPa
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.booking.ExamCalendarPage
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.booking.headerSubtitle
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.booking.rootSubtitle
-import it.attendance100.mybicocca.ui.screen.registry.subscreen.booking.title
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.booking.state.BookingActionState
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.booking.state.BookingSheetEvent
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.booking.state.BookingSheetStep
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.booking.state.groupByCourse
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.booking.title
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.taxes.openPdfDocument
+import it.attendance100.mybicocca.ui.theme.LocalIsOnline
 import kotlinx.coroutines.flow.collectLatest
 import java.time.LocalDate
 
@@ -114,7 +117,13 @@ import java.time.LocalDate
 fun AppelliPage(
     bookableViewModel: BookableExamsViewModel,
     viewModel: BookedExamsViewModel,
-    sheetViewModel: BookingSheetViewModel = hiltViewModel(),
+    sheetViewModel: BookingSheetViewModel = hiltViewModel(
+        checkNotNull(
+            LocalViewModelStoreOwner.current
+        ) {
+            "No ViewModelStoreOwner was provided via LocalViewModelStoreOwner"
+        }, null
+    ),
 ) {
     val bookingsData by viewModel.bookings.collectAsStateWithLifecycle()
     val syncStatus by viewModel.syncStatus.collectAsStateWithLifecycle()
@@ -180,13 +189,25 @@ fun AppelliPage(
                     BookedEvent.CancellationSucceeded -> {
                         confirmingCancel = false
                         detailKey = null
-                        outcome = SheetOutcome.Success("Prenotazione annullata")
+                        outcome =
+                            SheetOutcome.Success(context.getString(R.string.appelli_booking_cancelled))
                     }
+
                     is BookedEvent.CancellationFailed ->
-                        outcome = SheetOutcome.Error("Annullamento non riuscito", event.cause)
+                        outcome = SheetOutcome.Error(
+                            context.getString(R.string.appelli_cancellation_failed),
+                            event.cause
+                        )
+
                     is BookedEvent.OpenPdf ->
                         runCatching { openPdfDocument(context, event.bytes, event.fileName) }
-                            .onFailure { outcome = SheetOutcome.Error("Impossibile aprire il PDF", it) }
+                            .onFailure {
+                                outcome = SheetOutcome.Error(
+                                    context.getString(R.string.appelli_pdf_open_failed),
+                                    it
+                                )
+                            }
+
                     is BookedEvent.ShowMessage -> outcome = SheetOutcome.Info(event.message)
                 }
             }
@@ -200,11 +221,16 @@ fun AppelliPage(
                         booking = false
                         viewModel.refresh()
                         bookableViewModel.refresh()
-                        outcome = SheetOutcome.Success("Prenotazione confermata")
+                        outcome =
+                            SheetOutcome.Success(context.getString(R.string.appelli_booking_confirmed))
                     }
+
                     is BookingSheetEvent.BookingFailed -> {
                         sheetViewModel.close()
-                        outcome = SheetOutcome.Error("Prenotazione non riuscita", event.cause)
+                        outcome = SheetOutcome.Error(
+                            context.getString(R.string.appelli_booking_failed),
+                            event.cause
+                        )
                     }
                 }
             }
@@ -226,17 +252,17 @@ fun AppelliPage(
             SheetPagerHeader(
                 depth = page.depth,
                 title = when (page) {
-                    AppelliPage.Root -> "Appelli"
+                    AppelliPage.Root -> stringResource(R.string.appelli_title)
                     AppelliPage.Detail -> detailBooking?.displayTitle() ?: ""
-                    AppelliPage.ConfirmCancel -> "Annullare la prenotazione?"
-                    AppelliPage.BookingCalendar -> "Prenota esame"
+                    AppelliPage.ConfirmCancel -> stringResource(R.string.appelli_cancel_confirmation_title)
+                    AppelliPage.BookingCalendar -> stringResource(R.string.appelli_book_exam)
                     AppelliPage.BookingCall -> target?.call?.title() ?: ""
-                    AppelliPage.BookingConfirm -> "Conferma prenotazione"
+                    AppelliPage.BookingConfirm -> stringResource(R.string.appelli_confirm_booking)
                     AppelliPage.Result -> ""
                 },
                 subtitle = when (page) {
                     AppelliPage.Root -> if (loaded) activeSummary(active.size) else null
-                    AppelliPage.Detail -> "Dettagli appello"
+                    AppelliPage.Detail -> stringResource(R.string.appelli_booking_details)
                     AppelliPage.ConfirmCancel -> detailBooking?.displayTitle()
                     AppelliPage.BookingCalendar -> callGroups?.let { rootSubtitle(it) }
                     AppelliPage.BookingCall -> target?.call?.headerSubtitle()
@@ -308,7 +334,12 @@ fun AppelliPage(
                         onOpenCall = sheetViewModel::open,
                     )
 
-                    AppelliPage.BookingCall -> target?.let { CallPage(target = it, onBook = sheetViewModel::goToConfirm) }
+                    AppelliPage.BookingCall -> target?.let {
+                        CallPage(
+                            target = it,
+                            onBook = sheetViewModel::goToConfirm
+                        )
+                    }
 
                     AppelliPage.BookingConfirm -> ConfirmPage(
                         submitting = submitting,
@@ -367,17 +398,17 @@ private fun ActiveBody(
         when {
             failure != null && !loaded -> SheetMessage(
                 icon = Icons.Outlined.CloudOff,
-                title = "Caricamento non riuscito",
+                title = stringResource(R.string.appelli_load_failed),
                 body = failure.cause.friendlyMessage(),
                 action = { RetryButton(onClick = onRetry) },
             )
 
-            !settled -> SheetLoadingIndicator(label = "Caricamento prenotazioni…")
+            !settled -> SheetLoadingIndicator(label = stringResource(R.string.appelli_loading_bookings))
 
             active.isEmpty() -> SheetMessage(
                 icon = Icons.Outlined.EventAvailable,
-                title = "Nessun esame in programma",
-                body = "Quando prenoti un appello lo trovi qui. Premi Prenota per iniziare.",
+                title = stringResource(R.string.appelli_no_exams),
+                body = stringResource(R.string.appelli_no_exams_body),
             )
 
             else -> LazyColumn(
@@ -401,7 +432,12 @@ private fun ActiveBody(
         if (settled && failure == null) {
             PrenotaFooterButton(
                 onClick = onPrenota,
-                modifier = Modifier.padding(start = 24.dp, end = 24.dp, top = 12.dp, bottom = 24.dp),
+                modifier = Modifier.padding(
+                    start = 24.dp,
+                    end = 24.dp,
+                    top = 12.dp,
+                    bottom = 24.dp
+                ),
             )
         }
     }
@@ -425,9 +461,17 @@ private fun PrenotaFooterButton(onClick: () -> Unit, modifier: Modifier = Modifi
             contentColor = if (dark) scheme.onPrimaryContainer else scheme.onPrimary,
         ),
     ) {
-        Icon(Icons.Outlined.EditCalendar, contentDescription = null, modifier = Modifier.size(20.dp))
+        Icon(
+            Icons.Outlined.EditCalendar,
+            contentDescription = null,
+            modifier = Modifier.size(20.dp)
+        )
         Spacer(Modifier.width(8.dp))
-        Text("Prenota", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+        Text(
+            stringResource(R.string.appelli_book),
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.SemiBold
+        )
     }
 }
 
@@ -452,8 +496,7 @@ private fun CancelConfirmPage(
 
     Column(Modifier.fillMaxWidth()) {
         Text(
-            text = "Stai per annullare la prenotazione a $bookingTitle. " +
-                    "Potrai prenotarti di nuovo finché le iscrizioni restano aperte.",
+            text = stringResource(R.string.appelli_cancel_body, bookingTitle),
             style = MaterialTheme.typography.bodyMedium,
             color = scheme.onSurfaceVariant,
             modifier = Modifier.padding(horizontal = 24.dp),
@@ -476,7 +519,7 @@ private fun CancelConfirmPage(
                     contentColor = scheme.onSurface,
                 ),
             ) {
-                Text("Conferma", fontWeight = FontWeight.SemiBold)
+                Text(stringResource(R.string.common_confirm), fontWeight = FontWeight.SemiBold)
             }
             Button(
                 onClick = onKeep,
@@ -489,7 +532,7 @@ private fun CancelConfirmPage(
                     contentColor = brandFg,
                 ),
             ) {
-                Text("Annulla", fontWeight = FontWeight.SemiBold)
+                Text(stringResource(R.string.common_cancel), fontWeight = FontWeight.SemiBold)
             }
         }
     }

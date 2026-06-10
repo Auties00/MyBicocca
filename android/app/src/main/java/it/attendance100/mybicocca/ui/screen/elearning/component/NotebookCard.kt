@@ -32,6 +32,7 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -39,6 +40,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.domain.model.elearning.course.AcademicYear
 import it.attendance100.mybicocca.domain.model.elearning.course.CourseId
 import it.attendance100.mybicocca.domain.model.elearning.deadline.Deadline
@@ -189,6 +191,8 @@ fun NotebookCard(
                 FavouriteStar(
                     filled = isFavourite,
                     onClick = { onToggleFavourite(!isFavourite) },
+                    onRemoveFavorite = { stringResource(R.string.elearning_remove_favorite) },
+                    onAddFavorite = { stringResource(R.string.elearning_add_favorite) },
                 )
             }
         }
@@ -225,7 +229,11 @@ fun NotebookCard(
                     }
                     if (extra > 0) {
                         Text(
-                            text = "+$extra ${if (extra == 1) "altra scadenza" else "altre scadenze"}",
+                            text = "+$extra ${
+                                if (extra == 1) stringResource(R.string.elearning_deadline_singular) else stringResource(
+                                    R.string.elearning_deadline_plural
+                                )
+                            }",
                             color = scheme.onSurfaceVariant,
                             fontSize = 10.sp,
                             fontWeight = FontWeight.SemiBold,
@@ -338,14 +346,19 @@ private fun YearTab(
 }
 
 @Composable
-private fun FavouriteStar(filled: Boolean, onClick: () -> Unit) {
+private fun FavouriteStar(
+    filled: Boolean,
+    onClick: () -> Unit,
+    onRemoveFavorite: @Composable () -> String = { stringResource(R.string.elearning_remove_favorite) },
+    onAddFavorite: @Composable () -> String = { stringResource(R.string.elearning_add_favorite) },
+) {
     val scheme = MaterialTheme.colorScheme
     val palette = LocalCourseAccentPalette.current
     val tint = if (filled) palette.favouriteStar else scheme.onSurfaceVariant
     IconButton(onClick = onClick, modifier = Modifier.size(36.dp)) {
         Icon(
             imageVector = if (filled) Icons.Filled.Star else Icons.Outlined.Star,
-            contentDescription = if (filled) "Rimuovi dai preferiti" else "Aggiungi ai preferiti",
+            contentDescription = if (filled) onRemoveFavorite() else onAddFavorite(),
             tint = tint,
             modifier = Modifier.size(22.dp),
         )
@@ -373,10 +386,14 @@ private fun DeadlineRow(
     val urgent = !overdue && !isToday && daysLeft <= 3
 
     val dueText = when {
-        isToday -> "entro oggi"
-        overdue -> if (abs(daysLeft) == 1) "scaduto 1 giorno fa" else "scaduto ${abs(daysLeft)} giorni fa"
-        daysLeft == 1 -> "entro 1 giorno"
-        else -> "entro $daysLeft giorni"
+        isToday -> stringResource(R.string.elearning_deadline_today)
+        overdue -> if (abs(daysLeft) == 1) stringResource(R.string.elearning_deadline_overdue_one) else stringResource(
+            R.string.elearning_deadline_overdue_many,
+            abs(daysLeft)
+        )
+
+        daysLeft == 1 -> stringResource(R.string.elearning_deadline_in_one)
+        else -> stringResource(R.string.elearning_deadline_in_many, daysLeft)
     }
     val dueColor = when {
         isToday || overdue -> scheme.error

@@ -38,9 +38,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.SyncStatus
 import it.attendance100.mybicocca.domain.model.appointment.AppointmentMonthAvailability
@@ -107,7 +109,7 @@ internal fun SlotPicker(
                 is Loadable.Loaded -> {
                     val days = monthAvailability.value.availableDays
                     if (days.isEmpty()) {
-                        PickerMessage("Nessuna disponibilità in questo mese.")
+                        PickerMessage(stringResource(R.string.appointments_no_availability))
                     } else {
                         CalendarGrid(
                             month = month,
@@ -184,7 +186,10 @@ private fun MonthSwitcher(
             shapes = IconButtonDefaults.shapes(),
             colors = monthNavColors(),
         ) {
-            Icon(Icons.AutoMirrored.Rounded.KeyboardArrowLeft, contentDescription = "Mese precedente")
+            Icon(
+                Icons.AutoMirrored.Rounded.KeyboardArrowLeft,
+                contentDescription = stringResource(R.string.appointments_previous_month)
+            )
         }
         Spacer(Modifier.size(6.dp))
         FilledTonalIconButton(
@@ -194,7 +199,10 @@ private fun MonthSwitcher(
             shapes = IconButtonDefaults.shapes(),
             colors = monthNavColors(),
         ) {
-            Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, contentDescription = "Mese successivo")
+            Icon(
+                Icons.AutoMirrored.Rounded.KeyboardArrowRight,
+                contentDescription = stringResource(R.string.appointments_next_month)
+            )
         }
     }
 }
@@ -394,7 +402,7 @@ private fun SlotGrid(
     onSelectSlot: (AppointmentSlot) -> Unit,
 ) {
     if (slots.none { it.available }) {
-        PickerMessage("Tutti gli orari di questa giornata sono occupati.")
+        PickerMessage(stringResource(R.string.appointments_all_slots_full))
         return
     }
 
@@ -402,8 +410,22 @@ private fun SlotGrid(
     val afternoon = slots.filter { it.start.hour >= 13 }
 
     Column(verticalArrangement = Arrangement.spacedBy(18.dp)) {
-        SlotSection("Mattina", Icons.Outlined.WbSunny, morning, selectedSlot, enabled, onSelectSlot)
-        SlotSection("Pomeriggio", Icons.Outlined.WbTwilight, afternoon, selectedSlot, enabled, onSelectSlot)
+        SlotSection(
+            stringResource(R.string.appointments_morning),
+            Icons.Outlined.WbSunny,
+            morning,
+            selectedSlot,
+            enabled,
+            onSelectSlot
+        )
+        SlotSection(
+            stringResource(R.string.appointments_afternoon),
+            Icons.Outlined.WbTwilight,
+            afternoon,
+            selectedSlot,
+            enabled,
+            onSelectSlot
+        )
     }
 }
 
@@ -501,7 +523,7 @@ private fun ErrorRow(onRetry: () -> Unit) {
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
-            text = "Caricamento delle disponibilità non riuscito.",
+            text = stringResource(R.string.appointments_availability_load_failed),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.weight(1f),

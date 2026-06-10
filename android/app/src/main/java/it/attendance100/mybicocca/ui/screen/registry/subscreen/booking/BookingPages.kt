@@ -48,21 +48,23 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.state.SyncStatus
 import it.attendance100.mybicocca.domain.model.exam.ExamCall
 import it.attendance100.mybicocca.domain.model.exam.ExamType
 import it.attendance100.mybicocca.ui.component.button.RetryButton
+import it.attendance100.mybicocca.ui.component.feedback.friendlyMessage
 import it.attendance100.mybicocca.ui.component.feedback.rememberMinDurationLoading
 import it.attendance100.mybicocca.ui.component.modal.SheetLoadingIndicator
 import it.attendance100.mybicocca.ui.component.modal.SheetMessage
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.booking.state.BookingCourseGroup
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.booking.state.BookingTarget
-import it.attendance100.mybicocca.ui.component.feedback.friendlyMessage
 import it.attendance100.mybicocca.ui.theme.LocalIsOnline
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -105,12 +107,12 @@ internal fun ExamCalendarPage(
         when {
             failure != null && groups == null -> SheetError(cause = failure.cause, onRetry = onRetry)
 
-            !settled -> SheetLoadingIndicator(label = "Caricamento appelli…")
+            !settled -> SheetLoadingIndicator(label = stringResource(R.string.booking_loading_calls))
 
             groups.isNullOrEmpty() -> SheetMessage(
                 icon = Icons.Outlined.EventAvailable,
-                title = "Nessun appello disponibile",
-                body = "Non ci sono appelli prenotabili al momento.",
+                title = stringResource(R.string.booking_no_calls_available),
+                body = stringResource(R.string.booking_no_calls_available_body),
             )
 
             else -> ExamCalendarList(
@@ -319,27 +321,45 @@ internal fun CallPage(
         ) {
             val facts = buildList {
                 call.stateDescription?.takeIf { it.isNotBlank() }?.let {
-                    add(Triple(Icons.Outlined.Schedule, "Stato", it))
+                    add(
+                        Triple(
+                            Icons.Outlined.Schedule,
+                            stringResource(R.string.booking_status),
+                            it
+                        )
+                    )
                 }
                 val window = call.enrollmentWindow
                 if (window.opensAt != null || window.closesAt != null) {
                     add(
                         Triple(
                             Icons.Outlined.EventAvailable,
-                            "Iscrizioni",
+                            stringResource(R.string.booking_enrollments),
                             formatWindow(window.opensAt, window.closesAt),
                         )
                     )
                 }
                 call.enrolledNumber?.takeIf { it > 0 }?.let { n ->
-                    add(Triple(Icons.Outlined.Groups, "Iscritti", "$n studenti"))
+                    add(
+                        Triple(
+                            Icons.Outlined.Groups,
+                            stringResource(R.string.booking_enrolled),
+                            "$n studenti"
+                        )
+                    )
                 }
                 call.bookingTypeDescription?.takeIf { it.isNotBlank() }?.let {
-                    add(Triple(Icons.Outlined.EditNote, "Modalità prenotazione", it))
+                    add(Triple(Icons.Outlined.EditNote, stringResource(R.string.booking_mode), it))
                 }
                 call.president?.let { p ->
                     listOfNotNull(p.name, p.surname).joinToString(" ").ifBlank { null }?.let {
-                        add(Triple(Icons.Outlined.Person, "Presidente", it))
+                        add(
+                            Triple(
+                                Icons.Outlined.Person,
+                                stringResource(R.string.booking_president),
+                                it
+                            )
+                        )
                     }
                 }
             }
@@ -362,7 +382,7 @@ internal fun CallPage(
 
         if (target.canBook) {
             BrandActionButton(
-                text = "Prenota",
+                text = stringResource(R.string.booking_book),
                 onClick = onBook,
                 enabled = LocalIsOnline.current,
                 modifier = Modifier
@@ -371,7 +391,7 @@ internal fun CallPage(
             )
         } else {
             Text(
-                text = "Prenotazione non disponibile per questo appello.",
+                text = stringResource(R.string.booking_not_available),
                 style = MaterialTheme.typography.bodySmall,
                 color = scheme.onSurfaceVariant,
                 modifier = Modifier.padding(start = 24.dp, end = 24.dp, top = 16.dp, bottom = 24.dp),
@@ -448,7 +468,7 @@ private fun NotesCard(notes: String) {
             verticalArrangement = Arrangement.spacedBy(6.dp),
         ) {
             Text(
-                text = "Note dell'appello",
+                text = stringResource(R.string.booking_call_notes),
                 style = MaterialTheme.typography.labelLarge,
                 color = scheme.onSurfaceVariant,
             )
@@ -489,22 +509,21 @@ internal fun ConfirmPage(
                 onValueChange = { note = it },
                 modifier = Modifier.fillMaxWidth(),
                 shape = MaterialTheme.shapes.large,
-                label = { Text("Nota (facoltativa)") },
+                label = { Text(stringResource(R.string.booking_optional_note)) },
                 minLines = 2,
                 maxLines = 4,
                 enabled = !submitting,
             )
 
             Text(
-                text = "Confermando, sarai iscritto a questo appello. Potrai annullare la " +
-                    "prenotazione fino alla data di chiusura iscrizioni.",
+                text = stringResource(R.string.booking_confirm_message),
                 style = MaterialTheme.typography.bodySmall,
                 color = scheme.onSurfaceVariant,
             )
         }
 
         BrandActionButton(
-            text = "Conferma",
+            text = stringResource(R.string.common_confirm),
             onClick = { onConfirm(note.ifBlank { null }) },
             enabled = !submitting && LocalIsOnline.current,
             loading = submitting,
@@ -557,7 +576,7 @@ private fun BrandActionButton(
 private fun SheetError(cause: Throwable, onRetry: () -> Unit) {
     SheetMessage(
         icon = Icons.Outlined.CloudOff,
-        title = "Caricamento non riuscito",
+        title = stringResource(R.string.booking_load_failed),
         body = cause.friendlyMessage(),
         action = { RetryButton(onClick = onRetry) },
     )

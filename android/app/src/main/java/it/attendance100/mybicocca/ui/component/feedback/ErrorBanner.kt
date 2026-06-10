@@ -69,7 +69,7 @@ fun ErrorBanner(
                 ) {
                     Icon(
                         imageVector = Icons.Outlined.Close,
-                        contentDescription = "Chiudi",
+                        contentDescription = null,
                         modifier = Modifier.size(16.dp),
                         tint = MaterialTheme.colorScheme.onErrorContainer,
                     )

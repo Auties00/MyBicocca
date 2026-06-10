@@ -2,7 +2,6 @@ package it.attendance100.mybicocca.ui.screen.registry.subscreen.library.componen
 
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -14,10 +13,10 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.ShowChart
 import androidx.compose.material.icons.outlined.EventSeat
 import androidx.compose.material.icons.outlined.LocationOn
 import androidx.compose.material.icons.outlined.Schedule
-import androidx.compose.material.icons.automirrored.outlined.ShowChart
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
@@ -28,8 +27,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.SyncStatus
 import it.attendance100.mybicocca.domain.model.library.Library
@@ -78,28 +80,36 @@ internal fun LibraryDetailPage(
                 .padding(horizontal = 24.dp),
             verticalArrangement = Arrangement.spacedBy(18.dp),
         ) {
+            val context = LocalContext.current
             when (liveStatus) {
                 Loadable.NotYetLoaded -> when (detailStatus) {
                     is SyncStatus.Failed -> SheetMessage(
                         icon = Icons.AutoMirrored.Outlined.ShowChart,
-                        title = "Caricamento non riuscito",
-                        body = "Non è stato possibile caricare lo stato della biblioteca.",
+                        title = context.getString(R.string.common_error_title),
+                        body = context.getString(R.string.library_status_loading_failed),
                         action = { RetryButton(onClick = onRetry) },
                     )
-                    else -> SheetLoadingIndicator(label = "Caricamento…")
+
+                    else -> SheetLoadingIndicator(label = context.getString(R.string.common_loading))
                 }
 
                 is Loadable.Loaded -> {
                     OccupancyHeader(status = liveStatus.value)
 
                     if (liveStatus.value.todayForecast.isNotEmpty()) {
-                        SectionCard(icon = Icons.AutoMirrored.Outlined.ShowChart, title = "Affluenza oggi") {
+                        SectionCard(
+                            icon = Icons.AutoMirrored.Outlined.ShowChart,
+                            title = context.getString(R.string.library_today_occupancy)
+                        ) {
                             ForecastGraph(points = liveStatus.value.todayForecast)
                         }
                     }
 
                     (weekHours as? Loadable.Loaded)?.value?.let { hours ->
-                        SectionCard(icon = Icons.Outlined.Schedule, title = "Orari di apertura") {
+                        SectionCard(
+                            icon = Icons.Outlined.Schedule,
+                            title = context.getString(R.string.library_opening_hours)
+                        ) {
                             WeekHoursList(hours)
                         }
                     }
@@ -128,14 +138,20 @@ internal fun LibraryDetailPage(
         ) {
             Icon(Icons.Outlined.EventSeat, contentDescription = null, modifier = Modifier.size(20.dp))
             Spacer(Modifier.width(8.dp))
-            Text("Prenota un posto", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+            Text(
+                stringResource(R.string.library_book_seat),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold
+            )
         }
     }
 }
 
+
 @Composable
 private fun OccupancyHeader(status: LibraryLiveStatus) {
     val scheme = MaterialTheme.colorScheme
+    val context = LocalContext.current
     Surface(
         shape = MaterialTheme.shapes.extraLarge,
         color = scheme.surfaceContainerLow,
@@ -152,7 +168,9 @@ private fun OccupancyHeader(status: LibraryLiveStatus) {
             }
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(
-                    text = if (status.isOpen) "Aperta ora" else "Chiusa",
+                    text = if (status.isOpen) context.getString(R.string.library_open_now) else context.getString(
+                        R.string.library_closed
+                    ),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
                     color = if (status.isOpen) occupancyColor(0) else scheme.error,
@@ -216,9 +234,10 @@ private fun WeekHoursRow(day: LibraryDayHours) {
             fontWeight = emphasis,
             color = color,
         )
+        val context = LocalContext.current
         Text(
             text = if (day.ranges.isEmpty()) {
-                "Chiusa"
+                context.getString(R.string.library_closed)
             } else {
                 day.ranges.joinToString("  ") { "${it.open.format(TimeFormat)}–${it.close.format(TimeFormat)}" }
             },

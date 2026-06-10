@@ -26,16 +26,18 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.os.LocalDeviceType
 import it.attendance100.mybicocca.core.os.rememberHapticManager
+import it.attendance100.mybicocca.domain.model.settings.AppTheme
 import it.attendance100.mybicocca.domain.model.settings.ThemeMode
 import it.attendance100.mybicocca.ui.component.input.SegmentedSwitch
 import it.attendance100.mybicocca.ui.component.modal.PredictiveModalBottomSheet
-import it.attendance100.mybicocca.domain.model.settings.AppTheme
 import it.attendance100.mybicocca.ui.screen.settings.subscreen.settingsAppearance.component.AppThemePreviewItem
 import it.attendance100.mybicocca.ui.theme.BicoccaTheme
 import it.attendance100.mybicocca.ui.theme.isDynamicColorAvailable
@@ -43,11 +45,8 @@ import it.attendance100.mybicocca.ui.theme.isDynamicColorAvailable
 private val THEME_MODES = listOf(ThemeMode.System, ThemeMode.Light, ThemeMode.Dark)
 //private val BADGE_CARD_THEMES = BadgeCardTheme.entries.toList()
 
-private fun themeModeLabel(mode: ThemeMode): String = when (mode) {
-    ThemeMode.System -> "Sistema"
-    ThemeMode.Light -> "Chiaro"
-    ThemeMode.Dark -> "Scuro"
-}
+// Theme mode labels must use context.getString for resource loading in lambda context
+// The lambda is called within a Composable but not directly composed
 
 /**
  * The "Aspetto" settings page, shown as a modal bottom sheet: a two-per-row grid of palette
@@ -67,12 +66,21 @@ fun SettingsAppearanceSheet(
 ) {
     val appTheme by viewModel.appTheme.collectAsStateWithLifecycle()
     val themeMode by viewModel.themeMode.collectAsStateWithLifecycle()
+    val context = androidx.compose.ui.platform.LocalContext.current
 //    val badgeCardTheme by viewModel.badgeCardTheme.collectAsStateWithLifecycle()
 
     val dark = when (themeMode) {
         ThemeMode.System -> isSystemInDarkTheme()
         ThemeMode.Light -> false
         ThemeMode.Dark -> true
+    }
+
+    val themeModeLabel: (ThemeMode) -> String = { mode ->
+        when (mode) {
+            ThemeMode.System -> context.getString(R.string.settings_language_system)
+            ThemeMode.Light -> context.getString(R.string.settings_theme_mode_light)
+            ThemeMode.Dark -> context.getString(R.string.settings_theme_mode_dark)
+        }
     }
 
     val paletteRows = remember {
@@ -93,12 +101,12 @@ fun SettingsAppearanceSheet(
                     .weight(1f, fill = false)
             ) {
                 Text(
-                    text = "Aspetto",
+                    text = stringResource(R.string.settings_appearance_sheet_title),
                     style = MaterialTheme.typography.titleLargeEmphasized,
                     fontWeight = FontWeight.SemiBold,
                 )
                 Text(
-                    text = "Tema e colori dell'app",
+                    text = stringResource(R.string.settings_appearance_sheet_subtitle),
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -165,7 +173,7 @@ fun SettingsAppearanceSheet(
                     options = THEME_MODES,
                     selected = themeMode,
                     onSelected = viewModel::setThemeMode,
-                    label = ::themeModeLabel,
+                    label = themeModeLabel,
                 )
             }
 //            }

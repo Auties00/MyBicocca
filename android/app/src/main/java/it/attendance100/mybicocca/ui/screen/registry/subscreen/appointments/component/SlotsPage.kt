@@ -5,9 +5,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -20,9 +20,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.ui.component.feedback.EmptyState
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.appointments.AppointmentsViewModel
@@ -56,7 +58,7 @@ internal fun SlotsPage(
                 .padding(24.dp),
         ) {
             Text(
-                text = "Questo sportello non è prenotabile al momento. Riprova più tardi.",
+                text = stringResource(R.string.appointments_desk_not_available),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -74,8 +76,8 @@ internal fun SlotsPage(
         ) {
             EmptyState(
                 icon = Icons.Outlined.EventBusy,
-                title = "Nessuna data disponibile",
-                body = "Al momento non ci sono date disponibili per la prenotazione di questo sportello. Riprova più tardi.",
+                title = stringResource(R.string.appointments_no_dates),
+                body = stringResource(R.string.appointments_no_dates_body),
             )
         }
         return
@@ -148,6 +150,10 @@ private fun ContinuaButton(enabled: Boolean, onClick: () -> Unit, modifier: Modi
             contentColor = if (dark) scheme.onPrimaryContainer else scheme.onPrimary,
         ),
     ) {
-        Text("Continua", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+        Text(
+            stringResource(R.string.appointments_continue),
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.SemiBold
+        )
     }
 }

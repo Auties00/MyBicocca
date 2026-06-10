@@ -20,8 +20,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import it.attendance100.mybicocca.R
 
 private val CardShape = RoundedCornerShape(28.dp)
 
@@ -64,7 +66,7 @@ fun AddAccountCard(
                 )
             }
             Text(
-                text = "Aggiungi un altro account",
+                text = stringResource(R.string.account_switcher_add_account),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Medium,
                 color = scheme.onSurface,
