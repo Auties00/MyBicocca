@@ -41,6 +41,7 @@ import it.attendance100.mybicocca.ui.theme.BicoccaTheme
 import it.attendance100.mybicocca.ui.theme.isDynamicColorAvailable
 
 private val THEME_MODES = listOf(ThemeMode.System, ThemeMode.Light, ThemeMode.Dark)
+//private val BADGE_CARD_THEMES = BadgeCardTheme.entries.toList()
 
 private fun themeModeLabel(mode: ThemeMode): String = when (mode) {
     ThemeMode.System -> "Sistema"
@@ -66,6 +67,7 @@ fun SettingsAppearanceSheet(
 ) {
     val appTheme by viewModel.appTheme.collectAsStateWithLifecycle()
     val themeMode by viewModel.themeMode.collectAsStateWithLifecycle()
+//    val badgeCardTheme by viewModel.badgeCardTheme.collectAsStateWithLifecycle()
 
     val dark = when (themeMode) {
         ThemeMode.System -> isSystemInDarkTheme()
@@ -129,10 +131,31 @@ fun SettingsAppearanceSheet(
                 }
             }
 
+//            Column(
+//                modifier = Modifier
+//                    .fillMaxWidth()
+//                    .padding(horizontal = 20.dp, vertical = 6.dp)
+//                verticalArrangement = Arrangement.spacedBy(8.dp),
+//            ) {
+//                Box(
+//                    modifier = Modifier
+//                        .fillMaxWidth()
+//                        .background(
+//                            MaterialTheme.colorScheme.surfaceContainerLow,
+//                            RoundedCornerShape(100)
+//                        )
+//                ) {
+//                    SegmentedSwitch(
+//                        options = BADGE_CARD_THEMES,
+//                        selected = badgeCardTheme,
+//                        onSelected = viewModel::setBadgeCardTheme,
+//                        label = BadgeCardTheme::displayName,
+//                    )
+//                }
+//
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 20.dp, vertical = 6.dp)
                     .background(
                         MaterialTheme.colorScheme.surfaceContainerLow,
                         RoundedCornerShape(100)
@@ -145,6 +168,7 @@ fun SettingsAppearanceSheet(
                     label = ::themeModeLabel,
                 )
             }
+//            }
         }
     }
 }

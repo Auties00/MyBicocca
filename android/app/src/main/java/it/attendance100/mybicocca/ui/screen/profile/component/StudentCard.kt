@@ -6,6 +6,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import it.attendance100.mybicocca.domain.model.account.Account
 import it.attendance100.mybicocca.domain.model.career.Career
+import it.attendance100.mybicocca.domain.model.settings.BadgeCardTheme
 import it.attendance100.mybicocca.ui.theme.BadgeWhiteDrawableColor
 import it.attendance100.mybicocca.ui.theme.OnBackgroundColor
 import java.io.File
@@ -14,6 +15,10 @@ import java.io.File
  * Interactive student ID badge: a flippable [CreditCard] in the chromatic finish, with
  * [BadgeFront] (logo art, chip, holder name, matricola) and [BadgeBack] (magnetic stripe,
  * signature box, photo, institutional email) bound to its faces.
+ *
+ * [theme] selects the badge finish picked in the Aspetto settings: [BadgeCardTheme.Default] is
+ * the red Bicocca card, [BadgeCardTheme.White] the pale variant, which switches the card fill and
+ * the face content colors to their light-on-white palette.
  */
 @Composable
 fun StudentCard(
@@ -21,6 +26,7 @@ fun StudentCard(
     career: Career?,
     photoFile: File?,
     modifier: Modifier = Modifier,
+    theme: BadgeCardTheme = BadgeCardTheme.Default,
     accent: Color = MaterialTheme.colorScheme.primary,
     enabled: Boolean = true,
 ) {
@@ -29,6 +35,7 @@ fun StudentCard(
         accentColor = accent,
         isChromatic = true,
         enabled = enabled,
+        whiteBadge = theme == BadgeCardTheme.White,
         frontContent = { x, y, white, _ ->
             BadgeFront(
                 account = account,

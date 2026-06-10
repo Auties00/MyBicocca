@@ -111,6 +111,7 @@ fun ProfileContent(
     val account by viewModel.account.collectAsStateWithLifecycle()
     val activeCareer by viewModel.activeCareer.collectAsStateWithLifecycle()
     val photoFile by viewModel.photoFile.collectAsStateWithLifecycle()
+    val badgeCardTheme by viewModel.badgeCardTheme.collectAsStateWithLifecycle()
 
     val stats = statsLoadable.valueOrNull()
     val rollup = rollupLoadable.valueOrNull()
@@ -152,6 +153,7 @@ fun ProfileContent(
                             photoFile = photoFile,
                             enabled = true,
                             modifier = Modifier.fillMaxWidth(),
+                            theme = badgeCardTheme,
                         )
                     }
                 }

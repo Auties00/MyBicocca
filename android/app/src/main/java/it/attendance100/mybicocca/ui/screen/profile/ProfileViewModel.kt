@@ -8,6 +8,7 @@ import it.attendance100.mybicocca.core.state.SyncStatus
 import it.attendance100.mybicocca.domain.model.account.Account
 import it.attendance100.mybicocca.domain.model.career.Career
 import it.attendance100.mybicocca.domain.model.career.CareerId
+import it.attendance100.mybicocca.domain.model.settings.BadgeCardTheme
 import it.attendance100.mybicocca.domain.model.transcript.GradeRollup
 import it.attendance100.mybicocca.domain.model.transcript.PrerequisiteStatus
 import it.attendance100.mybicocca.domain.model.transcript.TranscriptRow
@@ -15,6 +16,7 @@ import it.attendance100.mybicocca.domain.model.transcript.TranscriptRowState
 import it.attendance100.mybicocca.domain.model.transcript.TranscriptStats
 import it.attendance100.mybicocca.domain.usecase.account.GetUserPhotoUseCase
 import it.attendance100.mybicocca.domain.usecase.account.ObserveActiveAccountUseCase
+import it.attendance100.mybicocca.domain.usecase.settings.ObserveBadgeCardThemeUseCase
 import it.attendance100.mybicocca.domain.usecase.transcript.GetPrerequisiteStatusUseCase
 import it.attendance100.mybicocca.domain.usecase.transcript.ObserveGradeRollupUseCase
 import it.attendance100.mybicocca.domain.usecase.transcript.ObserveTranscriptRowsUseCase
@@ -44,10 +46,11 @@ import javax.inject.Inject
  * Drives the profile body: the signed-in student's identity plus the transcript-derived
  * career statistics.
  *
- * Identity streams: [account], [activeCareer], and [photoFile]. Data streams, cache-backed
- * and scoped to the active career: [stats], [gradeRollup], [transcriptRows], and the
- * lazily filled [prerequisiteStatuses]. Sync streams: [syncStatus] with the derived
- * [isRefreshing] and [errorMessage]. One-shot stream: [openCalculatorRequests].
+ * Identity streams: [account], [activeCareer], [photoFile], and the persisted [badgeCardTheme]
+ * finish the identity badge renders in. Data streams, cache-backed and scoped to the active
+ * career: [stats], [gradeRollup], [transcriptRows], and the lazily filled [prerequisiteStatuses].
+ * Sync streams: [syncStatus] with the derived [isRefreshing] and [errorMessage]. One-shot stream:
+ * [openCalculatorRequests].
  *
  * A non-forced transcript refresh runs whenever the active career changes. Actions:
  * [refresh] forces a re-sync, [clearError] dismisses the failure message, and
@@ -64,6 +67,7 @@ class ProfileViewModel @Inject constructor(
     private val refreshTranscript: RefreshTranscriptUseCase,
     private val getPrerequisiteStatus: GetPrerequisiteStatusUseCase,
     private val getUserPhoto: GetUserPhotoUseCase,
+    observeBadgeCardTheme: ObserveBadgeCardThemeUseCase,
 ) : ViewModel() {
 
     private val openCalculatorChannel = Channel<Unit>(Channel.BUFFERED)
@@ -77,6 +81,13 @@ class ProfileViewModel @Inject constructor(
     fun requestHypotheticalCalculator() {
         openCalculatorChannel.trySend(Unit)
     }
+
+    /**
+     * The persisted finish the identity badge renders in. Read-only here; the picker that changes
+     * it lives in the Impostazioni > Aspetto sheet ([SettingsAppearanceViewModel]).
+     */
+    val badgeCardTheme: StateFlow<BadgeCardTheme> = observeBadgeCardTheme()
+        .stateIn(viewModelScope, SharingStarted.Eagerly, BadgeCardTheme.Default)
 
     val account: StateFlow<Account?> = observeActiveAccount()
         .stateIn(viewModelScope, SharingStarted.Eagerly, null)
@@ -167,7 +178,7 @@ class ProfileViewModel @Inject constructor(
         }
     }
 
-    private suspend fun loadPrerequisites(rows: List<TranscriptRow>) {
+    private fun loadPrerequisites(rows: List<TranscriptRow>) {
         val careerId = activeCareerId.value ?: return
         val pending = rows.filter { it.state != TranscriptRowState.Passed }
         val known = _prerequisiteStatuses.value
@@ -180,7 +191,7 @@ class ProfileViewModel @Inject constructor(
     private fun launchPrerequisiteFetch(careerId: CareerId, activityChoiceId: Long) {
         viewModelScope.launch {
             val status = getPrerequisiteStatus(careerId, activityChoiceId)
-            _prerequisiteStatuses.value = _prerequisiteStatuses.value + (activityChoiceId to status)
+            _prerequisiteStatuses.value += (activityChoiceId to status)
         }
     }
 
