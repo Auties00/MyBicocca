@@ -27,12 +27,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.domain.model.library.LibraryReservation
 import it.attendance100.mybicocca.ui.component.feedback.EmptyState
 import it.attendance100.mybicocca.ui.component.modal.SheetLoadingIndicator
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.library.LibraryTestTags
 
 /**
  * Landing page of the Biblioteca sheet: the server-synced bookings over a pinned footer button.
@@ -55,10 +57,11 @@ internal fun HomePage(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .heightIn(max = 720.dp),
+            .heightIn(max = 720.dp)
+            .testTag(LibraryTestTags.HOME_PAGE),
     ) {
         when {
-            !loggedIn -> EmptyBox {
+            !loggedIn -> EmptyBox(modifier = Modifier.testTag(LibraryTestTags.HOME_VERIFY_PROMPT)) {
                 EmptyState(
                     icon = Icons.Outlined.MarkEmailRead,
                     title = "Verifica la tua email",
@@ -69,12 +72,13 @@ internal fun HomePage(
             reservations !is Loadable.Loaded -> Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(400.dp),
+                    .height(400.dp)
+                    .testTag(LibraryTestTags.HOME_SYNCING),
             ) {
                 SheetLoadingIndicator(label = "Sincronizzazione…", modifier = Modifier.align(Alignment.Center))
             }
 
-            bookings.isEmpty() -> EmptyBox {
+            bookings.isEmpty() -> EmptyBox(modifier = Modifier.testTag(LibraryTestTags.HOME_EMPTY)) {
                 EmptyState(
                     icon = Icons.AutoMirrored.Outlined.LibraryBooks,
                     title = "Nessuna prenotazione",
@@ -86,7 +90,8 @@ internal fun HomePage(
                 modifier = Modifier
                     .weight(1f, fill = false)
                     .verticalScroll(rememberScrollState())
-                    .padding(horizontal = 24.dp),
+                    .padding(horizontal = 24.dp)
+                    .testTag(LibraryTestTags.HOME_LIST),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 bookings.forEach { reservation ->
@@ -99,15 +104,17 @@ internal fun HomePage(
             label = if (loggedIn) "Prenota" else "Verifica",
             icon = if (loggedIn) Icons.Outlined.EventSeat else Icons.Outlined.MarkEmailRead,
             onClick = if (loggedIn) onPrenota else onLogin,
-            modifier = Modifier.padding(start = 24.dp, end = 24.dp, top = 12.dp, bottom = 24.dp),
+            modifier = Modifier
+                .padding(start = 24.dp, end = 24.dp, top = 12.dp, bottom = 24.dp)
+                .testTag(LibraryTestTags.HOME_FOOTER),
         )
     }
 }
 
 @Composable
-private fun EmptyBox(content: @Composable () -> Unit) {
+private fun EmptyBox(modifier: Modifier = Modifier, content: @Composable () -> Unit) {
     Box(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .height(400.dp)
             .padding(bottom = 4.dp),

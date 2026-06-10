@@ -39,6 +39,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -159,13 +160,16 @@ fun ElearningScreen(
     }
 
     ProvideCourseAccentPalette {
-        Box(modifier = modifier.fillMaxSize()) {
+        Box(modifier = modifier
+            .testTag(ElearningTestTags.ROOT)
+            .fillMaxSize()) {
             Column(modifier = Modifier.fillMaxSize()) {
                 if (initialFetch is InitialFetchState.Settled) {
                     HomeFilterBar(
                         selected = filter,
                         studyYears = studyYears,
                         onSelect = viewModel::setFilter,
+                        modifier = Modifier.testTag(ElearningTestTags.FILTER_BAR),
                     )
                 }
 
@@ -216,6 +220,7 @@ fun ElearningScreen(
             AddCourseFab(
                 onClick = { addSheetVisible = true },
                 modifier = Modifier
+                    .testTag(ElearningTestTags.ADD_COURSE_FAB)
                     .align(Alignment.BottomEnd)
                     .padding(16.dp),
             )
@@ -296,6 +301,7 @@ private fun CourseList(
 ) {
     Box(
         Modifier
+            .testTag(ElearningTestTags.STATE_CONTENT)
             .fillMaxSize()
             .padding(horizontal = 16.dp)
             .clip(RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp))
@@ -344,6 +350,7 @@ private fun CourseList(
                     onToggleFavourite = { fav -> onToggleGroupFavourite(group, fav) },
                     onDeadlineClick = onOpenDeadline,
                     modifier = Modifier
+                        .testTag(ElearningTestTags.courseItem(active.id.value))
                         .animateItem(
                             fadeInSpec = tween(durationMillis = 260),
                             fadeOutSpec = tween(durationMillis = 220),
@@ -363,26 +370,32 @@ private fun EmptyStateForCurrentFilter(
     filterActive: Boolean,
     modifier: Modifier = Modifier,
 ) {
+    val tagged = modifier.testTag(ElearningTestTags.STATE_EMPTY)
     when {
         filterActive -> EmptyState(
             icon = Icons.Outlined.FilterAltOff,
             title = "Nessun corso per questo filtro",
             body = "Cambia filtro per vedere altri corsi.",
-            modifier = modifier,
+            modifier = tagged,
         )
 
         else -> EmptyState(
             icon = Icons.Outlined.School,
             title = "Nessun corso",
             body = "Non risulti iscritto a nessun corso e-learning.",
-            modifier = modifier,
+            modifier = tagged,
         )
     }
 }
 
 @Composable
 private fun ElearningLoadingState(modifier: Modifier = Modifier) {
-    Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+    Box(
+        modifier = modifier
+            .testTag(ElearningTestTags.STATE_LOADING)
+            .fillMaxSize(),
+        contentAlignment = Alignment.Center,
+    ) {
         CircularProgressIndicator()
     }
 }
@@ -416,7 +429,7 @@ private fun ErrorEmptyState(
         icon = Icons.Outlined.CloudOff,
         title = "Sincronizzazione non riuscita",
         body = cause.friendlyMessage(),
-        modifier = modifier,
+        modifier = modifier.testTag(ElearningTestTags.STATE_ERROR),
     )
 }
 

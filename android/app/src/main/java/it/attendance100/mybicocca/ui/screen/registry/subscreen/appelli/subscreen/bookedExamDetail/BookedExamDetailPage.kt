@@ -34,10 +34,12 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import it.attendance100.mybicocca.domain.model.exam.BookedExam
 import it.attendance100.mybicocca.ui.component.card.DetailFactCard
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.appelli.AppelliTestTags
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.appelli.ext.countdownLabel
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.appelli.ext.displayLabel
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.appelli.ext.locationLabel
@@ -183,6 +185,7 @@ private fun ActionRow(
             onClick = onCancel,
             enabled = canCancel && !isCancelling && isOnline,
             modifier = Modifier
+                .testTag(AppelliTestTags.DETAIL_CANCEL_BUTTON)
                 .weight(1f)
                 .height(56.dp),
             shape = ButtonGroupDefaults.connectedLeadingButtonShape,

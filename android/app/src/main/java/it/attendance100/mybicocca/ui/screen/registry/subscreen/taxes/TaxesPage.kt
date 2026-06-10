@@ -40,6 +40,7 @@ import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.boundsInWindow
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -125,21 +126,27 @@ private fun TaxesBody(
 
     Column(
         modifier = Modifier
+            .testTag(TaxesTestTags.ROOT)
             .fillMaxWidth()
             .animateContentSize(animationSpec = sizeSpec),
     ) {
         when {
-            failure != null && grouped == null -> SheetMessage(
-                icon = Icons.Outlined.CloudOff,
-                title = "Caricamento non riuscito",
-                body = failure.cause.taxFriendlyMessage(),
-                action = { RetryButton(onClick = onRetry) },
-            )
+            failure != null && grouped == null -> Box(modifier = Modifier.testTag(TaxesTestTags.STATE_ERROR)) {
+                SheetMessage(
+                    icon = Icons.Outlined.CloudOff,
+                    title = "Caricamento non riuscito",
+                    body = failure.cause.taxFriendlyMessage(),
+                    action = { RetryButton(onClick = onRetry) },
+                )
+            }
 
-            grouped == null || !settled -> SheetLoadingIndicator(label = "Caricamento tasse…")
+            grouped == null || !settled -> Box(modifier = Modifier.testTag(TaxesTestTags.STATE_LOADING)) {
+                SheetLoadingIndicator(label = "Caricamento tasse…")
+            }
 
             grouped.values.all { it.isEmpty() } -> Box(
                 modifier = Modifier
+                    .testTag(TaxesTestTags.STATE_EMPTY)
                     .fillMaxWidth()
                     .height(400.dp)
                     .padding(bottom = 16.dp),
@@ -185,7 +192,9 @@ private fun TaxesPager(
         snapAnimationSpec = tween(durationMillis = 350, easing = FastOutSlowInEasing),
     )
 
-    Column(modifier = Modifier.fillMaxWidth()) {
+    Column(modifier = Modifier
+        .testTag(TaxesTestTags.STATE_CONTENT)
+        .fillMaxWidth()) {
         HorizontalPager(
             state = pagerState,
             flingBehavior = flingBehavior,
@@ -220,6 +229,7 @@ private fun TaxesPager(
 
         Box(
             modifier = Modifier
+                .testTag(TaxesTestTags.FILTER_SWITCH)
                 .fillMaxWidth()
                 .padding(horizontal = 20.dp, vertical = 6.dp)
                 .background(MaterialTheme.colorScheme.surfaceContainerLow, RoundedCornerShape(100)),
@@ -263,7 +273,9 @@ private fun HeroInvoiceCard(
                 )
             }
         },
-        modifier = Modifier.onGloballyPositioned { coords = it },
+        modifier = Modifier
+            .testTag(TaxesTestTags.invoiceCard(invoice.id.value))
+            .onGloballyPositioned { coords = it },
     )
 }
 

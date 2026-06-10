@@ -11,6 +11,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.MeetingRoom
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.SyncStatus
@@ -18,6 +19,7 @@ import it.attendance100.mybicocca.domain.model.library.Library
 import it.attendance100.mybicocca.ui.component.button.RetryButton
 import it.attendance100.mybicocca.ui.component.modal.SheetLoadingIndicator
 import it.attendance100.mybicocca.ui.component.modal.SheetMessage
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.library.LibraryTestTags
 
 /**
  * "Prenota" sub-page: the bookable libraries as a scrollable column of [LibraryCard]s, with
@@ -48,8 +50,12 @@ internal fun LibrariesPage(
                     title = "Caricamento non riuscito",
                     body = "Non è stato possibile caricare le biblioteche.",
                     action = { RetryButton(onClick = onRetry) },
+                    modifier = Modifier.testTag(LibraryTestTags.LIBRARIES_ERROR),
                 )
-                else -> SheetLoadingIndicator(label = "Caricamento biblioteche…")
+                else -> SheetLoadingIndicator(
+                    label = "Caricamento biblioteche…",
+                    modifier = Modifier.testTag(LibraryTestTags.LIBRARIES_LOADING),
+                )
             }
 
             is Loadable.Loaded -> {
@@ -58,10 +64,15 @@ internal fun LibrariesPage(
                         icon = Icons.Outlined.MeetingRoom,
                         title = "Nessuna biblioteca",
                         body = "Al momento non ci sono biblioteche prenotabili.",
+                        modifier = Modifier.testTag(LibraryTestTags.LIBRARIES_EMPTY),
                     )
                 } else {
                     libraries.value.forEach { library ->
-                        LibraryCard(library = library, onClick = { onOpenLibrary(library) })
+                        LibraryCard(
+                            library = library,
+                            onClick = { onOpenLibrary(library) },
+                            modifier = Modifier.testTag(LibraryTestTags.library(library.id)),
+                        )
                     }
                 }
             }

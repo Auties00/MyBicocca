@@ -34,9 +34,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import it.attendance100.mybicocca.domain.model.elearning.assignment.Assignment
+import it.attendance100.mybicocca.ui.screen.elearning.subscreen.assignmentDetail.AssignmentDetailTestTags
 import it.attendance100.mybicocca.domain.model.elearning.assignment.SubmissionStatus
 import it.attendance100.mybicocca.ui.component.button.PrimaryActionButton
 import it.attendance100.mybicocca.ui.component.text.HtmlBody
@@ -206,14 +208,19 @@ private fun OverviewActions(
                 onClick = onCompose,
                 enabled = isOnline,
                 leadingIcon = Icons.AutoMirrored.Rounded.Send,
-                modifier = Modifier.fillMaxWidth().height(56.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp)
+                    .testTag(AssignmentDetailTestTags.COMPOSE_ACTION),
             )
             if (isDraft || isSubmitted) {
                 Spacer(Modifier.height(4.dp))
                 TextButton(
                     onClick = onRemove,
                     enabled = isOnline,
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag(AssignmentDetailTestTags.REMOVE_ACTION),
                 ) {
                     Icon(Icons.Outlined.DeleteOutline, contentDescription = null, modifier = Modifier.size(18.dp))
                     Spacer(Modifier.width(8.dp))

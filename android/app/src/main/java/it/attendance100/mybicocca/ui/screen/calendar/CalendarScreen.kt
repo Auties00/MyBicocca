@@ -31,6 +31,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.State
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
@@ -139,7 +140,9 @@ fun CalendarScreen(
     var timelineZoom by rememberSaveable { mutableFloatStateOf(TIMELINE_ZOOM_DEFAULT) }
 
     ProvideEventPalette {
-    Box(modifier = modifier.fillMaxSize()) {
+    Box(modifier = modifier
+        .testTag(CalendarTestTags.ROOT)
+        .fillMaxSize()) {
         PullToRefreshBox(
             isRefreshing = syncStatus is SyncStatus.Refreshing || initialLoading,
             onRefresh = viewModel::pullToRefresh,
@@ -153,9 +156,12 @@ fun CalendarScreen(
                     title = "Sincronizzazione del calendario non riuscita",
                     body = failure.cause.friendlyMessage(),
                     action = { RetryButton(onClick = viewModel::pullToRefresh) },
+                    modifier = Modifier.testTag(CalendarTestTags.STATE_ERROR),
                 )
             } else {
-            Column(modifier = Modifier.fillMaxSize()) {
+            Column(modifier = Modifier
+                .testTag(CalendarTestTags.STATE_CONTENT)
+                .fillMaxSize()) {
                 Spacer(Modifier.height(16.dp))
                 CalendarSegmentedControl(
                     viewMode = viewMode,

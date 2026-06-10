@@ -46,6 +46,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
@@ -53,6 +54,7 @@ import it.attendance100.mybicocca.domain.model.calendar.CalendarEvent
 import it.attendance100.mybicocca.domain.model.calendar.EventStatus
 import it.attendance100.mybicocca.domain.model.elearning.course.CourseId
 import it.attendance100.mybicocca.domain.model.elearning.course.EnrolledCourse
+import it.attendance100.mybicocca.ui.screen.calendar.CalendarTestTags
 import it.attendance100.mybicocca.ui.screen.calendar.ext.durationMinutes
 import it.attendance100.mybicocca.ui.screen.calendar.ext.formatTimeRange
 import it.attendance100.mybicocca.ui.screen.calendar.ext.isPointInTime
@@ -97,6 +99,7 @@ fun EventDetailSheet(
         ) {
             Text(
                 text = event.title,
+                modifier = Modifier.testTag(CalendarTestTags.EVENT_TITLE),
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.SemiBold,
                 color = if (cancelled) scheme.onSurfaceVariant else scheme.onSurface,
@@ -105,6 +108,7 @@ fun EventDetailSheet(
             Spacer(Modifier.height(4.dp))
             Text(
                 text = activityLabel(event),
+                modifier = Modifier.testTag(CalendarTestTags.EVENT_ACTIVITY_LABEL),
                 style = MaterialTheme.typography.bodyMedium,
                 color = scheme.onSurfaceVariant,
             )
@@ -145,7 +149,7 @@ fun EventDetailContent(
     val context = LocalContext.current
     var showEditionPicker by remember { mutableStateOf(false) }
 
-    Column(modifier = modifier) {
+    Column(modifier = modifier.testTag(CalendarTestTags.EVENT_CONTENT)) {
         Spacer(Modifier.height(24.dp))
 
         val rows = buildList {
@@ -327,7 +331,8 @@ private fun ActionRow(primary: EventAction, secondary: EventAction?) {
             onClick = primary.onClick,
             modifier = Modifier
                 .fillMaxWidth()
-                .height(56.dp),
+                .height(56.dp)
+                .testTag(CalendarTestTags.EVENT_PRIMARY_ACTION),
             colors = ButtonDefaults.buttonColors(
                 containerColor = primaryBg,
                 contentColor = primaryFg,
@@ -352,7 +357,8 @@ private fun ActionRow(primary: EventAction, secondary: EventAction?) {
             onClick = secondary.onClick,
             modifier = Modifier
                 .weight(1f)
-                .height(56.dp),
+                .height(56.dp)
+                .testTag(CalendarTestTags.EVENT_SECONDARY_ACTION),
             shape = ButtonGroupDefaults.connectedLeadingButtonShape,
             colors = ButtonDefaults.filledTonalButtonColors(
                 containerColor = scheme.surfaceContainerHighest,
@@ -371,7 +377,8 @@ private fun ActionRow(primary: EventAction, secondary: EventAction?) {
             onClick = primary.onClick,
             modifier = Modifier
                 .weight(1.4f)
-                .height(56.dp),
+                .height(56.dp)
+                .testTag(CalendarTestTags.EVENT_PRIMARY_ACTION),
             shape = ButtonGroupDefaults.connectedTrailingButtonShape,
             colors = ButtonDefaults.buttonColors(
                 containerColor = primaryBg,

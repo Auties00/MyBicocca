@@ -58,6 +58,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -277,7 +278,9 @@ private fun AddCourseContent(
             query = searchQuery,
             placeholder = searchPlaceholder(depth),
             onQueryChange = onSetSearch,
-            modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 10.dp, bottom = 6.dp),
+            modifier = Modifier
+                .testTag(AddCourseTestTags.SEARCH_FIELD)
+                .padding(start = 20.dp, end = 20.dp, top = 10.dp, bottom = 6.dp),
         )
 
         Box(
@@ -441,21 +444,30 @@ private fun RootPage(
     ) { current ->
         when (current) {
             RootPageState.Loading -> Box(
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier
+                    .testTag(AddCourseTestTags.ROOT_STATE_LOADING)
+                    .fillMaxSize(),
                 contentAlignment = Alignment.Center,
             ) {
                 SheetLoadingIndicator(label = "Caricamento catalogo…")
             }
 
             RootPageState.Error -> Box(
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier
+                    .testTag(AddCourseTestTags.ROOT_STATE_ERROR)
+                    .fillMaxSize(),
                 contentAlignment = Alignment.Center,
             ) {
                 SheetMessage(
                     icon = Icons.Outlined.CloudOff,
                     title = "Caricamento non riuscito",
                     body = "Impossibile caricare il catalogo dei corsi.",
-                    action = { RetryButton(onClick = onRetry) },
+                    action = {
+                        RetryButton(
+                            onClick = onRetry,
+                            modifier = Modifier.testTag(AddCourseTestTags.RETRY_BUTTON),
+                        )
+                    },
                 )
             }
 
@@ -464,7 +476,9 @@ private fun RootPage(
                 onOpen = onOpen,
                 onUserScroll = onUserScroll,
                 gridState = gridState,
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier
+                    .testTag(AddCourseTestTags.ROOT_STATE_CONTENT)
+                    .fillMaxSize(),
             )
         }
     }
@@ -596,6 +610,8 @@ private fun InsideLevel(
                     isFirst = index == 0,
                     isLast = index == courses.lastIndex,
                     onEnrol = { onEnrol(course) },
+                    modifier = Modifier.testTag(AddCourseTestTags.courseRow(course.id.value)),
+                    enrolButtonModifier = Modifier.testTag(AddCourseTestTags.enrolButton(course.id.value)),
                 )
             }
         }

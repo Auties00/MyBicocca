@@ -10,6 +10,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.valueOrNull
@@ -166,7 +168,7 @@ fun LibraryPage(
             ).joinToString(" · ").ifBlank { null }
         }
 
-        Column {
+        Column(modifier = Modifier.testTag(LibraryTestTags.ROOT)) {
             SheetPagerHeader(
                 depth = displayDepth(display),
                 title = when (display) {

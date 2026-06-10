@@ -60,6 +60,9 @@ android {
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
+            excludes += "/META-INF/LICENSE.md"
+            excludes += "/META-INF/LICENSE-notice.md"
+            excludes += "/META-INF/NOTICE.md"
         }
     }
 
@@ -69,6 +72,13 @@ android {
         // line up with the stored bytes, so MapLibre's PMTilesFileSource reads garbage for the root
         // directory and aborts the process with a zlib "incorrect header check". Store it raw.
         noCompress += "pmtiles"
+    }
+
+    testOptions {
+        unitTests {
+            isReturnDefaultValues = true
+            isIncludeAndroidResources = true
+        }
     }
 }
 
@@ -80,6 +90,7 @@ kotlin {
 
 ksp {
     arg("correctErrorTypes", "true")
+    arg("room.schemaLocation", "$projectDir/schemas")
 }
 
 // Dependencies
@@ -132,11 +143,30 @@ dependencies {
     // Encrypted SharedPreferences
     implementation("androidx.security:security-crypto:1.1.0-alpha06")
 
-    // Android Test dependencies
+    // Unit Test dependencies (pure-JVM, JUnit 4 — Robolectric/Compose require JUnit 4)
+    testImplementation("junit:junit:4.13.2")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.2")
+    testImplementation("io.mockk:mockk:1.14.2")
+    testImplementation("app.cash.turbine:turbine:1.2.0")
+    testImplementation("com.google.truth:truth:1.4.4")
+
+    // Android-runtime unit tests (Wave 2 — Robolectric): Room DAO, Hilt graph, Compose behaviour
+    testImplementation("org.robolectric:robolectric:4.14.1")
+    testImplementation("androidx.test:core-ktx:1.6.1")
+    testImplementation("androidx.test.ext:junit-ktx:1.2.1")
+    testImplementation("androidx.room:room-testing:2.8.4")
+    testImplementation("com.google.dagger:hilt-android-testing:2.59.2")
+    kspTest("com.google.dagger:hilt-android-compiler:2.59.2")
+
+    // Android Test dependencies (instrumented — device/emulator: the Robolectric-deferred UI interactions)
     androidTestImplementation("androidx.test.ext:junit:1.3.0")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.7.0")
-    androidTestImplementation(platform("androidx.compose:compose-bom:2026.05.01"))
+    androidTestImplementation(platform("androidx.compose:compose-bom:2026.03.01"))
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")
+    androidTestImplementation("io.mockk:mockk-android:1.14.2")
+    androidTestImplementation("com.google.truth:truth:1.4.4")
+    androidTestImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.2")
+    androidTestImplementation("app.cash.turbine:turbine:1.2.0")
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
     implementation("androidx.compose.material:material-icons-extended-android:1.7.8")

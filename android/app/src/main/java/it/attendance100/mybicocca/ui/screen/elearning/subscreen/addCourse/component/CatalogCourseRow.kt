@@ -41,6 +41,7 @@ fun CatalogCourseRow(
     isLast: Boolean,
     onEnrol: () -> Unit,
     modifier: Modifier = Modifier,
+    enrolButtonModifier: Modifier = Modifier,
 ) {
     val scheme = MaterialTheme.colorScheme
     Surface(
@@ -91,7 +92,12 @@ fun CatalogCourseRow(
                     )
                 }
             }
-            CourseEnrolButton(status = status, accent = accent, onEnrol = onEnrol)
+            CourseEnrolButton(
+                status = status,
+                accent = accent,
+                onEnrol = onEnrol,
+                modifier = enrolButtonModifier,
+            )
         }
     }
 }

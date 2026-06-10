@@ -18,12 +18,14 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import it.attendance100.mybicocca.ui.component.directory.SegmentedHeaderTile
 import it.attendance100.mybicocca.ui.component.directory.SegmentedIconChip
 import it.attendance100.mybicocca.ui.component.directory.SegmentedTile
 import it.attendance100.mybicocca.ui.screen.registry.state.RegistryBadge
+import it.attendance100.mybicocca.ui.screen.registry.state.RegistryService
 import it.attendance100.mybicocca.ui.screen.registry.state.RegistryServiceGroup
 import it.attendance100.mybicocca.ui.screen.registry.theme.registryBadgeTone
 
@@ -32,6 +34,10 @@ import it.attendance100.mybicocca.ui.screen.registry.theme.registryBadgeTone
  * primitives: a header tile, then one tile per service with an accent icon chip leading
  * and an optional status badge plus a chevron (or a link icon for external entries)
  * trailing.
+ *
+ * [tileTag] supplies an optional `testTag` per service tile so UI tests can address an
+ * individual row by its stable id; the shared [SegmentedTile] primitive itself carries no
+ * tag, so the marker lands here at the call site.
  */
 @Composable
 fun RegistryServiceSection(
@@ -39,6 +45,7 @@ fun RegistryServiceSection(
     accentContainer: Color,
     accentOnContainer: Color,
     modifier: Modifier = Modifier,
+    tileTag: ((RegistryService) -> String)? = null,
 ) {
     val scheme = MaterialTheme.colorScheme
     Column(
@@ -47,9 +54,11 @@ fun RegistryServiceSection(
     ) {
         SegmentedHeaderTile(title = group.name, subtitle = group.caption)
         group.services.forEachIndexed { index, item ->
+            val tileModifier = tileTag?.let { Modifier.testTag(it(item)) } ?: Modifier
             SegmentedTile(
                 isFirst = false,
                 isLast = index == group.services.lastIndex,
+                modifier = tileModifier,
                 title = item.title,
                 subtitle = item.subtitle,
                 onClick = item.onClick,

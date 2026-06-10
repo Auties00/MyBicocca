@@ -109,6 +109,10 @@ subprojects {
     }
 
     tasks.withType<Test> {
-        useJUnitPlatform()
+        useJUnitPlatform {
+            if (!project.hasProperty("includeLive")) {
+                excludeTags("live")
+            }
+        }
     }
 }

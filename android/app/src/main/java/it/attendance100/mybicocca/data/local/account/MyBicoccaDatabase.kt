@@ -92,8 +92,10 @@ import it.attendance100.mybicocca.data.local.certificate.CertificateEntity
  *   history, questionnaires, badge/titles, certificates): the last successful read of each,
  *   served only when the device has no network
  *
- * Most tables are scoped by account id and/or career id. Schema export is disabled, so there is
- * no recorded schema history to validate incremental migrations against.
+ * Most tables are scoped by account id and/or career id. Schema export is enabled (the JSON
+ * lands under `app/schemas/`), giving every released version a recorded schema history that
+ * incremental migrations are validated against; each [version] bump must register a matching
+ * migration on the builder rather than dropping the database.
  */
 @Database(
     entities = [
@@ -147,8 +149,8 @@ import it.attendance100.mybicocca.data.local.certificate.CertificateEntity
         BadgeImageEntity::class,
         CertificateEntity::class,
     ],
-    version = 33,
-    exportSchema = false,
+    version = 1,
+    exportSchema = true,
 )
 abstract class MyBicoccaDatabase : RoomDatabase() {
     abstract fun accountDao(): AccountDao

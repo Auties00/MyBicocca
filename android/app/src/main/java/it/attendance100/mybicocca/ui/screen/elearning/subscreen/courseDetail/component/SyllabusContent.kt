@@ -28,6 +28,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontStyle
@@ -72,7 +73,7 @@ fun SyllabusContent(
 
     LazyColumn(
         state = listState,
-        modifier = modifier,
+        modifier = modifier.testTag(CourseDetailTestTags.SYLLABUS_CONTENT),
         contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 28.dp),
         verticalArrangement = Arrangement.spacedBy(24.dp),
     ) {
@@ -637,7 +638,7 @@ private fun SyllabusEmpty(modifier: Modifier) {
         icon = Icons.Outlined.Description,
         title = "Scheda non disponibile",
         body = "La scheda di questo corso non è stata pubblicata.",
-        modifier = modifier,
+        modifier = modifier.testTag(CourseDetailTestTags.SYLLABUS_EMPTY),
     )
 }
 

@@ -41,15 +41,16 @@ import javax.inject.Singleton
 object DatabaseModule {
 
     /**
-     * Schema version bumps drop and recreate every table rather than running migrations,
-     * relying on all cached data being re-syncable from the university platforms. A shipped
-     * release whose users must keep local data across upgrades needs real migrations.
+     * Schema version bumps must ship an explicit [androidx.room.migration.Migration] registered on
+     * this builder. The destructive fallback that dropped and recreated every table on a version
+     * change is gone: a released build preserves the user's cached data across upgrades, so opening
+     * a database whose version advanced without a matching migration is a hard failure surfaced
+     * during development rather than silent data loss in the field.
      */
     @Provides
     @Singleton
     fun provideDatabase(@ApplicationContext context: Context): MyBicoccaDatabase =
         Room.databaseBuilder(context, MyBicoccaDatabase::class.java, DATABASE_NAME)
-            .fallbackToDestructiveMigration(dropAllTables = true)
             .build()
 
     @Provides

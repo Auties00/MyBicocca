@@ -38,6 +38,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
@@ -361,6 +362,7 @@ private fun ActiveBody(
 
     Column(
         modifier = Modifier
+            .testTag(AppelliTestTags.ROOT)
             .fillMaxWidth()
             .animateContentSize(animationSpec = sizeSpec),
     ) {
@@ -370,18 +372,24 @@ private fun ActiveBody(
                 title = "Caricamento non riuscito",
                 body = failure.cause.friendlyMessage(),
                 action = { RetryButton(onClick = onRetry) },
+                modifier = Modifier.testTag(AppelliTestTags.STATE_ERROR),
             )
 
-            !settled -> SheetLoadingIndicator(label = "Caricamento prenotazioni…")
+            !settled -> SheetLoadingIndicator(
+                label = "Caricamento prenotazioni…",
+                modifier = Modifier.testTag(AppelliTestTags.STATE_LOADING),
+            )
 
             active.isEmpty() -> SheetMessage(
                 icon = Icons.Outlined.EventAvailable,
                 title = "Nessun esame in programma",
                 body = "Quando prenoti un appello lo trovi qui. Premi Prenota per iniziare.",
+                modifier = Modifier.testTag(AppelliTestTags.STATE_EMPTY),
             )
 
             else -> LazyColumn(
                 modifier = Modifier
+                    .testTag(AppelliTestTags.STATE_CONTENT)
                     .fillMaxWidth()
                     .heightIn(max = 520.dp)
                     .padding(horizontal = 16.dp),
@@ -392,7 +400,9 @@ private fun ActiveBody(
                     BookedExamCard(
                         booking = booking,
                         onClick = { onOpenDetail(booking) },
-                        modifier = Modifier.animateItem(),
+                        modifier = Modifier
+                            .testTag(AppelliTestTags.item(booking.identityKey()))
+                            .animateItem(),
                     )
                 }
             }
@@ -401,7 +411,9 @@ private fun ActiveBody(
         if (settled && failure == null) {
             PrenotaFooterButton(
                 onClick = onPrenota,
-                modifier = Modifier.padding(start = 24.dp, end = 24.dp, top = 12.dp, bottom = 24.dp),
+                modifier = Modifier
+                    .testTag(AppelliTestTags.PRENOTA_BUTTON)
+                    .padding(start = 24.dp, end = 24.dp, top = 12.dp, bottom = 24.dp),
             )
         }
     }
@@ -468,6 +480,7 @@ private fun CancelConfirmPage(
                 onClick = onConfirm,
                 enabled = LocalIsOnline.current,
                 modifier = Modifier
+                    .testTag(AppelliTestTags.CANCEL_CONFIRM)
                     .weight(1f)
                     .height(56.dp),
                 shape = ButtonGroupDefaults.connectedLeadingButtonShape,
@@ -481,6 +494,7 @@ private fun CancelConfirmPage(
             Button(
                 onClick = onKeep,
                 modifier = Modifier
+                    .testTag(AppelliTestTags.CANCEL_KEEP)
                     .weight(1.4f)
                     .height(56.dp),
                 shape = ButtonGroupDefaults.connectedTrailingButtonShape,

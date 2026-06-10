@@ -25,6 +25,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -126,17 +127,19 @@ fun ProfileContent(
         viewModel.openCalculatorRequests.collect { calculatorWeighted = true }
     }
 
-    Column(modifier) {
+    Column(modifier.testTag(ProfileTestTags.ROOT)) {
         ErrorBanner(
             message = error,
             onDismiss = viewModel::clearError,
         )
 
         if (showSkeleton) {
-            SkeletonProfileContent()
+            SkeletonProfileContent(modifier = Modifier.testTag(ProfileTestTags.STATE_SKELETON))
         } else {
             LazyColumn(
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .testTag(ProfileTestTags.STATE_CONTENT),
                 contentPadding = PaddingValues(
                     start = 16.dp,
                     end = 16.dp,
@@ -152,7 +155,9 @@ fun ProfileContent(
                             career = activeCareer,
                             photoFile = photoFile,
                             enabled = true,
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .testTag(ProfileTestTags.STUDENT_CARD),
                             theme = badgeCardTheme,
                         )
                     }
@@ -177,7 +182,10 @@ fun ProfileContent(
                         title = "Andamento",
                         modifier = Modifier.padding(bottom = 12.dp),
                     )
-                    GradeTrendChart(rows = rows)
+                    GradeTrendChart(
+                        rows = rows,
+                        modifier = Modifier.testTag(ProfileTestTags.GRADE_CHART),
+                    )
                 }
             }
         }
@@ -230,7 +238,8 @@ private fun StatisticsGrid(
             StatCard(
                 modifier = Modifier
                     .weight(1f)
-                    .fillMaxHeight(),
+                    .fillMaxHeight()
+                    .testTag(ProfileTestTags.STAT_ARITHMETIC),
                 title = "Media Aritmetica",
                 value = stats?.arithmeticAverage?.let {
                     String.format(
@@ -254,7 +263,8 @@ private fun StatisticsGrid(
             StatCard(
                 modifier = Modifier
                     .weight(1f)
-                    .fillMaxHeight(),
+                    .fillMaxHeight()
+                    .testTag(ProfileTestTags.STAT_WEIGHTED),
                 title = "Media Ponderata",
                 value = stats?.weightedAverage?.let {
                     String.format(
@@ -283,7 +293,8 @@ private fun StatisticsGrid(
             ProgressStatCard(
                 modifier = Modifier
                     .weight(1f)
-                    .fillMaxHeight(),
+                    .fillMaxHeight()
+                    .testTag(ProfileTestTags.PROGRESS_EXAMS),
                 title = "Esami Sostenuti",
                 current = stats?.passedExamCount ?: 0,
                 total = stats?.plannedExamCount ?: 0,
@@ -294,7 +305,8 @@ private fun StatisticsGrid(
             ProgressStatCard(
                 modifier = Modifier
                     .weight(1f)
-                    .fillMaxHeight(),
+                    .fillMaxHeight()
+                    .testTag(ProfileTestTags.PROGRESS_CREDITS),
                 title = "CFU Acquisiti",
                 current = stats?.passedCredits?.toInt() ?: 0,
                 total = stats?.totalCreditsRequired?.toInt() ?: 0,

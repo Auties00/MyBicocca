@@ -56,6 +56,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.SpanStyle
@@ -354,6 +355,7 @@ private fun SheetBody(
 
     Column(
         modifier = Modifier
+            .testTag(ExamResultsTestTags.ROOT)
             .fillMaxWidth()
             .animateContentSize(animationSpec = sizeSpec),
     ) {
@@ -363,14 +365,19 @@ private fun SheetBody(
                 title = "Caricamento non riuscito",
                 body = failure.cause.friendlyMessage(),
                 action = { RetryButton(onClick = onRetry) },
+                modifier = Modifier.testTag(ExamResultsTestTags.STATE_ERROR),
             )
 
-            !settled -> SheetLoadingIndicator(label = "Caricamento esiti…")
+            !settled -> SheetLoadingIndicator(
+                label = "Caricamento esiti…",
+                modifier = Modifier.testTag(ExamResultsTestTags.STATE_LOADING),
+            )
 
             grouped.values.all { it.isEmpty() } -> SheetMessage(
                 icon = Icons.Outlined.Grading,
                 title = "Nessun esito pubblicato",
                 body = "Quando un docente pubblica l'esito di un appello lo troverai qui.",
+                modifier = Modifier.testTag(ExamResultsTestTags.STATE_EMPTY),
             )
 
             else -> EsitiPager(
@@ -415,7 +422,11 @@ private fun EsitiPager(
 
     LaunchedEffect(pagerState.targetPage) { onSectionChange(filters[pagerState.targetPage]) }
 
-    Column(modifier = Modifier.fillMaxWidth()) {
+    Column(
+        modifier = Modifier
+            .testTag(ExamResultsTestTags.STATE_CONTENT)
+            .fillMaxWidth(),
+    ) {
         HorizontalPager(
             state = pagerState,
             flingBehavior = flingBehavior,
@@ -449,11 +460,13 @@ private fun EsitiPager(
                                 result = result,
                                 today = today,
                                 onClick = { onOpenDetail(result) },
+                                modifier = Modifier.testTag(ExamResultsTestTags.item(result.identity())),
                             )
                         } else {
                             ArchivedResultRow(
                                 result = result,
                                 onClick = { onOpenDetail(result) },
+                                modifier = Modifier.testTag(ExamResultsTestTags.item(result.identity())),
                             )
                         }
                     }
@@ -507,10 +520,11 @@ private fun PendingResultRow(
     result: ExamResult,
     today: LocalDate,
     onClick: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val scheme = MaterialTheme.colorScheme
     Surface(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
         color = scheme.surfaceContainer,
         shape = RoundedCornerShape(20.dp),
     ) {
@@ -567,10 +581,11 @@ private fun deadlineLabel(daysLeft: Long): String = when {
 private fun ArchivedResultRow(
     result: ExamResult,
     onClick: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val scheme = MaterialTheme.colorScheme
     Surface(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
         color = scheme.surfaceContainer,
         shape = RoundedCornerShape(20.dp),
     ) {
@@ -740,6 +755,7 @@ private fun DecisionActionRow(
             onClick = onRequestReject,
             enabled = enabled,
             modifier = Modifier
+                .testTag(ExamResultsTestTags.REJECT_BUTTON)
                 .weight(1f)
                 .height(56.dp),
             shape = ButtonGroupDefaults.connectedLeadingButtonShape,
@@ -770,6 +786,7 @@ private fun DecisionActionRow(
             onClick = onAccept,
             enabled = enabled,
             modifier = Modifier
+                .testTag(ExamResultsTestTags.ACCEPT_BUTTON)
                 .weight(1.4f)
                 .height(56.dp),
             shape = ButtonGroupDefaults.connectedTrailingButtonShape,
@@ -836,6 +853,7 @@ private fun RejectConfirmPage(
             FilledTonalButton(
                 onClick = onConfirm,
                 modifier = Modifier
+                    .testTag(ExamResultsTestTags.REJECT_CONFIRM)
                     .weight(1f)
                     .height(56.dp),
                 shape = ButtonGroupDefaults.connectedLeadingButtonShape,
@@ -849,6 +867,7 @@ private fun RejectConfirmPage(
             Button(
                 onClick = onKeep,
                 modifier = Modifier
+                    .testTag(ExamResultsTestTags.REJECT_KEEP)
                     .weight(1.4f)
                     .height(56.dp),
                 shape = ButtonGroupDefaults.connectedTrailingButtonShape,

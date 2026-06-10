@@ -23,6 +23,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import com.google.android.gms.oss.licenses.OssLicensesMenuActivity
 import it.attendance100.mybicocca.core.os.rememberHapticManager
@@ -119,6 +120,7 @@ fun SettingsScreen() {
 
     Column(
         modifier = Modifier
+            .testTag(SettingsTestTags.ROOT)
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
             .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 32.dp),

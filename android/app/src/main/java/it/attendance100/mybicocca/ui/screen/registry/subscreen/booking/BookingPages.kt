@@ -46,6 +46,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
@@ -99,18 +100,27 @@ internal fun ExamCalendarPage(
 
     Column(
         modifier = Modifier
+            .testTag(BookingTestTags.CALENDAR_ROOT)
             .fillMaxWidth()
             .animateContentSize(animationSpec = sizeSpec),
     ) {
         when {
-            failure != null && groups == null -> SheetError(cause = failure.cause, onRetry = onRetry)
+            failure != null && groups == null -> SheetError(
+                cause = failure.cause,
+                onRetry = onRetry,
+                modifier = Modifier.testTag(BookingTestTags.CALENDAR_ERROR),
+            )
 
-            !settled -> SheetLoadingIndicator(label = "Caricamento appelli…")
+            !settled -> SheetLoadingIndicator(
+                label = "Caricamento appelli…",
+                modifier = Modifier.testTag(BookingTestTags.CALENDAR_LOADING),
+            )
 
             groups.isNullOrEmpty() -> SheetMessage(
                 icon = Icons.Outlined.EventAvailable,
                 title = "Nessun appello disponibile",
                 body = "Non ci sono appelli prenotabili al momento.",
+                modifier = Modifier.testTag(BookingTestTags.CALENDAR_EMPTY),
             )
 
             else -> ExamCalendarList(
@@ -149,6 +159,7 @@ private fun ExamCalendarList(
     LazyColumn(
         state = listState,
         modifier = Modifier
+            .testTag(BookingTestTags.CALENDAR_CONTENT)
             .fillMaxWidth()
             .heightIn(max = 560.dp)
             .padding(horizontal = 16.dp),
@@ -235,6 +246,7 @@ private fun CallDateCell(
         color = container,
         contentColor = content,
         shape = RoundedCornerShape(20.dp),
+        modifier = Modifier.testTag(BookingTestTags.call(call.examCallId)),
     ) {
         Column(
             modifier = Modifier
@@ -366,6 +378,7 @@ internal fun CallPage(
                 onClick = onBook,
                 enabled = LocalIsOnline.current,
                 modifier = Modifier
+                    .testTag(BookingTestTags.CALL_BOOK_BUTTON)
                     .fillMaxWidth()
                     .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 24.dp),
             )
@@ -487,7 +500,9 @@ internal fun ConfirmPage(
             OutlinedTextField(
                 value = note,
                 onValueChange = { note = it },
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag(BookingTestTags.CONFIRM_NOTE_FIELD),
                 shape = MaterialTheme.shapes.large,
                 label = { Text("Nota (facoltativa)") },
                 minLines = 2,
@@ -509,6 +524,7 @@ internal fun ConfirmPage(
             enabled = !submitting && LocalIsOnline.current,
             loading = submitting,
             modifier = Modifier
+                .testTag(BookingTestTags.CONFIRM_BUTTON)
                 .fillMaxWidth()
                 .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 24.dp),
         )
@@ -554,12 +570,13 @@ private fun BrandActionButton(
 }
 
 @Composable
-private fun SheetError(cause: Throwable, onRetry: () -> Unit) {
+private fun SheetError(cause: Throwable, onRetry: () -> Unit, modifier: Modifier = Modifier) {
     SheetMessage(
         icon = Icons.Outlined.CloudOff,
         title = "Caricamento non riuscito",
         body = cause.friendlyMessage(),
         action = { RetryButton(onClick = onRetry) },
+        modifier = modifier,
     )
 }
 

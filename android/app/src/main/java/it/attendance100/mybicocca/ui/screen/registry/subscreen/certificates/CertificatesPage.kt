@@ -46,6 +46,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntSize
@@ -107,7 +108,7 @@ fun CertificatesPage(
 
     BackHandler(enabled = outcome != null) { outcome = null }
 
-    Column {
+    Column(modifier = Modifier.testTag(CertificatesTestTags.ROOT)) {
         SheetPagerHeader(
             depth = if (outcome != null) 1 else 0,
             title = if (outcome != null) "" else "Certificati",
@@ -122,7 +123,9 @@ fun CertificatesPage(
             label = "certificates_pages",
         ) { current ->
             if (current != null) {
-                SheetResultPage(outcome = current, onDismiss = { outcome = null })
+                Box(modifier = Modifier.testTag(CertificatesTestTags.RESULT_PAGE)) {
+                    SheetResultPage(outcome = current, onDismiss = { outcome = null })
+                }
             } else {
                 SheetBody(
                     loaded = certificatesLoadable is Loadable.Loaded,
@@ -171,20 +174,26 @@ private fun SheetBody(
             .animateContentSize(animationSpec = sizeSpec),
     ) {
         when {
-            failure != null && certificates == null -> SheetMessage(
-                icon = Icons.Outlined.CloudOff,
-                title = "Caricamento non riuscito",
-                body = "Impossibile caricare i certificati.",
-                action = { RetryButton(onClick = onRetry) },
-            )
+            failure != null && certificates == null -> Box(modifier = Modifier.testTag(CertificatesTestTags.STATE_ERROR)) {
+                SheetMessage(
+                    icon = Icons.Outlined.CloudOff,
+                    title = "Caricamento non riuscito",
+                    body = "Impossibile caricare i certificati.",
+                    action = { RetryButton(onClick = onRetry) },
+                )
+            }
 
-            !settled -> SheetLoadingIndicator(label = "Caricamento certificati…")
+            !settled -> Box(modifier = Modifier.testTag(CertificatesTestTags.STATE_LOADING)) {
+                SheetLoadingIndicator(label = "Caricamento certificati…")
+            }
 
-            certificates.isNullOrEmpty() -> SheetMessage(
-                icon = Icons.Rounded.Description,
-                title = "Nessun certificato",
-                body = "Non risultano certificati disponibili.",
-            )
+            certificates.isNullOrEmpty() -> Box(modifier = Modifier.testTag(CertificatesTestTags.STATE_EMPTY)) {
+                SheetMessage(
+                    icon = Icons.Rounded.Description,
+                    title = "Nessun certificato",
+                    body = "Non risultano certificati disponibili.",
+                )
+            }
 
             else -> CertificateList(
                 certificates = certificates,
@@ -205,6 +214,7 @@ private fun CertificateList(
 ) {
     LazyColumn(
         modifier = Modifier
+            .testTag(CertificatesTestTags.STATE_CONTENT)
             .fillMaxWidth()
             .heightIn(max = 560.dp)
             .padding(horizontal = 16.dp),
@@ -219,6 +229,7 @@ private fun CertificateList(
                 downloading = cert.id in downloading,
                 downloaded = cert.id in downloaded,
                 onDownload = { onDownload(cert) },
+                modifier = Modifier.testTag(CertificatesTestTags.tile(cert.id.value)),
             )
         }
     }
@@ -239,12 +250,13 @@ private fun CertificateTile(
     downloading: Boolean,
     downloaded: Boolean,
     onDownload: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val scheme = MaterialTheme.colorScheme
     val large = 20.dp
     val small = 4.dp
     Surface(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .clickable(enabled = !downloading, onClick = onDownload),
         color = scheme.surfaceContainer,

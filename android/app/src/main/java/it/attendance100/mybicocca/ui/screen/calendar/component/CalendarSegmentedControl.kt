@@ -24,6 +24,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -34,6 +35,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import it.attendance100.mybicocca.ui.screen.calendar.CalendarTestTags
 import it.attendance100.mybicocca.ui.screen.calendar.state.CalendarViewMode
 import java.time.LocalDate
 import java.time.YearMonth
@@ -117,7 +119,9 @@ fun CalendarSegmentedControl(
                     active = active,
                     contentColor = contentColor,
                     onClick = { onSelect(segment.mode) },
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier
+                        .weight(1f)
+                        .testTag(CalendarTestTags.segment(segment.mode)),
                 )
             }
         }

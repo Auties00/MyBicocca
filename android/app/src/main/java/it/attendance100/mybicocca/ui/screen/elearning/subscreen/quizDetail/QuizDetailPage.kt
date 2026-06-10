@@ -53,6 +53,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -220,7 +221,7 @@ fun QuizDetailPage(
             }
         }
 
-        Column {
+        Column(modifier = Modifier.testTag(QuizDetailTestTags.ROOT)) {
             SheetPagerHeader(
                 depth = page.depth,
                 title = when (page) {
@@ -260,7 +261,10 @@ fun QuizDetailPage(
                 when (target) {
                     QuizSheetPage.Overview ->
                         if (quiz == null) {
-                            SheetLoadingIndicator(label = "Caricamento quiz…")
+                            SheetLoadingIndicator(
+                                label = "Caricamento quiz…",
+                                modifier = Modifier.testTag(QuizDetailTestTags.STATE_LOADING),
+                            )
                         } else {
                             QuizOverviewPage(
                                 quiz = quiz,
@@ -269,6 +273,7 @@ fun QuizDetailPage(
                                 onStartAttempt = viewModel::onStartAttempt,
                                 onResumeAttempt = { viewModel.resumeAttempt(AttemptId(it)) },
                                 onShowHistory = { showHistory = true },
+                                modifier = Modifier.testTag(QuizDetailTestTags.OVERVIEW),
                             )
                         }
 
@@ -358,6 +363,7 @@ private fun QuizOverviewPage(
     onStartAttempt: () -> Unit,
     onResumeAttempt: (Int) -> Unit,
     onShowHistory: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val scheme = MaterialTheme.colorScheme
     val now = remember(quiz, attempts) { Instant.now() }
@@ -369,7 +375,7 @@ private fun QuizOverviewPage(
     val canStart = resumable != null || (!closed && !notYetOpen && attemptsLeft)
 
     Column(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .heightIn(max = 620.dp)
             .padding(horizontal = 24.dp)
@@ -437,7 +443,8 @@ private fun QuizHistoryPage(
         modifier = Modifier
             .fillMaxWidth()
             .heightIn(max = 560.dp)
-            .padding(horizontal = 16.dp),
+            .padding(horizontal = 16.dp)
+            .testTag(QuizDetailTestTags.HISTORY_LIST),
         contentPadding = PaddingValues(bottom = 24.dp),
         verticalArrangement = Arrangement.spacedBy(2.dp),
     ) {
@@ -446,6 +453,7 @@ private fun QuizHistoryPage(
                 attempt = attempt,
                 isFirst = index == 0,
                 isLast = index == ordered.lastIndex,
+                modifier = Modifier.testTag(QuizDetailTestTags.attempt(attempt.id.value)),
                 onClick = {
                     if (attempt.state == AttemptState.InProgress) onResumeAttempt(attempt.id.value)
                     else onReviewAttempt(attempt.id.value)
@@ -466,11 +474,12 @@ private fun AttemptRow(
     isFirst: Boolean,
     isLast: Boolean,
     onClick: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val scheme = MaterialTheme.colorScheme
     val inProgress = attempt.state == AttemptState.InProgress
     Surface(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(
             topStart = if (isFirst) 28.dp else 6.dp,
             topEnd = if (isFirst) 28.dp else 6.dp,
@@ -613,13 +622,16 @@ private fun QuizActionRow(
                 shape = ButtonGroupDefaults.connectedLeadingButtonShape,
                 onClick = onPrimary,
                 enabled = canStart && isOnline,
-                modifier = Modifier.weight(1.4f),
+                modifier = Modifier
+                    .weight(1.4f)
+                    .testTag(QuizDetailTestTags.PRIMARY_ACTION),
             )
             FilledTonalButton(
                 onClick = onShowHistory,
                 modifier = Modifier
                     .weight(1f)
-                    .height(56.dp),
+                    .height(56.dp)
+                    .testTag(QuizDetailTestTags.HISTORY_ACTION),
                 shape = ButtonGroupDefaults.connectedTrailingButtonShape,
                 colors = ButtonDefaults.filledTonalButtonColors(
                     containerColor = scheme.surfaceContainerHigh,
@@ -639,7 +651,9 @@ private fun QuizActionRow(
                 shape = RoundedCornerShape(28.dp),
                 onClick = onPrimary,
                 enabled = canStart && isOnline,
-                modifier = Modifier.weight(1f),
+                modifier = Modifier
+                    .weight(1f)
+                    .testTag(QuizDetailTestTags.PRIMARY_ACTION),
             )
         }
     }

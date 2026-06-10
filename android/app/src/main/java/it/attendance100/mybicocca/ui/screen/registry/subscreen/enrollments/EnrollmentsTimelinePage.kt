@@ -4,6 +4,7 @@ import android.content.Intent
 import android.net.Uri
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -22,6 +23,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -124,23 +126,29 @@ private fun TimelinePage(
 
     Column(
         modifier = Modifier
+            .testTag(EnrollmentsTestTags.ROOT)
             .fillMaxWidth()
             .animateContentSize(animationSpec = sizeSpec),
     ) {
         when {
-            failure != null && history == null -> SheetMessage(
-                icon = Icons.Outlined.CloudOff,
-                title = "Caricamento non riuscito",
-                body = "Impossibile caricare le iscrizioni.",
-                action = { RetryButton(onClick = onRetry) },
-            )
+            failure != null && history == null -> Box(modifier = Modifier.testTag(EnrollmentsTestTags.STATE_ERROR)) {
+                SheetMessage(
+                    icon = Icons.Outlined.CloudOff,
+                    title = "Caricamento non riuscito",
+                    body = "Impossibile caricare le iscrizioni.",
+                    action = { RetryButton(onClick = onRetry) },
+                )
+            }
 
-            !settled || history == null -> SheetLoadingIndicator(label = "Caricamento iscrizioni…")
+            !settled || history == null -> Box(modifier = Modifier.testTag(EnrollmentsTestTags.STATE_LOADING)) {
+                SheetLoadingIndicator(label = "Caricamento iscrizioni…")
+            }
 
             else -> {
                 val hasFooter = history.renewal != RenewalState.NotApplicable
                 LazyColumn(
                     modifier = Modifier
+                        .testTag(if (history.years.isEmpty()) EnrollmentsTestTags.STATE_EMPTY else EnrollmentsTestTags.STATE_CONTENT)
                         .fillMaxWidth()
                         .heightIn(max = 560.dp)
                         .padding(horizontal = 16.dp),
@@ -162,6 +170,7 @@ private fun TimelinePage(
                                 isFirst = index == 0,
                                 isLast = index == history.years.lastIndex,
                                 onClick = { onOpenDetail(enrollment) },
+                                modifier = Modifier.testTag(EnrollmentsTestTags.row(enrollment.id.value)),
                             )
                         }
                     }
@@ -171,6 +180,7 @@ private fun TimelinePage(
                         state = history.renewal,
                         onRenew = onRenew,
                         modifier = Modifier
+                            .testTag(EnrollmentsTestTags.RENEW_BUTTON)
                             .fillMaxWidth()
                             .padding(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 20.dp),
                     )

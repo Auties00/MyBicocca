@@ -60,6 +60,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
@@ -347,7 +348,7 @@ fun AccountSwitcherSheet(
  * survivors animate into their new slots when the account list updates.
  */
 @Composable
-private fun AccountsScene(
+internal fun AccountsScene(
     modifier: Modifier,
     ordered: List<Account>,
     activeId: AccountId?,
@@ -362,7 +363,9 @@ private fun AccountsScene(
     onAddAccount: () -> Unit,
 ) {
     Column(
-        modifier = modifier.padding(bottom = 24.dp, top = 8.dp),
+        modifier = modifier
+            .testTag(AccountSwitcherTestTags.ROSTER)
+            .padding(bottom = 24.dp, top = 8.dp),
     ) {
         Row(
             modifier = Modifier
@@ -378,7 +381,10 @@ private fun AccountsScene(
                 modifier = Modifier.padding(start = 8.dp),
             )
             Spacer(Modifier.weight(1f))
-            IconButton(onClick = onOpenSettings) {
+            IconButton(
+                onClick = onOpenSettings,
+                modifier = Modifier.testTag(AccountSwitcherTestTags.SETTINGS_SHORTCUT),
+            ) {
                 Icon(
                     imageVector = Icons.Default.Settings,
                     contentDescription = "Impostazioni",
@@ -414,6 +420,7 @@ private fun AccountsScene(
                         onOpenDetails = onOpenDetails,
                         onSwitchAccount = { onSwitchAccount(account.id) },
                         onSelectCareer = { careerId -> onSelectCareer(account.id, careerId) },
+                        modifier = Modifier.testTag(AccountSwitcherTestTags.account(account.id)),
                     )
                 }
             }
@@ -421,9 +428,11 @@ private fun AccountsScene(
             item(key = ADD_ACCOUNT_KEY) {
                 AddAccountCard(
                     onClick = onAddAccount,
-                    modifier = Modifier.animateItem(
-                        placementSpec = motion.defaultSpatialSpec(),
-                    ),
+                    modifier = Modifier
+                        .testTag(AccountSwitcherTestTags.ADD_ACCOUNT)
+                        .animateItem(
+                            placementSpec = motion.defaultSpatialSpec(),
+                        ),
                 )
             }
         }

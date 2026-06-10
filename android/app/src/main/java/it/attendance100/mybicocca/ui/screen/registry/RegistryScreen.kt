@@ -27,6 +27,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import it.attendance100.mybicocca.core.state.Loadable
@@ -173,15 +174,18 @@ fun RegistryScreen(
 
     var showDeadlines by remember { mutableStateOf(false) }
 
-    Column(modifier = modifier.fillMaxSize()) {
+    Column(modifier = modifier.fillMaxSize().testTag(RegistryTestTags.ROOT)) {
         ScadenzeHeader(
             summary = headerSummary,
             onClick = { showDeadlines = true },
-            modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 12.dp),
+            modifier = Modifier
+                .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 12.dp)
+                .testTag(RegistryTestTags.SCADENZE_HEADER),
         )
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .testTag(RegistryTestTags.SERVICES)
                 .verticalScroll(rememberScrollState())
                 .padding(start = 16.dp, end = 16.dp, bottom = 32.dp),
             verticalArrangement = Arrangement.spacedBy(24.dp),
@@ -193,6 +197,7 @@ fun RegistryScreen(
                     group = group,
                     accentContainer = accent.container,
                     accentOnContainer = accent.onContainer,
+                    tileTag = { service -> RegistryTestTags.service(service.id) },
                 )
             }
         }

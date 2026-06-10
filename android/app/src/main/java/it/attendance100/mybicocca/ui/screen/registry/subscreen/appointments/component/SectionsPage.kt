@@ -25,6 +25,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.SyncStatus
@@ -32,6 +33,7 @@ import it.attendance100.mybicocca.domain.model.appointment.AppointmentService
 import it.attendance100.mybicocca.ui.component.button.RetryButton
 import it.attendance100.mybicocca.ui.component.directory.SegmentedIconChip
 import it.attendance100.mybicocca.ui.component.directory.SegmentedTile
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.appointments.AppointmentsTestTags
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.appointments.state.AppointmentDirectorySection
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.appointments.ext.toDirectorySections
 
@@ -49,7 +51,14 @@ internal fun SectionsPage(
     modifier: Modifier = Modifier,
 ) {
     when (services) {
-        Loadable.NotYetLoaded -> SheetStatusBody(syncStatus = syncStatus, onRetry = onRetry, modifier = modifier)
+        Loadable.NotYetLoaded -> {
+            val statusTag = if (syncStatus is SyncStatus.Failed) {
+                AppointmentsTestTags.SECTIONS_ERROR
+            } else {
+                AppointmentsTestTags.SECTIONS_LOADING
+            }
+            SheetStatusBody(syncStatus = syncStatus, onRetry = onRetry, modifier = modifier.testTag(statusTag))
+        }
 
         is Loadable.Loaded -> {
             val sections = remember(services.value) { services.value.toDirectorySections() }
@@ -60,7 +69,8 @@ internal fun SectionsPage(
                     .heightIn(max = 720.dp)
                     .verticalScroll(rememberScrollState())
                     .padding(horizontal = 24.dp)
-                    .padding(bottom = 24.dp),
+                    .padding(bottom = 24.dp)
+                    .testTag(AppointmentsTestTags.SECTIONS_LIST),
                 verticalArrangement = Arrangement.spacedBy(2.dp),
             ) {
                 sections.forEachIndexed { index, section ->
@@ -71,6 +81,7 @@ internal fun SectionsPage(
                         title = section.name,
                         subtitle = section.caption,
                         onClick = { onOpenSection(section) },
+                        modifier = Modifier.testTag(AppointmentsTestTags.section(section.name)),
                         leading = {
                             SegmentedIconChip(
                                 icon = sectionIcon(section.name),

@@ -53,6 +53,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -214,7 +215,7 @@ fun QuestionnairesPage(
         }
         val backDispatcher = LocalOnBackPressedDispatcherOwner.current?.onBackPressedDispatcher
 
-        Column {
+        Column(modifier = Modifier.testTag(QuestionnairesTestTags.ROOT)) {
             SheetPagerHeader(
                 depth = page.depth,
                 title = when (page) {
@@ -259,27 +260,29 @@ fun QuestionnairesPage(
                         onOpenActivity = viewModel::openActivity,
                     )
 
-                    QPage.Units -> QuestionnaireUnitsPage(
-                        detail = activityDetail,
-                        detailStatus = detailStatus,
-                        onCompileUnit = { detail, unit ->
-                            val questionnaireId = detail.questionnaireId
-                            val questionnaireConfigId = detail.questionnaireConfigId
-                            if (questionnaireId != null && questionnaireConfigId != null) {
-                                compileRequest = QuestionnaireCompilationRequest(
-                                    activityChoiceId = detail.activityChoiceId,
-                                    questionnaireId = questionnaireId,
-                                    questionnaireConfigId = questionnaireConfigId,
-                                    anonymous = detail.anonymous,
-                                    tags = unit.tags,
-                                    activityName = activity?.displayName.orEmpty(),
-                                    lecturerName = unit.lecturerName,
-                                    partitionName = unit.partitionName,
-                                )
-                            }
-                        },
-                        onRetry = viewModel::retryDetail,
-                    )
+                    QPage.Units -> Box(modifier = Modifier.testTag(QuestionnairesTestTags.UNITS_PAGE)) {
+                        QuestionnaireUnitsPage(
+                            detail = activityDetail,
+                            detailStatus = detailStatus,
+                            onCompileUnit = { detail, unit ->
+                                val questionnaireId = detail.questionnaireId
+                                val questionnaireConfigId = detail.questionnaireConfigId
+                                if (questionnaireId != null && questionnaireConfigId != null) {
+                                    compileRequest = QuestionnaireCompilationRequest(
+                                        activityChoiceId = detail.activityChoiceId,
+                                        questionnaireId = questionnaireId,
+                                        questionnaireConfigId = questionnaireConfigId,
+                                        anonymous = detail.anonymous,
+                                        tags = unit.tags,
+                                        activityName = activity?.displayName.orEmpty(),
+                                        lecturerName = unit.lecturerName,
+                                        partitionName = unit.partitionName,
+                                    )
+                                }
+                            },
+                            onRetry = viewModel::retryDetail,
+                        )
+                    }
 
                     QPage.Compile -> compileViewModel?.let { compileVm ->
                         QuestionnaireCompilationPage(
@@ -432,14 +435,19 @@ private fun ActivitiesPage(
                 title = "Caricamento non riuscito",
                 body = failure.cause.friendlyMessage(),
                 action = { RetryButton(onClick = onRetry) },
+                modifier = Modifier.testTag(QuestionnairesTestTags.ROOT_ERROR),
             )
 
-            !settled -> SheetLoadingIndicator(label = "Caricamento questionari…")
+            !settled -> SheetLoadingIndicator(
+                label = "Caricamento questionari…",
+                modifier = Modifier.testTag(QuestionnairesTestTags.ROOT_LOADING),
+            )
 
             activities.isNullOrEmpty() -> SheetMessage(
                 icon = Icons.AutoMirrored.Outlined.FactCheck,
                 title = "Nessun questionario",
                 body = "Quando un insegnamento aprirà la valutazione della didattica lo troverai qui.",
+                modifier = Modifier.testTag(QuestionnairesTestTags.ROOT_EMPTY),
             )
 
             else -> ActivityList(activities = activities, onOpenActivity = onOpenActivity)
@@ -463,7 +471,8 @@ private fun ActivityList(
         modifier = Modifier
             .fillMaxWidth()
             .heightIn(max = 560.dp)
-            .padding(horizontal = 16.dp),
+            .padding(horizontal = 16.dp)
+            .testTag(QuestionnairesTestTags.ACTIVITY_LIST),
         contentPadding = PaddingValues(bottom = 24.dp),
         verticalArrangement = Arrangement.spacedBy(2.dp),
     ) {
@@ -482,6 +491,7 @@ private fun ActivityList(
                     bottomEnd = if (index == ordered.lastIndex) large else small,
                 ),
                 onClick = { onOpenActivity(activity) },
+                modifier = Modifier.testTag(QuestionnairesTestTags.activity(activity.activityChoiceId)),
             )
         }
     }
@@ -498,6 +508,7 @@ private fun QuestionnaireActivityRow(
     activity: QuestionnaireActivity,
     shape: Shape,
     onClick: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val scheme = MaterialTheme.colorScheme
     val accent = when (activity.status) {
@@ -512,7 +523,7 @@ private fun QuestionnaireActivityRow(
         shape = shape,
         color = scheme.surfaceContainer,
         contentColor = scheme.onSurface,
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
     ) {
         Row(
             modifier = Modifier.padding(start = 12.dp, end = 14.dp, top = 12.dp, bottom = 12.dp),

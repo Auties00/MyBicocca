@@ -33,6 +33,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -132,6 +133,7 @@ fun AssignmentDetailPage(
     CourseDetailTheme(courseId = remember(courseId) { CourseId(courseId) }) {
         Column(
             modifier = Modifier
+                .testTag(AssignmentDetailTestTags.ROOT)
                 .fillMaxWidth()
                 .heightIn(max = 760.dp)
                 .padding(top = 8.dp),
@@ -189,12 +191,15 @@ fun AssignmentDetailPage(
 
                     is Display.Page -> when (shown.page) {
                         AssignmentPage.Detail -> when (val loadable = assignmentLoadable) {
-                            Loadable.NotYetLoaded -> LoadingBox()
+                            Loadable.NotYetLoaded -> LoadingBox(
+                                modifier = Modifier.testTag(AssignmentDetailTestTags.STATE_LOADING),
+                            )
                             is Loadable.Loaded -> AssignmentOverviewPage(
                                 assignment = loadable.value,
                                 onOpenFile = onOpenFile,
                                 onCompose = viewModel::openCompose,
                                 onRemove = { pendingRemove = true },
+                                modifier = Modifier.testTag(AssignmentDetailTestTags.OVERVIEW),
                             )
                         }
 
@@ -241,9 +246,9 @@ fun AssignmentDetailPage(
 }
 
 @Composable
-private fun LoadingBox() {
+private fun LoadingBox(modifier: Modifier = Modifier) {
     Box(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .height(220.dp),
         contentAlignment = Alignment.Center,

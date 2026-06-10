@@ -1,12 +1,14 @@
 package it.attendance100.mybicocca.data.remote.easystaff.api
 
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffAcademicYear
+import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.TestInstance
 import org.junit.jupiter.api.extension.ExtendWith
 import java.time.LocalDate
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @ExtendWith(EasyStaffGlobalApiData::class)
+@Tag("live")
 abstract class EasyStaffTestBase {
     protected val api: EasyStaffApi
         get() = EasyStaffGlobalApiData.api

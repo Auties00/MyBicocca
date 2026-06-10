@@ -24,11 +24,13 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.domain.model.appointment.AppointmentReservation
 import it.attendance100.mybicocca.ui.component.feedback.EmptyState
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.appointments.AppointmentsTestTags
 
 /**
  * Root page of the Appuntamenti sheet: this device's bookings, one [ReservationCard] each in
@@ -48,14 +50,16 @@ internal fun ReservationsPage(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .heightIn(max = 720.dp),
+            .heightIn(max = 720.dp)
+            .testTag(AppointmentsTestTags.RESERVATIONS_PAGE),
     ) {
         if (list.isEmpty()) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(400.dp)
-                    .padding(bottom = 4.dp),
+                    .padding(bottom = 4.dp)
+                    .testTag(AppointmentsTestTags.RESERVATIONS_EMPTY),
             ) {
                 EmptyState(
                     icon = Icons.AutoMirrored.Outlined.EventNote,
@@ -68,7 +72,8 @@ internal fun ReservationsPage(
                 modifier = Modifier
                     .weight(1f, fill = false)
                     .verticalScroll(rememberScrollState())
-                    .padding(horizontal = 24.dp),
+                    .padding(horizontal = 24.dp)
+                    .testTag(AppointmentsTestTags.RESERVATIONS_LIST),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 list.forEach { reservation ->
@@ -82,7 +87,9 @@ internal fun ReservationsPage(
 
         PrenotaButton(
             onClick = onPrenota,
-            modifier = Modifier.padding(start = 24.dp, end = 24.dp, top = 12.dp, bottom = 24.dp),
+            modifier = Modifier
+                .padding(start = 24.dp, end = 24.dp, top = 12.dp, bottom = 24.dp)
+                .testTag(AppointmentsTestTags.PRENOTA_BUTTON),
         )
     }
 }

@@ -27,12 +27,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import it.attendance100.mybicocca.domain.model.elearning.course.CourseFilter
 import it.attendance100.mybicocca.domain.model.studyplan.StudyYear
+import it.attendance100.mybicocca.ui.screen.elearning.ElearningTestTags
 
 private val ButtonHeight = 44.dp
 private val SegmentSpacing = 2.dp
@@ -89,9 +91,17 @@ fun HomeFilterBar(
                 shapes = shapesForIndex(index, options.size),
                 colors = colors,
                 onCheck = { onSelect(opt.value) },
+                modifier = Modifier.testTag(ElearningTestTags.filterOption(opt.value.tagKey())),
             )
         }
     }
+}
+
+/** Stable per-option key for the filter toggle's testTag (e.g. "all", "favourites", "year:1"). */
+private fun CourseFilter.tagKey(): String = when (this) {
+    CourseFilter.All -> "all"
+    CourseFilter.Favourites -> "favourites"
+    is CourseFilter.ByYear -> "year:${year.value}"
 }
 
 private data class FilterOption(val value: CourseFilter, val label: String)

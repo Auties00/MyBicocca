@@ -55,6 +55,7 @@ import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -148,6 +149,7 @@ fun SearchOverlay(
     val pullState = rememberPullToRefreshState()
     Box(
         modifier = modifier
+            .testTag(SearchOverlayTestTags.ROOT)
             .fillMaxSize()
             .graphicsLayer {
                 alpha = fadeThroughExpanded(progress) * (1f - subPageProgress)
@@ -171,9 +173,15 @@ fun SearchOverlay(
             HorizontalDivider(color = scheme.outlineVariant)
 
             val keyboardOpen = WindowInsets.ime.asPaddingValues().calculateBottomPadding() > 0.dp
+            val listTag = if (query.isBlank()) {
+                SearchOverlayTestTags.HISTORY_LIST
+            } else {
+                SearchOverlayTestTags.RESULTS_LIST
+            }
             LazyColumn(
                 state = listState,
                 modifier = Modifier
+                    .testTag(listTag)
                     .fillMaxSize()
                     .imePadding()
                     .pullToRefresh(
@@ -209,13 +217,16 @@ fun SearchOverlay(
                                 },
                                 onRemove = { viewModel.removeFromHistory(entry.query) },
                                 modifier = Modifier
+                                    .testTag(SearchOverlayTestTags.historyItem(entry.query))
                                     .animateItem()
                                     .padding(top = if (index == 0) 8.dp else GroupGap),
                             )
                         }
                     } else {
                         item(key = "history-empty") {
-                            Box(Modifier.fillParentMaxSize()) {
+                            Box(Modifier
+                                .testTag(SearchOverlayTestTags.HISTORY_EMPTY)
+                                .fillParentMaxSize()) {
                                 EmptyState(
                                     icon = Icons.Outlined.History,
                                     title = "Nessuna ricerca recente",
@@ -227,7 +238,9 @@ fun SearchOverlay(
                 } else {
                     if (results.isEmpty()) {
                         item(key = "no-results") {
-                            Box(Modifier.fillParentMaxSize()) {
+                            Box(Modifier
+                                .testTag(SearchOverlayTestTags.NO_RESULTS)
+                                .fillParentMaxSize()) {
                                 EmptyState(
                                     icon = Icons.Outlined.SearchOff,
                                     title = "Nessun risultato",
@@ -250,6 +263,7 @@ fun SearchOverlay(
                                     subtitle = topHit.subtitle,
                                     query = query,
                                     onClick = { onOpenResult(topHit) },
+                                    modifier = Modifier.testTag(SearchOverlayTestTags.TOP_HIT),
                                 )
                             }
                         }
@@ -283,7 +297,9 @@ fun SearchOverlay(
                                     shape = groupItemShape(index, rows.size),
                                     onClick = { onOpenResult(result) },
                                     accent = result is SearchResult.Action,
-                                    modifier = Modifier.padding(top = if (index == 0) 0.dp else GroupGap),
+                                    modifier = Modifier
+                                        .testTag(SearchOverlayTestTags.resultItem(result.key))
+                                        .padding(top = if (index == 0) 0.dp else GroupGap),
                                 )
                             }
                         }

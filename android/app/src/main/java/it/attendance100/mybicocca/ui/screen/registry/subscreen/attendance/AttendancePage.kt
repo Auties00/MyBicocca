@@ -33,6 +33,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntSize
@@ -147,7 +148,7 @@ fun AttendancePage(
             }
         }
 
-        Column {
+        Column(modifier = Modifier.testTag(AttendanceTestTags.ROOT)) {
             SheetPagerHeader(
                 depth = page.depth,
                 title = when (page) {
@@ -203,7 +204,11 @@ fun AttendancePage(
                         },
                     )
 
-                    is AttendancePage.Course -> CourseOverviewPage(course = target.course)
+                    is AttendancePage.Course -> androidx.compose.foundation.layout.Box(
+                        modifier = Modifier.testTag(AttendanceTestTags.COURSE_PAGE),
+                    ) {
+                        CourseOverviewPage(course = target.course)
+                    }
 
                     AttendancePage.Rileva -> RilevaChooserPage(
                         onLessonCode = { enteringCode = true },
@@ -307,14 +312,22 @@ private fun SheetBody(
             .animateContentSize(animationSpec = sizeSpec),
     ) {
         when {
-            failure != null && courses.isEmpty() -> SheetError(cause = failure.cause, onRetry = onRetry)
+            failure != null && courses.isEmpty() -> SheetError(
+                cause = failure.cause,
+                onRetry = onRetry,
+                modifier = Modifier.testTag(AttendanceTestTags.ROOT_ERROR),
+            )
 
-            !settled -> SheetLoadingIndicator(label = "Caricamento presenze…")
+            !settled -> SheetLoadingIndicator(
+                label = "Caricamento presenze…",
+                modifier = Modifier.testTag(AttendanceTestTags.ROOT_LOADING),
+            )
 
             courses.isEmpty() -> SheetMessage(
                 icon = Icons.Outlined.CoPresent,
                 title = "Nessun corso da frequentare",
                 body = "Hai superato tutti i corsi previsti dal tuo piano fino a questo semestre.",
+                modifier = Modifier.testTag(AttendanceTestTags.ROOT_EMPTY),
             )
 
             else -> CourseList(
@@ -329,7 +342,8 @@ private fun SheetBody(
                 onClick = onStartRileva,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(start = 16.dp, end = 16.dp, bottom = 24.dp),
+                    .padding(start = 16.dp, end = 16.dp, bottom = 24.dp)
+                    .testTag(AttendanceTestTags.RILEVA_BUTTON),
             )
         }
     }
@@ -375,7 +389,8 @@ private fun CourseList(
         modifier = Modifier
             .fillMaxWidth()
             .heightIn(max = 560.dp)
-            .padding(horizontal = 16.dp),
+            .padding(horizontal = 16.dp)
+            .testTag(AttendanceTestTags.COURSE_LIST),
         contentPadding = PaddingValues(bottom = bottomPadding),
         verticalArrangement = Arrangement.spacedBy(2.dp),
     ) {
@@ -387,17 +402,19 @@ private fun CourseList(
                 course = course,
                 shape = segmentedShape(isFirst = index == 0, isLast = index == courses.lastIndex),
                 onClick = { onOpenCourse(course) },
+                modifier = Modifier.testTag(AttendanceTestTags.course(course.code ?: course.name)),
             )
         }
     }
 }
 
 @Composable
-private fun SheetError(cause: Throwable, onRetry: () -> Unit) {
+private fun SheetError(cause: Throwable, onRetry: () -> Unit, modifier: Modifier = Modifier) {
     SheetMessage(
         icon = Icons.Outlined.CloudOff,
         title = "Caricamento non riuscito",
         body = cause.friendlyMessage(),
         action = { RetryButton(onClick = onRetry) },
+        modifier = modifier,
     )
 }

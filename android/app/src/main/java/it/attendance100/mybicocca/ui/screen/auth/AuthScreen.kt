@@ -51,6 +51,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.platform.LocalAutofillManager
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.contentType
 import androidx.compose.ui.semantics.semantics
@@ -200,7 +201,7 @@ private fun AuthScreenBody(
 
     if (onCancel != null && interceptBack) BackHandler(enabled = !inflight) { onCancel() }
 
-    Box(modifier = modifier) {
+    Box(modifier = modifier.testTag(AuthScreenTestTags.ROOT)) {
         val autofillColorHighlight = BicoccaWordmarkAccent.copy(alpha = 0.1f)
         @Suppress("DEPRECATION")
         CompositionLocalProvider(LocalAutofillHighlightColor provides autofillColorHighlight) {
@@ -240,6 +241,7 @@ private fun AuthScreenBody(
                     ),
                     modifier = Modifier
                         .fillMaxWidth()
+                        .testTag(AuthScreenTestTags.USERNAME_FIELD)
                         .semantics {
                             contentType = ContentType.Username + ContentType.EmailAddress
                         },
@@ -252,7 +254,9 @@ private fun AuthScreenBody(
                     enabled = !inflight,
                     isError = fieldsInError,
                     leadingIcon = { Icon(Icons.Outlined.Lock, contentDescription = null) },
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag(AuthScreenTestTags.PASSWORD_FIELD),
                 )
 
                 Spacer(Modifier.height(24.dp))
@@ -269,7 +273,8 @@ private fun AuthScreenBody(
                     ),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(52.dp),
+                        .height(52.dp)
+                        .testTag(AuthScreenTestTags.SUBMIT_BUTTON),
                 ) {
                     if (inflight) {
                         CircularProgressIndicator(
@@ -308,6 +313,7 @@ private fun AuthScreenBody(
                             snackbarHostState.showSnackbar("Accesso con SPID non ancora disponibile")
                         }
                     },
+                    modifier = Modifier.testTag(AuthScreenTestTags.SPID_BUTTON),
                 )
                 Spacer(Modifier.height(12.dp))
                 AlternativeLoginButton(
@@ -320,6 +326,7 @@ private fun AuthScreenBody(
                             snackbarHostState.showSnackbar("Accesso con CIE non ancora disponibile")
                         }
                     },
+                    modifier = Modifier.testTag(AuthScreenTestTags.CIE_BUTTON),
                 )
 
                 Spacer(Modifier.height(32.dp))
@@ -345,6 +352,7 @@ private fun AuthScreenBody(
                     .padding(top = cancelPaddingProvider())
                     .fillMaxWidth()
                     .height(48.dp)
+                    .testTag(AuthScreenTestTags.CANCEL_BUTTON)
                     .alpha((0.5f - cancelOpacityProvider()).coerceIn(0f, 1f))
             ) {
                 Icon(
@@ -416,6 +424,7 @@ private fun AlternativeLoginButton(
     iconTint: Color,
     enabled: Boolean,
     onClick: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
@@ -443,7 +452,7 @@ private fun AlternativeLoginButton(
         ),
         border = BorderStroke(1.dp, borderColor),
         shape = rememberPressShrinkShape(interactionSource),
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .height(52.dp),
     ) {

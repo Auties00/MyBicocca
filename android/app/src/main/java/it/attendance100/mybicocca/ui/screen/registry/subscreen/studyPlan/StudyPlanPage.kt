@@ -49,6 +49,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
@@ -231,7 +232,7 @@ fun StudyPlanPage(
         }
         val backDispatcher = LocalOnBackPressedDispatcherOwner.current?.onBackPressedDispatcher
 
-        Column {
+        Column(modifier = Modifier.testTag(StudyPlanTestTags.ROOT)) {
             SheetPagerHeader(
                 depth = when (page) {
                     PlanSheetPage.Root -> 0
@@ -303,6 +304,7 @@ fun StudyPlanPage(
 
                     is PlanSheetPage.Year -> YearCoursesPage(
                         courses = coursesByYear[target.year].orEmpty(),
+                        modifier = Modifier.testTag(StudyPlanTestTags.YEAR_COURSES),
                     )
 
                     PlanSheetPage.Edit -> editViewModel?.let { editVm ->
@@ -476,20 +478,29 @@ private fun SheetBody(
             .animateContentSize(animationSpec = sizeSpec),
     ) {
         when {
-            failure != null && plan == null -> SheetError(cause = failure.cause, onRetry = onRetry)
+            failure != null && plan == null -> SheetError(
+                cause = failure.cause,
+                onRetry = onRetry,
+                modifier = Modifier.testTag(StudyPlanTestTags.ROOT_ERROR),
+            )
 
-            !settled -> SheetLoadingIndicator(label = "Caricamento piano…")
+            !settled -> SheetLoadingIndicator(
+                label = "Caricamento piano…",
+                modifier = Modifier.testTag(StudyPlanTestTags.ROOT_LOADING),
+            )
 
             plan == null -> SheetMessage(
                 icon = Icons.AutoMirrored.Outlined.MenuBook,
                 title = "Nessun piano di studi",
                 body = "Non risulta alcun piano di studi per la tua carriera.",
+                modifier = Modifier.testTag(StudyPlanTestTags.ROOT_EMPTY),
             )
 
             else -> YearList(
                 coursesByYear = coursesByYear,
                 onYearClick = onYearClick,
                 bottomPadding = if (showFooter) 12.dp else 24.dp,
+                modifier = Modifier.testTag(StudyPlanTestTags.YEAR_LIST),
             )
         }
 
@@ -540,7 +551,8 @@ private fun PlanActionFooter(
                 enabled = !printing,
                 modifier = Modifier
                     .weight(1f)
-                    .height(56.dp),
+                    .height(56.dp)
+                    .testTag(StudyPlanTestTags.PRINT_BUTTON),
                 shape = if (paired) ButtonGroupDefaults.connectedLeadingButtonShape else ButtonDefaults.shape,
                 colors = ButtonDefaults.filledTonalButtonColors(
                     containerColor = scheme.surfaceContainerHighest,
@@ -569,7 +581,8 @@ private fun PlanActionFooter(
                 onClick = onEdit,
                 modifier = Modifier
                     .weight(1.4f)
-                    .height(56.dp),
+                    .height(56.dp)
+                    .testTag(StudyPlanTestTags.EDIT_BUTTON),
                 shape = if (paired) ButtonGroupDefaults.connectedTrailingButtonShape else ButtonDefaults.shape,
                 colors = ButtonDefaults.buttonColors(
                     containerColor = brandBg,
@@ -643,6 +656,7 @@ private fun YearList(
                 isFirst = index == 0,
                 isLast = index == years.lastIndex,
                 onClick = { onYearClick(year) },
+                modifier = Modifier.testTag(StudyPlanTestTags.yearRow(year.value)),
             )
         }
     }
@@ -661,11 +675,12 @@ private fun YearRow(
     isFirst: Boolean,
     isLast: Boolean,
     onClick: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val scheme = MaterialTheme.colorScheme
     Surface(
         onClick = onClick,
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
         color = scheme.surfaceContainer,
         contentColor = scheme.onSurface,
         shape = RoundedCornerShape(
@@ -822,12 +837,13 @@ private fun CourseTile(course: StudyPlanCourse, isFirst: Boolean, isLast: Boolea
 }
 
 @Composable
-private fun SheetError(cause: Throwable, onRetry: () -> Unit) {
+private fun SheetError(cause: Throwable, onRetry: () -> Unit, modifier: Modifier = Modifier) {
     SheetMessage(
         icon = Icons.Outlined.CloudOff,
         title = "Caricamento non riuscito",
         body = cause.friendlyMessage(),
         action = { RetryButton(onClick = onRetry) },
+        modifier = modifier,
     )
 }
 

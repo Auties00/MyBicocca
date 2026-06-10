@@ -33,6 +33,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -91,6 +92,7 @@ fun AppLockScreen(viewModel: AppLockViewModel) {
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surface) {
         Column(
             modifier = Modifier
+                .testTag(AppLockTestTags.ROOT)
                 .fillMaxSize()
                 .windowInsetsPadding(WindowInsets.safeDrawing)
                 .padding(horizontal = 32.dp),
@@ -114,6 +116,7 @@ fun AppLockScreen(viewModel: AppLockViewModel) {
                 Spacer(Modifier.height(4.dp))
                 Text(
                     text = it,
+                    modifier = Modifier.testTag(AppLockTestTags.USERNAME),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -127,13 +130,17 @@ fun AppLockScreen(viewModel: AppLockViewModel) {
                     enabled = !verifying,
                     errorText = error,
                     onImeAction = submit,
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag(AppLockTestTags.PASSWORD_FIELD),
                 )
                 Spacer(Modifier.height(16.dp))
                 Button(
                     onClick = submit,
                     enabled = !verifying && password.isNotEmpty(),
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag(AppLockTestTags.UNLOCK_BUTTON),
                 ) {
                     if (verifying) {
                         CircularProgressIndicator(
@@ -146,7 +153,10 @@ fun AppLockScreen(viewModel: AppLockViewModel) {
                     }
                 }
                 if (capability == BiometricCapability.Available) {
-                    TextButton(onClick = { usePassword = false; biometricTrigger++ }) {
+                    TextButton(
+                        onClick = { usePassword = false; biometricTrigger++ },
+                        modifier = Modifier.testTag(AppLockTestTags.USE_BIOMETRIC_BUTTON),
+                    ) {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -162,9 +172,14 @@ fun AppLockScreen(viewModel: AppLockViewModel) {
             } else {
                 Button(
                     onClick = { biometricTrigger++ },
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag(AppLockTestTags.UNLOCK_BUTTON),
                 ) { Text("Sblocca") }
-                TextButton(onClick = { usePassword = true }) { Text("Usa password") }
+                TextButton(
+                    onClick = { usePassword = true },
+                    modifier = Modifier.testTag(AppLockTestTags.USE_PASSWORD_BUTTON),
+                ) { Text("Usa password") }
             }
         }
     }

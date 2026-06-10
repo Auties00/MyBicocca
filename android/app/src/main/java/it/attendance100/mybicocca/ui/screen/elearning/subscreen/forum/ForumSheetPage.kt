@@ -50,6 +50,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -206,7 +207,7 @@ fun ForumSheetPage(
             if (subject.isNotBlank() || message.isNotBlank()) confirmDiscard = true else viewModel.cancelComposer()
         }
 
-        Column {
+        Column(modifier = Modifier.testTag(ForumSheetTestTags.ROOT)) {
             SheetPagerHeader(
                 depth = display.depth,
                 title = when (display) {
@@ -274,6 +275,7 @@ fun ForumSheetPage(
 
                     Display.Composer -> composerTarget?.let { target ->
                         ForumComposer(
+                            modifier = Modifier.testTag(ForumSheetTestTags.COMPOSER),
                             target = target,
                             subject = subject,
                             onSubjectChange = { subject = it },
@@ -376,14 +378,20 @@ private fun DiscussionsListBody(
     Column(modifier = Modifier.fillMaxWidth()) {
         LazyColumn(
             state = listState,
-            modifier = Modifier.fillMaxWidth().weight(1f, fill = false).heightIn(max = 600.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f, fill = false)
+                .heightIn(max = 600.dp)
+                .testTag(ForumSheetTestTags.DISCUSSIONS_LIST),
             contentPadding = PaddingValues(top = 8.dp, bottom = 12.dp),
             verticalArrangement = Arrangement.spacedBy(2.dp),
         ) {
             when {
-                showSkeleton -> item("loading") { ListLoading() }
+                showSkeleton -> item("loading") {
+                    ListLoading(modifier = Modifier.testTag(ForumSheetTestTags.STATE_LOADING))
+                }
                 showEmpty -> item("empty") {
-                    Box(Modifier.fillParentMaxHeight(0.55f)) {
+                    Box(Modifier.fillParentMaxHeight(0.55f).testTag(ForumSheetTestTags.STATE_EMPTY)) {
                         EmptyState(
                             icon = Icons.Outlined.Forum,
                             title = "Nessuna discussione",
@@ -394,12 +402,20 @@ private fun DiscussionsListBody(
                 }
                 else -> {
                     items(pinned, key = { "p${it.id.value}" }) { d ->
-                        Box(Modifier.padding(horizontal = 16.dp, vertical = 4.dp)) {
+                        Box(
+                            Modifier
+                                .padding(horizontal = 16.dp, vertical = 4.dp)
+                                .testTag(ForumSheetTestTags.discussion(d.id.value)),
+                        ) {
                             DiscussionRow(discussion = d, onClick = { onOpenDiscussion(d) })
                         }
                     }
                     items(others, key = { it.id.value }) { d ->
-                        Box(Modifier.padding(horizontal = 16.dp, vertical = 4.dp)) {
+                        Box(
+                            Modifier
+                                .padding(horizontal = 16.dp, vertical = 4.dp)
+                                .testTag(ForumSheetTestTags.discussion(d.id.value)),
+                        ) {
                             DiscussionRow(discussion = d, onClick = { onOpenDiscussion(d) })
                         }
                     }
@@ -416,7 +432,9 @@ private fun DiscussionsListBody(
         if (forum?.canCreateDiscussions == true) {
             NewDiscussionButton(
                 onClick = onNewDiscussion,
-                modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 24.dp),
+                modifier = Modifier
+                    .padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 24.dp)
+                    .testTag(ForumSheetTestTags.NEW_DISCUSSION_ACTION),
             )
         }
     }
@@ -560,8 +578,11 @@ private fun NewDiscussionButton(onClick: () -> Unit, modifier: Modifier = Modifi
 }
 
 @Composable
-private fun ListLoading() {
-    Box(Modifier.fillMaxWidth().padding(vertical = 48.dp), contentAlignment = Alignment.Center) {
+private fun ListLoading(modifier: Modifier = Modifier) {
+    Box(
+        modifier.fillMaxWidth().padding(vertical = 48.dp),
+        contentAlignment = Alignment.Center,
+    ) {
         CircularProgressIndicator()
     }
 }

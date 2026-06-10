@@ -28,6 +28,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -92,21 +93,28 @@ private fun TitlesListBody(
     val showLoading = rememberMinDurationLoading(loading = titles == null)
     val settled = titles != null && !showLoading
 
+    Box(modifier = Modifier.testTag(TitlesTestTags.ROOT)) {
     when {
-        failure != null && titles == null -> SheetMessage(
-            icon = Icons.Outlined.CloudOff,
-            title = "Caricamento non riuscito",
-            body = "Impossibile caricare i titoli.",
-            action = { RetryButton(onClick = onRetry) },
-        )
+        failure != null && titles == null -> Box(modifier = Modifier.testTag(TitlesTestTags.STATE_ERROR)) {
+            SheetMessage(
+                icon = Icons.Outlined.CloudOff,
+                title = "Caricamento non riuscito",
+                body = "Impossibile caricare i titoli.",
+                action = { RetryButton(onClick = onRetry) },
+            )
+        }
 
-        !settled || titles == null -> SheetLoadingIndicator(label = "Caricamento titoli…")
+        !settled || titles == null -> Box(modifier = Modifier.testTag(TitlesTestTags.STATE_LOADING)) {
+            SheetLoadingIndicator(label = "Caricamento titoli…")
+        }
 
-        titles.isEmpty() -> SheetMessage(
-            icon = Icons.Outlined.School,
-            title = "Nessun titolo",
-            body = "Non risultano titoli di studio registrati.",
-        )
+        titles.isEmpty() -> Box(modifier = Modifier.testTag(TitlesTestTags.STATE_EMPTY)) {
+            SheetMessage(
+                icon = Icons.Outlined.School,
+                title = "Nessun titolo",
+                body = "Non risultano titoli di studio registrati.",
+            )
+        }
 
         else -> {
             val grouped = remember(titles) {
@@ -115,6 +123,7 @@ private fun TitlesListBody(
             }
             LazyColumn(
                 modifier = Modifier
+                    .testTag(TitlesTestTags.STATE_CONTENT)
                     .fillMaxWidth()
                     .heightIn(max = 560.dp)
                     .padding(horizontal = 16.dp),
@@ -132,12 +141,14 @@ private fun TitlesListBody(
                                 isFirst = index == 0,
                                 isLast = index == items.lastIndex,
                                 onClick = { onTitleClick(title) },
+                                modifier = Modifier.testTag(TitlesTestTags.row(title.id)),
                             )
                         }
                     }
                 }
             }
         }
+    }
     }
 }
 
@@ -164,10 +175,11 @@ private fun TitleRow(
     isFirst: Boolean,
     isLast: Boolean,
     onClick: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val scheme = MaterialTheme.colorScheme
     Surface(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(
             topStart = if (isFirst) 28.dp else 6.dp,
             topEnd = if (isFirst) 28.dp else 6.dp,

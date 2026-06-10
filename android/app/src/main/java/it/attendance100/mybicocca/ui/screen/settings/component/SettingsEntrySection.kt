@@ -14,10 +14,12 @@ import androidx.compose.material3.Switch
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import it.attendance100.mybicocca.ui.component.directory.SegmentedHeaderTile
 import it.attendance100.mybicocca.ui.component.directory.SegmentedIconChip
 import it.attendance100.mybicocca.ui.component.directory.SegmentedTile
+import it.attendance100.mybicocca.ui.screen.settings.SettingsTestTags
 import it.attendance100.mybicocca.ui.screen.settings.state.SettingsEntryGroup
 
 /**
@@ -41,6 +43,7 @@ fun SettingsEntrySection(
         SegmentedHeaderTile(title = group.name, subtitle = group.caption)
         group.entries.forEachIndexed { index, item ->
             SegmentedTile(
+                modifier = Modifier.testTag(SettingsTestTags.entry(item.id)),
                 isFirst = false,
                 isLast = index == group.entries.lastIndex,
                 title = item.title,

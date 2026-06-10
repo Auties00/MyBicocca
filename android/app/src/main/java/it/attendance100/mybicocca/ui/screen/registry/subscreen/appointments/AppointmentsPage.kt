@@ -8,6 +8,8 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import it.attendance100.mybicocca.core.state.Loadable
 import androidx.compose.runtime.mutableStateOf
@@ -134,7 +136,7 @@ fun AppointmentsPage(
             selectedSlot?.start?.format(TimeFormat)?.let { "ore $it" },
         ).joinToString(" · ").ifBlank { null }
 
-        Column {
+        Column(modifier = Modifier.testTag(AppointmentsTestTags.ROOT)) {
             SheetPagerHeader(
                 depth = displayDepth(display),
                 title = when (display) {

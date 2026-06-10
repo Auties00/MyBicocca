@@ -298,12 +298,13 @@ class CourseDetailViewModel @AssistedInject constructor(
      * cmId settles on "no thumbnail" rather than a perpetual loading state.
      */
     fun resolveContinueWatchingThumbnail(cmId: Int?) {
-        if (cmId == continueWatchingThumbnailCmId) return
-        continueWatchingThumbnailCmId = cmId
         if (cmId == null) {
+            continueWatchingThumbnailCmId = null
             _continueWatchingThumbnailUrl.value = Loadable.Loaded(null)
             return
         }
+        if (cmId == continueWatchingThumbnailCmId) return
+        continueWatchingThumbnailCmId = cmId
         _continueWatchingThumbnailUrl.value = Loadable.NotYetLoaded
         viewModelScope.launch {
             val url = runCatching { getVideoThumbnailUrl(cmId) }.getOrNull()

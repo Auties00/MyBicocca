@@ -35,6 +35,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -111,19 +112,27 @@ private fun RefundsListBody(
     val motion = MaterialTheme.motionScheme
     val sizeSpec = remember(motion) { motion.defaultSpatialSpec<IntSize>() }
 
-    Column(modifier = Modifier.fillMaxWidth().animateContentSize(animationSpec = sizeSpec)) {
+    Column(modifier = Modifier
+        .testTag(RefundsTestTags.ROOT)
+        .fillMaxWidth()
+        .animateContentSize(animationSpec = sizeSpec)) {
         when {
-            failure != null && refunds == null -> SheetMessage(
-                icon = Icons.Outlined.CloudOff,
-                title = "Caricamento non riuscito",
-                body = failure.cause.taxFriendlyMessage(),
-                action = { RetryButton(onClick = onRetry) },
-            )
+            failure != null && refunds == null -> Box(modifier = Modifier.testTag(RefundsTestTags.STATE_ERROR)) {
+                SheetMessage(
+                    icon = Icons.Outlined.CloudOff,
+                    title = "Caricamento non riuscito",
+                    body = failure.cause.taxFriendlyMessage(),
+                    action = { RetryButton(onClick = onRetry) },
+                )
+            }
 
-            !settled || refunds == null -> SheetLoadingIndicator(label = "Caricamento rimborsi…")
+            !settled || refunds == null -> Box(modifier = Modifier.testTag(RefundsTestTags.STATE_LOADING)) {
+                SheetLoadingIndicator(label = "Caricamento rimborsi…")
+            }
 
             refunds.isEmpty() -> Box(
                 modifier = Modifier
+                    .testTag(RefundsTestTags.STATE_EMPTY)
                     .fillMaxWidth()
                     .height(400.dp)
                     .padding(bottom = 16.dp),
@@ -137,6 +146,7 @@ private fun RefundsListBody(
 
             else -> LazyColumn(
                 modifier = Modifier
+                    .testTag(RefundsTestTags.STATE_CONTENT)
                     .fillMaxWidth()
                     .heightIn(max = 560.dp)
                     .padding(horizontal = 16.dp),
@@ -216,7 +226,9 @@ private fun RefundRow(
     val tileColor = if (refund.refunded) scheme.primaryContainer else scheme.surfaceContainerHighest
     val tileTint = if (refund.refunded) scheme.onPrimaryContainer else scheme.onSurfaceVariant
     Surface(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .testTag(RefundsTestTags.row(refund.refundKey()))
+            .fillMaxWidth(),
         shape = RoundedCornerShape(
             topStart = if (isFirst) 28.dp else 6.dp,
             topEnd = if (isFirst) 28.dp else 6.dp,

@@ -46,6 +46,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
@@ -56,6 +57,7 @@ import it.attendance100.mybicocca.domain.model.tax.TaxInvoice
 import it.attendance100.mybicocca.domain.model.tax.TaxStatus
 import it.attendance100.mybicocca.ui.component.modal.SheetOutcome
 import it.attendance100.mybicocca.ui.component.modal.SheetResultPage
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.taxes.TaxesTestTags
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.taxes.TaxesViewModel
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.taxes.component.Invoice
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.taxes.component.PagoPaInvoice
@@ -226,6 +228,7 @@ private fun DetailContent(
 
     Column(
         modifier = modifier
+            .testTag(TaxesTestTags.DETAIL_ROOT)
             .fillMaxSize()
             .systemBarsPadding(),
     ) {
@@ -235,7 +238,7 @@ private fun DetailContent(
                 .padding(start = 4.dp, end = 16.dp, top = 4.dp, bottom = 4.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            IconButton(onClick = onClose) {
+            IconButton(onClick = onClose, modifier = Modifier.testTag(TaxesTestTags.DETAIL_CLOSE_BUTTON)) {
                 Icon(imageVector = Icons.Rounded.Close, contentDescription = "Chiudi")
             }
             Text(
@@ -269,7 +272,10 @@ private fun DetailContent(
                     onClick = onPay,
                     enabled = !actionInProgress && isOnline,
                     colors = ButtonDefaults.buttonColors(containerColor = PagoPaColor, contentColor = Color.White),
-                    modifier = Modifier.fillMaxWidth().height(52.dp),
+                    modifier = Modifier
+                        .testTag(TaxesTestTags.DETAIL_PAY_BUTTON)
+                        .fillMaxWidth()
+                        .height(52.dp),
                 ) { Text("Paga con pagoPA") }
             }
             if (payable && invoice.pagoPaNotice) {
@@ -290,7 +296,10 @@ private fun DetailContent(
                 FilledTonalButton(
                     onClick = onCheckStatus,
                     enabled = !actionInProgress,
-                    modifier = Modifier.fillMaxWidth().height(52.dp),
+                    modifier = Modifier
+                        .testTag(TaxesTestTags.DETAIL_CHECK_STATUS_BUTTON)
+                        .fillMaxWidth()
+                        .height(52.dp),
                 ) { Text("Verifica stato pagamento") }
             }
         }
