@@ -84,7 +84,7 @@ fun FileAssociationChooserSheet(
                 }
                 Spacer(Modifier.height(20.dp))
                 Text(
-                    text = kind.openChooserLabel(),
+                    text = stringResource(kind.openChooserLabel()),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onSurface,

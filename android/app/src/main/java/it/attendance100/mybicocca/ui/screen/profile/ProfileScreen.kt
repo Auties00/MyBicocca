@@ -160,6 +160,7 @@ fun ProfileContent(
                             enabled = true,
                             modifier = Modifier
                                 .fillMaxWidth()
+                                .padding(top = 8.dp)
                                 .testTag(ProfileTestTags.STUDENT_CARD),
                             theme = badgeCardTheme,
                         )

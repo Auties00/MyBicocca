@@ -96,7 +96,7 @@ fun FileAssociationsSheet(onDismiss: () -> Unit) {
                     SegmentedTile(
                         isFirst = index == 0,
                         isLast = index == FILE_ASSOCIATION_KINDS.lastIndex,
-                        title = kind.openChooserLabel(),
+                        title = stringResource(kind.openChooserLabel()),
                         subtitle = choices[kind.preferenceKey].associationLabel(context),
                         onClick = {
                             haptic.tap()
