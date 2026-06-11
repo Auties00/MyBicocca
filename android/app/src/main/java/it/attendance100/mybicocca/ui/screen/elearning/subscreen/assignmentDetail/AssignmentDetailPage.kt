@@ -1,6 +1,5 @@
 package it.attendance100.mybicocca.ui.screen.elearning.subscreen.assignmentDetail
 
-import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -42,10 +41,6 @@ import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.domain.model.elearning.assignment.Assignment
 import it.attendance100.mybicocca.domain.model.elearning.assignment.SubmissionForm
 import it.attendance100.mybicocca.domain.model.elearning.course.CourseId
-import java.time.Instant
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
-import java.util.Locale
 import it.attendance100.mybicocca.ui.component.modal.SheetConfirmPage
 import it.attendance100.mybicocca.ui.component.modal.SheetOutcome
 import it.attendance100.mybicocca.ui.component.modal.SheetPagerHeader
@@ -58,6 +53,10 @@ import it.attendance100.mybicocca.ui.screen.elearning.subscreen.assignmentDetail
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.assignmentDetail.state.AssignmentPage
 import it.attendance100.mybicocca.ui.screen.elearning.theme.CourseDetailTheme
 import it.attendance100.mybicocca.ui.theme.LocalIsOnline
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 
 /**
  * The compito (assignment) detail as a multi-state bottom-sheet modal, hosted as a single
@@ -122,11 +121,40 @@ fun AssignmentDetailPage(
         else -> Display.Page(current)
     }
 
-    BackHandler(enabled = display !is Display.Page || (backStack.size > 1 && !submitting)) {
-        when (display) {
-            Display.Outcome -> outcome = null
-            Display.ConfirmRemove -> pendingRemove = false
-            is Display.Page -> if (!submitting) viewModel.back()
+    val seekableState =
+        remember { androidx.compose.animation.core.SeekableTransitionState(display) }
+    val transition = androidx.compose.animation.core.rememberTransition(
+        seekableState,
+        label = "assignment_sheet_pages"
+    )
+
+    LaunchedEffect(display) {
+        if (seekableState.targetState != display) {
+            seekableState.animateTo(display)
+        }
+    }
+
+    androidx.activity.compose.PredictiveBackHandler(enabled = display !is Display.Page || (backStack.size > 1 && !submitting)) { progress ->
+        try {
+            val fallback = when (display) {
+                Display.Outcome -> if (pendingRemove) Display.ConfirmRemove else Display.Page(
+                    current
+                )
+
+                Display.ConfirmRemove -> Display.Page(current)
+                is Display.Page -> if (backStack.size > 1) Display.Page(backStack[backStack.size - 2]) else display
+            }
+            progress.collect { event ->
+                seekableState.seekTo(event.progress, targetState = fallback)
+            }
+            seekableState.animateTo(fallback)
+            when (display) {
+                Display.Outcome -> outcome = null
+                Display.ConfirmRemove -> pendingRemove = false
+                is Display.Page -> if (!submitting) viewModel.back()
+            }
+        } catch (_: kotlinx.coroutines.CancellationException) {
+            seekableState.animateTo(display)
         }
     }
 
@@ -165,13 +193,11 @@ fun AssignmentDetailPage(
                 },
             )
 
-            AnimatedContent(
-                targetState = display,
+            transition.AnimatedContent(
                 transitionSpec = {
                     sheetPageTransform(forward = displayDepth(targetState) >= displayDepth(initialState))
                 },
                 contentKey = { displayKey(it) },
-                label = "assignment_sheet_pages",
             ) { shown ->
                 when (shown) {
                     Display.Outcome -> outcome?.let { current ->
@@ -312,7 +338,9 @@ private fun ConfirmSubmitPage(
             FilledTonalButton(
                 onClick = onCancel,
                 enabled = !submitting,
-                modifier = Modifier.weight(1f).height(56.dp),
+                modifier = Modifier
+                    .weight(1f)
+                    .height(56.dp),
                 shape = ButtonGroupDefaults.connectedLeadingButtonShape,
                 colors = ButtonDefaults.filledTonalButtonColors(
                     containerColor = scheme.surfaceContainerHighest,
@@ -324,7 +352,9 @@ private fun ConfirmSubmitPage(
             Button(
                 onClick = onConfirm,
                 enabled = canSend && !submitting && LocalIsOnline.current,
-                modifier = Modifier.weight(1.4f).height(56.dp),
+                modifier = Modifier
+                    .weight(1.4f)
+                    .height(56.dp),
                 shape = ButtonGroupDefaults.connectedTrailingButtonShape,
                 colors = ButtonDefaults.buttonColors(
                     containerColor = scheme.primary,

@@ -1,6 +1,5 @@
 package it.attendance100.mybicocca.ui.screen.registry.subscreen.studyPlan
 
-import androidx.activity.compose.BackHandler
 import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.animateContentSize
@@ -222,16 +221,50 @@ fun StudyPlanPage(
             }
         }
 
-        BackHandler(enabled = page != PlanSheetPage.Root) {
-            when {
-                outcome != null -> outcome = null
-                pendingExit != null -> pendingExit = null
-                editRequest != null -> {
-                    editViewModel?.reset()
-                    editRequest = null
-                }
+        val seekableState =
+            remember { androidx.compose.animation.core.SeekableTransitionState(page) }
+        val transition = androidx.compose.animation.core.rememberTransition(
+            seekableState,
+            label = "study_plan_pages"
+        )
 
-                else -> selectedYear = null
+        LaunchedEffect(page) {
+            if (seekableState.targetState != page) {
+                seekableState.animateTo(page)
+            }
+        }
+
+        androidx.activity.compose.PredictiveBackHandler(enabled = page != PlanSheetPage.Root) { progress ->
+            try {
+                val fallback = when (page) {
+                    PlanSheetPage.Result -> if (pendingExit != null) PlanSheetPage.ConfirmExit else if (editRequest != null) PlanSheetPage.Edit else if (activeYear != null) PlanSheetPage.Year(
+                        activeYear
+                    ) else PlanSheetPage.Root
+
+                    PlanSheetPage.ConfirmExit -> if (editRequest != null) PlanSheetPage.Edit else if (activeYear != null) PlanSheetPage.Year(
+                        activeYear
+                    ) else PlanSheetPage.Root
+
+                    PlanSheetPage.Edit -> if (activeYear != null) PlanSheetPage.Year(activeYear) else PlanSheetPage.Root
+                    is PlanSheetPage.Year -> PlanSheetPage.Root
+                    PlanSheetPage.Root -> PlanSheetPage.Root
+                }
+                progress.collect { event ->
+                    seekableState.seekTo(event.progress, targetState = fallback)
+                }
+                seekableState.animateTo(fallback)
+                when {
+                    outcome != null -> outcome = null
+                    pendingExit != null -> pendingExit = null
+                    editRequest != null -> {
+                        editViewModel?.reset()
+                        editRequest = null
+                    }
+
+                    else -> selectedYear = null
+                }
+            } catch (_: kotlinx.coroutines.CancellationException) {
+                seekableState.animateTo(page)
             }
         }
         val backDispatcher = LocalOnBackPressedDispatcherOwner.current?.onBackPressedDispatcher
@@ -266,8 +299,7 @@ fun StudyPlanPage(
                     PlanSheetPage.Result -> null
                 },
             )
-            AnimatedContent(
-                targetState = page,
+            transition.AnimatedContent(
                 modifier = Modifier.sheetBodyGestureBarrier(),
                 transitionSpec = {
                     sheetPageTransform(forward = targetState.depth >= initialState.depth)
@@ -281,7 +313,6 @@ fun StudyPlanPage(
                         PlanSheetPage.Result -> "result"
                     }
                 },
-                label = "study_plan_pages",
             ) { target ->
                 when (target) {
                     PlanSheetPage.Root -> SheetBody(

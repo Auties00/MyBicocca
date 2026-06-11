@@ -1,6 +1,5 @@
 package it.attendance100.mybicocca.ui.screen.profile.subscreen.examsByYear
 
-import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
@@ -105,7 +104,31 @@ fun ExamsByYearSheet(
         val mode = if (pagerState.targetPage == 0) ExamValueMode.Grade else ExamValueMode.Credits
         val current = detailRow
 
-        BackHandler(enabled = current != null) { detailRow = null }
+        val seekableState =
+            remember { androidx.compose.animation.core.SeekableTransitionState(current) }
+        val transition = androidx.compose.animation.core.rememberTransition(
+            seekableState,
+            label = "exams_sheet_pages"
+        )
+
+        androidx.compose.runtime.LaunchedEffect(current) {
+            if (seekableState.targetState != current) seekableState.animateTo(current)
+        }
+
+        androidx.activity.compose.PredictiveBackHandler(enabled = current != null) { progress ->
+            try {
+                progress.collect { event ->
+                    seekableState.seekTo(
+                        event.progress,
+                        targetState = null
+                    )
+                }
+                seekableState.animateTo(null)
+                detailRow = null
+            } catch (_: kotlinx.coroutines.CancellationException) {
+                seekableState.animateTo(current)
+            }
+        }
 
         Column {
             SheetPagerHeader(
@@ -118,11 +141,9 @@ fun ExamsByYearSheet(
                 subtitle = current?.activityCode?.takeIf { it.isNotBlank() },
                 onBack = if (current != null) ({ detailRow = null }) else null,
             )
-            AnimatedContent(
-                targetState = current,
+            transition.AnimatedContent(
                 transitionSpec = { sheetPageTransform(forward = targetState != null) },
                 contentKey = { it?.id ?: -1L },
-                label = "exams_sheet_pages",
             ) { row ->
                 if (row == null) {
                     ExamsListPage(

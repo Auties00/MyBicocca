@@ -180,13 +180,43 @@ fun LibraryPage(
         }
 
         BackHandler(enabled = onDonePage && display is LibraryDisplay.Page) { }
-        BackHandler(
+
+        val seekableState =
+            remember { androidx.compose.animation.core.SeekableTransitionState(display) }
+        val transition = androidx.compose.animation.core.rememberTransition(
+            seekableState,
+            label = "library_sheet_pages"
+        )
+
+        LaunchedEffect(display) {
+            if (seekableState.targetState != display) {
+                seekableState.animateTo(display)
+            }
+        }
+
+        androidx.activity.compose.PredictiveBackHandler(
             enabled = display !is LibraryDisplay.Page || (depth > 0 && !submitting && !onDonePage),
-        ) {
-            when (display) {
-                LibraryDisplay.Outcome -> outcome = null
-                LibraryDisplay.ConfirmCancel -> pendingCancel = null
-                is LibraryDisplay.Page -> viewModel.back()
+        ) { progress ->
+            try {
+                val fallback = when (display) {
+                    LibraryDisplay.Outcome -> if (pendingCancel != null) LibraryDisplay.ConfirmCancel else LibraryDisplay.Page(
+                        current
+                    )
+
+                    LibraryDisplay.ConfirmCancel -> LibraryDisplay.Page(current)
+                    is LibraryDisplay.Page -> if (depth > 0) LibraryDisplay.Page(backStack[depth - 1]) else display
+                }
+                progress.collect { event ->
+                    seekableState.seekTo(event.progress, targetState = fallback)
+                }
+                seekableState.animateTo(fallback)
+                when (display) {
+                    LibraryDisplay.Outcome -> outcome = null
+                    LibraryDisplay.ConfirmCancel -> pendingCancel = null
+                    is LibraryDisplay.Page -> viewModel.back()
+                }
+            } catch (_: kotlinx.coroutines.CancellationException) {
+                seekableState.animateTo(display)
             }
         }
 
@@ -262,13 +292,11 @@ fun LibraryPage(
                 },
             )
 
-            AnimatedContent(
-                targetState = display,
+            transition.AnimatedContent(
                 transitionSpec = {
                     sheetPageTransform(forward = displayDepth(targetState) >= displayDepth(initialState))
                 },
                 contentKey = { displayKey(it) },
-                label = "library_sheet_pages",
             ) { shown ->
                 when (shown) {
                     LibraryDisplay.Outcome -> outcome?.let { current ->

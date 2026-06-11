@@ -1,11 +1,13 @@
 package it.attendance100.mybicocca.ui.screen.map.subscreen.buildingsList
 
-import androidx.activity.compose.BackHandler
+import androidx.activity.compose.PredictiveBackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.animateColor
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.SeekableTransitionState
 import androidx.compose.animation.core.animateDp
 import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.rememberTransition
 import androidx.compose.animation.core.updateTransition
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -42,6 +44,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -72,6 +75,8 @@ import it.attendance100.mybicocca.ui.screen.map.ext.openBuildingInMaps
 import it.attendance100.mybicocca.ui.screen.map.ext.splitLegacyAlias
 import it.attendance100.mybicocca.ui.screen.map.subscreen.buildingDetail.BuildingPageBody
 import it.attendance100.mybicocca.ui.screen.map.subscreen.buildingDetail.RoomDetailPage
+import kotlinx.coroutines.CancellationException
+
 
 /**
  * Edifici sheet: a single modal hosting a pinned morphing header over a three-level body
@@ -103,8 +108,31 @@ fun BuildingsListSheet(
         val scheduleMap = (daySchedule as? Loadable.Loaded)?.value
         val detailTitle = detailBuilding?.let { buildingDisplayName(it) }
 
-        BackHandler(enabled = detailBuilding != null) {
-            if (selectedRoom != null) onCloseRoom() else onBack()
+        val targetStatePair = detailBuilding to selectedRoom
+        val seekableState = remember { SeekableTransitionState(targetStatePair) }
+        val transition = rememberTransition(seekableState, label = "buildings_sheet_pages")
+
+        LaunchedEffect(targetStatePair) {
+            if (seekableState.targetState != targetStatePair) seekableState.animateTo(
+                targetStatePair
+            )
+        }
+
+        PredictiveBackHandler(enabled = detailBuilding != null) { progress ->
+            val isRoomLevel = selectedRoom != null
+            val fallbackState = if (isRoomLevel) detailBuilding to null else null to null
+            try {
+                progress.collect { event ->
+                    seekableState.seekTo(
+                        event.progress,
+                        targetState = fallbackState
+                    )
+                }
+                seekableState.animateTo(fallbackState)
+                if (isRoomLevel) onCloseRoom() else onBack()
+            } catch (_: CancellationException) {
+                seekableState.animateTo(targetStatePair)
+            }
         }
 
         Column {
@@ -141,13 +169,11 @@ fun BuildingsListSheet(
                     null
                 },
             )
-            AnimatedContent(
-                targetState = detailBuilding to selectedRoom,
+            transition.AnimatedContent(
                 transitionSpec = {
                     sheetPageTransform(forward = pageDepth(targetState) >= pageDepth(initialState))
                 },
                 contentKey = { (building, room) -> room?.code?.value ?: building?.code?.value ?: "list" },
-                label = "buildings_sheet_pages",
             ) { (building, room) ->
                 when {
                     building == null -> BuildingsListPage(

@@ -1,17 +1,16 @@
 package it.attendance100.mybicocca.ui.screen.registry.subscreen.appointments
 
-import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.layout.Column
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.testTag
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import it.attendance100.mybicocca.R
@@ -125,18 +124,47 @@ fun AppointmentsPage(
             }
         }
 
-        BackHandler(enabled = outcome != null || pendingCancel != null || (depth > 0 && !submitting)) {
-            when {
-                outcome != null -> outcome = null
-                pendingCancel != null -> pendingCancel = null
-                else -> viewModel.back()
-            }
-        }
-
         val display: AppointmentsDisplay = when {
             outcome != null -> AppointmentsDisplay.Outcome
             pendingCancel != null -> AppointmentsDisplay.ConfirmCancel
             else -> AppointmentsDisplay.Page(current)
+        }
+
+        val seekableState =
+            remember { androidx.compose.animation.core.SeekableTransitionState(display) }
+        val transition = androidx.compose.animation.core.rememberTransition(
+            seekableState,
+            label = "appointments_sheet_pages"
+        )
+
+        LaunchedEffect(display) {
+            if (seekableState.targetState != display) {
+                seekableState.animateTo(display)
+            }
+        }
+
+        androidx.activity.compose.PredictiveBackHandler(enabled = outcome != null || pendingCancel != null || (depth > 0 && !submitting)) { progress ->
+            try {
+                val fallback = when (display) {
+                    AppointmentsDisplay.Outcome -> if (pendingCancel != null) AppointmentsDisplay.ConfirmCancel else AppointmentsDisplay.Page(
+                        current
+                    )
+
+                    AppointmentsDisplay.ConfirmCancel -> AppointmentsDisplay.Page(current)
+                    is AppointmentsDisplay.Page -> if (depth > 0) AppointmentsDisplay.Page(backStack[depth - 1]) else display
+                }
+                progress.collect { event ->
+                    seekableState.seekTo(event.progress, targetState = fallback)
+                }
+                seekableState.animateTo(fallback)
+                when {
+                    outcome != null -> outcome = null
+                    pendingCancel != null -> pendingCancel = null
+                    else -> viewModel.back()
+                }
+            } catch (_: kotlinx.coroutines.CancellationException) {
+                seekableState.animateTo(display)
+            }
         }
 
         val sections = (services as? Loadable.Loaded)?.value?.toDirectorySections().orEmpty()
@@ -193,13 +221,11 @@ fun AppointmentsPage(
                 },
             )
 
-            AnimatedContent(
-                targetState = display,
+            transition.AnimatedContent(
                 transitionSpec = {
                     sheetPageTransform(forward = displayDepth(targetState) >= displayDepth(initialState))
                 },
                 contentKey = { displayKey(it) },
-                label = "appointments_sheet_pages",
             ) { shown ->
                 when (shown) {
                     AppointmentsDisplay.Outcome -> outcome?.let { current ->

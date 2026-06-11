@@ -2,7 +2,6 @@ package it.attendance100.mybicocca.ui.screen.elearning.subscreen.forum
 
 import android.net.Uri
 import android.provider.OpenableColumns
-import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedContent
@@ -59,7 +58,6 @@ import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.valueOrNull
 import it.attendance100.mybicocca.domain.model.elearning.course.CourseId
 import it.attendance100.mybicocca.domain.model.elearning.forum.Discussion
-import it.attendance100.mybicocca.domain.model.elearning.forum.DiscussionId
 import it.attendance100.mybicocca.domain.model.elearning.forum.Forum
 import it.attendance100.mybicocca.domain.model.elearning.forum.Post
 import it.attendance100.mybicocca.domain.model.elearning.forum.PostAttachment
@@ -73,6 +71,7 @@ import it.attendance100.mybicocca.ui.component.modal.sheetBodyGestureBarrier
 import it.attendance100.mybicocca.ui.component.modal.sheetPageTransform
 import it.attendance100.mybicocca.ui.navigation.route.SheetRoute
 import it.attendance100.mybicocca.ui.navigation.scene.LocalSheetDismissControl
+import it.attendance100.mybicocca.ui.screen.elearning.subscreen.forum.component.DiscussionRow
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.forum.component.ForumComposer
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.forum.component.ThreadPostItem
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.forum.state.ComposerTarget
@@ -80,7 +79,6 @@ import it.attendance100.mybicocca.ui.screen.elearning.subscreen.forum.state.Foru
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.forum.state.PendingAttachment
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.forum.state.ThreadNode
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.forum.state.visibleThread
-import it.attendance100.mybicocca.ui.screen.elearning.subscreen.forum.component.DiscussionRow
 import it.attendance100.mybicocca.ui.screen.elearning.theme.CourseDetailTheme
 import it.attendance100.mybicocca.ui.theme.LocalIsOnline
 import kotlinx.coroutines.delay
@@ -192,14 +190,45 @@ fun ForumSheetPage(
             control?.confirmDismiss = onConfirmDismiss
         }
 
-        BackHandler(enabled = display != Display.List) {
-            when (display) {
-                Display.Result -> outcome = null
-                Display.ConfirmDelete -> pendingDeletePostId = null
-                Display.ConfirmDiscard -> confirmDiscard = false
-                Display.Composer -> if (subject.isNotBlank() || message.isNotBlank()) confirmDiscard = true else viewModel.cancelComposer()
-                Display.Thread -> viewModel.closeThread()
-                Display.List -> Unit
+        val seekableState =
+            remember { androidx.compose.animation.core.SeekableTransitionState(display) }
+        val transition = androidx.compose.animation.core.rememberTransition(
+            seekableState,
+            label = "forum_sheet_pages"
+        )
+
+        LaunchedEffect(display) {
+            if (seekableState.targetState != display) {
+                seekableState.animateTo(display)
+            }
+        }
+
+        androidx.activity.compose.PredictiveBackHandler(enabled = display != Display.List) { progress ->
+            try {
+                val fallback = when (display) {
+                    Display.Result -> if (pendingDeletePostId != null) Display.ConfirmDelete else if (confirmDiscard) Display.ConfirmDiscard else if (composerTarget != null) Display.Composer else if (openDiscussionId != null) Display.Thread else Display.List
+                    Display.ConfirmDelete -> if (confirmDiscard) Display.ConfirmDiscard else if (composerTarget != null) Display.Composer else if (openDiscussionId != null) Display.Thread else Display.List
+                    Display.ConfirmDiscard -> if (composerTarget != null) Display.Composer else if (openDiscussionId != null) Display.Thread else Display.List
+                    Display.Composer -> if (subject.isNotBlank() || message.isNotBlank()) Display.ConfirmDiscard else if (openDiscussionId != null) Display.Thread else Display.List
+                    Display.Thread -> Display.List
+                    Display.List -> display
+                }
+                progress.collect { event ->
+                    seekableState.seekTo(event.progress, targetState = fallback)
+                }
+                seekableState.animateTo(fallback)
+                when (display) {
+                    Display.Result -> outcome = null
+                    Display.ConfirmDelete -> pendingDeletePostId = null
+                    Display.ConfirmDiscard -> confirmDiscard = false
+                    Display.Composer -> if (subject.isNotBlank() || message.isNotBlank()) confirmDiscard =
+                        true else viewModel.cancelComposer()
+
+                    Display.Thread -> viewModel.closeThread()
+                    Display.List -> Unit
+                }
+            } catch (_: kotlinx.coroutines.CancellationException) {
+                seekableState.animateTo(display)
             }
         }
 
@@ -237,12 +266,10 @@ fun ForumSheetPage(
                 },
             )
 
-            AnimatedContent(
-                targetState = display,
+            transition.AnimatedContent(
                 modifier = Modifier.sheetBodyGestureBarrier(),
                 transitionSpec = { sheetPageTransform(forward = targetState.depth >= initialState.depth) },
                 contentKey = { it.key },
-                label = "forum_sheet_pages",
             ) { target ->
                 when (target) {
                     Display.List -> DiscussionsListBody(
@@ -391,7 +418,9 @@ private fun DiscussionsListBody(
                     ListLoading(modifier = Modifier.testTag(ForumSheetTestTags.STATE_LOADING))
                 }
                 showEmpty -> item("empty") {
-                    Box(Modifier.fillParentMaxHeight(0.55f).testTag(ForumSheetTestTags.STATE_EMPTY)) {
+                    Box(Modifier
+                        .fillParentMaxHeight(0.55f)
+                        .testTag(ForumSheetTestTags.STATE_EMPTY)) {
                         EmptyState(
                             icon = Icons.Outlined.Forum,
                             title = "Nessuna discussione",
@@ -421,7 +450,9 @@ private fun DiscussionsListBody(
                     }
                     if (isLoadingMore) {
                         item("loading_more") {
-                            Box(Modifier.fillMaxWidth().padding(vertical = 18.dp), contentAlignment = Alignment.Center) {
+                            Box(Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 18.dp), contentAlignment = Alignment.Center) {
                                 CircularProgressIndicator(modifier = Modifier.size(26.dp))
                             }
                         }
@@ -473,7 +504,10 @@ private fun ThreadBody(
             SheetLoadingIndicator(label = "Caricamento discussione…")
         } else {
             LazyColumn(
-                modifier = Modifier.fillMaxWidth().weight(1f, fill = false).heightIn(max = 560.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f, fill = false)
+                    .heightIn(max = 560.dp),
                 contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 12.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
@@ -517,7 +551,9 @@ private fun ThreadFooter(canReply: Boolean, onReply: () -> Unit, onSubscribe: ()
             FilledTonalButton(
                 onClick = onSubscribe,
                 enabled = isOnline,
-                modifier = Modifier.weight(1f).height(56.dp),
+                modifier = Modifier
+                    .weight(1f)
+                    .height(56.dp),
                 shape = ButtonGroupDefaults.connectedLeadingButtonShape,
                 colors = ButtonDefaults.filledTonalButtonColors(
                     containerColor = scheme.surfaceContainerHighest,
@@ -531,7 +567,9 @@ private fun ThreadFooter(canReply: Boolean, onReply: () -> Unit, onSubscribe: ()
             Button(
                 onClick = onReply,
                 enabled = isOnline,
-                modifier = Modifier.weight(1.4f).height(56.dp),
+                modifier = Modifier
+                    .weight(1.4f)
+                    .height(56.dp),
                 shape = ButtonGroupDefaults.connectedTrailingButtonShape,
                 colors = ButtonDefaults.buttonColors(containerColor = brandBg, contentColor = brandFg),
             ) {
@@ -543,7 +581,9 @@ private fun ThreadFooter(canReply: Boolean, onReply: () -> Unit, onSubscribe: ()
             FilledTonalButton(
                 onClick = onSubscribe,
                 enabled = isOnline,
-                modifier = Modifier.fillMaxWidth().height(56.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp),
                 shape = RoundedCornerShape(28.dp),
                 colors = ButtonDefaults.filledTonalButtonColors(
                     containerColor = scheme.surfaceContainerHighest,
@@ -567,7 +607,9 @@ private fun NewDiscussionButton(onClick: () -> Unit, modifier: Modifier = Modifi
     Button(
         onClick = onClick,
         enabled = LocalIsOnline.current,
-        modifier = modifier.fillMaxWidth().height(52.dp),
+        modifier = modifier
+            .fillMaxWidth()
+            .height(52.dp),
         shape = RoundedCornerShape(26.dp),
         colors = ButtonDefaults.buttonColors(containerColor = brandBg, contentColor = brandFg),
     ) {
@@ -580,7 +622,9 @@ private fun NewDiscussionButton(onClick: () -> Unit, modifier: Modifier = Modifi
 @Composable
 private fun ListLoading(modifier: Modifier = Modifier) {
     Box(
-        modifier.fillMaxWidth().padding(vertical = 48.dp),
+        modifier
+            .fillMaxWidth()
+            .padding(vertical = 48.dp),
         contentAlignment = Alignment.Center,
     ) {
         CircularProgressIndicator()

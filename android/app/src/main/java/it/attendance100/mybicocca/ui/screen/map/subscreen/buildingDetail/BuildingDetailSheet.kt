@@ -1,8 +1,10 @@
 package it.attendance100.mybicocca.ui.screen.map.subscreen.buildingDetail
 
-import androidx.activity.compose.BackHandler
+import androidx.activity.compose.PredictiveBackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.SeekableTransitionState
+import androidx.compose.animation.core.rememberTransition
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -35,6 +37,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -70,6 +73,7 @@ import it.attendance100.mybicocca.ui.screen.map.ext.buildingDisplayName
 import it.attendance100.mybicocca.ui.screen.map.ext.openBuildingInMaps
 import it.attendance100.mybicocca.ui.screen.map.subscreen.buildingDetail.state.RoomStatus
 import it.attendance100.mybicocca.ui.screen.map.subscreen.buildingDetail.state.roomStatus
+import kotlinx.coroutines.CancellationException
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
@@ -81,11 +85,6 @@ private val StatusTimeFormat: DateTimeFormatter = DateTimeFormatter.ofPattern("H
  * buildings list sheet (which supplies [onBack] at the building level too). System back pops
  * the room page before closing or dismissing anything above it.
  */
-import androidx.activity.compose.PredictiveBackHandler
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.core.SeekableTransitionState
-import androidx.compose.animation.core.rememberTransition
-import kotlinx.coroutines.CancellationException
 
 // ... (other imports remain, just updating the composable logic)
 // I will rewrite the BuildingDetailSheet function body
@@ -334,9 +333,9 @@ private fun FloorHeader(floor: Int?, roomCount: Int) {
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
-            text = when {
-                floor == null -> stringResource(R.string.map_floor_other)
-                floor == 0 -> stringResource(R.string.map_floor_ground)
+            text = when (floor) {
+                null -> stringResource(R.string.map_floor_other)
+                0 -> stringResource(R.string.map_floor_ground)
                 else -> stringResource(R.string.map_floor_n, floor)
             },
             style = MaterialTheme.typography.titleSmallEmphasized,

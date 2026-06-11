@@ -1,6 +1,5 @@
 package it.attendance100.mybicocca.ui.screen.registry.subscreen.examResults
 
-import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -183,11 +182,38 @@ fun ExamResultsPage(
             }
         }
 
-        BackHandler(enabled = page != EsitiSheetPage.Root) {
-            when {
-                outcome != null -> outcome = null
-                confirmingReject -> confirmingReject = false
-                else -> detailId = null
+        val seekableState =
+            remember { androidx.compose.animation.core.SeekableTransitionState(page) }
+        val transition = androidx.compose.animation.core.rememberTransition(
+            seekableState,
+            label = "esiti_sheet_pages"
+        )
+
+        LaunchedEffect(page) {
+            if (seekableState.targetState != page) {
+                seekableState.animateTo(page)
+            }
+        }
+
+        androidx.activity.compose.PredictiveBackHandler(enabled = page != EsitiSheetPage.Root) { progress ->
+            try {
+                val fallback = when (page) {
+                    EsitiSheetPage.Result -> if (detailResult == null) EsitiSheetPage.Root else if (confirmingReject) EsitiSheetPage.ConfirmReject else EsitiSheetPage.Detail
+                    EsitiSheetPage.ConfirmReject -> EsitiSheetPage.Detail
+                    EsitiSheetPage.Detail -> EsitiSheetPage.Root
+                    EsitiSheetPage.Root -> EsitiSheetPage.Root
+                }
+                progress.collect { event ->
+                    seekableState.seekTo(event.progress, targetState = fallback)
+                }
+                seekableState.animateTo(fallback)
+                when {
+                    outcome != null -> outcome = null
+                    confirmingReject -> confirmingReject = false
+                    else -> detailId = null
+                }
+            } catch (_: kotlinx.coroutines.CancellationException) {
+                seekableState.animateTo(page)
             }
         }
 
@@ -219,8 +245,7 @@ fun ExamResultsPage(
                     EsitiSheetPage.Result -> null
                 },
             )
-            AnimatedContent(
-                targetState = page,
+            transition.AnimatedContent(
                 modifier = Modifier.sheetBodyGestureBarrier(),
                 transitionSpec = {
                     sheetPageTransform(forward = targetState.depth >= initialState.depth)
@@ -233,7 +258,6 @@ fun ExamResultsPage(
                         EsitiSheetPage.Result -> "result"
                     }
                 },
-                label = "esiti_sheet_pages",
             ) { target ->
                 when (target) {
                     EsitiSheetPage.Root -> SheetBody(
