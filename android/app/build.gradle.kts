@@ -42,12 +42,29 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
             signingConfig = signingConfigs.getByName("release")
+        }
+    }
+
+    /**
+     * Per-ABI APK splits. MapLibre and the ML Kit barcode engine ship large native
+     * libraries; a universal APK carries all four ABIs (~64 MB of .so), of which the
+     * x86/x86_64 copies only matter to emulators and the handful of x86 Chromebooks.
+     * Splitting emits one APK per ABI so a real device downloads only its own .so set,
+     * and the universal APK is kept as an install-anywhere fallback (and for emulators).
+     */
+    splits {
+        abi {
+            isEnable = true
+            reset()
+            include("armeabi-v7a", "arm64-v8a", "x86", "x86_64")
+            isUniversalApk = true
         }
     }
 
@@ -72,6 +89,11 @@ android {
         // line up with the stored bytes, so MapLibre's PMTilesFileSource reads garbage for the root
         // directory and aborts the process with a zlib "incorrect header check". Store it raw.
         noCompress += "pmtiles"
+
+        // The app's UI ships only Italian (default) and English; locales_config.xml offers just
+        // those two. Transitive AndroidX / Play Services / Material artifacts bundle dozens of
+        // other translations that would otherwise bloat resources.arsc. Package only it + en.
+        localeFilters += listOf("it", "en")
     }
 
     testOptions {

@@ -33,7 +33,12 @@ jobs:
         uses: android-actions/setup-android@v3
 
       - name: Install the compileSdk platform
-        run: sdkmanager --channel=3 "platforms;android-37"
+        run: |
+          sdkmanager --channel=3 "platforms;android-37.0"
+          sdk_root="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-/usr/local/lib/android/sdk}}"
+          if [ -d "$sdk_root/platforms/android-37.0" ] && [ ! -e "$sdk_root/platforms/android-37" ]; then
+            ln -s android-37.0 "$sdk_root/platforms/android-37"
+          fi
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
@@ -94,7 +99,12 @@ jobs:
         uses: android-actions/setup-android@v3
 
       - name: Install the compileSdk platform
-        run: sdkmanager --channel=3 "platforms;android-37"
+        run: |
+          sdkmanager --channel=3 "platforms;android-37.0"
+          sdk_root="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-/usr/local/lib/android/sdk}}"
+          if [ -d "$sdk_root/platforms/android-37.0" ] && [ ! -e "$sdk_root/platforms/android-37" ]; then
+            ln -s android-37.0 "$sdk_root/platforms/android-37"
+          fi
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
