@@ -1,6 +1,5 @@
 package it.attendance100.mybicocca.ui.screen.registry.subscreen.attendance
 
-import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -141,12 +140,41 @@ fun AttendancePage(
             else -> AttendancePage.Root
         }
 
-        BackHandler(enabled = page != AttendancePage.Root) {
-            when (page) {
-                is AttendancePage.Course -> closeCourse()
-                AttendancePage.RilevaCode -> enteringCode = false
-                AttendancePage.Rileva, AttendancePage.RilevaResult -> closeRileva()
-                AttendancePage.RilevaProgress, AttendancePage.Root -> Unit
+        val seekableState =
+            remember { androidx.compose.animation.core.SeekableTransitionState(page) }
+        val transition = androidx.compose.animation.core.rememberTransition(
+            seekableState,
+            label = "attendance_pages"
+        )
+
+        LaunchedEffect(page) {
+            if (seekableState.targetState != page) {
+                seekableState.animateTo(page)
+            }
+        }
+
+        androidx.activity.compose.PredictiveBackHandler(enabled = page != AttendancePage.Root) { progress ->
+            try {
+                val fallback = when (page) {
+                    is AttendancePage.Course -> AttendancePage.Root
+                    AttendancePage.RilevaCode -> AttendancePage.Rileva
+                    AttendancePage.Rileva -> AttendancePage.Root
+                    AttendancePage.RilevaResult -> AttendancePage.Root
+                    AttendancePage.RilevaProgress -> page
+                    AttendancePage.Root -> page
+                }
+                progress.collect { event ->
+                    seekableState.seekTo(event.progress, targetState = fallback)
+                }
+                seekableState.animateTo(fallback)
+                when (page) {
+                    is AttendancePage.Course -> closeCourse()
+                    AttendancePage.RilevaCode -> enteringCode = false
+                    AttendancePage.Rileva, AttendancePage.RilevaResult -> closeRileva()
+                    AttendancePage.RilevaProgress, AttendancePage.Root -> Unit
+                }
+            } catch (_: kotlinx.coroutines.CancellationException) {
+                seekableState.animateTo(page)
             }
         }
 
@@ -175,8 +203,7 @@ fun AttendancePage(
                     AttendancePage.Rileva -> ({ closeRileva() })
                 },
             )
-            AnimatedContent(
-                targetState = page,
+            transition.AnimatedContent(
                 modifier = Modifier.sheetBodyGestureBarrier(),
                 transitionSpec = {
                     sheetPageTransform(forward = targetState.depth >= initialState.depth)
@@ -191,7 +218,6 @@ fun AttendancePage(
                         AttendancePage.RilevaResult -> "rileva_result"
                     }
                 },
-                label = "attendance_pages",
             ) { target ->
                 when (target) {
                     AttendancePage.Root -> SheetBody(

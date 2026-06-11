@@ -1,6 +1,5 @@
 package it.attendance100.mybicocca.ui.screen.registry.subscreen.certificates
 
-import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.fadeIn
@@ -108,7 +107,30 @@ fun CertificatesPage(
         }
     }
 
-    BackHandler(enabled = outcome != null) { outcome = null }
+    val seekableState =
+        remember { androidx.compose.animation.core.SeekableTransitionState(outcome) }
+    val transition = androidx.compose.animation.core.rememberTransition(
+        seekableState,
+        label = "certificates_pages"
+    )
+
+    LaunchedEffect(outcome) {
+        if (seekableState.targetState != outcome) {
+            seekableState.animateTo(outcome)
+        }
+    }
+
+    androidx.activity.compose.PredictiveBackHandler(enabled = outcome != null) { progress ->
+        try {
+            progress.collect { event ->
+                seekableState.seekTo(event.progress, targetState = null)
+            }
+            seekableState.animateTo(null)
+            outcome = null
+        } catch (_: kotlinx.coroutines.CancellationException) {
+            seekableState.animateTo(outcome)
+        }
+    }
 
     Column(modifier = Modifier.testTag(CertificatesTestTags.ROOT)) {
         SheetPagerHeader(
@@ -118,11 +140,9 @@ fun CertificatesPage(
                 .takeIf { certificatesLoadable is Loadable.Loaded },
             onBack = null,
         )
-        AnimatedContent(
-            targetState = outcome,
+        transition.AnimatedContent(
             transitionSpec = { sheetPageTransform(forward = targetState != null) },
             contentKey = { it != null },
-            label = "certificates_pages",
         ) { current ->
             if (current != null) {
                 Box(modifier = Modifier.testTag(CertificatesTestTags.RESULT_PAGE)) {

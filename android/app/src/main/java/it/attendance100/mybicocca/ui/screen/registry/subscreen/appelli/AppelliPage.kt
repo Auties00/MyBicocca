@@ -1,6 +1,5 @@
 package it.attendance100.mybicocca.ui.screen.registry.subscreen.appelli
 
-import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -237,15 +236,45 @@ fun AppelliPage(
             }
         }
 
-        BackHandler(enabled = page != AppelliPage.Root) {
-            when (page) {
-                AppelliPage.Result -> outcome = null
-                AppelliPage.ConfirmCancel -> confirmingCancel = false
-                AppelliPage.Detail -> detailKey = null
-                AppelliPage.BookingConfirm -> if (!submitting) sheetViewModel.goBackToInfo()
-                AppelliPage.BookingCall -> sheetViewModel.close()
-                AppelliPage.BookingCalendar -> booking = false
-                AppelliPage.Root -> Unit
+        val seekableState =
+            remember { androidx.compose.animation.core.SeekableTransitionState(page) }
+        val transition = androidx.compose.animation.core.rememberTransition(
+            seekableState,
+            label = "appelli_pages"
+        )
+
+        LaunchedEffect(page) {
+            if (seekableState.targetState != page) {
+                seekableState.animateTo(page)
+            }
+        }
+
+        androidx.activity.compose.PredictiveBackHandler(enabled = page != AppelliPage.Root) { progress ->
+            try {
+                val fallback = when (page) {
+                    AppelliPage.Result -> if (detailBooking != null && confirmingCancel) AppelliPage.ConfirmCancel else if (detailBooking != null) AppelliPage.Detail else if (target != null && step == BookingSheetStep.Confirm) AppelliPage.BookingConfirm else if (target != null) AppelliPage.BookingCall else if (booking) AppelliPage.BookingCalendar else AppelliPage.Root
+                    AppelliPage.ConfirmCancel -> AppelliPage.Detail
+                    AppelliPage.Detail -> AppelliPage.Root
+                    AppelliPage.BookingConfirm -> if (!submitting) AppelliPage.BookingCall else page
+                    AppelliPage.BookingCall -> AppelliPage.BookingCalendar
+                    AppelliPage.BookingCalendar -> AppelliPage.Root
+                    AppelliPage.Root -> page
+                }
+                progress.collect { event ->
+                    seekableState.seekTo(event.progress, targetState = fallback)
+                }
+                seekableState.animateTo(fallback)
+                when (page) {
+                    AppelliPage.Result -> outcome = null
+                    AppelliPage.ConfirmCancel -> confirmingCancel = false
+                    AppelliPage.Detail -> detailKey = null
+                    AppelliPage.BookingConfirm -> if (!submitting) sheetViewModel.goBackToInfo()
+                    AppelliPage.BookingCall -> sheetViewModel.close()
+                    AppelliPage.BookingCalendar -> booking = false
+                    AppelliPage.Root -> Unit
+                }
+            } catch (_: kotlinx.coroutines.CancellationException) {
+                seekableState.animateTo(page)
             }
         }
 
@@ -280,14 +309,12 @@ fun AppelliPage(
                     AppelliPage.Result -> null
                 },
             )
-            AnimatedContent(
-                targetState = page,
+            transition.AnimatedContent(
                 modifier = Modifier.sheetBodyGestureBarrier(),
                 transitionSpec = {
                     sheetPageTransform(forward = targetState.depth >= initialState.depth)
                 },
                 contentKey = { it.key },
-                label = "appelli_pages",
             ) { current ->
                 when (current) {
                     AppelliPage.Root -> ActiveBody(

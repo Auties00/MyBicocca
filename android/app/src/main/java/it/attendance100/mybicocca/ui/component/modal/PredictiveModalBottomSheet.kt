@@ -13,6 +13,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.material3.BottomSheetDefaults
@@ -69,6 +70,16 @@ fun PredictiveModalBottomSheet(
     sizeDuration: Int = duration,
     confirmDismiss: () -> Boolean = { true },
     gesturesEnabled: Boolean = true,
+    contentWindowInsets: @Composable () -> WindowInsets = { BottomSheetDefaults.modalWindowInsets },
+    dragHandle: @Composable (() -> Unit)? = {
+        if (gesturesEnabled) {
+            BottomSheetDefaults.DragHandle()
+        } else {
+            BottomSheetDefaults.DragHandle(
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.12f),
+            )
+        }
+    },
     content: @Composable (closeTransition: Transition<Boolean>, progress: Float) -> Unit
 ) {
     val latestConfirmDismiss by rememberUpdatedState(confirmDismiss)
@@ -88,18 +99,11 @@ fun PredictiveModalBottomSheet(
         },
         sheetState = sheetState,
         sheetGesturesEnabled = gesturesEnabled,
-        dragHandle = {
-            if (gesturesEnabled) {
-                BottomSheetDefaults.DragHandle()
-            } else {
-                BottomSheetDefaults.DragHandle(
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.12f),
-                )
-            }
-        },
+        dragHandle = dragHandle,
         shape = shape,
-        containerColor = modalColor,
         scrimColor = scrimColor,
+        contentWindowInsets = contentWindowInsets,
+        containerColor = modalColor,
     ) {
         PredictiveBackHandler { progress ->
             try {

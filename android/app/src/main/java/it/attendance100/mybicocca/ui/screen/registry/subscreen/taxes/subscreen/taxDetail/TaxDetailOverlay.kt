@@ -1,6 +1,5 @@
 package it.attendance100.mybicocca.ui.screen.registry.subscreen.taxes.subscreen.taxDetail
 
-import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.Animatable
 import androidx.compose.foundation.background
@@ -138,7 +137,30 @@ fun TaxDetailOverlay(
                 }
             }
 
-            BackHandler(enabled = outcome != null) { outcome = null }
+            val seekableState =
+                remember { androidx.compose.animation.core.SeekableTransitionState(outcome) }
+            val transition = androidx.compose.animation.core.rememberTransition(
+                seekableState,
+                label = "tax_detail_result"
+            )
+
+            LaunchedEffect(outcome) {
+                if (seekableState.targetState != outcome) {
+                    seekableState.animateTo(outcome)
+                }
+            }
+
+            androidx.activity.compose.PredictiveBackHandler(enabled = outcome != null) { progress ->
+                try {
+                    progress.collect { event ->
+                        seekableState.seekTo(event.progress, targetState = null)
+                    }
+                    seekableState.animateTo(null)
+                    outcome = null
+                } catch (_: kotlinx.coroutines.CancellationException) {
+                    seekableState.animateTo(outcome)
+                }
+            }
 
             val view = LocalView.current
             var windowOffset by remember { mutableStateOf(Offset.Zero) }
@@ -182,7 +204,7 @@ fun TaxDetailOverlay(
                     val contentModifier = Modifier.graphicsLayer {
                         alpha = ((progress.value - 0.15f) / 0.85f).coerceIn(0f, 1f)
                     }
-                    AnimatedContent(targetState = outcome, label = "tax_detail_result") { current ->
+                    transition.AnimatedContent(contentKey = { it != null }) { current ->
                         if (current != null) {
                             TaxResultContent(
                                 outcome = current,

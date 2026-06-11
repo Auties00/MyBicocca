@@ -1,6 +1,5 @@
 package it.attendance100.mybicocca.ui.screen.elearning.subscreen.quizDetail
 
-import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -206,18 +205,46 @@ fun QuizDetailPage(
             control?.confirmDismiss = onConfirmDismiss
         }
 
-        BackHandler(
+        val seekableState =
+            remember { androidx.compose.animation.core.SeekableTransitionState(page) }
+        val transition = androidx.compose.animation.core.rememberTransition(
+            seekableState,
+            label = "quiz_sheet_pages"
+        )
+
+        LaunchedEffect(page) {
+            if (seekableState.targetState != page) {
+                seekableState.animateTo(page)
+            }
+        }
+
+        androidx.activity.compose.PredictiveBackHandler(
             enabled = page == QuizSheetPage.History ||
                     page == QuizSheetPage.Review ||
                     page == QuizSheetPage.ConfirmSubmit ||
                     page == QuizSheetPage.ConfirmClose,
-        ) {
-            when (page) {
-                QuizSheetPage.ConfirmSubmit -> confirmSubmit = false
-                QuizSheetPage.ConfirmClose -> confirmClose = false
-                QuizSheetPage.Review -> viewModel.closeAttempt()
-                QuizSheetPage.History -> showHistory = false
-                else -> Unit
+        ) { progress ->
+            try {
+                val fallback = when (page) {
+                    QuizSheetPage.ConfirmSubmit -> QuizSheetPage.Attempt
+                    QuizSheetPage.ConfirmClose -> QuizSheetPage.Attempt
+                    QuizSheetPage.Review -> if (showHistory) QuizSheetPage.History else QuizSheetPage.Overview
+                    QuizSheetPage.History -> QuizSheetPage.Overview
+                    else -> page
+                }
+                progress.collect { event ->
+                    seekableState.seekTo(event.progress, targetState = fallback)
+                }
+                seekableState.animateTo(fallback)
+                when (page) {
+                    QuizSheetPage.ConfirmSubmit -> confirmSubmit = false
+                    QuizSheetPage.ConfirmClose -> confirmClose = false
+                    QuizSheetPage.Review -> viewModel.closeAttempt()
+                    QuizSheetPage.History -> showHistory = false
+                    else -> Unit
+                }
+            } catch (_: kotlinx.coroutines.CancellationException) {
+                seekableState.animateTo(page)
             }
         }
 
@@ -249,14 +276,12 @@ fun QuizDetailPage(
                     else -> null
                 },
             )
-            AnimatedContent(
-                targetState = page,
+            transition.AnimatedContent(
                 modifier = Modifier.sheetBodyGestureBarrier(),
                 transitionSpec = {
                     sheetPageTransform(forward = targetState.depth >= initialState.depth)
                 },
                 contentKey = { it.key },
-                label = "quiz_sheet_pages",
             ) { target ->
                 when (target) {
                     QuizSheetPage.Overview ->

@@ -1,6 +1,5 @@
 package it.attendance100.mybicocca.ui.screen.registry.subscreen.questionnaires
 
-import androidx.activity.compose.BackHandler
 import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.animateContentSize
@@ -53,9 +52,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -209,16 +208,45 @@ fun QuestionnairesPage(
             }
         }
 
-        BackHandler(enabled = page != QPage.Root) {
-            when {
-                outcome != null -> outcome = null
-                pendingConfirm != null -> pendingConfirm = null
-                compileRequest != null -> {
-                    compileViewModel?.reset()
-                    compileRequest = null
-                }
+        val seekableState =
+            remember { androidx.compose.animation.core.SeekableTransitionState(page) }
+        val transition = androidx.compose.animation.core.rememberTransition(
+            seekableState,
+            label = "questionnaires_pages"
+        )
 
-                else -> viewModel.dismissActivity()
+        LaunchedEffect(page) {
+            if (seekableState.targetState != page) {
+                seekableState.animateTo(page)
+            }
+        }
+
+        androidx.activity.compose.PredictiveBackHandler(enabled = page != QPage.Root) { progress ->
+            try {
+                val fallback = when (page) {
+                    QPage.Result -> if (pendingConfirm == ConfirmIntent.Send) QPage.ConfirmSend else if (pendingConfirm != null) QPage.ConfirmExit else if (compileRequest != null) QPage.Compile else if (activity != null) QPage.Units else QPage.Root
+                    QPage.ConfirmSend -> if (compileRequest != null) QPage.Compile else if (activity != null) QPage.Units else QPage.Root
+                    QPage.ConfirmExit -> if (compileRequest != null) QPage.Compile else if (activity != null) QPage.Units else QPage.Root
+                    QPage.Compile -> if (activity != null) QPage.Units else QPage.Root
+                    QPage.Units -> QPage.Root
+                    QPage.Root -> QPage.Root
+                }
+                progress.collect { event ->
+                    seekableState.seekTo(event.progress, targetState = fallback)
+                }
+                seekableState.animateTo(fallback)
+                when {
+                    outcome != null -> outcome = null
+                    pendingConfirm != null -> pendingConfirm = null
+                    compileRequest != null -> {
+                        compileViewModel?.reset()
+                        compileRequest = null
+                    }
+
+                    else -> viewModel.dismissActivity()
+                }
+            } catch (_: kotlinx.coroutines.CancellationException) {
+                seekableState.animateTo(page)
             }
         }
         val backDispatcher = LocalOnBackPressedDispatcherOwner.current?.onBackPressedDispatcher
@@ -254,14 +282,12 @@ fun QuestionnairesPage(
                     QPage.Result -> null
                 },
             )
-            AnimatedContent(
-                targetState = page,
+            transition.AnimatedContent(
                 modifier = Modifier.sheetBodyGestureBarrier(),
                 transitionSpec = {
                     sheetPageTransform(forward = targetState.depth >= initialState.depth)
                 },
                 contentKey = { it.name },
-                label = "questionnaires_pages",
             ) { target ->
                 when (target) {
                     QPage.Root -> ActivitiesPage(

@@ -1,10 +1,12 @@
 package it.attendance100.mybicocca.ui.screen.registry.subscreen.questionnaires.subscreen.compilation
 
-import androidx.activity.compose.BackHandler
+import androidx.activity.compose.PredictiveBackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.SeekableTransitionState
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.rememberTransition
 import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -57,7 +59,9 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -90,6 +94,7 @@ import it.attendance100.mybicocca.ui.screen.registry.theme.RegistryAccent
 import it.attendance100.mybicocca.ui.screen.registry.theme.registryAccent
 import it.attendance100.mybicocca.ui.screen.registry.theme.registryBadgeTone
 import it.attendance100.mybicocca.ui.theme.LocalIsOnline
+import kotlinx.coroutines.CancellationException
 
 /**
  * Questionnaire compiler in the Piano di Studi edit language, hosted as a page inside
@@ -128,8 +133,33 @@ fun QuestionnaireCompilationPage(
         else -> false
     }
 
-    BackHandler(enabled = !working && (canStepBack || step is QuestionnaireCompilationStep.Page)) {
-        if (canStepBack) viewModel.back() else onExitAttempt()
+    val seekableState = remember { SeekableTransitionState(step) }
+    val transition = rememberTransition(seekableState, label = "compilation-step")
+
+    LaunchedEffect(step) {
+        if (seekableState.targetState != step) seekableState.animateTo(step)
+    }
+
+    PredictiveBackHandler(enabled = !working && (canStepBack || step is QuestionnaireCompilationStep.Page)) { progress ->
+        if (canStepBack) {
+            val fallbackState = step
+
+            try {
+                progress.collect { event ->
+                    seekableState.seekTo(
+                        event.progress,
+                        targetState = fallbackState
+                    )
+                }
+                seekableState.animateTo(fallbackState)
+                viewModel.back()
+            } catch (_: CancellationException) {
+                seekableState.animateTo(step)
+            }
+        } else {
+            // we're on the first page, predictive back should just close it without internal seeking
+            onExitAttempt()
+        }
     }
 
     when (val current = step) {
@@ -144,8 +174,7 @@ fun QuestionnaireCompilationPage(
         )
 
         else -> Column(Modifier.fillMaxWidth()) {
-            AnimatedContent(
-                targetState = current,
+            transition.AnimatedContent(
                 transitionSpec = {
                     val forward = (targetState as? QuestionnaireCompilationStep.Page)?.index
                         ?.let { target ->
@@ -162,7 +191,6 @@ fun QuestionnaireCompilationPage(
                         else -> state::class.simpleName
                     }
                 },
-                label = "compilation-step",
                 modifier = Modifier
                     .fillMaxWidth()
                     .heightIn(max = 500.dp),
@@ -200,7 +228,8 @@ fun QuestionnaireCompilationPage(
                     summary != null -> CompilationAction.Confirm
                     else -> CompilationAction.Next
                 },
-                enabled = !working && (if (summary != null) summary.complete else currentPageComplete) && LocalIsOnline.current,
+                enabled = !working && (summary?.complete
+                    ?: currentPageComplete) && LocalIsOnline.current,
                 onBack = viewModel::back,
                 onPrimary = {
                     if (summary != null) onConfirmAttempt() else viewModel.next()
@@ -239,9 +268,8 @@ fun compilationWizardHeader(
         )
 
         is QuestionnaireCompilationStep.Summary -> {
-            val context = LocalContext.current
             CompilationWizardHeader(
-                title = context.getString(R.string.questionnaire_summary_title),
+                title = stringResource(R.string.questionnaire_summary_title),
                 subtitle = buildAnnotatedString {
                     withStyle(
                         SpanStyle(
@@ -250,8 +278,8 @@ fun compilationWizardHeader(
                         ),
                     ) {
                         append(
-                            if (current.complete) context.getString(R.string.questionnaire_summary_ready)
-                            else context.getString(R.string.questionnaire_summary_missing)
+                            if (current.complete) stringResource(R.string.questionnaire_summary_ready)
+                            else stringResource(R.string.questionnaire_summary_missing)
                         )
                     }
                 },
@@ -366,7 +394,7 @@ private fun QuestionGroup(
                 FreeTextTile(
                     value = state.freeText,
                     onValueChange = onFreeTextChange,
-                    placeholder = context.getString(R.string.questionnaire_free_text_placeholder),
+                    placeholder = stringResource(R.string.questionnaire_free_text_placeholder),
                     minLines = 3,
                 )
             }
@@ -378,7 +406,7 @@ private fun QuestionGroup(
                 }
                 question.options.forEachIndexed { index, option ->
                     OptionTile(
-                        text = option.text.ifBlank { context.getString(R.string.questionnaire_other_option) },
+                        text = option.text.ifBlank { stringResource(R.string.questionnaire_other_option) },
                         selected = option.id in state.selectedOptionIds,
                         isLast = index == question.options.lastIndex && !companionVisible,
                         onToggle = { onSelectOption(option) },
@@ -388,7 +416,7 @@ private fun QuestionGroup(
                     FreeTextTile(
                         value = state.freeText,
                         onValueChange = onFreeTextChange,
-                        placeholder = context.getString(R.string.questionnaire_free_text_specify),
+                        placeholder = stringResource(R.string.questionnaire_free_text_specify),
                         minLines = 1,
                     )
                 }
@@ -651,8 +679,8 @@ private fun SummaryContent(complete: Boolean, anonymous: Boolean) {
         }
         Spacer(Modifier.height(24.dp))
         Text(
-            text = if (complete) context.getString(R.string.questionnaire_summary_complete)
-            else context.getString(R.string.questionnaire_summary_incomplete),
+            text = if (complete) stringResource(R.string.questionnaire_summary_complete)
+            else stringResource(R.string.questionnaire_summary_incomplete),
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.SemiBold,
             color = scheme.onSurface,
@@ -661,9 +689,9 @@ private fun SummaryContent(complete: Boolean, anonymous: Boolean) {
         Spacer(Modifier.height(8.dp))
         Text(
             text = when {
-                !complete -> context.getString(R.string.questionnaire_summary_incomplete_help)
-                anonymous -> context.getString(R.string.questionnaire_summary_anonymous_help)
-                else -> context.getString(R.string.questionnaire_summary_help)
+                !complete -> stringResource(R.string.questionnaire_summary_incomplete_help)
+                anonymous -> stringResource(R.string.questionnaire_summary_anonymous_help)
+                else -> stringResource(R.string.questionnaire_summary_help)
             },
             style = MaterialTheme.typography.bodyMedium,
             color = scheme.onSurfaceVariant,
@@ -765,7 +793,7 @@ private fun CompilationBottomBar(
                     when (target) {
                         CompilationAction.Next -> {
                             Text(
-                                context.getString(R.string.questionnaire_next),
+                                stringResource(R.string.questionnaire_next),
                                 fontWeight = FontWeight.SemiBold
                             )
                             Spacer(Modifier.width(8.dp))
@@ -778,7 +806,7 @@ private fun CompilationBottomBar(
 
                         CompilationAction.Confirm -> {
                             Text(
-                                context.getString(R.string.questionnaire_confirm),
+                                stringResource(R.string.questionnaire_confirm),
                                 fontWeight = FontWeight.SemiBold
                             )
                             Spacer(Modifier.width(8.dp))
@@ -793,7 +821,7 @@ private fun CompilationBottomBar(
                             LoadingIndicator(modifier = Modifier.size(24.dp), color = brandFg)
                             Spacer(Modifier.width(8.dp))
                             Text(
-                                context.getString(R.string.questionnaire_working),
+                                stringResource(R.string.questionnaire_working),
                                 fontWeight = FontWeight.SemiBold
                             )
                         }
