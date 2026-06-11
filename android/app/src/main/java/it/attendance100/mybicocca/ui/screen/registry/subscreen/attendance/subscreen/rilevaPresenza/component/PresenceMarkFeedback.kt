@@ -25,9 +25,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.domain.model.attendance.PresenceMarkOutcome
 import it.attendance100.mybicocca.ui.component.button.PrimaryActionButton
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.attendance.ext.visual
@@ -36,7 +38,7 @@ import it.attendance100.mybicocca.ui.screen.registry.subscreen.attendance.ext.vi
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun PresenceMarkingProgress(
-    label: String = "Registrazione in corso…",
+    label: String = stringResource(R.string.attendance_recording_in_progress),
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -119,7 +121,7 @@ fun PresenceResultContent(
 
         Spacer(Modifier.height(28.dp))
         PrimaryActionButton(
-            text = "Fatto",
+            text = stringResource(R.string.common_done),
             onClick = onDone,
             modifier = Modifier.fillMaxWidth(),
         )

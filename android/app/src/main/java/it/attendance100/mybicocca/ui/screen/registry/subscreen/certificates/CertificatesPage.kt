@@ -31,9 +31,9 @@ import androidx.compose.material.icons.rounded.FileDownload
 import androidx.compose.material.icons.rounded.Receipt
 import androidx.compose.material.icons.rounded.School
 import androidx.compose.material.icons.rounded.WorkspacePremium
-import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -47,11 +47,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.SyncStatus
 import it.attendance100.mybicocca.core.state.valueOrNull
@@ -100,7 +102,7 @@ fun CertificatesPage(
                 is CertificateEvent.ShowMessage -> outcome = SheetOutcome.Info(event.message)
                 is CertificateEvent.OpenFile ->
                     if (!openCertificate(context, File(event.path))) {
-                        outcome = SheetOutcome.Info("Nessuna app per aprire i PDF.")
+                        outcome = SheetOutcome.Info(context.getString(R.string.certs_no_pdf_app))
                     }
             }
         }
@@ -111,8 +113,8 @@ fun CertificatesPage(
     Column(modifier = Modifier.testTag(CertificatesTestTags.ROOT)) {
         SheetPagerHeader(
             depth = if (outcome != null) 1 else 0,
-            title = if (outcome != null) "" else "Certificati",
-            subtitle = if (outcome != null) null else "Autocertificazioni in PDF"
+            title = if (outcome != null) "" else stringResource(R.string.certs_title),
+            subtitle = if (outcome != null) null else stringResource(R.string.certs_subtitle)
                 .takeIf { certificatesLoadable is Loadable.Loaded },
             onBack = null,
         )
@@ -177,21 +179,21 @@ private fun SheetBody(
             failure != null && certificates == null -> Box(modifier = Modifier.testTag(CertificatesTestTags.STATE_ERROR)) {
                 SheetMessage(
                     icon = Icons.Outlined.CloudOff,
-                    title = "Caricamento non riuscito",
-                    body = "Impossibile caricare i certificati.",
+                    title = stringResource(R.string.certs_load_failed),
+                    body = stringResource(R.string.certs_load_failed_body),
                     action = { RetryButton(onClick = onRetry) },
                 )
             }
 
             !settled -> Box(modifier = Modifier.testTag(CertificatesTestTags.STATE_LOADING)) {
-                SheetLoadingIndicator(label = "Caricamento certificati…")
+                SheetLoadingIndicator(label = stringResource(R.string.certs_loading))
             }
 
             certificates.isNullOrEmpty() -> Box(modifier = Modifier.testTag(CertificatesTestTags.STATE_EMPTY)) {
                 SheetMessage(
                     icon = Icons.Rounded.Description,
-                    title = "Nessun certificato",
-                    body = "Non risultano certificati disponibili.",
+                    title = stringResource(R.string.certs_none),
+                    body = stringResource(R.string.certs_none_body),
                 )
             }
 
@@ -288,7 +290,7 @@ private fun CertificateTile(
             Spacer(Modifier.width(14.dp))
             Column(Modifier.weight(1f)) {
                 Text(
-                    text = certificate.description.ifBlank { "Certificato" },
+                    text = certificate.description.ifBlank { stringResource(R.string.certs_certificate) },
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
                     color = scheme.onSurface,
@@ -321,13 +323,13 @@ private fun CertificateTile(
                         CertificateStatus.Downloading -> LoadingIndicator(modifier = Modifier.size(36.dp))
                         CertificateStatus.Downloaded -> Icon(
                             imageVector = Icons.Rounded.CheckCircle,
-                            contentDescription = "Scaricato",
+                            contentDescription = stringResource(R.string.certs_downloaded),
                             tint = scheme.primary,
                             modifier = Modifier.size(24.dp),
                         )
                         CertificateStatus.Available -> Icon(
                             imageVector = Icons.Rounded.FileDownload,
-                            contentDescription = "Scarica",
+                            contentDescription = stringResource(R.string.certs_download),
                             tint = scheme.onSurfaceVariant,
                             modifier = Modifier.size(24.dp),
                         )

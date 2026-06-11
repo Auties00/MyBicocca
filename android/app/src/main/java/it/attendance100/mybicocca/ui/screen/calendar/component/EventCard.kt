@@ -6,16 +6,12 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -29,11 +25,13 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.domain.model.calendar.CalendarEvent
 import it.attendance100.mybicocca.domain.model.calendar.EventStatus
 import it.attendance100.mybicocca.ui.screen.calendar.ext.colorsFor
@@ -134,7 +132,9 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawDashedBorder(co
 @Composable
 private fun DotContent(accent: Color, alpha: Float) {
     Box(
-        modifier = Modifier.fillMaxSize().padding(start = 6.dp),
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(start = 6.dp),
         contentAlignment = Alignment.CenterStart,
     ) {
         Box(
@@ -150,7 +150,9 @@ private fun DotContent(accent: Color, alpha: Float) {
 private fun MiniContent(event: CalendarEvent, textColor: Color, cancelled: Boolean) {
     Text(
         text = "${event.compactLabel()} · ${event.locationLine().ifBlank { event.title.take(8) }}",
-        modifier = Modifier.padding(start = 7.dp, end = 4.dp).fillMaxSize(),
+        modifier = Modifier
+            .padding(start = 7.dp, end = 4.dp)
+            .fillMaxSize(),
         color = textColor,
         fontSize = 9.sp,
         fontWeight = FontWeight.SemiBold,
@@ -163,7 +165,9 @@ private fun MiniContent(event: CalendarEvent, textColor: Color, cancelled: Boole
 @Composable
 private fun IconContent(event: CalendarEvent, textColor: Color, cancelled: Boolean) {
     Column(
-        modifier = Modifier.padding(start = 7.dp, end = 4.dp, top = 4.dp, bottom = 4.dp).fillMaxSize(),
+        modifier = Modifier
+            .padding(start = 7.dp, end = 4.dp, top = 4.dp, bottom = 4.dp)
+            .fillMaxSize(),
         verticalArrangement = Arrangement.spacedBy(2.dp),
     ) {
         Text(
@@ -186,7 +190,9 @@ private fun IconContent(event: CalendarEvent, textColor: Color, cancelled: Boole
 @Composable
 private fun CompactContent(event: CalendarEvent, textColor: Color, cancelled: Boolean) {
     Column(
-        modifier = Modifier.padding(start = 9.dp, end = 6.dp, top = 6.dp, bottom = 6.dp).fillMaxSize(),
+        modifier = Modifier
+            .padding(start = 9.dp, end = 6.dp, top = 6.dp, bottom = 6.dp)
+            .fillMaxSize(),
         verticalArrangement = Arrangement.spacedBy(2.dp),
     ) {
         Text(
@@ -210,7 +216,9 @@ private fun CompactContent(event: CalendarEvent, textColor: Color, cancelled: Bo
 @Composable
 private fun FullContent(event: CalendarEvent, textColor: Color, cancelled: Boolean, accent: Color) {
     Column(
-        modifier = Modifier.padding(start = 11.dp, end = 8.dp, top = 8.dp, bottom = 8.dp).fillMaxSize(),
+        modifier = Modifier
+            .padding(start = 11.dp, end = 8.dp, top = 8.dp, bottom = 8.dp)
+            .fillMaxSize(),
         verticalArrangement = Arrangement.spacedBy(3.dp),
     ) {
         Text(
@@ -253,13 +261,18 @@ private fun FullContent(event: CalendarEvent, textColor: Color, cancelled: Boole
     }
 }
 
+@Composable
 private fun CalendarEvent.activityLabelShort(): String = when (this) {
-    is CalendarEvent.Lesson -> "Lezione"
+    is CalendarEvent.Lesson -> stringResource(R.string.event_type_lesson)
     is CalendarEvent.Exam -> {
         val type = examTypeLabel?.takeIf { it.isNotBlank() }
-        if (type != null) "Esame · $type" else "Esame"
+        if (type != null) stringResource(
+            R.string.event_type_exam_with_type,
+            type
+        ) else stringResource(R.string.event_type_exam)
     }
-    is CalendarEvent.AssignmentDeadline -> "Scadenza compito"
-    is CalendarEvent.Appointment -> "Appuntamento"
-    is CalendarEvent.LibraryReservation -> "Biblioteca"
+
+    is CalendarEvent.AssignmentDeadline -> stringResource(R.string.event_type_assignment_deadline)
+    is CalendarEvent.Appointment -> stringResource(R.string.event_type_appointment)
+    is CalendarEvent.LibraryReservation -> stringResource(R.string.event_type_library_reservation)
 }

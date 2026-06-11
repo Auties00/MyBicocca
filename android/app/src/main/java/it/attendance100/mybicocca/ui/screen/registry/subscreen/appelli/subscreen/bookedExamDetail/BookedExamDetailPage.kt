@@ -15,12 +15,12 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.Notes
+import androidx.compose.material.icons.automirrored.outlined.ReceiptLong
 import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material.icons.outlined.ConfirmationNumber
 import androidx.compose.material.icons.outlined.EventAvailable
 import androidx.compose.material.icons.outlined.EventBusy
 import androidx.compose.material.icons.outlined.LocationOn
-import androidx.compose.material.icons.outlined.ReceiptLong
 import androidx.compose.material.icons.outlined.School
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -35,8 +35,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.domain.model.exam.BookedExam
 import it.attendance100.mybicocca.ui.component.card.DetailFactCard
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.appelli.AppelliTestTags
@@ -74,7 +76,7 @@ fun BookedExamDetailPage(
     val location = remember(booking.classroomDescription, booking.buildingDescription) {
         booking.locationLabel()
     }
-    val countdown = remember(booking.examDateTime, today) { booking.countdownLabel(today) }
+    val countdown = booking.countdownLabel(today)
     val modeValue = listOfNotNull(
         booking.examType.displayLabel(),
         booking.examModeDescription?.takeIf { it.isNotBlank() },
@@ -92,7 +94,7 @@ fun BookedExamDetailPage(
             booking.examDateTime?.let { dt ->
                 DetailFactCard(
                     icon = Icons.Outlined.CalendarMonth,
-                    label = "APPELLO",
+                    label = stringResource(R.string.appelli_exam_call),
                     value = buildString {
                         append(
                             dt.toLocalDate().format(FullDateFormat)
@@ -106,31 +108,41 @@ fun BookedExamDetailPage(
             }
             DetailFactCard(
                 icon = Icons.Outlined.LocationOn,
-                label = "LUOGO",
-                value = location ?: "Aula da definire",
+                label = stringResource(R.string.appelli_location),
+                value = location ?: stringResource(R.string.appelli_location_unassigned),
             )
             modeValue?.let {
                 DetailFactCard(
                     icon = Icons.Outlined.School,
-                    label = "MODALITÀ",
+                    label = stringResource(R.string.appelli_modality),
                     value = it,
                 )
             }
             booking.position?.takeIf { it > 0 }?.let { p ->
                 DetailFactCard(
                     icon = Icons.Outlined.ConfirmationNumber,
-                    label = "POSIZIONE",
-                    value = "${p}º a prenotarsi",
+                    label = stringResource(R.string.appelli_position),
+                    value = stringResource(R.string.appelli_position_value, p),
                 )
             }
             booking.bookingDate?.let { booked ->
                 DetailFactCard(
                     icon = Icons.Outlined.EventAvailable,
-                    label = "PRENOTAZIONE",
+                    label = stringResource(R.string.appelli_booking),
                     value = buildString {
-                        append("Effettuata il ${booked.format(BookingDateFormat)}")
+                        append(
+                            stringResource(
+                                R.string.appelli_booking_made,
+                                booked.format(BookingDateFormat)
+                            )
+                        )
                         booking.cancellableUntil?.let {
-                            append(" · annullabile fino al ${it.format(ShortDateFormat)}")
+                            append(
+                                " · " + stringResource(
+                                    R.string.appelli_cancellable_until,
+                                    it.format(ShortDateFormat)
+                                )
+                            )
                         }
                     },
                 )
@@ -138,7 +150,7 @@ fun BookedExamDetailPage(
             booking.studentNote?.let {
                 DetailFactCard(
                     icon = Icons.AutoMirrored.Outlined.Notes,
-                    label = "NOTA",
+                    label = stringResource(R.string.appelli_note),
                     value = it,
                 )
             }
@@ -209,7 +221,7 @@ private fun ActionRow(
                     modifier = Modifier.size(20.dp),
                 )
                 Spacer(Modifier.width(8.dp))
-                Text("Cancella", fontWeight = FontWeight.SemiBold)
+                Text(stringResource(R.string.appelli_cancel), fontWeight = FontWeight.SemiBold)
             }
         }
         Button(
@@ -232,12 +244,12 @@ private fun ActionRow(
                 )
             } else {
                 Icon(
-                    imageVector = Icons.Outlined.ReceiptLong,
+                    imageVector = Icons.AutoMirrored.Outlined.ReceiptLong,
                     contentDescription = null,
                     modifier = Modifier.size(20.dp),
                 )
                 Spacer(Modifier.width(8.dp))
-                Text("Ricevuta", fontWeight = FontWeight.SemiBold)
+                Text(stringResource(R.string.appelli_slip), fontWeight = FontWeight.SemiBold)
             }
         }
     }

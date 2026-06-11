@@ -37,10 +37,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.domain.model.appointment.AppointmentReservation
 import it.attendance100.mybicocca.ui.component.card.DetailFactCard
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.appointments.ext.decodeQrDataUrl
@@ -113,7 +115,7 @@ internal fun ReservationDetailPage(
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 DetailFactCard(
                     icon = Icons.Outlined.CalendarMonth,
-                    label = "APPUNTAMENTO",
+                    label = stringResource(R.string.appointments_appointment),
                     value = buildString {
                         append(
                             reservation.start.format(FullDateFormat)
@@ -126,16 +128,16 @@ internal fun ReservationDetailPage(
                 if (reservation.webConferenceUrl != null) {
                     DetailFactCard(
                         icon = Icons.Outlined.Videocam,
-                        label = "MODALITÀ",
-                        value = "In videoconferenza",
+                        label = stringResource(R.string.appointments_modality),
+                        value = stringResource(R.string.appointments_video_call),
                     )
                 } else {
                     DetailFactCard(
                         icon = Icons.Outlined.LocationOn,
-                        label = "LUOGO",
+                        label = stringResource(R.string.appointments_location),
                         value = listOfNotNull(reservation.areaName, reservation.areaAddress)
                             .joinToString(" · ")
-                            .ifBlank { "Sede da definire" },
+                            .ifBlank { stringResource(R.string.appointments_location_unassigned) },
                     )
                 }
             }
@@ -211,7 +213,7 @@ private fun ActionRow(
                     modifier = Modifier.size(20.dp),
                 )
                 Spacer(Modifier.width(8.dp))
-                Text("Annulla", fontWeight = FontWeight.SemiBold)
+                Text(stringResource(R.string.appointments_cancel), fontWeight = FontWeight.SemiBold)
             }
         }
         if (hasCall) {
@@ -233,7 +235,7 @@ private fun ActionRow(
                     modifier = Modifier.size(20.dp),
                 )
                 Spacer(Modifier.width(8.dp))
-                Text("Partecipa", fontWeight = FontWeight.SemiBold)
+                Text(stringResource(R.string.appointments_join), fontWeight = FontWeight.SemiBold)
             }
         }
     }

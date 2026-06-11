@@ -30,9 +30,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.domain.model.account.Account
 import it.attendance100.mybicocca.domain.model.career.Career
 import it.attendance100.mybicocca.domain.model.career.CareerId
@@ -247,7 +249,7 @@ private fun CareerSubCard(
             if (selected) {
                 Icon(
                     imageVector = Icons.Default.Check,
-                    contentDescription = "Carriera attiva",
+                    contentDescription = stringResource(R.string.account_switcher_career_active),
                     tint = scheme.onPrimaryContainer,
                 )
             }
@@ -274,8 +276,8 @@ private fun StatusChip(label: String, active: Boolean) {
 /** Chip copy for statuses worth flagging; null (regular active or unknown) renders no chip. */
 private fun statusLabel(status: CareerStatus): String? = when (status) {
     CareerStatus.ACTIVE -> null
-    CareerStatus.SUSPENDED -> "Sospesa"
-    CareerStatus.GRADUATED -> "Conclusa"
-    CareerStatus.INTERRUPTED -> "Interrotta"
+    CareerStatus.SUSPENDED -> "Sospesa" // TODO: externalize to resources
+    CareerStatus.GRADUATED -> "Conclusa" // TODO: externalize to resources
+    CareerStatus.INTERRUPTED -> "Interrotta" // TODO: externalize to resources
     CareerStatus.OTHER -> null
 }

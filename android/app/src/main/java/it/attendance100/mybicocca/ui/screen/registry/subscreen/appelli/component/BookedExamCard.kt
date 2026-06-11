@@ -82,8 +82,8 @@ fun BookedExamCard(
             "$weekday · ${it.toLocalTime().format(TimeFormat)}"
         }
     }
-    val title = remember(booking.activityDescription) { booking.displayTitle() }
-    val subtitle = remember(booking.examType, booking.callType) { booking.examKindLabel() }
+    val title = booking.displayTitle()
+    val subtitle = booking.examKindLabel()
 
     val interactionSource = remember { MutableInteractionSource() }
     val pressed by interactionSource.collectIsPressedAsState()

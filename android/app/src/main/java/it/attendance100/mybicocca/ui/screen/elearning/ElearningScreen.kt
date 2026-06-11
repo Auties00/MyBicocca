@@ -40,10 +40,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.SyncStatus
 import it.attendance100.mybicocca.domain.model.elearning.assignment.AssignmentId
@@ -122,6 +124,7 @@ fun ElearningScreen(
     val initialFetch by viewModel.initialFetch.collectAsStateWithLifecycle()
 
     val snackbar = LocalAppSnackbarController.current
+    val context = androidx.compose.ui.platform.LocalContext.current
     val coroutineScope = rememberCoroutineScope()
     var addSheetVisible by rememberSaveable { mutableStateOf(false) }
 
@@ -232,12 +235,12 @@ fun ElearningScreen(
             onDismiss = { addSheetVisible = false },
             onEnrolFailed = { cause ->
                 coroutineScope.launch {
-                    snackbar.showError(enrolFailureMessage(cause))
+                    snackbar.showError(enrolFailureMessage(cause, context))
                 }
             },
             onEnrolSucceeded = { courseId, name ->
                 coroutineScope.launch {
-                    snackbar.showInfo("Iscritto a $name")
+                    snackbar.showInfo(context.getString(R.string.elearning_enrolled_success, name))
                 }
                 viewModel.revealEnrolledCourse(courseId)
             },
@@ -254,14 +257,17 @@ fun ElearningScreen(
  * requirement or "self-enrolment disabled"), or a network error — so it is surfaced instead of
  * a bare title the user can't act on.
  */
-private fun enrolFailureMessage(cause: Throwable): String {
+private fun enrolFailureMessage(cause: Throwable, context: android.content.Context): String {
     val reason = when (cause) {
-        is UnknownHostException, is ConnectException -> "rete non disponibile"
-        is SocketTimeoutException -> "timeout di rete"
-        is IOException -> "errore di rete"
+        is UnknownHostException, is ConnectException -> context.getString(R.string.elearning_error_network_unavailable)
+        is SocketTimeoutException -> context.getString(R.string.elearning_error_network_timeout)
+        is IOException -> context.getString(R.string.elearning_error_network)
         else -> cause.message?.takeIf { it.isNotBlank() }
     }
-    return if (reason != null) "Iscrizione non riuscita: $reason" else "Iscrizione non riuscita"
+    return if (reason != null) context.getString(
+        R.string.elearning_enrol_failed_with_reason,
+        reason
+    ) else context.getString(R.string.elearning_enrol_failed)
 }
 
 @Composable
@@ -280,7 +286,7 @@ private fun AddCourseFab(
                 contentDescription = null,
             )
         },
-        text = { Text("Aggiungi corso") },
+        text = { Text(stringResource(R.string.elearning_add_course)) },
     )
 }
 
@@ -374,15 +380,15 @@ private fun EmptyStateForCurrentFilter(
     when {
         filterActive -> EmptyState(
             icon = Icons.Outlined.FilterAltOff,
-            title = "Nessun corso per questo filtro",
-            body = "Cambia filtro per vedere altri corsi.",
+            title = stringResource(R.string.elearning_filter_no_courses),
+            body = stringResource(R.string.elearning_filter_change_hint),
             modifier = tagged,
         )
 
         else -> EmptyState(
             icon = Icons.Outlined.School,
-            title = "Nessun corso",
-            body = "Non risulti iscritto a nessun corso e-learning.",
+            title = stringResource(R.string.elearning_no_courses),
+            body = stringResource(R.string.elearning_no_enrollment),
             modifier = tagged,
         )
     }
@@ -427,17 +433,17 @@ private fun ErrorEmptyState(
 ) {
     EmptyState(
         icon = Icons.Outlined.CloudOff,
-        title = "Sincronizzazione non riuscita",
-        body = cause.friendlyMessage(),
+        title = stringResource(R.string.elearning_sync_failed),
+        body = cause.friendlyMessage(androidx.compose.ui.platform.LocalContext.current),
         modifier = modifier.testTag(ElearningTestTags.STATE_ERROR),
     )
 }
 
-private fun Throwable.friendlyMessage(): String = when (this) {
+private fun Throwable.friendlyMessage(context: android.content.Context): String = when (this) {
     is UnknownHostException,
-    is ConnectException -> "Rete non disponibile. Controlla la connessione e riprova."
+    is ConnectException -> context.getString(R.string.elearning_error_network_unavailable_detailed)
 
-    is SocketTimeoutException -> "Timeout di rete. Riprova tra un momento."
-    is IOException -> "Errore di rete. Riprova tra un momento."
-    else -> "Si è verificato un errore imprevisto"
+    is SocketTimeoutException -> context.getString(R.string.elearning_error_network_timeout_detailed)
+    is IOException -> context.getString(R.string.elearning_error_network_detailed)
+    else -> context.getString(R.string.elearning_error_unexpected)
 }

@@ -1,5 +1,8 @@
 package it.attendance100.mybicocca.domain.usecase.search
 
+import android.content.Context
+import dagger.hilt.android.qualifiers.ApplicationContext
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.search.MatchInput
 import it.attendance100.mybicocca.core.search.SearchMatcher
 import it.attendance100.mybicocca.core.search.normalizeForSearch
@@ -25,6 +28,7 @@ import it.attendance100.mybicocca.domain.repository.ElearningQuizRepository
 import it.attendance100.mybicocca.domain.repository.MapRepository
 import it.attendance100.mybicocca.domain.repository.SearchHistoryRepository
 import it.attendance100.mybicocca.domain.repository.TranscriptRepository
+import it.attendance100.mybicocca.domain.usecase.search.GlobalSearchUseCase.Companion.MAX_RESULTS
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import java.time.LocalDate
@@ -49,6 +53,7 @@ import javax.inject.Inject
  *   truncated to [MAX_RESULTS]
  */
 class GlobalSearchUseCase @Inject constructor(
+    @ApplicationContext private val context: Context,
     private val searchDestinations: SearchDestinationsUseCase,
     private val searchActions: SearchActionsUseCase,
     private val courseRepository: ElearningCourseRepository,
@@ -114,6 +119,7 @@ class GlobalSearchUseCase @Inject constructor(
             { it.displayName.ifBlank { it.fullName } },
         )
         val buildingNames = primary.buildings.associateBy({ it.code }, { it.name })
+        val eventDateFormat = DateTimeFormatter.ofPattern("EEE d MMM", Locale.getDefault())
         val groups = listOf(
             searchActions(query),
             searchDestinations(query),
@@ -121,7 +127,7 @@ class GlobalSearchUseCase @Inject constructor(
             primary.courses.mapNotNull { it.toResult(query) },
             primary.events
                 .distinctBy { normalizeForSearch(it.title) to (it is CalendarEvent.Exam) }
-                .mapNotNull { it.toResult(query) },
+                .mapNotNull { it.toResult(query, eventDateFormat) },
             deep.assignments.mapNotNull { it.toResult(query, courseNames) },
             deep.quizzes.mapNotNull { it.toResult(query, courseNames) },
             primary.buildings.mapNotNull { it.toResult(query) },
@@ -143,12 +149,13 @@ class GlobalSearchUseCase @Inject constructor(
 
     /** "domani", "lunedì", "22/06" — a result that jumps straight to that calendar day. */
     private fun dateResults(query: String): List<SearchResult> {
-        val match = parseDateQuery(query, LocalDate.now()) ?: return emptyList()
+        val match = parseDateQuery(query, LocalDate.now(), context, Locale.getDefault())
+            ?: return emptyList()
         return listOf(
             SearchResult.CalendarDay(
                 date = match.date,
                 title = match.label,
-                subtitle = "Apri nel calendario",
+                subtitle = context.getString(R.string.search_open_in_calendar),
                 score = DATE_SCORE,
             ),
         )
@@ -162,7 +169,10 @@ class GlobalSearchUseCase @Inject constructor(
         return SearchResult.Course(id, title, subtitle, score)
     }
 
-    private fun CalendarEvent.toResult(query: String): SearchResult.CalendarEntry? {
+    private fun CalendarEvent.toResult(
+        query: String,
+        eventDateFormat: DateTimeFormatter
+    ): SearchResult.CalendarEntry? {
         val people = when (this) {
             is CalendarEvent.Lesson -> teachers
             else -> emptyList()
@@ -170,7 +180,7 @@ class GlobalSearchUseCase @Inject constructor(
         val codes = listOfNotNull(shortLabel, (this as? CalendarEvent.Lesson)?.subjectCode)
         val score = SearchMatcher.score(query, MatchInput(title, codes + people)) ?: return null
         val place = location?.room ?: location?.building
-        val subtitle = listOfNotNull(date.format(EventDateFormat), place).joinToString(" · ")
+        val subtitle = listOfNotNull(date.format(eventDateFormat), place).joinToString(" · ")
         return SearchResult.CalendarEntry(id, this is CalendarEvent.Exam, date, title, subtitle, score)
     }
 
@@ -218,7 +228,10 @@ class GlobalSearchUseCase @Inject constructor(
     private fun TranscriptRow.toResult(query: String): SearchResult.TranscriptEntry? {
         val aliases = listOfNotNull(activityCode).filter { it.isNotBlank() }
         val score = SearchMatcher.score(query, MatchInput(activityName, aliases)) ?: return null
-        val gradeLabel = grade?.let { "Voto $it${if (cumLaude) "L" else ""}" }
+        val gradeLabel = grade?.let {
+            val prefix = context.getString(R.string.search_grade)
+            "$prefix $it${if (cumLaude) "L" else ""}"
+        }
         val subtitle = listOfNotNull(activityCode, gradeLabel).joinToString(" · ").ifBlank { null }
         return SearchResult.TranscriptEntry(id, activityName, subtitle, score)
     }
@@ -301,6 +314,5 @@ class GlobalSearchUseCase @Inject constructor(
         const val PICK_BOOST_EXACT = 0.4
         const val PICK_BOOST_PREFIX = 0.25
         const val DATE_SCORE = 0.95
-        val EventDateFormat: DateTimeFormatter = DateTimeFormatter.ofPattern("EEE d MMM", Locale.ITALIAN)
     }
 }

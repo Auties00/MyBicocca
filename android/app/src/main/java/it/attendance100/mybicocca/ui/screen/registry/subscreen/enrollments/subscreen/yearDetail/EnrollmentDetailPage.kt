@@ -18,11 +18,11 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Accessible
+import androidx.compose.material.icons.automirrored.outlined.Accessible
+import androidx.compose.material.icons.automirrored.outlined.MenuBook
+import androidx.compose.material.icons.automirrored.outlined.Notes
 import androidx.compose.material.icons.outlined.Event
 import androidx.compose.material.icons.outlined.HowToReg
-import androidx.compose.material.icons.outlined.MenuBook
-import androidx.compose.material.icons.outlined.Notes
 import androidx.compose.material.icons.outlined.PauseCircle
 import androidx.compose.material.icons.outlined.Place
 import androidx.compose.material.icons.outlined.Savings
@@ -38,9 +38,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.domain.model.enrollment.AnnualEnrollment
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.enrollments.component.EnrollmentBadgeChip
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.enrollments.ext.badges
@@ -84,16 +86,24 @@ fun EnrollmentDetailPage(
         item {
             DetailGroup(
                 icon = Icons.Outlined.HowToReg,
-                title = "Iscrizione",
+                title = stringResource(R.string.enrollments_enrollment),
                 rows = buildList {
-                    add("Tipo iscrizione" to enrollment.typeLabel())
-                    enrollment.studentTypeDescription?.let { add("Tipologia studente" to it) }
+                    add(stringResource(R.string.enrollments_type) to enrollment.typeLabel())
+                    enrollment.studentTypeDescription?.let { add(stringResource(R.string.enrollments_student_type) to it) }
                     if (enrollment.outOfCourseYears > 0) {
-                        add("Anni fuori corso" to enrollment.outOfCourseYears.toString())
+                        add(stringResource(R.string.enrollments_out_of_course_years) to enrollment.outOfCourseYears.toString())
                     }
-                    if (enrollment.conditional) add("Iscrizione" to "Condizionata")
-                    if (enrollment.reconstructed) add("Origine dato" to "Ricostruita")
-                    enrollment.statusReasonCode?.let { add("Motivo stato" to it) }
+                    if (enrollment.conditional) add(
+                        stringResource(R.string.enrollments_enrollment) to stringResource(
+                            R.string.enrollments_conditional
+                        )
+                    )
+                    if (enrollment.reconstructed) add(
+                        stringResource(R.string.enrollments_data_origin) to stringResource(
+                            R.string.enrollments_reconstructed
+                        )
+                    )
+                    enrollment.statusReasonCode?.let { add(stringResource(R.string.enrollments_status_reason) to it) }
                 },
             )
         }
@@ -102,11 +112,15 @@ fun EnrollmentDetailPage(
             item {
                 DetailGroup(
                     icon = Icons.Outlined.Schedule,
-                    title = "Part-time",
+                    title = stringResource(R.string.enrollments_part_time),
                     rows = buildList {
-                        pt.credits?.let { add("CFU previsti" to "$it CFU") }
-                        pt.extraCredits?.let { add("CFU extra" to "$it CFU") }
-                        add("Modifiche" to if (pt.locked) "Bloccate" else "Consentite")
+                        pt.credits?.let { add(stringResource(R.string.enrollments_planned_credits) to "$it CFU") }
+                        pt.extraCredits?.let { add(stringResource(R.string.enrollments_extra_credits) to "$it CFU") }
+                        add(
+                            stringResource(R.string.enrollments_changes) to if (pt.locked) stringResource(
+                                R.string.enrollments_locked
+                            ) else stringResource(R.string.enrollments_allowed)
+                        )
                     },
                 )
             }
@@ -116,9 +130,10 @@ fun EnrollmentDetailPage(
             item {
                 DetailGroup(
                     icon = Icons.Outlined.PauseCircle,
-                    title = "Sospensione",
+                    title = stringResource(R.string.enrollments_suspension),
                     rows = buildList {
-                        susp.reasonCode?.let { add("Causale" to it) } ?: add("Stato" to "Sospesa")
+                        susp.reasonCode?.let { add(stringResource(R.string.enrollments_reason) to it) }
+                            ?: add(stringResource(R.string.enrollments_status) to stringResource(R.string.enrollments_suspended))
                     },
                 )
             }
@@ -128,79 +143,101 @@ fun EnrollmentDetailPage(
             item {
                 DetailGroup(
                     icon = Icons.Outlined.School,
-                    title = "Laurea",
+                    title = stringResource(R.string.enrollments_degree),
                     rows = buildList {
-                        if (enrollment.awaitingDegree) add("Stato" to "In attesa di laurea")
+                        if (enrollment.awaitingDegree) add(
+                            stringResource(R.string.enrollments_status) to stringResource(
+                                R.string.enrollments_awaiting_degree
+                            )
+                        )
                         enrollment.degreeAwardDate?.let {
-                            add("Data attesa laurea" to it.toEnrollmentDateLabel())
+                            add(stringResource(R.string.enrollments_expected_degree_date) to it.toEnrollmentDateLabel())
                         }
                     },
                 )
             }
         }
 
-        val benefitRows = buildList {
-            enrollment.exemptionDescription?.let { add("Esonero" to it) }
-            enrollment.incomeBandId?.let { add("Fascia di reddito" to it.toString()) }
-            enrollment.canteenBandId?.let { add("Fascia mensa" to it.toString()) }
-            enrollment.meritBandId?.let { add("Fascia di merito" to it.toString()) }
-            enrollment.meritNote?.let { add("Nota merito" to it) }
-        }
-        if (benefitRows.isNotEmpty()) {
+        if (enrollment.exemptionDescription != null || enrollment.incomeBandId != null ||
+            enrollment.canteenBandId != null || enrollment.meritBandId != null || enrollment.meritNote != null
+        ) {
             item {
-                DetailGroup(icon = Icons.Outlined.Savings, title = "Agevolazioni", rows = benefitRows)
+                DetailGroup(
+                    icon = Icons.Outlined.Savings,
+                    title = stringResource(R.string.enrollments_benefits),
+                    rows = buildList {
+                        enrollment.exemptionDescription?.let { add(stringResource(R.string.enrollments_exemption) to it) }
+                        enrollment.incomeBandId?.let { add(stringResource(R.string.enrollments_income_band) to it.toString()) }
+                        enrollment.canteenBandId?.let { add(stringResource(R.string.enrollments_canteen_band) to it.toString()) }
+                        enrollment.meritBandId?.let { add(stringResource(R.string.enrollments_merit_band) to it.toString()) }
+                        enrollment.meritNote?.let { add(stringResource(R.string.enrollments_merit_note) to it) }
+                    },
+                )
             }
         }
 
-        val disabilityRows = buildList {
-            enrollment.disabilityTypeDescription?.let { add("Tipologia" to it) }
-            enrollment.disabilityPercentage?.let {
-                add("Percentuale" to "${it.toInt()}%")
-            }
-        }
-        if (disabilityRows.isNotEmpty()) {
+        if (enrollment.disabilityTypeDescription != null || enrollment.disabilityPercentage != null) {
             item {
-                DetailGroup(icon = Icons.Outlined.Accessible, title = "Disabilità", rows = disabilityRows)
+                DetailGroup(
+                    icon = Icons.AutoMirrored.Outlined.Accessible,
+                    title = stringResource(R.string.enrollments_disability),
+                    rows = buildList {
+                        enrollment.disabilityTypeDescription?.let { add(stringResource(R.string.enrollments_disability_type) to it) }
+                        enrollment.disabilityPercentage?.let {
+                            add(stringResource(R.string.enrollments_disability_percentage) to "${it.toInt()}%")
+                        }
+                    },
+                )
             }
         }
 
         item {
             DetailGroup(
-                icon = Icons.Outlined.MenuBook,
-                title = "Corso di studio",
+                icon = Icons.AutoMirrored.Outlined.MenuBook,
+                title = stringResource(R.string.enrollments_course_of_study),
                 rows = buildList {
-                    enrollment.courseDescription?.let { add("Corso" to it) }
-                    enrollment.courseTypeDescription?.let { add("Tipo corso" to it) }
-                    enrollment.degreeClassDescription?.let { add("Classe" to it) }
-                    enrollment.degreeClassCode?.let { add("Codice classe" to it) }
+                    enrollment.courseDescription?.let { add(stringResource(R.string.enrollments_course) to it) }
+                    enrollment.courseTypeDescription?.let { add(stringResource(R.string.enrollments_course_type) to it) }
+                    enrollment.degreeClassDescription?.let { add(stringResource(R.string.enrollments_class) to it) }
+                    enrollment.degreeClassCode?.let { add(stringResource(R.string.enrollments_class_code) to it) }
                     enrollment.addressDescription
                         ?.takeIf { !it.equals("PERCORSO COMUNE", ignoreCase = true) }
-                        ?.let { add("Percorso" to it) }
-                    enrollment.orientationDescription?.let { add("Orientamento" to it) }
-                    enrollment.studyOrderDescription?.let { add("Ordinamento" to it) }
-                    enrollment.minimumCredits?.let { add("CFU per il titolo" to "$it CFU") }
-                    enrollment.courseDuration?.let { add("Durata" to "$it anni") }
-                    enrollment.teachingLanguage?.let { add("Lingua" to it) }
-                    enrollment.regulationCode?.let { add("Normativa" to it) }
+                        ?.let { add(stringResource(R.string.enrollments_path) to it) }
+                    enrollment.orientationDescription?.let { add(stringResource(R.string.enrollments_orientation) to it) }
+                    enrollment.studyOrderDescription?.let { add(stringResource(R.string.enrollments_study_order) to it) }
+                    enrollment.minimumCredits?.let { add(stringResource(R.string.enrollments_credits_for_degree) to "$it CFU") }
+                    enrollment.courseDuration?.let { add(stringResource(R.string.enrollments_duration) to "$it anni") }
+                    enrollment.teachingLanguage?.let { add(stringResource(R.string.enrollments_language) to it) }
+                    enrollment.regulationCode?.let { add(stringResource(R.string.enrollments_regulation) to it) }
                 },
             )
         }
 
-        val locationRows = buildList {
-            enrollment.universityDescription?.let { add("Ateneo" to it) }
-            enrollment.siteDescription?.let { add("Sede" to it) }
-        }
-        if (locationRows.isNotEmpty()) {
-            item { DetailGroup(icon = Icons.Outlined.Place, title = "Sede", rows = locationRows) }
+        if (enrollment.universityDescription != null || enrollment.siteDescription != null) {
+            item {
+                DetailGroup(
+                    icon = Icons.Outlined.Place,
+                    title = stringResource(R.string.enrollments_location),
+                    rows = buildList {
+                        enrollment.universityDescription?.let { add(stringResource(R.string.enrollments_university) to it) }
+                        enrollment.siteDescription?.let { add(stringResource(R.string.enrollments_site) to it) }
+                    },
+                )
+            }
         }
 
-        val dateRows = buildList {
-            enrollment.enrollmentDate?.let { add("Data iscrizione" to it.toEnrollmentDateLabel()) }
-            enrollment.insertionDate?.let { add("Inserita il" to it.toEnrollmentDateLabel()) }
-            enrollment.modificationDate?.let { add("Aggiornata il" to it.toEnrollmentDateLabel()) }
-        }
-        if (dateRows.isNotEmpty()) {
-            item { DetailGroup(icon = Icons.Outlined.Event, title = "Date", rows = dateRows) }
+        if (enrollment.enrollmentDate != null || enrollment.insertionDate != null || enrollment.modificationDate != null) {
+            item {
+                DetailGroup(
+                    icon = Icons.Outlined.Event,
+                    title = stringResource(R.string.enrollments_dates),
+                    rows = buildList {
+                        enrollment.enrollmentDate?.let { add(stringResource(R.string.enrollments_enrollment_date) to it.toEnrollmentDateLabel()) }
+                        enrollment.insertionDate?.let { add(stringResource(R.string.enrollments_inserted) to it.toEnrollmentDateLabel()) }
+                        enrollment.modificationDate?.let { add(stringResource(R.string.enrollments_updated) to it.toEnrollmentDateLabel()) }
+                    },
+                )
+            }
         }
 
         enrollment.enrollmentNote?.let { note ->
@@ -248,7 +285,10 @@ private fun DetailGroup(
 private fun NoteGroup(note: String) {
     val scheme = MaterialTheme.colorScheme
     Column(modifier = Modifier.fillMaxWidth()) {
-        GroupHeader(icon = Icons.Outlined.Notes, title = "Note")
+        GroupHeader(
+            icon = Icons.AutoMirrored.Outlined.Notes,
+            title = stringResource(R.string.enrollments_notes)
+        )
         Spacer(Modifier.height(10.dp))
         Surface(
             shape = RoundedCornerShape(24.dp),

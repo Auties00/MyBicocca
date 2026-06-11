@@ -22,9 +22,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.state.valueOrNull
 import it.attendance100.mybicocca.domain.model.appointment.AppointmentFormField
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.appointments.AppointmentsViewModel
@@ -120,7 +122,7 @@ private fun ActionButtons(
                 contentColor = scheme.onSurface,
             ),
         ) {
-            Text("Indietro", fontWeight = FontWeight.SemiBold)
+            Text(stringResource(R.string.appointments_back), fontWeight = FontWeight.SemiBold)
         }
         Button(
             onClick = onSubmit,
@@ -140,7 +142,10 @@ private fun ActionButtons(
                     color = if (dark) scheme.onPrimaryContainer else scheme.onPrimary,
                 )
             } else {
-                Text("Prenota", fontWeight = FontWeight.SemiBold)
+                Text(
+                    stringResource(R.string.appointments_book_final),
+                    fontWeight = FontWeight.SemiBold
+                )
             }
         }
     }

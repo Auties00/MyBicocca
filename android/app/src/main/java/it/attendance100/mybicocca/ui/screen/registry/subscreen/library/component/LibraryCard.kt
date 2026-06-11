@@ -1,5 +1,6 @@
 package it.attendance100.mybicocca.ui.screen.registry.subscreen.library.component
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -9,7 +10,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.background
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -17,12 +17,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.domain.model.library.Library
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.library.ext.occupancyColor
 
@@ -86,6 +87,7 @@ fun LibraryCard(
 @Composable
 private fun StatusLine(isOpen: Boolean, statusText: String?) {
     val scheme = MaterialTheme.colorScheme
+    val context = LocalContext.current
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
         Box(
             modifier = Modifier
@@ -94,7 +96,8 @@ private fun StatusLine(isOpen: Boolean, statusText: String?) {
                 .background(if (isOpen) occupancyColor(0) else scheme.error),
         )
         Text(
-            text = statusText ?: if (isOpen) "Aperta" else "Chiusa",
+            text = statusText
+                ?: if (isOpen) context.getString(R.string.library_open) else context.getString(R.string.library_closed),
             style = MaterialTheme.typography.labelMedium,
             color = scheme.onSurfaceVariant,
             maxLines = 1,
@@ -102,3 +105,4 @@ private fun StatusLine(isOpen: Boolean, statusText: String?) {
         )
     }
 }
+

@@ -19,7 +19,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.Assignment
-import androidx.compose.material.icons.automirrored.outlined.MenuBook
+import androidx.compose.material.icons.filled.Navigation
+import androidx.compose.material.icons.filled.School
 import androidx.compose.material.icons.outlined.Chair
 import androidx.compose.material.icons.outlined.ConfirmationNumber
 import androidx.compose.material.icons.outlined.EventBusy
@@ -34,7 +35,6 @@ import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import it.attendance100.mybicocca.ui.component.modal.PredictiveModalBottomSheet
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -47,13 +47,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.domain.model.calendar.CalendarEvent
 import it.attendance100.mybicocca.domain.model.calendar.EventStatus
 import it.attendance100.mybicocca.domain.model.elearning.course.CourseId
 import it.attendance100.mybicocca.domain.model.elearning.course.EnrolledCourse
+import it.attendance100.mybicocca.ui.component.modal.PredictiveModalBottomSheet
 import it.attendance100.mybicocca.ui.screen.calendar.CalendarTestTags
 import it.attendance100.mybicocca.ui.screen.calendar.ext.durationMinutes
 import it.attendance100.mybicocca.ui.screen.calendar.ext.formatTimeRange
@@ -153,23 +156,62 @@ fun EventDetailContent(
         Spacer(Modifier.height(24.dp))
 
         val rows = buildList {
-            add(Triple(Icons.Outlined.Schedule, "ORARIO", orarioValue(event)))
+            add(
+                Triple(
+                    Icons.Outlined.Schedule,
+                    stringResource(R.string.event_detail_time_label),
+                    orarioValue(event)
+                )
+            )
             event.locationLine().takeIf { it.isNotBlank() }?.let {
-                add(Triple(Icons.Outlined.LocationOn, "LUOGO", it))
+                add(
+                    Triple(
+                        Icons.Outlined.LocationOn,
+                        stringResource(R.string.event_detail_location_label),
+                        it
+                    )
+                )
             }
             event.peopleLine().takeIf { it.isNotBlank() }?.let {
-                add(Triple(Icons.Outlined.Person, "DOCENTE", it))
+                add(
+                    Triple(
+                        Icons.Outlined.Person,
+                        stringResource(R.string.event_detail_teacher_label),
+                        it
+                    )
+                )
             }
             if (event is CalendarEvent.Exam) {
                 bookingLine(event)?.let {
-                    add(Triple(Icons.Outlined.ConfirmationNumber, "PRENOTAZIONE", it))
+                    add(
+                        Triple(
+                            Icons.Outlined.ConfirmationNumber,
+                            stringResource(R.string.event_detail_booking_label),
+                            it
+                        )
+                    )
                 }
                 event.cancellableUntil?.let {
-                    add(Triple(Icons.Outlined.EventBusy, "CANCELLABILE", "Entro il ${it.formatItalian()}"))
+                    add(
+                        Triple(
+                            Icons.Outlined.EventBusy,
+                            stringResource(R.string.event_detail_cancellable_label),
+                            stringResource(
+                                R.string.event_detail_cancellable_until,
+                                it.formatItalian()
+                            )
+                        )
+                    )
                 }
             }
             if (event is CalendarEvent.LibraryReservation) {
-                add(Triple(Icons.Outlined.Chair, "POSTO", event.seatName))
+                add(
+                    Triple(
+                        Icons.Outlined.Chair,
+                        stringResource(R.string.event_detail_seat_label),
+                        event.seatName
+                    )
+                )
             }
         }
         Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
@@ -201,24 +243,40 @@ fun EventDetailContent(
 
         val goToReservation = EventAction(
             icon = Icons.Outlined.ConfirmationNumber,
-            label = "Vai alla prenotazione",
+            label = stringResource(R.string.event_detail_go_to_reservation),
             onClick = { onOpenReservation(event) },
         )
         val (primary, secondary) = when (event) {
             is CalendarEvent.AssignmentDeadline -> EventAction(
                 icon = Icons.AutoMirrored.Outlined.Assignment,
-                label = "Apri compito",
+                label = stringResource(R.string.event_detail_open_assignment),
                 onClick = { onOpenAssignment(event.assignmentId, event.courseId) },
             ) to null
             is CalendarEvent.Exam,
             is CalendarEvent.LibraryReservation,
             -> goToReservation to null
             is CalendarEvent.Appointment ->
-                goToReservation to openMap?.let { EventAction(Icons.Outlined.LocationOn, "Mappa", it) }
+                goToReservation to openMap?.let {
+                    EventAction(
+                        Icons.Default.Navigation,
+                        stringResource(R.string.event_detail_maps),
+                        it
+                    )
+                }
             is CalendarEvent.Lesson -> {
-                val map = openMap?.let { EventAction(Icons.Outlined.LocationOn, "Mappa", it) }
+                val map = openMap?.let {
+                    EventAction(
+                        Icons.Default.Navigation,
+                        stringResource(R.string.event_detail_maps),
+                        it
+                    )
+                }
                 val course = openCourse?.let {
-                    EventAction(Icons.AutoMirrored.Outlined.MenuBook, "Apri corso", it)
+                    EventAction(
+                        Icons.Default.School,
+                        stringResource(R.string.event_detail_open_course),
+                        it
+                    )
                 }
                 if (course != null) course to map else map to null
             }
@@ -396,35 +454,58 @@ private fun ActionRow(primary: EventAction, secondary: EventAction?) {
     }
 }
 
+@Composable
 private fun activityLabel(event: CalendarEvent): String = when (event) {
-    is CalendarEvent.Lesson -> "Lezione"
+    is CalendarEvent.Lesson -> stringResource(R.string.event_detail_type_lesson)
     is CalendarEvent.Exam -> {
         val type = event.examTypeLabel?.takeIf { it.isNotBlank() }
-        if (type != null) "Esame · $type" else "Esame"
+        if (type != null) stringResource(
+            R.string.event_detail_type_exam_with_type,
+            type
+        ) else stringResource(R.string.event_detail_type_exam)
     }
-    is CalendarEvent.AssignmentDeadline -> "Consegna compito"
+
+    is CalendarEvent.AssignmentDeadline -> stringResource(R.string.event_detail_type_assignment_deadline)
     is CalendarEvent.Appointment ->
-        event.serviceGroup?.takeIf { it.isNotBlank() }?.let { "Appuntamento · $it" } ?: "Appuntamento"
-    is CalendarEvent.LibraryReservation -> "Posto in biblioteca"
+        event.serviceGroup?.takeIf { it.isNotBlank() }
+            ?.let { stringResource(R.string.event_detail_type_appointment_with_group, it) }
+            ?: stringResource(R.string.event_detail_type_appointment)
+
+    is CalendarEvent.LibraryReservation -> stringResource(R.string.event_detail_type_library_reservation)
 }
 
+@Composable
 /** Time-row value: "Entro le HH:MM" for point-in-time events, the range plus a compact duration suffix otherwise. */
 private fun orarioValue(event: CalendarEvent): String {
-    if (event.isPointInTime) return "Entro le ${event.formatTimeRange()}"
+    if (event.isPointInTime) return stringResource(
+        R.string.event_detail_instant_time,
+        event.formatTimeRange()
+    )
     val durMin = event.durationMinutes()
     val durLabel = when {
-        durMin == 0 -> "istantaneo"
-        durMin < 60 -> "${durMin}min"
-        durMin % 60 == 0 -> "${durMin / 60}h"
-        else -> "${durMin / 60}h ${durMin % 60}min"
+        durMin == 0 -> stringResource(R.string.event_detail_duration_instant)
+        durMin < 60 -> stringResource(R.string.event_detail_duration_minutes, durMin)
+        durMin % 60 == 0 -> stringResource(R.string.event_detail_duration_hours, durMin / 60)
+        else -> stringResource(
+            R.string.event_detail_duration_hours_minutes,
+            durMin / 60,
+            durMin % 60
+        )
     }
-    return "${event.formatTimeRange()} · $durLabel"
+    return stringResource(R.string.event_detail_duration_format, event.formatTimeRange(), durLabel)
 }
 
+@Composable
 /** Booking-row value composed from whichever facts the exam carries (position, booking date); null when it has none. */
 private fun bookingLine(event: CalendarEvent.Exam): String? {
-    val position = event.bookingPosition?.let { "Posizione $it" }
-    val booked = event.bookedAt?.let { "prenotato il ${it.toLocalDate().formatItalian()}" }
+    val position =
+        event.bookingPosition?.let { stringResource(R.string.event_detail_booking_position, it) }
+    val booked = event.bookedAt?.let {
+        stringResource(
+            R.string.event_detail_booking_date,
+            it.toLocalDate().formatItalian()
+        )
+    }
     val line = listOfNotNull(position, booked).joinToString(" · ")
     return line.takeIf { it.isNotBlank() }?.replaceFirstChar { it.uppercase() }
 }

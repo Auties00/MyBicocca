@@ -29,8 +29,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import it.attendance100.mybicocca.R
 
 /**
  * The reveal behind a profile card while it is swiped left. The trash-style icon grows in
@@ -85,7 +87,7 @@ fun RemoveSwipeBackground(
                 exit = fadeOut(motion.fastEffectsSpec()) + shrinkHorizontally(motion.fastSpatialSpec()),
             ) {
                 Text(
-                    text = "Rimuovi",
+                    text = stringResource(R.string.account_switcher_remove),
                     style = MaterialTheme.typography.labelLarge,
                     fontWeight = FontWeight.SemiBold,
                     color = content,
@@ -93,7 +95,7 @@ fun RemoveSwipeBackground(
             }
             Icon(
                 imageVector = Icons.Outlined.PersonRemove,
-                contentDescription = "Rimuovi account",
+                contentDescription = stringResource(R.string.account_switcher_remove_account),
                 tint = content,
                 modifier = Modifier
                     .size(26.dp)

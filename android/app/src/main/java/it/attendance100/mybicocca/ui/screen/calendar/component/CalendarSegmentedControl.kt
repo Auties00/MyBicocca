@@ -21,8 +21,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.geometry.CornerRadius
@@ -30,11 +30,13 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.ui.screen.calendar.CalendarTestTags
 import it.attendance100.mybicocca.ui.screen.calendar.state.CalendarViewMode
 import java.time.LocalDate
@@ -70,11 +72,18 @@ fun CalendarSegmentedControl(
     val activeContentColor = if (dark) scheme.onPrimaryContainer else scheme.onPrimary
     val inactiveContentColor = scheme.onSurfaceVariant
 
+    val dayLabel = stringResource(R.string.calendar_view_day)
+    val weekLabel = stringResource(R.string.calendar_view_week)
+    val monthLabel = stringResource(R.string.calendar_view_month)
     val segments = remember(selectedDay, weekStart, selectedMonth) {
         listOf(
-            Segment(CalendarViewMode.DAY, primary = dayPrimary(selectedDay), secondary = "Giorno"),
-            Segment(CalendarViewMode.WEEK, primary = weekPrimary(weekStart), secondary = "Settimana"),
-            Segment(CalendarViewMode.MONTH, primary = monthPrimary(selectedMonth), secondary = "Mese"),
+            Segment(CalendarViewMode.DAY, primary = dayPrimary(selectedDay), secondary = dayLabel),
+            Segment(CalendarViewMode.WEEK, primary = weekPrimary(weekStart), secondary = weekLabel),
+            Segment(
+                CalendarViewMode.MONTH,
+                primary = monthPrimary(selectedMonth),
+                secondary = monthLabel
+            ),
         )
     }
     val selectedIndex = segments.indexOfFirst { it.mode == viewMode }.coerceAtLeast(0)

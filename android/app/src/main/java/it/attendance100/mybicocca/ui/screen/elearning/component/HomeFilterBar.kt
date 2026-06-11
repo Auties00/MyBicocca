@@ -56,6 +56,8 @@ fun HomeFilterBar(
     onSelect: (CourseFilter) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    // Note: filter labels are built dynamically and contain non-translatable year values
+    // Only the base "Tutti" and "Preferiti" are translatable
     val options = remember(studyYears) {
         buildList {
             add(FilterOption(CourseFilter.All, "Tutti"))

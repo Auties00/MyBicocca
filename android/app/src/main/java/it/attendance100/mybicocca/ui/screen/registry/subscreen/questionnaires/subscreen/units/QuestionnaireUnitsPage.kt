@@ -1,15 +1,14 @@
 package it.attendance100.mybicocca.ui.screen.registry.subscreen.questionnaires.subscreen.units
 
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.background
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -30,9 +29,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.SyncStatus
 import it.attendance100.mybicocca.domain.model.questionnaire.ActivityQuestionnaires
@@ -59,12 +61,12 @@ fun QuestionnaireUnitsPage(
         Loadable.NotYetLoaded -> when (detailStatus) {
             is SyncStatus.Failed -> SheetMessage(
                 icon = Icons.Outlined.CloudOff,
-                title = "Caricamento non riuscito",
-                body = "Impossibile caricare i questionari di questo insegnamento.",
+                title = stringResource(R.string.common_error_title),
+                body = stringResource(R.string.questionnaire_units_load_error),
                 action = { RetryButton(onClick = onRetry) },
             )
 
-            else -> SheetLoadingIndicator(label = "Caricamento questionari…")
+            else -> SheetLoadingIndicator(label = stringResource(R.string.questionnaire_loading))
         }
 
         is Loadable.Loaded -> UnitsList(
@@ -158,36 +160,48 @@ private fun UnitsList(
                     }
                     Spacer(Modifier.width(12.dp))
                     when {
-                        unit.completed -> OutlinedButton(
-                            onClick = {},
-                            enabled = false,
-                            border = BorderStroke(1.dp, scheme.primary),
-                            colors = ButtonDefaults.outlinedButtonColors(
-                                disabledContentColor = scheme.primary,
-                            ),
-                        ) {
-                            Text("Compilato")
-                        }
-
-                        compilable -> Button(
-                            onClick = { onCompileUnit(detail, unit) },
-                            enabled = isOnline,
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = brandBg,
-                                contentColor = brandFg,
-                            ),
-                        ) {
-                            Box(contentAlignment = Alignment.Center) {
-                                Text("Compilato", color = Color.Transparent)
-                                Text("Compila")
+                        unit.completed -> {
+                            val context = LocalContext.current
+                            OutlinedButton(
+                                onClick = {},
+                                enabled = false,
+                                border = BorderStroke(1.dp, scheme.primary),
+                                colors = ButtonDefaults.outlinedButtonColors(
+                                    disabledContentColor = scheme.primary,
+                                ),
+                            ) {
+                                Text(context.getString(R.string.questionnaire_unit_compiled))
                             }
                         }
 
-                        else -> Text(
-                            text = "Non disponibile",
-                            style = MaterialTheme.typography.labelMedium,
-                            color = scheme.onSurfaceVariant,
-                        )
+                        compilable -> {
+                            val context = LocalContext.current
+                            Button(
+                                onClick = { onCompileUnit(detail, unit) },
+                                enabled = isOnline,
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = brandBg,
+                                    contentColor = brandFg,
+                                ),
+                            ) {
+                                Box(contentAlignment = Alignment.Center) {
+                                    Text(
+                                        context.getString(R.string.questionnaire_unit_compiled),
+                                        color = Color.Transparent
+                                    )
+                                    Text(context.getString(R.string.questionnaire_unit_compile))
+                                }
+                            }
+                        }
+
+                        else -> {
+                            val context = LocalContext.current
+                            Text(
+                                text = context.getString(R.string.questionnaire_unit_unavailable),
+                                style = MaterialTheme.typography.labelMedium,
+                                color = scheme.onSurfaceVariant,
+                            )
+                        }
                     }
                 }
             }

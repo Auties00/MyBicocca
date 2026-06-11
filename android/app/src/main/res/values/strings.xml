@@ -1,4 +1,918 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">MyBicocca</string>
+    <string name="app_name" translatable="false">MyBicocca</string>
+
+    <!-- Common -->
+    <string name="common_loading">Caricamento…</string>
+    <string name="common_error_title">Errore</string>
+    <string name="common_retry">Riprova</string>
+    <string name="common_cancel">Annulla</string>
+    <string name="common_confirm">Conferma</string>
+    <string name="common_close">Chiudi</string>
+    <string name="common_done">Fatto</string>
+    <string name="common_or">oppure</string>
+    <string name="common_no_results">Nessun risultato</string>
+    <string name="common_password">Password</string>
+    <string name="common_show_password">Mostra password</string>
+    <string name="common_hide_password">Nascondi password</string>
+
+    <!-- Connectivity -->
+    <string name="connectivity_online">Di nuovo online</string>
+    <string name="connectivity_offline">Sei offline</string>
+
+    <!-- Shared error messages -->
+    <string name="error_network_unavailable">rete non disponibile</string>
+    <string name="error_network_timeout">timeout di rete</string>
+    <string name="error_network_generic">errore di rete</string>
+    <string name="error_network_unavailable_full">Rete non disponibile. Controlla la connessione e riprova.</string>
+    <string name="error_network_timeout_full">Timeout di rete. Riprova tra un momento.</string>
+    <string name="error_network_generic_full">Errore di rete. Riprova tra un momento.</string>
+    <string name="error_unexpected">Si è verificato un errore imprevisto.</string>
+
+    <!-- Relative time -->
+    <string name="relative_day_today">Oggi</string>
+    <string name="relative_day_tomorrow">Domani</string>
+    <string name="relative_time_now">adesso</string>
+    <string name="relative_time_minutes_ago">%d min fa</string>
+    <string name="relative_time_one_hour_ago">1 ora fa</string>
+    <string name="relative_time_hours_ago">%d ore fa</string>
+    <string name="relative_time_yesterday">ieri</string>
+    <string name="relative_time_days_ago">%d giorni fa</string>
+
+    <!-- Exam grade badges -->
+    <string name="exam_grade_passed">Id.</string>
+    <string name="exam_grade_not_passed">Resp.</string>
+    <string name="exam_grade_withdrew">Rit.</string>
+    <string name="exam_grade_absent">Ass.</string>
+
+    <!-- File kind labels -->
+    <string name="file_kind_pdf">PDF</string>
+    <string name="file_kind_image">Immagine</string>
+    <string name="file_kind_video">Video</string>
+    <string name="file_kind_audio">Audio</string>
+    <string name="file_kind_html">Pagina web</string>
+    <string name="file_kind_text">Documento di testo</string>
+    <string name="file_kind_zip">Archivio</string>
+    <string name="file_kind_generic">File</string>
+
+    <!-- Screen titles -->
+    <string name="screen_title_profile">Profilo</string>
+    <string name="screen_title_settings">Impostazioni</string>
+    <string name="screen_title_assignment">Compito</string>
+    <string name="screen_title_teacher">Docente</string>
+
+    <!-- Auth -->
+    <string name="auth_tagline">Accedi con le tue credenziali di Ateneo</string>
+    <string name="auth_username_label">Username o Email</string>
+    <string name="auth_sign_in_button">Accedi</string>
+    <string name="auth_spid_button">Entra con SPID</string>
+    <string name="auth_cie_button">Entra con CIE</string>
+    <string name="auth_spid_unavailable">L\'accesso con SPID non è ancora disponibile</string>
+    <string name="auth_cie_unavailable">L\'accesso con CIE non è ancora disponibile</string>
+    <string name="auth_error_bad_credentials">Credenziali non valide. Controlla username e password.</string>
+    <string name="auth_error_no_connection">Impossibile raggiungere il server. Controlla la connessione o riprova più tardi.</string>
+    <string name="auth_error_already_signed_in">Questo account è già presente sul dispositivo.</string>
+    <string name="auth_error_unknown">Accesso non riuscito. Riprova tra qualche istante.</string>
+
+    <!-- Career picker -->
+    <string name="career_picker_title">Scegli una carriera</string>
+    <string name="career_picker_greeting">Ciao %s. Hai più carriere: scegli quella da usare come predefinita.</string>
+    <string name="career_picker_active">Attive</string>
+    <string name="career_picker_ended">Concluse</string>
+
+    <!-- Account switcher -->
+    <string name="account_switcher_title">Account</string>
+    <string name="account_switcher_settings">Impostazioni</string>
+    <string name="account_switcher_add_account">Aggiungi un altro account</string>
+    <string name="account_switcher_career_active">Carriera attiva</string>
+    <string name="account_switcher_remove">Rimuovi</string>
+    <string name="account_switcher_remove_account">Rimuovi account</string>
+
+    <!-- Navigation tabs -->
+    <string name="nav_tab_calendar">Calendario</string>
+    <string name="nav_tab_elearning">E-learning</string>
+    <string name="nav_tab_map">Mappe</string>
+    <string name="nav_tab_registry">Servizi</string>
+
+    <!-- Shell / session messages -->
+    <string name="shell_session_expired">La sessione è scaduta. Effettua di nuovo l\'accesso.</string>
+    <string name="shell_account_removed">Account rimosso</string>
+    <string name="shell_new_career_available">Nuova carriera disponibile: %s</string>
+    <string name="shell_career_ended">La carriera \"%s\" è terminata</string>
+    <string name="shell_career_missing">La carriera selezionata non è più disponibile</string>
+
+    <!-- Calendar -->
+    <string name="calendar_sync_failed">Sincronizzazione del calendario non riuscita</string>
+    <string name="calendar_no_events">Nessun impegno</string>
+    <string name="calendar_view_day">Giorno</string>
+    <string name="calendar_view_week">Settimana</string>
+    <string name="calendar_view_month">Mese</string>
+    <string name="calendar_go_to_today">Vai a oggi</string>
+
+    <!-- Event type labels (compact) -->
+    <string name="event_type_lesson">Lezione</string>
+    <string name="event_type_exam">Esame</string>
+    <string name="event_type_exam_with_type">Esame · %1$s</string>
+    <string name="event_type_assignment_deadline">Scadenza compito</string>
+    <string name="event_type_appointment">Appuntamento</string>
+    <string name="event_type_appointment_with_group">Appuntamento · %1$s</string>
+    <string name="event_type_library_reservation">Biblioteca</string>
+
+    <!-- Event detail sheet -->
+    <string name="event_detail_type_lesson">Lezione</string>
+    <string name="event_detail_type_exam">Esame</string>
+    <string name="event_detail_type_exam_with_type">Esame · %1$s</string>
+    <string name="event_detail_type_assignment_deadline">Consegna compito</string>
+    <string name="event_detail_type_appointment">Appuntamento</string>
+    <string name="event_detail_type_appointment_with_group">Appuntamento · %1$s</string>
+    <string name="event_detail_type_library_reservation">Posto in biblioteca</string>
+    <string name="event_detail_time_label">ORARIO</string>
+    <string name="event_detail_location_label">LUOGO</string>
+    <string name="event_detail_teacher_label">DOCENTE</string>
+    <string name="event_detail_booking_label">PRENOTAZIONE</string>
+    <string name="event_detail_cancellable_label">CANCELLABILE</string>
+    <string name="event_detail_seat_label">POSTO</string>
+    <string name="event_detail_instant_time">Entro le %1$s</string>
+    <string name="event_detail_duration_instant">istantaneo</string>
+    <string name="event_detail_duration_minutes">%1$dmin</string>
+    <string name="event_detail_duration_hours">%1$dh</string>
+    <string name="event_detail_duration_hours_minutes">%1$dh %2$dmin</string>
+    <string name="event_detail_duration_format">%1$s · %2$s</string>
+    <string name="event_detail_booking_position">Posizione %1$d</string>
+    <string name="event_detail_booking_date">prenotato il %1$s</string>
+    <string name="event_detail_cancellable_until">Entro il %1$s</string>
+    <string name="event_detail_go_to_reservation">Vai alla prenotazione</string>
+    <string name="event_detail_open_assignment">Apri compito</string>
+    <string name="event_detail_open_course">Apri corso</string>
+    <string name="event_detail_maps">Maps</string>
+
+    <!-- Course edition picker -->
+    <string name="course_picker_title">Apri corso</string>
+    <string name="course_picker_editions">%1$d edizioni</string>
+    <string name="course_picker_available">disponibili su e-learning</string>
+    <string name="course_picker_transversal">Trasversale</string>
+
+    <!-- Month agenda sheet -->
+    <string name="agenda_date_today">OGGI</string>
+    <string name="agenda_date_selected">SELEZIONATO</string>
+    <string name="agenda_event_count_singular">1 evento</string>
+    <string name="agenda_event_count_plural">%1$d eventi</string>
+    <string name="agenda_expand">Espandi</string>
+    <string name="agenda_collapse">Comprimi</string>
+
+    <!-- E-Learning: home screen -->
+    <string name="elearning_add_course">Aggiungi corso</string>
+    <string name="elearning_filter_no_courses">Nessun corso per questo filtro</string>
+    <string name="elearning_filter_change_hint">Cambia filtro per vedere altri corsi.</string>
+    <string name="elearning_no_courses">Nessun corso</string>
+    <string name="elearning_no_enrollment">Non risulti iscritto a nessun corso e-learning.</string>
+    <string name="elearning_sync_failed">Sincronizzazione non riuscita</string>
+    <string name="elearning_enrolled_success">Iscritto a %1$s</string>
+    <string name="elearning_enrol_failed">Iscrizione non riuscita</string>
+    <string name="elearning_enrol_failed_with_reason">Iscrizione non riuscita: %1$s</string>
+    <string name="elearning_error_network_unavailable">Connessione non disponibile</string>
+    <string name="elearning_error_network_timeout">Connessione scaduta</string>
+    <string name="elearning_error_network">Errore di rete</string>
+    <string name="elearning_error_network_unavailable_detailed">Impossibile raggiungere i server. Controlla la connessione di rete.</string>
+    <string name="elearning_error_network_timeout_detailed">Il server non risponde. Riprova tra qualche minuto.</string>
+    <string name="elearning_error_network_detailed">Si è verificato un errore di rete. Riprova più tardi.</string>
+    <string name="elearning_error_unexpected">Errore imprevisto</string>
+    <string name="elearning_remove_favorite">Rimuovi dai preferiti</string>
+    <string name="elearning_add_favorite">Aggiungi ai preferiti</string>
+    <string name="elearning_deadline_singular">altra scadenza</string>
+    <string name="elearning_deadline_plural">altre scadenze</string>
+    <string name="elearning_deadline_today">entro oggi</string>
+    <string name="elearning_deadline_overdue_one">scaduto 1 giorno fa</string>
+    <string name="elearning_deadline_overdue_many">scaduto %1$d giorni fa</string>
+    <string name="elearning_deadline_in_one">entro 1 giorno</string>
+    <string name="elearning_deadline_in_many">entro %1$d giorni</string>
+
+    <!-- E-Learning: add course sheet -->
+    <string name="elearning_back">Indietro</string>
+    <string name="elearning_select_area">Seleziona un\'area didattica</string>
+    <string name="elearning_categories">Categorie</string>
+    <string name="elearning_courses">Insegnamenti</string>
+    <string name="elearning_category_empty">Nessun contenuto in questa categoria.</string>
+    <string name="elearning_search_placeholder_area">Cerca area, insegnamento, codice…</string>
+    <string name="elearning_search_placeholder_category">Cerca tipo, insegnamento, codice…</string>
+    <string name="elearning_search_placeholder_subcategory">Cerca programma, insegnamento, codice…</string>
+    <string name="elearning_search_placeholder_course">Cerca insegnamento, codice…</string>
+    <string name="elearning_catalog_loading">Caricamento catalogo…</string>
+    <string name="elearning_catalog_load_failed">Caricamento non riuscito</string>
+    <string name="elearning_catalog_load_error">Impossibile caricare il catalogo dei corsi.</string>
+    <string name="elearning_clear_search">Cancella ricerca</string>
+    <string name="elearning_enrol">Iscriviti</string>
+
+    <!-- E-Learning: course detail tabs -->
+    <string name="elearning_course_tab_overview">Scheda</string>
+    <string name="elearning_course_tab_content">Contenuti</string>
+    <string name="elearning_course_tab_quiz">Quiz</string>
+    <string name="elearning_course_tab_assignments">Compiti</string>
+    <string name="elearning_course_tab_forum">Forum</string>
+
+    <!-- E-Learning: course detail content -->
+    <string name="elearning_course_add_to_favorites">Aggiungi ai preferiti</string>
+    <string name="elearning_course_remove_from_favorites">Rimuovi dai preferiti</string>
+    <string name="elearning_course_no_content">Nessun contenuto</string>
+    <string name="elearning_course_content_not_available">I materiali del corso appariranno qui.</string>
+    <string name="elearning_course_no_quiz">Nessun quiz</string>
+    <string name="elearning_course_quiz_not_available">I quiz del corso appariranno qui.</string>
+    <string name="elearning_course_progress">Avanzamento</string>
+    <string name="elearning_course_no_assignment">Nessun compito</string>
+    <string name="elearning_course_assignment_not_available">I compiti assegnati nel corso appariranno qui.</string>
+    <string name="elearning_course_no_forum">Nessun forum</string>
+    <string name="elearning_course_forum_not_available">Gli spazi di discussione del corso appariranno qui.</string>
+    <string name="elearning_course_announcements_board">✦ BACHECA AVVISI</string>
+    <string name="elearning_course_announcement_count_zero">Nessun avviso</string>
+    <string name="elearning_course_announcement_count_one">1 avviso dei docenti</string>
+    <string name="elearning_course_announcement_count_plural">%1$d avvisi dei docenti</string>
+    <string name="elearning_course_no_announcement_published">Nessun avviso pubblicato finora</string>
+    <string name="elearning_course_last_announcement">ULTIMO AVVISO</string>
+    <string name="elearning_course_attachment">Con allegato</string>
+    <string name="elearning_course_continue_watching">Riprendi</string>
+    <string name="elearning_course_watch_now">Guarda</string>
+    <string name="elearning_course_go_to_lesson">Vai alla lezione</string>
+    <string name="elearning_course_expand">Espandi</string>
+    <string name="elearning_course_collapse">Comprimi</string>
+    <string name="elearning_course_quiz_item">Quiz del corso</string>
+    <string name="elearning_course_other_quiz">Altri quiz</string>
+    <string name="elearning_course_no_discussions">Ancora nessuna discussione</string>
+    <string name="elearning_course_no_deadline">Senza scadenza</string>
+    <string name="elearning_course_submitted">Consegnato</string>
+    <string name="elearning_course_draft_saved">Bozza salvata</string>
+    <string name="elearning_course_graded">Valutato</string>
+    <string name="elearning_course_submitted_date">Inviato il %1$s</string>
+    <string name="elearning_course_submitted_late">in ritardo</string>
+    <string name="elearning_course_graded_date">Valutato · inviato il %1$s</string>
+    <string name="elearning_course_submitted_date_with_due">Inviato il %1$s</string>
+    <string name="elearning_course_expired_days_ago">Scaduto %1$s fa</string>
+    <string name="elearning_course_expires_in">Scade tra %1$s</string>
+    <string name="elearning_course_expires_today">Scade oggi</string>
+    <string name="elearning_course_due_days_count_singular">1 giorno</string>
+    <string name="elearning_course_due_days_count_plural">%1$d giorni</string>
+    <string name="elearning_course_closed_date">Chiuso il %1$s</string>
+    <string name="elearning_course_opens_date">Apre il %1$s</string>
+    <string name="elearning_course_available">Disponibile</string>
+    <string name="elearning_course_completed">Completato</string>
+    <string name="elearning_course_close_today">chiude oggi alle %1$s</string>
+    <string name="elearning_course_close_tomorrow">chiude domani alle %1$s</string>
+    <string name="elearning_course_close_days">chiude tra %1$d giorni</string>
+    <string name="elearning_course_close_date">chiude il %1$s</string>
+    <string name="elearning_course_time_limit">%1$d min</string>
+    <string name="elearning_course_single_attempt">tentativo singolo</string>
+    <string name="elearning_course_announcements">Avvisi</string>
+    <string name="elearning_course_qa_forum">Domande e risposte</string>
+    <string name="elearning_course_open_discussion">Discussione aperta</string>
+    <string name="elearning_course_per_user_discussion">Una discussione per studente</string>
+    <string name="elearning_course_single_discussion">Discussione singola</string>
+    <string name="elearning_course_blog_format">Formato blog</string>
+    <string name="elearning_course_generic_forum">Forum</string>
+    <string name="elearning_course_syllabus_not_available">Scheda non disponibile</string>
+    <string name="elearning_course_syllabus_not_published">La scheda di questo corso non è stata pubblicata.</string>
+    <string name="elearning_course_info_section">Informazioni</string>
+    <string name="elearning_course_credits_label">crediti formativi</string>
+    <string name="elearning_course_hours_label">ore di lezione</string>
+    <string name="elearning_course_language_label">lingua del corso</string>
+    <string name="elearning_course_level_label">corso di laurea</string>
+    <string name="elearning_course_extended_program">Programma esteso</string>
+    <string name="elearning_course_objectives">Obiettivi</string>
+    <string name="elearning_course_summary">Contenuti sintetici</string>
+    <string name="elearning_course_prerequisites">Prerequisiti</string>
+    <string name="elearning_course_teaching_method">Modalità didattica</string>
+    <string name="elearning_course_reference_material">Materiale didattico</string>
+    <string name="elearning_course_assessment">Verifica del profitto</string>
+    <string name="elearning_course_office_hours">Orario di ricevimento</string>
+    <string name="elearning_course_sustainable_goals">Sustainable Development Goals</string>
+    <string name="elearning_course_staff">Staff</string>
+    <string name="elearning_course_docente_role">Docente</string>
+    <string name="elearning_course_tutor_role">Tutor</string>
+    <string name="elearning_course_esercitatore_role">Esercitatore</string>
+    <string name="elearning_course_staff_role">Staff</string>
+    <string name="elearning_course_part_prefix">PARTE</string>
+    <string name="elearning_course_topics_count">%1$d argomenti</string>
+    <string name="elearning_course_sync_failed">Sincronizzazione del corso non riuscita</string>
+
+    <!-- E-Learning: link sheet -->
+    <string name="elearning_link_outside_app">Questo collegamento porta fuori dall\'app.</string>
+    <string name="elearning_link_open">Apri</string>
+    <string name="elearning_link_copy">Copia</string>
+    <string name="elearning_link_copied">Link copiato</string>
+    <string name="elearning_link_open_failed">Impossibile aprire il collegamento</string>
+
+    <!-- E-Learning: assignment detail -->
+    <string name="elearning_assign_overview_title">Compito</string>
+    <string name="elearning_assign_submission_title">La tua consegna</string>
+    <string name="elearning_assign_confirm_title">Conferma consegna</string>
+    <string name="elearning_assign_confirm_remove_title">Rimuovere la consegna?</string>
+    <string name="elearning_assign_no_deadline">Senza scadenza</string>
+    <string name="elearning_assign_expired_date">Scaduto il %1$s</string>
+    <string name="elearning_assign_expires_date">Scade %1$s</string>
+    <string name="elearning_assign_opens_later">Apre il %1$s</string>
+    <string name="elearning_assign_late_submission">Possibile fino al %1$s</string>
+    <string name="elearning_assign_submitted_date">Il %1$s</string>
+    <string name="elearning_assign_max_attempts_singular">Uno solo</string>
+    <string name="elearning_assign_max_attempts_plural">Massimo %1$d</string>
+    <string name="elearning_assign_complete_submission">Completa consegna</string>
+    <string name="elearning_assign_modify_submission">Modifica consegna</string>
+    <string name="elearning_assign_late_submission_button">Consegna in ritardo</string>
+    <string name="elearning_assign_add_submission">Aggiungi consegna</string>
+    <string name="elearning_assign_not_open_yet">Consegne non ancora aperte</string>
+    <string name="elearning_assign_closed">Consegne chiuse</string>
+    <string name="elearning_assign_remove_submission">Rimuovi consegna</string>
+    <string name="elearning_assign_confirm_remove_body">La consegna verrà eliminata e dovrai ricaricarla per inviarla di nuovo.</string>
+    <string name="elearning_assign_remove_button">Rimuovi</string>
+    <string name="elearning_assign_cancel">Annulla</string>
+    <string name="elearning_assign_submit_text">Invia consegna</string>
+    <string name="elearning_assign_draft_saved">Bozza salvata</string>
+    <string name="elearning_assign_submission_sent">Consegna inviata</string>
+    <string name="elearning_assign_submission_removed">Consegna rimossa</string>
+    <string name="elearning_assign_confirm_body">Stai per inviare %1$s per la valutazione. Dopo l\'invio non potrai più modificarla.</string>
+    <string name="elearning_assign_submission_files_count_singular">1 file</string>
+    <string name="elearning_assign_submission_files_count_plural">%1$d file</string>
+    <string name="elearning_assign_submission_text">testo</string>
+    <string name="elearning_assign_submission_recap">la consegna</string>
+    <string name="elearning_assign_grade_label">VOTO</string>
+    <string name="elearning_assign_opening_label">APERTURA</string>
+    <string name="elearning_assign_late_submission_label">CONSEGNA TARDIVA</string>
+    <string name="elearning_assign_submitted_label">CONSEGNATO</string>
+    <string name="elearning_assign_attempts_label">TENTATIVI</string>
+    <string name="elearning_assign_instructions">Istruzioni</string>
+    <string name="elearning_assign_teacher_feedback">Feedback del docente</string>
+    <string name="elearning_assign_edit_text">Testo</string>
+    <string name="elearning_assign_edit_files">File</string>
+    <string name="elearning_assign_add_files">Aggiungi file</string>
+    <string name="elearning_assign_write_answer">Scrivi la tua risposta…</string>
+    <string name="elearning_assign_save_draft">Salva bozza</string>
+    <string name="elearning_assign_continue">Continua</string>
+    <string name="elearning_assign_submit">Consegna</string>
+    <string name="elearning_assign_constraints">max %1$d file · fino a %2$s · %3$s</string>
+    <string name="elearning_assign_not_editable">Questa consegna non è al momento modificabile.</string>
+    <string name="elearning_assign_remove_file">Rimuovi</string>
+
+    <!-- E-Learning: file viewer -->
+    <string name="elearning_file_download_failed">Download del file non riuscito</string>
+    <string name="elearning_file_word_wrap_on">Abilita a capo</string>
+    <string name="elearning_file_word_wrap_off">Disabilita a capo</string>
+    <string name="elearning_file_file_truncated">… (file troncato)</string>
+    <string name="elearning_file_download">Scarica</string>
+    <string name="elearning_file_share">Condividi</string>
+
+    <!-- Registry: home screen -->
+    <string name="registry_sync_failed">Sincronizzazione non riuscita</string>
+    <string name="registry_no_deadlines">Nessuna scadenza imminente</string>
+    <string name="registry_next_deadline">Prossima il %1$s</string>
+    <string name="registry_one_urgent">1 urgente</string>
+    <string name="registry_multiple_urgent">%1$d urgenti</string>
+    <string name="registry_teaching">Didattica</string>
+    <string name="registry_teaching_caption">Percorso, presenze ed esiti</string>
+    <string name="registry_study_plan">Percorso</string>
+    <string name="registry_study_plan_desc">Percorso e piano di studi</string>
+    <string name="registry_attendance">Presenze</string>
+    <string name="registry_attendance_desc">Frequenze e rilevazioni</string>
+    <string name="registry_exam_results">Esiti</string>
+    <string name="registry_exam_results_desc">Accetta o rifiuta i voti</string>
+    <string name="registry_questionnaires">Questionari</string>
+    <string name="registry_questionnaires_desc">Valutazione didattica</string>
+    <string name="registry_bookings">Prenotazioni</string>
+    <string name="registry_bookings_caption">Appelli, sportelli e posti studio</string>
+    <string name="registry_library">Biblioteca</string>
+    <string name="registry_library_desc">Prenota un posto in biblioteca</string>
+    <string name="registry_documents">Documenti</string>
+    <string name="registry_documents_caption">Iscrizioni, titoli e certificati</string>
+    <string name="registry_enrollments">Iscrizioni</string>
+    <string name="registry_enrollments_desc">Storico iscrizioni e rinnovo</string>
+    <string name="registry_titles">Titoli</string>
+    <string name="registry_titles_desc">Titoli di studio conseguiti</string>
+    <string name="registry_certificates">Certificati</string>
+    <string name="registry_certificates_desc">Autocertificazioni in PDF</string>
+    <string name="registry_taxes">Tasse &amp; agevolazioni</string>
+    <string name="registry_taxes_caption">La tua posizione amministrativa</string>
+    <string name="registry_fees">Tasse</string>
+    <string name="registry_fees_desc">Pagamenti e fatture</string>
+    <string name="registry_isee">ISEE</string>
+    <string name="registry_isee_desc">Dichiarazioni e fasce</string>
+    <string name="registry_refunds">Rimborsi</string>
+    <string name="registry_refunds_desc">Importi e mandati</string>
+    <string name="registry_deadlines">Scadenze</string>
+
+    <!-- Registry: appelli (booked exams) -->
+    <string name="appelli_title">Appelli</string>
+    <string name="appelli_desc">Prenotazione agli appelli d\'esame</string>
+    <string name="appelli_book">Prenota</string>
+    <string name="appelli_cancel_confirmation_title">Annullare la prenotazione?</string>
+    <string name="appelli_book_exam">Prenota esame</string>
+    <string name="appelli_confirm_booking">Conferma prenotazione</string>
+    <string name="appelli_booking_details">Dettagli appello</string>
+    <string name="appelli_load_failed">Caricamento non riuscito</string>
+    <string name="appelli_loading_bookings">Caricamento prenotazioni…</string>
+    <string name="appelli_no_exams">Nessun esame in programma</string>
+    <string name="appelli_no_exams_body">Quando prenoti un appello lo trovi qui. Premi Prenota per iniziare.</string>
+    <string name="appelli_booking_cancelled">Prenotazione annullata</string>
+    <string name="appelli_cancellation_failed">Annullamento non riuscito</string>
+    <string name="appelli_pdf_open_failed">Impossibile aprire il PDF</string>
+    <string name="appelli_booking_confirmed">Prenotazione confermata</string>
+    <string name="appelli_booking_failed">Prenotazione non riuscita</string>
+    <string name="appelli_cancel_body">Stai per annullare la prenotazione a %1$s. Potrai prenotarti di nuovo finché le iscrizioni restano aperte.</string>
+    <string name="appelli_exam_call">APPELLO</string>
+    <string name="appelli_location">LUOGO</string>
+    <string name="appelli_location_unassigned">Aula da definire</string>
+    <string name="appelli_modality">MODALITÀ</string>
+    <string name="appelli_position">POSIZIONE</string>
+    <string name="appelli_position_value">%1$dº a prenotarsi</string>
+    <string name="appelli_booking">PRENOTAZIONE</string>
+    <string name="appelli_booking_made">Effettuata il %1$s</string>
+    <string name="appelli_cancellable_until">annullabile fino al %1$s</string>
+    <string name="appelli_note">NOTA</string>
+    <string name="appelli_cancel">Cancella</string>
+    <string name="appelli_slip">Ricevuta</string>
+
+    <!-- Registry: appointments (sportelli) -->
+    <string name="appointments_cancelled">Appuntamento annullato.</string>
+    <string name="appointments_cancel_failed">Annullamento non riuscito</string>
+    <string name="appointments_pdf_failed">Download non riuscito</string>
+    <string name="appointments_booking_failed">Prenotazione non riuscita</string>
+    <string name="appointments_cancel_title">Annullare l\'appuntamento?</string>
+    <string name="appointments_title">Segreterie</string>
+    <string name="appointments_single">Appuntamento</string>
+    <string name="appointments_book">Prenota</string>
+    <string name="appointments_confirm">Conferma</string>
+    <string name="appointments_confirmed">Confermato</string>
+    <string name="appointments_no_reservations">Nessuna prenotazione</string>
+    <string name="appointments_one_reservation">1 prenotazione</string>
+    <string name="appointments_multiple_reservations">%1$d prenotazioni</string>
+    <string name="appointments_details">Dettagli appuntamento</string>
+    <string name="appointments_choose_service">Scegli un servizio</string>
+    <string name="appointments_choose_date_time">Scegli data e ora</string>
+    <string name="appointments_cancel_body">Stai per annullare l\'appuntamento a \"%1$s\". Lo sportello tornerà prenotabile da altri studenti.</string>
+    <string name="appointments_confirmed_text">Appuntamento confermato</string>
+    <string name="appointments_booking_code">CODICE PRENOTAZIONE</string>
+    <string name="appointments_reservation_info">Trovi la prenotazione in Appuntamenti, con QR e promemoria PDF.</string>
+    <string name="appointments_done">Fatto</string>
+    <string name="appointments_back">Indietro</string>
+    <string name="appointments_book_final">Prenota</string>
+    <string name="appointments_video_call">In videoconferenza</string>
+    <string name="appointments_location_unassigned">Sede da definire</string>
+    <string name="appointments_appointment">APPUNTAMENTO</string>
+    <string name="appointments_modality">MODALITÀ</string>
+    <string name="appointments_location">LUOGO</string>
+    <string name="appointments_cancel">Annulla</string>
+    <string name="appointments_join">Partecipa</string>
+    <string name="appointments_no_appointments">Nessun appuntamento</string>
+    <string name="appointments_no_appointments_body">Non hai ancora prenotato nessun appuntamento. Tocca Prenota per fissarne uno.</string>
+    <string name="appointments_book_button">Prenota</string>
+    <string name="appointments_load_failed">Caricamento non riuscito.</string>
+    <string name="appointments_no_availability">Nessuna disponibilità in questo mese.</string>
+    <string name="appointments_previous_month">Mese precedente</string>
+    <string name="appointments_next_month">Mese successivo</string>
+    <string name="appointments_all_slots_full">Tutti gli orari di questa giornata sono occupati.</string>
+    <string name="appointments_morning">Mattina</string>
+    <string name="appointments_afternoon">Pomeriggio</string>
+    <string name="appointments_availability_load_failed">Caricamento delle disponibilità non riuscito.</string>
+    <string name="appointments_desk_not_available">Questo sportello non è prenotabile al momento. Riprova più tardi.</string>
+    <string name="appointments_no_dates">Nessuna data disponibile</string>
+    <string name="appointments_no_dates_body">Al momento non ci sono date disponibili per la prenotazione di questo sportello. Riprova più tardi.</string>
+    <string name="appointments_continue">Continua</string>
+    <string name="appointments_desc">Prenota uno sportello in segreteria</string>
+
+    <!-- Registry: attendance -->
+    <string name="attendance_title">Presenze</string>
+    <string name="attendance_rileva_title">Rileva presenza</string>
+    <string name="attendance_loading_presence">Caricamento presenze…</string>
+    <string name="attendance_no_courses">Nessun corso da frequentare</string>
+    <string name="attendance_no_courses_body">Hai superato tutti i corsi previsti dal tuo piano fino a questo semestre.</string>
+    <string name="attendance_mark_presence">Rileva presenza</string>
+    <string name="attendance_load_failed">Caricamento non riuscito</string>
+    <string name="attendance_no_classroom_detection">Nessuna rilevazione in aula</string>
+    <string name="attendance_easystaff_no_records">EasyStaff non ha ancora registrato presenze per questo corso.</string>
+    <string name="attendance_no_detection_available">Nessuna rilevazione disponibile</string>
+    <string name="attendance_register_no_records">Il registro non contiene ancora presenze registrate.</string>
+    <string name="attendance_lesson">Lezione</string>
+    <string name="attendance_classroom_presence">Presenze in aula</string>
+    <string name="attendance_other_activities">Altre attività</string>
+    <string name="attendance_elearning_presence">Presenze e-learning</string>
+    <string name="attendance_lesson_code">Codice lezione</string>
+    <string name="attendance_recording_in_progress">Registrazione in corso…</string>
+    <string name="attendance_qr_hint">Inquadra il QR della lezione</string>
+    <string name="attendance_manual_code_title">Inserisci codice</string>
+    <string name="attendance_manual_code_description">Digita il codice dell\'attività mostrato dal docente.</string>
+    <string name="attendance_activity_code">Codice dell\'attività</string>
+    <string name="attendance_record">Registra</string>
+    <string name="attendance_manual_code_entry">Inserisci codice manualmente</string>
+    <string name="attendance_camera_permission_needed">Serve l\'accesso alla fotocamera per scansionare il QR della lezione.</string>
+    <string name="attendance_allow_camera">Consenti fotocamera</string>
+    <string name="attendance_status_attending">Frequentante</string>
+    <string name="attendance_status_in_progress">In frequenza</string>
+    <string name="attendance_status_not_attending">Non frequentante</string>
+    <string name="attendance_semester_first">1° semestre</string>
+    <string name="attendance_semester_second">2° semestre</string>
+    <string name="attendance_year_other">Altri corsi</string>
+    <string name="attendance_presence_recorded">Presenza registrata</string>
+    <string name="attendance_already_recorded">Già registrata</string>
+    <string name="attendance_wrong_credential">Credenziale non valida</string>
+    <string name="attendance_session_unavailable">Sessione non disponibile</string>
+    <string name="attendance_registration_failed">Registrazione non riuscita</string>
+    <string name="attendance_lesson_title">Codice presenza</string>
+    <string name="attendance_registration_title">Registrazione</string>
+    <string name="attendance_result_title">Risultato</string>
+    <string name="attendance_rileva_subtitle">Come vuoi registrare la tua presenza?</string>
+    <string name="attendance_lesson_code_subtitle">Inserisci il codice fornito dal docente</string>
+
+    <!-- Registry: booking (bookable exams) -->
+    <string name="booking_loading_calls">Caricamento appelli…</string>
+    <string name="booking_no_calls_available">Nessun appello disponibile</string>
+    <string name="booking_no_calls_available_body">Non ci sono appelli prenotabili al momento.</string>
+    <string name="booking_status">Stato</string>
+    <string name="booking_enrollments">Iscrizioni</string>
+    <string name="booking_enrolled">Iscritti</string>
+    <string name="booking_mode">Modalità prenotazione</string>
+    <string name="booking_president">Presidente</string>
+    <string name="booking_book">Prenota</string>
+    <string name="booking_not_available">Prenotazione non disponibile per questo appello.</string>
+    <string name="booking_optional_note">Nota (facoltativa)</string>
+    <string name="booking_confirm_message">Confermando, sarai iscritto a questo appello. Potrai annullare la prenotazione fino alla data di chiusura iscrizioni.</string>
+    <string name="booking_call_notes">Note dell\'appello</string>
+    <string name="booking_load_failed">Caricamento non riuscito</string>
+
+    <!-- Registry: certificates -->
+    <string name="certs_title">Certificati</string>
+    <string name="certs_subtitle">Autocertificazioni in PDF</string>
+    <string name="certs_no_pdf_app">Nessuna app per aprire i PDF.</string>
+    <string name="certs_load_failed">Caricamento non riuscito</string>
+    <string name="certs_load_failed_body">Impossibile caricare i certificati.</string>
+    <string name="certs_loading">Caricamento certificati…</string>
+    <string name="certs_none">Nessun certificato</string>
+    <string name="certs_none_body">Non risultano certificati disponibili.</string>
+    <string name="certs_certificate">Certificato</string>
+    <string name="certs_downloaded">Scaricato</string>
+    <string name="certs_download">Scarica</string>
+
+    <!-- Registry: deadlines -->
+    <string name="deadlines_title">Scadenzario</string>
+    <string name="deadlines_none_next_30">Nessuna scadenza nei prossimi 30 giorni</string>
+    <string name="deadlines_count_one">1 scadenza</string>
+    <string name="deadlines_count_many">%d scadenze</string>
+    <string name="deadlines_next_30_suffix"> nei prossimi 30 giorni</string>
+    <string name="deadlines_loading">Caricamento scadenze…</string>
+    <string name="deadlines_none_imminent">Nessuna scadenza imminente.</string>
+    <string name="deadlines_load_failed">Caricamento non riuscito</string>
+
+    <!-- Registry: enrollments -->
+    <string name="enrollments_load_failed">Caricamento non riuscito</string>
+    <string name="enrollments_load_failed_body">Impossibile caricare le iscrizioni.</string>
+    <string name="enrollments_loading">Caricamento iscrizioni…</string>
+    <string name="enrollments_none">Nessuna iscrizione</string>
+    <string name="enrollments_none_body">Non risultano iscrizioni registrate.</string>
+    <string name="enrollments_renew_button">Rinnova l\'iscrizione %d/%d</string>
+    <string name="enrollments_enrolled_button">Iscritto per l\'a.a. %d/%d</string>
+    <string name="enrollments_enrollment">Iscrizione</string>
+    <string name="enrollments_type">Tipo iscrizione</string>
+    <string name="enrollments_student_type">Tipologia studente</string>
+    <string name="enrollments_out_of_course_years">Anni fuori corso</string>
+    <string name="enrollments_conditional">Condizionata</string>
+    <string name="enrollments_data_origin">Origine dato</string>
+    <string name="enrollments_reconstructed">Ricostruita</string>
+    <string name="enrollments_status_reason">Motivo stato</string>
+    <string name="enrollments_part_time">Part-time</string>
+    <string name="enrollments_planned_credits">CFU previsti</string>
+    <string name="enrollments_extra_credits">CFU extra</string>
+    <string name="enrollments_changes">Modifiche</string>
+    <string name="enrollments_locked">Bloccate</string>
+    <string name="enrollments_allowed">Consentite</string>
+    <string name="enrollments_suspension">Sospensione</string>
+    <string name="enrollments_reason">Causale</string>
+    <string name="enrollments_status">Stato</string>
+    <string name="enrollments_suspended">Sospesa</string>
+    <string name="enrollments_degree">Laurea</string>
+    <string name="enrollments_awaiting_degree">In attesa di laurea</string>
+    <string name="enrollments_expected_degree_date">Data attesa laurea</string>
+    <string name="enrollments_benefits">Agevolazioni</string>
+    <string name="enrollments_exemption">Esonero</string>
+    <string name="enrollments_income_band">Fascia di reddito</string>
+    <string name="enrollments_canteen_band">Fascia mensa</string>
+    <string name="enrollments_merit_band">Fascia di merito</string>
+    <string name="enrollments_merit_note">Nota merito</string>
+    <string name="enrollments_disability">Disabilità</string>
+    <string name="enrollments_disability_type">Tipologia</string>
+    <string name="enrollments_disability_percentage">Percentuale</string>
+    <string name="enrollments_course_of_study">Corso di studio</string>
+    <string name="enrollments_course">Corso</string>
+    <string name="enrollments_course_type">Tipo corso</string>
+    <string name="enrollments_class">Classe</string>
+    <string name="enrollments_class_code">Codice classe</string>
+    <string name="enrollments_path">Percorso</string>
+    <string name="enrollments_orientation">Orientamento</string>
+    <string name="enrollments_study_order">Ordinamento</string>
+    <string name="enrollments_credits_for_degree">CFU per il titolo</string>
+    <string name="enrollments_duration">Durata</string>
+    <string name="enrollments_language">Lingua</string>
+    <string name="enrollments_regulation">Normativa</string>
+    <string name="enrollments_location">Sede</string>
+    <string name="enrollments_university">Ateneo</string>
+    <string name="enrollments_site">Sede</string>
+    <string name="enrollments_dates">Date</string>
+    <string name="enrollments_enrollment_date">Data iscrizione</string>
+    <string name="enrollments_inserted">Inserita il</string>
+    <string name="enrollments_updated">Aggiornata il</string>
+    <string name="enrollments_notes">Note</string>
+    <string name="enrollment_status_active">Attiva</string>
+    <string name="enrollment_status_canceled">Annullata</string>
+    <string name="enrollment_status_suspended">Sospesa</string>
+    <string name="enrollment_status_unknown">Stato n/d</string>
+    <string name="enrollment_type_in_progress">In corso</string>
+    <string name="enrollment_type_out_of_course">Fuori corso</string>
+    <string name="enrollment_type_repeating">Ripetente</string>
+    <string name="enrollment_type_unknown">Tipo n/d</string>
+    <string name="enrollment_badge_out_of_course">Fuori corso</string>
+    <string name="enrollment_badge_repeating">Ripetente</string>
+    <string name="enrollment_badge_suspended">Sospesa</string>
+    <string name="enrollment_badge_canceled">Annullata</string>
+    <string name="enrollment_badge_part_time">Part-time</string>
+    <string name="enrollment_badge_conditional">Condizionata</string>
+    <string name="enrollment_badge_awaiting_degree">In attesa di laurea</string>
+    <string name="enrollment_badge_exemption">Esonero</string>
+
+    <!-- Registry: exam results -->
+    <string name="exam_results_title">Esiti</string>
+    <string name="exam_results_confirm_reject_title">Rifiutare l\'esito?</string>
+    <string name="exam_results_accepted">Esito accettato</string>
+    <string name="exam_results_rejected">Esito rifiutato</string>
+    <string name="exam_results_operation_failed">Operazione non riuscita</string>
+    <string name="exam_results_loading">Caricamento esiti…</string>
+    <string name="exam_results_no_results">Nessun esito pubblicato</string>
+    <string name="exam_results_no_results_body">Quando un docente pubblica l\'esito di un appello lo troverai qui.</string>
+    <string name="exam_results_decide_by">Decidi entro</string>
+    <string name="exam_results_accept">Accetta</string>
+    <string name="exam_results_reject">Rifiuta</string>
+
+    <!-- Registry: ISEE -->
+    <string name="isee_loading">Caricamento ISEE…</string>
+    <string name="isee_no_declarations">Nessuna dichiarazione ISEE</string>
+    <string name="isee_no_declarations_body">Non risultano dichiarazioni ISEE per la tua carriera.</string>
+    <string name="isee_declare_message">Puoi ancora presentare l\'ISEE per l\'anno accademico %1$s tramite il servizio INPS.</string>
+    <string name="isee_guide">Guida</string>
+    <string name="isee_declare">Dichiara ISEE</string>
+    <string name="isee_indicator">INDICATORE ISEE</string>
+    <string name="isee_threshold">Soglia agevolazioni</string>
+    <string name="isee_course">Corso</string>
+    <string name="isee_exemption">Esonero</string>
+
+    <!-- Registry: library -->
+    <string name="library_title">Biblioteca</string>
+    <string name="library_login">Accedi</string>
+    <string name="library_libraries">Biblioteche</string>
+    <string name="library_reservation">Prenotazione</string>
+    <string name="library_book">Prenota</string>
+    <string name="library_choose_seat">Scegli il posto</string>
+    <string name="library_confirmed">Confermato</string>
+    <string name="library_cancel_confirmation">Cancellare la prenotazione?</string>
+    <string name="library_cancel">Cancella</string>
+    <string name="library_confirm_cancel">Stai per cancellare il posto in %1$s. Tornerà prenotabile da altri studenti.</string>
+    <string name="library_login_and_book">Accedi e prenota un posto</string>
+    <string name="library_no_bookings">Nessuna prenotazione</string>
+    <string name="library_one_booking">1 prenotazione</string>
+    <string name="library_multiple_bookings">%1$d prenotazioni</string>
+    <string name="library_verify_email">Verifica la tua email</string>
+    <string name="library_verify_email_body">Verifica la tua email istituzionale per vedere e prenotare i posti in biblioteca.</string>
+    <string name="library_verify">Verifica</string>
+    <string name="library_syncing">Sincronizzazione…</string>
+    <string name="library_no_bookings_body">Non hai ancora prenotato un posto in biblioteca. Tocca Prenota per farlo.</string>
+    <string name="library_choose_library">Scegli dove prenotare</string>
+    <string name="library_reservation_details">Dettagli prenotazione</string>
+    <string name="library_choose_zone">Scegli una zona</string>
+    <string name="library_choose_datetime">Scegli giorno e orario</string>
+    <string name="library_qr_hint">Inquadra il QR in biblioteca</string>
+    <string name="library_manual_code_title">Inserisci codice</string>
+    <string name="library_manual_code_description">Inserisci il codice di validazione mostrato in biblioteca.</string>
+    <string name="library_manual_code_label">Codice di validazione</string>
+    <string name="library_verify_presence">Verifica presenza</string>
+    <string name="library_reservation_cancelled">Prenotazione annullata.</string>
+    <string name="library_cancellation_failed">Annullamento non riuscito</string>
+    <string name="library_booking_failed">Prenotazione non riuscita</string>
+    <string name="library_send_failed">Invio non riuscito</string>
+    <string name="library_login_failed">Accesso non riuscito</string>
+    <string name="library_sync_failed">Sincronizzazione non riuscita</string>
+    <string name="library_presence_verified">Presenza registrata.</string>
+    <string name="library_invalid_code">Codice non valido</string>
+    <string name="library_invalid_code_body">Controlla il QR o il codice e riprova.</string>
+    <string name="library_presence_failed">Verifica non riuscita</string>
+    <string name="library_library">BIBLIOTECA</string>
+    <string name="library_seat">POSTO</string>
+    <string name="library_when">QUANDO</string>
+    <string name="library_book_as">PRENOTI COME</string>
+    <string name="library_power_outlet">presa elettrica</string>
+    <string name="library_accept">Accetto le</string>
+    <string name="library_terms">condizioni d\'uso</string>
+    <string name="library_availability_loading_failed">Non è stato possibile caricare le disponibilità.</string>
+    <string name="library_availability_loading">Caricamento disponibilità…</string>
+    <string name="library_day">Giorno</string>
+    <string name="library_no_bookable_days">Nessun giorno prenotabile per questa zona.</string>
+    <string name="library_duration">Durata</string>
+    <string name="library_start_time">Orario di inizio</string>
+    <string name="library_times_loading_failed">Caricamento orari non riuscito.</string>
+    <string name="library_times_loading">Caricamento orari…</string>
+    <string name="library_no_available_times">Nessun orario disponibile in questa giornata.</string>
+    <string name="library_previous_month">Mese precedente</string>
+    <string name="library_next_month">Mese successivo</string>
+    <string name="library_libraries_loading_failed">Non è stato possibile caricare le biblioteche.</string>
+    <string name="library_libraries_loading">Caricamento biblioteche…</string>
+    <string name="library_no_libraries">Nessuna biblioteca</string>
+    <string name="library_no_libraries_body">Al momento non ci sono biblioteche prenotabili.</string>
+    <string name="library_open">Aperta</string>
+    <string name="library_closed">Chiusa</string>
+    <string name="library_status_loading_failed">Non è stato possibile caricare lo stato della biblioteca.</string>
+    <string name="library_today_occupancy">Affluenza oggi</string>
+    <string name="library_opening_hours">Orari di apertura</string>
+    <string name="library_book_seat">Prenota un posto</string>
+    <string name="library_open_now">Aperta ora</string>
+    <string name="library_booked">Posto prenotato</string>
+    <string name="library_find_in_bookings">La trovi in Biblioteca, nelle tue prenotazioni.</string>
+    <string name="library_verification_opens">La verifica apre alle %1$s (%2$d min prima dell\'inizio).</string>
+    <string name="library_booking_complete">Prenotazione conclusa.</string>
+    <string name="library_qr_or_code">Inquadra il QR in biblioteca o inserisci il codice.</string>
+    <string name="library_no_free_seats">Nessun posto libero</string>
+    <string name="library_no_free_seats_body">Per questo orario non ci sono posti disponibili. Prova un altro orario o durata.</string>
+    <string name="library_auto_select">Scegli automaticamente</string>
+    <string name="library_login_title">Accedi alle tue prenotazioni</string>
+    <string name="library_link_sent">Ti abbiamo inviato un link. Aprilo dalla tua casella, poi torna qui e tocca \"Ho aperto il link\".</string>
+    <string name="library_will_send_link">Ti invieremo un link di accesso alla tua email istituzionale per sincronizzare le tue prenotazioni.</string>
+    <string name="library_link_opened">Ho aperto il link</string>
+    <string name="library_send_link">Invia link di accesso</string>
+    <string name="library_login_success">Accesso eseguito</string>
+    <string name="library_link_not_opened">Link non ancora aperto</string>
+    <string name="library_bookings_synced">Le tue prenotazioni sono sincronizzate.</string>
+    <string name="library_open_link_again">Aprilo dalla tua email istituzionale, poi tocca di nuovo \"Ho aperto il link\".</string>
+    <string name="library_zones_loading_failed">Non è stato possibile caricare le zone prenotabili.</string>
+    <string name="library_zones_loading">Caricamento zone…</string>
+    <string name="library_no_zones">Nessuna zona</string>
+    <string name="library_no_zones_body">Questa biblioteca non ha zone prenotabili al momento.</string>
+    <string name="library_crowded_low">Poco affollata</string>
+    <string name="library_crowded_mid">Moderatamente affollata</string>
+    <string name="library_crowded_high">Molto affollata</string>
+
+    <!-- Registry: questionnaires -->
+    <string name="questionnaire_root_title">Questionari</string>
+    <string name="questionnaire_compile_title">Compilazione Questionario</string>
+    <string name="questionnaire_confirm_exit_title">Esci senza inviare?</string>
+    <string name="questionnaire_confirm_send_title">Confermare l\'invio?</string>
+    <string name="questionnaire_confirm_exit_body">Le tue risposte non verranno salvate.</string>
+    <string name="questionnaire_confirm_exit_action">Esci</string>
+    <string name="questionnaire_confirm_send_body">Confermare l\'invio di questo questionario?</string>
+    <string name="questionnaire_confirm_send_action">Invia</string>
+    <string name="questionnaire_confirm_continue">Continua</string>
+    <string name="questionnaire_no_pending">Tutti i questionari completati</string>
+    <string name="questionnaire_one_pending">1 questionario in sospeso</string>
+    <string name="questionnaire_multiple_pending">%d questionari in sospeso</string>
+    <string name="questionnaire_loading">Caricamento questionari...</string>
+    <string name="questionnaire_no_activities">Nessun questionario</string>
+    <string name="questionnaire_no_activities_body">Nessun questionario di valutazione attualmente disponibile.</string>
+    <string name="questionnaire_success_message">Questionario inviato con successo</string>
+    <string name="questionnaire_error_title">Invio non riuscito</string>
+    <string name="questionnaire_starting">Avvio questionario...</string>
+    <string name="questionnaire_start_failed_title">Impossibile avviare il questionario</string>
+    <string name="questionnaire_start_failed_body">Si è verificato un errore durante la preparazione del questionario.</string>
+    <string name="questionnaire_mandatory">Obbligatorio</string>
+    <string name="questionnaire_free_text_placeholder">Inserisci la tua risposta...</string>
+    <string name="questionnaire_free_text_specify">Si prega di specificare...</string>
+    <string name="questionnaire_other_option">Altro</string>
+    <string name="questionnaire_scale_disagree">Disaccordo</string>
+    <string name="questionnaire_scale_agree">D\'accordo</string>
+    <string name="questionnaire_summary_title">Riepilogo</string>
+    <string name="questionnaire_summary_ready">Pronto per l\'invio</string>
+    <string name="questionnaire_summary_missing">Incompleto</string>
+    <string name="questionnaire_summary_complete">Questionario Completato</string>
+    <string name="questionnaire_summary_incomplete">Questionario Incompleto</string>
+    <string name="questionnaire_summary_incomplete_help">Rispondi a tutte le domande obbligatorie per completare.</string>
+    <string name="questionnaire_summary_anonymous_help">Questo questionario è anonimo.</string>
+    <string name="questionnaire_summary_help">Pronto a inviare il tuo questionario.</string>
+    <string name="questionnaire_previous_page">Precedente</string>
+    <string name="questionnaire_next">Avanti</string>
+    <string name="questionnaire_confirm">Conferma</string>
+    <string name="questionnaire_working">Invio in corso...</string>
+    <string name="questionnaire_units_load_error">Errore nel caricamento delle unità</string>
+    <string name="questionnaire_unit_compile">Compila</string>
+    <string name="questionnaire_unit_compiled">Compilato</string>
+    <string name="questionnaire_unit_unavailable">Non disponibile</string>
+
+    <!-- Registry: refunds -->
+    <string name="refunds_loading">Caricamento rimborsi...</string>
+    <string name="refunds_loading_failed">Caricamento non riuscito</string>
+    <string name="refunds_empty_title">Nessun rimborso</string>
+    <string name="refunds_empty_body">Non risultano rimborsi sulla tua carriera.</string>
+    <string name="refunds_total_label">TOTALE RIMBORSATO</string>
+    <string name="refunds_academic_year">Anno accademico %s</string>
+    <string name="refunds_status_refunded">Rimborsato</string>
+    <string name="refunds_status_processing">In lavorazione</string>
+    <string name="refunds_amount_label">IMPORTO RIMBORSO</string>
+    <string name="refunds_section_status">Stato</string>
+    <string name="refunds_credit_date">Accredito</string>
+    <string name="refunds_mandate_number">Mandato</string>
+    <string name="refunds_collected_by">Incasso</string>
+    <string name="refunds_section_details">Dettagli</string>
+    <string name="refunds_reason_code">Causale</string>
+    <string name="refunds_description">Descrizione</string>
+    <string name="refunds_issue_date">Emissione</string>
+    <string name="refunds_processing_date">Elaborazione</string>
+    <string name="refunds_payment_date">Pagamento</string>
+    <string name="refunds_note">Nota</string>
+
+    <!-- Settings -->
+    <string name="settings_preferences_title">Preferenze</string>
+    <string name="settings_preferences_subtitle">Personalizza la tua esperienza</string>
+    <string name="settings_appearance_title">Aspetto</string>
+    <string name="settings_appearance_subtitle">Tema e colori dell\'app</string>
+    <string name="settings_language_title">Lingua</string>
+    <string name="settings_security_title">Sicurezza</string>
+    <string name="settings_security_subtitle">Blocco app e privacy</string>
+    <string name="settings_file_opening_title">Apertura file</string>
+    <string name="settings_file_opening_subtitle">App predefinite per tipo di file</string>
+    <string name="settings_information_title">Informazioni</string>
+    <string name="settings_information_subtitle">About MyBicocca</string>
+    <string name="settings_about_title">About</string>
+    <string name="settings_about_subtitle">Versione, copyright e crediti</string>
+    <string name="settings_privacy_title">Privacy Policy</string>
+    <string name="settings_privacy_subtitle">Informativa sulla privacy</string>
+    <string name="settings_license_title">Licenze</string>
+    <string name="settings_license_subtitle">Licenze open source delle librerie</string>
+    <string name="settings_oss_licenses_title">Licenze open source</string>
+    <string name="settings_check_updates_title">Check for Updates</string>
+    <string name="settings_check_updates_subtitle">Cerca nuove versioni</string>
+    <string name="settings_whats_new_title">What\'s New</string>
+    <string name="settings_whats_new_subtitle">Novità dell\'ultima versione</string>
+    <string name="settings_github_title">GitHub</string>
+    <string name="settings_github_subtitle">Codice sorgente del progetto</string>
+    <string name="settings_credits_title">Credits</string>
+    <string name="settings_file_association_choose_hint">Scegli come aprire i file di questo tipo.</string>
+    <string name="settings_file_association_in_app">In app</string>
+    <string name="settings_file_association_external">Altra app</string>
+    <string name="settings_file_association_ask">Chiedi ogni volta</string>
+    <string name="settings_file_association_open_in_app">Apri in app</string>
+    <string name="settings_file_association_open_external">Apri con altra app</string>
+    <string name="settings_language_sheet_title">Lingua</string>
+    <string name="settings_language_sheet_subtitle">Lingua dell\'app</string>
+    <string name="settings_language_system">Sistema</string>
+    <string name="settings_language_italian">Italiano</string>
+    <string name="settings_appearance_sheet_title">Aspetto</string>
+    <string name="settings_appearance_sheet_subtitle">Tema e colori dell\'app</string>
+    <string name="settings_theme_mode_light">Chiaro</string>
+    <string name="settings_theme_mode_dark">Scuro</string>
+    <string name="settings_security_sheet_title">Sicurezza</string>
+    <string name="settings_security_sheet_subtitle">Blocco app</string>
+    <string name="settings_security_timeout_immediately">Immediatamente</string>
+    <string name="settings_security_timeout_1hour">1 ora</string>
+    <string name="settings_security_timeout_4hours">4 ore</string>
+    <string name="settings_security_lock_inactive_title">Blocca quando inattivo</string>
+    <string name="settings_security_private_screen_title">Schermo privato</string>
+    <string name="settings_security_private_screen_subtitle">Nascondi l\'app nelle anteprime e blocca gli screenshot</string>
+    <string name="settings_security_biometric_unavailable">Nessun dato biometrico registrato su questo dispositivo: verrà usata la password.</string>
+    <string name="settings_security_biometric_not_available">L\'accesso biometrico non è disponibile su questo dispositivo: verrà usata la password.</string>
+    <string name="settings_security_enable_lock">Attiva il blocco app</string>
+    <string name="settings_security_disable_lock">Disattiva il blocco app</string>
+    <string name="settings_security_use_password">Usa password</string>
+    <string name="settings_security_confirm_identity">Conferma identità</string>
+    <string name="settings_security_lock_active">Attivo</string>
+    <string name="settings_security_lock_inactive">Disattivato</string>
+    <string name="settings_security_password_confirm_prompt">Inserisci la tua password per confermare.</string>
+    <string name="settings_security_enable_lock_dialog">Attiva blocco app</string>
+    <string name="settings_security_disable_lock_dialog">Disattiva blocco app</string>
+
+    <!-- Appelli added strings -->
+    <string name="relative_day_in_days">Tra %1$d giorni</string>
+    <string name="relative_day_after_tomorrow">Dopodomani</string>
+    <string name="appelli_taken_on">Sostenuto il %1$s</string>
+    <string name="appelli_awaiting_result">in attesa di esito</string>
+    <string name="appelli_partial_exam">Prova parziale</string>
+    <string name="appelli_type_written">Scritto</string>
+    <string name="appelli_type_oral">Orale</string>
+    <string name="appelli_type_written_and_oral">Scritto e Orale</string>
+    <string name="appelli_credits">%1$s CFU</string>
+    <string name="appelli_exam">Esame</string>
+
+    <!-- Enrollment added strings -->
+    <string name="enrollment_year">Anno %1$d</string>
+    <string name="enrollment_year_unknown">Anno di corso n/d</string>
+    <string name="enrollment_badge_out_of_course_year">Fuori corso · Anno %1$d</string>
+    <string name="enrollment_badge_part_time_credits">Part-time · %1$s CFU</string>
+
+    <!-- Appointment added strings -->
+    <string name="appointments_duration">Appuntamento: %1$d min</string>
+    <string name="appointments_section_career">Gestisci la tua carriera</string>
+    <string name="appointments_section_teaching">Sportelli didattici</string>
+    <string name="appointments_section_deliveries">Badge, diplomi e certificati</string>
+    <string name="appointments_section_other">Orientamento, estero e altro</string>
+    <string name="appointments_section_label_career">Carriere studenti</string>
+    <string name="appointments_section_label_teaching">Didattica</string>
+    <string name="appointments_section_label_deliveries">Ritiri e consegne</string>
+    <string name="appointments_section_label_other">Altri sportelli</string>
+
+    <!-- Attendance added strings -->
+    <string name="attendance_year">Anno %1$d</string>
+
+    <!-- Library added strings -->
+    <string name="library_duration_minutes_only">%1$d min</string>
+    <string name="library_duration_hours_only">%1$dh</string>
+    <string name="library_duration_hours_minutes">%1$dh %2$dm</string>
+
+    <!-- DateQuery added string -->
+    <string name="search_open_in_calendar">Apri nel calendario</string>
+    <string name="search_grade">Voto</string>
 </resources>

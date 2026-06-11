@@ -63,7 +63,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
-import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
@@ -72,10 +72,12 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.google.mlkit.vision.barcode.BarcodeScannerOptions
 import com.google.mlkit.vision.barcode.BarcodeScanning
 import com.google.mlkit.vision.barcode.common.Barcode
 import com.google.mlkit.vision.common.InputImage
+import it.attendance100.mybicocca.R
 
 /**
  * Full-screen QR scanner shown above the "Rileva presenza" sheet: an edge-to-edge black
@@ -91,11 +93,6 @@ import com.google.mlkit.vision.common.InputImage
 fun QrScannerScreen(
     onResult: (String) -> Unit,
     onClose: () -> Unit,
-    hint: String = "Inquadra il QR della lezione",
-    manualTitle: String = "Inserisci codice",
-    manualDescription: String = "Digita il codice dell'attività mostrato dal docente.",
-    manualLabel: String = "Codice dell'attività",
-    manualConfirm: String = "Registra",
 ) {
     Dialog(
         onDismissRequest = onClose,
@@ -155,7 +152,7 @@ fun QrScannerScreen(
                     onDispose { controller.unbind() }
                 }
                 ScannerReticle()
-                ScannerHint(hint)
+                ScannerHint(stringResource(R.string.attendance_qr_hint))
             } else {
                 PermissionDenied(onRequest = { permissionLauncher.launch(Manifest.permission.CAMERA) })
             }
@@ -169,10 +166,6 @@ fun QrScannerScreen(
 
         if (showCodeDialog) {
             ManualCodeDialog(
-                title = manualTitle,
-                description = manualDescription,
-                label = manualLabel,
-                confirm = manualConfirm,
                 onSubmit = { code ->
                     showCodeDialog = false
                     if (!consumed) {
@@ -195,10 +188,6 @@ fun QrScannerScreen(
  */
 @Composable
 private fun ManualCodeDialog(
-    title: String,
-    description: String,
-    label: String,
-    confirm: String,
     onSubmit: (String) -> Unit,
     onDismiss: () -> Unit,
 ) {
@@ -209,17 +198,17 @@ private fun ManualCodeDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         icon = { Icon(Icons.Outlined.Keyboard, contentDescription = null) },
-        title = { Text(title) },
+        title = { Text(stringResource(R.string.attendance_manual_code_title)) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                Text(description)
+                Text(stringResource(R.string.attendance_manual_code_description))
                 OutlinedTextField(
                     value = code,
                     onValueChange = { code = it },
                     modifier = Modifier
                         .fillMaxWidth()
                         .focusRequester(focusRequester),
-                    label = { Text(label) },
+                    label = { Text(stringResource(R.string.attendance_activity_code)) },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
                     keyboardActions = KeyboardActions(
@@ -232,10 +221,10 @@ private fun ManualCodeDialog(
             TextButton(
                 enabled = code.isNotBlank(),
                 onClick = { onSubmit(code.trim()) },
-            ) { Text(confirm) }
+            ) { Text(stringResource(R.string.attendance_record)) }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Annulla") }
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.common_cancel)) }
         },
     )
 }
@@ -355,7 +344,7 @@ private fun ScannerTopBar(
                 contentColor = Color.White,
             ),
         ) {
-            Icon(Icons.Outlined.Close, contentDescription = "Chiudi")
+            Icon(Icons.Outlined.Close, contentDescription = stringResource(R.string.common_close))
         }
 
         IconButton(
@@ -365,7 +354,10 @@ private fun ScannerTopBar(
                 contentColor = Color.White,
             ),
         ) {
-            Icon(Icons.Outlined.Keyboard, contentDescription = "Inserisci codice manualmente")
+            Icon(
+                Icons.Outlined.Keyboard,
+                contentDescription = stringResource(R.string.attendance_manual_code_entry)
+            )
         }
     }
 }
@@ -387,13 +379,13 @@ private fun PermissionDenied(onRequest: () -> Unit) {
         )
         Spacer(Modifier.height(16.dp))
         Text(
-            text = "Serve l'accesso alla fotocamera per scansionare il QR della lezione.",
+            text = stringResource(R.string.attendance_camera_permission_needed),
             color = Color.White,
             style = MaterialTheme.typography.bodyLarge,
             textAlign = TextAlign.Center,
         )
         Spacer(Modifier.height(20.dp))
-        Button(onClick = onRequest) { Text("Consenti fotocamera") }
+        Button(onClick = onRequest) { Text(stringResource(R.string.attendance_allow_camera)) }
     }
 }
 

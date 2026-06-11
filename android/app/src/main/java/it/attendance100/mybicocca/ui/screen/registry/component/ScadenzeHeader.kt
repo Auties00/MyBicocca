@@ -21,9 +21,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import it.attendance100.mybicocca.R
 
 /**
  * Tappable "Scadenze" banner that opens the scadenzario sheet. Mirrors the design's
@@ -67,7 +69,7 @@ fun ScadenzeHeader(
 
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = "Scadenze",
+                    text = stringResource(R.string.registry_deadlines),
                     fontSize = 19.sp,
                     fontWeight = FontWeight.Bold,
                     letterSpacing = (-0.5).sp,

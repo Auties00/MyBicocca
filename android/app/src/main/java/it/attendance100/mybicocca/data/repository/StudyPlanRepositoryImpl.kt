@@ -107,7 +107,7 @@ class StudyPlanRepositoryImpl @Inject constructor(
             statusDescription = header.stateDescription,
             lastUpdated = header.lastStateChangeDate.parseEsse3Date(),
             choiceRegulationId = header.choiceRegulationId,
-            schemaId = header.schemaId?.toLong(),
+            schemaId = header.schemaId,
             courses = plan.activity.mapNotNull { it.toStudyPlanCourse() },
         )
     }

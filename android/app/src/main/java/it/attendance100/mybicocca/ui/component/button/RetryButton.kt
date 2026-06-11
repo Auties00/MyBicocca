@@ -8,6 +8,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
+import it.attendance100.mybicocca.R
 
 /**
  * The standard retry action shared by error states across the app: expressive press morph on
@@ -26,6 +28,6 @@ fun RetryButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
             contentColor = Color.White,
         ),
     ) {
-        Text("Riprova")
+        Text(stringResource(R.string.common_retry))
     }
 }

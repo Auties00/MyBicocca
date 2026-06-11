@@ -117,12 +117,14 @@ class VideoPlayerViewModel @AssistedInject constructor(
     private val _player = MutableStateFlow<Player?>(null)
     val player: StateFlow<Player?> = _player.asStateFlow()
 
+    @kotlin.OptIn(ExperimentalCoroutinesApi::class)
     private val courseDetails: StateFlow<Loadable<CourseDetails>> = activeAccountId
         .flatMapLatest { id ->
             if (id == null) flowOf(Loadable.NotYetLoaded) else observeCourseDetails(id, courseId)
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STATE_KEEP_ALIVE_MS), Loadable.NotYetLoaded)
 
+    @kotlin.OptIn(ExperimentalCoroutinesApi::class)
     val progressByCmId: StateFlow<Map<Int, VideoProgress>> = activeAccountId
         .flatMapLatest { id ->
             if (id == null) flowOf(emptyMap()) else observeCourseVideoProgress(id, courseId)

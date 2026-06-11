@@ -29,13 +29,12 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -43,6 +42,7 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.SyncStatus
 import it.attendance100.mybicocca.core.state.valueOrNull
@@ -84,12 +84,12 @@ fun RefundsListPage(
     )
 }
 
-/** "3 rimborsi · 2 in lavorazione" — count line in place of a sub-page title. */
+/** "3 refunds · 2 processing" — count line in place of a sub-page title. */
 fun refundsHeaderSubtitle(refunds: List<Refund>): String? {
     if (refunds.isEmpty()) return null
-    val total = if (refunds.size == 1) "1 rimborso" else "${refunds.size} rimborsi"
+    val total = if (refunds.size == 1) "1 refund" else "${refunds.size} refunds"
     val pending = refunds.count { !it.refunded }
-    return if (pending == 0) total else "$total · $pending in lavorazione"
+    return if (pending == 0) total else "$total · $pending processing"
 }
 
 /**
@@ -120,14 +120,14 @@ private fun RefundsListBody(
             failure != null && refunds == null -> Box(modifier = Modifier.testTag(RefundsTestTags.STATE_ERROR)) {
                 SheetMessage(
                     icon = Icons.Outlined.CloudOff,
-                    title = "Caricamento non riuscito",
+                    title = stringResource(R.string.refunds_loading_failed),
                     body = failure.cause.taxFriendlyMessage(),
                     action = { RetryButton(onClick = onRetry) },
                 )
             }
 
             !settled || refunds == null -> Box(modifier = Modifier.testTag(RefundsTestTags.STATE_LOADING)) {
-                SheetLoadingIndicator(label = "Caricamento rimborsi…")
+                SheetLoadingIndicator(label = stringResource(R.string.refunds_loading))
             }
 
             refunds.isEmpty() -> Box(
@@ -139,8 +139,8 @@ private fun RefundsListBody(
             ) {
                 EmptyState(
                     icon = Icons.Outlined.CurrencyExchange,
-                    title = "Nessun rimborso",
-                    body = "Non risultano rimborsi sulla tua carriera.",
+                    title = stringResource(R.string.refunds_empty_title),
+                    body = stringResource(R.string.refunds_empty_body),
                 )
             }
 
@@ -194,7 +194,7 @@ private fun RefundsSummaryCard(
         verticalArrangement = Arrangement.spacedBy(2.dp),
     ) {
         Text(
-            text = "TOTALE RIMBORSATO",
+            text = stringResource(R.string.refunds_total_label),
             fontSize = 11.sp,
             fontWeight = FontWeight.ExtraBold,
             letterSpacing = 0.8.sp,
@@ -267,7 +267,7 @@ private fun RefundRow(
                 )
                 refund.academicYearLabel()?.let { year ->
                     Text(
-                        text = "Anno accademico $year",
+                        text = stringResource(R.string.refunds_academic_year, year),
                         style = MaterialTheme.typography.bodySmall,
                         color = scheme.onSurfaceVariant,
                     )
@@ -294,7 +294,9 @@ private fun RefundStatusPill(refunded: Boolean) {
             .padding(horizontal = 12.dp, vertical = 6.dp),
     ) {
         Text(
-            text = if (refunded) "Rimborsato" else "In lavorazione",
+            text = if (refunded) stringResource(R.string.refunds_status_refunded) else stringResource(
+                R.string.refunds_status_processing
+            ),
             style = MaterialTheme.typography.labelMedium,
             fontWeight = FontWeight.SemiBold,
             color = content,
@@ -332,7 +334,7 @@ fun RefundDetailPage(
                 verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
                 Text(
-                    text = "IMPORTO RIMBORSO",
+                    text = stringResource(R.string.refunds_amount_label),
                     fontSize = 11.sp,
                     fontWeight = FontWeight.ExtraBold,
                     letterSpacing = 0.8.sp,
@@ -351,25 +353,25 @@ fun RefundDetailPage(
 
         item {
             DetailSection(
-                title = "Stato",
+                title = stringResource(R.string.refunds_section_status),
                 rows = buildList {
-                    refund.creditDate?.let { add("Accredito" to it.formatTaxDate()) }
-                    refund.mandateNumber?.let { add("Mandato" to it) }
-                    refund.collectedBy?.let { add("Incasso" to it) }
+                    refund.creditDate?.let { add(stringResource(R.string.refunds_credit_date) to it.formatTaxDate()) }
+                    refund.mandateNumber?.let { add(stringResource(R.string.refunds_mandate_number) to it) }
+                    refund.collectedBy?.let { add(stringResource(R.string.refunds_collected_by) to it) }
                 },
             )
         }
 
         item {
             DetailSection(
-                title = "Dettagli",
+                title = stringResource(R.string.refunds_section_details),
                 rows = buildList {
-                    refund.reasonCode?.let { add("Causale" to it) }
-                    refund.description?.let { add("Descrizione" to it) }
-                    refund.issueDate?.let { add("Emissione" to it.formatTaxDate()) }
-                    refund.processingDate?.let { add("Elaborazione" to it.formatTaxDate()) }
-                    refund.paymentDate?.let { add("Pagamento" to it.formatTaxDate()) }
-                    refund.note?.let { add("Nota" to it) }
+                    refund.reasonCode?.let { add(stringResource(R.string.refunds_reason_code) to it) }
+                    refund.description?.let { add(stringResource(R.string.refunds_description) to it) }
+                    refund.issueDate?.let { add(stringResource(R.string.refunds_issue_date) to it.formatTaxDate()) }
+                    refund.processingDate?.let { add(stringResource(R.string.refunds_processing_date) to it.formatTaxDate()) }
+                    refund.paymentDate?.let { add(stringResource(R.string.refunds_payment_date) to it.formatTaxDate()) }
+                    refund.note?.let { add(stringResource(R.string.refunds_note) to it) }
                 },
             )
         }
@@ -434,7 +436,7 @@ private fun Refund.academicYearLabel(): String? =
  * Detail header text (paired with [refundHeaderSubtitle]), exposed for the sheet entry's
  * pinned header in MainShell.
  */
-fun refundHeaderTitle(refund: Refund): String = refund.amount?.let(::formatEuro) ?: "Rimborso"
+fun refundHeaderTitle(refund: Refund): String = refund.amount?.let(::formatEuro) ?: "Refund"
 
 fun refundHeaderSubtitle(refund: Refund): String? =
-    refund.academicYearLabel()?.let { "Anno accademico $it" } ?: "Dettaglio rimborso"
+    refund.academicYearLabel()?.let { "Academic Year $it" } ?: "Refund Details"

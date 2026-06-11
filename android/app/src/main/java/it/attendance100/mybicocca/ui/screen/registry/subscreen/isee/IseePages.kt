@@ -3,8 +3,6 @@ package it.attendance100.mybicocca.ui.screen.registry.subscreen.isee
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
-import androidx.activity.compose.BackHandler
-import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -42,19 +40,19 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.SyncStatus
 import it.attendance100.mybicocca.core.state.valueOrNull
@@ -64,8 +62,6 @@ import it.attendance100.mybicocca.ui.component.feedback.EmptyState
 import it.attendance100.mybicocca.ui.component.feedback.rememberMinDurationLoading
 import it.attendance100.mybicocca.ui.component.modal.SheetLoadingIndicator
 import it.attendance100.mybicocca.ui.component.modal.SheetMessage
-import it.attendance100.mybicocca.ui.component.modal.sheetBodyGestureBarrier
-import it.attendance100.mybicocca.ui.component.modal.sheetPageTransform
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.taxes.TaxesViewModel
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.taxes.formatEuro
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.taxes.taxFriendlyMessage
@@ -181,12 +177,12 @@ private fun DeclarationsPage(
         when {
             failure != null && declarations == null -> SheetMessage(
                 icon = Icons.Outlined.CloudOff,
-                title = "Caricamento non riuscito",
+                title = stringResource(R.string.common_error_title),
                 body = failure.cause.taxFriendlyMessage(),
                 action = { RetryButton(onClick = onRetry) },
             )
 
-            !settled || declarations == null -> SheetLoadingIndicator(label = "Caricamento ISEE…")
+            !settled -> SheetLoadingIndicator(label = stringResource(R.string.isee_loading))
 
             declarations.isEmpty() -> Box(
                 modifier = Modifier
@@ -196,8 +192,8 @@ private fun DeclarationsPage(
             ) {
                 EmptyState(
                     icon = Icons.Outlined.Savings,
-                    title = "Nessuna dichiarazione ISEE",
-                    body = "Non risultano dichiarazioni ISEE per la tua carriera.",
+                    title = stringResource(R.string.isee_no_declarations),
+                    body = stringResource(R.string.isee_no_declarations_body),
                 )
             }
 
@@ -223,7 +219,7 @@ private fun DeclarationsPage(
             }
         }
 
-        if (showFooter && declareYear != null) {
+        if (showFooter) {
             DeclareFooter(
                 year = declareYear,
                 onDeclare = onDeclare,
@@ -261,8 +257,7 @@ private fun DeclareFooter(
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Text(
-            text = "Puoi ancora presentare l'ISEE per l'anno accademico " +
-                "${academicYearLabel(year)} tramite il servizio INPS.",
+            text = stringResource(R.string.isee_declare_message, academicYearLabel(year)),
             style = MaterialTheme.typography.bodySmall,
             color = scheme.onSurfaceVariant,
         )
@@ -284,7 +279,7 @@ private fun DeclareFooter(
                     modifier = Modifier.size(20.dp),
                 )
                 Spacer(Modifier.width(8.dp))
-                Text("Guida", fontWeight = FontWeight.SemiBold)
+                Text(stringResource(R.string.isee_guide), fontWeight = FontWeight.SemiBold)
             }
             Button(
                 onClick = onDeclare,
@@ -303,7 +298,7 @@ private fun DeclareFooter(
                     modifier = Modifier.size(20.dp),
                 )
                 Spacer(Modifier.width(8.dp))
-                Text("Dichiara ISEE", fontWeight = FontWeight.SemiBold)
+                Text(stringResource(R.string.isee_declare), fontWeight = FontWeight.SemiBold)
             }
         }
     }
@@ -397,7 +392,7 @@ fun IseeDetailPage(
                 verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
                 Text(
-                    text = "INDICATORE ISEE",
+                    text = stringResource(R.string.isee_indicator),
                     fontSize = 11.sp,
                     fontWeight = FontWeight.ExtraBold,
                     letterSpacing = 0.8.sp,
@@ -417,11 +412,17 @@ fun IseeDetailPage(
             DetailSection(
                 title = "Dettagli",
                 rows = buildList {
-                    declaration.iseeThreshold?.let { add("Soglia agevolazioni" to formatEuro(it)) }
-                    declaration.courseDescription?.let { add("Corso" to it) }
+                    declaration.iseeThreshold?.let {
+                        add(
+                            stringResource(R.string.isee_threshold) to formatEuro(
+                                it
+                            )
+                        )
+                    }
+                    declaration.courseDescription?.let { add(stringResource(R.string.isee_course) to it) }
                     declaration.exemptionDescription
                         ?.takeIf { it.isNotBlank() }
-                        ?.let { add("Esonero" to it) }
+                        ?.let { add(stringResource(R.string.isee_exemption) to it) }
                 },
             )
         }

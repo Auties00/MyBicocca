@@ -20,6 +20,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntRect
 import androidx.compose.ui.unit.IntSize
@@ -28,6 +29,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupPositionProvider
 import androidx.compose.ui.window.PopupProperties
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.ui.screen.calendar.ext.rememberCurrentTime
 import it.attendance100.mybicocca.ui.screen.calendar.ext.visibleWeekDays
 import it.attendance100.mybicocca.ui.screen.calendar.state.CalendarViewMode
@@ -110,7 +112,7 @@ fun TodayFab(
                             contentDescription = null,
                         )
                     },
-                    text = { Text("Vai a oggi") },
+                    text = { Text(stringResource(R.string.calendar_go_to_today)) },
                 )
             }
         }

@@ -29,6 +29,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -36,6 +37,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.ui.component.button.RetryButton
 import it.attendance100.mybicocca.ui.component.feedback.friendlyMessage
 import it.attendance100.mybicocca.ui.component.feedback.rememberMinDurationLoading
@@ -92,7 +94,7 @@ fun DeadlinesSheet(
         ) {
             Column(modifier = Modifier.padding(start = 22.dp, top = 4.dp, end = 22.dp, bottom = 8.dp)) {
                 Text(
-                    text = "Scadenzario",
+                    text = stringResource(R.string.deadlines_title),
                     fontSize = 27.sp,
                     fontWeight = FontWeight.Bold,
                     letterSpacing = (-0.9).sp,
@@ -102,12 +104,17 @@ fun DeadlinesSheet(
                     Text(
                         text = buildAnnotatedString {
                             if (deadlines.isEmpty()) {
-                                append("Nessuna scadenza nei prossimi 30 giorni")
+                                append(stringResource(R.string.deadlines_none_next_30))
                             } else {
                                 withStyle(SpanStyle(color = scheme.primary, fontWeight = FontWeight.Bold)) {
-                                    append(if (deadlines.size == 1) "1 scadenza" else "${deadlines.size} scadenze")
+                                    append(
+                                        if (deadlines.size == 1) stringResource(R.string.deadlines_count_one) else stringResource(
+                                            R.string.deadlines_count_many,
+                                            deadlines.size
+                                        )
+                                    )
                                 }
-                                append(" nei prossimi 30 giorni")
+                                append(stringResource(R.string.deadlines_next_30_suffix))
                             }
                         },
                         fontSize = 13.5.sp,
@@ -120,7 +127,7 @@ fun DeadlinesSheet(
             when {
                 failure != null && loading -> SheetError(cause = failure, onRetry = onRetry)
 
-                !settled -> SheetLoadingIndicator(label = "Caricamento scadenze…")
+                !settled -> SheetLoadingIndicator(label = stringResource(R.string.deadlines_loading))
 
                 deadlines.isEmpty() -> Box(
                     modifier = Modifier
@@ -130,7 +137,7 @@ fun DeadlinesSheet(
                     contentAlignment = Alignment.Center,
                 ) {
                     Text(
-                        text = "Nessuna scadenza imminente.",
+                        text = stringResource(R.string.deadlines_none_imminent),
                         fontSize = 14.sp,
                         color = scheme.onSurfaceVariant,
                     )
@@ -163,7 +170,7 @@ fun DeadlinesSheet(
 private fun SheetError(cause: Throwable, onRetry: () -> Unit) {
     SheetMessage(
         icon = Icons.Outlined.CloudOff,
-        title = "Caricamento non riuscito",
+        title = stringResource(R.string.deadlines_load_failed),
         body = cause.friendlyMessage(),
         action = { RetryButton(onClick = onRetry) },
     )

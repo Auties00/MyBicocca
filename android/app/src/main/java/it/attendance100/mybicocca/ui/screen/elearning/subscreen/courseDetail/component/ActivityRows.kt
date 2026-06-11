@@ -37,7 +37,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import it.attendance100.mybicocca.domain.model.elearning.assignment.Assignment as DomainAssignment
 import it.attendance100.mybicocca.domain.model.elearning.assignment.SubmissionStatus
 import it.attendance100.mybicocca.domain.model.elearning.forum.Forum
 import it.attendance100.mybicocca.domain.model.elearning.forum.ForumType
@@ -50,6 +49,7 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 import java.util.Locale
+import it.attendance100.mybicocca.domain.model.elearning.assignment.Assignment as DomainAssignment
 
 /**
  * Card for one assignment on the Compiti tab: a calendar-style due-date tile anchors the row,

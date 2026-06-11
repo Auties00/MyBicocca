@@ -29,6 +29,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import it.attendance100.mybicocca.R
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
@@ -36,11 +37,11 @@ import java.util.Locale
 private val DayOfWeekFormat = DateTimeFormatter.ofPattern("EEE", Locale.ITALIAN)
 
 /** "Oggi" / "Domani" for the next two days, otherwise the capitalized Italian weekday ("Gio"). */
-fun relativeDayLabel(date: LocalDate): String {
+fun relativeDayLabel(date: LocalDate, context: android.content.Context? = null): String {
     val today = LocalDate.now()
     return when (date) {
-        today -> "Oggi"
-        today.plusDays(1) -> "Domani"
+        today -> context?.getString(R.string.relative_day_today) ?: "Oggi"
+        today.plusDays(1) -> context?.getString(R.string.relative_day_tomorrow) ?: "Domani"
         else -> date.format(DayOfWeekFormat).replaceFirstChar { it.titlecase(Locale.ITALIAN) }
     }
 }

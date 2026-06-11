@@ -4,7 +4,6 @@ import androidx.browser.customtabs.CustomTabsIntent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -40,11 +39,13 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.net.toUri
+import coil.compose.AsyncImage
 import it.attendance100.mybicocca.BuildConfig
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.os.rememberHapticManager
@@ -73,13 +74,13 @@ private val copyrightText: String
         return "© $span 100% Attendance"
     }
 
-private data class Credit(val name: String, val icon: @Composable (modifier: Modifier) -> Unit)
+private data class Credit(val name: String, val githubUsername: String)
 
 private val CREDITS = listOf(
-    Credit("Alessandro Autiero", { }),
-    Credit("Lorenzo Angelo Lupi", { }),
-    Credit("Alessandro Ferrari Pagini", { }),
-    Credit("Federico Giarrusso", { }),
+    Credit("Alessandro Autiero", "Auties00"),
+    Credit("Lorenzo Angelo Lupi", "LordLux"),
+    Credit("Alessandro Ferrari Pagini", "AleFerroExe"),
+    Credit("Federico Giarrusso", "Fedogia"),
 )
 
 /**
@@ -140,8 +141,8 @@ fun AppInfoSheet(onDismiss: () -> Unit) {
                 SegmentedTile(
                     isFirst = true,
                     isLast = false,
-                    title = "Check for Updates",
-                    subtitle = "Cerca nuove versioni",
+                    title = stringResource(R.string.settings_check_updates_title),
+                    subtitle = stringResource(R.string.settings_check_updates_subtitle),
                     onClick = {
                         haptic.tap()
                         if (!isLoading) {
@@ -173,8 +174,8 @@ fun AppInfoSheet(onDismiss: () -> Unit) {
                 SegmentedTile(
                     isFirst = false,
                     isLast = false,
-                    title = "What's New",
-                    subtitle = "Novità dell'ultima versione",
+                    title = stringResource(R.string.settings_whats_new_title),
+                    subtitle = stringResource(R.string.settings_whats_new_subtitle),
                     onClick = { haptic.tap() },
                     leading = {
                         SegmentedIconChip(
@@ -188,8 +189,8 @@ fun AppInfoSheet(onDismiss: () -> Unit) {
                 SegmentedTile(
                     isFirst = false,
                     isLast = true,
-                    title = "GitHub",
-                    subtitle = "Codice sorgente del progetto",
+                    title = stringResource(R.string.settings_github_title),
+                    subtitle = stringResource(R.string.settings_github_subtitle),
                     onClick = {
                         haptic.tap()
                         CustomTabsIntent.Builder().setShowTitle(true).build()
@@ -209,7 +210,7 @@ fun AppInfoSheet(onDismiss: () -> Unit) {
             Spacer(Modifier.height(24.dp))
 
             Text(
-                text = "Credits",
+                text = stringResource(R.string.settings_credits_title),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold,
                 modifier = Modifier.padding(start = 4.dp, bottom = 8.dp),
@@ -253,7 +254,15 @@ private fun CreditTile(
     isLast: Boolean,
 ) {
     val scheme = MaterialTheme.colorScheme
+    val context = LocalContext.current
+    val haptic = rememberHapticManager()
+
     Surface(
+        onClick = {
+            haptic.tap()
+            CustomTabsIntent.Builder().setShowTitle(true).build()
+                .launchUrl(context, "https://github.com/${credit.githubUsername}".toUri())
+        },
         modifier = Modifier.fillMaxWidth(),
         color = scheme.surfaceContainer,
         contentColor = scheme.onSurface,
@@ -263,21 +272,29 @@ private fun CreditTile(
             modifier = Modifier.padding(start = 12.dp, end = 14.dp, top = 8.dp, bottom = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Box(
+            AsyncImage(
+                model = "https://github.com/${credit.githubUsername}.png",
+                contentDescription = "${credit.name} Avatar",
                 modifier = Modifier
                     .size(40.dp)
                     .clip(CircleShape)
                     .background(scheme.secondaryContainer),
-                contentAlignment = Alignment.Center,
-            ) {
-                credit.icon(Modifier.size(26.dp))
-            }
-            Spacer(Modifier.width(14.dp))
-            Text(
-                text = credit.name,
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.SemiBold,
             )
+            Spacer(Modifier.width(14.dp))
+            Column {
+                Text(
+                    text = credit.name,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold,
+                )
+                Text(
+                    text = "@${credit.githubUsername}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            Spacer(Modifier.weight(1f))
+            TrailingGlyph(Icons.Rounded.ChevronRight)
         }
     }
 }

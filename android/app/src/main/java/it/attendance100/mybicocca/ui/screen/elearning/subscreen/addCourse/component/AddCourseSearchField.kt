@@ -31,10 +31,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import it.attendance100.mybicocca.R
 
 /**
  * Material 3 Expressive search pill: fully-rounded filled field, leading search glyph, and a
@@ -111,7 +113,7 @@ fun AddCourseSearchField(
             ) {
                 Icon(
                     imageVector = Icons.Outlined.Close,
-                    contentDescription = "Cancella ricerca",
+                    contentDescription = stringResource(R.string.elearning_clear_search),
                     tint = scheme.onSurfaceVariant,
                     modifier = Modifier.size(16.dp),
                 )

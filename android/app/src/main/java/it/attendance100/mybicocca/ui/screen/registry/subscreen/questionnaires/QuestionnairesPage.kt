@@ -55,6 +55,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -62,6 +64,7 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.SyncStatus
 import it.attendance100.mybicocca.core.state.valueOrNull
@@ -140,7 +143,7 @@ fun QuestionnairesPage(
     var pendingConfirm by remember { mutableStateOf<ConfirmIntent?>(null) }
     var outcome by remember { mutableStateOf<SheetOutcome?>(null) }
 
-    val compileViewModel = compileRequest?.let { request ->
+    @Suppress("DEPRECATION") val compileViewModel = compileRequest?.let { request ->
         hiltViewModel<QuestionnaireCompilationViewModel, QuestionnaireCompilationViewModel.Factory>(
             key = "questionnaire_compile_${request.activityChoiceId}_${request.questionnaireId}_${request.tags}",
             creationCallback = { factory: QuestionnaireCompilationViewModel.Factory ->
@@ -182,13 +185,15 @@ fun QuestionnairesPage(
     }
 
     run {
+        val context = LocalContext.current
         LaunchedEffect(compileViewModel) {
             compileViewModel?.events?.collectLatest { event ->
                 when (event) {
                     QuestionnaireCompilationEvent.Confirmed -> {
                         pendingConfirm = null
                         compileRequest = null
-                        outcome = SheetOutcome.Success("Questionario inviato. Grazie!")
+                        outcome =
+                            SheetOutcome.Success(context.getString(R.string.questionnaire_success_message))
                         viewModel.refresh()
                         viewModel.retryDetail()
                     }
@@ -196,7 +201,10 @@ fun QuestionnairesPage(
                     QuestionnaireCompilationEvent.MissingAnswers -> Unit
 
                     is QuestionnaireCompilationEvent.Failed ->
-                        outcome = SheetOutcome.Error("Operazione non riuscita", event.cause)
+                        outcome = SheetOutcome.Error(
+                            context.getString(R.string.questionnaire_error_title),
+                            event.cause
+                        )
                 }
             }
         }
@@ -219,11 +227,15 @@ fun QuestionnairesPage(
             SheetPagerHeader(
                 depth = page.depth,
                 title = when (page) {
-                    QPage.Root -> "Questionari"
-                    QPage.Units -> activity?.displayName ?: "Questionari"
-                    QPage.Compile -> compileHeader?.title ?: "Questionario"
-                    QPage.ConfirmExit -> "Uscire senza inviare?"
-                    QPage.ConfirmSend -> "Confermare il questionario?"
+                    QPage.Root -> stringResource(R.string.questionnaire_root_title)
+                    QPage.Units -> activity?.displayName
+                        ?: stringResource(R.string.questionnaire_root_title)
+
+                    QPage.Compile -> compileHeader?.title
+                        ?: stringResource(R.string.questionnaire_compile_title)
+
+                    QPage.ConfirmExit -> stringResource(R.string.questionnaire_confirm_exit_title)
+                    QPage.ConfirmSend -> stringResource(R.string.questionnaire_confirm_send_title)
                     QPage.Result -> ""
                 },
                 subtitle = when (page) {
@@ -293,8 +305,8 @@ fun QuestionnairesPage(
                     }
 
                     QPage.ConfirmExit -> ConfirmPage(
-                        body = "Le risposte date finora non sono state inviate e andranno perse.",
-                        confirmLabel = "Esci",
+                        body = stringResource(R.string.questionnaire_confirm_exit_body),
+                        confirmLabel = stringResource(R.string.questionnaire_confirm_exit_action),
                         onContinue = { pendingConfirm = null },
                         onConfirm = {
                             val intent = pendingConfirm
@@ -306,8 +318,8 @@ fun QuestionnairesPage(
                     )
 
                     QPage.ConfirmSend -> ConfirmPage(
-                        body = "La conferma è definitiva: le risposte non potranno più essere modificate.",
-                        confirmLabel = "Conferma",
+                        body = stringResource(R.string.questionnaire_confirm_send_body),
+                        confirmLabel = stringResource(R.string.questionnaire_confirm_send_action),
                         onContinue = { pendingConfirm = null },
                         onConfirm = { compileViewModel?.confirm() },
                     )
@@ -334,11 +346,12 @@ private enum class QPage(val depth: Int) {
 /** What the user was doing when a confirm page interrupted them. */
 private enum class ConfirmIntent { Leave, LeaveAndDismiss, Send }
 
+@Composable
 private fun rootSubtitle(loaded: Boolean, pendingCount: Int): AnnotatedString? = when {
     !loaded -> null
-    pendingCount == 0 -> AnnotatedString("Nessuna valutazione in attesa")
-    pendingCount == 1 -> AnnotatedString("1 insegnamento in attesa di valutazione")
-    else -> AnnotatedString("$pendingCount insegnamenti in attesa di valutazione")
+    pendingCount == 0 -> AnnotatedString(stringResource(R.string.questionnaire_no_pending))
+    pendingCount == 1 -> AnnotatedString(stringResource(R.string.questionnaire_one_pending))
+    else -> AnnotatedString(stringResource(R.string.questionnaire_multiple_pending, pendingCount))
 }
 
 /**
@@ -396,7 +409,10 @@ private fun ConfirmPage(
                     contentColor = brandFg,
                 ),
             ) {
-                Text("Continua", fontWeight = FontWeight.SemiBold)
+                Text(
+                    stringResource(R.string.questionnaire_confirm_continue),
+                    fontWeight = FontWeight.SemiBold
+                )
             }
         }
     }
@@ -432,21 +448,21 @@ private fun ActivitiesPage(
         when {
             failure != null && activities.isNullOrEmpty() -> SheetMessage(
                 icon = Icons.Outlined.CloudOff,
-                title = "Caricamento non riuscito",
+                title = stringResource(R.string.common_error_title),
                 body = failure.cause.friendlyMessage(),
                 action = { RetryButton(onClick = onRetry) },
                 modifier = Modifier.testTag(QuestionnairesTestTags.ROOT_ERROR),
             )
 
             !settled -> SheetLoadingIndicator(
-                label = "Caricamento questionari…",
+                label = stringResource(R.string.questionnaire_loading),
                 modifier = Modifier.testTag(QuestionnairesTestTags.ROOT_LOADING),
             )
 
             activities.isNullOrEmpty() -> SheetMessage(
                 icon = Icons.AutoMirrored.Outlined.FactCheck,
-                title = "Nessun questionario",
-                body = "Quando un insegnamento aprirà la valutazione della didattica lo troverai qui.",
+                title = stringResource(R.string.questionnaire_no_activities),
+                body = stringResource(R.string.questionnaire_no_activities_body),
                 modifier = Modifier.testTag(QuestionnairesTestTags.ROOT_EMPTY),
             )
 

@@ -2,9 +2,12 @@ package it.attendance100.mybicocca.ui.screen.registry.subscreen.library.ext
 
 import android.graphics.BitmapFactory
 import android.util.Base64
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.res.stringResource
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.domain.model.library.LibraryCrowd
 
 private val OccupancyLow = Color(0xFF2E9E55)
@@ -21,26 +24,29 @@ fun occupancyColor(percentage: Int): Color = when {
     else -> OccupancyHigh
 }
 
+@Composable
 fun occupancyLabel(percentage: Int): String = when {
-    percentage < 40 -> "Poco affollata"
-    percentage < 75 -> "Moderatamente affollata"
-    else -> "Molto affollata"
+    percentage < 40 -> stringResource(R.string.library_crowded_low)
+    percentage < 75 -> stringResource(R.string.library_crowded_mid)
+    else -> stringResource(R.string.library_crowded_high)
 }
 
+@Composable
 fun crowdLabel(crowd: LibraryCrowd): String = when (crowd) {
-    LibraryCrowd.Fluid -> "Poco affollata"
-    LibraryCrowd.Moderate -> "Moderatamente affollata"
-    LibraryCrowd.Dense -> "Molto affollata"
+    LibraryCrowd.Fluid -> stringResource(R.string.library_crowded_low)
+    LibraryCrowd.Moderate -> stringResource(R.string.library_crowded_mid)
+    LibraryCrowd.Dense -> stringResource(R.string.library_crowded_high)
 }
 
 /** Formats a duration as "30 min", "1 h" or "1 h 30". */
+@Composable
 fun durationLabel(minutes: Int): String {
     val hours = minutes / 60
     val rest = minutes % 60
     return when {
-        hours == 0 -> "$rest min"
-        rest == 0 -> "$hours h"
-        else -> "$hours h $rest"
+        hours == 0 -> stringResource(R.string.library_duration_minutes_only, rest)
+        rest == 0 -> stringResource(R.string.library_duration_hours_only, hours)
+        else -> stringResource(R.string.library_duration_hours_minutes, hours, rest)
     }
 }
 

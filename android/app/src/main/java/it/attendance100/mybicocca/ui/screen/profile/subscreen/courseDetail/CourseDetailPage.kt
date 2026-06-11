@@ -42,8 +42,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.SyncStatus
 import it.attendance100.mybicocca.domain.model.transcript.AttemptOutcome
@@ -75,7 +76,13 @@ fun CourseDetailPage(
     row: TranscriptRow,
     onOpenAppelli: (courseKey: String) -> Unit,
     modifier: Modifier = Modifier,
-    viewModel: CourseDetailViewModel = hiltViewModel(),
+    viewModel: CourseDetailViewModel = hiltViewModel(
+        checkNotNull(
+            LocalViewModelStoreOwner.current
+        ) {
+            "No ViewModelStoreOwner was provided via LocalViewModelStoreOwner"
+        }, null
+    ),
 ) {
     val detail by viewModel.detail.collectAsStateWithLifecycle()
     val syncStatus by viewModel.syncStatus.collectAsStateWithLifecycle()
@@ -99,6 +106,7 @@ fun CourseDetailPage(
                     is SyncStatus.Failed -> DetailError(
                         onRetry = { viewModel.retry(row.id, row.passed) },
                     )
+
                     else -> Box(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -114,7 +122,11 @@ fun CourseDetailPage(
         }
 
         Spacer(Modifier.height(12.dp))
-        AppelliButton(row = row, detail = (detail as? Loadable.Loaded)?.value, onOpenAppelli = onOpenAppelli)
+        AppelliButton(
+            row = row,
+            detail = (detail as? Loadable.Loaded)?.value,
+            onOpenAppelli = onOpenAppelli
+        )
         Spacer(Modifier.height(8.dp))
     }
 }
@@ -276,7 +288,8 @@ private fun AttemptCard(
             )
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = attempt.callDate?.format(FullDateFormat)?.replaceFirstChar { it.uppercase() }
+                    text = attempt.callDate?.format(FullDateFormat)
+                        ?.replaceFirstChar { it.uppercase() }
                         ?: attempt.sessionDescription
                         ?: "Prova",
                     style = MaterialTheme.typography.bodyMedium,

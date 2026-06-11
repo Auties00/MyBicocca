@@ -33,9 +33,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.domain.model.settings.FileOpenChoice
 import it.attendance100.mybicocca.ui.component.file.FileKind
 import it.attendance100.mybicocca.ui.component.file.openChooserIcon
@@ -90,7 +92,7 @@ fun FileAssociationChooserSheet(
                 )
                 Spacer(Modifier.height(6.dp))
                 Text(
-                    text = "Scegli come aprire i file di questo tipo.",
+                    text = stringResource(R.string.settings_file_association_choose_hint),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center,
@@ -106,7 +108,7 @@ fun FileAssociationChooserSheet(
                 horizontalArrangement = Arrangement.spacedBy(4.dp),
             ) {
                 ChoiceButton(
-                    label = "In app",
+                    label = stringResource(R.string.settings_file_association_in_app),
                     icon = Icons.Outlined.OpenInFull,
                     selected = current == FileOpenChoice.InApp,
                     shape = ButtonGroupDefaults.connectedLeadingButtonShape,
@@ -114,7 +116,7 @@ fun FileAssociationChooserSheet(
                     modifier = Modifier.weight(1.4f),
                 )
                 ChoiceButton(
-                    label = "Altra app",
+                    label = stringResource(R.string.settings_file_association_external),
                     icon = Icons.AutoMirrored.Outlined.OpenInNew,
                     selected = current == FileOpenChoice.External,
                     shape = ButtonGroupDefaults.connectedTrailingButtonShape,
@@ -126,7 +128,7 @@ fun FileAssociationChooserSheet(
             Spacer(Modifier.height(8.dp))
 
             ChoiceButton(
-                label = "Chiedi ogni volta",
+                label = stringResource(R.string.settings_file_association_ask),
                 icon = Icons.AutoMirrored.Outlined.HelpOutline,
                 selected = current == null,
                 shape = MaterialTheme.shapes.extraLarge,

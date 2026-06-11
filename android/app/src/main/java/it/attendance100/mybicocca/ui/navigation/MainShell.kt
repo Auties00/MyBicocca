@@ -37,6 +37,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
@@ -54,6 +55,7 @@ import androidx.navigation3.ui.NavDisplay
 import coil.imageLoader
 import coil.request.ImageRequest
 import coil.size.Size
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.state.valueOrNull
 import it.attendance100.mybicocca.domain.model.calendar.CalendarEvent
 import it.attendance100.mybicocca.domain.model.settings.FileOpenChoice
@@ -491,8 +493,12 @@ fun MainShell(
         onSubmit = searchViewModel::submit,
     )
 
-    val bottomBarItems = remember {
-        ShellTab.entries.map { BottomBarItem(key = it, label = it.label, icon = it.icon) }
+    val bottomBarItems = ShellTab.entries.map {
+        BottomBarItem(
+            key = it,
+            label = stringResource(it.labelRes),
+            icon = it.icon
+        )
     }
 
     val snackbarController = rememberAppSnackbarController()
@@ -501,15 +507,28 @@ fun MainShell(
         accountViewModel.events.collect { event ->
             when (event) {
                 is AccountEvent.RequireReauth ->
-                    snackbarController.showError("La sessione è scaduta. Effettua di nuovo l'accesso.", event.cause)
+                    snackbarController.showError(
+                        context.getString(R.string.shell_session_expired),
+                        event.cause
+                    )
                 is AccountEvent.SignedOut ->
-                    snackbarController.showInfo("Account rimosso")
+                    snackbarController.showInfo(context.getString(R.string.shell_account_removed))
                 is AccountEvent.NewCareerAvailable ->
-                    snackbarController.showInfo("Nuova carriera disponibile: ${event.career.description}")
+                    snackbarController.showInfo(
+                        context.getString(
+                            R.string.shell_new_career_available,
+                            event.career.description
+                        )
+                    )
                 is AccountEvent.SelectedCareerEnded ->
-                    snackbarController.showInfo("La carriera \"${event.career.description}\" è terminata")
+                    snackbarController.showInfo(
+                        context.getString(
+                            R.string.shell_career_ended,
+                            event.career.description
+                        )
+                    )
                 is AccountEvent.SelectedCareerMissing ->
-                    snackbarController.showInfo("La carriera selezionata non è più disponibile")
+                    snackbarController.showInfo(context.getString(R.string.shell_career_missing))
                 is AccountEvent.Switched -> Unit
             }
         }

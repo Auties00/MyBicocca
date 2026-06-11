@@ -6,6 +6,8 @@ import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material.icons.outlined.Videocam
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.domain.model.appointment.AppointmentReservation
 import it.attendance100.mybicocca.ui.component.card.BookingFooterEntry
 import it.attendance100.mybicocca.ui.component.card.BookingSummaryCard
@@ -26,14 +28,19 @@ fun ReservationCard(
     modifier: Modifier = Modifier,
 ) {
     val timeLabel = "${relativeDayLabel(reservation.start.toLocalDate())} · ${reservation.start.format(TimeFormat)}"
-    val section = sectionLabelOf(reservation.serviceGroup ?: reservation.serviceName)
+    val section =
+        stringResource(sectionLabelOf(reservation.serviceGroup ?: reservation.serviceName))
 
     val placeEntry = if (reservation.webConferenceUrl != null) {
-        BookingFooterEntry(Icons.Outlined.Videocam, "In videoconferenza")
+        BookingFooterEntry(
+            Icons.Outlined.Videocam,
+            stringResource(R.string.appointments_video_call)
+        )
     } else {
         BookingFooterEntry(
             icon = Icons.Outlined.LocationOn,
-            label = reservation.areaName ?: "Sede da definire",
+            label = reservation.areaName
+                ?: stringResource(R.string.appointments_location_unassigned),
             muted = reservation.areaName == null,
         )
     }

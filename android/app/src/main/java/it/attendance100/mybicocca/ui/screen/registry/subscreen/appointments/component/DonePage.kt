@@ -3,7 +3,6 @@ package it.attendance100.mybicocca.ui.screen.registry.subscreen.appointments.com
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -31,10 +30,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.domain.model.appointment.AppointmentReservation
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.appointments.ext.decodeQrDataUrl
 import java.time.format.DateTimeFormatter
@@ -88,7 +89,7 @@ internal fun DonePage(
             }
             Spacer(Modifier.height(24.dp))
             Text(
-                text = "Appuntamento confermato",
+                text = stringResource(R.string.appointments_confirmed_text),
                 style = MaterialTheme.typography.headlineSmallEmphasized,
                 color = scheme.onSurface,
                 textAlign = TextAlign.Center,
@@ -110,7 +111,7 @@ internal fun DonePage(
                         horizontalAlignment = Alignment.CenterHorizontally,
                     ) {
                         Text(
-                            text = "CODICE PRENOTAZIONE",
+                            text = stringResource(R.string.appointments_booking_code),
                             style = MaterialTheme.typography.labelSmall,
                             color = scheme.onSurfaceVariant,
                             fontWeight = FontWeight.SemiBold,
@@ -142,7 +143,7 @@ internal fun DonePage(
             }
             Spacer(Modifier.height(16.dp))
             Text(
-                text = "Trovi la prenotazione in Appuntamenti, con QR e promemoria PDF.",
+                text = stringResource(R.string.appointments_reservation_info),
                 style = MaterialTheme.typography.bodySmall,
                 color = scheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,
@@ -163,7 +164,11 @@ internal fun DonePage(
                 contentColor = if (dark) scheme.onPrimaryContainer else scheme.onPrimary,
             ),
         ) {
-            Text("Fatto", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+            Text(
+                stringResource(R.string.appointments_done),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold
+            )
         }
     }
 }

@@ -1,5 +1,6 @@
 package it.attendance100.mybicocca.ui.screen.registry.subscreen.library.component
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -10,7 +11,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.background
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.EventSeat
@@ -23,9 +23,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.SyncStatus
 import it.attendance100.mybicocca.domain.model.library.LibraryZone
@@ -55,23 +57,25 @@ internal fun ZonesPage(
             .padding(bottom = 24.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
+        val context = LocalContext.current
         when (zones) {
             Loadable.NotYetLoaded -> when (zonesStatus) {
                 is SyncStatus.Failed -> SheetMessage(
                     icon = Icons.Outlined.EventSeat,
-                    title = "Caricamento non riuscito",
-                    body = "Non è stato possibile caricare le zone prenotabili.",
+                    title = context.getString(R.string.common_error_title),
+                    body = context.getString(R.string.library_zones_loading_failed),
                     action = { RetryButton(onClick = onRetry) },
                 )
-                else -> SheetLoadingIndicator(label = "Caricamento zone…")
+
+                else -> SheetLoadingIndicator(label = context.getString(R.string.library_zones_loading))
             }
 
             is Loadable.Loaded -> {
                 if (zones.value.isEmpty()) {
                     SheetMessage(
                         icon = Icons.Outlined.EventSeat,
-                        title = "Nessuna zona",
-                        body = "Questa biblioteca non ha zone prenotabili al momento.",
+                        title = context.getString(R.string.library_no_zones),
+                        body = context.getString(R.string.library_no_zones_body),
                     )
                 } else {
                     zones.value.forEach { zone ->

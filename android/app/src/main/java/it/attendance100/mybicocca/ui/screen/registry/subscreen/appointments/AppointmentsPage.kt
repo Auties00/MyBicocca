@@ -7,13 +7,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import it.attendance100.mybicocca.core.state.Loadable
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.res.stringResource
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import it.attendance100.mybicocca.R
+import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.domain.model.appointment.AppointmentReservation
 import it.attendance100.mybicocca.ui.component.modal.SheetConfirmPage
 import it.attendance100.mybicocca.ui.component.modal.SheetOutcome
@@ -87,9 +89,13 @@ fun AppointmentsPage(
             viewModel.events.collect { event ->
                 when (event) {
                     AppointmentsEvent.ReservationCancelled ->
-                        outcome = SheetOutcome.Success("Appuntamento annullato.")
+                        outcome =
+                            SheetOutcome.Success(context.getString(R.string.appointments_cancelled))
                     is AppointmentsEvent.CancelFailed ->
-                        outcome = SheetOutcome.Error("Annullamento non riuscito", event.cause)
+                        outcome = SheetOutcome.Error(
+                            context.getString(R.string.appointments_cancel_failed),
+                            event.cause
+                        )
                     is AppointmentsEvent.PdfReady -> {
                         val path = withContext(Dispatchers.IO) {
                             val dir = File(context.cacheDir, "appointments").apply { mkdirs() }
@@ -98,9 +104,15 @@ fun AppointmentsPage(
                         onOpenPdf(path, event.fileName)
                     }
                     is AppointmentsEvent.PdfFailed ->
-                        outcome = SheetOutcome.Error("Download non riuscito", event.cause)
+                        outcome = SheetOutcome.Error(
+                            context.getString(R.string.appointments_pdf_failed),
+                            event.cause
+                        )
                     is AppointmentsEvent.BookingFailed ->
-                        outcome = SheetOutcome.Error("Prenotazione non riuscita", event.cause)
+                        outcome = SheetOutcome.Error(
+                            context.getString(R.string.appointments_booking_failed),
+                            event.cause
+                        )
                 }
             }
         }
@@ -127,9 +139,7 @@ fun AppointmentsPage(
             else -> AppointmentsDisplay.Page(current)
         }
 
-        val sections = remember(services) {
-            (services as? Loadable.Loaded)?.value?.toDirectorySections().orEmpty()
-        }
+        val sections = (services as? Loadable.Loaded)?.value?.toDirectorySections().orEmpty()
         val serviceName = bookingService?.displayName.orEmpty()
         val slotRecap = listOfNotNull(
             selectedDate?.format(DetailDateFormat)?.replaceFirstChar { it.titlecase(Locale.ITALIAN) },
@@ -141,15 +151,17 @@ fun AppointmentsPage(
                 depth = displayDepth(display),
                 title = when (display) {
                     AppointmentsDisplay.Outcome -> ""
-                    AppointmentsDisplay.ConfirmCancel -> "Annullare l'appuntamento?"
+                    AppointmentsDisplay.ConfirmCancel -> stringResource(R.string.appointments_cancel_title)
                     is AppointmentsDisplay.Page -> when (val page = display.page) {
-                        AppointmentsPage.Reservations -> "Segreterie"
-                        is AppointmentsPage.ReservationDetail -> detailReservation?.serviceName ?: "Appuntamento"
-                        AppointmentsPage.Sections -> "Prenota"
+                        AppointmentsPage.Reservations -> stringResource(R.string.appointments_title)
+                        is AppointmentsPage.ReservationDetail -> detailReservation?.serviceName
+                            ?: stringResource(R.string.appointments_single)
+
+                        AppointmentsPage.Sections -> stringResource(R.string.appointments_book)
                         is AppointmentsPage.Types -> page.sectionName
-                        AppointmentsPage.Slots -> serviceName.ifBlank { "Prenota" }
-                        AppointmentsPage.Form -> serviceName.ifBlank { "Conferma" }
-                        AppointmentsPage.Done -> "Confermato"
+                        AppointmentsPage.Slots -> serviceName.ifBlank { stringResource(R.string.appointments_book) }
+                        AppointmentsPage.Form -> serviceName.ifBlank { stringResource(R.string.appointments_confirm) }
+                        AppointmentsPage.Done -> stringResource(R.string.appointments_confirmed)
                     }
                 },
                 subtitle = when (display) {
@@ -158,14 +170,18 @@ fun AppointmentsPage(
                     is AppointmentsDisplay.Page -> when (val page = display.page) {
                         AppointmentsPage.Reservations ->
                             if (reservations !is Loadable.Loaded) null
-                            else if (reservationList.isEmpty()) "Nessuna prenotazione"
-                            else if (reservationList.size == 1) "1 prenotazione"
-                            else "${reservationList.size} prenotazioni"
-                        is AppointmentsPage.ReservationDetail -> "Dettagli appuntamento"
-                        AppointmentsPage.Sections -> "Scegli un servizio"
+                            else if (reservationList.isEmpty()) stringResource(R.string.appointments_no_reservations)
+                            else if (reservationList.size == 1) stringResource(R.string.appointments_one_reservation)
+                            else stringResource(
+                                R.string.appointments_multiple_reservations,
+                                reservationList.size
+                            )
+
+                        is AppointmentsPage.ReservationDetail -> stringResource(R.string.appointments_details)
+                        AppointmentsPage.Sections -> stringResource(R.string.appointments_choose_service)
                         is AppointmentsPage.Types ->
                             sections.firstOrNull { it.name == page.sectionName }?.caption
-                        AppointmentsPage.Slots -> "Scegli data e ora"
+                        AppointmentsPage.Slots -> stringResource(R.string.appointments_choose_date_time)
                         AppointmentsPage.Form -> slotRecap
                         AppointmentsPage.Done -> serviceName.ifBlank { null }
                     }
@@ -192,8 +208,10 @@ fun AppointmentsPage(
 
                     AppointmentsDisplay.ConfirmCancel -> pendingCancel?.let { reservation ->
                         SheetConfirmPage(
-                            body = "Stai per annullare l'appuntamento a \"${reservation.serviceName}\". " +
-                                "Lo sportello tornerà prenotabile da altri studenti.",
+                            body = stringResource(
+                                R.string.appointments_cancel_body,
+                                reservation.serviceName
+                            ),
                             onConfirm = {
                                 pendingCancel = null
                                 viewModel.cancel(reservation)

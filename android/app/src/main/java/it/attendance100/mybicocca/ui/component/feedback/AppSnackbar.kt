@@ -3,9 +3,9 @@ package it.attendance100.mybicocca.ui.component.feedback
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.togetherWith
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -253,9 +253,9 @@ private fun SnackbarDuration.toMillisCompat(
  * builds — must not leak internals (no class names, no stack traces).
  */
 private fun Throwable.friendlyShortReason(): String? = when (this) {
-    is UnknownHostException, is ConnectException -> "rete non disponibile"
-    is SocketTimeoutException -> "timeout di rete"
-    is IOException -> "errore di rete"
+    is UnknownHostException, is ConnectException -> "error_network_unavailable"
+    is SocketTimeoutException -> "error_network_timeout"
+    is IOException -> "error_network_generic"
     else -> null
 }
 

@@ -3,6 +3,8 @@ package it.attendance100.mybicocca.ui.screen.registry.subscreen.examResults
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -21,8 +23,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerDefaults
 import androidx.compose.foundation.pager.rememberPagerState
@@ -30,10 +30,10 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.Grading
 import androidx.compose.material.icons.automirrored.outlined.Notes
 import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material.icons.outlined.CloudOff
-import androidx.compose.material.icons.outlined.Grading
 import androidx.compose.material.icons.outlined.TaskAlt
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Close
@@ -59,6 +59,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -67,6 +68,7 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.SyncStatus
 import it.attendance100.mybicocca.core.state.valueOrNull
@@ -74,7 +76,6 @@ import it.attendance100.mybicocca.domain.model.exam.AcknowledgmentStatus
 import it.attendance100.mybicocca.domain.model.exam.ExamGrade
 import it.attendance100.mybicocca.domain.model.exam.ExamResult
 import it.attendance100.mybicocca.domain.model.exam.requiresStudentDecision
-import it.attendance100.mybicocca.ui.component.input.SegmentedSwitch
 import it.attendance100.mybicocca.ui.component.button.RetryButton
 import it.attendance100.mybicocca.ui.component.card.DetailFactCard
 import it.attendance100.mybicocca.ui.component.exam.ExamGradeBadge
@@ -82,6 +83,7 @@ import it.attendance100.mybicocca.ui.component.exam.shortLabel
 import it.attendance100.mybicocca.ui.component.feedback.EmptyState
 import it.attendance100.mybicocca.ui.component.feedback.friendlyMessage
 import it.attendance100.mybicocca.ui.component.feedback.rememberMinDurationLoading
+import it.attendance100.mybicocca.ui.component.input.SegmentedSwitch
 import it.attendance100.mybicocca.ui.component.modal.SheetLoadingIndicator
 import it.attendance100.mybicocca.ui.component.modal.SheetMessage
 import it.attendance100.mybicocca.ui.component.modal.SheetOutcome
@@ -156,6 +158,10 @@ fun ExamResultsPage(
         else -> EsitiSheetPage.Detail
     }
 
+    val acceptedMsg = stringResource(R.string.exam_results_accepted)
+    val rejectedMsg = stringResource(R.string.exam_results_rejected)
+    val operationFailedMsg = stringResource(R.string.exam_results_operation_failed)
+
     run {
         LaunchedEffect(viewModel) {
             viewModel.events.collectLatest { event ->
@@ -163,15 +169,15 @@ fun ExamResultsPage(
                     ExamResultEvent.AcceptSucceeded -> {
                         confirmingReject = false
                         detailId = null
-                        outcome = SheetOutcome.Success("Esito accettato")
+                        outcome = SheetOutcome.Success(acceptedMsg)
                     }
                     ExamResultEvent.RejectSucceeded -> {
                         confirmingReject = false
                         detailId = null
-                        outcome = SheetOutcome.Success("Esito rifiutato")
+                        outcome = SheetOutcome.Success(rejectedMsg)
                     }
                     is ExamResultEvent.Failed ->
-                        outcome = SheetOutcome.Error("Operazione non riuscita", event.cause)
+                        outcome = SheetOutcome.Error(operationFailedMsg, event.cause)
                 }
             }
         }
@@ -188,9 +194,9 @@ fun ExamResultsPage(
             SheetPagerHeader(
                 depth = page.depth,
                 title = when (page) {
-                    EsitiSheetPage.Root -> "Esiti"
+                    EsitiSheetPage.Root -> stringResource(R.string.exam_results_title)
                     EsitiSheetPage.Detail -> detailResult?.displayTitle() ?: ""
-                    EsitiSheetPage.ConfirmReject -> "Rifiutare l'esito?"
+                    EsitiSheetPage.ConfirmReject -> stringResource(R.string.exam_results_confirm_reject_title)
                     EsitiSheetPage.Result -> ""
                 },
                 subtitle = when (page) {
@@ -329,6 +335,7 @@ private fun sectionSummary(
     }
 }
 
+
 /**
  * Root feed body: a first-load failure page with retry, a minimum-duration loading
  * indicator so quick fetches don't flash it, the all-empty message, or the two-tab pager.
@@ -362,21 +369,21 @@ private fun SheetBody(
         when {
             failure != null && !loaded -> SheetMessage(
                 icon = Icons.Outlined.CloudOff,
-                title = "Caricamento non riuscito",
+                title = stringResource(R.string.common_error_title),
                 body = failure.cause.friendlyMessage(),
                 action = { RetryButton(onClick = onRetry) },
                 modifier = Modifier.testTag(ExamResultsTestTags.STATE_ERROR),
             )
 
             !settled -> SheetLoadingIndicator(
-                label = "Caricamento esiti…",
+                label = stringResource(R.string.exam_results_loading),
                 modifier = Modifier.testTag(ExamResultsTestTags.STATE_LOADING),
             )
 
             grouped.values.all { it.isEmpty() } -> SheetMessage(
-                icon = Icons.Outlined.Grading,
-                title = "Nessun esito pubblicato",
-                body = "Quando un docente pubblica l'esito di un appello lo troverai qui.",
+                icon = Icons.AutoMirrored.Outlined.Grading,
+                title = stringResource(R.string.exam_results_no_results),
+                body = stringResource(R.string.exam_results_no_results_body),
                 modifier = Modifier.testTag(ExamResultsTestTags.STATE_EMPTY),
             )
 
@@ -495,7 +502,7 @@ private fun EsitiPager(
 
 private fun ExamResultFilter.emptyIcon(): ImageVector = when (this) {
     ExamResultFilter.Pending -> Icons.Outlined.TaskAlt
-    ExamResultFilter.Archived -> Icons.Outlined.Grading
+    ExamResultFilter.Archived -> Icons.AutoMirrored.Outlined.Grading
 }
 
 private fun ExamResultFilter.emptyTitle(): String = when (this) {
@@ -507,6 +514,7 @@ private fun ExamResultFilter.emptyBody(): String = when (this) {
     ExamResultFilter.Pending -> "Non hai esiti in attesa di una tua decisione."
     ExamResultFilter.Archived -> "Gli esiti accettati, rifiutati o verbalizzati compaiono qui."
 }
+
 
 /**
  * An outcome still waiting for the student's choice, as a standalone card: the grade
@@ -551,7 +559,7 @@ private fun PendingResultRow(
                     val daysLeft = ChronoUnit.DAYS.between(today, deadline)
                     Text(
                         text = buildAnnotatedString {
-                            append("Decidi entro ")
+                            append(stringResource(R.string.exam_results_decide_by) + " ")
                             withStyle(SpanStyle(color = scheme.primary)) {
                                 append(deadlineLabel(daysLeft))
                             }
@@ -779,7 +787,7 @@ private fun DecisionActionRow(
                     modifier = Modifier.size(20.dp),
                 )
                 Spacer(Modifier.width(8.dp))
-                Text("Rifiuta", fontWeight = FontWeight.SemiBold)
+                Text(stringResource(R.string.exam_results_reject), fontWeight = FontWeight.SemiBold)
             }
         }
         Button(
@@ -810,7 +818,7 @@ private fun DecisionActionRow(
                     modifier = Modifier.size(20.dp),
                 )
                 Spacer(Modifier.width(8.dp))
-                Text("Accetta", fontWeight = FontWeight.SemiBold)
+                Text(stringResource(R.string.exam_results_accept), fontWeight = FontWeight.SemiBold)
             }
         }
     }
@@ -862,7 +870,7 @@ private fun RejectConfirmPage(
                     contentColor = scheme.onSurface,
                 ),
             ) {
-                Text("Conferma", fontWeight = FontWeight.SemiBold)
+                Text(stringResource(R.string.common_confirm), fontWeight = FontWeight.SemiBold)
             }
             Button(
                 onClick = onKeep,
@@ -876,7 +884,7 @@ private fun RejectConfirmPage(
                     contentColor = brandFg,
                 ),
             ) {
-                Text("Annulla", fontWeight = FontWeight.SemiBold)
+                Text(stringResource(R.string.common_cancel), fontWeight = FontWeight.SemiBold)
             }
         }
     }

@@ -11,8 +11,9 @@ import java.net.UnknownHostException
  */
 fun Throwable.friendlyMessage(): String = when (this) {
     is UnknownHostException,
-    is ConnectException -> "Rete non disponibile. Controlla la connessione e riprova."
-    is SocketTimeoutException -> "Timeout di rete. Riprova tra un momento."
-    is IOException -> "Errore di rete. Riprova tra un momento."
-    else -> "Si è verificato un errore imprevisto."
+    is ConnectException -> "error_network_unavailable_full"
+
+    is SocketTimeoutException -> "error_network_timeout_full"
+    is IOException -> "error_network_generic_full"
+    else -> "error_unexpected"
 }

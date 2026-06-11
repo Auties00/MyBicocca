@@ -40,9 +40,9 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
@@ -162,7 +162,7 @@ fun StudyPlanPage(
             retrying = false
         }
     }
-    val editViewModel = editRequest?.let { request ->
+    @Suppress("DEPRECATION") val editViewModel = editRequest?.let { request ->
         hiltViewModel<StudyPlanEditViewModel, StudyPlanEditViewModel.Factory>(
             key = "plan_edit_${request.choiceRegulationId}_${request.schemaId}_${request.planId}",
             creationCallback = { factory: StudyPlanEditViewModel.Factory ->
@@ -210,6 +210,7 @@ fun StudyPlanPage(
                                 outcomeTerminal = false
                                 outcome = SheetOutcome.Error("Impossibile aprire il documento", it)
                             }
+
                     is StudyPlanEvent.ShowMessage -> {
                         outcomeTerminal = false
                         outcome = SheetOutcome.Info(event.message)
@@ -339,7 +340,9 @@ fun StudyPlanPage(
                     PlanSheetPage.Result -> outcome?.let { current ->
                         SheetResultPage(
                             outcome = current,
-                            onDismiss = { if (outcomeTerminal) control?.dismiss() else outcome = null },
+                            onDismiss = {
+                                if (outcomeTerminal) control?.dismiss() else outcome = null
+                            },
                             onRetry = if (outcomeTerminal && current is SheetOutcome.Error && editRequest != null) {
                                 { retrying = true }
                             } else {

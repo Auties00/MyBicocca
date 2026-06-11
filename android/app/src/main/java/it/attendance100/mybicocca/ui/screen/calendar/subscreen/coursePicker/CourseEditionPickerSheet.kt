@@ -21,6 +21,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -28,6 +29,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.domain.model.elearning.course.CourseId
 import it.attendance100.mybicocca.domain.model.elearning.course.EnrolledCourse
 import it.attendance100.mybicocca.domain.model.elearning.course.courseCode
@@ -82,7 +84,7 @@ private fun Header(count: Int) {
     val scheme = MaterialTheme.colorScheme
     Column(modifier = Modifier.padding(start = 22.dp, top = 4.dp, end = 22.dp, bottom = 4.dp)) {
         Text(
-            text = "Apri corso",
+            text = stringResource(R.string.course_picker_title),
             fontSize = 27.sp,
             fontWeight = FontWeight.Bold,
             letterSpacing = (-0.9).sp,
@@ -91,9 +93,9 @@ private fun Header(count: Int) {
         Text(
             text = buildAnnotatedString {
                 withStyle(SpanStyle(color = scheme.primary, fontWeight = FontWeight.Bold)) {
-                    append("$count edizioni")
+                    append(stringResource(R.string.course_picker_editions, count))
                 }
-                append(" disponibili su e-learning")
+                append(" " + stringResource(R.string.course_picker_available))
             },
             fontSize = 13.5.sp,
             fontWeight = FontWeight.SemiBold,
@@ -148,7 +150,8 @@ private fun EditionRow(
             }
             Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text(
-                    text = course.courseCode().periodLabel ?: "Trasversale",
+                    text = course.courseCode().periodLabel
+                        ?: stringResource(R.string.course_picker_transversal),
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.SemiBold,
                     color = scheme.onSurface,

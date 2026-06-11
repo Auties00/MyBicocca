@@ -24,8 +24,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.ui.component.button.PrimaryActionButton
 import it.attendance100.mybicocca.ui.component.feedback.friendlyMessage
 
@@ -112,10 +114,10 @@ fun SheetResultPage(
                         contentColor = scheme.onSurface,
                     ),
                 ) {
-                    Text("Chiudi", fontWeight = FontWeight.SemiBold)
+                    Text(stringResource(R.string.common_close), fontWeight = FontWeight.SemiBold)
                 }
                 Button(
-                    onClick = { onRetry?.invoke() },
+                    onClick = { onRetry.invoke() },
                     enabled = !retryInProgress,
                     modifier = Modifier
                         .weight(1.4f)
@@ -131,13 +133,18 @@ fun SheetResultPage(
                     if (retryInProgress) {
                         LoadingIndicator(modifier = Modifier.size(24.dp), color = brandFg)
                     } else {
-                        Text("Riprova", fontWeight = FontWeight.SemiBold)
+                        Text(
+                            stringResource(R.string.common_retry),
+                            fontWeight = FontWeight.SemiBold
+                        )
                     }
                 }
             }
         } else {
             PrimaryActionButton(
-                text = if (outcome is SheetOutcome.Error) "Chiudi" else "Fine",
+                text = if (outcome is SheetOutcome.Error) stringResource(R.string.common_close) else stringResource(
+                    R.string.common_done
+                ),
                 onClick = onDismiss,
                 modifier = Modifier
                     .fillMaxWidth()

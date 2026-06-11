@@ -49,12 +49,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.library.state.LibraryLoginFeedback
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.library.state.LibraryLoginPhase
 import kotlinx.coroutines.delay
@@ -143,8 +145,9 @@ private fun LoginForm(
                     modifier = Modifier.size(40.dp),
                 )
             }
+            val context = LocalContext.current
             Text(
-                text = "Accedi alle tue prenotazioni",
+                text = stringResource(R.string.library_login_title),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.SemiBold,
                 color = scheme.onSurface,
@@ -152,9 +155,9 @@ private fun LoginForm(
             )
             Text(
                 text = if (awaiting) {
-                    "Ti abbiamo inviato un link. Aprilo dalla tua casella, poi torna qui e tocca \"Ho aperto il link\"."
+                    context.getString(R.string.library_link_sent)
                 } else {
-                    "Ti invieremo un link di accesso alla tua email istituzionale per sincronizzare le tue prenotazioni."
+                    context.getString(R.string.library_will_send_link)
                 },
                 style = MaterialTheme.typography.bodyMedium,
                 color = scheme.onSurfaceVariant,
@@ -198,9 +201,17 @@ private fun LoginForm(
             } else if (awaiting) {
                 Icon(Icons.Outlined.TaskAlt, contentDescription = null, modifier = Modifier.size(20.dp))
                 Spacer(Modifier.width(8.dp))
-                Text("Ho aperto il link", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                Text(
+                    stringResource(R.string.library_link_opened),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold
+                )
             } else {
-                Text("Invia link di accesso", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                Text(
+                    stringResource(R.string.library_send_link),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold
+                )
             }
         }
     }
@@ -217,16 +228,18 @@ private fun LoginFeedbackPanel(
     onDismiss: () -> Unit,
 ) {
     val scheme = MaterialTheme.colorScheme
+    val context = LocalContext.current
     val success = feedback == LibraryLoginFeedback.LoggedIn
 
     val icon: ImageVector = if (success) Icons.Rounded.CheckCircle else Icons.Rounded.MarkEmailUnread
     val container = if (success) scheme.primaryContainer else scheme.tertiaryContainer
     val onContainer = if (success) scheme.onPrimaryContainer else scheme.onTertiaryContainer
-    val title = if (success) "Accesso eseguito" else "Link non ancora aperto"
+    val title =
+        if (success) context.getString(R.string.library_login_success) else context.getString(R.string.library_link_not_opened)
     val body = if (success) {
-        "Le tue prenotazioni sono sincronizzate."
+        context.getString(R.string.library_bookings_synced)
     } else {
-        "Aprilo dalla tua email istituzionale, poi tocca di nuovo \"Ho aperto il link\"."
+        context.getString(R.string.library_open_link_again)
     }
 
     val pop by animateFloatAsState(

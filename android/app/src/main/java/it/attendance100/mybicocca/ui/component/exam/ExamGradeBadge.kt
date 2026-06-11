@@ -109,9 +109,9 @@ private fun ExamGrade.containerColors(): Pair<Color, Color> {
 /** Compact badge label: the numeric value, "30L" for the lode, abbreviated Italian outcomes otherwise. */
 fun ExamGrade.shortLabel(): String = when (this) {
     is ExamGrade.Numeric -> if (value >= 31) "30L" else value.toString()
-    ExamGrade.Passed -> "Id."
-    ExamGrade.NotPassed -> "Resp."
-    ExamGrade.Withdrew -> "Rit."
-    ExamGrade.Absent -> "Ass."
+    ExamGrade.Passed -> "exam_grade_passed"
+    ExamGrade.NotPassed -> "exam_grade_not_passed"
+    ExamGrade.Withdrew -> "exam_grade_withdrew"
+    ExamGrade.Absent -> "exam_grade_absent"
     ExamGrade.Unknown -> "—"
 }

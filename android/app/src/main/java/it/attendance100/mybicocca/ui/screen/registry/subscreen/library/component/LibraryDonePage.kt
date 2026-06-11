@@ -20,7 +20,6 @@ import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
@@ -28,9 +27,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.library.ext.durationLabel
 import java.time.LocalDate
 import java.time.LocalTime
@@ -74,9 +76,10 @@ internal fun LibraryDonePage(
         ) {
             Spacer(Modifier.height(8.dp))
             HeroIcon(Icons.Rounded.Check)
+            val context = LocalContext.current
             Spacer(Modifier.height(24.dp))
             Text(
-                text = "Posto prenotato",
+                text = stringResource(R.string.library_booked),
                 style = MaterialTheme.typography.headlineSmallEmphasized,
                 color = scheme.onSurface,
                 textAlign = TextAlign.Center,
@@ -102,7 +105,7 @@ internal fun LibraryDonePage(
             }
             Spacer(Modifier.height(16.dp))
             Text(
-                text = "La trovi in Biblioteca, nelle tue prenotazioni.",
+                text = stringResource(R.string.library_find_in_bookings),
                 style = MaterialTheme.typography.bodySmall,
                 color = scheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,
@@ -147,6 +150,10 @@ private fun DoneButton(onDone: () -> Unit) {
             contentColor = if (dark) scheme.onPrimaryContainer else scheme.onPrimary,
         ),
     ) {
-        Text("Fatto", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+        Text(
+            stringResource(R.string.common_done),
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.SemiBold
+        )
     }
 }

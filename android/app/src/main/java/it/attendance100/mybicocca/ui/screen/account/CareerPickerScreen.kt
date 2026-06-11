@@ -15,7 +15,9 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.domain.model.account.Account
 import it.attendance100.mybicocca.domain.model.career.Career
 import it.attendance100.mybicocca.domain.model.career.CareerId
@@ -43,9 +45,12 @@ fun CareerPickerScreen(
                 .padding(horizontal = 16.dp, vertical = 24.dp),
         ) {
             item {
-                Text("Scegli una carriera", style = MaterialTheme.typography.headlineSmall)
                 Text(
-                    text = "Ciao ${account.displayName}. Hai più carriere: scegli quella da usare come predefinita.",
+                    stringResource(R.string.career_picker_title),
+                    style = MaterialTheme.typography.headlineSmall
+                )
+                Text(
+                    text = stringResource(R.string.career_picker_greeting, account.displayName),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -54,7 +59,7 @@ fun CareerPickerScreen(
 
             if (selectable.isNotEmpty()) {
                 item {
-                    SectionLabel("Attive")
+                    SectionLabel(stringResource(R.string.career_picker_active))
                 }
                 items(selectable, key = { it.id.value }) { career ->
                     CareerCard(career = career, onClick = { onPicked(career.id) })
@@ -65,7 +70,7 @@ fun CareerPickerScreen(
             if (history.isNotEmpty()) {
                 item {
                     Spacer(Modifier.height(16.dp))
-                    SectionLabel("Concluse")
+                    SectionLabel(stringResource(R.string.career_picker_ended))
                 }
                 items(history, key = { it.id.value }) { career ->
                     CareerCard(career = career, onClick = null)
@@ -85,6 +90,8 @@ private fun SectionLabel(text: String) {
         modifier = Modifier.padding(vertical = 8.dp),
     )
 }
+
+private val CareerPlaceholder = "Carriera n. %d"
 
 /**
  * Career summary card: description, matricola, academic year and status on three lines.
@@ -110,7 +117,7 @@ internal fun CareerCard(
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(
-                text = career.description.ifEmpty { "Carriera n. ${career.id.value}" },
+                text = career.description.ifEmpty { CareerPlaceholder.format(career.id.value) },
                 style = MaterialTheme.typography.titleMedium,
             )
             Text(
