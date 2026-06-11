@@ -91,7 +91,7 @@ internal fun ReservationDetailPage(
                     Surface(shape = MaterialTheme.shapes.extraLarge, color = Color.White) {
                         Image(
                             bitmap = qr,
-                            contentDescription = "QR di check-in",
+                            contentDescription = stringResource(R.string.appointments_qr_checkin),
                             modifier = Modifier
                                 .padding(16.dp)
                                 .size(200.dp),
@@ -102,7 +102,7 @@ internal fun ReservationDetailPage(
             }
 
             Text(
-                text = "Codice ${reservation.code}",
+                text = stringResource(R.string.appointments_reservation_code, reservation.code),
                 style = MaterialTheme.typography.bodySmall,
                 fontFamily = FontFamily.Monospace,
                 fontWeight = FontWeight.SemiBold,

@@ -61,6 +61,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -71,6 +72,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.lerp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.ui.component.brand.MyBicoccaWordmark
 import it.attendance100.mybicocca.ui.theme.BicoccaTheme
 import java.io.File
@@ -152,6 +154,7 @@ private fun MorphIcon(
  *   background always returns as the progress collapses, so the morph back to a tab page is
  *   unaffected.
  */
+@Suppress("AssignedValueIsNeverRead")
 @Composable
 fun MyBicoccaTopBar(
     navProgress: FloatState,
@@ -534,7 +537,7 @@ private fun TrailingSlot(
                 ) {
                     MorphIcon(
                         imageVector = Icons.Outlined.FilterList,
-                        contentDescription = "Filtri",
+                        contentDescription = stringResource(R.string.topbar_filters),
                         tint = if (filterActive) scheme.primary else scheme.onSurface,
                         alpha = fadeThroughExpanded(p),
                     )
@@ -555,13 +558,13 @@ private fun TrailingSlot(
                     Box(contentAlignment = Alignment.Center) {
                         MorphIcon(
                             imageVector = Icons.Outlined.Mic,
-                            contentDescription = if (searchQueryEmpty) "Ricerca vocale" else null,
+                            contentDescription = if (searchQueryEmpty) stringResource(R.string.search_voice_title) else null,
                             tint = if (dictating) scheme.primary else scheme.onSurface,
                             alpha = fadeThroughExpanded(p) * micAlpha,
                         )
                         MorphIcon(
                             imageVector = Icons.Outlined.Close,
-                            contentDescription = if (searchQueryEmpty) null else "Cancella testo",
+                            contentDescription = if (searchQueryEmpty) null else stringResource(R.string.topbar_clear_text),
                             tint = scheme.onSurface,
                             alpha = fadeThroughExpanded(p) * (1f - micAlpha),
                         )
@@ -592,7 +595,7 @@ private fun AvatarSlot(
         if (photo != null) {
             AsyncImage(
                 model = photo,
-                contentDescription = "Profilo",
+                contentDescription = stringResource(R.string.screen_title_profile),
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
                     .fillMaxSize()
@@ -601,7 +604,7 @@ private fun AvatarSlot(
         } else {
             Icon(
                 imageVector = Icons.Outlined.Person,
-                contentDescription = "Profilo",
+                contentDescription = stringResource(R.string.screen_title_profile),
                 tint = scheme.onSurfaceVariant,
                 modifier = Modifier.size(24.dp),
             )

@@ -40,6 +40,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -49,6 +50,7 @@ import com.valentinilk.shimmer.Shimmer
 import com.valentinilk.shimmer.ShimmerBounds
 import com.valentinilk.shimmer.rememberShimmer
 import com.valentinilk.shimmer.shimmer
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.SyncStatus
 import it.attendance100.mybicocca.domain.model.map.MapBuilding
@@ -58,12 +60,12 @@ import it.attendance100.mybicocca.domain.model.map.RoomScheduleEntry
 import it.attendance100.mybicocca.ui.component.button.RetryButton
 import it.attendance100.mybicocca.ui.component.feedback.friendlyMessage
 import it.attendance100.mybicocca.ui.component.feedback.rememberMinDurationLoading
-import it.attendance100.mybicocca.ui.component.shimmer.ShimmerCircle
-import it.attendance100.mybicocca.ui.screen.map.component.label
 import it.attendance100.mybicocca.ui.component.modal.SheetLoadingIndicator
 import it.attendance100.mybicocca.ui.component.modal.SheetMessage
 import it.attendance100.mybicocca.ui.component.modal.SheetPagerHeader
 import it.attendance100.mybicocca.ui.component.modal.sheetPageTransform
+import it.attendance100.mybicocca.ui.component.shimmer.ShimmerCircle
+import it.attendance100.mybicocca.ui.screen.map.component.labelRes
 import it.attendance100.mybicocca.ui.screen.map.ext.buildingDisplayName
 import it.attendance100.mybicocca.ui.screen.map.ext.openBuildingInMaps
 import it.attendance100.mybicocca.ui.screen.map.subscreen.buildingDetail.state.RoomStatus
@@ -79,6 +81,15 @@ private val StatusTimeFormat: DateTimeFormatter = DateTimeFormatter.ofPattern("H
  * buildings list sheet (which supplies [onBack] at the building level too). System back pops
  * the room page before closing or dismissing anything above it.
  */
+import androidx.activity.compose.PredictiveBackHandler
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.SeekableTransitionState
+import androidx.compose.animation.core.rememberTransition
+import kotlinx.coroutines.CancellationException
+
+// ... (other imports remain, just updating the composable logic)
+// I will rewrite the BuildingDetailSheet function body
+
 @Composable
 fun BuildingDetailSheet(
     building: MapBuilding,
@@ -97,14 +108,29 @@ fun BuildingDetailSheet(
     val scheduleMap = (daySchedule as? Loadable.Loaded)?.value
     val buildingTitle = remember(building.name) { buildingDisplayName(building) }
 
-    BackHandler(enabled = selectedRoom != null, onBack = onCloseRoom)
+    val roomSeek = remember { SeekableTransitionState<MapRoom?>(selectedRoom) }
+    val roomTransition = rememberTransition(roomSeek, label = "building_detail_pages")
+
+    LaunchedEffect(selectedRoom) {
+        if (roomSeek.targetState != selectedRoom) roomSeek.animateTo(selectedRoom)
+    }
+
+    PredictiveBackHandler(enabled = selectedRoom != null) { progress ->
+        try {
+            progress.collect { event -> roomSeek.seekTo(event.progress, targetState = null) }
+            roomSeek.animateTo(null)
+            onCloseRoom()
+        } catch (_: CancellationException) {
+            roomSeek.animateTo(selectedRoom)
+        }
+    }
 
     Column(modifier = modifier.fillMaxWidth()) {
         SheetPagerHeader(
             depth = if (selectedRoom == null) 0 else 1,
             title = selectedRoom?.name ?: buildingTitle,
             subtitle = if (selectedRoom == null) {
-                building.address ?: building.city ?: building.category.label
+                building.address ?: building.city ?: stringResource(building.category.labelRes)
             } else {
                 buildingTitle
             },
@@ -115,11 +141,9 @@ fun BuildingDetailSheet(
                 null
             },
         )
-        AnimatedContent(
-            targetState = selectedRoom,
+        roomTransition.AnimatedContent(
             transitionSpec = { sheetPageTransform(forward = targetState != null) },
             contentKey = { it?.code?.value },
-            label = "building_detail_pages",
         ) { room ->
             if (room == null) {
                 BuildingPageBody(
@@ -190,19 +214,23 @@ internal fun BuildingPageBody(
     val motion = MaterialTheme.motionScheme
     val sizeSpec = remember(motion) { motion.defaultSpatialSpec<IntSize>() }
 
-    Column(modifier = modifier.fillMaxWidth().animateContentSize(animationSpec = sizeSpec)) {
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .animateContentSize(animationSpec = sizeSpec)
+    ) {
         when {
             roomList.isNullOrEmpty() && failure != null -> SheetMessage(
                 icon = Icons.Outlined.CloudOff,
-                title = "Caricamento aule non riuscito",
+                title = stringResource(R.string.map_rooms_load_failed),
                 body = failure.cause.friendlyMessage(),
                 action = onRetry?.let { { RetryButton(onClick = it) } },
             )
 
-            showLoading -> SheetLoadingIndicator(label = "Caricamento aule…")
+            showLoading -> SheetLoadingIndicator(label = stringResource(R.string.map_rooms_loading))
 
             roomList.isNullOrEmpty() -> Text(
-                text = "Nessuna aula disponibile",
+                text = stringResource(R.string.map_rooms_empty),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp),
@@ -288,7 +316,7 @@ private fun DirectionsButton(
             modifier = Modifier.size(20.dp),
         )
         Text(
-            text = "Indicazioni",
+            text = stringResource(R.string.map_directions),
             fontWeight = FontWeight.SemiBold,
             modifier = Modifier.padding(start = 8.dp),
         )
@@ -307,14 +335,18 @@ private fun FloorHeader(floor: Int?, roomCount: Int) {
     ) {
         Text(
             text = when {
-                floor == null -> "Altri spazi"
-                floor == 0 -> "Piano terra"
-                else -> "Piano $floor"
+                floor == null -> stringResource(R.string.map_floor_other)
+                floor == 0 -> stringResource(R.string.map_floor_ground)
+                else -> stringResource(R.string.map_floor_n, floor)
             },
             style = MaterialTheme.typography.titleSmallEmphasized,
         )
         Text(
-            text = if (roomCount == 1) "1 aula" else "$roomCount aule",
+            text = if (roomCount == 1) {
+                stringResource(R.string.map_room_count_one)
+            } else {
+                stringResource(R.string.map_room_count_many, roomCount)
+            },
             style = MaterialTheme.typography.labelMedium,
             color = scheme.onSurfaceVariant,
         )
@@ -349,9 +381,12 @@ private fun RoomCell(
     }
     val statusLabel = when (status) {
         is RoomStatus.Free ->
-            status.until?.let { "Libera fino alle ${it.format(StatusTimeFormat)}" } ?: "Libera"
+            status.until?.let {
+                stringResource(R.string.map_room_free_until, it.format(StatusTimeFormat))
+            } ?: stringResource(R.string.map_room_free)
 
-        is RoomStatus.Busy -> "Occupata fino alle ${status.until.format(StatusTimeFormat)}"
+        is RoomStatus.Busy ->
+            stringResource(R.string.map_room_busy_until, status.until.format(StatusTimeFormat))
 
         RoomStatus.Unknown -> null
     }
@@ -426,9 +461,9 @@ private fun RoomCell(
                 }
                 Text(
                     text = when {
-                        statusLoading -> "Verifica disponibilità…"
+                        statusLoading -> stringResource(R.string.map_room_checking)
                         statusLabel != null -> statusLabel
-                        else -> "Disponibilità sconosciuta"
+                        else -> stringResource(R.string.map_room_unknown)
                     },
                     style = MaterialTheme.typography.bodySmall,
                     color = scheme.onSurfaceVariant,

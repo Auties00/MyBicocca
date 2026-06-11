@@ -47,11 +47,13 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.domain.model.tax.TaxInvoice
 import it.attendance100.mybicocca.domain.model.tax.TaxStatus
@@ -239,10 +241,13 @@ private fun DetailContent(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             IconButton(onClick = onClose, modifier = Modifier.testTag(TaxesTestTags.DETAIL_CLOSE_BUTTON)) {
-                Icon(imageVector = Icons.Rounded.Close, contentDescription = "Chiudi")
+                Icon(
+                    imageVector = Icons.Rounded.Close,
+                    contentDescription = stringResource(R.string.common_close)
+                )
             }
             Text(
-                text = "Fattura #${invoice.id.value}",
+                text = stringResource(R.string.taxes_invoice_number, invoice.id.value),
                 style = MaterialTheme.typography.titleLargeEmphasized,
                 fontWeight = FontWeight.SemiBold,
             )
@@ -276,21 +281,25 @@ private fun DetailContent(
                         .testTag(TaxesTestTags.DETAIL_PAY_BUTTON)
                         .fillMaxWidth()
                         .height(52.dp),
-                ) { Text("Paga con pagoPA") }
+                ) { Text(stringResource(R.string.taxes_pay_pagopa)) }
             }
             if (payable && invoice.pagoPaNotice) {
                 FilledTonalButton(
                     onClick = onPrintNotice,
                     enabled = !actionInProgress && isOnline,
-                    modifier = Modifier.fillMaxWidth().height(52.dp),
-                ) { Text("Stampa avviso pagoPA") }
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(52.dp),
+                ) { Text(stringResource(R.string.taxes_print_notice)) }
             }
             if (invoice.status == TaxStatus.PAID && invoice.pagoPaEnabled) {
                 FilledTonalButton(
                     onClick = onPrintReceipt,
                     enabled = !actionInProgress && isOnline,
-                    modifier = Modifier.fillMaxWidth().height(52.dp),
-                ) { Text("Stampa quietanza") }
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(52.dp),
+                ) { Text(stringResource(R.string.taxes_print_receipt)) }
             }
             if (invoice.pagoPaEnabled) {
                 FilledTonalButton(
@@ -300,7 +309,7 @@ private fun DetailContent(
                         .testTag(TaxesTestTags.DETAIL_CHECK_STATUS_BUTTON)
                         .fillMaxWidth()
                         .height(52.dp),
-                ) { Text("Verifica stato pagamento") }
+                ) { Text(stringResource(R.string.taxes_check_status)) }
             }
         }
     }
@@ -329,7 +338,10 @@ private fun TaxResultContent(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             IconButton(onClick = onBack) {
-                Icon(imageVector = Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = "Indietro")
+                Icon(
+                    imageVector = Icons.AutoMirrored.Outlined.ArrowBack,
+                    contentDescription = stringResource(R.string.common_back)
+                )
             }
         }
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {

@@ -12,9 +12,11 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import it.attendance100.mybicocca.R
 
 // In-sheet undo affordance shown while a sign-out is pending. Styled like the app snackbar
 // but rendered inside the sheet, since a system snackbar would sit behind the modal.
@@ -39,7 +41,7 @@ fun UndoRemovalBar(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             Text(
-                text = "$displayName rimosso",
+                text = stringResource(R.string.account_removed, displayName),
                 style = MaterialTheme.typography.bodyMedium,
                 color = scheme.inverseOnSurface,
                 maxLines = 1,
@@ -48,7 +50,7 @@ fun UndoRemovalBar(
             )
             TextButton(onClick = onUndo) {
                 Text(
-                    text = "Annulla",
+                    text = stringResource(R.string.common_cancel),
                     color = scheme.inversePrimary,
                     fontWeight = FontWeight.SemiBold,
                 )

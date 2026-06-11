@@ -41,9 +41,11 @@ import androidx.compose.ui.layout.boundsInWindow
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.SyncStatus
 import it.attendance100.mybicocca.core.state.valueOrNull
@@ -51,8 +53,8 @@ import it.attendance100.mybicocca.domain.model.tax.TaxInvoice
 import it.attendance100.mybicocca.domain.model.tax.TaxStatus
 import it.attendance100.mybicocca.ui.component.button.RetryButton
 import it.attendance100.mybicocca.ui.component.feedback.EmptyState
-import it.attendance100.mybicocca.ui.component.input.SegmentedSwitch
 import it.attendance100.mybicocca.ui.component.feedback.rememberMinDurationLoading
+import it.attendance100.mybicocca.ui.component.input.SegmentedSwitch
 import it.attendance100.mybicocca.ui.component.modal.SheetLoadingIndicator
 import it.attendance100.mybicocca.ui.component.modal.SheetMessage
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.taxes.component.TaxInvoiceCard
@@ -71,6 +73,7 @@ import kotlinx.coroutines.launch
  * the tax feature), so a re-open shows the cached snapshot instantly while a background
  * refresh runs.
  */
+@Suppress("AssignedValueIsNeverRead")
 @Composable
 fun TaxesPage(
     viewModel: TaxesViewModel,
@@ -134,14 +137,14 @@ private fun TaxesBody(
             failure != null && grouped == null -> Box(modifier = Modifier.testTag(TaxesTestTags.STATE_ERROR)) {
                 SheetMessage(
                     icon = Icons.Outlined.CloudOff,
-                    title = "Caricamento non riuscito",
+                    title = stringResource(R.string.common_load_failed),
                     body = failure.cause.taxFriendlyMessage(),
                     action = { RetryButton(onClick = onRetry) },
                 )
             }
 
             grouped == null || !settled -> Box(modifier = Modifier.testTag(TaxesTestTags.STATE_LOADING)) {
-                SheetLoadingIndicator(label = "Caricamento tasse…")
+                SheetLoadingIndicator(label = stringResource(R.string.taxes_loading))
             }
 
             grouped.values.all { it.isEmpty() } -> Box(
@@ -153,8 +156,8 @@ private fun TaxesBody(
             ) {
                 EmptyState(
                     icon = Icons.AutoMirrored.Outlined.ReceiptLong,
-                    title = "Nessuna tassa",
-                    body = "Non risultano fatture per la tua carriera.",
+                    title = stringResource(R.string.taxes_empty_title),
+                    body = stringResource(R.string.taxes_empty_body),
                 )
             }
 

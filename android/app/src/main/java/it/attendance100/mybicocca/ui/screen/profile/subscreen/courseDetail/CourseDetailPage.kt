@@ -39,12 +39,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.SyncStatus
 import it.attendance100.mybicocca.domain.model.transcript.AttemptOutcome
@@ -102,7 +104,7 @@ fun CourseDetailPage(
                 .heightIn(min = 120.dp, max = 480.dp),
         ) {
             when (val data = detail) {
-                Loadable.NotYetLoaded -> when (val status = syncStatus) {
+                Loadable.NotYetLoaded -> when (syncStatus) {
                     is SyncStatus.Failed -> DetailError(
                         onRetry = { viewModel.retry(row.id, row.passed) },
                     )
@@ -171,8 +173,8 @@ private fun CourseBody(
             ) {
                 EmptyState(
                     icon = Icons.Outlined.HistoryEdu,
-                    title = "Nessuna prova registrata",
-                    body = "Non risultano prove registrate per questo insegnamento.",
+                    title = stringResource(R.string.profile_course_no_exams_title),
+                    body = stringResource(R.string.profile_course_no_exams_body),
                 )
             }
         }
@@ -200,7 +202,7 @@ private fun OutcomeCard(row: TranscriptRow) {
             )
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = "Superato",
+                    text = stringResource(R.string.profile_course_passed),
                     style = MaterialTheme.typography.labelLarge,
                     color = scheme.onSurfaceVariant,
                 )
@@ -242,7 +244,7 @@ private fun PrerequisiteWarning() {
                 modifier = Modifier.size(24.dp),
             )
             Text(
-                text = "Le propedeuticità per questo insegnamento non risultano soddisfatte.",
+                text = stringResource(R.string.profile_course_prereq_unmet),
                 style = MaterialTheme.typography.bodyMedium,
                 color = tone.onContainer,
             )
@@ -352,7 +354,7 @@ private fun AppelliButton(
                 modifier = Modifier.size(20.dp),
             )
             Text(
-                text = "Vai agli appelli",
+                text = stringResource(R.string.profile_course_go_to_appelli),
                 fontWeight = FontWeight.SemiBold,
                 modifier = Modifier.padding(start = 8.dp),
             )
@@ -382,7 +384,7 @@ private fun AppelliButton(
                 modifier = Modifier.size(20.dp),
             )
             Text(
-                text = "Non ci sono appelli disponibili.",
+                text = stringResource(R.string.profile_course_no_appelli),
                 fontWeight = FontWeight.SemiBold,
                 modifier = Modifier.padding(start = 8.dp),
             )
@@ -418,7 +420,7 @@ private fun DetailError(onRetry: () -> Unit) {
         )
         Spacer(Modifier.height(12.dp))
         Text(
-            text = "Impossibile caricare i dettagli.",
+            text = stringResource(R.string.profile_course_load_failed),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,

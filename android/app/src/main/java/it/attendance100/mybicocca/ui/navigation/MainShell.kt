@@ -887,7 +887,7 @@ fun MainShell(
                                             val history by enrollmentsViewModel.history
                                                 .collectAsStateWithLifecycle()
                                             SheetHeaderSpec(
-                                                title = "Iscrizioni",
+                                                title = stringResource(R.string.registry_enrollments),
                                                 subtitle = history.valueOrNull()?.let(::enrollmentsHeaderSubtitle),
                                             )
                                         },
@@ -909,7 +909,10 @@ fun MainShell(
                                                     ?.firstOrNull { it.id.value == k.enrollmentId }
                                             }?.let { enrollment ->
                                                 SheetHeaderSpec(
-                                                    title = "Iscrizione ${enrollment.academicYearLabel()}",
+                                                    title = stringResource(
+                                                        R.string.enrollments_detail_title,
+                                                        enrollment.academicYearLabel()
+                                                    ),
                                                     subtitle = "${enrollment.courseYearLabel()} · ${enrollment.statusLabel()}",
                                                 )
                                             }
@@ -931,7 +934,7 @@ fun MainShell(
                                             val titles by titlesViewModel.titles
                                                 .collectAsStateWithLifecycle()
                                             SheetHeaderSpec(
-                                                title = "Titoli",
+                                                title = stringResource(R.string.registry_titles),
                                                 subtitle = titles.valueOrNull()?.let(::titlesHeaderSubtitle),
                                             )
                                         },
@@ -975,7 +978,7 @@ fun MainShell(
                                             val refunds by refundsViewModel.refunds
                                                 .collectAsStateWithLifecycle()
                                             SheetHeaderSpec(
-                                                title = "Rimborsi",
+                                                title = stringResource(R.string.registry_refunds),
                                                 subtitle = refunds.valueOrNull()?.let(::refundsHeaderSubtitle),
                                             )
                                         },
@@ -1016,7 +1019,7 @@ fun MainShell(
                                             val declarations = state.valueOrNull()
                                                 ?.filter { it.isee != null && it.academicYearEnrollmentId != null }
                                             SheetHeaderSpec(
-                                                title = "ISEE",
+                                                title = stringResource(R.string.registry_isee),
                                                 subtitle = declarations?.let(::iseeHeaderSubtitle),
                                             )
                                         },
@@ -1060,7 +1063,7 @@ fun MainShell(
                                             val state by taxesViewModel.invoices
                                                 .collectAsStateWithLifecycle()
                                             SheetHeaderSpec(
-                                                title = "Tasse",
+                                                title = stringResource(R.string.registry_fees),
                                                 subtitle = state.valueOrNull()?.let(::taxesHeaderSubtitle),
                                             )
                                         },

@@ -25,8 +25,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import it.attendance100.mybicocca.R
 
 /**
  * One recent-search segment of the history group, per the M3 search view spec: history
@@ -70,7 +72,7 @@ fun SearchHistoryRow(
             ) {
                 Icon(
                     imageVector = Icons.Outlined.Delete,
-                    contentDescription = "Rimuovi dalla cronologia",
+                    contentDescription = stringResource(R.string.search_history_remove),
                     tint = scheme.onErrorContainer,
                     modifier = Modifier.padding(horizontal = 20.dp),
                 )
@@ -108,7 +110,7 @@ fun SearchHistoryRow(
                 IconButton(onClick = onInsert, modifier = Modifier.size(40.dp)) {
                     Icon(
                         imageVector = Icons.Outlined.NorthWest,
-                        contentDescription = "Inserisci nel campo di ricerca",
+                        contentDescription = stringResource(R.string.search_history_insert),
                         tint = scheme.onSurfaceVariant,
                         modifier = Modifier.size(18.dp),
                     )

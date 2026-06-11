@@ -50,6 +50,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
@@ -58,6 +59,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.SyncStatus
 import it.attendance100.mybicocca.core.state.valueOrNull
@@ -124,6 +126,7 @@ import kotlinx.coroutines.flow.collectLatest
  * keeps the wizard so Riprova returns to it to resend after a brief held loading beat;
  * print feedback is non-terminal and returns to the percorso.
  */
+@Suppress("AssignedValueIsNeverRead")
 @Composable
 fun StudyPlanPage(
     viewModel: StudyPlanViewModel,
@@ -404,7 +407,7 @@ private fun DiscardChangesPage(
 
     Column(Modifier.fillMaxWidth()) {
         Text(
-            text = "Le scelte fatte finora non sono state inviate e andranno perse.",
+            text = stringResource(R.string.studyplan_exit_warning),
             style = MaterialTheme.typography.bodyMedium,
             color = scheme.onSurfaceVariant,
             modifier = Modifier.padding(horizontal = 24.dp),
@@ -426,7 +429,7 @@ private fun DiscardChangesPage(
                     contentColor = scheme.onSurface,
                 ),
             ) {
-                Text("Esci", fontWeight = FontWeight.SemiBold)
+                Text(stringResource(R.string.common_exit), fontWeight = FontWeight.SemiBold)
             }
             Button(
                 onClick = onContinue,
@@ -439,7 +442,7 @@ private fun DiscardChangesPage(
                     contentColor = brandFg,
                 ),
             ) {
-                Text("Continua", fontWeight = FontWeight.SemiBold)
+                Text(stringResource(R.string.common_continue), fontWeight = FontWeight.SemiBold)
             }
         }
     }
@@ -488,14 +491,14 @@ private fun SheetBody(
             )
 
             !settled -> SheetLoadingIndicator(
-                label = "Caricamento piano…",
+                label = stringResource(R.string.studyplan_loading),
                 modifier = Modifier.testTag(StudyPlanTestTags.ROOT_LOADING),
             )
 
             plan == null -> SheetMessage(
                 icon = Icons.AutoMirrored.Outlined.MenuBook,
-                title = "Nessun piano di studi",
-                body = "Non risulta alcun piano di studi per la tua carriera.",
+                title = stringResource(R.string.studyplan_empty_title),
+                body = stringResource(R.string.studyplan_empty_body),
                 modifier = Modifier.testTag(StudyPlanTestTags.ROOT_EMPTY),
             )
 
@@ -575,7 +578,7 @@ private fun PlanActionFooter(
                     )
                 }
                 Spacer(Modifier.width(8.dp))
-                Text("Stampa", fontWeight = FontWeight.SemiBold)
+                Text(stringResource(R.string.common_print), fontWeight = FontWeight.SemiBold)
             }
         }
 
@@ -598,7 +601,7 @@ private fun PlanActionFooter(
                     modifier = Modifier.size(20.dp),
                 )
                 Spacer(Modifier.width(8.dp))
-                Text("Modifica percorso", fontWeight = FontWeight.SemiBold)
+                Text(stringResource(R.string.studyplan_edit_path), fontWeight = FontWeight.SemiBold)
             }
         }
     }
@@ -805,7 +808,7 @@ private fun CourseTile(course: StudyPlanCourse, isFirst: Boolean, isLast: Boolea
                         maxLines = 1,
                     )
                     Text(
-                        text = "CFU",
+                        text = stringResource(R.string.common_cfu),
                         color = scheme.onPrimaryContainer.copy(alpha = 0.75f),
                         fontSize = 8.sp,
                         lineHeight = 9.sp,
@@ -843,7 +846,7 @@ private fun CourseTile(course: StudyPlanCourse, isFirst: Boolean, isLast: Boolea
 private fun SheetError(cause: Throwable, onRetry: () -> Unit, modifier: Modifier = Modifier) {
     SheetMessage(
         icon = Icons.Outlined.CloudOff,
-        title = "Caricamento non riuscito",
+        title = stringResource(R.string.common_load_failed),
         body = cause.friendlyMessage(),
         action = { RetryButton(onClick = onRetry) },
         modifier = modifier,

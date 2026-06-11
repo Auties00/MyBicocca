@@ -31,9 +31,11 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.platform.LocalLocale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.domain.model.calendar.CalendarEvent
 import it.attendance100.mybicocca.domain.model.calendar.EventSource
 import it.attendance100.mybicocca.ui.screen.calendar.ext.durationMinutes
@@ -71,7 +73,9 @@ fun MonthGrid(
             .padding(horizontal = 14.dp),
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth().height(20.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(20.dp),
             horizontalArrangement = Arrangement.spacedBy(4.dp),
         ) {
             WeekHeaderDays.forEach { dow ->
@@ -243,7 +247,7 @@ fun MonthBusyLegend(modifier: Modifier = Modifier) {
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         Text(
-            text = "Leggenda",
+            text = stringResource(R.string.calendar_legend),
             color = scheme.onSurfaceVariant,
             fontSize = 10.sp,
             fontWeight = FontWeight.SemiBold,

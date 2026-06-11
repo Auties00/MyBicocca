@@ -25,6 +25,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -100,12 +101,23 @@ fun Invoice(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Row {
-                        Text(text = "Data ", fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                        Text(text = "Scadenza", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                        Text(
+                            text = stringResource(R.string.taxes_date_label),
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 14.sp
+                        )
+                        Text(
+                            text = stringResource(R.string.taxes_deadline),
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 14.sp
+                        )
                     }
                     Spacer(modifier = Modifier.width(16.dp))
                     Text(
-                        text = formatFullDate(invoice.expiryDate, Locale.getDefault()),
+                        text = formatFullDate(
+                            invoice.expiryDate,
+                            androidx.compose.ui.platform.LocalConfiguration.current.locales[0]
+                        ),
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Normal,
@@ -115,7 +127,7 @@ fun Invoice(
                 }
 
                 InfoRow(
-                    label = "Importo Totale",
+                    label = stringResource(R.string.taxes_total_amount),
                     value = formatCurrency(invoice.amount),
                     isLarge = true,
                     verticalPadding = 6.dp,
@@ -161,18 +173,26 @@ private fun TicketHeader(invoice: InvoiceData) {
         Box(modifier = Modifier.size(67.dp), contentAlignment = Alignment.Center) {
             Image(
                 painter = painterResource(R.drawable.logo_simple),
-                contentDescription = "Logo",
+                contentDescription = stringResource(R.string.common_logo),
                 colorFilter = if (isDarkMode) ColorFilter.tint(Color.White) else null,
-                modifier = Modifier.fillMaxSize().size(67.dp),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .size(67.dp),
             )
         }
 
         Column(horizontalAlignment = Alignment.End) {
             Text(
                 text = if (invoice.paymentDate != null) {
-                    "Pagata il ${formatFullDate(invoice.paymentDate, Locale.getDefault())}"
+                    stringResource(
+                        R.string.taxes_paid_on,
+                        formatFullDate(
+                            invoice.paymentDate,
+                            androidx.compose.ui.platform.LocalConfiguration.current.locales[0]
+                        )
+                    )
                 } else {
-                    "Non pagata"
+                    stringResource(R.string.taxes_unpaid)
                 },
                 fontSize = if (invoice.paymentDate != null) 12.sp else 40.sp,
                 color = if (invoice.paymentDate != null) Color.Unspecified else MaterialTheme.colorScheme.primary,
@@ -182,7 +202,7 @@ private fun TicketHeader(invoice: InvoiceData) {
             Spacer(modifier = Modifier.height(32.dp))
 
             Text(
-                text = "Fattura ${invoice.invoiceNumber}",
+                text = stringResource(R.string.taxes_invoice_label, invoice.invoiceNumber),
                 fontWeight = FontWeight.Bold,
                 fontSize = 20.sp,
             )

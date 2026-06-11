@@ -1,6 +1,7 @@
 package it.attendance100.mybicocca.ui.screen.search.component
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.animation.core.RepeatMode
@@ -11,7 +12,6 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
@@ -57,6 +57,7 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.asComposePath
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.LayoutDirection
@@ -66,6 +67,7 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.window.DialogWindowProvider
 import androidx.graphics.shapes.Morph
 import androidx.graphics.shapes.toPath
+import it.attendance100.mybicocca.R
 
 /**
  * Voice-search dialog in the M3 expressive language: a centered card with a live audio-reactive
@@ -155,7 +157,7 @@ private fun DictationCard(
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Text(
-                text = "Ricerca vocale",
+                text = stringResource(R.string.search_voice_title),
                 style = MaterialTheme.typography.labelLarge,
                 color = scheme.onSurfaceVariant,
             )
@@ -174,7 +176,7 @@ private fun DictationCard(
                         containerColor = MaterialTheme.colorScheme.primary,
                         contentColor = Color.White,
                     ),
-                ) { Text("Chiudi") }
+                ) { Text(stringResource(R.string.common_close)) }
             }
         }
     }
@@ -256,7 +258,7 @@ private fun MicVisual(
         ) {
             Icon(
                 imageVector = Icons.Outlined.Mic,
-                contentDescription = "Termina dettatura",
+                contentDescription = stringResource(R.string.search_voice_stop),
                 tint = scheme.onPrimary,
                 modifier = Modifier
                     .size(40.dp)

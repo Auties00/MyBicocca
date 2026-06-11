@@ -35,10 +35,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.domain.model.transcript.GradeRollup
 import it.attendance100.mybicocca.ui.component.modal.PredictiveModalBottomSheet
 import java.util.Locale
@@ -95,7 +97,7 @@ fun HypotheticalGradeSheet(
                 Icon(Icons.Filled.Calculate, contentDescription = null, tint = primaryColor)
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = "Calcola Media Ipotetica",
+                    text = stringResource(R.string.hyp_title),
                     color = textColor,
                     fontSize = 22.sp,
                     fontWeight = FontWeight.SemiBold,
@@ -109,7 +111,11 @@ fun HypotheticalGradeSheet(
                 verticalArrangement = Arrangement.spacedBy(6.dp),
             ) {
                 HypotheticalStatCard(
-                    title = if (isWeighted) "Media Ponderata" else "Media Aritmetica",
+                    title = if (isWeighted) {
+                        stringResource(R.string.profile_weighted_average)
+                    } else {
+                        stringResource(R.string.profile_arithmetic_average)
+                    },
                     currentValue = current,
                     newValue = projected,
                     textColor = textColor,
@@ -126,14 +132,24 @@ fun HypotheticalGradeSheet(
                 OutlinedTextField(
                     value = gradeText,
                     onValueChange = { if (it.length <= 2) gradeText = it.filter(Char::isDigit) },
-                    label = { Text("Voto") },
-                    placeholder = { Text(">17", color = grayColor) },
+                    label = { Text(stringResource(R.string.hyp_grade_label)) },
+                    placeholder = {
+                        Text(
+                            stringResource(R.string.hyp_grade_placeholder),
+                            color = grayColor
+                        )
+                    },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     singleLine = true,
                     isError = grade != null && grade < MIN_PASSING_GRADE,
                     supportingText = when {
-                        grade != null && grade < MIN_PASSING_GRADE -> { { Text("Voto non valido (>17)") } }
-                        grade != null && grade > MAX_GRADE -> { { Text("Voto troppo alto!") } }
+                        grade != null && grade < MIN_PASSING_GRADE -> {
+                            { Text(stringResource(R.string.hyp_grade_invalid)) }
+                        }
+
+                        grade != null && grade > MAX_GRADE -> {
+                            { Text(stringResource(R.string.hyp_grade_too_high)) }
+                        }
                         else -> null
                     },
                     modifier = Modifier.weight(1f),
@@ -144,12 +160,19 @@ fun HypotheticalGradeSheet(
                     OutlinedTextField(
                         value = cfuText,
                         onValueChange = { if (it.length <= 2) cfuText = it.filter(Char::isDigit) },
-                        label = { Text("CFU") },
-                        placeholder = { Text("Opzionale", color = grayColor) },
+                        label = { Text(stringResource(R.string.common_cfu)) },
+                        placeholder = {
+                            Text(
+                                stringResource(R.string.common_optional),
+                                color = grayColor
+                            )
+                        },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         singleLine = true,
                         isError = cfu != null && cfu <= 0,
-                        supportingText = if (cfu != null && cfu <= 0) { { Text("CFU non validi") } } else null,
+                        supportingText = if (cfu != null && cfu <= 0) {
+                            { Text(stringResource(R.string.hyp_cfu_invalid)) }
+                        } else null,
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(12.dp),
                     )

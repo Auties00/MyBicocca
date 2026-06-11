@@ -14,10 +14,12 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.domain.model.map.BuildingCategory
 import it.attendance100.mybicocca.ui.screen.map.component.icon
-import it.attendance100.mybicocca.ui.screen.map.component.label
+import it.attendance100.mybicocca.ui.screen.map.component.labelRes
 
 /**
  * Multi-select category filter for the map pins, opened from the shell app bar's filter
@@ -41,7 +43,7 @@ fun MapFilterSheet(
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             Text(
-                text = "Filtra per categoria",
+                text = stringResource(R.string.map_filter_title),
                 style = MaterialTheme.typography.titleMedium,
             )
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -49,13 +51,13 @@ fun MapFilterSheet(
                     FilterChip(
                         selected = category in selected,
                         onClick = { onToggle(category) },
-                        label = { Text(category.label) },
+                        label = { Text(stringResource(category.labelRes)) },
                         leadingIcon = { Icon(category.icon, contentDescription = null) },
                     )
                 }
             }
             if (selected.isNotEmpty()) {
-                TextButton(onClick = onClear) { Text("Azzera filtri") }
+                TextButton(onClick = onClear) { Text(stringResource(R.string.map_filter_clear)) }
             }
         }
     }

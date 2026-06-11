@@ -5,9 +5,11 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.ui.component.modal.SheetPagerHeader
 
 /**
@@ -33,8 +35,8 @@ fun ProfileSheetContent(
     Column(modifier = modifier.padding(top = 8.dp)) {
         SheetPagerHeader(
             depth = 0,
-            title = "Profilo",
-            subtitle = "La tua carriera in numeri",
+            title = stringResource(R.string.screen_title_profile),
+            subtitle = stringResource(R.string.profile_subtitle),
             onBack = onCollapse,
         )
 

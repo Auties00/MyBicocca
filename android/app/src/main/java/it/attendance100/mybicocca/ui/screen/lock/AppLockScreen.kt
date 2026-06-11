@@ -34,9 +34,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.domain.model.security.UnlockResult
 import it.attendance100.mybicocca.ui.component.input.PasswordTextField
 
@@ -70,17 +72,19 @@ fun AppLockScreen(viewModel: AppLockViewModel) {
         error = null
         viewModel.verifyPassword(password) { result ->
             if (result == UnlockResult.Success) password = ""
-            error = result.errorMessage()
+            error = result.errorMessageRes()?.let(context::getString)
         }
     }
 
+    val title = stringResource(R.string.lock_unlock_title)
+    val negativeButton = stringResource(R.string.lock_use_password)
     LaunchedEffect(usePassword, biometricTrigger) {
         if (!usePassword && capability == BiometricCapability.Available && activity != null) {
             promptBiometric(
                 activity = activity,
-                title = "Sblocca MyBicocca",
+                title = title,
                 subtitle = username.orEmpty(),
-                negativeButton = "Usa password",
+                negativeButton = negativeButton,
                 onSuccess = viewModel::onBiometricSuccess,
                 onError = { _, _ -> usePassword = true },
             )
@@ -107,7 +111,7 @@ fun AppLockScreen(viewModel: AppLockViewModel) {
             )
             Spacer(Modifier.height(16.dp))
             Text(
-                text = "App bloccata",
+                text = stringResource(R.string.lock_app_locked),
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface,
@@ -149,7 +153,7 @@ fun AppLockScreen(viewModel: AppLockViewModel) {
                             color = MaterialTheme.colorScheme.onPrimary,
                         )
                     } else {
-                        Text("Sblocca")
+                        Text(stringResource(R.string.lock_unlock))
                     }
                 }
                 if (capability == BiometricCapability.Available) {
@@ -165,7 +169,7 @@ fun AppLockScreen(viewModel: AppLockViewModel) {
                                 imageVector = Icons.Outlined.Fingerprint,
                                 contentDescription = null,
                             )
-                            Text("Usa impronta o volto")
+                            Text(stringResource(R.string.lock_use_biometric))
                         }
                     }
                 }
@@ -175,11 +179,11 @@ fun AppLockScreen(viewModel: AppLockViewModel) {
                     modifier = Modifier
                         .fillMaxWidth()
                         .testTag(AppLockTestTags.UNLOCK_BUTTON),
-                ) { Text("Sblocca") }
+                ) { Text(stringResource(R.string.lock_unlock)) }
                 TextButton(
                     onClick = { usePassword = true },
                     modifier = Modifier.testTag(AppLockTestTags.USE_PASSWORD_BUTTON),
-                ) { Text("Usa password") }
+                ) { Text(stringResource(R.string.lock_use_password)) }
             }
         }
     }

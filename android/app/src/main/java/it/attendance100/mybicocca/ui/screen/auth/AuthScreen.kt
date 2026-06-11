@@ -187,6 +187,9 @@ private fun AuthScreenBody(
 
     val autofillManager = LocalAutofillManager.current
 
+    val spidUnavailableMsg = stringResource(R.string.auth_spid_unavailable)
+    val cieUnavailableMsg = stringResource(R.string.auth_cie_unavailable)
+
     LaunchedEffect(Unit) {
         viewModel.events.collect { event ->
             when (event) {
@@ -197,7 +200,7 @@ private fun AuthScreenBody(
 
                 is AuthEvent.Failed -> {
                     snackbarHostState.currentSnackbarData?.dismiss()
-                    snackbarHostState.showSnackbar(context.getString(event.reason.toStringRes()))
+                    snackbarHostState.showSnackbar(context.applicationContext.getString(event.reason.toStringRes()))
                 }
             }
         }
@@ -234,7 +237,7 @@ private fun AuthScreenBody(
                     value = username,
                     onValueChange = viewModel::setUsername,
                     label = { Text(stringResource(R.string.auth_username_label)) },
-                    placeholder = { Text("m.rossi1") },
+                    placeholder = { Text(stringResource(R.string.auth_username_placeholder)) },
                     leadingIcon = { Icon(Icons.Outlined.Person, contentDescription = null) },
                     enabled = !inflight,
                     singleLine = true,
@@ -314,7 +317,7 @@ private fun AuthScreenBody(
                     enabled = !inflight,
                     onClick = {
                         scope.launch {
-                            snackbarHostState.showSnackbar(context.getString(R.string.auth_spid_unavailable))
+                            snackbarHostState.showSnackbar(spidUnavailableMsg)
                         }
                     },
                     modifier = Modifier.testTag(AuthScreenTestTags.SPID_BUTTON),
@@ -327,7 +330,7 @@ private fun AuthScreenBody(
                     enabled = !inflight,
                     onClick = {
                         scope.launch {
-                            snackbarHostState.showSnackbar(context.getString(R.string.auth_cie_unavailable))
+                            snackbarHostState.showSnackbar(cieUnavailableMsg)
                         }
                     },
                     modifier = Modifier.testTag(AuthScreenTestTags.CIE_BUTTON),
@@ -423,13 +426,13 @@ private val AlternativeLoginPressedColor = Color(0xFF0066CC)
  */
 @Composable
 private fun AlternativeLoginButton(
+    modifier: Modifier = Modifier,
     label: String? = null,
     @StringRes labelRes: Int? = null,
     icon: Painter,
     iconTint: Color,
     enabled: Boolean,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier,
 ) {
     val finalLabel = when {
         label != null -> label

@@ -29,10 +29,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.SyncStatus
 import it.attendance100.mybicocca.core.state.valueOrNull
@@ -98,21 +100,21 @@ private fun TitlesListBody(
         failure != null && titles == null -> Box(modifier = Modifier.testTag(TitlesTestTags.STATE_ERROR)) {
             SheetMessage(
                 icon = Icons.Outlined.CloudOff,
-                title = "Caricamento non riuscito",
-                body = "Impossibile caricare i titoli.",
+                title = stringResource(R.string.common_load_failed),
+                body = stringResource(R.string.titles_load_failed_body),
                 action = { RetryButton(onClick = onRetry) },
             )
         }
 
-        !settled || titles == null -> Box(modifier = Modifier.testTag(TitlesTestTags.STATE_LOADING)) {
-            SheetLoadingIndicator(label = "Caricamento titoli…")
+        !settled -> Box(modifier = Modifier.testTag(TitlesTestTags.STATE_LOADING)) {
+            SheetLoadingIndicator(label = stringResource(R.string.titles_loading))
         }
 
         titles.isEmpty() -> Box(modifier = Modifier.testTag(TitlesTestTags.STATE_EMPTY)) {
             SheetMessage(
                 icon = Icons.Outlined.School,
-                title = "Nessun titolo",
-                body = "Non risultano titoli di studio registrati.",
+                title = stringResource(R.string.titles_empty_title),
+                body = stringResource(R.string.titles_empty_body),
             )
         }
 

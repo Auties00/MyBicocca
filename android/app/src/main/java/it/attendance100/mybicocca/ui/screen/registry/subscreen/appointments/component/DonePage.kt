@@ -134,7 +134,7 @@ internal fun DonePage(
                 Surface(shape = MaterialTheme.shapes.extraLarge, color = Color.White) {
                     Image(
                         bitmap = qr,
-                        contentDescription = "QR di check-in",
+                        contentDescription = stringResource(R.string.appointments_qr_checkin),
                         modifier = Modifier
                             .padding(12.dp)
                             .size(160.dp),

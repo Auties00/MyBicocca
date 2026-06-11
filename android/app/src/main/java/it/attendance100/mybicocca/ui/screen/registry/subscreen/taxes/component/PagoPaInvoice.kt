@@ -11,6 +11,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -40,21 +41,25 @@ fun PagoPaInvoice(modifier: Modifier = Modifier) {
         stroke = PagoPaColor,
         modifier = modifier.fillMaxWidth(),
     ) {
-        Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp)) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp)
+        ) {
             Spacer(Modifier.height(16.dp))
             Icon(
                 painter = painterResource(id = R.drawable.pagopa_white),
                 modifier = Modifier.size(90.dp),
-                contentDescription = "pagoPA",
+                contentDescription = stringResource(R.string.taxes_pagopa),
             )
             Spacer(Modifier.height(4.dp))
             Text(
-                text = "Esito Transazione",
+                text = stringResource(R.string.taxes_transaction_outcome),
                 fontWeight = FontWeight.Bold,
                 fontSize = 20.sp,
                 color = PagoPaSecondaryColor,
             )
-            Text(text = "Il pagamento si è completato con successo per l'intera somma dovuta")
+            Text(text = stringResource(R.string.taxes_payment_success))
             Spacer(Modifier.height(24.dp))
         }
     }

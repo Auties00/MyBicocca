@@ -26,15 +26,17 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.valueOrNull
 import it.attendance100.mybicocca.domain.model.transcript.TranscriptStats
-import it.attendance100.mybicocca.ui.component.text.SectionHeader
 import it.attendance100.mybicocca.ui.component.feedback.ErrorBanner
+import it.attendance100.mybicocca.ui.component.text.SectionHeader
 import it.attendance100.mybicocca.ui.screen.profile.component.GradeTrendChart
 import it.attendance100.mybicocca.ui.screen.profile.component.ProgressStatCard
 import it.attendance100.mybicocca.ui.screen.profile.component.SkeletonProfileContent
@@ -97,6 +99,7 @@ fun ProfileScreen(
  * means the cache has not emitted yet, while a refresh over loaded data keeps the content
  * on screen.
  */
+@Suppress("AssignedValueIsNeverRead")
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun ProfileContent(
@@ -165,7 +168,7 @@ fun ProfileContent(
 
                 item {
                     SectionHeader(
-                        title = "Statistiche",
+                        title = stringResource(R.string.profile_statistics),
                         modifier = Modifier.padding(bottom = 12.dp),
                     )
                     StatisticsGrid(
@@ -179,7 +182,7 @@ fun ProfileContent(
 
                 item {
                     SectionHeader(
-                        title = "Andamento",
+                        title = stringResource(R.string.profile_trend),
                         modifier = Modifier.padding(bottom = 12.dp),
                     )
                     GradeTrendChart(
@@ -240,7 +243,7 @@ private fun StatisticsGrid(
                     .weight(1f)
                     .fillMaxHeight()
                     .testTag(ProfileTestTags.STAT_ARITHMETIC),
-                title = "Media Aritmetica",
+                title = stringResource(R.string.profile_arithmetic_average),
                 value = stats?.arithmeticAverage?.let {
                     String.format(
                         Locale.getDefault(),
@@ -252,7 +255,7 @@ private fun StatisticsGrid(
                 icon = { m ->
                     Icon(
                         Icons.Filled.Calculate,
-                        contentDescription = "Calcola media ipotetica",
+                        contentDescription = stringResource(R.string.profile_calc_hypothetical),
                         tint = primaryColor,
                         modifier = m
                     )
@@ -265,7 +268,7 @@ private fun StatisticsGrid(
                     .weight(1f)
                     .fillMaxHeight()
                     .testTag(ProfileTestTags.STAT_WEIGHTED),
-                title = "Media Ponderata",
+                title = stringResource(R.string.profile_weighted_average),
                 value = stats?.weightedAverage?.let {
                     String.format(
                         Locale.getDefault(),
@@ -277,7 +280,7 @@ private fun StatisticsGrid(
                 icon = { m ->
                     Icon(
                         Icons.Filled.Calculate,
-                        contentDescription = "Calcola media ipotetica",
+                        contentDescription = stringResource(R.string.profile_calc_hypothetical),
                         tint = primaryColor,
                         modifier = m
                     )
@@ -295,7 +298,7 @@ private fun StatisticsGrid(
                     .weight(1f)
                     .fillMaxHeight()
                     .testTag(ProfileTestTags.PROGRESS_EXAMS),
-                title = "Esami Sostenuti",
+                title = stringResource(R.string.profile_exams_taken),
                 current = stats?.passedExamCount ?: 0,
                 total = stats?.plannedExamCount ?: 0,
                 textColor = textColor,
@@ -307,7 +310,7 @@ private fun StatisticsGrid(
                     .weight(1f)
                     .fillMaxHeight()
                     .testTag(ProfileTestTags.PROGRESS_CREDITS),
-                title = "CFU Acquisiti",
+                title = stringResource(R.string.profile_credits_earned),
                 current = stats?.passedCredits?.toInt() ?: 0,
                 total = stats?.totalCreditsRequired?.toInt() ?: 0,
                 textColor = textColor,

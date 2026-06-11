@@ -32,6 +32,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontWeight
@@ -46,6 +47,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupPositionProvider
 import androidx.compose.ui.window.PopupProperties
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.domain.model.transcript.TranscriptRow
 import it.attendance100.mybicocca.domain.model.transcript.TranscriptRowState
 import java.time.format.DateTimeFormatter
@@ -116,7 +118,7 @@ fun GradeTrendChart(
                         .height(160.dp), contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = "Andamento disponibile dopo almeno due esami superati",
+                        text = stringResource(R.string.profile_trend_min_exams),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -149,8 +151,11 @@ fun GradeTrendChart(
                                     fun xAt(index: Int): Float =
                                         if (points.size == 1) leftPad + chartWidth / 2f
                                         else leftPad + chartWidth * index / (points.size - 1)
-                                    val nearest = points.indices.minByOrNull { abs(tap.x - xAt(it)) }
-                                    selectedIndex = nearest?.takeIf { abs(tap.x - xAt(it)) <= 24.dp.toPx() }
+
+                                    val nearest =
+                                        points.indices.minByOrNull { abs(tap.x - xAt(it)) }
+                                    selectedIndex =
+                                        nearest?.takeIf { abs(tap.x - xAt(it)) <= 24.dp.toPx() }
                                 }
                             },
                     ) {
@@ -315,7 +320,7 @@ private fun GradeTooltip(name: String, date: String, gradeText: String) {
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Text(
-                text = "Voto: $gradeText",
+                text = stringResource(R.string.profile_grade_label, gradeText),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )

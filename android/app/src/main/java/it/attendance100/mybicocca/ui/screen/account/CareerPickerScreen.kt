@@ -121,7 +121,11 @@ internal fun CareerCard(
                 style = MaterialTheme.typography.titleMedium,
             )
             Text(
-                text = "Matricola ${career.studentNumber} · A.A. ${career.academicYear}",
+                text = stringResource(
+                    R.string.account_matricola_year,
+                    career.studentNumber,
+                    career.academicYear,
+                ),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )

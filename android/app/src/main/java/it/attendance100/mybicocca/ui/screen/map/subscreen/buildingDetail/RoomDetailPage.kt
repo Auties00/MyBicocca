@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -34,10 +33,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.domain.model.map.MapRoom
 import it.attendance100.mybicocca.domain.model.map.MapRoomDetail
@@ -84,7 +85,7 @@ internal fun RoomDetailPage(
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
         if (showLoading) {
-            SheetLoadingIndicator(label = "Caricamento aula…")
+            SheetLoadingIndicator(label = stringResource(R.string.map_room_loading))
         } else {
             RoomFeatures(room = room, detail = detailValue)
 
@@ -110,13 +111,21 @@ private fun RoomFeatures(room: MapRoom, detail: MapRoomDetail?) {
         (detail?.floor ?: room.floor)?.let { floor ->
             FeaturePill(
                 icon = Icons.Outlined.Layers,
-                text = if (floor == 0) "Piano terra" else "Piano $floor",
+                text = if (floor == 0) {
+                    stringResource(R.string.map_floor_ground)
+                } else {
+                    stringResource(R.string.map_floor_n, floor)
+                },
             )
         }
         (detail?.capacity ?: room.capacity)?.let { capacity ->
             FeaturePill(
                 icon = Icons.Outlined.Groups,
-                text = if (capacity == 1) "1 posto" else "$capacity posti",
+                text = if (capacity == 1) {
+                    stringResource(R.string.map_seat_count_one)
+                } else {
+                    stringResource(R.string.map_seat_count_many, capacity)
+                },
             )
         }
         detail?.roomType?.let { type ->
@@ -140,7 +149,7 @@ private fun SectionTitle(text: String) {
 private fun DescriptionSection(description: String) {
     val scheme = MaterialTheme.colorScheme
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        SectionTitle("Descrizione")
+        SectionTitle(stringResource(R.string.map_room_description))
         Surface(
             shape = RoundedCornerShape(20.dp),
             color = scheme.surfaceContainer,
@@ -168,7 +177,7 @@ private fun AccessibilitySection(detail: MapRoomDetail) {
     if (!hasContent) return
 
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        SectionTitle("Accessibilità")
+        SectionTitle(stringResource(R.string.map_room_accessibility))
         Surface(
             shape = RoundedCornerShape(20.dp),
             color = scheme.surfaceContainer,
@@ -182,13 +191,13 @@ private fun AccessibilitySection(detail: MapRoomDetail) {
                 if (detail.isAccessible) {
                     IconLine(
                         icon = Icons.AutoMirrored.Outlined.Accessible,
-                        text = "Senza barriere architettoniche",
+                        text = stringResource(R.string.map_room_barrier_free),
                     )
                 }
                 if (detail.isInclusionValidated) {
                     IconLine(
                         icon = Icons.Outlined.Verified,
-                        text = "Validata da Spazio B.Inclusion",
+                        text = stringResource(R.string.map_room_validated_binclusion),
                     )
                 }
                 detail.accessibilityNotes?.let { notes ->
@@ -228,7 +237,7 @@ private fun IconLine(icon: ImageVector, text: String) {
 @Composable
 private fun EquipmentSection(equipment: List<String>) {
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        SectionTitle("Attrezzature")
+        SectionTitle(stringResource(R.string.map_room_equipment))
         FlowRow(
             horizontalArrangement = Arrangement.spacedBy(6.dp),
             verticalArrangement = Arrangement.spacedBy(6.dp),
@@ -251,10 +260,10 @@ private fun TodaySchedule(entries: List<RoomScheduleEntry>?) {
     if (entries == null) return
 
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        SectionTitle("Oggi in quest'aula")
+        SectionTitle(stringResource(R.string.map_room_today))
         if (entries.isEmpty()) {
             Text(
-                text = "Nessuna attività programmata: libera tutto il giorno",
+                text = stringResource(R.string.map_room_no_activities),
                 style = MaterialTheme.typography.bodySmall,
                 color = scheme.onSurfaceVariant,
             )

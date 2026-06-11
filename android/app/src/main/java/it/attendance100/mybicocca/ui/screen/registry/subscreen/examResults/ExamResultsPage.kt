@@ -56,9 +56,9 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -125,6 +125,7 @@ import java.util.Locale
  * The root covers first-load failure (retry page), minimum-duration loading, and the
  * all-empty state.
  */
+@Suppress("AssignedValueIsNeverRead")
 @Composable
 fun ExamResultsPage(
     viewModel: ExamResultsViewModel,
@@ -698,7 +699,7 @@ private fun EsitoDetailPage(
                 result.examDateTime?.let {
                     DetailFactCard(
                         icon = Icons.Outlined.CalendarMonth,
-                        label = "SOSTENUTO IL",
+                        label = stringResource(R.string.exam_results_taken_on_label),
                         value = it.toLocalDate().format(FullDateFormat)
                             .replaceFirstChar { c -> c.titlecase(Locale.ITALIAN) },
                     )
@@ -706,14 +707,14 @@ private fun EsitoDetailPage(
                 result.publishedNote?.takeIf { it.isNotBlank() }?.let {
                     DetailFactCard(
                         icon = Icons.AutoMirrored.Outlined.Notes,
-                        label = "NOTA DEL DOCENTE",
+                        label = stringResource(R.string.exam_results_teacher_note_label),
                         value = it,
                     )
                 }
                 result.acknowledgment.choiceLabel()?.let {
                     DetailFactCard(
                         icon = Icons.Outlined.TaskAlt,
-                        label = "LA TUA SCELTA",
+                        label = stringResource(R.string.exam_results_your_choice_label),
                         value = it,
                     )
                 }
@@ -845,9 +846,11 @@ private fun RejectConfirmPage(
 
     Column(Modifier.fillMaxWidth()) {
         Text(
-            text = "Stai per rifiutare ${result.grade.spelledOut()} in ${result.displayTitle()}. " +
-                "Il voto verrà annullato e per superare l'esame dovrai iscriverti a un nuovo appello. " +
-                "La decisione non può essere annullata.",
+            text = stringResource(
+                R.string.exam_results_reject_confirm_body,
+                result.grade.spelledOut(),
+                result.displayTitle(),
+            ),
             style = MaterialTheme.typography.bodyMedium,
             color = scheme.onSurfaceVariant,
             modifier = Modifier.padding(horizontal = 24.dp),

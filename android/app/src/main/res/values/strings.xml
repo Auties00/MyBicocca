@@ -917,4 +917,193 @@
     <!-- DateQuery added string -->
     <string name="search_open_in_calendar">Apri nel calendario</string>
     <string name="search_grade">Voto</string>
+
+    <!-- Map -->
+    <string name="map_view_buildings">Visualizza edifici</string>
+    <string name="map_filter_title">Filtra per categoria</string>
+    <string name="map_filter_clear">Azzera filtri</string>
+    <string name="map_category_teaching">Didattica</string>
+    <string name="map_category_library">Biblioteca</string>
+    <string name="map_category_canteen">Mensa</string>
+    <string name="map_category_admin">Segreterie</string>
+    <string name="map_category_sport">Sport</string>
+    <string name="map_category_other">Altro</string>
+    <string name="map_buildings_title">Edifici</string>
+    <string name="map_site_count_one">1 sede</string>
+    <string name="map_site_count_many">%1$d sedi</string>
+    <string name="map_building_code">Codice %1$s</string>
+    <string name="map_directions">Indicazioni</string>
+    <string name="map_info">Informazioni</string>
+    <string name="map_expand">Espandi</string>
+    <string name="map_collapse">Comprimi</string>
+    <string name="map_rooms_load_failed">Caricamento aule non riuscito</string>
+    <string name="map_rooms_loading">Caricamento aule…</string>
+    <string name="map_rooms_empty">Nessuna aula disponibile</string>
+    <string name="map_floor_other">Altri spazi</string>
+    <string name="map_floor_ground">Piano terra</string>
+    <string name="map_floor_n">Piano %1$d</string>
+    <string name="map_room_count_one">1 aula</string>
+    <string name="map_room_count_many">%1$d aule</string>
+    <string name="map_room_free_until">Libera fino alle %1$s</string>
+    <string name="map_room_free">Libera</string>
+    <string name="map_room_busy_until">Occupata fino alle %1$s</string>
+    <string name="map_room_checking">Verifica disponibilità…</string>
+    <string name="map_room_unknown">Disponibilità sconosciuta</string>
+    <string name="map_room_loading">Caricamento aula…</string>
+    <string name="map_seat_count_one">1 posto</string>
+    <string name="map_seat_count_many">%1$d posti</string>
+    <string name="map_room_description">Descrizione</string>
+    <string name="map_room_accessibility">Accessibilità</string>
+    <string name="map_room_barrier_free">Senza barriere architettoniche</string>
+    <string name="map_room_validated_binclusion">Validata da Spazio B.Inclusion</string>
+    <string name="map_room_equipment">Attrezzature</string>
+    <string name="map_room_today">Oggi in quest\'aula</string>
+    <string name="map_room_no_activities">Nessuna attività programmata: libera tutto il giorno</string>
+
+    <!-- Common (added) -->
+    <string name="common_back">Indietro</string>
+
+    <!-- Auth (added) -->
+    <string name="auth_username_placeholder" translatable="false">m.rossi1</string>
+
+    <!-- App lock -->
+    <string name="lock_unlock_title">Sblocca MyBicocca</string>
+    <string name="lock_app_locked">App bloccata</string>
+    <string name="lock_unlock">Sblocca</string>
+    <string name="lock_use_biometric">Usa impronta o volto</string>
+    <string name="lock_use_password">Usa password</string>
+    <string name="lock_error_wrong_password">Password errata</string>
+    <string name="lock_error_cannot_verify">Impossibile verificare</string>
+
+    <!-- Account (added) -->
+    <string name="account_matricola_year">Matricola %1$s · A.A. %2$s</string>
+    <string name="account_removed">%1$s rimosso</string>
+
+    <!-- Search overlay -->
+    <string name="search_no_recent_title">Nessuna ricerca recente</string>
+    <string name="search_no_recent_body">Le tue ricerche recenti appariranno qui</string>
+    <string name="search_no_results_for">Nessun risultato per “%1$s”</string>
+    <string name="search_voice_title">Ricerca vocale</string>
+    <string name="search_voice_stop">Termina dettatura</string>
+    <string name="search_top_hit">Miglior risultato</string>
+    <string name="search_history_remove">Rimuovi dalla cronologia</string>
+    <string name="search_history_insert">Inserisci nel campo di ricerca</string>
+
+    <!-- Top bar -->
+    <string name="topbar_filters">Filtri</string>
+    <string name="topbar_clear_text">Cancella testo</string>
+
+    <!-- Calendar (added) -->
+    <string name="calendar_legend">Leggenda</string>
+
+    <!-- Enrollments (added) -->
+    <string name="enrollments_detail_title">Iscrizione %1$s</string>
+
+    <!-- Common (added 2) -->
+    <string name="common_cfu" translatable="false">CFU</string>
+    <string name="common_optional">Opzionale</string>
+
+    <!-- Profile -->
+    <string name="profile_subtitle">La tua carriera in numeri</string>
+    <string name="profile_statistics">Statistiche</string>
+    <string name="profile_trend">Andamento</string>
+    <string name="profile_arithmetic_average">Media Aritmetica</string>
+    <string name="profile_weighted_average">Media Ponderata</string>
+    <string name="profile_exams_taken">Esami Sostenuti</string>
+    <string name="profile_credits_earned">CFU Acquisiti</string>
+    <string name="profile_calc_hypothetical">Calcola media ipotetica</string>
+    <string name="profile_trend_min_exams">Andamento disponibile dopo almeno due esami superati</string>
+    <string name="profile_grade_label">Voto: %1$s</string>
+
+    <!-- Profile: hypothetical grade -->
+    <string name="hyp_title">Calcola Media Ipotetica</string>
+    <string name="hyp_grade_label">Voto</string>
+    <string name="hyp_grade_placeholder" translatable="false">&gt;17</string>
+    <string name="hyp_grade_invalid">Voto non valido (&gt;17)</string>
+    <string name="hyp_grade_too_high">Voto troppo alto!</string>
+    <string name="hyp_cfu_invalid">CFU non validi</string>
+
+    <!-- Profile: course detail -->
+    <string name="profile_course_no_exams_title">Nessuna prova registrata</string>
+    <string name="profile_course_no_exams_body">Non risultano prove registrate per questo insegnamento.</string>
+    <string name="profile_course_passed">Superato</string>
+    <string name="profile_course_prereq_unmet">Le propedeuticità per questo insegnamento non risultano soddisfatte.</string>
+    <string name="profile_course_prereq_unmet_short">Propedeuticità non soddisfatte</string>
+    <string name="profile_course_go_to_appelli">Vai agli appelli</string>
+    <string name="profile_course_no_appelli">Non ci sono appelli disponibili.</string>
+    <string name="profile_course_load_failed">Impossibile caricare i dettagli.</string>
+
+    <!-- Profile: student badge -->
+    <string name="badge_university" translatable="false">Università degli Studi</string>
+    <string name="badge_signature">Signature</string>
+    <string name="badge_email">Email</string>
+    <string name="badge_photo">Foto profilo</string>
+
+    <!-- Common (added 3) -->
+    <string name="common_load_failed">Caricamento non riuscito</string>
+    <string name="common_exit">Esci</string>
+    <string name="common_continue">Continua</string>
+    <string name="common_next">Avanti</string>
+    <string name="common_print">Stampa</string>
+    <string name="common_details">Dettagli</string>
+    <string name="common_prev_page">Pagina precedente</string>
+    <string name="common_logo">Logo</string>
+
+    <!-- Taxes -->
+    <string name="taxes_pagopa" translatable="false">pagoPA</string>
+    <string name="taxes_transaction_outcome">Esito Transazione</string>
+    <string name="taxes_payment_success">Il pagamento si è completato con successo per l\'intera somma dovuta</string>
+    <string name="taxes_date_label">"Data "</string>
+    <string name="taxes_deadline">Scadenza</string>
+    <string name="taxes_total_amount">Importo Totale</string>
+    <string name="taxes_paid_on">Pagata il %1$s</string>
+    <string name="taxes_unpaid">Non pagata</string>
+    <string name="taxes_invoice_label">Fattura %1$s</string>
+    <string name="taxes_invoice_number">Fattura #%1$s</string>
+    <string name="taxes_loading">Caricamento tasse…</string>
+    <string name="taxes_empty_title">Nessuna tassa</string>
+    <string name="taxes_empty_body">Non risultano fatture per la tua carriera.</string>
+    <string name="taxes_pay_pagopa">Paga con pagoPA</string>
+    <string name="taxes_print_notice">Stampa avviso pagoPA</string>
+    <string name="taxes_print_receipt">Stampa quietanza</string>
+    <string name="taxes_check_status">Verifica stato pagamento</string>
+
+    <!-- Study plan -->
+    <string name="studyplan_exit_warning">Le scelte fatte finora non sono state inviate e andranno perse.</string>
+    <string name="studyplan_loading">Caricamento piano…</string>
+    <string name="studyplan_empty_title">Nessun piano di studi</string>
+    <string name="studyplan_empty_body">Non risulta alcun piano di studi per la tua carriera.</string>
+    <string name="studyplan_edit_path">Modifica percorso</string>
+
+    <!-- Study plan edit -->
+    <string name="studyplanedit_unavailable_title">Compilazione non disponibile</string>
+    <string name="studyplanedit_unavailable_body">Non è stato possibile recuperare i percorsi del tuo corso di studi.</string>
+    <string name="studyplanedit_loading_rules">Caricamento regole…</string>
+    <string name="studyplanedit_no_rules_title">Nessuna regola da compilare</string>
+    <string name="studyplanedit_no_rules_body">Lo schema del piano non contiene regole di scelta.</string>
+    <string name="studyplanedit_choose_path">Scegli il percorso</string>
+    <string name="studyplanedit_path_to_choose">"1 PERCORSO DA SCEGLIERE · "</string>
+    <string name="studyplanedit_rules_not_loaded">Regole del percorso non caricate.</string>
+    <string name="studyplanedit_path_no_rules">Il percorso selezionato non contiene regole da compilare.</string>
+    <string name="studyplanedit_submit_plan">Invia piano</string>
+    <string name="studyplanedit_sending">Invio in corso…</string>
+
+    <!-- Titles -->
+    <string name="titles_load_failed_body">Impossibile caricare i titoli.</string>
+    <string name="titles_loading">Caricamento titoli…</string>
+    <string name="titles_empty_title">Nessun titolo</string>
+    <string name="titles_empty_body">Non risultano titoli di studio registrati.</string>
+
+    <!-- ISEE (added) -->
+    <string name="isee_academic_year">Anno accademico %1$s</string>
+
+    <!-- Exam results (added) -->
+    <string name="exam_results_taken_on_label">SOSTENUTO IL</string>
+    <string name="exam_results_teacher_note_label">NOTA DEL DOCENTE</string>
+    <string name="exam_results_your_choice_label">LA TUA SCELTA</string>
+    <string name="exam_results_reject_confirm_body">Stai per rifiutare %1$s in %2$s. Il voto verrà annullato e per superare l\'esame dovrai iscriverti a un nuovo appello. La decisione non può essere annullata.</string>
+
+    <!-- Appointments (added) -->
+    <string name="appointments_qr_checkin">QR di check-in</string>
+    <string name="appointments_reservation_code">Codice %1$s</string>
 </resources>

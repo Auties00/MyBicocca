@@ -46,7 +46,7 @@ import it.attendance100.mybicocca.domain.model.security.UnlockResult
 import it.attendance100.mybicocca.ui.component.input.PasswordTextField
 import it.attendance100.mybicocca.ui.component.modal.PredictiveModalBottomSheet
 import it.attendance100.mybicocca.ui.screen.lock.BiometricCapability
-import it.attendance100.mybicocca.ui.screen.lock.errorMessage
+import it.attendance100.mybicocca.ui.screen.lock.errorMessageRes
 import it.attendance100.mybicocca.ui.screen.lock.findFragmentActivity
 import it.attendance100.mybicocca.ui.screen.lock.promptBiometric
 import it.attendance100.mybicocca.ui.screen.lock.rememberBiometricCapability
@@ -87,25 +87,31 @@ fun SettingsSecuritySheet(
     var passwordError by remember { mutableStateOf<String?>(null) }
     var authorizing by remember { mutableStateOf(false) }
 
+    val timeoutImmediately = stringResource(R.string.settings_security_timeout_immediately)
+    val timeout1Hour = stringResource(R.string.settings_security_timeout_1hour)
+    val timeout4Hours = stringResource(R.string.settings_security_timeout_4hours)
     val timeoutLabel: (Int) -> String = { minutes ->
         when (minutes) {
-            0 -> context.getString(R.string.settings_security_timeout_immediately)
-            60 -> context.getString(R.string.settings_security_timeout_1hour)
-            240 -> context.getString(R.string.settings_security_timeout_4hours)
+            0 -> timeoutImmediately
+            60 -> timeout1Hour
+            240 -> timeout4Hours
             else -> "$minutes min"
         }
     }
+
+    val confirmIdentityStr = stringResource(R.string.settings_security_confirm_identity)
+    val enableLockStr = stringResource(R.string.settings_security_enable_lock)
+    val disableLockStr = stringResource(R.string.settings_security_disable_lock)
+    val usePasswordStr = stringResource(R.string.settings_security_use_password)
 
     val startToggle: () -> Unit = {
         val target = !enabled
         if (capability == BiometricCapability.Available && activity != null) {
             promptBiometric(
                 activity = activity,
-                title = context.getString(R.string.settings_security_confirm_identity),
-                subtitle = if (target) context.getString(R.string.settings_security_enable_lock) else context.getString(
-                    R.string.settings_security_disable_lock
-                ),
-                negativeButton = context.getString(R.string.settings_security_use_password),
+                title = confirmIdentityStr,
+                subtitle = if (target) enableLockStr else disableLockStr,
+                negativeButton = usePasswordStr,
                 onSuccess = { viewModel.setEnabled(target) },
                 onError = { _, _ ->
                     pendingTarget = target
@@ -216,7 +222,7 @@ fun SettingsSecuritySheet(
                         showPasswordDialog = false
                         password = ""
                     } else {
-                        passwordError = result.errorMessage()
+                        passwordError = result.errorMessageRes()?.let(context::getString)
                     }
                 }
             }
@@ -284,11 +290,14 @@ private fun TimeoutSlider(
         inactiveTickColor = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.4f),
     )
 
+    val timeoutImmediately = stringResource(R.string.settings_security_timeout_immediately)
+    val timeout1Hour = stringResource(R.string.settings_security_timeout_1hour)
+    val timeout4Hours = stringResource(R.string.settings_security_timeout_4hours)
     val timeoutLabelFunc: (Int) -> String = { minutes ->
         when (minutes) {
-            0 -> context.getString(R.string.settings_security_timeout_immediately)
-            60 -> context.getString(R.string.settings_security_timeout_1hour)
-            240 -> context.getString(R.string.settings_security_timeout_4hours)
+            0 -> timeoutImmediately
+            60 -> timeout1Hour
+            240 -> timeout4Hours
             else -> "$minutes min"
         }
     }

@@ -234,7 +234,11 @@ private fun CareerSubCard(
                     horizontalArrangement = Arrangement.spacedBy(6.dp),
                 ) {
                     Text(
-                        text = "Matricola ${career.studentNumber} · A.A. ${career.academicYear}",
+                        text = stringResource(
+                            R.string.account_matricola_year,
+                            career.studentNumber,
+                            career.academicYear,
+                        ),
                         style = MaterialTheme.typography.bodySmall,
                         color = supportColor,
                         maxLines = 1,

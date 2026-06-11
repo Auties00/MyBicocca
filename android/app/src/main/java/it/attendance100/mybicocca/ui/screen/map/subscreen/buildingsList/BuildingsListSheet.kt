@@ -51,9 +51,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.SyncStatus
 import it.attendance100.mybicocca.domain.model.map.BuildingCode
@@ -64,7 +66,7 @@ import it.attendance100.mybicocca.domain.model.map.RoomScheduleEntry
 import it.attendance100.mybicocca.ui.component.modal.PredictiveModalBottomSheet
 import it.attendance100.mybicocca.ui.component.modal.SheetPagerHeader
 import it.attendance100.mybicocca.ui.component.modal.sheetPageTransform
-import it.attendance100.mybicocca.ui.screen.map.component.label
+import it.attendance100.mybicocca.ui.screen.map.component.labelRes
 import it.attendance100.mybicocca.ui.screen.map.ext.buildingDisplayName
 import it.attendance100.mybicocca.ui.screen.map.ext.openBuildingInMaps
 import it.attendance100.mybicocca.ui.screen.map.ext.splitLegacyAlias
@@ -113,14 +115,19 @@ fun BuildingsListSheet(
                     else -> 2
                 },
                 title = when {
-                    detailBuilding == null -> "Edifici"
+                    detailBuilding == null -> stringResource(R.string.map_buildings_title)
                     selectedRoom == null -> detailTitle.orEmpty()
                     else -> selectedRoom.name
                 },
                 subtitle = when {
-                    detailBuilding == null -> if (buildings.size == 1) "1 sede" else "${buildings.size} sedi"
+                    detailBuilding == null -> if (buildings.size == 1) {
+                        stringResource(R.string.map_site_count_one)
+                    } else {
+                        stringResource(R.string.map_site_count_many, buildings.size)
+                    }
                     selectedRoom == null ->
-                        detailBuilding.address ?: detailBuilding.city ?: detailBuilding.category.label
+                        detailBuilding.address ?: detailBuilding.city
+                        ?: stringResource(detailBuilding.category.labelRes)
                     else -> detailTitle
                 },
                 onBack = when {
@@ -300,7 +307,7 @@ private fun BuildingRow(
                             style = MaterialTheme.typography.titleMediumEmphasized,
                         )
                         Text(
-                            text = building.city ?: building.category.label,
+                            text = building.city ?: stringResource(building.category.labelRes),
                             style = MaterialTheme.typography.bodySmall,
                             color = scheme.onSurfaceVariant,
                         )
@@ -308,7 +315,11 @@ private fun BuildingRow(
                 }
                 Icon(
                     imageVector = Icons.Outlined.KeyboardArrowDown,
-                    contentDescription = if (expanded) "Comprimi" else "Espandi",
+                    contentDescription = if (expanded) {
+                        stringResource(R.string.map_collapse)
+                    } else {
+                        stringResource(R.string.map_expand)
+                    },
                     tint = scheme.onSurfaceVariant,
                     modifier = Modifier.rotate(arrowRotation),
                 )
@@ -319,7 +330,10 @@ private fun BuildingRow(
                     building.address?.let { address ->
                         DetailRow(icon = Icons.Outlined.Place, value = address)
                     }
-                    DetailRow(icon = Icons.Outlined.Tag, value = "Codice ${building.code.value}")
+                    DetailRow(
+                        icon = Icons.Outlined.Tag,
+                        value = stringResource(R.string.map_building_code, building.code.value),
+                    )
                     ActionRow(building = building, onShowInfo = onShowInfo)
                 }
             }
@@ -391,7 +405,7 @@ private fun ActionRow(
                 modifier = Modifier.size(20.dp),
             )
             Spacer(Modifier.width(8.dp))
-            Text("Indicazioni", fontWeight = FontWeight.SemiBold)
+            Text(stringResource(R.string.map_directions), fontWeight = FontWeight.SemiBold)
         }
 
         Button(
@@ -411,7 +425,7 @@ private fun ActionRow(
                 modifier = Modifier.size(20.dp),
             )
             Spacer(Modifier.width(8.dp))
-            Text("Informazioni", fontWeight = FontWeight.SemiBold)
+            Text(stringResource(R.string.map_info), fontWeight = FontWeight.SemiBold)
         }
     }
 }

@@ -18,9 +18,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import it.attendance100.mybicocca.R
 
 /**
  * Hero treatment for a confident best match: bigger frame, expressive corner, a colored
@@ -67,7 +69,7 @@ fun TopHitCard(
                     .padding(start = 16.dp, end = 8.dp),
             ) {
                 Text(
-                    text = "Miglior risultato",
+                    text = stringResource(R.string.search_top_hit),
                     style = MaterialTheme.typography.labelSmall,
                     fontWeight = FontWeight.SemiBold,
                     color = scheme.primary,

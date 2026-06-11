@@ -22,7 +22,6 @@ import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -43,6 +42,7 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -52,6 +52,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import com.google.gson.JsonPrimitive
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.domain.model.map.BuildingCode
 import it.attendance100.mybicocca.domain.model.settings.AppTheme
@@ -266,6 +267,7 @@ private val VIEWPORT_PADDING = 16.dp
  *   the gap between the map view's bottom and the screen bottom, i.e. the slice of the detail
  *   sheet that hangs BELOW the map and so covers none of it.
  */
+@Suppress("AssignedValueIsNeverRead")
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun MapScreen(
@@ -510,7 +512,7 @@ fun MapScreen(
         ExtendedFloatingActionButton(
             onClick = { showBuildingsList = true },
             icon = { Icon(Icons.Outlined.Apartment, contentDescription = null) },
-            text = { Text("Visualizza edifici") },
+            text = { Text(stringResource(R.string.map_view_buildings)) },
             modifier = Modifier
                 .align(Alignment.BottomEnd)
                 .padding(16.dp),
@@ -518,13 +520,12 @@ fun MapScreen(
     }
 
     if (detailModalBuilding != null) {
-        ModalBottomSheet(
-            onDismissRequest = { viewModel.clearSelection() },
-            sheetState = modalState,
+        it.attendance100.mybicocca.ui.component.modal.PredictiveModalBottomSheet(
+            onDismiss = { viewModel.clearSelection() },
             scrimColor = Color.Transparent,
             dragHandle = null,
             contentWindowInsets = { WindowInsets(0) },
-        ) {
+        ) { _, _ ->
             val navBottomPx = WindowInsets.navigationBars.getBottom(density)
             key(detailModalBuilding.code) {
                 Column(

@@ -2,7 +2,6 @@ package it.attendance100.mybicocca.ui.screen.registry.subscreen.isee
 
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -51,6 +50,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.state.Loadable
@@ -349,7 +349,7 @@ private fun DeclarationRow(
                 }
             }
             Text(
-                text = "Anno accademico ${declaration.academicYearLabel()}",
+                text = stringResource(R.string.isee_academic_year, declaration.academicYearLabel()),
                 style = MaterialTheme.typography.titleMediumEmphasized,
                 modifier = Modifier.weight(1f),
             )
@@ -410,7 +410,7 @@ fun IseeDetailPage(
 
         item {
             DetailSection(
-                title = "Dettagli",
+                title = stringResource(R.string.common_details),
                 rows = buildList {
                     declaration.iseeThreshold?.let {
                         add(
@@ -493,13 +493,13 @@ fun iseeDetailTitle(declaration: IseeDeclaration): String =
     "Anno accademico ${declaration.academicYearLabel()}"
 
 /** Detail header subtitle, exposed for the sheet entry's pinned header in MainShell. */
-fun iseeDetailSubtitle(declaration: IseeDeclaration): String? =
+fun iseeDetailSubtitle(declaration: IseeDeclaration): String =
     declaration.courseDescription ?: "Indicatore situazione economica"
 
 private fun Context.openUrl(url: String) {
     runCatching {
         startActivity(
-            Intent(Intent.ACTION_VIEW, Uri.parse(url))
+            Intent(Intent.ACTION_VIEW, url.toUri())
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
         )
     }

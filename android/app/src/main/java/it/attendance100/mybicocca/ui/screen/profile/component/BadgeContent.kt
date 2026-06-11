@@ -40,6 +40,7 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.ColorMatrix
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -145,7 +146,7 @@ fun BadgeFront(
                     .absoluteOffset(x = (-85).dp, y = (-2).dp),
             ) {
                 Text(
-                    text = "Università degli Studi",
+                    text = stringResource(R.string.badge_university),
                     fontSize = 17.sp,
                     color = drawableColor,
                 )
@@ -367,7 +368,7 @@ fun BadgeBack(
                     ) {
                         Text(
                             modifier = Modifier.padding(top = 10.dp),
-                            text = "Signature",
+                            text = stringResource(R.string.badge_signature),
                             color = textColor,
                             fontSize = 10.sp,
                             fontWeight = FontWeight.Medium,
@@ -439,7 +440,7 @@ fun BadgeBack(
                         if (photoFile != null) {
                             AsyncImage(
                                 model = photoFile,
-                                contentDescription = "Foto profilo",
+                                contentDescription = stringResource(R.string.badge_photo),
                                 modifier = Modifier.fillMaxSize(),
                                 contentScale = ContentScale.Crop,
                                 alignment = Alignment.Center,
@@ -456,7 +457,7 @@ fun BadgeBack(
                 ) {
                     Text(
                         modifier = Modifier.offset(y = 5.dp),
-                        text = "Email",
+                        text = stringResource(R.string.badge_email),
                         color = textColor,
                         fontSize = 10.sp,
                         fontWeight = FontWeight.Medium,

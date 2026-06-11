@@ -63,6 +63,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -73,6 +74,7 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.SyncStatus
 import it.attendance100.mybicocca.core.state.valueOrNull
@@ -151,20 +153,20 @@ fun StudyPlanEditPage(
             is SyncStatus.Failed -> SheetError(cause = status.cause, onRetry = viewModel::refresh)
             else -> SheetMessage(
                 icon = Icons.Outlined.Lock,
-                title = "Compilazione non disponibile",
-                body = "Non è stato possibile recuperare i percorsi del tuo corso di studi.",
+                title = stringResource(R.string.studyplanedit_unavailable_title),
+                body = stringResource(R.string.studyplanedit_unavailable_body),
             )
         }
 
         !hasPathStep && rules == null -> when (val status = syncStatus) {
             is SyncStatus.Failed -> SheetError(cause = status.cause, onRetry = viewModel::refresh)
-            else -> SheetLoadingIndicator(label = "Caricamento regole…")
+            else -> SheetLoadingIndicator(label = stringResource(R.string.studyplanedit_loading_rules))
         }
 
         !hasPathStep && rules.orEmpty().isEmpty() -> SheetMessage(
             icon = Icons.Outlined.Lock,
-            title = "Nessuna regola da compilare",
-            body = "Lo schema del piano non contiene regole di scelta.",
+            title = stringResource(R.string.studyplanedit_no_rules_title),
+            body = stringResource(R.string.studyplanedit_no_rules_body),
         )
 
         else -> PlanCompilerPager(
@@ -212,19 +214,20 @@ fun editWizardHeader(
     val segment by viewModel.currentSegment.collectAsStateWithLifecycle()
 
     val fallback = EditWizardHeader(
-        title = "Modifica percorso",
+        title = stringResource(R.string.studyplan_edit_path),
         subtitle = fallbackSubtitle?.let(::AnnotatedString),
     )
     if (pathData !is Loadable.Loaded) return fallback
 
     val options = pathData.valueOrNull()?.options.orEmpty()
     val rule = rulesData.valueOrNull().orEmpty().firstOrNull { it.choiceId == segment }
+    val pathToChooseLabel = stringResource(R.string.studyplanedit_path_to_choose)
 
     return when {
         segment == PATH_SEGMENT && options.isNotEmpty() -> EditWizardHeader(
-            title = "Scegli il percorso",
+            title = stringResource(R.string.studyplanedit_choose_path),
             subtitle = buildAnnotatedString {
-                append("1 PERCORSO DA SCEGLIERE · ")
+                append(pathToChooseLabel)
                 withStyle(
                     SpanStyle(
                         color = ruleStatusColor(satisfied = selectedSchemaId != null),
@@ -516,12 +519,12 @@ private fun PathChoicePage(
                     )
                     Spacer(Modifier.width(10.dp))
                     Text(
-                        text = "Regole del percorso non caricate.",
+                        text = stringResource(R.string.studyplanedit_rules_not_loaded),
                         style = MaterialTheme.typography.bodyMedium,
                         color = scheme.onSurfaceVariant,
                         modifier = Modifier.weight(1f),
                     )
-                    TextButton(onClick = onRetryRules) { Text("Riprova") }
+                    TextButton(onClick = onRetryRules) { Text(stringResource(R.string.common_retry)) }
                 }
             }
 
@@ -535,7 +538,7 @@ private fun PathChoicePage(
                     )
                     Spacer(Modifier.width(10.dp))
                     Text(
-                        text = "Il percorso selezionato non contiene regole da compilare.",
+                        text = stringResource(R.string.studyplanedit_path_no_rules),
                         style = MaterialTheme.typography.bodyMedium,
                         color = scheme.onSurfaceVariant,
                     )
@@ -671,7 +674,7 @@ private fun RulePage(
     ) {
         if (hasPreNote) {
             item(key = "pre_note") {
-                NoteTile(text = rule.preNote.orEmpty(), capTop = true, capBottom = false)
+                NoteTile(text = rule.preNote, capTop = true, capBottom = false)
             }
         }
         itemsIndexed(rule.courses, key = { _, course -> course.choiceId }) { index, course ->
@@ -686,7 +689,7 @@ private fun RulePage(
         }
         if (hasPostNote) {
             item(key = "post_note") {
-                NoteTile(text = rule.postNote.orEmpty(), capTop = false, capBottom = true)
+                NoteTile(text = rule.postNote, capTop = false, capBottom = true)
             }
         }
     }
@@ -762,7 +765,7 @@ private fun CourseTile(
                         maxLines = 1,
                     )
                     Text(
-                        text = "CFU",
+                        text = stringResource(R.string.common_cfu),
                         fontSize = 9.sp,
                         lineHeight = 10.sp,
                         fontWeight = FontWeight.SemiBold,
@@ -884,7 +887,7 @@ private fun WizardBottomBar(
                 ) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "Pagina precedente",
+                        contentDescription = stringResource(R.string.common_prev_page),
                         modifier = Modifier.size(20.dp),
                     )
                 }
@@ -935,7 +938,10 @@ private fun WizardBottomBar(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         when (target) {
                             WizardAction.Next -> {
-                                Text("Avanti", fontWeight = FontWeight.SemiBold)
+                                Text(
+                                    stringResource(R.string.common_next),
+                                    fontWeight = FontWeight.SemiBold
+                                )
                                 Spacer(Modifier.width(8.dp))
                                 Icon(
                                     imageVector = Icons.AutoMirrored.Filled.ArrowForward,
@@ -945,7 +951,10 @@ private fun WizardBottomBar(
                             }
 
                             WizardAction.Submit -> {
-                                Text("Invia piano", fontWeight = FontWeight.SemiBold)
+                                Text(
+                                    stringResource(R.string.studyplanedit_submit_plan),
+                                    fontWeight = FontWeight.SemiBold
+                                )
                                 Spacer(Modifier.width(8.dp))
                                 Icon(
                                     imageVector = Icons.AutoMirrored.Filled.Send,
@@ -957,13 +966,19 @@ private fun WizardBottomBar(
                             WizardAction.Loading -> {
                                 LoadingIndicator(modifier = Modifier.size(24.dp), color = brandFg)
                                 Spacer(Modifier.width(8.dp))
-                                Text("Caricamento…", fontWeight = FontWeight.SemiBold)
+                                Text(
+                                    stringResource(R.string.common_loading),
+                                    fontWeight = FontWeight.SemiBold
+                                )
                             }
 
                             WizardAction.Sending -> {
                                 LoadingIndicator(modifier = Modifier.size(24.dp), color = brandFg)
                                 Spacer(Modifier.width(8.dp))
-                                Text("Invio in corso…", fontWeight = FontWeight.SemiBold)
+                                Text(
+                                    stringResource(R.string.studyplanedit_sending),
+                                    fontWeight = FontWeight.SemiBold
+                                )
                             }
                         }
                     }
@@ -1007,7 +1022,7 @@ private fun PageDots(pageCount: Int, currentPage: Int) {
 private fun SheetError(cause: Throwable, onRetry: () -> Unit) {
     SheetMessage(
         icon = Icons.Default.Warning,
-        title = "Caricamento non riuscito",
+        title = stringResource(R.string.common_load_failed),
         body = cause.friendlyMessage(),
         action = { RetryButton(onClick = onRetry) },
     )

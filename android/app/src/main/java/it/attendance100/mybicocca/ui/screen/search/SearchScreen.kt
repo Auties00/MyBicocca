@@ -56,10 +56,12 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.domain.model.search.SearchResult
 import it.attendance100.mybicocca.domain.model.search.SearchResultCategory
 import it.attendance100.mybicocca.ui.component.bar.fadeThroughExpanded
@@ -229,8 +231,8 @@ fun SearchOverlay(
                                 .fillParentMaxSize()) {
                                 EmptyState(
                                     icon = Icons.Outlined.History,
-                                    title = "Nessuna ricerca recente",
-                                    body = "Le tue ricerche recenti appariranno qui",
+                                    title = stringResource(R.string.search_no_recent_title),
+                                    body = stringResource(R.string.search_no_recent_body),
                                 )
                             }
                         }
@@ -243,8 +245,8 @@ fun SearchOverlay(
                                 .fillParentMaxSize()) {
                                 EmptyState(
                                     icon = Icons.Outlined.SearchOff,
-                                    title = "Nessun risultato",
-                                    body = "Nessun risultato per “$query”",
+                                    title = stringResource(R.string.common_no_results),
+                                    body = stringResource(R.string.search_no_results_for, query),
                                 )
                             }
                         }
@@ -355,7 +357,8 @@ private fun HistoryClearIndicator(
                 val f = state.distanceFraction
                 alpha = f.coerceIn(0f, 1f)
                 val travel = size.height + 24.dp.toPx()
-                translationY = -size.height + travel * (f.coerceAtMost(1f) + (f - 1f).coerceAtLeast(0f) * 0.5f)
+                translationY =
+                    -size.height + travel * (f.coerceAtMost(1f) + (f - 1f).coerceAtLeast(0f) * 0.5f)
                 val scale = 0.7f + 0.3f * f.coerceAtMost(1f)
                 scaleX = scale
                 scaleY = scale
