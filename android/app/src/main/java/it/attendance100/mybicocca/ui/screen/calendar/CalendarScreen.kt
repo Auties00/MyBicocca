@@ -18,11 +18,16 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.ime
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.CloudOff
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
+import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
@@ -60,6 +65,8 @@ import it.attendance100.mybicocca.ui.screen.calendar.state.CalendarViewMode
 import it.attendance100.mybicocca.ui.screen.calendar.subscreen.eventDetail.EventDetailSheet
 import it.attendance100.mybicocca.ui.screen.calendar.subscreen.monthAgenda.MonthAgendaSheet
 import it.attendance100.mybicocca.ui.screen.calendar.theme.ProvideEventPalette
+import java.time.Instant
+import java.time.ZoneId
 
 /**
  * The calendar tab: the student's unified schedule — lessons, booked exams, assignment
@@ -92,6 +99,7 @@ import it.attendance100.mybicocca.ui.screen.calendar.theme.ProvideEventPalette
  *   search open begins, in both directions and during predictive back. Null means no
  *   shell hosts the screen (previews) and counts as settled.
  */
+@Suppress("AssignedValueIsNeverRead")
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun CalendarScreen(
@@ -147,6 +155,39 @@ fun CalendarScreen(
 
     var monthSheetSize by remember { mutableStateOf(IntSize.Zero) }
     var timelineZoom by rememberSaveable { mutableFloatStateOf(TIMELINE_ZOOM_DEFAULT) }
+    var showDatePicker by rememberSaveable { mutableStateOf(false) }
+
+    // Re-tapping the already-selected segment opens a date picker to jump the calendar to any
+    // day; confirming snaps the selection (and the month/week derived from it) to that date.
+    if (showDatePicker) {
+        val datePickerState = rememberDatePickerState(
+            initialSelectedDateMillis = selectedDay.atStartOfDay(ZoneId.of("UTC")).toInstant()
+                .toEpochMilli()
+        )
+
+        DatePickerDialog(
+            onDismissRequest = { showDatePicker = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    datePickerState.selectedDateMillis?.let { millis ->
+                        val date =
+                            Instant.ofEpochMilli(millis).atZone(ZoneId.of("UTC")).toLocalDate()
+                        viewModel.selectDay(date)
+                    }
+                    showDatePicker = false
+                }) {
+                    Text(stringResource(R.string.common_confirm))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDatePicker = false }) {
+                    Text(stringResource(R.string.common_cancel))
+                }
+            }
+        ) {
+            DatePicker(state = datePickerState)
+        }
+    }
 
     ProvideEventPalette {
         Box(modifier = modifier
@@ -177,7 +218,13 @@ fun CalendarScreen(
                             selectedDay = selectedDay,
                             weekStart = weekStart,
                             selectedMonth = selectedMonth,
-                            onSelect = viewModel::selectViewMode,
+                            onSelect = { mode ->
+                                if (mode == viewMode) {
+                                    showDatePicker = true
+                                } else {
+                                    viewModel.selectViewMode(mode)
+                                }
+                            },
                         )
                         Spacer(Modifier.height(16.dp))
 
