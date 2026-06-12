@@ -1,16 +1,20 @@
 # MyBicocca
-
 The all-in-one Android app for University of Milano-Bicocca students.
 
-## What is MyBicocca?
+## Authors
+| Name | Student ID |
+|---|---|
+| Alessandro Autiero | 909697 |
+| Alessandro Ferrari | 909536 |
+| Federico Giarrusso | 914656 |
+| Lorenzo Lupi | 909369 |
 
+## What is MyBicocca?
 MyBicocca unifies all your university services in a single app. No more switching between multiple websites and apps to manage your academic life. 
 Access everything you need from one place.
 
 ### Unified Services
-
 MyBicocca brings together:
-
 - **[Segreterie OnLine](https://s3w.si.unimib.it)** - Your student administration portal
 - **[E-Learning](https://elearning.unimib.it)** - The university's Moodle platform
 - **[Agenda Web](https://gestioneorari.didattica.unimib.it)** - Lesson and exam schedules
@@ -61,37 +65,30 @@ MyBicocca brings together:
 - Stay updated on course announcements
 
 ## Requirements
-
 - Android 8.0 (Oreo) or higher
 - University of Milano-Bicocca student credentials
 
 ## Installation
-
 *Coming soon to Google Play Store*
 
 ## How to Use
-
 1. **Login** - Sign in with your university credentials (@campus.unimib.it)
 2. **Explore** - Navigate through the different sections
 3. **Customize** - Set up your preferred courses and notifications
 
 ## Privacy & Security
-
 - Your credentials are securely stored on your device
 - All communications use encrypted HTTPS connections
 - No personal data is shared with third parties
 - Authentication uses official university SSO
 
 ## Support
-
 If you encounter any issues or have suggestions, open an issue on GitHub
 
 ## Disclaimer
-
 This is an unofficial application not affiliated with the University of Milano-Bicocca. It uses publicly available APIs and web services. Please use responsibly and in accordance with university policies.
 
 ## Acknowledgments
-
 - [University of Milano-Bicocca](https://www.unimib.it/) for the digital services
 - [CINECA](https://www.cineca.it/) for the Esse3 platform
 - [Moodle](https://moodle.org/) for the e-learning platform

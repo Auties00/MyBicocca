@@ -28,6 +28,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
@@ -49,6 +50,7 @@ import androidx.compose.ui.unit.coerceAtLeast
 import androidx.compose.ui.unit.dp
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.hazeSource
+import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.ui.theme.BadgeCardColorDark
 import it.attendance100.mybicocca.ui.theme.BadgeCardColorLight
 import kotlinx.coroutines.launch
@@ -121,25 +123,39 @@ fun CreditCard(
     var touchY by remember { mutableFloatStateOf(0.5f) }
     var gestureStartTime by remember { mutableLongStateOf(0L) }
     var totalDragX by remember { mutableFloatStateOf(0f) }
+    var hasFeatheredDuringGesture by remember { mutableStateOf(false) }
+    var prevAngleDuringGesture by remember { mutableFloatStateOf(((rotationY.value % 360f) + 360f) % 360f) }
+
+    val haptics = rememberHapticManager()
 
     val animatedRotationX by animateFloatAsState(
         targetValue = rotationX,
-        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow),
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessLow
+        ),
         label = "rotationX",
     )
     val animatedTouchX by animateFloatAsState(
         targetValue = touchX,
-        animationSpec = spring(dampingRatio = Spring.DampingRatioLowBouncy, stiffness = Spring.StiffnessMediumLow),
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioLowBouncy,
+            stiffness = Spring.StiffnessMediumLow
+        ),
         label = "touchX",
     )
     val animatedTouchY by animateFloatAsState(
         targetValue = touchY,
-        animationSpec = spring(dampingRatio = Spring.DampingRatioLowBouncy, stiffness = Spring.StiffnessMediumLow),
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioLowBouncy,
+            stiffness = Spring.StiffnessMediumLow
+        ),
         label = "touchY",
     )
 
     val context = LocalContext.current
-    val sensorManager = remember { context.getSystemService(Context.SENSOR_SERVICE) as SensorManager }
+    val sensorManager =
+        remember { context.getSystemService(Context.SENSOR_SERVICE) as SensorManager }
     val hazeState = remember { HazeState() }
     var tiltX by remember { mutableFloatStateOf(0f) }
     var tiltY by remember { mutableFloatStateOf(0f) }
@@ -176,8 +192,12 @@ fun CreditCard(
         .pointerInput(Unit) {
             detectDragGestures(
                 onDragStart = {
+
                     gestureStartTime = System.currentTimeMillis()
                     totalDragX = 0f
+                    hasFeatheredDuringGesture = false
+                    prevAngleDuringGesture = (((rotationY.value % 360f) + 360f) % 360f)
+                    haptics.custom(intensity = 0.5f, durationMillis = 20)
                 },
                 onDragEnd = {
                     val current = rotationY.value
@@ -204,6 +224,7 @@ fun CreditCard(
                     rotationX = 0f
                     touchX = 0.5f
                     touchY = 0.5f
+                    if (!isFlick) haptics.tap()
                 },
                 onDragCancel = {
                     val current = rotationY.value
@@ -234,6 +255,36 @@ fun CreditCard(
                     val rotationDelta = (dragAmount.x / cardWidth) * 180f
                     scope.launch {
                         rotationY.snapTo(rotationY.value + rotationDelta)
+
+                        // robust crossing detection: trigger feather when crossing 90° or 270° lines
+                        val angleNow = (((rotationY.value % 360f) + 360f) % 360f)
+                        val prev = prevAngleDuringGesture
+                        val delta =
+                            (((angleNow - prev + 540f) % 360f) - 180f) // signed delta in [-180,180)
+
+                        fun crossedThreshold(threshold: Float): Boolean {
+                            if (abs(delta) < 0.0001f) return false
+                            val tRel = (threshold - prev + 360f) % 360f
+                            return if (delta > 0f) {
+                                tRel > 0f && tRel <= delta
+                            } else {
+                                tRel >= 360f + delta && tRel < 360f
+                            }
+                        }
+
+                        var didCross = false
+                        if (crossedThreshold(90f) || crossedThreshold(270f)) {
+                            didCross = true
+                        }
+
+                        if (didCross) {
+                            try {
+                                haptics.feather()
+                            } catch (_: Exception) {
+                            }
+                        }
+
+                        prevAngleDuringGesture = angleNow
                     }
                 }
             }
@@ -251,6 +302,12 @@ fun CreditCard(
                             target,
                             animationSpec = tween(300, easing = FastOutSlowInEasing)
                         )
+                    }
+
+                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+                        haptics.spring()
+                    } else {
+                        haptics.tap()
                     }
                 },
             )

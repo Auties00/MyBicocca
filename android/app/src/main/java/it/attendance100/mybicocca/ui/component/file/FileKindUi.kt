@@ -10,6 +10,7 @@ import androidx.compose.material.icons.outlined.Movie
 import androidx.compose.material.icons.outlined.MusicNote
 import androidx.compose.material.icons.outlined.PictureAsPdf
 import androidx.compose.ui.graphics.vector.ImageVector
+import it.attendance100.mybicocca.R
 
 /**
  * Per-kind icon shared by the in-app/external open chooser and the "Apertura file" settings
@@ -30,13 +31,13 @@ internal fun FileKind.openChooserIcon(): ImageVector = when (this) {
  * Per-kind human label paired with [openChooserIcon] in the chooser hero chip and the
  * file-associations settings rows.
  */
-internal fun FileKind.openChooserLabel(): String = when (this) {
-    FileKind.Pdf -> "file_kind_pdf"
-    FileKind.Image -> "file_kind_image"
-    FileKind.Video -> "file_kind_video"
-    FileKind.Audio -> "file_kind_audio"
-    FileKind.Html -> "file_kind_html"
-    FileKind.Text -> "file_kind_text"
-    FileKind.Zip -> "file_kind_zip"
-    else -> "file_kind_generic"
+internal fun FileKind.openChooserLabel(): Int = when (this) {
+    FileKind.Pdf -> R.string.file_kind_pdf
+    FileKind.Image -> R.string.file_kind_image
+    FileKind.Video -> R.string.file_kind_video
+    FileKind.Audio -> R.string.file_kind_audio
+    FileKind.Html -> R.string.file_kind_html
+    FileKind.Text -> R.string.file_kind_text
+    FileKind.Zip -> R.string.file_kind_zip
+    else -> R.string.file_kind_generic
 }
