@@ -45,7 +45,7 @@ import it.attendance100.mybicocca.ui.component.feedback.rememberMinDurationLoadi
 import it.attendance100.mybicocca.ui.component.modal.SheetLoadingIndicator
 import it.attendance100.mybicocca.ui.component.modal.SheetMessage
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.titles.ext.icon
-import it.attendance100.mybicocca.ui.screen.registry.subscreen.titles.ext.label
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.titles.ext.labelRes
 
 /**
  * Root page of the "Titoli" sheet: the student's qualifications as a category-grouped
@@ -157,7 +157,7 @@ private fun TitlesListBody(
 @Composable
 private fun CategoryHeader(category: TitleCategory) {
     Text(
-        text = category.label(),
+        text = stringResource(category.labelRes),
         style = MaterialTheme.typography.labelLarge,
         fontWeight = FontWeight.Bold,
         color = MaterialTheme.colorScheme.primary,
@@ -243,28 +243,36 @@ private fun TitleRow(
  * empty. Public so MainShell's sheet entry can build the pinned header from the
  * shell-hoisted ViewModel's titles.
  */
+@Composable
 fun titlesHeaderSubtitle(titles: List<AcademicTitle>): String? {
     if (titles.isEmpty()) return null
-    return if (titles.size == 1) "1 titolo" else "${titles.size} titoli"
+    return if (titles.size == 1) {
+        stringResource(R.string.titles_count_one)
+    } else {
+        stringResource(R.string.titles_count_other, titles.size)
+    }
 }
 
 /** Display headline: the subject when present, else the type description, else the institution. */
+@Composable
 fun AcademicTitle.headline(): String =
     subject?.takeIf { it.isNotBlank() }
         ?: typeDescription?.takeIf { it.isNotBlank() }
         ?: institution
-        ?: "Titolo"
+        ?: stringResource(R.string.titles_headline_fallback)
 
 /**
  * Detail-page header subtitle: the title type when the headline is the subject, else the
  * awarding institution.
  */
+@Composable
 fun AcademicTitle.headlineSubtitle(): String? {
     val headline = headline()
     return typeDescription?.takeIf { it.isNotBlank() && it != headline }
         ?: institution?.takeIf { it.isNotBlank() && it != headline }
 }
 
+@Composable
 private fun AcademicTitle.listSubtitle(): String? {
     val headline = headline()
     val parts = buildList {

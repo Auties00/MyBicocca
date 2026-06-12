@@ -30,6 +30,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
@@ -49,6 +50,7 @@ import androidx.media3.ui.compose.material3.indicator.PositionAndDurationText
 import androidx.media3.ui.compose.material3.indicator.ProgressSlider
 import androidx.media3.ui.compose.modifiers.resizeWithContentScale
 import androidx.media3.ui.compose.state.rememberPresentationState
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.os.LocalPipController
 import it.attendance100.mybicocca.core.os.PipState
 
@@ -194,10 +196,13 @@ private fun MediaControls(player: ExoPlayer, onPip: () -> Unit, onShare: () -> U
                 PositionAndDurationText(player = player)
             }
             IconButton(onClick = onPip) {
-                Icon(Icons.Outlined.PictureInPictureAlt, contentDescription = "Picture-in-picture")
+                Icon(
+                    Icons.Outlined.PictureInPictureAlt,
+                    contentDescription = stringResource(R.string.elearning_file_picture_in_picture),
+                )
             }
             IconButton(onClick = onShare) {
-                Icon(Icons.Outlined.Share, contentDescription = "Condividi")
+                Icon(Icons.Outlined.Share, contentDescription = stringResource(R.string.elearning_file_share))
             }
         }
     }

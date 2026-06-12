@@ -18,18 +18,28 @@ import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.viewinterop.AndroidView
+import it.attendance100.mybicocca.R
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
 
 /** Display theme of the html viewer, cycled by its bottom-bar action; not persisted. */
-enum class HtmlThemeMode(val label: String) {
-    System("Sistema"),
-    Light("Chiaro"),
-    Dark("Scuro");
+enum class HtmlThemeMode {
+    System,
+    Light,
+    Dark;
 
     fun next(): HtmlThemeMode = entries[(ordinal + 1) % entries.size]
+}
+
+/** Localized label of the cycled html theme, reusing the app's system/light/dark wording. */
+@Composable
+private fun HtmlThemeMode.label(): String = when (this) {
+    HtmlThemeMode.System -> stringResource(R.string.settings_language_system)
+    HtmlThemeMode.Light -> stringResource(R.string.settings_theme_mode_light)
+    HtmlThemeMode.Dark -> stringResource(R.string.settings_theme_mode_dark)
 }
 
 /**
@@ -122,17 +132,17 @@ fun HtmlViewerContent(
         ViewerBottomBar(
             primary = ViewerAction(
                 icon = Icons.Outlined.Download,
-                label = "Scarica",
+                label = stringResource(R.string.elearning_file_download),
                 onClick = onDownload,
             ),
             ViewerAction(
                 icon = Icons.Outlined.Share,
-                label = "Condividi",
+                label = stringResource(R.string.elearning_file_share),
                 onClick = onShare,
             ),
             ViewerAction(
                 icon = Icons.AutoMirrored.Outlined.OpenInNew,
-                label = "Apri nel browser",
+                label = stringResource(R.string.elearning_file_open_in_browser),
                 onClick = onOpenInBrowser,
             ),
             ViewerAction(
@@ -141,7 +151,7 @@ fun HtmlViewerContent(
                     HtmlThemeMode.Light -> Icons.Outlined.LightMode
                     HtmlThemeMode.Dark -> Icons.Outlined.DarkMode
                 },
-                label = "Tema: ${themeMode.label}",
+                label = stringResource(R.string.elearning_file_theme_label, themeMode.label()),
                 onClick = { themeMode = themeMode.next() },
             )
         )

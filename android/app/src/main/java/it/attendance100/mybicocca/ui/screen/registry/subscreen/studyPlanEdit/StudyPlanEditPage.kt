@@ -147,7 +147,8 @@ fun StudyPlanEditPage(
     val rules = rulesData.valueOrNull()
 
     when {
-        pathData !is Loadable.Loaded -> SheetLoadingIndicator(label = "Caricamento percorsi…")
+        pathData !is Loadable.Loaded ->
+            SheetLoadingIndicator(label = stringResource(R.string.studyplanedit_loading_paths))
 
         !hasPathStep && selectedSchemaId == null -> when (val status = syncStatus) {
             is SyncStatus.Failed -> SheetError(cause = status.cause, onRetry = viewModel::refresh)
@@ -222,6 +223,7 @@ fun editWizardHeader(
     val options = pathData.valueOrNull()?.options.orEmpty()
     val rule = rulesData.valueOrNull().orEmpty().firstOrNull { it.choiceId == segment }
     val pathToChooseLabel = stringResource(R.string.studyplanedit_path_to_choose)
+    val mandatoryLabel = stringResource(R.string.studyplanedit_mandatory_caps)
 
     return when {
         segment == PATH_SEGMENT && options.isNotEmpty() -> EditWizardHeader(
@@ -234,7 +236,7 @@ fun editWizardHeader(
                         fontWeight = FontWeight.SemiBold,
                     ),
                 ) {
-                    append("OBBLIGATORIO")
+                    append(mandatoryLabel)
                 }
             },
         )
@@ -259,8 +261,13 @@ fun editWizardHeader(
     }
 }
 
+@Composable
 private fun ruleYearLabel(year: Int): String =
-    if (year == 0) "ALTRE ATTIVITÀ" else "$year° ANNO"
+    if (year == 0) {
+        stringResource(R.string.studyplan_year_other_activities)
+    } else {
+        stringResource(R.string.studyplan_year_label, year)
+    }
 
 /**
  * Success green / warning orange for the inline rule status — neither exists as a
@@ -277,37 +284,67 @@ private fun ruleStatusColor(satisfied: Boolean): Color =
  * optional rule is satisfied with zero picks — its floor only kicks in once something is
  * selected, so the label leads with the ceiling, never "TRA".
  */
+@Composable
 private fun EditableRule.requirementLabel(): String {
-    if (isMandatoryRule) return "${effectiveMinUnits?.toInt() ?: 0} CFU OBBLIGATORI"
-
     val activities = unit == ChoiceConstraintUnit.Activities
-    val unitName = if (activities) "ATTIVITÀ" else "CFU"
-    val mandatoryAdj = if (activities) "OBBLIGATORIE" else "OBBLIGATORI"
+    val unitName = stringResource(
+        if (activities) R.string.studyplanedit_unit_activities else R.string.common_cfu,
+    )
+    if (isMandatoryRule) {
+        return stringResource(
+            R.string.studyplanedit_req_mandatory_credits,
+            effectiveMinUnits?.toInt() ?: 0,
+            unitName,
+        )
+    }
+
+    val mandatoryAdj = stringResource(
+        if (activities) {
+            R.string.studyplanedit_mandatory_adj_feminine
+        } else {
+            R.string.studyplanedit_mandatory_adj_masculine
+        },
+    )
     val min = minUnits?.toInt()?.takeIf { it > 0 }
     val max = maxUnits?.toInt()
     return when {
-        isOptional && min != null && max != null && min == max -> "$min $unitName OPZIONALI"
-        isOptional && max != null -> "FINO A $max $unitName OPZIONALI"
-        isOptional -> "$unitName OPZIONALI"
-        min != null && max != null && min == max -> "$min $unitName $mandatoryAdj"
-        min != null && max != null -> "TRA I $min E $max $unitName $mandatoryAdj"
-        max != null -> "FINO A $max $unitName $mandatoryAdj"
-        min != null -> "ALMENO $min $unitName $mandatoryAdj"
-        else -> "$unitName A SCELTA"
+        isOptional && min != null && max != null && min == max ->
+            stringResource(R.string.studyplanedit_req_optional_exact, min, unitName)
+        isOptional && max != null ->
+            stringResource(R.string.studyplanedit_req_optional_up_to, max, unitName)
+        isOptional -> stringResource(R.string.studyplanedit_req_optional, unitName)
+        min != null && max != null && min == max ->
+            stringResource(R.string.studyplanedit_req_exact, min, unitName, mandatoryAdj)
+        min != null && max != null ->
+            stringResource(R.string.studyplanedit_req_between, min, max, unitName, mandatoryAdj)
+        max != null ->
+            stringResource(R.string.studyplanedit_req_up_to, max, unitName, mandatoryAdj)
+        min != null ->
+            stringResource(R.string.studyplanedit_req_at_least, min, unitName, mandatoryAdj)
+        else -> stringResource(R.string.studyplanedit_req_free_choice, unitName)
     }
 }
 
 /** The live selection count in the rule's own unit: "8/12 CFU SELEZIONATI". */
+@Composable
 private fun EditableRule.selectionLabel(): String {
     val activities = unit == ChoiceConstraintUnit.Activities
-    val unitName = if (activities) "ATTIVITÀ" else "CFU"
-    val selectedAdj = if (activities) "SELEZIONATE" else "SELEZIONATI"
+    val unitName = stringResource(
+        if (activities) R.string.studyplanedit_unit_activities else R.string.common_cfu,
+    )
+    val selectedAdj = stringResource(
+        if (activities) {
+            R.string.studyplanedit_selected_adj_feminine
+        } else {
+            R.string.studyplanedit_selected_adj_masculine
+        },
+    )
     val selected = selectedUnits.toInt()
     val target = (effectiveMaxUnits ?: effectiveMinUnits)?.toInt()
     return if (target != null) {
-        "$selected/$target $unitName $selectedAdj"
+        stringResource(R.string.studyplanedit_selection_of, selected, target, unitName, selectedAdj)
     } else {
-        "$selected $unitName $selectedAdj"
+        stringResource(R.string.studyplanedit_selection, selected, unitName, selectedAdj)
     }
 }
 
@@ -618,9 +655,10 @@ private fun PathChoiceCard(
                     )
                 }
                 val approvalLabel = when (option.approval) {
-                    PlanApprovalType.Automatic -> "Approvazione automatica"
-                    PlanApprovalType.Manual -> "Richiede approvazione"
-                    PlanApprovalType.AutomaticIfCompliant -> "Approvazione automatica se conforme"
+                    PlanApprovalType.Automatic -> stringResource(R.string.studyplanedit_approval_automatic)
+                    PlanApprovalType.Manual -> stringResource(R.string.studyplanedit_approval_manual)
+                    PlanApprovalType.AutomaticIfCompliant ->
+                        stringResource(R.string.studyplanedit_approval_automatic_if_compliant)
                     PlanApprovalType.Unknown -> null
                 }
                 if (approvalLabel != null) {

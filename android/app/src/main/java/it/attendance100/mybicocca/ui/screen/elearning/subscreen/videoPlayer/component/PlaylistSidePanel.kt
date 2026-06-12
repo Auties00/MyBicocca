@@ -40,9 +40,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.videoPlayer.state.VideoPlayerPlaylistItem
 
 /**
@@ -112,12 +114,16 @@ private fun PanelContent(
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = "Video del corso",
+                    text = stringResource(R.string.elearning_video_course_videos),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
                 )
                 Text(
-                    text = "${items.count { it.completed }} / ${items.size} completati",
+                    text = stringResource(
+                        R.string.elearning_video_completed_count,
+                        items.count { it.completed },
+                        items.size,
+                    ),
                     style = MaterialTheme.typography.labelMedium,
                     color = scheme.onSurfaceVariant,
                 )
@@ -125,7 +131,7 @@ private fun PanelContent(
             IconButton(onClick = onClose) {
                 Icon(
                     imageVector = Icons.Outlined.Close,
-                    contentDescription = "Chiudi",
+                    contentDescription = stringResource(R.string.common_close),
                 )
             }
         }

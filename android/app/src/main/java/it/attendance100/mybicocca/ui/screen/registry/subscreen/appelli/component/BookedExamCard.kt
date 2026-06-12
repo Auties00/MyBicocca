@@ -46,9 +46,9 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
-private val DayOfWeekFormat = DateTimeFormatter.ofPattern("EEE", Locale.ITALIAN)
+private val DayOfWeekFormat = DateTimeFormatter.ofPattern("EEE", Locale.getDefault())
 private val DayOfMonthFormat = DateTimeFormatter.ofPattern("d")
-private val MonthFormat = DateTimeFormatter.ofPattern("MMM", Locale.ITALIAN)
+private val MonthFormat = DateTimeFormatter.ofPattern("MMM", Locale.getDefault())
 private val TimeFormat = DateTimeFormatter.ofPattern("HH:mm")
 
 /**
@@ -73,12 +73,12 @@ fun BookedExamCard(
         booking.examDateTime?.toLocalDate()?.format(DayOfMonthFormat)
     }
     val month = remember(booking.examDateTime) {
-        booking.examDateTime?.toLocalDate()?.format(MonthFormat)?.uppercase(Locale.ITALIAN)
+        booking.examDateTime?.toLocalDate()?.format(MonthFormat)?.uppercase(Locale.getDefault())
     }
     val timeLabel = remember(booking.examDateTime) {
         booking.examDateTime?.let {
             val weekday = it.toLocalDate().format(DayOfWeekFormat)
-                .replaceFirstChar { c -> c.titlecase(Locale.ITALIAN) }
+                .replaceFirstChar { c -> c.titlecase(Locale.getDefault()) }
             "$weekday · ${it.toLocalTime().format(TimeFormat)}"
         }
     }

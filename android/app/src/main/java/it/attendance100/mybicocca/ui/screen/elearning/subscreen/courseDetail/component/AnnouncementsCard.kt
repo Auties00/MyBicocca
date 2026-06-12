@@ -27,11 +27,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.domain.model.elearning.forum.Discussion
 import it.attendance100.mybicocca.domain.model.elearning.forum.Forum
@@ -189,7 +192,7 @@ private fun LatestAnnouncementBlock(
                 if (announcement.hasAttachments) {
                     Icon(
                         imageVector = Icons.Outlined.AttachFile,
-                        contentDescription = "Con allegato",
+                        contentDescription = stringResource(R.string.elearning_course_attachment),
                         tint = scheme.onTertiaryContainer.copy(alpha = 0.65f),
                         modifier = Modifier.size(12.dp),
                     )
@@ -257,8 +260,10 @@ private fun LatestAnnouncementPlaceholder() {
     }
 }
 
-private fun announcementCountLabel(count: Int): String = when (count) {
-    0 -> "Nessun avviso"
-    1 -> "1 avviso dei docenti"
-    else -> "$count avvisi dei docenti"
-}
+@Composable
+private fun announcementCountLabel(count: Int): String =
+    if (count == 0) {
+        stringResource(R.string.elearning_course_announcement_count_zero)
+    } else {
+        pluralStringResource(R.plurals.elearning_course_announcement_count, count, count)
+    }

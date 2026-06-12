@@ -35,8 +35,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.domain.model.elearning.assignment.Assignment
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.assignmentDetail.AssignmentDetailTestTags
 import it.attendance100.mybicocca.domain.model.elearning.assignment.SubmissionStatus
@@ -82,7 +85,7 @@ internal fun AssignmentOverviewPage(
                 (status as? SubmissionStatus.Graded)?.takeIf { it.grade != null }?.let { graded ->
                     IconRow(
                         icon = Icons.Outlined.EmojiEvents,
-                        label = "VOTO",
+                        label = stringResource(R.string.elearning_assign_grade_label),
                         value = buildString {
                             append(formatGrade(graded.grade!!))
                             graded.maxGrade?.takeIf { it > 0 }?.let { append(" / ${formatGrade(it)}") }
@@ -90,19 +93,39 @@ internal fun AssignmentOverviewPage(
                     )
                 }
                 assignment.allowSubmissionsFrom?.takeIf { it.isAfter(now) }?.let {
-                    IconRow(Icons.Outlined.Schedule, "APERTURA", "Apre ${DateFmt.format(it)}")
+                    IconRow(
+                        Icons.Outlined.Schedule,
+                        stringResource(R.string.elearning_assign_opening_label),
+                        stringResource(R.string.elearning_assign_opens_later, DateFmt.format(it)),
+                    )
                 }
                 assignment.cutoffDate?.takeIf { it.isAfter(now) && assignment.dueDate?.isBefore(now) == true }?.let {
-                    IconRow(Icons.Outlined.EventBusy, "CONSEGNA TARDIVA", "Possibile fino al ${DateFmt.format(it)}")
+                    IconRow(
+                        Icons.Outlined.EventBusy,
+                        stringResource(R.string.elearning_assign_late_submission_label),
+                        stringResource(R.string.elearning_assign_late_submission, DateFmt.format(it)),
+                    )
                 }
                 (status as? SubmissionStatus.Submitted)?.submittedAt?.let {
-                    IconRow(Icons.Outlined.CheckCircle, "CONSEGNATO", "Il ${DateFmt.format(it)}")
+                    IconRow(
+                        Icons.Outlined.CheckCircle,
+                        stringResource(R.string.elearning_assign_submitted_label),
+                        stringResource(R.string.elearning_assign_submitted_date, DateFmt.format(it)),
+                    )
                 }
                 (status as? SubmissionStatus.Graded)?.submittedAt?.let {
-                    IconRow(Icons.Outlined.CheckCircle, "CONSEGNATO", "Il ${DateFmt.format(it)}")
+                    IconRow(
+                        Icons.Outlined.CheckCircle,
+                        stringResource(R.string.elearning_assign_submitted_label),
+                        stringResource(R.string.elearning_assign_submitted_date, DateFmt.format(it)),
+                    )
                 }
                 assignment.maxAttempts?.takeIf { it >= 1 }?.let {
-                    IconRow(Icons.Outlined.Repeat, "TENTATIVI", if (it == 1) "Uno solo" else "Massimo $it")
+                    IconRow(
+                        Icons.Outlined.Repeat,
+                        stringResource(R.string.elearning_assign_attempts_label),
+                        pluralStringResource(R.plurals.elearning_assign_max_attempts, it, it),
+                    )
                 }
             }
 
@@ -125,7 +148,7 @@ internal fun AssignmentOverviewPage(
             (status as? SubmissionStatus.Submitted)?.let { submitted ->
                 val text = submitted.onlineText?.takeIf { it.isNotBlank() }
                 if (submitted.files.isNotEmpty() || text != null) {
-                    SectionLabel("La tua consegna")
+                    SectionLabel(stringResource(R.string.elearning_assign_submission_title))
                     AttachmentList(files = submitted.files, onOpenFile = onOpenFile)
                     if (text != null) {
                         if (submitted.files.isNotEmpty()) Spacer(Modifier.height(8.dp))
@@ -141,7 +164,7 @@ internal fun AssignmentOverviewPage(
             }
 
             (status as? SubmissionStatus.Graded)?.feedback?.takeIf { it.isNotBlank() }?.let { feedback ->
-                SectionLabel("Feedback del docente")
+                SectionLabel(stringResource(R.string.elearning_assign_teacher_feedback))
                 Surface(
                     shape = RoundedCornerShape(18.dp),
                     color = scheme.surfaceContainerLowest,
@@ -198,10 +221,10 @@ private fun OverviewActions(
     when {
         canEdit -> Column(modifier) {
             val label = when {
-                isDraft -> "Completa consegna"
-                isSubmitted -> "Modifica consegna"
-                overdue && lateOpen -> "Consegna in ritardo"
-                else -> "Aggiungi consegna"
+                isDraft -> stringResource(R.string.elearning_assign_complete_submission)
+                isSubmitted -> stringResource(R.string.elearning_assign_modify_submission)
+                overdue && lateOpen -> stringResource(R.string.elearning_assign_late_submission_button)
+                else -> stringResource(R.string.elearning_assign_add_submission)
             }
             PrimaryActionButton(
                 text = label,
@@ -224,7 +247,10 @@ private fun OverviewActions(
                 ) {
                     Icon(Icons.Outlined.DeleteOutline, contentDescription = null, modifier = Modifier.size(18.dp))
                     Spacer(Modifier.width(8.dp))
-                    Text("Rimuovi consegna", fontWeight = FontWeight.SemiBold)
+                    Text(
+                        stringResource(R.string.elearning_assign_remove_submission),
+                        fontWeight = FontWeight.SemiBold,
+                    )
                 }
             }
         }
@@ -232,7 +258,11 @@ private fun OverviewActions(
         isGraded || isSubmitted -> Unit
 
         else -> Column(modifier) {
-            val label = if (opensLater) "Consegne non ancora aperte" else "Consegne chiuse"
+            val label = if (opensLater) {
+                stringResource(R.string.elearning_assign_not_open_yet)
+            } else {
+                stringResource(R.string.elearning_assign_closed)
+            }
             FilledTonalButton(
                 onClick = {},
                 enabled = false,
@@ -327,9 +357,9 @@ private fun IconRow(icon: ImageVector, label: String, value: String) {
 /** Whole grades render without a decimal; fractional ones keep one place. */
 internal fun formatGrade(grade: Double): String = when {
     grade % 1.0 == 0.0 -> grade.toInt().toString()
-    else -> String.format(java.util.Locale.ITALIAN, "%.1f", grade)
+    else -> String.format(java.util.Locale.getDefault(), "%.1f", grade)
 }
 
 internal val DateFmt: java.time.format.DateTimeFormatter = java.time.format.DateTimeFormatter
-    .ofPattern("EEE d MMM, HH:mm", java.util.Locale.ITALIAN)
+    .ofPattern("EEE d MMM, HH:mm", java.util.Locale.getDefault())
     .withZone(java.time.ZoneId.systemDefault())

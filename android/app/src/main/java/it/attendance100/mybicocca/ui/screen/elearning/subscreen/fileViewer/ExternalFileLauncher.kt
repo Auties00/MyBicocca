@@ -15,11 +15,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.SyncStatus
 import it.attendance100.mybicocca.ui.component.feedback.LocalAppSnackbarController
@@ -50,16 +52,19 @@ fun ExternalFileLauncher(
     val localPath by viewModel.localPath.collectAsStateWithLifecycle()
     val downloadStatus by viewModel.downloadStatus.collectAsStateWithLifecycle()
 
+    val noAppMessage = stringResource(R.string.elearning_file_no_app)
+    val downloadFailedMessage = stringResource(R.string.elearning_file_download_failed)
+
     LaunchedEffect(localPath) {
         val path = (localPath as? Loadable.Loaded)?.value ?: return@LaunchedEffect
         if (!launchExternalViewer(context, path, route.mimeType)) {
-            snackbar.showError("Nessuna app installata può aprire questo file")
+            snackbar.showError(noAppMessage)
         }
         onFinished()
     }
     LaunchedEffect(downloadStatus) {
         if (downloadStatus is SyncStatus.Failed) {
-            snackbar.showError("Download del file non riuscito")
+            snackbar.showError(downloadFailedMessage)
             onFinished()
         }
     }
@@ -80,7 +85,7 @@ fun ExternalFileLauncher(
                     CircularProgressIndicator(modifier = Modifier.size(28.dp))
                     Spacer(Modifier.width(16.dp))
                     Text(
-                        text = "Apertura nel lettore predefinito…",
+                        text = stringResource(R.string.elearning_file_opening_external),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurface,
                     )

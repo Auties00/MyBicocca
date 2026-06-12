@@ -21,10 +21,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.domain.model.elearning.quiz.AttemptQuestion
 import it.attendance100.mybicocca.domain.model.elearning.quiz.AttemptReview
 import it.attendance100.mybicocca.ui.component.text.HtmlBody
@@ -98,7 +101,7 @@ internal fun AttemptReviewContent(
                 contentColor = scheme.onPrimary,
             ),
         ) {
-            Text("Chiudi revisione", fontWeight = FontWeight.SemiBold)
+            Text(stringResource(R.string.elearning_quiz_close_review), fontWeight = FontWeight.SemiBold)
         }
     }
 }
@@ -109,7 +112,7 @@ private fun ReviewGradeHero(review: AttemptReview, questions: List<AttemptQuesti
     val scheme = MaterialTheme.colorScheme
     Column(modifier = Modifier.padding(horizontal = 20.dp, vertical = 10.dp)) {
         Text(
-            text = "❀ REVISIONE",
+            text = stringResource(R.string.elearning_quiz_review_eyebrow),
             color = scheme.tertiary,
             fontWeight = FontWeight.Bold,
             fontSize = 10.sp,
@@ -146,10 +149,10 @@ private fun ReviewGradeHero(review: AttemptReview, questions: List<AttemptQuesti
         val wrong = questions.count { it.state == "gradedwrong" }
         val skipped = questions.count { it.state == "gaveup" }
         val summary = listOfNotNull(
-            right.takeIf { it > 0 }?.let { "$it corrette" },
-            partial.takeIf { it > 0 }?.let { "$it parziali" },
-            wrong.takeIf { it > 0 }?.let { "$it sbagliate" },
-            skipped.takeIf { it > 0 }?.let { "$it senza risposta" },
+            right.takeIf { it > 0 }?.let { pluralStringResource(R.plurals.elearning_quiz_correct_count, it, it) },
+            partial.takeIf { it > 0 }?.let { pluralStringResource(R.plurals.elearning_quiz_partial_count, it, it) },
+            wrong.takeIf { it > 0 }?.let { pluralStringResource(R.plurals.elearning_quiz_wrong_count, it, it) },
+            skipped.takeIf { it > 0 }?.let { pluralStringResource(R.plurals.elearning_quiz_no_answer_count, it, it) },
         )
         if (summary.isNotEmpty()) {
             Spacer(Modifier.height(4.dp))

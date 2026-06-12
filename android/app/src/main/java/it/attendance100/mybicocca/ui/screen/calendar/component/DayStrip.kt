@@ -27,7 +27,7 @@ import java.time.LocalDate
 import java.time.format.TextStyle
 import java.util.Locale
 
-private val ItalianLocale = Locale.ITALIAN
+private val DisplayLocale = Locale.getDefault()
 
 /**
  * One week as a row of seven equal-width cells, each a narrow weekday initial over the
@@ -87,5 +87,5 @@ fun DayStrip(
 }
 
 private fun dayShort(day: LocalDate): String =
-    day.dayOfWeek.getDisplayName(TextStyle.NARROW_STANDALONE, ItalianLocale)
-        .uppercase(ItalianLocale)
+    day.dayOfWeek.getDisplayName(TextStyle.NARROW_STANDALONE, DisplayLocale)
+        .uppercase(DisplayLocale)

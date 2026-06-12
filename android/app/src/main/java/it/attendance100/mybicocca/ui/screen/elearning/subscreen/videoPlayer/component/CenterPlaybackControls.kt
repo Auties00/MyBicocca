@@ -21,10 +21,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.ui.compose.state.rememberPlayPauseButtonState
+import it.attendance100.mybicocca.R
 
 /**
  * The transport cluster floating at the centre of the video: a large play/pause toggle flanked by
@@ -49,7 +51,7 @@ fun CenterPlaybackControls(
     ) {
         CircularControl(
             icon = Icons.Outlined.SkipPrevious,
-            contentDescription = "Video precedente",
+            contentDescription = stringResource(R.string.elearning_video_previous),
             enabled = onPrevious != null,
             size = SIDE_SIZE,
             iconSize = SIDE_ICON,
@@ -60,7 +62,11 @@ fun CenterPlaybackControls(
         )
         CircularControl(
             icon = if (playPauseState.showPlay) Icons.Outlined.PlayArrow else Icons.Outlined.Pause,
-            contentDescription = if (playPauseState.showPlay) "Play" else "Pausa",
+            contentDescription = if (playPauseState.showPlay) {
+                stringResource(R.string.elearning_video_play)
+            } else {
+                stringResource(R.string.elearning_video_pause)
+            },
             enabled = playPauseState.isEnabled,
             size = CENTER_SIZE,
             iconSize = CENTER_ICON,
@@ -71,7 +77,7 @@ fun CenterPlaybackControls(
         )
         CircularControl(
             icon = Icons.Outlined.SkipNext,
-            contentDescription = "Video successivo",
+            contentDescription = stringResource(R.string.elearning_video_next),
             enabled = onNext != null,
             size = SIDE_SIZE,
             iconSize = SIDE_ICON,

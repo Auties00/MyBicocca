@@ -178,7 +178,7 @@ private fun DeclarationsPage(
             failure != null && declarations == null -> SheetMessage(
                 icon = Icons.Outlined.CloudOff,
                 title = stringResource(R.string.common_error_title),
-                body = failure.cause.taxFriendlyMessage(),
+                body = failure.cause.taxFriendlyMessage(LocalContext.current),
                 action = { RetryButton(onClick = onRetry) },
             )
 

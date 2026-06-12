@@ -149,4 +149,4 @@ private fun urgencyFor(today: LocalDate, date: LocalDate): DeadlineUrgency {
 }
 
 private fun formatAmount(amount: Double): String =
-    "€ " + String.format(java.util.Locale.ITALIAN, "%,.2f", amount)
+    "€ " + String.format(java.util.Locale.getDefault(), "%,.2f", amount)

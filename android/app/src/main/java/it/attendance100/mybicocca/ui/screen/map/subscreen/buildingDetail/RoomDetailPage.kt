@@ -33,6 +33,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -121,11 +122,7 @@ private fun RoomFeatures(room: MapRoom, detail: MapRoomDetail?) {
         (detail?.capacity ?: room.capacity)?.let { capacity ->
             FeaturePill(
                 icon = Icons.Outlined.Groups,
-                text = if (capacity == 1) {
-                    stringResource(R.string.map_seat_count_one)
-                } else {
-                    stringResource(R.string.map_seat_count_many, capacity)
-                },
+                text = pluralStringResource(R.plurals.map_seat_count, capacity, capacity),
             )
         }
         detail?.roomType?.let { type ->

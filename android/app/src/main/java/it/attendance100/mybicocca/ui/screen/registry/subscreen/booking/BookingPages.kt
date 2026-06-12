@@ -263,7 +263,7 @@ private fun CallDateCell(
                 maxLines = 1,
             )
             Text(
-                text = call.callDate?.format(MonthFormat)?.uppercase(Locale.ITALIAN) ?: "N.D.",
+                text = call.callDate?.format(MonthFormat)?.uppercase(Locale.getDefault()) ?: "N.D.",
                 style = MaterialTheme.typography.labelSmall,
                 color = content.copy(alpha = content.alpha * 0.8f),
                 maxLines = 1,
@@ -662,7 +662,7 @@ private fun formatWindow(opensAt: LocalDate?, closesAt: LocalDate?): String {
     }
 }
 
-private val ShortDateFormat = DateTimeFormatter.ofPattern("d MMM yyyy", Locale.ITALIAN)
-private val MonthFormat = DateTimeFormatter.ofPattern("MMM", Locale.ITALIAN)
+private val ShortDateFormat = DateTimeFormatter.ofPattern("d MMM yyyy", Locale.getDefault())
+private val MonthFormat = DateTimeFormatter.ofPattern("MMM", Locale.getDefault())
 private val TimeFormat = DateTimeFormatter.ofPattern("HH:mm")
-private val WindowFormat = DateTimeFormatter.ofPattern("d MMM yyyy", Locale.ITALIAN)
+private val WindowFormat = DateTimeFormatter.ofPattern("d MMM yyyy", Locale.getDefault())

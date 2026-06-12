@@ -210,7 +210,10 @@ fun StudyPlanPage(
                         runCatching { openPdfDocument(context, event.bytes, event.fileName) }
                             .onFailure {
                                 outcomeTerminal = false
-                                outcome = SheetOutcome.Error("Impossibile aprire il documento", it)
+                                outcome = SheetOutcome.Error(
+                                    context.getString(R.string.studyplan_open_document_failed),
+                                    it,
+                                )
                             }
 
                     is StudyPlanEvent.ShowMessage -> {
@@ -278,17 +281,17 @@ fun StudyPlanPage(
                     PlanSheetPage.Result -> 1
                 },
                 title = when (page) {
-                    PlanSheetPage.Root -> "Percorso"
+                    PlanSheetPage.Root -> stringResource(R.string.studyplan_path_title)
                     is PlanSheetPage.Year -> page.year.label()
-                    PlanSheetPage.Edit -> editHeader?.title ?: "Modifica percorso"
-                    PlanSheetPage.ConfirmExit -> "Uscire senza inviare?"
+                    PlanSheetPage.Edit -> editHeader?.title ?: stringResource(R.string.studyplan_edit_path)
+                    PlanSheetPage.ConfirmExit -> stringResource(R.string.studyplan_exit_confirm_title)
                     PlanSheetPage.Result -> ""
                 },
                 subtitle = when (page) {
                     PlanSheetPage.Root -> if (loaded) headerSubtitle(plan, path) else null
                     is PlanSheetPage.Year -> yearSummary(coursesByYear[page.year].orEmpty())
                     PlanSheetPage.Edit -> editHeader?.subtitle
-                    PlanSheetPage.ConfirmExit -> "Modifica percorso"
+                    PlanSheetPage.ConfirmExit -> stringResource(R.string.studyplan_edit_path)
                     PlanSheetPage.Result -> null
                 },
                 onBack = when (page) {
@@ -355,7 +358,10 @@ fun StudyPlanPage(
                             },
                             onSubmitFailed = { message ->
                                 outcomeTerminal = true
-                                outcome = SheetOutcome.Error("Invio non riuscito", body = message)
+                                outcome = SheetOutcome.Error(
+                                    context.getString(R.string.studyplan_submit_failed),
+                                    body = message,
+                                )
                             },
                         )
                     }
@@ -639,9 +645,14 @@ private fun PlanActionFooter(
 }
 
 /** "Percorso comune · piano standard": the percorso facet plus the plan flavor. */
+@Composable
 private fun headerSubtitle(plan: StudyPlan?, path: StudyPath?): String {
     val percorso = path?.percorso?.label?.takeIf { it.isNotBlank() }?.displayCase()
-        ?: if (path?.choiceAvailable == true) "Percorso" else "Percorso unico"
+        ?: if (path?.choiceAvailable == true) {
+            stringResource(R.string.studyplan_path_facet)
+        } else {
+            stringResource(R.string.studyplan_path_single)
+        }
     val piano = plan?.type?.label() ?: return percorso
     return "$percorso · $piano"
 }
@@ -654,15 +665,19 @@ private fun String.displayCase(): String =
     if (any { it.isLowerCase() }) this
     else lowercase().replaceFirstChar { it.titlecase() }
 
-private fun StudyPlanType.label(): String = when (this) {
-    StudyPlanType.Standard -> "piano standard"
-    StudyPlanType.Individual -> "piano individuale"
-    StudyPlanType.Unknown -> "piano di studi"
-}
+@Composable
+private fun StudyPlanType.label(): String = stringResource(
+    when (this) {
+        StudyPlanType.Standard -> R.string.studyplan_type_standard
+        StudyPlanType.Individual -> R.string.studyplan_type_individual
+        StudyPlanType.Unknown -> R.string.studyplan_type_generic
+    },
+)
 
+@Composable
 private fun yearSummary(courses: List<StudyPlanCourse>): String {
     val credits = courses.sumOf { it.credits.toDouble() }.toInt()
-    return "${courses.size} attività · $credits CFU"
+    return stringResource(R.string.studyplan_year_summary, courses.size, credits)
 }
 
 /**
@@ -884,5 +899,10 @@ private fun SheetError(cause: Throwable, onRetry: () -> Unit, modifier: Modifier
     )
 }
 
+@Composable
 private fun StudyYear.label(): String =
-    if (this == StudyYear.Unknown) "ALTRE ATTIVITÀ" else "$value° ANNO"
+    if (this == StudyYear.Unknown) {
+        stringResource(R.string.studyplan_year_other_activities)
+    } else {
+        stringResource(R.string.studyplan_year_label, value)
+    }

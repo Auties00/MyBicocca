@@ -69,6 +69,7 @@ import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
@@ -775,13 +776,14 @@ private fun QuizzesPage(
     }
 }
 
+@Composable
 private fun quizGroupSubtitle(quizzes: List<Quiz>, completion: Map<Int, CompletionState>): String {
     val done = quizzes.count { completion[it.cmId]?.isCompleted == true }
     val base = "${quizzes.size} quiz"
-    return when (done) {
-        0 -> base
-        1 -> "$base · 1 completato"
-        else -> "$base · $done completati"
+    return if (done == 0) {
+        base
+    } else {
+        "$base · ${pluralStringResource(R.plurals.elearning_course_completed_count, done, done)}"
     }
 }
 
@@ -797,14 +799,14 @@ private fun QuizProgressCard(done: Int, total: Int) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    text = "Avanzamento",
+                    text = stringResource(R.string.elearning_course_progress),
                     style = MaterialTheme.typography.titleSmall,
                     color = scheme.onSurface,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.weight(1f),
                 )
                 Text(
-                    text = "$done di $total",
+                    text = stringResource(R.string.elearning_course_progress_fraction, done, total),
                     style = MaterialTheme.typography.labelLarge,
                     color = scheme.primary,
                     fontWeight = FontWeight.ExtraBold,

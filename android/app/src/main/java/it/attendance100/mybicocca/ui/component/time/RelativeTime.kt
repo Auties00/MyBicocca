@@ -7,10 +7,10 @@ import java.time.format.DateTimeFormatter
 import java.util.Locale
 
 private val DayMonthFmt = DateTimeFormatter
-    .ofPattern("d MMM", Locale.ITALIAN)
+    .ofPattern("d MMM", Locale.getDefault())
     .withZone(ZoneId.systemDefault())
 private val DayMonthYearFmt = DateTimeFormatter
-    .ofPattern("d MMM yyyy", Locale.ITALIAN)
+    .ofPattern("d MMM yyyy", Locale.getDefault())
     .withZone(ZoneId.systemDefault())
 
 /**

@@ -34,8 +34,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.fileViewer.state.ZipEntryItem
 import java.util.Locale
 
@@ -60,7 +62,7 @@ fun ZipViewerContent(
     modifier: Modifier = Modifier,
 ) {
     if (entries.isEmpty()) {
-        ViewerError(message = "L'archivio è vuoto o non leggibile.", modifier = modifier)
+        ViewerError(message = stringResource(R.string.elearning_file_archive_empty), modifier = modifier)
         return
     }
     Box(modifier = modifier.fillMaxSize()) {
@@ -80,12 +82,12 @@ fun ZipViewerContent(
         ViewerBottomBar(
             primary = ViewerAction(
                 icon = Icons.Outlined.Download,
-                label = "Scarica",
+                label = stringResource(R.string.elearning_file_download),
                 onClick = onDownload,
             ),
             ViewerAction(
                 icon = Icons.Outlined.Share,
-                label = "Condividi",
+                label = stringResource(R.string.elearning_file_share),
                 onClick = onShare,
             ),
         )
@@ -160,5 +162,5 @@ private fun formatEntrySize(bytes: Long): String? = when {
     bytes <= 0 -> null
     bytes < 1024 -> "$bytes B"
     bytes < 1024 * 1024 -> "${bytes / 1024} KB"
-    else -> String.format(Locale.ITALIAN, "%.1f MB", bytes / (1024.0 * 1024.0))
+    else -> String.format(Locale.getDefault(), "%.1f MB", bytes / (1024.0 * 1024.0))
 }

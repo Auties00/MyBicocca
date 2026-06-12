@@ -23,7 +23,9 @@ import androidx.compose.material.icons.outlined.School
 import androidx.compose.material.icons.outlined.Translate
 import androidx.compose.material.icons.outlined.Verified
 import androidx.compose.material.icons.outlined.WorkspacePremium
+import androidx.annotation.StringRes
 import androidx.compose.ui.graphics.vector.ImageVector
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.domain.model.document.TitleCategory
 import it.attendance100.mybicocca.domain.model.document.TitleField
 
@@ -31,13 +33,24 @@ import it.attendance100.mybicocca.domain.model.document.TitleField
  * Sections the detail page groups a title's attribute rows into, rendered in declaration
  * order.
  */
-enum class TitleSection(val label: String) {
-    Achievement("Conseguimento"),
-    Evaluation("Valutazione"),
-    Institution("Istituzione"),
-    Path("Percorso"),
-    Documentation("Documentazione"),
+enum class TitleSection {
+    Achievement,
+    Evaluation,
+    Institution,
+    Path,
+    Documentation,
 }
+
+/** Section header copy resource for the detail page's grouped cards. */
+@get:StringRes
+val TitleSection.labelRes: Int
+    get() = when (this) {
+        TitleSection.Achievement -> R.string.titles_section_achievement
+        TitleSection.Evaluation -> R.string.titles_section_evaluation
+        TitleSection.Institution -> R.string.titles_section_institution
+        TitleSection.Path -> R.string.titles_section_path
+        TitleSection.Documentation -> R.string.titles_section_documentation
+    }
 
 /** Section header icon for the detail page's grouped cards (same icon-chip language as Iscrizioni). */
 val TitleSection.icon: ImageVector
@@ -107,40 +120,48 @@ val TitleField.icon: ImageVector
     }
 
 /**
- * Italian field label. A couple of labels read differently for a school diploma vs a
+ * Field label copy resource. A couple of labels read differently for a school diploma vs a
  * university title: the same semantic field is an "Istituto" for the former and an
- * "Ateneo" for the latter.
+ * "Ateneo" for the latter, so it takes the title's [category].
  */
-fun TitleField.label(category: TitleCategory): String = when (this) {
-    TitleField.AcademicYear -> "Anno accademico"
-    TitleField.GraduationYear -> "Anno di maturità"
-    TitleField.AwardDate -> "Data di conseguimento"
-    TitleField.Session -> "Sessione"
-    TitleField.AchievementYears -> "Anni impiegati"
-    TitleField.DurationYears -> "Durata legale"
-    TitleField.GradeAverage -> "Media voti"
-    TitleField.Credits -> "CFU"
-    TitleField.Institution -> if (category == TitleCategory.HighSchool) "Istituto" else "Ateneo"
-    TitleField.City -> "Città"
-    TitleField.Province -> "Provincia"
-    TitleField.Country -> "Nazione"
-    TitleField.SameUniversity -> "Stesso ateneo"
-    TitleField.InstitutionCode -> if (category == TitleCategory.HighSchool) "Codice MIUR" else "Codice ISTAT"
-    TitleField.Language -> "Lingua"
-    TitleField.ThesisTitle -> "Titolo tesi"
-    TitleField.StudyPath -> "Percorso di studio"
-    TitleField.EquivalentPath -> "Equipollenza"
-    TitleField.DepositType -> "Deposito titolo"
-    TitleField.ValueDeclaration -> "Dichiarazione di valore"
-    TitleField.Evaluated -> "Valutato"
-    TitleField.Recognized -> "Riconosciuto"
+@StringRes
+fun TitleField.labelRes(category: TitleCategory): Int = when (this) {
+    TitleField.AcademicYear -> R.string.titles_field_academic_year
+    TitleField.GraduationYear -> R.string.titles_field_graduation_year
+    TitleField.AwardDate -> R.string.titles_field_award_date
+    TitleField.Session -> R.string.titles_field_session
+    TitleField.AchievementYears -> R.string.titles_field_achievement_years
+    TitleField.DurationYears -> R.string.titles_field_duration_years
+    TitleField.GradeAverage -> R.string.titles_field_grade_average
+    TitleField.Credits -> R.string.common_cfu
+    TitleField.Institution ->
+        if (category == TitleCategory.HighSchool) R.string.titles_field_institution_school
+        else R.string.titles_field_institution_university
+    TitleField.City -> R.string.titles_field_city
+    TitleField.Province -> R.string.titles_field_province
+    TitleField.Country -> R.string.titles_field_country
+    TitleField.SameUniversity -> R.string.titles_field_same_university
+    TitleField.InstitutionCode ->
+        if (category == TitleCategory.HighSchool) R.string.titles_field_code_miur
+        else R.string.titles_field_code_istat
+    TitleField.Language -> R.string.titles_field_language
+    TitleField.ThesisTitle -> R.string.titles_field_thesis_title
+    TitleField.StudyPath -> R.string.titles_field_study_path
+    TitleField.EquivalentPath -> R.string.titles_field_equivalent_path
+    TitleField.DepositType -> R.string.titles_field_deposit_type
+    TitleField.ValueDeclaration -> R.string.titles_field_value_declaration
+    TitleField.Evaluated -> R.string.titles_field_evaluated
+    TitleField.Recognized -> R.string.titles_field_recognized
 }
 
-fun TitleCategory.label(): String = when (this) {
-    TitleCategory.HighSchool -> "Maturità"
-    TitleCategory.Italian -> "Titoli italiani"
-    TitleCategory.Foreign -> "Titoli esteri"
-}
+/** Category section header copy resource for the titles directory. */
+@get:StringRes
+val TitleCategory.labelRes: Int
+    get() = when (this) {
+        TitleCategory.HighSchool -> R.string.titles_category_high_school
+        TitleCategory.Italian -> R.string.titles_category_italian
+        TitleCategory.Foreign -> R.string.titles_category_foreign
+    }
 
 val TitleCategory.icon: ImageVector
     get() = when (this) {

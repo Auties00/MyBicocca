@@ -155,8 +155,6 @@
     <!-- Month agenda sheet -->
     <string name="agenda_date_today">OGGI</string>
     <string name="agenda_date_selected">SELEZIONATO</string>
-    <string name="agenda_event_count_singular">1 evento</string>
-    <string name="agenda_event_count_plural">%1$d eventi</string>
     <string name="agenda_expand">Espandi</string>
     <string name="agenda_collapse">Comprimi</string>
 
@@ -179,13 +177,7 @@
     <string name="elearning_error_unexpected">Errore imprevisto</string>
     <string name="elearning_remove_favorite">Rimuovi dai preferiti</string>
     <string name="elearning_add_favorite">Aggiungi ai preferiti</string>
-    <string name="elearning_deadline_singular">altra scadenza</string>
-    <string name="elearning_deadline_plural">altre scadenze</string>
     <string name="elearning_deadline_today">entro oggi</string>
-    <string name="elearning_deadline_overdue_one">scaduto 1 giorno fa</string>
-    <string name="elearning_deadline_overdue_many">scaduto %1$d giorni fa</string>
-    <string name="elearning_deadline_in_one">entro 1 giorno</string>
-    <string name="elearning_deadline_in_many">entro %1$d giorni</string>
 
     <!-- E-Learning: add course sheet -->
     <string name="elearning_back">Indietro</string>
@@ -224,8 +216,6 @@
     <string name="elearning_course_forum_not_available">Gli spazi di discussione del corso appariranno qui.</string>
     <string name="elearning_course_announcements_board">✦ BACHECA AVVISI</string>
     <string name="elearning_course_announcement_count_zero">Nessun avviso</string>
-    <string name="elearning_course_announcement_count_one">1 avviso dei docenti</string>
-    <string name="elearning_course_announcement_count_plural">%1$d avvisi dei docenti</string>
     <string name="elearning_course_no_announcement_published">Nessun avviso pubblicato finora</string>
     <string name="elearning_course_last_announcement">ULTIMO AVVISO</string>
     <string name="elearning_course_attachment">Con allegato</string>
@@ -248,8 +238,6 @@
     <string name="elearning_course_expired_days_ago">Scaduto %1$s fa</string>
     <string name="elearning_course_expires_in">Scade tra %1$s</string>
     <string name="elearning_course_expires_today">Scade oggi</string>
-    <string name="elearning_course_due_days_count_singular">1 giorno</string>
-    <string name="elearning_course_due_days_count_plural">%1$d giorni</string>
     <string name="elearning_course_closed_date">Chiuso il %1$s</string>
     <string name="elearning_course_opens_date">Apre il %1$s</string>
     <string name="elearning_course_available">Disponibile</string>
@@ -310,8 +298,6 @@
     <string name="elearning_assign_opens_later">Apre il %1$s</string>
     <string name="elearning_assign_late_submission">Possibile fino al %1$s</string>
     <string name="elearning_assign_submitted_date">Il %1$s</string>
-    <string name="elearning_assign_max_attempts_singular">Uno solo</string>
-    <string name="elearning_assign_max_attempts_plural">Massimo %1$d</string>
     <string name="elearning_assign_complete_submission">Completa consegna</string>
     <string name="elearning_assign_modify_submission">Modifica consegna</string>
     <string name="elearning_assign_late_submission_button">Consegna in ritardo</string>
@@ -327,8 +313,6 @@
     <string name="elearning_assign_submission_sent">Consegna inviata</string>
     <string name="elearning_assign_submission_removed">Consegna rimossa</string>
     <string name="elearning_assign_confirm_body">Stai per inviare %1$s per la valutazione. Dopo l\'invio non potrai più modificarla.</string>
-    <string name="elearning_assign_submission_files_count_singular">1 file</string>
-    <string name="elearning_assign_submission_files_count_plural">%1$d file</string>
     <string name="elearning_assign_submission_text">testo</string>
     <string name="elearning_assign_submission_recap">la consegna</string>
     <string name="elearning_assign_grade_label">VOTO</string>
@@ -361,8 +345,6 @@
     <string name="registry_sync_failed">Sincronizzazione non riuscita</string>
     <string name="registry_no_deadlines">Nessuna scadenza imminente</string>
     <string name="registry_next_deadline">Prossima il %1$s</string>
-    <string name="registry_one_urgent">1 urgente</string>
-    <string name="registry_multiple_urgent">%1$d urgenti</string>
     <string name="registry_teaching">Didattica</string>
     <string name="registry_teaching_caption">Percorso, presenze ed esiti</string>
     <string name="registry_study_plan">Percorso</string>
@@ -438,8 +420,6 @@
     <string name="appointments_confirm">Conferma</string>
     <string name="appointments_confirmed">Confermato</string>
     <string name="appointments_no_reservations">Nessuna prenotazione</string>
-    <string name="appointments_one_reservation">1 prenotazione</string>
-    <string name="appointments_multiple_reservations">%1$d prenotazioni</string>
     <string name="appointments_details">Dettagli appuntamento</string>
     <string name="appointments_choose_service">Scegli un servizio</string>
     <string name="appointments_choose_date_time">Scegli data e ora</string>
@@ -549,8 +529,6 @@
     <!-- Registry: deadlines -->
     <string name="deadlines_title">Scadenzario</string>
     <string name="deadlines_none_next_30">Nessuna scadenza nei prossimi 30 giorni</string>
-    <string name="deadlines_count_one">1 scadenza</string>
-    <string name="deadlines_count_many">%d scadenze</string>
     <string name="deadlines_next_30_suffix"> nei prossimi 30 giorni</string>
     <string name="deadlines_loading">Caricamento scadenze…</string>
     <string name="deadlines_none_imminent">Nessuna scadenza imminente.</string>
@@ -669,8 +647,6 @@
     <string name="library_confirm_cancel">Stai per cancellare il posto in %1$s. Tornerà prenotabile da altri studenti.</string>
     <string name="library_login_and_book">Accedi e prenota un posto</string>
     <string name="library_no_bookings">Nessuna prenotazione</string>
-    <string name="library_one_booking">1 prenotazione</string>
-    <string name="library_multiple_bookings">%1$d prenotazioni</string>
     <string name="library_verify_email">Verifica la tua email</string>
     <string name="library_verify_email_body">Verifica la tua email istituzionale per vedere e prenotare i posti in biblioteca.</string>
     <string name="library_verify">Verifica</string>
@@ -760,8 +736,6 @@
     <string name="questionnaire_confirm_send_action">Invia</string>
     <string name="questionnaire_confirm_continue">Continua</string>
     <string name="questionnaire_no_pending">Tutti i questionari completati</string>
-    <string name="questionnaire_one_pending">1 questionario in sospeso</string>
-    <string name="questionnaire_multiple_pending">%d questionari in sospeso</string>
     <string name="questionnaire_loading">Caricamento questionari...</string>
     <string name="questionnaire_no_activities">Nessun questionario</string>
     <string name="questionnaire_no_activities_body">Nessun questionario di valutazione attualmente disponibile.</string>
@@ -929,8 +903,6 @@
     <string name="map_category_sport">Sport</string>
     <string name="map_category_other">Altro</string>
     <string name="map_buildings_title">Edifici</string>
-    <string name="map_site_count_one">1 sede</string>
-    <string name="map_site_count_many">%1$d sedi</string>
     <string name="map_building_code">Codice %1$s</string>
     <string name="map_directions">Indicazioni</string>
     <string name="map_info">Informazioni</string>
@@ -942,16 +914,12 @@
     <string name="map_floor_other">Altri spazi</string>
     <string name="map_floor_ground">Piano terra</string>
     <string name="map_floor_n">Piano %1$d</string>
-    <string name="map_room_count_one">1 aula</string>
-    <string name="map_room_count_many">%1$d aule</string>
     <string name="map_room_free_until">Libera fino alle %1$s</string>
     <string name="map_room_free">Libera</string>
     <string name="map_room_busy_until">Occupata fino alle %1$s</string>
     <string name="map_room_checking">Verifica disponibilità…</string>
     <string name="map_room_unknown">Disponibilità sconosciuta</string>
     <string name="map_room_loading">Caricamento aula…</string>
-    <string name="map_seat_count_one">1 posto</string>
-    <string name="map_seat_count_many">%1$d posti</string>
     <string name="map_room_description">Descrizione</string>
     <string name="map_room_accessibility">Accessibilità</string>
     <string name="map_room_barrier_free">Senza barriere architettoniche</string>
@@ -1067,6 +1035,14 @@
     <string name="taxes_print_notice">Stampa avviso pagoPA</string>
     <string name="taxes_print_receipt">Stampa quietanza</string>
     <string name="taxes_check_status">Verifica stato pagamento</string>
+    <string name="taxes_modality">Modalità</string>
+    <string name="taxes_section_info">Informazioni</string>
+    <string name="taxes_bulletin_code">Codice Avviso</string>
+    <string name="taxes_no_pagopa_transaction">Nessuna transazione pagoPA trovata per questa fattura.</string>
+    <string name="taxes_payment_completed">Pagamento eseguito</string>
+    <string name="taxes_payment_pending">Pagamento in corso</string>
+    <string name="taxes_payment_failed">Pagamento non riuscito</string>
+    <string name="taxes_payment_status_unavailable">Stato del pagamento non disponibile</string>
 
     <!-- Study plan -->
     <string name="studyplan_exit_warning">Le scelte fatte finora non sono state inviate e andranno perse.</string>
@@ -1106,4 +1082,492 @@
     <!-- Appointments (added) -->
     <string name="appointments_qr_checkin">QR di check-in</string>
     <string name="appointments_reservation_code">Codice %1$s</string>
+
+    <!-- E-Learning: course detail (added) -->
+    <string name="elearning_course_hours_stat">ORE</string>
+    <string name="elearning_course_sent">Inviato</string>
+
+    <!-- Plurals (quantity strings) -->
+    <plurals name="agenda_event_count">
+        <item quantity="one">1 evento</item>
+        <item quantity="other">%1$d eventi</item>
+    </plurals>
+    <plurals name="registry_urgent">
+        <item quantity="one">1 urgente</item>
+        <item quantity="other">%1$d urgenti</item>
+    </plurals>
+    <plurals name="appointments_reservation_count">
+        <item quantity="one">1 prenotazione</item>
+        <item quantity="other">%1$d prenotazioni</item>
+    </plurals>
+    <plurals name="library_booking_count">
+        <item quantity="one">1 prenotazione</item>
+        <item quantity="other">%1$d prenotazioni</item>
+    </plurals>
+    <plurals name="deadlines_count">
+        <item quantity="one">1 scadenza</item>
+        <item quantity="other">%1$d scadenze</item>
+    </plurals>
+    <plurals name="questionnaire_pending_count">
+        <item quantity="one">1 questionario in sospeso</item>
+        <item quantity="other">%1$d questionari in sospeso</item>
+    </plurals>
+    <plurals name="map_site_count">
+        <item quantity="one">1 sede</item>
+        <item quantity="other">%1$d sedi</item>
+    </plurals>
+    <plurals name="map_room_count">
+        <item quantity="one">1 aula</item>
+        <item quantity="other">%1$d aule</item>
+    </plurals>
+    <plurals name="map_seat_count">
+        <item quantity="one">1 posto</item>
+        <item quantity="other">%1$d posti</item>
+    </plurals>
+    <plurals name="elearning_deadline_extra">
+        <item quantity="one">altra scadenza</item>
+        <item quantity="other">altre scadenze</item>
+    </plurals>
+    <plurals name="elearning_deadline_overdue">
+        <item quantity="one">scaduto 1 giorno fa</item>
+        <item quantity="other">scaduto %1$d giorni fa</item>
+    </plurals>
+    <plurals name="elearning_deadline_in">
+        <item quantity="one">entro 1 giorno</item>
+        <item quantity="other">entro %1$d giorni</item>
+    </plurals>
+    <plurals name="elearning_course_due_days">
+        <item quantity="one">1 giorno</item>
+        <item quantity="other">%1$d giorni</item>
+    </plurals>
+
+    <!-- E-Learning: course detail module meta -->
+    <string name="elearning_module_video">Video</string>
+    <string name="elearning_module_watched">Guardato</string>
+    <string name="elearning_module_watched_percent">Visto al %1$d%%</string>
+    <string name="elearning_module_quiz">Quiz</string>
+    <string name="elearning_module_assign">Compito</string>
+    <string name="elearning_module_folder">Cartella</string>
+    <string name="elearning_module_folder_count">Cartella · %1$d file</string>
+    <string name="elearning_module_forum">Forum</string>
+    <string name="elearning_module_link">Link</string>
+    <string name="elearning_module_page">Pagina</string>
+    <string name="elearning_module_book">Libro</string>
+    <string name="elearning_module_lesson">Lezione</string>
+    <string name="elearning_module_choice">Sondaggio</string>
+    <string name="elearning_module_choice_group">Scelta gruppo</string>
+    <string name="elearning_module_wiki">Wiki</string>
+    <string name="elearning_module_glossary">Glossario</string>
+    <string name="elearning_module_workshop">Workshop</string>
+    <string name="elearning_module_feedback">Questionario</string>
+    <string name="elearning_module_wooclap">Wooclap</string>
+    <string name="elearning_module_lti">Strumento esterno</string>
+    <string name="elearning_module_reservation">Prenotazione</string>
+    <string name="elearning_module_webex">Webex</string>
+    <string name="elearning_module_database">Database</string>
+    <string name="elearning_module_attendance">Presenze</string>
+    <string name="elearning_module_scheduler">Appuntamenti</string>
+    <string name="elearning_module_activity">Attività</string>
+    <string name="elearning_module_no_resources">Nessuna risorsa</string>
+    <string name="elearning_module_deadline_closed">chiuso il %1$s</string>
+    <string name="elearning_module_deadline_due">entro il %1$s</string>
+    <string name="elearning_module_deadline_from">dal %1$s</string>
+    <string name="elearning_upnext_overdue">SCADUTO</string>
+    <string name="elearning_upnext_in_days">TRA %1$dG %2$dH</string>
+    <string name="elearning_upnext_in_hours">TRA %1$dH %2$dMIN</string>
+    <string name="elearning_upnext_in_minutes">TRA %1$dMIN</string>
+    <string name="elearning_course_progress_fraction">%1$d di %2$d</string>
+
+    <plurals name="elearning_count_video">
+        <item quantity="one">video</item>
+        <item quantity="other">video</item>
+    </plurals>
+    <plurals name="elearning_count_pdf">
+        <item quantity="one">PDF</item>
+        <item quantity="other">PDF</item>
+    </plurals>
+    <plurals name="elearning_count_file">
+        <item quantity="one">file</item>
+        <item quantity="other">file</item>
+    </plurals>
+    <plurals name="elearning_count_quiz">
+        <item quantity="one">quiz</item>
+        <item quantity="other">quiz</item>
+    </plurals>
+    <plurals name="elearning_count_forum">
+        <item quantity="one">forum</item>
+        <item quantity="other">forum</item>
+    </plurals>
+    <plurals name="elearning_count_link">
+        <item quantity="one">link</item>
+        <item quantity="other">link</item>
+    </plurals>
+    <plurals name="elearning_count_assign">
+        <item quantity="one">compito</item>
+        <item quantity="other">compiti</item>
+    </plurals>
+    <plurals name="elearning_count_folder">
+        <item quantity="one">cartella</item>
+        <item quantity="other">cartelle</item>
+    </plurals>
+    <plurals name="elearning_count_page">
+        <item quantity="one">pagina</item>
+        <item quantity="other">pagine</item>
+    </plurals>
+    <plurals name="elearning_count_other">
+        <item quantity="one">attività</item>
+        <item quantity="other">attività</item>
+    </plurals>
+    <plurals name="elearning_course_announcement_count">
+        <item quantity="one">1 avviso dei docenti</item>
+        <item quantity="other">%1$d avvisi dei docenti</item>
+    </plurals>
+    <plurals name="elearning_course_completed_count">
+        <item quantity="one">1 completato</item>
+        <item quantity="other">%1$d completati</item>
+    </plurals>
+
+    <!-- E-Learning: forum -->
+    <string name="elearning_forum_discussion_fallback">Discussione</string>
+    <string name="elearning_forum_new_discussion">Nuova discussione</string>
+    <string name="elearning_forum_edit_message_title">Modifica messaggio</string>
+    <string name="elearning_forum_reply">Rispondi</string>
+    <string name="elearning_forum_delete">Elimina</string>
+    <string name="elearning_forum_edit">Modifica</string>
+    <string name="elearning_forum_delete_confirm_title">Eliminare il messaggio?</string>
+    <string name="elearning_forum_discard_confirm_title">Scartare la bozza?</string>
+    <string name="elearning_forum_delete_confirm_body">Il messaggio verrà eliminato definitivamente.</string>
+    <string name="elearning_forum_discard_confirm_body">La bozza non pubblicata andrà persa.</string>
+    <string name="elearning_forum_empty_title">Nessuna discussione</string>
+    <string name="elearning_forum_empty_can_create">Apri tu la prima discussione di questo forum</string>
+    <string name="elearning_forum_empty_readonly">Quando i docenti pubblicheranno qualcosa lo troverai qui</string>
+    <string name="elearning_forum_thread_loading">Caricamento discussione…</string>
+    <string name="elearning_forum_subscribe_short">Segui</string>
+    <string name="elearning_forum_subscribe">Segui discussione</string>
+    <string name="elearning_forum_attachment_fallback_name">allegato</string>
+    <string name="elearning_forum_publish">Pubblica</string>
+    <string name="elearning_forum_save">Salva</string>
+    <string name="elearning_forum_subject">Oggetto</string>
+    <string name="elearning_forum_message">Messaggio</string>
+    <string name="elearning_forum_attach_file">Allega file</string>
+    <string name="elearning_forum_group">Gruppo</string>
+    <string name="elearning_forum_deleted_post">Messaggio eliminato</string>
+    <string name="elearning_forum_collapse_replies">Nascondi</string>
+    <string name="elearning_forum_actions">Azioni</string>
+    <string name="elearning_forum_pinned">In evidenza</string>
+    <string name="elearning_forum_has_attachment">Con allegato</string>
+    <string name="elearning_forum_locked">Discussione bloccata</string>
+    <string name="elearning_forum_last_post_author">ultima di %1$s</string>
+    <string name="elearning_forum_refresh_failed">Aggiornamento non riuscito</string>
+    <string name="elearning_forum_operation_failed">Operazione non riuscita</string>
+    <string name="elearning_forum_subscribed_info">Ora segui questa discussione</string>
+    <string name="elearning_forum_unsubscribed_info">Non segui più questa discussione</string>
+    <string name="elearning_forum_delete_failed">Eliminazione non riuscita</string>
+    <string name="elearning_forum_publish_failed">Pubblicazione non riuscita</string>
+    <plurals name="elearning_forum_discussion_count">
+        <item quantity="one">%1$d discussione</item>
+        <item quantity="other">%1$d discussioni</item>
+    </plurals>
+    <plurals name="elearning_forum_thread_replies">
+        <item quantity="one">%1$s · %2$d risposta</item>
+        <item quantity="other">%1$s · %2$d risposte</item>
+    </plurals>
+    <plurals name="elearning_forum_reply_count">
+        <item quantity="one">%1$d risposta</item>
+        <item quantity="other">%1$d risposte</item>
+    </plurals>
+
+    <!-- E-Learning: file viewer (added) -->
+    <string name="elearning_file_no_app">Nessuna app installata può aprire questo file</string>
+    <string name="elearning_file_share_failed">Impossibile condividere il file</string>
+    <string name="elearning_file_saved">File salvato</string>
+    <string name="elearning_file_storage_denied">Permesso di archiviazione negato</string>
+    <string name="elearning_file_open_app_failed">Impossibile aprire %1$s</string>
+    <string name="elearning_file_download_failed_detail">Download del file non riuscito.</string>
+    <string name="elearning_file_opening_external">Apertura nel lettore predefinito…</string>
+    <string name="elearning_file_pdf_open_failed">Impossibile aprire il PDF.</string>
+    <string name="elearning_file_pdf_page_indicator">%1$d / %2$d</string>
+    <string name="elearning_file_pdf_page">Pagina %1$d</string>
+    <string name="elearning_file_change_theme">Cambia tema</string>
+    <string name="elearning_file_change_direction">Cambia direzione</string>
+    <string name="elearning_file_picture_in_picture">Picture-in-picture</string>
+    <string name="elearning_file_save_to_gallery">Salva in galleria</string>
+    <string name="elearning_file_fill_screen">Riempi schermo</string>
+    <string name="elearning_file_fit_image">Adatta immagine</string>
+    <string name="elearning_file_open_in_browser">Apri nel browser</string>
+    <string name="elearning_file_theme_label">Tema: %1$s</string>
+    <string name="elearning_file_no_preview">Questo tipo di file non ha un\'anteprima integrata.</string>
+    <string name="elearning_file_downloading">Download in corso…</string>
+    <string name="elearning_file_open_with">Apri con</string>
+    <string name="elearning_file_archive_empty">L\'archivio è vuoto o non leggibile.</string>
+    <string name="elearning_file_remember_choice">Ricorda la scelta</string>
+    <string name="elearning_file_remember_choice_hint">Tieni premuto un file per cambiare di nuovo.</string>
+    <string name="elearning_file_office_opens_readonly">Si apre in %1$s in sola lettura.</string>
+    <string name="elearning_file_office_install_needed">Per aprire questo documento serve l\'app %1$s di Microsoft, gratuita sul Play Store.</string>
+    <string name="elearning_file_play_store_failed">Impossibile aprire il Play Store</string>
+    <string name="elearning_file_office_open_in">Apri in %1$s</string>
+    <string name="elearning_file_office_install">Installa %1$s</string>
+    <string name="elearning_file_office_doc_word">Documento Word</string>
+    <string name="elearning_file_office_doc_excel">Foglio di calcolo Excel</string>
+    <string name="elearning_file_office_doc_powerpoint">Presentazione PowerPoint</string>
+
+    <!-- E-Learning: video player -->
+    <string name="elearning_video_course_video">Video del corso</string>
+    <string name="elearning_video_course_videos">Video del corso</string>
+    <string name="elearning_video_section">Sezione %1$d</string>
+    <string name="elearning_video_load_failed">Impossibile caricare il video</string>
+    <string name="elearning_video_completed_count">%1$d / %2$d completati</string>
+    <string name="elearning_video_quality">Qualità</string>
+    <string name="elearning_video_quality_auto">Automatica</string>
+    <string name="elearning_video_quality_auto_detail">Adattiva (consigliata)</string>
+    <string name="elearning_video_picture_in_picture">Picture in picture</string>
+    <string name="elearning_video_playlist">Playlist</string>
+    <string name="elearning_video_previous">Video precedente</string>
+    <string name="elearning_video_play">Play</string>
+    <string name="elearning_video_pause">Pausa</string>
+    <string name="elearning_video_next">Video successivo</string>
+
+    <!-- Account / career (added) -->
+    <string name="account_career_fallback">Carriera #%1$s</string>
+    <string name="account_career_status_graduated">Conclusa</string>
+    <string name="account_career_status_interrupted">Interrotta</string>
+
+    <!-- Top bar / search (added) -->
+    <string name="topbar_search">Cerca</string>
+    <string name="topbar_search_placeholder">Cerca in MyBicocca</string>
+    <string name="search_category_actions">Azioni</string>
+    <string name="search_category_pages">Pagine</string>
+    <string name="search_category_courses">Corsi</string>
+    <string name="search_category_assignments">Compiti</string>
+    <string name="search_category_quizzes">Quiz</string>
+    <string name="search_category_calendar">Calendario</string>
+    <string name="search_category_places">Luoghi</string>
+    <string name="search_category_career">Carriera</string>
+
+    <!-- Titles (added) -->
+    <string name="titles_count_one">1 titolo</string>
+    <string name="titles_count_other">%1$d titoli</string>
+    <string name="titles_headline_fallback">Titolo</string>
+    <string name="titles_grade_label">Voto</string>
+    <string name="titles_grade_cum_laude">%1$s e lode</string>
+    <string name="titles_status_label">Stato</string>
+    <string name="titles_status_awarded">Conseguito</string>
+    <string name="titles_status_hypothesised">In ipotesi</string>
+    <string name="titles_category_high_school">Maturità</string>
+    <string name="titles_category_italian">Titoli italiani</string>
+    <string name="titles_category_foreign">Titoli esteri</string>
+    <string name="titles_section_achievement">Conseguimento</string>
+    <string name="titles_section_evaluation">Valutazione</string>
+    <string name="titles_section_institution">Istituzione</string>
+    <string name="titles_section_path">Percorso</string>
+    <string name="titles_section_documentation">Documentazione</string>
+    <string name="titles_field_academic_year">Anno accademico</string>
+    <string name="titles_field_graduation_year">Anno di maturità</string>
+    <string name="titles_field_award_date">Data di conseguimento</string>
+    <string name="titles_field_session">Sessione</string>
+    <string name="titles_field_achievement_years">Anni impiegati</string>
+    <string name="titles_field_duration_years">Durata legale</string>
+    <string name="titles_field_grade_average">Media voti</string>
+    <string name="titles_field_institution_school">Istituto</string>
+    <string name="titles_field_institution_university">Ateneo</string>
+    <string name="titles_field_city">Città</string>
+    <string name="titles_field_province">Provincia</string>
+    <string name="titles_field_country">Nazione</string>
+    <string name="titles_field_same_university">Stesso ateneo</string>
+    <string name="titles_field_code_miur">Codice MIUR</string>
+    <string name="titles_field_code_istat">Codice ISTAT</string>
+    <string name="titles_field_language">Lingua</string>
+    <string name="titles_field_thesis_title">Titolo tesi</string>
+    <string name="titles_field_study_path">Percorso di studio</string>
+    <string name="titles_field_equivalent_path">Equipollenza</string>
+    <string name="titles_field_deposit_type">Deposito titolo</string>
+    <string name="titles_field_value_declaration">Dichiarazione di valore</string>
+    <string name="titles_field_evaluated">Valutato</string>
+    <string name="titles_field_recognized">Riconosciuto</string>
+
+    <!-- Study plan (added) -->
+    <string name="studyplan_path_title">Percorso</string>
+    <string name="studyplan_exit_confirm_title">Uscire senza inviare?</string>
+    <string name="studyplan_path_facet">Percorso</string>
+    <string name="studyplan_path_single">Percorso unico</string>
+    <string name="studyplan_type_standard">piano standard</string>
+    <string name="studyplan_type_individual">piano individuale</string>
+    <string name="studyplan_type_generic">piano di studi</string>
+    <string name="studyplan_year_summary">%1$d attività · %2$d CFU</string>
+    <string name="studyplan_year_other_activities">ALTRE ATTIVITÀ</string>
+    <string name="studyplan_year_label">%1$d° ANNO</string>
+    <string name="studyplan_open_document_failed">Impossibile aprire il documento</string>
+    <string name="studyplan_submit_failed">Invio non riuscito</string>
+    <string name="studyplan_print_unavailable">Stampa del piano non disponibile.</string>
+
+    <!-- Study plan edit (added) -->
+    <string name="studyplanedit_loading_paths">Caricamento percorsi…</string>
+    <string name="studyplanedit_mandatory_caps">OBBLIGATORIO</string>
+    <string name="studyplanedit_unit_activities">ATTIVITÀ</string>
+    <string name="studyplanedit_mandatory_adj_masculine">OBBLIGATORI</string>
+    <string name="studyplanedit_mandatory_adj_feminine">OBBLIGATORIE</string>
+    <string name="studyplanedit_selected_adj_masculine">SELEZIONATI</string>
+    <string name="studyplanedit_selected_adj_feminine">SELEZIONATE</string>
+    <string name="studyplanedit_req_mandatory_credits">%1$d %2$s OBBLIGATORI</string>
+    <string name="studyplanedit_req_optional_exact">%1$d %2$s OPZIONALI</string>
+    <string name="studyplanedit_req_optional_up_to">FINO A %1$d %2$s OPZIONALI</string>
+    <string name="studyplanedit_req_optional">%1$s OPZIONALI</string>
+    <string name="studyplanedit_req_exact">%1$d %2$s %3$s</string>
+    <string name="studyplanedit_req_between">TRA I %1$d E %2$d %3$s %4$s</string>
+    <string name="studyplanedit_req_up_to">FINO A %1$d %2$s %3$s</string>
+    <string name="studyplanedit_req_at_least">ALMENO %1$d %2$s %3$s</string>
+    <string name="studyplanedit_req_free_choice">%1$s A SCELTA</string>
+    <string name="studyplanedit_selection_of">%1$d/%2$d %3$s %4$s</string>
+    <string name="studyplanedit_selection">%1$d %2$s %3$s</string>
+    <string name="studyplanedit_approval_automatic">Approvazione automatica</string>
+    <string name="studyplanedit_approval_manual">Richiede approvazione</string>
+    <string name="studyplanedit_approval_automatic_if_compliant">Approvazione automatica se conforme</string>
+    <string name="studyplanedit_submitted_automatic">Piano inviato: l\'approvazione è automatica.</string>
+    <string name="studyplanedit_submitted_if_compliant">Piano inviato: verrà approvato automaticamente se conforme al regolamento.</string>
+    <string name="studyplanedit_submitted_pending">Piano inviato: in attesa di approvazione.</string>
+    <string name="studyplanedit_submitted_generic">Piano di studi inviato</string>
+    <string name="studyplanedit_submit_error_generic">Errore nell\'invio del piano.</string>
+    <string name="studyplanedit_submit_error_profile">La modifica del piano non è attualmente consentita dal tuo profilo.</string>
+    <string name="studyplanedit_submit_error_forbidden">Accesso negato: impossibile inviare il piano di studi.</string>
+
+    <!-- Exam results (added) -->
+    <string name="exam_results_filter_pending">In sospeso</string>
+    <string name="exam_results_filter_archived">Archiviati</string>
+    <string name="exam_results_exam_fallback">Esame</string>
+    <string name="exam_results_decide_by_date">Decidi entro il %1$s</string>
+    <string name="exam_results_taken_on_date">Sostenuto il %1$s</string>
+    <string name="exam_results_summary_pending_none">Nessun esito da decidere</string>
+    <string name="exam_results_summary_pending_one">1 esito da decidere</string>
+    <string name="exam_results_summary_pending_other">%1$d esiti da decidere</string>
+    <string name="exam_results_summary_archived_none">Nessun esito archiviato</string>
+    <string name="exam_results_summary_archived_one">1 esito archiviato</string>
+    <string name="exam_results_summary_archived_other">%1$d esiti archiviati</string>
+    <string name="exam_results_empty_pending_title">Niente da decidere</string>
+    <string name="exam_results_empty_archived_title">Nessun esito archiviato</string>
+    <string name="exam_results_empty_pending_body">Non hai esiti in attesa di una tua decisione.</string>
+    <string name="exam_results_empty_archived_body">Gli esiti accettati, rifiutati o verbalizzati compaiono qui.</string>
+    <string name="exam_results_choice_accepted">Accettato</string>
+    <string name="exam_results_choice_rejected">Rifiutato</string>
+    <string name="exam_results_deadline_today">oggi</string>
+    <string name="exam_results_deadline_tomorrow">domani</string>
+    <string name="exam_results_deadline_days">%1$d giorni</string>
+    <string name="exam_results_grade_thirty_cum_laude">trenta e lode</string>
+    <string name="exam_results_grade_out_of_thirty">%1$s su trenta</string>
+    <string name="exam_results_grade_passed">idoneo</string>
+    <string name="exam_results_grade_not_passed">non superato</string>
+    <string name="exam_results_grade_withdrew">ritirato</string>
+    <string name="exam_results_grade_absent">assente</string>
+    <string name="exam_results_grade_unavailable">esito non disponibile</string>
+    <string-array name="grade_words">
+        <item>diciotto</item>
+        <item>diciannove</item>
+        <item>venti</item>
+        <item>ventuno</item>
+        <item>ventidue</item>
+        <item>ventitré</item>
+        <item>ventiquattro</item>
+        <item>venticinque</item>
+        <item>ventisei</item>
+        <item>ventisette</item>
+        <item>ventotto</item>
+        <item>ventinove</item>
+        <item>trenta</item>
+    </string-array>
+
+    <!-- E-Learning: assignment detail (added) -->
+    <string name="elearning_assign_submission_recap_join">" e "</string>
+    <string name="elearning_assign_max_size">fino a %1$s</string>
+    <string name="elearning_assign_open_failed">Impossibile aprire la consegna</string>
+    <string name="elearning_assign_remove_failed">Rimozione non riuscita</string>
+    <string name="elearning_assign_submit_failed">Consegna non riuscita</string>
+    <plurals name="elearning_assign_submission_files">
+        <item quantity="one">1 file</item>
+        <item quantity="other">%1$d file</item>
+    </plurals>
+    <plurals name="elearning_assign_max_attempts">
+        <item quantity="one">Uno solo</item>
+        <item quantity="other">Massimo %1$d</item>
+    </plurals>
+    <plurals name="elearning_assign_max_files">
+        <item quantity="one">1 file</item>
+        <item quantity="other">max %1$d file</item>
+    </plurals>
+
+    <!-- E-Learning: quiz detail (added) -->
+    <string name="elearning_quiz_title">Quiz</string>
+    <string name="elearning_quiz_history">Storico</string>
+    <string name="elearning_quiz_loading">Caricamento quiz…</string>
+    <string name="elearning_quiz_loading_attempt">Caricamento tentativo…</string>
+    <string name="elearning_quiz_submitting">Invio in corso…</string>
+    <string name="elearning_quiz_operation_failed">Operazione non riuscita</string>
+    <string name="elearning_quiz_page">Pagina %1$d</string>
+    <string name="elearning_quiz_page_of">Pagina %1$d di %2$d</string>
+    <string name="elearning_quiz_confirm_submit_title">Consegnare il tentativo?</string>
+    <string name="elearning_quiz_confirm_submit_body">La consegna è definitiva: le risposte di questo tentativo non potranno più essere modificate.</string>
+    <string name="elearning_quiz_confirm_close_title">Chiudere il quiz?</string>
+    <string name="elearning_quiz_confirm_close_body">Il tentativo rimarrà in sospeso e potrai riprenderlo in seguito.</string>
+    <string name="elearning_quiz_submit_attempt">Consegna</string>
+    <string name="elearning_quiz_best_grade_label">VOTO MIGLIORE</string>
+    <string name="elearning_quiz_attempts_label">TENTATIVI</string>
+    <string name="elearning_quiz_time_label">TEMPO</string>
+    <string name="elearning_quiz_time_minutes">%1$d minuti</string>
+    <string name="elearning_quiz_instructions_label">ISTRUZIONI</string>
+    <string name="elearning_quiz_opening_label">APERTURA</string>
+    <string name="elearning_quiz_opens">Apre %1$s</string>
+    <string name="elearning_quiz_closing_label">CHIUSURA</string>
+    <string name="elearning_quiz_closes">Chiude %1$s</string>
+    <string name="elearning_quiz_closed_on">Chiuso il %1$s</string>
+    <string name="elearning_quiz_attempt_number">Tentativo %1$d</string>
+    <string name="elearning_quiz_state_in_progress">In corso</string>
+    <string name="elearning_quiz_state_overdue">Scaduto</string>
+    <string name="elearning_quiz_state_finished">Concluso</string>
+    <string name="elearning_quiz_state_abandoned">Abbandonato</string>
+    <string name="elearning_quiz_state_unknown">Tentativo</string>
+    <string name="elearning_quiz_resume">Riprendi</string>
+    <string name="elearning_quiz_not_open_yet">Non ancora aperto</string>
+    <string name="elearning_quiz_closed">Quiz chiuso</string>
+    <string name="elearning_quiz_attempts_exhausted">Tentativi esauriti</string>
+    <string name="elearning_quiz_start_attempt">Inizia tentativo</string>
+    <string name="elearning_quiz_attempts_used">%1$d di %2$d</string>
+    <string name="elearning_quiz_attempts_unlimited">Tentativi illimitati</string>
+    <string name="elearning_quiz_attempts_used_unlimited">%1$d effettuati · illimitati</string>
+    <string name="elearning_quiz_close_review">Chiudi revisione</string>
+    <string name="elearning_quiz_review_eyebrow">❀ REVISIONE</string>
+    <string name="elearning_quiz_answer_placeholder">Risposta…</string>
+    <string name="elearning_quiz_essay_placeholder">Scrivi qui la tua risposta…</string>
+    <string name="elearning_quiz_unsupported_question">Questo tipo di domanda non è supportato nell\'app: rispondi dal sito e-learning.</string>
+    <string name="elearning_quiz_correct_answer">Risposta corretta</string>
+    <string name="elearning_quiz_feedback">Feedback</string>
+    <string name="elearning_quiz_question_number">DOMANDA %1$d</string>
+    <string name="elearning_quiz_question_score">Punteggio %1$s su %2$s</string>
+    <string name="elearning_quiz_flag_question">Contrassegna domanda</string>
+    <string name="elearning_quiz_remove_flag">Rimuovi contrassegno</string>
+    <string name="elearning_quiz_gap_answer">Risposta %1$d</string>
+    <string name="elearning_quiz_correct">Corretta</string>
+    <string name="elearning_quiz_incorrect">Sbagliata</string>
+    <string name="elearning_quiz_verdict_correct">CORRETTA</string>
+    <string name="elearning_quiz_verdict_partial">PARZIALE</string>
+    <string name="elearning_quiz_verdict_wrong">SBAGLIATA</string>
+    <string name="elearning_quiz_verdict_no_answer">SENZA RISPOSTA</string>
+    <string name="elearning_quiz_verdict_to_grade">DA VALUTARE</string>
+    <plurals name="elearning_quiz_attempts_count">
+        <item quantity="one">1 tentativo</item>
+        <item quantity="other">%1$d tentativi</item>
+    </plurals>
+    <plurals name="elearning_quiz_correct_count">
+        <item quantity="one">1 corretta</item>
+        <item quantity="other">%1$d corrette</item>
+    </plurals>
+    <plurals name="elearning_quiz_partial_count">
+        <item quantity="one">1 parziale</item>
+        <item quantity="other">%1$d parziali</item>
+    </plurals>
+    <plurals name="elearning_quiz_wrong_count">
+        <item quantity="one">1 sbagliata</item>
+        <item quantity="other">%1$d sbagliate</item>
+    </plurals>
+    <plurals name="elearning_quiz_no_answer_count">
+        <item quantity="one">1 senza risposta</item>
+        <item quantity="other">%1$d senza risposta</item>
+    </plurals>
 </resources>

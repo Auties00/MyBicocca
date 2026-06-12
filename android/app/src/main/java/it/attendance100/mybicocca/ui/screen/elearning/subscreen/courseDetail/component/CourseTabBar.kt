@@ -12,6 +12,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.res.stringResource
+import it.attendance100.mybicocca.R
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -62,6 +64,8 @@ fun CourseTabBar(
 ) {
     val scheme = MaterialTheme.colorScheme
     val tabs = CourseTab.entries
+    val labels = tabs.map { stringResource(tabLabelRes(it)) }
+    val weights = labels.map { it.length + 4f }
 
     val restingColor = scheme.surfaceContainerHigh
     val selectionColor = scheme.primary
@@ -82,13 +86,13 @@ fun CourseTabBar(
             .padding(top = CourseTabBarBreathingRoom, bottom = 8.dp)
             .drawWithCache {
                 val spacingPx = CellSpacing.toPx()
-                val weightSum = tabs.sumOf { tabWeight(it).toDouble() }.toFloat()
+                val weightSum = weights.sum()
                 val available = size.width - spacingPx * (tabs.size - 1)
                 val widths = FloatArray(tabs.size)
                 val lefts = FloatArray(tabs.size)
                 var x = 0f
                 for (i in tabs.indices) {
-                    widths[i] = available * tabWeight(tabs[i]) / weightSum
+                    widths[i] = available * weights[i] / weightSum
                     lefts[i] = x
                     x += widths[i] + spacingPx
                 }
@@ -144,14 +148,14 @@ fun CourseTabBar(
             }
             Box(
                 modifier = Modifier
-                    .weight(tabWeight(tab))
+                    .weight(weights[index])
                     .clip(CellShape)
                     .selectable(selected = selected, role = Role.Tab) { onSelect(tab) }
                     .padding(vertical = 10.dp),
                 contentAlignment = Alignment.Center,
             ) {
                 BasicText(
-                    text = tabLabel(tab),
+                    text = labels[index],
                     style = labelStyle,
                     color = labelColor,
                     maxLines = 1,
@@ -162,19 +166,17 @@ fun CourseTabBar(
     }
 }
 
-private fun tabLabel(tab: CourseTab): String = when (tab) {
-    CourseTab.Syllabus -> "Scheda"
-    CourseTab.Content -> "Contenuti"
-    CourseTab.Quiz -> "Quiz"
-    CourseTab.Assignments -> "Compiti"
-    CourseTab.Forum -> "Forum"
-}
-
 /**
- * Width share proportional to the label (plus constant slack) so the row fills the screen
- * while long labels like "Contenuti" still fit on compact widths.
+ * Resource id for a tab's caption. The label is resolved once in the composable so its length
+ * can also drive the proportional cell width — long captions like "Contenuti" keep their share.
  */
-private fun tabWeight(tab: CourseTab): Float = tabLabel(tab).length + 4f
+private fun tabLabelRes(tab: CourseTab): Int = when (tab) {
+    CourseTab.Syllabus -> R.string.elearning_course_tab_overview
+    CourseTab.Content -> R.string.elearning_course_tab_content
+    CourseTab.Quiz -> R.string.elearning_course_tab_quiz
+    CourseTab.Assignments -> R.string.elearning_course_tab_assignments
+    CourseTab.Forum -> R.string.elearning_course_tab_forum
+}
 
 private val CellShape = RoundedCornerShape(999.dp)
 private val CellSpacing = 6.dp

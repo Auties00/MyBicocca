@@ -44,7 +44,7 @@ import java.time.YearMonth
 import java.time.format.TextStyle
 import java.util.Locale
 
-private val ItalianLocale: Locale = Locale.ITALIAN
+private val DisplayLocale: Locale = Locale.getDefault()
 private val IndicatorEasing = CubicBezierEasing(0.5f, 0.05f, 0.1f, 1f)
 private const val IndicatorDurationMs = 320
 
@@ -156,7 +156,7 @@ private fun Segment(
         verticalArrangement = Arrangement.spacedBy(0.dp, Alignment.CenterVertically),
     ) {
         Text(
-            text = secondary.uppercase(ItalianLocale),
+            text = secondary.uppercase(DisplayLocale),
             color = contentColor.copy(alpha = if (active) 0.9f else 0.75f),
             fontSize = 10.sp,
             fontWeight = FontWeight.Medium,
@@ -186,7 +186,7 @@ private data class Segment(
 
 private fun dayPrimary(date: LocalDate): String {
     val dow = date.dayOfWeek
-        .getDisplayName(TextStyle.SHORT_STANDALONE, ItalianLocale)
+        .getDisplayName(TextStyle.SHORT_STANDALONE, DisplayLocale)
         .replaceFirstChar { it.uppercase() }
         .trimEnd('.')
     return "$dow ${date.dayOfMonth}"
@@ -197,5 +197,5 @@ private fun weekPrimary(weekStart: LocalDate): String =
 
 private fun monthPrimary(yearMonth: YearMonth): String =
     yearMonth.month
-        .getDisplayName(TextStyle.FULL_STANDALONE, ItalianLocale)
+        .getDisplayName(TextStyle.FULL_STANDALONE, DisplayLocale)
         .replaceFirstChar { it.uppercase() }

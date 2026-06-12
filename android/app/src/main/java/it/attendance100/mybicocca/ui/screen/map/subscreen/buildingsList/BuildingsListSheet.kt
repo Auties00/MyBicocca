@@ -54,6 +54,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntSize
@@ -148,11 +149,8 @@ fun BuildingsListSheet(
                     else -> selectedRoom.name
                 },
                 subtitle = when {
-                    detailBuilding == null -> if (buildings.size == 1) {
-                        stringResource(R.string.map_site_count_one)
-                    } else {
-                        stringResource(R.string.map_site_count_many, buildings.size)
-                    }
+                    detailBuilding == null ->
+                        pluralStringResource(R.plurals.map_site_count, buildings.size, buildings.size)
                     selectedRoom == null ->
                         detailBuilding.address ?: detailBuilding.city
                         ?: stringResource(detailBuilding.category.labelRes)

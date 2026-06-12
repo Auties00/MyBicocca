@@ -99,7 +99,7 @@ fun AttachmentTile(
 }
 
 private fun formatFileSize(bytes: Long): String = when {
-    bytes >= 1_048_576L -> String.format(Locale.ITALIAN, "%.1f MB", bytes / 1_048_576.0)
-    bytes >= 1_024L -> String.format(Locale.ITALIAN, "%.0f KB", bytes / 1_024.0)
+    bytes >= 1_048_576L -> String.format(Locale.getDefault(), "%.1f MB", bytes / 1_048_576.0)
+    bytes >= 1_024L -> String.format(Locale.getDefault(), "%.0f KB", bytes / 1_024.0)
     else -> "$bytes B"
 }

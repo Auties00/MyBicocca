@@ -22,9 +22,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import it.attendance100.mybicocca.R
 
 /**
  * The player's top bar, laid over the video on a black-to-transparent gradient: back button,
@@ -64,7 +66,7 @@ fun PlayerChrome(
             IconButton(onClick = onBack) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Outlined.ArrowBack,
-                    contentDescription = "Indietro",
+                    contentDescription = stringResource(R.string.common_back),
                     tint = Color.White,
                 )
             }
@@ -91,21 +93,21 @@ fun PlayerChrome(
             IconButton(onClick = onEnterPip, enabled = videoLoaded) {
                 Icon(
                     imageVector = Icons.Outlined.PictureInPictureAlt,
-                    contentDescription = "Picture in picture",
+                    contentDescription = stringResource(R.string.elearning_video_picture_in_picture),
                     tint = if (videoLoaded) Color.White else disabledTint,
                 )
             }
             IconButton(onClick = onOpenQuality, enabled = videoLoaded) {
                 Icon(
                     imageVector = Icons.Outlined.HighQuality,
-                    contentDescription = "Qualità",
+                    contentDescription = stringResource(R.string.elearning_video_quality),
                     tint = if (videoLoaded) Color.White else disabledTint,
                 )
             }
             IconButton(onClick = onOpenPlaylist) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Outlined.PlaylistPlay,
-                    contentDescription = "Playlist",
+                    contentDescription = stringResource(R.string.elearning_video_playlist),
                     tint = Color.White,
                 )
             }

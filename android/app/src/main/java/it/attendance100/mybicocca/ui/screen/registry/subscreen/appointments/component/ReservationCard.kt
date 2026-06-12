@@ -17,7 +17,7 @@ import java.time.format.DateTimeFormatter
 import java.util.Locale
 
 private val DayOfMonthFormat = DateTimeFormatter.ofPattern("d")
-private val MonthFormat = DateTimeFormatter.ofPattern("MMM", Locale.ITALIAN)
+private val MonthFormat = DateTimeFormatter.ofPattern("MMM", Locale.getDefault())
 private val TimeFormat = DateTimeFormatter.ofPattern("HH:mm")
 
 /** One desk booking, styled like the Appelli card: date tile, service and section, tonal when/where footer. */
@@ -49,7 +49,7 @@ fun ReservationCard(
         title = reservation.serviceName,
         subtitle = section,
         dayOfMonth = reservation.start.format(DayOfMonthFormat),
-        month = reservation.start.format(MonthFormat).uppercase(Locale.ITALIAN),
+        month = reservation.start.format(MonthFormat).uppercase(Locale.getDefault()),
         footer = listOf(BookingFooterEntry(Icons.Outlined.Schedule, timeLabel), placeEntry),
         onClick = onClick,
         modifier = modifier,

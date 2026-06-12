@@ -39,11 +39,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.ui.component.feedback.LocalAppSnackbarController
 import kotlinx.coroutines.launch
 
@@ -120,7 +122,7 @@ fun LinkSheet(
                 }
                 Spacer(Modifier.height(16.dp))
                 Text(
-                    text = "Questo collegamento porta fuori dall'app.",
+                    text = stringResource(R.string.elearning_link_outside_app),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center,
@@ -129,6 +131,8 @@ fun LinkSheet(
 
             Spacer(Modifier.height(24.dp))
 
+            val openFailedMessage = stringResource(R.string.elearning_link_open_failed)
+            val copiedMessage = stringResource(R.string.elearning_link_copied)
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -138,7 +142,7 @@ fun LinkSheet(
                 Button(
                     onClick = {
                         if (openInBrowser(context, url)) onDismiss()
-                        else scope.launch { snackbar.showError("Impossibile aprire il collegamento") }
+                        else scope.launch { snackbar.showError(openFailedMessage) }
                     },
                     modifier = Modifier
                         .weight(1.4f)
@@ -151,12 +155,12 @@ fun LinkSheet(
                         modifier = Modifier.size(20.dp),
                     )
                     Spacer(Modifier.width(8.dp))
-                    Text("Apri", fontWeight = FontWeight.SemiBold)
+                    Text(stringResource(R.string.elearning_link_open), fontWeight = FontWeight.SemiBold)
                 }
                 FilledTonalButton(
                     onClick = {
                         copyToClipboard(context, title, url)
-                        scope.launch { snackbar.showInfo("Link copiato") }
+                        scope.launch { snackbar.showInfo(copiedMessage) }
                         onDismiss()
                     },
                     modifier = Modifier
@@ -174,7 +178,7 @@ fun LinkSheet(
                         modifier = Modifier.size(20.dp),
                     )
                     Spacer(Modifier.width(8.dp))
-                    Text("Copia", fontWeight = FontWeight.SemiBold)
+                    Text(stringResource(R.string.elearning_link_copy), fontWeight = FontWeight.SemiBold)
                 }
             }
         }

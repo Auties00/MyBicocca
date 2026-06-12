@@ -49,8 +49,10 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.createBitmap
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.domain.model.settings.PdfPagerOrientation
 import it.attendance100.mybicocca.domain.model.settings.PdfThemeMode
 import kotlinx.coroutines.Dispatchers
@@ -139,7 +141,7 @@ fun PdfViewerContent(
             contentAlignment = Alignment.Center,
         ) {
             Text(
-                text = "Impossibile aprire il PDF.",
+                text = stringResource(R.string.elearning_file_pdf_open_failed),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -202,7 +204,11 @@ fun PdfViewerContent(
                     .padding(top = 16.dp),
             ) {
                 Text(
-                    text = "${pagerState.currentPage + 1} / ${document.pageCount}",
+                    text = stringResource(
+                        R.string.elearning_file_pdf_page_indicator,
+                        pagerState.currentPage + 1,
+                        document.pageCount,
+                    ),
                     style = MaterialTheme.typography.labelMedium,
                     modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp),
                 )
@@ -211,12 +217,12 @@ fun PdfViewerContent(
         ViewerBottomBar(
             primary = ViewerAction(
                 icon = Icons.Outlined.Download,
-                label = "Scarica",
+                label = stringResource(R.string.elearning_file_download),
                 onClick = onDownload,
             ),
             ViewerAction(
                 icon = Icons.Outlined.Share,
-                label = "Condividi",
+                label = stringResource(R.string.elearning_file_share),
                 onClick = onShare,
             ),
             ViewerAction(
@@ -225,7 +231,7 @@ fun PdfViewerContent(
                     PdfThemeMode.Light -> Icons.Outlined.LightMode
                     PdfThemeMode.Dark -> Icons.Outlined.DarkMode
                 },
-                label = "Cambia tema",
+                label = stringResource(R.string.elearning_file_change_theme),
                 onClick = {
                     onThemeModeChange(
                         when (themeMode) {
@@ -238,7 +244,7 @@ fun PdfViewerContent(
             ),
             ViewerAction(
                 icon = if (orientation == PdfPagerOrientation.Vertical) Icons.Outlined.SwapVert else Icons.Outlined.SwapHoriz,
-                label = "Cambia direzione",
+                label = stringResource(R.string.elearning_file_change_direction),
                 onClick = {
                     onOrientationChange(
                         if (orientation == PdfPagerOrientation.Vertical)
@@ -250,7 +256,7 @@ fun PdfViewerContent(
             ),
             ViewerAction(
                 icon = Icons.Outlined.PictureInPictureAlt,
-                label = "Picture-in-picture",
+                label = stringResource(R.string.elearning_file_picture_in_picture),
                 onClick = onPip,
             ),
         )
@@ -297,7 +303,7 @@ private fun PdfPage(document: PdfDocument, index: Int, widthPx: Int, isDarkTheme
 
             Image(
                 bitmap = bitmap,
-                contentDescription = "Pagina ${index + 1}",
+                contentDescription = stringResource(R.string.elearning_file_pdf_page, index + 1),
                 contentScale = ContentScale.Fit,
                 colorFilter = colorFilter,
                 modifier = Modifier

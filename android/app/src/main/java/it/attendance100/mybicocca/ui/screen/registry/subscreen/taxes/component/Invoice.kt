@@ -40,10 +40,13 @@ import it.attendance100.mybicocca.ui.theme.BicoccaWordmarkAccent
 import java.text.NumberFormat
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
+import java.util.Currency
 import java.util.Locale
 
 fun formatCurrency(amount: Double): String {
-    return NumberFormat.getCurrencyInstance(Locale.ITALY).format(amount)
+    return NumberFormat.getCurrencyInstance(Locale.getDefault()).apply {
+        currency = Currency.getInstance("EUR")
+    }.format(amount)
 }
 
 private fun formatFullDate(date: LocalDate, locale: Locale): String {
@@ -88,10 +91,10 @@ fun Invoice(
                 DashedDivider()
 
                 Spacer(modifier = Modifier.height(16.dp))
-                SectionTitle("Informazioni")
+                SectionTitle(stringResource(R.string.taxes_section_info))
 
-                InfoRow(label = "Codice Avviso", value = invoice.bulletinCode ?: "-", verticalPadding = 6.dp)
-                InfoRow(label = "Modalità", value = invoice.modalita, verticalPadding = 6.dp)
+                InfoRow(label = stringResource(R.string.taxes_bulletin_code), value = invoice.bulletinCode ?: "-", verticalPadding = 6.dp)
+                InfoRow(label = stringResource(R.string.taxes_modality), value = invoice.modalita, verticalPadding = 6.dp)
 
                 Row(
                     modifier = Modifier

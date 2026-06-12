@@ -62,10 +62,13 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.domain.model.elearning.course.CompletionState
 import it.attendance100.mybicocca.domain.model.elearning.course.CourseModule
 import it.attendance100.mybicocca.domain.model.elearning.course.CourseSection
@@ -153,7 +156,7 @@ private fun SectionCard(
     val scheme = MaterialTheme.colorScheme
     val blocks = remember(section) { section.contentBlocks(resolveSubsection) }
     val summaryHtml = remember(section) { section.summary?.takeIf { it.containsRenderableHtml() } }
-    val subtitle = remember(blocks) { typeSummary(blocks) }
+    val subtitle = typeSummary(blocks)
 
     ExpandableGroupCard(
         ordinal = ordinal,
@@ -598,44 +601,61 @@ private fun CourseModule.resourceIcon(): ImageVector {
  * badges) are worth surfacing; resource upload metadata is noise, so only forums carry the
  * afterlink through.
  */
+@Composable
 private fun moduleMeta(module: CourseModule, progress: VideoProgress?): String {
     val base = when {
         module.isVideo() -> when {
-            progress?.completed == true -> "Guardato"
+            progress?.completed == true -> stringResource(R.string.elearning_module_watched)
             progress != null && progress.progressFraction > 0.01f ->
-                "Visto al ${(progress.progressFraction * 100).roundToInt()}%"
-            else -> "Video"
+                stringResource(
+                    R.string.elearning_module_watched_percent,
+                    (progress.progressFraction * 100).roundToInt(),
+                )
+            else -> stringResource(R.string.elearning_module_video)
         }
         module.type == ModuleType.Resource -> {
             val mimeLabel = mimeShortLabel(module.contents.firstOrNull()?.mimeType)
             val size = module.contents.sumOf { it.sizeBytes ?: 0L }.takeIf { it > 0 }?.let(::formatBytes)
             listOfNotNull(mimeLabel, size).joinToString(" · ")
         }
-        module.type == ModuleType.Quiz -> withDeadline("Quiz", module.dueAt)
-        module.type == ModuleType.Assign -> withDeadlineOrOpen("Compito", module)
+        module.type == ModuleType.Quiz ->
+            withDeadline(stringResource(R.string.elearning_module_quiz), module.dueAt)
+        module.type == ModuleType.Assign ->
+            withDeadlineOrOpen(stringResource(R.string.elearning_module_assign), module)
         module.type == ModuleType.Folder -> {
+            val folderLabel = stringResource(R.string.elearning_module_folder)
             val files = module.contents.size.takeIf { it > 0 }
-            if (files != null) "Cartella · $files file" else "Cartella"
+            if (files != null) {
+                stringResource(R.string.elearning_module_folder_count, files)
+            } else {
+                folderLabel
+            }
         }
-        module.type == ModuleType.Forum || module.type == ModuleType.HsuForum -> "Forum"
-        module.type == ModuleType.Url -> "Link"
-        module.type == ModuleType.Page -> "Pagina"
-        module.type == ModuleType.Book -> "Libro"
-        module.type == ModuleType.Lesson -> "Lezione"
-        module.type == ModuleType.Choice -> withDeadline("Sondaggio", module.dueAt)
-        module.type == ModuleType.ChoiceGroup -> withDeadlineOrOpen("Scelta gruppo", module)
-        module.type == ModuleType.Wiki -> "Wiki"
-        module.type == ModuleType.Glossary -> "Glossario"
-        module.type == ModuleType.Workshop -> "Workshop"
-        module.type == ModuleType.Feedback -> withDeadline("Questionario", module.dueAt)
-        module.type == ModuleType.Wooclap -> "Wooclap"
-        module.type == ModuleType.Lti -> "Strumento esterno"
-        module.type == ModuleType.Reservation -> withDeadlineOrOpen("Prenotazione", module)
-        module.type == ModuleType.Webex -> "Webex"
-        module.type == ModuleType.Database -> "Database"
-        module.type == ModuleType.Attendance -> "Presenze"
-        module.type == ModuleType.Scheduler -> "Appuntamenti"
-        else -> module.typeLabel?.takeIf { it.isNotBlank() } ?: "Attività"
+        module.type == ModuleType.Forum || module.type == ModuleType.HsuForum ->
+            stringResource(R.string.elearning_module_forum)
+        module.type == ModuleType.Url -> stringResource(R.string.elearning_module_link)
+        module.type == ModuleType.Page -> stringResource(R.string.elearning_module_page)
+        module.type == ModuleType.Book -> stringResource(R.string.elearning_module_book)
+        module.type == ModuleType.Lesson -> stringResource(R.string.elearning_module_lesson)
+        module.type == ModuleType.Choice ->
+            withDeadline(stringResource(R.string.elearning_module_choice), module.dueAt)
+        module.type == ModuleType.ChoiceGroup ->
+            withDeadlineOrOpen(stringResource(R.string.elearning_module_choice_group), module)
+        module.type == ModuleType.Wiki -> stringResource(R.string.elearning_module_wiki)
+        module.type == ModuleType.Glossary -> stringResource(R.string.elearning_module_glossary)
+        module.type == ModuleType.Workshop -> stringResource(R.string.elearning_module_workshop)
+        module.type == ModuleType.Feedback ->
+            withDeadline(stringResource(R.string.elearning_module_feedback), module.dueAt)
+        module.type == ModuleType.Wooclap -> stringResource(R.string.elearning_module_wooclap)
+        module.type == ModuleType.Lti -> stringResource(R.string.elearning_module_lti)
+        module.type == ModuleType.Reservation ->
+            withDeadlineOrOpen(stringResource(R.string.elearning_module_reservation), module)
+        module.type == ModuleType.Webex -> stringResource(R.string.elearning_module_webex)
+        module.type == ModuleType.Database -> stringResource(R.string.elearning_module_database)
+        module.type == ModuleType.Attendance -> stringResource(R.string.elearning_module_attendance)
+        module.type == ModuleType.Scheduler -> stringResource(R.string.elearning_module_scheduler)
+        else -> module.typeLabel?.takeIf { it.isNotBlank() }
+            ?: stringResource(R.string.elearning_module_activity)
     }
     val badge = module.afterLink
         ?.takeIf { module.type == ModuleType.Forum || module.type == ModuleType.HsuForum }
@@ -643,20 +663,31 @@ private fun moduleMeta(module: CourseModule, progress: VideoProgress?): String {
     return if (badge != null) "$base · $badge" else base
 }
 
-private val DEADLINE_FORMAT = DateTimeFormatter.ofPattern("d MMM HH:mm", Locale.ITALIAN)
+private val DEADLINE_FORMAT = DateTimeFormatter.ofPattern("d MMM HH:mm", Locale.getDefault())
 
+@Composable
 private fun withDeadline(base: String, deadline: Instant?): String {
     if (deadline == null) return base
     val label = DEADLINE_FORMAT.format(deadline.atZone(ZoneId.systemDefault()))
-    return if (deadline.isBefore(Instant.now())) "$base · chiuso il $label" else "$base · entro il $label"
+    val glue = if (deadline.isBefore(Instant.now())) {
+        stringResource(R.string.elearning_module_deadline_closed, label)
+    } else {
+        stringResource(R.string.elearning_module_deadline_due, label)
+    }
+    return "$base · $glue"
 }
 
 /** Prefers a real deadline; falls back to the opening date when that's all the module exposes. */
+@Composable
 private fun withDeadlineOrOpen(base: String, module: CourseModule): String {
     module.dueAt?.let { return withDeadline(base, it) }
     val opens = module.opensAt ?: return base
     val label = DEADLINE_FORMAT.format(opens.atZone(ZoneId.systemDefault()))
-    return if (opens.isAfter(Instant.now())) "$base · dal $label" else base
+    return if (opens.isAfter(Instant.now())) {
+        "$base · ${stringResource(R.string.elearning_module_deadline_from, label)}"
+    } else {
+        base
+    }
 }
 
 private fun formatBytes(bytes: Long): String = when {
@@ -665,7 +696,7 @@ private fun formatBytes(bytes: Long): String = when {
     else -> {
         val mb = bytes / (1024.0 * 1024.0)
         val pattern = if (mb >= 100) "%.0f MB" else "%.1f MB"
-        String.format(Locale.ITALIAN, pattern, mb)
+        String.format(Locale.getDefault(), pattern, mb)
     }
 }
 
@@ -673,9 +704,10 @@ private fun formatBytes(bytes: Long): String = when {
  * Subtitle like "26 video · 8 PDF · 1 quiz" — surveyed data shows PDFs and videos dominate,
  * so a type-aware summary tells students far more than a flat resource count.
  */
+@Composable
 private fun typeSummary(blocks: List<ContentBlock>): String {
     val modules = blocks.flatMap { (it as? ContentBlock.Group)?.modules ?: emptyList() }
-    if (modules.isEmpty()) return "Nessuna risorsa"
+    if (modules.isEmpty()) return stringResource(R.string.elearning_module_no_resources)
     val counts = linkedMapOf<String, Int>()
     fun add(key: String) = counts.merge(key, 1, Int::plus)
     modules.forEach { m ->
@@ -692,36 +724,39 @@ private fun typeSummary(blocks: List<ContentBlock>): String {
             else -> add("other")
         }
     }
-    return counts.entries
-        .sortedByDescending { it.value }
-        .take(3)
-        .joinToString(" · ") { (key, n) -> "$n ${countLabel(key, n)}" }
+    val parts = mutableListOf<String>()
+    for ((key, n) in counts.entries.sortedByDescending { it.value }.take(3)) {
+        parts += "$n " + countLabel(key, n)
+    }
+    return parts.joinToString(" · ")
 }
 
+@Composable
 private fun countLabel(key: String, count: Int): String = when (key) {
-    "video" -> "video"
-    "pdf" -> "PDF"
-    "file" -> "file"
-    "quiz" -> "quiz"
-    "assign" -> if (count == 1) "compito" else "compiti"
-    "forum" -> "forum"
-    "url" -> "link"
-    "folder" -> if (count == 1) "cartella" else "cartelle"
-    "page" -> if (count == 1) "pagina" else "pagine"
-    else -> "attività"
+    "video" -> pluralStringResource(R.plurals.elearning_count_video, count, count)
+    "pdf" -> pluralStringResource(R.plurals.elearning_count_pdf, count, count)
+    "file" -> pluralStringResource(R.plurals.elearning_count_file, count, count)
+    "quiz" -> pluralStringResource(R.plurals.elearning_count_quiz, count, count)
+    "assign" -> pluralStringResource(R.plurals.elearning_count_assign, count, count)
+    "forum" -> pluralStringResource(R.plurals.elearning_count_forum, count, count)
+    "url" -> pluralStringResource(R.plurals.elearning_count_link, count, count)
+    "folder" -> pluralStringResource(R.plurals.elearning_count_folder, count, count)
+    "page" -> pluralStringResource(R.plurals.elearning_count_page, count, count)
+    else -> pluralStringResource(R.plurals.elearning_count_other, count, count)
 }
 
+@Composable
 private fun mimeShortLabel(mime: String?): String {
     val m = mime.orEmpty()
     return when {
         m.contains("pdf") -> "PDF"
         m.contains("zip") || m.contains("compressed") -> "ZIP"
-        m.startsWith("video") -> "Video"
-        m.startsWith("image") -> "Immagine"
+        m.startsWith("video") -> stringResource(R.string.file_kind_video)
+        m.startsWith("image") -> stringResource(R.string.file_kind_image)
         m.contains("presentationml") || m.contains("ms-powerpoint") -> "PPT"
         m.contains("spreadsheetml") || m.contains("ms-excel") -> "XLS"
         m.contains("wordprocessingml") || m.contains("msword") -> "DOC"
         m == "text/plain" -> "TXT"
-        else -> "File"
+        else -> stringResource(R.string.file_kind_generic)
     }
 }

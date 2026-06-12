@@ -36,8 +36,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.domain.model.elearning.assignment.Assignment
 import it.attendance100.mybicocca.domain.model.elearning.assignment.SubmissionForm
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.assignmentDetail.state.PickedFile
@@ -75,7 +78,7 @@ internal fun SubmissionComposePage(
     if (!form.canEdit) {
         Column(modifier = modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 8.dp)) {
             Text(
-                text = "Questa consegna non è al momento modificabile.",
+                text = stringResource(R.string.elearning_assign_not_editable),
                 style = MaterialTheme.typography.bodyMedium,
                 color = scheme.onSurfaceVariant,
             )
@@ -101,18 +104,18 @@ internal fun SubmissionComposePage(
                 .padding(horizontal = 24.dp),
         ) {
             if (form.onlineTextEnabled) {
-                SectionLabel("Testo")
+                SectionLabel(stringResource(R.string.elearning_assign_edit_text))
                 OutlinedTextField(
                     value = draftText,
                     onValueChange = onTextChange,
                     modifier = Modifier.fillMaxWidth().heightIn(min = 120.dp),
-                    placeholder = { Text("Scrivi la tua risposta…") },
+                    placeholder = { Text(stringResource(R.string.elearning_assign_write_answer)) },
                     enabled = !submitting,
                 )
             }
 
             if (form.fileEnabled) {
-                SectionLabel("File")
+                SectionLabel(stringResource(R.string.elearning_assign_edit_files))
                 Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     keptExistingFiles.forEach { ref ->
                         FileRow(
@@ -140,7 +143,7 @@ internal fun SubmissionComposePage(
                 ) {
                     Icon(Icons.Outlined.Add, contentDescription = null, modifier = Modifier.size(20.dp))
                     Spacer(Modifier.width(8.dp))
-                    Text("Aggiungi file", fontWeight = FontWeight.SemiBold)
+                    Text(stringResource(R.string.elearning_assign_add_files), fontWeight = FontWeight.SemiBold)
                 }
                 Spacer(Modifier.height(8.dp))
                 Text(
@@ -178,7 +181,11 @@ private fun SubmissionActions(
 ) {
     val isOnline = LocalIsOnline.current
     val scheme = MaterialTheme.colorScheme
-    val primaryLabel = if (draftsEnabled) "Continua" else "Consegna"
+    val primaryLabel = if (draftsEnabled) {
+        stringResource(R.string.elearning_assign_continue)
+    } else {
+        stringResource(R.string.elearning_assign_submit)
+    }
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -199,7 +206,7 @@ private fun SubmissionActions(
                 if (submitting) {
                     LoadingIndicator(modifier = Modifier.size(24.dp))
                 } else {
-                    Text("Salva bozza", fontWeight = FontWeight.SemiBold)
+                    Text(stringResource(R.string.elearning_assign_save_draft), fontWeight = FontWeight.SemiBold)
                 }
             }
         }
@@ -256,22 +263,35 @@ private fun FileRow(fileName: String, sizeBytes: Long?, enabled: Boolean, onRemo
                 }
             }
             IconButton(onClick = onRemove, enabled = enabled) {
-                Icon(Icons.Outlined.Close, contentDescription = "Rimuovi", tint = scheme.onSurfaceVariant)
+                Icon(
+                    Icons.Outlined.Close,
+                    contentDescription = stringResource(R.string.elearning_assign_remove_file),
+                    tint = scheme.onSurfaceVariant,
+                )
             }
         }
     }
 }
 
+@Composable
 private fun constraintsHint(form: SubmissionForm): String {
     val parts = mutableListOf<String>()
-    if (form.maxFiles > 0) parts += if (form.maxFiles == 1) "1 file" else "max ${form.maxFiles} file"
-    if (form.maxSizeBytes > 0) parts += "fino a ${formatSize(form.maxSizeBytes)}"
+    if (form.maxFiles > 0) {
+        parts += pluralStringResource(
+            R.plurals.elearning_assign_max_files,
+            form.maxFiles,
+            form.maxFiles,
+        )
+    }
+    if (form.maxSizeBytes > 0) {
+        parts += stringResource(R.string.elearning_assign_max_size, formatSize(form.maxSizeBytes))
+    }
     if (form.acceptedFileTypes.isNotEmpty()) parts += form.acceptedFileTypes.joinToString(", ")
     return parts.joinToString(" · ")
 }
 
 private fun formatSize(bytes: Long): String = when {
-    bytes >= 1_048_576 -> String.format(Locale.ITALIAN, "%.1f MB", bytes / 1_048_576.0)
-    bytes >= 1024 -> String.format(Locale.ITALIAN, "%.0f KB", bytes / 1024.0)
+    bytes >= 1_048_576 -> String.format(Locale.getDefault(), "%.1f MB", bytes / 1_048_576.0)
+    bytes >= 1024 -> String.format(Locale.getDefault(), "%.0f KB", bytes / 1024.0)
     else -> "$bytes B"
 }

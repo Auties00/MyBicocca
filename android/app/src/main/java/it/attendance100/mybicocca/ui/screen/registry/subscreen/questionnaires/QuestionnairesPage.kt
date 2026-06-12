@@ -55,6 +55,7 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -376,8 +377,7 @@ private enum class ConfirmIntent { Leave, LeaveAndDismiss, Send }
 private fun rootSubtitle(loaded: Boolean, pendingCount: Int): AnnotatedString? = when {
     !loaded -> null
     pendingCount == 0 -> AnnotatedString(stringResource(R.string.questionnaire_no_pending))
-    pendingCount == 1 -> AnnotatedString(stringResource(R.string.questionnaire_one_pending))
-    else -> AnnotatedString(stringResource(R.string.questionnaire_multiple_pending, pendingCount))
+    else -> AnnotatedString(pluralStringResource(R.plurals.questionnaire_pending_count, pendingCount, pendingCount))
 }
 
 /**

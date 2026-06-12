@@ -1,5 +1,7 @@
 package it.attendance100.mybicocca.ui.screen.registry.subscreen.taxes
 
+import android.content.Context
+import androidx.test.core.app.ApplicationProvider
 import app.cash.turbine.test
 import com.google.common.truth.Truth.assertThat
 import io.mockk.coEvery
@@ -35,6 +37,9 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import org.junit.Rule
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
 import java.io.IOException
 import java.time.Instant
 import java.time.LocalDate
@@ -46,6 +51,8 @@ import java.time.LocalDate
  * filenames, the payment-status message produced by every PaymentStatus branch).
  */
 @OptIn(ExperimentalCoroutinesApi::class)
+@RunWith(RobolectricTestRunner::class)
+@Config(sdk = [34], qualifiers = "it")
 class TaxesViewModelTest {
 
     @get:Rule
@@ -62,9 +69,12 @@ class TaxesViewModelTest {
     private val getPaymentStatus: GetPaymentStatusUseCase = mockk()
     private val observeActiveAccount: ObserveActiveAccountUseCase = mockk()
 
+    private val context: Context = ApplicationProvider.getApplicationContext()
+
     private fun viewModel(): TaxesViewModel {
         every { observeActiveAccount() } returns flowOf(account(careerId))
         return TaxesViewModel(
+            context,
             getTaxInvoices,
             getIseeDeclarations,
             startPagoPaPayment,

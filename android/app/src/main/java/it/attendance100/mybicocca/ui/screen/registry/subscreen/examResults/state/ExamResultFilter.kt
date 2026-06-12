@@ -1,5 +1,7 @@
 package it.attendance100.mybicocca.ui.screen.registry.subscreen.examResults.state
 
+import androidx.annotation.StringRes
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.domain.model.exam.ExamResult
 import it.attendance100.mybicocca.domain.model.exam.requiresStudentDecision
 import java.time.LocalDate
@@ -9,10 +11,12 @@ import java.time.LocalDate
  * awaiting the student's accept/reject within an open decision window; Archived =
  * everything already settled (accepted, rejected, or auto-verbalised). Both halves come
  * from the same published-esiti feed.
+ *
+ * @property labelRes segmented-switch tab copy resource.
  */
-enum class ExamResultFilter(val label: String) {
-    Pending("In sospeso"),
-    Archived("Archiviati"),
+enum class ExamResultFilter(@param:StringRes val labelRes: Int) {
+    Pending(R.string.exam_results_filter_pending),
+    Archived(R.string.exam_results_filter_archived),
 }
 
 

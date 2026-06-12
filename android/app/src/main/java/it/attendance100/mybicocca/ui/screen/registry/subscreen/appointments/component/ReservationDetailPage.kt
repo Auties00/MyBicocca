@@ -50,7 +50,7 @@ import it.attendance100.mybicocca.ui.theme.LocalIsOnline
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
-private val FullDateFormat = DateTimeFormatter.ofPattern("EEEE d MMMM yyyy", Locale.ITALIAN)
+private val FullDateFormat = DateTimeFormatter.ofPattern("EEEE d MMMM yyyy", Locale.getDefault())
 private val TimeFormat = DateTimeFormatter.ofPattern("HH:mm")
 
 /**
@@ -119,7 +119,7 @@ internal fun ReservationDetailPage(
                     value = buildString {
                         append(
                             reservation.start.format(FullDateFormat)
-                                .replaceFirstChar { it.titlecase(Locale.ITALIAN) },
+                                .replaceFirstChar { it.titlecase(Locale.getDefault()) },
                         )
                         append(" · ore ")
                         append(reservation.start.format(TimeFormat))

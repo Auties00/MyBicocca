@@ -13,6 +13,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import it.attendance100.mybicocca.R
@@ -266,9 +267,9 @@ fun LibraryPage(
                             if (linkedEmail == null) stringResource(R.string.library_login_and_book)
                             else if (reservations !is Loadable.Loaded) null
                             else if (reservationList.isEmpty()) stringResource(R.string.library_no_bookings)
-                            else if (reservationList.size == 1) stringResource(R.string.library_one_booking)
-                            else stringResource(
-                                R.string.library_multiple_bookings,
+                            else pluralStringResource(
+                                R.plurals.library_booking_count,
+                                reservationList.size,
                                 reservationList.size
                             )
 

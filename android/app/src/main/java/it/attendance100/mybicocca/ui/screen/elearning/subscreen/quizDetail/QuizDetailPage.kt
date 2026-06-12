@@ -53,10 +53,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.state.valueOrNull
 import it.attendance100.mybicocca.domain.model.elearning.course.CourseId
 import it.attendance100.mybicocca.domain.model.elearning.quiz.AttemptId
@@ -119,13 +122,14 @@ fun QuizDetailPage(
     ),
 ) {
     val snackbar = LocalAppSnackbarController.current
+    val operationFailed = stringResource(R.string.elearning_quiz_operation_failed)
     LaunchedEffect(viewModel) {
         viewModel.oneShotEvents.collectLatest { event ->
             when (event) {
                 is QuizDetailOneShotEvent.AttemptStarted -> Unit
                 is QuizDetailOneShotEvent.AttemptSubmitted -> Unit
                 is QuizDetailOneShotEvent.RefreshFailed ->
-                    snackbar.showError("Operazione non riuscita", event.cause)
+                    snackbar.showError(operationFailed, event.cause)
             }
         }
     }
@@ -178,8 +182,11 @@ fun QuizDetailPage(
             currentAttempt?.layout?.split(',')?.count { it.trim() == "0" }?.takeIf { it > 0 }
         }
         val attemptSubtitle = inProgress?.let {
-            if (totalPages != null) "Pagina ${it.page.pageIndex + 1} di $totalPages"
-            else "Pagina ${it.page.pageIndex + 1}"
+            if (totalPages != null) {
+                stringResource(R.string.elearning_quiz_page_of, it.page.pageIndex + 1, totalPages)
+            } else {
+                stringResource(R.string.elearning_quiz_page, it.page.pageIndex + 1)
+            }
         }
 
         val control = LocalSheetDismissControl.current
@@ -256,16 +263,16 @@ fun QuizDetailPage(
                     QuizSheetPage.AttemptLoading,
                     QuizSheetPage.Attempt,
                     QuizSheetPage.Submitting,
-                    QuizSheetPage.Review -> quiz?.name ?: "Quiz"
+                    QuizSheetPage.Review -> quiz?.name ?: stringResource(R.string.elearning_quiz_title)
 
-                    QuizSheetPage.History -> "Storico"
-                    QuizSheetPage.ConfirmSubmit -> "Consegnare il tentativo?"
-                    QuizSheetPage.ConfirmClose -> "Chiudere il quiz?"
+                    QuizSheetPage.History -> stringResource(R.string.elearning_quiz_history)
+                    QuizSheetPage.ConfirmSubmit -> stringResource(R.string.elearning_quiz_confirm_submit_title)
+                    QuizSheetPage.ConfirmClose -> stringResource(R.string.elearning_quiz_confirm_close_title)
                 },
                 subtitle = when (page) {
                     QuizSheetPage.History -> attemptsCountLabel(attempts.size)
                     QuizSheetPage.Attempt -> attemptSubtitle
-                    QuizSheetPage.Submitting -> "Invio in corso…"
+                    QuizSheetPage.Submitting -> stringResource(R.string.elearning_quiz_submitting)
                     else -> null
                 },
                 onBack = when (page) {
@@ -287,7 +294,7 @@ fun QuizDetailPage(
                     QuizSheetPage.Overview ->
                         if (quiz == null) {
                             SheetLoadingIndicator(
-                                label = "Caricamento quiz…",
+                                label = stringResource(R.string.elearning_quiz_loading),
                                 modifier = Modifier.testTag(QuizDetailTestTags.STATE_LOADING),
                             )
                         } else {
@@ -309,7 +316,7 @@ fun QuizDetailPage(
                     )
 
                     QuizSheetPage.AttemptLoading ->
-                        SheetLoadingIndicator(label = "Caricamento tentativo…")
+                        SheetLoadingIndicator(label = stringResource(R.string.elearning_quiz_loading_attempt))
 
                     QuizSheetPage.Attempt -> lastInProgress?.let { state ->
                         AttemptWizard(
@@ -323,7 +330,7 @@ fun QuizDetailPage(
                     }
 
                     QuizSheetPage.Submitting ->
-                        SheetLoadingIndicator(label = "Invio in corso…")
+                        SheetLoadingIndicator(label = stringResource(R.string.elearning_quiz_submitting))
 
                     QuizSheetPage.Review -> lastReview?.let { review ->
                         AttemptReviewContent(
@@ -333,26 +340,26 @@ fun QuizDetailPage(
                     }
 
                     QuizSheetPage.ConfirmSubmit -> SheetConfirmPage(
-                        body = "La consegna è definitiva: le risposte di questo tentativo non potranno più essere modificate.",
+                        body = stringResource(R.string.elearning_quiz_confirm_submit_body),
                         onConfirm = { confirmSubmit = false },
                         onKeep = {
                             confirmSubmit = false
                             viewModel.onSubmit()
                         },
-                        confirmLabel = "Annulla",
-                        keepLabel = "Consegna",
+                        confirmLabel = stringResource(R.string.common_cancel),
+                        keepLabel = stringResource(R.string.elearning_quiz_submit_attempt),
                     )
 
                     QuizSheetPage.ConfirmClose -> SheetConfirmPage(
-                        body = "Il tentativo rimarrà in sospeso e potrai riprenderlo in seguito.",
+                        body = stringResource(R.string.elearning_quiz_confirm_close_body),
                         onConfirm = {
                             confirmClose = false
                             viewModel.onSaveDraft()
                             viewModel.closeAttempt()
                         },
                         onKeep = { confirmClose = false },
-                        confirmLabel = "Esci",
-                        keepLabel = "Continua",
+                        confirmLabel = stringResource(R.string.common_exit),
+                        keepLabel = stringResource(R.string.common_continue),
                     )
                 }
             }
@@ -411,7 +418,7 @@ private fun QuizOverviewPage(
             if (bestGrade?.grade != null) {
                 IconRow(
                     icon = Icons.Outlined.EmojiEvents,
-                    label = "VOTO MIGLIORE",
+                    label = stringResource(R.string.elearning_quiz_best_grade_label),
                     value = buildString {
                         append(formatGradeValue(bestGrade.grade))
                         bestGrade.maxGrade?.takeIf { it > 0 }?.let { append(" / ${formatGradeValue(it)}") }
@@ -420,21 +427,24 @@ private fun QuizOverviewPage(
             }
             IconRow(
                 icon = Icons.Outlined.Repeat,
-                label = "TENTATIVI",
+                label = stringResource(R.string.elearning_quiz_attempts_label),
                 value = attemptsValue(quiz, attempts.size),
             )
             quiz.timeLimitSeconds?.takeIf { it > 0 }?.let { limit ->
                 IconRow(
                     icon = Icons.Outlined.Timer,
-                    label = "TEMPO",
-                    value = "${limit / 60} minuti",
+                    label = stringResource(R.string.elearning_quiz_time_label),
+                    value = stringResource(R.string.elearning_quiz_time_minutes, limit / 60),
                 )
             }
             availabilityValue(quiz, now)?.let { (label, value) ->
                 IconRow(icon = Icons.Outlined.Schedule, label = label, value = value)
             }
             quiz.intro?.takeIf { it.isNotBlank() }?.let { intro ->
-                IconRow(icon = Icons.AutoMirrored.Outlined.Notes, label = "ISTRUZIONI") {
+                IconRow(
+                    icon = Icons.AutoMirrored.Outlined.Notes,
+                    label = stringResource(R.string.elearning_quiz_instructions_label),
+                ) {
                     HtmlBody(html = intro, color = scheme.onSurface)
                 }
             }
@@ -444,7 +454,7 @@ private fun QuizOverviewPage(
 
         QuizActionRow(
             canStart = canStart,
-            primaryLabel = primaryLabel(resumable != null, notYetOpen, closed, attemptsLeft),
+            primaryLabel = primaryActionLabel(resumable != null, notYetOpen, closed, attemptsLeft),
             primaryIsResume = resumable != null,
             hasHistory = attempts.isNotEmpty(),
             onPrimary = { if (resumable != null) onResumeAttempt(resumable.id.value) else onStartAttempt() },
@@ -539,7 +549,7 @@ private fun AttemptRow(
                 verticalArrangement = Arrangement.spacedBy(2.dp),
             ) {
                 Text(
-                    text = "Tentativo ${attempt.attemptNumber}",
+                    text = stringResource(R.string.elearning_quiz_attempt_number, attempt.attemptNumber),
                     style = MaterialTheme.typography.titleMediumEmphasized,
                     color = scheme.onSurface,
                 )
@@ -665,7 +675,7 @@ private fun QuizActionRow(
             ) {
                 Icon(Icons.Outlined.History, contentDescription = null, modifier = Modifier.size(20.dp))
                 Spacer(Modifier.width(8.dp))
-                Text("Storico", fontWeight = FontWeight.SemiBold)
+                Text(stringResource(R.string.elearning_quiz_history), fontWeight = FontWeight.SemiBold)
             }
         } else {
             BrandButton(
@@ -708,55 +718,66 @@ private fun BrandButton(
     }
 }
 
+@Composable
 private fun attemptsCountLabel(count: Int): String =
-    if (count == 1) "1 tentativo" else "$count tentativi"
+    pluralStringResource(R.plurals.elearning_quiz_attempts_count, count, count)
 
+@Composable
 private fun attemptSubtitle(attempt: QuizAttempt): String {
     val state = when (attempt.state) {
-        AttemptState.InProgress -> "In corso"
-        AttemptState.Overdue -> "Scaduto"
-        AttemptState.Finished -> "Concluso"
-        AttemptState.Abandoned -> "Abbandonato"
-        AttemptState.Unknown -> "Tentativo"
+        AttemptState.InProgress -> stringResource(R.string.elearning_quiz_state_in_progress)
+        AttemptState.Overdue -> stringResource(R.string.elearning_quiz_state_overdue)
+        AttemptState.Finished -> stringResource(R.string.elearning_quiz_state_finished)
+        AttemptState.Abandoned -> stringResource(R.string.elearning_quiz_state_abandoned)
+        AttemptState.Unknown -> stringResource(R.string.elearning_quiz_state_unknown)
     }
     val instant = attempt.timeFinish ?: attempt.timeStart
     return if (instant != null) "$state · ${DateFmt.format(instant)}" else state
 }
 
-private fun primaryLabel(
+@Composable
+private fun primaryActionLabel(
     resumable: Boolean,
     notYetOpen: Boolean,
     closed: Boolean,
     attemptsLeft: Boolean,
 ): String = when {
-    resumable -> "Riprendi"
-    notYetOpen -> "Non ancora aperto"
-    closed -> "Quiz chiuso"
-    !attemptsLeft -> "Tentativi esauriti"
-    else -> "Inizia tentativo"
+    resumable -> stringResource(R.string.elearning_quiz_resume)
+    notYetOpen -> stringResource(R.string.elearning_quiz_not_open_yet)
+    closed -> stringResource(R.string.elearning_quiz_closed)
+    !attemptsLeft -> stringResource(R.string.elearning_quiz_attempts_exhausted)
+    else -> stringResource(R.string.elearning_quiz_start_attempt)
 }
 
+@Composable
 private fun attemptsValue(quiz: Quiz, used: Int): String {
     val max = quiz.maxAttempts
     return when {
-        max != null && max > 0 -> "$used di $max"
-        used == 0 -> "Tentativi illimitati"
-        else -> "$used effettuati · illimitati"
+        max != null && max > 0 -> stringResource(R.string.elearning_quiz_attempts_used, used, max)
+        used == 0 -> stringResource(R.string.elearning_quiz_attempts_unlimited)
+        else -> stringResource(R.string.elearning_quiz_attempts_used_unlimited, used)
     }
 }
 
 /** (label, value) for the availability fact row, or null when the quiz is always open. */
+@Composable
 private fun availabilityValue(quiz: Quiz, now: Instant): Pair<String, String>? {
     quiz.timeOpen?.takeIf { it.isAfter(now) }?.let {
-        return "APERTURA" to "Apre ${DateFmt.format(it)}"
+        return stringResource(R.string.elearning_quiz_opening_label) to
+            stringResource(R.string.elearning_quiz_opens, DateFmt.format(it))
     }
     quiz.timeClose?.let {
-        return if (it.isAfter(now)) "CHIUSURA" to "Chiude ${DateFmt.format(it)}"
-        else "CHIUSURA" to "Chiuso il ${DateFmt.format(it)}"
+        return if (it.isAfter(now)) {
+            stringResource(R.string.elearning_quiz_closing_label) to
+                stringResource(R.string.elearning_quiz_closes, DateFmt.format(it))
+        } else {
+            stringResource(R.string.elearning_quiz_closing_label) to
+                stringResource(R.string.elearning_quiz_closed_on, DateFmt.format(it))
+        }
     }
     return null
 }
 
-private val DateFmt = DateTimeFormatter
-    .ofPattern("EEE d MMM, HH:mm", Locale.ITALIAN)
+private val DateFmt: DateTimeFormatter = DateTimeFormatter
+    .ofPattern("EEE d MMM, HH:mm", Locale.getDefault())
     .withZone(ZoneId.systemDefault())

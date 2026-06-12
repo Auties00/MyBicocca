@@ -51,10 +51,10 @@ import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
-private val FullDateFormat = DateTimeFormatter.ofPattern("EEEE d MMMM yyyy", Locale.ITALIAN)
+private val FullDateFormat = DateTimeFormatter.ofPattern("EEEE d MMMM yyyy", Locale.getDefault())
 private val TimeFormat = DateTimeFormatter.ofPattern("HH:mm")
-private val ShortDateFormat = DateTimeFormatter.ofPattern("d MMMM", Locale.ITALIAN)
-private val BookingDateFormat = DateTimeFormatter.ofPattern("d MMMM, HH:mm", Locale.ITALIAN)
+private val ShortDateFormat = DateTimeFormatter.ofPattern("d MMMM", Locale.getDefault())
+private val BookingDateFormat = DateTimeFormatter.ofPattern("d MMMM, HH:mm", Locale.getDefault())
 
 /**
  * Everything about one booking, paged inside the appelli sheet. The pinned morphing header
@@ -98,7 +98,7 @@ fun BookedExamDetailPage(
                     value = buildString {
                         append(
                             dt.toLocalDate().format(FullDateFormat)
-                                .replaceFirstChar { it.titlecase(Locale.ITALIAN) },
+                                .replaceFirstChar { it.titlecase(Locale.getDefault()) },
                         )
                         append(" · ore ")
                         append(dt.toLocalTime().format(TimeFormat))

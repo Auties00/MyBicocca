@@ -36,10 +36,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.domain.model.settings.FileOpenChoice
 import it.attendance100.mybicocca.ui.component.file.FileKind
 import it.attendance100.mybicocca.ui.component.file.openChooserIcon
@@ -129,13 +131,13 @@ fun FileOpenChooserContent(
                     ) {
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = "Ricorda la scelta",
+                                text = stringResource(R.string.elearning_file_remember_choice),
                                 style = MaterialTheme.typography.bodyLarge,
                                 color = MaterialTheme.colorScheme.onSurface,
                                 fontWeight = FontWeight.Medium,
                             )
                             Text(
-                                text = "Tieni premuto un file per cambiare di nuovo.",
+                                text = stringResource(R.string.elearning_file_remember_choice_hint),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
@@ -167,7 +169,10 @@ fun FileOpenChooserContent(
                 ) {
                     Icon(Icons.Outlined.OpenInFull, contentDescription = null, modifier = Modifier.size(20.dp))
                     Spacer(Modifier.width(8.dp))
-                    Text("In app", fontWeight = FontWeight.SemiBold)
+                    Text(
+                        stringResource(R.string.settings_file_association_in_app),
+                        fontWeight = FontWeight.SemiBold,
+                    )
                 }
                 FilledTonalButton(
                     onClick = { onChoose(FileOpenChoice.External, rememberChoice) },
@@ -182,7 +187,10 @@ fun FileOpenChooserContent(
                 ) {
                     Icon(Icons.AutoMirrored.Outlined.OpenInNew, contentDescription = null, modifier = Modifier.size(20.dp))
                     Spacer(Modifier.width(8.dp))
-                    Text("Altra app", fontWeight = FontWeight.SemiBold)
+                    Text(
+                        stringResource(R.string.settings_file_association_external),
+                        fontWeight = FontWeight.SemiBold,
+                    )
                 }
             }
     }
@@ -192,5 +200,5 @@ private fun formatSize(bytes: Long?): String? = when {
     bytes == null || bytes <= 0 -> null
     bytes < 1024 -> "$bytes B"
     bytes < 1024 * 1024 -> "${bytes / 1024} KB"
-    else -> String.format(Locale.ITALIAN, "%.1f MB", bytes / (1024.0 * 1024.0))
+    else -> String.format(Locale.getDefault(), "%.1f MB", bytes / (1024.0 * 1024.0))
 }

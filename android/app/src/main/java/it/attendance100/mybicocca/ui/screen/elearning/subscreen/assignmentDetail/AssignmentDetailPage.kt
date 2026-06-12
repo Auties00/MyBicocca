@@ -33,10 +33,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.domain.model.elearning.assignment.Assignment
 import it.attendance100.mybicocca.domain.model.elearning.assignment.SubmissionForm
@@ -97,15 +100,18 @@ fun AssignmentDetailPage(
         onDispose { viewModel.resetNavigation() }
     }
 
+    val draftSavedMessage = stringResource(R.string.elearning_assign_draft_saved)
+    val submissionSentMessage = stringResource(R.string.elearning_assign_submission_sent)
+    val submissionRemovedMessage = stringResource(R.string.elearning_assign_submission_removed)
     LaunchedEffect(Unit) {
         viewModel.oneShotEvents.collect { event ->
             when (event) {
                 AssignmentDetailOneShotEvent.DraftSaved ->
-                    outcome = SheetOutcome.Success("Bozza salvata")
+                    outcome = SheetOutcome.Success(draftSavedMessage)
                 AssignmentDetailOneShotEvent.SubmissionSent ->
-                    outcome = SheetOutcome.Success("Consegna inviata")
+                    outcome = SheetOutcome.Success(submissionSentMessage)
                 AssignmentDetailOneShotEvent.SubmissionRemoved ->
-                    outcome = SheetOutcome.Success("Consegna rimossa")
+                    outcome = SheetOutcome.Success(submissionRemovedMessage)
                 is AssignmentDetailOneShotEvent.ActionFailed ->
                     outcome = SheetOutcome.Error(event.title, event.cause)
                 is AssignmentDetailOneShotEvent.OpenFile -> Unit
@@ -170,17 +176,18 @@ fun AssignmentDetailPage(
                 depth = displayDepth(display),
                 title = when (display) {
                     Display.Outcome -> ""
-                    Display.ConfirmRemove -> "Rimuovere la consegna?"
+                    Display.ConfirmRemove -> stringResource(R.string.elearning_assign_confirm_remove_title)
                     is Display.Page -> when (display.page) {
-                        AssignmentPage.Detail -> (assignmentLoadable as? Loadable.Loaded)?.value?.name ?: "Compito"
-                        AssignmentPage.Compose -> "La tua consegna"
-                        AssignmentPage.ConfirmSubmit -> "Conferma consegna"
+                        AssignmentPage.Detail -> (assignmentLoadable as? Loadable.Loaded)?.value?.name
+                            ?: stringResource(R.string.elearning_assign_overview_title)
+                        AssignmentPage.Compose -> stringResource(R.string.elearning_assign_submission_title)
+                        AssignmentPage.ConfirmSubmit -> stringResource(R.string.elearning_assign_confirm_title)
                     }
                 },
                 subtitle = when (display) {
                     is Display.Page -> when (display.page) {
                         AssignmentPage.Detail ->
-                            (assignmentLoadable as? Loadable.Loaded)?.value?.let(::deadlineSubtitle)
+                            (assignmentLoadable as? Loadable.Loaded)?.value?.let { deadlineSubtitle(it) }
                         AssignmentPage.Compose, AssignmentPage.ConfirmSubmit ->
                             (assignmentLoadable as? Loadable.Loaded)?.value?.name
                     }
@@ -205,14 +212,14 @@ fun AssignmentDetailPage(
                     }
 
                     Display.ConfirmRemove -> SheetConfirmPage(
-                        body = "La consegna verrà eliminata e dovrai ricaricarla per inviarla di nuovo.",
+                        body = stringResource(R.string.elearning_assign_confirm_remove_body),
                         onConfirm = {
                             pendingRemove = false
                             viewModel.removeSubmission()
                         },
                         onKeep = { pendingRemove = false },
-                        confirmLabel = "Rimuovi",
-                        keepLabel = "Annulla",
+                        confirmLabel = stringResource(R.string.elearning_assign_remove_button),
+                        keepLabel = stringResource(R.string.elearning_assign_cancel),
                     )
 
                     is Display.Page -> when (shown.page) {
@@ -299,14 +306,17 @@ private fun ConfirmSubmitPage(
 ) {
     val scheme = MaterialTheme.colorScheme
     val recap = buildList {
-        if (fileCount > 0) add(if (fileCount == 1) "1 file" else "$fileCount file")
-        if (hasText) add("testo")
-    }.joinToString(" e ").ifBlank { "la consegna" }
+        if (fileCount > 0) {
+            add(pluralStringResource(R.plurals.elearning_assign_submission_files, fileCount, fileCount))
+        }
+        if (hasText) add(stringResource(R.string.elearning_assign_submission_text))
+    }.joinToString(stringResource(R.string.elearning_assign_submission_recap_join))
+        .ifBlank { stringResource(R.string.elearning_assign_submission_recap) }
     val canSend = !form.requiresSubmissionStatement || statementAccepted
 
     Column(modifier = Modifier.fillMaxWidth()) {
         Text(
-            text = "Stai per inviare $recap per la valutazione. Dopo l'invio non potrai più modificarla.",
+            text = stringResource(R.string.elearning_assign_confirm_body, recap),
             style = MaterialTheme.typography.bodyMedium,
             color = scheme.onSurfaceVariant,
             modifier = Modifier.padding(horizontal = 24.dp),
@@ -347,7 +357,7 @@ private fun ConfirmSubmitPage(
                     contentColor = scheme.onSurface,
                 ),
             ) {
-                Text("Annulla", fontWeight = FontWeight.SemiBold)
+                Text(stringResource(R.string.elearning_assign_cancel), fontWeight = FontWeight.SemiBold)
             }
             Button(
                 onClick = onConfirm,
@@ -364,7 +374,7 @@ private fun ConfirmSubmitPage(
                 if (submitting) {
                     LoadingIndicator(modifier = Modifier.size(24.dp), color = Color.White)
                 } else {
-                    Text("Invia consegna", fontWeight = FontWeight.SemiBold)
+                    Text(stringResource(R.string.elearning_assign_submit_text), fontWeight = FontWeight.SemiBold)
                 }
             }
         }
@@ -399,12 +409,16 @@ private fun displayKey(display: Display): String = when (display) {
 }
 
 private val DeadlineFmt: DateTimeFormatter = DateTimeFormatter
-    .ofPattern("EEE d MMM, HH:mm", Locale.ITALIAN)
+    .ofPattern("EEE d MMM, HH:mm", Locale.getDefault())
     .withZone(ZoneId.systemDefault())
 
 /** Deadline line shown as the modal subtitle on the overview page. */
+@Composable
 private fun deadlineSubtitle(assignment: Assignment): String {
-    val due = assignment.dueDate ?: return "Senza scadenza"
-    return if (due.isBefore(Instant.now())) "Scaduto il ${DeadlineFmt.format(due)}"
-    else "Scade ${DeadlineFmt.format(due)}"
+    val due = assignment.dueDate ?: return stringResource(R.string.elearning_assign_no_deadline)
+    return if (due.isBefore(Instant.now())) {
+        stringResource(R.string.elearning_assign_expired_date, DeadlineFmt.format(due))
+    } else {
+        stringResource(R.string.elearning_assign_expires_date, DeadlineFmt.format(due))
+    }
 }

@@ -11,6 +11,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import it.attendance100.mybicocca.R
@@ -199,9 +200,9 @@ fun AppointmentsPage(
                         AppointmentsPage.Reservations ->
                             if (reservations !is Loadable.Loaded) null
                             else if (reservationList.isEmpty()) stringResource(R.string.appointments_no_reservations)
-                            else if (reservationList.size == 1) stringResource(R.string.appointments_one_reservation)
-                            else stringResource(
-                                R.string.appointments_multiple_reservations,
+                            else pluralStringResource(
+                                R.plurals.appointments_reservation_count,
+                                reservationList.size,
                                 reservationList.size
                             )
 

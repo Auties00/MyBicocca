@@ -55,10 +55,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.domain.model.elearning.quiz.Quiz
 import it.attendance100.mybicocca.domain.model.elearning.quiz.QuizAttempt
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.quizDetail.QuizDetailViewModel
@@ -305,7 +307,7 @@ private fun QuizWizardBottomBar(
                 ) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "Pagina precedente",
+                        contentDescription = stringResource(R.string.common_prev_page),
                         modifier = Modifier.size(20.dp),
                     )
                 }
@@ -345,7 +347,10 @@ private fun QuizWizardBottomBar(
                 ) { last ->
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         if (last) {
-                            Text("Consegna", fontWeight = FontWeight.SemiBold)
+                            Text(
+                                stringResource(R.string.elearning_quiz_submit_attempt),
+                                fontWeight = FontWeight.SemiBold,
+                            )
                             Spacer(Modifier.width(8.dp))
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.Send,
@@ -353,7 +358,7 @@ private fun QuizWizardBottomBar(
                                 modifier = Modifier.size(20.dp),
                             )
                         } else {
-                            Text("Avanti", fontWeight = FontWeight.SemiBold)
+                            Text(stringResource(R.string.common_next), fontWeight = FontWeight.SemiBold)
                             Spacer(Modifier.width(8.dp))
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.ArrowForward,

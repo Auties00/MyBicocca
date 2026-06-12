@@ -1,5 +1,6 @@
 package it.attendance100.mybicocca.ui.screen.elearning.subscreen.assignmentDetail
 
+import android.content.Context
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -7,6 +8,8 @@ import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.SyncStatus
 import it.attendance100.mybicocca.domain.model.account.AccountId
@@ -69,6 +72,7 @@ import kotlinx.coroutines.launch
 @HiltViewModel(assistedFactory = AssignmentDetailViewModel.Factory::class)
 class AssignmentDetailViewModel @AssistedInject constructor(
     @Assisted private val key: AppRoute.AssignmentDetail,
+    @ApplicationContext private val appContext: Context,
     savedState: SavedStateHandle,
     observeActiveAccount: ObserveActiveAccountUseCase,
     private val observeAssignment: ObserveAssignmentUseCase,
@@ -164,7 +168,12 @@ class AssignmentDetailViewModel @AssistedInject constructor(
                 }
                 .onFailure {
                     back()
-                    oneShotChannel.trySend(AssignmentDetailOneShotEvent.ActionFailed("Impossibile aprire la consegna", it))
+                    oneShotChannel.trySend(
+                        AssignmentDetailOneShotEvent.ActionFailed(
+                            appContext.getString(R.string.elearning_assign_open_failed),
+                            it,
+                        ),
+                    )
                 }
         }
     }
@@ -247,7 +256,12 @@ class AssignmentDetailViewModel @AssistedInject constructor(
                     oneShotChannel.trySend(AssignmentDetailOneShotEvent.SubmissionRemoved)
                 }
                 .onFailure {
-                    oneShotChannel.trySend(AssignmentDetailOneShotEvent.ActionFailed("Rimozione non riuscita", it))
+                    oneShotChannel.trySend(
+                        AssignmentDetailOneShotEvent.ActionFailed(
+                            appContext.getString(R.string.elearning_assign_remove_failed),
+                            it,
+                        ),
+                    )
                 }
             _submitting.value = false
         }
@@ -277,7 +291,12 @@ class AssignmentDetailViewModel @AssistedInject constructor(
                     oneShotChannel.trySend(success)
                 }
                 .onFailure {
-                    oneShotChannel.trySend(AssignmentDetailOneShotEvent.ActionFailed("Consegna non riuscita", it))
+                    oneShotChannel.trySend(
+                        AssignmentDetailOneShotEvent.ActionFailed(
+                            appContext.getString(R.string.elearning_assign_submit_failed),
+                            it,
+                        ),
+                    )
                 }
             _submitting.value = false
         }

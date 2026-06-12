@@ -510,7 +510,7 @@ private fun bookingLine(event: CalendarEvent.Exam): String? {
     return line.takeIf { it.isNotBlank() }?.replaceFirstChar { it.uppercase() }
 }
 
-private val ItalianDate = DateTimeFormatter.ofPattern("d MMMM", Locale.ITALIAN)
+private val ItalianDate = DateTimeFormatter.ofPattern("d MMMM", Locale.getDefault())
 
 private fun LocalDate.formatItalian(): String = format(ItalianDate)
 

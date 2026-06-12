@@ -1,11 +1,14 @@
 package it.attendance100.mybicocca.ui.screen.registry.subscreen.studyPlanEdit
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.SyncStatus
 import it.attendance100.mybicocca.core.state.valueOrNull
@@ -47,6 +50,7 @@ import kotlinx.coroutines.sync.withLock
 @HiltViewModel(assistedFactory = StudyPlanEditViewModel.Factory::class)
 class StudyPlanEditViewModel @AssistedInject constructor(
     @Assisted private val key: StudyPlanEditRequest,
+    @ApplicationContext private val appContext: Context,
     private val getStudyPath: GetStudyPathUseCase,
     private val getStudyPlanDraft: GetStudyPlanDraftUseCase,
     private val submitStudyPlan: SubmitStudyPlanUseCase,
@@ -279,7 +283,7 @@ class StudyPlanEditViewModel @AssistedInject constructor(
                     _currentSegment.value = PATH_SEGMENT
                     loadPath()
                 },
-                onFailure = { cause -> _submitError.value = cause.submitFriendlyMessage() },
+                onFailure = { cause -> _submitError.value = submitFriendlyMessage(cause) },
             )
             _submitting.value = false
         }
@@ -301,28 +305,33 @@ class StudyPlanEditViewModel @AssistedInject constructor(
     }
 
     /** What the student should expect next depends on the schema's approval flavour. */
-    private fun submittedMessage(chosen: StudyPathOption?): String = when (chosen?.approval) {
-        PlanApprovalType.Automatic -> "Piano inviato: l'approvazione è automatica."
-        PlanApprovalType.AutomaticIfCompliant ->
-            "Piano inviato: verrà approvato automaticamente se conforme al regolamento."
-        PlanApprovalType.Manual -> "Piano inviato: in attesa di approvazione."
-        else -> "Piano di studi inviato"
+    private fun submittedMessage(chosen: StudyPathOption?): String = appContext.getString(
+        when (chosen?.approval) {
+            PlanApprovalType.Automatic -> R.string.studyplanedit_submitted_automatic
+            PlanApprovalType.AutomaticIfCompliant -> R.string.studyplanedit_submitted_if_compliant
+            PlanApprovalType.Manual -> R.string.studyplanedit_submitted_pending
+            else -> R.string.studyplanedit_submitted_generic
+        },
+    )
+
+    /**
+     * Maps a submission failure to student-facing copy: a profile-permission wall and a
+     * 403 access denial get a plain explanation, anything else surfaces the raw message.
+     */
+    private fun submitFriendlyMessage(cause: Throwable): String {
+        val raw = cause.message ?: appContext.getString(R.string.studyplanedit_submit_error_generic)
+        return when {
+            raw.contains("Security failed", ignoreCase = true) ||
+                raw.contains("profilo", ignoreCase = true) ->
+                appContext.getString(R.string.studyplanedit_submit_error_profile)
+
+            raw.contains("403") -> appContext.getString(R.string.studyplanedit_submit_error_forbidden)
+            else -> raw
+        }
     }
 
     companion object {
         /** Sentinel segment for the percorso step; rule choiceIds are always positive. */
         const val PATH_SEGMENT = -1L
-    }
-}
-
-private fun Throwable.submitFriendlyMessage(): String {
-    val raw = message ?: "Errore nell'invio del piano."
-    return when {
-        raw.contains("Security failed", ignoreCase = true) ||
-            raw.contains("profilo", ignoreCase = true) ->
-            "La modifica del piano non è attualmente consentita dal tuo profilo."
-
-        raw.contains("403") -> "Accesso negato: impossibile inviare il piano di studi."
-        else -> raw
     }
 }

@@ -33,6 +33,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -77,10 +78,11 @@ fun CodeViewerContent(
 ) {
     val scheme = MaterialTheme.colorScheme
     val syntaxTheme = remember(scheme) { appSyntaxTheme(scheme) }
+    val truncatedMarker = stringResource(R.string.elearning_file_file_truncated)
 
     val lines by produceState<List<AnnotatedString>?>(initialValue = null, localPath, syntaxTheme) {
         value = withContext(Dispatchers.Default) {
-            runCatching { highlightFile(localPath, fileName, syntaxTheme) }.getOrNull()
+            runCatching { highlightFile(localPath, fileName, syntaxTheme, truncatedMarker) }.getOrNull()
         }
     }
 
@@ -158,17 +160,21 @@ fun CodeViewerContent(
         ViewerBottomBar(
             ViewerAction(
                 icon = Icons.Outlined.Download,
-                label = "Scarica",
+                label = stringResource(R.string.elearning_file_download),
                 onClick = onDownload,
             ),
             ViewerAction(
                 icon = Icons.Outlined.Share,
-                label = "Condividi",
+                label = stringResource(R.string.elearning_file_share),
                 onClick = onShare,
             ),
             ViewerAction(
                 icon = Icons.AutoMirrored.Outlined.WrapText,
-                label = if (wordWrap) "Disabilita a capo" else "Abilita a capo",
+                label = if (wordWrap) {
+                    stringResource(R.string.elearning_file_word_wrap_off)
+                } else {
+                    stringResource(R.string.elearning_file_word_wrap_on)
+                },
                 onClick = { wordWrap = !wordWrap },
             ),
         )
@@ -205,11 +211,12 @@ private const val MAX_FILE_CHARS = 2 * 1024 * 1024
 private fun highlightFile(
     localPath: String,
     fileName: String,
-    theme: SyntaxTheme
+    theme: SyntaxTheme,
+    truncatedMarker: String,
 ): List<AnnotatedString> {
     var text = File(localPath).readText()
     if (text.length > MAX_FILE_CHARS) {
-        text = text.take(MAX_FILE_CHARS) + "\n… (file troncato)"
+        text = text.take(MAX_FILE_CHARS) + "\n" + truncatedMarker
     }
     text = text.replace("\t", "    ")
     val language = languageFor(fileName)

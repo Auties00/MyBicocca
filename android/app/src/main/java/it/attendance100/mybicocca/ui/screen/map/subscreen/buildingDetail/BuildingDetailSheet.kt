@@ -43,6 +43,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -341,11 +342,7 @@ private fun FloorHeader(floor: Int?, roomCount: Int) {
             style = MaterialTheme.typography.titleSmallEmphasized,
         )
         Text(
-            text = if (roomCount == 1) {
-                stringResource(R.string.map_room_count_one)
-            } else {
-                stringResource(R.string.map_room_count_many, roomCount)
-            },
+            text = pluralStringResource(R.plurals.map_room_count, roomCount, roomCount),
             style = MaterialTheme.typography.labelMedium,
             color = scheme.onSurfaceVariant,
         )

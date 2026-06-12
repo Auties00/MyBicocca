@@ -50,6 +50,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -80,7 +81,7 @@ import java.time.format.TextStyle
 import java.util.Locale
 import kotlin.math.roundToInt
 
-private val ItalianLocale = Locale.ITALIAN
+private val DisplayLocale = Locale.getDefault()
 private const val SheetTopMargin = 64
 private const val ExpansionThreshold = 0.5f
 
@@ -370,10 +371,7 @@ private fun DateLabel(selectedDay: LocalDate, eventCount: Int, isToday: Boolean)
             letterSpacing = (-0.2).sp,
         )
         Text(
-            text = if (eventCount == 1) stringResource(R.string.agenda_event_count_singular) else stringResource(
-                R.string.agenda_event_count_plural,
-                eventCount
-            ),
+            text = pluralStringResource(R.plurals.agenda_event_count, eventCount, eventCount),
             color = scheme.onSurfaceVariant,
             fontSize = 11.sp,
             fontWeight = FontWeight.SemiBold,
@@ -505,4 +503,4 @@ private fun AgendaRow(
 }
 
 private fun monthName(monthValue: Int): String =
-    Month.of(monthValue).getDisplayName(TextStyle.FULL_STANDALONE, ItalianLocale)
+    Month.of(monthValue).getDisplayName(TextStyle.FULL_STANDALONE, DisplayLocale)

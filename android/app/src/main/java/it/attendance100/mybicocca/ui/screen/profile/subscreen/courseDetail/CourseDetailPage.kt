@@ -62,7 +62,7 @@ import java.time.format.DateTimeFormatter
 import java.util.Locale
 
 private val PassedGreen = Color(0xFF1FA84B)
-private val FullDateFormat = DateTimeFormatter.ofPattern("d MMMM yyyy", Locale.ITALIAN)
+private val FullDateFormat = DateTimeFormatter.ofPattern("d MMMM yyyy", Locale.getDefault())
 
 /**
  * Body page for a single libretto course, hosted as the depth-1 page of the exams sheet's

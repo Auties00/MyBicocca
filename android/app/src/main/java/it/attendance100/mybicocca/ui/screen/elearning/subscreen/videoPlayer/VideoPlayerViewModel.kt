@@ -22,6 +22,7 @@ import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.SyncStatus
 import it.attendance100.mybicocca.core.state.valueOrNull
@@ -362,7 +363,7 @@ class VideoPlayerViewModel @AssistedInject constructor(
     private fun buildMediaItem(cmId: Int, stream: VideoStream): MediaItem {
         val playlistItem = playlist.value.firstOrNull { it.cmId == cmId }
         val metadata = MediaMetadata.Builder()
-            .setTitle(playlistItem?.title ?: "Video del corso")
+            .setTitle(playlistItem?.title ?: context.getString(R.string.elearning_video_course_video))
             .setArtist(playlistItem?.sectionName)
             .setArtworkUri(Uri.parse(stream.thumbnailUrl))
             .setMediaType(MediaMetadata.MEDIA_TYPE_VIDEO)
@@ -399,7 +400,7 @@ class VideoPlayerViewModel @AssistedInject constructor(
                     cmId = videoCmId,
                     title = module.name,
                     sectionName = section.name.takeIf { it.isNotBlank() }
-                        ?: "Sezione ${section.sectionNumber}",
+                        ?: context.getString(R.string.elearning_video_section, section.sectionNumber),
                     progressFraction = p?.progressFraction ?: 0f,
                     completed = p?.completed == true,
                     isCurrent = videoCmId == currentCmId,

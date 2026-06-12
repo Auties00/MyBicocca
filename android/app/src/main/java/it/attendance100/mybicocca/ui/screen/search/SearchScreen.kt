@@ -390,16 +390,19 @@ private fun groupItemShape(index: Int, count: Int): Shape {
     return RoundedCornerShape(topStart = top, topEnd = top, bottomStart = bottom, bottomEnd = bottom)
 }
 
-private fun SearchResultCategory.label(): String = when (this) {
-    SearchResultCategory.Action -> "Azioni"
-    SearchResultCategory.Destination -> "Pagine"
-    SearchResultCategory.Course -> "Corsi"
-    SearchResultCategory.Assignment -> "Compiti"
-    SearchResultCategory.Quiz -> "Quiz"
-    SearchResultCategory.CalendarEvent -> "Calendario"
-    SearchResultCategory.Place -> "Luoghi"
-    SearchResultCategory.TranscriptEntry -> "Carriera"
-}
+@Composable
+private fun SearchResultCategory.label(): String = stringResource(
+    when (this) {
+        SearchResultCategory.Action -> R.string.search_category_actions
+        SearchResultCategory.Destination -> R.string.search_category_pages
+        SearchResultCategory.Course -> R.string.search_category_courses
+        SearchResultCategory.Assignment -> R.string.search_category_assignments
+        SearchResultCategory.Quiz -> R.string.search_category_quizzes
+        SearchResultCategory.CalendarEvent -> R.string.search_category_calendar
+        SearchResultCategory.Place -> R.string.search_category_places
+        SearchResultCategory.TranscriptEntry -> R.string.search_category_career
+    },
+)
 
 private fun SearchResult.icon(): ImageVector = when (this) {
     is SearchResult.Action -> Icons.Outlined.Bolt

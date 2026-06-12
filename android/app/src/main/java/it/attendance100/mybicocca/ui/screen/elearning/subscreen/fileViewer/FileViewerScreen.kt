@@ -32,11 +32,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.os.LocalPipController
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.SyncStatus
@@ -86,27 +88,35 @@ fun FileViewerScreen(
     val pipController = LocalPipController.current
     val inPip by pipController.isInPip
 
+    val downloadFailedMessage = stringResource(R.string.elearning_file_download_failed)
+    val noAppMessage = stringResource(R.string.elearning_file_no_app)
+    val shareFailedMessage = stringResource(R.string.elearning_file_share_failed)
+    val fileSavedMessage = stringResource(R.string.elearning_file_saved)
+    val storageDeniedMessage = stringResource(R.string.elearning_file_storage_denied)
+
     LaunchedEffect(viewModel) {
         viewModel.oneShotEvents.collectLatest { event ->
             when (event) {
                 is FileViewerOneShotEvent.DownloadFailed ->
-                    snackbar.showError("Download del file non riuscito", event.cause)
+                    snackbar.showError(downloadFailedMessage, event.cause)
 
                 is FileViewerOneShotEvent.LaunchOfficeUri -> {
                     if (!launchOfficeUri(context, event.uri, event.app)) {
-                        snackbar.showError("Impossibile aprire ${event.app.label}")
+                        snackbar.showError(
+                            context.getString(R.string.elearning_file_open_app_failed, event.app.label),
+                        )
                     }
                 }
 
                 is FileViewerOneShotEvent.OpenWithExternalApp -> {
                     if (!launchExternalViewer(context, event.localPath, event.mimeType)) {
-                        snackbar.showError("Nessuna app installata può aprire questo file")
+                        snackbar.showError(noAppMessage)
                     }
                 }
 
                 is FileViewerOneShotEvent.ShareFile -> {
                     if (!shareFile(context, event.localPath, event.fileName, event.mimeType)) {
-                        snackbar.showError("Impossibile condividere il file")
+                        snackbar.showError(shareFailedMessage)
                     }
                 }
 
@@ -121,7 +131,7 @@ fun FileViewerScreen(
                 )
 
                 FileViewerOneShotEvent.FileSaved ->
-                    snackbar.showInfo("File salvato")
+                    snackbar.showInfo(fileSavedMessage)
             }
         }
     }
@@ -176,7 +186,7 @@ private fun FileViewerChrome(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             IconButton(onClick = onClose) {
-                Icon(Icons.Outlined.Close, contentDescription = "Chiudi")
+                Icon(Icons.Outlined.Close, contentDescription = stringResource(R.string.common_close))
             }
             Text(
                 text = fileName,
@@ -221,6 +231,7 @@ private fun FileContent(
     val pdfThemeMode by viewModel.pdfThemeMode.collectAsStateWithLifecycle()
     val pdfOrientation by viewModel.pdfOrientation.collectAsStateWithLifecycle()
 
+    val storageDeniedMessage = stringResource(R.string.elearning_file_storage_denied)
     var pendingSave by remember { mutableStateOf<(() -> Unit)?>(null) }
     val storagePermissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission(),
@@ -228,7 +239,7 @@ private fun FileContent(
         val save = pendingSave
         pendingSave = null
         if (granted) save?.invoke()
-        else scope.launch { snackbar.showError("Permesso di archiviazione negato") }
+        else scope.launch { snackbar.showError(storageDeniedMessage) }
     }
     val saveWithPermission: (() -> Unit) -> Unit = { save ->
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q ||
@@ -339,7 +350,7 @@ private fun LocalFileGate(
         is Loadable.Loaded -> content(value.value)
         Loadable.NotYetLoaded -> when (status) {
             is SyncStatus.Failed -> ViewerError(
-                message = "Download del file non riuscito.",
+                message = stringResource(R.string.elearning_file_download_failed_detail),
                 onRetry = onRetry,
                 modifier = Modifier.fillMaxSize(),
             )
@@ -354,5 +365,5 @@ private fun LocalFileGate(
 private fun formatDownloadSize(bytes: Long?): String? = when {
     bytes == null || bytes <= 0 -> null
     bytes < 1024 * 1024 -> "${bytes / 1024} KB"
-    else -> String.format(Locale.ITALIAN, "%.1f MB", bytes / (1024.0 * 1024.0))
+    else -> String.format(Locale.getDefault(), "%.1f MB", bytes / (1024.0 * 1024.0))
 }

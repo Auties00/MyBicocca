@@ -32,6 +32,7 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
@@ -229,11 +230,7 @@ fun NotebookCard(
                     }
                     if (extra > 0) {
                         Text(
-                            text = "+$extra ${
-                                if (extra == 1) stringResource(R.string.elearning_deadline_singular) else stringResource(
-                                    R.string.elearning_deadline_plural
-                                )
-                            }",
+                            text = "+$extra " + pluralStringResource(R.plurals.elearning_deadline_extra, extra, extra),
                             color = scheme.onSurfaceVariant,
                             fontSize = 10.sp,
                             fontWeight = FontWeight.SemiBold,
@@ -387,13 +384,8 @@ private fun DeadlineRow(
 
     val dueText = when {
         isToday -> stringResource(R.string.elearning_deadline_today)
-        overdue -> if (abs(daysLeft) == 1) stringResource(R.string.elearning_deadline_overdue_one) else stringResource(
-            R.string.elearning_deadline_overdue_many,
-            abs(daysLeft)
-        )
-
-        daysLeft == 1 -> stringResource(R.string.elearning_deadline_in_one)
-        else -> stringResource(R.string.elearning_deadline_in_many, daysLeft)
+        overdue -> pluralStringResource(R.plurals.elearning_deadline_overdue, abs(daysLeft), abs(daysLeft))
+        else -> pluralStringResource(R.plurals.elearning_deadline_in, daysLeft, daysLeft)
     }
     val dueColor = when {
         isToday || overdue -> scheme.error

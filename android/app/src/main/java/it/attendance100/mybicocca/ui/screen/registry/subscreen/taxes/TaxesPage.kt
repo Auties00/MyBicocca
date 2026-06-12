@@ -41,6 +41,7 @@ import androidx.compose.ui.layout.boundsInWindow
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
@@ -138,7 +139,7 @@ private fun TaxesBody(
                 SheetMessage(
                     icon = Icons.Outlined.CloudOff,
                     title = stringResource(R.string.common_load_failed),
-                    body = failure.cause.taxFriendlyMessage(),
+                    body = failure.cause.taxFriendlyMessage(LocalContext.current),
                     action = { RetryButton(onClick = onRetry) },
                 )
             }

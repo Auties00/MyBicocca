@@ -32,11 +32,14 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.domain.model.elearning.assignment.SubmissionStatus
 import it.attendance100.mybicocca.domain.model.elearning.forum.Forum
 import it.attendance100.mybicocca.domain.model.elearning.forum.ForumType
@@ -376,7 +379,7 @@ fun ForumRow(
                 val intro = forum.intro?.let(::stripIntro)
                 Text(
                     text = when {
-                        isEmpty -> "Ancora nessuna discussione · ${forumTypeLabel(forum.type)}"
+                        isEmpty -> stringResource(R.string.elearning_course_no_discussions) + " · " + forumTypeLabel(forum.type)
                         !intro.isNullOrBlank() -> intro
                         else -> forumTypeLabel(forum.type)
                     },
@@ -456,80 +459,89 @@ private fun GradeChip(label: String) {
 }
 
 private val DateFmt = DateTimeFormatter
-    .ofPattern("d MMM", Locale.ITALIAN)
+    .ofPattern("d MMM", Locale.getDefault())
     .withZone(ZoneId.systemDefault())
 
 private val DayFmt = DateTimeFormatter
-    .ofPattern("d", Locale.ITALIAN)
+    .ofPattern("d", Locale.getDefault())
     .withZone(ZoneId.systemDefault())
 
 private val MonthFmt = DateTimeFormatter
-    .ofPattern("MMM", Locale.ITALIAN)
+    .ofPattern("MMM", Locale.getDefault())
     .withZone(ZoneId.systemDefault())
 
 private val TimeFmt = DateTimeFormatter
-    .ofPattern("HH:mm", Locale.ITALIAN)
+    .ofPattern("HH:mm", Locale.getDefault())
     .withZone(ZoneId.systemDefault())
 
 private const val DUE_SOON_HOURS = 48L
 
+@Composable
 private fun assignmentStatusLabel(a: DomainAssignment, now: Instant): String =
     when (val s = a.submissionStatus) {
         SubmissionStatus.NotSubmitted -> {
             val due = a.dueDate
-            if (due == null) "Senza scadenza" else dueLabel(now, due)
+            if (due == null) stringResource(R.string.elearning_course_no_deadline) else dueLabel(now, due)
         }
         is SubmissionStatus.Draft -> {
             val due = a.dueDate
-            if (due == null || due.isBefore(now)) "Bozza salvata"
-            else "Bozza salvata · ${dueLabel(now, due).replaceFirstChar { it.lowercaseChar() }}"
+            if (due == null || due.isBefore(now)) stringResource(R.string.elearning_course_draft_saved)
+            else stringResource(R.string.elearning_course_draft_saved) + " · " +
+                dueLabel(now, due).replaceFirstChar { it.lowercaseChar() }
         }
         is SubmissionStatus.Submitted -> {
             val late = a.dueDate != null && s.submittedAt?.isAfter(a.dueDate) == true
-            val sent = s.submittedAt?.let { "Inviato il ${DateFmt.format(it)}" } ?: "Inviato"
-            if (late) "$sent · in ritardo" else sent
+            val sent = s.submittedAt?.let { stringResource(R.string.elearning_course_submitted_date, DateFmt.format(it)) }
+                ?: stringResource(R.string.elearning_course_sent)
+            if (late) sent + " · " + stringResource(R.string.elearning_course_submitted_late) else sent
         }
         is SubmissionStatus.Graded ->
-            s.submittedAt?.let { "Valutato · inviato il ${DateFmt.format(it)}" } ?: "Valutato"
+            s.submittedAt?.let { stringResource(R.string.elearning_course_graded_date, DateFmt.format(it)) }
+                ?: stringResource(R.string.elearning_course_graded)
     }
 
+@Composable
 private fun dueLabel(now: Instant, due: Instant): String {
     val zone = ZoneId.systemDefault()
     val days = ChronoUnit.DAYS.between(now.atZone(zone).toLocalDate(), due.atZone(zone).toLocalDate())
     return when {
-        days < 0L -> "Scaduto ${dayCount(-days)} fa"
-        days == 0L -> "Scade oggi"
-        else -> "Scade tra ${dayCount(days)}"
+        days < 0L -> stringResource(R.string.elearning_course_expired_days_ago, dayCount(-days))
+        days == 0L -> stringResource(R.string.elearning_course_expires_today)
+        else -> stringResource(R.string.elearning_course_expires_in, dayCount(days))
     }
 }
 
-private fun dayCount(days: Long): String = if (days == 1L) "1 giorno" else "$days giorni"
+@Composable
+private fun dayCount(days: Long): String =
+    pluralStringResource(R.plurals.elearning_course_due_days, days.toInt(), days.toInt())
 
+@Composable
 private fun quizStatusLabel(quiz: Quiz, completed: Boolean, now: Instant): String {
     val open = quiz.timeOpen
     val close = quiz.timeClose
     val parts = mutableListOf<String>()
     when {
-        close != null && now.isAfter(close) -> parts += "Chiuso il ${DateFmt.format(close)}"
-        open != null && now.isBefore(open) -> parts += "Apre il ${DateFmt.format(open)}"
+        close != null && now.isAfter(close) -> parts += stringResource(R.string.elearning_course_closed_date, DateFmt.format(close))
+        open != null && now.isBefore(open) -> parts += stringResource(R.string.elearning_course_opens_date, DateFmt.format(open))
         else -> {
-            parts += if (completed) "Completato" else "Disponibile"
+            parts += if (completed) stringResource(R.string.elearning_course_completed) else stringResource(R.string.elearning_course_available)
             if (close != null) parts += closeLabel(now, close)
         }
     }
-    quiz.timeLimitSeconds?.takeIf { it > 0 }?.let { parts += "${it / 60} min" }
-    if (quiz.maxAttempts == 1) parts += "tentativo singolo"
+    quiz.timeLimitSeconds?.takeIf { it > 0 }?.let { parts += stringResource(R.string.elearning_course_time_limit, it / 60) }
+    if (quiz.maxAttempts == 1) parts += stringResource(R.string.elearning_course_single_attempt)
     return parts.joinToString(" · ")
 }
 
+@Composable
 private fun closeLabel(now: Instant, close: Instant): String {
     val zone = ZoneId.systemDefault()
     val days = ChronoUnit.DAYS.between(now.atZone(zone).toLocalDate(), close.atZone(zone).toLocalDate())
     return when {
-        days == 0L -> "chiude oggi alle ${TimeFmt.format(close)}"
-        days == 1L -> "chiude domani alle ${TimeFmt.format(close)}"
-        days <= 14L -> "chiude tra $days giorni"
-        else -> "chiude il ${DateFmt.format(close)}"
+        days == 0L -> stringResource(R.string.elearning_course_close_today, TimeFmt.format(close))
+        days == 1L -> stringResource(R.string.elearning_course_close_tomorrow, TimeFmt.format(close))
+        days <= 14L -> stringResource(R.string.elearning_course_close_days, days)
+        else -> stringResource(R.string.elearning_course_close_date, DateFmt.format(close))
     }
 }
 
@@ -544,17 +556,20 @@ private fun formatGradePair(grade: Double?, max: Double?): String? {
 }
 
 private fun Double.trimZero(): String =
-    if (this % 1.0 == 0.0) toInt().toString() else String.format(Locale.ITALIAN, "%.1f", this)
+    if (this % 1.0 == 0.0) toInt().toString() else String.format(Locale.getDefault(), "%.1f", this)
 
-private fun forumTypeLabel(type: ForumType): String = when (type) {
-    ForumType.News -> "Avvisi"
-    ForumType.QandA -> "Domande e risposte"
-    ForumType.General -> "Discussione aperta"
-    ForumType.EachUser -> "Una discussione per studente"
-    ForumType.SingleSimple -> "Discussione singola"
-    ForumType.BlogLike -> "Formato blog"
-    ForumType.Other -> "Forum"
-}
+@Composable
+private fun forumTypeLabel(type: ForumType): String = stringResource(
+    when (type) {
+        ForumType.News -> R.string.elearning_course_announcements
+        ForumType.QandA -> R.string.elearning_course_qa_forum
+        ForumType.General -> R.string.elearning_course_open_discussion
+        ForumType.EachUser -> R.string.elearning_course_per_user_discussion
+        ForumType.SingleSimple -> R.string.elearning_course_single_discussion
+        ForumType.BlogLike -> R.string.elearning_course_blog_format
+        ForumType.Other -> R.string.elearning_course_generic_forum
+    }
+)
 
 private fun forumTypeIcon(type: ForumType): ImageVector = when (type) {
     ForumType.News -> Icons.Outlined.Campaign

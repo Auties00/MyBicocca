@@ -35,8 +35,10 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.domain.model.elearning.forum.PostAttachment
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.forum.state.ThreadNode
 import it.attendance100.mybicocca.ui.theme.LocalIsOnline
@@ -75,8 +77,8 @@ fun ThreadPostItem(
     val swipeAction: SwipeAction? = when {
         !isOnline -> null
         post.isDeleted -> null
-        post.canEdit -> SwipeAction(Icons.Outlined.Edit, "Modifica", scheme.tertiary, scheme.onTertiary, onEdit)
-        post.canReply -> SwipeAction(Icons.AutoMirrored.Outlined.Reply, "Rispondi", scheme.primary, scheme.onPrimary, onReply)
+        post.canEdit -> SwipeAction(Icons.Outlined.Edit, stringResource(R.string.elearning_forum_edit), scheme.tertiary, scheme.onTertiary, onEdit)
+        post.canReply -> SwipeAction(Icons.AutoMirrored.Outlined.Reply, stringResource(R.string.elearning_forum_reply), scheme.primary, scheme.onPrimary, onReply)
         else -> null
     }
 

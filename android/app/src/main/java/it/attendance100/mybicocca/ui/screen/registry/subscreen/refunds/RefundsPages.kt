@@ -34,6 +34,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -121,7 +122,7 @@ private fun RefundsListBody(
                 SheetMessage(
                     icon = Icons.Outlined.CloudOff,
                     title = stringResource(R.string.refunds_loading_failed),
-                    body = failure.cause.taxFriendlyMessage(),
+                    body = failure.cause.taxFriendlyMessage(LocalContext.current),
                     action = { RetryButton(onClick = onRetry) },
                 )
             }

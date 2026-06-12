@@ -50,10 +50,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.valueOrNull
 import it.attendance100.mybicocca.domain.model.elearning.course.CourseId
@@ -240,15 +243,15 @@ fun ForumSheetPage(
             SheetPagerHeader(
                 depth = display.depth,
                 title = when (display) {
-                    Display.List -> forum?.name ?: "Forum"
-                    Display.Thread -> openDiscussion?.subject ?: "Discussione"
+                    Display.List -> forum?.name ?: stringResource(R.string.elearning_course_generic_forum)
+                    Display.Thread -> openDiscussion?.subject ?: stringResource(R.string.elearning_forum_discussion_fallback)
                     Display.Composer -> when (composerTarget) {
-                        is ComposerTarget.NewDiscussion -> "Nuova discussione"
-                        is ComposerTarget.Edit -> "Modifica messaggio"
-                        else -> "Rispondi"
+                        is ComposerTarget.NewDiscussion -> stringResource(R.string.elearning_forum_new_discussion)
+                        is ComposerTarget.Edit -> stringResource(R.string.elearning_forum_edit_message_title)
+                        else -> stringResource(R.string.elearning_forum_reply)
                     }
-                    Display.ConfirmDelete -> "Eliminare il messaggio?"
-                    Display.ConfirmDiscard -> "Scartare la bozza?"
+                    Display.ConfirmDelete -> stringResource(R.string.elearning_forum_delete_confirm_title)
+                    Display.ConfirmDiscard -> stringResource(R.string.elearning_forum_discard_confirm_title)
                     Display.Result -> ""
                 },
                 subtitle = when (display) {
@@ -320,19 +323,18 @@ fun ForumSheetPage(
                     }
 
                     Display.ConfirmDelete -> SheetConfirmPage(
-                        body = "Il messaggio verrà eliminato definitivamente.",
+                        body = stringResource(R.string.elearning_forum_delete_confirm_body),
                         onConfirm = {
                             val id = pendingDeletePostId
                             pendingDeletePostId = null
                             postsLoadable.valueOrNull()?.firstOrNull { it.id.value == id }?.let(viewModel::deletePost)
                         },
                         onKeep = { pendingDeletePostId = null },
-                        confirmLabel = "Elimina",
-                        keepLabel = "Annulla",
+                        confirmLabel = stringResource(R.string.elearning_forum_delete),
                     )
 
                     Display.ConfirmDiscard -> SheetConfirmPage(
-                        body = "La bozza non pubblicata andrà persa.",
+                        body = stringResource(R.string.elearning_forum_discard_confirm_body),
                         onConfirm = {
                             confirmDiscard = false
                             viewModel.cancelComposer()
@@ -423,9 +425,9 @@ private fun DiscussionsListBody(
                         .testTag(ForumSheetTestTags.STATE_EMPTY)) {
                         EmptyState(
                             icon = Icons.Outlined.Forum,
-                            title = "Nessuna discussione",
-                            body = if (forum?.canCreateDiscussions == true) "Apri tu la prima discussione di questo forum"
-                            else "Quando i docenti pubblicheranno qualcosa lo troverai qui",
+                            title = stringResource(R.string.elearning_forum_empty_title),
+                            body = if (forum?.canCreateDiscussions == true) stringResource(R.string.elearning_forum_empty_can_create)
+                            else stringResource(R.string.elearning_forum_empty_readonly),
                         )
                     }
                 }
@@ -501,7 +503,7 @@ private fun ThreadBody(
     val visible = remember(shown, collapsedIds) { visibleThread(shown, collapsedIds) }
     Column(modifier = Modifier.fillMaxWidth()) {
         if (loading) {
-            SheetLoadingIndicator(label = "Caricamento discussione…")
+            SheetLoadingIndicator(label = stringResource(R.string.elearning_forum_thread_loading))
         } else {
             LazyColumn(
                 modifier = Modifier
@@ -562,7 +564,7 @@ private fun ThreadFooter(canReply: Boolean, onReply: () -> Unit, onSubscribe: ()
             ) {
                 Icon(Icons.Outlined.NotificationsActive, contentDescription = null, modifier = Modifier.size(20.dp))
                 Spacer(Modifier.width(8.dp))
-                Text("Segui", fontWeight = FontWeight.SemiBold)
+                Text(stringResource(R.string.elearning_forum_subscribe_short), fontWeight = FontWeight.SemiBold)
             }
             Button(
                 onClick = onReply,
@@ -575,7 +577,7 @@ private fun ThreadFooter(canReply: Boolean, onReply: () -> Unit, onSubscribe: ()
             ) {
                 Icon(Icons.AutoMirrored.Outlined.Reply, contentDescription = null, modifier = Modifier.size(20.dp))
                 Spacer(Modifier.width(8.dp))
-                Text("Rispondi", fontWeight = FontWeight.SemiBold)
+                Text(stringResource(R.string.elearning_forum_reply), fontWeight = FontWeight.SemiBold)
             }
         } else {
             FilledTonalButton(
@@ -592,7 +594,7 @@ private fun ThreadFooter(canReply: Boolean, onReply: () -> Unit, onSubscribe: ()
             ) {
                 Icon(Icons.Outlined.NotificationsActive, contentDescription = null, modifier = Modifier.size(20.dp))
                 Spacer(Modifier.width(8.dp))
-                Text("Segui discussione", fontWeight = FontWeight.SemiBold)
+                Text(stringResource(R.string.elearning_forum_subscribe), fontWeight = FontWeight.SemiBold)
             }
         }
     }
@@ -615,7 +617,7 @@ private fun NewDiscussionButton(onClick: () -> Unit, modifier: Modifier = Modifi
     ) {
         Icon(Icons.AutoMirrored.Outlined.Reply, contentDescription = null, modifier = Modifier.size(20.dp))
         Spacer(Modifier.width(8.dp))
-        Text("Nuova discussione", fontWeight = FontWeight.SemiBold)
+        Text(stringResource(R.string.elearning_forum_new_discussion), fontWeight = FontWeight.SemiBold)
     }
 }
 
@@ -658,26 +660,22 @@ private fun rememberThreadLoading(hasContent: Boolean, key: Any?): Boolean {
 private const val LOADING_GRACE_MS = 120L
 private const val LOADING_MIN_MS = 600L
 
+@Composable
 private fun discussionsSubtitle(forum: Forum, discussions: List<Discussion>?): String {
     val count = discussions?.size ?: forum.discussionCount
-    return when (count) {
-        0 -> "Nessuna discussione"
-        1 -> "1 discussione"
-        else -> "$count discussioni"
-    }
+    return if (count == 0) stringResource(R.string.elearning_forum_empty_title)
+    else pluralStringResource(R.plurals.elearning_forum_discussion_count, count, count)
 }
 
+@Composable
 private fun threadSubtitle(discussion: Discussion): String {
     val replies = discussion.replyCount
-    return when (replies) {
-        0 -> discussion.authorName
-        1 -> "${discussion.authorName} · 1 risposta"
-        else -> "${discussion.authorName} · $replies risposte"
-    }
+    return if (replies == 0) discussion.authorName
+    else pluralStringResource(R.plurals.elearning_forum_thread_replies, replies, discussion.authorName, replies)
 }
 
 private fun queryAttachment(context: android.content.Context, uri: Uri): PendingAttachment {
-    var name = "allegato"
+    var name = context.getString(R.string.elearning_forum_attachment_fallback_name)
     var size: Long? = null
     runCatching {
         context.contentResolver.query(uri, null, null, null, null)?.use { cursor ->

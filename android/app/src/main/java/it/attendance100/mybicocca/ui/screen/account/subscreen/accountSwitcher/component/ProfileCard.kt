@@ -222,7 +222,9 @@ private fun CareerSubCard(
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = career.description.ifEmpty { "Carriera #${career.id.value}" },
+                    text = career.description.ifEmpty {
+                        stringResource(R.string.account_career_fallback, career.id.value)
+                    },
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Medium,
                     color = titleColor,
@@ -278,10 +280,11 @@ private fun StatusChip(label: String, active: Boolean) {
 }
 
 /** Chip copy for statuses worth flagging; null (regular active or unknown) renders no chip. */
+@Composable
 private fun statusLabel(status: CareerStatus): String? = when (status) {
     CareerStatus.ACTIVE -> null
-    CareerStatus.SUSPENDED -> "Sospesa" // TODO: externalize to resources
-    CareerStatus.GRADUATED -> "Conclusa" // TODO: externalize to resources
-    CareerStatus.INTERRUPTED -> "Interrotta" // TODO: externalize to resources
+    CareerStatus.SUSPENDED -> stringResource(R.string.enrollment_status_suspended)
+    CareerStatus.GRADUATED -> stringResource(R.string.account_career_status_graduated)
+    CareerStatus.INTERRUPTED -> stringResource(R.string.account_career_status_interrupted)
     CareerStatus.OTHER -> null
 }

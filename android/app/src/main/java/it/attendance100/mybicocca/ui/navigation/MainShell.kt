@@ -935,7 +935,7 @@ fun MainShell(
                                                 .collectAsStateWithLifecycle()
                                             SheetHeaderSpec(
                                                 title = stringResource(R.string.registry_titles),
-                                                subtitle = titles.valueOrNull()?.let(::titlesHeaderSubtitle),
+                                                subtitle = titles.valueOrNull()?.let { titlesHeaderSubtitle(it) },
                                             )
                                         },
                                     ) {

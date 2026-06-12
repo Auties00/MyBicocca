@@ -24,11 +24,13 @@ import androidx.compose.material3.Text
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.ui.component.shape.OrganicShapes
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.courseDetail.state.UpNextItem
 import java.time.Duration
@@ -116,7 +118,7 @@ fun UpNextCard(
                             modifier = Modifier.size(18.dp),
                         )
                         Text(
-                            text = "Apri",
+                            text = stringResource(R.string.elearning_link_open),
                             color = scheme.tertiaryContainer,
                             fontWeight = FontWeight.Bold,
                             fontSize = 14.sp,
@@ -128,15 +130,16 @@ fun UpNextCard(
     }
 }
 
+@Composable
 private fun formatCountdown(now: Instant, due: Instant): String {
     val duration = Duration.between(now, due)
-    if (duration.isNegative) return "SCADUTO"
+    if (duration.isNegative) return stringResource(R.string.elearning_upnext_overdue)
     val days = duration.toDays()
     val hours = (duration.toHours() % 24)
     val minutes = (duration.toMinutes() % 60)
     return when {
-        days >= 1 -> "TRA ${days}G ${hours}H"
-        hours >= 1 -> "TRA ${hours}H ${minutes}MIN"
-        else -> "TRA ${minutes}MIN"
+        days >= 1 -> stringResource(R.string.elearning_upnext_in_days, days, hours)
+        hours >= 1 -> stringResource(R.string.elearning_upnext_in_hours, hours, minutes)
+        else -> stringResource(R.string.elearning_upnext_in_minutes, minutes)
     }
 }

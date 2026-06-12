@@ -58,6 +58,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -232,8 +233,13 @@ fun ExamResultsPage(
                     EsitiSheetPage.Detail -> detailResult?.let { result ->
                         result.acknowledgmentDeadline
                             ?.takeIf { result.requiresStudentDecision(today) }
-                            ?.let { "Decidi entro il ${it.format(ShortDateFormat)}" }
-                            ?: result.examDateTime?.let { "Sostenuto il ${it.toLocalDate().format(ShortDateFormat)}" }
+                            ?.let { stringResource(R.string.exam_results_decide_by_date, it.format(ShortDateFormat)) }
+                            ?: result.examDateTime?.let {
+                                stringResource(
+                                    R.string.exam_results_taken_on_date,
+                                    it.toLocalDate().format(ShortDateFormat),
+                                )
+                            }
                             ?: result.grade.spelledOut()
                     }
                     EsitiSheetPage.ConfirmReject -> detailResult?.displayTitle()
@@ -338,9 +344,12 @@ private fun ExamResult.identity(): String =
     applicationListId?.toString()
         ?: "${key.courseOfStudyId}-${key.activityId}-${key.callId}"
 
-private fun ExamResult.displayTitle(): String = activityDescription ?: "Esame"
+@Composable
+private fun ExamResult.displayTitle(): String =
+    activityDescription ?: stringResource(R.string.exam_results_exam_fallback)
 
 /** The header subtitle for the visible section: how full it is. */
+@Composable
 private fun sectionSummary(
     section: ExamResultFilter,
     grouped: Map<ExamResultFilter, List<ExamResult>>,
@@ -348,14 +357,14 @@ private fun sectionSummary(
     val count = grouped[section].orEmpty().size
     return when (section) {
         ExamResultFilter.Pending -> when (count) {
-            0 -> "Nessun esito da decidere"
-            1 -> "1 esito da decidere"
-            else -> "$count esiti da decidere"
+            0 -> stringResource(R.string.exam_results_summary_pending_none)
+            1 -> stringResource(R.string.exam_results_summary_pending_one)
+            else -> stringResource(R.string.exam_results_summary_pending_other, count)
         }
         ExamResultFilter.Archived -> when (count) {
-            0 -> "Nessun esito archiviato"
-            1 -> "1 esito archiviato"
-            else -> "$count esiti archiviati"
+            0 -> stringResource(R.string.exam_results_summary_archived_none)
+            1 -> stringResource(R.string.exam_results_summary_archived_one)
+            else -> stringResource(R.string.exam_results_summary_archived_other, count)
         }
     }
 }
@@ -441,6 +450,7 @@ private fun EsitiPager(
     onOpenDetail: (ExamResult) -> Unit,
 ) {
     val filters = ExamResultFilter.entries
+    val filterLabels = filters.associateWith { stringResource(it.labelRes) }
     val initialPage = remember(grouped) {
         filters.indexOfFirst { grouped[it].orEmpty().isNotEmpty() }.coerceAtLeast(0)
     }
@@ -518,7 +528,7 @@ private fun EsitiPager(
                 onSelected = { filter ->
                     scope.launch { pagerState.animateScrollToPage(filters.indexOf(filter)) }
                 },
-                label = { it.label },
+                label = { filterLabels.getValue(it) },
                 borderColor = Color.White.copy(alpha = 0.5f),
             )
         }
@@ -530,15 +540,21 @@ private fun ExamResultFilter.emptyIcon(): ImageVector = when (this) {
     ExamResultFilter.Archived -> Icons.AutoMirrored.Outlined.Grading
 }
 
-private fun ExamResultFilter.emptyTitle(): String = when (this) {
-    ExamResultFilter.Pending -> "Niente da decidere"
-    ExamResultFilter.Archived -> "Nessun esito archiviato"
-}
+@Composable
+private fun ExamResultFilter.emptyTitle(): String = stringResource(
+    when (this) {
+        ExamResultFilter.Pending -> R.string.exam_results_empty_pending_title
+        ExamResultFilter.Archived -> R.string.exam_results_empty_archived_title
+    },
+)
 
-private fun ExamResultFilter.emptyBody(): String = when (this) {
-    ExamResultFilter.Pending -> "Non hai esiti in attesa di una tua decisione."
-    ExamResultFilter.Archived -> "Gli esiti accettati, rifiutati o verbalizzati compaiono qui."
-}
+@Composable
+private fun ExamResultFilter.emptyBody(): String = stringResource(
+    when (this) {
+        ExamResultFilter.Pending -> R.string.exam_results_empty_pending_body
+        ExamResultFilter.Archived -> R.string.exam_results_empty_archived_body
+    },
+)
 
 
 /**
@@ -599,10 +615,11 @@ private fun PendingResultRow(
     }
 }
 
+@Composable
 private fun deadlineLabel(daysLeft: Long): String = when {
-    daysLeft <= 0L -> "oggi"
-    daysLeft == 1L -> "domani"
-    else -> "$daysLeft giorni"
+    daysLeft <= 0L -> stringResource(R.string.exam_results_deadline_today)
+    daysLeft == 1L -> stringResource(R.string.exam_results_deadline_tomorrow)
+    else -> stringResource(R.string.exam_results_deadline_days, daysLeft.toInt())
 }
 
 /**
@@ -657,17 +674,24 @@ private fun ArchivedResultRow(
  * What became of a published outcome, in a readable line: the student's choice when they
  * made one, otherwise when the exam was taken.
  */
+@Composable
 private fun ExamResult.archivedSubtitle(): String? =
     acknowledgment.choiceLabel()
-        ?: examDateTime?.let { "Sostenuto il ${it.toLocalDate().format(MediumDateFormat)}" }
+        ?: examDateTime?.let {
+            stringResource(
+                R.string.exam_results_taken_on_date,
+                it.toLocalDate().format(MediumDateFormat),
+            )
+        }
 
 /**
  * Only states the student actively produced are worth a word; everything else is just
  * a published grade.
  */
+@Composable
 private fun AcknowledgmentStatus.choiceLabel(): String? = when (this) {
-    AcknowledgmentStatus.Accepted -> "Accettato"
-    AcknowledgmentStatus.Rejected -> "Rifiutato"
+    AcknowledgmentStatus.Accepted -> stringResource(R.string.exam_results_choice_accepted)
+    AcknowledgmentStatus.Rejected -> stringResource(R.string.exam_results_choice_rejected)
     else -> null
 }
 
@@ -725,7 +749,7 @@ private fun EsitoDetailPage(
                         icon = Icons.Outlined.CalendarMonth,
                         label = stringResource(R.string.exam_results_taken_on_label),
                         value = it.toLocalDate().format(FullDateFormat)
-                            .replaceFirstChar { c -> c.titlecase(Locale.ITALIAN) },
+                            .replaceFirstChar { c -> c.titlecase(Locale.getDefault()) },
                     )
                 }
                 result.publishedNote?.takeIf { it.isNotBlank() }?.let {
@@ -918,25 +942,29 @@ private fun RejectConfirmPage(
 }
 
 /** The grade in words, like on the verbale. */
+@Composable
 private fun ExamGrade.spelledOut(): String = when (this) {
     is ExamGrade.Numeric -> when {
-        value >= 31 -> "trenta e lode"
-        else -> "${GradeWords[value] ?: value.toString()} su trenta"
+        value >= 31 -> stringResource(R.string.exam_results_grade_thirty_cum_laude)
+        else -> stringResource(R.string.exam_results_grade_out_of_thirty, gradeWord(value))
     }
-    ExamGrade.Passed -> "idoneo"
-    ExamGrade.NotPassed -> "non superato"
-    ExamGrade.Withdrew -> "ritirato"
-    ExamGrade.Absent -> "assente"
-    ExamGrade.Unknown -> "esito non disponibile"
+    ExamGrade.Passed -> stringResource(R.string.exam_results_grade_passed)
+    ExamGrade.NotPassed -> stringResource(R.string.exam_results_grade_not_passed)
+    ExamGrade.Withdrew -> stringResource(R.string.exam_results_grade_withdrew)
+    ExamGrade.Absent -> stringResource(R.string.exam_results_grade_absent)
+    ExamGrade.Unknown -> stringResource(R.string.exam_results_grade_unavailable)
 }
 
-private val GradeWords = mapOf(
-    18 to "diciotto", 19 to "diciannove", 20 to "venti", 21 to "ventuno",
-    22 to "ventidue", 23 to "ventitré", 24 to "ventiquattro", 25 to "venticinque",
-    26 to "ventisei", 27 to "ventisette", 28 to "ventotto", 29 to "ventinove",
-    30 to "trenta",
-)
+/**
+ * The spelled-out word for a numeric grade in 18..30, drawn from the `grade_words` array
+ * (index 0 = 18); out-of-range grades fall back to the digits.
+ */
+@Composable
+private fun gradeWord(value: Int): String {
+    val words = stringArrayResource(R.array.grade_words)
+    return words.getOrNull(value - 18) ?: value.toString()
+}
 
-private val ShortDateFormat = DateTimeFormatter.ofPattern("d MMM", Locale.ITALIAN)
-private val MediumDateFormat = DateTimeFormatter.ofPattern("d MMM yyyy", Locale.ITALIAN)
-private val FullDateFormat = DateTimeFormatter.ofPattern("EEEE d MMMM yyyy", Locale.ITALIAN)
+private val ShortDateFormat = DateTimeFormatter.ofPattern("d MMM", Locale.getDefault())
+private val MediumDateFormat = DateTimeFormatter.ofPattern("d MMM yyyy", Locale.getDefault())
+private val FullDateFormat = DateTimeFormatter.ofPattern("EEEE d MMMM yyyy", Locale.getDefault())

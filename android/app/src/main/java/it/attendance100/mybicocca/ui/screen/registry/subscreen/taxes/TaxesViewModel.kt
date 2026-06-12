@@ -1,8 +1,11 @@
 package it.attendance100.mybicocca.ui.screen.registry.subscreen.taxes
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.SyncStatus
 import it.attendance100.mybicocca.core.state.valueOrNull
@@ -51,6 +54,7 @@ import kotlin.coroutines.cancellation.CancellationException
  */
 @HiltViewModel
 class TaxesViewModel @Inject constructor(
+    @ApplicationContext private val appContext: Context,
     private val getTaxInvoices: GetTaxInvoicesUseCase,
     private val getIseeDeclarations: GetIseeDeclarationsUseCase,
     private val startPagoPaPayment: StartPagoPaPaymentUseCase,
@@ -143,7 +147,7 @@ class TaxesViewModel @Inject constructor(
 
     fun checkPaymentStatus(invoiceId: InvoiceId) = invoiceAction { careerId ->
         val status = getPaymentStatus(careerId, invoiceId)
-        _events.send(TaxEvent.ShowMessage(status.toStatusMessage()))
+        _events.send(TaxEvent.ShowMessage(status.toStatusMessage(appContext)))
     }
 
     private fun invoiceAction(block: suspend (CareerId) -> Unit) {
@@ -167,19 +171,19 @@ class TaxesViewModel @Inject constructor(
     }
 }
 
-private val PAYMENT_DATE_FORMAT = DateTimeFormatter.ofPattern("d MMMM yyyy", Locale.ITALIAN)
+private val PAYMENT_DATE_FORMAT = DateTimeFormatter.ofPattern("d MMMM yyyy", Locale.getDefault())
 
-private fun PaymentStatus?.toStatusMessage(): String {
-    if (this == null) return "Nessuna transazione pagoPA trovata per questa fattura."
+private fun PaymentStatus?.toStatusMessage(context: Context): String {
+    if (this == null) return context.getString(R.string.taxes_no_pagopa_transaction)
     val head = when (outcome) {
-        PaymentOutcome.Completed -> "Pagamento eseguito"
-        PaymentOutcome.Pending -> "Pagamento in corso"
-        PaymentOutcome.Failed -> "Pagamento non riuscito"
-        PaymentOutcome.Unknown -> description ?: "Stato del pagamento non disponibile"
+        PaymentOutcome.Completed -> context.getString(R.string.taxes_payment_completed)
+        PaymentOutcome.Pending -> context.getString(R.string.taxes_payment_pending)
+        PaymentOutcome.Failed -> context.getString(R.string.taxes_payment_failed)
+        PaymentOutcome.Unknown -> description ?: context.getString(R.string.taxes_payment_status_unavailable)
     }
     val details = buildList {
         paymentDate?.let { add(it.format(PAYMENT_DATE_FORMAT)) }
-        paidAmount?.takeIf { it > 0 }?.let { add("€ %.2f".format(Locale.ITALIAN, it)) }
+        paidAmount?.takeIf { it > 0 }?.let { add("€ %.2f".format(Locale.getDefault(), it)) }
     }
     return if (details.isEmpty()) head else "$head · ${details.joinToString(" · ")}"
 }

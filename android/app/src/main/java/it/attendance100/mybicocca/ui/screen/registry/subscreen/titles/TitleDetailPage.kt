@@ -28,14 +28,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.domain.model.document.AcademicTitle
 import it.attendance100.mybicocca.domain.model.document.TitleStatus
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.titles.ext.TitleSection
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.titles.ext.icon
-import it.attendance100.mybicocca.ui.screen.registry.subscreen.titles.ext.label
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.titles.ext.labelRes
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.titles.ext.section
 
 /**
@@ -50,7 +52,7 @@ internal fun TitleDetailPage(
     title: AcademicTitle,
     modifier: Modifier = Modifier,
 ) {
-    val sections = remember(title) { title.detailSections() }
+    val sections = title.detailSections()
 
     LazyColumn(
         modifier = modifier
@@ -77,26 +79,37 @@ private data class DetailSectionData(
  * promoted grade (Valutazione) and status (Conseguimento) in at the head of their
  * sections. Sections with nothing to show are dropped.
  */
+@Composable
 private fun AcademicTitle.detailSections(): List<DetailSectionData> {
-    val gradeRow = grade?.let { "Voto" to (if (cumLaude) "$it e lode" else it) }
+    val gradeLabel = stringResource(R.string.titles_grade_label)
+    val statusLabel = stringResource(R.string.titles_status_label)
+    val gradeRow = grade?.let { value ->
+        gradeLabel to if (cumLaude) stringResource(R.string.titles_grade_cum_laude, value) else value
+    }
     val statusRow = when (status) {
-        TitleStatus.Awarded -> "Stato" to "Conseguito"
-        TitleStatus.Hypothesised -> "Stato" to "In ipotesi"
+        TitleStatus.Awarded -> statusLabel to stringResource(R.string.titles_status_awarded)
+        TitleStatus.Hypothesised -> statusLabel to stringResource(R.string.titles_status_hypothesised)
         TitleStatus.Unknown -> null
     }
 
-    return TitleSection.entries.mapNotNull { section ->
-        val attributeRows = attributes
-            .filter { it.field.section == section }
-            .map { it.field.label(category) to it.value }
-        val promoted = when (section) {
-            TitleSection.Achievement -> listOfNotNull(statusRow)
-            TitleSection.Evaluation -> listOfNotNull(gradeRow)
-            else -> emptyList()
+    val sections = mutableListOf<DetailSectionData>()
+    for (section in TitleSection.entries) {
+        val rows = buildList {
+            when (section) {
+                TitleSection.Achievement -> statusRow?.let(::add)
+                TitleSection.Evaluation -> gradeRow?.let(::add)
+                else -> Unit
+            }
+            for (attribute in attributes) {
+                if (attribute.field.section != section) continue
+                add(stringResource(attribute.field.labelRes(category)) to attribute.value)
+            }
         }
-        (promoted + attributeRows).takeIf { it.isNotEmpty() }
-            ?.let { DetailSectionData(section.label, section.icon, it) }
+        if (rows.isNotEmpty()) {
+            sections += DetailSectionData(stringResource(section.labelRes), section.icon, rows)
+        }
     }
+    return sections
 }
 
 /**

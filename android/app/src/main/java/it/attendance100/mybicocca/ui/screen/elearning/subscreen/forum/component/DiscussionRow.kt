@@ -27,11 +27,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.domain.model.elearning.forum.Discussion
 import it.attendance100.mybicocca.ui.component.shape.OrganicShapes
 import it.attendance100.mybicocca.ui.component.time.relativeTimeLabel
@@ -67,7 +69,7 @@ fun DiscussionRow(
                     if (pinned) {
                         Icon(
                             imageVector = Icons.Outlined.PushPin,
-                            contentDescription = "In evidenza",
+                            contentDescription = stringResource(R.string.elearning_forum_pinned),
                             tint = scheme.tertiary,
                             modifier = Modifier.size(14.dp),
                         )
@@ -126,7 +128,7 @@ private fun MetaLine(discussion: Discussion, pinned: Boolean) {
         if (discussion.hasAttachments) {
             Icon(
                 imageVector = Icons.Outlined.AttachFile,
-                contentDescription = "Con allegato",
+                contentDescription = stringResource(R.string.elearning_forum_has_attachment),
                 tint = muted,
                 modifier = Modifier.size(13.dp),
             )
@@ -134,7 +136,7 @@ private fun MetaLine(discussion: Discussion, pinned: Boolean) {
         if (discussion.isLocked) {
             Icon(
                 imageVector = Icons.Outlined.Lock,
-                contentDescription = "Discussione bloccata",
+                contentDescription = stringResource(R.string.elearning_forum_locked),
                 tint = muted,
                 modifier = Modifier.size(13.dp),
             )
@@ -146,13 +148,14 @@ private fun MetaLine(discussion: Discussion, pinned: Boolean) {
  * Author plus relative time; threads with replies also show who moved them last, since that
  * activity is what students chase.
  */
+@Composable
 private fun buildMetaLabel(discussion: Discussion): String {
     val parts = mutableListOf(discussion.authorName)
     val time = discussion.timeModified ?: discussion.createdAt
     if (time != null) parts += relativeTimeLabel(time)
     val lastAuthor = discussion.lastPostAuthorName
     if (discussion.replyCount > 0 && !lastAuthor.isNullOrBlank() && lastAuthor != discussion.authorName) {
-        parts += "ultima di $lastAuthor"
+        parts += stringResource(R.string.elearning_forum_last_post_author, lastAuthor)
     }
     return parts.joinToString(" · ")
 }

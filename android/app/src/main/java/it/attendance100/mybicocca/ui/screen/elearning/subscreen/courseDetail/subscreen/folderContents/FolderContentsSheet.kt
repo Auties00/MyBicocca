@@ -24,10 +24,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.domain.model.elearning.course.ModuleContent
 import it.attendance100.mybicocca.ui.component.modal.PredictiveModalBottomSheet
 import java.util.Locale
@@ -93,7 +95,7 @@ private fun FileRow(content: ModuleContent, onClick: () -> Unit, onLongClick: ()
         )
         Column(modifier = Modifier.weight(1f)) {
             Text(
-                text = content.fileName ?: "File",
+                text = content.fileName ?: stringResource(R.string.file_kind_generic),
                 fontSize = 15.sp,
                 fontWeight = FontWeight.Medium,
                 maxLines = 1,
@@ -126,5 +128,5 @@ private fun formatSize(bytes: Long?): String? = when {
     bytes == null || bytes <= 0 -> null
     bytes < 1024 -> "$bytes B"
     bytes < 1024 * 1024 -> "${bytes / 1024} KB"
-    else -> String.format(Locale.ITALIAN, "%.1f MB", bytes / (1024.0 * 1024.0))
+    else -> String.format(Locale.getDefault(), "%.1f MB", bytes / (1024.0 * 1024.0))
 }

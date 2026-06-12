@@ -34,7 +34,7 @@ import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
-private val DayOfWeekFormat = DateTimeFormatter.ofPattern("EEE", Locale.ITALIAN)
+private val DayOfWeekFormat = DateTimeFormatter.ofPattern("EEE", Locale.getDefault())
 
 /** "Oggi" / "Domani" for the next two days, otherwise the capitalized Italian weekday ("Gio"). */
 fun relativeDayLabel(date: LocalDate, context: android.content.Context? = null): String {
@@ -42,7 +42,7 @@ fun relativeDayLabel(date: LocalDate, context: android.content.Context? = null):
     return when (date) {
         today -> context?.getString(R.string.relative_day_today) ?: "Oggi"
         today.plusDays(1) -> context?.getString(R.string.relative_day_tomorrow) ?: "Domani"
-        else -> date.format(DayOfWeekFormat).replaceFirstChar { it.titlecase(Locale.ITALIAN) }
+        else -> date.format(DayOfWeekFormat).replaceFirstChar { it.titlecase(Locale.getDefault()) }
     }
 }
 

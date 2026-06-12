@@ -42,8 +42,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.domain.model.elearning.forum.ForumGroup
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.forum.state.ComposerTarget
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.forum.state.PendingAttachment
@@ -87,9 +89,9 @@ fun ForumComposer(
     }
     val existingAttachments = (target as? ComposerTarget.Edit)?.existingAttachments.orEmpty()
     val submitLabel = when (target) {
-        is ComposerTarget.NewDiscussion -> "Pubblica"
-        is ComposerTarget.Reply -> "Rispondi"
-        is ComposerTarget.Edit -> "Salva"
+        is ComposerTarget.NewDiscussion -> stringResource(R.string.elearning_forum_publish)
+        is ComposerTarget.Reply -> stringResource(R.string.elearning_forum_reply)
+        is ComposerTarget.Edit -> stringResource(R.string.elearning_forum_save)
     }
     val subjectRequired = target is ComposerTarget.NewDiscussion || target is ComposerTarget.Edit
     val canSubmit = !submitting && message.isNotBlank() && (!subjectRequired || subject.isNotBlank()) &&
@@ -111,7 +113,7 @@ fun ForumComposer(
             OutlinedTextField(
                 value = subject,
                 onValueChange = onSubjectChange,
-                label = { Text("Oggetto") },
+                label = { Text(stringResource(R.string.elearning_forum_subject)) },
                 singleLine = true,
                 shape = RoundedCornerShape(18.dp),
                 modifier = Modifier.fillMaxWidth(),
@@ -119,7 +121,7 @@ fun ForumComposer(
             OutlinedTextField(
                 value = message,
                 onValueChange = onMessageChange,
-                label = { Text("Messaggio") },
+                label = { Text(stringResource(R.string.elearning_forum_message)) },
                 shape = RoundedCornerShape(18.dp),
                 modifier = Modifier
                     .fillMaxWidth()
@@ -150,7 +152,7 @@ fun ForumComposer(
                 TextButton(onClick = onAddAttachment) {
                     Icon(Icons.Outlined.AttachFile, contentDescription = null, modifier = Modifier.size(18.dp))
                     Spacer(Modifier.width(6.dp))
-                    Text("Allega file", fontWeight = FontWeight.SemiBold)
+                    Text(stringResource(R.string.elearning_forum_attach_file), fontWeight = FontWeight.SemiBold)
                 }
             }
         }
@@ -203,7 +205,7 @@ private fun GroupSelector(groups: List<ForumGroup>, selectedGroupId: Int?, onSel
             ) {
                 Icon(Icons.Outlined.Group, contentDescription = null, tint = scheme.primary, modifier = Modifier.size(20.dp))
                 Column(modifier = Modifier.weight(1f)) {
-                    Text("Gruppo", style = MaterialTheme.typography.labelSmall, color = scheme.onSurfaceVariant)
+                    Text(stringResource(R.string.elearning_forum_group), style = MaterialTheme.typography.labelSmall, color = scheme.onSurfaceVariant)
                     Text(selectedName, style = MaterialTheme.typography.bodyMedium, color = scheme.onSurface, fontWeight = FontWeight.SemiBold)
                 }
                 Icon(Icons.Outlined.UnfoldMore, contentDescription = null, tint = scheme.onSurfaceVariant, modifier = Modifier.size(20.dp))
@@ -247,7 +249,7 @@ private fun PendingAttachmentRow(attachment: PendingAttachment, onRemove: () -> 
             )
             Icon(
                 imageVector = Icons.Outlined.Close,
-                contentDescription = "Rimuovi",
+                contentDescription = stringResource(R.string.elearning_assign_remove_button),
                 tint = scheme.onSurfaceVariant,
                 modifier = Modifier
                     .size(36.dp)

@@ -62,7 +62,7 @@ class MlKitSpeechToText @Inject constructor() : SpeechToText {
     }
 
     private fun options(): SpeechRecognizerOptions = speechRecognizerOptions {
-        locale = java.util.Locale.ITALIAN
+        locale = java.util.Locale.getDefault()
         preferredMode = SpeechRecognizerOptions.Mode.MODE_ADVANCED
     }
 

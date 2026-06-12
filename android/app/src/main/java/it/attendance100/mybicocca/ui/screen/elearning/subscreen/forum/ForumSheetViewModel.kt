@@ -8,6 +8,7 @@ import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.SyncStatus
 import it.attendance100.mybicocca.core.state.valueOrNull
@@ -197,7 +198,7 @@ class ForumSheetViewModel @AssistedInject constructor(
             }
             .onFailure {
                 _syncStatus.value = SyncStatus.Failed(it)
-                events.trySend(ForumSheetEvent.Failed("Aggiornamento non riuscito", it))
+                events.trySend(ForumSheetEvent.Failed(appContext.getString(R.string.elearning_forum_refresh_failed), it))
             }
     }
 
@@ -248,7 +249,7 @@ class ForumSheetViewModel @AssistedInject constructor(
             .onSuccess { _threadSyncStatus.value = SyncStatus.Idle }
             .onFailure {
                 _threadSyncStatus.value = SyncStatus.Failed(it)
-                events.trySend(ForumSheetEvent.Failed("Caricamento non riuscito", it))
+                events.trySend(ForumSheetEvent.Failed(appContext.getString(R.string.common_load_failed), it))
             }
     }
 
@@ -256,7 +257,7 @@ class ForumSheetViewModel @AssistedInject constructor(
         viewModelScope.launch {
             val accountId = activeAccountId.filterNotNull().first()
             runCatching { setFavourite(accountId, forumId, discussion.id, !discussion.isFavourite) }
-                .onFailure { events.trySend(ForumSheetEvent.Failed("Operazione non riuscita", it)) }
+                .onFailure { events.trySend(ForumSheetEvent.Failed(appContext.getString(R.string.elearning_forum_operation_failed), it)) }
         }
     }
 
@@ -266,10 +267,15 @@ class ForumSheetViewModel @AssistedInject constructor(
             runCatching { setSubscription(accountId, forumId, discussionId, subscribed) }
                 .onSuccess {
                     events.trySend(
-                        ForumSheetEvent.Info(if (subscribed) "Ora segui questa discussione" else "Non segui più questa discussione")
+                        ForumSheetEvent.Info(
+                            appContext.getString(
+                                if (subscribed) R.string.elearning_forum_subscribed_info
+                                else R.string.elearning_forum_unsubscribed_info
+                            )
+                        )
                     )
                 }
-                .onFailure { events.trySend(ForumSheetEvent.Failed("Operazione non riuscita", it)) }
+                .onFailure { events.trySend(ForumSheetEvent.Failed(appContext.getString(R.string.elearning_forum_operation_failed), it)) }
         }
     }
 
@@ -278,7 +284,7 @@ class ForumSheetViewModel @AssistedInject constructor(
         viewModelScope.launch {
             val accountId = activeAccountId.filterNotNull().first()
             runCatching { deletePostUseCase(accountId, discussionId, post.id) }
-                .onFailure { events.trySend(ForumSheetEvent.Failed("Eliminazione non riuscita", it)) }
+                .onFailure { events.trySend(ForumSheetEvent.Failed(appContext.getString(R.string.elearning_forum_delete_failed), it)) }
         }
     }
 
@@ -311,7 +317,7 @@ class ForumSheetViewModel @AssistedInject constructor(
     fun startReply(post: Post) {
         val discussionId = _openDiscussionId.value ?: return
         val canAttach = forum.value.valueOrNull()?.canAttachFiles == true
-        val subject = post.subject.ifBlank { "Discussione" }
+        val subject = post.subject.ifBlank { appContext.getString(R.string.elearning_forum_discussion_fallback) }
         val replySubject = if (subject.startsWith("Re:", ignoreCase = true)) subject else "Re: $subject"
         _composerTarget.value = ComposerTarget.Reply(discussionId, post.id, replySubject, canAttach)
     }
@@ -388,7 +394,7 @@ class ForumSheetViewModel @AssistedInject constructor(
                 cancelComposer()
                 newDiscussionId?.let { openThread(it) }
             }.onFailure {
-                events.trySend(ForumSheetEvent.Failed("Pubblicazione non riuscita", it))
+                events.trySend(ForumSheetEvent.Failed(appContext.getString(R.string.elearning_forum_publish_failed), it))
             }
             _submitting.value = false
         }

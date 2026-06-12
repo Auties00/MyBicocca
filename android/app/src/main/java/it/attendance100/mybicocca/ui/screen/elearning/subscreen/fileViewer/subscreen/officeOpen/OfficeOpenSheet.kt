@@ -44,6 +44,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -51,6 +52,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.state.SyncStatus
 import it.attendance100.mybicocca.ui.component.feedback.LocalAppSnackbarController
 import it.attendance100.mybicocca.ui.navigation.route.AppRoute
@@ -106,20 +108,25 @@ fun OfficeOpenSheet(
         onPauseOrDispose { }
     }
 
+    val downloadFailedMessage = stringResource(R.string.elearning_file_download_failed)
+    val noAppMessage = stringResource(R.string.elearning_file_no_app)
+
     LaunchedEffect(viewModel) {
         viewModel.oneShotEvents.collectLatest { event ->
             when (event) {
                 is FileViewerOneShotEvent.DownloadFailed ->
-                    snackbar.showError("Download del file non riuscito", event.cause)
+                    snackbar.showError(downloadFailedMessage, event.cause)
 
                 is FileViewerOneShotEvent.LaunchOfficeUri -> {
                     if (launchOfficeUri(context, event.uri, event.app)) onDismiss()
-                    else snackbar.showError("Impossibile aprire ${event.app.label}")
+                    else snackbar.showError(
+                        context.getString(R.string.elearning_file_open_app_failed, event.app.label),
+                    )
                 }
 
                 is FileViewerOneShotEvent.OpenWithExternalApp -> {
                     if (launchExternalViewer(context, event.localPath, event.mimeType)) onDismiss()
-                    else snackbar.showError("Nessuna app installata può aprire questo file")
+                    else snackbar.showError(noAppMessage)
                 }
 
                 is FileViewerOneShotEvent.OpenExtractedFile,
@@ -180,9 +187,9 @@ fun OfficeOpenSheet(
                 Spacer(Modifier.height(16.dp))
                 Text(
                     text = if (installed) {
-                        "Si apre in ${app.label} in sola lettura."
+                        stringResource(R.string.elearning_file_office_opens_readonly, app.label)
                     } else {
-                        "Per aprire questo documento serve l'app ${app.label} di Microsoft, gratuita sul Play Store."
+                        stringResource(R.string.elearning_file_office_install_needed, app.label)
                     },
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -198,11 +205,12 @@ fun OfficeOpenSheet(
                     .padding(start = 20.dp, end = 20.dp, bottom = 8.dp),
                 horizontalArrangement = Arrangement.spacedBy(4.dp),
             ) {
+                val playStoreFailedMessage = stringResource(R.string.elearning_file_play_store_failed)
                 Button(
                     onClick = {
                         if (installed) viewModel.openInOffice()
                         else if (!launchPlayStore(context, app.packageName)) {
-                            scope.launch { snackbar.showError("Impossibile aprire il Play Store") }
+                            scope.launch { snackbar.showError(playStoreFailedMessage) }
                         }
                     },
                     modifier = Modifier
@@ -225,7 +233,11 @@ fun OfficeOpenSheet(
                     )
                     Spacer(Modifier.width(8.dp))
                     Text(
-                        text = if (installed) "Apri in ${app.label}" else "Installa ${app.label}",
+                        text = if (installed) {
+                            stringResource(R.string.elearning_file_office_open_in, app.label)
+                        } else {
+                            stringResource(R.string.elearning_file_office_install, app.label)
+                        },
                         fontWeight = FontWeight.SemiBold,
                     )
                 }
@@ -250,7 +262,10 @@ fun OfficeOpenSheet(
                             modifier = Modifier.size(20.dp),
                         )
                         Spacer(Modifier.width(8.dp))
-                        Text("Altra app", fontWeight = FontWeight.SemiBold)
+                        Text(
+                            stringResource(R.string.settings_file_association_external),
+                            fontWeight = FontWeight.SemiBold,
+                        )
                     }
                 }
             }
@@ -284,15 +299,16 @@ private fun OfficeApp.brandColor() = when (this) {
     OfficeApp.PowerPoint -> Color(0xFFC43E1C)
 }
 
+@Composable
 private fun OfficeApp.documentLabel() = when (this) {
-    OfficeApp.Word -> "Documento Word"
-    OfficeApp.Excel -> "Foglio di calcolo Excel"
-    OfficeApp.PowerPoint -> "Presentazione PowerPoint"
+    OfficeApp.Word -> stringResource(R.string.elearning_file_office_doc_word)
+    OfficeApp.Excel -> stringResource(R.string.elearning_file_office_doc_excel)
+    OfficeApp.PowerPoint -> stringResource(R.string.elearning_file_office_doc_powerpoint)
 }
 
 private fun formatSize(bytes: Long?): String? = when {
     bytes == null || bytes <= 0 -> null
     bytes < 1024 -> "$bytes B"
     bytes < 1024 * 1024 -> "${bytes / 1024} KB"
-    else -> String.format(Locale.ITALIAN, "%.1f MB", bytes / (1024.0 * 1024.0))
+    else -> String.format(Locale.getDefault(), "%.1f MB", bytes / (1024.0 * 1024.0))
 }

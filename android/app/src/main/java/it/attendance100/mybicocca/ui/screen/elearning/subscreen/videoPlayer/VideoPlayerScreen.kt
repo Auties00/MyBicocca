@@ -31,6 +31,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
@@ -44,6 +45,7 @@ import androidx.media3.ui.compose.PlayerSurface
 import androidx.media3.ui.compose.SURFACE_TYPE_SURFACE_VIEW
 import androidx.media3.ui.compose.modifiers.resizeWithContentScale
 import androidx.media3.ui.compose.state.rememberPresentationState
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.os.LocalPipController
 import it.attendance100.mybicocca.core.os.PipState
 import it.attendance100.mybicocca.core.state.Loadable
@@ -195,7 +197,7 @@ private fun VideoPlayerScreenContent(
         ) {
             Box(modifier = Modifier.fillMaxSize()) {
                 PlayerChrome(
-                    title = currentItem?.title ?: "Video del corso",
+                    title = currentItem?.title ?: stringResource(R.string.elearning_video_course_video),
                     subtitle = currentItem?.sectionName,
                     videoLoaded = activeStream != null,
                     onBack = onBack,
@@ -288,7 +290,7 @@ private fun VideoSurface(
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
                     Text(
-                        text = "Impossibile caricare il video",
+                        text = stringResource(R.string.elearning_video_load_failed),
                         color = Color.White,
                         style = MaterialTheme.typography.titleMedium,
                     )

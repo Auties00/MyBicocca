@@ -19,6 +19,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.res.stringResource
+import it.attendance100.mybicocca.R
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -129,12 +131,15 @@ private fun StaffTile(member: CourseStaffMember, variant: StaffVariant) {
     }
 }
 
-private fun roleLabel(role: CourseStaffRole): String = when (role) {
-    CourseStaffRole.Docente -> "Docente"
-    CourseStaffRole.Tutor -> "Tutor"
-    CourseStaffRole.Esercitatore -> "Esercitatore"
-    CourseStaffRole.Other -> "Staff"
-}
+@Composable
+private fun roleLabel(role: CourseStaffRole): String = stringResource(
+    when (role) {
+        CourseStaffRole.Docente -> R.string.elearning_course_docente_role
+        CourseStaffRole.Tutor -> R.string.elearning_course_tutor_role
+        CourseStaffRole.Esercitatore -> R.string.elearning_course_esercitatore_role
+        CourseStaffRole.Other -> R.string.elearning_course_staff_role
+    }
+)
 
 private fun String.initials(): String =
     split(" ", "\t").filter { it.isNotBlank() }.take(2)

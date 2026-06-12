@@ -20,10 +20,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import coil.ImageLoader
 import coil.decode.GifDecoder
 import coil.decode.ImageDecoderDecoder
 import coil.decode.SvgDecoder
+import it.attendance100.mybicocca.R
 import me.saket.telephoto.zoomable.coil.ZoomableAsyncImage
 import java.io.File
 
@@ -76,17 +78,21 @@ fun ImageViewerContent(
         ViewerBottomBar(
             primary = ViewerAction(
                 icon = Icons.Outlined.Download,
-                label = "Salva in galleria",
+                label = stringResource(R.string.elearning_file_save_to_gallery),
                 onClick = onSaveToGallery,
             ),
             ViewerAction(
                 icon = Icons.Outlined.Share,
-                label = "Condividi",
+                label = stringResource(R.string.elearning_file_share),
                 onClick = onShare,
             ),
             ViewerAction(
                 icon = if (fitToScreen) Icons.Outlined.Fullscreen else Icons.Outlined.FitScreen,
-                label = if (fitToScreen) "Riempi schermo" else "Adatta immagine",
+                label = if (fitToScreen) {
+                    stringResource(R.string.elearning_file_fill_screen)
+                } else {
+                    stringResource(R.string.elearning_file_fit_image)
+                },
                 onClick = { fitToScreen = !fitToScreen },
             ),
         )

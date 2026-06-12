@@ -375,13 +375,13 @@ private fun LeadingSlot(
         Box(contentAlignment = Alignment.Center) {
             MorphIcon(
                 imageVector = Icons.Outlined.Search,
-                contentDescription = if (mode == BarMode.PAGE) "Cerca" else null,
+                contentDescription = if (mode == BarMode.PAGE) stringResource(R.string.topbar_search) else null,
                 tint = scheme.onSurface,
                 alpha = fadeThroughCollapsed(p),
             )
             MorphIcon(
                 imageVector = Icons.AutoMirrored.Outlined.ArrowBack,
-                contentDescription = if (mode == BarMode.PAGE) null else "Indietro",
+                contentDescription = if (mode == BarMode.PAGE) null else stringResource(R.string.common_back),
                 tint = scheme.onSurface,
                 alpha = fadeThroughExpanded(p),
             )
@@ -458,7 +458,7 @@ private fun SearchFieldContent(
     ) {
         if (query.isEmpty()) {
             Text(
-                text = SearchPlaceholder,
+                text = stringResource(R.string.topbar_search_placeholder),
                 color = scheme.onSurfaceVariant,
                 fontSize = 16.sp,
             )
@@ -483,9 +483,6 @@ private fun SearchFieldContent(
         )
     }
 }
-
-/** One app-wide placeholder — search is unified, not scoped to the visible tab. */
-private const val SearchPlaceholder = "Cerca in MyBicocca"
 
 /**
  * Same fade-through + scale handoff as [LeadingSlot]: the avatar (collapsed/PAGE) is always

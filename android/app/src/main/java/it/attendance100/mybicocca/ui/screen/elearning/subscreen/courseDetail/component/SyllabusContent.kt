@@ -24,6 +24,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -37,6 +38,7 @@ import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.domain.model.elearning.course.CourseDetails
 import it.attendance100.mybicocca.domain.model.elearning.course.CourseLevel
 import it.attendance100.mybicocca.domain.model.elearning.course.CourseStaffMember
@@ -80,26 +82,26 @@ fun SyllabusContent(
         if (info.hasInfoTile) {
             item {
                 Column(modifier = Modifier.fillMaxWidth()) {
-                    SyllabusHeader(title = "Informazioni")
+                    SyllabusHeader(title = stringResource(R.string.elearning_course_info_section))
                     Spacer(Modifier.height(12.dp))
                     SyllabusInfoTile(info = info)
                 }
             }
         }
 
-        info.objectives?.let { item { SyllabusSection(title = "Obiettivi", body = it) } }
-        info.summary?.let { item { SyllabusSection(title = "Contenuti sintetici", body = it) } }
+        info.objectives?.let { item { SyllabusSection(title = stringResource(R.string.elearning_course_objectives), body = it) } }
+        info.summary?.let { item { SyllabusSection(title = stringResource(R.string.elearning_course_summary), body = it) } }
 
         if (info.extendedProgramme.isNotEmpty()) {
             item { ExtendedProgrammeList(parts = info.extendedProgramme) }
         }
 
-        info.prerequisites?.let { item { SyllabusSection(title = "Prerequisiti", body = it) } }
-        info.teachingMethod?.let { item { SyllabusSection(title = "Modalità didattica", body = it) } }
-        info.referenceMaterial?.let { item { SyllabusSection(title = "Materiale didattico", body = it) } }
-        info.assessment?.let { item { SyllabusSection(title = "Verifica del profitto", body = it) } }
-        info.officeHours?.let { item { SyllabusSection(title = "Orario di ricevimento", body = it) } }
-        info.sustainableDevelopmentGoals?.let { item { SyllabusSection(title = "Sustainable Development Goals", body = it) } }
+        info.prerequisites?.let { item { SyllabusSection(title = stringResource(R.string.elearning_course_prerequisites), body = it) } }
+        info.teachingMethod?.let { item { SyllabusSection(title = stringResource(R.string.elearning_course_teaching_method), body = it) } }
+        info.referenceMaterial?.let { item { SyllabusSection(title = stringResource(R.string.elearning_course_reference_material), body = it) } }
+        info.assessment?.let { item { SyllabusSection(title = stringResource(R.string.elearning_course_assessment), body = it) } }
+        info.officeHours?.let { item { SyllabusSection(title = stringResource(R.string.elearning_course_office_hours), body = it) } }
+        info.sustainableDevelopmentGoals?.let { item { SyllabusSection(title = stringResource(R.string.elearning_course_sustainable_goals), body = it) } }
 
         if (details.staff.isNotEmpty()) {
             item { StaffGrid(staff = details.staff) }
@@ -161,16 +163,16 @@ private fun SyllabusInfoTile(info: SyllabusInfo) {
                 if (info.credits != null) {
                     BigStatCard(
                         value = info.credits.toString(),
-                        label = "CFU",
-                        caption = "crediti formativi",
+                        label = stringResource(R.string.common_cfu),
+                        caption = stringResource(R.string.elearning_course_credits_label),
                         modifier = Modifier.weight(1f),
                     )
                 }
                 if (info.hours != null) {
                     BigStatCard(
                         value = info.hours.toString(),
-                        label = "ORE",
-                        caption = "ore di lezione",
+                        label = stringResource(R.string.elearning_course_hours_stat),
+                        caption = stringResource(R.string.elearning_course_hours_label),
                         modifier = Modifier.weight(1f),
                     )
                 }
@@ -249,7 +251,7 @@ private fun LanguageCard(language: String, modifier: Modifier = Modifier) {
                 letterSpacing = (-0.3).sp,
             )
             Text(
-                text = "lingua del corso",
+                text = stringResource(R.string.elearning_course_language_label),
                 color = scheme.onSurfaceVariant.copy(alpha = 0.78f),
                 fontStyle = FontStyle.Italic,
                 fontSize = 10.5.sp,
@@ -321,7 +323,7 @@ private fun LevelCard(level: CourseLevel, modifier: Modifier = Modifier) {
                 letterSpacing = (-0.3).sp,
             )
             Text(
-                text = "corso di laurea",
+                text = stringResource(R.string.elearning_course_level_label),
                 color = scheme.onSurfaceVariant.copy(alpha = 0.78f),
                 fontStyle = FontStyle.Italic,
                 fontSize = 10.5.sp,
@@ -430,7 +432,7 @@ private fun SemesterCalendar(semester: Semester) {
 private fun ExtendedProgrammeList(parts: List<ProgrammeSection>) {
     val scheme = MaterialTheme.colorScheme
     Column(modifier = Modifier.fillMaxWidth()) {
-        SyllabusHeader(title = "Programma esteso")
+        SyllabusHeader(title = stringResource(R.string.elearning_course_extended_program))
         Spacer(Modifier.height(8.dp))
         parts.forEachIndexed { index, part ->
             if (index > 0) {
@@ -452,7 +454,7 @@ private fun ExtendedProgrammeList(parts: List<ProgrammeSection>) {
                 ) {
                     Column {
                         Text(
-                            text = "PARTE",
+                            text = stringResource(R.string.elearning_course_part_prefix),
                             color = scheme.tertiary,
                             fontWeight = FontWeight.Bold,
                             fontSize = 9.sp,
@@ -487,7 +489,7 @@ private fun ExtendedProgrammeList(parts: List<ProgrammeSection>) {
                         if (part.items.isNotEmpty()) {
                             Spacer(Modifier.height(5.dp))
                             Text(
-                                text = "${part.items.size} argomenti",
+                                text = stringResource(R.string.elearning_course_topics_count, part.items.size),
                                 color = scheme.onSurfaceVariant.copy(alpha = 0.75f),
                                 fontStyle = FontStyle.Italic,
                                 fontSize = 12.sp,
@@ -546,7 +548,7 @@ private fun PillCluster(items: List<String>) {
 @Composable
 private fun StaffGrid(staff: List<CourseStaffMember>) {
     Column(modifier = Modifier.fillMaxWidth()) {
-        SyllabusHeader(title = "Staff")
+        SyllabusHeader(title = stringResource(R.string.elearning_course_staff))
         Spacer(Modifier.height(12.dp))
         val rows = staff.chunked(2)
         rows.forEachIndexed { rowIdx, pair ->
@@ -636,18 +638,21 @@ private fun StaffGridTile(member: CourseStaffMember, variant: StaffGridVariant, 
 private fun SyllabusEmpty(modifier: Modifier) {
     EmptyState(
         icon = Icons.Outlined.Description,
-        title = "Scheda non disponibile",
-        body = "La scheda di questo corso non è stata pubblicata.",
+        title = stringResource(R.string.elearning_course_syllabus_not_available),
+        body = stringResource(R.string.elearning_course_syllabus_not_published),
         modifier = modifier.testTag(CourseDetailTestTags.SYLLABUS_EMPTY),
     )
 }
 
-private fun roleLabel(role: CourseStaffRole): String = when (role) {
-    CourseStaffRole.Docente -> "Docente"
-    CourseStaffRole.Tutor -> "Tutor"
-    CourseStaffRole.Esercitatore -> "Esercitatore"
-    CourseStaffRole.Other -> "Staff"
-}
+@Composable
+private fun roleLabel(role: CourseStaffRole): String = stringResource(
+    when (role) {
+        CourseStaffRole.Docente -> R.string.elearning_course_docente_role
+        CourseStaffRole.Tutor -> R.string.elearning_course_tutor_role
+        CourseStaffRole.Esercitatore -> R.string.elearning_course_esercitatore_role
+        CourseStaffRole.Other -> R.string.elearning_course_staff_role
+    }
+)
 
 private fun initialsOf(name: String): String =
     name.split(" ", "\t").filter { it.isNotBlank() }.take(2)

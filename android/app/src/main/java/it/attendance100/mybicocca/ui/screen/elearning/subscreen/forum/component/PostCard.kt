@@ -38,10 +38,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.domain.model.elearning.forum.Post
 import it.attendance100.mybicocca.domain.model.elearning.forum.PostAttachment
 import it.attendance100.mybicocca.ui.component.text.HtmlBody
@@ -106,7 +109,7 @@ fun PostCard(
 
             if (post.isDeleted) {
                 Text(
-                    text = "Messaggio eliminato",
+                    text = stringResource(R.string.elearning_forum_deleted_post),
                     style = MaterialTheme.typography.bodyMedium,
                     color = scheme.onSurfaceVariant,
                     fontStyle = FontStyle.Italic,
@@ -168,8 +171,8 @@ private fun RepliesToggle(count: Int, collapsed: Boolean, onClick: () -> Unit) {
             )
             Text(
                 text = if (collapsed) {
-                    if (count == 1) "1 risposta" else "$count risposte"
-                } else "Nascondi",
+                    pluralStringResource(R.plurals.elearning_forum_reply_count, count, count)
+                } else stringResource(R.string.elearning_forum_collapse_replies),
                 style = MaterialTheme.typography.labelLarge,
                 color = if (collapsed) scheme.onSecondaryContainer else scheme.onSurfaceVariant,
                 fontWeight = FontWeight.SemiBold,
@@ -186,7 +189,7 @@ private fun PostMenu(post: Post, onReply: () -> Unit, onEdit: () -> Unit, onDele
     Box {
         Icon(
             imageVector = Icons.Outlined.MoreVert,
-            contentDescription = "Azioni",
+            contentDescription = stringResource(R.string.elearning_forum_actions),
             tint = scheme.onSurfaceVariant,
             modifier = Modifier
                 .size(28.dp)
@@ -196,7 +199,7 @@ private fun PostMenu(post: Post, onReply: () -> Unit, onEdit: () -> Unit, onDele
         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
             if (post.canReply) {
                 DropdownMenuItem(
-                    text = { Text("Rispondi") },
+                    text = { Text(stringResource(R.string.elearning_forum_reply)) },
                     onClick = { expanded = false; onReply() },
                     leadingIcon = { Icon(Icons.AutoMirrored.Outlined.Reply, contentDescription = null) },
                     enabled = isOnline,
@@ -204,7 +207,7 @@ private fun PostMenu(post: Post, onReply: () -> Unit, onEdit: () -> Unit, onDele
             }
             if (post.canEdit) {
                 DropdownMenuItem(
-                    text = { Text("Modifica") },
+                    text = { Text(stringResource(R.string.elearning_forum_edit)) },
                     onClick = { expanded = false; onEdit() },
                     leadingIcon = { Icon(Icons.Outlined.Edit, contentDescription = null) },
                     enabled = isOnline,
@@ -212,7 +215,7 @@ private fun PostMenu(post: Post, onReply: () -> Unit, onEdit: () -> Unit, onDele
             }
             if (post.canDelete) {
                 DropdownMenuItem(
-                    text = { Text("Elimina") },
+                    text = { Text(stringResource(R.string.elearning_forum_delete)) },
                     onClick = { expanded = false; onDelete() },
                     leadingIcon = { Icon(Icons.Outlined.Delete, contentDescription = null) },
                     enabled = isOnline,

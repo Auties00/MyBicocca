@@ -14,9 +14,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.domain.model.elearning.video.VideoVariant
 
 /**
@@ -35,14 +37,14 @@ fun QualityPickerSheet(
     it.attendance100.mybicocca.ui.component.modal.PredictiveModalBottomSheet(onDismiss = onDismiss) { _, _ ->
         Column(modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)) {
             Text(
-                text = "Qualità",
+                text = stringResource(R.string.elearning_video_quality),
                 fontWeight = FontWeight.SemiBold,
                 fontSize = 18.sp,
                 modifier = Modifier.padding(start = 24.dp, top = 8.dp, bottom = 8.dp),
             )
             QualityRow(
-                label = "Automatica",
-                detail = "Adattiva (consigliata)",
+                label = stringResource(R.string.elearning_video_quality_auto),
+                detail = stringResource(R.string.elearning_video_quality_auto_detail),
                 isSelected = selected == null,
                 onClick = { onSelect(null); onDismiss() },
             )

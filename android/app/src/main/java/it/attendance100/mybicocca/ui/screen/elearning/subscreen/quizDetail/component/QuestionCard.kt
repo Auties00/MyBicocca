@@ -38,6 +38,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Matrix
@@ -54,6 +55,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.graphics.shapes.Morph
 import androidx.graphics.shapes.toPath
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.domain.model.elearning.quiz.AttemptQuestion
 import it.attendance100.mybicocca.ui.component.text.HtmlBody
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.quizDetail.state.ChoiceOption
@@ -147,7 +149,7 @@ fun QuestionCard(
                     onValueChange = { onAnswer(model.baseFields + (model.fieldName to it)) },
                     readOnly = readOnly,
                     singleLine = true,
-                    placeholder = { Text("Risposta…") },
+                    placeholder = { Text(stringResource(R.string.elearning_quiz_answer_placeholder)) },
                     keyboardOptions = if (model.numeric) {
                         KeyboardOptions(keyboardType = KeyboardType.Decimal)
                     } else {
@@ -163,7 +165,7 @@ fun QuestionCard(
                     onValueChange = { onAnswer(model.baseFields + (model.fieldName to it)) },
                     readOnly = readOnly,
                     minLines = 5,
-                    placeholder = { Text("Scrivi qui la tua risposta…") },
+                    placeholder = { Text(stringResource(R.string.elearning_quiz_essay_placeholder)) },
                     modifier = Modifier.fillMaxWidth(),
                 )
             }
@@ -180,7 +182,7 @@ fun QuestionCard(
             is QuestionUiModel.Unsupported -> if (!readOnly) {
                 BodyTile(closing = bodyClosing) {
                     Text(
-                        text = "Questo tipo di domanda non è supportato nell'app: rispondi dal sito e-learning.",
+                        text = stringResource(R.string.elearning_quiz_unsupported_question),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.error,
                         fontStyle = FontStyle.Italic,
@@ -192,10 +194,20 @@ fun QuestionCard(
         if (readOnly) {
             val hasFeedback = parsed.feedbackHtml != null
             parsed.rightAnswerHtml?.let {
-                ReviewNoteTile(title = "Risposta corretta", html = it, accent = true, closing = !hasFeedback)
+                ReviewNoteTile(
+                    title = stringResource(R.string.elearning_quiz_correct_answer),
+                    html = it,
+                    accent = true,
+                    closing = !hasFeedback,
+                )
             }
             parsed.feedbackHtml?.let {
-                ReviewNoteTile(title = "Feedback", html = it, accent = false, closing = true)
+                ReviewNoteTile(
+                    title = stringResource(R.string.elearning_quiz_feedback),
+                    html = it,
+                    accent = false,
+                    closing = true,
+                )
             }
         }
     }
@@ -225,7 +237,7 @@ private fun QuestionHeaderTile(
         Column(modifier = Modifier.padding(start = 18.dp, end = 16.dp, top = 14.dp, bottom = 14.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    text = "DOMANDA ${question.slot}",
+                    text = stringResource(R.string.elearning_quiz_question_number, question.slot),
                     color = scheme.tertiary,
                     fontWeight = FontWeight.Bold,
                     fontSize = 11.sp,
@@ -238,7 +250,11 @@ private fun QuestionHeaderTile(
                     IconButton(onClick = onToggleFlag, modifier = Modifier.size(32.dp)) {
                         Icon(
                             imageVector = if (flagged) Icons.Rounded.Flag else Icons.Outlined.Flag,
-                            contentDescription = if (flagged) "Rimuovi contrassegno" else "Contrassegna domanda",
+                            contentDescription = if (flagged) {
+                                stringResource(R.string.elearning_quiz_remove_flag)
+                            } else {
+                                stringResource(R.string.elearning_quiz_flag_question)
+                            },
                             tint = if (flagged) scheme.tertiary else scheme.onSurfaceVariant,
                             modifier = Modifier.size(18.dp),
                         )
@@ -248,7 +264,11 @@ private fun QuestionHeaderTile(
             if (readOnly && question.mark != null && question.maxMark != null) {
                 Spacer(Modifier.height(2.dp))
                 Text(
-                    text = "Punteggio ${formatGradeValue(question.mark)} su ${formatGradeValue(question.maxMark)}",
+                    text = stringResource(
+                        R.string.elearning_quiz_question_score,
+                        formatGradeValue(question.mark),
+                        formatGradeValue(question.maxMark),
+                    ),
                     style = MaterialTheme.typography.labelSmall,
                     color = scheme.onSurfaceVariant,
                     fontStyle = FontStyle.Italic,
@@ -451,13 +471,25 @@ private fun ClozeContent(
                         onValueChange = { emit(segment.fieldName, it) },
                         readOnly = readOnly,
                         singleLine = true,
-                        label = { Text("Risposta $gapNumber") },
+                        label = { Text(stringResource(R.string.elearning_quiz_gap_answer, gapNumber)) },
                         trailingIcon = when (segment.reviewMark) {
                             ReviewMark.Correct -> {
-                                { Icon(Icons.Rounded.Check, contentDescription = "Corretta", tint = scheme.primary) }
+                                {
+                                    Icon(
+                                        Icons.Rounded.Check,
+                                        contentDescription = stringResource(R.string.elearning_quiz_correct),
+                                        tint = scheme.primary,
+                                    )
+                                }
                             }
                             ReviewMark.Incorrect -> {
-                                { Icon(Icons.Rounded.Close, contentDescription = "Sbagliata", tint = scheme.error) }
+                                {
+                                    Icon(
+                                        Icons.Rounded.Close,
+                                        contentDescription = stringResource(R.string.elearning_quiz_incorrect),
+                                        tint = scheme.error,
+                                    )
+                                }
                             }
                             null -> null
                         },
@@ -470,7 +502,7 @@ private fun ClozeContent(
                     val current = currentValue(segment.fieldName, segment.initialValue)
                     Column {
                         Text(
-                            text = "Risposta $gapNumber",
+                            text = stringResource(R.string.elearning_quiz_gap_answer, gapNumber),
                             style = MaterialTheme.typography.labelSmall,
                             color = when (segment.reviewMark) {
                                 ReviewMark.Correct -> scheme.primary
@@ -518,11 +550,31 @@ private fun ClozeContent(
 private fun VerdictBadge(question: AttemptQuestion) {
     val scheme = MaterialTheme.colorScheme
     val (label, bg, fg) = when (question.state) {
-        "gradedright" -> Triple("CORRETTA", scheme.primaryContainer, scheme.onPrimaryContainer)
-        "gradedpartial" -> Triple("PARZIALE", scheme.tertiaryContainer, scheme.onTertiaryContainer)
-        "gradedwrong" -> Triple("SBAGLIATA", scheme.errorContainer, scheme.onErrorContainer)
-        "gaveup" -> Triple("SENZA RISPOSTA", scheme.surfaceContainerHighest, scheme.onSurfaceVariant)
-        "needsgrading", "complete" -> Triple("DA VALUTARE", scheme.secondaryContainer, scheme.onSecondaryContainer)
+        "gradedright" -> Triple(
+            stringResource(R.string.elearning_quiz_verdict_correct),
+            scheme.primaryContainer,
+            scheme.onPrimaryContainer,
+        )
+        "gradedpartial" -> Triple(
+            stringResource(R.string.elearning_quiz_verdict_partial),
+            scheme.tertiaryContainer,
+            scheme.onTertiaryContainer,
+        )
+        "gradedwrong" -> Triple(
+            stringResource(R.string.elearning_quiz_verdict_wrong),
+            scheme.errorContainer,
+            scheme.onErrorContainer,
+        )
+        "gaveup" -> Triple(
+            stringResource(R.string.elearning_quiz_verdict_no_answer),
+            scheme.surfaceContainerHighest,
+            scheme.onSurfaceVariant,
+        )
+        "needsgrading", "complete" -> Triple(
+            stringResource(R.string.elearning_quiz_verdict_to_grade),
+            scheme.secondaryContainer,
+            scheme.onSecondaryContainer,
+        )
         else -> return
     }
     Box(

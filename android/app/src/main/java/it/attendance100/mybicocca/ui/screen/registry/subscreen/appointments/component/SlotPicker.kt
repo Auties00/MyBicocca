@@ -53,8 +53,8 @@ import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
-private val MonthTitleFormat = DateTimeFormatter.ofPattern("LLLL yyyy", Locale.ITALIAN)
-private val DayHeaderFormat = DateTimeFormatter.ofPattern("EEEE d MMMM", Locale.ITALIAN)
+private val MonthTitleFormat = DateTimeFormatter.ofPattern("LLLL yyyy", Locale.getDefault())
+private val DayHeaderFormat = DateTimeFormatter.ofPattern("EEEE d MMMM", Locale.getDefault())
 private val TimeFormat = DateTimeFormatter.ofPattern("HH:mm")
 
 /** Italian week, Monday-first. The narrow names collide (Mar/Mer both "M"), so the letters are fixed. */
@@ -173,7 +173,7 @@ private fun MonthSwitcher(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
-            text = month.format(MonthTitleFormat).replaceFirstChar { it.titlecase(Locale.ITALIAN) },
+            text = month.format(MonthTitleFormat).replaceFirstChar { it.titlecase(Locale.getDefault()) },
             style = MaterialTheme.typography.titleLargeEmphasized,
             fontWeight = FontWeight.SemiBold,
             color = MaterialTheme.colorScheme.onSurface,
@@ -368,7 +368,7 @@ private fun TimeCard(
             modifier = Modifier.size(20.dp),
         )
         Text(
-            text = date.format(DayHeaderFormat).replaceFirstChar { it.titlecase(Locale.ITALIAN) },
+            text = date.format(DayHeaderFormat).replaceFirstChar { it.titlecase(Locale.getDefault()) },
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.SemiBold,
             color = MaterialTheme.colorScheme.onSurface,
