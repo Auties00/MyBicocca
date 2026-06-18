@@ -50,7 +50,7 @@ android {
         minSdk = 25
         targetSdk = 36
         versionCode = 1
-        versionName = "1.0"
+        versionName = "0.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -141,11 +141,11 @@ ksp {
 // Dependencies
 dependencies {
     // Data API modules
-    implementation("it.attendance100.mybicocca.data.remote:esse3:1.0")
-    implementation("it.attendance100.mybicocca.data.remote:esse3-scraper:1.0") // Legacy Esse3 web-scrape client (Shibboleth SAML cookie session) for the flows with no REST surface(autocertificazioni)
-    implementation("it.attendance100.mybicocca.data.remote:easystaff:1.0")
-    implementation("it.attendance100.mybicocca.data.remote:affluences:1.0")
-    implementation("it.attendance100.mybicocca.data.remote:elearning:1.0")
+    implementation("it.attendance100.mybicocca.data.remote:esse3:0.1")
+    implementation("it.attendance100.mybicocca.data.remote:esse3-scraper:0.1") // Legacy Esse3 web-scrape client (Shibboleth SAML cookie session) for the flows with no REST surface(autocertificazioni)
+    implementation("it.attendance100.mybicocca.data.remote:easystaff:0.1")
+    implementation("it.attendance100.mybicocca.data.remote:affluences:0.1")
+    implementation("it.attendance100.mybicocca.data.remote:elearning:0.1")
 
     // Android
     implementation("androidx.core:core-ktx:1.17.0")

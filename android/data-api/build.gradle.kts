@@ -8,7 +8,7 @@ plugins {
 }
 
 group = "it.attendance100.mybicocca.data.remote"
-version = "1.0"
+version = "0.1"
 
 dependencies {
     // Ktor HTTP Client
