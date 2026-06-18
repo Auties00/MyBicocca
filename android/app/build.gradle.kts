@@ -246,6 +246,7 @@ dependencies {
     // Ktor
     implementation("io.ktor:ktor-io:3.3.3")
     implementation("io.ktor:ktor-client-core:3.3.3")
+
     // App-side GitHub Releases client (update check). The data-api clients bring their own
     // engine transitively; the app needs its own engine + JSON negotiation to build one here.
     implementation("io.ktor:ktor-client-okhttp:3.3.3")
