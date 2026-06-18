@@ -50,7 +50,7 @@ android {
         minSdk = 25
         targetSdk = 36
         versionCode = 1
-        versionName = "0.1"
+        versionName = "0.0.2"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -246,6 +246,11 @@ dependencies {
     // Ktor
     implementation("io.ktor:ktor-io:3.3.3")
     implementation("io.ktor:ktor-client-core:3.3.3")
+    // App-side GitHub Releases client (update check). The data-api clients bring their own
+    // engine transitively; the app needs its own engine + JSON negotiation to build one here.
+    implementation("io.ktor:ktor-client-okhttp:3.3.3")
+    implementation("io.ktor:ktor-client-content-negotiation:3.3.3")
+    implementation("io.ktor:ktor-serialization-kotlinx-json:3.3.3")
 
     // Firebase Performance Monitoring
     implementation(platform("com.google.firebase:firebase-bom:34.4.0"))

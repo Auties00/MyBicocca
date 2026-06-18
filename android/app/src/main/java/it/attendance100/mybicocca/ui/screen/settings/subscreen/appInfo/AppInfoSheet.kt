@@ -1,6 +1,15 @@
 package it.attendance100.mybicocca.ui.screen.settings.subscreen.appInfo
 
+import androidx.activity.compose.PredictiveBackHandler
 import androidx.browser.customtabs.CustomTabsIntent
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.ContentTransform
+import androidx.compose.animation.SizeTransform
+import androidx.compose.animation.core.SeekableTransitionState
+import androidx.compose.animation.core.rememberTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -8,10 +17,13 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
@@ -22,23 +34,32 @@ import androidx.compose.material.icons.outlined.NewReleases
 import androidx.compose.material.icons.outlined.Update
 import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material.icons.rounded.Link
+import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
@@ -46,20 +67,24 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.net.toUri
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import it.attendance100.mybicocca.BuildConfig
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.os.rememberHapticManager
+import it.attendance100.mybicocca.domain.model.update.UpdateCheckResult
+import it.attendance100.mybicocca.domain.model.update.UpdateStatus
 import it.attendance100.mybicocca.ui.component.brand.MyBicoccaWordmark
 import it.attendance100.mybicocca.ui.component.directory.SegmentedIconChip
 import it.attendance100.mybicocca.ui.component.directory.SegmentedTile
 import it.attendance100.mybicocca.ui.component.directory.segmentedShape
 import it.attendance100.mybicocca.ui.component.feedback.AppSnackbarHost
 import it.attendance100.mybicocca.ui.component.feedback.rememberAppSnackbarController
-import it.attendance100.mybicocca.ui.component.modal.PredictiveModalBottomSheet
-import kotlinx.coroutines.delay
+import it.attendance100.mybicocca.ui.component.modal.sheetPageTransform
 import kotlinx.coroutines.launch
 import java.time.Year
+import kotlin.coroutines.cancellation.CancellationException
 
 private const val COPYRIGHT_START_YEAR = 2025
 private const val GITHUB_URL = "https://github.com/Auties00/MyBicocca"
@@ -87,64 +112,247 @@ private val CREDITS = listOf(
 )
 
 /**
- * The settings About page, shown as a modal bottom sheet. A centered header stacks the app logo
- * with the wordmark tucked up close beneath it, then the version (with a debug marker on debug
- * builds) and the copyright span. Below, a connected segmented card offers three actions:
- * "Check for Updates" (shows an inline spinner in the trailing slot; the check itself is a
- * stubbed delay, and re-taps while one is in flight are ignored so checks never overlap),
- * "What's New" (haptic-only placeholder), and "GitHub", which opens the repository in an in-app
- * Custom Tab so the user stays inside the app. A "Credits" section lists the team as compact
- * avatar rows.
+ * The settings About modal — a full-height, two-state bottom sheet (About ⇄ What's New) built on
+ * the same predictive-back machinery as the account switcher.
+ *
+ * The sheet always expands to the full available height even when the About content is short, so
+ * both states share one stable frame. A back gesture is staged through a seekable transition: in
+ * the What's New state it drives the page back to About (springing back if cancelled); in the
+ * About state it drives the close transition, shrinking the sheet's height in step with the
+ * finger before dismissing. Tapping the "What's New" tile (or the in-page back arrow) moves
+ * between the two states with the shared in-sheet page push.
+ *
+ * The About state keeps the update-aware "Check for Updates" tile (forced check + sheet snackbar
+ * while up to date; an "Update available" tile that opens the store-aware page once a newer
+ * release is known), the "What's New" navigation tile, the "GitHub" Custom Tab link, and the
+ * credits.
  */
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AppInfoSheet(onDismiss: () -> Unit) {
+fun AppInfoSheet(
+    onDismiss: () -> Unit,
+    viewModel: AppInfoViewModel = hiltViewModel(),
+) {
+    val scheme = MaterialTheme.colorScheme
+    val scope = rememberCoroutineScope()
+    val snackbar = rememberAppSnackbarController()
+    val githubIcon = ImageVector.vectorResource(R.drawable.ic_github)
+
+    val updateStatus by viewModel.status.collectAsStateWithLifecycle()
+    val checking by viewModel.checking.collectAsStateWithLifecycle()
+    var whatsNewOpen by rememberSaveable { mutableStateOf(false) }
+
+    val noUpdatesMsg = stringResource(R.string.settings_no_updates_found)
+    val newVersionMsg = stringResource(R.string.shell_update_available)
+    val checkFailedMsg = stringResource(R.string.settings_update_check_failed)
+
+    val onCheckResult: (UpdateCheckResult) -> Unit = { result ->
+        scope.launch {
+            when (result) {
+                UpdateCheckResult.UpToDate -> snackbar.showInfo(noUpdatesMsg)
+                is UpdateCheckResult.UpdateAvailable -> snackbar.showInfo(newVersionMsg)
+                is UpdateCheckResult.Failed -> snackbar.showError(checkFailedMsg, result.cause)
+            }
+        }
+    }
+
+    // Seekable page transition (About <-> What's New), advanced by the tile/back arrow and driven
+    // frame-by-frame by the back gesture while What's New is open.
+    val pageSeekable = remember { SeekableTransitionState(false) }
+    val pageTransition = rememberTransition(pageSeekable, label = "appInfoPage")
+    LaunchedEffect(whatsNewOpen) {
+        if (pageSeekable.targetState != whatsNewOpen) {
+            pageSeekable.animateTo(whatsNewOpen, tween(durationMillis = 450))
+        }
+    }
+    val whatsNewOpenState = rememberUpdatedState(whatsNewOpen)
+
+    val sheetState = rememberModalBottomSheetState(
+        skipPartiallyExpanded = true,
+        confirmValueChange = { newState ->
+            !(whatsNewOpenState.value && newState == SheetValue.Hidden)
+        },
+    )
+
+    // Seekable close transition, driven by the back gesture in the About state so the sheet's
+    // height collapses with the finger before it dismisses.
+    val closeSeekable = remember { SeekableTransitionState(true) }
+    val closeTransition = rememberTransition(closeSeekable, label = "appInfoClose")
+
+    val configuration = LocalConfiguration.current
+    val screenHeight = configuration.screenHeightDp.dp
+    val topWindowInsets =
+        WindowInsets.safeDrawing.asPaddingValues(LocalDensity.current).calculateTopPadding()
+    val handleHeight = 16.dp
+    val fullHeight = screenHeight - topWindowInsets - handleHeight
+
+    ModalBottomSheet(
+        onDismissRequest = { if (whatsNewOpen) whatsNewOpen = false else onDismiss() },
+        sheetState = sheetState,
+        contentWindowInsets = { WindowInsets(0) },
+        dragHandle = { Box(Modifier.padding(top = handleHeight)) },
+        shape = BottomSheetDefaults.ExpandedShape,
+        containerColor = scheme.surfaceContainerLow,
+    ) {
+        PredictiveBackHandler(enabled = whatsNewOpen) { progress ->
+            try {
+                progress.collect { backEvent ->
+                    pageSeekable.seekTo(
+                        backEvent.progress,
+                        targetState = false
+                    )
+                }
+                whatsNewOpen = false
+                pageSeekable.animateTo(false)
+            } catch (_: CancellationException) {
+                pageSeekable.animateTo(true)
+            }
+        }
+
+        PredictiveBackHandler(enabled = !whatsNewOpen && sheetState.isVisible) { progress ->
+            try {
+                progress.collect { backEvent ->
+                    closeSeekable.seekTo(
+                        backEvent.progress,
+                        targetState = false
+                    )
+                }
+                closeSeekable.animateTo(false)
+                onDismiss()
+            } catch (_: CancellationException) {
+                closeSeekable.animateTo(true)
+            }
+        }
+
+        closeTransition.AnimatedContent(
+            modifier = Modifier.fillMaxWidth(),
+            transitionSpec = {
+                ContentTransform(
+                    targetContentEnter = fadeIn(tween(durationMillis = 400)),
+                    initialContentExit = fadeOut(tween(durationMillis = 400)),
+                    sizeTransform = SizeTransform(clip = true) { _, _ -> tween(durationMillis = 450) },
+                )
+            },
+            contentKey = { it },
+        ) { isVisible ->
+            if (isVisible) {
+                Box(Modifier.fillMaxWidth()) {
+                    pageTransition.AnimatedContent(
+                        modifier = Modifier.fillMaxWidth(),
+                        transitionSpec = { sheetPageTransform(forward = targetState) },
+                        contentKey = { it },
+                    ) { showingWhatsNew ->
+                        if (showingWhatsNew) {
+                            WhatsNewScene(
+                                onBack = { whatsNewOpen = false },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(fullHeight),
+                            )
+                        } else {
+                            AboutScene(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(fullHeight),
+                                viewModel = viewModel,
+                                updateStatus = updateStatus,
+                                checking = checking,
+                                githubIcon = githubIcon,
+                                onOpenWhatsNew = { whatsNewOpen = true },
+                                onCheckResult = onCheckResult,
+                            )
+                        }
+                    }
+                    AppSnackbarHost(
+                        controller = snackbar,
+                        modifier = Modifier.align(Alignment.BottomCenter),
+                    )
+                }
+            } else {
+                Spacer(
+                    Modifier
+                        .fillMaxWidth()
+                        .height(0.dp),
+                )
+            }
+        }
+    }
+}
+
+/**
+ * The About state's content: the centered logo/wordmark/version/copyright header, the action
+ * tiles, and the credits. Sized to fill the sheet via [modifier]; its content scrolls when it
+ * outgrows the frame and simply sits at the top otherwise.
+ */
+@Composable
+private fun AboutScene(
+    modifier: Modifier,
+    viewModel: AppInfoViewModel,
+    updateStatus: UpdateStatus,
+    checking: Boolean,
+    githubIcon: ImageVector,
+    onOpenWhatsNew: () -> Unit,
+    onCheckResult: (UpdateCheckResult) -> Unit,
+) {
     val scheme = MaterialTheme.colorScheme
     val secondary = scheme.onSurfaceVariant
     val haptic = rememberHapticManager()
     val context = LocalContext.current
-    val githubIcon = ImageVector.vectorResource(R.drawable.ic_github)
-    val scope = rememberCoroutineScope()
-    var isLoading by remember { mutableStateOf(false) }
-    val snackbar = rememberAppSnackbarController()
-    val noUpdatesMsg = stringResource(R.string.settings_no_updates_found)
-    val noVersionsMsg = stringResource(R.string.settings_no_other_versions)
 
-    PredictiveModalBottomSheet(
-        onDismiss = onDismiss,
-        sizeDuration = 500,
-    ) { _, _ ->
-        Box(Modifier.fillMaxWidth()) {
+    Column(
+        modifier = modifier
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = 20.dp)
+            .padding(bottom = 24.dp),
+    ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 20.dp)
-                .padding(bottom = 24.dp),
+            modifier = Modifier.fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                Spacer(Modifier.height(8.dp))
-                Image(
-                    painter = painterResource(R.drawable.logo),
-                    contentDescription = "Logo MyBicocca",
-                    modifier = Modifier.size(168.dp),
-                )
-                MyBicoccaWordmark(
-                    modifier = Modifier.offset(y = (-10).dp),
-                    fontSize = 30.sp,
-                    fontWeight = FontWeight.Bold,
-                )
-                Text(text = versionText, color = secondary, fontSize = 14.sp)
-                Spacer(Modifier.height(8.dp))
-                Text(text = copyrightText, color = secondary, fontSize = 13.sp)
-            }
+            Spacer(Modifier.height(8.dp))
+            Image(
+                painter = painterResource(R.drawable.logo),
+                contentDescription = "Logo MyBicocca",
+                modifier = Modifier.size(168.dp),
+            )
+            MyBicoccaWordmark(
+                modifier = Modifier.offset(y = (-10).dp),
+                fontSize = 30.sp,
+                fontWeight = FontWeight.Bold,
+            )
+            Text(text = versionText, color = secondary, fontSize = 14.sp)
+            Spacer(Modifier.height(8.dp))
+            Text(text = copyrightText, color = secondary, fontSize = 13.sp)
+        }
 
-            Spacer(Modifier.height(28.dp))
+        Spacer(Modifier.height(28.dp))
 
-            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            val available = updateStatus as? UpdateStatus.UpdateAvailable
+            if (available != null) {
+                SegmentedTile(
+                    isFirst = true,
+                    isLast = false,
+                    title = stringResource(R.string.settings_update_available_title),
+                    subtitle = stringResource(
+                        R.string.settings_update_available_subtitle,
+                        available.release.versionName,
+                    ),
+                    onClick = {
+                        haptic.tap()
+                        CustomTabsIntent.Builder().setShowTitle(true).build()
+                            .launchUrl(context, viewModel.updatePageUrl(available.release).toUri())
+                    },
+                    leading = {
+                        SegmentedIconChip(
+                            Icons.Outlined.Update,
+                            scheme.primaryContainer,
+                            scheme.onPrimaryContainer,
+                        )
+                    },
+                    trailing = { TrailingGlyph(Icons.Rounded.ChevronRight) },
+                )
+            } else {
                 SegmentedTile(
                     isFirst = true,
                     isLast = false,
@@ -152,25 +360,18 @@ fun AppInfoSheet(onDismiss: () -> Unit) {
                     subtitle = stringResource(R.string.settings_check_updates_subtitle),
                     onClick = {
                         haptic.tap()
-                        if (!isLoading) {
-                            isLoading = true
-                            scope.launch {
-                                delay(2000L)
-                                isLoading = false
-                                snackbar.showInfo(noUpdatesMsg)
-                            }
-                        }
+                        if (!checking) viewModel.check(onCheckResult)
                     },
                     leading = {
                         SegmentedIconChip(
                             Icons.Outlined.Update,
                             scheme.secondaryContainer,
-                            scheme.onSecondaryContainer
+                            scheme.onSecondaryContainer,
                         )
                     },
                     trailing = {
                         Spacer(Modifier.width(6.dp))
-                        if (isLoading) {
+                        if (checking) {
                             CircularProgressIndicator(
                                 modifier = Modifier.size(22.dp),
                                 strokeWidth = 2.dp,
@@ -179,68 +380,63 @@ fun AppInfoSheet(onDismiss: () -> Unit) {
                         }
                     },
                 )
-                SegmentedTile(
-                    isFirst = false,
-                    isLast = false,
-                    title = stringResource(R.string.settings_whats_new_title),
-                    subtitle = stringResource(R.string.settings_whats_new_subtitle),
-                    onClick = {
-                        haptic.tap()
-                        scope.launch { snackbar.showInfo(noVersionsMsg) }
-                    },
-                    leading = {
-                        SegmentedIconChip(
-                            Icons.Outlined.NewReleases,
-                            scheme.secondaryContainer,
-                            scheme.onSecondaryContainer
-                        )
-                    },
-                    trailing = { TrailingGlyph(Icons.Rounded.ChevronRight) },
-                )
-                SegmentedTile(
-                    isFirst = false,
-                    isLast = true,
-                    title = stringResource(R.string.settings_github_title),
-                    subtitle = stringResource(R.string.settings_github_subtitle),
-                    onClick = {
-                        haptic.tap()
-                        CustomTabsIntent.Builder().setShowTitle(true).build()
-                            .launchUrl(context, GITHUB_URL.toUri())
-                    },
-                    leading = {
-                        SegmentedIconChip(
-                            githubIcon,
-                            scheme.secondaryContainer,
-                            scheme.onSecondaryContainer
-                        )
-                    },
-                    trailing = { TrailingGlyph(Icons.Rounded.Link) },
-                )
             }
-
-            Spacer(Modifier.height(24.dp))
-
-            Text(
-                text = stringResource(R.string.settings_credits_title),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
-                modifier = Modifier.padding(start = 4.dp, bottom = 8.dp),
-            )
-
-            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                CREDITS.forEachIndexed { index, credit ->
-                    CreditTile(
-                        credit = credit,
-                        isFirst = index == 0,
-                        isLast = index == CREDITS.lastIndex,
+            SegmentedTile(
+                isFirst = false,
+                isLast = false,
+                title = stringResource(R.string.settings_whats_new_title),
+                subtitle = stringResource(R.string.settings_whats_new_subtitle),
+                onClick = {
+                    haptic.tap()
+                    onOpenWhatsNew()
+                },
+                leading = {
+                    SegmentedIconChip(
+                        Icons.Outlined.NewReleases,
+                        scheme.secondaryContainer,
+                        scheme.onSecondaryContainer,
                     )
-                }
-            }
-        }
-            AppSnackbarHost(
-                controller = snackbar,
-                modifier = Modifier.align(Alignment.BottomCenter),
+                },
+                trailing = { TrailingGlyph(Icons.Rounded.ChevronRight) },
             )
+            SegmentedTile(
+                isFirst = false,
+                isLast = true,
+                title = stringResource(R.string.settings_github_title),
+                subtitle = stringResource(R.string.settings_github_subtitle),
+                onClick = {
+                    haptic.tap()
+                    CustomTabsIntent.Builder().setShowTitle(true).build()
+                        .launchUrl(context, GITHUB_URL.toUri())
+                },
+                leading = {
+                    SegmentedIconChip(
+                        githubIcon,
+                        scheme.secondaryContainer,
+                        scheme.onSecondaryContainer,
+                    )
+                },
+                trailing = { TrailingGlyph(Icons.Rounded.Link) },
+            )
+        }
+
+        Spacer(Modifier.height(24.dp))
+
+        Text(
+            text = stringResource(R.string.settings_credits_title),
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier.padding(start = 4.dp, bottom = 8.dp),
+        )
+
+        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            CREDITS.forEachIndexed { index, credit ->
+                CreditTile(
+                    credit = credit,
+                    isFirst = index == 0,
+                    isLast = index == CREDITS.lastIndex,
+                )
+            }
         }
     }
 }
