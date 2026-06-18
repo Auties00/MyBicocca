@@ -502,6 +502,13 @@ fun MainShell(
     }
 
     val snackbarController = rememberAppSnackbarController()
+    val updateEventsViewModel: UpdateEventsViewModel = hiltViewModel()
+
+    LaunchedEffect(updateEventsViewModel, snackbarController) {
+        updateEventsViewModel.events.collect {
+            snackbarController.showInfo(context.getString(R.string.shell_update_available))
+        }
+    }
 
     LaunchedEffect(accountViewModel, snackbarController) {
         accountViewModel.events.collect { event ->

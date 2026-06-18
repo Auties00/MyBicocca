@@ -32,8 +32,12 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
 import it.attendance100.mybicocca.core.os.LocalDeviceType
+import it.attendance100.mybicocca.core.os.LocalPipController
+import it.attendance100.mybicocca.core.os.PipController
+import it.attendance100.mybicocca.core.os.PipState
 import it.attendance100.mybicocca.core.os.ProvideHapticManager
 import it.attendance100.mybicocca.core.os.getDeviceType
+import it.attendance100.mybicocca.data.update.UpdateChecker
 import it.attendance100.mybicocca.domain.model.library.LibraryActionKind
 import it.attendance100.mybicocca.domain.model.library.LibraryDeepLinkAction
 import it.attendance100.mybicocca.domain.model.settings.AppTheme
@@ -44,9 +48,6 @@ import it.attendance100.mybicocca.domain.usecase.security.ObserveAppLockEnabledU
 import it.attendance100.mybicocca.domain.usecase.security.ObserveSecureScreenUseCase
 import it.attendance100.mybicocca.domain.usecase.settings.ObserveAppThemeUseCase
 import it.attendance100.mybicocca.domain.usecase.settings.ObserveThemeModeUseCase
-import it.attendance100.mybicocca.core.os.LocalPipController
-import it.attendance100.mybicocca.core.os.PipController
-import it.attendance100.mybicocca.core.os.PipState
 import it.attendance100.mybicocca.ui.navigation.AppRoot
 import it.attendance100.mybicocca.ui.theme.BicoccaTheme
 import it.attendance100.mybicocca.ui.theme.LocalAppTheme
@@ -91,6 +92,10 @@ class MyBicoccaActivity : AppCompatActivity() {
     @Inject
     lateinit var submitLibraryAction: SubmitLibraryActionUseCase
 
+    // Drives the once-a-day update check; started in onCreate.
+    @Inject
+    lateinit var updateChecker: UpdateChecker
+
     private val pipController = object : PipController {
         private var state: PipState? = null
         val inPip = mutableStateOf(false)
@@ -121,6 +126,8 @@ class MyBicoccaActivity : AppCompatActivity() {
 
         captureAttendanceDeepLink(intent)
         captureLibraryDeepLink(intent)
+
+        updateChecker.start()
 
         splashScreen.setOnExitAnimationListener { provider -> provider.animateExitAndRemove() }
 

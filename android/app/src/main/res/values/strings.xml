@@ -100,6 +100,7 @@
     <string name="shell_new_career_available">Nuova carriera disponibile: %s</string>
     <string name="shell_career_ended">La carriera \"%s\" è terminata</string>
     <string name="shell_career_missing">La carriera selezionata non è più disponibile</string>
+    <string name="shell_update_available">Nuova versione disponibile</string>
 
     <!-- Calendar -->
     <string name="calendar_sync_failed">Sincronizzazione del calendario non riuscita</string>
@@ -810,6 +811,11 @@
     <string name="settings_oss_licenses_title">Licenze open source</string>
     <string name="settings_check_updates_title">Controlla Aggiornamenti</string>
     <string name="settings_check_updates_subtitle">Cerca nuove versioni</string>
+    <string name="settings_update_available_title">Aggiornamento disponibile</string>
+    <string name="settings_update_available_subtitle">Versione %1$s · tocca per aggiornare</string>
+    <string name="settings_update_check_failed">Controllo aggiornamenti non riuscito</string>
+    <string name="whats_new_error">Impossibile caricare le novità</string>
+    <string name="whats_new_retry">Riprova</string>
     <string name="settings_no_updates_found">Sei già all\'ultima versione</string>
     <string name="settings_no_other_versions">Non ci sono ancora altre versioni!</string>
     <string name="settings_whats_new_title">Novità</string>

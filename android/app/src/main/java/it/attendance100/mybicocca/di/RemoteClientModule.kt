@@ -8,6 +8,7 @@ import io.ktor.client.plugins.HttpTimeout
 import it.attendance100.mybicocca.data.observability.HttpMetrics
 import it.attendance100.mybicocca.data.remote.affluences.api.AffluencesApi
 import it.attendance100.mybicocca.data.remote.easystaff.api.EasyStaffApi
+import it.attendance100.mybicocca.data.update.GithubReleaseApi
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -47,5 +48,17 @@ object RemoteClientModule {
         install(HttpMetrics)
     }
 
+    /**
+     * The GitHub Releases client behind the app-update check. Unauthenticated;
+     * the repo coordinates are fixed here, and timeout/headers/metrics live inside [GithubReleaseApi].
+     */
+    @Suppress("unused")
+    @Provides
+    @Singleton
+    fun provideGithubReleaseApi(): GithubReleaseApi =
+        GithubReleaseApi(owner = GITHUB_OWNER, repo = GITHUB_REPO)
+
     private const val HTTP_TIMEOUT_MS = 30_000L
+    private const val GITHUB_OWNER = "Auties00"
+    private const val GITHUB_REPO = "MyBicocca"
 }

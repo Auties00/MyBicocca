@@ -99,6 +99,7 @@
     <string name="shell_new_career_available">New career available: %s</string>
     <string name="shell_career_ended">The career \"%s\" has ended</string>
     <string name="shell_career_missing">The selected career is no longer available</string>
+    <string name="shell_update_available">New version available</string>
 
     <!-- Calendar -->
     <string name="calendar_sync_failed">Calendar sync failed</string>
@@ -809,6 +810,11 @@
     <string name="settings_oss_licenses_title">Open-source licences</string>
     <string name="settings_check_updates_title">Check for Updates</string>
     <string name="settings_check_updates_subtitle">Look for new versions</string>
+    <string name="settings_update_available_title">Update available</string>
+    <string name="settings_update_available_subtitle">Version %1$s · tap to update</string>
+    <string name="settings_update_check_failed">Couldn\'t check for updates</string>
+    <string name="whats_new_error">Couldn\'t load what\'s new</string>
+    <string name="whats_new_retry">Retry</string>
     <string name="settings_no_updates_found">You\'re up to date</string>
     <string name="settings_no_other_versions">There are no other versions yet!</string>
     <string name="settings_whats_new_title">What\'s New</string>

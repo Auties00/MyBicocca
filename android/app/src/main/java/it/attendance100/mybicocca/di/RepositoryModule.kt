@@ -34,6 +34,7 @@ import it.attendance100.mybicocca.data.repository.SecuritySettingsRepositoryImpl
 import it.attendance100.mybicocca.data.repository.StudyPlanRepositoryImpl
 import it.attendance100.mybicocca.data.repository.TaxRepositoryImpl
 import it.attendance100.mybicocca.data.repository.TranscriptRepositoryImpl
+import it.attendance100.mybicocca.data.repository.UpdateRepositoryImpl
 import it.attendance100.mybicocca.data.repository.VideoPlaybackRepositoryImpl
 import it.attendance100.mybicocca.domain.repository.AccountRepository
 import it.attendance100.mybicocca.domain.repository.AppLockRepository
@@ -65,6 +66,7 @@ import it.attendance100.mybicocca.domain.repository.SecuritySettingsRepository
 import it.attendance100.mybicocca.domain.repository.StudyPlanRepository
 import it.attendance100.mybicocca.domain.repository.TaxRepository
 import it.attendance100.mybicocca.domain.repository.TranscriptRepository
+import it.attendance100.mybicocca.domain.repository.UpdateRepository
 import it.attendance100.mybicocca.domain.repository.VideoPlaybackRepository
 import javax.inject.Singleton
 
@@ -72,6 +74,7 @@ import javax.inject.Singleton
  * Binds the domain repository interfaces to their data-layer implementations, all singletons so
  * each repository's in-memory state (mutexes, caches, callbacks) is process-wide.
  */
+@Suppress("unused")
 @Module
 @InstallIn(SingletonComponent::class)
 abstract class RepositoryModule {
@@ -199,4 +202,8 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindDocumentRepository(impl: DocumentRepositoryImpl): DocumentRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindUpdateRepository(impl: UpdateRepositoryImpl): UpdateRepository
 }
