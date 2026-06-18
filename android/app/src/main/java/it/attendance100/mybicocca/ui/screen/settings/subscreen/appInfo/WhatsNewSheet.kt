@@ -27,8 +27,10 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -43,11 +45,6 @@ import it.attendance100.mybicocca.ui.component.directory.segmentedShape
 import it.attendance100.mybicocca.ui.component.feedback.EmptyState
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
-import java.time.format.FormatStyle
-import java.util.Locale
-
-private val dateFormatter: DateTimeFormatter =
-    DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withLocale(Locale.getDefault())
 
 /**
  * The "What's New" page, shown as a state of the About modal rather than a separate sheet. A
@@ -65,6 +62,9 @@ fun WhatsNewScene(
     viewModel: WhatsNewViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+
+    val locale = LocalConfiguration.current.locales[0]
+    val dateFormatter = remember(locale) { DateTimeFormatter.ofPattern("d MMM yyyy", locale) }
 
     Column(modifier = modifier.padding(horizontal = 20.dp)) {
         Row(
@@ -126,6 +126,7 @@ fun WhatsNewScene(
                         current.releases.forEachIndexed { index, release ->
                             ReleaseCard(
                                 release = release,
+                                dateFormatter = dateFormatter,
                                 isFirst = index == 0,
                                 isLast = index == current.releases.lastIndex,
                             )
@@ -151,6 +152,7 @@ private fun CenteredBlock(modifier: Modifier = Modifier, content: @Composable ()
 @Composable
 private fun ReleaseCard(
     release: AppRelease,
+    dateFormatter: DateTimeFormatter,
     isFirst: Boolean,
     isLast: Boolean,
 ) {
