@@ -1,3 +1,5 @@
+import java.util.Properties
+
 // Plugins
 plugins {
     id("com.android.application")
@@ -9,14 +11,35 @@ plugins {
     id("com.google.gms.google-services")
 }
 
+/**
+ * Release signing credentials, resolved from the gitignored `keystore.properties` at the
+ * Gradle root when present, otherwise from the `KEYSTORE_FILE`, `KEYSTORE_PASSWORD`,
+ * `KEY_ALIAS`, and `KEY_PASSWORD` environment variables so CI can sign without a
+ * checked-in secrets file. Keys: `storeFile` (path relative to the Gradle root),
+ * `storePassword`, `keyAlias`, `keyPassword`. When neither source provides a keystore,
+ * the release build is produced unsigned.
+ */
+val keystoreProperties = Properties().apply {
+    val propertiesFile = rootProject.file("keystore.properties")
+    if (propertiesFile.exists()) {
+        propertiesFile.inputStream().use { load(it) }
+    }
+}
+
+fun signingCredential(propertyKey: String, environmentKey: String): String? =
+    keystoreProperties.getProperty(propertyKey) ?: System.getenv(environmentKey)
+
 // Android config
 android {
     signingConfigs {
         create("release") {
-            storeFile = file("keystore_release_key")
-            storePassword = "mybicocca"
-            keyAlias = "releasekey"
-            keyPassword = "mybicocca"
+            val storePath = signingCredential("storeFile", "KEYSTORE_FILE")
+            if (storePath != null) {
+                storeFile = rootProject.file(storePath)
+                storePassword = signingCredential("storePassword", "KEYSTORE_PASSWORD")
+                keyAlias = signingCredential("keyAlias", "KEY_ALIAS")
+                keyPassword = signingCredential("keyPassword", "KEY_PASSWORD")
+            }
         }
     }
     namespace = "it.attendance100.mybicocca"
@@ -48,7 +71,7 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            signingConfig = signingConfigs.getByName("release")
+            signingConfig = signingConfigs.getByName("release").takeIf { it.storeFile != null }
         }
     }
 
