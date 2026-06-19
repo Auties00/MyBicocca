@@ -29,6 +29,8 @@ val keystoreProperties = Properties().apply {
 fun signingCredential(propertyKey: String, environmentKey: String): String? =
     keystoreProperties.getProperty(propertyKey) ?: System.getenv(environmentKey)
 
+val appVersionName = "0.0.2"
+
 // Android config
 android {
     signingConfigs {
@@ -50,7 +52,7 @@ android {
         minSdk = 25
         targetSdk = 36
         versionCode = 1
-        versionName = "0.0.2"
+        versionName = appVersionName
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -123,6 +125,22 @@ android {
         unitTests {
             isReturnDefaultValues = true
             isIncludeAndroidResources = true
+        }
+    }
+}
+
+androidComponents {
+    onVariants { variant ->
+        variant.outputs.forEach { variantOutput ->
+            val output = variantOutput as com.android.build.api.variant.impl.VariantOutputImpl
+            val abi = output.filters.find { it.filterType.toString() == "ABI" }?.identifier
+
+            val newName = if (abi != null) {
+                "mybicocca-$abi-v$appVersionName.apk"
+            } else {
+                "mybicocca-universal-v$appVersionName.apk"
+            }
+            output.outputFileName = newName
         }
     }
 }
