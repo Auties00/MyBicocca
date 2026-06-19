@@ -14,6 +14,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.platform.LocalView
 import kotlin.math.roundToInt
 
@@ -210,7 +211,16 @@ fun ProvideHapticManager(content: @Composable () -> Unit) {
     }
 }
 
+/**
+ * The [HapticManager] installed by the nearest [ProvideHapticManager].
+ */
 @Composable
 fun rememberHapticManager(): HapticManager {
+    // Under Compose previews a local manager is built on the spot
+    if (LocalInspectionMode.current) {
+        val context = LocalContext.current
+        val view = LocalView.current
+        return remember(context, view) { HapticManager(context, view) }
+    }
     return LocalHapticManager.current
 }

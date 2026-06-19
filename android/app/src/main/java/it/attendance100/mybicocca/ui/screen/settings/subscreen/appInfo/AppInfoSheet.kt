@@ -1,5 +1,6 @@
 package it.attendance100.mybicocca.ui.screen.settings.subscreen.appInfo
 
+import android.annotation.SuppressLint
 import androidx.activity.compose.PredictiveBackHandler
 import androidx.browser.customtabs.CustomTabsIntent
 import androidx.compose.animation.AnimatedContent
@@ -47,7 +48,7 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
@@ -112,21 +113,22 @@ private val CREDITS = listOf(
 )
 
 /**
- * The settings About modal — a full-height, two-state bottom sheet (About ⇄ What's New) built on
- * the same predictive-back machinery as the account switcher.
+ * The settings About modal — a full-height, three-level bottom sheet built on the same
+ * predictive-back machinery as the account switcher. The levels form a stack by [depth]:
+ * 0 = About, 1 = What's New (the merged changelog), 2 = All versions (the per-release list).
  *
  * The sheet always expands to the full available height even when the About content is short, so
- * both states share one stable frame. A back gesture is staged through a seekable transition: in
- * the What's New state it drives the page back to About (springing back if cancelled); in the
- * About state it drives the close transition, shrinking the sheet's height in step with the
- * finger before dismissing. Tapping the "What's New" tile (or the in-page back arrow) moves
- * between the two states with the shared in-sheet page push.
+ * every level shares one stable frame. A back gesture is staged through a seekable transition:
+ * above the root it drives the page back one level (springing back if cancelled); at the root it
+ * drives the close transition, shrinking the sheet's height in step with the finger before
+ * dismissing. Tapping a tile / the "All versions" button / an in-page back arrow walks the same
+ * stack with the shared in-sheet page push.
  *
- * The About state keeps the update-aware "Check for Updates" tile (forced check + sheet snackbar
- * while up to date; an "Update available" tile that opens the store-aware page once a newer
- * release is known), the "What's New" navigation tile, the "GitHub" Custom Tab link, and the
- * credits.
+ * Level 0 keeps the update-aware "Check for Updates" tile (forced check + sheet snackbar while up
+ * to date; an "Update available" tile that opens the store-aware page once a newer release is
+ * known), the "What's New" navigation tile, the "GitHub" Custom Tab link, and the credits.
  */
+@SuppressLint("ConfigurationScreenWidthHeight")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AppInfoSheet(
@@ -140,7 +142,8 @@ fun AppInfoSheet(
 
     val updateStatus by viewModel.status.collectAsStateWithLifecycle()
     val checking by viewModel.checking.collectAsStateWithLifecycle()
-    var whatsNewOpen by rememberSaveable { mutableStateOf(false) }
+    // In-sheet depth: 0 = About, 1 = What's New (merged), 2 = All versions.
+    var depth by rememberSaveable { mutableIntStateOf(0) }
 
     val noUpdatesMsg = stringResource(R.string.settings_no_updates_found)
     val newVersionMsg = stringResource(R.string.shell_update_available)
@@ -156,21 +159,21 @@ fun AppInfoSheet(
         }
     }
 
-    // Seekable page transition (About <-> What's New), advanced by the tile/back arrow and driven
-    // frame-by-frame by the back gesture while What's New is open.
-    val pageSeekable = remember { SeekableTransitionState(false) }
+    // Seekable depth pager (About -> Merged -> All versions), advanced by the tiles/buttons and
+    // driven frame-by-frame by the back gesture while not at the root.
+    val pageSeekable = remember { SeekableTransitionState(0) }
     val pageTransition = rememberTransition(pageSeekable, label = "appInfoPage")
-    LaunchedEffect(whatsNewOpen) {
-        if (pageSeekable.targetState != whatsNewOpen) {
-            pageSeekable.animateTo(whatsNewOpen, tween(durationMillis = 450))
+    LaunchedEffect(depth) {
+        if (pageSeekable.targetState != depth) {
+            pageSeekable.animateTo(depth, tween(durationMillis = 450))
         }
     }
-    val whatsNewOpenState = rememberUpdatedState(whatsNewOpen)
+    val depthState = rememberUpdatedState(depth)
 
     val sheetState = rememberModalBottomSheetState(
         skipPartiallyExpanded = true,
         confirmValueChange = { newState ->
-            !(whatsNewOpenState.value && newState == SheetValue.Hidden)
+            !(depthState.value > 0 && newState == SheetValue.Hidden)
         },
     )
 
@@ -187,29 +190,27 @@ fun AppInfoSheet(
     val fullHeight = screenHeight - topWindowInsets - handleHeight
 
     ModalBottomSheet(
-        onDismissRequest = { if (whatsNewOpen) whatsNewOpen = false else onDismiss() },
+        onDismissRequest = { if (depth > 0) depth -= 1 else onDismiss() },
         sheetState = sheetState,
         contentWindowInsets = { WindowInsets(0) },
         dragHandle = { Box(Modifier.padding(top = handleHeight)) },
         shape = BottomSheetDefaults.ExpandedShape,
         containerColor = scheme.surfaceContainerLow,
     ) {
-        PredictiveBackHandler(enabled = whatsNewOpen) { progress ->
+        PredictiveBackHandler(enabled = depth > 0) { progress ->
+            val target = depth - 1
             try {
                 progress.collect { backEvent ->
-                    pageSeekable.seekTo(
-                        backEvent.progress,
-                        targetState = false
-                    )
+                    pageSeekable.seekTo(backEvent.progress, targetState = target)
                 }
-                whatsNewOpen = false
-                pageSeekable.animateTo(false)
+                depth = target
+                pageSeekable.animateTo(target)
             } catch (_: CancellationException) {
-                pageSeekable.animateTo(true)
+                pageSeekable.animateTo(depth)
             }
         }
 
-        PredictiveBackHandler(enabled = !whatsNewOpen && sheetState.isVisible) { progress ->
+        PredictiveBackHandler(enabled = depth == 0 && sheetState.isVisible) { progress ->
             try {
                 progress.collect { backEvent ->
                     closeSeekable.seekTo(
@@ -239,27 +240,32 @@ fun AppInfoSheet(
                 Box(Modifier.fillMaxWidth()) {
                     pageTransition.AnimatedContent(
                         modifier = Modifier.fillMaxWidth(),
-                        transitionSpec = { sheetPageTransform(forward = targetState) },
+                        transitionSpec = { sheetPageTransform(forward = targetState > initialState) },
                         contentKey = { it },
-                    ) { showingWhatsNew ->
-                        if (showingWhatsNew) {
-                            WhatsNewScene(
-                                onBack = { whatsNewOpen = false },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(fullHeight),
-                            )
-                        } else {
-                            AboutScene(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(fullHeight),
+                    ) { pageDepth ->
+                        val pageModifier = Modifier
+                            .fillMaxWidth()
+                            .height(fullHeight)
+                        when (pageDepth) {
+                            0 -> AboutScene(
+                                modifier = pageModifier,
                                 viewModel = viewModel,
                                 updateStatus = updateStatus,
                                 checking = checking,
                                 githubIcon = githubIcon,
-                                onOpenWhatsNew = { whatsNewOpen = true },
+                                onOpenWhatsNew = { depth = 1 },
                                 onCheckResult = onCheckResult,
+                            )
+
+                            1 -> WhatsNewScene(
+                                onBack = { depth = 0 },
+                                onAllVersions = { depth = 2 },
+                                modifier = pageModifier,
+                            )
+
+                            else -> WhatsNewAllVersionsScene(
+                                onBack = { depth = 1 },
+                                modifier = pageModifier,
                             )
                         }
                     }

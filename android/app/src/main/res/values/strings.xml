@@ -816,6 +816,9 @@
     <string name="settings_update_check_failed">Controllo aggiornamenti non riuscito</string>
     <string name="whats_new_error">Impossibile caricare le novità</string>
     <string name="whats_new_retry">Riprova</string>
+    <string name="whats_new_all_versions">Tutte le versioni</string>
+    <string name="whats_new_other_changes">Altre modifiche</string>
+    <string name="whats_new_merged_subtitle">Anteprima combinata di tutte le modifiche dalla v%1$s</string>
     <string name="settings_no_updates_found">Sei già all\'ultima versione</string>
     <string name="settings_no_other_versions">Non ci sono ancora altre versioni!</string>
     <string name="settings_whats_new_title">Novità</string>
