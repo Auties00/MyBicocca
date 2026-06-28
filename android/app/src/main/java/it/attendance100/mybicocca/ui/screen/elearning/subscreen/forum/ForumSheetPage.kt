@@ -57,6 +57,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import it.attendance100.mybicocca.R
+import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.valueOrNull
 import it.attendance100.mybicocca.domain.model.elearning.course.CourseId
@@ -438,7 +439,10 @@ private fun DiscussionsListBody(
                                 .padding(horizontal = 16.dp, vertical = 4.dp)
                                 .testTag(ForumSheetTestTags.discussion(d.id.value)),
                         ) {
-                            DiscussionRow(discussion = d, onClick = { onOpenDiscussion(d) })
+                            val haptic = rememberHapticManager()
+                            DiscussionRow(
+                                discussion = d,
+                                onClick = { haptic.tap(); onOpenDiscussion(d) })
                         }
                     }
                     items(others, key = { it.id.value }) { d ->
@@ -447,7 +451,10 @@ private fun DiscussionsListBody(
                                 .padding(horizontal = 16.dp, vertical = 4.dp)
                                 .testTag(ForumSheetTestTags.discussion(d.id.value)),
                         ) {
-                            DiscussionRow(discussion = d, onClick = { onOpenDiscussion(d) })
+                            val haptic = rememberHapticManager()
+                            DiscussionRow(
+                                discussion = d,
+                                onClick = { haptic.tap(); onOpenDiscussion(d) })
                         }
                     }
                     if (isLoadingMore) {
@@ -463,8 +470,9 @@ private fun DiscussionsListBody(
             }
         }
         if (forum?.canCreateDiscussions == true) {
+            val haptic = rememberHapticManager()
             NewDiscussionButton(
-                onClick = onNewDiscussion,
+                onClick = { haptic.tap(); onNewDiscussion() },
                 modifier = Modifier
                     .padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 24.dp)
                     .testTag(ForumSheetTestTags.NEW_DISCUSSION_ACTION),
@@ -501,6 +509,7 @@ private fun ThreadBody(
 
     val loading = rememberThreadLoading(hasContent = shown.isNotEmpty(), key = discussionKey)
     val visible = remember(shown, collapsedIds) { visibleThread(shown, collapsedIds) }
+    val haptic = rememberHapticManager()
     Column(modifier = Modifier.fillMaxWidth()) {
         if (loading) {
             SheetLoadingIndicator(label = stringResource(R.string.elearning_forum_thread_loading))
@@ -517,16 +526,19 @@ private fun ThreadBody(
                     ThreadPostItem(
                         node = node,
                         collapsed = node.post.id.value in collapsedIds,
-                        onToggleCollapse = { onToggleCollapse(node.post.id.value) },
-                        onReply = { onReplyToPost(node.post) },
-                        onEdit = { onEditPost(node.post) },
-                        onDelete = { onDeletePost(node.post) },
-                        onOpenAttachment = onOpenAttachment,
+                        onToggleCollapse = { haptic.tap(); onToggleCollapse(node.post.id.value) },
+                        onReply = { haptic.tap(); onReplyToPost(node.post) },
+                        onEdit = { haptic.tap(); onEditPost(node.post) },
+                        onDelete = { haptic.tap(); onDeletePost(node.post) },
+                        onOpenAttachment = { haptic.tap(); onOpenAttachment(it) },
                     )
                 }
             }
         }
-        ThreadFooter(canReply = canReply, onReply = onReplyToDiscussion, onSubscribe = onSubscribe)
+        ThreadFooter(
+            canReply = canReply,
+            onReply = { haptic.tap(); onReplyToDiscussion() },
+            onSubscribe = { haptic.tap(); onSubscribe() })
     }
 }
 

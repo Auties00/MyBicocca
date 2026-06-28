@@ -23,6 +23,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import it.attendance100.mybicocca.core.os.rememberHapticManager
 
 /**
  * The corner rule of the connected-segmented-card language shared by every directory-style list
@@ -124,6 +125,7 @@ fun SegmentedTile(
     trailing: (@Composable () -> Unit)? = null,
 ) {
     val scheme = MaterialTheme.colorScheme
+    val haptic = rememberHapticManager()
     val shape = segmentedShape(isFirst, isLast)
     val body: @Composable () -> Unit = {
         Row(
@@ -158,7 +160,10 @@ fun SegmentedTile(
     }
     if (onClick != null) {
         Surface(
-            onClick = onClick,
+            onClick = {
+                haptic.tap()
+                onClick()
+            },
             modifier = modifier.fillMaxWidth(),
             color = scheme.surfaceContainer,
             contentColor = scheme.onSurface,

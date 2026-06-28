@@ -40,6 +40,7 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import it.attendance100.mybicocca.R
+import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.SyncStatus
 import it.attendance100.mybicocca.core.state.valueOrNull
@@ -383,10 +384,11 @@ private fun RilevaFooterButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val haptic = rememberHapticManager()
     val scheme = MaterialTheme.colorScheme
     val dark = isSystemInDarkTheme()
     Button(
-        onClick = onClick,
+        onClick = { haptic.tap(); onClick() },
         modifier = modifier.height(56.dp),
         colors = ButtonDefaults.buttonColors(
             containerColor = if (dark) scheme.primaryContainer else scheme.primary,
@@ -442,7 +444,10 @@ private fun SheetError(cause: Throwable, onRetry: () -> Unit, modifier: Modifier
         icon = Icons.Outlined.CloudOff,
         title = stringResource(R.string.attendance_load_failed),
         body = cause.friendlyMessage(),
-        action = { RetryButton(onClick = onRetry) },
+        action = {
+            val haptic = rememberHapticManager()
+            RetryButton(onClick = { haptic.tap(); onRetry() })
+        },
         modifier = modifier,
     )
 }

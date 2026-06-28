@@ -23,6 +23,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.R
 
 private val CardShape = RoundedCornerShape(28.dp)
@@ -39,9 +40,10 @@ fun AddAccountCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val haptic = rememberHapticManager()
     val scheme = MaterialTheme.colorScheme
     Surface(
-        onClick = onClick,
+        onClick = { haptic.tap(); onClick() },
         shape = CardShape,
         color = scheme.surfaceContainerLow,
         border = BorderStroke(width = 1.dp, color = scheme.outlineVariant),

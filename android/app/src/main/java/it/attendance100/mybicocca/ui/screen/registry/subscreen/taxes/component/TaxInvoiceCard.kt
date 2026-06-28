@@ -20,6 +20,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import it.attendance100.mybicocca.R
+import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.domain.model.tax.TaxInvoice
 import it.attendance100.mybicocca.domain.model.tax.TaxStatus
 import it.attendance100.mybicocca.ui.component.shape.DynamicCard
@@ -41,6 +42,7 @@ fun TaxInvoiceCard(
 ) {
     val scheme = MaterialTheme.colorScheme
     val taxId = invoice.id.value
+    val haptic = rememberHapticManager()
     DynamicCard(
         topSliceRes = R.drawable.border_outer,
         midSliceRes = R.drawable.body_outer,
@@ -52,7 +54,7 @@ fun TaxInvoiceCard(
         sliceBottomHeightDp = 10.dp,
         fill = scheme.surfaceContainerLowest,
         stroke = scheme.primary,
-        onClick = onClick,
+        onClick = { haptic.tap(); onClick() },
         modifier = modifier.fillMaxWidth(),
     ) {
         Column(

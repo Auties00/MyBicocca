@@ -284,7 +284,7 @@ private fun AreaTilePreview() {
             )
         )
 
-        ProvideHapticManager {
+        ProvideHapticManager(enabled = true) {
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(16.dp),

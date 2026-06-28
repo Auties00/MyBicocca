@@ -78,6 +78,7 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import it.attendance100.mybicocca.R
+import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.domain.model.questionnaire.QuestionnaireOption
 import it.attendance100.mybicocca.domain.model.questionnaire.QuestionnairePage
 import it.attendance100.mybicocca.domain.model.questionnaire.QuestionnaireParagraph
@@ -170,7 +171,10 @@ fun QuestionnaireCompilationPage(
             icon = Icons.Outlined.CloudOff,
             title = stringResource(R.string.questionnaire_start_failed_title),
             body = stringResource(R.string.questionnaire_start_failed_body),
-            action = { RetryButton(onClick = viewModel::retryStart) },
+            action = {
+                val haptic =
+                    rememberHapticManager(); RetryButton(onClick = { haptic.tap(); viewModel.retryStart() })
+            },
         )
 
         else -> Column(Modifier.fillMaxWidth()) {
@@ -401,6 +405,7 @@ private fun QuestionGroup(
 
             else -> {
                 val context = LocalContext.current
+                val haptic = rememberHapticManager()
                 val companionVisible = question.options.any {
                     it.requiresFreeText && it.id in state.selectedOptionIds
                 }
@@ -409,7 +414,7 @@ private fun QuestionGroup(
                         text = option.text.ifBlank { stringResource(R.string.questionnaire_other_option) },
                         selected = option.id in state.selectedOptionIds,
                         isLast = index == question.options.lastIndex && !companionVisible,
-                        onToggle = { onSelectOption(option) },
+                        onToggle = { haptic.tap(); onSelectOption(option) },
                     )
                 }
                 AnimatedVisibility(visible = companionVisible) {
@@ -575,6 +580,7 @@ private fun ScaleTile(
     onSelectOption: (QuestionnaireOption) -> Unit,
 ) {
     val scheme = MaterialTheme.colorScheme
+    val haptic = rememberHapticManager()
     Surface(
         modifier = Modifier.fillMaxWidth(),
         color = scheme.surfaceContainer,
@@ -594,7 +600,7 @@ private fun ScaleTile(
                             .size(42.dp)
                             .clip(CircleShape)
                             .background(if (selected) scheme.primary else scheme.surfaceContainerHighest)
-                            .clickable { onSelectOption(option) },
+                            .clickable { haptic.tap(); onSelectOption(option) },
                         contentAlignment = Alignment.Center,
                     ) {
                         Text(
@@ -726,6 +732,7 @@ private fun CompilationBottomBar(
     val motion = MaterialTheme.motionScheme
     val spatialOffsetSpec = motion.defaultSpatialSpec<IntOffset>()
     val effectsFloatSpec = motion.defaultEffectsSpec<Float>()
+    val haptic = rememberHapticManager()
 
     Row(
         modifier = Modifier
@@ -739,7 +746,7 @@ private fun CompilationBottomBar(
             exit = shrinkHorizontally(motion.defaultSpatialSpec()) + fadeOut(motion.defaultEffectsSpec()),
         ) {
             FilledTonalButton(
-                onClick = onBack,
+                onClick = { haptic.tap(); onBack() },
                 modifier = Modifier
                     .width(64.dp)
                     .height(56.dp),
@@ -764,7 +771,10 @@ private fun CompilationBottomBar(
             label = "actionCorner",
         )
         Button(
-            onClick = { if (action != CompilationAction.Working) onPrimary() },
+            onClick = {
+                haptic.tap()
+                if (action != CompilationAction.Working) onPrimary()
+            },
             enabled = enabled || action == CompilationAction.Working,
             modifier = Modifier
                 .weight(1f)

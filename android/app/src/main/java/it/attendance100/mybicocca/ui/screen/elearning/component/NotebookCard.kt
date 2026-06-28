@@ -42,6 +42,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import it.attendance100.mybicocca.R
+import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.domain.model.elearning.course.AcademicYear
 import it.attendance100.mybicocca.domain.model.elearning.course.CourseId
 import it.attendance100.mybicocca.domain.model.elearning.deadline.Deadline
@@ -108,6 +109,7 @@ fun NotebookCard(
     val palette = LocalCourseAccentPalette.current
     val topBg = lerp(scheme.surfaceContainer, accent, palette.heroTint)
     val bodyBg = lerp(scheme.surfaceContainer, accent, palette.bodyTint)
+    val haptic = rememberHapticManager()
 
     val visible = deadlines.take(3)
     val extra = (deadlines.size - visible.size).coerceAtLeast(0)
@@ -133,7 +135,10 @@ fun NotebookCard(
         YearTabStrip(
             editions = editions,
             activeEditionId = activeEdition.id,
-            onSelectEdition = onSelectEdition,
+            onSelectEdition = {
+                haptic.tap()
+                onSelectEdition(it)
+            },
             foreground = palette.onAccent,
             modifier = Modifier.padding(start = 18.dp),
         )
@@ -149,7 +154,10 @@ fun NotebookCard(
                 .fillMaxWidth()
                 .clip(heroShape)
                 .background(topBg)
-                .clickable(onClick = onClick),
+                .clickable {
+                    haptic.tap()
+                    onClick()
+                },
         ) {
             ShapeDecorationLayer(
                 placements = heroPlacements,
@@ -225,7 +233,10 @@ fun NotebookCard(
                         DeadlineRow(
                             deadline = d,
                             today = today,
-                            onClick = { onDeadlineClick(d) },
+                            onClick = {
+                                haptic.tap()
+                                onDeadlineClick(d)
+                            },
                         )
                     }
                     if (extra > 0) {
@@ -352,7 +363,14 @@ private fun FavouriteStar(
     val scheme = MaterialTheme.colorScheme
     val palette = LocalCourseAccentPalette.current
     val tint = if (filled) palette.favouriteStar else scheme.onSurfaceVariant
-    IconButton(onClick = onClick, modifier = Modifier.size(36.dp)) {
+    val haptic = rememberHapticManager()
+    IconButton(
+        onClick = {
+            haptic.tap()
+            onClick()
+        },
+        modifier = Modifier.size(36.dp),
+    ) {
         Icon(
             imageVector = if (filled) Icons.Filled.Star else Icons.Outlined.Star,
             contentDescription = if (filled) onRemoveFavorite() else onAddFavorite(),
@@ -393,11 +411,16 @@ private fun DeadlineRow(
         else -> scheme.onSurface.copy(alpha = 0.70f)
     }
     val dueWeight = if (isToday || overdue || urgent) FontWeight.SemiBold else FontWeight.Medium
+    val haptic = rememberHapticManager()
 
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick)
+            .clip(RoundedCornerShape(8.dp))
+            .clickable {
+                haptic.tap()
+                onClick()
+            }
             .padding(vertical = 9.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(10.dp),

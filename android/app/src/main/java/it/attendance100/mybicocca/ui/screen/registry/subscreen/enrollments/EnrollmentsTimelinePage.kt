@@ -142,7 +142,7 @@ private fun TimelinePage(
                 )
             }
 
-            !settled || history == null -> Box(modifier = Modifier.testTag(EnrollmentsTestTags.STATE_LOADING)) {
+            !settled -> Box(modifier = Modifier.testTag(EnrollmentsTestTags.STATE_LOADING)) {
                 SheetLoadingIndicator(label = stringResource(R.string.enrollments_loading))
             }
 

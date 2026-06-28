@@ -25,6 +25,7 @@ import it.attendance100.mybicocca.data.repository.ElearningQuizRepositoryImpl
 import it.attendance100.mybicocca.data.repository.EnrollmentRepositoryImpl
 import it.attendance100.mybicocca.data.repository.ExamRepositoryImpl
 import it.attendance100.mybicocca.data.repository.FileOpenPreferenceRepositoryImpl
+import it.attendance100.mybicocca.data.repository.HapticSettingsRepositoryImpl
 import it.attendance100.mybicocca.data.repository.LibraryRepositoryImpl
 import it.attendance100.mybicocca.data.repository.MapRepositoryImpl
 import it.attendance100.mybicocca.data.repository.PdfViewerSettingsRepositoryImpl
@@ -57,6 +58,7 @@ import it.attendance100.mybicocca.domain.repository.ElearningQuizRepository
 import it.attendance100.mybicocca.domain.repository.EnrollmentRepository
 import it.attendance100.mybicocca.domain.repository.ExamRepository
 import it.attendance100.mybicocca.domain.repository.FileOpenPreferenceRepository
+import it.attendance100.mybicocca.domain.repository.HapticSettingsRepository
 import it.attendance100.mybicocca.domain.repository.LibraryRepository
 import it.attendance100.mybicocca.domain.repository.MapRepository
 import it.attendance100.mybicocca.domain.repository.PdfViewerSettingsRepository
@@ -182,6 +184,10 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindSecuritySettingsRepository(impl: SecuritySettingsRepositoryImpl): SecuritySettingsRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindHapticSettingsRepository(impl: HapticSettingsRepositoryImpl): HapticSettingsRepository
 
     @Binds
     @Singleton

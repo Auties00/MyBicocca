@@ -33,8 +33,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -44,6 +44,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import it.attendance100.mybicocca.R
+import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.SyncStatus
 import it.attendance100.mybicocca.core.state.valueOrNull
@@ -119,15 +120,16 @@ private fun RefundsListBody(
         .animateContentSize(animationSpec = sizeSpec)) {
         when {
             failure != null && refunds == null -> Box(modifier = Modifier.testTag(RefundsTestTags.STATE_ERROR)) {
+                val haptic = rememberHapticManager()
                 SheetMessage(
                     icon = Icons.Outlined.CloudOff,
                     title = stringResource(R.string.refunds_loading_failed),
                     body = failure.cause.taxFriendlyMessage(LocalContext.current),
-                    action = { RetryButton(onClick = onRetry) },
+                    action = { RetryButton(onClick = { haptic.tap(); onRetry() }) },
                 )
             }
 
-            !settled || refunds == null -> Box(modifier = Modifier.testTag(RefundsTestTags.STATE_LOADING)) {
+            !settled -> Box(modifier = Modifier.testTag(RefundsTestTags.STATE_LOADING)) {
                 SheetLoadingIndicator(label = stringResource(R.string.refunds_loading))
             }
 
@@ -167,11 +169,12 @@ private fun RefundsListBody(
                     items = refunds,
                     key = { _, refund -> refund.refundKey() },
                 ) { index, refund ->
+                    val haptic = rememberHapticManager()
                     RefundRow(
                         refund = refund,
                         isFirst = index == 0,
                         isLast = index == refunds.lastIndex,
-                        onClick = { onOpenDetail(refund) },
+                        onClick = { haptic.tap(); onOpenDetail(refund) },
                     )
                 }
             }

@@ -59,6 +59,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
+import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.SyncStatus
@@ -251,6 +252,7 @@ private fun BuildingRow(
     onToggle: () -> Unit,
     onShowInfo: () -> Unit,
 ) {
+    val haptic = rememberHapticManager()
     val scheme = MaterialTheme.colorScheme
     val motion = MaterialTheme.motionScheme
     val transition = updateTransition(expanded, label = "building_row")
@@ -289,7 +291,7 @@ private fun BuildingRow(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable(onClick = onToggle)
+                .clickable(onClick = { haptic.tap(); onToggle() })
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
@@ -400,6 +402,7 @@ private fun ActionRow(
     building: MapBuilding,
     onShowInfo: () -> Unit,
 ) {
+    val haptic = rememberHapticManager()
     val scheme = MaterialTheme.colorScheme
     val context = LocalContext.current
     val dark = isSystemInDarkTheme()
@@ -413,7 +416,7 @@ private fun ActionRow(
         horizontalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         FilledTonalButton(
-            onClick = { context.openBuildingInMaps(building) },
+            onClick = { haptic.tap(); context.openBuildingInMaps(building) },
             modifier = Modifier
                 .weight(1f)
                 .height(48.dp),
@@ -433,7 +436,7 @@ private fun ActionRow(
         }
 
         Button(
-            onClick = onShowInfo,
+            onClick = { haptic.tap(); onShowInfo() },
             modifier = Modifier
                 .weight(1f)
                 .height(48.dp),

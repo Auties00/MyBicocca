@@ -65,6 +65,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import it.attendance100.mybicocca.R
+import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.SyncStatus
 import it.attendance100.mybicocca.core.state.valueOrNull
@@ -397,6 +398,7 @@ private fun ConfirmPage(
     val dark = isSystemInDarkTheme()
     val brandBg = if (dark) scheme.primaryContainer else scheme.primary
     val brandFg = if (dark) scheme.onPrimaryContainer else scheme.onPrimary
+    val haptic = rememberHapticManager()
 
     Column(Modifier.fillMaxWidth()) {
         Text(
@@ -412,7 +414,7 @@ private fun ConfirmPage(
             horizontalArrangement = Arrangement.spacedBy(4.dp),
         ) {
             FilledTonalButton(
-                onClick = onConfirm,
+                onClick = { haptic.tap(); onConfirm() },
                 modifier = Modifier
                     .weight(1f)
                     .height(56.dp),
@@ -425,7 +427,7 @@ private fun ConfirmPage(
                 Text(confirmLabel, fontWeight = FontWeight.SemiBold)
             }
             Button(
-                onClick = onContinue,
+                onClick = { haptic.tap(); onContinue() },
                 modifier = Modifier
                     .weight(1.4f)
                     .height(56.dp),
@@ -472,13 +474,16 @@ private fun ActivitiesPage(
             .animateContentSize(animationSpec = sizeSpec),
     ) {
         when {
-            failure != null && activities.isNullOrEmpty() -> SheetMessage(
-                icon = Icons.Outlined.CloudOff,
-                title = stringResource(R.string.common_error_title),
-                body = failure.cause.friendlyMessage(),
-                action = { RetryButton(onClick = onRetry) },
-                modifier = Modifier.testTag(QuestionnairesTestTags.ROOT_ERROR),
-            )
+            failure != null && activities.isNullOrEmpty() -> {
+                val haptic = rememberHapticManager()
+                SheetMessage(
+                    icon = Icons.Outlined.CloudOff,
+                    title = stringResource(R.string.common_error_title),
+                    body = failure.cause.friendlyMessage(),
+                    action = { RetryButton(onClick = { haptic.tap(); onRetry() }) },
+                    modifier = Modifier.testTag(QuestionnairesTestTags.ROOT_ERROR),
+                )
+            }
 
             !settled -> SheetLoadingIndicator(
                 label = stringResource(R.string.questionnaire_loading),
@@ -553,6 +558,7 @@ private fun QuestionnaireActivityRow(
     modifier: Modifier = Modifier,
 ) {
     val scheme = MaterialTheme.colorScheme
+    val haptic = rememberHapticManager()
     val accent = when (activity.status) {
         QuestionnaireActivityStatus.ToCompile -> scheme.primaryContainer to scheme.onPrimaryContainer
         QuestionnaireActivityStatus.PartiallyCompleted -> scheme.tertiaryContainer to scheme.onTertiaryContainer

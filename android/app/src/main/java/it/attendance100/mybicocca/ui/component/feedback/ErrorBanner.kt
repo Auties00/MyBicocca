@@ -22,6 +22,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import it.attendance100.mybicocca.core.os.rememberHapticManager
 
 /**
  * Inline dismissible banner for a sync error, shown without nuking the stale content
@@ -34,6 +35,7 @@ fun ErrorBanner(
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val haptic = rememberHapticManager()
     AnimatedVisibility(
         visible = message != null,
         enter = expandVertically() + fadeIn(),
@@ -64,7 +66,7 @@ fun ErrorBanner(
                     modifier = Modifier.weight(1f),
                 )
                 IconButton(
-                    onClick = onDismiss,
+                    onClick = { haptic.tap(); onDismiss() },
                     modifier = Modifier.size(24.dp),
                 ) {
                     Icon(

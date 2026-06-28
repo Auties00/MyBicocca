@@ -45,6 +45,7 @@ import androidx.compose.ui.text.withLink
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import it.attendance100.mybicocca.R
+import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.domain.model.library.LibraryAgreement
 import it.attendance100.mybicocca.domain.model.library.LibrarySeat
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.library.ext.durationLabel
@@ -88,6 +89,7 @@ internal fun ConfirmPage(
     val noteOk = !seat.noteRequired || note.isNotBlank()
     val consentOk = agreement?.mandatory != true || consentAccepted
     val canSubmit = email.isNotBlank() && noteOk && consentOk && !submitting
+    val haptic = rememberHapticManager()
 
     Column(
         modifier = modifier
@@ -152,7 +154,7 @@ internal fun ConfirmPage(
         }
 
         Button(
-            onClick = onSubmit,
+            onClick = { haptic.tap(); onSubmit() },
             enabled = canSubmit && LocalIsOnline.current,
             shapes = ButtonDefaults.shapes(),
             modifier = Modifier
@@ -208,6 +210,7 @@ private fun ConsentRow(
     val context = LocalContext.current
     val scheme = MaterialTheme.colorScheme
     val linkStyles = TextLinkStyles(SpanStyle(color = scheme.primary, fontWeight = FontWeight.SemiBold))
+    val haptic = rememberHapticManager()
 
     val statement = buildAnnotatedString {
         append(context.getString(R.string.library_accept) + " ")
@@ -223,7 +226,11 @@ private fun ConsentRow(
     }
 
     Surface(
-        onClick = { if (enabled) onChange(!accepted) },
+        onClick = {
+            if (enabled) {
+                haptic.tap(); onChange(!accepted)
+            }
+        },
         enabled = enabled,
         shape = MaterialTheme.shapes.large,
         color = scheme.surfaceContainerHigh,
@@ -241,7 +248,11 @@ private fun ConsentRow(
                 modifier = Modifier.weight(1f),
             )
             Spacer(Modifier.width(12.dp))
-            Switch(checked = accepted, onCheckedChange = { onChange(it) }, enabled = enabled)
+            Switch(
+                checked = accepted,
+                onCheckedChange = { haptic.tap(); onChange(it) },
+                enabled = enabled
+            )
         }
     }
 }

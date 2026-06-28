@@ -47,6 +47,7 @@ import it.attendance100.mybicocca.domain.usecase.library.SubmitLibraryActionUseC
 import it.attendance100.mybicocca.domain.usecase.security.ObserveAppLockEnabledUseCase
 import it.attendance100.mybicocca.domain.usecase.security.ObserveSecureScreenUseCase
 import it.attendance100.mybicocca.domain.usecase.settings.ObserveAppThemeUseCase
+import it.attendance100.mybicocca.domain.usecase.settings.ObserveHapticEnabledUseCase
 import it.attendance100.mybicocca.domain.usecase.settings.ObserveThemeModeUseCase
 import it.attendance100.mybicocca.ui.navigation.AppRoot
 import it.attendance100.mybicocca.ui.theme.BicoccaTheme
@@ -85,6 +86,9 @@ class MyBicoccaActivity : AppCompatActivity() {
 
     @Inject
     lateinit var observeSecureScreen: ObserveSecureScreenUseCase
+
+    @Inject
+    lateinit var observeHapticEnabled: ObserveHapticEnabledUseCase
 
     @Inject
     lateinit var submitPresenceScan: SubmitPresenceScanUseCase
@@ -151,6 +155,7 @@ class MyBicoccaActivity : AppCompatActivity() {
         setContent {
             val themeMode by observeThemeMode().collectAsStateWithLifecycle(ThemeMode.System)
             val appTheme by observeAppTheme().collectAsStateWithLifecycle(AppTheme.Default)
+            val hapticEnabled by observeHapticEnabled().collectAsStateWithLifecycle(true)
             val dark = when (themeMode) {
                 ThemeMode.System -> isSystemInDarkTheme()
                 ThemeMode.Light -> false
@@ -174,7 +179,7 @@ class MyBicoccaActivity : AppCompatActivity() {
                     LocalDarkTheme provides dark,
                 ) {
                     CompositionLocalProvider(LocalPipController provides pipController) {
-                        ProvideHapticManager {
+                        ProvideHapticManager(enabled = hapticEnabled) {
                             AppRoot()
                         }
                     }

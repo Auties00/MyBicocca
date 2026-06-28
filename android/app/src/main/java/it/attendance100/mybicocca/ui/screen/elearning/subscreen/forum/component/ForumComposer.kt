@@ -1,5 +1,6 @@
 package it.attendance100.mybicocca.ui.screen.elearning.subscreen.forum.component
 
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
@@ -41,6 +42,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -97,7 +99,9 @@ fun ForumComposer(
     val canSubmit = !submitting && message.isNotBlank() && (!subjectRequired || subject.isNotBlank()) &&
             LocalIsOnline.current
 
-    Column(modifier = modifier.fillMaxWidth().imePadding()) {
+    Column(modifier = modifier
+        .fillMaxWidth()
+        .imePadding()) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -225,10 +229,15 @@ private fun GroupSelector(groups: List<ForumGroup>, selectedGroupId: Int?, onSel
 @Composable
 private fun PendingAttachmentRow(attachment: PendingAttachment, onRemove: () -> Unit) {
     val scheme = MaterialTheme.colorScheme
+    val haptic = it.attendance100.mybicocca.core.os.rememberHapticManager()
     Surface(
         shape = RoundedCornerShape(14.dp),
         color = scheme.surfaceContainerHighest,
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(14.dp))
+            .clickable(onClick = { haptic.tap(); onRemove() })
+            .border(1.dp, scheme.outlineVariant, RoundedCornerShape(14.dp)),
     ) {
         Row(
             modifier = Modifier.padding(start = 12.dp, end = 4.dp, top = 8.dp, bottom = 8.dp),
@@ -253,7 +262,7 @@ private fun PendingAttachmentRow(attachment: PendingAttachment, onRemove: () -> 
                 tint = scheme.onSurfaceVariant,
                 modifier = Modifier
                     .size(36.dp)
-                    .clickable(onClick = onRemove)
+                    .clickable(onClick = { haptic.tap(); onRemove() })
                     .padding(8.dp),
             )
         }

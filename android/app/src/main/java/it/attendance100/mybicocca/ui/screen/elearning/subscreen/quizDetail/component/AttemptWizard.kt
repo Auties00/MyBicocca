@@ -61,6 +61,7 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import it.attendance100.mybicocca.R
+import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.domain.model.elearning.quiz.Quiz
 import it.attendance100.mybicocca.domain.model.elearning.quiz.QuizAttempt
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.quizDetail.QuizDetailViewModel
@@ -271,6 +272,7 @@ private fun QuizWizardBottomBar(
     val spatialOffsetSpec = motion.defaultSpatialSpec<IntOffset>()
     val effectsFloatSpec = motion.defaultEffectsSpec<Float>()
     val backVisible = currentPage > 0
+    val haptic = rememberHapticManager()
 
     Column(
         modifier = Modifier
@@ -293,7 +295,7 @@ private fun QuizWizardBottomBar(
                 exit = shrinkHorizontally(motion.defaultSpatialSpec()) + fadeOut(motion.defaultEffectsSpec()),
             ) {
                 FilledTonalButton(
-                    onClick = onBack,
+                    onClick = { haptic.tap(); onBack() },
                     enabled = isOnline,
                     modifier = Modifier
                         .width(64.dp)
@@ -319,7 +321,10 @@ private fun QuizWizardBottomBar(
                 label = "actionCorner",
             )
             Button(
-                onClick = { if (isLast) onSubmit() else onNext() },
+                onClick = {
+                    haptic.tap()
+                    if (isLast) onSubmit() else onNext()
+                },
                 enabled = isOnline,
                 modifier = Modifier
                     .weight(1f)

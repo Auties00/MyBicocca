@@ -37,6 +37,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.domain.model.appointment.AppointmentReservation
+import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.appointments.ext.decodeQrDataUrl
 import java.time.format.DateTimeFormatter
 import java.util.Locale
@@ -60,6 +61,7 @@ internal fun DonePage(
 ) {
     val scheme = MaterialTheme.colorScheme
     val dark = isSystemInDarkTheme()
+    val haptic = rememberHapticManager()
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -152,7 +154,7 @@ internal fun DonePage(
         }
 
         Button(
-            onClick = onDone,
+            onClick = { haptic.tap(); onDone() },
             shapes = ButtonDefaults.shapes(),
             modifier = Modifier
                 .fillMaxWidth()

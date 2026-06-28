@@ -30,6 +30,7 @@ import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.state.valueOrNull
 import it.attendance100.mybicocca.domain.model.appointment.AppointmentFormField
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.appointments.AppointmentsViewModel
+import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.ui.theme.LocalIsOnline
 
 /**
@@ -104,6 +105,7 @@ private fun ActionButtons(
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val haptic = rememberHapticManager()
     val scheme = MaterialTheme.colorScheme
     val dark = isSystemInDarkTheme()
     Row(
@@ -111,7 +113,7 @@ private fun ActionButtons(
         horizontalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         FilledTonalButton(
-            onClick = onBack,
+            onClick = { haptic.tap(); onBack() },
             enabled = !submitting,
             modifier = Modifier
                 .weight(1f)
@@ -125,7 +127,7 @@ private fun ActionButtons(
             Text(stringResource(R.string.appointments_back), fontWeight = FontWeight.SemiBold)
         }
         Button(
-            onClick = onSubmit,
+            onClick = { haptic.tap(); onSubmit() },
             enabled = canSubmit && LocalIsOnline.current,
             modifier = Modifier
                 .weight(1.4f)

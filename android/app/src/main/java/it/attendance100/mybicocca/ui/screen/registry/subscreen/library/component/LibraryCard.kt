@@ -24,6 +24,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import it.attendance100.mybicocca.R
+import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.domain.model.library.Library
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.library.ext.occupancyColor
 
@@ -37,12 +38,12 @@ fun LibraryCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val scheme = MaterialTheme.colorScheme
+    val haptic = rememberHapticManager()
     Surface(
-        onClick = onClick,
+        onClick = { haptic.tap(); onClick() },
         modifier = modifier.fillMaxWidth(),
         shape = MaterialTheme.shapes.extraLarge,
-        color = scheme.surfaceContainerHigh,
+        color = MaterialTheme.colorScheme.surfaceContainerHigh,
     ) {
         Column {
             if (library.pictureUrl != null) {
@@ -65,7 +66,7 @@ fun LibraryCard(
                         text = library.name,
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold,
-                        color = scheme.onSurface,
+                        color = MaterialTheme.colorScheme.onSurface,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )

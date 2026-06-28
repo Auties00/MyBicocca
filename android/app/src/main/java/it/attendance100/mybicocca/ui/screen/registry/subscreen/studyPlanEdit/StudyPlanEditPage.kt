@@ -75,6 +75,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import it.attendance100.mybicocca.R
+import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.SyncStatus
 import it.attendance100.mybicocca.core.state.valueOrNull
@@ -561,7 +562,9 @@ private fun PathChoicePage(
                         color = scheme.onSurfaceVariant,
                         modifier = Modifier.weight(1f),
                     )
-                    TextButton(onClick = onRetryRules) { Text(stringResource(R.string.common_retry)) }
+                    Spacer(Modifier.height(16.dp))
+                    val haptic = rememberHapticManager()
+                    TextButton(onClick = { haptic.tap(); onRetryRules() }) { Text(stringResource(R.string.common_retry)) }
                 }
             }
 
@@ -716,13 +719,14 @@ private fun RulePage(
             }
         }
         itemsIndexed(rule.courses, key = { _, course -> course.choiceId }) { index, course ->
+            val haptic = rememberHapticManager()
             CourseTile(
                 course = course,
                 enabled = !locked && isCourseEnabled(course),
                 locked = locked,
                 isFirst = index == 0 && !hasPreNote,
                 isLast = index == rule.courses.lastIndex && !hasPostNote,
-                onToggle = { onToggleCourse(course.choiceId) },
+                onToggle = { haptic.tap(); onToggleCourse(course.choiceId) },
             )
         }
         if (hasPostNote) {
@@ -841,6 +845,7 @@ private fun CourseTile(
 @Composable
 private fun NoteTile(text: String, capTop: Boolean, capBottom: Boolean) {
     val scheme = MaterialTheme.colorScheme
+    val haptic = rememberHapticManager()
     Surface(
         modifier = Modifier.fillMaxWidth(),
         color = scheme.surfaceContainer,
@@ -911,8 +916,9 @@ private fun WizardBottomBar(
                 enter = expandHorizontally(motion.defaultSpatialSpec()) + fadeIn(motion.defaultEffectsSpec()),
                 exit = shrinkHorizontally(motion.defaultSpatialSpec()) + fadeOut(motion.defaultEffectsSpec()),
             ) {
+                val haptic = rememberHapticManager()
                 FilledTonalButton(
-                    onClick = onBack,
+                    onClick = { haptic.tap(); onBack() },
                     modifier = Modifier
                         .width(64.dp)
                         .height(56.dp),
@@ -942,8 +948,10 @@ private fun WizardBottomBar(
                 advancing -> WizardAction.Loading
                 else -> WizardAction.Next
             }
+            val haptic = rememberHapticManager()
             Button(
                 onClick = {
+                    haptic.tap()
                     when (action) {
                         WizardAction.Next -> onNext()
                         WizardAction.Submit -> onSubmit()
@@ -1062,6 +1070,8 @@ private fun SheetError(cause: Throwable, onRetry: () -> Unit) {
         icon = Icons.Default.Warning,
         title = stringResource(R.string.common_load_failed),
         body = cause.friendlyMessage(),
-        action = { RetryButton(onClick = onRetry) },
+        action = {
+            val haptic = rememberHapticManager(); RetryButton(onClick = { haptic.tap(); onRetry() })
+        },
     )
 }

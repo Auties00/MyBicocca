@@ -61,6 +61,7 @@ import it.attendance100.mybicocca.domain.model.exam.ExamCall
 import it.attendance100.mybicocca.domain.model.exam.ExamType
 import it.attendance100.mybicocca.ui.component.button.RetryButton
 import it.attendance100.mybicocca.ui.component.feedback.friendlyMessage
+import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.ui.component.feedback.rememberMinDurationLoading
 import it.attendance100.mybicocca.ui.component.modal.SheetLoadingIndicator
 import it.attendance100.mybicocca.ui.component.modal.SheetMessage
@@ -231,6 +232,7 @@ private fun CallDateCell(
     today: LocalDate,
     onClick: () -> Unit,
 ) {
+    val haptic = rememberHapticManager()
     val scheme = MaterialTheme.colorScheme
     val status = call.windowStatus(today)
     val container = when (status) {
@@ -244,7 +246,7 @@ private fun CallDateCell(
     }
 
     Surface(
-        onClick = onClick,
+        onClick = { haptic.tap(); onClick() },
         color = container,
         contentColor = content,
         shape = RoundedCornerShape(20.dp),
@@ -563,13 +565,14 @@ private fun BrandActionButton(
     enabled: Boolean = true,
     loading: Boolean = false,
 ) {
+    val haptic = rememberHapticManager()
     val scheme = MaterialTheme.colorScheme
     val dark = isSystemInDarkTheme()
     val brandBg = if (dark) scheme.primaryContainer else scheme.primary
     val brandFg = if (dark) scheme.onPrimaryContainer else scheme.onPrimary
 
     Button(
-        onClick = onClick,
+        onClick = { haptic.tap(); onClick() },
         enabled = enabled,
         modifier = modifier.height(56.dp),
         colors = ButtonDefaults.buttonColors(
@@ -594,7 +597,10 @@ private fun SheetError(cause: Throwable, onRetry: () -> Unit, modifier: Modifier
         icon = Icons.Outlined.CloudOff,
         title = stringResource(R.string.booking_load_failed),
         body = cause.friendlyMessage(),
-        action = { RetryButton(onClick = onRetry) },
+        action = {
+            val haptic = rememberHapticManager()
+            RetryButton(onClick = { haptic.tap(); onRetry() })
+        },
         modifier = modifier,
     )
 }

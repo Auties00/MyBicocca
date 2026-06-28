@@ -68,6 +68,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import it.attendance100.mybicocca.R
+import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.domain.model.elearning.catalog.CatalogCourse
 import it.attendance100.mybicocca.domain.model.elearning.catalog.CatalogSection
@@ -303,12 +304,14 @@ private fun AddCourseContent(
                 transitionSpec = { fadeIn(tween(220)) togetherWith fadeOut(tween(220)) },
                 contentKey = { it },
             ) { searching ->
+                val haptic = rememberHapticManager()
                 if (searching) {
                     SearchResults(
                         rows = searchResults,
                         enrolment = enrolment,
                         insideAccent = (currentLevel as? CatalogLevel.Inside)?.accent,
                         onOpenCategory = { row, accent ->
+                            haptic.tap()
                             onOpenPath(
                                 row.path.map { node ->
                                     CatalogStackEntry(
@@ -319,7 +322,7 @@ private fun AddCourseContent(
                                 },
                             )
                         },
-                        onEnrol = onEnrol,
+                        onEnrol = { haptic.tap(); onEnrol(it) },
                         onUserScroll = onUserScroll,
                         modifier = Modifier.fillMaxSize(),
                     )
@@ -333,8 +336,8 @@ private fun AddCourseContent(
                             is CatalogLevel.Root -> RootPage(
                                 sections = catalogValue?.sections,
                                 failed = catalogFailed,
-                                onRetry = onRetryCatalog,
-                                onOpen = onOpen,
+                                onRetry = { haptic.tap(); onRetryCatalog() },
+                                onOpen = { haptic.tap(); onOpen(it) },
                                 onUserScroll = onUserScroll,
                                 gridState = rootGridState,
                                 modifier = Modifier.fillMaxSize(),
@@ -343,8 +346,8 @@ private fun AddCourseContent(
                             is CatalogLevel.Inside -> InsideLevel(
                                 level = level,
                                 enrolment = enrolment,
-                                onOpen = onOpen,
-                                onEnrol = onEnrol,
+                                onOpen = { haptic.tap(); onOpen(it) },
+                                onEnrol = { haptic.tap(); onEnrol(it) },
                                 onUserScroll = onUserScroll,
                                 listState = levelListStates.getOrPut(level.key) { LazyListState() },
                                 modifier = Modifier.fillMaxSize(),
@@ -369,6 +372,7 @@ private fun Header(
     onBack: () -> Unit,
 ) {
     val scheme = MaterialTheme.colorScheme
+    val haptic = rememberHapticManager()
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -380,7 +384,7 @@ private fun Header(
             enter = fadeIn() + expandHorizontally(),
             exit = fadeOut() + shrinkHorizontally(),
         ) {
-            IconButton(onClick = onBack) {
+            IconButton(onClick = { haptic.tap(); onBack() }) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
                     contentDescription = stringResource(R.string.elearning_back),

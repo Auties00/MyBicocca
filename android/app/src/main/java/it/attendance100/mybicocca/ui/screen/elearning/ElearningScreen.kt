@@ -61,6 +61,7 @@ import it.attendance100.mybicocca.ui.screen.elearning.component.CardEdition
 import it.attendance100.mybicocca.ui.screen.elearning.component.HomeFilterBar
 import it.attendance100.mybicocca.ui.screen.elearning.component.NotebookCard
 import it.attendance100.mybicocca.ui.screen.elearning.state.ElearningOneShotEvent
+import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.ui.screen.elearning.state.InitialFetchState
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.addCourse.AddCourseSheet
 import it.attendance100.mybicocca.ui.screen.elearning.theme.LocalCourseAccentPalette
@@ -148,6 +149,7 @@ fun ElearningScreen(
 
     val pullState = rememberPullToRefreshState()
     val listState = rememberLazyListState()
+    val haptic = rememberHapticManager()
 
     LaunchedEffect(listState) {
         viewModel.revealCourse.collect { courseId ->
@@ -171,7 +173,10 @@ fun ElearningScreen(
                     HomeFilterBar(
                         selected = filter,
                         studyYears = studyYears,
-                        onSelect = viewModel::setFilter,
+                        onSelect = {
+                            haptic.tap()
+                            viewModel.setFilter(it)
+                        },
                         modifier = Modifier.testTag(ElearningTestTags.FILTER_BAR),
                     )
                 }
@@ -199,9 +204,18 @@ fun ElearningScreen(
                                 is Loadable.Loaded if data.value.isNotEmpty() -> CourseList(
                                     groups = data.value,
                                     listState = listState,
-                                    onOpenCourse = viewModel::openCourse,
-                                    onOpenDeadline = viewModel::openDeadline,
-                                    onToggleGroupFavourite = viewModel::toggleGroupFavourite,
+                                    onOpenCourse = {
+                                        haptic.tap()
+                                        viewModel.openCourse(it)
+                                    },
+                                    onOpenDeadline = {
+                                        haptic.tap()
+                                        viewModel.openDeadline(it)
+                                    },
+                                    onToggleGroupFavourite = { group, fav ->
+                                        haptic.tap()
+                                        viewModel.toggleGroupFavourite(group, fav)
+                                    },
                                 )
 
                                 is Loadable.Loaded -> RefreshableEmpty {
@@ -221,7 +235,10 @@ fun ElearningScreen(
             }
 
             AddCourseFab(
-                onClick = { addSheetVisible = true },
+                onClick = {
+                    haptic.tap()
+                    addSheetVisible = true
+                },
                 modifier = Modifier
                     .testTag(ElearningTestTags.ADD_COURSE_FAB)
                     .align(Alignment.BottomEnd)

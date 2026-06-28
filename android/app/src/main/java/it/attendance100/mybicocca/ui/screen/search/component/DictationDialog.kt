@@ -63,6 +63,7 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import it.attendance100.mybicocca.core.os.rememberHapticManager
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.window.DialogWindowProvider
 import androidx.graphics.shapes.Morph
@@ -87,6 +88,7 @@ fun DictationDialog(
     soundLevel: Float,
     onFinish: () -> Unit,
 ) {
+    val haptic = rememberHapticManager()
     val transitionState = remember { MutableTransitionState(false) }
     transitionState.targetState = visible
     if (!transitionState.currentState && !transitionState.targetState) return
@@ -112,7 +114,7 @@ fun DictationDialog(
                         .clickable(
                             indication = null,
                             interactionSource = remember { MutableInteractionSource() },
-                            onClick = onFinish,
+                            onClick = { haptic.tap(); onFinish() },
                         ),
                 )
             }
@@ -144,6 +146,7 @@ private fun DictationCard(
     soundLevel: Float,
     onFinish: () -> Unit,
 ) {
+    val haptic = rememberHapticManager()
     val scheme = MaterialTheme.colorScheme
     Surface(
         shape = RoundedCornerShape(28.dp),
@@ -171,7 +174,7 @@ private fun DictationCard(
                 horizontalArrangement = Arrangement.End,
             ) {
                 FilledTonalButton(
-                    onClick = onFinish,
+                    onClick = { haptic.tap(); onFinish() },
                     colors = ButtonDefaults.filledTonalButtonColors(
                         containerColor = MaterialTheme.colorScheme.primary,
                         contentColor = Color.White,
@@ -199,6 +202,7 @@ private fun MicVisual(
     soundLevel: Float,
     onClick: () -> Unit,
 ) {
+    val haptic = rememberHapticManager()
     val scheme = MaterialTheme.colorScheme
 
     val level by animateFloatAsState(
@@ -253,7 +257,7 @@ private fun MicVisual(
                 }
                 .clip(knobShape)
                 .background(scheme.primary)
-                .clickable(onClick = onClick),
+                .clickable(onClick = { haptic.tap(); onClick() }),
             contentAlignment = Alignment.Center,
         ) {
             Icon(

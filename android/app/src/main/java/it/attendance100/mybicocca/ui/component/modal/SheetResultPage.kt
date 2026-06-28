@@ -28,6 +28,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import it.attendance100.mybicocca.R
+import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.ui.component.button.PrimaryActionButton
 import it.attendance100.mybicocca.ui.component.feedback.friendlyMessage
 
@@ -54,6 +55,7 @@ fun SheetResultPage(
     onRetry: (() -> Unit)? = null,
     retryInProgress: Boolean = false,
 ) {
+    val haptic = rememberHapticManager()
     val scheme = MaterialTheme.colorScheme
     val dark = isSystemInDarkTheme()
     val brandBg = if (dark) scheme.primaryContainer else scheme.primary
@@ -103,7 +105,7 @@ fun SheetResultPage(
                 horizontalArrangement = Arrangement.spacedBy(4.dp),
             ) {
                 FilledTonalButton(
-                    onClick = onDismiss,
+                    onClick = { haptic.tap(); onDismiss() },
                     enabled = !retryInProgress,
                     modifier = Modifier
                         .weight(1f)
@@ -117,7 +119,7 @@ fun SheetResultPage(
                     Text(stringResource(R.string.common_close), fontWeight = FontWeight.SemiBold)
                 }
                 Button(
-                    onClick = { onRetry.invoke() },
+                    onClick = { haptic.tap(); onRetry.invoke() },
                     enabled = !retryInProgress,
                     modifier = Modifier
                         .weight(1.4f)

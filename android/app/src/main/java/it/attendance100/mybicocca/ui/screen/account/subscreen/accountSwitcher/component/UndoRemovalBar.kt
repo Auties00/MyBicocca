@@ -16,6 +16,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.R
 
 // In-sheet undo affordance shown while a sign-out is pending. Styled like the app snackbar
@@ -26,6 +27,7 @@ fun UndoRemovalBar(
     onUndo: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val haptic = rememberHapticManager()
     val scheme = MaterialTheme.colorScheme
     Surface(
         shape = RoundedCornerShape(20.dp),
@@ -48,7 +50,7 @@ fun UndoRemovalBar(
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.weight(1f),
             )
-            TextButton(onClick = onUndo) {
+            TextButton(onClick = { haptic.tap(); onUndo() }) {
                 Text(
                     text = stringResource(R.string.common_cancel),
                     color = scheme.inversePrimary,

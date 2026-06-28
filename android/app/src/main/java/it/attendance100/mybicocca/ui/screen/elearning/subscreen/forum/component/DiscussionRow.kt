@@ -34,6 +34,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import it.attendance100.mybicocca.R
+import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.domain.model.elearning.forum.Discussion
 import it.attendance100.mybicocca.ui.component.shape.OrganicShapes
 import it.attendance100.mybicocca.ui.component.time.relativeTimeLabel
@@ -52,12 +53,13 @@ fun DiscussionRow(
 ) {
     val scheme = MaterialTheme.colorScheme
     val pinned = discussion.isPinned
+    val haptic = rememberHapticManager()
     Surface(
         shape = RoundedCornerShape(22.dp),
         color = if (pinned) scheme.tertiaryContainer else scheme.surfaceContainerHigh,
         modifier = modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick),
+            .clickable(onClick = { haptic.tap(); onClick() }),
     ) {
         Row(
             modifier = Modifier.padding(14.dp),

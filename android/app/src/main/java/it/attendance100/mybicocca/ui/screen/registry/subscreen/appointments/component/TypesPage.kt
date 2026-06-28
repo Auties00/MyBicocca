@@ -15,6 +15,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.domain.model.appointment.AppointmentService
 import it.attendance100.mybicocca.ui.component.directory.SegmentedIconChip
 import it.attendance100.mybicocca.ui.component.directory.SegmentedTile
@@ -30,6 +31,7 @@ internal fun TypesPage(
     modifier: Modifier = Modifier,
 ) {
     val scheme = MaterialTheme.colorScheme
+    val haptic = rememberHapticManager()
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -45,7 +47,7 @@ internal fun TypesPage(
                 isLast = index == services.lastIndex,
                 title = service.displayName,
                 subtitle = service.durationLabel,
-                onClick = { onStartBooking(service) },
+                onClick = { haptic.tap(); onStartBooking(service) },
                 leading = {
                     SegmentedIconChip(
                         icon = service.directoryIcon,

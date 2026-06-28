@@ -32,6 +32,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.domain.model.elearning.course.CourseFilter
 import it.attendance100.mybicocca.domain.model.studyplan.StudyYear
 import it.attendance100.mybicocca.ui.screen.elearning.ElearningTestTags
@@ -78,6 +79,8 @@ fun HomeFilterBar(
     )
 
     val scrollState = rememberScrollState()
+    val haptic = rememberHapticManager()
+
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -92,7 +95,10 @@ fun HomeFilterBar(
                 active = opt.value == selected,
                 shapes = shapesForIndex(index, options.size),
                 colors = colors,
-                onCheck = { onSelect(opt.value) },
+                onCheck = {
+                    haptic.tap()
+                    onSelect(opt.value)
+                },
                 modifier = Modifier.testTag(ElearningTestTags.filterOption(opt.value.tagKey())),
             )
         }

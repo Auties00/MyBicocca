@@ -53,6 +53,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import it.attendance100.mybicocca.R
+import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.domain.model.tax.TaxInvoice
 import it.attendance100.mybicocca.domain.model.tax.TaxStatus
@@ -249,6 +250,7 @@ private fun DetailContent(
 ) {
     val payable = invoice.status == TaxStatus.PENDING || invoice.status == TaxStatus.EXPIRED
     val isOnline = LocalIsOnline.current
+    val haptic = rememberHapticManager()
 
     Column(
         modifier = modifier
@@ -262,7 +264,10 @@ private fun DetailContent(
                 .padding(start = 4.dp, end = 16.dp, top = 4.dp, bottom = 4.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            IconButton(onClick = onClose, modifier = Modifier.testTag(TaxesTestTags.DETAIL_CLOSE_BUTTON)) {
+            IconButton(
+                onClick = { haptic.tap(); onClose() },
+                modifier = Modifier.testTag(TaxesTestTags.DETAIL_CLOSE_BUTTON)
+            ) {
                 Icon(
                     imageVector = Icons.Rounded.Close,
                     contentDescription = stringResource(R.string.common_close)
@@ -296,7 +301,7 @@ private fun DetailContent(
 
             if (payable && invoice.pagoPaImmediate) {
                 Button(
-                    onClick = onPay,
+                    onClick = { haptic.tap(); onPay() },
                     enabled = !actionInProgress && isOnline,
                     colors = ButtonDefaults.buttonColors(containerColor = PagoPaColor, contentColor = Color.White),
                     modifier = Modifier
@@ -307,7 +312,7 @@ private fun DetailContent(
             }
             if (payable && invoice.pagoPaNotice) {
                 FilledTonalButton(
-                    onClick = onPrintNotice,
+                    onClick = { haptic.tap(); onPrintNotice() },
                     enabled = !actionInProgress && isOnline,
                     modifier = Modifier
                         .fillMaxWidth()
@@ -316,7 +321,7 @@ private fun DetailContent(
             }
             if (invoice.status == TaxStatus.PAID && invoice.pagoPaEnabled) {
                 FilledTonalButton(
-                    onClick = onPrintReceipt,
+                    onClick = { haptic.tap(); onPrintReceipt() },
                     enabled = !actionInProgress && isOnline,
                     modifier = Modifier
                         .fillMaxWidth()
@@ -325,7 +330,7 @@ private fun DetailContent(
             }
             if (invoice.pagoPaEnabled) {
                 FilledTonalButton(
-                    onClick = onCheckStatus,
+                    onClick = { haptic.tap(); onCheckStatus() },
                     enabled = !actionInProgress,
                     modifier = Modifier
                         .testTag(TaxesTestTags.DETAIL_CHECK_STATUS_BUTTON)
@@ -348,6 +353,7 @@ private fun TaxResultContent(
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val haptic = rememberHapticManager()
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -359,7 +365,7 @@ private fun TaxResultContent(
                 .padding(start = 4.dp, end = 16.dp, top = 4.dp, bottom = 4.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            IconButton(onClick = onBack) {
+            IconButton(onClick = { haptic.tap(); onBack() }) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Outlined.ArrowBack,
                     contentDescription = stringResource(R.string.common_back)

@@ -46,6 +46,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import it.attendance100.mybicocca.core.os.rememberHapticManager
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -302,6 +303,7 @@ fun MapScreen(
     val syncStatus by viewModel.syncStatus.collectAsStateWithLifecycle()
     val categoryFilter by viewModel.categoryFilter.collectAsStateWithLifecycle()
 
+    val haptic = rememberHapticManager()
     var showFilterSheet by remember { mutableStateOf(false) }
     var showBuildingsList by remember { mutableStateOf(false) }
     LaunchedEffect(isActive) { if (isActive) onProvideFilterToggle { showFilterSheet = true } }
@@ -402,6 +404,7 @@ fun MapScreen(
             iconIgnorePlacement = true
         }
         sm.addClickListener { symbol ->
+            haptic.tap()
             symbol.data?.asString?.let { viewModel.selectBuilding(BuildingCode(it)) }
             true
         }
@@ -510,7 +513,7 @@ fun MapScreen(
         )
 
         ExtendedFloatingActionButton(
-            onClick = { showBuildingsList = true },
+            onClick = { haptic.tap(); showBuildingsList = true },
             icon = { Icon(Icons.Outlined.Apartment, contentDescription = null) },
             text = { Text(stringResource(R.string.map_view_buildings)) },
             modifier = Modifier

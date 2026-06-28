@@ -74,6 +74,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.os.ProvideHapticManager
+import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.domain.model.account.AcademicIdentity
 import it.attendance100.mybicocca.domain.model.account.Account
 import it.attendance100.mybicocca.domain.model.account.AccountId
@@ -356,6 +357,7 @@ internal fun AccountsScene(
     onUndoRemove: () -> Unit,
     onAddAccount: () -> Unit,
 ) {
+    val haptic = rememberHapticManager()
     Column(
         modifier = modifier
             .testTag(AccountSwitcherTestTags.ROSTER)
@@ -376,7 +378,7 @@ internal fun AccountsScene(
             )
             Spacer(Modifier.weight(1f))
             IconButton(
-                onClick = onOpenSettings,
+                onClick = { haptic.tap(); onOpenSettings() },
                 modifier = Modifier.testTag(AccountSwitcherTestTags.SETTINGS_SHORTCUT),
             ) {
                 Icon(
@@ -515,7 +517,7 @@ private fun AccountsScenePreviewContent() {
         lastSyncedAt = Instant.now()
     )
 
-    ProvideHapticManager {
+    ProvideHapticManager(enabled = true) {
         AccountsScene(
             modifier = Modifier.fillMaxWidth(),
             ordered = listOf(account),

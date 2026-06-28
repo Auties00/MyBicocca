@@ -31,6 +31,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.domain.model.attendance.PresenceMarkOutcome
+import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.ui.component.button.PrimaryActionButton
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.attendance.ext.visual
 
@@ -76,6 +77,7 @@ fun PresenceResultContent(
         animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy),
         label = "result_pop",
     )
+    val haptic = rememberHapticManager()
 
     Column(
         modifier = modifier
@@ -122,7 +124,7 @@ fun PresenceResultContent(
         Spacer(Modifier.height(28.dp))
         PrimaryActionButton(
             text = stringResource(R.string.common_done),
-            onClick = onDone,
+            onClick = { haptic.tap(); onDone() },
             modifier = Modifier.fillMaxWidth(),
         )
     }

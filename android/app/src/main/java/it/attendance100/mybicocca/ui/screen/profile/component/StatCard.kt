@@ -34,6 +34,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.valentinilk.shimmer.shimmer
+import it.attendance100.mybicocca.core.os.rememberHapticManager
 import kotlinx.coroutines.launch
 
 /**
@@ -55,6 +56,7 @@ fun StatCard(
     iconOnClick: (() -> Unit)? = null,
     onClick: (() -> Unit)? = null,
 ) {
+    val haptic = rememberHapticManager()
     val scope = rememberCoroutineScope()
     val scale = remember { Animatable(1f) }
     val rotation = remember { Animatable(0f) }
@@ -67,6 +69,7 @@ fun StatCard(
             containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
         ),
         onClick = {
+            haptic.tap()
             onClick?.invoke()
             scope.launch {
                 launch {
@@ -135,6 +138,7 @@ fun StatCard(
                                 .width(34.dp),
                             colors = CardDefaults.cardColors(containerColor = Color.Transparent),
                             onClick = {
+                                haptic.tap()
                                 iconOnClick?.invoke()
                             },
                             shape = RoundedCornerShape(16),

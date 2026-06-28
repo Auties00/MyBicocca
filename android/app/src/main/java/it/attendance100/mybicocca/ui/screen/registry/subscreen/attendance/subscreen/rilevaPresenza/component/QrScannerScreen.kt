@@ -77,6 +77,7 @@ import com.google.mlkit.vision.barcode.BarcodeScannerOptions
 import com.google.mlkit.vision.barcode.BarcodeScanning
 import com.google.mlkit.vision.barcode.common.Barcode
 import com.google.mlkit.vision.common.InputImage
+import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.R
 
 /**
@@ -193,6 +194,7 @@ private fun ManualCodeDialog(
 ) {
     var code by remember { mutableStateOf("") }
     val focusRequester = remember { FocusRequester() }
+    val haptic = rememberHapticManager()
     LaunchedEffect(Unit) { focusRequester.requestFocus() }
 
     AlertDialog(
@@ -220,11 +222,11 @@ private fun ManualCodeDialog(
         confirmButton = {
             TextButton(
                 enabled = code.isNotBlank(),
-                onClick = { onSubmit(code.trim()) },
+                onClick = { haptic.tap(); onSubmit(code.trim()) },
             ) { Text(stringResource(R.string.attendance_record)) }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text(stringResource(R.string.common_cancel)) }
+            TextButton(onClick = { haptic.tap(); onDismiss() }) { Text(stringResource(R.string.common_cancel)) }
         },
     )
 }
@@ -329,6 +331,7 @@ private fun ScannerTopBar(
     onClose: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val haptic = rememberHapticManager()
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -338,7 +341,7 @@ private fun ScannerTopBar(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         IconButton(
-            onClick = onClose,
+            onClick = { haptic.tap(); onClose() },
             colors = IconButtonDefaults.iconButtonColors(
                 containerColor = Color.Black.copy(alpha = 0.45f),
                 contentColor = Color.White,
@@ -348,7 +351,7 @@ private fun ScannerTopBar(
         }
 
         IconButton(
-            onClick = onManualEntry,
+            onClick = { haptic.tap(); onManualEntry() },
             colors = IconButtonDefaults.iconButtonColors(
                 containerColor = Color.Black.copy(alpha = 0.45f),
                 contentColor = Color.White,
@@ -364,6 +367,7 @@ private fun ScannerTopBar(
 
 @Composable
 private fun PermissionDenied(onRequest: () -> Unit) {
+    val haptic = rememberHapticManager()
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -385,7 +389,7 @@ private fun PermissionDenied(onRequest: () -> Unit) {
             textAlign = TextAlign.Center,
         )
         Spacer(Modifier.height(20.dp))
-        Button(onClick = onRequest) { Text(stringResource(R.string.attendance_allow_camera)) }
+        Button(onClick = { haptic.tap(); onRequest() }) { Text(stringResource(R.string.attendance_allow_camera)) }
     }
 }
 

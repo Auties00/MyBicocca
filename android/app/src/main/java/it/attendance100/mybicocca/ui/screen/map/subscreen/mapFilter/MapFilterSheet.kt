@@ -16,6 +16,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.domain.model.map.BuildingCategory
 import it.attendance100.mybicocca.ui.screen.map.component.icon
@@ -34,6 +35,7 @@ fun MapFilterSheet(
     onClear: () -> Unit,
     onDismiss: () -> Unit,
 ) {
+    val haptic = rememberHapticManager()
     it.attendance100.mybicocca.ui.component.modal.PredictiveModalBottomSheet(onDismiss = onDismiss) { _, _ ->
         Column(
             modifier = Modifier
@@ -50,14 +52,14 @@ fun MapFilterSheet(
                 BuildingCategory.entries.forEach { category ->
                     FilterChip(
                         selected = category in selected,
-                        onClick = { onToggle(category) },
+                        onClick = { haptic.tap(); onToggle(category) },
                         label = { Text(stringResource(category.labelRes)) },
                         leadingIcon = { Icon(category.icon, contentDescription = null) },
                     )
                 }
             }
             if (selected.isNotEmpty()) {
-                TextButton(onClick = onClear) { Text(stringResource(R.string.map_filter_clear)) }
+                TextButton(onClick = { haptic.tap(); onClear() }) { Text(stringResource(R.string.map_filter_clear)) }
             }
         }
     }

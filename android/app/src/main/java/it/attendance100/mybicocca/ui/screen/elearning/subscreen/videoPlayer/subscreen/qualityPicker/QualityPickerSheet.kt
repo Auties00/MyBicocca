@@ -19,6 +19,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import it.attendance100.mybicocca.R
+import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.domain.model.elearning.video.VideoVariant
 
 /**
@@ -34,8 +35,11 @@ fun QualityPickerSheet(
     onSelect: (VideoVariant?) -> Unit,
     onDismiss: () -> Unit,
 ) {
+    val haptic = rememberHapticManager()
     it.attendance100.mybicocca.ui.component.modal.PredictiveModalBottomSheet(onDismiss = onDismiss) { _, _ ->
-        Column(modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)) {
+        Column(modifier = Modifier
+            .fillMaxWidth()
+            .padding(bottom = 16.dp)) {
             Text(
                 text = stringResource(R.string.elearning_video_quality),
                 fontWeight = FontWeight.SemiBold,
@@ -46,7 +50,7 @@ fun QualityPickerSheet(
                 label = stringResource(R.string.elearning_video_quality_auto),
                 detail = stringResource(R.string.elearning_video_quality_auto_detail),
                 isSelected = selected == null,
-                onClick = { onSelect(null); onDismiss() },
+                onClick = { haptic.tap(); onSelect(null); onDismiss() },
             )
             variants.asReversed().forEach { variant ->
                 val label = variant.heightPx?.let { "${it}p" } ?: variant.flavorId
@@ -58,7 +62,7 @@ fun QualityPickerSheet(
                     label = label,
                     detail = detail,
                     isSelected = selected?.flavorId == variant.flavorId,
-                    onClick = { onSelect(variant); onDismiss() },
+                    onClick = { haptic.tap(); onSelect(variant); onDismiss() },
                 )
             }
         }

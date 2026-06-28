@@ -47,6 +47,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import it.attendance100.mybicocca.R
+import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.core.state.SyncStatus
 import it.attendance100.mybicocca.core.state.valueOrNull
 import it.attendance100.mybicocca.domain.model.calendar.CalendarEvent
@@ -119,6 +120,7 @@ fun CalendarScreen(
         }, null
     ),
 ) {
+    val haptic = rememberHapticManager()
     val viewMode by viewModel.viewMode.collectAsStateWithLifecycle()
     val selectedDay by viewModel.selectedDay.collectAsStateWithLifecycle()
     val selectedMonth by viewModel.selectedMonth.collectAsStateWithLifecycle()
@@ -169,6 +171,7 @@ fun CalendarScreen(
             onDismissRequest = { showDatePicker = false },
             confirmButton = {
                 TextButton(onClick = {
+                    haptic.tap()
                     datePickerState.selectedDateMillis?.let { millis ->
                         val date =
                             Instant.ofEpochMilli(millis).atZone(ZoneId.of("UTC")).toLocalDate()
@@ -180,7 +183,10 @@ fun CalendarScreen(
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showDatePicker = false }) {
+                TextButton(onClick = {
+                    haptic.tap()
+                    showDatePicker = false
+                }) {
                     Text(stringResource(R.string.common_cancel))
                 }
             }
@@ -190,9 +196,11 @@ fun CalendarScreen(
     }
 
     ProvideEventPalette {
-        Box(modifier = modifier
-            .testTag(CalendarTestTags.ROOT)
-            .fillMaxSize()) {
+        Box(
+            modifier = modifier
+                .testTag(CalendarTestTags.ROOT)
+                .fillMaxSize()
+        ) {
             PullToRefreshBox(
                 isRefreshing = syncStatus is SyncStatus.Refreshing || initialLoading,
                 onRefresh = viewModel::pullToRefresh,
@@ -209,9 +217,11 @@ fun CalendarScreen(
                         modifier = Modifier.testTag(CalendarTestTags.STATE_ERROR),
                     )
                 } else {
-                    Column(modifier = Modifier
-                        .testTag(CalendarTestTags.STATE_CONTENT)
-                        .fillMaxSize()) {
+                    Column(
+                        modifier = Modifier
+                            .testTag(CalendarTestTags.STATE_CONTENT)
+                            .fillMaxSize()
+                    ) {
                         Spacer(Modifier.height(16.dp))
                         CalendarSegmentedControl(
                             viewMode = viewMode,
@@ -331,9 +341,18 @@ fun CalendarScreen(
                     event = selected,
                     elearningCourses = selected.activityCode?.let(coursesByActivityCode::get)
                         .orEmpty(),
-                    onOpenCourse = onOpenCourse,
-                    onOpenAssignment = onOpenAssignment,
-                    onOpenReservation = onOpenReservation,
+                    onOpenCourse = { course ->
+                        onOpenCourse(course)
+                        viewModel.closeEventDetail()
+                    },
+                    onOpenAssignment = { assignmentId, courseId ->
+                        onOpenAssignment(assignmentId, courseId)
+                        viewModel.closeEventDetail()
+                    },
+                    onOpenReservation = { reservation ->
+                        onOpenReservation(reservation)
+                        viewModel.closeEventDetail()
+                    },
                     onDismiss = viewModel::closeEventDetail,
                 )
             }

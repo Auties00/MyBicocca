@@ -46,6 +46,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.valentinilk.shimmer.shimmer
+import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.R
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
@@ -84,6 +85,7 @@ fun ProgressStatCard(
     isLoading: Boolean = false,
     onClick: (() -> Unit)? = null,
 ) {
+    val haptic = rememberHapticManager()
     var primaryColor by remember { mutableStateOf(primaryColor) }
     if (primaryColor == null) {
         primaryColor = if (isSystemInDarkTheme()) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.inversePrimary
@@ -109,6 +111,7 @@ fun ProgressStatCard(
             containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
         ),
         onClick = {
+            haptic.tap()
             onClick?.invoke()
             scope.launch {
                 launch {

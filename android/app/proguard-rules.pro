@@ -67,3 +67,5 @@
 -keepclassmembers class * {
     @androidx.annotation.Keep *;
 }
+-keep class com.google.android.gms.oss.licenses.** { *; }
+-keep interface com.google.android.gms.oss.licenses.** { *; }

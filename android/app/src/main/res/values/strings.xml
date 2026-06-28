@@ -859,6 +859,12 @@
     <string name="settings_security_password_confirm_prompt">Inserisci la tua password per confermare.</string>
     <string name="settings_security_enable_lock_dialog">Attiva blocco app</string>
     <string name="settings_security_disable_lock_dialog">Disattiva blocco app</string>
+    <string name="settings_haptic_title">Vibrazione</string>
+    <string name="settings_haptic_subtitle">Feedback tattile nei tocchi</string>
+    <string name="settings_haptic_sheet_title">Vibrazione</string>
+    <string name="settings_haptic_sheet_subtitle">Feedback tattile</string>
+    <string name="settings_haptic_toggle_title">Vibrazione abilitata</string>
+    <string name="settings_haptic_toggle_subtitle">Produci vibrazioni al tocco e durante le interazioni</string>
 
     <!-- Appelli added strings -->
     <string name="relative_day_in_days">Tra %1$d giorni</string>

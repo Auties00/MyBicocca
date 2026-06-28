@@ -51,6 +51,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
+import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.domain.model.calendar.CalendarEvent
 import it.attendance100.mybicocca.domain.model.calendar.EventStatus
@@ -379,6 +380,7 @@ private data class EventAction(
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun ActionRow(primary: EventAction, secondary: EventAction?) {
+    val haptic = rememberHapticManager()
     val scheme = MaterialTheme.colorScheme
     val dark = isSystemInDarkTheme()
     val primaryBg = if (dark) scheme.primaryContainer else scheme.primary
@@ -386,7 +388,7 @@ private fun ActionRow(primary: EventAction, secondary: EventAction?) {
 
     if (secondary == null) {
         Button(
-            onClick = primary.onClick,
+            onClick = { haptic.tap(); primary.onClick() },
             modifier = Modifier
                 .fillMaxWidth()
                 .height(56.dp)
@@ -412,7 +414,7 @@ private fun ActionRow(primary: EventAction, secondary: EventAction?) {
         horizontalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         FilledTonalButton(
-            onClick = secondary.onClick,
+            onClick = { haptic.tap(); secondary.onClick() },
             modifier = Modifier
                 .weight(1f)
                 .height(56.dp)
@@ -432,7 +434,7 @@ private fun ActionRow(primary: EventAction, secondary: EventAction?) {
             Text(secondary.label, fontWeight = FontWeight.SemiBold)
         }
         Button(
-            onClick = primary.onClick,
+            onClick = { haptic.tap(); primary.onClick() },
             modifier = Modifier
                 .weight(1.4f)
                 .height(56.dp)

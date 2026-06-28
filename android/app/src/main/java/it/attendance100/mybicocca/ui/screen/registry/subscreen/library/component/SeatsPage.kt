@@ -38,6 +38,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import it.attendance100.mybicocca.R
+import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.domain.model.library.LibrarySeat
 import it.attendance100.mybicocca.domain.model.library.LibraryZoneColor
 import it.attendance100.mybicocca.ui.component.modal.SheetMessage
@@ -73,6 +74,7 @@ internal fun SeatsPage(
             )
             return
         }
+        val haptic = rememberHapticManager()
 
         Column(
             modifier = Modifier
@@ -82,14 +84,17 @@ internal fun SeatsPage(
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             seats.forEach { seat ->
-                SeatRow(seat = seat, zoneColor = zoneColor, onClick = { onSelectSeat(seat) })
+                SeatRow(
+                    seat = seat,
+                    zoneColor = zoneColor,
+                    onClick = { haptic.tap(); onSelectSeat(seat) })
             }
             Spacer(Modifier.size(4.dp))
         }
 
         val dark = isSystemInDarkTheme()
         Button(
-            onClick = onAutoSelect,
+            onClick = { haptic.tap(); onAutoSelect() },
             enabled = LocalIsOnline.current,
             shapes = ButtonDefaults.shapes(),
             modifier = Modifier

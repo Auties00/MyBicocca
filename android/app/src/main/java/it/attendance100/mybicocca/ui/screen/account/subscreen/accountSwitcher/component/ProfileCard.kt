@@ -34,6 +34,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.domain.model.account.Account
 import it.attendance100.mybicocca.domain.model.career.Career
@@ -71,6 +72,7 @@ fun ProfileCard(
     onSelectCareer: (CareerId) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val haptic = rememberHapticManager()
     val scheme = MaterialTheme.colorScheme
     val motion = MaterialTheme.motionScheme
     val careers = account.academic.careers.sortedByDescending { it.status.isSelectable }
@@ -93,7 +95,10 @@ fun ProfileCard(
     )
 
     Surface(
-        onClick = if (isActive) onOpenDetails else onSwitchAccount,
+        onClick = {
+            haptic.tap()
+            if (isActive) onOpenDetails() else onSwitchAccount()
+        },
         shape = CardShape,
         color = containerColor,
         border = BorderStroke(width = 1.dp, color = borderColor),
@@ -192,6 +197,7 @@ private fun CareerSubCard(
     selected: Boolean,
     onClick: () -> Unit,
 ) {
+    val haptic = rememberHapticManager()
     val scheme = MaterialTheme.colorScheme
     val selectable = career.status.isSelectable
     val container = when {
@@ -207,7 +213,7 @@ private fun CareerSubCard(
     val supportColor = if (selected) scheme.onPrimaryContainer else scheme.onSurfaceVariant
 
     Surface(
-        onClick = onClick,
+        onClick = { haptic.tap(); onClick() },
         enabled = selectable,
         shape = CareerShape,
         color = container,

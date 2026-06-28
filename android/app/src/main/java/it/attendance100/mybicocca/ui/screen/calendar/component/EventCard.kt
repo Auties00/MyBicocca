@@ -31,6 +31,7 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.domain.model.calendar.CalendarEvent
 import it.attendance100.mybicocca.domain.model.calendar.EventStatus
@@ -82,6 +83,7 @@ private fun EventCardCore(
     onClick: () -> Unit,
     modifier: Modifier,
 ) {
+    val haptic = rememberHapticManager()
     val now by rememberCurrentTime()
     val colors = event.colorsFor(now)
     val cancelled = event.status == EventStatus.CANCELLED
@@ -100,7 +102,7 @@ private fun EventCardCore(
                     }
                 } else Modifier,
             )
-            .clickable(onClick = onClick),
+            .clickable(onClick = { haptic.tap(); onClick() }),
     ) {
         Box(
             modifier = Modifier

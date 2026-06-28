@@ -30,6 +30,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import it.attendance100.mybicocca.R
+import it.attendance100.mybicocca.core.os.rememberHapticManager
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
@@ -79,9 +80,13 @@ fun BookingSummaryCard(
         targetValue = if (pressed) 12.dp else 24.dp,
         label = "bookingCardCorner",
     )
+    val haptic = rememberHapticManager()
 
     Surface(
-        onClick = onClick,
+        onClick = {
+            haptic.tap()
+            onClick()
+        },
         interactionSource = interactionSource,
         modifier = modifier.fillMaxWidth(),
         color = scheme.surfaceContainer,

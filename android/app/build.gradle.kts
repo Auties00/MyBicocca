@@ -29,7 +29,7 @@ val keystoreProperties = Properties().apply {
 fun signingCredential(propertyKey: String, environmentKey: String): String? =
     keystoreProperties.getProperty(propertyKey) ?: System.getenv(environmentKey)
 
-val appVersionName = "0.0.2"
+val appVersionName = "0.0.3"
 
 // Android config
 android {

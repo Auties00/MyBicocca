@@ -64,6 +64,7 @@ import androidx.compose.ui.util.lerp
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupPositionProvider
 import androidx.compose.ui.window.PopupProperties
+import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.domain.model.calendar.CalendarEvent
 import it.attendance100.mybicocca.domain.model.calendar.CalendarEventId
@@ -122,6 +123,7 @@ fun MonthAgendaSheet(
     bottomNavBarPadding: PaddingValues,
     sheetHeight: Int,
 ) {
+    val haptic = rememberHapticManager()
     val density = LocalDensity.current
     val configuration = LocalConfiguration.current
     val coroutineScope = rememberCoroutineScope()
@@ -139,6 +141,17 @@ fun MonthAgendaSheet(
     var expandedEventId by remember { mutableStateOf<CalendarEventId?>(null) }
     LaunchedEffect(isSheetExpanded, selectedDay) {
         if (!isSheetExpanded) expandedEventId = null
+    }
+
+    LaunchedEffect(progress) {
+        var wasAtEdge = progress.value <= 0f || progress.value >= 1f
+        androidx.compose.runtime.snapshotFlow { progress.value }.collect { current ->
+            val isAtEdge = current <= 0f || current >= 1f
+            if (wasAtEdge != isAtEdge) {
+                haptic.feather()
+            }
+            wasAtEdge = isAtEdge
+        }
     }
 
     val scrimColor = scheme.scrim
@@ -400,6 +413,7 @@ private fun AgendaRow(
     onOpenReservation: (CalendarEvent) -> Unit,
     onClick: () -> Unit,
 ) {
+    val haptic = rememberHapticManager()
     val scheme = MaterialTheme.colorScheme
     val motion = MaterialTheme.motionScheme
     val now by rememberCurrentTime()
@@ -450,7 +464,7 @@ private fun AgendaRow(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clickable(onClick = onClick)
+                        .clickable(onClick = { haptic.tap(); onClick() })
                         .padding(start = 13.dp, top = 16.dp, bottom = 16.dp, end = 16.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {

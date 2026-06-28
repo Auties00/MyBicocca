@@ -16,7 +16,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.domain.model.account.Account
 import it.attendance100.mybicocca.domain.model.career.Career
@@ -104,13 +106,17 @@ internal fun CareerCard(
     onClick: (() -> Unit)?,
     selected: Boolean = false,
 ) {
+    val haptic = rememberHapticManager()
     val container = when {
         selected -> MaterialTheme.colorScheme.primaryContainer
         onClick == null -> MaterialTheme.colorScheme.surfaceVariant
         else -> MaterialTheme.colorScheme.surface
     }
     Card(
-        onClick = onClick ?: {},
+        onClick = {
+            haptic.tap()
+            onClick?.invoke()
+        },
         enabled = onClick != null,
         colors = CardDefaults.cardColors(containerColor = container),
         modifier = Modifier.fillMaxWidth(),

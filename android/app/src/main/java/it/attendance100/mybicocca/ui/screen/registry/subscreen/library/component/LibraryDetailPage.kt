@@ -32,6 +32,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import it.attendance100.mybicocca.R
+import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.SyncStatus
 import it.attendance100.mybicocca.domain.model.library.Library
@@ -122,8 +123,9 @@ internal fun LibraryDetailPage(
             Spacer(Modifier.size(4.dp))
         }
 
+        val haptic = rememberHapticManager()
         Button(
-            onClick = onPrenota,
+            onClick = { haptic.tap(); onPrenota() },
             enabled = liveStatus is Loadable.Loaded,
             shapes = ButtonDefaults.shapes(),
             modifier = Modifier

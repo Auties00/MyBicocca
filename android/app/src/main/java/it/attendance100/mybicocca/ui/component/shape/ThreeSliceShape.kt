@@ -33,6 +33,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.PathParser
+import it.attendance100.mybicocca.core.os.rememberHapticManager
 
 /**
  * A shape with a fixed-height top and bottom slice (driven by a vector path so the
@@ -106,7 +107,9 @@ private fun ThreeSliceBackground(
 ) {
     val blendMode = BlendMode.SrcIn
     Column(modifier = modifier) {
-        Box(modifier = Modifier.fillMaxWidth().height(topHeight)) {
+        Box(modifier = Modifier
+            .fillMaxWidth()
+            .height(topHeight)) {
             Image(
                 painter = painterResource(id = topRes),
                 contentDescription = null,
@@ -123,7 +126,9 @@ private fun ThreeSliceBackground(
             )
         }
 
-        Box(modifier = Modifier.fillMaxSize().weight(1f)) {
+        Box(modifier = Modifier
+            .fillMaxSize()
+            .weight(1f)) {
             Image(
                 painter = painterResource(id = midRes),
                 contentDescription = null,
@@ -140,7 +145,10 @@ private fun ThreeSliceBackground(
             )
         }
 
-        Box(modifier = Modifier.fillMaxWidth().height(bottomHeight).rotate(180f)) {
+        Box(modifier = Modifier
+            .fillMaxWidth()
+            .height(bottomHeight)
+            .rotate(180f)) {
             Image(
                 painter = painterResource(id = botRes),
                 contentDescription = null,
@@ -184,6 +192,7 @@ fun DynamicCard(
     val context = LocalContext.current
     val density = LocalDensity.current
 
+    val haptic = rememberHapticManager()
     val topVectorDef = remember(topSliceRes) { getVectorDefinition(context, topSliceRes) }
     val bottomVectorDef = remember(bottomSliceRes) { getVectorDefinition(context, bottomSliceRes) }
     val customShape = remember(density, sliceTopHeightDp, sliceBottomHeightDp, topVectorDef, bottomVectorDef) {
@@ -198,7 +207,10 @@ fun DynamicCard(
     Surface(
         modifier = modifier,
         shape = customShape,
-        onClick = { onClick?.invoke() },
+        onClick = {
+            haptic.tap()
+            onClick?.invoke()
+        },
         enabled = onClick != null,
         color = Color.Transparent,
     ) {
