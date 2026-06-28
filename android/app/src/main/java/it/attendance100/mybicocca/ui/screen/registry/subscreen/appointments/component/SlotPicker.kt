@@ -47,6 +47,7 @@ import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.SyncStatus
 import it.attendance100.mybicocca.domain.model.appointment.AppointmentMonthAvailability
 import it.attendance100.mybicocca.domain.model.appointment.AppointmentSlot
+import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.ui.component.button.RetryButton
 import java.time.LocalDate
 import java.time.YearMonth
@@ -166,6 +167,7 @@ private fun MonthSwitcher(
     onPreviousMonth: () -> Unit,
     onNextMonth: () -> Unit,
 ) {
+    val haptic = rememberHapticManager()
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -180,7 +182,7 @@ private fun MonthSwitcher(
             modifier = Modifier.weight(1f),
         )
         FilledTonalIconButton(
-            onClick = onPreviousMonth,
+            onClick = { haptic.tap(); onPreviousMonth() },
             enabled = enabled && canGoToPreviousMonth,
             modifier = Modifier.size(44.dp),
             shapes = IconButtonDefaults.shapes(),
@@ -193,7 +195,7 @@ private fun MonthSwitcher(
         }
         Spacer(Modifier.size(6.dp))
         FilledTonalIconButton(
-            onClick = onNextMonth,
+            onClick = { haptic.tap(); onNextMonth() },
             enabled = enabled && canGoToNextMonth,
             modifier = Modifier.size(44.dp),
             shapes = IconButtonDefaults.shapes(),
@@ -289,6 +291,7 @@ private fun DayCell(
     onSelectDate: (LocalDate) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val haptic = rememberHapticManager()
     val scheme = MaterialTheme.colorScheme
     val motion = MaterialTheme.motionScheme
     val cornerPercent by animateIntAsState(
@@ -320,7 +323,7 @@ private fun DayCell(
     ) {
         if (available) {
             Surface(
-                onClick = { onSelectDate(date) },
+                onClick = { haptic.tap(); onSelectDate(date) },
                 enabled = enabled,
                 shape = RoundedCornerShape(cornerPercent),
                 color = container,
@@ -443,6 +446,7 @@ private fun SlotSection(
     enabled: Boolean,
     onSelectSlot: (AppointmentSlot) -> Unit,
 ) {
+    val haptic = rememberHapticManager()
     if (slots.isEmpty()) return
     Column(
         modifier = Modifier.padding(horizontal = 20.dp),
@@ -474,7 +478,7 @@ private fun SlotSection(
                     rowSlots.forEach { slot ->
                         ToggleButton(
                             checked = slot == selectedSlot,
-                            onCheckedChange = { onSelectSlot(slot) },
+                            onCheckedChange = { haptic.tap(); onSelectSlot(slot) },
                             enabled = enabled && slot.available,
                             shapes = ToggleButtonDefaults.shapes(),
                             modifier = Modifier.weight(1f),
@@ -515,6 +519,7 @@ private fun CenteredLoading() {
 
 @Composable
 private fun ErrorRow(onRetry: () -> Unit) {
+    val haptic = rememberHapticManager()
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -528,7 +533,7 @@ private fun ErrorRow(onRetry: () -> Unit) {
             color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.weight(1f),
         )
-        RetryButton(onClick = onRetry)
+        RetryButton(onClick = { haptic.tap(); onRetry() })
     }
 }
 

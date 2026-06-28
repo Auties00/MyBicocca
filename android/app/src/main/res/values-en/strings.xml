@@ -858,6 +858,12 @@
     <string name="settings_security_password_confirm_prompt">Enter your password to confirm.</string>
     <string name="settings_security_enable_lock_dialog">Enable app lock</string>
     <string name="settings_security_disable_lock_dialog">Disable app lock</string>
+    <string name="settings_haptic_title">Haptics</string>
+    <string name="settings_haptic_subtitle">Touch feedback for interactions</string>
+    <string name="settings_haptic_sheet_title">Haptics</string>
+    <string name="settings_haptic_sheet_subtitle">Touch feedback</string>
+    <string name="settings_haptic_toggle_title">Haptic feedback</string>
+    <string name="settings_haptic_toggle_subtitle">Vibrate on taps and during interactions</string>
 
     <!-- Appelli added strings -->
     <string name="relative_day_in_days">In %1$d days</string>

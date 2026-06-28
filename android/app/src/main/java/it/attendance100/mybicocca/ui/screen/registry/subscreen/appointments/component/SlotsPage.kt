@@ -27,6 +27,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.ui.component.feedback.EmptyState
+import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.appointments.AppointmentsViewModel
 
 /**
@@ -41,6 +42,7 @@ internal fun SlotsPage(
     viewModel: AppointmentsViewModel,
     modifier: Modifier = Modifier,
 ) {
+    val haptic = rememberHapticManager()
     val offerings by viewModel.offerings.collectAsStateWithLifecycle()
     val setupStatus by viewModel.setupStatus.collectAsStateWithLifecycle()
 
@@ -126,7 +128,7 @@ internal fun SlotsPage(
 
         ContinuaButton(
             enabled = selectedSlot != null,
-            onClick = viewModel::goToForm,
+            onClick = { haptic.tap(); viewModel.goToForm() },
             modifier = Modifier.padding(start = 24.dp, end = 24.dp, top = 12.dp, bottom = 24.dp),
         )
     }

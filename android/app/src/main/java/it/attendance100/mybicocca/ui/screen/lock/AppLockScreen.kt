@@ -39,6 +39,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import it.attendance100.mybicocca.R
+import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.domain.model.security.UnlockResult
 import it.attendance100.mybicocca.ui.component.input.PasswordTextField
 
@@ -58,6 +59,7 @@ fun AppLockScreen(viewModel: AppLockViewModel) {
     val context = LocalContext.current
     val activity = remember(context) { context.findFragmentActivity() }
     val capability = rememberBiometricCapability()
+    val haptic = rememberHapticManager()
 
     val username by viewModel.username.collectAsStateWithLifecycle()
     val verifying by viewModel.verifying.collectAsStateWithLifecycle()
@@ -68,6 +70,7 @@ fun AppLockScreen(viewModel: AppLockViewModel) {
     var biometricTrigger by remember { mutableIntStateOf(0) }
 
     val submit: () -> Unit = submit@{
+        haptic.tap()
         if (password.isEmpty() || verifying) return@submit
         error = null
         viewModel.verifyPassword(password) { result ->
@@ -158,7 +161,7 @@ fun AppLockScreen(viewModel: AppLockViewModel) {
                 }
                 if (capability == BiometricCapability.Available) {
                     TextButton(
-                        onClick = { usePassword = false; biometricTrigger++ },
+                        onClick = { haptic.tap(); usePassword = false; biometricTrigger++ },
                         modifier = Modifier.testTag(AppLockTestTags.USE_BIOMETRIC_BUTTON),
                     ) {
                         Row(
@@ -175,13 +178,13 @@ fun AppLockScreen(viewModel: AppLockViewModel) {
                 }
             } else {
                 Button(
-                    onClick = { biometricTrigger++ },
+                    onClick = { haptic.tap(); biometricTrigger++ },
                     modifier = Modifier
                         .fillMaxWidth()
                         .testTag(AppLockTestTags.UNLOCK_BUTTON),
                 ) { Text(stringResource(R.string.lock_unlock)) }
                 TextButton(
-                    onClick = { usePassword = true },
+                    onClick = { haptic.tap(); usePassword = true },
                     modifier = Modifier.testTag(AppLockTestTags.USE_PASSWORD_BUTTON),
                 ) { Text(stringResource(R.string.lock_use_password)) }
             }

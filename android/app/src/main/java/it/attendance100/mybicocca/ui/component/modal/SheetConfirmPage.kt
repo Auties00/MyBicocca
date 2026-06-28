@@ -20,6 +20,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import it.attendance100.mybicocca.R
+import it.attendance100.mybicocca.core.os.rememberHapticManager
 
 /**
  * In-sheet destructive-confirm page, used where a popup AlertDialog would otherwise appear:
@@ -43,6 +44,7 @@ fun SheetConfirmPage(
     val dark = isSystemInDarkTheme()
     val brandBg = if (dark) scheme.primaryContainer else scheme.primary
     val brandFg = if (dark) scheme.onPrimaryContainer else scheme.onPrimary
+    val haptic = rememberHapticManager()
     val (secondaryLabel, onSecondary) = if (confirmIsPrimary) keepLabel to onKeep else confirmLabel to onConfirm
     val (primaryLabel, onPrimary) = if (confirmIsPrimary) confirmLabel to onConfirm else keepLabel to onKeep
 
@@ -60,7 +62,7 @@ fun SheetConfirmPage(
             horizontalArrangement = Arrangement.spacedBy(4.dp),
         ) {
             FilledTonalButton(
-                onClick = onSecondary,
+                onClick = { haptic.tap(); onSecondary() },
                 modifier = Modifier
                     .weight(1f)
                     .height(56.dp),
@@ -73,7 +75,7 @@ fun SheetConfirmPage(
                 Text(secondaryLabel, fontWeight = FontWeight.SemiBold)
             }
             Button(
-                onClick = onPrimary,
+                onClick = { haptic.tap(); onPrimary() },
                 modifier = Modifier
                     .weight(1.4f)
                     .height(56.dp),

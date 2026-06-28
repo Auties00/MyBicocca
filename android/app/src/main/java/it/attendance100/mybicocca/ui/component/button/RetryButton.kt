@@ -10,6 +10,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import it.attendance100.mybicocca.R
+import it.attendance100.mybicocca.core.os.rememberHapticManager
 
 /**
  * The standard retry action shared by error states across the app: expressive press morph on
@@ -19,8 +20,12 @@ import it.attendance100.mybicocca.R
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun RetryButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
+    val haptic = rememberHapticManager()
     Button(
-        onClick = onClick,
+        onClick = {
+            haptic.tap()
+            onClick()
+        },
         modifier = modifier,
         shapes = ButtonDefaults.shapes(),
         colors = ButtonDefaults.buttonColors(

@@ -44,6 +44,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import it.attendance100.mybicocca.core.os.rememberHapticManager
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import it.attendance100.mybicocca.R
@@ -331,6 +332,7 @@ private fun AppelliButton(
     detail: CourseDetail?,
     onOpenAppelli: (courseKey: String) -> Unit,
 ) {
+    val haptic = rememberHapticManager()
     val scheme = MaterialTheme.colorScheme
     val bookableCount = detail?.bookableCallsCount ?: row.bookableCallsCount
     val hasAppelli = bookableCount > 0
@@ -338,7 +340,7 @@ private fun AppelliButton(
 
     if (hasAppelli) {
         Button(
-            onClick = { onOpenAppelli(courseKey) },
+            onClick = { haptic.tap(); onOpenAppelli(courseKey) },
             modifier = Modifier
                 .fillMaxWidth()
                 .height(56.dp),

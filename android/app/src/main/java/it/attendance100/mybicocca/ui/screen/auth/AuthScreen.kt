@@ -53,6 +53,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.platform.LocalAutofillManager
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -69,6 +70,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import it.attendance100.mybicocca.R
+import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.domain.model.account.Account
 import it.attendance100.mybicocca.domain.model.account.SignInFailure
 import it.attendance100.mybicocca.ui.component.brand.MyBicoccaWordmark
@@ -182,6 +184,7 @@ private fun AuthScreenBody(
     val inflight by viewModel.inflight.collectAsStateWithLifecycle()
     val fieldsInError by viewModel.credentialsRejected.collectAsStateWithLifecycle()
 
+    val haptic = rememberHapticManager()
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
 
@@ -268,8 +271,13 @@ private fun AuthScreenBody(
 
                 Spacer(Modifier.height(24.dp))
                 val (accediInteractionSource, accediShape) = rememberPressShrink()
+                val keyboardController = LocalSoftwareKeyboardController.current
                 Button(
-                    onClick = viewModel::submit,
+                    onClick = {
+                        haptic.tap()
+                        viewModel.submit()
+                        keyboardController?.hide()
+                    },
                     enabled = !inflight && username.isNotBlank() && password.isNotBlank() &&
                             LocalIsOnline.current,
                     interactionSource = accediInteractionSource,
@@ -316,6 +324,7 @@ private fun AuthScreenBody(
                     iconTint = Color.Unspecified,
                     enabled = !inflight,
                     onClick = {
+                        haptic.tap()
                         scope.launch {
                             snackbarHostState.showSnackbar(spidUnavailableMsg)
                         }
@@ -329,6 +338,7 @@ private fun AuthScreenBody(
                     iconTint = MaterialTheme.colorScheme.onSurface,
                     enabled = !inflight,
                     onClick = {
+                        haptic.tap()
                         scope.launch {
                             snackbarHostState.showSnackbar(cieUnavailableMsg)
                         }
@@ -344,7 +354,7 @@ private fun AuthScreenBody(
             val (cancelInteractionSource, cancelShape) = rememberPressShrink()
 
             OutlinedButton(
-                onClick = onCancel,
+                onClick = { haptic.tap(); onCancel() },
                 enabled = !inflight,
                 interactionSource = cancelInteractionSource,
                 shape = cancelShape,

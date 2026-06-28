@@ -26,6 +26,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import it.attendance100.mybicocca.R
+import it.attendance100.mybicocca.core.os.rememberHapticManager
 
 /**
  * Tappable "Scadenze" banner that opens the scadenzario sheet. Mirrors the design's
@@ -40,9 +41,10 @@ fun ScadenzeHeader(
 ) {
     val scheme = MaterialTheme.colorScheme
     val overlay = scheme.onPrimaryContainer.copy(alpha = 0.12f)
+    val haptic = rememberHapticManager()
 
     Surface(
-        onClick = onClick,
+        onClick = { haptic.tap(); onClick() },
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(24.dp),
         color = scheme.primaryContainer,

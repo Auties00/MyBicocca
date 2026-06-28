@@ -24,6 +24,7 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import it.attendance100.mybicocca.domain.model.appointment.AppointmentFormField
+import it.attendance100.mybicocca.core.os.rememberHapticManager
 import kotlinx.coroutines.delay
 
 /**
@@ -141,6 +142,7 @@ private fun SelectFieldRow(
     onValueChange: (String, String) -> Unit,
 ) {
     var expanded by remember { mutableStateOf(false) }
+    val haptic = rememberHapticManager()
     val selectedLabel = field.options.firstOrNull { it.value == value }?.label.orEmpty()
 
     ExposedDropdownMenuBox(
@@ -167,6 +169,7 @@ private fun SelectFieldRow(
                 DropdownMenuItem(
                     text = { Text(option.label) },
                     onClick = {
+                        haptic.tap()
                         onValueChange(field.code, option.value)
                         expanded = false
                     },

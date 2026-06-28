@@ -38,7 +38,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Matrix
@@ -46,6 +45,7 @@ import androidx.compose.ui.graphics.Outline
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.asComposePath
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -56,6 +56,7 @@ import androidx.compose.ui.unit.sp
 import androidx.graphics.shapes.Morph
 import androidx.graphics.shapes.toPath
 import it.attendance100.mybicocca.R
+import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.domain.model.elearning.quiz.AttemptQuestion
 import it.attendance100.mybicocca.ui.component.text.HtmlBody
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.quizDetail.state.ChoiceOption
@@ -91,6 +92,7 @@ fun QuestionCard(
     val noteCount = if (readOnly) listOfNotNull(parsed.rightAnswerHtml, parsed.feedbackHtml).size else 0
     val hasBody = parsed.model !is QuestionUiModel.Unsupported || !readOnly
     val bodyClosing = noteCount == 0
+    val haptic = rememberHapticManager()
 
     Column(
         modifier = modifier.fillMaxWidth(),
@@ -115,6 +117,7 @@ fun QuestionCard(
                     readOnly = readOnly,
                     closing = bodyClosing,
                     onSelect = { option ->
+                        haptic.tap()
                         onAnswer(model.baseFields + (model.fieldName to option.value))
                     },
                 )
@@ -130,6 +133,7 @@ fun QuestionCard(
                     readOnly = readOnly,
                     closing = bodyClosing,
                     onSelect = { option ->
+                        haptic.tap()
                         val updated = model.options.associate { o ->
                             val value = if (o.fieldName == option.fieldName) {
                                 if (checked(o)) "0" else "1"
@@ -247,7 +251,11 @@ private fun QuestionHeaderTile(
                 if (readOnly) {
                     VerdictBadge(question)
                 } else if (onToggleFlag != null) {
-                    IconButton(onClick = onToggleFlag, modifier = Modifier.size(32.dp)) {
+                    val haptic = rememberHapticManager()
+                    IconButton(
+                        onClick = { haptic.tap(); onToggleFlag() },
+                        modifier = Modifier.size(32.dp)
+                    ) {
                         Icon(
                             imageVector = if (flagged) Icons.Rounded.Flag else Icons.Outlined.Flag,
                             contentDescription = if (flagged) {
@@ -314,8 +322,9 @@ private fun ChoiceTiles(
                 scheme.errorContainer to scheme.onErrorContainer
             else -> scheme.surfaceContainerLow to scheme.onSurface
         }
+        val haptic = it.attendance100.mybicocca.core.os.rememberHapticManager()
         Surface(
-            onClick = { onSelect(option) },
+            onClick = { haptic.tap(); onSelect(option) },
             enabled = !readOnly,
             shape = segmentShape(closing = closing && index == options.lastIndex),
             color = container,
@@ -444,6 +453,7 @@ private fun ClozeContent(
     onAnswer: (Map<String, String>) -> Unit,
 ) {
     val scheme = MaterialTheme.colorScheme
+    val haptic = rememberHapticManager()
 
     fun currentValue(fieldName: String, initial: String): String =
         answerFields[fieldName] ?: initial
@@ -526,7 +536,12 @@ private fun ClozeContent(
                                             .background(if (selected) scheme.secondary else scheme.surfaceContainerHigh)
                                             .then(
                                                 if (readOnly) Modifier
-                                                else Modifier.clickable { emit(segment.fieldName, option.value) },
+                                                else Modifier.clickable {
+                                                    haptic.tap(); emit(
+                                                    segment.fieldName,
+                                                    option.value
+                                                )
+                                                },
                                             )
                                             .padding(horizontal = 14.dp, vertical = 8.dp),
                                     ) {

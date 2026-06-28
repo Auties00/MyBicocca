@@ -24,6 +24,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import it.attendance100.mybicocca.R
+import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.domain.model.enrollment.RenewalState
 
 /**
@@ -44,9 +45,10 @@ fun EnrollmentRenewalButton(
     val dark = isSystemInDarkTheme()
     val brandBg = if (dark) scheme.primaryContainer else scheme.primary
     val brandFg = if (dark) scheme.onPrimaryContainer else scheme.onPrimary
+    val haptic = rememberHapticManager()
     when (state) {
         is RenewalState.Renewable -> Button(
-            onClick = onRenew,
+            onClick = { haptic.tap(); onRenew() },
             modifier = modifier.height(56.dp),
             colors = ButtonDefaults.buttonColors(
                 containerColor = brandBg,

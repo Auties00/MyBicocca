@@ -22,6 +22,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.ui.screen.calendar.ext.visibleWeekDays
 import java.time.LocalDate
 import java.time.format.TextStyle
@@ -43,6 +44,7 @@ fun DayStrip(
     contentPadding: PaddingValues = PaddingValues(horizontal = 14.dp),
     leadingSpacerWidth: Dp = 32.dp,
 ) {
+    val haptic = rememberHapticManager()
     val scheme = MaterialTheme.colorScheme
     val days = remember(weekStart) { visibleWeekDays(weekStart) }
 
@@ -62,7 +64,7 @@ fun DayStrip(
                 modifier = Modifier
                     .weight(1f)
                     .clip(CircleShape)
-                    .then(if (handler != null) Modifier.clickable { handler(day) } else Modifier)
+                    .then(if (handler != null) Modifier.clickable { haptic.tap(); handler(day) } else Modifier)
                     .padding(vertical = 4.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center,

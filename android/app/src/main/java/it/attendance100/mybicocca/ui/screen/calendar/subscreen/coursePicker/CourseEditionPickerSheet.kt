@@ -29,6 +29,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.domain.model.elearning.course.CourseId
 import it.attendance100.mybicocca.domain.model.elearning.course.EnrolledCourse
@@ -116,6 +117,7 @@ private fun EditionRow(
     isLast: Boolean,
     onClick: () -> Unit,
 ) {
+    val haptic = rememberHapticManager()
     val scheme = MaterialTheme.colorScheme
     val shape = RoundedCornerShape(
         topStart = if (isFirst) 20.dp else 6.dp,
@@ -124,7 +126,7 @@ private fun EditionRow(
         bottomEnd = if (isLast) 20.dp else 6.dp,
     )
     Surface(
-        onClick = onClick,
+        onClick = { haptic.tap(); onClick() },
         shape = shape,
         color = scheme.surfaceContainerHigh,
         modifier = Modifier.fillMaxWidth(),

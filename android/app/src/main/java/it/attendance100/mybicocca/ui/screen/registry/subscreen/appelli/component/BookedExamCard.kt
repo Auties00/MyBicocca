@@ -37,6 +37,7 @@ import it.attendance100.mybicocca.domain.model.exam.BookedExam
 import it.attendance100.mybicocca.domain.model.exam.ExamCallKey
 import it.attendance100.mybicocca.domain.model.exam.ExamCallType
 import it.attendance100.mybicocca.domain.model.exam.ExamType
+import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.appelli.ext.displayTitle
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.appelli.ext.examKindLabel
 import it.attendance100.mybicocca.ui.theme.BicoccaTheme
@@ -68,6 +69,7 @@ fun BookedExamCard(
     modifier: Modifier = Modifier,
 ) {
     val scheme = MaterialTheme.colorScheme
+    val haptic = rememberHapticManager()
 
     val dayOfMonth = remember(booking.examDateTime) {
         booking.examDateTime?.toLocalDate()?.format(DayOfMonthFormat)
@@ -93,7 +95,7 @@ fun BookedExamCard(
     )
 
     Surface(
-        onClick = onClick,
+        onClick = { haptic.tap(); onClick() },
         interactionSource = interactionSource,
         modifier = modifier.fillMaxWidth(),
         color = scheme.surfaceContainer,

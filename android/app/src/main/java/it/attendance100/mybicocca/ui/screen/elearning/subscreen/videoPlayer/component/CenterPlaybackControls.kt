@@ -27,6 +27,7 @@ import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.ui.compose.state.rememberPlayPauseButtonState
 import it.attendance100.mybicocca.R
+import it.attendance100.mybicocca.core.os.rememberHapticManager
 
 /**
  * The transport cluster floating at the centre of the video: a large play/pause toggle flanked by
@@ -44,6 +45,7 @@ fun CenterPlaybackControls(
     modifier: Modifier = Modifier,
 ) {
     val playPauseState = rememberPlayPauseButtonState(player)
+    val haptic = rememberHapticManager()
     Row(
         modifier = modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
@@ -56,6 +58,7 @@ fun CenterPlaybackControls(
             size = SIDE_SIZE,
             iconSize = SIDE_ICON,
             onClick = {
+                haptic.tap()
                 onPrevious?.invoke()
                 onUserActivity()
             },
@@ -71,6 +74,7 @@ fun CenterPlaybackControls(
             size = CENTER_SIZE,
             iconSize = CENTER_ICON,
             onClick = {
+                haptic.tap()
                 playPauseState.onClick()
                 onUserActivity()
             },
@@ -82,6 +86,7 @@ fun CenterPlaybackControls(
             size = SIDE_SIZE,
             iconSize = SIDE_ICON,
             onClick = {
+                haptic.tap()
                 onNext?.invoke()
                 onUserActivity()
             },

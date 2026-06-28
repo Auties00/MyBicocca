@@ -29,6 +29,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import it.attendance100.mybicocca.R
+import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.domain.model.appointment.AppointmentReservation
 import it.attendance100.mybicocca.ui.component.feedback.EmptyState
@@ -48,6 +49,7 @@ internal fun ReservationsPage(
     modifier: Modifier = Modifier,
 ) {
     val list = (reservations as? Loadable.Loaded)?.value.orEmpty()
+    val haptic = rememberHapticManager()
 
     Column(
         modifier = modifier
@@ -81,14 +83,14 @@ internal fun ReservationsPage(
                 list.forEach { reservation ->
                     ReservationCard(
                         reservation = reservation,
-                        onClick = { onOpenReservation(reservation) },
+                        onClick = { haptic.tap(); onOpenReservation(reservation) },
                     )
                 }
             }
         }
 
         PrenotaButton(
-            onClick = onPrenota,
+            onClick = { haptic.tap(); onPrenota() },
             modifier = Modifier
                 .padding(start = 24.dp, end = 24.dp, top = 12.dp, bottom = 24.dp)
                 .testTag(AppointmentsTestTags.PRENOTA_BUTTON),

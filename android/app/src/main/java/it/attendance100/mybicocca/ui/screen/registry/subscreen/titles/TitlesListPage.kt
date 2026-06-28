@@ -35,6 +35,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import it.attendance100.mybicocca.R
+import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.SyncStatus
 import it.attendance100.mybicocca.core.state.valueOrNull
@@ -98,11 +99,12 @@ private fun TitlesListBody(
     Box(modifier = Modifier.testTag(TitlesTestTags.ROOT)) {
     when {
         failure != null && titles == null -> Box(modifier = Modifier.testTag(TitlesTestTags.STATE_ERROR)) {
+            val haptic = rememberHapticManager()
             SheetMessage(
                 icon = Icons.Outlined.CloudOff,
                 title = stringResource(R.string.common_load_failed),
                 body = stringResource(R.string.titles_load_failed_body),
-                action = { RetryButton(onClick = onRetry) },
+                action = { RetryButton(onClick = { haptic.tap(); onRetry() }) },
             )
         }
 
@@ -180,8 +182,11 @@ private fun TitleRow(
     modifier: Modifier = Modifier,
 ) {
     val scheme = MaterialTheme.colorScheme
+    val haptic = rememberHapticManager()
     Surface(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .clickable(onClick = { haptic.tap(); onClick() }),
         shape = RoundedCornerShape(
             topStart = if (isFirst) 28.dp else 6.dp,
             topEnd = if (isFirst) 28.dp else 6.dp,

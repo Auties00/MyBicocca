@@ -1,7 +1,6 @@
 package it.attendance100.mybicocca.ui.screen.elearning.subscreen.forum.component
 
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -13,6 +12,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.InsertDriveFile
@@ -36,6 +36,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.pluralStringResource
@@ -45,6 +46,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import it.attendance100.mybicocca.R
+import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.domain.model.elearning.forum.Post
 import it.attendance100.mybicocca.domain.model.elearning.forum.PostAttachment
 import it.attendance100.mybicocca.ui.component.text.HtmlBody
@@ -131,7 +133,10 @@ fun PostCard(
                     Spacer(Modifier.height(12.dp))
                     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                         post.attachments.forEach { attachment ->
-                            AttachmentChip(attachment = attachment, onClick = { onOpenAttachment(attachment) })
+                            val haptic = rememberHapticManager()
+                            AttachmentChip(
+                                attachment = attachment,
+                                onClick = { haptic.tap(); onOpenAttachment(attachment) })
                         }
                     }
                 }
@@ -139,7 +144,11 @@ fun PostCard(
 
             if (hasChildren) {
                 Spacer(Modifier.height(10.dp))
-                RepliesToggle(count = descendantCount, collapsed = collapsed, onClick = onToggleCollapse)
+                val haptic = rememberHapticManager()
+                RepliesToggle(
+                    count = descendantCount,
+                    collapsed = collapsed,
+                    onClick = { haptic.tap(); onToggleCollapse() })
             }
         }
     }
@@ -167,7 +176,9 @@ private fun RepliesToggle(count: Int, collapsed: Boolean, onClick: () -> Unit) {
                 imageVector = Icons.Outlined.ExpandMore,
                 contentDescription = null,
                 tint = if (collapsed) scheme.onSecondaryContainer else scheme.onSurfaceVariant,
-                modifier = Modifier.size(18.dp).rotate(rotation),
+                modifier = Modifier
+                    .size(18.dp)
+                    .rotate(rotation),
             )
             Text(
                 text = if (collapsed) {
@@ -186,21 +197,26 @@ private fun PostMenu(post: Post, onReply: () -> Unit, onEdit: () -> Unit, onDele
     val scheme = MaterialTheme.colorScheme
     var expanded by remember { mutableStateOf(false) }
     val isOnline = LocalIsOnline.current
+    val haptic = rememberHapticManager()
     Box {
-        Icon(
-            imageVector = Icons.Outlined.MoreVert,
-            contentDescription = stringResource(R.string.elearning_forum_actions),
-            tint = scheme.onSurfaceVariant,
+        Box(
             modifier = Modifier
-                .size(28.dp)
-                .clickable { expanded = true }
-                .padding(2.dp),
-        )
+                .size(36.dp)
+                .clip(CircleShape)
+                .clickable { haptic.tap(); expanded = true },
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                imageVector = Icons.Outlined.MoreVert,
+                contentDescription = stringResource(R.string.elearning_forum_actions),
+                tint = scheme.onSurfaceVariant,
+            )
+        }
         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
             if (post.canReply) {
                 DropdownMenuItem(
                     text = { Text(stringResource(R.string.elearning_forum_reply)) },
-                    onClick = { expanded = false; onReply() },
+                    onClick = { haptic.tap(); expanded = false; onReply() },
                     leadingIcon = { Icon(Icons.AutoMirrored.Outlined.Reply, contentDescription = null) },
                     enabled = isOnline,
                 )
@@ -208,16 +224,27 @@ private fun PostMenu(post: Post, onReply: () -> Unit, onEdit: () -> Unit, onDele
             if (post.canEdit) {
                 DropdownMenuItem(
                     text = { Text(stringResource(R.string.elearning_forum_edit)) },
-                    onClick = { expanded = false; onEdit() },
+                    onClick = { haptic.tap(); expanded = false; onEdit() },
                     leadingIcon = { Icon(Icons.Outlined.Edit, contentDescription = null) },
                     enabled = isOnline,
                 )
             }
             if (post.canDelete) {
                 DropdownMenuItem(
-                    text = { Text(stringResource(R.string.elearning_forum_delete)) },
-                    onClick = { expanded = false; onDelete() },
-                    leadingIcon = { Icon(Icons.Outlined.Delete, contentDescription = null) },
+                    text = {
+                        Text(
+                            stringResource(R.string.elearning_forum_delete),
+                            color = scheme.error
+                        )
+                    },
+                    onClick = { haptic.tap(); expanded = false; onDelete() },
+                    leadingIcon = {
+                        Icon(
+                            Icons.Outlined.Delete,
+                            contentDescription = null,
+                            tint = scheme.error
+                        )
+                    },
                     enabled = isOnline,
                 )
             }
@@ -228,10 +255,12 @@ private fun PostMenu(post: Post, onReply: () -> Unit, onEdit: () -> Unit, onDele
 @Composable
 private fun AttachmentChip(attachment: PostAttachment, onClick: () -> Unit) {
     val scheme = MaterialTheme.colorScheme
+    val haptic = rememberHapticManager()
     Surface(
+        onClick = { haptic.tap(); onClick() },
         shape = RoundedCornerShape(14.dp),
         color = scheme.surfaceContainerHighest,
-        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
+        modifier = Modifier.fillMaxWidth(),
     ) {
         Row(
             modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),

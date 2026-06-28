@@ -44,6 +44,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.domain.model.transcript.PrerequisiteStatus
 import it.attendance100.mybicocca.domain.model.transcript.TranscriptRow
@@ -278,6 +279,7 @@ private fun ExamCard(
     isLast: Boolean,
     onClick: () -> Unit,
 ) {
+    val haptic = rememberHapticManager()
     val scheme = MaterialTheme.colorScheme
     val passed = exam.state == TranscriptRowState.Passed
     val prereqMissing = !passed && prerequisiteStatus == PrerequisiteStatus.NotSatisfied
@@ -290,7 +292,7 @@ private fun ExamCard(
     )
 
     Surface(
-        onClick = onClick,
+        onClick = { haptic.tap(); onClick() },
         color = scheme.surfaceContainer,
         shape = shape,
         modifier = Modifier.fillMaxWidth(),

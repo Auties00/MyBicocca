@@ -35,6 +35,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import it.attendance100.mybicocca.R
+import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.SyncStatus
 import it.attendance100.mybicocca.domain.model.questionnaire.ActivityQuestionnaires
@@ -161,7 +162,6 @@ private fun UnitsList(
                     Spacer(Modifier.width(12.dp))
                     when {
                         unit.completed -> {
-                            val context = LocalContext.current
                             OutlinedButton(
                                 onClick = {},
                                 enabled = false,
@@ -170,14 +170,15 @@ private fun UnitsList(
                                     disabledContentColor = scheme.primary,
                                 ),
                             ) {
-                                Text(context.getString(R.string.questionnaire_unit_compiled))
+                                Text(stringResource(R.string.questionnaire_unit_compiled))
                             }
                         }
 
                         compilable -> {
                             val context = LocalContext.current
+                            val haptic = rememberHapticManager()
                             Button(
-                                onClick = { onCompileUnit(detail, unit) },
+                                onClick = { haptic.tap(); onCompileUnit(detail, unit) },
                                 enabled = isOnline,
                                 colors = ButtonDefaults.buttonColors(
                                     containerColor = brandBg,

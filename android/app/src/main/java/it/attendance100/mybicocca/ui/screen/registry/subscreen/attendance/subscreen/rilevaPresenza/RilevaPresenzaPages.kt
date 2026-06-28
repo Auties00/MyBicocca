@@ -41,6 +41,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import it.attendance100.mybicocca.R
+import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.ui.component.button.PrimaryActionButton
 import it.attendance100.mybicocca.ui.theme.LocalIsOnline
 
@@ -89,8 +90,9 @@ private fun ChooserOption(
     onContainer: Color,
     onClick: () -> Unit,
 ) {
+    val haptic = rememberHapticManager()
     Surface(
-        onClick = onClick,
+        onClick = { haptic.tap(); onClick() },
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(24.dp),
         color = container,
@@ -137,6 +139,7 @@ private fun ChooserOption(
 fun RilevaCodePage(onSubmit: (String) -> Unit) {
     var code by remember { mutableStateOf("") }
     val focusRequester = remember { FocusRequester() }
+    val haptic = rememberHapticManager()
     LaunchedEffect(Unit) { focusRequester.requestFocus() }
     Column(
         modifier = Modifier
@@ -157,7 +160,7 @@ fun RilevaCodePage(onSubmit: (String) -> Unit) {
         Spacer(Modifier.height(20.dp))
         PrimaryActionButton(
             text = stringResource(R.string.attendance_mark_presence),
-            onClick = { onSubmit(code.trim()) },
+            onClick = { haptic.tap(); onSubmit(code.trim()) },
             enabled = code.isNotBlank() && LocalIsOnline.current,
             modifier = Modifier.fillMaxWidth(),
         )

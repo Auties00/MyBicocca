@@ -115,8 +115,9 @@ private fun WhatsNewEntryContent(
             title = stringResource(R.string.settings_whats_new_title),
             onBack = onBack,
             trailing = {
+                val haptic = rememberHapticManager()
                 if (merged != null) {
-                    TextButton(onClick = onAllVersions) {
+                    TextButton(onClick = { haptic.tap(); onAllVersions() }) {
                         Text(stringResource(R.string.whats_new_all_versions))
                     }
                 }
@@ -227,13 +228,14 @@ private fun SceneHeader(
     onBack: () -> Unit,
     trailing: @Composable () -> Unit = {},
 ) {
+    val haptic = rememberHapticManager()
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(top = 4.dp, bottom = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        IconButton(onClick = onBack) {
+        IconButton(onClick = { haptic.tap(); onBack() }) {
             Icon(
                 imageVector = Icons.AutoMirrored.Outlined.ArrowBack,
                 contentDescription = stringResource(R.string.common_back),
@@ -252,12 +254,13 @@ private fun SceneHeader(
 
 @Composable
 private fun ErrorContent(onRetry: () -> Unit) {
+    val haptic = rememberHapticManager()
     EmptyState(
         icon = Icons.Outlined.ErrorOutline,
         title = stringResource(R.string.whats_new_error),
         body = "",
         action = {
-            TextButton(onClick = onRetry) {
+            TextButton(onClick = { haptic.tap(); onRetry() }) {
                 Text(stringResource(R.string.whats_new_retry))
             }
         },
@@ -394,7 +397,7 @@ private fun ReleaseCardPreviewDark(
 
 @Composable
 private fun WhatsNewMergedPreviewContent() {
-    ProvideHapticManager {
+    ProvideHapticManager(enabled = true) {
         WhatsNewEntryContent(
             state = mockLoadedState(),
             onBack = {},
@@ -407,7 +410,7 @@ private fun WhatsNewMergedPreviewContent() {
 /** The entry page when there is nothing to merge (0–1 newer): it shows the list directly. */
 @Composable
 private fun WhatsNewEntryNoMergePreviewContent() {
-    ProvideHapticManager {
+    ProvideHapticManager(enabled = true) {
         WhatsNewEntryContent(
             state = mockLoadedState().copy(merged = null),
             onBack = {},
@@ -419,7 +422,7 @@ private fun WhatsNewEntryNoMergePreviewContent() {
 
 @Composable
 private fun WhatsNewAllVersionsPreviewContent() {
-    ProvideHapticManager {
+    ProvideHapticManager(enabled = true) {
         WhatsNewAllVersionsContent(
             state = mockLoadedState(),
             onBack = {},

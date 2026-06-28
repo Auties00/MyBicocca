@@ -22,6 +22,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.R
 
 /**
@@ -39,9 +40,10 @@ fun TopHitCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val haptic = rememberHapticManager()
     val scheme = MaterialTheme.colorScheme
     Surface(
-        onClick = onClick,
+        onClick = { haptic.tap(); onClick() },
         shape = RoundedCornerShape(24.dp),
         color = scheme.surfaceContainer,
         modifier = modifier.fillMaxWidth(),

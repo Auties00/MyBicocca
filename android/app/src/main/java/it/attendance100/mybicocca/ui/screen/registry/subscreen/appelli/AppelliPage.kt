@@ -61,6 +61,7 @@ import it.attendance100.mybicocca.ui.component.modal.SheetResultPage
 import it.attendance100.mybicocca.ui.component.modal.sheetBodyGestureBarrier
 import it.attendance100.mybicocca.ui.component.modal.sheetPageTransform
 import it.attendance100.mybicocca.ui.navigation.scene.LocalSheetDismissControl
+import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.appelli.component.BookedExamCard
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.appelli.ext.displayTitle
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.appelli.state.BookedEvent
@@ -414,6 +415,7 @@ private fun ActiveBody(
     val failure = syncStatus as? SyncStatus.Failed
     val showLoading = rememberMinDurationLoading(loading = !loaded)
     val settled = loaded && !showLoading
+    val haptic = rememberHapticManager()
 
     val motion = MaterialTheme.motionScheme
     val sizeSpec = remember(motion) { motion.defaultSpatialSpec<IntSize>() }
@@ -429,7 +431,7 @@ private fun ActiveBody(
                 icon = Icons.Outlined.CloudOff,
                 title = stringResource(R.string.appelli_load_failed),
                 body = failure.cause.friendlyMessage(),
-                action = { RetryButton(onClick = onRetry) },
+                action = { RetryButton(onClick = { haptic.tap(); onRetry() }) },
                 modifier = Modifier.testTag(AppelliTestTags.STATE_ERROR),
             )
 
@@ -457,7 +459,7 @@ private fun ActiveBody(
                 items(items = active, key = { it.identityKey() }) { booking ->
                     BookedExamCard(
                         booking = booking,
-                        onClick = { onOpenDetail(booking) },
+                        onClick = { haptic.tap(); onOpenDetail(booking) },
                         modifier = Modifier
                             .testTag(AppelliTestTags.item(booking.identityKey()))
                             .animateItem(),
@@ -468,7 +470,7 @@ private fun ActiveBody(
 
         if (settled && failure == null) {
             PrenotaFooterButton(
-                onClick = onPrenota,
+                onClick = { haptic.tap(); onPrenota() },
                 modifier = Modifier
                     .testTag(AppelliTestTags.PRENOTA_BUTTON)
                     .padding(start = 24.dp, end = 24.dp, top = 12.dp, bottom = 24.dp),
@@ -527,6 +529,7 @@ private fun CancelConfirmPage(
     val dark = isSystemInDarkTheme()
     val brandBg = if (dark) scheme.primaryContainer else scheme.primary
     val brandFg = if (dark) scheme.onPrimaryContainer else scheme.onPrimary
+    val haptic = rememberHapticManager()
 
     Column(Modifier.fillMaxWidth()) {
         Text(
@@ -542,7 +545,7 @@ private fun CancelConfirmPage(
             horizontalArrangement = Arrangement.spacedBy(4.dp),
         ) {
             FilledTonalButton(
-                onClick = onConfirm,
+                onClick = { haptic.tap(); onConfirm() },
                 enabled = LocalIsOnline.current,
                 modifier = Modifier
                     .testTag(AppelliTestTags.CANCEL_CONFIRM)
@@ -557,7 +560,7 @@ private fun CancelConfirmPage(
                 Text(stringResource(R.string.common_confirm), fontWeight = FontWeight.SemiBold)
             }
             Button(
-                onClick = onKeep,
+                onClick = { haptic.tap(); onKeep() },
                 modifier = Modifier
                     .testTag(AppelliTestTags.CANCEL_KEEP)
                     .weight(1.4f)

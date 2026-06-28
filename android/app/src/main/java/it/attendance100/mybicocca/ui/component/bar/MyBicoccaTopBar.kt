@@ -74,6 +74,7 @@ import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.ui.component.brand.MyBicoccaWordmark
+import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.ui.theme.BicoccaTheme
 import java.io.File
 import kotlin.coroutines.cancellation.CancellationException
@@ -172,6 +173,7 @@ fun MyBicoccaTopBar(
     globalAlpha: Float = 1f,
     transparentBackground: Boolean = false,
 ) {
+    val haptic = rememberHapticManager()
     val scheme = MaterialTheme.colorScheme
     val focusRequester = remember { FocusRequester() }
     val keyboardController = LocalSoftwareKeyboardController.current
@@ -278,7 +280,10 @@ fun MyBicoccaTopBar(
                                 Modifier.clickable(
                                     indication = null,
                                     interactionSource = remember { MutableInteractionSource() },
-                                ) { searchState.onActiveChange(true) }
+                                ) {
+                                    haptic.tap()
+                                    searchState.onActiveChange(true)
+                                }
                             } else Modifier,
                         )
                         .padding(horizontal = 10.dp),
@@ -365,13 +370,14 @@ private fun LeadingSlot(
     onCloseSearch: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val haptic = rememberHapticManager()
     val scheme = MaterialTheme.colorScheme
     val onClick = when (mode) {
         BarMode.PAGE -> onSearchClick
         BarMode.SUB_PAGE -> onBackClick
         BarMode.SEARCH -> onCloseSearch
     }
-    IconButton(onClick = onClick, modifier = modifier.size(40.dp)) {
+    IconButton(onClick = { haptic.tap(); onClick() }, modifier = modifier.size(40.dp)) {
         Box(contentAlignment = Alignment.Center) {
             MorphIcon(
                 imageVector = Icons.Outlined.Search,
@@ -509,6 +515,7 @@ private fun TrailingSlot(
     onClearText: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val haptic = rememberHapticManager()
     val scheme = MaterialTheme.colorScheme
     Box(contentAlignment = Alignment.Center, modifier = modifier) {
         AvatarSlot(
@@ -529,7 +536,7 @@ private fun TrailingSlot(
                 }
 
                 onFilterToggle != null -> IconButton(
-                    onClick = onFilterToggle,
+                    onClick = { haptic.tap(); onFilterToggle() },
                     modifier = Modifier.size(40.dp)
                 ) {
                     MorphIcon(
@@ -549,7 +556,10 @@ private fun TrailingSlot(
                     label = "search-mic-clear",
                 )
                 IconButton(
-                    onClick = { if (searchQueryEmpty) onMicClick() else onClearText() },
+                    onClick = {
+                        haptic.tap()
+                        if (searchQueryEmpty) onMicClick() else onClearText()
+                    },
                     modifier = Modifier.size(40.dp),
                 ) {
                     Box(contentAlignment = Alignment.Center) {
@@ -579,6 +589,7 @@ private fun AvatarSlot(
     enabled: Boolean,
     onClick: () -> Unit,
 ) {
+    val haptic = rememberHapticManager()
     val scheme = MaterialTheme.colorScheme
     Box(
         modifier = Modifier
@@ -586,7 +597,7 @@ private fun AvatarSlot(
             .graphicsLayer { fadeThroughLayer(alpha, minScale = 0.6f) }
             .clip(CircleShape)
             .background(scheme.surfaceContainerHigh)
-            .clickable(enabled = enabled, onClick = onClick),
+            .clickable(enabled = enabled, onClick = { haptic.tap(); onClick() }),
         contentAlignment = Alignment.Center,
     ) {
         if (photo != null) {

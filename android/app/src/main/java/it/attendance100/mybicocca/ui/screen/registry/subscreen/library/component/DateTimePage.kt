@@ -51,6 +51,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import it.attendance100.mybicocca.R
+import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.SyncStatus
 import it.attendance100.mybicocca.domain.model.library.LibraryBookingConstraints
@@ -99,6 +100,7 @@ internal fun DateTimePage(
 ) {
     val scheme = MaterialTheme.colorScheme
     val dark = isSystemInDarkTheme()
+    val haptic = rememberHapticManager()
 
     Column(
         modifier = modifier
@@ -138,7 +140,10 @@ internal fun DateTimePage(
                                 openDays = openDays,
                                 selectedDate = selectedDate,
                                 enabled = enabled,
-                                onSelectDate = onSelectDate,
+                                onSelectDate = {
+                                    haptic.tap()
+                                    onSelectDate(it)
+                                },
                             )
                         }
                     }
@@ -152,7 +157,10 @@ internal fun DateTimePage(
                                 constraints.value.durationsMinutes.forEach { minutes ->
                                     ToggleButton(
                                         checked = minutes == selectedDuration,
-                                        onCheckedChange = { onSelectDuration(minutes) },
+                                        onCheckedChange = {
+                                            haptic.tap()
+                                            onSelectDuration(minutes)
+                                        },
                                         enabled = enabled,
                                         shapes = ToggleButtonDefaults.shapes(),
                                     ) {
@@ -174,7 +182,10 @@ internal fun DateTimePage(
                                 availableStartTimes = availableStartTimes,
                                 selectedStartTime = selectedStartTime,
                                 enabled = enabled,
-                                onSelectStartTime = onSelectStartTime,
+                                onSelectStartTime = {
+                                    haptic.tap()
+                                    onSelectStartTime(it)
+                                },
                                 onRetry = onRetrySeats,
                             )
                         }
@@ -185,7 +196,7 @@ internal fun DateTimePage(
         }
 
         Button(
-            onClick = onContinue,
+            onClick = { haptic.tap(); onContinue() },
             enabled = enabled && selectedStartTime != null,
             shapes = ButtonDefaults.shapes(),
             modifier = Modifier
@@ -295,6 +306,7 @@ private fun CalendarSection(
         mutableStateOf(selectedDate?.let { YearMonth.from(it) } ?: minMonth)
     }
     val availableSet = remember(openDays) { openDays.toHashSet() }
+    val haptic = rememberHapticManager()
 
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -307,7 +319,7 @@ private fun CalendarSection(
             )
             val context = LocalContext.current
             FilledTonalIconButton(
-                onClick = { if (month > minMonth) month = month.minusMonths(1) },
+                onClick = { haptic.tap(); if (month > minMonth) month = month.minusMonths(1) },
                 enabled = enabled && month > minMonth,
                 modifier = Modifier.size(40.dp),
                 shapes = IconButtonDefaults.shapes(),
@@ -320,7 +332,7 @@ private fun CalendarSection(
             }
             Spacer(Modifier.size(6.dp))
             FilledTonalIconButton(
-                onClick = { if (month < maxMonth) month = month.plusMonths(1) },
+                onClick = { haptic.tap(); if (month < maxMonth) month = month.plusMonths(1) },
                 enabled = enabled && month < maxMonth,
                 modifier = Modifier.size(40.dp),
                 shapes = IconButtonDefaults.shapes(),
@@ -390,6 +402,7 @@ private fun DayCell(
 ) {
     val scheme = MaterialTheme.colorScheme
     val motion = MaterialTheme.motionScheme
+    val haptic = rememberHapticManager()
     val cornerPercent by animateIntAsState(
         targetValue = if (selected) 32 else 50,
         animationSpec = motion.defaultSpatialSpec(),
@@ -418,7 +431,7 @@ private fun DayCell(
     ) {
         if (available) {
             Surface(
-                onClick = { onSelectDate(date) },
+                onClick = { haptic.tap(); onSelectDate(date) },
                 enabled = enabled,
                 shape = RoundedCornerShape(cornerPercent),
                 color = container,

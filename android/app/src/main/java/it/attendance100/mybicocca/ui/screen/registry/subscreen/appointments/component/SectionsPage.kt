@@ -35,6 +35,7 @@ import it.attendance100.mybicocca.ui.component.button.RetryButton
 import it.attendance100.mybicocca.ui.component.directory.SegmentedIconChip
 import it.attendance100.mybicocca.ui.component.directory.SegmentedTile
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.appointments.AppointmentsTestTags
+import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.appointments.ext.toDirectorySections
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.appointments.state.AppointmentDirectorySection
 
@@ -64,6 +65,7 @@ internal fun SectionsPage(
         is Loadable.Loaded -> {
             val sections = services.value.toDirectorySections()
             val scheme = MaterialTheme.colorScheme
+            val haptic = rememberHapticManager()
             Column(
                 modifier = modifier
                     .fillMaxWidth()
@@ -81,7 +83,7 @@ internal fun SectionsPage(
                         isLast = index == sections.lastIndex,
                         title = section.name,
                         subtitle = section.caption,
-                        onClick = { onOpenSection(section) },
+                        onClick = { haptic.tap(); onOpenSection(section) },
                         modifier = Modifier.testTag(AppointmentsTestTags.section(section.name)),
                         leading = {
                             SegmentedIconChip(
@@ -130,6 +132,7 @@ internal fun SheetStatusBody(
     onRetry: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val haptic = rememberHapticManager()
     Box(
         modifier = modifier
             .fillMaxWidth()
@@ -147,7 +150,7 @@ internal fun SheetStatusBody(
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurface,
                 )
-                RetryButton(onClick = onRetry)
+                RetryButton(onClick = { haptic.tap(); onRetry() })
             }
 
             else -> LoadingIndicator(modifier = Modifier.size(56.dp))

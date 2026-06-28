@@ -28,6 +28,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import it.attendance100.mybicocca.R
+import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.SyncStatus
 import it.attendance100.mybicocca.domain.model.library.LibraryZone
@@ -91,8 +92,9 @@ internal fun ZonesPage(
 private fun ZoneRow(zone: LibraryZone, onClick: () -> Unit) {
     val scheme = MaterialTheme.colorScheme
     val swatch = zoneSwatch(zone.color)
+    val haptic = rememberHapticManager()
     Surface(
-        onClick = onClick,
+        onClick = { haptic.tap(); onClick() },
         modifier = Modifier.fillMaxWidth(),
         shape = MaterialTheme.shapes.large,
         color = scheme.surfaceContainerHigh,

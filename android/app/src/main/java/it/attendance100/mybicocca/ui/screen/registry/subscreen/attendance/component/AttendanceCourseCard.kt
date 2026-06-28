@@ -26,6 +26,7 @@ import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.domain.model.attendance.CourseAttendance
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.attendance.ext.label
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.attendance.ext.tone
@@ -47,9 +48,10 @@ fun AttendanceCourseCard(
     val scheme = MaterialTheme.colorScheme
     val status = course.classroomAttendance?.status
     val tone = status.tone()
+    val haptic = rememberHapticManager()
 
     Surface(
-        onClick = onClick,
+        onClick = { haptic.tap(); onClick() },
         modifier = modifier.fillMaxWidth(),
         shape = shape,
         color = scheme.surfaceContainer,

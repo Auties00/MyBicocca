@@ -61,6 +61,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.SyncStatus
+import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.core.state.valueOrNull
 import it.attendance100.mybicocca.domain.model.studyplan.StudyPath
 import it.attendance100.mybicocca.domain.model.studyplan.StudyPlan
@@ -441,6 +442,7 @@ private fun DiscardChangesPage(
     val dark = isSystemInDarkTheme()
     val brandBg = if (dark) scheme.primaryContainer else scheme.primary
     val brandFg = if (dark) scheme.onPrimaryContainer else scheme.onPrimary
+    val haptic = rememberHapticManager()
 
     Column(Modifier.fillMaxWidth()) {
         Text(
@@ -456,7 +458,7 @@ private fun DiscardChangesPage(
             horizontalArrangement = Arrangement.spacedBy(4.dp),
         ) {
             FilledTonalButton(
-                onClick = onExit,
+                onClick = { haptic.tap(); onExit() },
                 modifier = Modifier
                     .weight(1f)
                     .height(56.dp),
@@ -469,7 +471,7 @@ private fun DiscardChangesPage(
                 Text(stringResource(R.string.common_exit), fontWeight = FontWeight.SemiBold)
             }
             Button(
-                onClick = onContinue,
+                onClick = { haptic.tap(); onContinue() },
                 modifier = Modifier
                     .weight(1.4f)
                     .height(56.dp),
@@ -583,6 +585,7 @@ private fun PlanActionFooter(
     val brandBg = if (dark) scheme.primaryContainer else scheme.primary
     val brandFg = if (dark) scheme.onPrimaryContainer else scheme.onPrimary
     val paired = editAvailable && printAvailable
+    val haptic = rememberHapticManager()
 
     Row(
         modifier = modifier,
@@ -590,7 +593,7 @@ private fun PlanActionFooter(
     ) {
         if (printAvailable) {
             FilledTonalButton(
-                onClick = onPrint,
+                onClick = { haptic.tap(); onPrint() },
                 enabled = !printing,
                 modifier = Modifier
                     .weight(1f)
@@ -621,7 +624,7 @@ private fun PlanActionFooter(
 
         if (editAvailable) {
             Button(
-                onClick = onEdit,
+                onClick = { haptic.tap(); onEdit() },
                 modifier = Modifier
                     .weight(1.4f)
                     .height(56.dp)
@@ -730,8 +733,9 @@ private fun YearRow(
     modifier: Modifier = Modifier,
 ) {
     val scheme = MaterialTheme.colorScheme
+    val haptic = rememberHapticManager()
     Surface(
-        onClick = onClick,
+        onClick = { haptic.tap(); onClick() },
         modifier = modifier.fillMaxWidth(),
         color = scheme.surfaceContainer,
         contentColor = scheme.onSurface,
@@ -894,7 +898,10 @@ private fun SheetError(cause: Throwable, onRetry: () -> Unit, modifier: Modifier
         icon = Icons.Outlined.CloudOff,
         title = stringResource(R.string.common_load_failed),
         body = cause.friendlyMessage(),
-        action = { RetryButton(onClick = onRetry) },
+        action = {
+            val haptic = rememberHapticManager()
+            RetryButton(onClick = { haptic.tap(); onRetry() })
+        },
         modifier = modifier,
     )
 }

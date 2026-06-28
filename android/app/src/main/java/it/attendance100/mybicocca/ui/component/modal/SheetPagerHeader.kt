@@ -39,6 +39,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import it.attendance100.mybicocca.R
+import it.attendance100.mybicocca.core.os.rememberHapticManager
 
 /**
  * Pinned header for in-sheet pagers: it never leaves the composition when the page below
@@ -78,6 +79,7 @@ fun SheetPagerHeader(
     modifier: Modifier = Modifier,
     onSubtitleClick: (() -> Unit)? = null,
 ) {
+    val haptic = rememberHapticManager()
     val scheme = MaterialTheme.colorScheme
 
     val lastBack = remember { mutableStateOf(onBack) }
@@ -114,7 +116,10 @@ fun SheetPagerHeader(
                 exit = shrinkHorizontally(tween(350)) + fadeOut(tween(180)),
             ) {
                 IconButton(
-                    onClick = { lastBack.value?.invoke() },
+                    onClick = {
+                        haptic.tap()
+                        lastBack.value?.invoke()
+                    },
                     modifier = Modifier.padding(end = 6.dp),
                 ) {
                     Icon(
@@ -161,7 +166,7 @@ fun SheetPagerHeader(
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                             modifier = onSubtitleClick
-                                ?.let { Modifier.clickable(onClick = it) }
+                                ?.let { Modifier.clickable(onClick = { haptic.tap(); it() }) }
                                 ?: Modifier,
                         )
                     } else {

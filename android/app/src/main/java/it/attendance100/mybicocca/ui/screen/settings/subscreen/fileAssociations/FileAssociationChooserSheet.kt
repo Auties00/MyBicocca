@@ -38,6 +38,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import it.attendance100.mybicocca.R
+import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.domain.model.settings.FileOpenChoice
 import it.attendance100.mybicocca.ui.component.file.FileKind
 import it.attendance100.mybicocca.ui.component.file.openChooserIcon
@@ -60,6 +61,7 @@ fun FileAssociationChooserSheet(
     onSelect: (FileOpenChoice?) -> Unit,
     onDismiss: () -> Unit,
 ) {
+    val haptic = rememberHapticManager()
     PredictiveModalBottomSheet(onDismiss = onDismiss) { _, _ ->
         Column(modifier = Modifier.fillMaxWidth()) {
             Column(
@@ -112,7 +114,7 @@ fun FileAssociationChooserSheet(
                     icon = Icons.Outlined.OpenInFull,
                     selected = current == FileOpenChoice.InApp,
                     shape = ButtonGroupDefaults.connectedLeadingButtonShape,
-                    onClick = { onSelect(FileOpenChoice.InApp) },
+                    onClick = { haptic.tap(); onSelect(FileOpenChoice.InApp) },
                     modifier = Modifier.weight(1.4f),
                 )
                 ChoiceButton(
@@ -120,7 +122,7 @@ fun FileAssociationChooserSheet(
                     icon = Icons.AutoMirrored.Outlined.OpenInNew,
                     selected = current == FileOpenChoice.External,
                     shape = ButtonGroupDefaults.connectedTrailingButtonShape,
-                    onClick = { onSelect(FileOpenChoice.External) },
+                    onClick = { haptic.tap(); onSelect(FileOpenChoice.External) },
                     modifier = Modifier.weight(1f),
                 )
             }
@@ -132,7 +134,7 @@ fun FileAssociationChooserSheet(
                 icon = Icons.AutoMirrored.Outlined.HelpOutline,
                 selected = current == null,
                 shape = MaterialTheme.shapes.extraLarge,
-                onClick = { onSelect(null) },
+                onClick = { haptic.tap(); onSelect(null) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(start = 20.dp, end = 20.dp, bottom = 8.dp),

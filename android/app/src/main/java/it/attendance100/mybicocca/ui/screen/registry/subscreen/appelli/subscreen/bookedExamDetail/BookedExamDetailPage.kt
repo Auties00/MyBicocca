@@ -45,6 +45,7 @@ import it.attendance100.mybicocca.ui.screen.registry.subscreen.appelli.AppelliTe
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.appelli.ext.countdownLabel
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.appelli.ext.displayLabel
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.appelli.ext.locationLabel
+import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.appelli.state.ExamDocument
 import it.attendance100.mybicocca.ui.theme.LocalIsOnline
 import java.time.LocalDate
@@ -188,13 +189,14 @@ private fun ActionRow(
     val slipBg = if (dark) scheme.primaryContainer else scheme.primary
     val slipFg = if (dark) scheme.onPrimaryContainer else scheme.onPrimary
     val isOnline = LocalIsOnline.current
+    val haptic = rememberHapticManager()
 
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         FilledTonalButton(
-            onClick = onCancel,
+            onClick = { haptic.tap(); onCancel() },
             enabled = canCancel && !isCancelling && isOnline,
             modifier = Modifier
                 .testTag(AppelliTestTags.DETAIL_CANCEL_BUTTON)
@@ -225,7 +227,7 @@ private fun ActionRow(
             }
         }
         Button(
-            onClick = onDownloadSlip,
+            onClick = { haptic.tap(); onDownloadSlip() },
             enabled = !isDownloadingSlip && !isCancelling && isOnline,
             modifier = Modifier
                 .weight(1.4f)

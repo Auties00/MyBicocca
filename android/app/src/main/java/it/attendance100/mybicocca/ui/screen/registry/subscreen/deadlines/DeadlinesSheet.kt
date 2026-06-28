@@ -39,6 +39,7 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import it.attendance100.mybicocca.R
+import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.ui.component.button.RetryButton
 import it.attendance100.mybicocca.ui.component.feedback.friendlyMessage
 import it.attendance100.mybicocca.ui.component.feedback.rememberMinDurationLoading
@@ -189,6 +190,7 @@ private fun TimelineEvent(
     onClick: () -> Unit,
 ) {
     val scheme = MaterialTheme.colorScheme
+    val haptic = rememberHapticManager()
     val accent =
         if (deadline.urgency == DeadlineUrgency.Urgent) scheme.primary else scheme.onSurfaceVariant
 
@@ -257,7 +259,7 @@ private fun TimelineEvent(
         }
 
         Surface(
-            onClick = onClick,
+            onClick = { haptic.tap(); onClick() },
             modifier = Modifier
                 .weight(1f)
                 .padding(start = 6.dp, top = 6.dp, bottom = 14.dp),

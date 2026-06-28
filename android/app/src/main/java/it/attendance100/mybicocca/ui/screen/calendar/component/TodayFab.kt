@@ -29,6 +29,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupPositionProvider
 import androidx.compose.ui.window.PopupProperties
+import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.ui.screen.calendar.ext.rememberCurrentTime
 import it.attendance100.mybicocca.ui.screen.calendar.ext.visibleWeekDays
@@ -62,6 +63,7 @@ fun TodayFab(
     onJumpToToday: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val haptic = rememberHapticManager()
     val now by rememberCurrentTime()
     val today = now.toLocalDate()
 
@@ -103,7 +105,7 @@ fun TodayFab(
                 },
             ) {
                 ExtendedFloatingActionButton(
-                    onClick = onJumpToToday,
+                    onClick = { haptic.tap(); onJumpToToday() },
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
                     contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
                     icon = {

@@ -45,6 +45,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import it.attendance100.mybicocca.R
+import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.videoPlayer.state.VideoPlayerPlaylistItem
 
 /**
@@ -68,11 +69,12 @@ fun PlaylistSidePanel(
             enter = fadeIn(),
             exit = fadeOut(),
         ) {
+            val haptic = rememberHapticManager()
             Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .background(Color.Black.copy(alpha = 0.5f))
-                    .clickable(onClick = onDismiss),
+                    .clickable(onClick = { haptic.tap(); onDismiss() }),
             )
         }
 
@@ -128,7 +130,8 @@ private fun PanelContent(
                     color = scheme.onSurfaceVariant,
                 )
             }
-            IconButton(onClick = onClose) {
+            val haptic = rememberHapticManager()
+            IconButton(onClick = { haptic.tap(); onClose() }) {
                 Icon(
                     imageVector = Icons.Outlined.Close,
                     contentDescription = stringResource(R.string.common_close),
@@ -138,7 +141,8 @@ private fun PanelContent(
         HorizontalDivider(color = scheme.outlineVariant)
         LazyColumn(modifier = Modifier.fillMaxSize()) {
             items(items = items, key = { it.cmId }) { item ->
-                PlaylistRow(item = item, onClick = { onSelect(item.cmId) })
+                val haptic = rememberHapticManager()
+                PlaylistRow(item = item, onClick = { haptic.tap(); onSelect(item.cmId) })
             }
         }
     }

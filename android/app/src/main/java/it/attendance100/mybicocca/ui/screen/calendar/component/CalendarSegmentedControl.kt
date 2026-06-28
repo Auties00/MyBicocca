@@ -36,6 +36,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.ui.screen.calendar.CalendarTestTags
 import it.attendance100.mybicocca.ui.screen.calendar.state.CalendarViewMode
@@ -65,6 +66,7 @@ fun CalendarSegmentedControl(
     onSelect: (CalendarViewMode) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val haptic = rememberHapticManager()
     val scheme = MaterialTheme.colorScheme
     val dark = isSystemInDarkTheme()
     val containerColor = if (dark) scheme.surfaceContainerHigh else scheme.surfaceContainer
@@ -127,7 +129,10 @@ fun CalendarSegmentedControl(
                     secondary = segment.secondary,
                     active = active,
                     contentColor = contentColor,
-                    onClick = { onSelect(segment.mode) },
+                    onClick = {
+                        haptic.tap()
+                        onSelect(segment.mode)
+                    },
                     modifier = Modifier
                         .weight(1f)
                         .testTag(CalendarTestTags.segment(segment.mode)),

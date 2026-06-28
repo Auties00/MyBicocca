@@ -21,6 +21,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.ui.component.directory.SegmentedHeaderTile
 import it.attendance100.mybicocca.ui.component.directory.SegmentedIconChip
 import it.attendance100.mybicocca.ui.component.directory.SegmentedTile
@@ -48,6 +49,7 @@ fun RegistryServiceSection(
     tileTag: ((RegistryService) -> String)? = null,
 ) {
     val scheme = MaterialTheme.colorScheme
+    val haptic = rememberHapticManager()
     Column(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(2.dp),
@@ -61,7 +63,7 @@ fun RegistryServiceSection(
                 modifier = tileModifier,
                 title = item.title,
                 subtitle = item.subtitle,
-                onClick = item.onClick,
+                onClick = { haptic.tap(); item.onClick() },
                 leading = { SegmentedIconChip(item.icon, accentContainer, accentOnContainer) },
                 trailing = {
                     val badge = item.badge

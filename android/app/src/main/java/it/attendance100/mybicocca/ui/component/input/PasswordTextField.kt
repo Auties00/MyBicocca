@@ -24,6 +24,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.R
 
 /**
@@ -45,6 +46,7 @@ fun PasswordTextField(
     imeAction: ImeAction = ImeAction.Done,
     onImeAction: (() -> Unit)? = null,
 ) {
+    val haptic = rememberHapticManager()
     var visible by rememberSaveable { mutableStateOf(false) }
     OutlinedTextField(
         value = value,
@@ -53,7 +55,10 @@ fun PasswordTextField(
         label = { Text(stringResource(labelRes)) },
         leadingIcon = leadingIcon,
         trailingIcon = {
-            IconButton(onClick = { visible = !visible }) {
+            IconButton(onClick = {
+                haptic.tap()
+                visible = !visible
+            }) {
                 Icon(
                     imageVector = if (visible) Icons.Outlined.VisibilityOff else Icons.Outlined.Visibility,
                     contentDescription = stringResource(if (visible) R.string.common_hide_password else R.string.common_show_password),

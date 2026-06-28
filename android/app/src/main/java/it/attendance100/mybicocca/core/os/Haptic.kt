@@ -12,6 +12,7 @@ import androidx.annotation.RequiresApi
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalInspectionMode
@@ -26,7 +27,11 @@ import kotlin.math.roundToInt
  * vibration primitives when the device supports them and degrade to plain waveforms or one-shot
  * buzzes otherwise; every effect is a no-op on devices without a vibrator.
  */
-class HapticManager(context: Context, private val view: View?) {
+class HapticManager(
+    context: Context,
+    private val view: View?,
+    private val enabled: () -> Boolean = { true }
+) {
 
     private val vibrator: Vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
         val vibratorManager =
@@ -38,26 +43,22 @@ class HapticManager(context: Context, private val view: View?) {
     }
 
     /** A feather-light tick, softer than [tap]. */
-    fun feather() {
-        custom(intensity = 0.15f, durationMillis = 20)
-    }
+    fun feather(force: Boolean = false) =
+        ifEnabled(force) { custom(intensity = 0.15f, durationMillis = 20) }
 
-    fun tap() {
-        view?.performHapticFeedback(HapticFeedbackConstants.CONTEXT_CLICK)
-    }
+    fun tap(force: Boolean = false) =
+        ifEnabled(force) { view?.performHapticFeedback(HapticFeedbackConstants.CONTEXT_CLICK) }
 
-    fun longPress() {
-        view?.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
-    }
+    fun longPress(force: Boolean = false) =
+        ifEnabled(force) { view?.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS) }
 
-    fun keyboardTap() {
-        view?.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
-    }
+    fun keyboardTap(force: Boolean = false) =
+        ifEnabled(force) { view?.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP) }
 
     /** Success: two crisp ticks; devices without the click primitive get a double-pulse waveform. */
     @RequiresApi(Build.VERSION_CODES.R)
-    fun success() {
-        if (!hasVibrator()) return
+    fun success(force: Boolean = false) = ifEnabled(force) {
+        if (!hasVibrator()) return@ifEnabled
 
         if (arePrimitivesSupported(VibrationEffect.Composition.PRIMITIVE_CLICK)) {
             val effect = VibrationEffect.startComposition()
@@ -74,8 +75,8 @@ class HapticManager(context: Context, private val view: View?) {
 
     /** Error/warning: rapid heavy thuds; devices without the thud primitive get a double buzz. */
     @RequiresApi(Build.VERSION_CODES.S)
-    fun error() {
-        if (!hasVibrator()) return
+    fun error(force: Boolean = false) = ifEnabled(force) {
+        if (!hasVibrator()) return@ifEnabled
 
         if (arePrimitivesSupported(VibrationEffect.Composition.PRIMITIVE_THUD)) {
             val effect = VibrationEffect.startComposition()
@@ -95,8 +96,8 @@ class HapticManager(context: Context, private val view: View?) {
      * rebound, with [scale] driving the intensity. Devices without primitives get a short buzz.
      */
     @RequiresApi(Build.VERSION_CODES.S)
-    fun spring(scale: Float = 1f) {
-        if (!hasVibrator()) return
+    fun spring(scale: Float = 1f, force: Boolean = false) = ifEnabled(force) {
+        if (!hasVibrator()) return@ifEnabled
 
         if (arePrimitivesSupported(VibrationEffect.Composition.PRIMITIVE_THUD)) {
             val delayMs = 200L
@@ -109,6 +110,7 @@ class HapticManager(context: Context, private val view: View?) {
             vibrator.vibrate(composition.compose())
 
             view?.postDelayed({
+                if (!force && !enabled()) return@postDelayed
                 vibrator.vibrate(
                     VibrationEffect.startComposition()
                         .addPrimitive(
@@ -126,8 +128,8 @@ class HapticManager(context: Context, private val view: View?) {
 
     /** A wobble: three quick spins of varying strength; devices without the spin primitive get a soft pulse. */
     @RequiresApi(Build.VERSION_CODES.S)
-    fun wobble() {
-        if (!hasVibrator()) return
+    fun wobble(force: Boolean = false) = ifEnabled(force) {
+        if (!hasVibrator()) return@ifEnabled
 
         if (arePrimitivesSupported(VibrationEffect.Composition.PRIMITIVE_SPIN)) {
             val effect = VibrationEffect.startComposition()
@@ -145,13 +147,17 @@ class HapticManager(context: Context, private val view: View?) {
      * One-shot vibration with [intensity] clamped to 0..1 and mapped onto the platform amplitude
      * range; devices without amplitude control vibrate at their default strength.
      */
-    fun custom(intensity: Float, durationMillis: Long) {
-        if (!hasVibrator()) return
+    fun custom(intensity: Float, durationMillis: Long, force: Boolean = false) = ifEnabled(force) {
+        if (!hasVibrator()) return@ifEnabled
 
         val safeIntensity = intensity.coerceIn(0f, 1f)
         val amplitude = (safeIntensity * 255).roundToInt()
 
         safeOneShotVibrate(durationMillis, amplitude)
+    }
+
+    private inline fun ifEnabled(force: Boolean, block: () -> Unit) {
+        if (force || enabled()) block()
     }
 
     private fun safeOneShotVibrate(duration: Long, amplitude: Int) {
@@ -196,14 +202,22 @@ val LocalHapticManager = staticCompositionLocalOf<HapticManager> {
     error("No HapticManager provided")
 }
 
-/** Installs a [HapticManager] for the current context and view into [LocalHapticManager]. */
+/**
+ * Installs a [HapticManager] for the current context and view into [LocalHapticManager].
+ *
+ * [enabled] is read on every haptic call (via [rememberUpdatedState]), so toggling the setting
+ * takes effect immediately without recreating the manager. Must be supplied explicitly — omitting
+ * it in a production subtree would install a permanently-enabled manager that shadows the outer
+ * composition-local.
+ */
 @Composable
-fun ProvideHapticManager(content: @Composable () -> Unit) {
+fun ProvideHapticManager(enabled: Boolean, content: @Composable () -> Unit) {
     val context = LocalContext.current
     val view = LocalView.current
+    val enabledState = rememberUpdatedState(enabled)
 
     val hapticManager = remember(context, view) {
-        HapticManager(context, view)
+        HapticManager(context, view, enabled = { enabledState.value })
     }
 
     CompositionLocalProvider(LocalHapticManager provides hapticManager) {

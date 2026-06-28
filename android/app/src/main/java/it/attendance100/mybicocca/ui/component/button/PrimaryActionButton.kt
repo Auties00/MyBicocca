@@ -16,6 +16,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import it.attendance100.mybicocca.core.os.rememberHapticManager
 
 /**
  * Brand-fill primary action with expressive press shapes and an optional leading icon. White
@@ -30,8 +31,12 @@ fun PrimaryActionButton(
     enabled: Boolean = true,
     leadingIcon: ImageVector? = null,
 ) {
+    val haptic = rememberHapticManager()
     Button(
-        onClick = onClick,
+        onClick = {
+            haptic.tap()
+            onClick()
+        },
         enabled = enabled,
         modifier = modifier.heightIn(min = 52.dp),
         shapes = ButtonDefaults.shapes(),

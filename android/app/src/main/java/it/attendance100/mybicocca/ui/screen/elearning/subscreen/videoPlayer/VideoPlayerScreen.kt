@@ -46,6 +46,8 @@ import androidx.media3.ui.compose.SURFACE_TYPE_SURFACE_VIEW
 import androidx.media3.ui.compose.modifiers.resizeWithContentScale
 import androidx.media3.ui.compose.state.rememberPresentationState
 import it.attendance100.mybicocca.R
+import it.attendance100.mybicocca.core.os.rememberHapticManager
+import it.attendance100.mybicocca.core.os.LocalHapticManager
 import it.attendance100.mybicocca.core.os.LocalPipController
 import it.attendance100.mybicocca.core.os.PipState
 import it.attendance100.mybicocca.core.state.Loadable
@@ -294,7 +296,8 @@ private fun VideoSurface(
                         color = Color.White,
                         style = MaterialTheme.typography.titleMedium,
                     )
-                    RetryButton(onClick = onRetry)
+                    val haptic = rememberHapticManager()
+                    RetryButton(onClick = { haptic.tap(); onRetry() })
                 }
             }
 

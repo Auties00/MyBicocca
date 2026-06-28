@@ -53,6 +53,7 @@ import androidx.compose.ui.unit.sp
 import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import it.attendance100.mybicocca.R
+import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.SyncStatus
 import it.attendance100.mybicocca.core.state.valueOrNull
@@ -179,7 +180,10 @@ private fun DeclarationsPage(
                 icon = Icons.Outlined.CloudOff,
                 title = stringResource(R.string.common_error_title),
                 body = failure.cause.taxFriendlyMessage(LocalContext.current),
-                action = { RetryButton(onClick = onRetry) },
+                action = {
+                    val haptic =
+                        rememberHapticManager(); RetryButton(onClick = { haptic.tap(); onRetry() })
+                },
             )
 
             !settled -> SheetLoadingIndicator(label = stringResource(R.string.isee_loading))
@@ -262,8 +266,9 @@ private fun DeclareFooter(
             color = scheme.onSurfaceVariant,
         )
         Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+            val haptic = rememberHapticManager()
             FilledTonalButton(
-                onClick = onOpenGuide,
+                onClick = { haptic.tap(); onOpenGuide() },
                 modifier = Modifier
                     .weight(1f)
                     .height(56.dp),
@@ -282,7 +287,7 @@ private fun DeclareFooter(
                 Text(stringResource(R.string.isee_guide), fontWeight = FontWeight.SemiBold)
             }
             Button(
-                onClick = onDeclare,
+                onClick = { haptic.tap(); onDeclare() },
                 modifier = Modifier
                     .weight(1.4f)
                     .height(56.dp),
@@ -327,10 +332,11 @@ private fun DeclarationRow(
         ),
         color = scheme.surfaceContainer,
     ) {
+        val haptic = rememberHapticManager()
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable(onClick = onClick)
+                .clickable(onClick = { haptic.tap(); onClick() })
                 .padding(16.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalAlignment = Alignment.CenterVertically,

@@ -21,6 +21,7 @@ import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -29,6 +30,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import it.attendance100.mybicocca.R
+import it.attendance100.mybicocca.core.os.rememberHapticManager
 
 /**
  * One recent-search segment of the history group, per the M3 search view spec: history
@@ -49,6 +51,7 @@ fun SearchHistoryRow(
     onRemove: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val haptic = rememberHapticManager()
     val scheme = MaterialTheme.colorScheme
     @Suppress("DEPRECATION") val dismissState = rememberSwipeToDismissBoxState(
         confirmValueChange = { value ->
@@ -56,6 +59,14 @@ fun SearchHistoryRow(
             true
         },
     )
+
+    val targetValue = dismissState.targetValue
+    LaunchedEffect(targetValue) {
+        if (targetValue != SwipeToDismissBoxValue.Settled) {
+            haptic.tap()
+        }
+    }
+
     SwipeToDismissBox(
         state = dismissState,
         modifier = modifier,
@@ -80,7 +91,7 @@ fun SearchHistoryRow(
         },
     ) {
         Surface(
-            onClick = onClick,
+            onClick = { haptic.tap(); onClick() },
             shape = shape,
             color = scheme.surfaceContainerLow,
             modifier = Modifier.fillMaxWidth(),
@@ -107,7 +118,10 @@ fun SearchHistoryRow(
                         .weight(1f)
                         .padding(horizontal = 16.dp),
                 )
-                IconButton(onClick = onInsert, modifier = Modifier.size(40.dp)) {
+                IconButton(
+                    onClick = { haptic.tap(); onInsert() },
+                    modifier = Modifier.size(40.dp)
+                ) {
                     Icon(
                         imageVector = Icons.Outlined.NorthWest,
                         contentDescription = stringResource(R.string.search_history_insert),

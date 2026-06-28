@@ -33,6 +33,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import it.attendance100.mybicocca.R
+import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.domain.model.attendance.ClassroomAttendance
 import it.attendance100.mybicocca.domain.model.attendance.CourseAttendance
 import it.attendance100.mybicocca.domain.model.attendance.SessionAttendance
@@ -65,6 +66,7 @@ fun CourseOverviewPage(course: CourseAttendance) {
     val tabs = remember(course) { course.attendanceTabs() }
     val pagerState = rememberPagerState { tabs.size }
     val scope = rememberCoroutineScope()
+    val haptic = rememberHapticManager()
 
     val flingBehavior = PagerDefaults.flingBehavior(
         state = pagerState,
@@ -96,7 +98,13 @@ fun CourseOverviewPage(course: CourseAttendance) {
         SegmentedSwitch(
             options = tabs.indices.toList(),
             selected = pagerState.targetPage.coerceIn(0, tabs.lastIndex),
-            onSelected = { index -> scope.launch { pagerState.animateScrollToPage(index) } },
+            onSelected = { index ->
+                haptic.tap(); scope.launch {
+                pagerState.animateScrollToPage(
+                    index
+                )
+            }
+            },
             label = { tabs[it].title },
             modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 10.dp, bottom = 24.dp),
         )

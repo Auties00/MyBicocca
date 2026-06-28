@@ -33,6 +33,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import it.attendance100.mybicocca.R
+import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.domain.model.library.LibraryReservation
 import it.attendance100.mybicocca.ui.component.feedback.EmptyState
@@ -135,8 +136,9 @@ private fun EmptyBox(modifier: Modifier = Modifier, content: @Composable () -> U
 private fun FooterButton(label: String, icon: ImageVector, onClick: () -> Unit, modifier: Modifier = Modifier) {
     val scheme = MaterialTheme.colorScheme
     val dark = isSystemInDarkTheme()
+    val haptic = rememberHapticManager()
     Button(
-        onClick = onClick,
+        onClick = { haptic.tap(); onClick() },
         shapes = ButtonDefaults.shapes(),
         modifier = modifier
             .fillMaxWidth()

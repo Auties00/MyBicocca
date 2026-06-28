@@ -25,6 +25,7 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.core.search.matchHighlightRanges
 
 /**
@@ -43,9 +44,10 @@ fun SearchResultRow(
     modifier: Modifier = Modifier,
     accent: Boolean = false,
 ) {
+    val haptic = rememberHapticManager()
     val scheme = MaterialTheme.colorScheme
     Surface(
-        onClick = onClick,
+        onClick = { haptic.tap(); onClick() },
         shape = shape,
         color = scheme.surfaceContainerLow,
         modifier = modifier.fillMaxWidth(),

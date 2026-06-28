@@ -22,6 +22,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withLink
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
+import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.domain.model.appointment.AppointmentFormField
 
 /**
@@ -42,6 +43,7 @@ internal fun ConsentSwitchRow(
 ) {
     val context = LocalContext.current
     val scheme = MaterialTheme.colorScheme
+    val haptic = rememberHapticManager()
     val linkStyles = TextLinkStyles(SpanStyle(color = scheme.primary, fontWeight = FontWeight.SemiBold))
     val openPolicy: (String) -> Unit = { url ->
         CustomTabsIntent.Builder().setShowTitle(true).build().launchUrl(context, url.toUri())
@@ -72,7 +74,11 @@ internal fun ConsentSwitchRow(
     }
 
     Surface(
-        onClick = { if (enabled) onValueChange(field.code, if (!accepted) "true" else "") },
+        onClick = {
+            if (enabled) {
+                haptic.tap(); onValueChange(field.code, if (!accepted) "true" else "")
+            }
+        },
         enabled = enabled,
         shape = MaterialTheme.shapes.large,
         color = scheme.surfaceContainerHigh,

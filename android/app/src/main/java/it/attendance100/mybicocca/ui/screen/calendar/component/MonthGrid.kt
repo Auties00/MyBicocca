@@ -35,6 +35,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.domain.model.calendar.CalendarEvent
 import it.attendance100.mybicocca.domain.model.calendar.EventSource
@@ -126,6 +127,7 @@ private fun MonthCell(
     onClick: () -> Unit,
     cellAspectRatio: Float,
 ) {
+    val haptic = rememberHapticManager()
     val level = remember(events) { busyLevelOf(events) }
     val accent = busyAccent()
     val background = busyBackground(level)
@@ -148,7 +150,7 @@ private fun MonthCell(
             .clip(RoundedCornerShape(8.dp))
             .background(background)
             .border(width = borderWidth, color = borderColor, shape = RoundedCornerShape(8.dp))
-            .clickable(onClick = onClick),
+            .clickable(onClick = { haptic.tap(); onClick() }),
         contentAlignment = Alignment.Center,
     ) {
         if (hasExam) {

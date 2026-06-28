@@ -8,6 +8,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import it.attendance100.mybicocca.R
+import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.domain.model.appointment.AppointmentReservation
 import it.attendance100.mybicocca.ui.component.card.BookingFooterEntry
 import it.attendance100.mybicocca.ui.component.card.BookingSummaryCard
@@ -27,6 +28,7 @@ fun ReservationCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val haptic = rememberHapticManager()
     val timeLabel = "${relativeDayLabel(reservation.start.toLocalDate())} · ${reservation.start.format(TimeFormat)}"
     val section =
         stringResource(sectionLabelOf(reservation.serviceGroup ?: reservation.serviceName))
@@ -51,7 +53,7 @@ fun ReservationCard(
         dayOfMonth = reservation.start.format(DayOfMonthFormat),
         month = reservation.start.format(MonthFormat).uppercase(Locale.getDefault()),
         footer = listOf(BookingFooterEntry(Icons.Outlined.Schedule, timeLabel), placeEntry),
-        onClick = onClick,
+        onClick = { haptic.tap(); onClick() },
         modifier = modifier,
     )
 }

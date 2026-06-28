@@ -28,6 +28,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import it.attendance100.mybicocca.R
+import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.domain.model.elearning.quiz.AttemptQuestion
 import it.attendance100.mybicocca.domain.model.elearning.quiz.AttemptReview
 import it.attendance100.mybicocca.ui.component.text.HtmlBody
@@ -45,7 +46,8 @@ internal fun AttemptReviewContent(
     onClose: () -> Unit,
 ) {
     val scheme = MaterialTheme.colorScheme
-    BackHandler(onBack = onClose)
+    val haptic = rememberHapticManager()
+    BackHandler(onBack = { haptic.tap(); onClose() })
     val questions = remember(review) { review.pages.flatMap { it.questions } }
 
     Column(modifier = Modifier.fillMaxWidth()) {
@@ -90,7 +92,7 @@ internal fun AttemptReviewContent(
         }
 
         Button(
-            onClick = onClose,
+            onClick = { haptic.tap(); onClose() },
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(start = 16.dp, end = 16.dp, top = 10.dp, bottom = 14.dp)

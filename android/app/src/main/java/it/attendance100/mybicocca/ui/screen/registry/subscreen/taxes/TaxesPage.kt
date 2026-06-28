@@ -47,6 +47,7 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import it.attendance100.mybicocca.R
+import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.SyncStatus
 import it.attendance100.mybicocca.core.state.valueOrNull
@@ -136,11 +137,12 @@ private fun TaxesBody(
     ) {
         when {
             failure != null && grouped == null -> Box(modifier = Modifier.testTag(TaxesTestTags.STATE_ERROR)) {
+                val haptic = rememberHapticManager()
                 SheetMessage(
                     icon = Icons.Outlined.CloudOff,
                     title = stringResource(R.string.common_load_failed),
                     body = failure.cause.taxFriendlyMessage(LocalContext.current),
-                    action = { RetryButton(onClick = onRetry) },
+                    action = { RetryButton(onClick = { haptic.tap(); onRetry() }) },
                 )
             }
 
@@ -190,6 +192,7 @@ private fun TaxesPager(
     }
     val pagerState = rememberPagerState(initialPage = initialPage) { filters.size }
     val scope = rememberCoroutineScope()
+    val haptic = rememberHapticManager()
 
     val flingBehavior = PagerDefaults.flingBehavior(
         state = pagerState,

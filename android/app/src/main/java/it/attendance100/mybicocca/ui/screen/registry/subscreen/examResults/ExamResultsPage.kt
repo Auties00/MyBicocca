@@ -69,6 +69,7 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import it.attendance100.mybicocca.R
+import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.SyncStatus
 import it.attendance100.mybicocca.core.state.valueOrNull
@@ -405,7 +406,10 @@ private fun SheetBody(
                 icon = Icons.Outlined.CloudOff,
                 title = stringResource(R.string.common_error_title),
                 body = failure.cause.friendlyMessage(),
-                action = { RetryButton(onClick = onRetry) },
+                action = {
+                    val haptic =
+                        rememberHapticManager(); RetryButton(onClick = { haptic.tap(); onRetry() })
+                },
                 modifier = Modifier.testTag(ExamResultsTestTags.STATE_ERROR),
             )
 
@@ -522,10 +526,12 @@ private fun EsitiPager(
                 .padding(horizontal = 20.dp, vertical = 6.dp)
                 .background(MaterialTheme.colorScheme.surfaceContainerLow, RoundedCornerShape(100)),
         ) {
+            val haptic = rememberHapticManager()
             SegmentedSwitch(
                 options = filters,
                 selected = filters[pagerState.targetPage],
                 onSelected = { filter ->
+                    haptic.tap()
                     scope.launch { pagerState.animateScrollToPage(filters.indexOf(filter)) }
                 },
                 label = { filterLabels.getValue(it) },
@@ -572,6 +578,7 @@ private fun PendingResultRow(
     modifier: Modifier = Modifier,
 ) {
     val scheme = MaterialTheme.colorScheme
+    val haptic = rememberHapticManager()
     Surface(
         modifier = modifier.fillMaxWidth(),
         color = scheme.surfaceContainer,
@@ -579,7 +586,7 @@ private fun PendingResultRow(
     ) {
         Row(
             modifier = Modifier
-                .clickable(onClick = onClick)
+                .clickable(onClick = { haptic.tap(); onClick() })
                 .padding(14.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(14.dp),
@@ -634,6 +641,7 @@ private fun ArchivedResultRow(
     modifier: Modifier = Modifier,
 ) {
     val scheme = MaterialTheme.colorScheme
+    val haptic = rememberHapticManager()
     Surface(
         modifier = modifier.fillMaxWidth(),
         color = scheme.surfaceContainer,
@@ -641,7 +649,7 @@ private fun ArchivedResultRow(
     ) {
         Row(
             modifier = Modifier
-                .clickable(onClick = onClick)
+                .clickable(onClick = { haptic.tap(); onClick() })
                 .padding(14.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(14.dp),
@@ -803,13 +811,14 @@ private fun DecisionActionRow(
     val dark = isSystemInDarkTheme()
     val brandBg = if (dark) scheme.primaryContainer else scheme.primary
     val brandFg = if (dark) scheme.onPrimaryContainer else scheme.onPrimary
+    val haptic = rememberHapticManager()
 
     Row(
         modifier = modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         FilledTonalButton(
-            onClick = onRequestReject,
+            onClick = { haptic.tap(); onRequestReject() },
             enabled = enabled,
             modifier = Modifier
                 .testTag(ExamResultsTestTags.REJECT_BUTTON)
@@ -840,7 +849,7 @@ private fun DecisionActionRow(
             }
         }
         Button(
-            onClick = onAccept,
+            onClick = { haptic.tap(); onAccept() },
             enabled = enabled,
             modifier = Modifier
                 .testTag(ExamResultsTestTags.ACCEPT_BUTTON)
@@ -903,6 +912,7 @@ private fun RejectConfirmPage(
             color = scheme.onSurfaceVariant,
             modifier = Modifier.padding(horizontal = 24.dp),
         )
+        val haptic = rememberHapticManager()
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -910,7 +920,7 @@ private fun RejectConfirmPage(
             horizontalArrangement = Arrangement.spacedBy(4.dp),
         ) {
             FilledTonalButton(
-                onClick = onConfirm,
+                onClick = { haptic.tap(); onConfirm() },
                 modifier = Modifier
                     .testTag(ExamResultsTestTags.REJECT_CONFIRM)
                     .weight(1f)
@@ -924,7 +934,7 @@ private fun RejectConfirmPage(
                 Text(stringResource(R.string.common_confirm), fontWeight = FontWeight.SemiBold)
             }
             Button(
-                onClick = onKeep,
+                onClick = { haptic.tap(); onKeep() },
                 modifier = Modifier
                     .testTag(ExamResultsTestTags.REJECT_KEEP)
                     .weight(1.4f)

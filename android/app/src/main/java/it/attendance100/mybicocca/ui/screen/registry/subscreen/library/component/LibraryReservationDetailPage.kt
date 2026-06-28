@@ -37,6 +37,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import it.attendance100.mybicocca.R
+import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.domain.model.library.LibraryReservation
 import it.attendance100.mybicocca.ui.component.card.DetailFactCard
 import it.attendance100.mybicocca.ui.theme.LocalIsOnline
@@ -157,13 +158,14 @@ private fun ActionRow(
     val dark = isSystemInDarkTheme()
     val brandBg = if (dark) scheme.primaryContainer else scheme.primary
     val brandFg = if (dark) scheme.onPrimaryContainer else scheme.onPrimary
+    val haptic = rememberHapticManager()
 
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         FilledTonalButton(
-            onClick = onCancel,
+            onClick = { haptic.tap(); onCancel() },
             enabled = canCancel && !isCancelling && LocalIsOnline.current,
             modifier = Modifier
                 .weight(1f)
@@ -181,7 +183,7 @@ private fun ActionRow(
             }
         }
         Button(
-            onClick = onVerifyPresence,
+            onClick = { haptic.tap(); onVerifyPresence() },
             enabled = canVerify && !isCancelling,
             modifier = Modifier
                 .weight(1.6f)

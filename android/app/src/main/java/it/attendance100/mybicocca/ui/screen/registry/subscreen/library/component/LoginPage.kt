@@ -57,6 +57,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import it.attendance100.mybicocca.R
+import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.library.state.LibraryLoginFeedback
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.library.state.LibraryLoginPhase
 import kotlinx.coroutines.delay
@@ -185,8 +186,12 @@ private fun LoginForm(
             Spacer(Modifier.size(4.dp))
         }
 
+        val haptic = rememberHapticManager()
         Button(
-            onClick = if (awaiting) onVerify else onSendEmail,
+            onClick = {
+                haptic.tap()
+                if (awaiting) onVerify() else onSendEmail()
+            },
             enabled = !busy && email.isNotBlank(),
             shapes = ButtonDefaults.shapes(),
             modifier = Modifier

@@ -10,6 +10,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
+import it.attendance100.mybicocca.core.os.rememberHapticManager
 
 /**
  * The app's main tab bar. In light theme the selection indicator is the brand primary with
@@ -36,6 +37,7 @@ fun <T> MyBicoccaBottomBar(
         unselectedIconColor = scheme.onSurfaceVariant,
         unselectedTextColor = scheme.onSurfaceVariant,
     )
+    val haptic = rememberHapticManager()
     NavigationBar(
         modifier = modifier.graphicsLayer { this.translationY = translationY },
         containerColor = scheme.surfaceContainer,
@@ -43,7 +45,10 @@ fun <T> MyBicoccaBottomBar(
         items.forEach { item ->
             NavigationBarItem(
                 selected = item.key == selected,
-                onClick = { onSelect(item.key) },
+                onClick = {
+                    haptic.tap()
+                    onSelect(item.key)
+                },
                 icon = { Icon(item.icon, contentDescription = item.label) },
                 label = { Text(item.label) },
                 colors = itemColors,

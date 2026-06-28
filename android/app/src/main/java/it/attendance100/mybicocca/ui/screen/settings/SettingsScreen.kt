@@ -15,6 +15,7 @@ import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.Palette
 import androidx.compose.material.icons.outlined.PrivacyTip
 import androidx.compose.material.icons.outlined.Translate
+import androidx.compose.material.icons.outlined.Vibration
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -37,6 +38,7 @@ import it.attendance100.mybicocca.ui.screen.settings.subscreen.fileAssociations.
 import it.attendance100.mybicocca.ui.screen.settings.subscreen.language.LanguageSheet
 import it.attendance100.mybicocca.ui.screen.settings.subscreen.language.currentAppLanguageLabel
 import it.attendance100.mybicocca.ui.screen.settings.subscreen.settingsAppearance.SettingsAppearanceSheet
+import it.attendance100.mybicocca.ui.screen.settings.subscreen.settingsHaptic.SettingsHapticSheet
 import it.attendance100.mybicocca.ui.screen.settings.subscreen.settingsSecurity.SettingsSecuritySheet
 
 /**
@@ -60,6 +62,7 @@ fun SettingsScreen() {
     var showLanguageSheet by remember { mutableStateOf(false) }
     var showSecuritySheet by remember { mutableStateOf(false) }
     var showFileAssocSheet by remember { mutableStateOf(false) }
+    var showHapticSheet by remember { mutableStateOf(false) }
     var showAppInfoSheet by remember { mutableStateOf(false) }
 
     val languageLabel = remember(showLanguageSheet) { currentAppLanguageLabel(context) }
@@ -94,6 +97,12 @@ fun SettingsScreen() {
                         stringResource(R.string.settings_file_opening_subtitle),
                         Icons.Outlined.FileOpen,
                         onClick = { showFileAssocSheet = true }),
+                    SettingsEntry(
+                        "haptic",
+                        stringResource(R.string.settings_haptic_title),
+                        stringResource(R.string.settings_haptic_subtitle),
+                        Icons.Outlined.Vibration,
+                        onClick = { showHapticSheet = true }),
                 ),
             ),
             scheme.primaryContainer, scheme.onPrimaryContainer,
@@ -161,6 +170,10 @@ fun SettingsScreen() {
 
     if (showFileAssocSheet) {
         FileAssociationsSheet(onDismiss = { showFileAssocSheet = false })
+    }
+
+    if (showHapticSheet) {
+        SettingsHapticSheet(onDismiss = { showHapticSheet = false })
     }
 
     if (showAppInfoSheet) {

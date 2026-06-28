@@ -60,6 +60,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import it.attendance100.mybicocca.R
+import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.core.state.valueOrNull
 import it.attendance100.mybicocca.domain.model.elearning.course.CourseId
 import it.attendance100.mybicocca.domain.model.elearning.quiz.AttemptId
@@ -513,8 +514,11 @@ private fun AttemptRow(
 ) {
     val scheme = MaterialTheme.colorScheme
     val inProgress = attempt.state == AttemptState.InProgress
+    val haptic = rememberHapticManager()
     Surface(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .clickable(enabled = LocalIsOnline.current, onClick = { haptic.tap(); onClick() }),
         shape = RoundedCornerShape(
             topStart = if (isFirst) 28.dp else 6.dp,
             topEnd = if (isFirst) 28.dp else 6.dp,
@@ -526,7 +530,6 @@ private fun AttemptRow(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable(enabled = LocalIsOnline.current, onClick = onClick)
                 .padding(horizontal = 16.dp, vertical = 14.dp),
             horizontalArrangement = Arrangement.spacedBy(14.dp),
             verticalAlignment = Alignment.CenterVertically,
@@ -585,6 +588,7 @@ private fun IconRow(
     valueContent: (@Composable () -> Unit)? = null,
 ) {
     val scheme = MaterialTheme.colorScheme
+    val haptic = rememberHapticManager()
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(16.dp),
@@ -643,6 +647,7 @@ private fun QuizActionRow(
     val dark = isSystemInDarkTheme()
     val brandBg = if (dark) scheme.primaryContainer else scheme.primary
     val brandFg = if (dark) scheme.onPrimaryContainer else scheme.onPrimary
+    val haptic = rememberHapticManager()
 
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -655,14 +660,14 @@ private fun QuizActionRow(
                 bg = brandBg,
                 fg = brandFg,
                 shape = ButtonGroupDefaults.connectedLeadingButtonShape,
-                onClick = onPrimary,
+                onClick = { haptic.tap(); onPrimary() },
                 enabled = canStart && isOnline,
                 modifier = Modifier
                     .weight(1.4f)
                     .testTag(QuizDetailTestTags.PRIMARY_ACTION),
             )
             FilledTonalButton(
-                onClick = onShowHistory,
+                onClick = { haptic.tap(); onShowHistory() },
                 modifier = Modifier
                     .weight(1f)
                     .height(56.dp)
@@ -705,8 +710,9 @@ private fun BrandButton(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
 ) {
+    val haptic = it.attendance100.mybicocca.core.os.rememberHapticManager()
     Button(
-        onClick = onClick,
+        onClick = { haptic.tap(); onClick() },
         enabled = enabled,
         modifier = modifier.height(56.dp),
         shape = shape,

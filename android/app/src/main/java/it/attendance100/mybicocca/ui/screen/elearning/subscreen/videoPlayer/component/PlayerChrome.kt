@@ -27,6 +27,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import it.attendance100.mybicocca.R
+import it.attendance100.mybicocca.core.os.rememberHapticManager
 
 /**
  * The player's top bar, laid over the video on a black-to-transparent gradient: back button,
@@ -45,6 +46,7 @@ fun PlayerChrome(
     onEnterPip: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val haptic = rememberHapticManager()
     Box(
         modifier = modifier
             .fillMaxWidth()
@@ -59,18 +61,22 @@ fun PlayerChrome(
             .padding(top = 12.dp, bottom = 24.dp, start = 8.dp, end = 8.dp),
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth().height(56.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(56.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(4.dp),
         ) {
-            IconButton(onClick = onBack) {
+            IconButton(onClick = { haptic.tap(); onBack() }) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Outlined.ArrowBack,
                     contentDescription = stringResource(R.string.common_back),
                     tint = Color.White,
                 )
             }
-            Column(modifier = Modifier.weight(1f).padding(horizontal = 4.dp)) {
+            Column(modifier = Modifier
+                .weight(1f)
+                .padding(horizontal = 4.dp)) {
                 Text(
                     text = title,
                     color = Color.White,
@@ -90,21 +96,21 @@ fun PlayerChrome(
                 }
             }
             val disabledTint = Color.White.copy(alpha = 0.35f)
-            IconButton(onClick = onEnterPip, enabled = videoLoaded) {
+            IconButton(onClick = { haptic.tap(); onEnterPip() }, enabled = videoLoaded) {
                 Icon(
                     imageVector = Icons.Outlined.PictureInPictureAlt,
                     contentDescription = stringResource(R.string.elearning_video_picture_in_picture),
                     tint = if (videoLoaded) Color.White else disabledTint,
                 )
             }
-            IconButton(onClick = onOpenQuality, enabled = videoLoaded) {
+            IconButton(onClick = { haptic.tap(); onOpenQuality() }, enabled = videoLoaded) {
                 Icon(
                     imageVector = Icons.Outlined.HighQuality,
                     contentDescription = stringResource(R.string.elearning_video_quality),
                     tint = if (videoLoaded) Color.White else disabledTint,
                 )
             }
-            IconButton(onClick = onOpenPlaylist) {
+            IconButton(onClick = { haptic.tap(); onOpenPlaylist() }) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Outlined.PlaylistPlay,
                     contentDescription = stringResource(R.string.elearning_video_playlist),

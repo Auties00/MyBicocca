@@ -46,6 +46,7 @@ import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.domain.model.appointment.AppointmentReservation
 import it.attendance100.mybicocca.ui.component.card.DetailFactCard
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.appointments.ext.decodeQrDataUrl
+import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.ui.theme.LocalIsOnline
 import java.time.format.DateTimeFormatter
 import java.util.Locale
@@ -177,13 +178,14 @@ private fun ActionRow(
     val joinBg = if (dark) scheme.primaryContainer else scheme.primary
     val joinFg = if (dark) scheme.onPrimaryContainer else scheme.onPrimary
     val hasCall = webConferenceUrl != null
+    val haptic = rememberHapticManager()
 
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         FilledTonalButton(
-            onClick = onCancel,
+            onClick = { haptic.tap(); onCancel() },
             enabled = !isCancelling && LocalIsOnline.current,
             modifier = Modifier
                 .weight(1f)
@@ -218,7 +220,7 @@ private fun ActionRow(
         }
         if (hasCall) {
             Button(
-                onClick = onJoinCall,
+                onClick = { haptic.tap(); onJoinCall() },
                 enabled = !isCancelling,
                 modifier = Modifier
                     .weight(1.4f)

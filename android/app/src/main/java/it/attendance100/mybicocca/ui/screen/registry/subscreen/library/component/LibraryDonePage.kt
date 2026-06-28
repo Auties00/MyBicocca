@@ -33,6 +33,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import it.attendance100.mybicocca.R
+import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.library.ext.durationLabel
 import java.time.LocalDate
 import java.time.LocalTime
@@ -137,8 +138,9 @@ private fun HeroIcon(icon: ImageVector) {
 private fun DoneButton(onDone: () -> Unit) {
     val scheme = MaterialTheme.colorScheme
     val dark = isSystemInDarkTheme()
+    val haptic = rememberHapticManager()
     Button(
-        onClick = onDone,
+        onClick = { haptic.tap(); onDone() },
         shapes = ButtonDefaults.shapes(),
         modifier = Modifier
             .fillMaxWidth()
