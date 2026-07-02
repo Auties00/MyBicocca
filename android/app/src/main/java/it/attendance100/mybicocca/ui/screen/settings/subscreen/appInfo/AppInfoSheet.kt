@@ -49,6 +49,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
@@ -74,6 +75,8 @@ import coil.compose.AsyncImage
 import it.attendance100.mybicocca.BuildConfig
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.os.rememberHapticManager
+import it.attendance100.mybicocca.data.update.DownloadState
+import it.attendance100.mybicocca.domain.model.update.AppRelease
 import it.attendance100.mybicocca.domain.model.update.UpdateCheckResult
 import it.attendance100.mybicocca.domain.model.update.UpdateStatus
 import it.attendance100.mybicocca.ui.component.brand.MyBicoccaWordmark
@@ -82,6 +85,7 @@ import it.attendance100.mybicocca.ui.component.directory.SegmentedTile
 import it.attendance100.mybicocca.ui.component.directory.segmentedShape
 import it.attendance100.mybicocca.ui.component.feedback.AppSnackbarHost
 import it.attendance100.mybicocca.ui.component.feedback.rememberAppSnackbarController
+import it.attendance100.mybicocca.ui.component.modal.UpdateModalSheet
 import it.attendance100.mybicocca.ui.component.modal.sheetPageTransform
 import kotlinx.coroutines.launch
 import java.time.Year
@@ -92,7 +96,8 @@ private const val GITHUB_URL = "https://github.com/Auties00/MyBicocca"
 
 private val versionText: String = buildString {
     append("Versione ${BuildConfig.VERSION_NAME}")
-    if (BuildConfig.DEBUG) append(" [Debug]")
+    @Suppress("KotlinConstantConditions", "SimplifyBooleanWithConstants")
+    if (BuildConfig.DEBUG && BuildConfig.BUILD_TYPE != "release") append(" [Debug]")
 }
 
 private val copyrightText: String
@@ -128,6 +133,7 @@ private val CREDITS = listOf(
  * to date; an "Update available" tile that opens the store-aware page once a newer release is
  * known), the "What's New" navigation tile, the "GitHub" Custom Tab link, and the credits.
  */
+@Suppress("AssignedValueIsNeverRead")
 @SuppressLint("ConfigurationScreenWidthHeight")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -144,6 +150,25 @@ fun AppInfoSheet(
     val checking by viewModel.checking.collectAsStateWithLifecycle()
     // In-sheet depth: 0 = About, 1 = What's New (merged), 2 = All versions.
     var depth by rememberSaveable { mutableIntStateOf(0) }
+    var showUpdateModal by remember { mutableStateOf<AppRelease?>(null) }
+    val downloadState by viewModel.downloadState.collectAsStateWithLifecycle()
+
+    showUpdateModal?.let { release ->
+        UpdateModalSheet(
+            release = release,
+            downloadState = downloadState,
+            onDownload = { viewModel.startDownload(release) },
+            onInstall = { file ->
+                viewModel.installDownload(file)
+                viewModel.clearDownload()
+                showUpdateModal = null
+            },
+            onDismiss = {
+                viewModel.dismissDownloadError()
+                showUpdateModal = null
+            }
+        )
+    }
 
     val noUpdatesMsg = stringResource(R.string.settings_no_updates_found)
     val newVersionMsg = stringResource(R.string.shell_update_available)
@@ -252,9 +277,11 @@ fun AppInfoSheet(
                                 viewModel = viewModel,
                                 updateStatus = updateStatus,
                                 checking = checking,
+                                downloadState = downloadState,
                                 githubIcon = githubIcon,
                                 onOpenWhatsNew = { depth = 1 },
                                 onCheckResult = onCheckResult,
+                                onShowUpdateModal = { showUpdateModal = it }
                             )
 
                             1 -> WhatsNewScene(
@@ -296,9 +323,11 @@ private fun AboutScene(
     viewModel: AppInfoViewModel,
     updateStatus: UpdateStatus,
     checking: Boolean,
+    downloadState: DownloadState,
     githubIcon: ImageVector,
     onOpenWhatsNew: () -> Unit,
     onCheckResult: (UpdateCheckResult) -> Unit,
+    onShowUpdateModal: (AppRelease) -> Unit,
 ) {
     val scheme = MaterialTheme.colorScheme
     val secondary = scheme.onSurfaceVariant
@@ -336,18 +365,26 @@ private fun AboutScene(
         Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
             val available = updateStatus as? UpdateStatus.UpdateAvailable
             if (available != null) {
+                val isDownloading = downloadState is DownloadState.Downloading
+                val progress = (downloadState as? DownloadState.Downloading)?.progress ?: 0
+                val subtitle =
+                    if (isDownloading) stringResource(R.string.update_modal_downloading, progress)
+                    else stringResource(
+                        R.string.settings_update_available_subtitle,
+                        available.release.versionName
+                    )
+                
                 SegmentedTile(
                     isFirst = true,
                     isLast = false,
                     title = stringResource(R.string.settings_update_available_title),
-                    subtitle = stringResource(
-                        R.string.settings_update_available_subtitle,
-                        available.release.versionName,
-                    ),
-                    onClick = {
-                        haptic.tap()
-                        CustomTabsIntent.Builder().setShowTitle(true).build()
-                            .launchUrl(context, viewModel.updatePageUrl(available.release).toUri())
+                    subtitle = subtitle,
+                    progress = if (isDownloading) progress / 100f else null,
+                    onClick = if (isDownloading) null else {
+                        {
+                            haptic.tap()
+                            onShowUpdateModal(available.release)
+                        }
                     },
                     leading = {
                         SegmentedIconChip(

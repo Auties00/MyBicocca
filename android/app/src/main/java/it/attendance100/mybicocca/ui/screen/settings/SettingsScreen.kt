@@ -54,6 +54,8 @@ import it.attendance100.mybicocca.ui.screen.settings.subscreen.settingsSecurity.
 @Suppress("AssignedValueIsNeverRead")
 @Composable
 fun SettingsScreen() {
+    val strSettingsOssLicensesTitle = stringResource(R.string.settings_oss_licenses_title)
+
     val scheme = MaterialTheme.colorScheme
     val context = LocalContext.current
     val haptic = rememberHapticManager()
@@ -130,9 +132,15 @@ fun SettingsScreen() {
                         stringResource(R.string.settings_license_subtitle),
                         Icons.Outlined.Description,
                         onClick = {
-                            OssLicensesMenuActivity.setActivityTitle(context.getString(R.string.settings_oss_licenses_title))
-                        context.startActivity(Intent(context, OssLicensesMenuActivity::class.java))
-                    }),
+                            OssLicensesMenuActivity.setActivityTitle(strSettingsOssLicensesTitle)
+                            context.startActivity(
+                                Intent(
+                                    context,
+                                    OssLicensesMenuActivity::class.java
+                                )
+                            )
+                        }
+                    ),
                 ),
             ),
             scheme.secondaryContainer, scheme.onSecondaryContainer,

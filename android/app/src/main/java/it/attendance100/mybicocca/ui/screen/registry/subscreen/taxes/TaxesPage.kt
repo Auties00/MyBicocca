@@ -41,7 +41,6 @@ import androidx.compose.ui.layout.boundsInWindow
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
@@ -141,7 +140,7 @@ private fun TaxesBody(
                 SheetMessage(
                     icon = Icons.Outlined.CloudOff,
                     title = stringResource(R.string.common_load_failed),
-                    body = failure.cause.taxFriendlyMessage(LocalContext.current),
+                    body = stringResource(failure.cause.taxFriendlyMessage()),
                     action = { RetryButton(onClick = { haptic.tap(); onRetry() }) },
                 )
             }
@@ -192,7 +191,6 @@ private fun TaxesPager(
     }
     val pagerState = rememberPagerState(initialPage = initialPage) { filters.size }
     val scope = rememberCoroutineScope()
-    val haptic = rememberHapticManager()
 
     val flingBehavior = PagerDefaults.flingBehavior(
         state = pagerState,
@@ -287,6 +285,7 @@ private fun HeroInvoiceCard(
 }
 
 /** Pinned-header subtitle: the outstanding total while anything is due, else the invoice count. */
+@Composable
 fun taxesHeaderSubtitle(invoices: List<TaxInvoice>): String? {
     if (invoices.isEmpty()) return null
     val due = invoices

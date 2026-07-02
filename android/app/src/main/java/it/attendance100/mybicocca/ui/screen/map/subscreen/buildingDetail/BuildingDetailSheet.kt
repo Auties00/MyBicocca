@@ -50,12 +50,12 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
-import it.attendance100.mybicocca.core.os.rememberHapticManager
 import com.valentinilk.shimmer.Shimmer
 import com.valentinilk.shimmer.ShimmerBounds
 import com.valentinilk.shimmer.rememberShimmer
 import com.valentinilk.shimmer.shimmer
 import it.attendance100.mybicocca.R
+import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.SyncStatus
 import it.attendance100.mybicocca.domain.model.map.MapBuilding
@@ -224,7 +224,7 @@ internal fun BuildingPageBody(
             roomList.isNullOrEmpty() && failure != null -> SheetMessage(
                 icon = Icons.Outlined.CloudOff,
                 title = stringResource(R.string.map_rooms_load_failed),
-                body = failure.cause.friendlyMessage(),
+                body = stringResource(failure.cause.friendlyMessage()),
                 action = onRetry?.let { { RetryButton(onClick = it) } },
             )
 

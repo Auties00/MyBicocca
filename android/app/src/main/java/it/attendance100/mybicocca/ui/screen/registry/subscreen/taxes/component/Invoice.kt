@@ -33,6 +33,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import it.attendance100.mybicocca.R
+import it.attendance100.mybicocca.core.os.currentLocale
 import it.attendance100.mybicocca.ui.component.shape.DynamicCard
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.taxes.state.InvoiceData
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.taxes.state.InvoiceItem
@@ -43,8 +44,8 @@ import java.time.format.DateTimeFormatter
 import java.util.Currency
 import java.util.Locale
 
-fun formatCurrency(amount: Double): String {
-    return NumberFormat.getCurrencyInstance(Locale.getDefault()).apply {
+fun formatCurrency(amount: Double, locale: Locale): String {
+    return NumberFormat.getCurrencyInstance(locale).apply {
         currency = Currency.getInstance("EUR")
     }.format(amount)
 }
@@ -119,7 +120,7 @@ fun Invoice(
                     Text(
                         text = formatFullDate(
                             invoice.expiryDate,
-                            androidx.compose.ui.platform.LocalConfiguration.current.locales[0]
+                            currentLocale()
                         ),
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontSize = 14.sp,
@@ -131,7 +132,7 @@ fun Invoice(
 
                 InfoRow(
                     label = stringResource(R.string.taxes_total_amount),
-                    value = formatCurrency(invoice.amount),
+                    value = formatCurrency(invoice.amount, currentLocale()),
                     isLarge = true,
                     verticalPadding = 6.dp,
                 )
@@ -191,7 +192,7 @@ private fun TicketHeader(invoice: InvoiceData) {
                         R.string.taxes_paid_on,
                         formatFullDate(
                             invoice.paymentDate,
-                            androidx.compose.ui.platform.LocalConfiguration.current.locales[0]
+                            currentLocale()
                         )
                     )
                 } else {
@@ -257,7 +258,12 @@ private fun TaxItemRow(item: InvoiceItem) {
         Spacer(modifier = Modifier.height(8.dp))
         InfoRow(label = "Anno", value = item.year, verticalPadding = 0.dp)
         Spacer(modifier = Modifier.height(8.dp))
-        InfoRow(label = "Importo", value = formatCurrency(item.amount), isLarge = true, verticalPadding = 0.dp)
+        InfoRow(
+            label = "Importo",
+            value = formatCurrency(item.amount, currentLocale()),
+            isLarge = true,
+            verticalPadding = 0.dp
+        )
     }
 }
 

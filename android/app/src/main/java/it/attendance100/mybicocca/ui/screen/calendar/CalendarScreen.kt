@@ -212,7 +212,7 @@ fun CalendarScreen(
                     EmptyState(
                         icon = Icons.Outlined.CloudOff,
                         title = stringResource(R.string.calendar_sync_failed),
-                        body = failure.cause.friendlyMessage(),
+                        body = stringResource(failure.cause.friendlyMessage()),
                         action = { RetryButton(onClick = viewModel::pullToRefresh) },
                         modifier = Modifier.testTag(CalendarTestTags.STATE_ERROR),
                     )

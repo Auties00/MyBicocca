@@ -29,7 +29,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -175,7 +174,6 @@ private fun UnitsList(
                         }
 
                         compilable -> {
-                            val context = LocalContext.current
                             val haptic = rememberHapticManager()
                             Button(
                                 onClick = { haptic.tap(); onCompileUnit(detail, unit) },
@@ -187,18 +185,17 @@ private fun UnitsList(
                             ) {
                                 Box(contentAlignment = Alignment.Center) {
                                     Text(
-                                        context.getString(R.string.questionnaire_unit_compiled),
+                                        stringResource(R.string.questionnaire_unit_compiled),
                                         color = Color.Transparent
                                     )
-                                    Text(context.getString(R.string.questionnaire_unit_compile))
+                                    Text(stringResource(R.string.questionnaire_unit_compile))
                                 }
                             }
                         }
 
                         else -> {
-                            val context = LocalContext.current
                             Text(
-                                text = context.getString(R.string.questionnaire_unit_unavailable),
+                                text = stringResource(R.string.questionnaire_unit_unavailable),
                                 style = MaterialTheme.typography.labelMedium,
                                 color = scheme.onSurfaceVariant,
                             )

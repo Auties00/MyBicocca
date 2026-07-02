@@ -66,7 +66,6 @@ fun SettingsAppearanceSheet(
 ) {
     val appTheme by viewModel.appTheme.collectAsStateWithLifecycle()
     val themeMode by viewModel.themeMode.collectAsStateWithLifecycle()
-    val context = androidx.compose.ui.platform.LocalContext.current
 //    val badgeCardTheme by viewModel.badgeCardTheme.collectAsStateWithLifecycle()
 
     val dark = when (themeMode) {
@@ -75,11 +74,15 @@ fun SettingsAppearanceSheet(
         ThemeMode.Dark -> true
     }
 
+    val strSystem = stringResource(R.string.settings_language_system)
+    val strLight = stringResource(R.string.settings_theme_mode_light)
+    val strDark = stringResource(R.string.settings_theme_mode_dark)
+
     val themeModeLabel: (ThemeMode) -> String = { mode ->
         when (mode) {
-            ThemeMode.System -> context.getString(R.string.settings_language_system)
-            ThemeMode.Light -> context.getString(R.string.settings_theme_mode_light)
-            ThemeMode.Dark -> context.getString(R.string.settings_theme_mode_dark)
+            ThemeMode.System -> strSystem
+            ThemeMode.Light -> strLight
+            ThemeMode.Dark -> strDark
         }
     }
 

@@ -1,5 +1,6 @@
 package it.attendance100.mybicocca.domain.model.update
 
+import kotlinx.serialization.Serializable
 import java.time.Instant
 
 /**
@@ -23,4 +24,13 @@ data class AppRelease(
     val pageUrl: String,
     val publishedAt: Instant?,
     val isPreRelease: Boolean,
+    val assets: List<AppReleaseAsset> = emptyList()
+)
+
+@Serializable
+data class AppReleaseAsset(
+    val name: String,
+    val downloadUrl: String,
+    val size: Long,
+    val digest: String? = null // Expected content hash from the distribution source, formatted "sha256:<hex>
 )

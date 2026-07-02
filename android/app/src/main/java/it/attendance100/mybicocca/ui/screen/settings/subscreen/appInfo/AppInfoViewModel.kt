@@ -3,6 +3,8 @@ package it.attendance100.mybicocca.ui.screen.settings.subscreen.appInfo
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import it.attendance100.mybicocca.data.update.ApkDownloader
+import it.attendance100.mybicocca.data.update.DownloadState
 import it.attendance100.mybicocca.domain.model.update.AppRelease
 import it.attendance100.mybicocca.domain.model.update.UpdateCheckResult
 import it.attendance100.mybicocca.domain.model.update.UpdateStatus
@@ -15,6 +17,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import java.io.File
 import javax.inject.Inject
 
 /**
@@ -29,6 +32,7 @@ class AppInfoViewModel @Inject constructor(
     observeUpdateStatus: ObserveUpdateStatusUseCase,
     private val checkForUpdates: CheckForUpdatesUseCase,
     private val getUpdatePageUrl: GetUpdatePageUrlUseCase,
+    private val downloader: ApkDownloader,
 ) : ViewModel() {
 
     val status: StateFlow<UpdateStatus> = observeUpdateStatus()
@@ -36,6 +40,18 @@ class AppInfoViewModel @Inject constructor(
 
     private val _checking = MutableStateFlow(false)
     val checking: StateFlow<Boolean> = _checking.asStateFlow()
+
+    /** The in-flight update download, surfaced to the UI without exposing the downloader itself. */
+    val downloadState: StateFlow<DownloadState> = downloader.downloadState
+
+    fun startDownload(release: AppRelease) = downloader.startDownload(release)
+
+    /** Launches the installer for a finished download; call only from the foreground. */
+    fun installDownload(file: File) = downloader.installApk(file)
+
+    fun clearDownload() = downloader.resetState()
+
+    fun dismissDownloadError() = downloader.dismissError()
 
     /** Forces a check; ignores re-taps while one is in flight. Delivers the outcome to [onResult]. */
     fun check(onResult: (UpdateCheckResult) -> Unit) {

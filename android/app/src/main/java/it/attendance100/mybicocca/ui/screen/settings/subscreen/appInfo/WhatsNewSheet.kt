@@ -34,7 +34,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -46,6 +45,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.os.ProvideHapticManager
+import it.attendance100.mybicocca.core.os.currentLocale
 import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.domain.model.update.AppRelease
 import it.attendance100.mybicocca.ui.component.feedback.EmptyState
@@ -170,7 +170,7 @@ private fun WhatsNewAllVersionsContent(
 /** The newest-first list of per-release cards, shared by the entry (no-merge) and All-versions pages. */
 @Composable
 private fun ReleaseList(releases: List<ReleaseItem>, modifier: Modifier = Modifier) {
-    val locale = LocalConfiguration.current.locales[0]
+    val locale = currentLocale()
     val dateFormatter = remember(locale) { DateTimeFormatter.ofPattern("d MMM yyyy", locale) }
     LazyColumn(
         modifier = modifier.fillMaxWidth(),
@@ -191,7 +191,7 @@ private fun ReleaseList(releases: List<ReleaseItem>, modifier: Modifier = Modifi
  */
 @Composable
 private fun MergedNotes(merged: MergedSummary, modifier: Modifier = Modifier) {
-    val locale = LocalConfiguration.current.locales[0]
+    val locale = currentLocale()
     val dateFormatter = remember(locale) { DateTimeFormatter.ofPattern("d MMM yyyy", locale) }
     val mergedItem = ReleaseItem(
         release = AppRelease(
@@ -362,7 +362,7 @@ private fun ReleaseCardPreviewLight(
     @PreviewParameter(ReleaseItemProvider::class) item: ReleaseItem
 ) {
     BicoccaTheme(dark = false) {
-        val locale = LocalConfiguration.current.locales[0]
+        val locale = currentLocale()
         val dateFormatter = remember(locale) { DateTimeFormatter.ofPattern("d MMM yyyy", locale) }
         Surface(color = MaterialTheme.colorScheme.background) {
             Box(Modifier.padding(16.dp)) {
@@ -385,7 +385,7 @@ private fun ReleaseCardPreviewDark(
     @PreviewParameter(ReleaseItemProvider::class) item: ReleaseItem
 ) {
     BicoccaTheme(dark = true) {
-        val locale = LocalConfiguration.current.locales[0]
+        val locale = currentLocale()
         val dateFormatter = remember(locale) { DateTimeFormatter.ofPattern("d MMM yyyy", locale) }
         Surface(color = MaterialTheme.colorScheme.background) {
             Box(Modifier.padding(16.dp)) {

@@ -20,6 +20,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import it.attendance100.mybicocca.R
+import it.attendance100.mybicocca.core.os.currentLocale
 import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.domain.model.tax.TaxInvoice
 import it.attendance100.mybicocca.domain.model.tax.TaxStatus
@@ -74,7 +75,7 @@ fun TaxInvoiceCard(
                     color = scheme.onSurface,
                 )
                 Text(
-                    text = formatCurrency(invoice.amount),
+                    text = formatCurrency(invoice.amount, currentLocale()),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = scheme.onSurface,
@@ -123,6 +124,7 @@ fun TaxInvoiceCard(
     }
 }
 
+@Composable
 private fun TaxInvoice.statusLabel(): String = when (status) {
     TaxStatus.PAID -> paymentDate?.let { "Pagata il ${it.formatTaxDate()}" } ?: "Pagata"
     TaxStatus.PENDING -> "Da pagare"

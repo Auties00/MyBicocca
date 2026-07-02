@@ -32,7 +32,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -157,7 +156,6 @@ private fun SeatRow(seat: LibrarySeat, zoneColor: LibraryZoneColor, onClick: () 
                     overflow = TextOverflow.Ellipsis,
                 )
                 if (seat.hasPowerOutlet) {
-                    val context = LocalContext.current
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                         Icon(
                             imageVector = Icons.Outlined.Bolt,
@@ -166,7 +164,7 @@ private fun SeatRow(seat: LibrarySeat, zoneColor: LibraryZoneColor, onClick: () 
                             modifier = Modifier.size(14.dp),
                         )
                         Text(
-                            text = context.getString(R.string.library_power_outlet),
+                            text = stringResource(R.string.library_power_outlet),
                             style = MaterialTheme.typography.labelMedium,
                             color = scheme.onSurfaceVariant,
                         )

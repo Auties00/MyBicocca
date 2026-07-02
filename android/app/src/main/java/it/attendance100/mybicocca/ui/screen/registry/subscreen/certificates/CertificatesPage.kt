@@ -86,6 +86,8 @@ import java.io.File
 fun CertificatesPage(
     viewModel: CertificatesViewModel,
 ) {
+    val strCertsNoPdfApp = stringResource(R.string.certs_no_pdf_app)
+
     val certificatesLoadable by viewModel.certificates.collectAsStateWithLifecycle()
     val syncStatus by viewModel.syncStatus.collectAsStateWithLifecycle()
     val downloading by viewModel.downloadingCertificates.collectAsStateWithLifecycle()
@@ -101,7 +103,7 @@ fun CertificatesPage(
                 is CertificateEvent.ShowMessage -> outcome = SheetOutcome.Info(event.message)
                 is CertificateEvent.OpenFile ->
                     if (!openCertificate(context, File(event.path))) {
-                        outcome = SheetOutcome.Info(context.getString(R.string.certs_no_pdf_app))
+                        outcome = SheetOutcome.Info(strCertsNoPdfApp)
                     }
             }
         }

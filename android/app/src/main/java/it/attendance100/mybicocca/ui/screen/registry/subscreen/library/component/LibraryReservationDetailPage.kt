@@ -31,7 +31,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -70,21 +69,20 @@ internal fun LibraryReservationDetailPage(
     val scheme = MaterialTheme.colorScheme
     val canCancel = reservation.cancellationToken != null
 
-    val context = LocalContext.current
     val now = remember(reservation) { LocalDateTime.now() }
     val windowStart = reservation.start.minusMinutes(presenceWindowMinutes.toLong())
     val tooEarly = now.isBefore(windowStart)
     val past = now.isAfter(reservation.end)
     val canVerify = !tooEarly && !past
     val presenceHint = when {
-        tooEarly -> context.getString(
+        tooEarly -> stringResource(
             R.string.library_verification_opens,
             windowStart.format(TimeFormat),
             presenceWindowMinutes
         )
 
-        past -> context.getString(R.string.library_booking_complete)
-        else -> context.getString(R.string.library_qr_or_code)
+        past -> stringResource(R.string.library_booking_complete)
+        else -> stringResource(R.string.library_qr_or_code)
     }
 
     Column(

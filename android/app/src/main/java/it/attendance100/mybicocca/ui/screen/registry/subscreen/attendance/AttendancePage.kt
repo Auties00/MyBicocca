@@ -83,6 +83,7 @@ import it.attendance100.mybicocca.ui.screen.registry.subscreen.attendance.subscr
  * outside the app lands mid-flight as a one-shot [AttendanceEvent.OpenRilevaSheet]: the pager
  * jumps straight into the rileva flow riding the already-running mark.
  */
+@Suppress("AssignedValueIsNeverRead")
 @Composable
 fun AttendancePage(
     viewModel: AttendanceViewModel,
@@ -443,7 +444,7 @@ private fun SheetError(cause: Throwable, onRetry: () -> Unit, modifier: Modifier
     SheetMessage(
         icon = Icons.Outlined.CloudOff,
         title = stringResource(R.string.attendance_load_failed),
-        body = cause.friendlyMessage(),
+        body = stringResource(cause.friendlyMessage()),
         action = {
             val haptic = rememberHapticManager()
             RetryButton(onClick = { haptic.tap(); onRetry() })

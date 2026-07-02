@@ -81,6 +81,10 @@ fun AppointmentsPage(
         val submitting by viewModel.submitting.collectAsStateWithLifecycle()
         val bookedReservation by viewModel.bookedReservation.collectAsStateWithLifecycle()
 
+        val strAppointmentsBookingFailed = stringResource(R.string.appointments_booking_failed)
+        val strAppointmentsCancelled = stringResource(R.string.appointments_cancelled)
+        val strAppointmentsCancelFailed = stringResource(R.string.appointments_cancel_failed)
+        val strAppointmentsPdfFailed = stringResource(R.string.appointments_pdf_failed)
         val current = backStack.last()
         val depth = backStack.lastIndex
         val reservationList = (reservations as? Loadable.Loaded)?.value.orEmpty()
@@ -89,13 +93,14 @@ fun AppointmentsPage(
             viewModel.events.collect { event ->
                 when (event) {
                     AppointmentsEvent.ReservationCancelled ->
-                        outcome =
-                            SheetOutcome.Success(context.getString(R.string.appointments_cancelled))
+                        outcome = SheetOutcome.Success(strAppointmentsCancelled)
+
                     is AppointmentsEvent.CancelFailed ->
                         outcome = SheetOutcome.Error(
-                            context.getString(R.string.appointments_cancel_failed),
+                            strAppointmentsCancelFailed,
                             event.cause
                         )
+
                     is AppointmentsEvent.PdfReady -> {
                         val path = withContext(Dispatchers.IO) {
                             val dir = File(context.cacheDir, "appointments").apply { mkdirs() }
@@ -103,14 +108,16 @@ fun AppointmentsPage(
                         }
                         onOpenPdf(path, event.fileName)
                     }
+
                     is AppointmentsEvent.PdfFailed ->
                         outcome = SheetOutcome.Error(
-                            context.getString(R.string.appointments_pdf_failed),
+                            strAppointmentsPdfFailed,
                             event.cause
                         )
+
                     is AppointmentsEvent.BookingFailed ->
                         outcome = SheetOutcome.Error(
-                            context.getString(R.string.appointments_booking_failed),
+                            strAppointmentsBookingFailed,
                             event.cause
                         )
                 }
@@ -205,11 +212,9 @@ fun AppointmentsPage(
                                 reservationList.size,
                                 reservationList.size
                             )
-
                         is AppointmentsPage.ReservationDetail -> stringResource(R.string.appointments_details)
                         AppointmentsPage.Sections -> stringResource(R.string.appointments_choose_service)
-                        is AppointmentsPage.Types ->
-                            sections.firstOrNull { it.name == page.sectionName }?.caption
+                        is AppointmentsPage.Types -> sections.firstOrNull { it.name == page.sectionName }?.caption
                         AppointmentsPage.Slots -> stringResource(R.string.appointments_choose_date_time)
                         AppointmentsPage.Form -> slotRecap
                         AppointmentsPage.Done -> serviceName.ifBlank { null }
@@ -224,7 +229,11 @@ fun AppointmentsPage(
 
             transition.AnimatedContent(
                 transitionSpec = {
-                    sheetPageTransform(forward = displayDepth(targetState) >= displayDepth(initialState))
+                    sheetPageTransform(
+                        forward = displayDepth(targetState) >= displayDepth(
+                            initialState
+                        )
+                    )
                 },
                 contentKey = { displayKey(it) },
             ) { shown ->

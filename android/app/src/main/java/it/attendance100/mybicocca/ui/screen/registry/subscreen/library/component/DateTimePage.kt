@@ -45,7 +45,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -114,27 +113,26 @@ internal fun DateTimePage(
                 .padding(horizontal = 24.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            val context = LocalContext.current
             when (constraints) {
                 Loadable.NotYetLoaded -> when (constraintsStatus) {
                     is SyncStatus.Failed -> SheetMessage(
                         icon = Icons.Outlined.CalendarMonth,
-                        title = context.getString(R.string.common_error_title),
-                        body = context.getString(R.string.library_availability_loading_failed),
+                        title = stringResource(R.string.common_error_title),
+                        body = stringResource(R.string.library_availability_loading_failed),
                         action = { RetryButton(onClick = onRetryConstraints) },
                     )
 
-                    else -> SheetLoadingIndicator(label = context.getString(R.string.library_availability_loading))
+                    else -> SheetLoadingIndicator(label = stringResource(R.string.library_availability_loading))
                 }
 
                 is Loadable.Loaded -> {
                     val openDays = constraints.value.openDays
                     Card(
                         icon = Icons.Outlined.CalendarMonth,
-                        title = context.getString(R.string.library_day)
+                        title = stringResource(R.string.library_day)
                     ) {
                         if (openDays.isEmpty()) {
-                            Message(context.getString(R.string.library_no_bookable_days))
+                            Message(stringResource(R.string.library_no_bookable_days))
                         } else {
                             CalendarSection(
                                 openDays = openDays,
@@ -151,7 +149,7 @@ internal fun DateTimePage(
                     if (constraints.value.durationsMinutes.isNotEmpty()) {
                         Card(
                             icon = Icons.Outlined.Timelapse,
-                            title = context.getString(R.string.library_duration)
+                            title = stringResource(R.string.library_duration)
                         ) {
                             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                 constraints.value.durationsMinutes.forEach { minutes ->
@@ -174,7 +172,7 @@ internal fun DateTimePage(
                     if (selectedDate != null && selectedDuration != null) {
                         Card(
                             icon = Icons.Outlined.Schedule,
-                            title = context.getString(R.string.library_start_time)
+                            title = stringResource(R.string.library_start_time)
                         ) {
                             StartTimeSection(
                                 seats = seats,
@@ -230,7 +228,6 @@ private fun StartTimeSection(
     onSelectStartTime: (LocalTime) -> Unit,
     onRetry: () -> Unit,
 ) {
-    val context = LocalContext.current
     when (seats) {
         Loadable.NotYetLoaded -> when (seatsStatus) {
             is SyncStatus.Failed -> Row(
@@ -238,19 +235,19 @@ private fun StartTimeSection(
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 Text(
-                    context.getString(R.string.library_times_loading_failed),
+                    stringResource(R.string.library_times_loading_failed),
                     style = MaterialTheme.typography.bodyMedium,
                     modifier = Modifier.weight(1f),
                 )
                 RetryButton(onClick = onRetry)
             }
 
-            else -> SheetLoadingIndicator(label = context.getString(R.string.library_times_loading))
+            else -> SheetLoadingIndicator(label = stringResource(R.string.library_times_loading))
         }
 
         is Loadable.Loaded -> {
             if (availableStartTimes.isEmpty()) {
-                Message(context.getString(R.string.library_no_available_times))
+                Message(stringResource(R.string.library_no_available_times))
             } else {
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     availableStartTimes.forEach { time ->
@@ -317,7 +314,6 @@ private fun CalendarSection(
                 color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.weight(1f),
             )
-            val context = LocalContext.current
             FilledTonalIconButton(
                 onClick = { haptic.tap(); if (month > minMonth) month = month.minusMonths(1) },
                 enabled = enabled && month > minMonth,
@@ -327,7 +323,7 @@ private fun CalendarSection(
             ) {
                 Icon(
                     Icons.AutoMirrored.Rounded.KeyboardArrowLeft,
-                    contentDescription = context.getString(R.string.library_previous_month)
+                    contentDescription = stringResource(R.string.library_previous_month)
                 )
             }
             Spacer(Modifier.size(6.dp))
@@ -340,7 +336,7 @@ private fun CalendarSection(
             ) {
                 Icon(
                     Icons.AutoMirrored.Rounded.KeyboardArrowRight,
-                    contentDescription = context.getString(R.string.library_next_month)
+                    contentDescription = stringResource(R.string.library_next_month)
                 )
             }
         }

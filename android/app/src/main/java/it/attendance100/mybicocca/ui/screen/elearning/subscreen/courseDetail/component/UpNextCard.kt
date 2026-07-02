@@ -19,8 +19,8 @@ import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.runtime.Composable
 import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
@@ -44,10 +44,10 @@ import java.time.Instant
  */
 @Composable
 fun UpNextCard(
+    modifier: Modifier = Modifier,
     item: UpNextItem,
     now: Instant,
     onOpen: () -> Unit = item.onClick,
-    modifier: Modifier = Modifier,
 ) {
     val scheme = MaterialTheme.colorScheme
     val countdown = formatCountdown(now, item.dueAt)

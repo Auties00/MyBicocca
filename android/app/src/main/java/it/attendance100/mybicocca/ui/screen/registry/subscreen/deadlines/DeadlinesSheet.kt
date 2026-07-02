@@ -170,7 +170,7 @@ private fun SheetError(cause: Throwable, onRetry: () -> Unit) {
     SheetMessage(
         icon = Icons.Outlined.CloudOff,
         title = stringResource(R.string.deadlines_load_failed),
-        body = cause.friendlyMessage(),
+        body = stringResource(cause.friendlyMessage()),
         action = { RetryButton(onClick = onRetry) },
     )
 }

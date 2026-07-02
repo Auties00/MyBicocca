@@ -849,6 +849,7 @@ private fun NoteTile(text: String, capTop: Boolean, capBottom: Boolean) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
         color = scheme.surfaceContainer,
+        onClick = { haptic.tap() },
         contentColor = scheme.onSurfaceVariant,
         shape = RoundedCornerShape(
             topStart = if (capTop) 20.dp else 4.dp,
@@ -1069,7 +1070,7 @@ private fun SheetError(cause: Throwable, onRetry: () -> Unit) {
     SheetMessage(
         icon = Icons.Default.Warning,
         title = stringResource(R.string.common_load_failed),
-        body = cause.friendlyMessage(),
+        body = stringResource(cause.friendlyMessage()),
         action = {
             val haptic = rememberHapticManager(); RetryButton(onClick = { haptic.tap(); onRetry() })
         },

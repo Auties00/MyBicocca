@@ -23,7 +23,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -58,25 +58,24 @@ internal fun ZonesPage(
             .padding(bottom = 24.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        val context = LocalContext.current
         when (zones) {
             Loadable.NotYetLoaded -> when (zonesStatus) {
                 is SyncStatus.Failed -> SheetMessage(
                     icon = Icons.Outlined.EventSeat,
-                    title = context.getString(R.string.common_error_title),
-                    body = context.getString(R.string.library_zones_loading_failed),
+                    title = stringResource(R.string.common_error_title),
+                    body = stringResource(R.string.library_zones_loading_failed),
                     action = { RetryButton(onClick = onRetry) },
                 )
 
-                else -> SheetLoadingIndicator(label = context.getString(R.string.library_zones_loading))
+                else -> SheetLoadingIndicator(label = stringResource(R.string.library_zones_loading))
             }
 
             is Loadable.Loaded -> {
                 if (zones.value.isEmpty()) {
                     SheetMessage(
                         icon = Icons.Outlined.EventSeat,
-                        title = context.getString(R.string.library_no_zones),
-                        body = context.getString(R.string.library_no_zones_body),
+                        title = stringResource(R.string.library_no_zones),
+                        body = stringResource(R.string.library_no_zones_body),
                     )
                 } else {
                     zones.value.forEach { zone ->

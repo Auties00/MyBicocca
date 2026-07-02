@@ -103,21 +103,20 @@ internal fun ConfirmPage(
                 .padding(horizontal = 24.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            val context = LocalContext.current
             Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
                 IconRow(
                     Icons.Outlined.LocalLibrary,
-                    context.getString(R.string.library_library),
+                    stringResource(R.string.library_library),
                     "$libraryName · $zoneName"
                 )
                 IconRow(
                     Icons.Outlined.Chair,
-                    context.getString(R.string.library_seat),
-                    seat.shortName + if (seat.hasPowerOutlet) " · ${context.getString(R.string.library_power_outlet)}" else "",
+                    stringResource(R.string.library_seat),
+                    seat.shortName + if (seat.hasPowerOutlet) " · ${stringResource(R.string.library_power_outlet)}" else "",
                 )
                 IconRow(
                     Icons.Outlined.CalendarMonth,
-                    context.getString(R.string.library_when),
+                    stringResource(R.string.library_when),
                     buildString {
                         append(date.format(FullDateFormat).replaceFirstChar { it.titlecase(Locale.ITALIAN) })
                         append(" · ${startTime.format(TimeFormat)}–${end.format(TimeFormat)}")
@@ -126,7 +125,7 @@ internal fun ConfirmPage(
                 )
                 IconRow(
                     Icons.Outlined.AlternateEmail,
-                    context.getString(R.string.library_book_as),
+                    stringResource(R.string.library_book_as),
                     email
                 )
             }
@@ -213,9 +212,9 @@ private fun ConsentRow(
     val haptic = rememberHapticManager()
 
     val statement = buildAnnotatedString {
-        append(context.getString(R.string.library_accept) + " ")
+        append(stringResource(R.string.library_accept) + " ")
         val url = agreement.url
-        val label = agreement.name ?: context.getString(R.string.library_terms)
+        val label = agreement.name ?: stringResource(R.string.library_terms)
         if (url != null) {
             withLink(LinkAnnotation.Clickable("agreement", linkStyles) {
                 CustomTabsIntent.Builder().setShowTitle(true).build().launchUrl(context, url.toUri())

@@ -91,17 +91,20 @@ class ThreeSliceShape(
     }
 }
 
+/**
+ * Draws a three-slice background (top, middle, bottom) with optional second layer and tinting.
+ */
 @Composable
 private fun ThreeSliceBackground(
+    modifier: Modifier = Modifier,
     topRes: Int,
     topRes2: Int? = null,
     midRes: Int,
     midRes2: Int? = null,
-    botRes: Int,
-    botRes2: Int? = null,
+    bottomRes: Int,
+    bottomRes2: Int? = null,
     color: Color? = null,
     color2: Color? = null,
-    modifier: Modifier = Modifier,
     topHeight: Dp,
     bottomHeight: Dp,
 ) {
@@ -150,14 +153,14 @@ private fun ThreeSliceBackground(
             .height(bottomHeight)
             .rotate(180f)) {
             Image(
-                painter = painterResource(id = botRes),
+                painter = painterResource(id = bottomRes),
                 contentDescription = null,
                 contentScale = ContentScale.FillWidth,
                 modifier = Modifier.fillMaxWidth(),
                 colorFilter = color?.let { ColorFilter.tint(it, blendMode) },
             )
-            if (botRes2 != null) Image(
-                painter = painterResource(id = botRes2),
+            if (bottomRes2 != null) Image(
+                painter = painterResource(id = bottomRes2),
                 contentDescription = null,
                 contentScale = ContentScale.FillWidth,
                 modifier = Modifier.fillMaxWidth(),
@@ -220,8 +223,8 @@ fun DynamicCard(
                 topRes2 = topSliceRes2,
                 midRes = midSliceRes,
                 midRes2 = midSliceRes2,
-                botRes = bottomSliceRes,
-                botRes2 = bottomSliceRes2,
+                bottomRes = bottomSliceRes,
+                bottomRes2 = bottomSliceRes2,
                 color = stroke,
                 color2 = fill,
                 topHeight = sliceTopHeightDp,

@@ -27,7 +27,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -64,7 +63,6 @@ internal fun HomePage(
             .heightIn(max = 720.dp)
             .testTag(LibraryTestTags.HOME_PAGE),
     ) {
-        val context = LocalContext.current
         when {
             !loggedIn -> EmptyBox(modifier = Modifier.testTag(LibraryTestTags.HOME_VERIFY_PROMPT)) {
                 EmptyState(
@@ -109,7 +107,7 @@ internal fun HomePage(
         }
 
         FooterButton(
-            label = if (loggedIn) stringResource(R.string.library_book) else context.getString(R.string.library_verify),
+            label = if (loggedIn) stringResource(R.string.library_book) else stringResource(R.string.library_verify),
             icon = if (loggedIn) Icons.Outlined.EventSeat else Icons.Outlined.MarkEmailRead,
             onClick = if (loggedIn) onPrenota else onLogin,
             modifier = Modifier

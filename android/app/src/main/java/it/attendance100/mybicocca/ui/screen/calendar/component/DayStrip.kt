@@ -22,13 +22,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import it.attendance100.mybicocca.core.os.currentLocale
 import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.ui.screen.calendar.ext.visibleWeekDays
 import java.time.LocalDate
 import java.time.format.TextStyle
-import java.util.Locale
-
-private val DisplayLocale = Locale.getDefault()
 
 /**
  * One week as a row of seven equal-width cells, each a narrow weekday initial over the
@@ -38,9 +36,9 @@ private val DisplayLocale = Locale.getDefault()
  */
 @Composable
 fun DayStrip(
+    modifier: Modifier = Modifier,
     weekStart: LocalDate,
     onSelect: ((LocalDate) -> Unit)? = null,
-    modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(horizontal = 14.dp),
     leadingSpacerWidth: Dp = 32.dp,
 ) {
@@ -59,12 +57,11 @@ fun DayStrip(
             Spacer(Modifier.width(leadingSpacerWidth))
         }
         days.forEach { day ->
-            val handler = onSelect
             Column(
                 modifier = Modifier
                     .weight(1f)
                     .clip(CircleShape)
-                    .then(if (handler != null) Modifier.clickable { haptic.tap(); handler(day) } else Modifier)
+                    .then(if (onSelect != null) Modifier.clickable { haptic.tap(); onSelect(day) } else Modifier)
                     .padding(vertical = 4.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center,
@@ -88,6 +85,7 @@ fun DayStrip(
     }
 }
 
+@Composable
 private fun dayShort(day: LocalDate): String =
-    day.dayOfWeek.getDisplayName(TextStyle.NARROW_STANDALONE, DisplayLocale)
-        .uppercase(DisplayLocale)
+    day.dayOfWeek.getDisplayName(TextStyle.NARROW_STANDALONE, currentLocale())
+        .uppercase(currentLocale())

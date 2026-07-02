@@ -25,4 +25,5 @@ data class GithubReleaseDto(
     @SerialName("published_at") val publishedAt: String? = null,
     @SerialName("draft") val draft: Boolean = false,
     @SerialName("prerelease") val prerelease: Boolean = false,
+    @SerialName("assets") val assets: List<GithubReleaseAssetDto> = emptyList(),
 )

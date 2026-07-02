@@ -14,6 +14,7 @@
   <!-- EasyBadge presence certification attaches the device's coordinates. -->
   <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
   <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
   <uses-permission
           android:name="android.permission.WRITE_EXTERNAL_STORAGE"
           android:maxSdkVersion="29" />

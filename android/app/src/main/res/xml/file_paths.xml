@@ -6,4 +6,8 @@
     <cache-path name="elearning_files" path="elearning_files/" />
     <!-- Downloaded certificate PDFs, cached per-certificate so they open without re-downloading. -->
     <cache-path name="certificati" path="certificati/" />
+    <!-- Downloaded APKs for in-app updates. -->
+    <cache-path
+            name="updates"
+            path="updates/" />
 </paths>

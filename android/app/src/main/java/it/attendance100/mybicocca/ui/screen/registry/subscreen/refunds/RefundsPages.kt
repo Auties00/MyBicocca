@@ -33,7 +33,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -114,17 +113,19 @@ private fun RefundsListBody(
     val motion = MaterialTheme.motionScheme
     val sizeSpec = remember(motion) { motion.defaultSpatialSpec<IntSize>() }
 
-    Column(modifier = Modifier
-        .testTag(RefundsTestTags.ROOT)
-        .fillMaxWidth()
-        .animateContentSize(animationSpec = sizeSpec)) {
+    Column(
+        modifier = Modifier
+            .testTag(RefundsTestTags.ROOT)
+            .fillMaxWidth()
+            .animateContentSize(animationSpec = sizeSpec)
+    ) {
         when {
             failure != null && refunds == null -> Box(modifier = Modifier.testTag(RefundsTestTags.STATE_ERROR)) {
                 val haptic = rememberHapticManager()
                 SheetMessage(
                     icon = Icons.Outlined.CloudOff,
                     title = stringResource(R.string.refunds_loading_failed),
-                    body = failure.cause.taxFriendlyMessage(LocalContext.current),
+                    body = stringResource(failure.cause.taxFriendlyMessage()),
                     action = { RetryButton(onClick = { haptic.tap(); onRetry() }) },
                 )
             }
@@ -264,7 +265,7 @@ private fun RefundRow(
                 verticalArrangement = Arrangement.spacedBy(2.dp),
             ) {
                 Text(
-                    text = refund.amount?.let(::formatEuro) ?: "—",
+                    text = refund.amount?.let { formatEuro(it) } ?: "—",
                     style = MaterialTheme.typography.titleMediumEmphasized,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
@@ -345,7 +346,7 @@ fun RefundDetailPage(
                     color = scheme.primary,
                 )
                 Text(
-                    text = refund.amount?.let(::formatEuro) ?: "—",
+                    text = refund.amount?.let { formatEuro(it) } ?: "—",
                     style = MaterialTheme.typography.displaySmall,
                     fontWeight = FontWeight.Bold,
                     color = scheme.onSurface,
@@ -440,7 +441,8 @@ private fun Refund.academicYearLabel(): String? =
  * Detail header text (paired with [refundHeaderSubtitle]), exposed for the sheet entry's
  * pinned header in MainShell.
  */
-fun refundHeaderTitle(refund: Refund): String = refund.amount?.let(::formatEuro) ?: "Refund"
+@Composable
+fun refundHeaderTitle(refund: Refund): String = refund.amount?.let { formatEuro(it) } ?: "Refund"
 
-fun refundHeaderSubtitle(refund: Refund): String? =
+fun refundHeaderSubtitle(refund: Refund): String =
     refund.academicYearLabel()?.let { "Academic Year $it" } ?: "Refund Details"

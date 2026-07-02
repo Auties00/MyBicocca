@@ -84,7 +84,9 @@ fun SheetResultPage(
     val body = when (outcome) {
         is SheetOutcome.Success -> outcome.body
         is SheetOutcome.Info -> outcome.body
-        is SheetOutcome.Error -> outcome.body ?: outcome.cause?.friendlyMessage()
+        is SheetOutcome.Error -> outcome.body ?: stringResource(
+            outcome.cause?.friendlyMessage() ?: R.string.error_unexpected
+        )
     }
     val showRetry = outcome is SheetOutcome.Error && onRetry != null
 

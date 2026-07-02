@@ -17,8 +17,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
@@ -119,17 +121,31 @@ fun SegmentedTile(
     isLast: Boolean,
     title: String,
     modifier: Modifier = Modifier,
+    titleAnnotated: AnnotatedString? = null,
     subtitle: String? = null,
     onClick: (() -> Unit)? = null,
+    enabled: Boolean = true,
+    progress: Float? = null,
     leading: (@Composable () -> Unit)? = null,
     trailing: (@Composable () -> Unit)? = null,
 ) {
     val scheme = MaterialTheme.colorScheme
+    val disabledAlpha = 0.38f
     val haptic = rememberHapticManager()
     val shape = segmentedShape(isFirst, isLast)
     val body: @Composable () -> Unit = {
+        val progressModifier = if (progress != null) {
+            Modifier.drawBehind {
+                drawRect(
+                    color = scheme.primaryContainer,
+                    size = size.copy(width = size.width * progress.coerceIn(0f, 1f))
+                )
+            }
+        } else Modifier
         Row(
-            modifier = Modifier.padding(start = 12.dp, end = 14.dp, top = 12.dp, bottom = 12.dp),
+            modifier = Modifier
+                .then(progressModifier)
+                .padding(start = 12.dp, end = 14.dp, top = 12.dp, bottom = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             if (leading != null) {
@@ -137,19 +153,32 @@ fun SegmentedTile(
                 Spacer(Modifier.width(14.dp))
             }
             Column(Modifier.weight(1f)) {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    color = scheme.onSurface,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
+                if (titleAnnotated != null) {
+                    Text(
+                        text = titleAnnotated,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = if (enabled) scheme.onSurface else scheme.onSurface.copy(alpha = disabledAlpha),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                } else {
+                    Text(
+                        text = title,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = if (enabled) scheme.onSurface else scheme.onSurface.copy(alpha = disabledAlpha),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
                 if (subtitle != null) {
                     Text(
                         text = subtitle,
                         style = MaterialTheme.typography.bodySmall,
-                        color = scheme.onSurfaceVariant,
+                        color = if (enabled) scheme.onSurfaceVariant else scheme.onSurfaceVariant.copy(
+                            alpha = disabledAlpha
+                        ),
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
@@ -164,6 +193,7 @@ fun SegmentedTile(
                 haptic.tap()
                 onClick()
             },
+            enabled = enabled,
             modifier = modifier.fillMaxWidth(),
             color = scheme.surfaceContainer,
             contentColor = scheme.onSurface,

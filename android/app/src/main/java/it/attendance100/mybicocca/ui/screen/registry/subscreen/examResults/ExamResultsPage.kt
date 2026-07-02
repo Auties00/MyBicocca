@@ -57,6 +57,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalLocale
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
@@ -69,6 +70,7 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import it.attendance100.mybicocca.R
+import it.attendance100.mybicocca.core.os.currentLocale
 import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.SyncStatus
@@ -101,7 +103,6 @@ import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
-import java.util.Locale
 
 /**
  * Esiti: published exam outcomes as a modal sheet, in the same modal language as edifici
@@ -173,11 +174,13 @@ fun ExamResultsPage(
                         detailId = null
                         outcome = SheetOutcome.Success(acceptedMsg)
                     }
+
                     ExamResultEvent.RejectSucceeded -> {
                         confirmingReject = false
                         detailId = null
                         outcome = SheetOutcome.Success(rejectedMsg)
                     }
+
                     is ExamResultEvent.Failed ->
                         outcome = SheetOutcome.Error(operationFailedMsg, event.cause)
                 }
@@ -234,7 +237,12 @@ fun ExamResultsPage(
                     EsitiSheetPage.Detail -> detailResult?.let { result ->
                         result.acknowledgmentDeadline
                             ?.takeIf { result.requiresStudentDecision(today) }
-                            ?.let { stringResource(R.string.exam_results_decide_by_date, it.format(ShortDateFormat)) }
+                            ?.let {
+                                stringResource(
+                                    R.string.exam_results_decide_by_date,
+                                    it.format(ShortDateFormat)
+                                )
+                            }
                             ?: result.examDateTime?.let {
                                 stringResource(
                                     R.string.exam_results_taken_on_date,
@@ -243,6 +251,7 @@ fun ExamResultsPage(
                             }
                             ?: result.grade.spelledOut()
                     }
+
                     EsitiSheetPage.ConfirmReject -> detailResult?.displayTitle()
                 },
                 onBack = when (page) {
@@ -362,6 +371,7 @@ private fun sectionSummary(
             1 -> stringResource(R.string.exam_results_summary_pending_one)
             else -> stringResource(R.string.exam_results_summary_pending_other, count)
         }
+
         ExamResultFilter.Archived -> when (count) {
             0 -> stringResource(R.string.exam_results_summary_archived_none)
             1 -> stringResource(R.string.exam_results_summary_archived_one)
@@ -405,10 +415,15 @@ private fun SheetBody(
             failure != null && !loaded -> SheetMessage(
                 icon = Icons.Outlined.CloudOff,
                 title = stringResource(R.string.common_error_title),
-                body = failure.cause.friendlyMessage(),
+                body = stringResource(failure.cause.friendlyMessage()),
                 action = {
-                    val haptic =
-                        rememberHapticManager(); RetryButton(onClick = { haptic.tap(); onRetry() })
+                    val haptic = rememberHapticManager()
+                    RetryButton(
+                        onClick = {
+                            haptic.tap()
+                            onRetry()
+                        }
+                    )
                 },
                 modifier = Modifier.testTag(ExamResultsTestTags.STATE_ERROR),
             )
@@ -500,7 +515,10 @@ private fun EsitiPager(
                     contentPadding = PaddingValues(top = 4.dp, bottom = 16.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    itemsIndexed(items, key = { _, result -> "${filter.name}_${result.identity()}" }) { _, result ->
+                    itemsIndexed(
+                        items,
+                        key = { _, result -> "${filter.name}_${result.identity()}" }
+                    ) { _, result ->
                         if (filter == ExamResultFilter.Pending) {
                             PendingResultRow(
                                 result = result,
@@ -591,7 +609,11 @@ private fun PendingResultRow(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(14.dp),
         ) {
-            ExamGradeBadge(grade = result.grade, size = 52.dp, style = MaterialTheme.typography.titleMediumEmphasized)
+            ExamGradeBadge(
+                grade = result.grade,
+                size = 52.dp,
+                style = MaterialTheme.typography.titleMediumEmphasized
+            )
             Column(
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(2.dp),
@@ -654,7 +676,11 @@ private fun ArchivedResultRow(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(14.dp),
         ) {
-            ExamGradeBadge(grade = result.grade, size = 52.dp, style = MaterialTheme.typography.titleMediumEmphasized)
+            ExamGradeBadge(
+                grade = result.grade,
+                size = 52.dp,
+                style = MaterialTheme.typography.titleMediumEmphasized
+            )
             Column(
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(2.dp),
@@ -756,8 +782,9 @@ private fun EsitoDetailPage(
                     DetailFactCard(
                         icon = Icons.Outlined.CalendarMonth,
                         label = stringResource(R.string.exam_results_taken_on_label),
-                        value = it.toLocalDate().format(FullDateFormat)
-                            .replaceFirstChar { c -> c.titlecase(Locale.getDefault()) },
+                        value = it.toLocalDate().format(FullDateFormat).replaceFirstChar { c ->
+                            c.titlecase(LocalLocale.current.platformLocale)
+                        },
                     )
                 }
                 result.publishedNote?.takeIf { it.isNotBlank() }?.let {
@@ -958,6 +985,7 @@ private fun ExamGrade.spelledOut(): String = when (this) {
         value >= 31 -> stringResource(R.string.exam_results_grade_thirty_cum_laude)
         else -> stringResource(R.string.exam_results_grade_out_of_thirty, gradeWord(value))
     }
+
     ExamGrade.Passed -> stringResource(R.string.exam_results_grade_passed)
     ExamGrade.NotPassed -> stringResource(R.string.exam_results_grade_not_passed)
     ExamGrade.Withdrew -> stringResource(R.string.exam_results_grade_withdrew)
@@ -975,6 +1003,14 @@ private fun gradeWord(value: Int): String {
     return words.getOrNull(value - 18) ?: value.toString()
 }
 
-private val ShortDateFormat = DateTimeFormatter.ofPattern("d MMM", Locale.getDefault())
-private val MediumDateFormat = DateTimeFormatter.ofPattern("d MMM yyyy", Locale.getDefault())
-private val FullDateFormat = DateTimeFormatter.ofPattern("EEEE d MMMM yyyy", Locale.getDefault())
+@get:Composable
+private val ShortDateFormat
+    get() = DateTimeFormatter.ofPattern("d MMM", currentLocale())
+
+@get:Composable
+private val MediumDateFormat
+    get() = DateTimeFormatter.ofPattern("d MMM yyyy", currentLocale())
+
+@get:Composable
+private val FullDateFormat
+    get() = DateTimeFormatter.ofPattern("EEEE d MMMM yyyy", currentLocale())

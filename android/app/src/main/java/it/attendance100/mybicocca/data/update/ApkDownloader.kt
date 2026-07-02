@@ -1,0 +1,194 @@
+package it.attendance100.mybicocca.data.update
+
+import android.content.Context
+import android.content.Intent
+import android.os.Build
+import androidx.core.content.FileProvider
+import dagger.hilt.android.qualifiers.ApplicationContext
+import io.ktor.client.HttpClient
+import io.ktor.client.call.body
+import io.ktor.client.engine.okhttp.OkHttp
+import io.ktor.client.request.prepareGet
+import io.ktor.http.contentLength
+import io.ktor.utils.io.ByteReadChannel
+import io.ktor.utils.io.exhausted
+import io.ktor.utils.io.readRemaining
+import it.attendance100.mybicocca.core.io.sha256Hex
+import it.attendance100.mybicocca.di.ApplicationScope
+import it.attendance100.mybicocca.domain.model.update.AppRelease
+import it.attendance100.mybicocca.domain.model.update.AppReleaseAsset
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlinx.io.asSink
+import java.io.File
+import javax.inject.Inject
+import javax.inject.Singleton
+import kotlin.math.roundToInt
+
+sealed interface DownloadState {
+    data object Idle : DownloadState
+    data class Downloading(val progress: Int) : DownloadState
+    data class Success(val file: File) : DownloadState
+    data class Error(val message: String) : DownloadState
+}
+
+@Singleton
+class ApkDownloader @Inject constructor(
+    @ApplicationContext private val context: Context,
+    @ApplicationScope private val scope: CoroutineScope
+) {
+    private val client = HttpClient(OkHttp)
+
+    private val _downloadState = MutableStateFlow<DownloadState>(DownloadState.Idle)
+    val downloadState: StateFlow<DownloadState> = _downloadState.asStateFlow()
+
+    fun startDownload(release: AppRelease) {
+        if (_downloadState.value is DownloadState.Downloading) return
+
+        scope.launch {
+            _downloadState.value = DownloadState.Downloading(0)
+
+            try {
+                val defaultAbi = "universal"
+                val supportedAbi = Build.SUPPORTED_ABIS.firstOrNull() ?: defaultAbi
+
+                // Find the best asset
+                val asset =
+                    release.assets.find { it.name.contains(supportedAbi, ignoreCase = true) }
+                        ?: release.assets.find { it.name.contains("universal", ignoreCase = true) }
+                        ?: release.assets.firstOrNull { it.name.endsWith(".apk") }
+
+                if (asset == null) {
+                    val availableAssets = release.assets.joinToString { it.name }
+                    _downloadState.value =
+                        DownloadState.Error("No suitable APK found for device architecture ($supportedAbi). Available: $availableAssets")
+                    return@launch
+                }
+
+                // Never hand a plaintext-fetched binary to the installer
+                if (!asset.downloadUrl.startsWith("https://", ignoreCase = true)) {
+                    _downloadState.value =
+                        DownloadState.Error("Refusing to download the update over an insecure connection.")
+                    return@launch
+                }
+
+                val updatesDir = File(context.cacheDir, "updates")
+                if (!updatesDir.exists()) updatesDir.mkdirs()
+                val apkFile = File(updatesDir, asset.name)
+
+                if (apkFile.exists() && apkFile.passesIntegrityCheck(asset)) {
+                    // Already downloaded and verified; play the progress animation for UX
+                    for (i in 0..100 step 10) {
+                        _downloadState.value = DownloadState.Downloading(i)
+                        delay(100)
+                    }
+                    delay(500)
+                    _downloadState.value = DownloadState.Success(apkFile)
+                    return@launch
+                }
+
+                downloadToFile(asset, apkFile)
+
+                if (!apkFile.passesIntegrityCheck(asset)) {
+                    apkFile.delete()
+                    _downloadState.value =
+                        DownloadState.Error("The downloaded update failed its integrity check. Please try again.")
+                    return@launch
+                }
+
+                _downloadState.value = DownloadState.Downloading(100)
+                _downloadState.value = DownloadState.Success(apkFile)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                e.printStackTrace()
+                _downloadState.value = DownloadState.Error(e.message ?: "Download failed")
+            }
+        }
+    }
+
+    /**
+     * Streams [asset] to [target] in fixed-size chunks, publishing download progress as it goes.
+     */
+    private suspend fun downloadToFile(asset: AppReleaseAsset, target: File) {
+        withContext(Dispatchers.IO) {
+            client.prepareGet(asset.downloadUrl).execute { response ->
+                val channel: ByteReadChannel = response.body()
+                val total = response.contentLength() ?: asset.size
+                var received = 0L
+                var lastProgress = -1
+
+                target.outputStream().asSink().use { sink ->
+                    while (!channel.exhausted()) {
+                        received += channel.readRemaining(DOWNLOAD_CHUNK_BYTES).transferTo(sink)
+                        if (total > 0) {
+                            val progress =
+                                ((received.toFloat() / total) * 100).roundToInt().coerceIn(0, 100)
+                            if (progress != lastProgress) {
+                                lastProgress = progress
+                                _downloadState.value = DownloadState.Downloading(progress)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    fun dismissError() {
+        if (_downloadState.value is DownloadState.Error) {
+            _downloadState.value = DownloadState.Idle
+        }
+    }
+
+    fun resetState() {
+        _downloadState.value = DownloadState.Idle
+    }
+
+    /**
+     * Whether a local file can be trusted as the given [asset]'s payload. The size must always
+     * match; when the source advertised a `sha256:<hex>` [AppReleaseAsset.digest] the file's
+     * hash must match it too. If the digest is missing or uses an algorithm we don't recognise,
+     * the size check stands alone — the best guarantee the source gave us.
+     */
+    private fun File.passesIntegrityCheck(asset: AppReleaseAsset): Boolean {
+        if (length() != asset.size) return false
+
+        val expectedSha = asset.digest
+            ?.substringAfter("sha256:", missingDelimiterValue = "")
+            ?.takeIf { it.isNotBlank() }
+            ?: return true
+
+        return sha256Hex()?.equals(expectedSha, ignoreCase = true) == true
+    }
+
+    /**
+     * Fires the system installer for a downloaded APK. Called from the foreground UI once the
+     * download reaches [DownloadState.Success], never from the background download coroutine, so
+     * the activity start isn't silently dropped by Android's background-start restrictions.
+     */
+    fun installApk(file: File) {
+        val uri = FileProvider.getUriForFile(
+            context,
+            "${context.packageName}.fileprovider",
+            file
+        )
+        val intent = Intent(Intent.ACTION_VIEW).apply {
+            setDataAndType(uri, "application/vnd.android.package-archive")
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        }
+        context.startActivity(intent)
+    }
+
+    companion object {
+        private const val DOWNLOAD_CHUNK_BYTES: Long = 1L * 1024 * 1024
+    }
+}

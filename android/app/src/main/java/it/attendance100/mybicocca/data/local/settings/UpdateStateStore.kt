@@ -7,8 +7,10 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import it.attendance100.mybicocca.domain.model.update.AppRelease
+import it.attendance100.mybicocca.domain.model.update.AppReleaseAsset
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import kotlinx.serialization.json.Json
 import java.time.Instant
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -30,14 +32,26 @@ class UpdateStateStore @Inject constructor(
         val available = prefs[AVAILABLE_KEY] ?: false
         val version = prefs[REL_VERSION_KEY]
         val release = if (available && version != null) {
-            AppRelease(
-                versionName = version,
-                title = prefs[REL_TITLE_KEY] ?: version,
-                notes = prefs[REL_NOTES_KEY].orEmpty(),
-                pageUrl = prefs[REL_URL_KEY].orEmpty(),
-                publishedAt = prefs[REL_PUBLISHED_MS_KEY]?.let(Instant::ofEpochMilli),
-                isPreRelease = prefs[REL_PRERELEASE_KEY] ?: false,
-            )
+            val assetsJson = prefs[REL_ASSETS_KEY]
+            if (assetsJson == null) {
+                null
+            } else {
+                val assetsList = try {
+                    Json.decodeFromString<List<AppReleaseAsset>>(assetsJson)
+                } catch (_: Exception) {
+                    emptyList()
+                }
+
+                AppRelease(
+                    versionName = version,
+                    title = prefs[REL_TITLE_KEY] ?: version,
+                    notes = prefs[REL_NOTES_KEY].orEmpty(),
+                    pageUrl = prefs[REL_URL_KEY].orEmpty(),
+                    publishedAt = prefs[REL_PUBLISHED_MS_KEY]?.let(Instant::ofEpochMilli),
+                    isPreRelease = prefs[REL_PRERELEASE_KEY] ?: false,
+                    assets = assetsList
+                )
+            }
         } else {
             null
         }
@@ -60,6 +74,7 @@ class UpdateStateStore @Inject constructor(
             prefs.remove(REL_URL_KEY)
             prefs.remove(REL_PUBLISHED_MS_KEY)
             prefs.remove(REL_PRERELEASE_KEY)
+            prefs.remove(REL_ASSETS_KEY)
         }
     }
 
@@ -75,6 +90,7 @@ class UpdateStateStore @Inject constructor(
             release.publishedAt?.let { prefs[REL_PUBLISHED_MS_KEY] = it.toEpochMilli() }
                 ?: prefs.remove(REL_PUBLISHED_MS_KEY)
             prefs[REL_PRERELEASE_KEY] = release.isPreRelease
+            prefs[REL_ASSETS_KEY] = Json.encodeToString(release.assets)
         }
     }
 
@@ -92,6 +108,7 @@ class UpdateStateStore @Inject constructor(
         val REL_URL_KEY = stringPreferencesKey("update_release_url")
         val REL_PUBLISHED_MS_KEY = longPreferencesKey("update_release_published_ms")
         val REL_PRERELEASE_KEY = booleanPreferencesKey("update_release_prerelease")
+        val REL_ASSETS_KEY = stringPreferencesKey("update_release_assets")
         val LAST_NOTIFIED_VERSION_KEY = stringPreferencesKey("update_last_notified_version")
     }
 }

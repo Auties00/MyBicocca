@@ -46,6 +46,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import it.attendance100.mybicocca.R
+import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.SyncStatus
 import it.attendance100.mybicocca.core.state.valueOrNull
@@ -61,7 +62,6 @@ import it.attendance100.mybicocca.ui.component.modal.SheetResultPage
 import it.attendance100.mybicocca.ui.component.modal.sheetBodyGestureBarrier
 import it.attendance100.mybicocca.ui.component.modal.sheetPageTransform
 import it.attendance100.mybicocca.ui.navigation.scene.LocalSheetDismissControl
-import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.appelli.component.BookedExamCard
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.appelli.ext.displayTitle
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.appelli.state.BookedEvent
@@ -114,6 +114,7 @@ import java.time.LocalDate
  * success result page; a failed booking returns to the calendar with the error carried by
  * the result page.
  */
+@Suppress("AssignedValueIsNeverRead")
 @Composable
 fun AppelliPage(
     bookableViewModel: BookableExamsViewModel,
@@ -126,6 +127,12 @@ fun AppelliPage(
         }, null
     ),
 ) {
+    val strAppelliPdfOpenFailed = stringResource(R.string.appelli_pdf_open_failed)
+    val strAppelliBookingCancelled = stringResource(R.string.appelli_booking_cancelled)
+    val strAppelliBookingFailed = stringResource(R.string.appelli_booking_failed)
+    val strAppelliBookingConfirmed = stringResource(R.string.appelli_booking_confirmed)
+    val strAppelliCancellationFailed = stringResource(R.string.appelli_cancellation_failed)
+
     val bookingsData by viewModel.bookings.collectAsStateWithLifecycle()
     val syncStatus by viewModel.syncStatus.collectAsStateWithLifecycle()
     val cancelAction by viewModel.cancelAction.collectAsStateWithLifecycle()
@@ -191,12 +198,12 @@ fun AppelliPage(
                         confirmingCancel = false
                         detailKey = null
                         outcome =
-                            SheetOutcome.Success(context.getString(R.string.appelli_booking_cancelled))
+                            SheetOutcome.Success(strAppelliBookingCancelled)
                     }
 
                     is BookedEvent.CancellationFailed ->
                         outcome = SheetOutcome.Error(
-                            context.getString(R.string.appelli_cancellation_failed),
+                            strAppelliCancellationFailed,
                             event.cause
                         )
 
@@ -204,7 +211,7 @@ fun AppelliPage(
                         runCatching { openPdfDocument(context, event.bytes, event.fileName) }
                             .onFailure {
                                 outcome = SheetOutcome.Error(
-                                    context.getString(R.string.appelli_pdf_open_failed),
+                                    strAppelliPdfOpenFailed,
                                     it
                                 )
                             }
@@ -223,13 +230,13 @@ fun AppelliPage(
                         viewModel.refresh()
                         bookableViewModel.refresh()
                         outcome =
-                            SheetOutcome.Success(context.getString(R.string.appelli_booking_confirmed))
+                            SheetOutcome.Success(strAppelliBookingConfirmed)
                     }
 
                     is BookingSheetEvent.BookingFailed -> {
                         sheetViewModel.close()
                         outcome = SheetOutcome.Error(
-                            context.getString(R.string.appelli_booking_failed),
+                            strAppelliBookingFailed,
                             event.cause
                         )
                     }
@@ -430,7 +437,7 @@ private fun ActiveBody(
             failure != null && !loaded -> SheetMessage(
                 icon = Icons.Outlined.CloudOff,
                 title = stringResource(R.string.appelli_load_failed),
-                body = failure.cause.friendlyMessage(),
+                body = stringResource(failure.cause.friendlyMessage()),
                 action = { RetryButton(onClick = { haptic.tap(); onRetry() }) },
                 modifier = Modifier.testTag(AppelliTestTags.STATE_ERROR),
             )

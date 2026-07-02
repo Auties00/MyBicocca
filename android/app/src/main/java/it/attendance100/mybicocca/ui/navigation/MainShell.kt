@@ -212,6 +212,13 @@ fun MainShell(
         }, null
     ),
 ) {
+    val strShellSessionExpired = stringResource(R.string.shell_session_expired)
+    val strShellUpdateAvailable = stringResource(R.string.shell_update_available)
+    val strShellAccountRemoved = stringResource(R.string.shell_account_removed)
+    val strShellCareerMissing = stringResource(R.string.shell_career_missing)
+    val strShellNewCareerAvailable = stringResource(R.string.shell_new_career_available)
+    val strShellCareerEnded = stringResource(R.string.shell_career_ended)
+
     /**
      * Source of truth for the selected tab. One pager hosts all four tabs and keeps them composed
      * (beyondViewportPageCount), so switching is instant; user swipe is disabled because Registry
@@ -417,6 +424,7 @@ fun MainShell(
                 when {
                     forceChooser || remembered == null ->
                         backStack.add(SheetRoute.FileOpenChooser(route))
+
                     remembered == FileOpenChoice.InApp -> backStack.add(route)
                     remembered == FileOpenChoice.External -> externalFile = route
                 }
@@ -506,36 +514,31 @@ fun MainShell(
 
     LaunchedEffect(updateEventsViewModel, snackbarController) {
         updateEventsViewModel.events.collect {
-            snackbarController.showInfo(context.getString(R.string.shell_update_available))
+            snackbarController.showInfo(strShellUpdateAvailable)
         }
     }
 
     LaunchedEffect(accountViewModel, snackbarController) {
         accountViewModel.events.collect { event ->
             when (event) {
-                is AccountEvent.RequireReauth ->
-                    snackbarController.showError(
-                        context.getString(R.string.shell_session_expired),
-                        event.cause
-                    )
-                is AccountEvent.SignedOut ->
-                    snackbarController.showInfo(context.getString(R.string.shell_account_removed))
-                is AccountEvent.NewCareerAvailable ->
-                    snackbarController.showInfo(
-                        context.getString(
-                            R.string.shell_new_career_available,
-                            event.career.description
-                        )
-                    )
-                is AccountEvent.SelectedCareerEnded ->
-                    snackbarController.showInfo(
-                        context.getString(
-                            R.string.shell_career_ended,
-                            event.career.description
-                        )
-                    )
-                is AccountEvent.SelectedCareerMissing ->
-                    snackbarController.showInfo(context.getString(R.string.shell_career_missing))
+                is AccountEvent.RequireReauth -> snackbarController.showError(
+                    strShellSessionExpired,
+                    event.cause
+                )
+
+                is AccountEvent.SignedOut -> snackbarController.showInfo(strShellAccountRemoved)
+                is AccountEvent.NewCareerAvailable -> snackbarController.showInfo(
+                    strShellNewCareerAvailable.format(event.career.description)
+                )
+
+                is AccountEvent.SelectedCareerEnded -> snackbarController.showInfo(
+                    strShellCareerEnded.format(event.career.description)
+                )
+
+                is AccountEvent.SelectedCareerMissing -> snackbarController.showInfo(
+                    strShellCareerMissing
+                )
+
                 is AccountEvent.Switched -> Unit
             }
         }
@@ -586,7 +589,10 @@ fun MainShell(
                                 backStack = backStack,
                                 onBack = { backStack.removeLastOrNull() },
                                 modifier = Modifier.fillMaxSize(),
-                                sceneStrategies = listOf(bottomSheetStrategy, SinglePaneSceneStrategy()),
+                                sceneStrategies = listOf(
+                                    bottomSheetStrategy,
+                                    SinglePaneSceneStrategy()
+                                ),
                                 entryDecorators = listOf(
                                     rememberSaveableStateHolderNavEntryDecorator(),
                                     rememberViewModelStoreNavEntryDecorator(),
@@ -790,7 +796,10 @@ fun MainShell(
                                             hiltViewModel<CourseDetailViewModel, CourseDetailViewModel.Factory>(
                                                 creationCallback = { it.create(key) },
                                             )
-                                        SubPage(topInset, extendBehindBar = key.extendsBehindTopBar) {
+                                        SubPage(
+                                            topInset,
+                                            extendBehindBar = key.extendsBehindTopBar
+                                        ) {
                                             CourseDetailScreen(
                                                 courseId = key.courseId,
                                                 topBarInset = topInset,
@@ -895,7 +904,8 @@ fun MainShell(
                                                 .collectAsStateWithLifecycle()
                                             SheetHeaderSpec(
                                                 title = stringResource(R.string.registry_enrollments),
-                                                subtitle = history.valueOrNull()?.let(::enrollmentsHeaderSubtitle),
+                                                subtitle = history.valueOrNull()
+                                                    ?.let(::enrollmentsHeaderSubtitle),
                                             )
                                         },
                                     ) {
@@ -908,7 +918,8 @@ fun MainShell(
                                     }
                                     entry<SheetRoute.EnrollmentDetail>(
                                         metadata = sheetEntry("enrollments") {
-                                            val top = backStack.lastOrNull() as? SheetRoute.EnrollmentDetail
+                                            val top =
+                                                backStack.lastOrNull() as? SheetRoute.EnrollmentDetail
                                             val history by enrollmentsViewModel.history
                                                 .collectAsStateWithLifecycle()
                                             top?.let { k ->
@@ -942,22 +953,31 @@ fun MainShell(
                                                 .collectAsStateWithLifecycle()
                                             SheetHeaderSpec(
                                                 title = stringResource(R.string.registry_titles),
-                                                subtitle = titles.valueOrNull()?.let { titlesHeaderSubtitle(it) },
+                                                subtitle = titles.valueOrNull()
+                                                    ?.let { titlesHeaderSubtitle(it) },
                                             )
                                         },
                                     ) {
                                         TitlesListPage(
                                             viewModel = titlesViewModel,
-                                            onOpenDetail = { id -> backStack.add(SheetRoute.TitleDetail(id)) },
+                                            onOpenDetail = { id ->
+                                                backStack.add(
+                                                    SheetRoute.TitleDetail(
+                                                        id
+                                                    )
+                                                )
+                                            },
                                         )
                                     }
                                     entry<SheetRoute.TitleDetail>(
                                         metadata = sheetEntry("titles") {
-                                            val top = backStack.lastOrNull() as? SheetRoute.TitleDetail
+                                            val top =
+                                                backStack.lastOrNull() as? SheetRoute.TitleDetail
                                             val titles by titlesViewModel.titles
                                                 .collectAsStateWithLifecycle()
                                             top?.let { k ->
-                                                titles.valueOrNull()?.firstOrNull { it.id == k.titleId }
+                                                titles.valueOrNull()
+                                                    ?.firstOrNull { it.id == k.titleId }
                                             }?.let { title ->
                                                 SheetHeaderSpec(
                                                     title = title.headline(),
@@ -986,22 +1006,31 @@ fun MainShell(
                                                 .collectAsStateWithLifecycle()
                                             SheetHeaderSpec(
                                                 title = stringResource(R.string.registry_refunds),
-                                                subtitle = refunds.valueOrNull()?.let(::refundsHeaderSubtitle),
+                                                subtitle = refunds.valueOrNull()
+                                                    ?.let(::refundsHeaderSubtitle),
                                             )
                                         },
                                     ) {
                                         RefundsListPage(
                                             viewModel = refundsViewModel,
-                                            onOpenDetail = { key -> backStack.add(SheetRoute.RefundDetail(key)) },
+                                            onOpenDetail = { key ->
+                                                backStack.add(
+                                                    SheetRoute.RefundDetail(
+                                                        key
+                                                    )
+                                                )
+                                            },
                                         )
                                     }
                                     entry<SheetRoute.RefundDetail>(
                                         metadata = sheetEntry("refunds") {
-                                            val top = backStack.lastOrNull() as? SheetRoute.RefundDetail
+                                            val top =
+                                                backStack.lastOrNull() as? SheetRoute.RefundDetail
                                             val refunds by refundsViewModel.refunds
                                                 .collectAsStateWithLifecycle()
                                             top?.let { k ->
-                                                refunds.valueOrNull()?.firstOrNull { it.refundKey() == k.refundKey }
+                                                refunds.valueOrNull()
+                                                    ?.firstOrNull { it.refundKey() == k.refundKey }
                                             }?.let { refund ->
                                                 SheetHeaderSpec(
                                                     title = refundHeaderTitle(refund),
@@ -1033,16 +1062,24 @@ fun MainShell(
                                     ) {
                                         IseeDeclarationsPage(
                                             viewModel = taxesViewModel,
-                                            onOpenDetail = { year -> backStack.add(SheetRoute.IseeDetail(year)) },
+                                            onOpenDetail = { year ->
+                                                backStack.add(
+                                                    SheetRoute.IseeDetail(
+                                                        year
+                                                    )
+                                                )
+                                            },
                                         )
                                     }
                                     entry<SheetRoute.IseeDetail>(
                                         metadata = sheetEntry("isee") {
-                                            val top = backStack.lastOrNull() as? SheetRoute.IseeDetail
+                                            val top =
+                                                backStack.lastOrNull() as? SheetRoute.IseeDetail
                                             val state by taxesViewModel.isee
                                                 .collectAsStateWithLifecycle()
                                             top?.let { k ->
-                                                state.valueOrNull()?.firstOrNull { it.academicYearEnrollmentId == k.year }
+                                                state.valueOrNull()
+                                                    ?.firstOrNull { it.academicYearEnrollmentId == k.year }
                                             }?.let { declaration ->
                                                 SheetHeaderSpec(
                                                     title = iseeDetailTitle(declaration),
@@ -1071,7 +1108,8 @@ fun MainShell(
                                                 .collectAsStateWithLifecycle()
                                             SheetHeaderSpec(
                                                 title = stringResource(R.string.registry_fees),
-                                                subtitle = state.valueOrNull()?.let(::taxesHeaderSubtitle),
+                                                subtitle = state.valueOrNull()
+                                                    ?.let { taxesHeaderSubtitle(it) },
                                             )
                                         },
                                     ) {
@@ -1185,7 +1223,8 @@ fun MainShell(
                                                 backStack.removeLastOrNull()
                                                 when (choice) {
                                                     FileOpenChoice.InApp -> backStack.add(key.file)
-                                                    FileOpenChoice.External -> externalFile = key.file
+                                                    FileOpenChoice.External -> externalFile =
+                                                        key.file
                                                 }
                                             },
                                         )
@@ -1228,8 +1267,7 @@ fun MainShell(
                                  * pushes at once.
                                  */
                                 val plan = result.toNavPlan(searchNavHooks).filterNot { step ->
-                                    step is SearchNavStep.SwitchTab &&
-                                        step.tab == tab && backStack.size == 1
+                                    step is SearchNavStep.SwitchTab && step.tab == tab && backStack.size == 1
                                 }
                                 if (plan.all { it is SearchNavStep.PushPage }) {
                                     keyboardController?.hide()
@@ -1240,7 +1278,9 @@ fun MainShell(
                                     plan.forEachIndexed { index, step ->
                                         when (step) {
                                             is SearchNavStep.SwitchTab -> {
-                                                while (backStack.size > 1) backStack.removeAt(backStack.lastIndex)
+                                                while (backStack.size > 1) backStack.removeAt(
+                                                    backStack.lastIndex
+                                                )
                                                 pagerState.scrollToPage(step.tab.ordinal)
                                             }
 
@@ -1328,18 +1368,6 @@ fun MainShell(
                     }
                 }
             }
-
-
-
-
-
-
-
-
-
-
-
-
         }
     }
 }

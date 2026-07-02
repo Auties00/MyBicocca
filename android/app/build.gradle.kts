@@ -1,3 +1,8 @@
+import org.gradle.kotlin.dsl.android
+import org.gradle.kotlin.dsl.androidComponents
+import org.gradle.kotlin.dsl.kotlin
+import org.gradle.kotlin.dsl.ksp
+import org.jetbrains.kotlin.gradle.internal.types.error.ErrorModuleDescriptor.platform
 import java.util.Properties
 
 // Plugins
@@ -29,7 +34,7 @@ val keystoreProperties = Properties().apply {
 fun signingCredential(propertyKey: String, environmentKey: String): String? =
     keystoreProperties.getProperty(propertyKey) ?: System.getenv(environmentKey)
 
-val appVersionName = "0.0.3"
+val appVersionName = "0.0.4"
 
 // Android config
 android {
@@ -115,9 +120,7 @@ android {
         // directory and aborts the process with a zlib "incorrect header check". Store it raw.
         noCompress += "pmtiles"
 
-        // The app's UI ships only Italian (default) and English; locales_config.xml offers just
-        // those two. Transitive AndroidX / Play Services / Material artifacts bundle dozens of
-        // other translations that would otherwise bloat resources.arsc. Package only it + en.
+        // locales_config.xml holds the App's locales resources
         localeFilters += listOf("it", "en")
     }
 

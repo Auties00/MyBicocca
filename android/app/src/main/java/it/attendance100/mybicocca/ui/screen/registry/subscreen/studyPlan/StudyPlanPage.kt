@@ -59,9 +59,9 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import it.attendance100.mybicocca.R
+import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.SyncStatus
-import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.core.state.valueOrNull
 import it.attendance100.mybicocca.domain.model.studyplan.StudyPath
 import it.attendance100.mybicocca.domain.model.studyplan.StudyPlan
@@ -131,6 +131,9 @@ import kotlinx.coroutines.flow.collectLatest
 fun StudyPlanPage(
     viewModel: StudyPlanViewModel,
 ) {
+    val strStudyplanSubmitFailed = stringResource(R.string.studyplan_submit_failed)
+    val strStudyplanOpenDocumentFailed = stringResource(R.string.studyplan_open_document_failed)
+
     val planData by viewModel.plan.collectAsStateWithLifecycle()
     val pathData by viewModel.studyPath.collectAsStateWithLifecycle()
     val syncStatus by viewModel.syncStatus.collectAsStateWithLifecycle()
@@ -212,7 +215,7 @@ fun StudyPlanPage(
                             .onFailure {
                                 outcomeTerminal = false
                                 outcome = SheetOutcome.Error(
-                                    context.getString(R.string.studyplan_open_document_failed),
+                                    strStudyplanOpenDocumentFailed,
                                     it,
                                 )
                             }
@@ -360,7 +363,7 @@ fun StudyPlanPage(
                             onSubmitFailed = { message ->
                                 outcomeTerminal = true
                                 outcome = SheetOutcome.Error(
-                                    context.getString(R.string.studyplan_submit_failed),
+                                    strStudyplanSubmitFailed,
                                     body = message,
                                 )
                             },
@@ -897,7 +900,7 @@ private fun SheetError(cause: Throwable, onRetry: () -> Unit, modifier: Modifier
     SheetMessage(
         icon = Icons.Outlined.CloudOff,
         title = stringResource(R.string.common_load_failed),
-        body = cause.friendlyMessage(),
+        body = stringResource(cause.friendlyMessage()),
         action = {
             val haptic = rememberHapticManager()
             RetryButton(onClick = { haptic.tap(); onRetry() })

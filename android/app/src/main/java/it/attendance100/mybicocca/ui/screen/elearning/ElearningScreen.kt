@@ -46,6 +46,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import it.attendance100.mybicocca.R
+import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.SyncStatus
 import it.attendance100.mybicocca.domain.model.elearning.assignment.AssignmentId
@@ -61,7 +62,6 @@ import it.attendance100.mybicocca.ui.screen.elearning.component.CardEdition
 import it.attendance100.mybicocca.ui.screen.elearning.component.HomeFilterBar
 import it.attendance100.mybicocca.ui.screen.elearning.component.NotebookCard
 import it.attendance100.mybicocca.ui.screen.elearning.state.ElearningOneShotEvent
-import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.ui.screen.elearning.state.InitialFetchState
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.addCourse.AddCourseSheet
 import it.attendance100.mybicocca.ui.screen.elearning.theme.LocalCourseAccentPalette
@@ -124,8 +124,33 @@ fun ElearningScreen(
     val studyYears by viewModel.availableStudyYears.collectAsStateWithLifecycle()
     val initialFetch by viewModel.initialFetch.collectAsStateWithLifecycle()
 
+    val strElearningEnrolledSuccess = stringResource(R.string.elearning_enrolled_success)
+    val strEnrolFailedWithReason = stringResource(R.string.elearning_enrol_failed_with_reason)
+
+    val strElearningErrorNetworkDetailed = stringResource(R.string.elearning_error_network_detailed)
+    val strElearningEnrolFailed = stringResource(R.string.elearning_enrol_failed)
+    val strElearningErrorNetworkUnavailableDetailed =
+        stringResource(R.string.elearning_error_network_unavailable_detailed)
+    val strElearningErrorNetworkUnavailable =
+        stringResource(R.string.elearning_error_network_unavailable)
+    val strElearningErrorNetworkTimeoutDetailed =
+        stringResource(R.string.elearning_error_network_timeout_detailed)
+    val strElearningErrorUnexpected = stringResource(R.string.elearning_error_unexpected)
+    val strElearningErrorNetworkTimeout = stringResource(R.string.elearning_error_network_timeout)
+    val strElearningErrorNetwork = stringResource(R.string.elearning_error_network)
+
+    val resolveError: (Throwable) -> String = { cause ->
+        val reason = when (cause) {
+            is UnknownHostException, is ConnectException -> strElearningErrorNetworkUnavailable
+            is SocketTimeoutException -> strElearningErrorNetworkTimeout
+            is IOException -> strElearningErrorNetwork
+            else -> cause.message?.takeIf { it.isNotBlank() }
+        }
+        if (reason != null) strEnrolFailedWithReason.format(reason) else strElearningEnrolFailed
+    }
+
+    
     val snackbar = LocalAppSnackbarController.current
-    val context = androidx.compose.ui.platform.LocalContext.current
     val coroutineScope = rememberCoroutineScope()
     var addSheetVisible by rememberSaveable { mutableStateOf(false) }
 
@@ -139,7 +164,6 @@ fun ElearningScreen(
                     event.courseId,
                     event.assignmentId
                 )
-
                 is ElearningOneShotEvent.OpenQuiz -> onOpenQuiz(event.courseId, event.quizId)
                 ElearningOneShotEvent.RequireSignIn -> onRequireSignIn()
                 ElearningOneShotEvent.OpenAddCourse -> addSheetVisible = true
@@ -252,12 +276,12 @@ fun ElearningScreen(
             onDismiss = { addSheetVisible = false },
             onEnrolFailed = { cause ->
                 coroutineScope.launch {
-                    snackbar.showError(enrolFailureMessage(cause, context))
+                    snackbar.showError(resolveError(cause))
                 }
             },
             onEnrolSucceeded = { courseId, name ->
                 coroutineScope.launch {
-                    snackbar.showInfo(context.getString(R.string.elearning_enrolled_success, name))
+                    snackbar.showInfo(strElearningEnrolledSuccess.format(name))
                 }
                 viewModel.revealEnrolledCourse(courseId)
             },
@@ -269,23 +293,7 @@ fun ElearningScreen(
     }
 }
 
-/**
- * The enrol failure carries a meaningful reason — the Moodle warning (e.g. an enrolment-key
- * requirement or "self-enrolment disabled"), or a network error — so it is surfaced instead of
- * a bare title the user can't act on.
- */
-private fun enrolFailureMessage(cause: Throwable, context: android.content.Context): String {
-    val reason = when (cause) {
-        is UnknownHostException, is ConnectException -> context.getString(R.string.elearning_error_network_unavailable)
-        is SocketTimeoutException -> context.getString(R.string.elearning_error_network_timeout)
-        is IOException -> context.getString(R.string.elearning_error_network)
-        else -> cause.message?.takeIf { it.isNotBlank() }
-    }
-    return if (reason != null) context.getString(
-        R.string.elearning_enrol_failed_with_reason,
-        reason
-    ) else context.getString(R.string.elearning_enrol_failed)
-}
+
 
 @Composable
 private fun AddCourseFab(
@@ -451,16 +459,17 @@ private fun ErrorEmptyState(
     EmptyState(
         icon = Icons.Outlined.CloudOff,
         title = stringResource(R.string.elearning_sync_failed),
-        body = cause.friendlyMessage(androidx.compose.ui.platform.LocalContext.current),
+        body = stringResource(cause.friendlyMessage()),
         modifier = modifier.testTag(ElearningTestTags.STATE_ERROR),
     )
 }
 
-private fun Throwable.friendlyMessage(context: android.content.Context): String = when (this) {
+private fun Throwable.friendlyMessage(): Int = when (this) {
     is UnknownHostException,
-    is ConnectException -> context.getString(R.string.elearning_error_network_unavailable_detailed)
+    is ConnectException -> R.string.elearning_error_network_unavailable_detailed
 
-    is SocketTimeoutException -> context.getString(R.string.elearning_error_network_timeout_detailed)
-    is IOException -> context.getString(R.string.elearning_error_network_detailed)
-    else -> context.getString(R.string.elearning_error_unexpected)
+    is SocketTimeoutException -> R.string.elearning_error_network_timeout_detailed
+    is IOException -> R.string.elearning_error_network_detailed
+    else -> R.string.elearning_error_unexpected
 }
+

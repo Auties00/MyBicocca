@@ -19,10 +19,10 @@ import androidx.compose.ui.unit.sp
  */
 @Composable
 fun SectionTitle(
+    modifier: Modifier = Modifier,
     title: String,
     mark: String = "✿",
     subtitle: String? = null,
-    modifier: Modifier = Modifier,
 ) {
     val scheme = MaterialTheme.colorScheme
     Column(

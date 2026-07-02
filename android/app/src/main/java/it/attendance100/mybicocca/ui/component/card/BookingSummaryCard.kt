@@ -25,6 +25,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalLocale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -33,17 +35,19 @@ import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.os.rememberHapticManager
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
-import java.util.Locale
 
-private val DayOfWeekFormat = DateTimeFormatter.ofPattern("EEE", Locale.getDefault())
 
 /** "Oggi" / "Domani" for the next two days, otherwise the capitalized Italian weekday ("Gio"). */
-fun relativeDayLabel(date: LocalDate, context: android.content.Context? = null): String {
+@Composable
+fun relativeDayLabel(date: LocalDate): String {
     val today = LocalDate.now()
+    val dayOfWeekFormat = DateTimeFormatter.ofPattern("EEE", LocalLocale.current.platformLocale)
+
     return when (date) {
-        today -> context?.getString(R.string.relative_day_today) ?: "Oggi"
-        today.plusDays(1) -> context?.getString(R.string.relative_day_tomorrow) ?: "Domani"
-        else -> date.format(DayOfWeekFormat).replaceFirstChar { it.titlecase(Locale.getDefault()) }
+        today -> stringResource(R.string.relative_day_today)
+        today.plusDays(1) -> stringResource(R.string.relative_day_tomorrow)
+        else -> date.format(dayOfWeekFormat)
+            .replaceFirstChar { it.titlecase(LocalLocale.current.platformLocale) }
     }
 }
 

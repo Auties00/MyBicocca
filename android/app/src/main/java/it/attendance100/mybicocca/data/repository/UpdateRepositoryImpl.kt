@@ -58,7 +58,14 @@ class UpdateRepositoryImpl @Inject constructor(
             .map { persisted ->
                 when {
                     persisted.lastCheckedAtMs == null -> UpdateStatus.Unknown
-                    persisted.available && persisted.release != null ->
+                    // Re-validate the persisted flag against the running build: once the user has
+                    // installed the update, the release is no longer newer than us, so the tile
+                    // clears immediately instead of waiting for the next daily check to rewrite it.
+                    persisted.available && persisted.release != null &&
+                            SemVer.isNewer(
+                                persisted.release.versionName,
+                                BuildConfig.VERSION_NAME
+                            ) ->
                         UpdateStatus.UpdateAvailable(persisted.release)
 
                     else -> UpdateStatus.UpToDate
@@ -111,7 +118,12 @@ class UpdateRepositoryImpl @Inject constructor(
     }
 
     private fun PersistedUpdateState.toCheckResult(): UpdateCheckResult =
-        if (available && release != null) UpdateCheckResult.UpdateAvailable(release)
+        if (available && release != null && SemVer.isNewer(
+                release.versionName,
+                BuildConfig.VERSION_NAME
+            )
+        )
+            UpdateCheckResult.UpdateAvailable(release)
         else UpdateCheckResult.UpToDate
 
     private companion object {

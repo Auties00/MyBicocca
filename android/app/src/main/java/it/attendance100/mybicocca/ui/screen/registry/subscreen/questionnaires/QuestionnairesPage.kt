@@ -53,7 +53,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -127,6 +126,9 @@ import kotlinx.coroutines.flow.collectLatest
 fun QuestionnairesPage(
     viewModel: QuestionnairesViewModel,
 ) {
+    val strQuestionnaireErrorTitle = stringResource(R.string.questionnaire_error_title)
+    val strQuestionnaireSuccessMessage = stringResource(R.string.questionnaire_success_message)
+
     val data by viewModel.activities.collectAsStateWithLifecycle()
     val syncStatus by viewModel.syncStatus.collectAsStateWithLifecycle()
     val selectedActivity by viewModel.selectedActivity.collectAsStateWithLifecycle()
@@ -186,7 +188,6 @@ fun QuestionnairesPage(
     }
 
     run {
-        val context = LocalContext.current
         LaunchedEffect(compileViewModel) {
             compileViewModel?.events?.collectLatest { event ->
                 when (event) {
@@ -194,7 +195,7 @@ fun QuestionnairesPage(
                         pendingConfirm = null
                         compileRequest = null
                         outcome =
-                            SheetOutcome.Success(context.getString(R.string.questionnaire_success_message))
+                            SheetOutcome.Success(strQuestionnaireSuccessMessage)
                         viewModel.refresh()
                         viewModel.retryDetail()
                     }
@@ -203,7 +204,7 @@ fun QuestionnairesPage(
 
                     is QuestionnaireCompilationEvent.Failed ->
                         outcome = SheetOutcome.Error(
-                            context.getString(R.string.questionnaire_error_title),
+                            strQuestionnaireErrorTitle,
                             event.cause
                         )
                 }
@@ -272,8 +273,7 @@ fun QuestionnairesPage(
                     QPage.Root -> rootSubtitle(loaded, pendingCount)
                     QPage.Units -> activityDetail.valueOrNull()?.questionnaireName?.let(::AnnotatedString)
                     QPage.Compile -> compileHeader?.subtitle
-                    QPage.ConfirmExit, QPage.ConfirmSend ->
-                        compileHeader?.title?.let(::AnnotatedString)
+                    QPage.ConfirmExit, QPage.ConfirmSend -> compileHeader?.title?.let(::AnnotatedString)
                     QPage.Result -> null
                 },
                 onBack = when (page) {
@@ -378,7 +378,13 @@ private enum class ConfirmIntent { Leave, LeaveAndDismiss, Send }
 private fun rootSubtitle(loaded: Boolean, pendingCount: Int): AnnotatedString? = when {
     !loaded -> null
     pendingCount == 0 -> AnnotatedString(stringResource(R.string.questionnaire_no_pending))
-    else -> AnnotatedString(pluralStringResource(R.plurals.questionnaire_pending_count, pendingCount, pendingCount))
+    else -> AnnotatedString(
+        pluralStringResource(
+            R.plurals.questionnaire_pending_count,
+            pendingCount,
+            pendingCount
+        )
+    )
 }
 
 /**
@@ -479,7 +485,7 @@ private fun ActivitiesPage(
                 SheetMessage(
                     icon = Icons.Outlined.CloudOff,
                     title = stringResource(R.string.common_error_title),
-                    body = failure.cause.friendlyMessage(),
+                    body = stringResource(failure.cause.friendlyMessage()),
                     action = { RetryButton(onClick = { haptic.tap(); onRetry() }) },
                     modifier = Modifier.testTag(QuestionnairesTestTags.ROOT_ERROR),
                 )
@@ -567,7 +573,10 @@ private fun QuestionnaireActivityRow(
     }
 
     Surface(
-        onClick = onClick,
+        onClick = {
+            onClick()
+            haptic.tap()
+        },
         shape = shape,
         color = scheme.surfaceContainer,
         contentColor = scheme.onSurface,
@@ -622,7 +631,6 @@ private fun QuestionnaireActivityRow(
     }
 }
 
-/** MaterialShapes getters are @Composable, so the mapper is too. */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun QuestionnaireActivityStatus.glyphShape(): Shape = when (this) {

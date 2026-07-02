@@ -64,7 +64,6 @@ private val FILE_ASSOCIATION_KINDS = listOf(
 @Composable
 fun FileAssociationsSheet(onDismiss: () -> Unit) {
     val haptic = rememberHapticManager()
-    val context = androidx.compose.ui.platform.LocalContext.current
     val viewModel: FileOpenPreferenceViewModel =
         hiltViewModel(checkNotNull(LocalViewModelStoreOwner.current) {
             "No ViewModelStoreOwner was provided via LocalViewModelStoreOwner"
@@ -97,7 +96,7 @@ fun FileAssociationsSheet(onDismiss: () -> Unit) {
                         isFirst = index == 0,
                         isLast = index == FILE_ASSOCIATION_KINDS.lastIndex,
                         title = stringResource(kind.openChooserLabel()),
-                        subtitle = choices[kind.preferenceKey].associationLabel(context),
+                        subtitle = choices[kind.preferenceKey].associationLabel(),
                         onClick = {
                             haptic.tap()
                             editing = kind
@@ -140,9 +139,10 @@ fun FileAssociationsSheet(onDismiss: () -> Unit) {
     }
 }
 
-private fun FileOpenChoice?.associationLabel(context: android.content.Context): String =
+@Composable
+private fun FileOpenChoice?.associationLabel(): String =
     when (this) {
-        FileOpenChoice.InApp -> context.getString(R.string.settings_file_association_open_in_app)
-        FileOpenChoice.External -> context.getString(R.string.settings_file_association_open_external)
-        null -> context.getString(R.string.settings_file_association_ask)
+        FileOpenChoice.InApp -> stringResource(R.string.settings_file_association_open_in_app)
+        FileOpenChoice.External -> stringResource(R.string.settings_file_association_open_external)
+        null -> stringResource(R.string.settings_file_association_ask)
 }

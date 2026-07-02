@@ -2,6 +2,7 @@ package it.attendance100.mybicocca.data.mapper.update
 
 import it.attendance100.mybicocca.data.update.GithubReleaseDto
 import it.attendance100.mybicocca.domain.model.update.AppRelease
+import it.attendance100.mybicocca.domain.model.update.AppReleaseAsset
 import java.time.Instant
 
 /**
@@ -22,5 +23,13 @@ fun GithubReleaseDto.toAppReleaseOrNull(): AppRelease? {
         pageUrl = url,
         publishedAt = publishedAt?.let { runCatching { Instant.parse(it) }.getOrNull() },
         isPreRelease = prerelease,
+        assets = assets.map { asset ->
+            AppReleaseAsset(
+                name = asset.name,
+                downloadUrl = asset.browserDownloadUrl,
+                size = asset.size,
+                digest = asset.digest
+            )
+        }
     )
 }

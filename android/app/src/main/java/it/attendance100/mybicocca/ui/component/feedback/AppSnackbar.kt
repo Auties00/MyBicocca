@@ -1,11 +1,13 @@
 package it.attendance100.mybicocca.ui.component.feedback
 
+import android.content.Context
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -36,8 +38,10 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalAccessibilityManager
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import it.attendance100.mybicocca.R
 import kotlinx.coroutines.delay
 import java.io.IOException
 import java.net.ConnectException
@@ -52,8 +56,8 @@ internal data class AppSnackbarVisuals(
     val severity: AppSnackbarSeverity,
     override val actionLabel: String? = null,
     override val withDismissAction: Boolean = false,
-    override val duration: SnackbarDuration =
-        if (actionLabel == null) SnackbarDuration.Short else SnackbarDuration.Indefinite,
+    override val duration: SnackbarDuration = if (actionLabel == null) SnackbarDuration.Short else SnackbarDuration.Indefinite,
+    val onAction: (() -> Unit)? = null
 ) : SnackbarVisuals
 
 /**
@@ -62,18 +66,25 @@ internal data class AppSnackbarVisuals(
  * [Throwable] cause, appended as a compact user-readable reason when one is recognizable.
  */
 @Stable
-class AppSnackbarController internal constructor() {
+class AppSnackbarController internal constructor(private val context: Context) {
     val hostState: SnackbarHostState = SnackbarHostState()
 
-    suspend fun showInfo(message: String) {
+    suspend fun showInfo(
+        message: String,
+        onAction: (() -> Unit)? = null,
+    ) {
         hostState.currentSnackbarData?.dismiss()
         hostState.showSnackbar(
-            AppSnackbarVisuals(message = message, severity = AppSnackbarSeverity.Info),
+            AppSnackbarVisuals(
+                message = message,
+                severity = AppSnackbarSeverity.Info,
+                onAction = onAction,
+            ),
         )
     }
 
     suspend fun showError(message: String, cause: Throwable? = null) {
-        val friendly = cause?.friendlyShortReason()
+        val friendly = cause?.friendlyShortReason()?.let { context.getString(it) }
         val title = if (friendly != null) "$message · $friendly" else message
         hostState.currentSnackbarData?.dismiss()
         hostState.showSnackbar(
@@ -83,8 +94,14 @@ class AppSnackbarController internal constructor() {
 }
 
 @Composable
-fun rememberAppSnackbarController(): AppSnackbarController =
-    remember { AppSnackbarController() }
+fun rememberAppSnackbarController(): AppSnackbarController {
+    // Deliberately the Activity/composition context, not applicationContext: on API < 33 the
+    // per-app locale (AppCompat) overrides the Activity's configuration but not the application's,
+    // so applicationContext.getString() would resolve in the wrong language. This context is only
+    // held for the lifetime of the composition, so it can't outlive the Activity and leak.
+    val context = LocalContext.current
+    return remember { AppSnackbarController(context) }
+}
 
 /**
  * Ambient snackbar controller. Where it is read picks the feedback surface: inside a
@@ -163,7 +180,7 @@ private fun SnackbarTransition(current: SnackbarData?) {
         targetState = current,
         transitionSpec = {
             (slideInVertically(initialOffsetY = { it + 32 }) + fadeIn()) togetherWith
-                (slideOutVertically(targetOffsetY = { it + 32 }) + fadeOut())
+                    (slideOutVertically(targetOffsetY = { it + 32 }) + fadeOut())
         },
         label = "app_snackbar_animation",
     ) { data ->
@@ -201,7 +218,13 @@ private fun AppSnackbarSurface(data: SnackbarData) {
     Surface(
         modifier = Modifier
             .widthIn(min = 240.dp, max = 560.dp)
-            .fillMaxWidth(),
+            .fillMaxWidth()
+            .then(
+                if (visuals?.onAction != null) Modifier.clickable {
+                    visuals.onAction.invoke()
+                    data.dismiss()
+                } else Modifier
+            ),
         shape = RoundedCornerShape(20.dp),
         color = container,
         contentColor = onContainer,
@@ -252,10 +275,10 @@ private fun SnackbarDuration.toMillisCompat(
  * Compact, user-readable failure category appended to error messages. Shown in release
  * builds — must not leak internals (no class names, no stack traces).
  */
-private fun Throwable.friendlyShortReason(): String? = when (this) {
-    is UnknownHostException, is ConnectException -> "error_network_unavailable"
-    is SocketTimeoutException -> "error_network_timeout"
-    is IOException -> "error_network_generic"
+private fun Throwable.friendlyShortReason(): Int? = when (this) {
+    is UnknownHostException, is ConnectException -> R.string.error_network_unavailable
+    is SocketTimeoutException -> R.string.error_network_timeout
+    is IOException -> R.string.error_network_generic
     else -> null
 }
 

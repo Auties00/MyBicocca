@@ -18,7 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -88,7 +88,6 @@ fun LibraryCard(
 @Composable
 private fun StatusLine(isOpen: Boolean, statusText: String?) {
     val scheme = MaterialTheme.colorScheme
-    val context = LocalContext.current
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
         Box(
             modifier = Modifier
@@ -98,7 +97,7 @@ private fun StatusLine(isOpen: Boolean, statusText: String?) {
         )
         Text(
             text = statusText
-                ?: if (isOpen) context.getString(R.string.library_open) else context.getString(R.string.library_closed),
+                ?: if (isOpen) stringResource(R.string.library_open) else stringResource(R.string.library_closed),
             style = MaterialTheme.typography.labelMedium,
             color = scheme.onSurfaceVariant,
             maxLines = 1,

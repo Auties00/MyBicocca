@@ -50,7 +50,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -146,7 +145,6 @@ private fun LoginForm(
                     modifier = Modifier.size(40.dp),
                 )
             }
-            val context = LocalContext.current
             Text(
                 text = stringResource(R.string.library_login_title),
                 style = MaterialTheme.typography.titleLarge,
@@ -156,9 +154,9 @@ private fun LoginForm(
             )
             Text(
                 text = if (awaiting) {
-                    context.getString(R.string.library_link_sent)
+                    stringResource(R.string.library_link_sent)
                 } else {
-                    context.getString(R.string.library_will_send_link)
+                    stringResource(R.string.library_will_send_link)
                 },
                 style = MaterialTheme.typography.bodyMedium,
                 color = scheme.onSurfaceVariant,
@@ -233,18 +231,17 @@ private fun LoginFeedbackPanel(
     onDismiss: () -> Unit,
 ) {
     val scheme = MaterialTheme.colorScheme
-    val context = LocalContext.current
     val success = feedback == LibraryLoginFeedback.LoggedIn
 
     val icon: ImageVector = if (success) Icons.Rounded.CheckCircle else Icons.Rounded.MarkEmailUnread
     val container = if (success) scheme.primaryContainer else scheme.tertiaryContainer
     val onContainer = if (success) scheme.onPrimaryContainer else scheme.onTertiaryContainer
     val title =
-        if (success) context.getString(R.string.library_login_success) else context.getString(R.string.library_link_not_opened)
+        if (success) stringResource(R.string.library_login_success) else stringResource(R.string.library_link_not_opened)
     val body = if (success) {
-        context.getString(R.string.library_bookings_synced)
+        stringResource(R.string.library_bookings_synced)
     } else {
-        context.getString(R.string.library_open_link_again)
+        stringResource(R.string.library_open_link_again)
     }
 
     val pop by animateFloatAsState(

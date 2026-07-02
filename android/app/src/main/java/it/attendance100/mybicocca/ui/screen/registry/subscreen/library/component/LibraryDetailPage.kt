@@ -27,7 +27,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -81,17 +80,16 @@ internal fun LibraryDetailPage(
                 .padding(horizontal = 24.dp),
             verticalArrangement = Arrangement.spacedBy(18.dp),
         ) {
-            val context = LocalContext.current
             when (liveStatus) {
                 Loadable.NotYetLoaded -> when (detailStatus) {
                     is SyncStatus.Failed -> SheetMessage(
                         icon = Icons.AutoMirrored.Outlined.ShowChart,
-                        title = context.getString(R.string.common_error_title),
-                        body = context.getString(R.string.library_status_loading_failed),
+                        title = stringResource(R.string.common_error_title),
+                        body = stringResource(R.string.library_status_loading_failed),
                         action = { RetryButton(onClick = onRetry) },
                     )
 
-                    else -> SheetLoadingIndicator(label = context.getString(R.string.common_loading))
+                    else -> SheetLoadingIndicator(label = stringResource(R.string.common_loading))
                 }
 
                 is Loadable.Loaded -> {
@@ -100,7 +98,7 @@ internal fun LibraryDetailPage(
                     if (liveStatus.value.todayForecast.isNotEmpty()) {
                         SectionCard(
                             icon = Icons.AutoMirrored.Outlined.ShowChart,
-                            title = context.getString(R.string.library_today_occupancy)
+                            title = stringResource(R.string.library_today_occupancy)
                         ) {
                             ForecastGraph(points = liveStatus.value.todayForecast)
                         }
@@ -109,7 +107,7 @@ internal fun LibraryDetailPage(
                     (weekHours as? Loadable.Loaded)?.value?.let { hours ->
                         SectionCard(
                             icon = Icons.Outlined.Schedule,
-                            title = context.getString(R.string.library_opening_hours)
+                            title = stringResource(R.string.library_opening_hours)
                         ) {
                             WeekHoursList(hours)
                         }
@@ -153,7 +151,6 @@ internal fun LibraryDetailPage(
 @Composable
 private fun OccupancyHeader(status: LibraryLiveStatus) {
     val scheme = MaterialTheme.colorScheme
-    val context = LocalContext.current
     Surface(
         shape = MaterialTheme.shapes.extraLarge,
         color = scheme.surfaceContainerLow,
@@ -170,7 +167,7 @@ private fun OccupancyHeader(status: LibraryLiveStatus) {
             }
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(
-                    text = if (status.isOpen) context.getString(R.string.library_open_now) else context.getString(
+                    text = if (status.isOpen) stringResource(R.string.library_open_now) else stringResource(
                         R.string.library_closed
                     ),
                     style = MaterialTheme.typography.titleMedium,
@@ -236,10 +233,9 @@ private fun WeekHoursRow(day: LibraryDayHours) {
             fontWeight = emphasis,
             color = color,
         )
-        val context = LocalContext.current
         Text(
             text = if (day.ranges.isEmpty()) {
-                context.getString(R.string.library_closed)
+                stringResource(R.string.library_closed)
             } else {
                 day.ranges.joinToString("  ") { "${it.open.format(TimeFormat)}–${it.close.format(TimeFormat)}" }
             },

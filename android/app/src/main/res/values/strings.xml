@@ -836,6 +836,7 @@
     <string name="settings_language_sheet_subtitle">Lingua dell\'app</string>
     <string name="settings_language_system">Sistema</string>
     <string name="settings_language_italian">Italiano</string>
+    <string name="settings_language_english">English</string>
     <string name="settings_appearance_sheet_title">Aspetto</string>
     <string name="settings_appearance_sheet_subtitle">Tema e colori dell\'app</string>
     <string name="settings_theme_mode_light">Chiaro</string>
@@ -1585,4 +1586,15 @@
         <item quantity="one">1 senza risposta</item>
         <item quantity="other">%1$d senza risposta</item>
     </plurals>
+    <!-- Update Modal -->
+    <string name="update_modal_title">Nuova versione disponibile!</string>
+    <string name="update_modal_version">v%1$s</string>
+    <string name="update_modal_github">Apri su GitHub</string>
+    <string name="update_modal_download">Scarica aggiornamento</string>
+    <string name="update_modal_not_now">Non ora</string>
+    <string name="update_modal_downloading">Download... %1$d%%</string>
+
+    <!-- Settings: Language -->
+    <string name="settings_language_help_translate">Aiutaci a tradurre l\'app in %1$s!</string>
+
 </resources>

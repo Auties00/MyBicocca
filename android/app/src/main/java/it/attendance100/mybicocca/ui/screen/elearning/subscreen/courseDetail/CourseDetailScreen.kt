@@ -229,6 +229,7 @@ fun CourseDetailScreen(
     onOpenFile: (AppRoute.FileViewer, forceChooser: Boolean) -> Unit = { _, _ -> },
     viewModel: CourseDetailViewModel = hiltViewModel(),
 ) {
+    val strElearningCourseSyncFailed = stringResource(R.string.elearning_course_sync_failed)
     val context = LocalContext.current
     val courseIdValue = remember(courseId) { CourseId(courseId) }
     val heroShapes = remember(courseIdValue) { heroShapesFor(courseIdValue) }
@@ -286,7 +287,7 @@ fun CourseDetailScreen(
                 is CourseDetailOneShotEvent.OpenFolder -> folderPickCmId = event.cmId
                 is CourseDetailOneShotEvent.RefreshFailed ->
                     snackbar.showError(
-                        context.getString(R.string.elearning_course_sync_failed),
+                        strElearningCourseSyncFailed,
                         event.cause
                     )
             }

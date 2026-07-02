@@ -46,9 +46,9 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -56,12 +56,13 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import it.attendance100.mybicocca.R
+import it.attendance100.mybicocca.core.os.currentLocale
+import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.core.state.SyncStatus
 import it.attendance100.mybicocca.domain.model.exam.ExamCall
 import it.attendance100.mybicocca.domain.model.exam.ExamType
 import it.attendance100.mybicocca.ui.component.button.RetryButton
 import it.attendance100.mybicocca.ui.component.feedback.friendlyMessage
-import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.ui.component.feedback.rememberMinDurationLoading
 import it.attendance100.mybicocca.ui.component.modal.SheetLoadingIndicator
 import it.attendance100.mybicocca.ui.component.modal.SheetMessage
@@ -409,7 +410,12 @@ internal fun CallPage(
                 text = stringResource(R.string.booking_not_available),
                 style = MaterialTheme.typography.bodySmall,
                 color = scheme.onSurfaceVariant,
-                modifier = Modifier.padding(start = 24.dp, end = 24.dp, top = 16.dp, bottom = 24.dp),
+                modifier = Modifier.padding(
+                    start = 24.dp,
+                    end = 24.dp,
+                    top = 16.dp,
+                    bottom = 24.dp
+                ),
             )
         }
     }
@@ -596,7 +602,7 @@ private fun SheetError(cause: Throwable, onRetry: () -> Unit, modifier: Modifier
     SheetMessage(
         icon = Icons.Outlined.CloudOff,
         title = stringResource(R.string.booking_load_failed),
-        body = cause.friendlyMessage(),
+        body = stringResource(cause.friendlyMessage()),
         action = {
             val haptic = rememberHapticManager()
             RetryButton(onClick = { haptic.tap(); onRetry() })
@@ -616,13 +622,13 @@ private fun ExamCall.windowStatus(today: LocalDate): WindowStatus {
     }
 }
 
-internal fun ExamCall.title(): String =
-    activityDescription?.takeIf { it.isNotBlank() } ?: "Esame"
+internal fun ExamCall.title(): String = activityDescription?.takeIf { it.isNotBlank() } ?: "Esame"
 
 /**
  * "Esame scritto · 22 giu 2026, ore 14:00" — the appello sub-modal has no hero card, so the
  * header subtitle carries the whole when/how of the tapped cell.
  */
+@Composable
 internal fun ExamCall.headerSubtitle(): String {
     val date = callDate?.format(ShortDateFormat)
     val time = callTime?.let { "ore ${it.format(TimeFormat)}" }
@@ -654,9 +660,9 @@ internal fun rootSubtitle(groups: List<BookingCourseGroup>): String {
     return "${countLabel(calls)} · ${if (exams == 1) "1 esame" else "$exams esami"}"
 }
 
-private fun countLabel(calls: Int): String =
-    if (calls == 1) "1 appello" else "$calls appelli"
+private fun countLabel(calls: Int): String = if (calls == 1) "1 appello" else "$calls appelli"
 
+@Composable
 private fun formatWindow(opensAt: LocalDate?, closesAt: LocalDate?): String {
     val opens = opensAt?.format(WindowFormat)
     val closes = closesAt?.format(WindowFormat)
@@ -668,7 +674,15 @@ private fun formatWindow(opensAt: LocalDate?, closesAt: LocalDate?): String {
     }
 }
 
-private val ShortDateFormat = DateTimeFormatter.ofPattern("d MMM yyyy", Locale.getDefault())
-private val MonthFormat = DateTimeFormatter.ofPattern("MMM", Locale.getDefault())
+@get:Composable
+private val ShortDateFormat
+    get() = DateTimeFormatter.ofPattern("d MMM yyyy", currentLocale())
+
+@get:Composable
+private val MonthFormat
+    get() = DateTimeFormatter.ofPattern("MMM", currentLocale())
 private val TimeFormat = DateTimeFormatter.ofPattern("HH:mm")
-private val WindowFormat = DateTimeFormatter.ofPattern("d MMM yyyy", Locale.getDefault())
+
+@get:Composable
+private val WindowFormat
+    get() = DateTimeFormatter.ofPattern("d MMM yyyy", currentLocale())
