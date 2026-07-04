@@ -1,5 +1,7 @@
 package it.attendance100.mybicocca.ui.screen.elearning.subscreen.courseDetail.component
 
+import android.content.Context
+import android.content.Intent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -24,12 +26,15 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLocale
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontStyle
@@ -38,6 +43,8 @@ import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.net.toUri
+import androidx.core.os.ConfigurationCompat
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.domain.model.elearning.course.CourseDetails
 import it.attendance100.mybicocca.domain.model.elearning.course.CourseLevel
@@ -56,7 +63,9 @@ import it.attendance100.mybicocca.ui.screen.elearning.subscreen.courseDetail.sta
  * underlined prose sections (objectives, summary, prerequisites, teaching method, reference
  * material, assessment, office hours, SDGs), the extended programme as numbered "PARTE" parts
  * with topic pill clusters, and a two-column staff grid with organic-shape initial avatars.
- * Shows an empty state when the course has no published syllabus.
+ * Tapping a staff tile whose member has a published email opens the mail composer pre-addressed
+ * to them with the course name pre-filled as the subject prefix. Shows an empty state when the
+ * course has no published syllabus.
  */
 @Composable
 fun SyllabusContent(
@@ -104,7 +113,7 @@ fun SyllabusContent(
         info.sustainableDevelopmentGoals?.let { item { SyllabusSection(title = stringResource(R.string.elearning_course_sustainable_goals), body = it) } }
 
         if (details.staff.isNotEmpty()) {
-            item { StaffGrid(staff = details.staff) }
+            item { StaffGrid(staff = details.staff, courseName = details.enrolled.fullName) }
         }
     }
 }
@@ -546,7 +555,7 @@ private fun PillCluster(items: List<String>) {
 }
 
 @Composable
-private fun StaffGrid(staff: List<CourseStaffMember>) {
+private fun StaffGrid(staff: List<CourseStaffMember>, courseName: String) {
     Column(modifier = Modifier.fillMaxWidth()) {
         SyllabusHeader(title = stringResource(R.string.elearning_course_staff))
         Spacer(Modifier.height(12.dp))
@@ -561,6 +570,7 @@ private fun StaffGrid(staff: List<CourseStaffMember>) {
                     StaffGridTile(
                         member = member,
                         variant = staffVariantAt(variantIdx),
+                        courseName = courseName,
                         modifier = Modifier.weight(1f),
                     )
                 }
@@ -586,9 +596,18 @@ private fun staffVariantAt(index: Int): StaffGridVariant {
 }
 
 @Composable
-private fun StaffGridTile(member: CourseStaffMember, variant: StaffGridVariant, modifier: Modifier = Modifier) {
+private fun StaffGridTile(
+    member: CourseStaffMember,
+    variant: StaffGridVariant,
+    courseName: String,
+    modifier: Modifier = Modifier,
+) {
     val scheme = MaterialTheme.colorScheme
+    val context = LocalContext.current
+    val email = member.email
     Surface(
+        onClick = { email?.let { context.emailStaff(it, "$courseName | ") } },
+        enabled = email != null,
         shape = RoundedCornerShape(22.dp),
         color = variant.tileBg,
         modifier = modifier,
@@ -658,6 +677,24 @@ private fun initialsOf(name: String): String =
     name.split(" ", "\t").filter { it.isNotBlank() }.take(2)
         .joinToString("") { it.first().uppercaseChar().toString() }
         .ifBlank { "?" }
+
+/**
+ * Opens the device's email composer addressed to [address] with [subject] pre-filled, so the
+ * student only has to append their message. Uses a bare `mailto:` target with the recipient
+ * and subject passed as intent extras, which restricts resolution to email apps. Wrapped in
+ * runCatching so a device with no mail app resolves to a no-op instead of crashing.
+ */
+private fun Context.emailStaff(address: String, subject: String) {
+    runCatching {
+        startActivity(
+            Intent(Intent.ACTION_SENDTO).apply {
+                data = "mailto:".toUri()
+                putExtra(Intent.EXTRA_EMAIL, arrayOf(address))
+                putExtra(Intent.EXTRA_SUBJECT, subject)
+            }.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+        )
+    }
+}
 
 private val LeadingNumberRegex = Regex("""^\d+[.):\s-]*""")
 
