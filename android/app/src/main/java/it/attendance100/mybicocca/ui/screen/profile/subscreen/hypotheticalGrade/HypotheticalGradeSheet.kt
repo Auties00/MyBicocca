@@ -52,9 +52,12 @@ private const val MAX_GRADE = 31
  * Hypothetical-average calculator sheet: a stat card showing the current arithmetic or
  * weighted average with an animated arrow to the projected value, a signed delta chip
  * beneath it, and the grade input — plus an optional CFU input in weighted mode. The
- * projection is an O(1) recompute over the pre-aggregated [GradeRollup]: one hypothetical
- * entry added to the stored sums, one division. Out-of-range input is flagged inline and
- * produces no projection.
+ * projection extends the displayed [currentArithmetic]/[currentWeighted] average — the same
+ * value shown on the profile tile — with the hypothetical entry, using [GradeRollup] only
+ * for the exam count (arithmetic) or credit total (weighted). Anchoring to the displayed
+ * average keeps the projection consistent with what the user already sees, so a grade above
+ * the current average always moves it up and vice versa. Out-of-range input is flagged
+ * inline and produces no projection.
  */
 @Composable
 fun HypotheticalGradeSheet(
@@ -81,10 +84,16 @@ fun HypotheticalGradeSheet(
 
         val current = if (isWeighted) currentWeighted else currentArithmetic
         val projected: Float? = when {
-            rollup == null || grade == null || !gradeValid -> null
-            !isWeighted -> (rollup.gradeSum + grade).toFloat() / (rollup.gradedExamCount + 1).toFloat()
-            cfu != null && cfu > 0 ->
-                ((rollup.weightedGradeSum + grade.toDouble() * cfu).toFloat()) / (rollup.gradedCreditsSum + cfu)
+            rollup == null || current == null || grade == null || !gradeValid -> null
+            !isWeighted -> {
+                val n = rollup.gradedExamCount
+                (current * n + grade) / (n + 1)
+            }
+
+            cfu != null && cfu > 0 -> {
+                val credits = rollup.gradedCreditsSum
+                (current * credits + grade * cfu) / (credits + cfu)
+            }
             else -> null
         }
 
