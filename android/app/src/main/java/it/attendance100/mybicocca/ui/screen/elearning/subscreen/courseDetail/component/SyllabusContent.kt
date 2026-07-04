@@ -56,6 +56,8 @@ import it.attendance100.mybicocca.domain.model.elearning.course.SyllabusInfo
 import it.attendance100.mybicocca.ui.component.feedback.EmptyState
 import it.attendance100.mybicocca.ui.component.shape.OrganicShapes
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.courseDetail.state.StaffGridVariant
+import java.time.Month
+import java.time.format.TextStyle.FULL
 
 /**
  * Scheda tab page: the course syllabus rendered as a magazine-style column — an info tile
@@ -370,6 +372,7 @@ private fun LevelPip(label: String, active: Boolean) {
 @Composable
 private fun SemesterCalendar(semester: Semester) {
     val scheme = MaterialTheme.colorScheme
+    val academicMonths = rememberAcademicMonths()
     Surface(
         shape = RoundedCornerShape(24.dp),
         color = scheme.surfaceContainerHigh,
@@ -382,7 +385,7 @@ private fun SemesterCalendar(semester: Semester) {
                     .fillMaxWidth()
                     .padding(bottom = 10.dp),
             ) {
-                ACADEMIC_MONTHS.forEachIndexed { i, m ->
+                academicMonths.forEachIndexed { i, m ->
                     val active = i in semester.activeMonthIndices
                     Column(
                         modifier = Modifier.weight(1f),
@@ -481,7 +484,11 @@ private fun ExtendedProgrammeList(parts: List<ProgrammeSection>) {
                             style = TightTextStyle,
                         )
                     }
-                    Column(modifier = Modifier.weight(1f).padding(top = 18.dp)) {
+                    Column(
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(top = 18.dp)
+                    ) {
                         val title = cleanProgrammeTitle(part.title)
                         if (title.isNotBlank()) {
                             Text(
@@ -701,4 +708,21 @@ private val LeadingNumberRegex = Regex("""^\d+[.):\s-]*""")
 private fun cleanProgrammeTitle(raw: String): String =
     raw.trim().replaceFirst(LeadingNumberRegex, "").trim()
 
-private val ACADEMIC_MONTHS = listOf("S", "O", "N", "D", "G", "F", "M", "A", "M", "G", "L", "A")
+@Composable
+fun rememberAcademicMonths(): List<String> {
+    val configuration = LocalConfiguration.current
+    val currentLocale =
+        ConfigurationCompat.getLocales(configuration).get(0) ?: LocalLocale.current.platformLocale
+
+    val academicSequence = listOf(
+        Month.SEPTEMBER, Month.OCTOBER, Month.NOVEMBER, Month.DECEMBER,
+        Month.JANUARY, Month.FEBRUARY, Month.MARCH, Month.APRIL,
+        Month.MAY, Month.JUNE, Month.JULY, Month.AUGUST
+    )
+
+    return academicSequence.map { month ->
+        month.getDisplayName(FULL, currentLocale)
+            .first()
+            .uppercase()
+    }
+}
