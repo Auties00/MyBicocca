@@ -1,8 +1,5 @@
 package it.attendance100.mybicocca.domain.usecase.search
 
-import android.content.Context
-import dagger.hilt.android.qualifiers.ApplicationContext
-import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.search.MatchInput
 import it.attendance100.mybicocca.core.search.SearchMatcher
 import it.attendance100.mybicocca.core.search.normalizeForSearch
@@ -18,6 +15,7 @@ import it.attendance100.mybicocca.domain.model.elearning.quiz.Quiz
 import it.attendance100.mybicocca.domain.model.map.BuildingCode
 import it.attendance100.mybicocca.domain.model.map.MapBuilding
 import it.attendance100.mybicocca.domain.model.map.MapRoom
+import it.attendance100.mybicocca.domain.model.search.RelativeDay
 import it.attendance100.mybicocca.domain.model.search.SearchHistoryEntry
 import it.attendance100.mybicocca.domain.model.search.SearchResult
 import it.attendance100.mybicocca.domain.model.transcript.TranscriptRow
@@ -53,7 +51,6 @@ import javax.inject.Inject
  *   truncated to [MAX_RESULTS]
  */
 class GlobalSearchUseCase @Inject constructor(
-    @ApplicationContext private val context: Context,
     private val searchDestinations: SearchDestinationsUseCase,
     private val searchActions: SearchActionsUseCase,
     private val courseRepository: ElearningCourseRepository,
@@ -149,13 +146,15 @@ class GlobalSearchUseCase @Inject constructor(
 
     /** "domani", "lunedì", "22/06" — a result that jumps straight to that calendar day. */
     private fun dateResults(query: String): List<SearchResult> {
-        val match = parseDateQuery(query, LocalDate.now(), context, Locale.getDefault())
+        val match = parseDateQuery(query, LocalDate.now(), Locale.getDefault())
             ?: return emptyList()
         return listOf(
             SearchResult.CalendarDay(
                 date = match.date,
-                title = match.label,
-                subtitle = context.getString(R.string.search_open_in_calendar),
+                relativeDay = match.relativeDayOffset?.let(RelativeDay::fromOffset),
+                // Weekday/numeric hits rank on their date label; relative-day hits have no
+                // label, so rank on the matched query, preserving the recency boost.
+                title = match.label ?: query,
                 score = DATE_SCORE,
             ),
         )
@@ -228,12 +227,14 @@ class GlobalSearchUseCase @Inject constructor(
     private fun TranscriptRow.toResult(query: String): SearchResult.TranscriptEntry? {
         val aliases = listOfNotNull(activityCode).filter { it.isNotBlank() }
         val score = SearchMatcher.score(query, MatchInput(activityName, aliases)) ?: return null
-        val gradeLabel = grade?.let {
-            val prefix = context.getString(R.string.search_grade)
-            "$prefix $it${if (cumLaude) "L" else ""}"
-        }
-        val subtitle = listOfNotNull(activityCode, gradeLabel).joinToString(" · ").ifBlank { null }
-        return SearchResult.TranscriptEntry(id, activityName, subtitle, score)
+        return SearchResult.TranscriptEntry(
+            rowId = id,
+            title = activityName,
+            activityCode = activityCode,
+            grade = grade,
+            cumLaude = cumLaude,
+            score = score,
+        )
     }
 
     /**

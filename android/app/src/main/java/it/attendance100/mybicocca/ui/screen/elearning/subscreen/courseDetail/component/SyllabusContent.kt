@@ -9,9 +9,11 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -32,21 +34,23 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalLocale
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.net.toUri
 import androidx.core.os.ConfigurationCompat
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.domain.model.elearning.course.CourseDetails
+import it.attendance100.mybicocca.domain.model.elearning.course.CourseId
 import it.attendance100.mybicocca.domain.model.elearning.course.CourseLevel
 import it.attendance100.mybicocca.domain.model.elearning.course.CourseStaffMember
 import it.attendance100.mybicocca.domain.model.elearning.course.CourseStaffRole
@@ -56,6 +60,9 @@ import it.attendance100.mybicocca.domain.model.elearning.course.SyllabusInfo
 import it.attendance100.mybicocca.ui.component.feedback.EmptyState
 import it.attendance100.mybicocca.ui.component.shape.OrganicShapes
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.courseDetail.state.StaffGridVariant
+import it.attendance100.mybicocca.ui.screen.elearning.theme.CourseDetailTheme
+import it.attendance100.mybicocca.ui.screen.elearning.theme.ProvideCourseAccentPalette
+import it.attendance100.mybicocca.ui.theme.BicoccaTheme
 import java.time.Month
 import java.time.format.TextStyle.FULL
 
@@ -418,14 +425,14 @@ private fun SemesterCalendar(semester: Semester) {
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
                 Text(
-                    text = semester.title,
+                    text = semesterTitle(semester),
                     color = scheme.onSurface,
                     fontWeight = FontWeight.ExtraBold,
                     fontSize = 15.sp,
                     letterSpacing = (-0.2).sp,
                 )
                 Text(
-                    text = semester.rangeLabel,
+                    text = semesterRange(semester),
                     color = scheme.onSurfaceVariant.copy(alpha = 0.78f),
                     fontStyle = FontStyle.Italic,
                     fontSize = 12.sp,
@@ -569,7 +576,9 @@ private fun StaffGrid(staff: List<CourseStaffMember>, courseName: String) {
         val rows = staff.chunked(2)
         rows.forEachIndexed { rowIdx, pair ->
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(IntrinsicSize.Min),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 pair.forEachIndexed { colIdx, member ->
@@ -578,7 +587,9 @@ private fun StaffGrid(staff: List<CourseStaffMember>, courseName: String) {
                         member = member,
                         variant = staffVariantAt(variantIdx),
                         courseName = courseName,
-                        modifier = Modifier.weight(1f),
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxHeight(),
                     )
                 }
                 if (pair.size == 1) {
@@ -671,6 +682,24 @@ private fun SyllabusEmpty(modifier: Modifier) {
 }
 
 @Composable
+private fun semesterTitle(semester: Semester): String = stringResource(
+    when (semester) {
+        Semester.First -> R.string.elearning_course_semester_first
+        Semester.Second -> R.string.elearning_course_semester_second
+        Semester.FullYear -> R.string.elearning_course_semester_annual
+    }
+)
+
+@Composable
+private fun semesterRange(semester: Semester): String = stringResource(
+    when (semester) {
+        Semester.First -> R.string.elearning_course_semester_first_range
+        Semester.Second -> R.string.elearning_course_semester_second_range
+        Semester.FullYear -> R.string.elearning_course_semester_annual_range
+    }
+)
+
+@Composable
 private fun roleLabel(role: CourseStaffRole): String = stringResource(
     when (role) {
         CourseStaffRole.Docente -> R.string.elearning_course_docente_role
@@ -712,7 +741,7 @@ private fun cleanProgrammeTitle(raw: String): String =
 fun rememberAcademicMonths(): List<String> {
     val configuration = LocalConfiguration.current
     val currentLocale =
-        ConfigurationCompat.getLocales(configuration).get(0) ?: LocalLocale.current.platformLocale
+        ConfigurationCompat.getLocales(configuration).get(0) ?: Locale.current.platformLocale
 
     val academicSequence = listOf(
         Month.SEPTEMBER, Month.OCTOBER, Month.NOVEMBER, Month.DECEMBER,
@@ -724,5 +753,57 @@ fun rememberAcademicMonths(): List<String> {
         month.getDisplayName(FULL, currentLocale)
             .first()
             .uppercase()
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun StaffGridPreview() {
+    val sampleStaff = listOf(
+        CourseStaffMember(
+            1,
+            "Mario Rossi",
+            CourseStaffRole.Docente,
+            "MR",
+            "mario.rossi@unimib.it",
+            null
+        ),
+        CourseStaffMember(
+            2,
+            "Gianfranco Eleganti Bianchi",
+            CourseStaffRole.Tutor,
+            "LB",
+            "luigi.bianchi@unimib.it",
+            null
+        ),
+        CourseStaffMember(3, "Anna Verdi", CourseStaffRole.Esercitatore, "AV", null, null),
+        CourseStaffMember(
+            4,
+            "Paolo Neri",
+            CourseStaffRole.Other,
+            "PN",
+            "paolo.neri@unimib.it",
+            null
+        ),
+        CourseStaffMember(
+            5,
+            "Sofia Gialli",
+            CourseStaffRole.Docente,
+            "SG",
+            "sofia.gialli@unimib.it",
+            null
+        )
+    )
+    BicoccaTheme(dark = false) {
+        ProvideCourseAccentPalette(dark = false) {
+            CourseDetailTheme(courseId = CourseId(1), dark = false) {
+                Surface {
+                    StaffGrid(
+                        staff = sampleStaff,
+                        courseName = "Programmazione Mobile"
+                    )
+                }
+            }
+        }
     }
 }

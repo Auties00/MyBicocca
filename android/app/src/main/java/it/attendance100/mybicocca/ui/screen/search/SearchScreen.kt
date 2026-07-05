@@ -62,6 +62,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import it.attendance100.mybicocca.R
+import it.attendance100.mybicocca.domain.model.search.RelativeDay
 import it.attendance100.mybicocca.domain.model.search.SearchResult
 import it.attendance100.mybicocca.domain.model.search.SearchResultCategory
 import it.attendance100.mybicocca.ui.component.bar.fadeThroughExpanded
@@ -261,8 +262,8 @@ fun SearchOverlay(
                             item(key = "top-hit") {
                                 TopHitCard(
                                     icon = topHit.icon(),
-                                    title = topHit.title,
-                                    subtitle = topHit.subtitle,
+                                    title = topHit.displayTitle(),
+                                    subtitle = topHit.displaySubtitle(),
                                     query = query,
                                     onClick = { onOpenResult(topHit) },
                                     modifier = Modifier.testTag(SearchOverlayTestTags.TOP_HIT),
@@ -293,8 +294,8 @@ fun SearchOverlay(
                                 val result = rows[index]
                                 SearchResultRow(
                                     icon = result.icon(),
-                                    title = result.title,
-                                    subtitle = result.subtitle,
+                                    title = result.displayTitle(),
+                                    subtitle = result.displaySubtitle(),
                                     query = query,
                                     shape = groupItemShape(index, rows.size),
                                     onClick = { onOpenResult(result) },
@@ -417,6 +418,40 @@ private fun SearchResult.icon(): ImageVector = when (this) {
     is SearchResult.Building -> Icons.Outlined.Apartment
     is SearchResult.Room -> Icons.Outlined.MeetingRoom
     is SearchResult.TranscriptEntry -> Icons.Outlined.WorkspacePremium
+}
+
+/**
+ * Resolves the row title, localizing the relative-day hits ("Oggi"/"Domani"/…) that the use
+ * case leaves as a [RelativeDay] so localization stays in the UI. Every other hit already
+ * carries its title.
+ */
+@Composable
+private fun SearchResult.displayTitle(): String = when (this) {
+    is SearchResult.CalendarDay -> when (relativeDay) {
+        RelativeDay.Today -> stringResource(R.string.relative_day_today)
+        RelativeDay.Tomorrow -> stringResource(R.string.relative_day_tomorrow)
+        RelativeDay.AfterTomorrow -> stringResource(R.string.relative_day_after_tomorrow)
+        null -> title
+    }
+
+    else -> title
+}
+
+/**
+ * Resolves the row subtitle for the hits whose secondary text is localized in the UI: the
+ * fixed "open in calendar" caption for a date hit, and the "activity code · grade" line for a
+ * transcript hit. Every other hit already carries its subtitle.
+ */
+@Composable
+private fun SearchResult.displaySubtitle(): String? = when (this) {
+    is SearchResult.CalendarDay -> stringResource(R.string.search_open_in_calendar)
+    is SearchResult.TranscriptEntry -> {
+        val gradePrefix = stringResource(R.string.search_grade)
+        val gradeLabel = grade?.let { "$gradePrefix $it${if (cumLaude) "L" else ""}" }
+        listOfNotNull(activityCode, gradeLabel).joinToString(" · ").ifBlank { null }
+    }
+
+    else -> subtitle
 }
 
 /** Top-hit gate, score floor: the best result must reach at least acronym-tier strength. */

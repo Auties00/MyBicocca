@@ -16,6 +16,7 @@ import it.attendance100.mybicocca.domain.model.career.CareerStatus
 import it.attendance100.mybicocca.domain.model.search.DictationEvent
 import it.attendance100.mybicocca.domain.model.search.SearchAction
 import it.attendance100.mybicocca.domain.model.search.SearchHistoryEntry
+import it.attendance100.mybicocca.domain.model.search.RelativeDay
 import it.attendance100.mybicocca.domain.model.search.SearchResult
 import it.attendance100.mybicocca.domain.model.search.SpeechTranscript
 import it.attendance100.mybicocca.domain.usecase.account.ObserveActiveAccountUseCase
@@ -191,8 +192,8 @@ class SearchViewModelTest {
         val vm = viewModel(savedState)
         val result = SearchResult.CalendarDay(
             date = LocalDate.now(),
-            title = "Domani",
-            subtitle = null,
+            relativeDay = RelativeDay.Tomorrow,
+            title = "domani",
             score = 0.95,
         )
 

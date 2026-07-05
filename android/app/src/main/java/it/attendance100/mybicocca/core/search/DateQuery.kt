@@ -1,7 +1,5 @@
 package it.attendance100.mybicocca.core.search
 
-import android.content.Context
-import it.attendance100.mybicocca.R
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.format.TextStyle
@@ -11,12 +9,17 @@ import java.util.Locale
  * A date recognized inside a search query by [parseDateQuery].
  *
  * @property date The resolved calendar day.
- * @property label Display text ready for the result row title: "Domani", "Lunedì 15
- *   giugno"...
+ * @property label Display text ready for the result row title of weekday and numeric
+ *   matches ("Lunedì 15 giugno"), already localized through the parse [Locale]; null for
+ *   relative-day matches, whose wording lives in a string resource resolved at the UI layer.
+ * @property relativeDayOffset 0 = today, 1 = tomorrow, 2 = the day after, for the relative
+ *   day words; null for weekday and numeric matches. Kept as a raw offset so this core
+ *   parser stays free of Android string resources.
  */
 data class DateQueryMatch(
     val date: LocalDate,
-    val label: String,
+    val label: String?,
+    val relativeDayOffset: Int?,
 )
 
 /**
@@ -26,18 +29,18 @@ data class DateQueryMatch(
  * query, so unaccented forms ("lunedi") match too.
  *
  * Three expression families are recognized, resolved relative to [today]:
- * - relative day words: Italian ("oggi", "domani", "dopodomani") and English ("today", "tomorrow")
+ * - relative day words: Italian ("oggi", "domani", "dopodomani") and English ("today", "tomorrow"),
+ *   returned as a [DateQueryMatch.relativeDayOffset] so the caller can localize the wording
  * - weekday names in Italian or English, resolved to the next occurrence with today included
  * - numeric dates, day/month separated by '/' or '.' with an optional 2- or 4-digit year;
  *   2-digit years are 2000-based, and a bare day/month already in the past resolves to
  *   next year's occurrence rather than the elapsed one
  *
- * Display labels are produced in [locale] (defaults to [Locale.getDefault]).
+ * Weekday and numeric display labels are produced in [locale] (defaults to [Locale.getDefault]).
  */
 fun parseDateQuery(
     query: String,
     today: LocalDate,
-    context: Context,
     locale: Locale = Locale.getDefault(),
 ): DateQueryMatch? {
     val normalized = normalizeForSearch(query)
@@ -45,13 +48,13 @@ fun parseDateQuery(
 
     relativeDays[normalized]?.let { offset ->
         val date = today.plusDays(offset)
-        return DateQueryMatch(date, relativeLabel(offset, context))
+        return DateQueryMatch(date, label = null, relativeDayOffset = offset.toInt())
     }
 
     weekdays[normalized]?.let { target ->
         val delta = (target.value - today.dayOfWeek.value + 7) % 7
         val date = today.plusDays(delta.toLong())
-        return DateQueryMatch(date, date.weekdayDateLabel(locale))
+        return DateQueryMatch(date, label = date.weekdayDateLabel(locale), relativeDayOffset = null)
     }
 
     NumericDate.matchEntire(normalized)?.let { match ->
@@ -66,7 +69,11 @@ fun parseDateQuery(
         }
         val date = runCatching { LocalDate.of(year, month, day) }.getOrNull() ?: return null
         val resolved = if (rawYear.isEmpty() && date.isBefore(today)) date.plusYears(1) else date
-        return DateQueryMatch(resolved, resolved.weekdayDateLabel(locale))
+        return DateQueryMatch(
+            resolved,
+            label = resolved.weekdayDateLabel(locale),
+            relativeDayOffset = null
+        )
     }
 
     return null
@@ -78,13 +85,6 @@ private fun LocalDate.weekdayDateLabel(locale: Locale): String {
     val month = month.getDisplayName(TextStyle.FULL, locale)
     return "$weekday $dayOfMonth $month"
 }
-
-private fun relativeLabel(offset: Long, context: Context): String =
-    when (offset) {
-        0L -> context.getString(R.string.relative_day_today)
-        1L -> context.getString(R.string.relative_day_tomorrow)
-        else -> context.getString(R.string.relative_day_after_tomorrow)
-    }
 
 private val relativeDays = mapOf(
     // Italian

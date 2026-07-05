@@ -94,14 +94,21 @@ sealed interface SearchResult {
         override val key get() = "event:${eventId.value}"
     }
 
-    /** A recognized date expression ("domani", "lunedì", "22/06") — lands on that day. */
+    /**
+     * A recognized date expression ("domani", "lunedì", "22/06") — lands on that day.
+     * [title] is the weekday/numeric date label for weekday and numeric hits; for relative-day
+     * hits it holds the matched query text, so the recency ranking boost still applies, while
+     * [relativeDay] selects the localized label ("Oggi"/"Domani"/…) the UI shows instead. The
+     * subtitle is a fixed "open in calendar" string resolved by the UI.
+     */
     data class CalendarDay(
         val date: LocalDate,
+        val relativeDay: RelativeDay?,
         override val title: String,
-        override val subtitle: String?,
         override val score: Double,
     ) : SearchResult {
         override val category get() = SearchResultCategory.CalendarEvent
+        override val subtitle: String? get() = null
         override val key get() = "day"
     }
 
@@ -127,17 +134,24 @@ sealed interface SearchResult {
     }
 
     /**
-     * A matched row of the student transcript.
+     * A matched row of the student transcript. The subtitle (activity code plus a localized
+     * "grade" caption) is composed at the UI layer from these raw fields.
      *
      * @property rowId Local persistence identity of the transcript row.
+     * @property activityCode University activity code shown before the grade, when present.
+     * @property grade Numeric grade, or null for judgment-only / not-yet-passed rows.
+     * @property cumLaude True when the grade carries the lode (rendered as a trailing "L").
      */
     data class TranscriptEntry(
         val rowId: Long,
         override val title: String,
-        override val subtitle: String?,
+        val activityCode: String?,
+        val grade: Int?,
+        val cumLaude: Boolean,
         override val score: Double,
     ) : SearchResult {
         override val category get() = SearchResultCategory.TranscriptEntry
+        override val subtitle: String? get() = null
         override val key get() = "transcript:$rowId"
     }
 }

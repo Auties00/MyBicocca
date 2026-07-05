@@ -279,6 +279,12 @@
     <string name="elearning_course_part_prefix">PART</string>
     <string name="elearning_course_topics_count">%1$d topics</string>
     <string name="elearning_course_sync_failed">Course sync failed</string>
+    <string name="elearning_course_semester_first">First semester</string>
+    <string name="elearning_course_semester_first_range">September — February</string>
+    <string name="elearning_course_semester_second">Second semester</string>
+    <string name="elearning_course_semester_second_range">March — August</string>
+    <string name="elearning_course_semester_annual">Full year</string>
+    <string name="elearning_course_semester_annual_range">September — August</string>
 
     <!-- E-Learning: link sheet -->
     <string name="elearning_link_outside_app">This link opens outside the app.</string>

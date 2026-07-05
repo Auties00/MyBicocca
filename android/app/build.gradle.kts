@@ -1,8 +1,3 @@
-import org.gradle.kotlin.dsl.android
-import org.gradle.kotlin.dsl.androidComponents
-import org.gradle.kotlin.dsl.kotlin
-import org.gradle.kotlin.dsl.ksp
-import org.jetbrains.kotlin.gradle.internal.types.error.ErrorModuleDescriptor.platform
 import java.util.Properties
 
 // Plugins
@@ -180,9 +175,8 @@ dependencies {
     implementation("androidx.compose.material3:material3:1.5.0-alpha19")
     implementation("androidx.appcompat:appcompat:1.7.1")
     implementation("com.google.android.material:material:1.13.0")
-    implementation("androidx.compose.ui:ui-text-google-fonts:1.10.0")
-    implementation("androidx.compose.foundation:foundation:1.11.2")
-    implementation("androidx.compose.ui:ui-graphics:1.10.0")
+    implementation("androidx.compose.ui:ui-text-google-fonts")
+    implementation("androidx.compose.foundation:foundation")
 
     // Core library desugaring for java.time API on older Android versions
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
@@ -249,7 +243,6 @@ dependencies {
     implementation("com.patrykandpatrick.vico:compose:2.3.6")
     implementation("com.patrykandpatrick.vico:compose-m3:2.3.6")
     implementation("com.patrykandpatrick.vico:core:2.3.6")
-    debugImplementation("androidx.compose.ui:ui-tooling:1.10.0")
 
     // Haze for blur
     implementation("dev.chrisbanes.haze:haze:1.7.1")
