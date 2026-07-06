@@ -63,6 +63,7 @@ import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.SyncStatus
 import it.attendance100.mybicocca.core.state.valueOrNull
+import it.attendance100.mybicocca.core.utils.capitalizeString
 import it.attendance100.mybicocca.domain.model.studyplan.StudyPath
 import it.attendance100.mybicocca.domain.model.studyplan.StudyPlan
 import it.attendance100.mybicocca.domain.model.studyplan.StudyPlanCourse
@@ -669,7 +670,7 @@ private fun headerSubtitle(plan: StudyPlan?, path: StudyPath?): String {
  */
 private fun String.displayCase(): String =
     if (any { it.isLowerCase() }) this
-    else lowercase().replaceFirstChar { it.titlecase() }
+    else lowercase().capitalizeString()
 
 @Composable
 private fun StudyPlanType.label(): String = stringResource(

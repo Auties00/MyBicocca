@@ -636,7 +636,7 @@ private fun PathChoiceCard(
         ) {
             Column(Modifier.weight(1f)) {
                 Text(
-                    text = option.title,
+                    text = option.title ?: stringResource(R.string.studyplan_path_fallback),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
                     maxLines = 2,

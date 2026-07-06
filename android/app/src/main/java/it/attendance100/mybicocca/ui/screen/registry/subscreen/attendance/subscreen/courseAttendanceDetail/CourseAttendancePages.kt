@@ -34,6 +34,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.os.rememberHapticManager
+import it.attendance100.mybicocca.core.utils.capitalizeString
 import it.attendance100.mybicocca.domain.model.attendance.ClassroomAttendance
 import it.attendance100.mybicocca.domain.model.attendance.CourseAttendance
 import it.attendance100.mybicocca.domain.model.attendance.SessionAttendance
@@ -136,7 +137,7 @@ private fun SessionAttendance.tabTitle(): String {
         .let { if (it.startsWith("presenze", ignoreCase = true)) it.drop("presenze".length) else it }
         .trim()
         .lowercase()
-        .replaceFirstChar { it.titlecase() }
+        .capitalizeString()
     return cleaned.ifBlank { "Sessioni" }
 }
 

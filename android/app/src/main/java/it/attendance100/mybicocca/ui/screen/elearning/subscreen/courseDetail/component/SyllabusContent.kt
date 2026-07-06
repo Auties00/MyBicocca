@@ -49,6 +49,7 @@ import androidx.compose.ui.unit.sp
 import androidx.core.net.toUri
 import androidx.core.os.ConfigurationCompat
 import it.attendance100.mybicocca.R
+import it.attendance100.mybicocca.core.utils.capitalizeString
 import it.attendance100.mybicocca.domain.model.elearning.course.CourseDetails
 import it.attendance100.mybicocca.domain.model.elearning.course.CourseId
 import it.attendance100.mybicocca.domain.model.elearning.course.CourseLevel
@@ -99,11 +100,7 @@ fun SyllabusContent(
     ) {
         if (info.hasInfoTile) {
             item {
-                Column(modifier = Modifier.fillMaxWidth()) {
-                    SyllabusHeader(title = stringResource(R.string.elearning_course_info_section))
-                    Spacer(Modifier.height(12.dp))
-                    SyllabusInfoTile(info = info)
-                }
+                SyllabusInfoCard(info)
             }
         }
 
@@ -150,6 +147,15 @@ private fun SyllabusHeader(title: String) {
 }
 
 @Composable
+fun SyllabusInfoCard(info: SyllabusInfo) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        SyllabusHeader(title = stringResource(R.string.elearning_course_info_section))
+        Spacer(Modifier.height(12.dp))
+        SyllabusInfoTile(info = info)
+    }
+}
+
+@Composable
 private fun SyllabusSection(title: String, body: String) {
     Column(modifier = Modifier.fillMaxWidth()) {
         SyllabusHeader(title = title)
@@ -186,7 +192,7 @@ private fun SyllabusInfoTile(info: SyllabusInfo) {
                         modifier = Modifier.weight(1f),
                     )
                 }
-                if (info.hours != null) {
+                if (info.hours != null && info.hours > 0) {
                     BigStatCard(
                         value = info.hours.toString(),
                         label = stringResource(R.string.elearning_course_hours_stat),
@@ -261,7 +267,7 @@ private fun LanguageCard(language: String, modifier: Modifier = Modifier) {
             FlagSwatch(language = language)
             Spacer(Modifier.height(8.dp))
             Text(
-                text = language.replaceFirstChar { it.titlecase() },
+                text = language.capitalizeString(),
                 color = scheme.onSurface,
                 fontWeight = FontWeight.ExtraBold,
                 fontSize = 18.sp,
@@ -320,7 +326,7 @@ private fun LevelCard(level: CourseLevel, modifier: Modifier = Modifier) {
         Column(modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 14.dp, bottom = 12.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(3.dp)) {
                 CourseLevel.entries.forEachIndexed { i, t ->
-                    LevelPip(label = t.short, active = t == level)
+                    LevelPip(label = courseLevelShort(t), active = t == level)
                     if (i < CourseLevel.entries.lastIndex) {
                         Box(
                             modifier = Modifier
@@ -333,7 +339,7 @@ private fun LevelCard(level: CourseLevel, modifier: Modifier = Modifier) {
             }
             Spacer(Modifier.height(8.dp))
             Text(
-                text = level.title,
+                text = courseLevelTitle(level),
                 color = scheme.onSurface,
                 fontWeight = FontWeight.ExtraBold,
                 fontSize = 18.sp,
@@ -682,6 +688,24 @@ private fun SyllabusEmpty(modifier: Modifier) {
 }
 
 @Composable
+private fun courseLevelTitle(level: CourseLevel): String = stringResource(
+    when (level) {
+        CourseLevel.Bachelor -> R.string.elearning_course_level_bachelor
+        CourseLevel.Master -> R.string.elearning_course_level_master
+        CourseLevel.Doctorate -> R.string.elearning_course_level_doctorate
+    }
+)
+
+@Composable
+private fun courseLevelShort(level: CourseLevel): String = stringResource(
+    when (level) {
+        CourseLevel.Bachelor -> R.string.elearning_course_level_bachelor_short
+        CourseLevel.Master -> R.string.elearning_course_level_master_short
+        CourseLevel.Doctorate -> R.string.elearning_course_level_doctorate_short
+    }
+)
+
+@Composable
 private fun semesterTitle(semester: Semester): String = stringResource(
     when (semester) {
         Semester.First -> R.string.elearning_course_semester_first
@@ -802,6 +826,44 @@ fun StaffGridPreview() {
                         staff = sampleStaff,
                         courseName = "Programmazione Mobile"
                     )
+                }
+            }
+        }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun SyllabusInfoCardPreview() {
+    val sampleInfo = SyllabusInfo(
+        type = "Lezione",
+        credits = 6,
+        hours = 48,
+        language = "Italiano",
+        level = CourseLevel.Bachelor,
+        semester = Semester.First,
+        disciplinarySector = "INF/01",
+        objectives = "Il corso si propone di fornire le basi della programmazione mobile.",
+        summary = "Introduzione ad Android, Kotlin e Jetpack Compose.",
+        extendedProgramme = listOf(
+            ProgrammeSection(
+                "Introduzione",
+                listOf("Storia di Android", "Architettura del sistema")
+            ),
+            ProgrammeSection("Kotlin", listOf("Sintassi base", "Coroutines", "Flow"))
+        ),
+        prerequisites = "Conoscenza della programmazione a oggetti.",
+        teachingMethod = "Lezioni frontali ed esercitazioni in laboratorio.",
+        referenceMaterial = "Documentazione ufficiale Android.",
+        assessment = "Progetto finale e prova orale.",
+        officeHours = "Su appuntamento via email.",
+        sustainableDevelopmentGoals = "Istruzione di qualità."
+    )
+    BicoccaTheme(dark = false) {
+        ProvideCourseAccentPalette(dark = false) {
+            CourseDetailTheme(courseId = CourseId(1), dark = false) {
+                Surface(modifier = Modifier.padding(16.dp)) {
+                    SyllabusInfoCard(info = sampleInfo)
                 }
             }
         }

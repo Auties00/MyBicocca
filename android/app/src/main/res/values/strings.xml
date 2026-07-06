@@ -286,6 +286,12 @@
     <string name="elearning_course_semester_second_range">marzo — agosto</string>
     <string name="elearning_course_semester_annual">Annuale</string>
     <string name="elearning_course_semester_annual_range">settembre — agosto</string>
+    <string name="elearning_course_level_bachelor">Triennale</string>
+    <string name="elearning_course_level_master">Magistrale</string>
+    <string name="elearning_course_level_doctorate">Dottorato</string>
+    <string name="elearning_course_level_bachelor_short">L</string>
+    <string name="elearning_course_level_master_short">LM</string>
+    <string name="elearning_course_level_doctorate_short">D</string>
 
     <!-- E-Learning: link sheet -->
     <string name="elearning_link_outside_app">Questo collegamento porta fuori dall\'app.</string>
@@ -1409,6 +1415,7 @@
 
     <!-- Study plan (added) -->
     <string name="studyplan_path_title">Percorso</string>
+    <string name="studyplan_path_fallback">Percorso</string>
     <string name="studyplan_exit_confirm_title">Uscire senza inviare?</string>
     <string name="studyplan_path_facet">Percorso</string>
     <string name="studyplan_path_single">Percorso unico</string>

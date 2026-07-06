@@ -285,6 +285,12 @@
     <string name="elearning_course_semester_second_range">March — August</string>
     <string name="elearning_course_semester_annual">Full year</string>
     <string name="elearning_course_semester_annual_range">September — August</string>
+    <string name="elearning_course_level_bachelor">Bachelor\'s</string>
+    <string name="elearning_course_level_master">Master\'s</string>
+    <string name="elearning_course_level_doctorate">Doctorate</string>
+    <string name="elearning_course_level_bachelor_short">B</string>
+    <string name="elearning_course_level_master_short">M</string>
+    <string name="elearning_course_level_doctorate_short">PhD</string>
 
     <!-- E-Learning: link sheet -->
     <string name="elearning_link_outside_app">This link opens outside the app.</string>
@@ -1407,6 +1413,7 @@
 
     <!-- Study plan (added) -->
     <string name="studyplan_path_title">Path</string>
+    <string name="studyplan_path_fallback">Path</string>
     <string name="studyplan_exit_confirm_title">Exit without submitting?</string>
     <string name="studyplan_path_facet">Path</string>
     <string name="studyplan_path_single">Single path</string>

@@ -106,10 +106,12 @@ data class StudyPathOption(
     val conditionNote: String? = null,
     val languages: List<String> = emptyList(),
 ) {
-    /** Display title: percorso label, then schema description, then schema code. */
-    val title: String
+    /**
+     * Display title: percorso label, then schema description, then schema code; null when
+     * none is available, so the UI can supply a localized fallback.
+     */
+    val title: String?
         get() = percorso?.label?.takeIf { it.isNotBlank() }
             ?: schemaDescription?.takeIf { it.isNotBlank() }
             ?: schemaCode?.takeIf { it.isNotBlank() }
-            ?: "Percorso"
 }
