@@ -29,6 +29,7 @@ import it.attendance100.mybicocca.data.repository.HapticSettingsRepositoryImpl
 import it.attendance100.mybicocca.data.repository.LibraryRepositoryImpl
 import it.attendance100.mybicocca.data.repository.MapRepositoryImpl
 import it.attendance100.mybicocca.data.repository.PdfViewerSettingsRepositoryImpl
+import it.attendance100.mybicocca.data.repository.PrivacySettingsRepositoryImpl
 import it.attendance100.mybicocca.data.repository.QuestionnaireRepositoryImpl
 import it.attendance100.mybicocca.data.repository.SearchHistoryRepositoryImpl
 import it.attendance100.mybicocca.data.repository.SecuritySettingsRepositoryImpl
@@ -62,6 +63,7 @@ import it.attendance100.mybicocca.domain.repository.HapticSettingsRepository
 import it.attendance100.mybicocca.domain.repository.LibraryRepository
 import it.attendance100.mybicocca.domain.repository.MapRepository
 import it.attendance100.mybicocca.domain.repository.PdfViewerSettingsRepository
+import it.attendance100.mybicocca.domain.repository.PrivacySettingsRepository
 import it.attendance100.mybicocca.domain.repository.QuestionnaireRepository
 import it.attendance100.mybicocca.domain.repository.SearchHistoryRepository
 import it.attendance100.mybicocca.domain.repository.SecuritySettingsRepository
@@ -184,6 +186,10 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindSecuritySettingsRepository(impl: SecuritySettingsRepositoryImpl): SecuritySettingsRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindPrivacySettingsRepository(impl: PrivacySettingsRepositoryImpl): PrivacySettingsRepository
 
     @Binds
     @Singleton

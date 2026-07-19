@@ -9,6 +9,7 @@ plugins {
     id("com.google.dagger.hilt.android")
     id("org.jetbrains.kotlin.plugin.serialization")
     id("com.google.gms.google-services")
+    id("com.google.firebase.crashlytics")
 }
 
 /**
@@ -29,7 +30,24 @@ val keystoreProperties = Properties().apply {
 fun signingCredential(propertyKey: String, environmentKey: String): String? =
     keystoreProperties.getProperty(propertyKey) ?: System.getenv(environmentKey)
 
-val appVersionName = "0.0.4"
+val appBaseVersionName = "0.0.4"
+
+val buildNumber: Int = run {
+    val versionPropsFile = file("version.properties")
+    val current = versionPropsFile.takeIf { it.exists() }
+        ?.readText()
+        ?.substringAfter("buildNumber=", "")
+        ?.trim()
+        ?.toIntOrNull()
+        ?: 0
+    val buildTaskWords = listOf("assemble", "install", "bundle", "package", "build")
+    val isBuildInvocation = gradle.startParameter.taskNames.any { task ->
+        buildTaskWords.any { task.contains(it, ignoreCase = true) }
+    }
+    if (isBuildInvocation) (current + 1).also { versionPropsFile.writeText("buildNumber=$it\n") } else current
+}
+
+val appVersionName = "$appBaseVersionName${if (buildNumber != 0) "+$buildNumber" else ""}"
 
 // Android config
 android {
@@ -134,9 +152,9 @@ androidComponents {
             val abi = output.filters.find { it.filterType.toString() == "ABI" }?.identifier
 
             val newName = if (abi != null) {
-                "mybicocca-$abi-v$appVersionName.apk"
+                "mybicocca-$abi-v$appBaseVersionName.apk"
             } else {
-                "mybicocca-universal-v$appVersionName.apk"
+                "mybicocca-universal-v$appBaseVersionName.apk"
             }
             output.outputFileName = newName
         }
@@ -267,9 +285,13 @@ dependencies {
     implementation("io.ktor:ktor-client-content-negotiation:3.3.3")
     implementation("io.ktor:ktor-serialization-kotlinx-json:3.3.3")
 
-    // Firebase Performance Monitoring
-    implementation(platform("com.google.firebase:firebase-bom:34.4.0"))
+    // Firebase
+    implementation(platform("com.google.firebase:firebase-bom:34.16.0"))
+    // Performance Monitoring
     implementation("com.google.firebase:firebase-perf")
+    // Crashlytics and Analytics
+    implementation("com.google.firebase:firebase-crashlytics")
+    implementation("com.google.firebase:firebase-analytics")
 
     // Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")

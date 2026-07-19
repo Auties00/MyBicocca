@@ -861,6 +861,16 @@
     <string name="settings_security_lock_inactive_title">Blocca quando inattivo</string>
     <string name="settings_security_private_screen_title">Schermo privato</string>
     <string name="settings_security_private_screen_subtitle">Nascondi l\'app nelle anteprime e blocca gli screenshot</string>
+    <string name="settings_security_crash_reporting_title">Segnalazione arresti anomali</string>
+    <string name="settings_security_crash_reporting_subtitle">Invia rapporti anonimi sugli arresti anomali per aiutare a migliorare l\'app</string>
+
+    <!-- Crash screen -->
+    <string name="crash_screen_title">Qualcosa è andato storto</string>
+    <string name="crash_screen_description">Si è verificato un errore imprevisto. Salva il rapporto di errore per segnalarlo, oppure riavvia l\'app.</string>
+    <string name="crash_screen_save_log">Salva rapporto di errore</string>
+    <string name="crash_screen_restart">Riavvia l\'app</string>
+    <string name="crash_screen_save_failed">Impossibile creare il rapporto di errore</string>
+    <string name="crash_screen_no_stack_trace">Nessuna analisi dello stack disponibile</string>
     <string name="settings_security_biometric_unavailable">Nessun dato biometrico registrato su questo dispositivo: verrà usata la password.</string>
     <string name="settings_security_biometric_not_available">L\'accesso biometrico non è disponibile su questo dispositivo: verrà usata la password.</string>
     <string name="settings_security_enable_lock">Attiva il blocco app</string>

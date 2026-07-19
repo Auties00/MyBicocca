@@ -860,6 +860,16 @@
     <string name="settings_security_lock_inactive_title">Lock when inactive</string>
     <string name="settings_security_private_screen_title">Private screen</string>
     <string name="settings_security_private_screen_subtitle">Hide the app in previews and block screenshots</string>
+    <string name="settings_security_crash_reporting_title">Crash reporting</string>
+    <string name="settings_security_crash_reporting_subtitle">Send anonymous crash reports to help improve the app</string>
+
+    <!-- Crash screen -->
+    <string name="crash_screen_title">Something went wrong</string>
+    <string name="crash_screen_description">An unexpected error occurred. Save the crash log to report it, or restart the app.</string>
+    <string name="crash_screen_save_log">Save crash log</string>
+    <string name="crash_screen_restart">Restart the app</string>
+    <string name="crash_screen_save_failed">Couldn\'t create the crash log</string>
+    <string name="crash_screen_no_stack_trace">No stack trace available</string>
     <string name="settings_security_biometric_unavailable">No biometric data enrolled on this device: password will be used.</string>
     <string name="settings_security_biometric_not_available">Biometric unlock is not available on this device: password will be used.</string>
     <string name="settings_security_enable_lock">Enable app lock</string>

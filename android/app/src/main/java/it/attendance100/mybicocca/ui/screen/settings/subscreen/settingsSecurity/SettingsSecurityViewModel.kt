@@ -4,6 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import it.attendance100.mybicocca.domain.model.security.UnlockResult
+import it.attendance100.mybicocca.domain.usecase.privacy.ObserveCrashReportingEnabledUseCase
+import it.attendance100.mybicocca.domain.usecase.privacy.SetCrashReportingEnabledUseCase
 import it.attendance100.mybicocca.domain.usecase.security.ObserveAppLockEnabledUseCase
 import it.attendance100.mybicocca.domain.usecase.security.ObserveLockTimeoutUseCase
 import it.attendance100.mybicocca.domain.usecase.security.ObserveSecureScreenUseCase
@@ -25,17 +27,20 @@ import javax.inject.Inject
  * eagerly-shared state — [enabled] (master toggle), [timeoutMinutes] (inactivity threshold) and
  * [secureScreen] (hide previews / block screenshots) — plus [verifying], the in-flight flag for
  * password checks that drops overlapping verification attempts. Actions persist the preferences
- * ([setEnabled], [setTimeout], [setSecureScreen]) and authorize the master toggle's password
- * fallback via [verifyPassword].
+ * ([setEnabled], [setTimeout], [setSecureScreen], [setCrashReporting]) and authorize the
+ * master toggle's password fallback via [verifyPassword]. [crashReporting] streams the
+ * Crashlytics opt-in, the one privacy preference that lives outside the app-lock cluster.
  */
 @HiltViewModel
 class SettingsSecurityViewModel @Inject constructor(
     observeAppLockEnabled: ObserveAppLockEnabledUseCase,
     observeLockTimeout: ObserveLockTimeoutUseCase,
     observeSecureScreen: ObserveSecureScreenUseCase,
+    observeCrashReporting: ObserveCrashReportingEnabledUseCase,
     private val setAppLockEnabled: SetAppLockEnabledUseCase,
     private val setLockTimeoutMinutes: SetLockTimeoutUseCase,
     private val setSecureScreenEnabled: SetSecureScreenUseCase,
+    private val setCrashReportingEnabled: SetCrashReportingEnabledUseCase,
     private val verifyAppLockPassword: VerifyAppLockPasswordUseCase,
     private val unlockApp: UnlockAppUseCase,
 ) : ViewModel() {
@@ -48,6 +53,9 @@ class SettingsSecurityViewModel @Inject constructor(
 
     val secureScreen: StateFlow<Boolean> = observeSecureScreen()
         .stateIn(viewModelScope, SharingStarted.Eagerly, false)
+
+    val crashReporting: StateFlow<Boolean> = observeCrashReporting()
+        .stateIn(viewModelScope, SharingStarted.Eagerly, true)
 
     private val _verifying = MutableStateFlow(false)
     val verifying: StateFlow<Boolean> = _verifying.asStateFlow()
@@ -70,6 +78,10 @@ class SettingsSecurityViewModel @Inject constructor(
 
     fun setSecureScreen(enabled: Boolean) {
         viewModelScope.launch { setSecureScreenEnabled(enabled) }
+    }
+
+    fun setCrashReporting(enabled: Boolean) {
+        viewModelScope.launch { setCrashReportingEnabled(enabled) }
     }
 
     /** Password-fallback authorization for the master toggle, used when biometrics are unavailable. */

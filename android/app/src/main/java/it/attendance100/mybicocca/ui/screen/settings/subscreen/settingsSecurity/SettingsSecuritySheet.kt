@@ -63,10 +63,10 @@ private val TIMEOUT_STEPS = listOf(0, 1, 5, 10, 15, 30, 60, 240)
  * a password [AlertDialog] as fallback (and as the prompt's "Usa password" escape); only a
  * successful authorization commits the change. While the lock is on, an inactivity-timeout
  * slider and the "Schermo privato" switch (hide previews / block screenshots) reveal themselves
- * beneath the cells. A caption explains when biometrics are unenrolled or unavailable and the
+ * beneath the cells. The crash-reporting toggle (Crashlytics opt-out) sits below regardless of
+ * the lock state. A caption explains when biometrics are unenrolled or unavailable and the
  * password will be used.
  */
-@Suppress("AssignedValueIsNeverRead")
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun SettingsSecuritySheet(
@@ -80,24 +80,13 @@ fun SettingsSecuritySheet(
     val enabled by viewModel.enabled.collectAsStateWithLifecycle()
     val timeoutMinutes by viewModel.timeoutMinutes.collectAsStateWithLifecycle()
     val secureScreen by viewModel.secureScreen.collectAsStateWithLifecycle()
+    val crashReporting by viewModel.crashReporting.collectAsStateWithLifecycle()
 
     var showPasswordDialog by remember { mutableStateOf(false) }
     var pendingTarget by remember { mutableStateOf(false) }
     var password by remember { mutableStateOf("") }
     var passwordError by remember { mutableStateOf<String?>(null) }
     var authorizing by remember { mutableStateOf(false) }
-
-    val timeoutImmediately = stringResource(R.string.settings_security_timeout_immediately)
-    val timeout1Hour = stringResource(R.string.settings_security_timeout_1hour)
-    val timeout4Hours = stringResource(R.string.settings_security_timeout_4hours)
-    val timeoutLabel: (Int) -> String = { minutes ->
-        when (minutes) {
-            0 -> timeoutImmediately
-            60 -> timeout1Hour
-            240 -> timeout4Hours
-            else -> "$minutes min"
-        }
-    }
 
     val confirmIdentityStr = stringResource(R.string.settings_security_confirm_identity)
     val enableLockStr = stringResource(R.string.settings_security_enable_lock)
@@ -184,12 +173,25 @@ fun SettingsSecuritySheet(
                         onTimeoutChange = { viewModel.setTimeout(it) },
                     )
                     Spacer(Modifier.height(24.dp))
-                    SecureScreenRow(
+                    SettingToggleRow(
+                        title = stringResource(R.string.settings_security_private_screen_title),
+                        subtitle = stringResource(R.string.settings_security_private_screen_subtitle),
                         checked = secureScreen,
                         onCheckedChange = { viewModel.setSecureScreen(it) },
                     )
                     Spacer(Modifier.height(4.dp))
                 }
+            }
+
+            Column(modifier = Modifier.padding(horizontal = 20.dp)) {
+                Spacer(Modifier.height(20.dp))
+                SettingToggleRow(
+                    title = stringResource(R.string.settings_security_crash_reporting_title),
+                    subtitle = stringResource(R.string.settings_security_crash_reporting_subtitle),
+                    checked = crashReporting,
+                    onCheckedChange = { viewModel.setCrashReporting(it) },
+                )
+                Spacer(Modifier.height(4.dp))
             }
 
             if (capability == BiometricCapability.NoneEnrolled) {
@@ -278,7 +280,6 @@ private fun TimeoutSlider(
     onTimeoutChange: (Int) -> Unit,
 ) {
     val haptic = rememberHapticManager()
-    val context = LocalContext.current
 
     var sliderPos by remember(timeoutMinutes) {
         mutableFloatStateOf(TIMEOUT_STEPS.indexOf(timeoutMinutes).coerceAtLeast(0).toFloat())
@@ -340,28 +341,34 @@ private fun TimeoutSlider(
 }
 
 @Composable
-private fun SecureScreenRow(
+private fun SettingToggleRow(
+    title: String,
+    subtitle: String,
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit,
 ) {
+    val haptic = rememberHapticManager()
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(modifier = Modifier.weight(1f)) {
             Text(
-                text = stringResource(R.string.settings_security_private_screen_title),
+                text = title,
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold,
             )
             Text(
-                text = stringResource(R.string.settings_security_private_screen_subtitle),
+                text = subtitle,
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
         Spacer(Modifier.width(12.dp))
-        Switch(checked = checked, onCheckedChange = onCheckedChange)
+        Switch(checked = checked, onCheckedChange = { b ->
+            onCheckedChange(b)
+            haptic.tap()
+        })
     }
 }
 
