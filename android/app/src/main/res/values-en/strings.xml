@@ -864,8 +864,15 @@
     <string name="settings_security_crash_reporting_subtitle">Send anonymous crash reports to help improve the app</string>
 
     <!-- Crash screen -->
-    <string name="crash_screen_title">Something went wrong</string>
-    <string name="crash_screen_description">An unexpected error occurred. Save the crash log to report it, or restart the app.</string>
+    <string-array name="crash_screen_titles">
+        <item>Whoops!</item>
+        <item>Oh no!</item>
+        <item>Something went wrong</item>
+        <item>Well, this is awkward…</item>
+        <item>That wasn’t supposed to happen</item>
+        <item>Ouch!</item>
+    </string-array>
+    <string name="crash_screen_description">%1$s ran into an unexpected error. You can save the crash log to report it.</string>
     <string name="crash_screen_save_log">Save crash log</string>
     <string name="crash_screen_restart">Restart the app</string>
     <string name="crash_screen_save_failed">Couldn\'t create the crash log</string>
@@ -888,7 +895,7 @@
     <string name="settings_haptic_toggle_title">Haptic feedback</string>
     <string name="settings_haptic_toggle_subtitle">Vibrate on taps and during interactions</string>
 
-    <!-- Appelli added strings -->
+    <!-- Appelli -->
     <string name="relative_day_in_days">In %1$d days</string>
     <string name="relative_day_after_tomorrow">Day after tomorrow</string>
     <string name="appelli_taken_on">Taken on %1$s</string>
@@ -900,13 +907,13 @@
     <string name="appelli_credits">%1$s Credits</string>
     <string name="appelli_exam">Exam</string>
 
-    <!-- Enrollment added strings -->
+    <!-- Enrollment -->
     <string name="enrollment_year">Year %1$d</string>
     <string name="enrollment_year_unknown">Course Year Unknown</string>
     <string name="enrollment_badge_out_of_course_year">Out of Course · Year %1$d</string>
     <string name="enrollment_badge_part_time_credits">Part-time · %1$s Credits</string>
 
-    <!-- Appointment added strings -->
+    <!-- Appointment -->
     <string name="appointments_duration">Appointment: %1$d min</string>
     <string name="appointments_section_career">Manage your academic career</string>
     <string name="appointments_section_teaching">Course program counters</string>
@@ -917,15 +924,15 @@
     <string name="appointments_section_label_deliveries">Collections and Deliveries</string>
     <string name="appointments_section_label_other">Other Offices</string>
 
-    <!-- Attendance added strings -->
+    <!-- Attendance -->
     <string name="attendance_year">Year %1$d</string>
 
-    <!-- Library added strings -->
+    <!-- Library -->
     <string name="library_duration_minutes_only">%1$d min</string>
     <string name="library_duration_hours_only">%1$dh</string>
     <string name="library_duration_hours_minutes">%1$dh %2$dm</string>
 
-    <!-- DateQuery added string -->
+    <!-- DateQuery -->
     <string name="search_open_in_calendar">Open in Calendar</string>
     <string name="search_grade">Grade</string>
 

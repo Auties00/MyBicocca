@@ -865,8 +865,15 @@
     <string name="settings_security_crash_reporting_subtitle">Invia rapporti anonimi sugli arresti anomali per aiutare a migliorare l\'app</string>
 
     <!-- Crash screen -->
-    <string name="crash_screen_title">Qualcosa è andato storto</string>
-    <string name="crash_screen_description">Si è verificato un errore imprevisto. Salva il rapporto di errore per segnalarlo, oppure riavvia l\'app.</string>
+    <string-array name="crash_screen_titles">
+        <item>Ops!</item>
+        <item>Oh no!</item>
+        <item>Qualcosa è andato storto</item>
+        <item>Che imbarazzo…</item>
+        <item>Non doveva succedere</item>
+        <item>Ahia!</item>
+    </string-array>
+    <string name="crash_screen_description">Si è verificato un errore imprevisto in %1$s. Puoi salvare il rapporto di errore per segnalarlo.</string>
     <string name="crash_screen_save_log">Salva rapporto di errore</string>
     <string name="crash_screen_restart">Riavvia l\'app</string>
     <string name="crash_screen_save_failed">Impossibile creare il rapporto di errore</string>
@@ -889,7 +896,7 @@
     <string name="settings_haptic_toggle_title">Vibrazione abilitata</string>
     <string name="settings_haptic_toggle_subtitle">Produci vibrazioni al tocco e durante le interazioni</string>
 
-    <!-- Appelli added strings -->
+    <!-- Appelli -->
     <string name="relative_day_in_days">Tra %1$d giorni</string>
     <string name="relative_day_after_tomorrow">Dopodomani</string>
     <string name="appelli_taken_on">Sostenuto il %1$s</string>
@@ -901,13 +908,13 @@
     <string name="appelli_credits">%1$s CFU</string>
     <string name="appelli_exam">Esame</string>
 
-    <!-- Enrollment added strings -->
+    <!-- Enrollment -->
     <string name="enrollment_year">Anno %1$d</string>
     <string name="enrollment_year_unknown">Anno di corso n/d</string>
     <string name="enrollment_badge_out_of_course_year">Fuori corso · Anno %1$d</string>
     <string name="enrollment_badge_part_time_credits">Part-time · %1$s CFU</string>
 
-    <!-- Appointment added strings -->
+    <!-- Appointment -->
     <string name="appointments_duration">Appuntamento: %1$d min</string>
     <string name="appointments_section_career">Gestisci la tua carriera</string>
     <string name="appointments_section_teaching">Sportelli didattici</string>
@@ -918,15 +925,15 @@
     <string name="appointments_section_label_deliveries">Ritiri e consegne</string>
     <string name="appointments_section_label_other">Altri sportelli</string>
 
-    <!-- Attendance added strings -->
+    <!-- Attendance -->
     <string name="attendance_year">Anno %1$d</string>
 
-    <!-- Library added strings -->
+    <!-- Library -->
     <string name="library_duration_minutes_only">%1$d min</string>
     <string name="library_duration_hours_only">%1$dh</string>
     <string name="library_duration_hours_minutes">%1$dh %2$dm</string>
 
-    <!-- DateQuery added string -->
+    <!-- DateQuery -->
     <string name="search_open_in_calendar">Apri nel calendario</string>
     <string name="search_grade">Voto</string>
 

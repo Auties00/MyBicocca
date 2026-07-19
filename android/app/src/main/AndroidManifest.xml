@@ -81,6 +81,15 @@
       </intent-filter>
     </activity>
 
+    <!-- Crash screen host, launched by GlobalExceptionHandler on an uncaught exception. Its own
+         process so it survives the main process's death; plain theme since the splash pipeline
+         never runs here. -->
+    <activity
+            android:name="it.attendance100.mybicocca.CrashActivity"
+            android:exported="false"
+            android:process=":crash"
+            android:theme="@style/Theme.MyBicocca" />
+
     <service
         android:name=".ui.screen.elearning.subscreen.videoPlayer.player.VideoPlaybackService"
         android:exported="false"

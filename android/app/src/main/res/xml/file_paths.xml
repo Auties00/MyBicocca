@@ -10,4 +10,8 @@
     <cache-path
             name="updates"
             path="updates/" />
+    <!-- Crash logs assembled by CrashLogBuilder, shared from the crash screen. -->
+    <cache-path
+            name="crash_logs"
+            path="crash_logs/" />
 </paths>

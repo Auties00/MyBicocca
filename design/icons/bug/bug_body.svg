@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="Layer_1" xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 24 24">
+  <!-- Generator: Adobe Illustrator 29.0.1, SVG Export Plug-In . SVG Version: 2.1.0 Build 192)  -->
+  <defs>
+    <style>
+      .st0, .st1 {
+        display: none;
+      }
+
+      .st0, .st2 {
+        fill: #e8eaed;
+      }
+    </style>
+  </defs>
+  <path class="st0" d="M17,12h3v2h-3v-2ZM17,18h3v-2h-3v2ZM20,8h-3v2h3v-2ZM4,18h3v-2h-3v2ZM4,14h3v-2h-3v2ZM7,8h-3v2h3v-2ZM17,4.4l-1.4-1.4-2.3,2.3,1.5,1.4,2.3-2.3ZM8.4,3l-1.4,1.4,2.2,2.3,1.5-1.4-2.3-2.3Z"/>
+  <g class="st1">
+    <rect id="Right_2" class="st2" x="17" y="12" width="3" height="2"/>
+    <rect id="Right_3" class="st2" x="17" y="16" width="3" height="2"/>
+    <polygon id="Right_1" class="st2" points="20 8 17 8 17 10 20 10 20 8"/>
+    <rect id="Left_3" class="st2" x="4" y="16" width="3" height="2"/>
+    <rect id="Left_2" class="st2" x="4" y="12" width="3" height="2"/>
+    <polygon id="Left_1" class="st2" points="7 8 4 8 4 10 7 10 7 8"/>
+    <polygon id="Right_Ear" class="st2" points="17 4.4 15.6 3 13.3 5.3 14.7 6.7 17 4.4"/>
+    <polygon id="Left_Ear" class="st2" points="8.4 3 7 4.4 9.2 6.7 10.7 5.3 8.4 3"/>
+  </g>
+  <g>
+    <rect class="st2" x="10" y="14" width="4" height="2"/>
+    <rect class="st2" x="10" y="10" width="4" height="2"/>
+  </g>
+  <path class="st2" d="M12,6.9c2.2,0,4,1.8,4,4v4.1c0,2.2-1.8,4-4,4s-4-1.8-4-4v-4.1c0-2.2,1.8-4,4-4M12,4.9h0c-3.3,0-6,2.7-6,6v4.1c0,3.3,2.7,6,6,6h0c3.3,0,6-2.7,6-6v-4.1c0-3.3-2.7-6-6-6h0Z"/>
+</svg>
