@@ -45,8 +45,9 @@ class ExamCacheDaoTest {
     }
 
     @Test
-    fun `replaceBookings stores rows and getBookings returns them ordered by cache order`() = runTest {
-        dao.replaceBookings(
+    fun `replaceBookingsPreservingTotals stores rows and getBookings returns them ordered by cache order`() =
+        runTest {
+            dao.replaceBookingsPreservingTotals(
             careerId = 1L,
             rows = listOf(
                 booking(1L, callId = 30, cacheOrder = 2),
@@ -62,21 +63,31 @@ class ExamCacheDaoTest {
     }
 
     @Test
-    fun `replaceBookings wipes the prior career slice before inserting the fresh rows`() = runTest {
-        dao.replaceBookings(1L, listOf(booking(1L, callId = 10, cacheOrder = 0), booking(1L, callId = 11, cacheOrder = 1)))
+    fun `replaceBookingsPreservingTotals wipes the prior career slice before inserting the fresh rows`() =
+        runTest {
+            dao.replaceBookingsPreservingTotals(
+                1L,
+                listOf(
+                    booking(1L, callId = 10, cacheOrder = 0),
+                    booking(1L, callId = 11, cacheOrder = 1)
+                )
+            )
 
-        dao.replaceBookings(1L, listOf(booking(1L, callId = 99, cacheOrder = 0)))
+            dao.replaceBookingsPreservingTotals(
+                1L,
+                listOf(booking(1L, callId = 99, cacheOrder = 0))
+            )
 
         val stored = dao.getBookings(1L)
         assertThat(stored.map { it.callId }).containsExactly(99)
     }
 
     @Test
-    fun `replaceBookings leaves other careers untouched`() = runTest {
-        dao.replaceBookings(1L, listOf(booking(1L, callId = 10, cacheOrder = 0)))
-        dao.replaceBookings(2L, listOf(booking(2L, callId = 20, cacheOrder = 0)))
+    fun `replaceBookingsPreservingTotals leaves other careers untouched`() = runTest {
+        dao.replaceBookingsPreservingTotals(1L, listOf(booking(1L, callId = 10, cacheOrder = 0)))
+        dao.replaceBookingsPreservingTotals(2L, listOf(booking(2L, callId = 20, cacheOrder = 0)))
 
-        dao.replaceBookings(1L, listOf(booking(1L, callId = 11, cacheOrder = 0)))
+        dao.replaceBookingsPreservingTotals(1L, listOf(booking(1L, callId = 11, cacheOrder = 0)))
 
         assertThat(dao.getBookings(1L).map { it.callId }).containsExactly(11)
         assertThat(dao.getBookings(2L).map { it.callId }).containsExactly(20)
@@ -107,7 +118,7 @@ class ExamCacheDaoTest {
             publishedNote = "ottimo",
         )
 
-        dao.replaceBookings(1L, listOf(row))
+        dao.replaceBookingsPreservingTotals(1L, listOf(row))
 
         assertThat(dao.getBookings(1L).single()).isEqualTo(row)
     }
@@ -154,6 +165,31 @@ class ExamCacheDaoTest {
 
         assertThat(dao.getResults(999L)).isEmpty()
     }
+
+    @Test
+    fun `replaceBookingsPreservingTotals carries a lazily fetched total across refreshes`() =
+        runTest {
+            dao.replaceBookingsPreservingTotals(
+                1L,
+                listOf(booking(1L, callId = 10, cacheOrder = 0))
+            )
+            dao.updateBookingTotal(
+                careerId = 1L,
+                courseOfStudyId = 1000L,
+                activityId = 2000L,
+                callId = 10,
+                totalBookings = 27,
+            )
+
+            // A refresh whose rows carry no total (the /prenotazioni payload never does)
+            // must not clobber the previously persisted numIscritti.
+            dao.replaceBookingsPreservingTotals(
+                1L,
+                listOf(booking(1L, callId = 10, cacheOrder = 0))
+            )
+
+            assertThat(dao.getBookings(1L).single().totalBookings).isEqualTo(27)
+        }
 
     private fun booking(careerId: Long, callId: Int, cacheOrder: Int) = BookedExamEntity(
         careerId = careerId,

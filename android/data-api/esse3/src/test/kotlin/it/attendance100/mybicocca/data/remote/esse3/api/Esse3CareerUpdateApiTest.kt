@@ -401,7 +401,7 @@ class Esse3CareerUpdateApiTest : Esse3ApiTestBase() {
                 api.careerUpdate.setProcessingDetailFlag(
                     careerUpdateId = 1L,
                     careerUpdateDetailId = 1L,
-                    body = kotlinx.serialization.json.JsonObject(emptyMap())
+                    processNow = false
                 )
             }
             logger.info("testSetProcessingDetailFlag: Esse3Exception thrown as expected")

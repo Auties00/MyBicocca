@@ -39,13 +39,15 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import it.attendance100.mybicocca.R
+import it.attendance100.mybicocca.core.os.currentLocale
+import it.attendance100.mybicocca.core.os.rememberHapticManager
+import it.attendance100.mybicocca.core.utils.toOrdinal
 import it.attendance100.mybicocca.domain.model.exam.BookedExam
 import it.attendance100.mybicocca.ui.component.card.DetailFactCard
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.appelli.AppelliTestTags
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.appelli.ext.countdownLabel
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.appelli.ext.displayLabel
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.appelli.ext.locationLabel
-import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.appelli.state.ExamDocument
 import it.attendance100.mybicocca.ui.theme.LocalIsOnline
 import java.time.LocalDate
@@ -73,6 +75,7 @@ fun BookedExamDetailPage(
     downloadingDocument: ExamDocument?,
     onRequestCancel: () -> Unit,
     onDownloadSlip: (BookedExam) -> Unit,
+    totalBookings: Int? = null,
 ) {
     val location = remember(booking.classroomDescription, booking.buildingDescription) {
         booking.locationLabel()
@@ -99,7 +102,7 @@ fun BookedExamDetailPage(
                     value = buildString {
                         append(
                             dt.toLocalDate().format(FullDateFormat)
-                                .replaceFirstChar { it.titlecase(Locale.getDefault()) },
+                                .replaceFirstChar { it.titlecase(currentLocale()) },
                         )
                         append(" · ore ")
                         append(dt.toLocalTime().format(TimeFormat))
@@ -123,7 +126,15 @@ fun BookedExamDetailPage(
                 DetailFactCard(
                     icon = Icons.Outlined.ConfirmationNumber,
                     label = stringResource(R.string.appelli_position),
-                    value = stringResource(R.string.appelli_position_value, p),
+                    value = totalBookings?.takeIf { it >= p }
+                        ?.let {
+                            stringResource(
+                                R.string.appelli_position_value_of_total,
+                                p.toOrdinal(),
+                                it
+                            )
+                        }
+                        ?: stringResource(R.string.appelli_position_value, p.toOrdinal()),
                 )
             }
             booking.bookingDate?.let { booked ->

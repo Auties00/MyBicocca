@@ -7,6 +7,8 @@ import io.mockk.coVerifyOrder
 import io.mockk.every
 import io.mockk.mockk
 import it.attendance100.mybicocca.domain.model.security.UnlockResult
+import it.attendance100.mybicocca.domain.usecase.privacy.ObserveCrashReportingEnabledUseCase
+import it.attendance100.mybicocca.domain.usecase.privacy.SetCrashReportingEnabledUseCase
 import it.attendance100.mybicocca.domain.usecase.security.ObserveAppLockEnabledUseCase
 import it.attendance100.mybicocca.domain.usecase.security.ObserveLockTimeoutUseCase
 import it.attendance100.mybicocca.domain.usecase.security.ObserveSecureScreenUseCase
@@ -38,9 +40,11 @@ class SettingsSecurityViewModelTest {
     private val observeAppLockEnabled: ObserveAppLockEnabledUseCase = mockk()
     private val observeLockTimeout: ObserveLockTimeoutUseCase = mockk()
     private val observeSecureScreen: ObserveSecureScreenUseCase = mockk()
+    private val observeCrashReporting: ObserveCrashReportingEnabledUseCase = mockk()
     private val setAppLockEnabled: SetAppLockEnabledUseCase = mockk(relaxed = true)
     private val setLockTimeoutMinutes: SetLockTimeoutUseCase = mockk(relaxed = true)
     private val setSecureScreenEnabled: SetSecureScreenUseCase = mockk(relaxed = true)
+    private val setCrashReportingEnabled: SetCrashReportingEnabledUseCase = mockk(relaxed = true)
     private val verifyAppLockPassword: VerifyAppLockPasswordUseCase = mockk()
     private val unlockApp: UnlockAppUseCase = mockk(relaxed = true)
 
@@ -52,13 +56,16 @@ class SettingsSecurityViewModelTest {
         every { observeAppLockEnabled() } returns flowOf(enabled)
         every { observeLockTimeout() } returns flowOf(timeoutMinutes)
         every { observeSecureScreen() } returns flowOf(secureScreen)
+        every { observeCrashReporting() } returns flowOf(true)
         return SettingsSecurityViewModel(
             observeAppLockEnabled,
             observeLockTimeout,
             observeSecureScreen,
+            observeCrashReporting,
             setAppLockEnabled,
             setLockTimeoutMinutes,
             setSecureScreenEnabled,
+            setCrashReportingEnabled,
             verifyAppLockPassword,
             unlockApp,
         )

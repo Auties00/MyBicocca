@@ -139,6 +139,7 @@
     <string name="event_detail_duration_hours_minutes">%1$dh %2$dmin</string>
     <string name="event_detail_duration_format">%1$s · %2$s</string>
     <string name="event_detail_booking_position">Position %1$d</string>
+    <string name="event_detail_booking_position_of_total">Position %1$d of %2$d</string>
     <string name="event_detail_booking_date">booked on %1$s</string>
     <string name="event_detail_cancellable_until">Until %1$s</string>
     <string name="event_detail_go_to_reservation">Go to booking</string>
@@ -412,7 +413,9 @@
     <string name="appelli_location_unassigned">Room to be confirmed</string>
     <string name="appelli_modality">MODE</string>
     <string name="appelli_position">POSITION</string>
-    <string name="appelli_position_value">%1$dth to book</string>
+    <!-- %1$s is a pre-formatted locale-aware ordinal (Int.toOrdinal), e.g. "1st". -->
+    <string name="appelli_position_value">%1$s to book</string>
+    <string name="appelli_position_value_of_total">%1$s of %2$d booked</string>
     <string name="appelli_booking">BOOKING</string>
     <string name="appelli_booking_made">Made on %1$s</string>
     <string name="appelli_cancellable_until">cancellable until %1$s</string>
@@ -541,7 +544,8 @@
     <!-- Registry: deadlines -->
     <string name="deadlines_title">Deadlines</string>
     <string name="deadlines_none_next_30">No deadlines in the next 30 days</string>
-    <string name="deadlines_next_30_suffix"> in the next 30 days</string>
+    <!-- Quoted so AAPT keeps the leading space when appended after the bold count. -->
+    <string name="deadlines_next_30_suffix">" in the next 30 days"</string>
     <string name="deadlines_loading">Loading deadlines…</string>
     <string name="deadlines_none_imminent">No upcoming deadlines.</string>
     <string name="deadlines_load_failed">Load failed</string>

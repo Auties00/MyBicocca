@@ -1,6 +1,7 @@
 package it.attendance100.mybicocca.data.remote.esse3.api
 
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3PermissionLevel
+import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3StudyPlanStateFilter
 import it.attendance100.mybicocca.data.remote.esse3.exception.Esse3Exception
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.BeforeAll
@@ -204,7 +205,7 @@ class Esse3PlansApiTest : Esse3ApiTestBase() {
             logger.info("testGetStudentPlanHeadersWithOptionalParams: calling getStudentPlanHeaders() with planState filter")
             val resultWithPlanState = api.plans.getStudentPlanHeaders(
                 studentId = studentId,
-                planState = listOf("A", "V")
+                planState = Esse3StudyPlanStateFilter.A
             )
             logger.info("testGetStudentPlanHeadersWithOptionalParams: result with planState size=${resultWithPlanState.size}")
         } else {

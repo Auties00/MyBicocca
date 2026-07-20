@@ -23,11 +23,41 @@ interface ExamCacheDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertBookings(rows: List<BookedExamEntity>)
 
+    /**
+     * Replaces the booking list while carrying over each row's lazily fetched total.
+     * Returns the merged rows as persisted.
+     */
     @Transaction
-    suspend fun replaceBookings(careerId: Long, rows: List<BookedExamEntity>) {
+    suspend fun replaceBookingsPreservingTotals(
+        careerId: Long,
+        rows: List<BookedExamEntity>,
+    ): List<BookedExamEntity> {
+        val knownTotals = getBookings(careerId)
+            .filter { it.totalBookings != null }
+            .associate { Triple(it.courseOfStudyId, it.activityId, it.callId) to it.totalBookings }
+        val merged = rows.map { row ->
+            if (row.totalBookings != null) row
+            else knownTotals[Triple(row.courseOfStudyId, row.activityId, row.callId)]
+                ?.let { row.copy(totalBookings = it) } ?: row
+        }
         clearBookings(careerId)
-        insertBookings(rows)
+        insertBookings(merged)
+        return merged
     }
+
+    /** Persists a lazily fetched numIscritti onto its cached booking row (see getCallTotalBookings). */
+    @Query(
+        "UPDATE cached_booked_exam SET total_bookings = :totalBookings " +
+                "WHERE career_id = :careerId AND course_of_study_id = :courseOfStudyId " +
+                "AND activity_id = :activityId AND call_id = :callId",
+    )
+    suspend fun updateBookingTotal(
+        careerId: Long,
+        courseOfStudyId: Long,
+        activityId: Long,
+        callId: Int,
+        totalBookings: Int,
+    )
 
     @Query("SELECT * FROM cached_exam_call WHERE career_id = :careerId ORDER BY cache_order")
     suspend fun getCalls(careerId: Long): List<ExamCallEntity>

@@ -38,6 +38,7 @@ data class BookedExamEntity(
     val credits: Float?,
     @ColumnInfo("exam_mode_description") val examModeDescription: String?,
     val position: Int?,
+    @ColumnInfo("total_bookings") val totalBookings: Int? = null,
     @ColumnInfo("booking_date") val bookingDate: String?,
     @ColumnInfo("cancellable_until") val cancellableUntil: String?,
     @ColumnInfo("student_note") val studentNote: String?,

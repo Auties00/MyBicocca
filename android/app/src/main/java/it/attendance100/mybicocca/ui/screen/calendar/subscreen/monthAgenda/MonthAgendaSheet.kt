@@ -1,5 +1,6 @@
 package it.attendance100.mybicocca.ui.screen.calendar.subscreen.monthAgenda
 
+import android.annotation.SuppressLint
 import androidx.compose.animation.animateColor
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.Animatable
@@ -64,8 +65,8 @@ import androidx.compose.ui.util.lerp
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupPositionProvider
 import androidx.compose.ui.window.PopupProperties
-import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.R
+import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.domain.model.calendar.CalendarEvent
 import it.attendance100.mybicocca.domain.model.calendar.CalendarEventId
 import it.attendance100.mybicocca.domain.model.elearning.course.CourseId
@@ -108,6 +109,7 @@ private const val ExpansionThreshold = 0.5f
  * @param sheetHeight measured pixel height of the free region under the month grid that
  *   the collapsed sheet should occupy.
  */
+@SuppressLint("ConfigurationScreenWidthHeight")
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun MonthAgendaSheet(
@@ -118,6 +120,10 @@ fun MonthAgendaSheet(
     onOpenCourse: (CourseId) -> Unit,
     onOpenAssignment: (assignmentId: Int, courseId: Int) -> Unit,
     onOpenReservation: (CalendarEvent) -> Unit,
+    /** Live seat totals per exam event id, joined from the bookable-calls list by the shell. */
+    examBookingTotals: Map<CalendarEventId, Int> = emptyMap(),
+    /** Fired when an exam event's inline expansion opens, so the shell can lazily fetch its total. */
+    onExamEventShown: (CalendarEvent.Exam) -> Unit = {},
     progress: Animatable<Float, *>,
     presence: Float,
     bottomNavBarPadding: PaddingValues,
@@ -195,10 +201,16 @@ fun MonthAgendaSheet(
             onOpenCourse = onOpenCourse,
             onOpenAssignment = onOpenAssignment,
             onOpenReservation = onOpenReservation,
+            examBookingTotals = examBookingTotals,
             isSheetExpanded = isSheetExpanded,
             expandedEventId = expandedEventId,
             onToggleExpand = { id ->
-                expandedEventId = if (expandedEventId == id) null else id
+                val expanding = expandedEventId != id
+                expandedEventId = if (expanding) id else null
+                if (expanding) {
+                    (events.firstOrNull { it.id == id } as? CalendarEvent.Exam)
+                        ?.let(onExamEventShown)
+                }
             },
             collapsedPx = collapsedPx,
             expandedMaxPx = expandedMaxPx,
@@ -242,6 +254,7 @@ private fun AgendaSheetSurface(
     onOpenCourse: (CourseId) -> Unit,
     onOpenAssignment: (assignmentId: Int, courseId: Int) -> Unit,
     onOpenReservation: (CalendarEvent) -> Unit,
+    examBookingTotals: Map<CalendarEventId, Int>,
     isSheetExpanded: Boolean,
     expandedEventId: CalendarEventId?,
     onToggleExpand: (CalendarEventId) -> Unit,
@@ -307,6 +320,8 @@ private fun AgendaSheetSurface(
                             isLast = index == events.lastIndex,
                             isInlineExpanded = expandedEventId == e.id,
                             elearningCourses = elearningCoursesFor(e),
+                            examTotalBookings = (e as? CalendarEvent.Exam)
+                                ?.let { examBookingTotals[it.id] },
                             onOpenCourse = onOpenCourse,
                             onOpenAssignment = onOpenAssignment,
                             onOpenReservation = onOpenReservation,
@@ -408,6 +423,7 @@ private fun AgendaRow(
     isLast: Boolean,
     isInlineExpanded: Boolean,
     elearningCourses: List<EnrolledCourse>,
+    examTotalBookings: Int?,
     onOpenCourse: (CourseId) -> Unit,
     onOpenAssignment: (assignmentId: Int, courseId: Int) -> Unit,
     onOpenReservation: (CalendarEvent) -> Unit,
@@ -509,6 +525,7 @@ private fun AgendaRow(
                         onOpenAssignment = onOpenAssignment,
                         onOpenReservation = onOpenReservation,
                         modifier = Modifier.padding(start = 13.dp, end = 16.dp, bottom = 16.dp),
+                        examTotalBookings = examTotalBookings,
                     )
                 }
             }

@@ -370,7 +370,11 @@ class StudyPlanEditViewModelTest {
     fun `a first-plan request with schemaId zero starts with no selected schema`() = runTest {
         coEvery { getStudyPath(careerId) } returns pathWithOptions(option(20L), option(30L))
         val vm = StudyPlanEditViewModel(
-            request(schemaId = 0L, planId = 0L), getStudyPath, getStudyPlanDraft, submitStudyPlan,
+            request(schemaId = 0L, planId = 0L),
+            context,
+            getStudyPath,
+            getStudyPlanDraft,
+            submitStudyPlan,
         )
 
         assertThat(vm.selectedSchemaId.value).isNull()

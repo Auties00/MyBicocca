@@ -1,5 +1,6 @@
 package it.attendance100.mybicocca.data.remote.esse3.api
 
+import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3CompetitionRankingFileType
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3PermissionLevel
 import it.attendance100.mybicocca.data.remote.esse3.exception.Esse3Exception
 import kotlinx.coroutines.test.runTest
@@ -303,7 +304,7 @@ class Esse3CompetitionsApiTest : Esse3ApiTestBase() {
                     testId = 1,
                     competitionTestsId = 1,
                     body = emptyList(),
-                    fileTypology = "CSV"
+                    fileTypology = Esse3CompetitionRankingFileType.Unknown("CSV")
                 )
             }
             logger.info("testPutCompetitionRanking: Esse3Exception thrown as expected")
@@ -324,7 +325,7 @@ class Esse3CompetitionsApiTest : Esse3ApiTestBase() {
                     testId = 1,
                     competitionTestsId = 1,
                     body = kotlinx.serialization.json.JsonObject(emptyMap()),
-                    fileTypology = "CSV"
+                    fileTypology = Esse3CompetitionRankingFileType.Unknown("CSV")
                 )
             }
             logger.info("testPutCompetitionRankingFile: Esse3Exception thrown as expected")

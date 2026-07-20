@@ -9,6 +9,7 @@ import it.attendance100.mybicocca.domain.model.calendar.EventSource
 import it.attendance100.mybicocca.domain.model.calendar.EventStatus
 import it.attendance100.mybicocca.domain.model.career.CareerId
 import it.attendance100.mybicocca.domain.model.exam.BookedExam
+import it.attendance100.mybicocca.domain.model.exam.ExamCallKey
 import it.attendance100.mybicocca.domain.model.exam.ExamCallType
 import it.attendance100.mybicocca.domain.model.exam.ExamType
 import it.attendance100.mybicocca.domain.model.library.LibraryReservation
@@ -22,6 +23,14 @@ import java.time.ZoneId
  * event readable on the timeline without pretending to know the real end.
  */
 private const val NOMINAL_EXAM_DURATION_HOURS = 2L
+
+/**
+ * Namespaced calendar id of the exam event mapped from this call identity.
+ */
+fun examCalendarEventId(key: ExamCallKey): CalendarEventId = CalendarEventId.of(
+    EventSource.EXAM,
+    "${key.courseOfStudyId}_${key.activityId}_${key.callId}",
+)
 
 /**
  * Maps a booked Esse3 exam call to a calendar event, or null when Esse3 omits the date-time
@@ -50,10 +59,7 @@ internal fun BookedExam.toCalendarEvent(
         EventLocation(room = classroomDescription, building = buildingDescription)
     } else null
     return CalendarEvent.Exam(
-        id = CalendarEventId.of(
-            EventSource.EXAM,
-            "${key.courseOfStudyId}_${key.activityId}_${key.callId}",
-        ),
+        id = examCalendarEventId(key),
         careerId = careerId,
         date = startDateTime.toLocalDate(),
         start = start,

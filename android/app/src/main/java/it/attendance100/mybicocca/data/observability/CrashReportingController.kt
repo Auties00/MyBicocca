@@ -1,6 +1,9 @@
 package it.attendance100.mybicocca.data.observability
 
+import android.content.Context
 import com.google.firebase.crashlytics.FirebaseCrashlytics
+import dagger.hilt.android.qualifiers.ApplicationContext
+import it.attendance100.mybicocca.core.version.buildNumber
 import it.attendance100.mybicocca.di.ApplicationScope
 import it.attendance100.mybicocca.domain.repository.PrivacySettingsRepository
 import kotlinx.coroutines.CoroutineScope
@@ -14,6 +17,7 @@ import javax.inject.Singleton
  */
 @Singleton
 class CrashReportingController @Inject constructor(
+    @ApplicationContext private val context: Context,
     private val repository: PrivacySettingsRepository,
     @ApplicationScope private val scope: CoroutineScope,
 ) {
@@ -21,7 +25,11 @@ class CrashReportingController @Inject constructor(
         scope.launch {
             repository.observeCrashReportingEnabled().collect { enabled ->
                 runCatching {
-                    FirebaseCrashlytics.getInstance().isCrashlyticsCollectionEnabled = enabled
+                    FirebaseCrashlytics.getInstance().apply {
+                        isCrashlyticsCollectionEnabled = enabled
+                        // versionName stays clean; this is what identifies the exact build.
+                        setCustomKey("build_number", buildNumber(context))
+                    }
                 }
             }
         }

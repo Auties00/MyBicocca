@@ -40,6 +40,16 @@ interface ExamRepository {
     suspend fun getBookings(careerId: CareerId): List<BookedExam>
 
     /**
+     * Total students booked on a call (`numIscritti`), from the per-appello detail endpoint —
+     * the slow one (0.3–5 s, verified live) that list reads deliberately avoid.
+     * `/prenotazioni` carries no total and the bookable list excludes booked calls by construction,
+     * so this is the only live source for a booked exam;
+     * it is fetched lazily when a single booking's detail opens and persisted onto the cached
+     * booking row so later sessions start from the last known value. Throws on failure.
+     */
+    suspend fun getCallTotalBookings(careerId: CareerId, key: ExamCallKey): Int?
+
+    /**
      * Bookings whose outcome has been published (`pubblId > 0`) — what the user thinks
      * of as the "Bacheca Esiti". Broader than Esse3's strict `q=BACHECA_ESITI` filter,
      * which only includes outcomes whose acknowledgment deadline has passed.

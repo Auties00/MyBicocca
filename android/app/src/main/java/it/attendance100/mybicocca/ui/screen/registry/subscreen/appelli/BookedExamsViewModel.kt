@@ -7,15 +7,18 @@ import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.SyncStatus
 import it.attendance100.mybicocca.domain.model.career.CareerId
 import it.attendance100.mybicocca.domain.model.exam.BookedExam
+import it.attendance100.mybicocca.domain.model.exam.ExamCallKey
 import it.attendance100.mybicocca.domain.usecase.account.ObserveActiveAccountUseCase
 import it.attendance100.mybicocca.domain.usecase.exam.CancelBookingUseCase
 import it.attendance100.mybicocca.domain.usecase.exam.GetBookingSlipUseCase
 import it.attendance100.mybicocca.domain.usecase.exam.GetBookingsUseCase
+import it.attendance100.mybicocca.domain.usecase.exam.GetExamCallTotalBookingsUseCase
 import it.attendance100.mybicocca.domain.usecase.exam.GetPresenceCertificateUseCase
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.appelli.state.BookedEvent
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.appelli.state.CancelActionState
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.appelli.state.DocDownloadState
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.appelli.state.ExamDocument
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -27,6 +30,7 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import javax.inject.Inject
@@ -53,6 +57,7 @@ class BookedExamsViewModel @Inject constructor(
     private val cancelBooking: CancelBookingUseCase,
     private val getBookingSlip: GetBookingSlipUseCase,
     private val getPresenceCertificate: GetPresenceCertificateUseCase,
+    private val getCallTotalBookings: GetExamCallTotalBookingsUseCase,
     observeActiveAccount: ObserveActiveAccountUseCase,
 ) : ViewModel() {
 
@@ -76,12 +81,47 @@ class BookedExamsViewModel @Inject constructor(
     private val _events = Channel<BookedEvent>(Channel.BUFFERED)
     val events: Flow<BookedEvent> = _events.receiveAsFlow()
 
+    /** Freshly fetched numIscritti per call, keyed by call identity; see [loadTotalBookings]. */
+    private val _callTotals = MutableStateFlow<Map<ExamCallKey, Int>>(emptyMap())
+    val callTotals: StateFlow<Map<ExamCallKey, Int>> = _callTotals.asStateFlow()
+
+    private val totalsInFlight = mutableSetOf<ExamCallKey>()
+
     private val refreshMutex = Mutex()
 
     init {
         viewModelScope.launch {
             activeCareerId.filterNotNull().collect { careerId ->
+                _callTotals.value = emptyMap()
                 fetch(careerId)
+            }
+        }
+    }
+
+    /**
+     * Fetches the call's total bookings from the per-appello detail endpoint — too slow
+     * for list reads (0.3–5 s per call) but fine as one lazy call when a booking's detail page opens.
+     * Always refetches (the count is volatile while enrollment is open), with
+     * an in-flight guard per call; failures stay silent and the page keeps showing the
+     * booking's last persisted total, or the bare position.
+     *
+     * [totalsInFlight] needs no synchronization: this entry point is UI-only and
+     * viewModelScope resumes on Main.immediate, so every access is main-thread-confined.
+     */
+    fun loadTotalBookings(booking: BookedExam) {
+        val careerId = activeCareerId.value ?: return
+        val key = booking.key
+        if (!totalsInFlight.add(key)) return
+        viewModelScope.launch {
+            try {
+                val total = getCallTotalBookings(careerId, key)
+                total?.let { fetched -> _callTotals.update { it + (key to fetched) } }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (_: Exception) {
+                // Silent by design; see KDoc.
+            } finally {
+                totalsInFlight.remove(key)
             }
         }
     }
@@ -103,7 +143,10 @@ class BookedExamsViewModel @Inject constructor(
                     _events.trySend(BookedEvent.CancellationSucceeded)
                     val current = (_bookings.value as? Loadable.Loaded)?.value.orEmpty()
                     _bookings.value = Loadable.Loaded(current.filterNot { it.identityKey() == booking.identityKey() })
-                    fetch(careerId)
+                    // awaitTurn: a refresh already in flight predates the cancellation, so its
+                    // response still contains the dropped row; queueing (rather than tryLock's
+                    // silent skip) guarantees the reconcile lands last with post-cancel data.
+                    fetch(careerId, awaitTurn = true)
                 }
                 .onFailure { cause ->
                     _cancelAction.value = CancelActionState.Idle
@@ -137,8 +180,13 @@ class BookedExamsViewModel @Inject constructor(
         }
     }
 
-    private suspend fun fetch(careerId: CareerId) {
-        if (!refreshMutex.tryLock()) return
+    /**
+     * [awaitTurn] false (the default) collapses overlapping refreshes into one; true queues
+     * behind an in-flight refresh instead, for callers whose fetch must not be skipped —
+     * the post-cancellation reconcile, whose data supersedes any refresh already running.
+     */
+    private suspend fun fetch(careerId: CareerId, awaitTurn: Boolean = false) {
+        if (awaitTurn) refreshMutex.lock() else if (!refreshMutex.tryLock()) return
         try {
             _syncStatus.value = SyncStatus.Refreshing
             runCatching { getBookings(careerId) }.fold(

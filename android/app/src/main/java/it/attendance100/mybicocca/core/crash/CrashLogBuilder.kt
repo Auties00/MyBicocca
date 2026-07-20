@@ -6,6 +6,7 @@ import android.content.Intent
 import android.os.Build
 import androidx.core.content.FileProvider
 import it.attendance100.mybicocca.BuildConfig
+import it.attendance100.mybicocca.core.version.buildNumber
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -48,7 +49,7 @@ class CrashLogBuilder(private val context: Context) {
 
     private fun debugHeader(): String = """
         App ID:                 ${BuildConfig.APPLICATION_ID}
-        App version:            ${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})
+        App version:            ${BuildConfig.VERSION_NAME} (build ${buildNumber(context)}, code ${BuildConfig.VERSION_CODE})
         Android version:        ${Build.VERSION.RELEASE} (SDK ${Build.VERSION.SDK_INT}; build ${Build.DISPLAY})
         Device brand:           ${Build.BRAND}
         Device manufacturer:    ${Build.MANUFACTURER}

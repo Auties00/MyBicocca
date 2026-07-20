@@ -612,7 +612,8 @@ private fun PendingResultRow(
             ExamGradeBadge(
                 grade = result.grade,
                 size = 52.dp,
-                style = MaterialTheme.typography.titleMediumEmphasized
+                style = MaterialTheme.typography.titleMediumEmphasized,
+                showDenominator = false,
             )
             Column(
                 modifier = Modifier.weight(1f),
@@ -679,7 +680,8 @@ private fun ArchivedResultRow(
             ExamGradeBadge(
                 grade = result.grade,
                 size = 52.dp,
-                style = MaterialTheme.typography.titleMediumEmphasized
+                style = MaterialTheme.typography.titleMediumEmphasized,
+                showSubtitle = false,
             )
             Column(
                 modifier = Modifier.weight(1f),

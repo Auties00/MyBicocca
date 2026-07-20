@@ -106,8 +106,8 @@ fun Esse3ExamSessionEnrollment.toExamResult(): ExamResult? {
 }
 
 /**
- * Decodes Esse3's untyped `esito` object into a grade: absence and withdrawal flags win
- * over the numeric grade, which wins over the bare pass/fail flag.
+ * Decodes Esse3's untyped `esito` object into a grade: absence and withdrawal flags win over the numeric grade, which wins over the bare pass/fail flag.
+ * A `votoEsa` of 0 is not a real grade — Esse3 publishes it on failed outcomes alongside `superatoFlg=0` —> only positive values decode as numeric and the pass/fail flag decides the rest.
  */
 private fun JsonObject?.toExamGrade(): ExamGrade {
     if (this == null) return ExamGrade.Unknown
@@ -118,7 +118,7 @@ private fun JsonObject?.toExamGrade(): ExamGrade {
     return when {
         absentFlg == 1 -> ExamGrade.Absent
         withdrewFlg == 1 -> ExamGrade.Withdrew
-        votoEsa != null -> ExamGrade.Numeric(votoEsa)
+        votoEsa != null && votoEsa > 0 -> ExamGrade.Numeric(votoEsa)
         passedFlg == 1 -> ExamGrade.Passed
         passedFlg == 0 -> ExamGrade.NotPassed
         else -> ExamGrade.Unknown

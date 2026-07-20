@@ -1,11 +1,21 @@
 package it.attendance100.mybicocca.data.local.account
 
+import androidx.room.AutoMigration
 import androidx.room.Database
 import androidx.room.RoomDatabase
+import it.attendance100.mybicocca.data.local.appointment.AppointmentReservationDao
+import it.attendance100.mybicocca.data.local.appointment.AppointmentReservationEntity
 import it.attendance100.mybicocca.data.local.calendar.CalendarDao
 import it.attendance100.mybicocca.data.local.calendar.CalendarEventEntity
 import it.attendance100.mybicocca.data.local.calendar.CalendarSyncStateDao
 import it.attendance100.mybicocca.data.local.calendar.CalendarSyncStateEntity
+import it.attendance100.mybicocca.data.local.certificate.CertificateCacheDao
+import it.attendance100.mybicocca.data.local.certificate.CertificateEntity
+import it.attendance100.mybicocca.data.local.document.AcademicTitleEntity
+import it.attendance100.mybicocca.data.local.document.BadgeImageEntity
+import it.attendance100.mybicocca.data.local.document.DocumentCacheDao
+import it.attendance100.mybicocca.data.local.document.StudentBadgeEntity
+import it.attendance100.mybicocca.data.local.document.TitleAttributeEntity
 import it.attendance100.mybicocca.data.local.elearning.assignment.AssignmentDao
 import it.attendance100.mybicocca.data.local.elearning.assignment.AssignmentEntity
 import it.attendance100.mybicocca.data.local.elearning.badge.BadgeDao
@@ -35,44 +45,35 @@ import it.attendance100.mybicocca.data.local.elearning.sync.ElearningSyncStateDa
 import it.attendance100.mybicocca.data.local.elearning.sync.ElearningSyncStateEntity
 import it.attendance100.mybicocca.data.local.elearning.video.VideoProgressDao
 import it.attendance100.mybicocca.data.local.elearning.video.VideoProgressEntity
+import it.attendance100.mybicocca.data.local.enrollment.AnnualEnrollmentEntity
+import it.attendance100.mybicocca.data.local.enrollment.EnrollmentCacheDao
+import it.attendance100.mybicocca.data.local.exam.BookedExamEntity
+import it.attendance100.mybicocca.data.local.exam.ExamCacheDao
+import it.attendance100.mybicocca.data.local.exam.ExamCallEntity
+import it.attendance100.mybicocca.data.local.exam.ExamResultEntity
+import it.attendance100.mybicocca.data.local.library.LibraryReservationDao
+import it.attendance100.mybicocca.data.local.library.LibraryReservationEntity
 import it.attendance100.mybicocca.data.local.map.MapBuildingDao
 import it.attendance100.mybicocca.data.local.map.MapBuildingEntity
 import it.attendance100.mybicocca.data.local.map.MapRoomDao
 import it.attendance100.mybicocca.data.local.map.MapRoomEntity
 import it.attendance100.mybicocca.data.local.map.MapRoomSyncStateDao
 import it.attendance100.mybicocca.data.local.map.MapRoomSyncStateEntity
-import it.attendance100.mybicocca.data.local.transcript.TranscriptDao
-import it.attendance100.mybicocca.data.local.transcript.TranscriptRowEntity
-import it.attendance100.mybicocca.data.local.transcript.TranscriptStatsEntity
-import it.attendance100.mybicocca.data.local.transcript.TranscriptSyncStateDao
-import it.attendance100.mybicocca.data.local.transcript.TranscriptSyncStateEntity
-import it.attendance100.mybicocca.data.local.appointment.AppointmentReservationDao
-import it.attendance100.mybicocca.data.local.appointment.AppointmentReservationEntity
-import it.attendance100.mybicocca.data.local.library.LibraryReservationDao
-import it.attendance100.mybicocca.data.local.library.LibraryReservationEntity
-import it.attendance100.mybicocca.data.local.exam.BookedExamEntity
-import it.attendance100.mybicocca.data.local.exam.ExamCacheDao
-import it.attendance100.mybicocca.data.local.exam.ExamCallEntity
-import it.attendance100.mybicocca.data.local.exam.ExamResultEntity
+import it.attendance100.mybicocca.data.local.questionnaire.ActivityQuestionnairesEntity
+import it.attendance100.mybicocca.data.local.questionnaire.QuestionnaireActivityEntity
+import it.attendance100.mybicocca.data.local.questionnaire.QuestionnaireCacheDao
+import it.attendance100.mybicocca.data.local.questionnaire.QuestionnaireUnitEntity
 import it.attendance100.mybicocca.data.local.tax.IseeDeclarationEntity
 import it.attendance100.mybicocca.data.local.tax.RefundEntity
 import it.attendance100.mybicocca.data.local.tax.TaxCacheDao
 import it.attendance100.mybicocca.data.local.tax.TaxChargeItemEntity
 import it.attendance100.mybicocca.data.local.tax.TaxInvoiceEntity
 import it.attendance100.mybicocca.data.local.tax.TaxSummaryEntity
-import it.attendance100.mybicocca.data.local.enrollment.AnnualEnrollmentEntity
-import it.attendance100.mybicocca.data.local.enrollment.EnrollmentCacheDao
-import it.attendance100.mybicocca.data.local.questionnaire.ActivityQuestionnairesEntity
-import it.attendance100.mybicocca.data.local.questionnaire.QuestionnaireActivityEntity
-import it.attendance100.mybicocca.data.local.questionnaire.QuestionnaireCacheDao
-import it.attendance100.mybicocca.data.local.questionnaire.QuestionnaireUnitEntity
-import it.attendance100.mybicocca.data.local.document.AcademicTitleEntity
-import it.attendance100.mybicocca.data.local.document.BadgeImageEntity
-import it.attendance100.mybicocca.data.local.document.DocumentCacheDao
-import it.attendance100.mybicocca.data.local.document.StudentBadgeEntity
-import it.attendance100.mybicocca.data.local.document.TitleAttributeEntity
-import it.attendance100.mybicocca.data.local.certificate.CertificateCacheDao
-import it.attendance100.mybicocca.data.local.certificate.CertificateEntity
+import it.attendance100.mybicocca.data.local.transcript.TranscriptDao
+import it.attendance100.mybicocca.data.local.transcript.TranscriptRowEntity
+import it.attendance100.mybicocca.data.local.transcript.TranscriptStatsEntity
+import it.attendance100.mybicocca.data.local.transcript.TranscriptSyncStateDao
+import it.attendance100.mybicocca.data.local.transcript.TranscriptSyncStateEntity
 
 /**
  * The app's single Room database — the local source of truth every offline-first screen reads.
@@ -149,8 +150,12 @@ import it.attendance100.mybicocca.data.local.certificate.CertificateEntity
         BadgeImageEntity::class,
         CertificateEntity::class,
     ],
-    version = 1,
+    version = 2,
     exportSchema = true,
+    autoMigrations = [
+        // v2: cached_booked_exam gains the nullable total_bookings column (numIscritti).
+        AutoMigration(from = 1, to = 2),
+    ],
 )
 abstract class MyBicoccaDatabase : RoomDatabase() {
     abstract fun accountDao(): AccountDao

@@ -57,6 +57,7 @@ import coil.request.ImageRequest
 import coil.size.Size
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.state.valueOrNull
+import it.attendance100.mybicocca.data.mapper.calendar.examCalendarEventId
 import it.attendance100.mybicocca.domain.model.calendar.CalendarEvent
 import it.attendance100.mybicocca.domain.model.settings.FileOpenChoice
 import it.attendance100.mybicocca.ui.component.bar.BottomBarItem
@@ -158,7 +159,11 @@ import it.attendance100.mybicocca.ui.screen.registry.subscreen.titles.titlesHead
 import it.attendance100.mybicocca.ui.screen.search.SearchOverlay
 import it.attendance100.mybicocca.ui.screen.search.SearchViewModel
 import it.attendance100.mybicocca.ui.screen.settings.SettingsScreen
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.launch
 
 /**
@@ -654,6 +659,72 @@ fun MainShell(
                                                         ShellTab.Calendar -> CalendarScreen(
                                                             viewModel = calendarViewModel,
                                                             isActive = isActive,
+                                                            examBookingTotals = run {
+                                                                // Seat totals per exam event, merged off the main thread;
+                                                                // distinctUntilChanged keeps the instance stable when nothing changed.
+                                                                val totalsFlow = remember(
+                                                                    bookableExamsViewModel,
+                                                                    bookedExamsViewModel
+                                                                ) {
+                                                                    combine(
+                                                                        bookableExamsViewModel.examCalls,
+                                                                        bookedExamsViewModel.bookings,
+                                                                        bookedExamsViewModel.callTotals,
+                                                                    ) { calls, bookings, lazyTotals ->
+                                                                        buildMap {
+                                                                            calls.valueOrNull()
+                                                                                .orEmpty()
+                                                                                .forEach { call ->
+                                                                                    call.enrolledNumber?.let {
+                                                                                        put(
+                                                                                            examCalendarEventId(
+                                                                                                call.key
+                                                                                            ),
+                                                                                            it
+                                                                                        )
+                                                                                    }
+                                                                                }
+                                                                            // The booking's persisted numIscritti wins over the bookable list's count…
+                                                                            bookings.valueOrNull()
+                                                                                .orEmpty()
+                                                                                .forEach { booking ->
+                                                                                    booking.totalBookings?.let {
+                                                                                        put(
+                                                                                            examCalendarEventId(
+                                                                                                booking.key
+                                                                                            ),
+                                                                                            it
+                                                                                        )
+                                                                                    }
+                                                                                }
+                                                                            // …and a fresh lazy fetch wins over both.
+                                                                            lazyTotals.forEach { (key, total) ->
+                                                                                put(
+                                                                                    examCalendarEventId(
+                                                                                        key
+                                                                                    ), total
+                                                                                )
+                                                                            }
+                                                                        }
+                                                                    }
+                                                                        .distinctUntilChanged()
+                                                                        .flowOn(Dispatchers.Default)
+                                                                }
+                                                                val totals by totalsFlow.collectAsStateWithLifecycle(
+                                                                    initialValue = emptyMap(),
+                                                                )
+                                                                totals
+                                                            },
+                                                            onExamEventShown = { examEvent ->
+                                                                bookedExamsViewModel.bookings.value.valueOrNull()
+                                                                    .orEmpty()
+                                                                    .firstOrNull {
+                                                                        examCalendarEventId(
+                                                                            it.key
+                                                                        ) == examEvent.id
+                                                                    }
+                                                                    ?.let(bookedExamsViewModel::loadTotalBookings)
+                                                            },
                                                             coverProgress = remember {
                                                                 derivedStateOf {
                                                                     maxOf(
@@ -725,6 +796,7 @@ fun MainShell(
                                                             bookableExamsViewModel = bookableExamsViewModel,
                                                             taxesViewModel = taxesViewModel,
                                                             examResultsViewModel = examResultsViewModel,
+                                                            studyPlanViewModel = studyPlanViewModel,
                                                             isActive = isActive,
                                                             onOpenAppelli = {
                                                                 backStack.add(SheetRoute.Appelli)

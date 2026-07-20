@@ -47,6 +47,7 @@ import it.attendance100.mybicocca.ui.screen.registry.subscreen.booking.BookableE
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.deadlines.DeadlinesSheet
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.deadlines.nextDeadlineLabel
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.examResults.ExamResultsViewModel
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.studyPlan.StudyPlanViewModel
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.taxes.TaxesViewModel
 import it.attendance100.mybicocca.ui.screen.registry.theme.serviceAccents
 import java.time.LocalDate
@@ -71,6 +72,7 @@ fun RegistryScreen(
     bookableExamsViewModel: BookableExamsViewModel,
     taxesViewModel: TaxesViewModel,
     examResultsViewModel: ExamResultsViewModel,
+    studyPlanViewModel: StudyPlanViewModel,
     onOpenAppelli: () -> Unit,
     onOpenTaxes: () -> Unit,
     onOpenIsee: () -> Unit,
@@ -104,6 +106,17 @@ fun RegistryScreen(
     val invoiceList = invoices.valueOrNull().orEmpty()
     val resultList = examResults.valueOrNull().orEmpty()
 
+    // In-plan activity codes for the deadline spine's study-plan filter. The plan is
+    // fetched once per career by the shell-scoped StudyPlanViewModel; null (not loaded,
+    // failed, or codeless plan) disables the filter rather than hiding entries.
+    val studyPlan by studyPlanViewModel.plan.collectAsStateWithLifecycle()
+    val studyPlanCodes = remember(studyPlan) {
+        studyPlan.valueOrNull()?.courses
+            ?.mapNotNull { it.code?.trim()?.uppercase() }
+            ?.takeIf { it.isNotEmpty() }
+            ?.toSet()
+    }
+
     val deadlinesLoading = listOf(bookings, examCalls, invoices, examResults)
         .any { it is Loadable.NotYetLoaded }
     val deadlinesFailure = listOf(bookingsSync, examCallsSync, invoicesSync, examResultsSync)
@@ -111,7 +124,7 @@ fun RegistryScreen(
 
     val today = remember { LocalDate.now() }
 
-    val deadlines = remember(resultList, invoiceList, bookingList, examCallList) {
+    val deadlines = remember(resultList, invoiceList, bookingList, examCallList, studyPlanCodes) {
         buildRegistryDeadlines(
             today = today,
             examResults = resultList,
@@ -121,6 +134,7 @@ fun RegistryScreen(
             onOpenExamResults = onOpenExamResults,
             onOpenTaxes = onOpenTaxes,
             onOpenBookedExams = onOpenAppelli,
+            studyPlanCodes = studyPlanCodes,
         )
     }
     val urgentCount = deadlines.count { it.isUrgent() }
@@ -262,7 +276,9 @@ fun RegistryScreen(
 
     var showDeadlines by remember { mutableStateOf(false) }
 
-    Column(modifier = modifier.fillMaxSize().testTag(RegistryTestTags.ROOT)) {
+    Column(modifier = modifier
+        .fillMaxSize()
+        .testTag(RegistryTestTags.ROOT)) {
         ScadenzeHeader(
             summary = headerSummary,
             onClick = { showDeadlines = true },

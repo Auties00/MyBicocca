@@ -51,6 +51,7 @@ import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.core.state.SyncStatus
 import it.attendance100.mybicocca.core.state.valueOrNull
 import it.attendance100.mybicocca.domain.model.calendar.CalendarEvent
+import it.attendance100.mybicocca.domain.model.calendar.CalendarEventId
 import it.attendance100.mybicocca.domain.model.elearning.course.CourseId
 import it.attendance100.mybicocca.ui.component.button.RetryButton
 import it.attendance100.mybicocca.ui.component.feedback.EmptyState
@@ -100,7 +101,6 @@ import java.time.ZoneId
  *   search open begins, in both directions and during predictive back. Null means no
  *   shell hosts the screen (previews) and counts as settled.
  */
-@Suppress("AssignedValueIsNeverRead")
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun CalendarScreen(
@@ -111,6 +111,10 @@ fun CalendarScreen(
     onOpenCourse: (CourseId) -> Unit = {},
     onOpenAssignment: (assignmentId: Int, courseId: Int) -> Unit = { _, _ -> },
     onOpenReservation: (CalendarEvent) -> Unit = {},
+    /** Live seat totals per exam event id, joined from the bookable-calls list by the shell. */
+    examBookingTotals: Map<CalendarEventId, Int> = emptyMap(),
+    /** Fired when an exam event's detail becomes visible, so the shell can lazily fetch its total. */
+    onExamEventShown: (CalendarEvent.Exam) -> Unit = {},
     bottomNavBarPadding: PaddingValues,
     viewModel: CalendarViewModel = hiltViewModel(
         checkNotNull(
@@ -310,6 +314,8 @@ fun CalendarScreen(
                     onOpenCourse = onOpenCourse,
                     onOpenAssignment = onOpenAssignment,
                     onOpenReservation = onOpenReservation,
+                    examBookingTotals = examBookingTotals,
+                    onExamEventShown = onExamEventShown,
                     progress = agendaProgress,
                     presence = agendaPresence,
                     bottomNavBarPadding = bottomNavBarPadding,
@@ -337,8 +343,13 @@ fun CalendarScreen(
                     ?: dayEventsLoadable.valueOrNull()?.firstOrNull { it.id == id }
             }
             if (selected != null) {
+                LaunchedEffect(selected.id) {
+                    (selected as? CalendarEvent.Exam)?.let(onExamEventShown)
+                }
                 EventDetailSheet(
                     event = selected,
+                    examTotalBookings = (selected as? CalendarEvent.Exam)
+                        ?.let { examBookingTotals[it.id] },
                     elearningCourses = selected.activityCode?.let(coursesByActivityCode::get)
                         .orEmpty(),
                     onOpenCourse = { course ->

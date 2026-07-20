@@ -17,6 +17,8 @@ import it.attendance100.mybicocca.data.remote.esse3.api.Esse3Api
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3ExamSessionEnrollment
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3ExamSessionTranscript
 import it.attendance100.mybicocca.domain.model.calendar.EventSource
+import it.attendance100.mybicocca.domain.model.career.CareerId
+import it.attendance100.mybicocca.domain.model.exam.AcknowledgmentStatus
 import it.attendance100.mybicocca.domain.model.exam.BookExamRequest
 import it.attendance100.mybicocca.domain.model.exam.BookedExam
 import it.attendance100.mybicocca.domain.model.exam.ExamCall
@@ -26,8 +28,6 @@ import it.attendance100.mybicocca.domain.model.exam.ExamEnrollmentWindow
 import it.attendance100.mybicocca.domain.model.exam.ExamGrade
 import it.attendance100.mybicocca.domain.model.exam.ExamResult
 import it.attendance100.mybicocca.domain.model.exam.ExamType
-import it.attendance100.mybicocca.domain.model.exam.AcknowledgmentStatus
-import it.attendance100.mybicocca.domain.model.career.CareerId
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
@@ -129,7 +129,12 @@ class ExamRepositoryImplTest {
         assertThat(result).hasSize(1)
         assertThat(result.single().key).isEqualTo(ExamCallKey(10L, 20L, 3))
         assertThat(result.single().studentId).isEqualTo(77L)
-        coVerify(exactly = 1) { examCacheDao.replaceBookings(careerId.value, any()) }
+        coVerify(exactly = 1) {
+            examCacheDao.replaceBookingsPreservingTotals(
+                careerId.value,
+                any()
+            )
+        }
     }
 
     @Test
@@ -143,7 +148,7 @@ class ExamRepositoryImplTest {
 
         assertThat(result).hasSize(1)
         assertThat(result.single().key).isEqualTo(ExamCallKey(10L, 20L, 3))
-        coVerify(exactly = 0) { examCacheDao.replaceBookings(any(), any()) }
+        coVerify(exactly = 0) { examCacheDao.replaceBookingsPreservingTotals(any(), any()) }
     }
 
     @Test

@@ -16,7 +16,6 @@ import it.attendance100.mybicocca.domain.model.elearning.assignment.AssignmentId
 import it.attendance100.mybicocca.domain.model.elearning.assignment.SubmissionFileMetadata
 import it.attendance100.mybicocca.domain.model.elearning.assignment.SubmissionForm
 import it.attendance100.mybicocca.domain.model.elearning.course.CourseId
-import it.attendance100.mybicocca.domain.usecase.account.ObserveActiveAccountUseCase
 import it.attendance100.mybicocca.domain.usecase.elearning.assignment.LoadSubmissionFormUseCase
 import it.attendance100.mybicocca.domain.usecase.elearning.assignment.ObserveAssignmentUseCase
 import it.attendance100.mybicocca.domain.usecase.elearning.assignment.ProbeSubmissionFileUseCase
@@ -93,6 +92,7 @@ class AssignmentDetailViewModelTest {
         refreshCourse: RefreshCourseAssignmentsUseCase = mockk(relaxed = true),
     ): AssignmentDetailViewModel = AssignmentDetailViewModel(
         key = AppRoute.AssignmentDetail(assignId = assignmentId.value, courseId = courseId.value),
+        appContext = mockk(relaxed = true),
         savedState = SavedStateHandle(),
         observeActiveAccount = mockk {
             every { this@mockk.invoke() } returns MutableStateFlow<Account?>(activeAccount)

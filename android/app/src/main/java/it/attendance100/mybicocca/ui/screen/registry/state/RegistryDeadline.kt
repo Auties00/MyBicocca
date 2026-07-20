@@ -58,7 +58,9 @@ fun RegistryDeadline.isUrgent(): Boolean = urgency == DeadlineUrgency.Urgent
  * - upcoming booked-exam sittings — the bookings feed also carries the full past
  *   register, and a sat appello is not a deadline;
  * - booking windows about to close, collapsed to one entry per activity keeping the
- *   soonest closing date.
+ *   soonest closing date, and restricted to activities in the student's piano di studi
+ *   when [studyPlanCodes] is known — Esse3's bookable list also carries calls for
+ *   libretto rows outside the current plan, which are noise here.
  */
 fun buildRegistryDeadlines(
     today: LocalDate,
@@ -69,6 +71,7 @@ fun buildRegistryDeadlines(
     onOpenExamResults: () -> Unit,
     onOpenTaxes: () -> Unit,
     onOpenBookedExams: () -> Unit,
+    studyPlanCodes: Set<String>? = null,
 ): List<RegistryDeadline> {
     val deadlines = mutableListOf<RegistryDeadline>()
 
@@ -120,6 +123,7 @@ fun buildRegistryDeadlines(
         }
 
     examCalls.asSequence()
+        .filter { it.isInStudyPlan(studyPlanCodes) }
         .mapNotNull { call -> call.enrollmentWindow.closesAt?.let { it to call } }
         .filter { (closes, _) -> !closes.isBefore(today) }
         .groupBy { (_, call) -> call.activityDescription ?: call.activityCode ?: "" }
@@ -141,6 +145,17 @@ fun buildRegistryDeadlines(
     return deadlines
         .filter { !it.date.isBefore(from) && !it.date.isAfter(to) }
         .sortedBy { it.date }
+}
+
+/**
+ * Whether the call's activity belongs to the student's piano di studi. Fail-open: with no
+ * plan available ([planCodes] null or empty) or no activity code on the call there is
+ * nothing to check against, so the call stays visible rather than silently vanishing.
+ */
+private fun ExamCall.isInStudyPlan(planCodes: Set<String>?): Boolean {
+    if (planCodes.isNullOrEmpty()) return true
+    val code = activityCode?.trim()?.uppercase()?.takeIf { it.isNotEmpty() } ?: return true
+    return code in planCodes
 }
 
 private fun urgencyFor(today: LocalDate, date: LocalDate): DeadlineUrgency {

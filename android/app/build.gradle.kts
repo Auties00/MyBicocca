@@ -30,24 +30,27 @@ val keystoreProperties = Properties().apply {
 fun signingCredential(propertyKey: String, environmentKey: String): String? =
     keystoreProperties.getProperty(propertyKey) ?: System.getenv(environmentKey)
 
-val appBaseVersionName = "0.0.4"
+// Version state lives in version.properties (committed): `baseVersion` is the marketing
+// version; `buildNumber` bumps once per real build invocation (Gradle sync and non-build
+// tasks leave it alone). The number never appears in versionName or APK names — it ships
+// as manifest meta-data (a placeholder, readable by the IDE unlike AGP 9's variant-API
+// BuildConfig fields), feeding the crash-log header and a Crashlytics custom key.
+val versionPropsFile = file("version.properties")
+val versionProps = Properties().apply { versionPropsFile.inputStream().use(::load) }
+val appBaseVersionName: String = versionProps.getProperty("baseVersion")?.trim()
+    ?: error("version.properties is missing baseVersion")
 
 val buildNumber: Int = run {
-    val versionPropsFile = file("version.properties")
-    val current = versionPropsFile.takeIf { it.exists() }
-        ?.readText()
-        ?.substringAfter("buildNumber=", "")
-        ?.trim()
-        ?.toIntOrNull()
-        ?: 0
+    val current = versionProps.getProperty("buildNumber")?.trim()?.toIntOrNull() ?: 0
     val buildTaskWords = listOf("assemble", "install", "bundle", "package", "build")
     val isBuildInvocation = gradle.startParameter.taskNames.any { task ->
         buildTaskWords.any { task.contains(it, ignoreCase = true) }
     }
-    if (isBuildInvocation) (current + 1).also { versionPropsFile.writeText("buildNumber=$it\n") } else current
+    if (!isBuildInvocation) current
+    else (current + 1).also {
+        versionPropsFile.writeText("baseVersion=$appBaseVersionName\nbuildNumber=$it\n")
+    }
 }
-
-val appVersionName = "$appBaseVersionName${if (buildNumber != 0) "+$buildNumber" else ""}"
 
 // Android config
 android {
@@ -70,7 +73,8 @@ android {
         minSdk = 25
         targetSdk = 36
         versionCode = 1
-        versionName = appVersionName
+        versionName = appBaseVersionName
+        manifestPlaceholders["buildNumber"] = buildNumber.toString()
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -281,6 +285,9 @@ dependencies {
     // Ktor
     implementation("io.ktor:ktor-io:3.3.3")
     implementation("io.ktor:ktor-client-core:3.3.3")
+
+    // ICU4J for ordinal numbers
+    implementation("com.ibm.icu:icu4j:74.2")
 
     // App-side GitHub Releases client (update check). The data-api clients bring their own
     // engine transitively; the app needs its own engine + JSON negotiation to build one here.

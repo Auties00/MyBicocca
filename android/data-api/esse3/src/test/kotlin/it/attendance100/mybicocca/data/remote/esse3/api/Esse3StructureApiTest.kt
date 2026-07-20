@@ -1,6 +1,7 @@
 package it.attendance100.mybicocca.data.remote.esse3.api
 
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3PermissionLevel
+import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3TypologyCode
 import it.attendance100.mybicocca.data.remote.esse3.exception.Esse3Exception
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.BeforeAll
@@ -275,7 +276,7 @@ class Esse3StructureApiTest : Esse3ApiTestBase() {
 
             val result = api.structure.getCourseAccessTitles(
                 courseOfStudyCode = courseCode,
-                typologyCode = "AMM"
+                typologyCode = Esse3TypologyCode.AdmissionTitle
             )
             logger.info("testGetCourseAccessTitles: result size=${result.size}")
             for (title in result) {
@@ -285,13 +286,16 @@ class Esse3StructureApiTest : Esse3ApiTestBase() {
             logger.info("testGetCourseAccessTitles: calling getCourseAccessTitles() with typologyCode=IMM")
             val immResult = api.structure.getCourseAccessTitles(
                 courseOfStudyCode = courseCode,
-                typologyCode = "IMM"
+                typologyCode = Esse3TypologyCode.EnrollmentTitle
             )
             logger.info("testGetCourseAccessTitles: IMM result size=${immResult.size}")
         } else {
             logger.info("testGetCourseAccessTitles: user lacks required permissions, expecting Esse3Exception")
             assertFailsWith<Esse3Exception> {
-                api.structure.getCourseAccessTitles(courseOfStudyCode = "F1601Q", typologyCode = "AMM")
+                api.structure.getCourseAccessTitles(
+                    courseOfStudyCode = "F1601Q",
+                    typologyCode = Esse3TypologyCode.AdmissionTitle
+                )
             }
             logger.info("testGetCourseAccessTitles: Esse3Exception thrown as expected")
         }

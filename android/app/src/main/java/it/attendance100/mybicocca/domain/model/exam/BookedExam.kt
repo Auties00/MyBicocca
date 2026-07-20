@@ -30,6 +30,10 @@ import java.time.LocalDateTime
  * @property credits CFU weight of the booked activity.
  * @property examModeDescription Human description of the exam mode, e.g. "Scritto".
  * @property position The student's position in the enrollment list.
+ * @property totalBookings Total students booked on the call — the "su X" Esse3's own
+ *   site shows next to the position. `/prenotazioni` itself carries no `numIscritti`
+ *   (verified against the OpenAPI spec), so the repository joins it in from the cached
+ *   bookable-calls list; null when that list has no matching call yet.
  * @property bookingDate When the booking was placed.
  * @property cancellableUntil End of the call's enrollment window (`dataFineIscr`) —
  *   Esse3 also accepts booking cancellations up to this date.
@@ -56,6 +60,7 @@ data class BookedExam(
     val credits: Float?,
     val examModeDescription: String?,
     val position: Int?,
+    val totalBookings: Int? = null,
     val bookingDate: LocalDateTime?,
     val cancellableUntil: LocalDate?,
     val studentNote: String?,

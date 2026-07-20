@@ -1,5 +1,7 @@
 package it.attendance100.mybicocca.data.repository
 
+import io.ktor.utils.io.ByteReadChannel
+import io.ktor.utils.io.jvm.javaio.toInputStream
 import it.attendance100.mybicocca.data.auth.SessionManager
 import it.attendance100.mybicocca.data.local.exam.ExamCacheDao
 import it.attendance100.mybicocca.data.mapper.exam.toBookedExam
@@ -19,8 +21,6 @@ import it.attendance100.mybicocca.domain.model.exam.ExamCall
 import it.attendance100.mybicocca.domain.model.exam.ExamCallKey
 import it.attendance100.mybicocca.domain.model.exam.ExamResult
 import it.attendance100.mybicocca.domain.repository.ExamRepository
-import io.ktor.utils.io.ByteReadChannel
-import io.ktor.utils.io.jvm.javaio.toInputStream
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.IOException
@@ -63,7 +63,7 @@ class ExamRepositoryImpl @Inject constructor(
                 q = Esse3BookableExamFilter.AppelliPrenotabiliEFuturi,
                 order = "+dataInizioApp",
                 optionalFields = "dataInizioApp,oraEsa,dataInizioIscr,dataFineIscr,tipoEsaCod," +
-                    "note,presidenteNome,presidenteCognome,presidenteId,tipoGestPrenDes",
+                        "note,presidenteNome,presidenteCognome,presidenteId,tipoGestPrenDes,numIscritti",
             )
             val calls = withContext(Dispatchers.Default) { dtos.mapNotNull { it.toDomain() } }
             examCacheDao.replaceCalls(
@@ -74,6 +74,30 @@ class ExamRepositoryImpl @Inject constructor(
         } catch (e: IOException) {
             examCacheDao.getCalls(careerId.value).map { it.toDomain() }.ifEmpty { throw e }
         }
+    }
+
+    /**
+     * Fetches the call's numIscritti from the per-appello detail GET, projected down to
+     * the one field. Kept off every list path on purpose (it's slow);
+     * the result also lands on the cached booking row so it survives restarts.
+     */
+    override suspend fun getCallTotalBookings(careerId: CareerId, key: ExamCallKey): Int? {
+        val total = sessionManager.esse3().examsCalendar.getExamCall(
+            courseOfStudyId = key.courseOfStudyId,
+            activityId = key.activityId,
+            callId = key.callId.toLong(),
+            optionalFields = "numIscritti",
+        ).enrolledNumber
+        if (total != null) {
+            examCacheDao.updateBookingTotal(
+                careerId = careerId.value,
+                courseOfStudyId = key.courseOfStudyId,
+                activityId = key.activityId,
+                callId = key.callId,
+                totalBookings = total,
+            )
+        }
+        return total
     }
 
     /**
@@ -132,12 +156,31 @@ class ExamRepositoryImpl @Inject constructor(
                 optionalFields = "adStuDes,desAppello,aulaDes,edificioDes,dataInizioApp,dataOraTurno," +
                     "tipoEsaCod,tipoAppCod,dataFineIscr,esito,pubblId,notaPubbl",
             )
-            val bookings = withContext(Dispatchers.Default) { dtos.mapNotNull { it.toBookedExam() } }
-            examCacheDao.replaceBookings(
-                careerId.value,
-                bookings.mapIndexed { index, booking -> booking.toEntity(careerId, index) },
-            )
-            bookings
+            val (fetched, rows) = withContext(Dispatchers.Default) {
+                val bookings = dtos.mapNotNull { it.toBookedExam() }
+                bookings to bookings.mapIndexed { index, booking ->
+                    booking.toEntity(
+                        careerId,
+                        index
+                    )
+                }
+            }
+            // /prenotazioni never carries numIscritti: totals come from getCallTotalBookings,
+            // carried over inside the DAO transaction so a lazy fetch mid-refresh isn't lost.
+            val persisted = examCacheDao.replaceBookingsPreservingTotals(careerId.value, rows)
+            val totals = persisted.asSequence()
+                .filter { it.totalBookings != null }
+                .associate {
+                    ExamCallKey(
+                        it.courseOfStudyId,
+                        it.activityId,
+                        it.callId
+                    ) to it.totalBookings
+                }
+            if (totals.isEmpty()) fetched
+            else fetched.map { booking ->
+                totals[booking.key]?.let { booking.copy(totalBookings = it) } ?: booking
+            }
         } catch (e: IOException) {
             examCacheDao.getBookings(careerId.value).map { it.toDomain() }.ifEmpty { throw e }
         }

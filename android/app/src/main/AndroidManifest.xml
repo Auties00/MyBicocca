@@ -48,6 +48,11 @@
         android:name="com.google.android.gms.version"
         android:value="@integer/google_play_services_version" />
 
+    <!-- Internal build counter from version.properties; read by core/version/BuildNumber.kt -->
+    <meta-data
+            android:name="it.attendance100.mybicocca.BUILD_NUMBER"
+            android:value="${buildNumber}" />
+
     <activity
         android:name="it.attendance100.mybicocca.MyBicoccaActivity"
         android:exported="true"

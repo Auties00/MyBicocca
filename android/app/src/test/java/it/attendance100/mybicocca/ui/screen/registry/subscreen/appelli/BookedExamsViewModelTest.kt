@@ -23,6 +23,7 @@ import it.attendance100.mybicocca.domain.usecase.account.ObserveActiveAccountUse
 import it.attendance100.mybicocca.domain.usecase.exam.CancelBookingUseCase
 import it.attendance100.mybicocca.domain.usecase.exam.GetBookingSlipUseCase
 import it.attendance100.mybicocca.domain.usecase.exam.GetBookingsUseCase
+import it.attendance100.mybicocca.domain.usecase.exam.GetExamCallTotalBookingsUseCase
 import it.attendance100.mybicocca.domain.usecase.exam.GetPresenceCertificateUseCase
 import it.attendance100.mybicocca.testing.MainDispatcherRule
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.appelli.state.BookedEvent
@@ -52,6 +53,7 @@ class BookedExamsViewModelTest {
     private val cancelBooking: CancelBookingUseCase = mockk(relaxed = true)
     private val getBookingSlip: GetBookingSlipUseCase = mockk()
     private val getPresenceCertificate: GetPresenceCertificateUseCase = mockk()
+    private val getCallTotalBookings: GetExamCallTotalBookingsUseCase = mockk(relaxed = true)
     private val observeActiveAccount: ObserveActiveAccountUseCase = mockk()
 
     private fun viewModel(account: Account? = account(careerId)): BookedExamsViewModel {
@@ -61,6 +63,7 @@ class BookedExamsViewModelTest {
             cancelBooking,
             getBookingSlip,
             getPresenceCertificate,
+            getCallTotalBookings,
             observeActiveAccount,
         )
     }

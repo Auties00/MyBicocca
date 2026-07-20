@@ -51,8 +51,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
-import it.attendance100.mybicocca.core.os.rememberHapticManager
+import androidx.core.net.toUri
 import it.attendance100.mybicocca.R
+import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.domain.model.calendar.CalendarEvent
 import it.attendance100.mybicocca.domain.model.calendar.EventStatus
 import it.attendance100.mybicocca.domain.model.elearning.course.CourseId
@@ -84,6 +85,8 @@ fun EventDetailSheet(
     onOpenAssignment: (assignmentId: Int, courseId: Int) -> Unit,
     onOpenReservation: (CalendarEvent) -> Unit,
     onDismiss: () -> Unit,
+    /** Total students booked on the exam's call, joined from the live bookable list; null when unknown. */
+    examTotalBookings: Int? = null,
 ) {
     val cancelled = event.status == EventStatus.CANCELLED
     val scheme = MaterialTheme.colorScheme
@@ -122,6 +125,7 @@ fun EventDetailSheet(
                 onOpenCourse = onOpenCourse,
                 onOpenAssignment = onOpenAssignment,
                 onOpenReservation = onOpenReservation,
+                examTotalBookings = examTotalBookings,
             )
         }
     }
@@ -149,6 +153,8 @@ fun EventDetailContent(
     onOpenAssignment: (assignmentId: Int, courseId: Int) -> Unit,
     onOpenReservation: (CalendarEvent) -> Unit,
     modifier: Modifier = Modifier,
+    /** Total students booked on the exam's call, joined from the live bookable list; null when unknown. */
+    examTotalBookings: Int? = null,
 ) {
     val context = LocalContext.current
     var showEditionPicker by remember { mutableStateOf(false) }
@@ -183,7 +189,7 @@ fun EventDetailContent(
                 )
             }
             if (event is CalendarEvent.Exam) {
-                bookingLine(event)?.let {
+                bookingLine(event, examTotalBookings)?.let {
                     add(
                         Triple(
                             Icons.Outlined.ConfirmationNumber,
@@ -304,7 +310,7 @@ fun EventDetailContent(
 private fun android.content.Context.openExternal(url: String) {
     runCatching {
         startActivity(
-            Intent(Intent.ACTION_VIEW, Uri.parse(url))
+            Intent(Intent.ACTION_VIEW, url.toUri())
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
         )
     }
@@ -498,10 +504,13 @@ private fun orarioValue(event: CalendarEvent): String {
 }
 
 @Composable
-/** Booking-row value composed from whichever facts the exam carries (position, booking date); null when it has none. */
-private fun bookingLine(event: CalendarEvent.Exam): String? {
-    val position =
-        event.bookingPosition?.let { stringResource(R.string.event_detail_booking_position, it) }
+/** Booking-row value composed from whichever facts the exam carries (position with the call's total when known, booking date); null when it has none. */
+private fun bookingLine(event: CalendarEvent.Exam, totalBookings: Int?): String? {
+    val position = event.bookingPosition?.let { p ->
+        totalBookings?.takeIf { it >= p }
+            ?.let { stringResource(R.string.event_detail_booking_position_of_total, p, it) }
+            ?: stringResource(R.string.event_detail_booking_position, p)
+    }
     val booked = event.bookedAt?.let {
         stringResource(
             R.string.event_detail_booking_date,

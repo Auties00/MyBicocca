@@ -172,6 +172,10 @@ fun AppelliPage(
     LaunchedEffect(pendingFocus) { if (pendingFocus != null) booking = true }
     LaunchedEffect(booking) { if (booking) bookableViewModel.refresh() }
 
+    // Opening a booking's detail lazily fetches its live numIscritti (see loadTotalBookings).
+    val callTotals by viewModel.callTotals.collectAsStateWithLifecycle()
+    LaunchedEffect(detailBooking?.key) { detailBooking?.let(viewModel::loadTotalBookings) }
+
     val page = when {
         outcome != null -> AppelliPage.Result
         detailBooking != null && confirmingCancel -> AppelliPage.ConfirmCancel
@@ -341,6 +345,8 @@ fun AppelliPage(
                         BookedExamDetailPage(
                             booking = booked,
                             today = today,
+                            // Fresh lazy fetch wins over the total persisted on the row.
+                            totalBookings = callTotals[booked.key] ?: booked.totalBookings,
                             isCancelling = (cancelAction as? CancelActionState.InProgress)
                                 ?.key == booked.identityKey(),
                             downloadingDocument = downloading,

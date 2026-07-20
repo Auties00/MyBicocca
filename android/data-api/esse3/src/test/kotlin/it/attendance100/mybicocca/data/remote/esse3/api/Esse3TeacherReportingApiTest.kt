@@ -1,6 +1,7 @@
 package it.attendance100.mybicocca.data.remote.esse3.api
 
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3PermissionLevel
+import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3TeacherDiaryStateFilter
 import it.attendance100.mybicocca.data.remote.esse3.exception.Esse3Exception
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.BeforeAll
@@ -122,7 +123,8 @@ class Esse3TeacherReportingApiTest : Esse3ApiTestBase() {
         val requiredPermissions = setOf(Esse3PermissionLevel.TECHNICAL_USER)
         if (userPermissions.any { it in requiredPermissions }) {
             logger.info("testFilterLecturerDiaryWithDiaryStatusCode: calling filterLecturerDiary() with diaryStatusCode=A")
-            val result = api.teacherReporting.filterLecturerDiary(diaryStatusCode = "A")
+            val result =
+                api.teacherReporting.filterLecturerDiary(diaryStatusCode = Esse3TeacherDiaryStateFilter.A)
             logger.info("testFilterLecturerDiaryWithDiaryStatusCode: result size=${result.size}")
             for (diary in result) {
                 logger.info("testFilterLecturerDiaryWithDiaryStatusCode: diaryId=${diary.diaryId}, diaryStateCode=${diary.diaryStateCode}, diaryStateDescription=${diary.diaryStateDescription}")
@@ -130,7 +132,7 @@ class Esse3TeacherReportingApiTest : Esse3ApiTestBase() {
         } else {
             logger.info("testFilterLecturerDiaryWithDiaryStatusCode: user lacks TECHNICAL_USER permission, expecting Esse3Exception")
             assertFailsWith<Esse3Exception> {
-                api.teacherReporting.filterLecturerDiary(diaryStatusCode = "A")
+                api.teacherReporting.filterLecturerDiary(diaryStatusCode = Esse3TeacherDiaryStateFilter.A)
             }
             logger.info("testFilterLecturerDiaryWithDiaryStatusCode: Esse3Exception thrown as expected")
         }
