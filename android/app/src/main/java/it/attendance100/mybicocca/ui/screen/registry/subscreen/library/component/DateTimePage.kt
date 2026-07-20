@@ -38,6 +38,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.ToggleButton
 import androidx.compose.material3.ToggleButtonDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -50,6 +51,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import it.attendance100.mybicocca.R
+import it.attendance100.mybicocca.core.os.currentLocale
 import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.SyncStatus
@@ -63,9 +65,11 @@ import java.time.LocalDate
 import java.time.LocalTime
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
-import java.util.Locale
 
-private val MonthTitleFormat = DateTimeFormatter.ofPattern("LLLL yyyy", Locale.ITALIAN)
+private val MonthTitleFormat: DateTimeFormatter
+    @Composable
+    @ReadOnlyComposable
+    get() = DateTimeFormatter.ofPattern("LLLL yyyy", currentLocale())
 private val TimeFormat = DateTimeFormatter.ofPattern("HH:mm")
 private val WeekdayLetters = listOf("L", "M", "M", "G", "V", "S", "D")
 private val CardShape = RoundedCornerShape(28.dp)
@@ -308,7 +312,8 @@ private fun CalendarSection(
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
-                text = month.format(MonthTitleFormat).replaceFirstChar { it.titlecase(Locale.ITALIAN) },
+                text = month.format(MonthTitleFormat)
+                    .replaceFirstChar { it.titlecase(currentLocale()) },
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.onSurface,

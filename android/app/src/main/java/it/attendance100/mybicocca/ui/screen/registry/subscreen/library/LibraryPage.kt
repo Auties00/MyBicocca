@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -16,6 +17,7 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import it.attendance100.mybicocca.R
+import it.attendance100.mybicocca.core.os.currentLocale
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.valueOrNull
 import it.attendance100.mybicocca.domain.model.library.LibraryReservation
@@ -40,9 +42,11 @@ import it.attendance100.mybicocca.ui.screen.registry.subscreen.library.component
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.library.state.LibraryEvent
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.library.state.LibraryPage
 import java.time.format.DateTimeFormatter
-import java.util.Locale
 
-private val RecapDateFormat = DateTimeFormatter.ofPattern("EEE d MMM", Locale.ITALIAN)
+private val RecapDateFormat: DateTimeFormatter
+    @Composable
+    @ReadOnlyComposable
+    get() = DateTimeFormatter.ofPattern("EEE d MMM", currentLocale())
 private val TimeFormat = DateTimeFormatter.ofPattern("HH:mm")
 
 /**
@@ -65,7 +69,6 @@ private val TimeFormat = DateTimeFormatter.ofPattern("HH:mm")
  * - A reservation-detail page pops itself when a cancellation or sync drops its reservation.
  * - "Verifica presenza" opens a full-screen QR scanner with a manual-code fallback.
  */
-@Suppress("AssignedValueIsNeverRead")
 @Composable
 fun LibraryPage(
     viewModel: LibraryViewModel,
@@ -230,9 +233,11 @@ fun LibraryPage(
             val time = selectedStartTime
             if (time == null) emptyList() else seats.valueOrNull().orEmpty().filter { it.isBookableAt(time) }
         }
-        val slotRecap = remember(selectedDate, selectedStartTime) {
+        val locale = currentLocale()
+        val recapDateFormat = RecapDateFormat
+        val slotRecap = remember(selectedDate, selectedStartTime, locale, recapDateFormat) {
             listOfNotNull(
-                selectedDate?.format(RecapDateFormat)?.replaceFirstChar { it.titlecase(Locale.ITALIAN) },
+                selectedDate?.format(recapDateFormat)?.replaceFirstChar { it.titlecase(locale) },
                 selectedStartTime?.format(TimeFormat)?.let { "ore $it" },
             ).joinToString(" · ").ifBlank { null }
         }

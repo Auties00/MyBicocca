@@ -1,8 +1,10 @@
 package it.attendance100.mybicocca.ui.screen.registry.subscreen.enrollments.ext
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.ui.res.stringResource
 import it.attendance100.mybicocca.R
+import it.attendance100.mybicocca.core.os.currentLocale
 import it.attendance100.mybicocca.domain.model.enrollment.AnnualEnrollment
 import it.attendance100.mybicocca.domain.model.enrollment.EnrollmentStatus
 import it.attendance100.mybicocca.domain.model.enrollment.EnrollmentType
@@ -10,9 +12,11 @@ import it.attendance100.mybicocca.ui.screen.registry.state.RegistryBadgeTone
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.enrollments.state.EnrollmentBadge
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
-import java.util.Locale
 
-private val DayFormat = DateTimeFormatter.ofPattern("d MMMM yyyy", Locale.getDefault())
+private val DayFormat: DateTimeFormatter
+    @Composable
+    @ReadOnlyComposable
+    get() = DateTimeFormatter.ofPattern("d MMMM yyyy", currentLocale())
 
 /** "2024/2025"-style academic-year label. */
 fun AnnualEnrollment.academicYearLabel(): String =
@@ -119,4 +123,6 @@ fun AnnualEnrollment.badges(): List<EnrollmentBadge> {
 }
 
 /** "12 settembre 2024"-style Italian day label. */
+@Composable
+@ReadOnlyComposable
 fun LocalDate.toEnrollmentDateLabel(): String = format(DayFormat)

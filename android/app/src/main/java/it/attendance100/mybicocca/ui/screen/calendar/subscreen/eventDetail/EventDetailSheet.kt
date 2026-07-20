@@ -38,6 +38,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -53,6 +54,7 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import it.attendance100.mybicocca.R
+import it.attendance100.mybicocca.core.os.currentLocale
 import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.domain.model.calendar.CalendarEvent
 import it.attendance100.mybicocca.domain.model.calendar.EventStatus
@@ -68,7 +70,6 @@ import it.attendance100.mybicocca.ui.screen.calendar.ext.peopleLine
 import it.attendance100.mybicocca.ui.screen.calendar.subscreen.coursePicker.CourseEditionPickerSheet
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
-import java.util.Locale
 
 /**
  * Modal bottom sheet showing one calendar event in full: the headline title with the kind
@@ -205,7 +206,7 @@ fun EventDetailContent(
                             stringResource(R.string.event_detail_cancellable_label),
                             stringResource(
                                 R.string.event_detail_cancellable_until,
-                                it.formatItalian()
+                                it.formatDate()
                             )
                         )
                     )
@@ -514,16 +515,21 @@ private fun bookingLine(event: CalendarEvent.Exam, totalBookings: Int?): String?
     val booked = event.bookedAt?.let {
         stringResource(
             R.string.event_detail_booking_date,
-            it.toLocalDate().formatItalian()
+            it.toLocalDate().formatDate()
         )
     }
     val line = listOfNotNull(position, booked).joinToString(" · ")
     return line.takeIf { it.isNotBlank() }?.replaceFirstChar { it.uppercase() }
 }
 
-private val ItalianDate = DateTimeFormatter.ofPattern("d MMMM", Locale.getDefault())
+private val DateFormat: DateTimeFormatter
+    @Composable
+    @ReadOnlyComposable
+    get() = DateTimeFormatter.ofPattern("d MMMM", currentLocale())
 
-private fun LocalDate.formatItalian(): String = format(ItalianDate)
+@Composable
+@ReadOnlyComposable
+private fun LocalDate.formatDate(): String = format(DateFormat)
 
 private val MapsEmbedCoordRegex = Regex("!2d(-?\\d+\\.?\\d*)!3d(-?\\d+\\.?\\d*)")
 

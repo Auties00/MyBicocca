@@ -127,7 +127,6 @@ import java.time.temporal.ChronoUnit
  * The root covers first-load failure (retry page), minimum-duration loading, and the
  * all-empty state.
  */
-@Suppress("AssignedValueIsNeverRead")
 @Composable
 fun ExamResultsPage(
     viewModel: ExamResultsViewModel,

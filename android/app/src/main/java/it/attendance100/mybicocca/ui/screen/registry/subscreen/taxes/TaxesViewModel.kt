@@ -23,8 +23,6 @@ import it.attendance100.mybicocca.domain.usecase.tax.GetPaymentStatusUseCase
 import it.attendance100.mybicocca.domain.usecase.tax.GetTaxInvoicesUseCase
 import it.attendance100.mybicocca.domain.usecase.tax.StartPagoPaPaymentUseCase
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.taxes.state.TaxEvent
-import java.time.format.DateTimeFormatter
-import java.util.Locale
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -38,6 +36,8 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 import javax.inject.Inject
 import kotlin.coroutines.cancellation.CancellationException
 
@@ -171,10 +171,10 @@ class TaxesViewModel @Inject constructor(
     }
 }
 
-private val PAYMENT_DATE_FORMAT = DateTimeFormatter.ofPattern("d MMMM yyyy", Locale.getDefault())
-
 private fun PaymentStatus?.toStatusMessage(context: Context): String {
     if (this == null) return context.getString(R.string.taxes_no_pagopa_transaction)
+    val locale = context.resources.configuration.locales.get(0) ?: Locale.getDefault()
+    val paymentDateFormat = DateTimeFormatter.ofPattern("d MMMM yyyy", locale)
     val head = when (outcome) {
         PaymentOutcome.Completed -> context.getString(R.string.taxes_payment_completed)
         PaymentOutcome.Pending -> context.getString(R.string.taxes_payment_pending)
@@ -182,8 +182,8 @@ private fun PaymentStatus?.toStatusMessage(context: Context): String {
         PaymentOutcome.Unknown -> description ?: context.getString(R.string.taxes_payment_status_unavailable)
     }
     val details = buildList {
-        paymentDate?.let { add(it.format(PAYMENT_DATE_FORMAT)) }
-        paidAmount?.takeIf { it > 0 }?.let { add("€ %.2f".format(Locale.getDefault(), it)) }
+        paymentDate?.let { add(it.format(paymentDateFormat)) }
+        paidAmount?.takeIf { it > 0 }?.let { add("€ %.2f".format(locale, it)) }
     }
     return if (details.isEmpty()) head else "$head · ${details.joinToString(" · ")}"
 }

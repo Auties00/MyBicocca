@@ -23,24 +23,27 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import it.attendance100.mybicocca.R
+import it.attendance100.mybicocca.core.os.currentLocale
 import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.library.ext.durationLabel
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
-import java.util.Locale
 
-private val FullDateFormat = DateTimeFormatter.ofPattern("EEEE d MMMM", Locale.ITALIAN)
+private val FullDateFormat: DateTimeFormatter
+    @Composable
+    @ReadOnlyComposable
+    get() = DateTimeFormatter.ofPattern("EEEE d MMMM", currentLocale())
 private val TimeFormat = DateTimeFormatter.ofPattern("HH:mm")
 
 /**
@@ -77,7 +80,6 @@ internal fun LibraryDonePage(
         ) {
             Spacer(Modifier.height(8.dp))
             HeroIcon(Icons.Rounded.Check)
-            val context = LocalContext.current
             Spacer(Modifier.height(24.dp))
             Text(
                 text = stringResource(R.string.library_booked),
@@ -97,7 +99,8 @@ internal fun LibraryDonePage(
                 val end = startTime.plusMinutes(durationMinutes.toLong())
                 Spacer(Modifier.height(2.dp))
                 Text(
-                    text = date.format(FullDateFormat).replaceFirstChar { it.titlecase(Locale.ITALIAN) } +
+                    text = date.format(FullDateFormat)
+                        .replaceFirstChar { it.titlecase(currentLocale()) } +
                         " · ${startTime.format(TimeFormat)}–${end.format(TimeFormat)} · ${durationLabel(durationMinutes)}",
                     style = MaterialTheme.typography.bodyMedium,
                     color = scheme.onSurfaceVariant,

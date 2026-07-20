@@ -4,17 +4,21 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.LocationOn
 import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.ui.Modifier
+import it.attendance100.mybicocca.core.os.currentLocale
 import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.domain.model.library.LibraryReservation
 import it.attendance100.mybicocca.ui.component.card.BookingFooterEntry
 import it.attendance100.mybicocca.ui.component.card.BookingSummaryCard
 import it.attendance100.mybicocca.ui.component.card.relativeDayLabel
 import java.time.format.DateTimeFormatter
-import java.util.Locale
 
 private val DayOfMonthFormat = DateTimeFormatter.ofPattern("d")
-private val MonthFormat = DateTimeFormatter.ofPattern("MMM", Locale.ITALIAN)
+private val MonthFormat: DateTimeFormatter
+    @Composable
+    @ReadOnlyComposable
+    get() = DateTimeFormatter.ofPattern("MMM", currentLocale())
 private val TimeFormat = DateTimeFormatter.ofPattern("HH:mm")
 
 /**
@@ -43,7 +47,7 @@ fun LibraryReservationCard(
         title = reservation.libraryName,
         subtitle = reservation.seatName,
         dayOfMonth = reservation.start.format(DayOfMonthFormat),
-        month = reservation.start.format(MonthFormat).uppercase(Locale.ITALIAN),
+        month = reservation.start.format(MonthFormat).uppercase(currentLocale()),
         footer = footer,
         onClick = { haptic.tap(); onClick() },
         modifier = modifier,

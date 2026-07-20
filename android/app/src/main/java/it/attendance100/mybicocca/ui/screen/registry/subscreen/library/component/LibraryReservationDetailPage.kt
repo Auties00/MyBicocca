@@ -29,6 +29,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -36,15 +37,18 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import it.attendance100.mybicocca.R
+import it.attendance100.mybicocca.core.os.currentLocale
 import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.domain.model.library.LibraryReservation
 import it.attendance100.mybicocca.ui.component.card.DetailFactCard
 import it.attendance100.mybicocca.ui.theme.LocalIsOnline
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
-import java.util.Locale
 
-private val FullDateFormat = DateTimeFormatter.ofPattern("EEEE d MMMM yyyy", Locale.ITALIAN)
+private val FullDateFormat: DateTimeFormatter
+    @Composable
+    @ReadOnlyComposable
+    get() = DateTimeFormatter.ofPattern("EEEE d MMMM yyyy", currentLocale())
 private val TimeFormat = DateTimeFormatter.ofPattern("HH:mm")
 
 /**
@@ -107,10 +111,11 @@ internal fun LibraryReservationDetailPage(
                 listOfNotNull(reservation.libraryName, reservation.librarySecondaryName).joinToString(" · "),
             )
             DetailFactCard(Icons.Outlined.Chair, "POSTO", reservation.seatName)
+            val locale = currentLocale()
             DetailFactCard(
                 Icons.Outlined.CalendarMonth,
                 "QUANDO",
-                reservation.start.format(FullDateFormat).replaceFirstChar { it.titlecase(Locale.ITALIAN) } +
+                reservation.start.format(FullDateFormat).replaceFirstChar { it.titlecase(locale) } +
                     " · ${reservation.start.format(TimeFormat)}–${reservation.end.format(TimeFormat)}",
             )
             reservation.note?.let { note ->

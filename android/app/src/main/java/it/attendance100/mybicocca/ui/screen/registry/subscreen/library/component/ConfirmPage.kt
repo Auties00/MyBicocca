@@ -31,6 +31,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -45,6 +46,7 @@ import androidx.compose.ui.text.withLink
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import it.attendance100.mybicocca.R
+import it.attendance100.mybicocca.core.os.currentLocale
 import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.domain.model.library.LibraryAgreement
 import it.attendance100.mybicocca.domain.model.library.LibrarySeat
@@ -53,9 +55,11 @@ import it.attendance100.mybicocca.ui.theme.LocalIsOnline
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
-import java.util.Locale
 
-private val FullDateFormat = DateTimeFormatter.ofPattern("EEEE d MMMM", Locale.ITALIAN)
+private val FullDateFormat: DateTimeFormatter
+    @Composable
+    @ReadOnlyComposable
+    get() = DateTimeFormatter.ofPattern("EEEE d MMMM", currentLocale())
 private val TimeFormat = DateTimeFormatter.ofPattern("HH:mm")
 
 /**
@@ -114,11 +118,14 @@ internal fun ConfirmPage(
                     stringResource(R.string.library_seat),
                     seat.shortName + if (seat.hasPowerOutlet) " · ${stringResource(R.string.library_power_outlet)}" else "",
                 )
+                val fullDateFormat = FullDateFormat
+                val locale = currentLocale()
                 IconRow(
                     Icons.Outlined.CalendarMonth,
                     stringResource(R.string.library_when),
                     buildString {
-                        append(date.format(FullDateFormat).replaceFirstChar { it.titlecase(Locale.ITALIAN) })
+                        append(
+                            date.format(fullDateFormat).replaceFirstChar { it.titlecase(locale) })
                         append(" · ${startTime.format(TimeFormat)}–${end.format(TimeFormat)}")
                         append(" · ${durationLabel(durationMinutes)}")
                     },

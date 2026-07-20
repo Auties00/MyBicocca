@@ -301,6 +301,7 @@ fun QuestionnairesPage(
                     )
 
                     QPage.Units -> Box(modifier = Modifier.testTag(QuestionnairesTestTags.UNITS_PAGE)) {
+                        val activityName = activity?.displayName.orEmpty()
                         QuestionnaireUnitsPage(
                             detail = activityDetail,
                             detailStatus = detailStatus,
@@ -314,7 +315,7 @@ fun QuestionnairesPage(
                                         questionnaireConfigId = questionnaireConfigId,
                                         anonymous = detail.anonymous,
                                         tags = unit.tags,
-                                        activityName = activity?.displayName.orEmpty(),
+                                        activityName = activityName,
                                         lecturerName = unit.lecturerName,
                                         partitionName = unit.partitionName,
                                     )

@@ -25,6 +25,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -39,6 +40,7 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import it.attendance100.mybicocca.R
+import it.attendance100.mybicocca.core.os.currentLocale
 import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.ui.component.button.RetryButton
 import it.attendance100.mybicocca.ui.component.feedback.friendlyMessage
@@ -51,10 +53,16 @@ import it.attendance100.mybicocca.ui.screen.registry.state.RegistryDeadline
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
-import java.util.Locale
 
-private val MonthFormat = DateTimeFormatter.ofPattern("MMM", Locale.ITALIAN)
-private val NextFormat = DateTimeFormatter.ofPattern("d MMM", Locale.ITALIAN)
+private val MonthFormat: DateTimeFormatter
+    @Composable
+    @ReadOnlyComposable
+    get() = DateTimeFormatter.ofPattern("MMM", currentLocale())
+
+private val NextFormat: DateTimeFormatter
+    @Composable
+    @ReadOnlyComposable
+    get() = DateTimeFormatter.ofPattern("d MMM", currentLocale())
 
 /**
  * Scadenzario: the registry deadline spine rendered as a vertical timeline inside a modal
@@ -339,4 +347,6 @@ private fun relativeLabel(today: LocalDate, date: LocalDate, byDeadline: Boolean
 }
 
 /** Formats the soonest deadline for the banner summary ("prossima il 2 giu"). */
+@Composable
+@ReadOnlyComposable
 fun nextDeadlineLabel(date: LocalDate): String = date.format(NextFormat)

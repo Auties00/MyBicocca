@@ -225,6 +225,5 @@ private fun ExamDocument.fileName(booking: BookedExam): String {
  */
 private fun ExamDocument.errorMessage(cause: Throwable): String = when (this) {
     ExamDocument.BookingSlip -> "Impossibile scaricare lo statino di prenotazione. Riprova tra un momento."
-    ExamDocument.PresenceCertificate ->
-        "L'attestato di presenza non è ancora disponibile per questo appello."
+    ExamDocument.PresenceCertificate -> "L'attestato di presenza non è ancora disponibile per questo appello."
 }

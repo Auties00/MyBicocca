@@ -25,12 +25,14 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import it.attendance100.mybicocca.R
+import it.attendance100.mybicocca.core.os.currentLocale
 import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.SyncStatus
@@ -44,9 +46,11 @@ import it.attendance100.mybicocca.ui.component.modal.SheetMessage
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.library.ext.occupancyColor
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.library.ext.occupancyLabel
 import java.time.format.DateTimeFormatter
-import java.util.Locale
 
-private val WeekdayFormat = DateTimeFormatter.ofPattern("EEEE", Locale.ITALIAN)
+private val WeekdayFormat: DateTimeFormatter
+    @Composable
+    @ReadOnlyComposable
+    get() = DateTimeFormatter.ofPattern("EEEE", currentLocale())
 private val TimeFormat = DateTimeFormatter.ofPattern("HH:mm")
 
 /**
@@ -228,7 +232,7 @@ private fun WeekHoursRow(day: LibraryDayHours) {
     val color = if (day.isToday) scheme.onSurface else scheme.onSurfaceVariant
     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
         Text(
-            text = day.day.format(WeekdayFormat).replaceFirstChar { it.titlecase(Locale.ITALIAN) },
+            text = day.day.format(WeekdayFormat).replaceFirstChar { it.titlecase(currentLocale()) },
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = emphasis,
             color = color,

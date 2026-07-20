@@ -114,7 +114,6 @@ import java.time.LocalDate
  * success result page; a failed booking returns to the calendar with the error carried by
  * the result page.
  */
-@Suppress("AssignedValueIsNeverRead")
 @Composable
 fun AppelliPage(
     bookableViewModel: BookableExamsViewModel,
