@@ -147,7 +147,6 @@ internal fun mockLoadedState(): WhatsNewUiState.Loaded {
     val items = mockReleaseItems()
     val merged = mergeReleaseNotes(
         sources = items.map { MergedReleaseSource(it.release.versionName, it.notes) },
-        otherLabel = "Other changes",
     )
     val latest = items.first()
     return WhatsNewUiState.Loaded(

@@ -1,5 +1,8 @@
 package it.attendance100.mybicocca.ui.screen.registry.subscreen.appelli.state
 
+import it.attendance100.mybicocca.core.text.UiText
+
+
 /**
  * One-shot outcomes of the booked-exams actions: cancellation results, a fetched PDF to
  * open, and user-facing messages.
@@ -8,7 +11,7 @@ sealed interface BookedEvent {
     data object CancellationSucceeded : BookedEvent
     data class CancellationFailed(val cause: Throwable) : BookedEvent
     class OpenPdf(val bytes: ByteArray, val fileName: String) : BookedEvent
-    data class ShowMessage(val message: String) : BookedEvent
+    data class ShowMessage(val message: UiText) : BookedEvent
 }
 
 /**

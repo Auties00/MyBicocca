@@ -1,9 +1,7 @@
 package it.attendance100.mybicocca.ui.screen.elearning.subscreen.videoPlayer
 
-import android.content.ComponentName
-import android.content.Context
-import android.net.Uri
 import androidx.annotation.OptIn
+import androidx.core.net.toUri
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -15,13 +13,11 @@ import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaController
-import androidx.media3.session.SessionToken
 import com.google.common.util.concurrent.MoreExecutors
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.SyncStatus
@@ -61,6 +57,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * Drives course video playback through a [MediaController] bound to [VideoPlaybackService], so
@@ -84,7 +81,7 @@ import kotlinx.coroutines.launch
 @HiltViewModel(assistedFactory = VideoPlayerViewModel.Factory::class)
 class VideoPlayerViewModel @AssistedInject constructor(
     @Assisted private val key: AppRoute.VideoPlayback,
-    @ApplicationContext private val context: Context,
+    private val mediaControllerProvider: MediaControllerProvider,
     savedState: SavedStateHandle,
     observeActiveAccount: ObserveActiveAccountUseCase,
     private val observeCourseDetails: ObserveCourseDetailsUseCase,
@@ -188,11 +185,7 @@ class VideoPlayerViewModel @AssistedInject constructor(
     }
 
     private fun bindMediaController() {
-        val sessionToken = SessionToken(
-            context,
-            ComponentName(context, VideoPlaybackService::class.java),
-        )
-        val future = MediaController.Builder(context, sessionToken).buildAsync()
+        val future = mediaControllerProvider.createControllerFuture()
         mediaControllerFuture = future
         future.addListener(
             {
@@ -321,7 +314,7 @@ class VideoPlayerViewModel @AssistedInject constructor(
         if (progressTickerJob?.isActive == true) return
         progressTickerJob = viewModelScope.launch {
             while (true) {
-                delay(PROGRESS_TICK_MS)
+                delay(PROGRESS_TICK_MS.milliseconds)
                 val controller = _player.value ?: continue
                 if (!controller.isPlaying) continue
                 persistProgress(
@@ -363,9 +356,12 @@ class VideoPlayerViewModel @AssistedInject constructor(
     private fun buildMediaItem(cmId: Int, stream: VideoStream): MediaItem {
         val playlistItem = playlist.value.firstOrNull { it.cmId == cmId }
         val metadata = MediaMetadata.Builder()
-            .setTitle(playlistItem?.title ?: context.getString(R.string.elearning_video_course_video))
+            .setTitle(
+                playlistItem?.title
+                    ?: mediaControllerProvider.getString(R.string.elearning_video_course_video)
+            )
             .setArtist(playlistItem?.sectionName)
-            .setArtworkUri(Uri.parse(stream.thumbnailUrl))
+            .setArtworkUri(stream.thumbnailUrl.toUri())
             .setMediaType(MediaMetadata.MEDIA_TYPE_VIDEO)
             .build()
         return MediaItem.Builder()
@@ -400,7 +396,10 @@ class VideoPlayerViewModel @AssistedInject constructor(
                     cmId = videoCmId,
                     title = module.name,
                     sectionName = section.name.takeIf { it.isNotBlank() }
-                        ?: context.getString(R.string.elearning_video_section, section.sectionNumber),
+                        ?: mediaControllerProvider.getString(
+                            R.string.elearning_video_section,
+                            section.sectionNumber
+                        ),
                     progressFraction = p?.progressFraction ?: 0f,
                     completed = p?.completed == true,
                     isCurrent = videoCmId == currentCmId,

@@ -1,5 +1,6 @@
 package it.attendance100.mybicocca.data.repository
 
+import android.content.Context
 import com.google.common.truth.Truth.assertThat
 import io.mockk.Runs
 import io.mockk.coEvery
@@ -43,6 +44,7 @@ import java.time.ZoneId
  */
 class AppointmentRepositoryImplTest {
 
+    private val context: Context = mockk(relaxed = true)
     private val easyStaffApi: EasyStaffApi = mockk(relaxed = true)
     private val desks: EasyStaffPlanningBookingApi = mockk(relaxed = true)
     private val reservationDao: AppointmentReservationDao = mockk(relaxed = true)
@@ -53,7 +55,7 @@ class AppointmentRepositoryImplTest {
     fun setUp() {
         every { easyStaffApi.planning.informationDesks } returns desks
         every { desks.portal } returns EasyStaffPlanningPortal.INFORMATION_DESKS
-        repository = AppointmentRepositoryImpl(easyStaffApi, reservationDao)
+        repository = AppointmentRepositoryImpl(context, easyStaffApi, reservationDao)
     }
 
     private fun service() = AppointmentService(

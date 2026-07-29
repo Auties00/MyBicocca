@@ -1,12 +1,9 @@
 package it.attendance100.mybicocca.ui.screen.settings.subscreen.appInfo
 
-import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext
 import it.attendance100.mybicocca.BuildConfig
-import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.release.MergedReleaseSource
 import it.attendance100.mybicocca.core.release.ReleaseNotes
 import it.attendance100.mybicocca.core.release.mergeReleaseNotes
@@ -31,7 +28,6 @@ import javax.inject.Inject
  */
 @HiltViewModel
 class WhatsNewViewModel @Inject constructor(
-    @ApplicationContext private val context: Context,
     private val getReleases: GetReleasesUseCase,
 ) : ViewModel() {
 
@@ -78,7 +74,6 @@ class WhatsNewViewModel @Inject constructor(
                 latestPageUrl = latest.release.pageUrl,
                 notes = mergeReleaseNotes(
                     sources = newer.map { MergedReleaseSource(it.release.versionName, it.notes) },
-                    otherLabel = context.getString(R.string.whats_new_other_changes),
                 ),
                 mergedVersionCount = newer.size,
             )

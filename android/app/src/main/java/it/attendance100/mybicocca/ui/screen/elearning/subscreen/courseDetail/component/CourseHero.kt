@@ -29,6 +29,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -37,6 +38,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.domain.model.elearning.course.CourseDetails
 import it.attendance100.mybicocca.domain.model.elearning.course.CourseStaffRole
 import it.attendance100.mybicocca.domain.model.elearning.course.courseCode
@@ -243,8 +245,9 @@ private fun splitTitle(title: String, scheme: ColorScheme): AnnotatedString {
     }
 }
 
+@Composable
 private fun instructorLine(details: CourseDetails): String? {
     val primary = details.staff.firstOrNull { it.role == CourseStaffRole.Docente }
         ?: details.staff.firstOrNull()
-    return primary?.fullName?.let { "Prof. $it" }
+    return primary?.fullName?.let { stringResource(R.string.b3_course_hero_prof_prefix, it) }
 }

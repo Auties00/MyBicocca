@@ -219,7 +219,8 @@ fun AppelliPage(
                                 )
                             }
 
-                    is BookedEvent.ShowMessage -> outcome = SheetOutcome.Info(event.message)
+                    is BookedEvent.ShowMessage -> outcome =
+                        SheetOutcome.Info(event.message.asString(context))
                 }
             }
         }

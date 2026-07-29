@@ -1,5 +1,7 @@
 package it.attendance100.mybicocca.data.repository
 
+import android.content.Context
+import dagger.hilt.android.qualifiers.ApplicationContext
 import io.ktor.utils.io.ByteReadChannel
 import io.ktor.utils.io.jvm.javaio.toInputStream
 import it.attendance100.mybicocca.data.auth.SessionManager
@@ -46,6 +48,7 @@ import javax.inject.Singleton
  */
 @Singleton
 class TaxRepositoryImpl @Inject constructor(
+    @ApplicationContext private val context: Context,
     private val sessionManager: SessionManager,
     private val taxCacheDao: TaxCacheDao,
 ) : TaxRepository {
@@ -124,7 +127,7 @@ class TaxRepositoryImpl @Inject constructor(
             body = Esse3PagoPATransaction(invoiceId = invoiceId.value, returnURL = returnUrl),
         )
         return response.pagopaRedirectUrl?.takeIf { it.isNotBlank() }
-            ?: error("pagoPA non ha restituito un link di pagamento.")
+            ?: error(context.getString(it.attendance100.mybicocca.R.string.b1_tax_pagopa_no_link))
     }
 
     override suspend fun getPagoPaNotice(careerId: CareerId, invoiceId: InvoiceId): ByteArray {

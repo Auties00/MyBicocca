@@ -1,5 +1,7 @@
 package it.attendance100.mybicocca.data.mapper.attendance
 
+import it.attendance100.mybicocca.R
+import it.attendance100.mybicocca.core.text.UiText
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffAttendanceRecord
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffAttendanceStatus
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffCertifyAttendanceResult
@@ -57,24 +59,39 @@ fun ElearningAttendanceMarkableSession.toDomain(module: AttendanceModuleRef): Op
  */
 fun ElearningAttendanceMarkResult.toOutcome(): PresenceMarkOutcome = when (this) {
     is ElearningAttendanceMarkResult.Marked ->
-        PresenceMarkOutcome.Recorded("Presenza registrata", statusDescription)
+        PresenceMarkOutcome.Recorded(
+            message = UiText.StringResource(R.string.attendance_msg_recorded),
+            statusDescription = statusDescription,
+        )
 
     ElearningAttendanceMarkResult.AlreadyMarked ->
-        PresenceMarkOutcome.AlreadyRecorded("Presenza già registrata")
+        PresenceMarkOutcome.AlreadyRecorded(
+            message = UiText.StringResource(R.string.attendance_msg_already_recorded),
+        )
 
     ElearningAttendanceMarkResult.WrongPassword ->
-        PresenceMarkOutcome.WrongCredential("Password o codice non corretti")
+        PresenceMarkOutcome.WrongCredential(
+            message = UiText.StringResource(R.string.attendance_msg_wrong_credential),
+        )
 
-    is ElearningAttendanceMarkResult.NotOpen -> PresenceMarkOutcome.NotOpen(
-        when (reason) {
-            "subnetwrong" -> "Devi essere connesso alla rete dell'aula per registrare la presenza"
-            "preventsharederror" -> "Una presenza è già stata registrata da questa rete"
-            else -> "La sessione non è più disponibile"
-        }
-    )
+    is ElearningAttendanceMarkResult.NotOpen -> when (reason) {
+        "subnetwrong" -> PresenceMarkOutcome.NetworkRestricted(
+            message = UiText.StringResource(R.string.attendance_msg_network_wrong),
+        )
+
+        "preventsharederror" -> PresenceMarkOutcome.DeviceAlreadyUsed(
+            message = UiText.StringResource(R.string.attendance_msg_network_prevent_shared),
+        )
+
+        else -> PresenceMarkOutcome.NotOpen(
+            message = UiText.StringResource(R.string.attendance_msg_session_closed),
+        )
+    }
 
     is ElearningAttendanceMarkResult.Failed ->
-        PresenceMarkOutcome.Failed("Registrazione non riuscita")
+        PresenceMarkOutcome.Failed(
+            message = UiText.StringResource(R.string.attendance_msg_failed),
+        )
 }
 
 /**
@@ -83,7 +100,21 @@ fun ElearningAttendanceMarkResult.toOutcome(): PresenceMarkOutcome = when (this)
  * as a wrong lesson code.
  */
 fun EasyStaffCertifyAttendanceResult.toOutcome(): PresenceMarkOutcome = when {
-    success -> PresenceMarkOutcome.Recorded(message.ifBlank { "Presenza registrata" })
-    message.contains("codice", ignoreCase = true) -> PresenceMarkOutcome.WrongCredential(message)
-    else -> PresenceMarkOutcome.Failed(message.ifBlank { "Registrazione non riuscita" })
+    success -> PresenceMarkOutcome.Recorded(
+        message = if (message.isBlank()) UiText.StringResource(R.string.attendance_msg_recorded) else UiText.DynamicString(
+            message
+        ),
+        statusDescription = if (message.isBlank()) null else message,
+    )
+
+    message.contains("codice", ignoreCase = true) -> PresenceMarkOutcome.WrongCredential(
+        message = if (message.isBlank()) UiText.StringResource(R.string.attendance_msg_wrong_credential) else UiText.DynamicString(
+            message
+        ),
+    )
+
+    else -> PresenceMarkOutcome.Failed(
+        message = UiText.StringResource(R.string.attendance_msg_failed),
+        backendMessage = if (message.isBlank()) null else message,
+    )
 }

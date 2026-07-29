@@ -8,6 +8,7 @@ import io.mockk.every
 import io.mockk.mockk
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.SyncStatus
+import it.attendance100.mybicocca.core.text.UiText
 import it.attendance100.mybicocca.domain.model.account.AcademicIdentity
 import it.attendance100.mybicocca.domain.model.account.Account
 import it.attendance100.mybicocca.domain.model.account.AccountId
@@ -184,8 +185,8 @@ class BookedExamsViewModelTest {
             vm.downloadPresenceCertificate(target)
             val event = awaitItem()
             assertThat(event).isInstanceOf(BookedEvent.ShowMessage::class.java)
-            assertThat((event as BookedEvent.ShowMessage).message)
-                .isEqualTo("L'attestato di presenza non è ancora disponibile per questo appello.")
+            assertThat(((event as BookedEvent.ShowMessage).message as UiText.StringResource).resId)
+                .isEqualTo(it.attendance100.mybicocca.R.string.appelli_presence_certificate_error)
             cancelAndIgnoreRemainingEvents()
         }
     }

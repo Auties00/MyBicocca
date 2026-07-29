@@ -63,12 +63,12 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
-import it.attendance100.mybicocca.core.os.rememberHapticManager
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.window.DialogWindowProvider
 import androidx.graphics.shapes.Morph
 import androidx.graphics.shapes.toPath
 import it.attendance100.mybicocca.R
+import it.attendance100.mybicocca.core.os.rememberHapticManager
 
 /**
  * Voice-search dialog in the M3 expressive language: a centered card with a live audio-reactive
@@ -289,7 +289,7 @@ private fun TranscriptText(transcript: String) {
     )
 
     Text(
-        text = if (listening) "Parla ora…" else transcript,
+        text = if (listening) stringResource(R.string.b3_dictation_speak_now) else transcript,
         style = MaterialTheme.typography.titleMedium,
         color = if (listening) scheme.onSurfaceVariant.copy(alpha = pulse) else scheme.onSurface,
         textAlign = TextAlign.Center,

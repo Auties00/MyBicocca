@@ -1,7 +1,5 @@
 package it.attendance100.mybicocca.ui.screen.registry.subscreen.studyPlanEdit
 
-import android.content.Context
-import androidx.test.core.app.ApplicationProvider
 import app.cash.turbine.test
 import com.google.common.truth.Truth.assertThat
 import io.mockk.coEvery
@@ -45,8 +43,6 @@ class StudyPlanEditViewModelTest {
 
     @get:Rule
     val mainDispatcherRule = MainDispatcherRule()
-
-    private val context: Context = ApplicationProvider.getApplicationContext()
 
     private val getStudyPath: GetStudyPathUseCase = mockk()
     private val getStudyPlanDraft: GetStudyPlanDraftUseCase = mockk()
@@ -135,7 +131,7 @@ class StudyPlanEditViewModelTest {
         coEvery { getStudyPlanDraft(careerId, 555L, 10L, 20L) } returns
             listOf(rule(1L, listOf(course(11L, "A"))))
 
-        val vm = StudyPlanEditViewModel(request(), context, getStudyPath, getStudyPlanDraft, submitStudyPlan)
+        val vm = StudyPlanEditViewModel(request(), getStudyPath, getStudyPlanDraft, submitStudyPlan)
 
         assertThat(vm.selectedSchemaId.value).isEqualTo(20L)
         assertThat(vm.rules.value).isInstanceOf(Loadable.Loaded::class.java)
@@ -147,7 +143,7 @@ class StudyPlanEditViewModelTest {
     fun `a percorso step defers the rules fetch and preselects nothing`() = runTest {
         coEvery { getStudyPath(careerId) } returns pathWithOptions(option(20L), option(30L))
 
-        val vm = StudyPlanEditViewModel(request(), context, getStudyPath, getStudyPlanDraft, submitStudyPlan)
+        val vm = StudyPlanEditViewModel(request(), getStudyPath, getStudyPlanDraft, submitStudyPlan)
 
         assertThat(vm.selectedSchemaId.value).isNull()
         assertThat(vm.rules.value).isEqualTo(Loadable.NotYetLoaded)
@@ -161,7 +157,7 @@ class StudyPlanEditViewModelTest {
         coEvery { getStudyPlanDraft(careerId, 555L, 10L, 30L) } returns
             listOf(rule(2L, listOf(course(21L, "B"))))
 
-        val vm = StudyPlanEditViewModel(request(), context, getStudyPath, getStudyPlanDraft, submitStudyPlan)
+        val vm = StudyPlanEditViewModel(request(), getStudyPath, getStudyPlanDraft, submitStudyPlan)
         vm.selectSchema(30L)
         vm.loadSelectedRules()
 
@@ -178,7 +174,7 @@ class StudyPlanEditViewModelTest {
         coEvery { getStudyPlanDraft(careerId, 555L, 10L, 30L) } returns
             listOf(rule(2L, listOf(course(21L, "B"))))
 
-        val vm = StudyPlanEditViewModel(request(), context, getStudyPath, getStudyPlanDraft, submitStudyPlan)
+        val vm = StudyPlanEditViewModel(request(), getStudyPath, getStudyPlanDraft, submitStudyPlan)
         vm.selectSchema(20L)
         vm.loadSelectedRules()
         vm.selectSchema(30L)
@@ -195,7 +191,7 @@ class StudyPlanEditViewModelTest {
         coEvery { getStudyPath(careerId) } returns pathWithOptions()
         coEvery { getStudyPlanDraft(any(), any(), any(), any()) } returns
             listOf(rule(1L, listOf(course(11L, "A"))))
-        val vm = StudyPlanEditViewModel(request(), context, getStudyPath, getStudyPlanDraft, submitStudyPlan)
+        val vm = StudyPlanEditViewModel(request(), getStudyPath, getStudyPlanDraft, submitStudyPlan)
 
         vm.toggleCourse(ruleChoiceId = 1L, courseChoiceId = 11L)
 
@@ -208,7 +204,7 @@ class StudyPlanEditViewModelTest {
         coEvery { getStudyPath(careerId) } returns pathWithOptions()
         coEvery { getStudyPlanDraft(any(), any(), any(), any()) } returns
             listOf(rule(1L, listOf(course(11L, "A", selected = true, mandatory = true)), mandatory = true))
-        val vm = StudyPlanEditViewModel(request(), context, getStudyPath, getStudyPlanDraft, submitStudyPlan)
+        val vm = StudyPlanEditViewModel(request(), getStudyPath, getStudyPlanDraft, submitStudyPlan)
 
         vm.toggleCourse(ruleChoiceId = 1L, courseChoiceId = 11L)
 
@@ -222,7 +218,7 @@ class StudyPlanEditViewModelTest {
             rule(1L, listOf(course(11L, "SHARED", selected = true))),
             rule(2L, listOf(course(21L, "SHARED"))),
         )
-        val vm = StudyPlanEditViewModel(request(), context, getStudyPath, getStudyPlanDraft, submitStudyPlan)
+        val vm = StudyPlanEditViewModel(request(), getStudyPath, getStudyPlanDraft, submitStudyPlan)
 
         vm.toggleCourse(ruleChoiceId = 2L, courseChoiceId = 21L)
 
@@ -243,7 +239,7 @@ class StudyPlanEditViewModelTest {
                 maxUnits = 6f,
             ),
         )
-        val vm = StudyPlanEditViewModel(request(), context, getStudyPath, getStudyPlanDraft, submitStudyPlan)
+        val vm = StudyPlanEditViewModel(request(), getStudyPath, getStudyPlanDraft, submitStudyPlan)
 
         vm.toggleCourse(ruleChoiceId = 1L, courseChoiceId = 12L)
 
@@ -257,7 +253,7 @@ class StudyPlanEditViewModelTest {
         coEvery { getStudyPlanDraft(any(), any(), any(), any()) } returns listOf(
             rule(1L, listOf(course(11L, "A", credits = 6f, selected = true)), maxUnits = 6f),
         )
-        val vm = StudyPlanEditViewModel(request(), context, getStudyPath, getStudyPlanDraft, submitStudyPlan)
+        val vm = StudyPlanEditViewModel(request(), getStudyPath, getStudyPlanDraft, submitStudyPlan)
 
         vm.toggleCourse(ruleChoiceId = 1L, courseChoiceId = 11L)
 
@@ -269,7 +265,7 @@ class StudyPlanEditViewModelTest {
         coEvery { getStudyPath(careerId) } returns pathWithOptions()
         coEvery { getStudyPlanDraft(any(), any(), any(), any()) } returns
             listOf(rule(1L, listOf(course(11L, "A"))))
-        val vm = StudyPlanEditViewModel(request(), context, getStudyPath, getStudyPlanDraft, submitStudyPlan)
+        val vm = StudyPlanEditViewModel(request(), getStudyPath, getStudyPlanDraft, submitStudyPlan)
 
         assertThat(vm.hasChanges()).isFalse()
     }
@@ -279,7 +275,7 @@ class StudyPlanEditViewModelTest {
         coEvery { getStudyPath(careerId) } returns pathWithOptions()
         coEvery { getStudyPlanDraft(any(), any(), any(), any()) } returns
             listOf(rule(1L, listOf(course(11L, "A"))))
-        val vm = StudyPlanEditViewModel(request(), context, getStudyPath, getStudyPlanDraft, submitStudyPlan)
+        val vm = StudyPlanEditViewModel(request(), getStudyPath, getStudyPlanDraft, submitStudyPlan)
 
         vm.toggleCourse(ruleChoiceId = 1L, courseChoiceId = 11L)
 
@@ -291,7 +287,7 @@ class StudyPlanEditViewModelTest {
         coEvery { getStudyPath(careerId) } returns pathWithOptions(option(20L, PlanApprovalType.Automatic))
         coEvery { getStudyPlanDraft(careerId, 555L, 10L, 20L) } returns
             listOf(rule(1L, listOf(course(11L, "A"))))
-        val vm = StudyPlanEditViewModel(request(), context, getStudyPath, getStudyPlanDraft, submitStudyPlan)
+        val vm = StudyPlanEditViewModel(request(), getStudyPath, getStudyPlanDraft, submitStudyPlan)
         vm.selectSchema(20L)
         vm.loadSelectedRules()
 
@@ -299,8 +295,8 @@ class StudyPlanEditViewModelTest {
             vm.submit()
             val event = awaitItem()
             assertThat(event).isInstanceOf(StudyPlanEditEvent.Submitted::class.java)
-            assertThat((event as StudyPlanEditEvent.Submitted).message)
-                .isEqualTo("Piano inviato: l'approvazione è automatica.")
+            assertThat(((event as StudyPlanEditEvent.Submitted).message as it.attendance100.mybicocca.core.text.UiText.StringResource).resId)
+                .isEqualTo(it.attendance100.mybicocca.R.string.studyplanedit_submitted_automatic)
             cancelAndIgnoreRemainingEvents()
         }
         coVerify { submitStudyPlan(careerId, any(), any()) }
@@ -313,19 +309,19 @@ class StudyPlanEditViewModelTest {
         coEvery { getStudyPlanDraft(any(), any(), any(), any()) } returns
             listOf(rule(1L, listOf(course(11L, "A"))))
         coEvery { submitStudyPlan(any(), any(), any()) } throws IllegalStateException("Security failed")
-        val vm = StudyPlanEditViewModel(request(), context, getStudyPath, getStudyPlanDraft, submitStudyPlan)
+        val vm = StudyPlanEditViewModel(request(), getStudyPath, getStudyPlanDraft, submitStudyPlan)
 
         vm.submit()
 
-        assertThat(vm.submitError.value)
-            .isEqualTo("La modifica del piano non è attualmente consentita dal tuo profilo.")
+        assertThat((vm.submitError.value as it.attendance100.mybicocca.core.text.UiText.StringResource).resId)
+            .isEqualTo(it.attendance100.mybicocca.R.string.studyplanedit_submit_error_profile)
         assertThat(vm.submitting.value).isFalse()
     }
 
     @Test
     fun `submit is a no-op when no rules are loaded`() = runTest {
         coEvery { getStudyPath(careerId) } returns pathWithOptions(option(20L), option(30L))
-        val vm = StudyPlanEditViewModel(request(), context, getStudyPath, getStudyPlanDraft, submitStudyPlan)
+        val vm = StudyPlanEditViewModel(request(), getStudyPath, getStudyPlanDraft, submitStudyPlan)
 
         vm.submit()
 
@@ -337,7 +333,7 @@ class StudyPlanEditViewModelTest {
         val boom = IOException("offline")
         coEvery { getStudyPath(careerId) } returns pathWithOptions()
         coEvery { getStudyPlanDraft(careerId, 555L, 10L, 20L) } throws boom
-        val vm = StudyPlanEditViewModel(request(), context, getStudyPath, getStudyPlanDraft, submitStudyPlan)
+        val vm = StudyPlanEditViewModel(request(), getStudyPath, getStudyPlanDraft, submitStudyPlan)
 
         assertThat((vm.syncStatus.value as SyncStatus.Failed).cause).isEqualTo(boom)
     }
@@ -346,7 +342,7 @@ class StudyPlanEditViewModelTest {
     fun `setSegment records the visible wizard step`() = runTest {
         coEvery { getStudyPath(careerId) } returns pathWithOptions()
         coEvery { getStudyPlanDraft(any(), any(), any(), any()) } returns emptyList()
-        val vm = StudyPlanEditViewModel(request(), context, getStudyPath, getStudyPlanDraft, submitStudyPlan)
+        val vm = StudyPlanEditViewModel(request(), getStudyPath, getStudyPlanDraft, submitStudyPlan)
 
         vm.setSegment(7L)
 
@@ -356,7 +352,7 @@ class StudyPlanEditViewModelTest {
     @Test
     fun `reset rewinds the wizard to the percorso step and reloads the path`() = runTest {
         coEvery { getStudyPath(careerId) } returns pathWithOptions(option(20L), option(30L))
-        val vm = StudyPlanEditViewModel(request(), context, getStudyPath, getStudyPlanDraft, submitStudyPlan)
+        val vm = StudyPlanEditViewModel(request(), getStudyPath, getStudyPlanDraft, submitStudyPlan)
         vm.setSegment(5L)
 
         vm.reset()
@@ -371,7 +367,6 @@ class StudyPlanEditViewModelTest {
         coEvery { getStudyPath(careerId) } returns pathWithOptions(option(20L), option(30L))
         val vm = StudyPlanEditViewModel(
             request(schemaId = 0L, planId = 0L),
-            context,
             getStudyPath,
             getStudyPlanDraft,
             submitStudyPlan,

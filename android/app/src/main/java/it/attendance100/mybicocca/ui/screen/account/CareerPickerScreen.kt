@@ -16,10 +16,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.R
+import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.domain.model.account.Account
 import it.attendance100.mybicocca.domain.model.career.Career
 import it.attendance100.mybicocca.domain.model.career.CareerId
@@ -93,7 +92,6 @@ private fun SectionLabel(text: String) {
     )
 }
 
-private val CareerPlaceholder = "Carriera n. %d"
 
 /**
  * Career summary card: description, matricola, academic year and status on three lines.
@@ -123,7 +121,12 @@ internal fun CareerCard(
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(
-                text = career.description.ifEmpty { CareerPlaceholder.format(career.id.value) },
+                text = career.description.ifEmpty {
+                    stringResource(
+                        R.string.b3_career_placeholder,
+                        career.id.value
+                    )
+                },
                 style = MaterialTheme.typography.titleMedium,
             )
             Text(

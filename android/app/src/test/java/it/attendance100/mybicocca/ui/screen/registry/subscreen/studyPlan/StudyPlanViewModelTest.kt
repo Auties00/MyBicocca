@@ -1,7 +1,5 @@
 package it.attendance100.mybicocca.ui.screen.registry.subscreen.studyPlan
 
-import android.content.Context
-import androidx.test.core.app.ApplicationProvider
 import app.cash.turbine.test
 import com.google.common.truth.Truth.assertThat
 import io.mockk.coEvery
@@ -52,8 +50,6 @@ class StudyPlanViewModelTest {
 
     private val careerId = CareerId(101L)
 
-    private val context: Context = ApplicationProvider.getApplicationContext()
-
     private val getStudyPlan: GetStudyPlanUseCase = mockk()
     private val getStudyPath: GetStudyPathUseCase = mockk()
     private val getStudyPlanPrint: GetStudyPlanPrintUseCase = mockk()
@@ -86,7 +82,12 @@ class StudyPlanViewModelTest {
         every { observeActiveAccount() } returns flowOf(account())
         coEvery { getStudyPlan(any()) } returns plan()
         coEvery { getStudyPath(any()) } returns path(editingOpen = false)
-        return StudyPlanViewModel(context, getStudyPlan, getStudyPath, getStudyPlanPrint, observeActiveAccount)
+        return StudyPlanViewModel(
+            getStudyPlan,
+            getStudyPath,
+            getStudyPlanPrint,
+            observeActiveAccount
+        )
     }
 
     @Test
@@ -105,7 +106,8 @@ class StudyPlanViewModelTest {
         coEvery { getStudyPlan(careerId) } returns null
         coEvery { getStudyPath(careerId) } returns path(editingOpen = false)
 
-        val vm = StudyPlanViewModel(context, getStudyPlan, getStudyPath, getStudyPlanPrint, observeActiveAccount)
+        val vm =
+            StudyPlanViewModel(getStudyPlan, getStudyPath, getStudyPlanPrint, observeActiveAccount)
 
         assertThat(vm.plan.value).isEqualTo(Loadable.Loaded(null))
     }
@@ -117,7 +119,8 @@ class StudyPlanViewModelTest {
         coEvery { getStudyPlan(careerId) } throws boom
         coEvery { getStudyPath(careerId) } returns path(editingOpen = true)
 
-        val vm = StudyPlanViewModel(context, getStudyPlan, getStudyPath, getStudyPlanPrint, observeActiveAccount)
+        val vm =
+            StudyPlanViewModel(getStudyPlan, getStudyPath, getStudyPlanPrint, observeActiveAccount)
 
         assertThat((vm.syncStatus.value as SyncStatus.Failed).cause).isEqualTo(boom)
         assertThat(vm.studyPath.value).isInstanceOf(Loadable.Loaded::class.java)
@@ -130,7 +133,8 @@ class StudyPlanViewModelTest {
         coEvery { getStudyPlan(careerId) } returns plan()
         coEvery { getStudyPath(careerId) } throws IOException("path offline")
 
-        val vm = StudyPlanViewModel(context, getStudyPlan, getStudyPath, getStudyPlanPrint, observeActiveAccount)
+        val vm =
+            StudyPlanViewModel(getStudyPlan, getStudyPath, getStudyPlanPrint, observeActiveAccount)
 
         assertThat(vm.studyPath.value).isEqualTo(Loadable.Loaded(null))
         assertThat(vm.plan.value).isInstanceOf(Loadable.Loaded::class.java)
@@ -144,7 +148,8 @@ class StudyPlanViewModelTest {
         coEvery { getStudyPlan(careerId) } returns plan()
         coEvery { getStudyPath(careerId) } returns path(editingOpen = true)
 
-        val vm = StudyPlanViewModel(context, getStudyPlan, getStudyPath, getStudyPlanPrint, observeActiveAccount)
+        val vm =
+            StudyPlanViewModel(getStudyPlan, getStudyPath, getStudyPlanPrint, observeActiveAccount)
 
         assertThat(vm.editable.value).isTrue()
     }
@@ -182,7 +187,8 @@ class StudyPlanViewModelTest {
         every { observeActiveAccount() } returns flowOf(account())
         coEvery { getStudyPlan(careerId) } returns null
         coEvery { getStudyPath(careerId) } returns path(editingOpen = false)
-        val vm = StudyPlanViewModel(context, getStudyPlan, getStudyPath, getStudyPlanPrint, observeActiveAccount)
+        val vm =
+            StudyPlanViewModel(getStudyPlan, getStudyPath, getStudyPlanPrint, observeActiveAccount)
 
         vm.events.test {
             vm.printPlan()

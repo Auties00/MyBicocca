@@ -99,7 +99,6 @@ fun ProfileScreen(
  * means the cache has not emitted yet, while a refresh over loaded data keeps the content
  * on screen.
  */
-@Suppress("AssignedValueIsNeverRead")
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun ProfileContent(
@@ -132,7 +131,7 @@ fun ProfileContent(
 
     Column(modifier.testTag(ProfileTestTags.ROOT)) {
         ErrorBanner(
-            message = error,
+            message = error?.asString(),
             onDismiss = viewModel::clearError,
         )
 

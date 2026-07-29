@@ -78,7 +78,7 @@ fun SettingsAppearanceSheet(
     val strLight = stringResource(R.string.settings_theme_mode_light)
     val strDark = stringResource(R.string.settings_theme_mode_dark)
 
-    val themeModeLabel: (ThemeMode) -> String = { mode ->
+    val themeModeLabel: @Composable (ThemeMode) -> String = { mode ->
         when (mode) {
             ThemeMode.System -> strSystem
             ThemeMode.Light -> strLight

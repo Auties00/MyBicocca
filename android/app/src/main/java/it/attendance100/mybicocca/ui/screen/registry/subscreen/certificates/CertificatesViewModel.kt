@@ -1,12 +1,12 @@
 package it.attendance100.mybicocca.ui.screen.registry.subscreen.certificates
 
-import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.SyncStatus
+import it.attendance100.mybicocca.core.text.UiText
 import it.attendance100.mybicocca.domain.model.career.CareerId
 import it.attendance100.mybicocca.domain.model.document.Certificate
 import it.attendance100.mybicocca.domain.model.document.CertificateId
@@ -47,7 +47,7 @@ import javax.inject.Inject
  */
 @HiltViewModel
 class CertificatesViewModel @Inject constructor(
-    @ApplicationContext private val context: Context,
+    private val certificateStorage: CertificateStorage,
     private val getCertificates: GetCertificatesUseCase,
     private val downloadCertificate: DownloadCertificateUseCase,
     observeActiveAccount: ObserveActiveAccountUseCase,
@@ -113,7 +113,7 @@ class CertificatesViewModel @Inject constructor(
 
     private suspend fun recomputeDownloaded(certificates: List<Certificate>) {
         val cached = withContext(Dispatchers.IO) {
-            certificates.filter { isCertificateDownloaded(context, it) }.map { it.id }.toSet()
+            certificates.filter { certificateStorage.isDownloaded(it) }.map { it.id }.toSet()
         }
         _downloadedCertificates.value = cached
     }
@@ -126,21 +126,21 @@ class CertificatesViewModel @Inject constructor(
     fun download(certificate: Certificate) {
         if (certificate.id in _downloadingCertificates.value) return
         viewModelScope.launch {
-            val cached = certificateFile(context, certificate)
+            val cached = certificateStorage.getFile(certificate)
             if (cached.exists() && cached.length() > 0) {
                 _events.send(CertificateEvent.OpenFile(cached.absolutePath))
                 return@launch
             }
             _downloadingCertificates.update { it + certificate.id }
             runCatching { downloadCertificate(certificate.id) }
-                .mapCatching { bytes -> writeCertificate(context, certificate, bytes) }
+                .mapCatching { bytes -> certificateStorage.write(certificate, bytes) }
                 .fold(
                     onSuccess = { file ->
                         _downloadedCertificates.update { it + certificate.id }
                         _events.send(CertificateEvent.OpenFile(file.absolutePath))
                     },
                     onFailure = {
-                        _events.send(CertificateEvent.ShowMessage("Impossibile scaricare il certificato"))
+                        _events.send(CertificateEvent.ShowMessage(UiText.StringResource(R.string.certificates_download_error)))
                     },
                 )
             _downloadingCertificates.update { it - certificate.id }
@@ -153,7 +153,7 @@ class CertificatesViewModel @Inject constructor(
  * replayed across rotation.
  */
 sealed interface CertificateEvent {
-    data class ShowMessage(val message: String) : CertificateEvent
+    data class ShowMessage(val message: UiText) : CertificateEvent
 
     /** Path of a certificate PDF cached on disk; the UI opens it in an external viewer. */
     data class OpenFile(val path: String) : CertificateEvent

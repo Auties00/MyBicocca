@@ -427,6 +427,8 @@ private fun SearchResult.icon(): ImageVector = when (this) {
  */
 @Composable
 private fun SearchResult.displayTitle(): String = when (this) {
+    is SearchResult.Action -> if (titleRes != 0) stringResource(titleRes) else title
+    is SearchResult.Destination -> if (titleRes != 0) stringResource(titleRes) else title
     is SearchResult.CalendarDay -> when (relativeDay) {
         RelativeDay.Today -> stringResource(R.string.relative_day_today)
         RelativeDay.Tomorrow -> stringResource(R.string.relative_day_tomorrow)
@@ -444,6 +446,8 @@ private fun SearchResult.displayTitle(): String = when (this) {
  */
 @Composable
 private fun SearchResult.displaySubtitle(): String? = when (this) {
+    is SearchResult.Action -> if (subtitleRes != null) stringResource(subtitleRes) else subtitle
+    is SearchResult.Destination -> if (subtitleRes != null) stringResource(subtitleRes) else subtitle
     is SearchResult.CalendarDay -> stringResource(R.string.search_open_in_calendar)
     is SearchResult.TranscriptEntry -> {
         val gradePrefix = stringResource(R.string.search_grade)

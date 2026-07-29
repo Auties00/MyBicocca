@@ -106,7 +106,7 @@ fun CourseOverviewPage(course: CourseAttendance) {
                 )
             }
             },
-            label = { tabs[it].title },
+            label = { tabs[it].title() },
             modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 10.dp, bottom = 24.dp),
         )
     }
@@ -115,30 +115,33 @@ fun CourseOverviewPage(course: CourseAttendance) {
 private val TAB_BODY_HEIGHT = 400.dp
 
 private sealed interface AttendanceTab {
-    val title: String
+    val title: @Composable () -> String
 
     /** EasyStaff in-classroom badge telemetry. */
     data class Lezioni(val classroom: ClassroomAttendance?) : AttendanceTab {
-        override val title: String get() = "Lezioni"
+        override val title: @Composable () -> String get() = { stringResource(R.string.b4_registry_tab_lezioni) }
     }
 
     /** One Moodle mod_attendance session register. */
-    data class Register(override val title: String, val session: SessionAttendance) : AttendanceTab
+    data class Register(val session: SessionAttendance) : AttendanceTab {
+        override val title: @Composable () -> String get() = { session.tabTitle() }
+    }
 }
 
 private fun CourseAttendance.attendanceTabs(): List<AttendanceTab> = buildList {
     add(AttendanceTab.Lezioni(classroomAttendance))
-    sessionAttendance.forEach { add(AttendanceTab.Register(it.tabTitle(), it)) }
+    sessionAttendance.forEach { add(AttendanceTab.Register(it)) }
 }
 
 /** Moodle register names arrive as "Presenze LABORATORIO": the prefix is dropped and what remains is sentence-cased. */
+@Composable
 private fun SessionAttendance.tabTitle(): String {
     val cleaned = label.trim()
         .let { if (it.startsWith("presenze", ignoreCase = true)) it.drop("presenze".length) else it }
         .trim()
         .lowercase()
         .capitalizeString()
-    return cleaned.ifBlank { "Sessioni" }
+    return cleaned.ifBlank { stringResource(R.string.b4_registry_tab_sessioni) }
 }
 
 /**
@@ -165,8 +168,9 @@ private fun LezioniTabBody(classroom: ClassroomAttendance?) {
         AttendanceRing(
             progress = (classroom.attendancePercentage / 100.0).toFloat(),
             headline = "${classroom.attendancePercentage.roundToInt()}%",
-            caption = "frequenza",
-            footnote = classroom.minRequiredPercentage()?.let { "minimo $it%" },
+            caption = stringResource(R.string.b4_registry_caption_frequenza),
+            footnote = classroom.minRequiredPercentage()
+                ?.let { stringResource(R.string.b4_registry_footnote_minimum, it) },
             color = classroom.requirementColor(),
         )
     }
@@ -198,9 +202,10 @@ private fun RegisterTabBody(session: SessionAttendance) {
         AttendanceRing(
             progress = (recorded / 100.0).toFloat(),
             headline = "${recorded.roundToInt()}%",
-            caption = "sulle registrate",
+            caption = stringResource(R.string.b4_registry_caption_recorded),
             footnote = session.attendedSessions?.let {
-                if (it == 1) "1 presenza" else "$it presenze"
+                if (it == 1) stringResource(R.string.b4_registry_presence_one)
+                else stringResource(R.string.b4_registry_presence_many, it)
             },
             color = MaterialTheme.colorScheme.primary,
         )

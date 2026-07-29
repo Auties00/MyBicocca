@@ -185,13 +185,14 @@ class AccountViewModelTest {
     }
 
     @Test
-    fun `signOut does not emit when the use case throws`() = runTest {
+    fun `signOut emits SignOutFailed when the use case throws`() = runTest {
         coEvery { signOutUseCase(any()) } throws IllegalStateException("boom")
         val vm = viewModel()
 
         vm.events.test {
             vm.signOut(otherId)
-            expectNoEvents()
+            val event = awaitItem()
+            assertThat(event).isInstanceOf(AccountEvent.SignOutFailed::class.java)
             cancelAndIgnoreRemainingEvents()
         }
     }

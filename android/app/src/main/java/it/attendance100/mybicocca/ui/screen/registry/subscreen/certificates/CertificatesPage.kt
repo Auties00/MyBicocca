@@ -100,7 +100,8 @@ fun CertificatesPage(
     LaunchedEffect(viewModel) {
         viewModel.events.collectLatest { event ->
             when (event) {
-                is CertificateEvent.ShowMessage -> outcome = SheetOutcome.Info(event.message)
+                is CertificateEvent.ShowMessage -> outcome =
+                    SheetOutcome.Info(event.message.asString(context))
                 is CertificateEvent.OpenFile ->
                     if (!openCertificate(context, File(event.path))) {
                         outcome = SheetOutcome.Info(strCertsNoPdfApp)

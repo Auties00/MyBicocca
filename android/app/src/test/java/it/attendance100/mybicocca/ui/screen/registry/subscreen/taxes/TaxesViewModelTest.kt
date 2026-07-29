@@ -1,15 +1,15 @@
 package it.attendance100.mybicocca.ui.screen.registry.subscreen.taxes
 
-import android.content.Context
-import androidx.test.core.app.ApplicationProvider
 import app.cash.turbine.test
 import com.google.common.truth.Truth.assertThat
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.SyncStatus
+import it.attendance100.mybicocca.core.text.UiText
 import it.attendance100.mybicocca.domain.model.account.AcademicIdentity
 import it.attendance100.mybicocca.domain.model.account.Account
 import it.attendance100.mybicocca.domain.model.account.AccountId
@@ -69,12 +69,9 @@ class TaxesViewModelTest {
     private val getPaymentStatus: GetPaymentStatusUseCase = mockk()
     private val observeActiveAccount: ObserveActiveAccountUseCase = mockk()
 
-    private val context: Context = ApplicationProvider.getApplicationContext()
-
     private fun viewModel(): TaxesViewModel {
         every { observeActiveAccount() } returns flowOf(account(careerId))
         return TaxesViewModel(
-            context,
             getTaxInvoices,
             getIseeDeclarations,
             startPagoPaPayment,
@@ -192,7 +189,7 @@ class TaxesViewModelTest {
 
         vm.events.test {
             vm.printNotice(invoiceId)
-            assertThat(awaitItem()).isEqualTo(TaxEvent.ShowMessage("boom"))
+            assertThat((awaitItem() as TaxEvent.ShowMessage).message).isInstanceOf(UiText.StringResource::class.java)
             cancelAndIgnoreRemainingEvents()
         }
         assertThat(vm.actionInProgress.value).isFalse()
@@ -208,7 +205,7 @@ class TaxesViewModelTest {
         vm.events.test {
             vm.checkPaymentStatus(invoiceId)
             assertThat(awaitItem()).isEqualTo(
-                TaxEvent.ShowMessage("Nessuna transazione pagoPA trovata per questa fattura."),
+                TaxEvent.ShowMessage(UiText.StringResource(R.string.taxes_no_pagopa_transaction)),
             )
             cancelAndIgnoreRemainingEvents()
         }
@@ -229,10 +226,10 @@ class TaxesViewModelTest {
             vm.checkPaymentStatus(invoiceId)
             val event = awaitItem()
             assertThat(event).isInstanceOf(TaxEvent.ShowMessage::class.java)
-            val message = (event as TaxEvent.ShowMessage).message
-            assertThat(message).startsWith("Pagamento eseguito · ")
-            assertThat(message).contains("5 marzo 2026")
-            assertThat(message).contains("156,50")
+            val message = (event as TaxEvent.ShowMessage).message as UiText.Composite
+            assertThat(message.items[0]).isEqualTo(UiText.StringResource(R.string.taxes_payment_completed))
+            assertThat((message.items[1] as UiText.DynamicString).value).contains("5 marzo 2026")
+            assertThat((message.items[1] as UiText.DynamicString).value).contains("156")
             cancelAndIgnoreRemainingEvents()
         }
     }
@@ -250,7 +247,7 @@ class TaxesViewModelTest {
 
         vm.events.test {
             vm.checkPaymentStatus(invoiceId)
-            assertThat(awaitItem()).isEqualTo(TaxEvent.ShowMessage("Pagamento in corso"))
+            assertThat(awaitItem()).isEqualTo(TaxEvent.ShowMessage(UiText.StringResource(R.string.taxes_payment_pending)))
             cancelAndIgnoreRemainingEvents()
         }
     }
@@ -268,7 +265,7 @@ class TaxesViewModelTest {
 
         vm.events.test {
             vm.checkPaymentStatus(invoiceId)
-            assertThat(awaitItem()).isEqualTo(TaxEvent.ShowMessage("Pagamento non riuscito"))
+            assertThat(awaitItem()).isEqualTo(TaxEvent.ShowMessage(UiText.StringResource(R.string.taxes_payment_failed)))
             cancelAndIgnoreRemainingEvents()
         }
     }
@@ -287,7 +284,7 @@ class TaxesViewModelTest {
 
         vm.events.test {
             vm.checkPaymentStatus(invoiceId)
-            assertThat(awaitItem()).isEqualTo(TaxEvent.ShowMessage("In attesa di riscontro"))
+            assertThat(awaitItem()).isEqualTo(TaxEvent.ShowMessage(UiText.DynamicString("In attesa di riscontro")))
             cancelAndIgnoreRemainingEvents()
         }
     }
@@ -305,9 +302,9 @@ class TaxesViewModelTest {
 
         vm.events.test {
             vm.checkPaymentStatus(invoiceId)
-            val message = (awaitItem() as TaxEvent.ShowMessage).message
-            assertThat(message).contains("5 marzo 2026")
-            assertThat(message).doesNotContain("€")
+            val message = (awaitItem() as TaxEvent.ShowMessage).message as UiText.Composite
+            assertThat((message.items[1] as UiText.DynamicString).value).contains("5 marzo 2026")
+            assertThat((message.items[1] as UiText.DynamicString).value).doesNotContain("€")
             cancelAndIgnoreRemainingEvents()
         }
     }

@@ -44,8 +44,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.R
+import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.domain.model.transcript.PrerequisiteStatus
 import it.attendance100.mybicocca.domain.model.transcript.TranscriptRow
 import it.attendance100.mybicocca.domain.model.transcript.TranscriptRowState
@@ -136,8 +136,8 @@ fun ExamsByYearSheet(
                 depth = if (current == null) 0 else 1,
                 title = when {
                     current != null -> current.activityName
-                    mode == ExamValueMode.Grade -> "Esami Sostenuti"
-                    else -> "CFU Acquisiti"
+                    mode == ExamValueMode.Grade -> stringResource(R.string.profile_exams_passed)
+                    else -> stringResource(R.string.profile_cfu_acquired)
                 },
                 subtitle = current?.activityCode?.takeIf { it.isNotBlank() },
                 onBack = if (current != null) ({ detailRow = null }) else null,
@@ -245,7 +245,11 @@ private fun ExamsListPage(
                         pagerState.animateScrollToPage(if (selected == ExamValueMode.Grade) 0 else 1)
                     }
                 },
-                label = { if (it == ExamValueMode.Grade) "Voti" else "Crediti" },
+                label = {
+                    if (it == ExamValueMode.Grade) stringResource(R.string.profile_grades) else stringResource(
+                        R.string.profile_credits
+                    )
+                },
                 borderColor = Color.White.copy(alpha = 0.5f),
             )
         }
@@ -255,7 +259,10 @@ private fun ExamsListPage(
 @Composable
 private fun YearLabel(year: Int) {
     Text(
-        text = if (year <= 0) "Prerequisiti" else "Anno $year",
+        text = if (year <= 0) stringResource(R.string.profile_prerequisites) else stringResource(
+            R.string.profile_year,
+            year
+        ),
         style = MaterialTheme.typography.labelLarge,
         fontWeight = FontWeight.Bold,
         color = MaterialTheme.colorScheme.primary,
@@ -322,7 +329,9 @@ private fun ExamCard(
             } else {
                 Icon(
                     imageVector = if (passed) Icons.Filled.CheckCircle else Icons.Outlined.Schedule,
-                    contentDescription = if (passed) "Superato" else "In sospeso",
+                    contentDescription = if (passed) stringResource(R.string.profile_passed) else stringResource(
+                        R.string.profile_pending
+                    ),
                     tint = if (passed) PassedGreen else scheme.onSurfaceVariant,
                     modifier = Modifier.size(20.dp),
                 )

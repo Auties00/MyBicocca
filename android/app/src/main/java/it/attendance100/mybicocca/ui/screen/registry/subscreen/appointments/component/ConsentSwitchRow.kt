@@ -14,6 +14,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.LinkAnnotation
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextLinkStyles
@@ -22,6 +23,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withLink
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.domain.model.appointment.AppointmentFormField
 
@@ -49,18 +51,22 @@ internal fun ConsentSwitchRow(
         CustomTabsIntent.Builder().setShowTitle(true).build().launchUrl(context, url.toUri())
     }
 
+    val gdprPrefix = stringResource(R.string.b4_registry_gdpr_prefix)
+    val gdprPolicyLink = stringResource(R.string.b4_registry_gdpr_policy_link)
+    val gdprSuffix = stringResource(R.string.b4_registry_gdpr_suffix)
+
     val statement = buildAnnotatedString {
         if (field.label == "gdpr_label") {
-            append("Ho letto ")
+            append(gdprPrefix)
             val url = field.policyUrl
             if (url != null) {
                 withLink(LinkAnnotation.Clickable("policy", linkStyles) { openPolicy(url) }) {
-                    append("l'informativa")
+                    append(gdprPolicyLink)
                 }
             } else {
-                append("l'informativa")
+                append(gdprPolicyLink)
             }
-            append(" sul trattamento dei dati personali")
+            append(gdprSuffix)
         } else {
             val url = field.policyUrl
             if (url != null) {

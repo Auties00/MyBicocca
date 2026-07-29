@@ -1,6 +1,5 @@
 package it.attendance100.mybicocca.ui.screen.elearning.subscreen.assignmentDetail
 
-import android.content.Context
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -8,10 +7,10 @@ import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.SyncStatus
+import it.attendance100.mybicocca.core.text.UiText
 import it.attendance100.mybicocca.domain.model.account.AccountId
 import it.attendance100.mybicocca.domain.model.elearning.assignment.Assignment
 import it.attendance100.mybicocca.domain.model.elearning.assignment.Assignment.AttachmentRef
@@ -72,7 +71,6 @@ import kotlinx.coroutines.launch
 @HiltViewModel(assistedFactory = AssignmentDetailViewModel.Factory::class)
 class AssignmentDetailViewModel @AssistedInject constructor(
     @Assisted private val key: AppRoute.AssignmentDetail,
-    @ApplicationContext private val appContext: Context,
     savedState: SavedStateHandle,
     observeActiveAccount: ObserveActiveAccountUseCase,
     private val observeAssignment: ObserveAssignmentUseCase,
@@ -170,7 +168,7 @@ class AssignmentDetailViewModel @AssistedInject constructor(
                     back()
                     oneShotChannel.trySend(
                         AssignmentDetailOneShotEvent.ActionFailed(
-                            appContext.getString(R.string.elearning_assign_open_failed),
+                            UiText.StringResource(R.string.elearning_assign_open_failed),
                             it,
                         ),
                     )
@@ -258,7 +256,7 @@ class AssignmentDetailViewModel @AssistedInject constructor(
                 .onFailure {
                     oneShotChannel.trySend(
                         AssignmentDetailOneShotEvent.ActionFailed(
-                            appContext.getString(R.string.elearning_assign_remove_failed),
+                            UiText.StringResource(R.string.elearning_assign_remove_failed),
                             it,
                         ),
                     )
@@ -293,7 +291,7 @@ class AssignmentDetailViewModel @AssistedInject constructor(
                 .onFailure {
                     oneShotChannel.trySend(
                         AssignmentDetailOneShotEvent.ActionFailed(
-                            appContext.getString(R.string.elearning_assign_submit_failed),
+                            UiText.StringResource(R.string.elearning_assign_submit_failed),
                             it,
                         ),
                     )

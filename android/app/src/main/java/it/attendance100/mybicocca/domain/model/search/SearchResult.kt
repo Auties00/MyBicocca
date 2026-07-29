@@ -32,8 +32,10 @@ sealed interface SearchResult {
 
     data class Action(
         val action: SearchAction,
-        override val title: String,
-        override val subtitle: String?,
+        val titleRes: Int = 0,
+        val subtitleRes: Int? = null,
+        override val title: String = "",
+        override val subtitle: String? = null,
         override val score: Double,
     ) : SearchResult {
         override val category get() = SearchResultCategory.Action
@@ -42,8 +44,10 @@ sealed interface SearchResult {
 
     data class Destination(
         val destination: SearchDestination,
-        override val title: String,
-        override val subtitle: String?,
+        val titleRes: Int = 0,
+        val subtitleRes: Int? = null,
+        override val title: String = "",
+        override val subtitle: String? = null,
         override val score: Double,
     ) : SearchResult {
         override val category get() = SearchResultCategory.Destination

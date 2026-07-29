@@ -32,6 +32,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -40,6 +41,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import it.attendance100.mybicocca.R
+import it.attendance100.mybicocca.core.os.currentLocale
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.domain.model.elearning.assignment.Assignment
 import it.attendance100.mybicocca.domain.model.elearning.assignment.SubmissionForm
@@ -59,7 +61,6 @@ import it.attendance100.mybicocca.ui.theme.LocalIsOnline
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
-import java.util.Locale
 
 /**
  * The compito (assignment) detail as a multi-state bottom-sheet modal, hosted as a single
@@ -100,6 +101,7 @@ fun AssignmentDetailPage(
         onDispose { viewModel.resetNavigation() }
     }
 
+    val context = LocalContext.current
     val draftSavedMessage = stringResource(R.string.elearning_assign_draft_saved)
     val submissionSentMessage = stringResource(R.string.elearning_assign_submission_sent)
     val submissionRemovedMessage = stringResource(R.string.elearning_assign_submission_removed)
@@ -113,7 +115,8 @@ fun AssignmentDetailPage(
                 AssignmentDetailOneShotEvent.SubmissionRemoved ->
                     outcome = SheetOutcome.Success(submissionRemovedMessage)
                 is AssignmentDetailOneShotEvent.ActionFailed ->
-                    outcome = SheetOutcome.Error(event.title, event.cause)
+                    outcome =
+                        SheetOutcome.Error(event.title.asString(context = context), event.cause)
                 is AssignmentDetailOneShotEvent.OpenFile -> Unit
                 is AssignmentDetailOneShotEvent.RefreshFailed -> Unit
             }
@@ -408,17 +411,17 @@ private fun displayKey(display: Display): String = when (display) {
     Display.Outcome -> "outcome"
 }
 
-private val DeadlineFmt: DateTimeFormatter = DateTimeFormatter
-    .ofPattern("EEE d MMM, HH:mm", Locale.getDefault())
-    .withZone(ZoneId.systemDefault())
-
 /** Deadline line shown as the modal subtitle on the overview page. */
 @Composable
 private fun deadlineSubtitle(assignment: Assignment): String {
+    val locale = currentLocale()
+    val formatter = remember(locale) {
+        DateTimeFormatter.ofPattern("EEE d MMM, HH:mm", locale).withZone(ZoneId.systemDefault())
+    }
     val due = assignment.dueDate ?: return stringResource(R.string.elearning_assign_no_deadline)
     return if (due.isBefore(Instant.now())) {
-        stringResource(R.string.elearning_assign_expired_date, DeadlineFmt.format(due))
+        stringResource(R.string.elearning_assign_expired_date, formatter.format(due))
     } else {
-        stringResource(R.string.elearning_assign_expires_date, DeadlineFmt.format(due))
+        stringResource(R.string.elearning_assign_expires_date, formatter.format(due))
     }
 }

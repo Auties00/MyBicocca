@@ -100,6 +100,7 @@
     <string name="shell_career_ended">The career \"%s\" has ended</string>
     <string name="shell_career_missing">The selected career is no longer available</string>
     <string name="shell_update_available">New version available</string>
+    <string name="shell_signout_failed">Sign out failed</string>
 
     <!-- Calendar -->
     <string name="calendar_sync_failed">Calendar sync failed</string>
@@ -404,6 +405,8 @@
     <string name="appelli_no_exams_body">When you book an exam call it will appear here. Tap Book to get started.</string>
     <string name="appelli_booking_cancelled">Booking cancelled</string>
     <string name="appelli_cancellation_failed">Cancellation failed</string>
+    <string name="appelli_booking_slip_error">Unable to download the booking slip. Please try again later.</string>
+    <string name="appelli_presence_certificate_error">The presence certificate is not yet available for this exam.</string>
     <string name="appelli_pdf_open_failed">Unable to open PDF</string>
     <string name="appelli_booking_confirmed">Booking confirmed</string>
     <string name="appelli_booking_failed">Booking failed</string>
@@ -490,6 +493,18 @@
     <string name="attendance_qr_hint">Scan the lecture QR code</string>
     <string name="attendance_manual_code_title">Enter code</string>
     <string name="attendance_manual_code_description">Type the activity code shown by your lecturer.</string>
+    <string name="attendance_status_label">Status: %1$s</string>
+    <string name="attendance_msg_recorded">Attendance recorded</string>
+    <string name="attendance_msg_already_recorded">Attendance already recorded</string>
+    <string name="attendance_msg_wrong_credential">Incorrect password or code</string>
+    <string name="attendance_msg_network_wrong">You must be connected to the classroom network to record your attendance</string>
+    <string name="attendance_msg_network_prevent_shared">Attendance has already been recorded from this network</string>
+    <string name="attendance_msg_session_closed">The session is no longer available</string>
+    <string name="attendance_msg_failed">Registration failed</string>
+    <string name="attendance_msg_code_unrecognized">Unrecognized code</string>
+    <string name="attendance_msg_no_register_found">No course with attendance register found</string>
+    <string name="attendance_msg_session_not_in_courses">The session is not open or not among your courses</string>
+    <string name="attendance_msg_student_number_unavailable">Student number unavailable</string>
     <string name="attendance_activity_code">Activity code</string>
     <string name="attendance_record">Record</string>
     <string name="attendance_manual_code_entry">Enter code manually</string>
@@ -556,8 +571,8 @@
     <string name="enrollments_loading">Loading enrolments…</string>
     <string name="enrollments_none">No enrolments</string>
     <string name="enrollments_none_body">No enrolments found.</string>
-    <string name="enrollments_renew_button">Renew enrolment %d/%d</string>
-    <string name="enrollments_enrolled_button">Enrolled for a.y. %d/%d</string>
+    <string name="enrollments_renew_button">Renew enrolment %1$d/%2$d</string>
+    <string name="enrollments_enrolled_button">Enrolled for a.y. %1$d/%2$d</string>
     <string name="enrollments_enrollment">Enrolment</string>
     <string name="enrollments_type">Enrolment type</string>
     <string name="enrollments_student_type">Student type</string>
@@ -832,7 +847,6 @@
     <string name="whats_new_error">Couldn\'t load what\'s new</string>
     <string name="whats_new_retry">Retry</string>
     <string name="whats_new_all_versions">All versions</string>
-    <string name="whats_new_other_changes">Other changes</string>
     <string name="whats_new_merged_subtitle">Merged preview of all the changes since v%1$s</string>
     <string name="settings_no_updates_found">You\'re up to date</string>
     <string name="settings_no_other_versions">There are no other versions yet!</string>
@@ -1630,4 +1644,18 @@
     <!-- Settings: Language -->
     <string name="settings_language_help_translate">Help us translate the app in %1$s!</string>
 
+    <string name="certificates_download_error">Cannot download certificate</string>
+    <string name="taxes_operation_unavailable">Operation unavailable.</string>
+    <string name="profile_refresh_error">Cannot update data</string>
+    <string name="b4_registry_taxes_many_invoices">%1$d invoices</string>
+    <string name="profile_exams_passed">Passed Exams</string>
+    <string name="profile_cfu_acquired">Acquired CFU</string>
+    <string name="profile_grades">Grades</string>
+    <string name="profile_credits">Credits</string>
+    <string name="profile_prerequisites">Prerequisites</string>
+    <string name="profile_year">Year %1$d</string>
+    <string name="profile_passed">Passed</string>
+    <string name="profile_pending">Pending</string>
+    <string name="registry_no_active_career">No active career</string>
+    <string name="release_other_changes">Other changes</string>
 </resources>

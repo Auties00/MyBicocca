@@ -48,6 +48,7 @@ fun ClassroomAttendanceStatus?.tone(): StatusTone {
 }
 
 /** Expressive shape-as-meaning: the badge silhouette tracks the status. */
+@Suppress("unused")
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 fun ClassroomAttendanceStatus?.badgePolygon(): RoundedPolygon = when (this) {
     ClassroomAttendanceStatus.Attending -> MaterialShapes.Sunny
@@ -111,6 +112,16 @@ fun PresenceMarkOutcome.visual(): OutcomeVisual {
         )
 
         is PresenceMarkOutcome.Failed -> OutcomeVisual(
+            Icons.Outlined.ErrorOutline, scheme.errorContainer, scheme.onErrorContainer,
+            scheme.error, stringResource(R.string.attendance_registration_failed),
+        )
+
+        is PresenceMarkOutcome.NetworkRestricted -> OutcomeVisual(
+            Icons.Outlined.ErrorOutline, scheme.errorContainer, scheme.onErrorContainer,
+            scheme.error, stringResource(R.string.attendance_registration_failed),
+        )
+
+        is PresenceMarkOutcome.DeviceAlreadyUsed -> OutcomeVisual(
             Icons.Outlined.ErrorOutline, scheme.errorContainer, scheme.onErrorContainer,
             scheme.error, stringResource(R.string.attendance_registration_failed),
         )

@@ -6,6 +6,7 @@ import android.content.Intent
 import android.os.Build
 import androidx.core.content.FileProvider
 import it.attendance100.mybicocca.BuildConfig
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.version.buildNumber
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -25,7 +26,8 @@ class CrashLogBuilder(private val context: Context) {
             val file = File(dir, "mybicocca_crash_log.txt")
 
             file.writeText(
-                debugHeader() + "\n\n" + (stackTrace ?: "No stack trace captured") + "\n\n"
+                debugHeader() + "\n\n" + (stackTrace
+                    ?: context.getString(R.string.b1_crash_log_no_stack_trace)) + "\n\n"
             )
             // `logcat -f` appends to the existing file, preserving the header written above.
             Runtime.getRuntime()

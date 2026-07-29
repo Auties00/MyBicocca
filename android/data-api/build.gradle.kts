@@ -67,7 +67,7 @@ subprojects {
 
     dependencies {
         // Root project
-        implementation(rootProject)
+        implementation(project(":"))
 
         // Ktor HTTP Client
         implementation("io.ktor:ktor-client-core:3.3.3")

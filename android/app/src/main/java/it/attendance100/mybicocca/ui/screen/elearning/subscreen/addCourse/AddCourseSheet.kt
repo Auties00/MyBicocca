@@ -399,7 +399,7 @@ private fun Header(
         ) { level ->
             Column(modifier = Modifier.padding(start = if (showBack) 4.dp else 12.dp)) {
                 Text(
-                    text = level.title,
+                    text = if (level is CatalogLevel.Root) stringResource(R.string.b3_catalog_add_course) else level.title,
                     color = scheme.onSurface,
                     fontSize = 24.sp,
                     fontWeight = FontWeight.Bold,

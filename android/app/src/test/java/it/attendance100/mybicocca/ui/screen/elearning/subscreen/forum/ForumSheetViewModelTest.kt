@@ -1,6 +1,5 @@
 package it.attendance100.mybicocca.ui.screen.elearning.subscreen.forum
 
-import android.content.Context
 import app.cash.turbine.test
 import com.google.common.truth.Truth.assertThat
 import io.mockk.coEvery
@@ -9,6 +8,7 @@ import io.mockk.every
 import io.mockk.mockk
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.SyncStatus
+import it.attendance100.mybicocca.core.text.StringResolver
 import it.attendance100.mybicocca.domain.model.account.Account
 import it.attendance100.mybicocca.domain.model.account.AccountId
 import it.attendance100.mybicocca.domain.model.elearning.course.CourseId
@@ -19,7 +19,6 @@ import it.attendance100.mybicocca.domain.model.elearning.forum.ForumId
 import it.attendance100.mybicocca.domain.model.elearning.forum.ForumType
 import it.attendance100.mybicocca.domain.model.elearning.forum.Post
 import it.attendance100.mybicocca.domain.model.elearning.forum.PostId
-import it.attendance100.mybicocca.domain.usecase.account.ObserveActiveAccountUseCase
 import it.attendance100.mybicocca.domain.usecase.elearning.forum.CreateDiscussionUseCase
 import it.attendance100.mybicocca.domain.usecase.elearning.forum.DeletePostUseCase
 import it.attendance100.mybicocca.domain.usecase.elearning.forum.EditPostUseCase
@@ -146,9 +145,12 @@ class ForumSheetViewModelTest {
             coEvery { this@mockk.invoke(any(), any()) } returns emptyList()
         },
         prepareEdit: PrepareEditAttachmentsUseCase = mockk(relaxed = true),
+        attachmentReader: ForumAttachmentReader = mockk(relaxed = true),
+        stringResolver: StringResolver = mockk(relaxed = true),
     ): ForumSheetViewModel = ForumSheetViewModel(
         key = key,
-        appContext = mockk<Context>(relaxed = true),
+        attachmentReader = attachmentReader,
+        stringResolver = stringResolver,
         observeActiveAccount = mockk {
             every { this@mockk.invoke() } returns MutableStateFlow<Account?>(activeAccount)
         },
@@ -268,7 +270,8 @@ class ForumSheetViewModelTest {
             every { this@mockk.invoke(any(), any()) } returns flowOf(Loadable.Loaded(forum(canAttach = true)))
         })
         vm.forum.test {
-            while (awaitItem() !is Loadable.Loaded) { }
+            while (awaitItem() !is Loadable.Loaded) { /* drain loading emissions */
+            }
             vm.startNewDiscussion()
             val target = vm.composerTarget.value
             assertThat(target).isInstanceOf(ComposerTarget.NewDiscussion::class.java)

@@ -3,8 +3,10 @@ package it.attendance100.mybicocca.ui.screen.profile
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.SyncStatus
+import it.attendance100.mybicocca.core.text.UiText
 import it.attendance100.mybicocca.domain.model.account.Account
 import it.attendance100.mybicocca.domain.model.career.Career
 import it.attendance100.mybicocca.domain.model.career.CareerId
@@ -150,8 +152,8 @@ class ProfileViewModel @Inject constructor(
         .map { it is SyncStatus.Refreshing }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(KEEP_ALIVE_MS), false)
 
-    val errorMessage: StateFlow<String?> = syncStatus
-        .map { status -> if (status is SyncStatus.Failed) "Impossibile aggiornare i dati" else null }
+    val errorMessage: StateFlow<UiText?> = syncStatus
+        .map { status -> if (status is SyncStatus.Failed) UiText.StringResource(R.string.profile_refresh_error) else null }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(KEEP_ALIVE_MS), null)
 
     private val _prerequisiteStatuses = MutableStateFlow<Map<Long, PrerequisiteStatus>>(emptyMap())

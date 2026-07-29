@@ -1,141 +1,322 @@
 package it.attendance100.mybicocca.domain.usecase.search
 
+import androidx.annotation.StringRes
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.search.MatchInput
 import it.attendance100.mybicocca.core.search.SearchMatcher
+import it.attendance100.mybicocca.core.text.LocaleCachedCatalog
+import it.attendance100.mybicocca.core.text.StringResolver
 import it.attendance100.mybicocca.domain.model.search.SearchDestination
 import it.attendance100.mybicocca.domain.model.search.SearchResult
 import javax.inject.Inject
 
 /**
- * Scores every navigable page against the query. Titles mirror the app-bar titles; aliases
- * are the words students actually type ("voti" -> Esiti, "pagopa" -> Tasse) — bilingual
- * where students mix English ("dark mode").
+ * Scores the catalog of app sub-pages against the query — the typical page navigation list.
  */
-class SearchDestinationsUseCase @Inject constructor() {
+class SearchDestinationsUseCase @Inject constructor(
+    private val stringResolver: StringResolver
+) {
+
+    private data class ResolvedEntry(
+        val entry: Entry,
+        val title: String,
+        val aliases: List<String>,
+    )
+
+    private val catalog = LocaleCachedCatalog(Entries) { entry, resolver ->
+        ResolvedEntry(
+            entry = entry,
+            title = resolver.getString(entry.titleRes),
+            aliases = entry.aliasResList.map { resolver.getString(it) },
+        )
+    }
 
     operator fun invoke(query: String): List<SearchResult.Destination> =
-        Entries.mapNotNull { entry ->
-            val score = SearchMatcher.score(query, MatchInput(entry.title, entry.aliases))
+        catalog.get(stringResolver).mapNotNull { item ->
+            val score = SearchMatcher.score(query, MatchInput(item.title, item.aliases))
                 ?: return@mapNotNull null
-            SearchResult.Destination(entry.destination, entry.title, entry.subtitle, score)
+            SearchResult.Destination(
+                destination = item.entry.destination,
+                titleRes = item.entry.titleRes,
+                subtitleRes = item.entry.subtitleRes,
+                score = score,
+            )
         }
 
     private data class Entry(
         val destination: SearchDestination,
-        val title: String,
-        val subtitle: String?,
-        val aliases: List<String>,
+        @StringRes val titleRes: Int,
+        @StringRes val subtitleRes: Int?,
+        val aliasResList: List<Int>,
     )
 
     private companion object {
-        /**
-         * Catalog notes: libretto/carriera statistics live in the Profile page, so those
-         * search terms resolve to [SearchDestination.Profile]; the Settings-prefixed
-         * destinations open the settings modal already on the matching page.
-         */
         val Entries = listOf(
             Entry(
-                SearchDestination.TabCalendar, "Calendario", null,
-                listOf("orario", "lezioni", "agenda", "settimana"),
-            ),
-            Entry(
-                SearchDestination.TabElearning, "E-learning", null,
-                listOf("elearning", "moodle", "corsi", "materiale"),
-            ),
-            Entry(
-                SearchDestination.TabMap, "Mappe", null,
-                listOf("mappa", "aule", "edifici", "campus", "aula"),
-            ),
-            Entry(
-                SearchDestination.TabRegistry, "Servizi", null,
-                listOf("segreterie", "segreteria", "sportello"),
-            ),
-            Entry(
-                SearchDestination.Profile, "Profilo", null,
+                SearchDestination.TabCalendar,
+                R.string.b2_search_dest_calendar_title, null,
                 listOf(
-                    "account", "media", "statistiche", "matricola",
-                    "carriera", "libretto", "esami sostenuti", "crediti", "cfu",
+                    R.string.b2_search_dest_calendar_alias_1,
+                    R.string.b2_search_dest_calendar_alias_2,
+                    R.string.b2_search_dest_calendar_alias_3,
+                    R.string.b2_search_dest_calendar_alias_4,
                 ),
             ),
             Entry(
-                SearchDestination.Taxes, "Tasse", "Servizi",
-                listOf("pagamenti", "pagopa", "bollettini", "rette", "fatture"),
+                SearchDestination.TabElearning,
+                R.string.b2_search_dest_elearning_title, null,
+                listOf(
+                    R.string.b2_search_dest_elearning_alias_1,
+                    R.string.b2_search_dest_elearning_alias_2,
+                    R.string.b2_search_dest_elearning_alias_3,
+                    R.string.b2_search_dest_elearning_alias_4,
+                ),
             ),
             Entry(
-                SearchDestination.ExamResults, "Esiti", "Servizi",
-                listOf("voti", "risultati", "valutazioni", "esiti esami"),
+                SearchDestination.TabMap,
+                R.string.b2_search_dest_map_title, null,
+                listOf(
+                    R.string.b2_search_dest_map_alias_1,
+                    R.string.b2_search_dest_map_alias_2,
+                    R.string.b2_search_dest_map_alias_3,
+                    R.string.b2_search_dest_map_alias_4,
+                    R.string.b2_search_dest_map_alias_5,
+                ),
             ),
             Entry(
-                SearchDestination.BookedExams, "Esami", "Servizi",
-                listOf("appelli", "prenotazioni esami", "prenota esame", "iscrizione esame"),
+                SearchDestination.TabRegistry,
+                R.string.b2_search_dest_registry_title, null,
+                listOf(
+                    R.string.b2_search_dest_registry_alias_1,
+                    R.string.b2_search_dest_registry_alias_2,
+                    R.string.b2_search_dest_registry_alias_3,
+                ),
             ),
             Entry(
-                SearchDestination.StudyPlan, "Piano di Studi", "Servizi",
-                listOf("piano", "piano carriera", "piano di studio"),
+                SearchDestination.Profile,
+                R.string.b2_search_dest_profile_title, null,
+                listOf(
+                    R.string.b2_search_dest_profile_alias_1,
+                    R.string.b2_search_dest_profile_alias_2,
+                    R.string.b2_search_dest_profile_alias_3,
+                    R.string.b2_search_dest_profile_alias_4,
+                    R.string.b2_search_dest_profile_alias_5,
+                    R.string.b2_search_dest_profile_alias_6,
+                    R.string.b2_search_dest_profile_alias_7,
+                    R.string.b2_search_dest_profile_alias_8,
+                    R.string.b2_search_dest_profile_alias_9,
+                ),
             ),
             Entry(
-                SearchDestination.Attendance, "Presenze", "Servizi",
-                listOf("frequenza", "frequenze", "presenza"),
+                SearchDestination.Taxes,
+                R.string.b2_search_dest_taxes_title, R.string.b2_search_dest_taxes_subtitle,
+                listOf(
+                    R.string.b2_search_dest_taxes_alias_1,
+                    R.string.b2_search_dest_taxes_alias_2,
+                    R.string.b2_search_dest_taxes_alias_3,
+                    R.string.b2_search_dest_taxes_alias_4,
+                    R.string.b2_search_dest_taxes_alias_5,
+                ),
             ),
             Entry(
-                SearchDestination.Questionnaires, "Questionari", "Servizi",
-                listOf("questionario", "valutazione didattica"),
+                SearchDestination.ExamResults,
+                R.string.b2_search_dest_exam_results_title,
+                R.string.b2_search_dest_exam_results_subtitle,
+                listOf(
+                    R.string.b2_search_dest_exam_results_alias_1,
+                    R.string.b2_search_dest_exam_results_alias_2,
+                    R.string.b2_search_dest_exam_results_alias_3,
+                    R.string.b2_search_dest_exam_results_alias_4,
+                ),
             ),
             Entry(
-                SearchDestination.Appointments, "Appuntamenti", "Servizi",
-                listOf("appuntamento", "sportello", "prenotazione", "ritiro badge", "pergamena"),
+                SearchDestination.BookedExams,
+                R.string.b2_search_dest_booked_exams_title,
+                R.string.b2_search_dest_booked_exams_subtitle,
+                listOf(
+                    R.string.b2_search_dest_booked_exams_alias_1,
+                    R.string.b2_search_dest_booked_exams_alias_2,
+                    R.string.b2_search_dest_booked_exams_alias_3,
+                    R.string.b2_search_dest_booked_exams_alias_4,
+                ),
             ),
             Entry(
-                SearchDestination.Enrollments, "Iscrizioni", "Servizi",
-                listOf("iscrizione", "rinnovo", "rinnovo iscrizione", "immatricolazione"),
+                SearchDestination.StudyPlan,
+                R.string.b2_search_dest_study_plan_title,
+                R.string.b2_search_dest_study_plan_subtitle,
+                listOf(
+                    R.string.b2_search_dest_study_plan_alias_1,
+                    R.string.b2_search_dest_study_plan_alias_2,
+                    R.string.b2_search_dest_study_plan_alias_3,
+                ),
             ),
             Entry(
-                SearchDestination.Titles, "Titoli", "Servizi",
-                listOf("titoli di studio", "maturità", "diploma"),
+                SearchDestination.Attendance,
+                R.string.b2_search_dest_attendance_title,
+                R.string.b2_search_dest_attendance_subtitle,
+                listOf(
+                    R.string.b2_search_dest_attendance_alias_1,
+                    R.string.b2_search_dest_attendance_alias_2,
+                    R.string.b2_search_dest_attendance_alias_3,
+                ),
             ),
             Entry(
-                SearchDestination.Certificates, "Certificati", "Servizi",
-                listOf("certificato", "autodichiarazioni", "autocertificazione"),
+                SearchDestination.Questionnaires,
+                R.string.b2_search_dest_questionnaires_title,
+                R.string.b2_search_dest_questionnaires_subtitle,
+                listOf(
+                    R.string.b2_search_dest_questionnaires_alias_1,
+                    R.string.b2_search_dest_questionnaires_alias_2,
+                ),
             ),
             Entry(
-                SearchDestination.Library, "Biblioteca", "Servizi",
-                listOf("biblioteche", "sala studio", "posto biblioteca", "posto studio", "affluences"),
+                SearchDestination.Appointments,
+                R.string.b2_search_dest_appointments_title,
+                R.string.b2_search_dest_appointments_subtitle,
+                listOf(
+                    R.string.b2_search_dest_appointments_alias_1,
+                    R.string.b2_search_dest_appointments_alias_2,
+                    R.string.b2_search_dest_appointments_alias_3,
+                    R.string.b2_search_dest_appointments_alias_4,
+                    R.string.b2_search_dest_appointments_alias_5,
+                ),
             ),
             Entry(
-                SearchDestination.Refunds, "Rimborsi", "Servizi",
-                listOf("rimborso", "restituzione"),
+                SearchDestination.Enrollments,
+                R.string.b2_search_dest_enrollments_title,
+                R.string.b2_search_dest_enrollments_subtitle,
+                listOf(
+                    R.string.b2_search_dest_enrollments_alias_1,
+                    R.string.b2_search_dest_enrollments_alias_2,
+                    R.string.b2_search_dest_enrollments_alias_3,
+                    R.string.b2_search_dest_enrollments_alias_4,
+                ),
             ),
             Entry(
-                SearchDestination.Isee, "ISEE", "Servizi",
-                listOf("isee", "indicatore situazione economica", "fascia", "reddito"),
+                SearchDestination.Titles,
+                R.string.b2_search_dest_titles_title, R.string.b2_search_dest_titles_subtitle,
+                listOf(
+                    R.string.b2_search_dest_titles_alias_1,
+                    R.string.b2_search_dest_titles_alias_2,
+                    R.string.b2_search_dest_titles_alias_3,
+                ),
             ),
             Entry(
-                SearchDestination.Settings, "Impostazioni", null,
-                listOf("preferenze", "opzioni", "configurazione", "settings"),
+                SearchDestination.Certificates,
+                R.string.b2_search_dest_certificates_title,
+                R.string.b2_search_dest_certificates_subtitle,
+                listOf(
+                    R.string.b2_search_dest_certificates_alias_1,
+                    R.string.b2_search_dest_certificates_alias_2,
+                    R.string.b2_search_dest_certificates_alias_3,
+                ),
             ),
             Entry(
-                SearchDestination.SettingsAppearance, "Aspetto", "Impostazioni",
-                listOf("tema", "colori", "tema scuro", "tema chiaro", "dark mode", "colore dinamico"),
+                SearchDestination.Library,
+                R.string.b2_search_dest_library_title, R.string.b2_search_dest_library_subtitle,
+                listOf(
+                    R.string.b2_search_dest_library_alias_1,
+                    R.string.b2_search_dest_library_alias_2,
+                    R.string.b2_search_dest_library_alias_3,
+                    R.string.b2_search_dest_library_alias_4,
+                    R.string.b2_search_dest_library_alias_5,
+                ),
             ),
             Entry(
-                SearchDestination.SettingsSecurity, "Sicurezza", "Impostazioni",
-                listOf("biometria", "impronta", "blocco", "sblocco", "fingerprint"),
+                SearchDestination.Refunds,
+                R.string.b2_search_dest_refunds_title, R.string.b2_search_dest_refunds_subtitle,
+                listOf(
+                    R.string.b2_search_dest_refunds_alias_1,
+                    R.string.b2_search_dest_refunds_alias_2,
+                ),
             ),
             Entry(
-                SearchDestination.SettingsLanguage, "Lingua", "Impostazioni",
-                listOf("language", "italiano", "english", "traduzione"),
+                SearchDestination.Isee,
+                R.string.b2_search_dest_isee_title, R.string.b2_search_dest_isee_subtitle,
+                listOf(
+                    R.string.b2_search_dest_isee_alias_1,
+                    R.string.b2_search_dest_isee_alias_2,
+                    R.string.b2_search_dest_isee_alias_3,
+                    R.string.b2_search_dest_isee_alias_4,
+                ),
             ),
             Entry(
-                SearchDestination.SettingsFileAssociations, "Associazioni file", "Impostazioni",
-                listOf("apri con", "app predefinita", "file pdf", "lettore pdf"),
+                SearchDestination.Settings,
+                R.string.b2_search_dest_settings_title, null,
+                listOf(
+                    R.string.b2_search_dest_settings_alias_1,
+                    R.string.b2_search_dest_settings_alias_2,
+                    R.string.b2_search_dest_settings_alias_3,
+                    R.string.b2_search_dest_settings_alias_4,
+                ),
             ),
             Entry(
-                SearchDestination.SettingsLicenses, "Licenze", "Impostazioni",
-                listOf("open source", "librerie", "licenza"),
+                SearchDestination.SettingsAppearance,
+                R.string.b2_search_dest_settings_appearance_title,
+                R.string.b2_search_dest_settings_appearance_subtitle,
+                listOf(
+                    R.string.b2_search_dest_settings_appearance_alias_1,
+                    R.string.b2_search_dest_settings_appearance_alias_2,
+                    R.string.b2_search_dest_settings_appearance_alias_3,
+                    R.string.b2_search_dest_settings_appearance_alias_4,
+                    R.string.b2_search_dest_settings_appearance_alias_5,
+                    R.string.b2_search_dest_settings_appearance_alias_6,
+                ),
             ),
             Entry(
-                SearchDestination.SettingsAppInfo, "Info app", "Impostazioni",
-                listOf("versione", "informazioni", "about", "github"),
+                SearchDestination.SettingsSecurity,
+                R.string.b2_search_dest_settings_security_title,
+                R.string.b2_search_dest_settings_security_subtitle,
+                listOf(
+                    R.string.b2_search_dest_settings_security_alias_1,
+                    R.string.b2_search_dest_settings_security_alias_2,
+                    R.string.b2_search_dest_settings_security_alias_3,
+                    R.string.b2_search_dest_settings_security_alias_4,
+                    R.string.b2_search_dest_settings_security_alias_5,
+                ),
+            ),
+            Entry(
+                SearchDestination.SettingsLanguage,
+                R.string.b2_search_dest_settings_language_title,
+                R.string.b2_search_dest_settings_language_subtitle,
+                listOf(
+                    R.string.b2_search_dest_settings_language_alias_1,
+                    R.string.b2_search_dest_settings_language_alias_2,
+                    R.string.b2_search_dest_settings_language_alias_3,
+                    R.string.b2_search_dest_settings_language_alias_4,
+                ),
+            ),
+            Entry(
+                SearchDestination.SettingsFileAssociations,
+                R.string.b2_search_dest_settings_file_associations_title,
+                R.string.b2_search_dest_settings_file_associations_subtitle,
+                listOf(
+                    R.string.b2_search_dest_settings_file_associations_alias_1,
+                    R.string.b2_search_dest_settings_file_associations_alias_2,
+                    R.string.b2_search_dest_settings_file_associations_alias_3,
+                    R.string.b2_search_dest_settings_file_associations_alias_4,
+                ),
+            ),
+            Entry(
+                SearchDestination.SettingsLicenses,
+                R.string.b2_search_dest_settings_licenses_title,
+                R.string.b2_search_dest_settings_licenses_subtitle,
+                listOf(
+                    R.string.b2_search_dest_settings_licenses_alias_1,
+                    R.string.b2_search_dest_settings_licenses_alias_2,
+                    R.string.b2_search_dest_settings_licenses_alias_3,
+                ),
+            ),
+            Entry(
+                SearchDestination.SettingsAppInfo,
+                R.string.b2_search_dest_settings_app_info_title,
+                R.string.b2_search_dest_settings_app_info_subtitle,
+                listOf(
+                    R.string.b2_search_dest_settings_app_info_alias_1,
+                    R.string.b2_search_dest_settings_app_info_alias_2,
+                    R.string.b2_search_dest_settings_app_info_alias_3,
+                    R.string.b2_search_dest_settings_app_info_alias_4,
+                ),
             ),
         )
     }

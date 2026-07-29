@@ -17,4 +17,5 @@ sealed interface AccountEvent {
     data class NewCareerAvailable(val accountId: AccountId, val career: Career) : AccountEvent
     data class SelectedCareerEnded(val accountId: AccountId, val career: Career) : AccountEvent
     data class SelectedCareerMissing(val accountId: AccountId) : AccountEvent
+    data class SignOutFailed(val accountId: AccountId, val error: Throwable) : AccountEvent
 }

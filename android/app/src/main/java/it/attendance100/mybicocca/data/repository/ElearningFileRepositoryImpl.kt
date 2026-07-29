@@ -48,7 +48,7 @@ class ElearningFileRepositoryImpl @Inject constructor(
                 }
                 if (!temp.renameTo(file)) {
                     temp.delete()
-                    error("Impossibile salvare il file scaricato.")
+                    error(context.getString(it.attendance100.mybicocca.R.string.b1_elearning_file_save_failed))
                 }
             }
         }

@@ -109,7 +109,7 @@ fun PresenceResultContent(
             textAlign = TextAlign.Center,
         )
 
-        val detail = outcome.detailText()
+        val detail = outcome.detailText(visual.title)
         if (detail != null) {
             Spacer(Modifier.height(6.dp))
             Text(
@@ -130,7 +130,18 @@ fun PresenceResultContent(
     }
 }
 
-private fun PresenceMarkOutcome.detailText(): String? = when (this) {
-    is PresenceMarkOutcome.Recorded -> statusDescription?.let { "Stato: $it" } ?: message
-    else -> message
+@Composable
+private fun PresenceMarkOutcome.detailText(title: String): String? {
+    val text = when (this) {
+        is PresenceMarkOutcome.Recorded -> statusDescription?.let {
+            stringResource(
+                R.string.attendance_status_label,
+                it
+            )
+        }
+
+        is PresenceMarkOutcome.Failed -> backendMessage
+        else -> null
+    } ?: message.asString()
+    return text.takeIf { it != title }
 }

@@ -1,17 +1,17 @@
 package it.attendance100.mybicocca.ui.screen.elearning.subscreen.forum
 
-import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.SyncStatus
 import it.attendance100.mybicocca.core.state.valueOrNull
+import it.attendance100.mybicocca.core.text.StringResolver
+import it.attendance100.mybicocca.core.text.UiText
 import it.attendance100.mybicocca.domain.model.account.AccountId
 import it.attendance100.mybicocca.domain.model.elearning.course.CourseId
 import it.attendance100.mybicocca.domain.model.elearning.forum.Discussion
@@ -41,10 +41,10 @@ import it.attendance100.mybicocca.domain.usecase.elearning.forum.UploadForumAtta
 import it.attendance100.mybicocca.ui.navigation.route.SheetRoute
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.forum.state.ComposerTarget
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.forum.state.ForumSheetEvent
+import it.attendance100.mybicocca.ui.screen.elearning.subscreen.forum.state.PageState
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.forum.state.PendingAttachment
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.forum.state.ThreadNode
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.forum.state.buildThread
-import it.attendance100.mybicocca.ui.screen.elearning.subscreen.forum.state.PageState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
@@ -85,7 +85,8 @@ import kotlinx.coroutines.withContext
 @HiltViewModel(assistedFactory = ForumSheetViewModel.Factory::class)
 class ForumSheetViewModel @AssistedInject constructor(
     @Assisted private val key: SheetRoute.Forum,
-    @ApplicationContext private val appContext: Context,
+    private val attachmentReader: ForumAttachmentReader,
+    private val stringResolver: StringResolver,
     observeActiveAccount: ObserveActiveAccountUseCase,
     observeForum: ObserveForumUseCase,
     private val observeDiscussions: ObserveDiscussionsUseCase,
@@ -198,7 +199,12 @@ class ForumSheetViewModel @AssistedInject constructor(
             }
             .onFailure {
                 _syncStatus.value = SyncStatus.Failed(it)
-                events.trySend(ForumSheetEvent.Failed(appContext.getString(R.string.elearning_forum_refresh_failed), it))
+                events.trySend(
+                    ForumSheetEvent.Failed(
+                        UiText.StringResource(R.string.elearning_forum_refresh_failed),
+                        it
+                    )
+                )
             }
     }
 
@@ -249,7 +255,12 @@ class ForumSheetViewModel @AssistedInject constructor(
             .onSuccess { _threadSyncStatus.value = SyncStatus.Idle }
             .onFailure {
                 _threadSyncStatus.value = SyncStatus.Failed(it)
-                events.trySend(ForumSheetEvent.Failed(appContext.getString(R.string.common_load_failed), it))
+                events.trySend(
+                    ForumSheetEvent.Failed(
+                        UiText.StringResource(R.string.common_load_failed),
+                        it
+                    )
+                )
             }
     }
 
@@ -257,7 +268,14 @@ class ForumSheetViewModel @AssistedInject constructor(
         viewModelScope.launch {
             val accountId = activeAccountId.filterNotNull().first()
             runCatching { setFavourite(accountId, forumId, discussion.id, !discussion.isFavourite) }
-                .onFailure { events.trySend(ForumSheetEvent.Failed(appContext.getString(R.string.elearning_forum_operation_failed), it)) }
+                .onFailure {
+                    events.trySend(
+                        ForumSheetEvent.Failed(
+                            UiText.StringResource(R.string.elearning_forum_operation_failed),
+                            it
+                        )
+                    )
+                }
         }
     }
 
@@ -268,14 +286,21 @@ class ForumSheetViewModel @AssistedInject constructor(
                 .onSuccess {
                     events.trySend(
                         ForumSheetEvent.Info(
-                            appContext.getString(
+                            UiText.StringResource(
                                 if (subscribed) R.string.elearning_forum_subscribed_info
                                 else R.string.elearning_forum_unsubscribed_info
                             )
                         )
                     )
                 }
-                .onFailure { events.trySend(ForumSheetEvent.Failed(appContext.getString(R.string.elearning_forum_operation_failed), it)) }
+                .onFailure {
+                    events.trySend(
+                        ForumSheetEvent.Failed(
+                            UiText.StringResource(R.string.elearning_forum_operation_failed),
+                            it
+                        )
+                    )
+                }
         }
     }
 
@@ -284,7 +309,14 @@ class ForumSheetViewModel @AssistedInject constructor(
         viewModelScope.launch {
             val accountId = activeAccountId.filterNotNull().first()
             runCatching { deletePostUseCase(accountId, discussionId, post.id) }
-                .onFailure { events.trySend(ForumSheetEvent.Failed(appContext.getString(R.string.elearning_forum_delete_failed), it)) }
+                .onFailure {
+                    events.trySend(
+                        ForumSheetEvent.Failed(
+                            UiText.StringResource(R.string.elearning_forum_delete_failed),
+                            it
+                        )
+                    )
+                }
         }
     }
 
@@ -317,7 +349,8 @@ class ForumSheetViewModel @AssistedInject constructor(
     fun startReply(post: Post) {
         val discussionId = _openDiscussionId.value ?: return
         val canAttach = forum.value.valueOrNull()?.canAttachFiles == true
-        val subject = post.subject.ifBlank { appContext.getString(R.string.elearning_forum_discussion_fallback) }
+        val subject =
+            post.subject.ifBlank { stringResolver.getString(R.string.elearning_forum_discussion_fallback) }
         val replySubject = if (subject.startsWith("Re:", ignoreCase = true)) subject else "Re: $subject"
         _composerTarget.value = ComposerTarget.Reply(discussionId, post.id, replySubject, canAttach)
     }
@@ -394,7 +427,12 @@ class ForumSheetViewModel @AssistedInject constructor(
                 cancelComposer()
                 newDiscussionId?.let { openThread(it) }
             }.onFailure {
-                events.trySend(ForumSheetEvent.Failed(appContext.getString(R.string.elearning_forum_publish_failed), it))
+                events.trySend(
+                    ForumSheetEvent.Failed(
+                        UiText.StringResource(R.string.elearning_forum_publish_failed),
+                        it
+                    )
+                )
             }
             _submitting.value = false
         }
@@ -407,7 +445,7 @@ class ForumSheetViewModel @AssistedInject constructor(
 
     private suspend fun readUploads(): List<ForumAttachmentUpload> = withContext(Dispatchers.IO) {
         _pendingAttachments.value.map { item ->
-            val bytes = appContext.contentResolver.openInputStream(item.uri)?.use { it.readBytes() }
+            val bytes = attachmentReader.readBytes(item.uri)
                 ?: error("Impossibile leggere ${item.fileName}")
             ForumAttachmentUpload(item.fileName, item.mimeType, bytes)
         }

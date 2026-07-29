@@ -3,8 +3,10 @@ package it.attendance100.mybicocca.ui.screen.registry.subscreen.attendance
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.SyncStatus
+import it.attendance100.mybicocca.core.text.UiText
 import it.attendance100.mybicocca.domain.model.attendance.CourseAttendance
 import it.attendance100.mybicocca.domain.model.attendance.PresenceMarkOutcome
 import it.attendance100.mybicocca.domain.model.career.CareerId
@@ -98,7 +100,8 @@ class AttendanceViewModel @Inject constructor(
     fun submitScan(raw: String) {
         val careerId = activeCareerId.value
         if (careerId == null) {
-            _markState.value = MarkUiState.Done(PresenceMarkOutcome.Failed("Nessuna carriera attiva"))
+            _markState.value =
+                MarkUiState.Done(PresenceMarkOutcome.Failed(message = UiText.StringResource(R.string.registry_no_active_career)))
             return
         }
         viewModelScope.launch {
