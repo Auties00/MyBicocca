@@ -119,7 +119,7 @@ private sealed interface AttendanceTab {
 
     /** EasyStaff in-classroom badge telemetry. */
     data class Lezioni(val classroom: ClassroomAttendance?) : AttendanceTab {
-        override val title: @Composable () -> String get() = { stringResource(R.string.b4_registry_tab_lezioni) }
+        override val title: @Composable () -> String get() = { stringResource(R.string.registry_tab_lezioni) }
     }
 
     /** One Moodle mod_attendance session register. */
@@ -141,7 +141,7 @@ private fun SessionAttendance.tabTitle(): String {
         .trim()
         .lowercase()
         .capitalizeString()
-    return cleaned.ifBlank { stringResource(R.string.b4_registry_tab_sessioni) }
+    return cleaned.ifBlank { stringResource(R.string.registry_tab_sessioni) }
 }
 
 /**
@@ -168,9 +168,9 @@ private fun LezioniTabBody(classroom: ClassroomAttendance?) {
         AttendanceRing(
             progress = (classroom.attendancePercentage / 100.0).toFloat(),
             headline = "${classroom.attendancePercentage.roundToInt()}%",
-            caption = stringResource(R.string.b4_registry_caption_frequenza),
+            caption = stringResource(R.string.registry_caption_frequenza),
             footnote = classroom.minRequiredPercentage()
-                ?.let { stringResource(R.string.b4_registry_footnote_minimum, it) },
+                ?.let { stringResource(R.string.registry_footnote_minimum, it) },
             color = classroom.requirementColor(),
         )
     }
@@ -202,10 +202,10 @@ private fun RegisterTabBody(session: SessionAttendance) {
         AttendanceRing(
             progress = (recorded / 100.0).toFloat(),
             headline = "${recorded.roundToInt()}%",
-            caption = stringResource(R.string.b4_registry_caption_recorded),
+            caption = stringResource(R.string.registry_caption_recorded),
             footnote = session.attendedSessions?.let {
-                if (it == 1) stringResource(R.string.b4_registry_presence_one)
-                else stringResource(R.string.b4_registry_presence_many, it)
+                if (it == 1) stringResource(R.string.registry_presence_one)
+                else stringResource(R.string.registry_presence_many, it)
             },
             color = MaterialTheme.colorScheme.primary,
         )

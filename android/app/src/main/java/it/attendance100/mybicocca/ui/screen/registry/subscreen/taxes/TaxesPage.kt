@@ -290,9 +290,9 @@ fun taxesHeaderSubtitle(invoices: List<TaxInvoice>): String? {
     val due = invoices
         .filter { it.status == TaxStatus.PENDING || it.status == TaxStatus.EXPIRED }
         .sumOf { it.amount }
-    if (due > 0.0) return stringResource(R.string.b4_registry_taxes_due_subtitle, formatEuro(due))
-    return if (invoices.size == 1) stringResource(R.string.b4_registry_taxes_one_invoice) else stringResource(
-        R.string.b4_registry_taxes_many_invoices,
+    if (due > 0.0) return stringResource(R.string.registry_taxes_due_subtitle, formatEuro(due))
+    return if (invoices.size == 1) stringResource(R.string.registry_taxes_one_invoice) else stringResource(
+        R.string.registry_taxes_many_invoices,
         invoices.size
     )
 }

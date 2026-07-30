@@ -249,5 +249,5 @@ private fun splitTitle(title: String, scheme: ColorScheme): AnnotatedString {
 private fun instructorLine(details: CourseDetails): String? {
     val primary = details.staff.firstOrNull { it.role == CourseStaffRole.Docente }
         ?: details.staff.firstOrNull()
-    return primary?.fullName?.let { stringResource(R.string.b3_course_hero_prof_prefix, it) }
+    return primary?.fullName?.let { stringResource(R.string.course_hero_prof_prefix, it) }
 }

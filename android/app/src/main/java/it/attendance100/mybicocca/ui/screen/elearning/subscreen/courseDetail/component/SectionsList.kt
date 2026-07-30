@@ -169,7 +169,7 @@ private fun SectionCard(
         summaryHtml?.let { HtmlCallout(html = it) }
         if (blocks.isEmpty() && summaryHtml == null) {
             Text(
-                text = stringResource(R.string.b3_sections_list_empty_section),
+                text = stringResource(R.string.sections_list_empty_section),
                 style = MaterialTheme.typography.bodySmall,
                 color = scheme.onSurfaceVariant,
                 modifier = Modifier.padding(horizontal = 4.dp),
@@ -316,7 +316,7 @@ private fun SubsectionBlock(
                     block.summaryHtml?.let { HtmlCallout(html = it) }
                     if (block.blocks.isEmpty() && block.summaryHtml == null) {
                         Text(
-                            text = stringResource(R.string.b3_sections_list_no_resource),
+                            text = stringResource(R.string.sections_list_no_resource),
                             style = MaterialTheme.typography.bodySmall,
                             color = scheme.onSurfaceVariant,
                             modifier = Modifier.padding(horizontal = 4.dp),

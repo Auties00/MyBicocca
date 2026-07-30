@@ -1,21 +1,29 @@
 package it.attendance100.mybicocca.di
 
+import dagger.Binds
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import it.attendance100.mybicocca.core.text.ContextStringResolver
+import it.attendance100.mybicocca.core.text.StringResolver
 import it.attendance100.mybicocca.core.time.StalePolicy
 import it.attendance100.mybicocca.data.local.elearning.sync.ElearningSyncScope
 import javax.inject.Singleton
 
 /**
- * Provides cross-cutting configuration singletons: the cache staleness policy, with per-scope
- * TTLs tuned to how quickly each e-learning source goes stale (quiz attempts in the sub-minute
- * range, badges hourly, course content around ten minutes).
+ * Provides cross-cutting configuration singletons: the [StringResolver] used by domain components
+ * to resolve localized strings without depending on Android [android.content.Context], and the
+ * cache staleness policy, with per-scope TTLs tuned to how quickly each e-learning source goes
+ * stale (quiz attempts in the sub-minute range, badges hourly, course content around ten minutes).
  */
 @Module
 @InstallIn(SingletonComponent::class)
 abstract class CoreModule {
+
+    @Binds
+    @Singleton
+    abstract fun bindStringResolver(impl: ContextStringResolver): StringResolver
 
     companion object {
         @Provides

@@ -142,5 +142,5 @@ private fun CourseAttendance.statusCaption(): String {
         return "${it.attendedSessions}/${it.totalSessions} sessioni" +
             (it.recordedPercentage?.let { pct -> " · ${pct.roundToInt()}% registrate" } ?: "")
     }
-    return stringResource(R.string.b4_registry_attendance_no_records)
+    return stringResource(R.string.registry_attendance_no_records)
 }

@@ -289,7 +289,7 @@ private fun TranscriptText(transcript: String) {
     )
 
     Text(
-        text = if (listening) stringResource(R.string.b3_dictation_speak_now) else transcript,
+        text = if (listening) stringResource(R.string.dictation_speak_now) else transcript,
         style = MaterialTheme.typography.titleMedium,
         color = if (listening) scheme.onSurfaceVariant.copy(alpha = pulse) else scheme.onSurface,
         textAlign = TextAlign.Center,

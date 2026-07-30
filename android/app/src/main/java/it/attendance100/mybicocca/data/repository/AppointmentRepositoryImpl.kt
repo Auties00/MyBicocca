@@ -1,7 +1,6 @@
 package it.attendance100.mybicocca.data.repository
 
-import android.content.Context
-import dagger.hilt.android.qualifiers.ApplicationContext
+import it.attendance100.mybicocca.core.text.StringResolver
 import it.attendance100.mybicocca.data.local.appointment.AppointmentReservationDao
 import it.attendance100.mybicocca.data.mapper.appointment.CampusZone
 import it.attendance100.mybicocca.data.mapper.appointment.toAppointmentForm
@@ -38,7 +37,7 @@ import javax.inject.Singleton
  */
 @Singleton
 class AppointmentRepositoryImpl @Inject constructor(
-    @ApplicationContext private val context: Context,
+    private val stringResolver: StringResolver,
     private val easyStaffApi: EasyStaffApi,
     private val reservationDao: AppointmentReservationDao,
 ) : AppointmentRepository {
@@ -94,7 +93,7 @@ class AppointmentRepositoryImpl @Inject constructor(
         values: Map<String, String>,
     ): AppointmentReservation {
         val email = form.primaryField?.code?.let { values[it] }
-        require(!email.isNullOrBlank()) { context.getString(it.attendance100.mybicocca.R.string.b1_appointment_booking_email_required) }
+        require(!email.isNullOrBlank()) { stringResolver.getString(it.attendance100.mybicocca.R.string.appointment_booking_email_required) }
 
         val slotEnd = slotStart.plusSeconds(offering.durationSeconds.toLong())
         val result = desks.createReservation(

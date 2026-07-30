@@ -72,7 +72,7 @@ class ApkDownloader @Inject constructor(
                     _downloadState.value =
                         DownloadState.Error(
                             UiText.StringResource(
-                                it.attendance100.mybicocca.R.string.b1_apk_downloader_no_suitable_apk,
+                                it.attendance100.mybicocca.R.string.apk_downloader_no_suitable_apk,
                                 supportedAbi,
                                 availableAssets
                             )
@@ -83,7 +83,7 @@ class ApkDownloader @Inject constructor(
                 // Never hand a plaintext-fetched binary to the installer
                 if (!asset.downloadUrl.startsWith("https://", ignoreCase = true)) {
                     _downloadState.value =
-                        DownloadState.Error(UiText.StringResource(it.attendance100.mybicocca.R.string.b1_apk_downloader_insecure_connection))
+                        DownloadState.Error(UiText.StringResource(it.attendance100.mybicocca.R.string.apk_downloader_insecure_connection))
                     return@launch
                 }
 
@@ -107,7 +107,7 @@ class ApkDownloader @Inject constructor(
                 if (!apkFile.passesIntegrityCheck(asset)) {
                     apkFile.delete()
                     _downloadState.value =
-                        DownloadState.Error(UiText.StringResource(it.attendance100.mybicocca.R.string.b1_apk_downloader_integrity_check_failed))
+                        DownloadState.Error(UiText.StringResource(it.attendance100.mybicocca.R.string.apk_downloader_integrity_check_failed))
                     return@launch
                 }
 
@@ -119,7 +119,7 @@ class ApkDownloader @Inject constructor(
                 e.printStackTrace()
                 _downloadState.value =
                     DownloadState.Error(e.message?.let { UiText.DynamicString(it) }
-                        ?: UiText.StringResource(it.attendance100.mybicocca.R.string.b1_apk_downloader_failed))
+                        ?: UiText.StringResource(it.attendance100.mybicocca.R.string.apk_downloader_failed))
             }
         }
     }

@@ -27,7 +27,7 @@ class CrashLogBuilder(private val context: Context) {
 
             file.writeText(
                 debugHeader() + "\n\n" + (stackTrace
-                    ?: context.getString(R.string.b1_crash_log_no_stack_trace)) + "\n\n"
+                    ?: context.getString(R.string.crash_log_no_stack_trace)) + "\n\n"
             )
             // `logcat -f` appends to the existing file, preserving the header written above.
             Runtime.getRuntime()

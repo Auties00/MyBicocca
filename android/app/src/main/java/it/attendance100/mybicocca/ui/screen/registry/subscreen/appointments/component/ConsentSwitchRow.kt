@@ -51,9 +51,9 @@ internal fun ConsentSwitchRow(
         CustomTabsIntent.Builder().setShowTitle(true).build().launchUrl(context, url.toUri())
     }
 
-    val gdprPrefix = stringResource(R.string.b4_registry_gdpr_prefix)
-    val gdprPolicyLink = stringResource(R.string.b4_registry_gdpr_policy_link)
-    val gdprSuffix = stringResource(R.string.b4_registry_gdpr_suffix)
+    val gdprPrefix = stringResource(R.string.registry_gdpr_prefix)
+    val gdprPolicyLink = stringResource(R.string.registry_gdpr_policy_link)
+    val gdprSuffix = stringResource(R.string.registry_gdpr_suffix)
 
     val statement = buildAnnotatedString {
         if (field.label == "gdpr_label") {

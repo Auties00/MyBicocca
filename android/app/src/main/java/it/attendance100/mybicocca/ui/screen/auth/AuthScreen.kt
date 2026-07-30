@@ -390,14 +390,14 @@ private fun AlternativeLoginButtonPreview() {
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             AlternativeLoginButton(
-                label = stringResource(R.string.b3_auth_login_spid),
+                label = stringResource(R.string.auth_login_spid),
                 icon = painterResource(R.drawable.ic_spid),
                 iconTint = Color.Unspecified,
                 enabled = true,
                 onClick = {}
             )
             AlternativeLoginButton(
-                label = stringResource(R.string.b3_auth_login_cie),
+                label = stringResource(R.string.auth_login_cie),
                 icon = painterResource(R.drawable.ic_cie),
                 iconTint = MaterialTheme.colorScheme.onSurface,
                 enabled = true,

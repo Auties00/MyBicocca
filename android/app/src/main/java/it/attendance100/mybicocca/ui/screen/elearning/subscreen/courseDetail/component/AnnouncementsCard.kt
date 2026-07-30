@@ -90,7 +90,7 @@ fun AnnouncementsCard(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = stringResource(R.string.b3_announcements_title),
+                            text = stringResource(R.string.announcements_title),
                             color = scheme.tertiary,
                             fontSize = 10.sp,
                             fontWeight = FontWeight.Bold,
@@ -142,7 +142,7 @@ fun AnnouncementsCard(
                             )
                         } else {
                             Text(
-                                text = stringResource(R.string.b3_announcements_empty),
+                                text = stringResource(R.string.announcements_empty),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = scheme.onTertiaryContainer.copy(alpha = 0.7f),
                                 fontStyle = FontStyle.Italic,
@@ -175,7 +175,7 @@ private fun LatestAnnouncementBlock(
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
             ) {
                 Text(
-                    text = stringResource(R.string.b3_announcements_latest),
+                    text = stringResource(R.string.announcements_latest),
                     color = scheme.tertiary,
                     fontSize = 9.sp,
                     fontWeight = FontWeight.Bold,

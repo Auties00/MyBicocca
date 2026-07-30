@@ -296,7 +296,7 @@ private fun TimeoutSlider(
     val timeoutImmediately = stringResource(R.string.settings_security_timeout_immediately)
     val timeout1Hour = stringResource(R.string.settings_security_timeout_1hour)
     val timeout4Hours = stringResource(R.string.settings_security_timeout_4hours)
-    val minutesFormat = stringResource(R.string.b3_settings_security_minutes_format)
+    val minutesFormat = stringResource(R.string.settings_security_minutes_format)
     val timeoutLabelFunc: (Int) -> String = { minutes ->
         when (minutes) {
             0 -> timeoutImmediately

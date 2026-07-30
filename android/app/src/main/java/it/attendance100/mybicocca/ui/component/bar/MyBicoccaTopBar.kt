@@ -652,7 +652,7 @@ private fun MyBicoccaTopBarSubPagePreview() {
             navProgress = remember { mutableFloatStateOf(1f) },
             searchProgress = remember { Animatable(0f) },
             canNavigateBack = true,
-            subPageTitle = stringResource(R.string.b3_topbar_exam_detail),
+            subPageTitle = stringResource(R.string.topbar_exam_detail),
             searchState = TopBarSearchState(
                 query = "",
                 active = false,

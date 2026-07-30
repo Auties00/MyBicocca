@@ -756,7 +756,7 @@ private fun QuizzesPage(
                         ExpandableGroupCard(
                             ordinal = index + 1,
                             title = group.title
-                                ?: stringResource(R.string.b3_course_detail_quiz_group_title),
+                                ?: stringResource(R.string.course_detail_quiz_group_title),
                             subtitle = quizGroupSubtitle(group.quizzes, completion),
                             expanded = group.key in expandedGroups,
                             onToggle = { onToggleGroup(group.key) },

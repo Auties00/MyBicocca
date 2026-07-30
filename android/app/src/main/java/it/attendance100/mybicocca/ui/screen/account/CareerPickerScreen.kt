@@ -123,7 +123,7 @@ internal fun CareerCard(
             Text(
                 text = career.description.ifEmpty {
                     stringResource(
-                        R.string.b3_career_placeholder,
+                        R.string.career_placeholder,
                         career.id.value
                     )
                 },

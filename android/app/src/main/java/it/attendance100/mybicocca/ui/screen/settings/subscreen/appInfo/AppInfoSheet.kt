@@ -346,7 +346,7 @@ private fun AboutScene(
             Spacer(Modifier.height(8.dp))
             Image(
                 painter = painterResource(R.drawable.logo),
-                contentDescription = stringResource(R.string.b3_app_info_logo_content_description),
+                contentDescription = stringResource(R.string.app_info_logo_content_description),
                 modifier = Modifier.size(168.dp),
             )
             MyBicoccaWordmark(

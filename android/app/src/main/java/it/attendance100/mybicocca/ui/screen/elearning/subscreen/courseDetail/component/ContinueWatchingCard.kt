@@ -368,7 +368,7 @@ private fun ActionRow(label: String, onResume: () -> Unit, onGoToLesson: () -> U
         ) {
             Icon(
                 imageVector = Icons.Filled.SubdirectoryArrowRight,
-                contentDescription = stringResource(R.string.b3_continue_watching_go_to_lesson),
+                contentDescription = stringResource(R.string.continue_watching_go_to_lesson),
                 tint = scheme.onSurface,
                 modifier = Modifier.size(24.dp),
             )

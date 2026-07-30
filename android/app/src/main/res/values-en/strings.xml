@@ -1090,8 +1090,17 @@
     <string name="taxes_invoice_label">Invoice %1$s</string>
     <string name="taxes_invoice_number">Invoice #%1$s</string>
     <string name="taxes_loading">Loading taxes…</string>
+    <string name="taxes_empty_title_to_pay">No taxes to pay</string>
+    <string name="taxes_empty_title_paid">No paid taxes</string>
+    <string name="taxes_empty_body_to_pay">You have no pending payments.</string>
+    <string name="taxes_empty_body_paid">There are no paid invoices.</string>
     <string name="taxes_empty_title">No taxes</string>
     <string name="taxes_empty_body">There are no invoices for your career.</string>
+    <string name="taxes_status_paid_on">Paid on %1$s</string>
+    <string name="taxes_status_paid">Paid</string>
+    <string name="taxes_status_pending">To pay</string>
+    <string name="taxes_status_expired">Overdue</string>
+    <string name="taxes_status_canceled">Cancelled</string>
     <string name="taxes_pay_pagopa">Pay with pagoPA</string>
     <string name="taxes_print_notice">Print pagoPA notice</string>
     <string name="taxes_print_receipt">Print receipt</string>
@@ -1647,7 +1656,6 @@
     <string name="certificates_download_error">Cannot download certificate</string>
     <string name="taxes_operation_unavailable">Operation unavailable.</string>
     <string name="profile_refresh_error">Cannot update data</string>
-    <string name="b4_registry_taxes_many_invoices">%1$d invoices</string>
     <string name="profile_exams_passed">Passed Exams</string>
     <string name="profile_cfu_acquired">Acquired CFU</string>
     <string name="profile_grades">Grades</string>
@@ -1658,4 +1666,374 @@
     <string name="profile_pending">Pending</string>
     <string name="registry_no_active_career">No active career</string>
     <string name="release_other_changes">Other changes</string>
+
+    <!-- Crash log -->
+    <string name="crash_log_no_stack_trace">No stack trace captured</string>
+
+    <!-- Appointments -->
+    <string name="appointment_no_reservation_code">The booking returned no reservation code</string>
+    <string name="appointment_booking_email_required">The booking email is required</string>
+
+    <!-- Exam types -->
+    <string name="exam_type_scritto_e_orale">Written and oral</string>
+    <string name="exam_type_prova_parziale">Partial test</string>
+
+    <!-- E-Learning -->
+    <string name="default_submission_statement">This work is my own, except for those parts where I have explicitly indicated that it is the work of others.</string>
+    <string name="elearning_course_enroll_failed">Course enrolment failed.</string>
+    <string name="elearning_file_save_failed">Couldn\'t save the downloaded file.</string>
+
+    <!-- Library -->
+    <string name="library_seat_fallback_name">Seat</string>
+    <string name="library_power_outlet_label">power outlet</string>
+
+    <!-- Map: room equipment -->
+    <string name="equipment_fixed_equipment">Fixed equipment</string>
+    <string name="equipment_mobile_equipment">Movable equipment</string>
+    <string name="equipment_teacher_desk">Teacher\'s desk</string>
+    <string name="equipment_blackout_windows">Blackout windows</string>
+    <string name="equipment_tiered_seating">Tiered seating</string>
+    <string name="equipment_audio_system">Audio system</string>
+    <string name="equipment_standard_video_lesson_kit">Standard video-lesson kit</string>
+    <string name="equipment_flip_chart">Flip chart</string>
+    <string name="equipment_whiteboard">Whiteboard</string>
+    <string name="equipment_slate_blackboard">Slate blackboard</string>
+    <string name="equipment_overhead_projector">Overhead projector</string>
+    <string name="equipment_sliding_blackboard">Sliding blackboard</string>
+    <string name="equipment_examination_beds">Examination beds</string>
+    <string name="equipment_lcd_plasma_monitor">LCD/Plasma TV monitor</string>
+    <string name="equipment_teacher_pc">Teacher\'s PC</string>
+    <string name="equipment_podium">Podium</string>
+    <string name="equipment_student_power_socket">Student desk power socket</string>
+    <string name="equipment_recording_system">Recording</string>
+    <string name="equipment_wired_network">Wired network</string>
+    <string name="equipment_wifi_network">Wi-Fi network</string>
+    <string name="equipment_fixed_chairs_with_desks">Fixed chairs with desks</string>
+    <string name="equipment_fixed_chairs_with_tablet_arms">Fixed chairs with tablet arms</string>
+    <string name="equipment_mobile_chairs_with_tablet_arms">Movable chairs with tablet arms</string>
+    <string name="equipment_mobile_chairs_without_tablet_arms">Movable chairs without tablet arms</string>
+    <string name="equipment_accessible_table">Accessible table</string>
+    <string name="equipment_camera">Camera</string>
+    <string name="equipment_video_conference">Video conference</string>
+    <string name="equipment_ceiling_projector_and_screen">Ceiling projector + screen</string>
+    <string name="equipment_web_conference">Web conference</string>
+
+    <!-- Taxes -->
+    <string name="tax_invoice_fallback_title">Fees a.y. %1$d/%2$02d</string>
+    <string name="tax_invoice_fallback_id">Invoice %1$d</string>
+    <string name="tax_pagopa_no_link">pagoPA did not return a payment link.</string>
+
+    <!-- Search: voice input -->
+    <string name="speech_recognition_unavailable">Speech recognition unavailable</string>
+
+    <!-- App update download -->
+    <string name="apk_downloader_no_suitable_apk">No suitable APK found for device architecture (%1$s). Available: %2$s</string>
+    <string name="apk_downloader_insecure_connection">Refusing to download the update over an insecure connection.</string>
+    <string name="apk_downloader_integrity_check_failed">The downloaded update failed its integrity check. Please try again.</string>
+    <string name="apk_downloader_failed">Download failed</string>
+
+    <!-- E-Learning -->
+    <string name="enrolled_course_group_empty">Group must have at least one edition.</string>
+
+    <!-- Search: actions -->
+    <string name="search_action_book_exam_title">Book an exam</string>
+    <string name="search_action_book_exam_subtitle">Services · Exams</string>
+    <string name="search_action_book_exam_alias_1">book exam call</string>
+    <string name="search_action_book_exam_alias_2">sign up for an exam</string>
+    <string name="search_action_book_exam_alias_3">exam call registration</string>
+    <string name="search_action_book_exam_alias_4">exam booking</string>
+    <string name="search_action_book_exam_alias_5">exam session</string>
+    <string name="search_action_mark_presence_title">Check in</string>
+    <string name="search_action_mark_presence_subtitle">Services · Attendance</string>
+    <string name="search_action_mark_presence_alias_1">mark attendance</string>
+    <string name="search_action_mark_presence_alias_2">scan qr</string>
+    <string name="search_action_mark_presence_alias_3">lecture code</string>
+    <string name="search_action_mark_presence_alias_4">clock in</string>
+    <string name="search_action_mark_presence_alias_5">record attendance</string>
+    <string name="search_action_mark_presence_alias_6">attendance qr</string>
+    <string name="search_action_reserve_library_seat_title">Book a library seat</string>
+    <string name="search_action_reserve_library_seat_subtitle">Services · Library</string>
+    <string name="search_action_reserve_library_seat_alias_1">book seat</string>
+    <string name="search_action_reserve_library_seat_alias_2">book library</string>
+    <string name="search_action_reserve_library_seat_alias_3">study room seat</string>
+    <string name="search_action_reserve_library_seat_alias_4">library booking</string>
+    <string name="search_action_book_appointment_title">Book an appointment</string>
+    <string name="search_action_book_appointment_subtitle">Services · Appointments</string>
+    <string name="search_action_book_appointment_alias_1">book office</string>
+    <string name="search_action_book_appointment_alias_2">registrar appointment</string>
+    <string name="search_action_book_appointment_alias_3">appointment booking</string>
+    <string name="search_action_add_course_title">Add a course</string>
+    <string name="search_action_add_course_subtitle">E-learning</string>
+    <string name="search_action_add_course_alias_1">add course</string>
+    <string name="search_action_add_course_alias_2">enrol in a course</string>
+    <string name="search_action_add_course_alias_3">new course</string>
+    <string name="search_action_add_course_alias_4">moodle course enrolment</string>
+    <string name="search_action_add_course_alias_5">search course</string>
+    <string name="search_action_pay_taxes_title">Pay fees</string>
+    <string name="search_action_pay_taxes_subtitle">Services · Fees</string>
+    <string name="search_action_pay_taxes_alias_1">pay</string>
+    <string name="search_action_pay_taxes_alias_2">fee payment</string>
+    <string name="search_action_pay_taxes_alias_3">pay instalment</string>
+    <string name="search_action_pay_taxes_alias_4">pay notice</string>
+    <string name="search_action_pay_taxes_alias_5">pagopa</string>
+    <string name="search_action_compile_questionnaire_title">Fill in a questionnaire</string>
+    <string name="search_action_compile_questionnaire_subtitle">Services · Questionnaires</string>
+    <string name="search_action_compile_questionnaire_alias_1">evaluate teaching</string>
+    <string name="search_action_compile_questionnaire_alias_2">fill in evaluation</string>
+    <string name="search_action_compile_questionnaire_alias_3">course questionnaire</string>
+    <string name="search_action_edit_study_plan_title">Fill in the study plan</string>
+    <string name="search_action_edit_study_plan_subtitle">Services · Study Plan</string>
+    <string name="search_action_edit_study_plan_alias_1">edit plan</string>
+    <string name="search_action_edit_study_plan_alias_2">fill in plan</string>
+    <string name="search_action_edit_study_plan_alias_3">career plan</string>
+    <string name="search_action_edit_study_plan_alias_4">choose exams</string>
+    <string name="search_action_hypothetical_average_title">Calculate hypothetical average</string>
+    <string name="search_action_hypothetical_average_subtitle">Profile</string>
+    <string name="search_action_hypothetical_average_alias_1">simulate grade</string>
+    <string name="search_action_hypothetical_average_alias_2">calculate average</string>
+    <string name="search_action_hypothetical_average_alias_3">weighted average</string>
+    <string name="search_action_hypothetical_average_alias_4">average projection</string>
+    <string name="search_action_hypothetical_average_alias_5">grade calculator</string>
+    <string name="search_action_hypothetical_average_alias_6">graduation grade</string>
+    <string name="search_action_change_theme_title">Change theme</string>
+    <string name="search_action_change_theme_subtitle">Settings · Appearance</string>
+    <string name="search_action_change_theme_alias_1">dark theme</string>
+    <string name="search_action_change_theme_alias_2">light theme</string>
+    <string name="search_action_change_theme_alias_3">dark mode</string>
+    <string name="search_action_change_theme_alias_4">night mode</string>
+    <string name="search_action_change_theme_alias_5">app colours</string>
+    <string name="search_action_change_language_title">Change language</string>
+    <string name="search_action_change_language_subtitle">Settings · Language</string>
+    <string name="search_action_change_language_alias_1">app language</string>
+    <string name="search_action_change_language_alias_2">change language</string>
+    <string name="search_action_change_language_alias_3">italiano</string>
+    <string name="search_action_add_account_title">Add an account</string>
+    <string name="search_action_add_account_subtitle">Account</string>
+    <string name="search_action_add_account_alias_1">second account</string>
+    <string name="search_action_add_account_alias_2">another account</string>
+    <string name="search_action_add_account_alias_3">switch account</string>
+    <string name="search_action_add_account_alias_4">new login</string>
+
+    <!-- Search: destinations -->
+    <string name="search_dest_calendar_title">Calendar</string>
+    <string name="search_dest_calendar_alias_1">timetable</string>
+    <string name="search_dest_calendar_alias_2">lectures</string>
+    <string name="search_dest_calendar_alias_3">agenda</string>
+    <string name="search_dest_calendar_alias_4">week</string>
+    <string name="search_dest_elearning_title">E-learning</string>
+    <string name="search_dest_elearning_alias_1">elearning</string>
+    <string name="search_dest_elearning_alias_2">moodle</string>
+    <string name="search_dest_elearning_alias_3">courses</string>
+    <string name="search_dest_elearning_alias_4">materials</string>
+    <string name="search_dest_map_title">Maps</string>
+    <string name="search_dest_map_alias_1">map</string>
+    <string name="search_dest_map_alias_2">rooms</string>
+    <string name="search_dest_map_alias_3">buildings</string>
+    <string name="search_dest_map_alias_4">campus</string>
+    <string name="search_dest_map_alias_5">room</string>
+    <string name="search_dest_registry_title">Services</string>
+    <string name="search_dest_registry_alias_1">registrar offices</string>
+    <string name="search_dest_registry_alias_2">registrar</string>
+    <string name="search_dest_registry_alias_3">office</string>
+    <string name="search_dest_profile_title">Profile</string>
+    <string name="search_dest_profile_alias_1">account</string>
+    <string name="search_dest_profile_alias_2">average</string>
+    <string name="search_dest_profile_alias_3">statistics</string>
+    <string name="search_dest_profile_alias_4">student number</string>
+    <string name="search_dest_profile_alias_5">career</string>
+    <string name="search_dest_profile_alias_6">transcript</string>
+    <string name="search_dest_profile_alias_7">exams taken</string>
+    <string name="search_dest_profile_alias_8">credits</string>
+    <string name="search_dest_profile_alias_9">cfu</string>
+    <string name="search_dest_taxes_title">Fees</string>
+    <string name="search_dest_taxes_subtitle">Services</string>
+    <string name="search_dest_taxes_alias_1">payments</string>
+    <string name="search_dest_taxes_alias_2">pagopa</string>
+    <string name="search_dest_taxes_alias_3">payment notices</string>
+    <string name="search_dest_taxes_alias_4">tuition</string>
+    <string name="search_dest_taxes_alias_5">invoices</string>
+    <string name="search_dest_exam_results_title">Results</string>
+    <string name="search_dest_exam_results_subtitle">Services</string>
+    <string name="search_dest_exam_results_alias_1">grades</string>
+    <string name="search_dest_exam_results_alias_2">results</string>
+    <string name="search_dest_exam_results_alias_3">evaluations</string>
+    <string name="search_dest_exam_results_alias_4">exam results</string>
+    <string name="search_dest_booked_exams_title">Exams</string>
+    <string name="search_dest_booked_exams_subtitle">Services</string>
+    <string name="search_dest_booked_exams_alias_1">exam calls</string>
+    <string name="search_dest_booked_exams_alias_2">exam bookings</string>
+    <string name="search_dest_booked_exams_alias_3">book exam</string>
+    <string name="search_dest_booked_exams_alias_4">exam registration</string>
+    <string name="search_dest_study_plan_title">Study Plan</string>
+    <string name="search_dest_study_plan_subtitle">Services</string>
+    <string name="search_dest_study_plan_alias_1">plan</string>
+    <string name="search_dest_study_plan_alias_2">career plan</string>
+    <string name="search_dest_study_plan_alias_3">study plan</string>
+    <string name="search_dest_attendance_title">Attendance</string>
+    <string name="search_dest_attendance_subtitle">Services</string>
+    <string name="search_dest_attendance_alias_1">attendance</string>
+    <string name="search_dest_attendance_alias_2">attendances</string>
+    <string name="search_dest_attendance_alias_3">presence</string>
+    <string name="search_dest_questionnaires_title">Questionnaires</string>
+    <string name="search_dest_questionnaires_subtitle">Services</string>
+    <string name="search_dest_questionnaires_alias_1">questionnaire</string>
+    <string name="search_dest_questionnaires_alias_2">teaching evaluation</string>
+    <string name="search_dest_appointments_title">Appointments</string>
+    <string name="search_dest_appointments_subtitle">Services</string>
+    <string name="search_dest_appointments_alias_1">appointment</string>
+    <string name="search_dest_appointments_alias_2">office</string>
+    <string name="search_dest_appointments_alias_3">booking</string>
+    <string name="search_dest_appointments_alias_4">badge pickup</string>
+    <string name="search_dest_appointments_alias_5">diploma</string>
+    <string name="search_dest_enrollments_title">Enrolments</string>
+    <string name="search_dest_enrollments_subtitle">Services</string>
+    <string name="search_dest_enrollments_alias_1">enrolment</string>
+    <string name="search_dest_enrollments_alias_2">renewal</string>
+    <string name="search_dest_enrollments_alias_3">enrolment renewal</string>
+    <string name="search_dest_enrollments_alias_4">matriculation</string>
+    <string name="search_dest_titles_title">Qualifications</string>
+    <string name="search_dest_titles_subtitle">Services</string>
+    <string name="search_dest_titles_alias_1">qualifications</string>
+    <string name="search_dest_titles_alias_2">high school diploma</string>
+    <string name="search_dest_titles_alias_3">diploma</string>
+    <string name="search_dest_certificates_title">Certificates</string>
+    <string name="search_dest_certificates_subtitle">Services</string>
+    <string name="search_dest_certificates_alias_1">certificate</string>
+    <string name="search_dest_certificates_alias_2">self-declarations</string>
+    <string name="search_dest_certificates_alias_3">self-certification</string>
+    <string name="search_dest_library_title">Library</string>
+    <string name="search_dest_library_subtitle">Services</string>
+    <string name="search_dest_library_alias_1">libraries</string>
+    <string name="search_dest_library_alias_2">study room</string>
+    <string name="search_dest_library_alias_3">library seat</string>
+    <string name="search_dest_library_alias_4">study seat</string>
+    <string name="search_dest_library_alias_5">affluences</string>
+    <string name="search_dest_refunds_title">Refunds</string>
+    <string name="search_dest_refunds_subtitle">Services</string>
+    <string name="search_dest_refunds_alias_1">refund</string>
+    <string name="search_dest_refunds_alias_2">reimbursement</string>
+    <string name="search_dest_isee_title">ISEE</string>
+    <string name="search_dest_isee_subtitle">Services</string>
+    <string name="search_dest_isee_alias_1">isee</string>
+    <string name="search_dest_isee_alias_2">economic situation indicator</string>
+    <string name="search_dest_isee_alias_3">income band</string>
+    <string name="search_dest_isee_alias_4">income</string>
+    <string name="search_dest_settings_title">Settings</string>
+    <string name="search_dest_settings_alias_1">preferences</string>
+    <string name="search_dest_settings_alias_2">options</string>
+    <string name="search_dest_settings_alias_3">configuration</string>
+    <string name="search_dest_settings_alias_4">settings</string>
+    <string name="search_dest_settings_appearance_title">Appearance</string>
+    <string name="search_dest_settings_appearance_subtitle">Settings</string>
+    <string name="search_dest_settings_appearance_alias_1">theme</string>
+    <string name="search_dest_settings_appearance_alias_2">colours</string>
+    <string name="search_dest_settings_appearance_alias_3">dark theme</string>
+    <string name="search_dest_settings_appearance_alias_4">light theme</string>
+    <string name="search_dest_settings_appearance_alias_5">dark mode</string>
+    <string name="search_dest_settings_appearance_alias_6">dynamic colour</string>
+    <string name="search_dest_settings_security_title">Security</string>
+    <string name="search_dest_settings_security_subtitle">Settings</string>
+    <string name="search_dest_settings_security_alias_1">biometrics</string>
+    <string name="search_dest_settings_security_alias_2">fingerprint</string>
+    <string name="search_dest_settings_security_alias_3">lock</string>
+    <string name="search_dest_settings_security_alias_4">unlock</string>
+    <string name="search_dest_settings_security_alias_5">face unlock</string>
+    <string name="search_dest_settings_language_title">Language</string>
+    <string name="search_dest_settings_language_subtitle">Settings</string>
+    <string name="search_dest_settings_language_alias_1">language</string>
+    <string name="search_dest_settings_language_alias_2">italiano</string>
+    <string name="search_dest_settings_language_alias_3">english</string>
+    <string name="search_dest_settings_language_alias_4">translation</string>
+    <string name="search_dest_settings_file_associations_title">File associations</string>
+    <string name="search_dest_settings_file_associations_subtitle">Settings</string>
+    <string name="search_dest_settings_file_associations_alias_1">open with</string>
+    <string name="search_dest_settings_file_associations_alias_2">default app</string>
+    <string name="search_dest_settings_file_associations_alias_3">pdf file</string>
+    <string name="search_dest_settings_file_associations_alias_4">pdf reader</string>
+    <string name="search_dest_settings_licenses_title">Licences</string>
+    <string name="search_dest_settings_licenses_subtitle">Settings</string>
+    <string name="search_dest_settings_licenses_alias_1">open source</string>
+    <string name="search_dest_settings_licenses_alias_2">libraries</string>
+    <string name="search_dest_settings_licenses_alias_3">licence</string>
+    <string name="search_dest_settings_app_info_title">App info</string>
+    <string name="search_dest_settings_app_info_subtitle">Settings</string>
+    <string name="search_dest_settings_app_info_alias_1">version</string>
+    <string name="search_dest_settings_app_info_alias_2">information</string>
+    <string name="search_dest_settings_app_info_alias_3">about</string>
+    <string name="search_dest_settings_app_info_alias_4">github</string>
+
+    <!-- Top bar -->
+    <string name="topbar_exam_detail">Exam Detail</string>
+
+    <!-- Account / career -->
+    <string name="career_placeholder">Career no. %1$d</string>
+
+    <!-- Auth -->
+    <string name="auth_login_spid">Sign in with SPID</string>
+    <string name="auth_login_cie">Sign in with CIE</string>
+
+    <!-- E-Learning: course detail -->
+    <string name="catalog_add_course">Add course</string>
+    <string name="course_detail_quiz_group_title">Course quiz</string>
+    <string name="course_detail_other_quizzes">Other quizzes</string>
+    <string name="announcements_title">✦ ANNOUNCEMENTS</string>
+    <string name="announcements_empty">No announcements published yet</string>
+    <string name="announcements_latest">LATEST ANNOUNCEMENT</string>
+    <string name="continue_watching_go_to_lesson">Go to lesson</string>
+    <string name="course_hero_prof_prefix">Prof. %1$s</string>
+    <string name="sections_list_empty_section">No resources in this section</string>
+    <string name="sections_list_no_resource">No resources</string>
+
+    <!-- Search: voice input -->
+    <string name="dictation_speak_now">Speak now…</string>
+
+    <!-- Settings -->
+    <string name="app_info_logo_content_description">MyBicocca logo</string>
+    <string name="settings_security_minutes_format">%1$d min</string>
+
+    <!-- Registry: labels and counters -->
+    <string name="registry_taxes_many_invoices">%1$d invoices</string>
+    <string name="registry_gdpr_prefix">"I have read "</string>
+    <string name="registry_gdpr_policy_link">the privacy notice</string>
+    <string name="registry_gdpr_suffix">" on the processing of personal data"</string>
+    <string name="registry_attendance_one_to_attend">1 course to attend</string>
+    <string name="registry_attendance_many_to_attend">%1$d courses to attend</string>
+    <string name="registry_attendance_no_records">No attendance records</string>
+    <string name="registry_tab_lezioni">Lectures</string>
+    <string name="registry_tab_sessioni">Sessions</string>
+    <string name="registry_caption_frequenza">attendance</string>
+    <string name="registry_footnote_minimum">minimum %1$d%%</string>
+    <string name="registry_caption_recorded">of those recorded</string>
+    <string name="registry_presence_one">1 attendance</string>
+    <string name="registry_presence_many">%1$d attendances</string>
+    <string name="registry_students_count">%1$d students</string>
+    <string name="registry_exam_written">Written exam</string>
+    <string name="registry_exam_oral">Oral exam</string>
+    <string name="registry_exam_joint">Single exam</string>
+    <string name="registry_exam_call">Exam call</string>
+    <string name="registry_calls_one">1 exam call</string>
+    <string name="registry_calls_many">%1$d exam calls</string>
+    <string name="registry_exams_one">1 exam</string>
+    <string name="registry_exams_many">%1$d exams</string>
+    <string name="registry_window_range">From %1$s to %2$s</string>
+    <string name="registry_window_opens">Opens %1$s</string>
+    <string name="registry_window_closes">Closes %1$s</string>
+    <string name="registry_time_at">at %1$s</string>
+    <string name="registry_digital_signature">Digital signature</string>
+    <string name="registry_enrollments_one_year">1 academic year</string>
+    <string name="registry_enrollments_many_years">%1$d academic years</string>
+    <string name="registry_enrollments_duration_years">%1$d years</string>
+    <string name="registry_isee_detail_title">Academic year %1$s</string>
+    <string name="registry_isee_default_subtitle">Economic situation indicator</string>
+    <string name="registry_refund_one">1 refund</string>
+    <string name="registry_refund_many">%1$d refunds</string>
+    <string name="registry_refund_pending_suffix">%1$s · %2$d processing</string>
+    <string name="registry_refund_fallback_title">Refund</string>
+    <string name="registry_refund_academic_year_subtitle">Academic year %1$s</string>
+    <string name="registry_refund_details_subtitle">Refund details</string>
+    <string name="registry_taxes_due_subtitle">%1$s due</string>
+    <string name="registry_taxes_one_invoice">1 invoice</string>
+
+    <!-- Profile -->
+    <string name="profile_no_active_badge">No active badge</string>
 </resources>

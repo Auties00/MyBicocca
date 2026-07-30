@@ -1,12 +1,12 @@
 package it.attendance100.mybicocca.data.repository
 
-import android.content.Context
 import app.cash.turbine.test
 import com.google.common.truth.Truth.assertThat
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import it.attendance100.mybicocca.core.text.StringResolver
 import it.attendance100.mybicocca.core.time.StalePolicy
 import it.attendance100.mybicocca.data.auth.ElearningSession
 import it.attendance100.mybicocca.data.auth.SessionManager
@@ -49,7 +49,7 @@ class ElearningCourseRepositoryImplTest {
     private val account = elearningRepoTestAccount(accountId, lmsUserId)
     private val token = "x".repeat(32)
 
-    private val context = mockk<Context>(relaxed = true)
+    private val stringResolver = mockk<StringResolver>(relaxed = true)
     private val sessionManager = mockk<SessionManager>(relaxed = true)
     private val courseDao = mockk<CourseDao>(relaxed = true)
     private val deadlineDao = mockk<DeadlineDao>(relaxed = true)
@@ -63,7 +63,7 @@ class ElearningCourseRepositoryImplTest {
         coEvery { sessionManager.elearning() } returns ElearningSession(elearningApi, token)
         coEvery { syncStateDao.getState(any(), any(), any()) } returns null
         return ElearningCourseRepositoryImpl(
-            context = context,
+            stringResolver = stringResolver,
             sessionManager = sessionManager,
             courseDao = courseDao,
             deadlineDao = deadlineDao,

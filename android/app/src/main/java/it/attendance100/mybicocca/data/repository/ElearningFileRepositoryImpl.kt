@@ -48,7 +48,7 @@ class ElearningFileRepositoryImpl @Inject constructor(
                 }
                 if (!temp.renameTo(file)) {
                     temp.delete()
-                    error(context.getString(it.attendance100.mybicocca.R.string.b1_elearning_file_save_failed))
+                    error(context.getString(it.attendance100.mybicocca.R.string.elearning_file_save_failed))
                 }
             }
         }

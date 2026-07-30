@@ -90,13 +90,13 @@ fun RefundsListPage(
 fun refundsHeaderSubtitle(refunds: List<Refund>): String? {
     if (refunds.isEmpty()) return null
     val total =
-        if (refunds.size == 1) stringResource(R.string.b4_registry_refund_one) else stringResource(
-            R.string.b4_registry_refund_many,
+        if (refunds.size == 1) stringResource(R.string.registry_refund_one) else stringResource(
+            R.string.registry_refund_many,
             refunds.size
         )
     val pending = refunds.count { !it.refunded }
     return if (pending == 0) total else stringResource(
-        R.string.b4_registry_refund_pending_suffix,
+        R.string.registry_refund_pending_suffix,
         total,
         pending
     )
@@ -452,10 +452,10 @@ private fun Refund.academicYearLabel(): String? =
  */
 @Composable
 fun refundHeaderTitle(refund: Refund): String = refund.amount?.let { formatEuro(it) }
-    ?: stringResource(R.string.b4_registry_refund_fallback_title)
+    ?: stringResource(R.string.registry_refund_fallback_title)
 
 @Composable
 fun refundHeaderSubtitle(refund: Refund): String =
     refund.academicYearLabel()
-        ?.let { stringResource(R.string.b4_registry_refund_academic_year_subtitle, it) }
-        ?: stringResource(R.string.b4_registry_refund_details_subtitle)
+        ?.let { stringResource(R.string.registry_refund_academic_year_subtitle, it) }
+        ?: stringResource(R.string.registry_refund_details_subtitle)
