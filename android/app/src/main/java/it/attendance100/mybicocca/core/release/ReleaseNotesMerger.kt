@@ -78,9 +78,24 @@ fun mergeReleaseNotes(sources: List<MergedReleaseSource>): ReleaseNotes {
         out += ReleaseBlock.BulletList(other.distinctBy { it.text })
     }
 
+    var seenDownloadTip = false
     val seen = HashSet<Pair<CalloutKind, String>>()
     callouts.forEach { callout ->
-        if (seen.add(callout.kind to callout.text)) out += callout
+        // If multiple 'If you are unsure which version to download then go with...' Tip callouts are present, show only the latest
+        val isDownloadTip = callout.kind == CalloutKind.TIP && callout.text.contains(
+            "unsure which version to download",
+            ignoreCase = true
+        )
+
+        if (isDownloadTip) {
+            if (!seenDownloadTip) {
+                out += callout
+                seenDownloadTip = true
+            }
+        } else
+            if (seen.add(callout.kind to callout.text)) {
+                out += callout
+            }
     }
 
     return ReleaseNotes(out)
