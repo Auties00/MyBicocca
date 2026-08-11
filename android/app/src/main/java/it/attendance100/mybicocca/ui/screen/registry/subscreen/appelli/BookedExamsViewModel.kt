@@ -3,8 +3,10 @@ package it.attendance100.mybicocca.ui.screen.registry.subscreen.appelli
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.SyncStatus
+import it.attendance100.mybicocca.core.text.UiText
 import it.attendance100.mybicocca.domain.model.career.CareerId
 import it.attendance100.mybicocca.domain.model.exam.BookedExam
 import it.attendance100.mybicocca.domain.model.exam.ExamCallKey
@@ -173,8 +175,8 @@ class BookedExamsViewModel @Inject constructor(
                 }
             }.onSuccess { bytes ->
                 _events.trySend(BookedEvent.OpenPdf(bytes, document.fileName(booking)))
-            }.onFailure { cause ->
-                _events.trySend(BookedEvent.ShowMessage(document.errorMessage(cause)))
+            }.onFailure { _ ->
+                _events.trySend(BookedEvent.ShowMessage(document.errorMessage()))
             }
             _docDownload.value = DocDownloadState.Idle
         }
@@ -223,7 +225,7 @@ private fun ExamDocument.fileName(booking: BookedExam): String {
  * until the outcome is published, so it gets a clear "not yet available" message rather
  * than the raw server error.
  */
-private fun ExamDocument.errorMessage(cause: Throwable): String = when (this) {
-    ExamDocument.BookingSlip -> "Impossibile scaricare lo statino di prenotazione. Riprova tra un momento."
-    ExamDocument.PresenceCertificate -> "L'attestato di presenza non è ancora disponibile per questo appello."
+private fun ExamDocument.errorMessage(): UiText = when (this) {
+    ExamDocument.BookingSlip -> UiText.StringResource(R.string.appelli_booking_slip_error)
+    ExamDocument.PresenceCertificate -> UiText.StringResource(R.string.appelli_presence_certificate_error)
 }

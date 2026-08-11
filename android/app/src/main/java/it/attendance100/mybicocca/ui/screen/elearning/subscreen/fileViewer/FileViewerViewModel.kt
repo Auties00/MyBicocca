@@ -1,19 +1,11 @@
 package it.attendance100.mybicocca.ui.screen.elearning.subscreen.fileViewer
 
-import android.content.ContentValues
-import android.content.Context
-import android.media.MediaScannerConnection
-import android.os.Build
-import android.os.Environment
-import android.provider.MediaStore
-import androidx.annotation.RequiresApi
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.SyncStatus
 import it.attendance100.mybicocca.domain.model.settings.PdfPagerOrientation
@@ -66,7 +58,7 @@ import java.util.zip.ZipFile
 @HiltViewModel(assistedFactory = FileViewerViewModel.Factory::class)
 class FileViewerViewModel @AssistedInject constructor(
     @Assisted private val key: AppRoute.FileViewer,
-    @ApplicationContext private val context: Context,
+    private val fileMediaSaver: FileMediaSaver,
     private val downloadCourseFile: DownloadCourseFileUseCase,
     private val getAuthenticatedFileUrl: GetAuthenticatedFileUrlUseCase,
     observePdfThemeMode: ObservePdfThemeModeUseCase,
@@ -219,11 +211,7 @@ class FileViewerViewModel @AssistedInject constructor(
             val path = (_localPath.value as? Loadable.Loaded)?.value ?: return@launch
             withContext(Dispatchers.IO) {
                 runCatching {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                        saveViaMediaStoreDownloads(path)
-                    } else {
-                        saveLegacyDownloads(path)
-                    }
+                    fileMediaSaver.saveToDownloads(File(path), fileName, mimeType)
                 }
             }.fold(
                 onSuccess = { oneShotChannel.trySend(FileViewerOneShotEvent.FileSaved) },
@@ -237,11 +225,7 @@ class FileViewerViewModel @AssistedInject constructor(
             val path = (_localPath.value as? Loadable.Loaded)?.value ?: return@launch
             withContext(Dispatchers.IO) {
                 runCatching {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                        saveViaMediaStoreImages(path)
-                    } else {
-                        saveLegacyGallery(path)
-                    }
+                    fileMediaSaver.saveToGallery(File(path), fileName, mimeType)
                 }
             }.fold(
                 onSuccess = { oneShotChannel.trySend(FileViewerOneShotEvent.FileSaved) },
@@ -267,66 +251,6 @@ class FileViewerViewModel @AssistedInject constructor(
                 }
                 .onFailure { oneShotChannel.trySend(FileViewerOneShotEvent.DownloadFailed(it)) }
         }
-    }
-
-    @RequiresApi(Build.VERSION_CODES.Q)
-    private fun saveViaMediaStoreDownloads(localPath: String) {
-        val resolver = context.contentResolver
-        val values = ContentValues().apply {
-            put(MediaStore.Downloads.DISPLAY_NAME, fileName)
-            put(MediaStore.Downloads.MIME_TYPE, mimeType ?: "application/octet-stream")
-            put(MediaStore.Downloads.IS_PENDING, 1)
-        }
-        val uri = resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values)
-            ?: error("Impossibile creare voce nel MediaStore")
-        try {
-            resolver.openOutputStream(uri)!!.use { out ->
-                File(localPath).inputStream().use { it.copyTo(out) }
-            }
-            values.clear()
-            values.put(MediaStore.Downloads.IS_PENDING, 0)
-            resolver.update(uri, values, null, null)
-        } catch (e: Exception) {
-            resolver.delete(uri, null, null)
-            throw e
-        }
-    }
-
-    private fun saveLegacyDownloads(localPath: String) {
-        val dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
-        dir.mkdirs()
-        File(localPath).copyTo(File(dir, fileName), overwrite = true)
-    }
-
-    @RequiresApi(Build.VERSION_CODES.Q)
-    private fun saveViaMediaStoreImages(localPath: String) {
-        val resolver = context.contentResolver
-        val values = ContentValues().apply {
-            put(MediaStore.Images.Media.DISPLAY_NAME, fileName)
-            put(MediaStore.Images.Media.MIME_TYPE, mimeType ?: "image/jpeg")
-            put(MediaStore.Images.Media.IS_PENDING, 1)
-        }
-        val uri = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values)
-            ?: error("Impossibile creare voce nella galleria")
-        try {
-            resolver.openOutputStream(uri)!!.use { out ->
-                File(localPath).inputStream().use { it.copyTo(out) }
-            }
-            values.clear()
-            values.put(MediaStore.Images.Media.IS_PENDING, 0)
-            resolver.update(uri, values, null, null)
-        } catch (e: Exception) {
-            resolver.delete(uri, null, null)
-            throw e
-        }
-    }
-
-    private fun saveLegacyGallery(localPath: String) {
-        val dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
-        dir.mkdirs()
-        val target = File(dir, fileName)
-        File(localPath).copyTo(target, overwrite = true)
-        MediaScannerConnection.scanFile(context, arrayOf(target.absolutePath), null, null)
     }
 
     private fun ensureLocalFile() {

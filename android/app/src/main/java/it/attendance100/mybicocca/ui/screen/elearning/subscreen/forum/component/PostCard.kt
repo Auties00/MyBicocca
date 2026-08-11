@@ -46,6 +46,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import it.attendance100.mybicocca.R
+import it.attendance100.mybicocca.core.os.currentLocale
 import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.domain.model.elearning.forum.Post
 import it.attendance100.mybicocca.domain.model.elearning.forum.PostAttachment
@@ -95,7 +96,7 @@ fun PostCard(
                     val time = post.modifiedAt ?: post.createdAt
                     if (time != null) {
                         Text(
-                            text = relativeTimeLabel(time),
+                            text = relativeTimeLabel(time, locale = currentLocale()).asString(),
                             style = MaterialTheme.typography.labelSmall,
                             color = scheme.onSurfaceVariant,
                             fontStyle = FontStyle.Italic,

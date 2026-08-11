@@ -1,6 +1,8 @@
 package it.attendance100.mybicocca.data.repository
 
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.state.Loadable
+import it.attendance100.mybicocca.core.text.UiText
 import it.attendance100.mybicocca.data.auth.SessionManager
 import it.attendance100.mybicocca.data.local.settings.DeviceIdentityStore
 import it.attendance100.mybicocca.data.location.DeviceLocationProvider
@@ -89,7 +91,6 @@ class AttendanceRepositoryImpl @Inject constructor(
         val currentSemester = semesterOf(today)
         val currentYear = currentYearOfStudy(transcriptRows, academicYear, plan)
 
-        val plannedByName = planned.associateBy { it.normalizedName }
         val transcriptByCode = transcriptRows
             .mapNotNull { row -> row.activityCode?.let { it to row } }
             .toMap()
@@ -292,7 +293,7 @@ class AttendanceRepositoryImpl @Inject constructor(
             statusId = statusId ?: DEFAULT_STATUS_ID,
             studentPass = password,
         ).toOutcome()
-    }.getOrElse { PresenceMarkOutcome.Failed("Registrazione non riuscita") }
+    }.getOrElse { PresenceMarkOutcome.Failed() }
 
     override suspend fun registerPresence(
         scan: PresenceScan,
@@ -300,7 +301,8 @@ class AttendanceRepositoryImpl @Inject constructor(
     ): PresenceMarkOutcome = when (scan) {
         is PresenceScan.SessionLink -> registerSessionLink(scan.sessionId, scan.password)
         is PresenceScan.LessonCode -> registerLessonCode(careerId, scan.code)
-        is PresenceScan.Unrecognized -> PresenceMarkOutcome.Failed("Codice non riconosciuto")
+        is PresenceScan.Unrecognized ->
+            PresenceMarkOutcome.Failed(message = UiText.StringResource(R.string.attendance_msg_code_unrecognized))
     }
 
     /**
@@ -313,11 +315,11 @@ class AttendanceRepositoryImpl @Inject constructor(
     ): PresenceMarkOutcome {
         val modules = resolveModules()
         if (modules.isEmpty()) {
-            return PresenceMarkOutcome.NotOpen("Nessun corso con registro presenze trovato")
+            return PresenceMarkOutcome.NotOpen(message = UiText.StringResource(R.string.attendance_msg_no_register_found))
         }
         val target = runCatching { getOpenSessions(modules) }.getOrDefault(emptyList())
             .firstOrNull { it.sessionId == sessionId }
-            ?: return PresenceMarkOutcome.NotOpen("La sessione non è aperta o non è tra i tuoi corsi")
+            ?: return PresenceMarkOutcome.NotOpen(message = UiText.StringResource(R.string.attendance_msg_session_not_in_courses))
         return markSession(target.module, sessionId, target.statuses.firstOrNull()?.id, password)
     }
 
@@ -330,7 +332,7 @@ class AttendanceRepositoryImpl @Inject constructor(
         lessonCode: String,
     ): PresenceMarkOutcome {
         val studentNumber = activeCareer(careerId)?.studentNumber
-            ?: return PresenceMarkOutcome.Failed("Matricola non disponibile")
+            ?: return PresenceMarkOutcome.Failed(message = UiText.StringResource(R.string.attendance_msg_student_number_unavailable))
         val deviceId = deviceIdentityStore.deviceId()
         val location = locationProvider.lastKnownLatLong()
         return runCatching {
@@ -341,7 +343,7 @@ class AttendanceRepositoryImpl @Inject constructor(
                 longitude = location?.second ?: 0.0,
                 latitude = location?.first ?: 0.0,
             ).toOutcome()
-        }.getOrElse { PresenceMarkOutcome.Failed("Registrazione non riuscita") }
+        }.getOrElse { PresenceMarkOutcome.Failed() }
     }
 
     private suspend fun resolveModules(): List<AttendanceModuleRef> {

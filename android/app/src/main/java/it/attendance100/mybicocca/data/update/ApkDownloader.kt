@@ -14,6 +14,7 @@ import io.ktor.utils.io.ByteReadChannel
 import io.ktor.utils.io.exhausted
 import io.ktor.utils.io.readRemaining
 import it.attendance100.mybicocca.core.io.sha256Hex
+import it.attendance100.mybicocca.core.text.UiText
 import it.attendance100.mybicocca.di.ApplicationScope
 import it.attendance100.mybicocca.domain.model.update.AppRelease
 import it.attendance100.mybicocca.domain.model.update.AppReleaseAsset
@@ -31,12 +32,13 @@ import java.io.File
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.math.roundToInt
+import kotlin.time.Duration.Companion.milliseconds
 
 sealed interface DownloadState {
     data object Idle : DownloadState
     data class Downloading(val progress: Int) : DownloadState
     data class Success(val file: File) : DownloadState
-    data class Error(val message: String) : DownloadState
+    data class Error(val message: UiText) : DownloadState
 }
 
 @Singleton
@@ -68,14 +70,20 @@ class ApkDownloader @Inject constructor(
                 if (asset == null) {
                     val availableAssets = release.assets.joinToString { it.name }
                     _downloadState.value =
-                        DownloadState.Error("No suitable APK found for device architecture ($supportedAbi). Available: $availableAssets")
+                        DownloadState.Error(
+                            UiText.StringResource(
+                                it.attendance100.mybicocca.R.string.apk_downloader_no_suitable_apk,
+                                supportedAbi,
+                                availableAssets
+                            )
+                        )
                     return@launch
                 }
 
                 // Never hand a plaintext-fetched binary to the installer
                 if (!asset.downloadUrl.startsWith("https://", ignoreCase = true)) {
                     _downloadState.value =
-                        DownloadState.Error("Refusing to download the update over an insecure connection.")
+                        DownloadState.Error(UiText.StringResource(it.attendance100.mybicocca.R.string.apk_downloader_insecure_connection))
                     return@launch
                 }
 
@@ -87,9 +95,9 @@ class ApkDownloader @Inject constructor(
                     // Already downloaded and verified; play the progress animation for UX
                     for (i in 0..100 step 10) {
                         _downloadState.value = DownloadState.Downloading(i)
-                        delay(100)
+                        delay(100.milliseconds)
                     }
-                    delay(500)
+                    delay(500.milliseconds)
                     _downloadState.value = DownloadState.Success(apkFile)
                     return@launch
                 }
@@ -99,7 +107,7 @@ class ApkDownloader @Inject constructor(
                 if (!apkFile.passesIntegrityCheck(asset)) {
                     apkFile.delete()
                     _downloadState.value =
-                        DownloadState.Error("The downloaded update failed its integrity check. Please try again.")
+                        DownloadState.Error(UiText.StringResource(it.attendance100.mybicocca.R.string.apk_downloader_integrity_check_failed))
                     return@launch
                 }
 
@@ -109,7 +117,9 @@ class ApkDownloader @Inject constructor(
                 throw e
             } catch (e: Exception) {
                 e.printStackTrace()
-                _downloadState.value = DownloadState.Error(e.message ?: "Download failed")
+                _downloadState.value =
+                    DownloadState.Error(e.message?.let { UiText.DynamicString(it) }
+                        ?: UiText.StringResource(it.attendance100.mybicocca.R.string.apk_downloader_failed))
             }
         }
     }

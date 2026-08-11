@@ -16,6 +16,7 @@ import it.attendance100.mybicocca.domain.usecase.account.SwitchAccountUseCase
 import it.attendance100.mybicocca.domain.usecase.career.PickCareerUseCase
 import it.attendance100.mybicocca.domain.usecase.career.SwitchCareerUseCase
 import it.attendance100.mybicocca.ui.screen.account.state.AccountEvent
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
@@ -38,6 +39,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
 import javax.inject.Inject
+import kotlin.time.Duration.Companion.milliseconds
 import it.attendance100.mybicocca.domain.model.account.AccountEvent as DomainAccountEvent
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -135,8 +137,14 @@ class AccountViewModel @Inject constructor(
 
     fun signOut(accountId: AccountId) {
         viewModelScope.launch {
-            signOutUseCase(accountId)
-            _ownEvents.send(AccountEvent.SignedOut(accountId))
+            try {
+                signOutUseCase(accountId)
+                _ownEvents.send(AccountEvent.SignedOut(accountId))
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                _ownEvents.send(AccountEvent.SignOutFailed(accountId, e))
+            }
         }
     }
 
@@ -165,7 +173,7 @@ class AccountViewModel @Inject constructor(
         commitPendingNow()
         _pendingRemoval.value = account
         removalJob = viewModelScope.launch {
-            delay(UNDO_WINDOW_MS)
+            delay(UNDO_WINDOW_MS.milliseconds)
             finalizeRemoval(account.id)
             _pendingRemoval.compareAndSet(account, null)
         }

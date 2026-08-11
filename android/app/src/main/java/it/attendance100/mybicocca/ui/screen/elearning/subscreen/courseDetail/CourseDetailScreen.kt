@@ -129,6 +129,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import java.time.Instant
+import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * Favourite-star action for the course detail's top bar: toggles the course's favourite flag,
@@ -362,7 +363,7 @@ fun CourseDetailScreen(
                     pullIndicatorVisible = true
                     viewModel.pullToRefresh()
                     scope.launch {
-                        delay(PULL_INDICATOR_DISMISS_DELAY_MS)
+                        delay(PULL_INDICATOR_DISMISS_DELAY_MS.milliseconds)
                         pullIndicatorVisible = false
                     }
                 },
@@ -754,7 +755,8 @@ private fun QuizzesPage(
                     itemsIndexed(groups, key = { _, group -> group.key }) { index, group ->
                         ExpandableGroupCard(
                             ordinal = index + 1,
-                            title = group.title ?: "Quiz del corso",
+                            title = group.title
+                                ?: stringResource(R.string.course_detail_quiz_group_title),
                             subtitle = quizGroupSubtitle(group.quizzes, completion),
                             expanded = group.key in expandedGroups,
                             onToggle = { onToggleGroup(group.key) },

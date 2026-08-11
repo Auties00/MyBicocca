@@ -55,7 +55,7 @@ fun <T> SegmentedSwitch(
     options: List<T>,
     selected: T,
     onSelected: (T) -> Unit,
-    label: (T) -> String,
+    label: @Composable (T) -> String,
     modifier: Modifier = Modifier,
     borderColor: Color = Color.Unspecified,
 ) {

@@ -64,9 +64,8 @@ fun UpdateModalSheet(
 ) {
     val uriHandler = LocalUriHandler.current
     LaunchedEffect(downloadState) {
-        val state = downloadState
-        if (state is DownloadState.Success) {
-            onInstall(state.file)
+        if (downloadState is DownloadState.Success) {
+            onInstall(downloadState.file)
         }
     }
 
@@ -215,7 +214,7 @@ fun UpdateModalSheet(
 
                     if (hasError) {
                         Text(
-                            text = stringResource(R.string.settings_update_check_failed),
+                            text = downloadState.message.asString(),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.error,
                             modifier = Modifier.fillMaxWidth(),

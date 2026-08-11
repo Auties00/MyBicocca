@@ -88,6 +88,7 @@ import it.attendance100.mybicocca.ui.screen.registry.subscreen.studyPlanEdit.sta
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.taxes.openPdfDocument
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
+import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * "Percorso e piano" as a single sheet entry, in the same modal language as the maps
@@ -127,7 +128,6 @@ import kotlinx.coroutines.flow.collectLatest
  * keeps the wizard so Riprova returns to it to resend after a brief held loading beat;
  * print feedback is non-terminal and returns to the percorso.
  */
-@Suppress("AssignedValueIsNeverRead")
 @Composable
 fun StudyPlanPage(
     viewModel: StudyPlanViewModel,
@@ -164,7 +164,7 @@ fun StudyPlanPage(
     var retrying by remember { mutableStateOf(false) }
     LaunchedEffect(retrying) {
         if (retrying) {
-            delay(600)
+            delay(600.milliseconds)
             outcome = null
             retrying = false
         }
@@ -223,7 +223,7 @@ fun StudyPlanPage(
 
                     is StudyPlanEvent.ShowMessage -> {
                         outcomeTerminal = false
-                        outcome = SheetOutcome.Info(event.message)
+                        outcome = SheetOutcome.Info(event.message.asString(context))
                     }
                 }
             }

@@ -17,12 +17,13 @@ data class MergedReleaseSource(val version: String, val notes: ReleaseNotes)
  *
  * Intro paragraphs are discarded — that is how the "Check out the past release notes…" line
  * disappears in the merged view. Nothing is silently lost, though: a release that follows no
- * template (no headings at all) has its content gathered under an "Other changes" section labelled
- * [otherLabel] (passed in localized, since this layer holds no resources), and the full per-release
- * notes always remain one tap away in the "All versions" view. All callouts are kept (deduplicated)
- * because a [CalloutKind.WARNING]/[CalloutKind.CAUTION] can carry information worth not losing.
+ * template (no headings at all) has its content gathered under an "Other changes" section — a
+ * [ReleaseBlock.Heading] flagged [ReleaseBlock.Heading.isOtherChanges] so the renderer localizes
+ * its label (this layer holds no resources) — and the full per-release notes always remain one tap
+ * away in the "All versions" view. All callouts are kept (deduplicated) because a
+ * [CalloutKind.WARNING]/[CalloutKind.CAUTION] can carry information worth not losing.
  */
-fun mergeReleaseNotes(sources: List<MergedReleaseSource>, otherLabel: String): ReleaseNotes {
+fun mergeReleaseNotes(sources: List<MergedReleaseSource>): ReleaseNotes {
     if (sources.isEmpty()) return ReleaseNotes(emptyList())
     val tagVersions = sources.size > 1
 
@@ -73,13 +74,28 @@ fun mergeReleaseNotes(sources: List<MergedReleaseSource>, otherLabel: String): R
         }
 
     if (other.isNotEmpty()) {
-        out += ReleaseBlock.Heading(MERGED_HEADING_LEVEL, otherLabel)
+        out += ReleaseBlock.Heading(MERGED_HEADING_LEVEL, text = "", isOtherChanges = true)
         out += ReleaseBlock.BulletList(other.distinctBy { it.text })
     }
 
+    var seenDownloadTip = false
     val seen = HashSet<Pair<CalloutKind, String>>()
     callouts.forEach { callout ->
-        if (seen.add(callout.kind to callout.text)) out += callout
+        // If multiple 'If you are unsure which version to download then go with...' Tip callouts are present, show only the latest
+        val isDownloadTip = callout.kind == CalloutKind.TIP && callout.text.contains(
+            "unsure which version to download",
+            ignoreCase = true
+        )
+
+        if (isDownloadTip) {
+            if (!seenDownloadTip) {
+                out += callout
+                seenDownloadTip = true
+            }
+        } else
+            if (seen.add(callout.kind to callout.text)) {
+                out += callout
+            }
     }
 
     return ReleaseNotes(out)

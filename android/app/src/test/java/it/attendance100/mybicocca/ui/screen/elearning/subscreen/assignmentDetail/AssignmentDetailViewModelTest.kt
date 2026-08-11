@@ -92,7 +92,6 @@ class AssignmentDetailViewModelTest {
         refreshCourse: RefreshCourseAssignmentsUseCase = mockk(relaxed = true),
     ): AssignmentDetailViewModel = AssignmentDetailViewModel(
         key = AppRoute.AssignmentDetail(assignId = assignmentId.value, courseId = courseId.value),
-        appContext = mockk(relaxed = true),
         savedState = SavedStateHandle(),
         observeActiveAccount = mockk {
             every { this@mockk.invoke() } returns MutableStateFlow<Account?>(activeAccount)

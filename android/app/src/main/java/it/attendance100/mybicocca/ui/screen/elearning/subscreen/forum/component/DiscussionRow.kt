@@ -34,6 +34,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import it.attendance100.mybicocca.R
+import it.attendance100.mybicocca.core.os.currentLocale
 import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.domain.model.elearning.forum.Discussion
 import it.attendance100.mybicocca.ui.component.shape.OrganicShapes
@@ -154,7 +155,7 @@ private fun MetaLine(discussion: Discussion, pinned: Boolean) {
 private fun buildMetaLabel(discussion: Discussion): String {
     val parts = mutableListOf(discussion.authorName)
     val time = discussion.timeModified ?: discussion.createdAt
-    if (time != null) parts += relativeTimeLabel(time)
+    if (time != null) parts += relativeTimeLabel(time, locale = currentLocale()).asString()
     val lastAuthor = discussion.lastPostAuthorName
     if (discussion.replyCount > 0 && !lastAuthor.isNullOrBlank() && lastAuthor != discussion.authorName) {
         parts += stringResource(R.string.elearning_forum_last_post_author, lastAuthor)

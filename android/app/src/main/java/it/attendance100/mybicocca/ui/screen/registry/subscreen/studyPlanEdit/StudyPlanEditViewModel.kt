@@ -1,17 +1,16 @@
 package it.attendance100.mybicocca.ui.screen.registry.subscreen.studyPlanEdit
 
-import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.SyncStatus
 import it.attendance100.mybicocca.core.state.valueOrNull
+import it.attendance100.mybicocca.core.text.UiText
 import it.attendance100.mybicocca.domain.model.career.CareerId
 import it.attendance100.mybicocca.domain.model.studyplan.EditableRule
 import it.attendance100.mybicocca.domain.model.studyplan.PlanApprovalType
@@ -20,6 +19,7 @@ import it.attendance100.mybicocca.domain.model.studyplan.StudyPathOption
 import it.attendance100.mybicocca.domain.usecase.studyplan.GetStudyPathUseCase
 import it.attendance100.mybicocca.domain.usecase.studyplan.GetStudyPlanDraftUseCase
 import it.attendance100.mybicocca.domain.usecase.studyplan.SubmitStudyPlanUseCase
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.studyPlanEdit.StudyPlanEditViewModel.Companion.PATH_SEGMENT
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.studyPlanEdit.state.StudyPlanEditEvent
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.studyPlanEdit.state.StudyPlanEditRequest
 import kotlinx.coroutines.channels.Channel
@@ -50,7 +50,6 @@ import kotlinx.coroutines.sync.withLock
 @HiltViewModel(assistedFactory = StudyPlanEditViewModel.Factory::class)
 class StudyPlanEditViewModel @AssistedInject constructor(
     @Assisted private val key: StudyPlanEditRequest,
-    @ApplicationContext private val appContext: Context,
     private val getStudyPath: GetStudyPathUseCase,
     private val getStudyPlanDraft: GetStudyPlanDraftUseCase,
     private val submitStudyPlan: SubmitStudyPlanUseCase,
@@ -97,10 +96,14 @@ class StudyPlanEditViewModel @AssistedInject constructor(
     private val _submitting = MutableStateFlow(false)
     val submitting: StateFlow<Boolean> = _submitting.asStateFlow()
 
-    private val _submitError = MutableStateFlow<String?>(null)
+    private val _submitError = MutableStateFlow<UiText?>(null)
 
     /** Submit failures stay visible until the next attempt or edit clears them. */
-    val submitError: StateFlow<String?> = _submitError.asStateFlow()
+    val submitError: StateFlow<UiText?> = _submitError.asStateFlow()
+
+    fun clearSubmitError() {
+        _submitError.value = null
+    }
 
     private val _events = Channel<StudyPlanEditEvent>(Channel.BUFFERED)
     val events: Flow<StudyPlanEditEvent> = _events.receiveAsFlow()
@@ -305,7 +308,7 @@ class StudyPlanEditViewModel @AssistedInject constructor(
     }
 
     /** What the student should expect next depends on the schema's approval flavour. */
-    private fun submittedMessage(chosen: StudyPathOption?): String = appContext.getString(
+    private fun submittedMessage(chosen: StudyPathOption?): UiText = UiText.StringResource(
         when (chosen?.approval) {
             PlanApprovalType.Automatic -> R.string.studyplanedit_submitted_automatic
             PlanApprovalType.AutomaticIfCompliant -> R.string.studyplanedit_submitted_if_compliant
@@ -318,15 +321,16 @@ class StudyPlanEditViewModel @AssistedInject constructor(
      * Maps a submission failure to student-facing copy: a profile-permission wall and a
      * 403 access denial get a plain explanation, anything else surfaces the raw message.
      */
-    private fun submitFriendlyMessage(cause: Throwable): String {
-        val raw = cause.message ?: appContext.getString(R.string.studyplanedit_submit_error_generic)
+    private fun submitFriendlyMessage(cause: Throwable): UiText {
+        val raw = cause.message
+            ?: return UiText.StringResource(R.string.studyplanedit_submit_error_generic)
         return when {
             raw.contains("Security failed", ignoreCase = true) ||
                 raw.contains("profilo", ignoreCase = true) ->
-                appContext.getString(R.string.studyplanedit_submit_error_profile)
+                UiText.StringResource(R.string.studyplanedit_submit_error_profile)
 
-            raw.contains("403") -> appContext.getString(R.string.studyplanedit_submit_error_forbidden)
-            else -> raw
+            raw.contains("403") -> UiText.StringResource(R.string.studyplanedit_submit_error_forbidden)
+            else -> UiText.DynamicString(raw)
         }
     }
 

@@ -13,8 +13,16 @@ data class ReleaseNotes(val blocks: List<ReleaseBlock>) {
 
 /** One block of a parsed release body. The text strings keep their raw inline Markdown. */
 sealed interface ReleaseBlock {
-    /** A Markdown heading; [level] is 1–6 (`#`..`######`). */
-    data class Heading(val level: Int, val text: String) : ReleaseBlock
+    /**
+     * A Markdown heading; [level] is 1–6 (`#`..`######`). [isOtherChanges] marks the synthetic
+     * "other changes" bucket the merger emits for template-less releases, so the renderer can
+     * substitute a localized label instead of the domain layer having to hold a resource string.
+     */
+    data class Heading(
+        val level: Int,
+        val text: String,
+        val isOtherChanges: Boolean = false,
+    ) : ReleaseBlock
 
     /** A run of prose lines collapsed into one paragraph. */
     data class Paragraph(val text: String) : ReleaseBlock

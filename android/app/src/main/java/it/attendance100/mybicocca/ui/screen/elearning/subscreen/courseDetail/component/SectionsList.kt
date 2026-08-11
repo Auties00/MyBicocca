@@ -69,6 +69,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import it.attendance100.mybicocca.R
+import it.attendance100.mybicocca.core.os.currentLocale
 import it.attendance100.mybicocca.domain.model.elearning.course.CompletionState
 import it.attendance100.mybicocca.domain.model.elearning.course.CourseModule
 import it.attendance100.mybicocca.domain.model.elearning.course.CourseSection
@@ -168,7 +169,7 @@ private fun SectionCard(
         summaryHtml?.let { HtmlCallout(html = it) }
         if (blocks.isEmpty() && summaryHtml == null) {
             Text(
-                text = "Nessuna risorsa in questa sezione",
+                text = stringResource(R.string.sections_list_empty_section),
                 style = MaterialTheme.typography.bodySmall,
                 color = scheme.onSurfaceVariant,
                 modifier = Modifier.padding(horizontal = 4.dp),
@@ -315,7 +316,7 @@ private fun SubsectionBlock(
                     block.summaryHtml?.let { HtmlCallout(html = it) }
                     if (block.blocks.isEmpty() && block.summaryHtml == null) {
                         Text(
-                            text = "Nessuna risorsa",
+                            text = stringResource(R.string.sections_list_no_resource),
                             style = MaterialTheme.typography.bodySmall,
                             color = scheme.onSurfaceVariant,
                             modifier = Modifier.padding(horizontal = 4.dp),
@@ -663,12 +664,17 @@ private fun moduleMeta(module: CourseModule, progress: VideoProgress?): String {
     return if (badge != null) "$base · $badge" else base
 }
 
-private val DEADLINE_FORMAT = DateTimeFormatter.ofPattern("d MMM HH:mm", Locale.getDefault())
+@Composable
+private fun rememberDeadlineFormatter(): DateTimeFormatter {
+    val locale = currentLocale()
+    return remember(locale) { DateTimeFormatter.ofPattern("d MMM HH:mm", locale) }
+}
 
 @Composable
 private fun withDeadline(base: String, deadline: Instant?): String {
+    val formatter = rememberDeadlineFormatter()
     if (deadline == null) return base
-    val label = DEADLINE_FORMAT.format(deadline.atZone(ZoneId.systemDefault()))
+    val label = formatter.format(deadline.atZone(ZoneId.systemDefault()))
     val glue = if (deadline.isBefore(Instant.now())) {
         stringResource(R.string.elearning_module_deadline_closed, label)
     } else {
@@ -680,9 +686,10 @@ private fun withDeadline(base: String, deadline: Instant?): String {
 /** Prefers a real deadline; falls back to the opening date when that's all the module exposes. */
 @Composable
 private fun withDeadlineOrOpen(base: String, module: CourseModule): String {
+    val formatter = rememberDeadlineFormatter()
     module.dueAt?.let { return withDeadline(base, it) }
     val opens = module.opensAt ?: return base
-    val label = DEADLINE_FORMAT.format(opens.atZone(ZoneId.systemDefault()))
+    val label = formatter.format(opens.atZone(ZoneId.systemDefault()))
     return if (opens.isAfter(Instant.now())) {
         "$base · ${stringResource(R.string.elearning_module_deadline_from, label)}"
     } else {

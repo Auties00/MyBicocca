@@ -126,10 +126,16 @@ fun TaxInvoiceCard(
 
 @Composable
 private fun TaxInvoice.statusLabel(): String = when (status) {
-    TaxStatus.PAID -> paymentDate?.let { "Pagata il ${it.formatTaxDate()}" } ?: "Pagata"
-    TaxStatus.PENDING -> "Da pagare"
-    TaxStatus.EXPIRED -> "Scaduta"
-    TaxStatus.CANCELED -> "Annullata"
+    TaxStatus.PAID -> paymentDate?.let {
+        stringResource(
+            R.string.taxes_status_paid_on,
+            it.formatTaxDate()
+        )
+    } ?: stringResource(R.string.taxes_status_paid)
+
+    TaxStatus.PENDING -> stringResource(R.string.taxes_status_pending)
+    TaxStatus.EXPIRED -> stringResource(R.string.taxes_status_expired)
+    TaxStatus.CANCELED -> stringResource(R.string.taxes_status_canceled)
 }
 
 private fun TaxInvoice.statusColor(success: Color, error: Color, muted: Color): Color = when (status) {

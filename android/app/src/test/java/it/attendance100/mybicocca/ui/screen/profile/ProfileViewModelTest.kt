@@ -209,7 +209,9 @@ class ProfileViewModelTest {
         assertThat((status as SyncStatus.Failed).cause).isEqualTo(boom)
         assertThat(vm.isRefreshing.value).isFalse()
         vm.errorMessage.test {
-            assertThat(awaitItem()).isEqualTo("Impossibile aggiornare i dati")
+            assertThat((awaitItem() as it.attendance100.mybicocca.core.text.UiText.StringResource).resId).isEqualTo(
+                it.attendance100.mybicocca.R.string.profile_refresh_error
+            )
             cancelAndIgnoreRemainingEvents()
         }
     }

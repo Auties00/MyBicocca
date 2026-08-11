@@ -1,6 +1,7 @@
 package it.attendance100.mybicocca.data.repository
 
 import it.attendance100.mybicocca.core.state.Loadable
+import it.attendance100.mybicocca.core.text.StringResolver
 import it.attendance100.mybicocca.core.time.StalePolicy
 import it.attendance100.mybicocca.data.auth.SessionManager
 import it.attendance100.mybicocca.data.local.elearning.course.CourseDao
@@ -20,10 +21,10 @@ import it.attendance100.mybicocca.di.ApplicationScope
 import it.attendance100.mybicocca.domain.model.account.AccountId
 import it.attendance100.mybicocca.domain.model.elearning.course.CompletionState
 import it.attendance100.mybicocca.domain.model.elearning.course.CourseDetails
+import it.attendance100.mybicocca.domain.model.elearning.course.CourseFilter
 import it.attendance100.mybicocca.domain.model.elearning.course.CourseId
 import it.attendance100.mybicocca.domain.model.elearning.course.EnrolledCourse
 import it.attendance100.mybicocca.domain.model.elearning.deadline.Deadline
-import it.attendance100.mybicocca.domain.model.elearning.course.CourseFilter
 import it.attendance100.mybicocca.domain.repository.ElearningCourseRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
@@ -54,6 +55,7 @@ import kotlin.time.Clock.System
  */
 @Singleton
 class ElearningCourseRepositoryImpl @Inject constructor(
+    private val stringResolver: StringResolver,
     private val sessionManager: SessionManager,
     private val courseDao: CourseDao,
     private val deadlineDao: DeadlineDao,
@@ -289,7 +291,10 @@ class ElearningCourseRepositoryImpl @Inject constructor(
         val response = api.courses.enrollIntoCourse(token, courseId.value, password)
         if (!response.status) {
             val warning = response.warnings.firstOrNull()?.message
-            error(warning ?: "Iscrizione al corso non riuscita.")
+            error(
+                warning
+                    ?: stringResolver.getString(it.attendance100.mybicocca.R.string.elearning_course_enroll_failed)
+            )
         }
     }
 

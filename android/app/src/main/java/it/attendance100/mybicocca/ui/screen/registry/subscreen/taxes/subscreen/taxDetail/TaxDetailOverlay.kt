@@ -133,7 +133,8 @@ fun TaxDetailOverlay(
                         is TaxEvent.OpenUrl -> openExternalUrl(context, event.url)
                         is TaxEvent.OpenPdf -> runCatching { openPdfDocument(context, event.bytes, event.fileName) }
                             .onFailure { outcome = SheetOutcome.Error("Impossibile aprire il documento") }
-                        is TaxEvent.ShowMessage -> outcome = SheetOutcome.Info(event.message)
+                        is TaxEvent.ShowMessage -> outcome =
+                            SheetOutcome.Info(event.message.asString(context))
                     }
                 }
             }

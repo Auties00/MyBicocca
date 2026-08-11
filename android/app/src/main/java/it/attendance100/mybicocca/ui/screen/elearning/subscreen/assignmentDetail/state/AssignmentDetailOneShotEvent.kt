@@ -1,5 +1,7 @@
 package it.attendance100.mybicocca.ui.screen.elearning.subscreen.assignmentDetail.state
 
+import it.attendance100.mybicocca.core.text.UiText
+
 /**
  * One-shot events of the compito sheet: refresh failures, attachment-open requests, and the
  * submission lifecycle outcomes — [DraftSaved], [SubmissionSent], [SubmissionRemoved],
@@ -12,5 +14,5 @@ sealed interface AssignmentDetailOneShotEvent {
     data object DraftSaved : AssignmentDetailOneShotEvent
     data object SubmissionSent : AssignmentDetailOneShotEvent
     data object SubmissionRemoved : AssignmentDetailOneShotEvent
-    data class ActionFailed(val title: String, val cause: Throwable) : AssignmentDetailOneShotEvent
+    data class ActionFailed(val title: UiText, val cause: Throwable) : AssignmentDetailOneShotEvent
 }

@@ -359,7 +359,7 @@ internal fun CallPage(
                         Triple(
                             Icons.Outlined.Groups,
                             stringResource(R.string.booking_enrolled),
-                            "$n studenti"
+                            stringResource(R.string.registry_students_count, n)
                         )
                     )
                 }
@@ -631,7 +631,7 @@ internal fun ExamCall.title(): String = activityDescription?.takeIf { it.isNotBl
 @Composable
 internal fun ExamCall.headerSubtitle(): String {
     val date = callDate?.format(ShortDateFormat)
-    val time = callTime?.let { "ore ${it.format(TimeFormat)}" }
+    val time = callTime?.let { stringResource(R.string.registry_time_at, it.format(TimeFormat)) }
     val moment = when {
         date != null && time != null -> "$date, $time"
         else -> date ?: time
@@ -647,29 +647,47 @@ private fun ExamType.tagLabel(): String = when (this) {
     ExamType.Unknown -> "APPELLO"
 }
 
+@Composable
 private fun ExamType.longLabel(): String = when (this) {
-    ExamType.Written -> "Esame scritto"
-    ExamType.Oral -> "Esame orale"
-    ExamType.WrittenAndOralJoint, ExamType.WrittenAndOralSeparate -> "Esame unico"
-    ExamType.Unknown -> "Appello d'esame"
+    ExamType.Written -> stringResource(R.string.registry_exam_written)
+    ExamType.Oral -> stringResource(R.string.registry_exam_oral)
+    ExamType.WrittenAndOralJoint, ExamType.WrittenAndOralSeparate -> stringResource(R.string.registry_exam_joint)
+    ExamType.Unknown -> stringResource(R.string.registry_exam_call)
 }
 
+@Composable
 internal fun rootSubtitle(groups: List<BookingCourseGroup>): String {
     val calls = groups.sumOf { it.calls.size }
     val exams = groups.size
-    return "${countLabel(calls)} · ${if (exams == 1) "1 esame" else "$exams esami"}"
+    val callsStr = countLabel(calls)
+    val examsStr =
+        if (exams == 1) stringResource(R.string.registry_exams_one) else stringResource(
+            R.string.registry_exams_many,
+            exams
+        )
+    return "$callsStr · $examsStr"
 }
 
-private fun countLabel(calls: Int): String = if (calls == 1) "1 appello" else "$calls appelli"
+@Composable
+private fun countLabel(calls: Int): String =
+    if (calls == 1) stringResource(R.string.registry_calls_one) else stringResource(
+        R.string.registry_calls_many,
+        calls
+    )
 
 @Composable
 private fun formatWindow(opensAt: LocalDate?, closesAt: LocalDate?): String {
     val opens = opensAt?.format(WindowFormat)
     val closes = closesAt?.format(WindowFormat)
     return when {
-        opens != null && closes != null -> "Dal $opens al $closes"
-        opens != null -> "Apertura $opens"
-        closes != null -> "Chiusura $closes"
+        opens != null && closes != null -> stringResource(
+            R.string.registry_window_range,
+            opens,
+            closes
+        )
+
+        opens != null -> stringResource(R.string.registry_window_opens, opens)
+        closes != null -> stringResource(R.string.registry_window_closes, closes)
         else -> "—"
     }
 }

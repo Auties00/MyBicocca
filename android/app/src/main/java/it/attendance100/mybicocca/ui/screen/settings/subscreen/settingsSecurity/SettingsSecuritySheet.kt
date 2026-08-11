@@ -41,6 +41,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.os.DeviceType
 import it.attendance100.mybicocca.core.os.LocalDeviceType
+import it.attendance100.mybicocca.core.os.currentLocale
 import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.domain.model.security.UnlockResult
 import it.attendance100.mybicocca.ui.component.input.PasswordTextField
@@ -291,15 +292,17 @@ private fun TimeoutSlider(
         inactiveTickColor = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.4f),
     )
 
+    val locale = currentLocale()
     val timeoutImmediately = stringResource(R.string.settings_security_timeout_immediately)
     val timeout1Hour = stringResource(R.string.settings_security_timeout_1hour)
     val timeout4Hours = stringResource(R.string.settings_security_timeout_4hours)
+    val minutesFormat = stringResource(R.string.settings_security_minutes_format)
     val timeoutLabelFunc: (Int) -> String = { minutes ->
         when (minutes) {
             0 -> timeoutImmediately
             60 -> timeout1Hour
             240 -> timeout4Hours
-            else -> "$minutes min"
+            else -> String.format(locale, minutesFormat, minutes)
         }
     }
 

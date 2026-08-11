@@ -88,6 +88,7 @@ import it.attendance100.mybicocca.ui.theme.LocalIsOnline
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * The whole course forum in one modal sheet entry, driving an internal page machine over a single
@@ -141,8 +142,11 @@ fun ForumSheetPage(
     LaunchedEffect(viewModel) {
         viewModel.eventFlow.collectLatest { event ->
             when (event) {
-                is ForumSheetEvent.Failed -> outcome = SheetOutcome.Error(event.title, event.cause)
-                is ForumSheetEvent.Info -> outcome = SheetOutcome.Info(event.title)
+                is ForumSheetEvent.Failed -> outcome =
+                    SheetOutcome.Error(event.title.asString(context), event.cause)
+
+                is ForumSheetEvent.Info -> outcome =
+                    SheetOutcome.Info(event.title.asString(context))
             }
         }
     }
@@ -658,11 +662,11 @@ private fun rememberThreadLoading(hasContent: Boolean, key: Any?): Boolean {
     LaunchedEffect(key) {
         visible = false
         minDone = true
-        delay(LOADING_GRACE_MS)
+        delay(LOADING_GRACE_MS.milliseconds)
         if (!latestHasContent.value) {
             visible = true
             minDone = false
-            delay(LOADING_MIN_MS)
+            delay(LOADING_MIN_MS.milliseconds)
             minDone = true
         }
     }

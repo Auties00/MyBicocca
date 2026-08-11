@@ -101,6 +101,7 @@
     <string name="shell_career_ended">La carriera \"%s\" è terminata</string>
     <string name="shell_career_missing">La carriera selezionata non è più disponibile</string>
     <string name="shell_update_available">Nuova versione disponibile</string>
+    <string name="shell_signout_failed">Disconnessione non riuscita</string>
 
     <!-- Calendar -->
     <string name="calendar_sync_failed">Sincronizzazione del calendario non riuscita</string>
@@ -405,6 +406,8 @@
     <string name="appelli_no_exams_body">Quando prenoti un appello lo trovi qui. Premi Prenota per iniziare.</string>
     <string name="appelli_booking_cancelled">Prenotazione annullata</string>
     <string name="appelli_cancellation_failed">Annullamento non riuscito</string>
+    <string name="appelli_booking_slip_error">Impossibile scaricare lo statino di prenotazione. Riprova tra un momento.</string>
+    <string name="appelli_presence_certificate_error">L\'attestato di presenza non è ancora disponibile per questo appello.</string>
     <string name="appelli_pdf_open_failed">Impossibile aprire il PDF</string>
     <string name="appelli_booking_confirmed">Prenotazione confermata</string>
     <string name="appelli_booking_failed">Prenotazione non riuscita</string>
@@ -491,6 +494,18 @@
     <string name="attendance_qr_hint">Inquadra il QR della lezione</string>
     <string name="attendance_manual_code_title">Inserisci codice</string>
     <string name="attendance_manual_code_description">Digita il codice dell\'attività mostrato dal docente.</string>
+    <string name="attendance_status_label">Stato: %1$s</string>
+    <string name="attendance_msg_recorded">Presenza registrata</string>
+    <string name="attendance_msg_already_recorded">Presenza già registrata</string>
+    <string name="attendance_msg_wrong_credential">Password o codice non corretti</string>
+    <string name="attendance_msg_network_wrong">Devi essere connesso alla rete dell\'aula per registrare la presenza</string>
+    <string name="attendance_msg_network_prevent_shared">Una presenza è già stata registrata da questa rete</string>
+    <string name="attendance_msg_session_closed">La sessione non è più disponibile</string>
+    <string name="attendance_msg_failed">Registrazione non riuscita</string>
+    <string name="attendance_msg_code_unrecognized">Codice non riconosciuto</string>
+    <string name="attendance_msg_no_register_found">Nessun corso con registro presenze trovato</string>
+    <string name="attendance_msg_session_not_in_courses">La sessione non è aperta o non è tra i tuoi corsi</string>
+    <string name="attendance_msg_student_number_unavailable">Matricola non disponibile</string>
     <string name="attendance_activity_code">Codice dell\'attività</string>
     <string name="attendance_record">Registra</string>
     <string name="attendance_manual_code_entry">Inserisci codice manualmente</string>
@@ -557,8 +572,8 @@
     <string name="enrollments_loading">Caricamento iscrizioni…</string>
     <string name="enrollments_none">Nessuna iscrizione</string>
     <string name="enrollments_none_body">Non risultano iscrizioni registrate.</string>
-    <string name="enrollments_renew_button">Rinnova l\'iscrizione %d/%d</string>
-    <string name="enrollments_enrolled_button">Iscritto per l\'a.a. %d/%d</string>
+    <string name="enrollments_renew_button">Rinnova l\'iscrizione %1$d/%2$d</string>
+    <string name="enrollments_enrolled_button">Iscritto per l\'a.a. %1$d/%2$d</string>
     <string name="enrollments_enrollment">Iscrizione</string>
     <string name="enrollments_type">Tipo iscrizione</string>
     <string name="enrollments_student_type">Tipologia studente</string>
@@ -833,7 +848,6 @@
     <string name="whats_new_error">Impossibile caricare le novità</string>
     <string name="whats_new_retry">Riprova</string>
     <string name="whats_new_all_versions">Tutte le versioni</string>
-    <string name="whats_new_other_changes">Altre modifiche</string>
     <string name="whats_new_merged_subtitle">Anteprima combinata di tutte le modifiche dalla v%1$s</string>
     <string name="settings_no_updates_found">Sei già all\'ultima versione</string>
     <string name="settings_no_other_versions">Non ci sono ancora altre versioni!</string>
@@ -1078,8 +1092,17 @@
     <string name="taxes_invoice_label">Fattura %1$s</string>
     <string name="taxes_invoice_number">Fattura #%1$s</string>
     <string name="taxes_loading">Caricamento tasse…</string>
+    <string name="taxes_empty_title_to_pay">Nessuna tassa da pagare</string>
+    <string name="taxes_empty_title_paid">Nessuna tassa pagata</string>
+    <string name="taxes_empty_body_to_pay">Non hai pagamenti in sospeso.</string>
+    <string name="taxes_empty_body_paid">Non risultano fatture pagate.</string>
     <string name="taxes_empty_title">Nessuna tassa</string>
     <string name="taxes_empty_body">Non risultano fatture per la tua carriera.</string>
+    <string name="taxes_status_paid_on">Pagata il %1$s</string>
+    <string name="taxes_status_paid">Pagata</string>
+    <string name="taxes_status_pending">Da pagare</string>
+    <string name="taxes_status_expired">Scaduta</string>
+    <string name="taxes_status_canceled">Annullata</string>
     <string name="taxes_pay_pagopa">Paga con pagoPA</string>
     <string name="taxes_print_notice">Stampa avviso pagoPA</string>
     <string name="taxes_print_receipt">Stampa quietanza</string>
@@ -1631,4 +1654,391 @@
     <!-- Settings: Language -->
     <string name="settings_language_help_translate">Aiutaci a tradurre l\'app in %1$s!</string>
 
+    <string name="certificates_download_error">Impossibile scaricare il certificato</string>
+    <string name="taxes_operation_unavailable">Operazione non disponibile.</string>
+    <string name="profile_refresh_error">Impossibile aggiornare i dati</string>
+
+
+
+
+    <string name="profile_exams_passed">Esami Sostenuti</string>
+    <string name="profile_cfu_acquired">CFU Acquisiti</string>
+    <string name="profile_grades">Voti</string>
+    <string name="profile_credits">Crediti</string>
+    <string name="profile_prerequisites">Prerequisiti</string>
+    <string name="profile_year">Anno %1$d</string>
+    <string name="profile_passed">Superato</string>
+    <string name="profile_pending">In sospeso</string>
+    <string name="registry_no_active_career">Nessuna carriera attiva</string>
+    <string name="release_other_changes">Altre modifiche</string>
+
+    <!-- Crash log -->
+    <string name="crash_log_no_stack_trace">No stack trace captured</string>
+
+    <!-- Appointments -->
+    <string name="appointment_no_reservation_code">The booking returned no reservation code</string>
+    <string name="appointment_booking_email_required">The booking email is required</string>
+
+    <!-- Exam types -->
+    <string name="exam_type_scritto_e_orale">Scritto e orale</string>
+    <string name="exam_type_prova_parziale">Prova parziale</string>
+
+    <!-- E-Learning -->
+    <string name="default_submission_statement">Questo elaborato è opera mia, fatta eccezione per quelle parti in cui ho indicato in modo esplicito che si tratta del lavoro di altre persone.</string>
+    <string name="elearning_course_enroll_failed">Iscrizione al corso non riuscita.</string>
+    <string name="elearning_file_save_failed">Impossibile salvare il file scaricato.</string>
+
+    <!-- Library -->
+    <string name="library_seat_fallback_name">Posto</string>
+    <string name="library_power_outlet_label">presa elettrica</string>
+
+    <!-- Map: room equipment -->
+    <string name="equipment_fixed_equipment">Attrezzature fisse</string>
+    <string name="equipment_mobile_equipment">Attrezzature mobili</string>
+    <string name="equipment_teacher_desk">Cattedra</string>
+    <string name="equipment_blackout_windows">Finestre oscurabili</string>
+    <string name="equipment_tiered_seating">Gradoni</string>
+    <string name="equipment_audio_system">Impianto audio</string>
+    <string name="equipment_standard_video_lesson_kit">Kit aule per videolezioni</string>
+    <string name="equipment_flip_chart">Lavagna a fogli</string>
+    <string name="equipment_whiteboard">Lavagna a pennarelli</string>
+    <string name="equipment_slate_blackboard">Lavagna in ardesia</string>
+    <string name="equipment_overhead_projector">Lavagna luminosa</string>
+    <string name="equipment_sliding_blackboard">Lavagna saliscendi</string>
+    <string name="equipment_examination_beds">Lettini</string>
+    <string name="equipment_lcd_plasma_monitor">Monitor TV LCD/Plasma</string>
+    <string name="equipment_teacher_pc">PC cattedra</string>
+    <string name="equipment_podium">Podio</string>
+    <string name="equipment_student_power_socket">Presa elettrica postazione studente</string>
+    <string name="equipment_recording_system">Registrazione</string>
+    <string name="equipment_wired_network">Rete fissa</string>
+    <string name="equipment_wifi_network">Rete WiFi</string>
+    <string name="equipment_fixed_chairs_with_desks">Sedie fisse con banco</string>
+    <string name="equipment_fixed_chairs_with_tablet_arms">Sedie fisse con ribaltina</string>
+    <string name="equipment_mobile_chairs_with_tablet_arms">Sedie mobili con ribaltina</string>
+    <string name="equipment_mobile_chairs_without_tablet_arms">Sedie mobili senza ribaltina</string>
+    <string name="equipment_accessible_table">Tavolo accessibile</string>
+    <string name="equipment_camera">Telecamera</string>
+    <string name="equipment_video_conference">Video conference</string>
+    <string name="equipment_ceiling_projector_and_screen">Videoproiettore a soffitto + telo</string>
+    <string name="equipment_web_conference">Webconference</string>
+
+    <!-- Taxes -->
+    <string name="tax_invoice_fallback_title">Tasse a.a. %1$d/%2$02d</string>
+    <string name="tax_invoice_fallback_id">Fattura %1$d</string>
+    <string name="tax_pagopa_no_link">pagoPA non ha restituito un link di pagamento.</string>
+
+    <!-- Search: voice input -->
+    <string name="speech_recognition_unavailable">Riconoscimento vocale non disponibile</string>
+
+    <!-- App update download -->
+    <string name="apk_downloader_no_suitable_apk">No suitable APK found for device architecture (%1$s). Available: %2$s</string>
+    <string name="apk_downloader_insecure_connection">Refusing to download the update over an insecure connection.</string>
+    <string name="apk_downloader_integrity_check_failed">The downloaded update failed its integrity check. Please try again.</string>
+    <string name="apk_downloader_failed">Download failed</string>
+
+    <!-- E-Learning -->
+    <string name="enrolled_course_group_empty">Group must have at least one edition.</string>
+
+    <!-- Search: actions -->
+    <string name="search_action_book_exam_title">Prenota un esame</string>
+    <string name="search_action_book_exam_subtitle">Servizi · Esami</string>
+    <string name="search_action_book_exam_alias_1">prenota appello</string>
+    <string name="search_action_book_exam_alias_2">iscriviti a un esame</string>
+    <string name="search_action_book_exam_alias_3">iscrizione appello</string>
+    <string name="search_action_book_exam_alias_4">prenotazione esame</string>
+    <string name="search_action_book_exam_alias_5">appello esame</string>
+    <string name="search_action_mark_presence_title">Rileva presenza</string>
+    <string name="search_action_mark_presence_subtitle">Servizi · Presenze</string>
+    <string name="search_action_mark_presence_alias_1">segna presenza</string>
+    <string name="search_action_mark_presence_alias_2">scansiona qr</string>
+    <string name="search_action_mark_presence_alias_3">codice lezione</string>
+    <string name="search_action_mark_presence_alias_4">timbra</string>
+    <string name="search_action_mark_presence_alias_5">registra presenza</string>
+    <string name="search_action_mark_presence_alias_6">qr presenza</string>
+    <string name="search_action_reserve_library_seat_title">Prenota un posto in biblioteca</string>
+    <string name="search_action_reserve_library_seat_subtitle">Servizi · Biblioteca</string>
+    <string name="search_action_reserve_library_seat_alias_1">prenota posto</string>
+    <string name="search_action_reserve_library_seat_alias_2">prenota biblioteca</string>
+    <string name="search_action_reserve_library_seat_alias_3">posto in sala studio</string>
+    <string name="search_action_reserve_library_seat_alias_4">prenotazione biblioteca</string>
+    <string name="search_action_book_appointment_title">Prenota un appuntamento</string>
+    <string name="search_action_book_appointment_subtitle">Servizi · Appuntamenti</string>
+    <string name="search_action_book_appointment_alias_1">prenota sportello</string>
+    <string name="search_action_book_appointment_alias_2">appuntamento segreteria</string>
+    <string name="search_action_book_appointment_alias_3">prenotazione appuntamento</string>
+    <string name="search_action_add_course_title">Aggiungi un corso</string>
+    <string name="search_action_add_course_subtitle">E-learning</string>
+    <string name="search_action_add_course_alias_1">aggiungi corso</string>
+    <string name="search_action_add_course_alias_2">iscriviti a un corso</string>
+    <string name="search_action_add_course_alias_3">nuovo corso</string>
+    <string name="search_action_add_course_alias_4">iscrizione corso moodle</string>
+    <string name="search_action_add_course_alias_5">cerca corso</string>
+    <string name="search_action_pay_taxes_title">Paga le tasse</string>
+    <string name="search_action_pay_taxes_subtitle">Servizi · Tasse</string>
+    <string name="search_action_pay_taxes_alias_1">paga</string>
+    <string name="search_action_pay_taxes_alias_2">pagamento tasse</string>
+    <string name="search_action_pay_taxes_alias_3">paga rata</string>
+    <string name="search_action_pay_taxes_alias_4">paga bollettino</string>
+    <string name="search_action_pay_taxes_alias_5">pagopa</string>
+    <string name="search_action_compile_questionnaire_title">Compila un questionario</string>
+    <string name="search_action_compile_questionnaire_subtitle">Servizi · Questionari</string>
+    <string name="search_action_compile_questionnaire_alias_1">valuta la didattica</string>
+    <string name="search_action_compile_questionnaire_alias_2">compila valutazione</string>
+    <string name="search_action_compile_questionnaire_alias_3">questionario corso</string>
+    <string name="search_action_edit_study_plan_title">Compila il piano di studi</string>
+    <string name="search_action_edit_study_plan_subtitle">Servizi · Piano di Studi</string>
+    <string name="search_action_edit_study_plan_alias_1">modifica piano</string>
+    <string name="search_action_edit_study_plan_alias_2">compila piano</string>
+    <string name="search_action_edit_study_plan_alias_3">piano carriera</string>
+    <string name="search_action_edit_study_plan_alias_4">scegli esami</string>
+    <string name="search_action_hypothetical_average_title">Calcola la media ipotetica</string>
+    <string name="search_action_hypothetical_average_subtitle">Profilo</string>
+    <string name="search_action_hypothetical_average_alias_1">simula voto</string>
+    <string name="search_action_hypothetical_average_alias_2">calcola media</string>
+    <string name="search_action_hypothetical_average_alias_3">media ponderata</string>
+    <string name="search_action_hypothetical_average_alias_4">proiezione media</string>
+    <string name="search_action_hypothetical_average_alias_5">calcolatrice voti</string>
+    <string name="search_action_hypothetical_average_alias_6">voto di laurea</string>
+    <string name="search_action_change_theme_title">Cambia tema</string>
+    <string name="search_action_change_theme_subtitle">Impostazioni · Aspetto</string>
+    <string name="search_action_change_theme_alias_1">tema scuro</string>
+    <string name="search_action_change_theme_alias_2">tema chiaro</string>
+    <string name="search_action_change_theme_alias_3">dark mode</string>
+    <string name="search_action_change_theme_alias_4">modalità scura</string>
+    <string name="search_action_change_theme_alias_5">colori app</string>
+    <string name="search_action_change_language_title">Cambia lingua</string>
+    <string name="search_action_change_language_subtitle">Impostazioni · Lingua</string>
+    <string name="search_action_change_language_alias_1">lingua app</string>
+    <string name="search_action_change_language_alias_2">change language</string>
+    <string name="search_action_change_language_alias_3">english</string>
+    <string name="search_action_add_account_title">Aggiungi un account</string>
+    <string name="search_action_add_account_subtitle">Account</string>
+    <string name="search_action_add_account_alias_1">secondo account</string>
+    <string name="search_action_add_account_alias_2">altro account</string>
+    <string name="search_action_add_account_alias_3">cambia account</string>
+    <string name="search_action_add_account_alias_4">nuovo accesso</string>
+
+    <!-- Search: destinations -->
+    <string name="search_dest_calendar_title">Calendario</string>
+    <string name="search_dest_calendar_alias_1">orario</string>
+    <string name="search_dest_calendar_alias_2">lezioni</string>
+    <string name="search_dest_calendar_alias_3">agenda</string>
+    <string name="search_dest_calendar_alias_4">settimana</string>
+    <string name="search_dest_elearning_title">E-learning</string>
+    <string name="search_dest_elearning_alias_1">elearning</string>
+    <string name="search_dest_elearning_alias_2">moodle</string>
+    <string name="search_dest_elearning_alias_3">corsi</string>
+    <string name="search_dest_elearning_alias_4">materiale</string>
+    <string name="search_dest_map_title">Mappe</string>
+    <string name="search_dest_map_alias_1">mappa</string>
+    <string name="search_dest_map_alias_2">aule</string>
+    <string name="search_dest_map_alias_3">edifici</string>
+    <string name="search_dest_map_alias_4">campus</string>
+    <string name="search_dest_map_alias_5">aula</string>
+    <string name="search_dest_registry_title">Servizi</string>
+    <string name="search_dest_registry_alias_1">segreterie</string>
+    <string name="search_dest_registry_alias_2">segreteria</string>
+    <string name="search_dest_registry_alias_3">sportello</string>
+    <string name="search_dest_profile_title">Profilo</string>
+    <string name="search_dest_profile_alias_1">account</string>
+    <string name="search_dest_profile_alias_2">media</string>
+    <string name="search_dest_profile_alias_3">statistiche</string>
+    <string name="search_dest_profile_alias_4">matricola</string>
+    <string name="search_dest_profile_alias_5">carriera</string>
+    <string name="search_dest_profile_alias_6">libretto</string>
+    <string name="search_dest_profile_alias_7">esami sostenuti</string>
+    <string name="search_dest_profile_alias_8">crediti</string>
+    <string name="search_dest_profile_alias_9">cfu</string>
+    <string name="search_dest_taxes_title">Tasse</string>
+    <string name="search_dest_taxes_subtitle">Servizi</string>
+    <string name="search_dest_taxes_alias_1">pagamenti</string>
+    <string name="search_dest_taxes_alias_2">pagopa</string>
+    <string name="search_dest_taxes_alias_3">bollettini</string>
+    <string name="search_dest_taxes_alias_4">rette</string>
+    <string name="search_dest_taxes_alias_5">fatture</string>
+    <string name="search_dest_exam_results_title">Esiti</string>
+    <string name="search_dest_exam_results_subtitle">Servizi</string>
+    <string name="search_dest_exam_results_alias_1">voti</string>
+    <string name="search_dest_exam_results_alias_2">risultati</string>
+    <string name="search_dest_exam_results_alias_3">valutazioni</string>
+    <string name="search_dest_exam_results_alias_4">esiti esami</string>
+    <string name="search_dest_booked_exams_title">Esami</string>
+    <string name="search_dest_booked_exams_subtitle">Servizi</string>
+    <string name="search_dest_booked_exams_alias_1">appelli</string>
+    <string name="search_dest_booked_exams_alias_2">prenotazioni esami</string>
+    <string name="search_dest_booked_exams_alias_3">prenota esame</string>
+    <string name="search_dest_booked_exams_alias_4">iscrizione esame</string>
+    <string name="search_dest_study_plan_title">Piano di Studi</string>
+    <string name="search_dest_study_plan_subtitle">Servizi</string>
+    <string name="search_dest_study_plan_alias_1">piano</string>
+    <string name="search_dest_study_plan_alias_2">piano carriera</string>
+    <string name="search_dest_study_plan_alias_3">piano di studio</string>
+    <string name="search_dest_attendance_title">Presenze</string>
+    <string name="search_dest_attendance_subtitle">Servizi</string>
+    <string name="search_dest_attendance_alias_1">frequenza</string>
+    <string name="search_dest_attendance_alias_2">frequenze</string>
+    <string name="search_dest_attendance_alias_3">presenza</string>
+    <string name="search_dest_questionnaires_title">Questionari</string>
+    <string name="search_dest_questionnaires_subtitle">Servizi</string>
+    <string name="search_dest_questionnaires_alias_1">questionario</string>
+    <string name="search_dest_questionnaires_alias_2">valutazione didattica</string>
+    <string name="search_dest_appointments_title">Appuntamenti</string>
+    <string name="search_dest_appointments_subtitle">Servizi</string>
+    <string name="search_dest_appointments_alias_1">appuntamento</string>
+    <string name="search_dest_appointments_alias_2">sportello</string>
+    <string name="search_dest_appointments_alias_3">prenotazione</string>
+    <string name="search_dest_appointments_alias_4">ritiro badge</string>
+    <string name="search_dest_appointments_alias_5">pergamena</string>
+    <string name="search_dest_enrollments_title">Iscrizioni</string>
+    <string name="search_dest_enrollments_subtitle">Servizi</string>
+    <string name="search_dest_enrollments_alias_1">iscrizione</string>
+    <string name="search_dest_enrollments_alias_2">rinnovo</string>
+    <string name="search_dest_enrollments_alias_3">rinnovo iscrizione</string>
+    <string name="search_dest_enrollments_alias_4">immatricolazione</string>
+    <string name="search_dest_titles_title">Titoli</string>
+    <string name="search_dest_titles_subtitle">Servizi</string>
+    <string name="search_dest_titles_alias_1">titoli di studio</string>
+    <string name="search_dest_titles_alias_2">maturità</string>
+    <string name="search_dest_titles_alias_3">diploma</string>
+    <string name="search_dest_certificates_title">Certificati</string>
+    <string name="search_dest_certificates_subtitle">Servizi</string>
+    <string name="search_dest_certificates_alias_1">certificato</string>
+    <string name="search_dest_certificates_alias_2">autodichiarazioni</string>
+    <string name="search_dest_certificates_alias_3">autocertificazione</string>
+    <string name="search_dest_library_title">Biblioteca</string>
+    <string name="search_dest_library_subtitle">Servizi</string>
+    <string name="search_dest_library_alias_1">biblioteche</string>
+    <string name="search_dest_library_alias_2">sala studio</string>
+    <string name="search_dest_library_alias_3">posto biblioteca</string>
+    <string name="search_dest_library_alias_4">posto studio</string>
+    <string name="search_dest_library_alias_5">affluences</string>
+    <string name="search_dest_refunds_title">Rimborsi</string>
+    <string name="search_dest_refunds_subtitle">Servizi</string>
+    <string name="search_dest_refunds_alias_1">rimborso</string>
+    <string name="search_dest_refunds_alias_2">restituzione</string>
+    <string name="search_dest_isee_title">ISEE</string>
+    <string name="search_dest_isee_subtitle">Servizi</string>
+    <string name="search_dest_isee_alias_1">isee</string>
+    <string name="search_dest_isee_alias_2">indicatore situazione economica</string>
+    <string name="search_dest_isee_alias_3">fascia</string>
+    <string name="search_dest_isee_alias_4">reddito</string>
+    <string name="search_dest_settings_title">Impostazioni</string>
+    <string name="search_dest_settings_alias_1">preferenze</string>
+    <string name="search_dest_settings_alias_2">opzioni</string>
+    <string name="search_dest_settings_alias_3">configurazione</string>
+    <string name="search_dest_settings_alias_4">settings</string>
+    <string name="search_dest_settings_appearance_title">Aspetto</string>
+    <string name="search_dest_settings_appearance_subtitle">Impostazioni</string>
+    <string name="search_dest_settings_appearance_alias_1">tema</string>
+    <string name="search_dest_settings_appearance_alias_2">colori</string>
+    <string name="search_dest_settings_appearance_alias_3">tema scuro</string>
+    <string name="search_dest_settings_appearance_alias_4">tema chiaro</string>
+    <string name="search_dest_settings_appearance_alias_5">dark mode</string>
+    <string name="search_dest_settings_appearance_alias_6">colore dinamico</string>
+    <string name="search_dest_settings_security_title">Sicurezza</string>
+    <string name="search_dest_settings_security_subtitle">Impostazioni</string>
+    <string name="search_dest_settings_security_alias_1">biometria</string>
+    <string name="search_dest_settings_security_alias_2">impronta</string>
+    <string name="search_dest_settings_security_alias_3">blocco</string>
+    <string name="search_dest_settings_security_alias_4">sblocco</string>
+    <string name="search_dest_settings_security_alias_5">fingerprint</string>
+    <string name="search_dest_settings_language_title">Lingua</string>
+    <string name="search_dest_settings_language_subtitle">Impostazioni</string>
+    <string name="search_dest_settings_language_alias_1">language</string>
+    <string name="search_dest_settings_language_alias_2">italiano</string>
+    <string name="search_dest_settings_language_alias_3">english</string>
+    <string name="search_dest_settings_language_alias_4">traduzione</string>
+    <string name="search_dest_settings_file_associations_title">Associazioni file</string>
+    <string name="search_dest_settings_file_associations_subtitle">Impostazioni</string>
+    <string name="search_dest_settings_file_associations_alias_1">apri con</string>
+    <string name="search_dest_settings_file_associations_alias_2">app predefinita</string>
+    <string name="search_dest_settings_file_associations_alias_3">file pdf</string>
+    <string name="search_dest_settings_file_associations_alias_4">lettore pdf</string>
+    <string name="search_dest_settings_licenses_title">Licenze</string>
+    <string name="search_dest_settings_licenses_subtitle">Impostazioni</string>
+    <string name="search_dest_settings_licenses_alias_1">open source</string>
+    <string name="search_dest_settings_licenses_alias_2">librerie</string>
+    <string name="search_dest_settings_licenses_alias_3">licenza</string>
+    <string name="search_dest_settings_app_info_title">Info app</string>
+    <string name="search_dest_settings_app_info_subtitle">Impostazioni</string>
+    <string name="search_dest_settings_app_info_alias_1">versione</string>
+    <string name="search_dest_settings_app_info_alias_2">informazioni</string>
+    <string name="search_dest_settings_app_info_alias_3">about</string>
+    <string name="search_dest_settings_app_info_alias_4">github</string>
+
+    <!-- Top bar -->
+    <string name="topbar_exam_detail">Dettaglio Esame</string>
+
+    <!-- Account / career -->
+    <string name="career_placeholder">Carriera n. %1$d</string>
+
+    <!-- Auth -->
+    <string name="auth_login_spid">Entra con SPID</string>
+    <string name="auth_login_cie">Entra con CIE</string>
+
+    <!-- E-Learning: course detail -->
+    <string name="catalog_add_course">Aggiungi corso</string>
+    <string name="course_detail_quiz_group_title">Quiz del corso</string>
+    <string name="course_detail_other_quizzes">Altri quiz</string>
+    <string name="announcements_title">✦ BACHECA AVVISI</string>
+    <string name="announcements_empty">Nessun avviso pubblicato finora</string>
+    <string name="announcements_latest">ULTIMO AVVISO</string>
+    <string name="continue_watching_go_to_lesson">Vai alla lezione</string>
+    <string name="course_hero_prof_prefix">Prof. %1$s</string>
+    <string name="sections_list_empty_section">Nessuna risorsa in questa sezione</string>
+    <string name="sections_list_no_resource">Nessuna risorsa</string>
+
+    <!-- Search: voice input -->
+    <string name="dictation_speak_now">Parla ora…</string>
+
+    <!-- Settings -->
+    <string name="app_info_logo_content_description">Logo MyBicocca</string>
+    <string name="settings_security_minutes_format">%1$d min</string>
+
+    <!-- Profile -->
+    <string name="profile_no_active_badge">Nessun badge attivo</string>
+
+    <!-- Registry: labels and counters -->
+    <string name="registry_gdpr_prefix">"Ho letto "</string>
+    <string name="registry_gdpr_policy_link">l\'informativa</string>
+    <string name="registry_gdpr_suffix">" sul trattamento dei dati personali"</string>
+    <string name="registry_attendance_one_to_attend">1 corso da frequentare</string>
+    <string name="registry_attendance_many_to_attend">%1$d corsi da frequentare</string>
+    <string name="registry_attendance_no_records">Nessuna rilevazione presenze</string>
+    <string name="registry_tab_lezioni">Lezioni</string>
+    <string name="registry_tab_sessioni">Sessioni</string>
+    <string name="registry_caption_frequenza">frequenza</string>
+    <string name="registry_footnote_minimum">minimo %1$d%%</string>
+    <string name="registry_caption_recorded">sulle registrate</string>
+    <string name="registry_presence_one">1 presenza</string>
+    <string name="registry_presence_many">%1$d presenze</string>
+    <string name="registry_students_count">%1$d studenti</string>
+    <string name="registry_exam_written">Esame scritto</string>
+    <string name="registry_exam_oral">Esame orale</string>
+    <string name="registry_exam_joint">Esame unico</string>
+    <string name="registry_exam_call">Appello d\'esame</string>
+    <string name="registry_calls_one">1 appello</string>
+    <string name="registry_calls_many">%1$d appelli</string>
+    <string name="registry_exams_one">1 esame</string>
+    <string name="registry_exams_many">%1$d esami</string>
+    <string name="registry_window_range">Dal %1$s al %2$s</string>
+    <string name="registry_window_opens">Apertura %1$s</string>
+    <string name="registry_window_closes">Chiusura %1$s</string>
+    <string name="registry_time_at">ore %1$s</string>
+    <string name="registry_digital_signature">Firma digitale</string>
+    <string name="registry_enrollments_one_year">1 anno accademico</string>
+    <string name="registry_enrollments_many_years">%1$d anni accademici</string>
+    <string name="registry_enrollments_duration_years">%1$d anni</string>
+    <string name="registry_isee_detail_title">Anno accademico %1$s</string>
+    <string name="registry_isee_default_subtitle">Indicatore situazione economica</string>
+    <string name="registry_refund_one">1 rimborso</string>
+    <string name="registry_refund_many">%1$d rimborsi</string>
+    <string name="registry_refund_pending_suffix">%1$s · %2$d in lavorazione</string>
+    <string name="registry_refund_fallback_title">Rimborso</string>
+    <string name="registry_refund_academic_year_subtitle">Anno accademico %1$s</string>
+    <string name="registry_refund_details_subtitle">Dettagli rimborso</string>
+    <string name="registry_taxes_due_subtitle">%1$s da pagare</string>
+    <string name="registry_taxes_one_invoice">1 fattura</string>
+    <string name="registry_taxes_many_invoices">%1$d fatture</string>
 </resources>

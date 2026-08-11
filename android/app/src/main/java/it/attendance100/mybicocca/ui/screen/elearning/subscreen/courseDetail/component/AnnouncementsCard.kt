@@ -35,6 +35,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import it.attendance100.mybicocca.R
+import it.attendance100.mybicocca.core.os.currentLocale
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.domain.model.elearning.forum.Discussion
 import it.attendance100.mybicocca.domain.model.elearning.forum.Forum
@@ -89,7 +90,7 @@ fun AnnouncementsCard(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = "✦ BACHECA AVVISI",
+                            text = stringResource(R.string.announcements_title),
                             color = scheme.tertiary,
                             fontSize = 10.sp,
                             fontWeight = FontWeight.Bold,
@@ -141,7 +142,7 @@ fun AnnouncementsCard(
                             )
                         } else {
                             Text(
-                                text = "Nessun avviso pubblicato finora",
+                                text = stringResource(R.string.announcements_empty),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = scheme.onTertiaryContainer.copy(alpha = 0.7f),
                                 fontStyle = FontStyle.Italic,
@@ -174,7 +175,7 @@ private fun LatestAnnouncementBlock(
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
             ) {
                 Text(
-                    text = "ULTIMO AVVISO",
+                    text = stringResource(R.string.announcements_latest),
                     color = scheme.tertiary,
                     fontSize = 9.sp,
                     fontWeight = FontWeight.Bold,
@@ -183,7 +184,7 @@ private fun LatestAnnouncementBlock(
                 val time = announcement.timeModified ?: announcement.createdAt
                 if (time != null) {
                     Text(
-                        text = "· ${relativeTimeLabel(time)}",
+                        text = "· ${relativeTimeLabel(time, locale = currentLocale()).asString()}",
                         color = scheme.onTertiaryContainer.copy(alpha = 0.65f),
                         fontSize = 9.sp,
                         fontWeight = FontWeight.SemiBold,
@@ -251,11 +252,23 @@ private fun LatestAnnouncementPlaceholder() {
         modifier = Modifier.fillMaxWidth(),
     ) {
         Column(modifier = Modifier.padding(14.dp)) {
-            ShimmerBox(modifier = Modifier.width(90.dp).height(10.dp))
+            ShimmerBox(
+                modifier = Modifier
+                    .width(90.dp)
+                    .height(10.dp)
+            )
             Spacer(Modifier.height(10.dp))
-            ShimmerBox(modifier = Modifier.fillMaxWidth(0.85f).height(16.dp))
+            ShimmerBox(
+                modifier = Modifier
+                    .fillMaxWidth(0.85f)
+                    .height(16.dp)
+            )
             Spacer(Modifier.height(8.dp))
-            ShimmerBox(modifier = Modifier.fillMaxWidth(0.6f).height(12.dp))
+            ShimmerBox(
+                modifier = Modifier
+                    .fillMaxWidth(0.6f)
+                    .height(12.dp)
+            )
         }
     }
 }

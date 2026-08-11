@@ -5,6 +5,8 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import it.attendance100.mybicocca.R
+import it.attendance100.mybicocca.core.text.StringResolver
 import it.attendance100.mybicocca.data.auth.SessionManager
 import it.attendance100.mybicocca.data.local.tax.IseeDeclarationEntity
 import it.attendance100.mybicocca.data.local.tax.RefundEntity
@@ -47,6 +49,10 @@ class TaxRepositoryImplTest {
     private val account: Account = RepositoryTestFixtures.account()
     private val personId: Long = account.academic.personId
 
+    private val stringResolver = mockk<StringResolver>(relaxed = true) {
+        every { getString(R.string.tax_pagopa_no_link) } returns "Impossibile recuperare il link pagoPA."
+        every { getString(any()) } returns "Impossibile recuperare il link pagoPA."
+    }
     private val sessionManager = mockk<SessionManager>(relaxed = true)
     private val esse3 = mockk<Esse3Api>(relaxed = true)
     private val dao = mockk<TaxCacheDao>(relaxed = true)
@@ -54,7 +60,7 @@ class TaxRepositoryImplTest {
     private fun newRepository(): TaxRepositoryImpl {
         every { sessionManager.activeAccount } returns MutableStateFlow(account)
         coEvery { sessionManager.esse3() } returns esse3
-        return TaxRepositoryImpl(sessionManager, dao)
+        return TaxRepositoryImpl(stringResolver, sessionManager, dao)
     }
 
     private fun invoiceEntity(invoiceId: Long, order: Int) = TaxInvoiceEntity(
@@ -314,6 +320,7 @@ class TaxRepositoryImplTest {
 
     @Test
     fun `startPagoPaPayment blank redirect url raises a descriptive error`() = runTest {
+        every { stringResolver.getString(R.string.tax_pagopa_no_link) } returns "Impossibile recuperare il link pagoPA."
         val repository = newRepository()
         coEvery {
             esse3.tuitionFees.postInitPagoPaTransaction(body = any())

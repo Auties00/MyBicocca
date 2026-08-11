@@ -30,6 +30,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
@@ -40,6 +41,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.release.BulletItem
 import it.attendance100.mybicocca.core.release.CalloutKind
 import it.attendance100.mybicocca.core.release.ReleaseBlock
@@ -61,12 +63,16 @@ fun ReleaseNotesView(
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(10.dp)) {
         notes.blocks.forEachIndexed { index, block ->
             when (block) {
-                is ReleaseBlock.Heading -> Text(
-                    text = remember(block.text, styles) { buildInlineNotes(block.text, styles) },
-                    style = headingStyle(block.level),
-                    color = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.padding(top = if (index == 0) 0.dp else 4.dp),
-                )
+                is ReleaseBlock.Heading -> {
+                    val rawText =
+                        if (block.isOtherChanges) stringResource(R.string.release_other_changes) else block.text
+                    Text(
+                        text = remember(rawText, styles) { buildInlineNotes(rawText, styles) },
+                        style = headingStyle(block.level),
+                        color = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.padding(top = if (index == 0) 0.dp else 4.dp),
+                    )
+                }
 
                 is ReleaseBlock.Paragraph -> Text(
                     text = remember(block.text, styles) { buildInlineNotes(block.text, styles) },

@@ -63,6 +63,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
@@ -127,18 +128,21 @@ fun StudyPlanEditPage(
     val syncStatus by viewModel.syncStatus.collectAsStateWithLifecycle()
     val currentSegment by viewModel.currentSegment.collectAsStateWithLifecycle()
     val submitting by viewModel.submitting.collectAsStateWithLifecycle()
+    val context = LocalContext.current
 
     LaunchedEffect(viewModel) {
         viewModel.events.collectLatest { event ->
             when (event) {
-                is StudyPlanEditEvent.Submitted -> onSubmitted(event.message)
+                is StudyPlanEditEvent.Submitted -> onSubmitted(event.message.asString(context))
             }
         }
     }
 
     LaunchedEffect(viewModel) {
         viewModel.submitError.collectLatest { message ->
-            if (message != null) onSubmitFailed(message)
+            if (message != null) {
+                onSubmitFailed(message.asString(context)); viewModel.clearSubmitError()
+            }
         }
     }
 

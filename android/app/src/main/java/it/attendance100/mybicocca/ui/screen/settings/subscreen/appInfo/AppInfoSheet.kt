@@ -133,7 +133,6 @@ private val CREDITS = listOf(
  * to date; an "Update available" tile that opens the store-aware page once a newer release is
  * known), the "What's New" navigation tile, the "GitHub" Custom Tab link, and the credits.
  */
-@Suppress("AssignedValueIsNeverRead")
 @SuppressLint("ConfigurationScreenWidthHeight")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -347,7 +346,7 @@ private fun AboutScene(
             Spacer(Modifier.height(8.dp))
             Image(
                 painter = painterResource(R.drawable.logo),
-                contentDescription = "Logo MyBicocca",
+                contentDescription = stringResource(R.string.app_info_logo_content_description),
                 modifier = Modifier.size(168.dp),
             )
             MyBicoccaWordmark(

@@ -1,14 +1,13 @@
 package it.attendance100.mybicocca.ui.screen.registry.subscreen.studyPlan
 
-import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.SyncStatus
 import it.attendance100.mybicocca.core.state.valueOrNull
+import it.attendance100.mybicocca.core.text.UiText
 import it.attendance100.mybicocca.domain.model.career.CareerId
 import it.attendance100.mybicocca.domain.model.studyplan.StudyPath
 import it.attendance100.mybicocca.domain.model.studyplan.StudyPlan
@@ -51,7 +50,7 @@ import kotlin.coroutines.cancellation.CancellationException
  */
 @HiltViewModel
 class StudyPlanViewModel @Inject constructor(
-    @ApplicationContext private val appContext: Context,
+
     private val getStudyPlan: GetStudyPlanUseCase,
     private val getStudyPath: GetStudyPathUseCase,
     private val getStudyPlanPrint: GetStudyPlanPrintUseCase,
@@ -118,9 +117,9 @@ class StudyPlanViewModel @Inject constructor(
                 _events.send(StudyPlanEvent.OpenPdf(bytes, "piano_di_studi_$planId.pdf"))
             } catch (e: CancellationException) {
                 throw e
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 _events.send(
-                    StudyPlanEvent.ShowMessage(appContext.getString(R.string.studyplan_print_unavailable)),
+                    StudyPlanEvent.ShowMessage(UiText.StringResource(R.string.studyplan_print_unavailable)),
                 )
             } finally {
                 _actionInProgress.value = false

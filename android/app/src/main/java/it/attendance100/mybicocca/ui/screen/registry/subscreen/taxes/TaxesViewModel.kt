@@ -1,14 +1,13 @@
 package it.attendance100.mybicocca.ui.screen.registry.subscreen.taxes
 
-import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.SyncStatus
 import it.attendance100.mybicocca.core.state.valueOrNull
+import it.attendance100.mybicocca.core.text.UiText
 import it.attendance100.mybicocca.domain.model.career.CareerId
 import it.attendance100.mybicocca.domain.model.tax.InvoiceId
 import it.attendance100.mybicocca.domain.model.tax.IseeDeclaration
@@ -54,7 +53,6 @@ import kotlin.coroutines.cancellation.CancellationException
  */
 @HiltViewModel
 class TaxesViewModel @Inject constructor(
-    @ApplicationContext private val appContext: Context,
     private val getTaxInvoices: GetTaxInvoicesUseCase,
     private val getIseeDeclarations: GetIseeDeclarationsUseCase,
     private val startPagoPaPayment: StartPagoPaPaymentUseCase,
@@ -147,19 +145,20 @@ class TaxesViewModel @Inject constructor(
 
     fun checkPaymentStatus(invoiceId: InvoiceId) = invoiceAction { careerId ->
         val status = getPaymentStatus(careerId, invoiceId)
-        _events.send(TaxEvent.ShowMessage(status.toStatusMessage(appContext)))
+        _events.send(TaxEvent.ShowMessage(status.toStatusMessage()))
     }
 
     private fun invoiceAction(block: suspend (CareerId) -> Unit) {
         val careerId = activeCareerId.value ?: return
+        if (_actionInProgress.value) return
+        _actionInProgress.value = true
         viewModelScope.launch {
-            _actionInProgress.value = true
             try {
                 block(careerId)
             } catch (e: CancellationException) {
                 throw e
-            } catch (e: Exception) {
-                _events.send(TaxEvent.ShowMessage(e.message ?: "Operazione non disponibile."))
+            } catch (_: Exception) {
+                _events.send(TaxEvent.ShowMessage(UiText.StringResource(R.string.taxes_operation_unavailable)))
             } finally {
                 _actionInProgress.value = false
             }
@@ -171,19 +170,26 @@ class TaxesViewModel @Inject constructor(
     }
 }
 
-private fun PaymentStatus?.toStatusMessage(context: Context): String {
-    if (this == null) return context.getString(R.string.taxes_no_pagopa_transaction)
-    val locale = context.resources.configuration.locales.get(0) ?: Locale.getDefault()
-    val paymentDateFormat = DateTimeFormatter.ofPattern("d MMMM yyyy", locale)
-    val head = when (outcome) {
-        PaymentOutcome.Completed -> context.getString(R.string.taxes_payment_completed)
-        PaymentOutcome.Pending -> context.getString(R.string.taxes_payment_pending)
-        PaymentOutcome.Failed -> context.getString(R.string.taxes_payment_failed)
-        PaymentOutcome.Unknown -> description ?: context.getString(R.string.taxes_payment_status_unavailable)
+private fun PaymentStatus?.toStatusMessage(): UiText {
+    if (this == null) return UiText.StringResource(R.string.taxes_no_pagopa_transaction)
+    val headUiText: UiText = when (outcome) {
+        PaymentOutcome.Completed -> UiText.StringResource(R.string.taxes_payment_completed)
+        PaymentOutcome.Pending -> UiText.StringResource(R.string.taxes_payment_pending)
+        PaymentOutcome.Failed -> UiText.StringResource(R.string.taxes_payment_failed)
+        PaymentOutcome.Unknown -> description?.let { UiText.DynamicString(it) }
+            ?: UiText.StringResource(R.string.taxes_payment_status_unavailable)
     }
+    val paymentDateFormat = DateTimeFormatter.ofPattern("d MMMM yyyy", Locale.getDefault())
     val details = buildList {
         paymentDate?.let { add(it.format(paymentDateFormat)) }
-        paidAmount?.takeIf { it > 0 }?.let { add("€ %.2f".format(locale, it)) }
+        paidAmount?.takeIf { it > 0 }?.let { add("€ %.2f".format(Locale.getDefault(), it)) }
     }
-    return if (details.isEmpty()) head else "$head · ${details.joinToString(" · ")}"
+    return if (details.isEmpty()) {
+        headUiText
+    } else {
+        UiText.Composite(
+            items = listOf(headUiText, UiText.DynamicString(details.joinToString(" · "))),
+            separator = " · ",
+        )
+    }
 }

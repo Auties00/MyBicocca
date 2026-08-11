@@ -5,6 +5,8 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import it.attendance100.mybicocca.R
+import it.attendance100.mybicocca.core.text.UiText
 import it.attendance100.mybicocca.data.auth.ElearningSession
 import it.attendance100.mybicocca.data.auth.SessionManager
 import it.attendance100.mybicocca.data.local.settings.DeviceIdentityStore
@@ -65,7 +67,8 @@ class AttendanceRepositoryImplTest {
         val outcome = repository.registerPresence(PresenceScan.Unrecognized("garbage"), careerId)
 
         assertThat(outcome).isInstanceOf(PresenceMarkOutcome.Failed::class.java)
-        assertThat(outcome.message).isEqualTo("Codice non riconosciuto")
+        assertThat((outcome.message as UiText.StringResource).resId)
+            .isEqualTo(R.string.attendance_msg_code_unrecognized)
     }
 
     @Test
@@ -75,7 +78,8 @@ class AttendanceRepositoryImplTest {
         val outcome = repository.registerPresence(PresenceScan.LessonCode("L123"), careerId)
 
         assertThat(outcome).isInstanceOf(PresenceMarkOutcome.Failed::class.java)
-        assertThat(outcome.message).isEqualTo("Matricola non disponibile")
+        assertThat((outcome.message as UiText.StringResource).resId)
+            .isEqualTo(R.string.attendance_msg_student_number_unavailable)
     }
 
     @Test
@@ -96,6 +100,7 @@ class AttendanceRepositoryImplTest {
         val outcome = repository.markSession(module(), sessionId = "s1", statusId = null, password = null)
 
         assertThat(outcome).isInstanceOf(PresenceMarkOutcome.Failed::class.java)
-        assertThat(outcome.message).isEqualTo("Registrazione non riuscita")
+        assertThat((outcome.message as UiText.StringResource).resId)
+            .isEqualTo(R.string.attendance_msg_failed)
     }
 }

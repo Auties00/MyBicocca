@@ -85,12 +85,21 @@ fun RefundsListPage(
     )
 }
 
-/** "3 refunds · 2 processing" — count line in place of a sub-page title. */
+/** "3 rimborsi · 2 in lavorazione" — count line in place of a sub-page title. */
+@Composable
 fun refundsHeaderSubtitle(refunds: List<Refund>): String? {
     if (refunds.isEmpty()) return null
-    val total = if (refunds.size == 1) "1 refund" else "${refunds.size} refunds"
+    val total =
+        if (refunds.size == 1) stringResource(R.string.registry_refund_one) else stringResource(
+            R.string.registry_refund_many,
+            refunds.size
+        )
     val pending = refunds.count { !it.refunded }
-    return if (pending == 0) total else "$total · $pending processing"
+    return if (pending == 0) total else stringResource(
+        R.string.registry_refund_pending_suffix,
+        total,
+        pending
+    )
 }
 
 /**
@@ -442,7 +451,11 @@ private fun Refund.academicYearLabel(): String? =
  * pinned header in MainShell.
  */
 @Composable
-fun refundHeaderTitle(refund: Refund): String = refund.amount?.let { formatEuro(it) } ?: "Refund"
+fun refundHeaderTitle(refund: Refund): String = refund.amount?.let { formatEuro(it) }
+    ?: stringResource(R.string.registry_refund_fallback_title)
 
+@Composable
 fun refundHeaderSubtitle(refund: Refund): String =
-    refund.academicYearLabel()?.let { "Academic Year $it" } ?: "Refund Details"
+    refund.academicYearLabel()
+        ?.let { stringResource(R.string.registry_refund_academic_year_subtitle, it) }
+        ?: stringResource(R.string.registry_refund_details_subtitle)

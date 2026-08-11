@@ -1,6 +1,8 @@
 package it.attendance100.mybicocca.data.mapper.attendance
 
 import com.google.common.truth.Truth.assertThat
+import it.attendance100.mybicocca.R
+import it.attendance100.mybicocca.core.text.UiText
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffAttendanceRecord
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffAttendanceStatus
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffCertifyAttendanceResult
@@ -83,7 +85,7 @@ class AttendanceMapperTest {
         val outcome = ElearningAttendanceMarkResult.Marked("Presente").toOutcome()
         assertThat(outcome).isInstanceOf(PresenceMarkOutcome.Recorded::class.java)
         outcome as PresenceMarkOutcome.Recorded
-        assertThat(outcome.message).isEqualTo("Presenza registrata")
+        assertThat(outcome.message).isEqualTo(UiText.StringResource(R.string.attendance_msg_recorded))
         assertThat(outcome.statusDescription).isEqualTo("Presente")
     }
 
@@ -91,74 +93,77 @@ class AttendanceMapperTest {
     fun `mark result AlreadyMarked becomes AlreadyRecorded`() {
         val outcome = ElearningAttendanceMarkResult.AlreadyMarked.toOutcome()
         assertThat(outcome).isInstanceOf(PresenceMarkOutcome.AlreadyRecorded::class.java)
-        assertThat(outcome.message).isEqualTo("Presenza già registrata")
+        assertThat(outcome.message).isEqualTo(UiText.StringResource(R.string.attendance_msg_already_recorded))
     }
 
     @Test
     fun `mark result WrongPassword becomes WrongCredential`() {
         val outcome = ElearningAttendanceMarkResult.WrongPassword.toOutcome()
         assertThat(outcome).isInstanceOf(PresenceMarkOutcome.WrongCredential::class.java)
-        assertThat(outcome.message).isEqualTo("Password o codice non corretti")
+        assertThat(outcome.message).isEqualTo(UiText.StringResource(R.string.attendance_msg_wrong_credential))
     }
 
     @Test
     fun `mark result NotOpen subnetwrong explains the classroom network requirement`() {
         val outcome = ElearningAttendanceMarkResult.NotOpen("subnetwrong").toOutcome()
-        assertThat(outcome).isInstanceOf(PresenceMarkOutcome.NotOpen::class.java)
-        assertThat(outcome.message)
-            .isEqualTo("Devi essere connesso alla rete dell'aula per registrare la presenza")
+        assertThat(outcome).isInstanceOf(PresenceMarkOutcome.NetworkRestricted::class.java)
+        assertThat(outcome.message).isEqualTo(UiText.StringResource(R.string.attendance_msg_network_wrong))
     }
 
     @Test
     fun `mark result NotOpen preventsharederror explains the network already recorded`() {
         val outcome = ElearningAttendanceMarkResult.NotOpen("preventsharederror").toOutcome()
-        assertThat(outcome.message).isEqualTo("Una presenza è già stata registrata da questa rete")
+        assertThat(outcome).isInstanceOf(PresenceMarkOutcome.DeviceAlreadyUsed::class.java)
+        assertThat(outcome.message).isEqualTo(UiText.StringResource(R.string.attendance_msg_network_prevent_shared))
     }
 
     @Test
     fun `mark result NotOpen with an unknown reason uses the generic copy`() {
         val outcome = ElearningAttendanceMarkResult.NotOpen("closed").toOutcome()
-        assertThat(outcome.message).isEqualTo("La sessione non è più disponibile")
+        assertThat(outcome).isInstanceOf(PresenceMarkOutcome.NotOpen::class.java)
+        assertThat(outcome.message).isEqualTo(UiText.StringResource(R.string.attendance_msg_session_closed))
     }
 
     @Test
     fun `mark result NotOpen with a null reason uses the generic copy`() {
         val outcome = ElearningAttendanceMarkResult.NotOpen(null).toOutcome()
-        assertThat(outcome.message).isEqualTo("La sessione non è più disponibile")
+        assertThat(outcome).isInstanceOf(PresenceMarkOutcome.NotOpen::class.java)
+        assertThat(outcome.message).isEqualTo(UiText.StringResource(R.string.attendance_msg_session_closed))
     }
 
     @Test
     fun `mark result Failed becomes Failed`() {
         val outcome = ElearningAttendanceMarkResult.Failed("template").toOutcome()
         assertThat(outcome).isInstanceOf(PresenceMarkOutcome.Failed::class.java)
-        assertThat(outcome.message).isEqualTo("Registrazione non riuscita")
+        assertThat(outcome.message).isEqualTo(UiText.StringResource(R.string.attendance_msg_failed))
     }
 
     @Test
     fun `certify success returns Recorded with the backend message`() {
         val outcome = EasyStaffCertifyAttendanceResult(success = true, message = "Presenza confermata").toOutcome()
         assertThat(outcome).isInstanceOf(PresenceMarkOutcome.Recorded::class.java)
-        assertThat(outcome.message).isEqualTo("Presenza confermata")
+        assertThat(outcome.message).isEqualTo(UiText.DynamicString("Presenza confermata"))
     }
 
     @Test
     fun `certify success with a blank message falls back to default copy`() {
         val outcome = EasyStaffCertifyAttendanceResult(success = true, message = "").toOutcome()
-        assertThat(outcome.message).isEqualTo("Presenza registrata")
+        assertThat(outcome).isInstanceOf(PresenceMarkOutcome.Recorded::class.java)
+        assertThat(outcome.message).isEqualTo(UiText.StringResource(R.string.attendance_msg_recorded))
     }
 
     @Test
     fun `certify failure mentioning codice classifies as wrong credential`() {
         val outcome = EasyStaffCertifyAttendanceResult(success = false, message = "Codice lezione errato").toOutcome()
         assertThat(outcome).isInstanceOf(PresenceMarkOutcome.WrongCredential::class.java)
-        assertThat(outcome.message).isEqualTo("Codice lezione errato")
+        assertThat(outcome.message).isEqualTo(UiText.DynamicString("Codice lezione errato"))
     }
 
     @Test
     fun `certify other failure classifies as failed with fallback copy`() {
         val outcome = EasyStaffCertifyAttendanceResult(success = false, message = "").toOutcome()
         assertThat(outcome).isInstanceOf(PresenceMarkOutcome.Failed::class.java)
-        assertThat(outcome.message).isEqualTo("Registrazione non riuscita")
+        assertThat(outcome.message).isEqualTo(UiText.StringResource(R.string.attendance_msg_failed))
     }
 
     private fun record(state: EasyStaffAttendanceStatus) = EasyStaffAttendanceRecord(

@@ -7,7 +7,6 @@ import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
-import it.attendance100.mybicocca.testing.MainDispatcherRule
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.SyncStatus
 import it.attendance100.mybicocca.domain.model.account.AcademicIdentity
@@ -28,6 +27,7 @@ import it.attendance100.mybicocca.domain.usecase.attendance.GetPendingAttendance
 import it.attendance100.mybicocca.domain.usecase.attendance.MarkPresenceUseCase
 import it.attendance100.mybicocca.domain.usecase.attendance.ObservePendingPresenceScanUseCase
 import it.attendance100.mybicocca.domain.usecase.attendance.ParsePresenceScanUseCase
+import it.attendance100.mybicocca.testing.MainDispatcherRule
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.attendance.state.AttendanceEvent
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.attendance.state.MarkUiState
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -122,7 +122,7 @@ class AttendanceViewModelTest {
 
     @Test
     fun `submitScan moves markState Idle to Done with the outcome`() = runTest {
-        val recorded = PresenceMarkOutcome.Recorded("Presenza registrata")
+        val recorded = PresenceMarkOutcome.Recorded(statusDescription = null)
         val scan = PresenceScan.LessonCode("ABC")
         every { parseScan("ABC") } returns scan
         coEvery { markPresence(scan, careerId) } returns recorded
@@ -140,7 +140,9 @@ class AttendanceViewModelTest {
     fun `recorded outcome triggers an extra course refresh`() = runTest {
         val scan = PresenceScan.LessonCode("ABC")
         every { parseScan("ABC") } returns scan
-        coEvery { markPresence(scan, careerId) } returns PresenceMarkOutcome.Recorded("ok")
+        coEvery { markPresence(scan, careerId) } returns PresenceMarkOutcome.Recorded(
+            statusDescription = "ok"
+        )
         coEvery { getPendingCourses(careerId) } returns emptyList()
         val vm = viewModel()
 
@@ -153,7 +155,7 @@ class AttendanceViewModelTest {
     fun `failed outcome does not trigger a course refresh`() = runTest {
         val scan = PresenceScan.LessonCode("ABC")
         every { parseScan("ABC") } returns scan
-        coEvery { markPresence(scan, careerId) } returns PresenceMarkOutcome.WrongCredential("no")
+        coEvery { markPresence(scan, careerId) } returns PresenceMarkOutcome.WrongCredential()
         coEvery { getPendingCourses(careerId) } returns emptyList()
         val vm = viewModel()
 
@@ -178,7 +180,7 @@ class AttendanceViewModelTest {
     fun `resetMarkState returns the mark flow to Idle`() = runTest {
         val scan = PresenceScan.LessonCode("ABC")
         every { parseScan("ABC") } returns scan
-        coEvery { markPresence(scan, careerId) } returns PresenceMarkOutcome.NotOpen("closed")
+        coEvery { markPresence(scan, careerId) } returns PresenceMarkOutcome.NotOpen()
         coEvery { getPendingCourses(careerId) } returns emptyList()
         val vm = viewModel()
         vm.submitScan("ABC")
@@ -193,7 +195,9 @@ class AttendanceViewModelTest {
         val scanFlow = MutableStateFlow<String?>(null)
         val parsed = PresenceScan.SessionLink("99", "qr")
         every { parseScan("raw-link") } returns parsed
-        coEvery { markPresence(parsed, careerId) } returns PresenceMarkOutcome.Recorded("ok")
+        coEvery { markPresence(parsed, careerId) } returns PresenceMarkOutcome.Recorded(
+            statusDescription = "ok"
+        )
         coEvery { getPendingCourses(careerId) } returns emptyList()
         val vm = viewModel(scanFlow = scanFlow)
 

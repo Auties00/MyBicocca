@@ -73,8 +73,8 @@ import androidx.compose.ui.unit.lerp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import it.attendance100.mybicocca.R
-import it.attendance100.mybicocca.ui.component.brand.MyBicoccaWordmark
 import it.attendance100.mybicocca.core.os.rememberHapticManager
+import it.attendance100.mybicocca.ui.component.brand.MyBicoccaWordmark
 import it.attendance100.mybicocca.ui.theme.BicoccaTheme
 import java.io.File
 import kotlin.coroutines.cancellation.CancellationException
@@ -155,7 +155,6 @@ private fun MorphIcon(
  *   background always returns as the progress collapses, so the morph back to a tab page is
  *   unaffected.
  */
-@Suppress("AssignedValueIsNeverRead")
 @Composable
 fun MyBicoccaTopBar(
     navProgress: FloatState,
@@ -653,7 +652,7 @@ private fun MyBicoccaTopBarSubPagePreview() {
             navProgress = remember { mutableFloatStateOf(1f) },
             searchProgress = remember { Animatable(0f) },
             canNavigateBack = true,
-            subPageTitle = "Dettaglio Esame",
+            subPageTitle = stringResource(R.string.topbar_exam_detail),
             searchState = TopBarSearchState(
                 query = "",
                 active = false,

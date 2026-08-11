@@ -74,7 +74,6 @@ import kotlinx.coroutines.launch
  * the tax feature), so a re-open shows the cached snapshot instantly while a background
  * refresh runs.
  */
-@Suppress("AssignedValueIsNeverRead")
 @Composable
 fun TaxesPage(
     viewModel: TaxesViewModel,
@@ -291,8 +290,11 @@ fun taxesHeaderSubtitle(invoices: List<TaxInvoice>): String? {
     val due = invoices
         .filter { it.status == TaxStatus.PENDING || it.status == TaxStatus.EXPIRED }
         .sumOf { it.amount }
-    if (due > 0.0) return "${formatEuro(due)} da pagare"
-    return if (invoices.size == 1) "1 fattura" else "${invoices.size} fatture"
+    if (due > 0.0) return stringResource(R.string.registry_taxes_due_subtitle, formatEuro(due))
+    return if (invoices.size == 1) stringResource(R.string.registry_taxes_one_invoice) else stringResource(
+        R.string.registry_taxes_many_invoices,
+        invoices.size
+    )
 }
 
 private fun TaxFilter.emptyIcon(): ImageVector = when (this) {
@@ -300,12 +302,14 @@ private fun TaxFilter.emptyIcon(): ImageVector = when (this) {
     TaxFilter.Paid -> Icons.AutoMirrored.Outlined.ReceiptLong
 }
 
+@Composable
 private fun TaxFilter.emptyTitle(): String = when (this) {
-    TaxFilter.ToPay -> "Nessuna tassa da pagare"
-    TaxFilter.Paid -> "Nessuna tassa pagata"
+    TaxFilter.ToPay -> stringResource(R.string.taxes_empty_title_to_pay)
+    TaxFilter.Paid -> stringResource(R.string.taxes_empty_title_paid)
 }
 
+@Composable
 private fun TaxFilter.emptyBody(): String = when (this) {
-    TaxFilter.ToPay -> "Non hai pagamenti in sospeso."
-    TaxFilter.Paid -> "Non risultano fatture pagate."
+    TaxFilter.ToPay -> stringResource(R.string.taxes_empty_body_to_pay)
+    TaxFilter.Paid -> stringResource(R.string.taxes_empty_body_paid)
 }

@@ -495,12 +495,14 @@ private fun IseeDeclaration.academicYearLabel(): String =
 private fun academicYearLabel(year: Long): String = "$year/${"%02d".format((year + 1) % 100)}"
 
 /** Detail header title, exposed for the sheet entry's pinned header in MainShell. */
+@Composable
 fun iseeDetailTitle(declaration: IseeDeclaration): String =
-    "Anno accademico ${declaration.academicYearLabel()}"
+    stringResource(R.string.registry_isee_detail_title, declaration.academicYearLabel())
 
 /** Detail header subtitle, exposed for the sheet entry's pinned header in MainShell. */
+@Composable
 fun iseeDetailSubtitle(declaration: IseeDeclaration): String =
-    declaration.courseDescription ?: "Indicatore situazione economica"
+    declaration.courseDescription ?: stringResource(R.string.registry_isee_default_subtitle)
 
 private fun Context.openUrl(url: String) {
     runCatching {

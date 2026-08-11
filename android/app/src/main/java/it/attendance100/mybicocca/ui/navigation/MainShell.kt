@@ -223,6 +223,7 @@ fun MainShell(
     val strShellCareerMissing = stringResource(R.string.shell_career_missing)
     val strShellNewCareerAvailable = stringResource(R.string.shell_new_career_available)
     val strShellCareerEnded = stringResource(R.string.shell_career_ended)
+    val strShellSignOutFailed = stringResource(R.string.shell_signout_failed)
 
     /**
      * Source of truth for the selected tab. One pager hosts all four tabs and keeps them composed
@@ -542,6 +543,11 @@ fun MainShell(
 
                 is AccountEvent.SelectedCareerMissing -> snackbarController.showInfo(
                     strShellCareerMissing
+                )
+
+                is AccountEvent.SignOutFailed -> snackbarController.showError(
+                    strShellSignOutFailed,
+                    event.error
                 )
 
                 is AccountEvent.Switched -> Unit
@@ -1079,7 +1085,7 @@ fun MainShell(
                                             SheetHeaderSpec(
                                                 title = stringResource(R.string.registry_refunds),
                                                 subtitle = refunds.valueOrNull()
-                                                    ?.let(::refundsHeaderSubtitle),
+                                                    ?.let { refundsHeaderSubtitle(it) },
                                             )
                                         },
                                     ) {

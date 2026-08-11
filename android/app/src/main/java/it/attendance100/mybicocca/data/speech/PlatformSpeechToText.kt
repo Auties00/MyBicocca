@@ -34,7 +34,7 @@ class PlatformSpeechToText @Inject constructor(
 
     override fun dictate(): Flow<DictationEvent> = callbackFlow {
         if (!SpeechRecognizer.isRecognitionAvailable(context)) {
-            close(IllegalStateException("Riconoscimento vocale non disponibile"))
+            close(IllegalStateException(context.getString(it.attendance100.mybicocca.R.string.speech_recognition_unavailable)))
             return@callbackFlow
         }
         val recognizer = SpeechRecognizer.createSpeechRecognizer(context)

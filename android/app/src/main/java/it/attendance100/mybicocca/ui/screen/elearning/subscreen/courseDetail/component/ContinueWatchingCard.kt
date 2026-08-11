@@ -47,6 +47,7 @@ import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -55,6 +56,7 @@ import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImagePainter
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.ui.component.shape.OrganicShapes
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.courseDetail.state.ContinuePlayable
@@ -366,7 +368,7 @@ private fun ActionRow(label: String, onResume: () -> Unit, onGoToLesson: () -> U
         ) {
             Icon(
                 imageVector = Icons.Filled.SubdirectoryArrowRight,
-                contentDescription = "Vai alla lezione",
+                contentDescription = stringResource(R.string.continue_watching_go_to_lesson),
                 tint = scheme.onSurface,
                 modifier = Modifier.size(24.dp),
             )

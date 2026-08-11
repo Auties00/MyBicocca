@@ -23,9 +23,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.domain.model.attendance.CourseAttendance
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.attendance.ext.label
@@ -140,5 +142,5 @@ private fun CourseAttendance.statusCaption(): String {
         return "${it.attendedSessions}/${it.totalSessions} sessioni" +
             (it.recordedPercentage?.let { pct -> " · ${pct.roundToInt()}% registrate" } ?: "")
     }
-    return "Nessuna rilevazione presenze"
+    return stringResource(R.string.registry_attendance_no_records)
 }
