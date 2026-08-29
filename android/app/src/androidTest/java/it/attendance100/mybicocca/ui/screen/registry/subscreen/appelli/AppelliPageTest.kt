@@ -71,10 +71,11 @@ class AppelliPageTest {
         coEvery { getExamCalls(any()) } returns emptyList()
         val bookedVm = BookedExamsViewModel(
             getBookings,
-            cancelBooking,
-            getBookingSlip,
-            getPresenceCertificate,
-            observeActiveAccount,
+            getCallTotalBookings = mockk(relaxed = true),
+            cancelBooking = cancelBooking,
+            getBookingSlip = getBookingSlip,
+            getPresenceCertificate = getPresenceCertificate,
+            observeActiveAccount = observeActiveAccount,
         )
         val bookableVm = BookableExamsViewModel(getExamCalls, observeActiveAccount)
         val sheetVm = BookingSheetViewModel(bookExam, observeActiveAccount)

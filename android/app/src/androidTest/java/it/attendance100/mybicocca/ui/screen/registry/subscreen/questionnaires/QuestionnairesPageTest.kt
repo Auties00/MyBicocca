@@ -21,6 +21,7 @@ import it.attendance100.mybicocca.domain.model.questionnaire.QuestionnaireActivi
 import it.attendance100.mybicocca.domain.usecase.account.ObserveActiveAccountUseCase
 import it.attendance100.mybicocca.domain.usecase.questionnaire.GetActivityQuestionnairesUseCase
 import it.attendance100.mybicocca.domain.usecase.questionnaire.GetQuestionnaireActivitiesUseCase
+import it.attendance100.mybicocca.testing.setBicoccaContent
 import it.attendance100.mybicocca.ui.theme.BicoccaTheme
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flowOf
@@ -71,10 +72,9 @@ class QuestionnairesPageTest {
         QuestionnairesViewModel(getQuestionnaireActivities, getActivityQuestionnaires, observeActiveAccount)
 
     private fun setScreen(vm: QuestionnairesViewModel) {
-        compose.setContent {
-            BicoccaTheme(dark = false) {
+        compose.setBicoccaContent {
                 QuestionnairesPage(viewModel = vm)
-            }
+
         }
     }
 

@@ -24,6 +24,7 @@ import it.attendance100.mybicocca.domain.usecase.account.ObserveActiveAccountUse
 import it.attendance100.mybicocca.domain.usecase.studyplan.GetStudyPathUseCase
 import it.attendance100.mybicocca.domain.usecase.studyplan.GetStudyPlanPrintUseCase
 import it.attendance100.mybicocca.domain.usecase.studyplan.GetStudyPlanUseCase
+import it.attendance100.mybicocca.testing.setBicoccaContent
 import it.attendance100.mybicocca.ui.theme.BicoccaTheme
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flowOf
@@ -88,10 +89,9 @@ class StudyPlanPageTest {
         StudyPlanViewModel(getStudyPlan, getStudyPath, getStudyPlanPrint, observeActiveAccount)
 
     private fun setScreen(vm: StudyPlanViewModel) {
-        compose.setContent {
-            BicoccaTheme(dark = false) {
+        compose.setBicoccaContent {
                 StudyPlanPage(viewModel = vm)
-            }
+
         }
     }
 

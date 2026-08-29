@@ -14,6 +14,7 @@ import it.attendance100.mybicocca.domain.model.exam.ExamCallKey
 import it.attendance100.mybicocca.domain.model.exam.ExamCallType
 import it.attendance100.mybicocca.domain.model.exam.ExamEnrollmentWindow
 import it.attendance100.mybicocca.domain.model.exam.ExamType
+import it.attendance100.mybicocca.testing.setBicoccaContent
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.booking.state.BookingCourseGroup
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.booking.state.BookingTarget
 import it.attendance100.mybicocca.ui.theme.BicoccaTheme
@@ -69,8 +70,7 @@ class BookingPagesTest {
 
     @Test
     fun calendar_shows_the_loading_marker_before_the_calls_settle() {
-        compose.setContent {
-            BicoccaTheme(dark = false) {
+        compose.setBicoccaContent {
                 ExamCalendarPage(
                     loaded = false,
                     groups = null,
@@ -80,7 +80,7 @@ class BookingPagesTest {
                     onRetry = {},
                     onOpenCall = {},
                 )
-            }
+
         }
 
         compose.onNodeWithTag(BookingTestTags.CALENDAR_LOADING).assertIsDisplayed()
@@ -88,8 +88,7 @@ class BookingPagesTest {
 
     @Test
     fun calendar_shows_the_empty_marker_when_there_are_no_bookable_calls() {
-        compose.setContent {
-            BicoccaTheme(dark = false) {
+        compose.setBicoccaContent {
                 ExamCalendarPage(
                     loaded = true,
                     groups = emptyList(),
@@ -99,7 +98,7 @@ class BookingPagesTest {
                     onRetry = {},
                     onOpenCall = {},
                 )
-            }
+
         }
 
         compose.onNodeWithTag(BookingTestTags.CALENDAR_EMPTY).assertIsDisplayed()
@@ -107,8 +106,7 @@ class BookingPagesTest {
 
     @Test
     fun calendar_shows_the_error_marker_on_a_first_load_failure() {
-        compose.setContent {
-            BicoccaTheme(dark = false) {
+        compose.setBicoccaContent {
                 ExamCalendarPage(
                     loaded = false,
                     groups = null,
@@ -118,7 +116,7 @@ class BookingPagesTest {
                     onRetry = {},
                     onOpenCall = {},
                 )
-            }
+
         }
 
         compose.onNodeWithTag(BookingTestTags.CALENDAR_ERROR).assertIsDisplayed()
@@ -129,8 +127,7 @@ class BookingPagesTest {
         val call = examCall(examCallId = 50L)
         val onOpenCall = mockk<(ExamCall) -> Unit>(relaxed = true)
 
-        compose.setContent {
-            BicoccaTheme(dark = false) {
+        compose.setBicoccaContent {
                 ExamCalendarPage(
                     loaded = true,
                     groups = listOf(group(call)),
@@ -140,7 +137,7 @@ class BookingPagesTest {
                     onRetry = {},
                     onOpenCall = onOpenCall,
                 )
-            }
+
         }
 
         compose.onNodeWithTag(BookingTestTags.CALENDAR_CONTENT).assertIsDisplayed()
@@ -154,13 +151,12 @@ class BookingPagesTest {
     fun bookable_call_detail_invokes_onBook_when_its_action_is_tapped() {
         val onBook = mockk<() -> Unit>(relaxed = true)
 
-        compose.setContent {
-            BicoccaTheme(dark = false) {
+        compose.setBicoccaContent {
                 CallPage(
                     target = BookingTarget(call = examCall(examCallId = 50L), activityChoiceId = 99L),
                     onBook = onBook,
                 )
-            }
+
         }
 
         compose.onNodeWithTag(BookingTestTags.CALL_BOOK_BUTTON).assertIsDisplayed()
@@ -174,10 +170,9 @@ class BookingPagesTest {
     fun confirm_step_forwards_the_typed_note_on_confirm() {
         val onConfirm = mockk<(String?) -> Unit>(relaxed = true)
 
-        compose.setContent {
-            BicoccaTheme(dark = false) {
+        compose.setBicoccaContent {
                 ConfirmPage(submitting = false, onConfirm = onConfirm)
-            }
+
         }
 
         compose.onNodeWithTag(BookingTestTags.CONFIRM_NOTE_FIELD).performTextInput("vegetariano")

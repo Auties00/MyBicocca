@@ -25,6 +25,7 @@ import it.attendance100.mybicocca.domain.model.enrollment.RenewalState
 import it.attendance100.mybicocca.domain.usecase.account.ObserveActiveAccountUseCase
 import it.attendance100.mybicocca.domain.usecase.enrollment.GetEnrollmentHistoryUseCase
 import it.attendance100.mybicocca.domain.usecase.enrollment.GetRenewalWebUrlUseCase
+import it.attendance100.mybicocca.testing.setBicoccaContent
 import it.attendance100.mybicocca.ui.theme.BicoccaTheme
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.flowOf
@@ -59,10 +60,9 @@ class EnrollmentsTimelinePageTest {
     }
 
     private fun setScreen(vm: EnrollmentsViewModel, onOpenDetail: (EnrollmentId) -> Unit = {}) {
-        compose.setContent {
-            BicoccaTheme(dark = false) {
+        compose.setBicoccaContent {
                 EnrollmentsTimelinePage(viewModel = vm, onOpenDetail = onOpenDetail)
-            }
+
         }
         compose.waitForIdle()
     }

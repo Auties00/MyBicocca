@@ -19,6 +19,7 @@ import it.attendance100.mybicocca.domain.usecase.account.ObserveActiveAccountUse
 import it.attendance100.mybicocca.domain.usecase.security.ObserveAppLockUseCase
 import it.attendance100.mybicocca.domain.usecase.security.UnlockAppUseCase
 import it.attendance100.mybicocca.domain.usecase.security.VerifyAppLockPasswordUseCase
+import it.attendance100.mybicocca.testing.setBicoccaContent
 import it.attendance100.mybicocca.ui.theme.BicoccaTheme
 import kotlinx.coroutines.flow.flowOf
 import org.junit.Rule
@@ -54,10 +55,9 @@ class AppLockScreenTest {
 
     private fun setLockScreen() {
         val viewModel = AppLockViewModel(observeAppLock, unlockApp, verifyAppLockPassword, observeActiveAccount)
-        compose.setContent {
-            BicoccaTheme(dark = false) {
+        compose.setBicoccaContent {
                 AppLockScreen(viewModel = viewModel)
-            }
+
         }
         revealPasswordPath()
     }

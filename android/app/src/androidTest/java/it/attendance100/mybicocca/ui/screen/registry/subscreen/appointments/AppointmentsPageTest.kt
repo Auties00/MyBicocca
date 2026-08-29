@@ -64,7 +64,7 @@ class AppointmentsPageTest {
     private fun service(id: Int) = AppointmentService(
         id = id,
         name = "Sportello $id",
-        group = "Carriere Studenti",
+        group = "Carriere studenti",
         descriptionHtml = null,
         durationSeconds = 1200,
     )
@@ -139,6 +139,10 @@ class AppointmentsPageTest {
         compose.onNodeWithTag(AppointmentsTestTags.PRENOTA_BUTTON).performClick()
         compose.waitForIdle()
 
-        compose.onNodeWithTag(AppointmentsTestTags.section("Carriere studenti")).assertIsDisplayed()
+        val expectedLabel =
+            androidx.test.platform.app.InstrumentationRegistry.getInstrumentation().targetContext.getString(
+                it.attendance100.mybicocca.R.string.appointments_section_label_career
+            )
+        compose.onNodeWithTag(AppointmentsTestTags.section(expectedLabel)).assertIsDisplayed()
     }
 }

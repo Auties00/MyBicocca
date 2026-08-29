@@ -19,6 +19,7 @@ import it.attendance100.mybicocca.domain.model.career.CareerStatus
 import it.attendance100.mybicocca.domain.model.tax.Refund
 import it.attendance100.mybicocca.domain.usecase.account.ObserveActiveAccountUseCase
 import it.attendance100.mybicocca.domain.usecase.tax.GetRefundsUseCase
+import it.attendance100.mybicocca.testing.setBicoccaContent
 import it.attendance100.mybicocca.ui.theme.BicoccaTheme
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.flowOf
@@ -52,10 +53,9 @@ class RefundsListPageTest {
     }
 
     private fun setScreen(vm: RefundsViewModel, onOpenDetail: (Long) -> Unit = {}) {
-        compose.setContent {
-            BicoccaTheme(dark = false) {
+        compose.setBicoccaContent {
                 RefundsListPage(viewModel = vm, onOpenDetail = onOpenDetail)
-            }
+
         }
         compose.waitForIdle()
     }

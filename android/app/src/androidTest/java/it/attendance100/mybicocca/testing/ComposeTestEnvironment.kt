@@ -9,8 +9,8 @@ import it.attendance100.mybicocca.core.os.DeviceType
 import it.attendance100.mybicocca.core.os.HapticManager
 import it.attendance100.mybicocca.core.os.LocalDeviceType
 import it.attendance100.mybicocca.core.os.LocalHapticManager
-import it.attendance100.mybicocca.ui.component.feedback.AppSnackbarController
 import it.attendance100.mybicocca.ui.component.feedback.LocalAppSnackbarController
+import it.attendance100.mybicocca.ui.component.feedback.rememberAppSnackbarController
 import it.attendance100.mybicocca.ui.theme.BicoccaTheme
 
 /**
@@ -24,8 +24,9 @@ import it.attendance100.mybicocca.ui.theme.BicoccaTheme
 fun BicoccaTestEnvironment(content: @Composable () -> Unit) {
     CompositionLocalProvider(
         LocalHapticManager provides remember { mockk<HapticManager>(relaxed = true) },
-        LocalAppSnackbarController provides remember { AppSnackbarController() },
+        LocalAppSnackbarController provides rememberAppSnackbarController(),
         LocalDeviceType provides DeviceType.Phone,
+        it.attendance100.mybicocca.core.os.LocalIsTestEnvironment provides true,
     ) {
         BicoccaTheme(dark = false, content = content)
     }

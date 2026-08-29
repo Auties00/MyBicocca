@@ -23,10 +23,10 @@ import it.attendance100.mybicocca.domain.usecase.elearning.assignment.ObserveAss
 import it.attendance100.mybicocca.domain.usecase.elearning.assignment.ProbeSubmissionFileUseCase
 import it.attendance100.mybicocca.domain.usecase.elearning.assignment.ReadSubmissionFileUseCase
 import it.attendance100.mybicocca.domain.usecase.elearning.assignment.RefreshCourseAssignmentsUseCase
-import it.attendance100.mybicocca.domain.usecase.elearning.assignment.RefreshSubmissionStatusUseCase
 import it.attendance100.mybicocca.domain.usecase.elearning.assignment.RemoveSubmissionUseCase
 import it.attendance100.mybicocca.domain.usecase.elearning.assignment.SaveSubmissionUseCase
 import it.attendance100.mybicocca.domain.usecase.elearning.assignment.SubmitAssignmentForGradingUseCase
+import it.attendance100.mybicocca.testing.setBicoccaContent
 import it.attendance100.mybicocca.ui.navigation.route.AppRoute
 import it.attendance100.mybicocca.ui.theme.BicoccaTheme
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -111,15 +111,14 @@ class AssignmentDetailPageTest {
     )
 
     private fun setPage(viewModel: AssignmentDetailViewModel) {
-        compose.setContent {
-            BicoccaTheme(dark = false) {
+        compose.setBicoccaContent {
                 AssignmentDetailPage(
                     assignId = assignmentId.value,
                     courseId = courseId.value,
                     onOpenFile = { _, _, _, _, _ -> },
                     viewModel = viewModel,
                 )
-            }
+
         }
     }
 

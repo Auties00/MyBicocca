@@ -8,6 +8,7 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import it.attendance100.mybicocca.core.os.ProvideHapticManager
+import it.attendance100.mybicocca.testing.setBicoccaContent
 import it.attendance100.mybicocca.ui.theme.BicoccaTheme
 import org.junit.Rule
 import org.junit.Test
@@ -41,12 +42,8 @@ class SettingsScreenTest {
     )
 
     private fun setSettings() {
-        compose.setContent {
-            BicoccaTheme(dark = false) {
-                ProvideHapticManager {
-                    SettingsScreen()
-                }
-            }
+        compose.setBicoccaContent {
+            SettingsScreen()
         }
     }
 

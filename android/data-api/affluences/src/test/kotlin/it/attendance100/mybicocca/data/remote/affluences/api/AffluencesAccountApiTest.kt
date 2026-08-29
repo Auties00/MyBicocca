@@ -21,8 +21,9 @@ class AffluencesAccountApiTest : AffluencesTestBase() {
      * error paths, so no validation email is ever sent.
      */
     private suspend fun freshApiKey(): String {
-        val apiKey = assertNotNull(
-            api.account.checkIn(deviceId = TEST_DEVICE_ID).apiKey,
+        val apiKey = api.account.checkIn(deviceId = TEST_DEVICE_ID).apiKey
+        assertNotNull(
+            apiKey,
             "Check-in should mint a user-identifier api key",
         )
         assertTrue(apiKey.isNotBlank(), "The minted api key should not be blank")
@@ -32,7 +33,8 @@ class AffluencesAccountApiTest : AffluencesTestBase() {
     @Test
     suspend fun checkInMintsApiKey() {
         val checkin = api.account.checkIn(deviceId = TEST_DEVICE_ID)
-        val apiKey = assertNotNull(checkin.apiKey, "Check-in should mint a user-identifier api key")
+        val apiKey = checkin.apiKey
+        assertNotNull(apiKey, "Check-in should mint a user-identifier api key")
         assertTrue(apiKey.isNotBlank(), "The minted api key should not be blank")
     }
 
@@ -80,10 +82,10 @@ class AffluencesAccountApiTest : AffluencesTestBase() {
         val error = runCatching {
             api.account.getMyReservations(apiKey = apiKey, authToken = "bogus-token")
         }.exceptionOrNull()
-        val rejection = assertNotNull(error, "A bogus session token should be rejected")
+        assertNotNull(error, "A bogus session token should be rejected")
         assertTrue(
-            rejection is ApiRequestException || rejection is AffluencesException,
-            "A bogus session token should surface as an API error, was ${rejection::class.simpleName}",
+            error is ApiRequestException || error is AffluencesException,
+            "A bogus session token should surface as an API error, was ${error.let { it::class.simpleName }}",
         )
     }
 }

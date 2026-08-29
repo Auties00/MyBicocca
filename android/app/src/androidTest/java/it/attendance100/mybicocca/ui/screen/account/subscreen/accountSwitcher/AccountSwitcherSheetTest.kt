@@ -1,6 +1,5 @@
 package it.attendance100.mybicocca.ui.screen.account.subscreen.accountSwitcher
 
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
@@ -18,11 +17,11 @@ import it.attendance100.mybicocca.domain.model.account.LearningIdentity
 import it.attendance100.mybicocca.domain.model.career.Career
 import it.attendance100.mybicocca.domain.model.career.CareerId
 import it.attendance100.mybicocca.domain.model.career.CareerStatus
+import it.attendance100.mybicocca.testing.setBicoccaContent
 import it.attendance100.mybicocca.ui.theme.BicoccaTheme
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import java.io.File
 import java.time.Instant
 
 /**
@@ -93,25 +92,24 @@ class AccountSwitcherSheetTest {
     private val onOpenSettings: () -> Unit = mockk(relaxed = true)
 
     private fun setRoster() {
-        compose.setContent {
-            BicoccaTheme(dark = false) {
-                ProvideHapticManager {
-                    AccountsScene(
-                        modifier = Modifier,
-                        ordered = listOf(active, other),
-                        activeId = activeId,
-                        photos = emptyMap<AccountId, File?>(),
-                        maxListHeight = 600.dp,
-                        motion = MaterialTheme.motionScheme,
-                        onOpenDetails = onOpenDetails,
-                        onOpenSettings = onOpenSettings,
-                        onSwitchAccount = onSwitchAccount,
-                        onSelectCareer = onSelectCareer,
-                        onRemove = onRemove,
-                        onAddAccount = onAddAccount,
-                    )
-                }
-            }
+        compose.setBicoccaContent {
+            AccountsScene(
+                modifier = Modifier,
+                ordered = listOf(active, other),
+                activeId = activeId,
+                photos = emptyMap(),
+                pending = null,
+                lastRemovedName = "",
+                maxListHeight = 600.dp,
+                motion = androidx.compose.material3.MaterialTheme.motionScheme,
+                onOpenDetails = onOpenDetails,
+                onOpenSettings = onOpenSettings,
+                onSwitchAccount = onSwitchAccount,
+                onSelectCareer = onSelectCareer,
+                onRequestRemove = onRemove,
+                onUndoRemove = {},
+                onAddAccount = onAddAccount,
+            )
         }
     }
 

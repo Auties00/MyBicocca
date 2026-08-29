@@ -10,6 +10,7 @@ import it.attendance100.mybicocca.domain.model.elearning.course.CourseId
 import it.attendance100.mybicocca.domain.model.elearning.course.CourseSyllabusPointer
 import it.attendance100.mybicocca.domain.model.elearning.course.EnrolledCourse
 import it.attendance100.mybicocca.domain.model.elearning.course.SyllabusInfo
+import it.attendance100.mybicocca.testing.setBicoccaContent
 import it.attendance100.mybicocca.ui.theme.BicoccaTheme
 import org.junit.Rule
 import org.junit.Test
@@ -57,13 +58,12 @@ class SyllabusContentTest {
     )
 
     private fun setSyllabus(syllabus: CourseSyllabusPointer?) {
-        compose.setContent {
-            BicoccaTheme(dark = false) {
+        compose.setBicoccaContent {
                 SyllabusContent(
                     details = details(syllabus),
                     listState = rememberLazyListState(),
                 )
-            }
+
         }
     }
 

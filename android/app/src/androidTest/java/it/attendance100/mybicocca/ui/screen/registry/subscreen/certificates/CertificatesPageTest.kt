@@ -24,6 +24,7 @@ import it.attendance100.mybicocca.domain.model.document.CertificateType
 import it.attendance100.mybicocca.domain.usecase.account.ObserveActiveAccountUseCase
 import it.attendance100.mybicocca.domain.usecase.document.DownloadCertificateUseCase
 import it.attendance100.mybicocca.domain.usecase.document.GetCertificatesUseCase
+import it.attendance100.mybicocca.testing.setBicoccaContent
 import it.attendance100.mybicocca.ui.theme.BicoccaTheme
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.flowOf
@@ -58,14 +59,18 @@ class CertificatesPageTest {
 
     private fun viewModel(): CertificatesViewModel {
         every { observeActiveAccount() } returns flowOf(account(careerId))
-        return CertificatesViewModel(context, getCertificates, downloadCertificate, observeActiveAccount)
+        return CertificatesViewModel(
+            mockk<CertificateStorage>(relaxed = true),
+            getCertificates,
+            downloadCertificate,
+            observeActiveAccount
+        )
     }
 
     private fun setScreen(vm: CertificatesViewModel) {
-        compose.setContent {
-            BicoccaTheme(dark = false) {
+        compose.setBicoccaContent {
                 CertificatesPage(viewModel = vm)
-            }
+
         }
         compose.waitForIdle()
     }

@@ -160,7 +160,9 @@ fun CreditCard(
     var tiltX by remember { mutableFloatStateOf(0f) }
     var tiltY by remember { mutableFloatStateOf(0f) }
 
-    if (sensorsEnabled) DisposableEffect(Unit) {
+    val isTest = it.attendance100.mybicocca.core.os.LocalIsTestEnvironment.current
+
+    if (sensorsEnabled && !isTest) DisposableEffect(Unit) {
         val sensor = sensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR)
         val listener = object : SensorEventListener {
             override fun onSensorChanged(event: SensorEvent) {

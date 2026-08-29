@@ -102,7 +102,12 @@ class RegistryScreenTest {
         coEvery { getExamResults(careerId) } returns emptyList()
 
         val bookedExamsViewModel = BookedExamsViewModel(
-            getBookings, cancelBooking, getBookingSlip, getPresenceCertificate, observeActiveAccount,
+            getBookings,
+            getCallTotalBookings = mockk(relaxed = true),
+            cancelBooking = cancelBooking,
+            getBookingSlip = getBookingSlip,
+            getPresenceCertificate = getPresenceCertificate,
+            observeActiveAccount = observeActiveAccount,
         )
         val bookableExamsViewModel = BookableExamsViewModel(getExamCalls, observeActiveAccount)
         val taxesViewModel = TaxesViewModel(
@@ -112,6 +117,13 @@ class RegistryScreenTest {
         val examResultsViewModel = ExamResultsViewModel(
             getExamResults, acceptExamResult, rejectExamResult, observeActiveAccount,
         )
+        val studyPlanViewModel =
+            it.attendance100.mybicocca.ui.screen.registry.subscreen.studyPlan.StudyPlanViewModel(
+                mockk(relaxed = true),
+                mockk(relaxed = true),
+                mockk(relaxed = true),
+                mockk(relaxed = true)
+            )
 
         compose.setBicoccaContent {
             RegistryScreen(
@@ -119,6 +131,7 @@ class RegistryScreenTest {
                 bookableExamsViewModel = bookableExamsViewModel,
                 taxesViewModel = taxesViewModel,
                 examResultsViewModel = examResultsViewModel,
+                studyPlanViewModel = studyPlanViewModel,
                 onOpenAppelli = onOpenAppelli,
                 onOpenTaxes = onOpenTaxes,
                 onOpenIsee = onOpenIsee,

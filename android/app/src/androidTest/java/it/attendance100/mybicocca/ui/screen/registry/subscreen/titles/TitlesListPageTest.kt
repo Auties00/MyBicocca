@@ -21,6 +21,7 @@ import it.attendance100.mybicocca.domain.model.document.TitleCategory
 import it.attendance100.mybicocca.domain.model.document.TitleStatus
 import it.attendance100.mybicocca.domain.usecase.account.ObserveActiveAccountUseCase
 import it.attendance100.mybicocca.domain.usecase.document.GetAcademicTitlesUseCase
+import it.attendance100.mybicocca.testing.setBicoccaContent
 import it.attendance100.mybicocca.ui.theme.BicoccaTheme
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.flowOf
@@ -54,10 +55,9 @@ class TitlesListPageTest {
     }
 
     private fun setScreen(vm: TitlesViewModel, onOpenDetail: (String) -> Unit = {}) {
-        compose.setContent {
-            BicoccaTheme(dark = false) {
+        compose.setBicoccaContent {
                 TitlesListPage(viewModel = vm, onOpenDetail = onOpenDetail)
-            }
+
         }
         compose.waitForIdle()
     }

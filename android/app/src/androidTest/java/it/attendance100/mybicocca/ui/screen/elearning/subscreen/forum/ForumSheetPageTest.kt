@@ -1,12 +1,11 @@
 package it.attendance100.mybicocca.ui.screen.elearning.subscreen.forum
 
-import android.content.Context
-import com.google.common.truth.Truth.assertThat
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.google.common.truth.Truth.assertThat
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
@@ -24,6 +23,7 @@ import it.attendance100.mybicocca.domain.usecase.elearning.forum.ObserveDiscussi
 import it.attendance100.mybicocca.domain.usecase.elearning.forum.ObserveForumUseCase
 import it.attendance100.mybicocca.domain.usecase.elearning.forum.ObservePostsUseCase
 import it.attendance100.mybicocca.domain.usecase.elearning.forum.RefreshDiscussionsUseCase
+import it.attendance100.mybicocca.testing.setBicoccaContent
 import it.attendance100.mybicocca.ui.navigation.route.SheetRoute
 import it.attendance100.mybicocca.ui.theme.BicoccaTheme
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -93,7 +93,8 @@ class ForumSheetPageTest {
         discussions: Loadable<List<Discussion>>,
     ): ForumSheetViewModel = ForumSheetViewModel(
         key = SheetRoute.Forum(forumId = forumId.value, courseId = courseId.value),
-        appContext = mockk<Context>(relaxed = true),
+        attachmentReader = mockk(relaxed = true),
+        stringResolver = mockk(relaxed = true),
         observeActiveAccount = mockk {
             every { this@mockk.invoke() } returns MutableStateFlow<Account?>(account)
         },
@@ -125,8 +126,7 @@ class ForumSheetPageTest {
     )
 
     private fun setPage(viewModel: ForumSheetViewModel) {
-        compose.setContent {
-            BicoccaTheme(dark = false) {
+        compose.setBicoccaContent {
                 ForumSheetPage(
                     forumId = forumId.value,
                     courseId = courseId.value,
@@ -134,7 +134,7 @@ class ForumSheetPageTest {
                     onOpenFile = { _, _, _, _ -> },
                     viewModel = viewModel,
                 )
-            }
+
         }
     }
 
