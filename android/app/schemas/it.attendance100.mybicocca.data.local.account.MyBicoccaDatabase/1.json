@@ -1,0 +1,4059 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 1,
+    "identityHash": "121308546b84b2d41756b74030958fbb",
+    "entities": [
+      {
+        "tableName": "accounts",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `username` TEXT NOT NULL, `display_name` TEXT NOT NULL, `record_user_id` TEXT NOT NULL, `person_id` INTEGER NOT NULL, `fiscal_code` TEXT, `selected_career_id` INTEGER NOT NULL, `lms_user_id` INTEGER NOT NULL, `lms_username` TEXT NOT NULL, `lms_locale` TEXT NOT NULL, `lms_is_site_admin` INTEGER NOT NULL, `lms_max_upload_bytes` INTEGER NOT NULL, `lms_storage_quota_bytes` INTEGER NOT NULL, `created_at` INTEGER NOT NULL, `last_used_at` INTEGER NOT NULL, `last_synced_at` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "username",
+            "columnName": "username",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "displayName",
+            "columnName": "display_name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "recordUserId",
+            "columnName": "record_user_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "personId",
+            "columnName": "person_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "fiscalCode",
+            "columnName": "fiscal_code",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "selectedCareerId",
+            "columnName": "selected_career_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lmsUserId",
+            "columnName": "lms_user_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lmsUsername",
+            "columnName": "lms_username",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lmsLocale",
+            "columnName": "lms_locale",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lmsIsSiteAdmin",
+            "columnName": "lms_is_site_admin",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lmsMaxUploadBytes",
+            "columnName": "lms_max_upload_bytes",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lmsStorageQuotaBytes",
+            "columnName": "lms_storage_quota_bytes",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdAtEpochMillis",
+            "columnName": "created_at",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastUsedAtEpochMillis",
+            "columnName": "last_used_at",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastSyncedAtEpochMillis",
+            "columnName": "last_synced_at",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_accounts_record_user_id",
+            "unique": true,
+            "columnNames": [
+              "record_user_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_accounts_record_user_id` ON `${TABLE_NAME}` (`record_user_id`)"
+          }
+        ]
+      },
+      {
+        "tableName": "careers",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `account_id` TEXT NOT NULL, `enrollment_trait_id` INTEGER NOT NULL, `program_id` INTEGER NOT NULL, `easy_staff_program_code` TEXT, `academic_year_enrollment_id` INTEGER NOT NULL, `student_number` TEXT NOT NULL, `description` TEXT NOT NULL, `academic_year` INTEGER NOT NULL, `status` TEXT NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`account_id`) REFERENCES `accounts`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "accountId",
+            "columnName": "account_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "enrollmentTraitId",
+            "columnName": "enrollment_trait_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "programId",
+            "columnName": "program_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "easyStaffProgramCode",
+            "columnName": "easy_staff_program_code",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "academicYearEnrollmentId",
+            "columnName": "academic_year_enrollment_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "studentNumber",
+            "columnName": "student_number",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "description",
+            "columnName": "description",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "academicYear",
+            "columnName": "academic_year",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "status",
+            "columnName": "status",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_careers_account_id",
+            "unique": false,
+            "columnNames": [
+              "account_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_careers_account_id` ON `${TABLE_NAME}` (`account_id`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "accounts",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "account_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "calendar_events",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `career_id` INTEGER NOT NULL, `source` TEXT NOT NULL, `discriminator` TEXT NOT NULL, `date` TEXT NOT NULL, `start_time` TEXT NOT NULL, `end_time` TEXT NOT NULL, `title` TEXT NOT NULL, `short_label` TEXT, `room` TEXT, `building` TEXT, `maps_url` TEXT, `status` TEXT NOT NULL, `notes` TEXT, `activity_code` TEXT, `subject_code` TEXT, `teachers_csv` TEXT, `cfu` INTEGER, `exam_type_label` TEXT, `booking_position` INTEGER, `booked_at` TEXT, `cancellable_until` TEXT, PRIMARY KEY(`id`, `career_id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "careerId",
+            "columnName": "career_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "source",
+            "columnName": "source",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "discriminator",
+            "columnName": "discriminator",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "date",
+            "columnName": "date",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "startTime",
+            "columnName": "start_time",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "endTime",
+            "columnName": "end_time",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "title",
+            "columnName": "title",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "shortLabel",
+            "columnName": "short_label",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "room",
+            "columnName": "room",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "building",
+            "columnName": "building",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "mapsUrl",
+            "columnName": "maps_url",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "status",
+            "columnName": "status",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "notes",
+            "columnName": "notes",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "activityCode",
+            "columnName": "activity_code",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "subjectCode",
+            "columnName": "subject_code",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "teachersCsv",
+            "columnName": "teachers_csv",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "cfu",
+            "columnName": "cfu",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "examTypeLabel",
+            "columnName": "exam_type_label",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "bookingPosition",
+            "columnName": "booking_position",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "bookedAt",
+            "columnName": "booked_at",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "cancellableUntil",
+            "columnName": "cancellable_until",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id",
+            "career_id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_calendar_events_career_id_date",
+            "unique": false,
+            "columnNames": [
+              "career_id",
+              "date"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_calendar_events_career_id_date` ON `${TABLE_NAME}` (`career_id`, `date`)"
+          },
+          {
+            "name": "index_calendar_events_career_id_source_date",
+            "unique": false,
+            "columnNames": [
+              "career_id",
+              "source",
+              "date"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_calendar_events_career_id_source_date` ON `${TABLE_NAME}` (`career_id`, `source`, `date`)"
+          },
+          {
+            "name": "index_calendar_events_career_id_date_start_time",
+            "unique": false,
+            "columnNames": [
+              "career_id",
+              "date",
+              "start_time"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_calendar_events_career_id_date_start_time` ON `${TABLE_NAME}` (`career_id`, `date`, `start_time`)"
+          }
+        ]
+      },
+      {
+        "tableName": "calendar_sync_state",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`career_id` INTEGER NOT NULL, `source` TEXT NOT NULL, `year_month` TEXT NOT NULL, `last_refreshed_at_ms` INTEGER NOT NULL, PRIMARY KEY(`career_id`, `source`, `year_month`))",
+        "fields": [
+          {
+            "fieldPath": "careerId",
+            "columnName": "career_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "source",
+            "columnName": "source",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "yearMonth",
+            "columnName": "year_month",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastRefreshedAtMs",
+            "columnName": "last_refreshed_at_ms",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "career_id",
+            "source",
+            "year_month"
+          ]
+        }
+      },
+      {
+        "tableName": "elearning_enrolled_courses",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`account_id` TEXT NOT NULL, `course_id` INTEGER NOT NULL, `short_name` TEXT NOT NULL, `full_name` TEXT NOT NULL, `display_name` TEXT NOT NULL, `id_number` TEXT, `summary` TEXT, `course_image_url` TEXT, `format` TEXT, `language` TEXT, `category_id` INTEGER, `progress` REAL, `completed` INTEGER NOT NULL, `completion_enabled` INTEGER NOT NULL, `start_date_ms` INTEGER, `end_date_ms` INTEGER, `last_access_ms` INTEGER, `is_favourite` INTEGER NOT NULL, `hidden` INTEGER NOT NULL, `sort_order` INTEGER NOT NULL, PRIMARY KEY(`account_id`, `course_id`))",
+        "fields": [
+          {
+            "fieldPath": "accountId",
+            "columnName": "account_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "courseId",
+            "columnName": "course_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "shortName",
+            "columnName": "short_name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "fullName",
+            "columnName": "full_name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "displayName",
+            "columnName": "display_name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "idNumber",
+            "columnName": "id_number",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "summary",
+            "columnName": "summary",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "courseImageUrl",
+            "columnName": "course_image_url",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "format",
+            "columnName": "format",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "language",
+            "columnName": "language",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "categoryId",
+            "columnName": "category_id",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "progress",
+            "columnName": "progress",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "completed",
+            "columnName": "completed",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "completionEnabled",
+            "columnName": "completion_enabled",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "startDateMs",
+            "columnName": "start_date_ms",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "endDateMs",
+            "columnName": "end_date_ms",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "lastAccessMs",
+            "columnName": "last_access_ms",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "isFavourite",
+            "columnName": "is_favourite",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "hidden",
+            "columnName": "hidden",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sortOrder",
+            "columnName": "sort_order",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "account_id",
+            "course_id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_elearning_enrolled_courses_account_id_is_favourite_hidden",
+            "unique": false,
+            "columnNames": [
+              "account_id",
+              "is_favourite",
+              "hidden"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_elearning_enrolled_courses_account_id_is_favourite_hidden` ON `${TABLE_NAME}` (`account_id`, `is_favourite`, `hidden`)"
+          }
+        ]
+      },
+      {
+        "tableName": "elearning_course_sections",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`account_id` TEXT NOT NULL, `course_id` INTEGER NOT NULL, `section_id` INTEGER NOT NULL, `section_number` INTEGER NOT NULL, `name` TEXT NOT NULL, `summary` TEXT, `visible` INTEGER NOT NULL, `component` TEXT, `item_id` INTEGER, PRIMARY KEY(`account_id`, `course_id`, `section_id`))",
+        "fields": [
+          {
+            "fieldPath": "accountId",
+            "columnName": "account_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "courseId",
+            "columnName": "course_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sectionId",
+            "columnName": "section_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sectionNumber",
+            "columnName": "section_number",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "summary",
+            "columnName": "summary",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "visible",
+            "columnName": "visible",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "component",
+            "columnName": "component",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "itemId",
+            "columnName": "item_id",
+            "affinity": "INTEGER"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "account_id",
+            "course_id",
+            "section_id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_elearning_course_sections_account_id_course_id_section_number",
+            "unique": false,
+            "columnNames": [
+              "account_id",
+              "course_id",
+              "section_number"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_elearning_course_sections_account_id_course_id_section_number` ON `${TABLE_NAME}` (`account_id`, `course_id`, `section_number`)"
+          }
+        ]
+      },
+      {
+        "tableName": "elearning_course_modules",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`account_id` TEXT NOT NULL, `course_id` INTEGER NOT NULL, `cm_id` INTEGER NOT NULL, `section_id` INTEGER NOT NULL, `sort_order` INTEGER NOT NULL, `instance_id` INTEGER, `name` TEXT NOT NULL, `mod_name` TEXT, `type_label` TEXT, `description` TEXT, `url` TEXT, `icon_url` TEXT, `visible` INTEGER NOT NULL, `accessible` INTEGER NOT NULL, `availability_info` TEXT, `on_course_page` INTEGER NOT NULL, `indent` INTEGER NOT NULL, `after_link` TEXT, `linked_section_id` INTEGER, `dates_json` TEXT, `contents_json` TEXT, PRIMARY KEY(`account_id`, `course_id`, `cm_id`))",
+        "fields": [
+          {
+            "fieldPath": "accountId",
+            "columnName": "account_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "courseId",
+            "columnName": "course_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "cmId",
+            "columnName": "cm_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sectionId",
+            "columnName": "section_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sortOrder",
+            "columnName": "sort_order",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "instanceId",
+            "columnName": "instance_id",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "modName",
+            "columnName": "mod_name",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "typeLabel",
+            "columnName": "type_label",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "description",
+            "columnName": "description",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "url",
+            "columnName": "url",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "iconUrl",
+            "columnName": "icon_url",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "visible",
+            "columnName": "visible",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "accessible",
+            "columnName": "accessible",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "availabilityInfo",
+            "columnName": "availability_info",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "onCoursePage",
+            "columnName": "on_course_page",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "indent",
+            "columnName": "indent",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "afterLink",
+            "columnName": "after_link",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "linkedSectionId",
+            "columnName": "linked_section_id",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "datesJson",
+            "columnName": "dates_json",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "contentsJson",
+            "columnName": "contents_json",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "account_id",
+            "course_id",
+            "cm_id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_elearning_course_modules_account_id_course_id_section_id_sort_order",
+            "unique": false,
+            "columnNames": [
+              "account_id",
+              "course_id",
+              "section_id",
+              "sort_order"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_elearning_course_modules_account_id_course_id_section_id_sort_order` ON `${TABLE_NAME}` (`account_id`, `course_id`, `section_id`, `sort_order`)"
+          }
+        ]
+      },
+      {
+        "tableName": "elearning_course_staff",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`account_id` TEXT NOT NULL, `course_id` INTEGER NOT NULL, `row_index` INTEGER NOT NULL, `user_id` INTEGER, `full_name` TEXT NOT NULL, `role_raw` TEXT NOT NULL, `initials` TEXT, `email` TEXT, `profile_url` TEXT, PRIMARY KEY(`account_id`, `course_id`, `row_index`))",
+        "fields": [
+          {
+            "fieldPath": "accountId",
+            "columnName": "account_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "courseId",
+            "columnName": "course_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "rowIndex",
+            "columnName": "row_index",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "userId",
+            "columnName": "user_id",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "fullName",
+            "columnName": "full_name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "roleRaw",
+            "columnName": "role_raw",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "initials",
+            "columnName": "initials",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "email",
+            "columnName": "email",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "profileUrl",
+            "columnName": "profile_url",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "account_id",
+            "course_id",
+            "row_index"
+          ]
+        }
+      },
+      {
+        "tableName": "elearning_course_syllabus",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`account_id` TEXT NOT NULL, `course_id` INTEGER NOT NULL, `language` TEXT NOT NULL, `export_pdf_url` TEXT, `fields_json` TEXT NOT NULL, PRIMARY KEY(`account_id`, `course_id`))",
+        "fields": [
+          {
+            "fieldPath": "accountId",
+            "columnName": "account_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "courseId",
+            "columnName": "course_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "language",
+            "columnName": "language",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "exportPdfUrl",
+            "columnName": "export_pdf_url",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "fieldsJson",
+            "columnName": "fields_json",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "account_id",
+            "course_id"
+          ]
+        }
+      },
+      {
+        "tableName": "elearning_activity_completion",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`account_id` TEXT NOT NULL, `course_id` INTEGER NOT NULL, `cm_id` INTEGER NOT NULL, `is_completed` INTEGER NOT NULL, `completed_at_ms` INTEGER, `is_manual` INTEGER NOT NULL, `is_automatic` INTEGER NOT NULL, `is_tracked` INTEGER NOT NULL, PRIMARY KEY(`account_id`, `course_id`, `cm_id`))",
+        "fields": [
+          {
+            "fieldPath": "accountId",
+            "columnName": "account_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "courseId",
+            "columnName": "course_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "cmId",
+            "columnName": "cm_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isCompleted",
+            "columnName": "is_completed",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "completedAtMs",
+            "columnName": "completed_at_ms",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "isManual",
+            "columnName": "is_manual",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isAutomatic",
+            "columnName": "is_automatic",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isTracked",
+            "columnName": "is_tracked",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "account_id",
+            "course_id",
+            "cm_id"
+          ]
+        }
+      },
+      {
+        "tableName": "elearning_deadlines",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`account_id` TEXT NOT NULL, `event_id` INTEGER NOT NULL, `course_id` INTEGER NOT NULL, `kind` TEXT NOT NULL, `instance_id` INTEGER NOT NULL, `title` TEXT NOT NULL, `due_at_ms` INTEGER NOT NULL, PRIMARY KEY(`account_id`, `event_id`))",
+        "fields": [
+          {
+            "fieldPath": "accountId",
+            "columnName": "account_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "eventId",
+            "columnName": "event_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "courseId",
+            "columnName": "course_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "kind",
+            "columnName": "kind",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "instanceId",
+            "columnName": "instance_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "title",
+            "columnName": "title",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "dueAtMs",
+            "columnName": "due_at_ms",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "account_id",
+            "event_id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_elearning_deadlines_account_id_course_id",
+            "unique": false,
+            "columnNames": [
+              "account_id",
+              "course_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_elearning_deadlines_account_id_course_id` ON `${TABLE_NAME}` (`account_id`, `course_id`)"
+          },
+          {
+            "name": "index_elearning_deadlines_account_id_due_at_ms",
+            "unique": false,
+            "columnNames": [
+              "account_id",
+              "due_at_ms"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_elearning_deadlines_account_id_due_at_ms` ON `${TABLE_NAME}` (`account_id`, `due_at_ms`)"
+          }
+        ]
+      },
+      {
+        "tableName": "elearning_assignments",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`account_id` TEXT NOT NULL, `assignment_id` INTEGER NOT NULL, `course_id` INTEGER NOT NULL, `cm_id` INTEGER, `name` TEXT NOT NULL, `intro` TEXT, `intro_files_json` TEXT, `due_date_ms` INTEGER, `allow_submissions_from_ms` INTEGER, `cutoff_date_ms` INTEGER, `grading_due_date_ms` INTEGER, `max_attempts` INTEGER, `allowed_extensions_csv` TEXT, `allow_drafts` INTEGER NOT NULL, `submission_status_json` TEXT NOT NULL, `submission_config_json` TEXT, PRIMARY KEY(`account_id`, `assignment_id`))",
+        "fields": [
+          {
+            "fieldPath": "accountId",
+            "columnName": "account_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "assignmentId",
+            "columnName": "assignment_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "courseId",
+            "columnName": "course_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "cmId",
+            "columnName": "cm_id",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "intro",
+            "columnName": "intro",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "introFilesJson",
+            "columnName": "intro_files_json",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "dueDateMs",
+            "columnName": "due_date_ms",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "allowSubmissionsFromMs",
+            "columnName": "allow_submissions_from_ms",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "cutoffDateMs",
+            "columnName": "cutoff_date_ms",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "gradingDueDateMs",
+            "columnName": "grading_due_date_ms",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "maxAttempts",
+            "columnName": "max_attempts",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "allowedExtensionsCsv",
+            "columnName": "allowed_extensions_csv",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "allowDrafts",
+            "columnName": "allow_drafts",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "submissionStatusJson",
+            "columnName": "submission_status_json",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "submissionConfigJson",
+            "columnName": "submission_config_json",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "account_id",
+            "assignment_id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_elearning_assignments_account_id_course_id",
+            "unique": false,
+            "columnNames": [
+              "account_id",
+              "course_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_elearning_assignments_account_id_course_id` ON `${TABLE_NAME}` (`account_id`, `course_id`)"
+          }
+        ]
+      },
+      {
+        "tableName": "elearning_quizzes",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`account_id` TEXT NOT NULL, `quiz_id` INTEGER NOT NULL, `course_id` INTEGER NOT NULL, `cm_id` INTEGER, `name` TEXT NOT NULL, `intro` TEXT, `time_open_ms` INTEGER, `time_close_ms` INTEGER, `time_limit_seconds` INTEGER, `grace_period_seconds` INTEGER, `max_attempts` INTEGER, `pass_grade` REAL, `sum_grades` REAL, `max_grade` REAL, `preferred_behaviour` TEXT, `review_before_bitmask` INTEGER, `review_after_bitmask` INTEGER, PRIMARY KEY(`account_id`, `quiz_id`))",
+        "fields": [
+          {
+            "fieldPath": "accountId",
+            "columnName": "account_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "quizId",
+            "columnName": "quiz_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "courseId",
+            "columnName": "course_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "cmId",
+            "columnName": "cm_id",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "intro",
+            "columnName": "intro",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "timeOpenMs",
+            "columnName": "time_open_ms",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "timeCloseMs",
+            "columnName": "time_close_ms",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "timeLimitSeconds",
+            "columnName": "time_limit_seconds",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "gracePeriodSeconds",
+            "columnName": "grace_period_seconds",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "maxAttempts",
+            "columnName": "max_attempts",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "passGrade",
+            "columnName": "pass_grade",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "sumGrades",
+            "columnName": "sum_grades",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "maxGrade",
+            "columnName": "max_grade",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "preferredBehaviour",
+            "columnName": "preferred_behaviour",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "reviewBeforeBitmask",
+            "columnName": "review_before_bitmask",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "reviewAfterBitmask",
+            "columnName": "review_after_bitmask",
+            "affinity": "INTEGER"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "account_id",
+            "quiz_id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_elearning_quizzes_account_id_course_id",
+            "unique": false,
+            "columnNames": [
+              "account_id",
+              "course_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_elearning_quizzes_account_id_course_id` ON `${TABLE_NAME}` (`account_id`, `course_id`)"
+          }
+        ]
+      },
+      {
+        "tableName": "elearning_quiz_attempts",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`account_id` TEXT NOT NULL, `attempt_id` INTEGER NOT NULL, `quiz_id` INTEGER NOT NULL, `user_id` INTEGER NOT NULL, `attempt_number` INTEGER NOT NULL, `state_raw` TEXT NOT NULL, `sum_grades` REAL, `time_start_ms` INTEGER, `time_finish_ms` INTEGER, `time_modified_ms` INTEGER, `layout` TEXT, `preview_mode` INTEGER NOT NULL, PRIMARY KEY(`account_id`, `attempt_id`))",
+        "fields": [
+          {
+            "fieldPath": "accountId",
+            "columnName": "account_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "attemptId",
+            "columnName": "attempt_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "quizId",
+            "columnName": "quiz_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "userId",
+            "columnName": "user_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "attemptNumber",
+            "columnName": "attempt_number",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "stateRaw",
+            "columnName": "state_raw",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sumGrades",
+            "columnName": "sum_grades",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "timeStartMs",
+            "columnName": "time_start_ms",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "timeFinishMs",
+            "columnName": "time_finish_ms",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "timeModifiedMs",
+            "columnName": "time_modified_ms",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "layout",
+            "columnName": "layout",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "previewMode",
+            "columnName": "preview_mode",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "account_id",
+            "attempt_id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_elearning_quiz_attempts_account_id_quiz_id",
+            "unique": false,
+            "columnNames": [
+              "account_id",
+              "quiz_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_elearning_quiz_attempts_account_id_quiz_id` ON `${TABLE_NAME}` (`account_id`, `quiz_id`)"
+          }
+        ]
+      },
+      {
+        "tableName": "elearning_quiz_attempt_answers",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`account_id` TEXT NOT NULL, `attempt_id` INTEGER NOT NULL, `slot` INTEGER NOT NULL, `fields_json` TEXT NOT NULL, PRIMARY KEY(`account_id`, `attempt_id`, `slot`))",
+        "fields": [
+          {
+            "fieldPath": "accountId",
+            "columnName": "account_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "attemptId",
+            "columnName": "attempt_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "slot",
+            "columnName": "slot",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "fieldsJson",
+            "columnName": "fields_json",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "account_id",
+            "attempt_id",
+            "slot"
+          ]
+        }
+      },
+      {
+        "tableName": "elearning_quiz_best_grade",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`account_id` TEXT NOT NULL, `quiz_id` INTEGER NOT NULL, `grade` REAL, `max_grade` REAL, PRIMARY KEY(`account_id`, `quiz_id`))",
+        "fields": [
+          {
+            "fieldPath": "accountId",
+            "columnName": "account_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "quizId",
+            "columnName": "quiz_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "grade",
+            "columnName": "grade",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "maxGrade",
+            "columnName": "max_grade",
+            "affinity": "REAL"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "account_id",
+            "quiz_id"
+          ]
+        }
+      },
+      {
+        "tableName": "elearning_forums",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`account_id` TEXT NOT NULL, `forum_id` INTEGER NOT NULL, `course_id` INTEGER NOT NULL, `cm_id` INTEGER, `name` TEXT NOT NULL, `intro` TEXT, `type_raw` TEXT NOT NULL, `discussion_count` INTEGER NOT NULL, `post_count` INTEGER NOT NULL, `can_create_discussions` INTEGER NOT NULL, `can_subscribe` INTEGER NOT NULL, `can_attach_files` INTEGER NOT NULL, PRIMARY KEY(`account_id`, `forum_id`))",
+        "fields": [
+          {
+            "fieldPath": "accountId",
+            "columnName": "account_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "forumId",
+            "columnName": "forum_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "courseId",
+            "columnName": "course_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "cmId",
+            "columnName": "cm_id",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "intro",
+            "columnName": "intro",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "typeRaw",
+            "columnName": "type_raw",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "discussionCount",
+            "columnName": "discussion_count",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "postCount",
+            "columnName": "post_count",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "canCreateDiscussions",
+            "columnName": "can_create_discussions",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "canSubscribe",
+            "columnName": "can_subscribe",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "canAttachFiles",
+            "columnName": "can_attach_files",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "account_id",
+            "forum_id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_elearning_forums_account_id_course_id",
+            "unique": false,
+            "columnNames": [
+              "account_id",
+              "course_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_elearning_forums_account_id_course_id` ON `${TABLE_NAME}` (`account_id`, `course_id`)"
+          }
+        ]
+      },
+      {
+        "tableName": "elearning_forum_discussions",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`account_id` TEXT NOT NULL, `discussion_id` INTEGER NOT NULL, `forum_id` INTEGER NOT NULL, `first_post_id` INTEGER NOT NULL, `subject` TEXT NOT NULL, `author_user_id` INTEGER, `author_name` TEXT NOT NULL, `author_avatar_url` TEXT, `created_at_ms` INTEGER, `time_modified_ms` INTEGER, `is_pinned` INTEGER NOT NULL, `is_locked` INTEGER NOT NULL, `unread_count` INTEGER NOT NULL, `reply_count` INTEGER NOT NULL, `last_post_author_name` TEXT, `message_preview` TEXT, `has_attachments` INTEGER NOT NULL, `can_reply` INTEGER NOT NULL, `is_favourite` INTEGER NOT NULL DEFAULT 0, `can_favourite` INTEGER NOT NULL DEFAULT 0, PRIMARY KEY(`account_id`, `discussion_id`))",
+        "fields": [
+          {
+            "fieldPath": "accountId",
+            "columnName": "account_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "discussionId",
+            "columnName": "discussion_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "forumId",
+            "columnName": "forum_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "firstPostId",
+            "columnName": "first_post_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "subject",
+            "columnName": "subject",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "authorUserId",
+            "columnName": "author_user_id",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "authorName",
+            "columnName": "author_name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "authorAvatarUrl",
+            "columnName": "author_avatar_url",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "createdAtMs",
+            "columnName": "created_at_ms",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "timeModifiedMs",
+            "columnName": "time_modified_ms",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "isPinned",
+            "columnName": "is_pinned",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isLocked",
+            "columnName": "is_locked",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "unreadCount",
+            "columnName": "unread_count",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "replyCount",
+            "columnName": "reply_count",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastPostAuthorName",
+            "columnName": "last_post_author_name",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "messagePreview",
+            "columnName": "message_preview",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "hasAttachments",
+            "columnName": "has_attachments",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "canReply",
+            "columnName": "can_reply",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isFavourite",
+            "columnName": "is_favourite",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0"
+          },
+          {
+            "fieldPath": "canFavourite",
+            "columnName": "can_favourite",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "account_id",
+            "discussion_id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_elearning_forum_discussions_account_id_forum_id_is_pinned_time_modified_ms",
+            "unique": false,
+            "columnNames": [
+              "account_id",
+              "forum_id",
+              "is_pinned",
+              "time_modified_ms"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_elearning_forum_discussions_account_id_forum_id_is_pinned_time_modified_ms` ON `${TABLE_NAME}` (`account_id`, `forum_id`, `is_pinned`, `time_modified_ms`)"
+          }
+        ]
+      },
+      {
+        "tableName": "elearning_forum_posts",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`account_id` TEXT NOT NULL, `post_id` INTEGER NOT NULL, `discussion_id` INTEGER NOT NULL, `parent_id` INTEGER, `author_user_id` INTEGER, `author_name` TEXT NOT NULL, `author_avatar_url` TEXT, `subject` TEXT NOT NULL, `message` TEXT NOT NULL, `created_at_ms` INTEGER, `modified_at_ms` INTEGER, `attachments_json` TEXT, `can_reply` INTEGER NOT NULL, `can_edit` INTEGER NOT NULL, `can_delete` INTEGER NOT NULL, `is_deleted` INTEGER NOT NULL DEFAULT 0, PRIMARY KEY(`account_id`, `post_id`))",
+        "fields": [
+          {
+            "fieldPath": "accountId",
+            "columnName": "account_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "postId",
+            "columnName": "post_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "discussionId",
+            "columnName": "discussion_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "parentId",
+            "columnName": "parent_id",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "authorUserId",
+            "columnName": "author_user_id",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "authorName",
+            "columnName": "author_name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "authorAvatarUrl",
+            "columnName": "author_avatar_url",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "subject",
+            "columnName": "subject",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "message",
+            "columnName": "message",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdAtMs",
+            "columnName": "created_at_ms",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "modifiedAtMs",
+            "columnName": "modified_at_ms",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "attachmentsJson",
+            "columnName": "attachments_json",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "canReply",
+            "columnName": "can_reply",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "canEdit",
+            "columnName": "can_edit",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "canDelete",
+            "columnName": "can_delete",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isDeleted",
+            "columnName": "is_deleted",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "account_id",
+            "post_id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_elearning_forum_posts_account_id_discussion_id_created_at_ms",
+            "unique": false,
+            "columnNames": [
+              "account_id",
+              "discussion_id",
+              "created_at_ms"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_elearning_forum_posts_account_id_discussion_id_created_at_ms` ON `${TABLE_NAME}` (`account_id`, `discussion_id`, `created_at_ms`)"
+          },
+          {
+            "name": "index_elearning_forum_posts_account_id_discussion_id_parent_id",
+            "unique": false,
+            "columnNames": [
+              "account_id",
+              "discussion_id",
+              "parent_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_elearning_forum_posts_account_id_discussion_id_parent_id` ON `${TABLE_NAME}` (`account_id`, `discussion_id`, `parent_id`)"
+          }
+        ]
+      },
+      {
+        "tableName": "elearning_grade_items",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`account_id` TEXT NOT NULL, `course_id` INTEGER NOT NULL, `item_id` INTEGER NOT NULL, `name` TEXT NOT NULL, `type_raw` TEXT NOT NULL, `activity_type` TEXT, `grade` REAL, `max_grade` REAL, `percentage` REAL, `grade_formatted` TEXT, `feedback` TEXT, `graded_at_ms` INTEGER, `sort_order` INTEGER NOT NULL, PRIMARY KEY(`account_id`, `course_id`, `item_id`))",
+        "fields": [
+          {
+            "fieldPath": "accountId",
+            "columnName": "account_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "courseId",
+            "columnName": "course_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "itemId",
+            "columnName": "item_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "typeRaw",
+            "columnName": "type_raw",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "activityType",
+            "columnName": "activity_type",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "grade",
+            "columnName": "grade",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "maxGrade",
+            "columnName": "max_grade",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "percentage",
+            "columnName": "percentage",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "gradeFormatted",
+            "columnName": "grade_formatted",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "feedback",
+            "columnName": "feedback",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "gradedAtMs",
+            "columnName": "graded_at_ms",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "sortOrder",
+            "columnName": "sort_order",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "account_id",
+            "course_id",
+            "item_id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_elearning_grade_items_account_id_course_id",
+            "unique": false,
+            "columnNames": [
+              "account_id",
+              "course_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_elearning_grade_items_account_id_course_id` ON `${TABLE_NAME}` (`account_id`, `course_id`)"
+          }
+        ]
+      },
+      {
+        "tableName": "elearning_course_grade_overview",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`account_id` TEXT NOT NULL, `course_id` INTEGER NOT NULL, `course_name` TEXT NOT NULL, `grade` REAL, `max_grade` REAL, `grade_formatted` TEXT, PRIMARY KEY(`account_id`, `course_id`))",
+        "fields": [
+          {
+            "fieldPath": "accountId",
+            "columnName": "account_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "courseId",
+            "columnName": "course_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "courseName",
+            "columnName": "course_name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "grade",
+            "columnName": "grade",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "maxGrade",
+            "columnName": "max_grade",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "gradeFormatted",
+            "columnName": "grade_formatted",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "account_id",
+            "course_id"
+          ]
+        }
+      },
+      {
+        "tableName": "elearning_badges",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`account_id` TEXT NOT NULL, `badge_id` INTEGER NOT NULL, `name` TEXT NOT NULL, `description` TEXT, `image_url` TEXT, `issued_at_ms` INTEGER, `course_id` INTEGER, PRIMARY KEY(`account_id`, `badge_id`))",
+        "fields": [
+          {
+            "fieldPath": "accountId",
+            "columnName": "account_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "badgeId",
+            "columnName": "badge_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "description",
+            "columnName": "description",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "imageUrl",
+            "columnName": "image_url",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "issuedAtMs",
+            "columnName": "issued_at_ms",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "courseId",
+            "columnName": "course_id",
+            "affinity": "INTEGER"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "account_id",
+            "badge_id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_elearning_badges_account_id_course_id",
+            "unique": false,
+            "columnNames": [
+              "account_id",
+              "course_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_elearning_badges_account_id_course_id` ON `${TABLE_NAME}` (`account_id`, `course_id`)"
+          }
+        ]
+      },
+      {
+        "tableName": "elearning_sync_state",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`account_id` TEXT NOT NULL, `scope` TEXT NOT NULL, `scope_id` INTEGER NOT NULL, `last_refreshed_at_ms` INTEGER NOT NULL, PRIMARY KEY(`account_id`, `scope`, `scope_id`))",
+        "fields": [
+          {
+            "fieldPath": "accountId",
+            "columnName": "account_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "scope",
+            "columnName": "scope",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "scopeId",
+            "columnName": "scope_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastRefreshedAtMs",
+            "columnName": "last_refreshed_at_ms",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "account_id",
+            "scope",
+            "scope_id"
+          ]
+        }
+      },
+      {
+        "tableName": "elearning_video_progress",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`account_id` TEXT NOT NULL, `cm_id` INTEGER NOT NULL, `course_id` INTEGER NOT NULL, `position_ms` INTEGER NOT NULL, `duration_ms` INTEGER NOT NULL, `completed` INTEGER NOT NULL, `last_updated_at_ms` INTEGER NOT NULL, PRIMARY KEY(`account_id`, `cm_id`))",
+        "fields": [
+          {
+            "fieldPath": "accountId",
+            "columnName": "account_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "cmId",
+            "columnName": "cm_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "courseId",
+            "columnName": "course_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "positionMs",
+            "columnName": "position_ms",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "durationMs",
+            "columnName": "duration_ms",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "completed",
+            "columnName": "completed",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastUpdatedAtMs",
+            "columnName": "last_updated_at_ms",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "account_id",
+            "cm_id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_elearning_video_progress_account_id_course_id",
+            "unique": false,
+            "columnNames": [
+              "account_id",
+              "course_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_elearning_video_progress_account_id_course_id` ON `${TABLE_NAME}` (`account_id`, `course_id`)"
+          }
+        ]
+      },
+      {
+        "tableName": "transcript_rows",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `career_id` INTEGER NOT NULL, `activity_code` TEXT, `activity_name` TEXT NOT NULL, `course_year` INTEGER NOT NULL, `credits` REAL NOT NULL, `state` TEXT NOT NULL, `grade` INTEGER, `cum_laude` INTEGER NOT NULL, `exam_date` TEXT, `academic_year` INTEGER, `in_study_plan` INTEGER NOT NULL, `exam_type` TEXT, `bookable_calls_count` INTEGER NOT NULL DEFAULT 0, PRIMARY KEY(`id`, `career_id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "careerId",
+            "columnName": "career_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "activityCode",
+            "columnName": "activity_code",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "activityName",
+            "columnName": "activity_name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "courseYear",
+            "columnName": "course_year",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "credits",
+            "columnName": "credits",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "state",
+            "columnName": "state",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "grade",
+            "columnName": "grade",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "cumLaude",
+            "columnName": "cum_laude",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "examDate",
+            "columnName": "exam_date",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "academicYear",
+            "columnName": "academic_year",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "inStudyPlan",
+            "columnName": "in_study_plan",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "examType",
+            "columnName": "exam_type",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "bookableCallsCount",
+            "columnName": "bookable_calls_count",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id",
+            "career_id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_transcript_rows_career_id_state",
+            "unique": false,
+            "columnNames": [
+              "career_id",
+              "state"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_transcript_rows_career_id_state` ON `${TABLE_NAME}` (`career_id`, `state`)"
+          },
+          {
+            "name": "index_transcript_rows_career_id_exam_date",
+            "unique": false,
+            "columnNames": [
+              "career_id",
+              "exam_date"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_transcript_rows_career_id_exam_date` ON `${TABLE_NAME}` (`career_id`, `exam_date`)"
+          }
+        ]
+      },
+      {
+        "tableName": "transcript_stats",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`career_id` INTEGER NOT NULL, `passed_credits` REAL NOT NULL, `total_credits_required` REAL NOT NULL, `arithmetic_average` REAL, `weighted_average` REAL, `passed_exam_count` INTEGER NOT NULL, `planned_exam_count` INTEGER NOT NULL, `max_grade` INTEGER NOT NULL, `cum_laude_available` INTEGER NOT NULL, PRIMARY KEY(`career_id`))",
+        "fields": [
+          {
+            "fieldPath": "careerId",
+            "columnName": "career_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "passedCredits",
+            "columnName": "passed_credits",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "totalCreditsRequired",
+            "columnName": "total_credits_required",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "arithmeticAverage",
+            "columnName": "arithmetic_average",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "weightedAverage",
+            "columnName": "weighted_average",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "passedExamCount",
+            "columnName": "passed_exam_count",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "plannedExamCount",
+            "columnName": "planned_exam_count",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "maxGrade",
+            "columnName": "max_grade",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "cumLaudeAvailable",
+            "columnName": "cum_laude_available",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "career_id"
+          ]
+        }
+      },
+      {
+        "tableName": "transcript_sync_state",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`career_id` INTEGER NOT NULL, `last_refreshed_at_ms` INTEGER NOT NULL, PRIMARY KEY(`career_id`))",
+        "fields": [
+          {
+            "fieldPath": "careerId",
+            "columnName": "career_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastRefreshedAtMs",
+            "columnName": "last_refreshed_at_ms",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "career_id"
+          ]
+        }
+      },
+      {
+        "tableName": "map_buildings",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`code` TEXT NOT NULL, `name` TEXT NOT NULL, `latitude` REAL NOT NULL, `longitude` REAL NOT NULL, `category` TEXT NOT NULL, `address` TEXT, `city` TEXT, PRIMARY KEY(`code`))",
+        "fields": [
+          {
+            "fieldPath": "code",
+            "columnName": "code",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "latitude",
+            "columnName": "latitude",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "longitude",
+            "columnName": "longitude",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "category",
+            "columnName": "category",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "address",
+            "columnName": "address",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "city",
+            "columnName": "city",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "code"
+          ]
+        }
+      },
+      {
+        "tableName": "map_rooms",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`code` TEXT NOT NULL, `building_code` TEXT NOT NULL, `name` TEXT NOT NULL, `capacity` INTEGER, `floor` INTEGER, PRIMARY KEY(`code`, `building_code`))",
+        "fields": [
+          {
+            "fieldPath": "code",
+            "columnName": "code",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "buildingCode",
+            "columnName": "building_code",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "capacity",
+            "columnName": "capacity",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "floor",
+            "columnName": "floor",
+            "affinity": "INTEGER"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "code",
+            "building_code"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_map_rooms_building_code",
+            "unique": false,
+            "columnNames": [
+              "building_code"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_map_rooms_building_code` ON `${TABLE_NAME}` (`building_code`)"
+          }
+        ]
+      },
+      {
+        "tableName": "map_room_sync_state",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`building_code` TEXT NOT NULL, `last_refreshed_at_ms` INTEGER NOT NULL, PRIMARY KEY(`building_code`))",
+        "fields": [
+          {
+            "fieldPath": "buildingCode",
+            "columnName": "building_code",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastRefreshedAtMs",
+            "columnName": "last_refreshed_at_ms",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "building_code"
+          ]
+        }
+      },
+      {
+        "tableName": "appointment_reservation",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`code` TEXT NOT NULL, `email` TEXT NOT NULL, `entry_id` INTEGER, `service_id` INTEGER NOT NULL, `service_name` TEXT NOT NULL, `service_group` TEXT, `area_name` TEXT, `area_address` TEXT, `start_epoch_seconds` INTEGER NOT NULL, `end_epoch_seconds` INTEGER NOT NULL, `qr_code_data_url` TEXT, `web_conference_url` TEXT, `created_at` INTEGER NOT NULL, PRIMARY KEY(`code`))",
+        "fields": [
+          {
+            "fieldPath": "code",
+            "columnName": "code",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "email",
+            "columnName": "email",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "entryId",
+            "columnName": "entry_id",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "serviceId",
+            "columnName": "service_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "serviceName",
+            "columnName": "service_name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "serviceGroup",
+            "columnName": "service_group",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "areaName",
+            "columnName": "area_name",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "areaAddress",
+            "columnName": "area_address",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "startEpochSeconds",
+            "columnName": "start_epoch_seconds",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "endEpochSeconds",
+            "columnName": "end_epoch_seconds",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "qrCodeDataUrl",
+            "columnName": "qr_code_data_url",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "webConferenceUrl",
+            "columnName": "web_conference_url",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "created_at",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "code"
+          ]
+        }
+      },
+      {
+        "tableName": "library_reservation",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`reservation_id` INTEGER NOT NULL, `library_name` TEXT NOT NULL, `library_secondary_name` TEXT, `seat_name` TEXT NOT NULL, `start_epoch_seconds` INTEGER NOT NULL, `end_epoch_seconds` INTEGER NOT NULL, `note` TEXT, `reservation_code` TEXT, `cancellation_token` TEXT, `state` TEXT NOT NULL, PRIMARY KEY(`reservation_id`))",
+        "fields": [
+          {
+            "fieldPath": "reservationId",
+            "columnName": "reservation_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "libraryName",
+            "columnName": "library_name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "librarySecondaryName",
+            "columnName": "library_secondary_name",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "seatName",
+            "columnName": "seat_name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "startEpochSeconds",
+            "columnName": "start_epoch_seconds",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "endEpochSeconds",
+            "columnName": "end_epoch_seconds",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "note",
+            "columnName": "note",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "reservationCode",
+            "columnName": "reservation_code",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "cancellationToken",
+            "columnName": "cancellation_token",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "state",
+            "columnName": "state",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "reservation_id"
+          ]
+        }
+      },
+      {
+        "tableName": "cached_booked_exam",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`career_id` INTEGER NOT NULL, `course_of_study_id` INTEGER NOT NULL, `activity_id` INTEGER NOT NULL, `call_id` INTEGER NOT NULL, `cache_order` INTEGER NOT NULL, `application_list_id` INTEGER, `student_id` INTEGER, `activity_choice_id` INTEGER, `activity_description` TEXT, `exam_call_description` TEXT, `exam_type` TEXT NOT NULL, `call_type` TEXT NOT NULL, `exam_date_time` TEXT, `classroom_description` TEXT, `building_description` TEXT, `credits` REAL, `exam_mode_description` TEXT, `position` INTEGER, `booking_date` TEXT, `cancellable_until` TEXT, `student_note` TEXT, `grade_kind` TEXT NOT NULL, `grade_value` INTEGER, `outcome_published` INTEGER NOT NULL, `published_note` TEXT, PRIMARY KEY(`career_id`, `course_of_study_id`, `activity_id`, `call_id`))",
+        "fields": [
+          {
+            "fieldPath": "careerId",
+            "columnName": "career_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "courseOfStudyId",
+            "columnName": "course_of_study_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "activityId",
+            "columnName": "activity_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "callId",
+            "columnName": "call_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "cacheOrder",
+            "columnName": "cache_order",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "applicationListId",
+            "columnName": "application_list_id",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "studentId",
+            "columnName": "student_id",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "activityChoiceId",
+            "columnName": "activity_choice_id",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "activityDescription",
+            "columnName": "activity_description",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "examCallDescription",
+            "columnName": "exam_call_description",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "examType",
+            "columnName": "exam_type",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "callType",
+            "columnName": "call_type",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "examDateTime",
+            "columnName": "exam_date_time",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "classroomDescription",
+            "columnName": "classroom_description",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "buildingDescription",
+            "columnName": "building_description",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "credits",
+            "columnName": "credits",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "examModeDescription",
+            "columnName": "exam_mode_description",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "position",
+            "columnName": "position",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "bookingDate",
+            "columnName": "booking_date",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "cancellableUntil",
+            "columnName": "cancellable_until",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "studentNote",
+            "columnName": "student_note",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "gradeKind",
+            "columnName": "grade_kind",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "gradeValue",
+            "columnName": "grade_value",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "outcomePublished",
+            "columnName": "outcome_published",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "publishedNote",
+            "columnName": "published_note",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "career_id",
+            "course_of_study_id",
+            "activity_id",
+            "call_id"
+          ]
+        }
+      },
+      {
+        "tableName": "cached_exam_call",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`career_id` INTEGER NOT NULL, `course_of_study_id` INTEGER NOT NULL, `activity_id` INTEGER NOT NULL, `call_id` INTEGER NOT NULL, `cache_order` INTEGER NOT NULL, `exam_call_id` INTEGER, `activity_choice_id` INTEGER, `activity_code` TEXT, `activity_description` TEXT, `course_of_study_description` TEXT, `call_description` TEXT, `call_date` TEXT, `call_time` TEXT, `window_opens_at` TEXT, `window_closes_at` TEXT, `enrolled_number` INTEGER, `state` TEXT, `state_description` TEXT, `call_type` TEXT NOT NULL, `exam_type` TEXT NOT NULL, `is_reserved` INTEGER NOT NULL, `mat_id` INTEGER, `notes` TEXT, `president_id` INTEGER, `president_name` TEXT, `president_surname` TEXT, `booking_type_description` TEXT, PRIMARY KEY(`career_id`, `course_of_study_id`, `activity_id`, `call_id`))",
+        "fields": [
+          {
+            "fieldPath": "careerId",
+            "columnName": "career_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "courseOfStudyId",
+            "columnName": "course_of_study_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "activityId",
+            "columnName": "activity_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "callId",
+            "columnName": "call_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "cacheOrder",
+            "columnName": "cache_order",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "examCallId",
+            "columnName": "exam_call_id",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "activityChoiceId",
+            "columnName": "activity_choice_id",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "activityCode",
+            "columnName": "activity_code",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "activityDescription",
+            "columnName": "activity_description",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "courseOfStudyDescription",
+            "columnName": "course_of_study_description",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "callDescription",
+            "columnName": "call_description",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "callDate",
+            "columnName": "call_date",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "callTime",
+            "columnName": "call_time",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "windowOpensAt",
+            "columnName": "window_opens_at",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "windowClosesAt",
+            "columnName": "window_closes_at",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "enrolledNumber",
+            "columnName": "enrolled_number",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "state",
+            "columnName": "state",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "stateDescription",
+            "columnName": "state_description",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "callType",
+            "columnName": "call_type",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "examType",
+            "columnName": "exam_type",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isReserved",
+            "columnName": "is_reserved",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "matId",
+            "columnName": "mat_id",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "notes",
+            "columnName": "notes",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "presidentId",
+            "columnName": "president_id",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "presidentName",
+            "columnName": "president_name",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "presidentSurname",
+            "columnName": "president_surname",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "bookingTypeDescription",
+            "columnName": "booking_type_description",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "career_id",
+            "course_of_study_id",
+            "activity_id",
+            "call_id"
+          ]
+        }
+      },
+      {
+        "tableName": "cached_exam_result",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`career_id` INTEGER NOT NULL, `course_of_study_id` INTEGER NOT NULL, `activity_id` INTEGER NOT NULL, `call_id` INTEGER NOT NULL, `cache_order` INTEGER NOT NULL, `application_list_id` INTEGER, `publication_id` INTEGER, `activity_description` TEXT, `exam_date_time` TEXT, `grade_kind` TEXT NOT NULL, `grade_value` INTEGER, `acknowledgment` TEXT NOT NULL, `published_note` TEXT, `acknowledgment_deadline` TEXT, PRIMARY KEY(`career_id`, `course_of_study_id`, `activity_id`, `call_id`))",
+        "fields": [
+          {
+            "fieldPath": "careerId",
+            "columnName": "career_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "courseOfStudyId",
+            "columnName": "course_of_study_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "activityId",
+            "columnName": "activity_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "callId",
+            "columnName": "call_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "cacheOrder",
+            "columnName": "cache_order",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "applicationListId",
+            "columnName": "application_list_id",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "publicationId",
+            "columnName": "publication_id",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "activityDescription",
+            "columnName": "activity_description",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "examDateTime",
+            "columnName": "exam_date_time",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "gradeKind",
+            "columnName": "grade_kind",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "gradeValue",
+            "columnName": "grade_value",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "acknowledgment",
+            "columnName": "acknowledgment",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "publishedNote",
+            "columnName": "published_note",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "acknowledgmentDeadline",
+            "columnName": "acknowledgment_deadline",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "career_id",
+            "course_of_study_id",
+            "activity_id",
+            "call_id"
+          ]
+        }
+      },
+      {
+        "tableName": "cached_tax_invoice",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`career_id` INTEGER NOT NULL, `invoice_id` INTEGER NOT NULL, `cache_order` INTEGER NOT NULL, `academic_year` INTEGER, `title` TEXT NOT NULL, `amount` REAL NOT NULL, `paid_amount` REAL, `status` TEXT NOT NULL, `issue_date` TEXT, `expiration` TEXT, `payment_date` TEXT, `pagopa_enabled` INTEGER NOT NULL, `pagopa_immediate` INTEGER NOT NULL, `pagopa_notice` INTEGER NOT NULL, `iuv` TEXT, `notice_code` TEXT, PRIMARY KEY(`career_id`, `invoice_id`))",
+        "fields": [
+          {
+            "fieldPath": "careerId",
+            "columnName": "career_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "invoiceId",
+            "columnName": "invoice_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "cacheOrder",
+            "columnName": "cache_order",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "academicYear",
+            "columnName": "academic_year",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "title",
+            "columnName": "title",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "amount",
+            "columnName": "amount",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "paidAmount",
+            "columnName": "paid_amount",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "status",
+            "columnName": "status",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "issueDate",
+            "columnName": "issue_date",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "expiration",
+            "columnName": "expiration",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "paymentDate",
+            "columnName": "payment_date",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "pagoPaEnabled",
+            "columnName": "pagopa_enabled",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "pagoPaImmediate",
+            "columnName": "pagopa_immediate",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "pagoPaNotice",
+            "columnName": "pagopa_notice",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "iuv",
+            "columnName": "iuv",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "noticeCode",
+            "columnName": "notice_code",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "career_id",
+            "invoice_id"
+          ]
+        }
+      },
+      {
+        "tableName": "cached_tax_charge_item",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`career_id` INTEGER NOT NULL, `invoice_id` INTEGER NOT NULL, `item_order` INTEGER NOT NULL, `description` TEXT NOT NULL, `amount` REAL NOT NULL, `installment_description` TEXT, `expiration` TEXT, PRIMARY KEY(`career_id`, `invoice_id`, `item_order`))",
+        "fields": [
+          {
+            "fieldPath": "careerId",
+            "columnName": "career_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "invoiceId",
+            "columnName": "invoice_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "itemOrder",
+            "columnName": "item_order",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "description",
+            "columnName": "description",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "amount",
+            "columnName": "amount",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "installmentDescription",
+            "columnName": "installment_description",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "expiration",
+            "columnName": "expiration",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "career_id",
+            "invoice_id",
+            "item_order"
+          ]
+        }
+      },
+      {
+        "tableName": "cached_tax_summary",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`career_id` INTEGER NOT NULL, `light` TEXT NOT NULL, `due_amount` REAL NOT NULL, `expired_count` INTEGER NOT NULL, `due_count` INTEGER NOT NULL, PRIMARY KEY(`career_id`))",
+        "fields": [
+          {
+            "fieldPath": "careerId",
+            "columnName": "career_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "light",
+            "columnName": "light",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "dueAmount",
+            "columnName": "due_amount",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "expiredCount",
+            "columnName": "expired_count",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "dueCount",
+            "columnName": "due_count",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "career_id"
+          ]
+        }
+      },
+      {
+        "tableName": "cached_tax_isee",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`career_id` INTEGER NOT NULL, `cache_order` INTEGER NOT NULL, `academic_year_enrollment_id` INTEGER, `course_description` TEXT, `isee` REAL, `isee_threshold` REAL, `exemption_description` TEXT, PRIMARY KEY(`career_id`, `cache_order`))",
+        "fields": [
+          {
+            "fieldPath": "careerId",
+            "columnName": "career_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "cacheOrder",
+            "columnName": "cache_order",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "academicYearEnrollmentId",
+            "columnName": "academic_year_enrollment_id",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "courseDescription",
+            "columnName": "course_description",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "isee",
+            "columnName": "isee",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "iseeThreshold",
+            "columnName": "isee_threshold",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "exemptionDescription",
+            "columnName": "exemption_description",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "career_id",
+            "cache_order"
+          ]
+        }
+      },
+      {
+        "tableName": "cached_tax_refund",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`career_id` INTEGER NOT NULL, `cache_order` INTEGER NOT NULL, `invoice_id` INTEGER, `academic_year` INTEGER, `amount` REAL, `description` TEXT, `reason_code` TEXT, `mandate_number` TEXT, `refunded` INTEGER NOT NULL, `note` TEXT, `collected_by` TEXT, `issue_date` TEXT, `processing_date` TEXT, `payment_date` TEXT, `credit_date` TEXT, PRIMARY KEY(`career_id`, `cache_order`))",
+        "fields": [
+          {
+            "fieldPath": "careerId",
+            "columnName": "career_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "cacheOrder",
+            "columnName": "cache_order",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "invoiceId",
+            "columnName": "invoice_id",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "academicYear",
+            "columnName": "academic_year",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "amount",
+            "columnName": "amount",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "description",
+            "columnName": "description",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "reasonCode",
+            "columnName": "reason_code",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "mandateNumber",
+            "columnName": "mandate_number",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "refunded",
+            "columnName": "refunded",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "note",
+            "columnName": "note",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "collectedBy",
+            "columnName": "collected_by",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "issueDate",
+            "columnName": "issue_date",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "processingDate",
+            "columnName": "processing_date",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "paymentDate",
+            "columnName": "payment_date",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "creditDate",
+            "columnName": "credit_date",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "career_id",
+            "cache_order"
+          ]
+        }
+      },
+      {
+        "tableName": "cached_annual_enrollment",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`career_id` INTEGER NOT NULL, `enrollment_id` INTEGER NOT NULL, `cache_order` INTEGER NOT NULL, `academic_year` INTEGER NOT NULL, `course_year` INTEGER NOT NULL, `out_of_course_years` INTEGER NOT NULL, `type` TEXT NOT NULL, `type_description` TEXT, `status` TEXT NOT NULL, `status_reason_code` TEXT, `conditional` INTEGER NOT NULL, `reconstructed` INTEGER NOT NULL, `has_part_time` INTEGER NOT NULL, `part_time_credits` INTEGER, `part_time_extra_credits` INTEGER, `part_time_locked` INTEGER, `has_suspension` INTEGER NOT NULL, `suspension_reason_code` TEXT, `awaiting_degree` INTEGER NOT NULL, `degree_award_date` TEXT, `student_type_description` TEXT, `exemption_description` TEXT, `income_band_id` INTEGER, `canteen_band_id` INTEGER, `merit_band_id` INTEGER, `merit_note` TEXT, `enrollment_note` TEXT, `disability_percentage` REAL, `disability_type_description` TEXT, `course_description` TEXT, `course_type_description` TEXT, `degree_class_code` TEXT, `degree_class_description` TEXT, `orientation_description` TEXT, `address_description` TEXT, `study_order_description` TEXT, `minimum_credits` INTEGER, `course_duration` INTEGER, `teaching_language` TEXT, `regulation_code` TEXT, `university_description` TEXT, `site_description` TEXT, `enrollment_date` TEXT, `insertion_date` TEXT, `modification_date` TEXT, PRIMARY KEY(`career_id`, `enrollment_id`))",
+        "fields": [
+          {
+            "fieldPath": "careerId",
+            "columnName": "career_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "enrollmentId",
+            "columnName": "enrollment_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "cacheOrder",
+            "columnName": "cache_order",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "academicYear",
+            "columnName": "academic_year",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "courseYear",
+            "columnName": "course_year",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "outOfCourseYears",
+            "columnName": "out_of_course_years",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "type",
+            "columnName": "type",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "typeDescription",
+            "columnName": "type_description",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "status",
+            "columnName": "status",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "statusReasonCode",
+            "columnName": "status_reason_code",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "conditional",
+            "columnName": "conditional",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "reconstructed",
+            "columnName": "reconstructed",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "hasPartTime",
+            "columnName": "has_part_time",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "partTimeCredits",
+            "columnName": "part_time_credits",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "partTimeExtraCredits",
+            "columnName": "part_time_extra_credits",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "partTimeLocked",
+            "columnName": "part_time_locked",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "hasSuspension",
+            "columnName": "has_suspension",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "suspensionReasonCode",
+            "columnName": "suspension_reason_code",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "awaitingDegree",
+            "columnName": "awaiting_degree",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "degreeAwardDate",
+            "columnName": "degree_award_date",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "studentTypeDescription",
+            "columnName": "student_type_description",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "exemptionDescription",
+            "columnName": "exemption_description",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "incomeBandId",
+            "columnName": "income_band_id",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "canteenBandId",
+            "columnName": "canteen_band_id",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "meritBandId",
+            "columnName": "merit_band_id",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "meritNote",
+            "columnName": "merit_note",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "enrollmentNote",
+            "columnName": "enrollment_note",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "disabilityPercentage",
+            "columnName": "disability_percentage",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "disabilityTypeDescription",
+            "columnName": "disability_type_description",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "courseDescription",
+            "columnName": "course_description",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "courseTypeDescription",
+            "columnName": "course_type_description",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "degreeClassCode",
+            "columnName": "degree_class_code",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "degreeClassDescription",
+            "columnName": "degree_class_description",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "orientationDescription",
+            "columnName": "orientation_description",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "addressDescription",
+            "columnName": "address_description",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "studyOrderDescription",
+            "columnName": "study_order_description",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "minimumCredits",
+            "columnName": "minimum_credits",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "courseDuration",
+            "columnName": "course_duration",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "teachingLanguage",
+            "columnName": "teaching_language",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "regulationCode",
+            "columnName": "regulation_code",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "universityDescription",
+            "columnName": "university_description",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "siteDescription",
+            "columnName": "site_description",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "enrollmentDate",
+            "columnName": "enrollment_date",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "insertionDate",
+            "columnName": "insertion_date",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "modificationDate",
+            "columnName": "modification_date",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "career_id",
+            "enrollment_id"
+          ]
+        }
+      },
+      {
+        "tableName": "cached_questionnaire_activity",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`career_id` INTEGER NOT NULL, `activity_choice_id` INTEGER NOT NULL, `cache_order` INTEGER NOT NULL, `activity_code` TEXT, `activity_name` TEXT NOT NULL, `credits` REAL NOT NULL, `course_year` INTEGER NOT NULL, `attendance_year` INTEGER, `status` TEXT NOT NULL, PRIMARY KEY(`career_id`, `activity_choice_id`))",
+        "fields": [
+          {
+            "fieldPath": "careerId",
+            "columnName": "career_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "activityChoiceId",
+            "columnName": "activity_choice_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "cacheOrder",
+            "columnName": "cache_order",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "activityCode",
+            "columnName": "activity_code",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "activityName",
+            "columnName": "activity_name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "credits",
+            "columnName": "credits",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "courseYear",
+            "columnName": "course_year",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "attendanceYear",
+            "columnName": "attendance_year",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "status",
+            "columnName": "status",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "career_id",
+            "activity_choice_id"
+          ]
+        }
+      },
+      {
+        "tableName": "cached_activity_questionnaires",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`career_id` INTEGER NOT NULL, `activity_choice_id` INTEGER NOT NULL, `questionnaire_id` INTEGER, `questionnaire_config_id` INTEGER, `questionnaire_name` TEXT, `anonymous` INTEGER NOT NULL, PRIMARY KEY(`career_id`, `activity_choice_id`))",
+        "fields": [
+          {
+            "fieldPath": "careerId",
+            "columnName": "career_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "activityChoiceId",
+            "columnName": "activity_choice_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "questionnaireId",
+            "columnName": "questionnaire_id",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "questionnaireConfigId",
+            "columnName": "questionnaire_config_id",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "questionnaireName",
+            "columnName": "questionnaire_name",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "anonymous",
+            "columnName": "anonymous",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "career_id",
+            "activity_choice_id"
+          ]
+        }
+      },
+      {
+        "tableName": "cached_questionnaire_unit",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`career_id` INTEGER NOT NULL, `activity_choice_id` INTEGER NOT NULL, `unit_order` INTEGER NOT NULL, `teaching_unit_name` TEXT NOT NULL, `lecturer_name` TEXT, `partition_name` TEXT, `completed` INTEGER NOT NULL, `tags` TEXT NOT NULL, PRIMARY KEY(`career_id`, `activity_choice_id`, `unit_order`))",
+        "fields": [
+          {
+            "fieldPath": "careerId",
+            "columnName": "career_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "activityChoiceId",
+            "columnName": "activity_choice_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "unitOrder",
+            "columnName": "unit_order",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "teachingUnitName",
+            "columnName": "teaching_unit_name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lecturerName",
+            "columnName": "lecturer_name",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "partitionName",
+            "columnName": "partition_name",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "completed",
+            "columnName": "completed",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "tags",
+            "columnName": "tags",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "career_id",
+            "activity_choice_id",
+            "unit_order"
+          ]
+        }
+      },
+      {
+        "tableName": "cached_student_badge",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`career_id` INTEGER NOT NULL, `badge_id` INTEGER NOT NULL, `blob_id` INTEGER, `has_front_image` INTEGER NOT NULL, `has_rear_image` INTEGER NOT NULL, `rfid` TEXT, `student_number` TEXT, `full_name` TEXT, `course_description` TEXT, `faculty_description` TEXT, `academic_year` INTEGER, `delivered` INTEGER NOT NULL, `cancelled` INTEGER NOT NULL, `returned` INTEGER NOT NULL, `created_on` TEXT, `printed_on` TEXT, `delivered_on` TEXT, PRIMARY KEY(`career_id`))",
+        "fields": [
+          {
+            "fieldPath": "careerId",
+            "columnName": "career_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "badgeId",
+            "columnName": "badge_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "blobId",
+            "columnName": "blob_id",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "hasFrontImage",
+            "columnName": "has_front_image",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "hasRearImage",
+            "columnName": "has_rear_image",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "rfid",
+            "columnName": "rfid",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "studentNumber",
+            "columnName": "student_number",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "fullName",
+            "columnName": "full_name",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "courseDescription",
+            "columnName": "course_description",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "facultyDescription",
+            "columnName": "faculty_description",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "academicYear",
+            "columnName": "academic_year",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "delivered",
+            "columnName": "delivered",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "cancelled",
+            "columnName": "cancelled",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "returned",
+            "columnName": "returned",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdOn",
+            "columnName": "created_on",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "printedOn",
+            "columnName": "printed_on",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "deliveredOn",
+            "columnName": "delivered_on",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "career_id"
+          ]
+        }
+      },
+      {
+        "tableName": "cached_academic_title",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`career_id` INTEGER NOT NULL, `title_id` TEXT NOT NULL, `cache_order` INTEGER NOT NULL, `category` TEXT NOT NULL, `status` TEXT NOT NULL, `type_description` TEXT, `subject` TEXT, `institution` TEXT, `country` TEXT, `year` TEXT, `grade` TEXT, `cum_laude` INTEGER NOT NULL, `value_declaration_filed` INTEGER NOT NULL, PRIMARY KEY(`career_id`, `title_id`))",
+        "fields": [
+          {
+            "fieldPath": "careerId",
+            "columnName": "career_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "titleId",
+            "columnName": "title_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "cacheOrder",
+            "columnName": "cache_order",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "category",
+            "columnName": "category",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "status",
+            "columnName": "status",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "typeDescription",
+            "columnName": "type_description",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "subject",
+            "columnName": "subject",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "institution",
+            "columnName": "institution",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "country",
+            "columnName": "country",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "year",
+            "columnName": "year",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "grade",
+            "columnName": "grade",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "cumLaude",
+            "columnName": "cum_laude",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "valueDeclarationFiled",
+            "columnName": "value_declaration_filed",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "career_id",
+            "title_id"
+          ]
+        }
+      },
+      {
+        "tableName": "cached_title_attribute",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`career_id` INTEGER NOT NULL, `title_id` TEXT NOT NULL, `attr_order` INTEGER NOT NULL, `field` TEXT NOT NULL, `value` TEXT NOT NULL, PRIMARY KEY(`career_id`, `title_id`, `attr_order`))",
+        "fields": [
+          {
+            "fieldPath": "careerId",
+            "columnName": "career_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "titleId",
+            "columnName": "title_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "attrOrder",
+            "columnName": "attr_order",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "field",
+            "columnName": "field",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "value",
+            "columnName": "value",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "career_id",
+            "title_id",
+            "attr_order"
+          ]
+        }
+      },
+      {
+        "tableName": "cached_badge_image",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`blob_id` INTEGER NOT NULL, `side` TEXT NOT NULL, `bytes` BLOB NOT NULL, PRIMARY KEY(`blob_id`, `side`))",
+        "fields": [
+          {
+            "fieldPath": "blobId",
+            "columnName": "blob_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "side",
+            "columnName": "side",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "bytes",
+            "columnName": "bytes",
+            "affinity": "BLOB",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "blob_id",
+            "side"
+          ]
+        }
+      },
+      {
+        "tableName": "cached_certificate",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`owner_id` INTEGER NOT NULL, `certificate_id` TEXT NOT NULL, `cache_order` INTEGER NOT NULL, `description` TEXT NOT NULL, `type` TEXT NOT NULL, `solar_year` INTEGER, `digitally_signed` INTEGER NOT NULL, PRIMARY KEY(`owner_id`, `certificate_id`))",
+        "fields": [
+          {
+            "fieldPath": "ownerId",
+            "columnName": "owner_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "certificateId",
+            "columnName": "certificate_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "cacheOrder",
+            "columnName": "cache_order",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "description",
+            "columnName": "description",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "type",
+            "columnName": "type",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "solarYear",
+            "columnName": "solar_year",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "digitallySigned",
+            "columnName": "digitally_signed",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "owner_id",
+            "certificate_id"
+          ]
+        }
+      }
+    ],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '121308546b84b2d41756b74030958fbb')"
+    ]
+  }
+}
