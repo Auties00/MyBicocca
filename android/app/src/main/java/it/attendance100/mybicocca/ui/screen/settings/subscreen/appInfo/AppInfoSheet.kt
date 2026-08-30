@@ -104,6 +104,11 @@ private val versionText: String = buildString {
     append("Versione ${BuildConfig.VERSION_NAME}")
     @Suppress("KotlinConstantConditions", "SimplifyBooleanWithConstants")
     if (BuildConfig.DEBUG && BuildConfig.BUILD_TYPE != "release") append(" [Debug]")
+    
+    val nightlyId = BuildConfig.NIGHTLY_IDENTIFIER
+    if (BuildConfig.VERSION_NAME.contains("nightly") && nightlyId.isNotEmpty()) {
+        append(" [$nightlyId]")
+    }
 }
 
 private val copyrightText: String

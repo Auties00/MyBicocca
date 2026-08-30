@@ -76,6 +76,19 @@ android {
         versionName = appBaseVersionName
         manifestPlaceholders["buildNumber"] = buildNumber.toString()
 
+        val isCi = System.getenv("GITHUB_ACTIONS") == "true"
+        val nightlyIdentifier = if (isCi) {
+            val tz = java.util.TimeZone.getTimeZone("Europe/Rome")
+            val format = java.text.SimpleDateFormat("dd MMM yyyy, HH:mm")
+            format.timeZone = tz
+            format.format(java.util.Date())
+        } else {
+            ""
+        }
+        val commitSha = System.getenv("GITHUB_SHA")?.take(7) ?: ""
+        buildConfigField("String", "NIGHTLY_IDENTIFIER", "\"$nightlyIdentifier\"")
+        buildConfigField("String", "COMMIT_SHA", "\"$commitSha\"")
+
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
             useSupportLibrary = true

@@ -76,7 +76,8 @@ class UpdateRepositoryImpl @Inject constructor(
             .map { persisted ->
                 when {
                     persisted.lastCheckedAtMs == null -> UpdateStatus.Unknown
-                    persisted.available && persisted.release != null ->
+                    persisted.available && persisted.release != null && 
+                            persisted.release.commitSha != BuildConfig.COMMIT_SHA ->
                         UpdateStatus.UpdateAvailable(persisted.release)
                     else -> UpdateStatus.UpToDate
                 }
