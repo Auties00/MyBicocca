@@ -70,6 +70,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.net.toUri
@@ -684,7 +685,7 @@ private fun NightlyUpdateTile(
         if (sha != null && commitStr != null) {
             androidx.compose.ui.text.buildAnnotatedString {
                 append(fromStr)
-                androidx.compose.ui.text.withStyle(androidx.compose.ui.text.SpanStyle(color = scheme.onSurfaceVariant.copy(alpha = 0.5f))) {
+                withStyle(androidx.compose.ui.text.SpanStyle(color = scheme.onSurfaceVariant.copy(alpha = 0.5f))) {
                     append(commitStr)
                 }
             }
