@@ -40,8 +40,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalAccessibilityManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import it.attendance100.mybicocca.R
+import it.attendance100.mybicocca.ui.theme.BicoccaTheme
 import kotlinx.coroutines.delay
 import java.io.IOException
 import java.net.ConnectException
@@ -225,7 +227,7 @@ private fun AppSnackbarSurface(data: SnackbarData) {
                     data.dismiss()
                 } else Modifier
             ),
-        shape = RoundedCornerShape(20.dp),
+        shape = RoundedCornerShape(14.dp),
         color = container,
         contentColor = onContainer,
         tonalElevation = 3.dp,
@@ -280,5 +282,72 @@ private fun Throwable.friendlyShortReason(): Int? = when (this) {
     is SocketTimeoutException -> R.string.error_network_timeout
     is IOException -> R.string.error_network_generic
     else -> null
+}
+
+private class MockSnackbarData(
+    override val visuals: SnackbarVisuals,
+) : SnackbarData {
+    override fun dismiss() {}
+    override fun performAction() {}
+}
+
+@Preview(name = "Info · Light", group = "Feedback", showBackground = true)
+@Composable
+private fun AppSnackbarInfoLightPreview() {
+    BicoccaTheme(dark = false) {
+        AppSnackbarSurface(
+            data = MockSnackbarData(
+                visuals = AppSnackbarVisuals(
+                    message = "Information message successfully displayed.",
+                    severity = AppSnackbarSeverity.Info,
+                )
+            )
+        )
+    }
+}
+
+@Preview(name = "Info · Dark", group = "Feedback", showBackground = true)
+@Composable
+private fun AppSnackbarInfoDarkPreview() {
+    BicoccaTheme(dark = true) {
+        AppSnackbarSurface(
+            data = MockSnackbarData(
+                visuals = AppSnackbarVisuals(
+                    message = "Information message successfully displayed.",
+                    severity = AppSnackbarSeverity.Info,
+                )
+            )
+        )
+    }
+}
+
+@Preview(name = "Error · Light", group = "Feedback", showBackground = true)
+@Composable
+private fun AppSnackbarErrorLightPreview() {
+    BicoccaTheme(dark = false) {
+        AppSnackbarSurface(
+            data = MockSnackbarData(
+                visuals = AppSnackbarVisuals(
+                    message = "An error occurred while fetching data.",
+                    severity = AppSnackbarSeverity.Error,
+                )
+            )
+        )
+    }
+}
+
+@Preview(name = "Error · Dark", group = "Feedback", showBackground = true)
+@Composable
+private fun AppSnackbarErrorDarkPreview() {
+    BicoccaTheme(dark = true) {
+        AppSnackbarSurface(
+            data = MockSnackbarData(
+                visuals = AppSnackbarVisuals(
+                    message = "An error occurred while fetching data.",
+                    severity = AppSnackbarSeverity.Error,
+                )
+            )
+        )
+    }
 }
 
