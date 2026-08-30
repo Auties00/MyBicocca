@@ -181,8 +181,7 @@ tasks.withType<Test> {
 androidComponents {
     onVariants { variant ->
         if (variant.buildType == "nightly") {
-            val runNumber = System.getenv("GITHUB_RUN_NUMBER")?.toIntOrNull() ?: 
-                            (System.currentTimeMillis() / 1000).toInt()
+            val runNumber = (System.currentTimeMillis() / 1000).toInt()
             variant.outputs.forEach { it.versionCode.set(runNumber) }
         }
 
