@@ -4,6 +4,7 @@ import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ProcessLifecycleOwner
 import it.attendance100.mybicocca.di.ApplicationScope
+import it.attendance100.mybicocca.domain.model.update.AppRelease
 import it.attendance100.mybicocca.domain.repository.UpdateRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -22,8 +23,19 @@ import javax.inject.Singleton
 @Singleton
 class UpdateChecker @Inject constructor(
     private val repository: UpdateRepository,
+    private val apkDownloader: ApkDownloader,
     @ApplicationScope private val scope: CoroutineScope,
 ) : DefaultLifecycleObserver {
+
+    private var pendingNightlyRelease: AppRelease? = null
+
+    init {
+        scope.launch {
+            repository.newNightlyUpdateEvents.collect { release ->
+                pendingNightlyRelease = release
+            }
+        }
+    }
 
     /**
      * Registers the process-lifecycle observer. Called from the activity's onCreate; safe to call
@@ -37,5 +49,19 @@ class UpdateChecker @Inject constructor(
 
     override fun onStart(owner: LifecycleOwner) {
         scope.launch { runCatching { repository.checkForUpdates(force = false) } }
+    }
+
+    override fun onStop(owner: LifecycleOwner) {
+        val release = pendingNightlyRelease ?: return
+        pendingNightlyRelease = null
+        
+        scope.launch {
+            apkDownloader.startDownload(release)
+            apkDownloader.downloadState.collect { state ->
+                if (state is DownloadState.Success) {
+                    apkDownloader.installApk(state.file, silent = true)
+                }
+            }
+        }
     }
 }
