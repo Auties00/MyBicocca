@@ -72,6 +72,15 @@ class UpdateRepositoryImpl @Inject constructor(
         }
     }
 
+    override fun observeStableAutoDownload(): Flow<Boolean> = store.stableAutoDownload
+    override suspend fun setStableAutoDownload(enabled: Boolean) = store.setStableAutoDownload(enabled)
+
+    override fun observeNightlyAutoDownload(): Flow<Boolean> = store.nightlyAutoDownload
+    override suspend fun setNightlyAutoDownload(enabled: Boolean) = store.setNightlyAutoDownload(enabled)
+
+    override fun observeNightlyAutoInstall(): Flow<Boolean> = store.nightlyAutoInstall
+    override suspend fun setNightlyAutoInstall(enabled: Boolean) = store.setNightlyAutoInstall(enabled)
+
     override fun observeNightlyStatus(): Flow<UpdateStatus> =
         store.nightlyState
             .map { persisted ->

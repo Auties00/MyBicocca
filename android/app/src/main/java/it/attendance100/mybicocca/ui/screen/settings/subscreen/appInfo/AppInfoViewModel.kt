@@ -30,6 +30,7 @@ import javax.inject.Inject
 import it.attendance100.mybicocca.domain.usecase.update.ObserveNightlyEnabledUseCase
 import it.attendance100.mybicocca.domain.usecase.update.ObserveNightlyStatusUseCase
 import it.attendance100.mybicocca.domain.usecase.update.SetNightlyEnabledUseCase
+import it.attendance100.mybicocca.domain.repository.UpdateRepository
 
 @HiltViewModel
 class AppInfoViewModel @Inject constructor(
@@ -40,6 +41,7 @@ class AppInfoViewModel @Inject constructor(
     private val checkForUpdates: CheckForUpdatesUseCase,
     private val getUpdatePageUrl: GetUpdatePageUrlUseCase,
     private val downloader: ApkDownloader,
+    private val updateRepository: UpdateRepository,
 ) : ViewModel() {
 
     val status: StateFlow<UpdateStatus> = observeUpdateStatus()
@@ -92,5 +94,26 @@ class AppInfoViewModel @Inject constructor(
     fun checkAndOfferStable(onOfferStable: () -> Unit) {
         if (!nightlyEnabled.value) return
         onOfferStable()
+    }
+
+    val stableAutoDownload: StateFlow<Boolean> = updateRepository.observeStableAutoDownload()
+        .stateIn(viewModelScope, SharingStarted.Eagerly, true)
+
+    fun setStableAutoDownload(enabled: Boolean) {
+        viewModelScope.launch { updateRepository.setStableAutoDownload(enabled) }
+    }
+
+    val nightlyAutoDownload: StateFlow<Boolean> = updateRepository.observeNightlyAutoDownload()
+        .stateIn(viewModelScope, SharingStarted.Eagerly, true)
+
+    fun setNightlyAutoDownload(enabled: Boolean) {
+        viewModelScope.launch { updateRepository.setNightlyAutoDownload(enabled) }
+    }
+
+    val nightlyAutoInstall: StateFlow<Boolean> = updateRepository.observeNightlyAutoInstall()
+        .stateIn(viewModelScope, SharingStarted.Eagerly, false)
+
+    fun setNightlyAutoInstall(enabled: Boolean) {
+        viewModelScope.launch { updateRepository.setNightlyAutoInstall(enabled) }
     }
 }

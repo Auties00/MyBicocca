@@ -535,12 +535,83 @@ fun MainShell(
     val snackbarController = rememberAppSnackbarController()
     val updateEventsViewModel: UpdateEventsViewModel = hiltViewModel()
 
-    LaunchedEffect(updateEventsViewModel, snackbarController) {
-        kotlinx.coroutines.flow.merge(
-            updateEventsViewModel.events,
-            updateEventsViewModel.nightlyEvents
-        ).collect {
-            snackbarController.showInfo(strShellUpdateAvailable)
+    val stableAutoDownload by updateEventsViewModel.stableAutoDownload.collectAsStateWithLifecycle()
+    val nightlyAutoDownload by updateEventsViewModel.nightlyAutoDownload.collectAsStateWithLifecycle()
+    val nightlyAutoInstall by updateEventsViewModel.nightlyAutoInstall.collectAsStateWithLifecycle()
+    val downloadState by updateEventsViewModel.downloadState.collectAsStateWithLifecycle()
+    var showUpdateModal by remember { mutableStateOf<it.attendance100.mybicocca.domain.model.update.AppRelease?>(null) }
+    var downloadingRelease by remember { mutableStateOf<it.attendance100.mybicocca.domain.model.update.AppRelease?>(null) }
+
+    showUpdateModal?.let { release ->
+        it.attendance100.mybicocca.ui.component.modal.UpdateModalSheet(
+            release = release,
+            downloadStateFlow = updateEventsViewModel.downloadState,
+            onDownload = {
+                downloadingRelease = release
+                updateEventsViewModel.startDownload(release)
+            },
+            onInstall = { file ->
+                // Both trigger Silent Install from the button
+                updateEventsViewModel.installApk(file, silent = true)
+                updateEventsViewModel.clearDownload()
+                showUpdateModal = null
+            },
+            onDismiss = {
+                updateEventsViewModel.dismissDownloadError()
+                showUpdateModal = null
+            },
+            autoInstallOnSuccess = release.isPreRelease && nightlyAutoInstall
+        )
+    }
+
+    val strInstallUpdate = stringResource(R.string.update_modal_install)
+
+    LaunchedEffect(updateEventsViewModel, snackbarController, stableAutoDownload) {
+        updateEventsViewModel.events.collect { release ->
+            if (stableAutoDownload) {
+                snackbarController.showInfo(strShellUpdateAvailable)
+                downloadingRelease = release
+                updateEventsViewModel.startDownload(release)
+            } else {
+                snackbarController.showInfo(strShellUpdateAvailable) {
+                    showUpdateModal = release
+                }
+            }
+        }
+    }
+
+    LaunchedEffect(updateEventsViewModel, snackbarController, nightlyAutoDownload, nightlyAutoInstall) {
+        updateEventsViewModel.nightlyEvents.collect { release ->
+            if (nightlyAutoDownload) {
+                snackbarController.showInfo(strShellUpdateAvailable)
+                downloadingRelease = release
+                updateEventsViewModel.startDownload(release)
+            } else {
+                snackbarController.showInfo(strShellUpdateAvailable) {
+                    showUpdateModal = release
+                }
+            }
+        }
+    }
+
+    LaunchedEffect(downloadState) {
+        if (downloadState is it.attendance100.mybicocca.data.update.DownloadState.Success) {
+            val file = (downloadState as it.attendance100.mybicocca.data.update.DownloadState.Success).file
+            val release = downloadingRelease ?: return@LaunchedEffect
+
+            if (release.isPreRelease && nightlyAutoDownload && nightlyAutoInstall) {
+                val strInstalling = context.getString(R.string.update_modal_installing)
+                snackbarController.showInfo(strInstalling)
+                updateEventsViewModel.installApk(file, silent = true)
+                updateEventsViewModel.clearDownload()
+            } else if (showUpdateModal == null) {
+                // Background download completed and modal is NOT open, notify user
+                snackbarController.showInfo(strInstallUpdate) {
+                    // Tapping triggers silent install
+                    updateEventsViewModel.installApk(file, silent = true)
+                    updateEventsViewModel.clearDownload()
+                }
+            }
         }
     }
 

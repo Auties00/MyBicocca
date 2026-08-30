@@ -190,6 +190,10 @@ class UpdateStateStore @Inject constructor(
         val REL_ASSETS_KEY = stringPreferencesKey("update_release_assets")
         val LAST_NOTIFIED_VERSION_KEY = stringPreferencesKey("update_last_notified_version")
 
+        val STABLE_AUTO_DOWNLOAD_KEY = booleanPreferencesKey("update_stable_auto_download")
+        val NIGHTLY_AUTO_DOWNLOAD_KEY = booleanPreferencesKey("update_nightly_auto_download")
+        val NIGHTLY_AUTO_INSTALL_KEY = booleanPreferencesKey("update_nightly_auto_install")
+
         val NIGHTLY_ENABLED_KEY = booleanPreferencesKey("update_nightly_enabled")
         val NIGHTLY_LAST_CHECKED_MS_KEY = longPreferencesKey("update_nightly_last_checked_ms")
         val NIGHTLY_LAST_PUBLISHED_MS_KEY = longPreferencesKey("update_nightly_last_published_ms")
@@ -202,6 +206,24 @@ class UpdateStateStore @Inject constructor(
         val NIGHTLY_REL_PUBLISHED_MS_KEY = longPreferencesKey("update_nightly_rel_published_ms")
         val NIGHTLY_REL_ASSETS_KEY = stringPreferencesKey("update_nightly_rel_assets")
         val NIGHTLY_REL_COMMIT_SHA_KEY = stringPreferencesKey("update_nightly_rel_commit_sha")
+    }
+
+    val stableAutoDownload: Flow<Boolean> = dataStore.data.map { it[STABLE_AUTO_DOWNLOAD_KEY] ?: true }
+
+    suspend fun setStableAutoDownload(enabled: Boolean) {
+        dataStore.edit { it[STABLE_AUTO_DOWNLOAD_KEY] = enabled }
+    }
+
+    val nightlyAutoDownload: Flow<Boolean> = dataStore.data.map { it[NIGHTLY_AUTO_DOWNLOAD_KEY] ?: true }
+
+    suspend fun setNightlyAutoDownload(enabled: Boolean) {
+        dataStore.edit { it[NIGHTLY_AUTO_DOWNLOAD_KEY] = enabled }
+    }
+
+    val nightlyAutoInstall: Flow<Boolean> = dataStore.data.map { it[NIGHTLY_AUTO_INSTALL_KEY] ?: false }
+
+    suspend fun setNightlyAutoInstall(enabled: Boolean) {
+        dataStore.edit { it[NIGHTLY_AUTO_INSTALL_KEY] = enabled }
     }
 
     val nightlyEnabled: Flow<Boolean> = dataStore.data.map { it[NIGHTLY_ENABLED_KEY] ?: false }

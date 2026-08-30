@@ -50,4 +50,13 @@ interface UpdateRepository {
 
     /** One-shot events for the nightly channel (mirrors [newUpdateEvents]). */
     val newNightlyUpdateEvents: Flow<AppRelease>
+
+    fun observeStableAutoDownload(): Flow<Boolean>
+    suspend fun setStableAutoDownload(enabled: Boolean)
+
+    fun observeNightlyAutoDownload(): Flow<Boolean>
+    suspend fun setNightlyAutoDownload(enabled: Boolean)
+
+    fun observeNightlyAutoInstall(): Flow<Boolean>
+    suspend fun setNightlyAutoInstall(enabled: Boolean)
 }

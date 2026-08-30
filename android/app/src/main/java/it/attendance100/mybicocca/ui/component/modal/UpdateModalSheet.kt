@@ -63,12 +63,13 @@ fun UpdateModalSheet(
     onDownload: () -> Unit,
     onInstall: (File) -> Unit,
     onDismiss: () -> Unit,
+    autoInstallOnSuccess: Boolean = false,
 ) {
     val downloadState by downloadStateFlow.collectAsStateWithLifecycle()
     val uriHandler = LocalUriHandler.current
-    LaunchedEffect(downloadState) {
+    LaunchedEffect(downloadState, autoInstallOnSuccess) {
         val state = downloadState
-        if (state is DownloadState.Success) {
+        if (state is DownloadState.Success && autoInstallOnSuccess) {
             onInstall(state.file)
         }
     }
@@ -198,6 +199,15 @@ fun UpdateModalSheet(
                                         fontWeight = FontWeight.SemiBold
                                     )
                                 }
+                            }
+                        } else if (downloadState is DownloadState.Success && !autoInstallOnSuccess) {
+                            Button(
+                                onClick = { onInstall((downloadState as DownloadState.Success).file) },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(48.dp)
+                            ) {
+                                Text(stringResource(R.string.update_modal_install))
                             }
                         } else {
                             Button(

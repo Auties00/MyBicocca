@@ -31,6 +31,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.outlined.Bedtime
 import androidx.compose.material.icons.outlined.NewReleases
 import androidx.compose.material.icons.outlined.Update
@@ -41,6 +42,7 @@ import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.SheetValue
@@ -48,6 +50,8 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -61,7 +65,9 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
@@ -159,9 +165,10 @@ fun AppInfoSheet(
     val nightlyEnabled by viewModel.nightlyEnabled.collectAsStateWithLifecycle()
     val checking by viewModel.checking.collectAsStateWithLifecycle()
     var showRestoreStableDialog by remember { mutableStateOf(false) }
-    // In-sheet depth: 0 = About, 1 = What's New (merged), 2 = All versions.
+    // In-sheet depth: 0 = About, 1 = What's New (merged), 2 = All versions, 3 = Update Settings.
     var depth by rememberSaveable { mutableIntStateOf(0) }
     var showUpdateModal by remember { mutableStateOf<AppRelease?>(null) }
+    val nightlyAutoInstall by viewModel.nightlyAutoInstall.collectAsStateWithLifecycle()
 
     showUpdateModal?.let { release ->
         UpdateModalSheet(
@@ -176,7 +183,8 @@ fun AppInfoSheet(
             onDismiss = {
                 viewModel.dismissDownloadError()
                 showUpdateModal = null
-            }
+            },
+            autoInstallOnSuccess = release.isPreRelease && nightlyAutoInstall
         )
     }
 
@@ -293,6 +301,7 @@ fun AppInfoSheet(
                                 showRestoreStableDialog = showRestoreStableDialog,
                                 setShowRestoreStableDialog = { showRestoreStableDialog = it },
                                 onOpenWhatsNew = { depth = 1 },
+                                onOpenUpdateSettings = { depth = 3 },
                                 onCheckResult = onCheckResult,
                                 onShowUpdateModal = { showUpdateModal = it }
                             )
@@ -302,10 +311,19 @@ fun AppInfoSheet(
                                 onAllVersions = { depth = 2 },
                                 modifier = pageModifier,
                             )
-
-                            else -> WhatsNewAllVersionsScene(
+                            
+                            2 -> WhatsNewAllVersionsScene(
                                 onBack = { depth = 1 },
                                 modifier = pageModifier,
+                            )
+
+                            3 -> UpdateSettingsScene(
+                                modifier = pageModifier,
+                                viewModel = viewModel,
+                                nightlyEnabled = nightlyEnabled,
+                                onBack = { depth = 0 },
+                                showRestoreStableDialog = showRestoreStableDialog,
+                                setShowRestoreStableDialog = { showRestoreStableDialog = it }
                             )
                         }
                     }
@@ -342,6 +360,7 @@ private fun AboutScene(
     showRestoreStableDialog: Boolean,
     setShowRestoreStableDialog: (Boolean) -> Unit,
     onOpenWhatsNew: () -> Unit,
+    onOpenUpdateSettings: () -> Unit,
     onCheckResult: (UpdateCheckResult) -> Unit,
     onShowUpdateModal: (AppRelease) -> Unit,
 ) {
@@ -449,18 +468,11 @@ private fun AboutScene(
             SegmentedTile(
                 isFirst = false,
                 isLast = false,
-                role = androidx.compose.ui.semantics.Role.Switch,
-                title = stringResource(R.string.settings_beta_updates_title),
-                subtitle = stringResource(R.string.settings_beta_updates_subtitle),
+                title = stringResource(R.string.settings_update_settings_title),
+                subtitle = stringResource(R.string.settings_update_settings_subtitle),
                 onClick = {
                     haptic.tap()
-                    if (nightlyEnabled) {
-                        viewModel.checkAndOfferStable {
-                            setShowRestoreStableDialog(true)
-                        }
-                    } else {
-                        viewModel.setNightlyEnabled(true)
-                    }
+                    onOpenUpdateSettings()
                 },
                 leading = {
                     SegmentedIconChip(
@@ -469,13 +481,7 @@ private fun AboutScene(
                         scheme.onSecondaryContainer,
                     )
                 },
-                trailing = {
-                    Switch(
-                        checked = nightlyEnabled,
-                        onCheckedChange = null,
-                        modifier = Modifier.padding(end = 6.dp)
-                    )
-                },
+                trailing = { TrailingGlyph(Icons.Rounded.ChevronRight) },
             )
 
             SegmentedTile(
@@ -706,4 +712,151 @@ private fun NightlyUpdateTile(
         },
         trailing = { TrailingGlyph(Icons.Rounded.ChevronRight) },
     )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun UpdateSettingsScene(
+    modifier: Modifier,
+    viewModel: AppInfoViewModel,
+    nightlyEnabled: Boolean,
+    onBack: () -> Unit,
+    showRestoreStableDialog: Boolean,
+    setShowRestoreStableDialog: (Boolean) -> Unit,
+) {
+    val haptic = rememberHapticManager()
+    val scheme = MaterialTheme.colorScheme
+
+    val stableAutoDownload by viewModel.stableAutoDownload.collectAsStateWithLifecycle()
+    val nightlyAutoDownload by viewModel.nightlyAutoDownload.collectAsStateWithLifecycle()
+    val nightlyAutoInstall by viewModel.nightlyAutoInstall.collectAsStateWithLifecycle()
+
+    Column(modifier = modifier) {
+        TopAppBar(
+            title = { Text(stringResource(R.string.settings_update_settings_title)) },
+            navigationIcon = {
+                IconButton(onClick = onBack) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
+                        contentDescription = stringResource(R.string.common_back),
+                    )
+                }
+            },
+            colors = TopAppBarDefaults.topAppBarColors(
+                containerColor = Color.Transparent
+            )
+        )
+
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 20.dp, vertical = 8.dp)
+        ) {
+            Text(
+                text = stringResource(R.string.settings_update_stable_header),
+                style = MaterialTheme.typography.labelLarge,
+                color = scheme.primary,
+                modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
+            )
+            
+            SegmentedTile(
+                isFirst = true,
+                isLast = true,
+                role = androidx.compose.ui.semantics.Role.Switch,
+                title = stringResource(R.string.settings_update_stable_auto_download_title),
+                subtitle = stringResource(R.string.settings_update_stable_auto_download_subtitle),
+                onClick = {
+                    haptic.tap()
+                    viewModel.setStableAutoDownload(!stableAutoDownload)
+                },
+                trailing = {
+                    Switch(
+                        checked = stableAutoDownload,
+                        onCheckedChange = null,
+                        modifier = Modifier.padding(end = 6.dp)
+                    )
+                }
+            )
+
+            Spacer(Modifier.height(24.dp))
+
+            Text(
+                text = stringResource(R.string.settings_update_beta_header),
+                style = MaterialTheme.typography.labelLarge,
+                color = scheme.primary,
+                modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
+            )
+
+            SegmentedTile(
+                isFirst = true,
+                isLast = false,
+                role = androidx.compose.ui.semantics.Role.Switch,
+                title = stringResource(R.string.settings_beta_updates_title),
+                subtitle = stringResource(R.string.settings_beta_updates_subtitle),
+                onClick = {
+                    haptic.tap()
+                    if (nightlyEnabled) {
+                        viewModel.checkAndOfferStable {
+                            setShowRestoreStableDialog(true)
+                        }
+                    } else {
+                        viewModel.setNightlyEnabled(true)
+                    }
+                },
+                trailing = {
+                    Switch(
+                        checked = nightlyEnabled,
+                        onCheckedChange = null,
+                        modifier = Modifier.padding(end = 6.dp)
+                    )
+                }
+            )
+
+            val betaTogglesEnabled = nightlyEnabled
+            val alpha = if (betaTogglesEnabled) 1f else 0.5f
+
+            SegmentedTile(
+                isFirst = false,
+                isLast = false,
+                role = androidx.compose.ui.semantics.Role.Switch,
+                title = stringResource(R.string.settings_update_beta_auto_download_title),
+                subtitle = stringResource(R.string.settings_update_beta_auto_download_subtitle),
+                onClick = if (!betaTogglesEnabled) null else { {
+                    haptic.tap()
+                    viewModel.setNightlyAutoDownload(!nightlyAutoDownload)
+                } },
+                trailing = {
+                    Switch(
+                        checked = nightlyAutoDownload && betaTogglesEnabled,
+                        onCheckedChange = null,
+                        enabled = betaTogglesEnabled,
+                        modifier = Modifier.padding(end = 6.dp)
+                    )
+                },
+                modifier = Modifier.alpha(alpha)
+            )
+
+            SegmentedTile(
+                isFirst = false,
+                isLast = true,
+                role = androidx.compose.ui.semantics.Role.Switch,
+                title = stringResource(R.string.settings_update_beta_auto_install_title),
+                subtitle = stringResource(R.string.settings_update_beta_auto_install_subtitle),
+                onClick = if (!betaTogglesEnabled) null else { {
+                    haptic.tap()
+                    viewModel.setNightlyAutoInstall(!nightlyAutoInstall)
+                } },
+                trailing = {
+                    Switch(
+                        checked = nightlyAutoInstall && betaTogglesEnabled,
+                        onCheckedChange = null,
+                        enabled = betaTogglesEnabled,
+                        modifier = Modifier.padding(end = 6.dp)
+                    )
+                },
+                modifier = Modifier.alpha(alpha)
+            )
+        }
+    }
 }

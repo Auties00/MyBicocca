@@ -1654,8 +1654,20 @@
     <string name="update_modal_version">v%1$s</string>
     <string name="update_modal_github">Open on GitHub</string>
     <string name="update_modal_download">Download update</string>
+    <string name="update_modal_install">Install update</string>
+    <string name="update_modal_installing">Installing update...</string>
     <string name="update_modal_not_now">Not now</string>
     <string name="update_modal_downloading">Downloading… %1$d%%</string>
+    <string name="settings_update_settings_title">Update Settings</string>
+    <string name="settings_update_settings_subtitle">Manage auto-downloads and beta releases</string>
+    <string name="settings_update_stable_header">Stable Updates</string>
+    <string name="settings_update_beta_header">Beta Updates</string>
+    <string name="settings_update_stable_auto_download_title">Auto download updates</string>
+    <string name="settings_update_stable_auto_download_subtitle">Download new stable releases in the background</string>
+    <string name="settings_update_beta_auto_download_title">Auto download beta updates</string>
+    <string name="settings_update_beta_auto_download_subtitle">Download new beta releases in the background</string>
+    <string name="settings_update_beta_auto_install_title">Auto install beta updates</string>
+    <string name="settings_update_beta_auto_install_subtitle">Install downloaded beta updates silently</string>
 
     <!-- Settings: Language -->
     <string name="settings_language_help_translate">Help us translate the app in %1$s!</string>

@@ -134,6 +134,17 @@
         android:theme="@style/Theme.MyBicocca.OssLicenses"
         tools:replace="android:theme" />
 
+    <provider
+        android:name="androidx.startup.InitializationProvider"
+        android:authorities="${applicationId}.androidx-startup"
+        android:exported="false"
+        tools:node="merge">
+      <meta-data
+          android:name="androidx.work.WorkManagerInitializer"
+          android:value="androidx.startup"
+          tools:node="remove" />
+    </provider>
+
     <receiver android:name=".data.update.InstallResultReceiver" android:exported="false" />
   </application>
 </manifest>

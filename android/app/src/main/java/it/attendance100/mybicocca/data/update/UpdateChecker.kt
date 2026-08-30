@@ -11,6 +11,14 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import javax.inject.Singleton
+import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.WorkManager
+import androidx.work.ExistingPeriodicWorkPolicy
+import java.util.concurrent.TimeUnit
+import android.content.Context
+import dagger.hilt.android.qualifiers.ApplicationContext
+import androidx.work.Constraints
+import androidx.work.NetworkType
 
 /**
  * Fires the once-a-day update check. Observes the process lifecycle (like the app-lock manager)
@@ -23,25 +31,33 @@ import javax.inject.Singleton
 @Singleton
 class UpdateChecker @Inject constructor(
     private val repository: UpdateRepository,
-    private val apkDownloader: ApkDownloader,
     @ApplicationScope private val scope: CoroutineScope,
+    @ApplicationContext private val context: Context,
 ) : DefaultLifecycleObserver {
-
-    private var pendingNightlyRelease: AppRelease? = null
-
-    init {
-        scope.launch {
-            repository.newNightlyUpdateEvents.collect { release ->
-                pendingNightlyRelease = release
-            }
-        }
-    }
 
     /**
      * Registers the process-lifecycle observer. Called from the activity's onCreate; safe to call
      * again on every activity recreation, since re-adding the same singleton observer is a no-op.
      */
     fun start() {
+        val constraints = Constraints.Builder()
+            .setRequiredNetworkType(NetworkType.CONNECTED)
+            .build()
+            
+        val workRequest = PeriodicWorkRequestBuilder<AppUpdateWorker>(12, TimeUnit.HOURS)
+            .setConstraints(constraints)
+            .setBackoffCriteria(
+                androidx.work.BackoffPolicy.EXPONENTIAL,
+                10, TimeUnit.MINUTES
+            )
+            .build()
+            
+        WorkManager.getInstance(context).enqueueUniquePeriodicWork(
+            "AppUpdateWorker",
+            ExistingPeriodicWorkPolicy.KEEP,
+            workRequest
+        )
+
         scope.launch(Dispatchers.Main) {
             ProcessLifecycleOwner.get().lifecycle.addObserver(this@UpdateChecker)
         }
@@ -49,19 +65,5 @@ class UpdateChecker @Inject constructor(
 
     override fun onStart(owner: LifecycleOwner) {
         scope.launch { runCatching { repository.checkForUpdates(force = false) } }
-    }
-
-    override fun onStop(owner: LifecycleOwner) {
-        val release = pendingNightlyRelease ?: return
-        pendingNightlyRelease = null
-        
-        scope.launch {
-            apkDownloader.startDownload(release)
-            apkDownloader.downloadState.collect { state ->
-                if (state is DownloadState.Success) {
-                    apkDownloader.installApk(state.file, silent = true)
-                }
-            }
-        }
     }
 }

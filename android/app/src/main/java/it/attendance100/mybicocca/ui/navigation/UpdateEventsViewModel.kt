@@ -16,15 +16,53 @@ import javax.inject.Inject
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.shareIn
 import androidx.lifecycle.viewModelScope
+import it.attendance100.mybicocca.data.local.settings.UpdateStateStore
+import it.attendance100.mybicocca.data.update.ApkDownloader
+import it.attendance100.mybicocca.data.update.DownloadState
 import it.attendance100.mybicocca.domain.usecase.update.ObserveNightlyEventsUseCase
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
+import java.io.File
 
 @HiltViewModel
 class UpdateEventsViewModel @Inject constructor(
     observeUpdateEvents: ObserveUpdateEventsUseCase,
     observeNightlyEvents: ObserveNightlyEventsUseCase,
+    private val downloader: ApkDownloader,
+    updateRepository: it.attendance100.mybicocca.domain.repository.UpdateRepository
 ) : ViewModel() {
     val events: Flow<AppRelease> = observeUpdateEvents()
         .shareIn(viewModelScope, SharingStarted.WhileSubscribed(5000))
     val nightlyEvents: Flow<AppRelease> = observeNightlyEvents()
         .shareIn(viewModelScope, SharingStarted.WhileSubscribed(5000))
+
+    val downloadState: StateFlow<DownloadState> = downloader.downloadState
+
+    val stableAutoDownload: StateFlow<Boolean> = updateRepository.observeStableAutoDownload()
+        .stateIn(viewModelScope, SharingStarted.Eagerly, true)
+
+    val nightlyAutoDownload: StateFlow<Boolean> = updateRepository.observeNightlyAutoDownload()
+        .stateIn(viewModelScope, SharingStarted.Eagerly, true)
+
+    val nightlyAutoInstall: StateFlow<Boolean> = updateRepository.observeNightlyAutoInstall()
+        .stateIn(viewModelScope, SharingStarted.Eagerly, false)
+
+    fun startDownload(release: AppRelease) {
+        downloader.startDownload(release)
+    }
+
+    fun installApk(file: File, silent: Boolean) {
+        viewModelScope.launch {
+            downloader.installApk(file, silent)
+        }
+    }
+
+    fun clearDownload() {
+        downloader.resetState()
+    }
+
+    fun dismissDownloadError() {
+        downloader.dismissError()
+    }
 }

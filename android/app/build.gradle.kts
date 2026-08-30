@@ -259,6 +259,11 @@ dependencies {
     // ProcessLifecycleOwner — app-wide foreground/background signal for the app lock.
     implementation("androidx.lifecycle:lifecycle-process:2.10.0")
 
+    // WorkManager
+    implementation("androidx.work:work-runtime-ktx:2.9.1")
+    implementation("androidx.hilt:hilt-work:1.2.0")
+    ksp("androidx.hilt:hilt-compiler:1.2.0")
+
     // DataStore
     implementation("androidx.datastore:datastore-preferences:1.1.4")
 

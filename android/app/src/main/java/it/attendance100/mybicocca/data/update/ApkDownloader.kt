@@ -241,6 +241,8 @@ class ApkDownloader @Inject constructor(
             val pendingIntent = android.app.PendingIntent.getBroadcast(context, sessionId, intent, flags)
 
             session.commit(pendingIntent.intentSender)
+            // Note: After a successful commit, the system takes ownership of the session.
+            // Calling close() here is a no-op on some API levels, but is kept for safety.
             session.close()
         } catch (e: Exception) {
             e.printStackTrace()

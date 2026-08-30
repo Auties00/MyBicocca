@@ -9,11 +9,22 @@ import it.attendance100.mybicocca.core.os.systemAppLanguage
 import it.attendance100.mybicocca.data.observability.CrashReportingController
 import javax.inject.Inject
 
+import androidx.hilt.work.HiltWorkerFactory
+import androidx.work.Configuration
+
 @HiltAndroidApp
-class MyBicoccaApplication : Application() {
+class MyBicoccaApplication : Application(), Configuration.Provider {
+
+    @Inject
+    lateinit var workerFactory: HiltWorkerFactory
 
     @Inject
     lateinit var crashReportingController: CrashReportingController
+
+    override val workManagerConfiguration: Configuration
+        get() = Configuration.Builder()
+            .setWorkerFactory(workerFactory)
+            .build()
 
     override fun onCreate() {
         super.onCreate()
